@@ -5,9 +5,19 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
-import type { ProgramState, ProgramSettings, ProgramExercise, ScheduledRunDay, ScheduledRunStatus } from "./programTypes";
+import type {
+  LegacyScheduledRunStatus,
+  ProgramState,
+  ProgramSettings,
+  ProgramExercise,
+  ScheduledRunDay,
+  ScheduledRunStatus,
+} from "./programTypes";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
-import { migrateProgramState, backfillWeekScheduleIfMissing } from "./migrations";
+import {
+  migrateProgramState,
+  backfillWeekScheduleIfMissing,
+} from "./migrations";
 import {
   generateProgram,
   advanceWeek,
@@ -43,7 +53,12 @@ import {
   scheduleRecoveryWeekV2,
   recoveryWeeksForDistance,
 } from "./runScheduler";
-import { localWeekKey, localDateString, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localWeekKey,
+  localDateString,
+  addLocalDays,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
@@ -69,8 +84,11 @@ const PROGRAM_DOC = "current";
  */
 function makeRunPlanRecord(
   v2: { totalWeeks: number; compressed: boolean },
-  raceGoal: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string },
-  carry: { currentWeek?: number; totalWeeks?: number } = {},
+  raceGoal: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  },
+  carry: { currentWeek?: number; totalWeeks?: number } = {}
 ): ProgramState["runPlan"] {
   return {
     mode: "race_prep",
@@ -96,7 +114,9 @@ export function useProgram() {
   const { user, profile, updateProfile } = useAuth();
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(null);
+  const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(
+    null
+  );
 
   // Load program from Firestore (with backward-compat normalize)
   useEffect(() => {
@@ -129,7 +149,10 @@ export function useProgram() {
         try {
           await updateProfile(profilePatch, { throwOnError: true });
         } catch (e) {
-          logger.warn("[useProgram] weekSchedule backfill failed; continuing with stale shape", e);
+          logger.warn(
+            "[useProgram] weekSchedule backfill failed; continuing with stale shape",
+            e
+          );
         }
       }
 
@@ -168,7 +191,11 @@ export function useProgram() {
         }
 
         // Hydrate run days if user has run mode but no runDays yet
-        if (!migrated.runDays && profile.runMode && profile.runMode !== "freeform") {
+        if (
+          !migrated.runDays &&
+          profile.runMode &&
+          profile.runMode !== "freeform"
+        ) {
           // PR-0b-ii: V2 writers. Reads weekSchedule directly so
           // hybrid Both-day slots get a scheduled run (V1 lost them
           // because it derived run-eligible days from liftIndices).
@@ -200,7 +227,11 @@ export function useProgram() {
           }
 
           const withRuns = { ...migrated, runDays, runPlan };
-          await setDoc(ref, { ...withRuns, updatedAt: Date.now() }, { merge: true });
+          await setDoc(
+            ref,
+            { ...withRuns, updatedAt: Date.now() },
+            { merge: true }
+          );
           setProgramState(withRuns);
         } else {
           // PR-0b-i: drive React state from the migrated value so
@@ -219,7 +250,7 @@ export function useProgram() {
           goal,
           weeklyTarget,
           undefined,
-          profile.primaryGoal,
+          profile.primaryGoal
         );
 
         // Generate run schedule if applicable. PR-0b-ii: V2 writers.
@@ -255,7 +286,9 @@ export function useProgram() {
           // Loading already backfills via normalizeProgramState (see
           // line ~80) but the initial doc should write the field
           // explicitly so the persisted shape matches reads.
-          ...(profile.primaryGoal !== undefined && { primaryGoal: profile.primaryGoal }),
+          ...(profile.primaryGoal !== undefined && {
+            primaryGoal: profile.primaryGoal,
+          }),
           currentPhase: "base",
           weekNumber: 1,
           splitType,
@@ -299,18 +332,20 @@ export function useProgram() {
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
       // Strip undefined values — Firestore rejects them
       const clean = Object.fromEntries(
-        Object.entries({ ...state, updatedAt: Date.now() }).filter(([, v]) => v !== undefined),
+        Object.entries({ ...state, updatedAt: Date.now() }).filter(
+          ([, v]) => v !== undefined
+        )
       );
       try {
         await setDoc(ref, clean);
         setProgramState(state);
       } catch (error) {
-        logger.error('[Program] Save failed:', error);
-        toast.error('Failed to save programme changes');
+        logger.error("[Program] Save failed:", error);
+        toast.error("Failed to save programme changes");
         throw error;
       }
     },
-    [user],
+    [user]
   );
 
   // PR-D: race-day auto-transition effect. When the race date has
@@ -353,12 +388,14 @@ export function useProgram() {
     if (!transitionStatus(status, "race_no_show")) return;
 
     const updatedRunDays = programState.runDays!.map((rd) =>
-      rd === raceDay ? { ...rd, status: "race_no_show" as ScheduledRunStatus } : rd,
+      rd === raceDay
+        ? { ...rd, status: "race_no_show" as ScheduledRunStatus }
+        : rd
     );
 
     logger.log(
       `[auto-transition] race-day runDay ${raceDay.id ?? raceDay.dayIndex} → race_no_show ` +
-        `(date ${raceDate}, ${Math.floor((new Date().getTime() - parseLocalDate(raceDate).getTime()) / 86400000)} days past)`,
+        `(date ${raceDate}, ${Math.floor((new Date().getTime() - parseLocalDate(raceDate).getTime()) / 86400000)} days past)`
     );
 
     saveProgram({ ...programState, runDays: updatedRunDays }).catch((err) => {
@@ -398,7 +435,7 @@ export function useProgram() {
     delete cleared.recoveryEndDate;
 
     logger.log(
-      `[recovery-exit] phase cleared after grace (recoveryEndDate ${programState.runPlan.recoveryEndDate}, today ${todayKey})`,
+      `[recovery-exit] phase cleared after grace (recoveryEndDate ${programState.runPlan.recoveryEndDate}, today ${todayKey})`
     );
 
     saveProgram({ ...programState, runPlan: cleared }).catch((err) => {
@@ -462,10 +499,10 @@ export function useProgram() {
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.
       const nextWeekStart = localWeekKey(
-        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
       );
       const nextWeekCurrentDate = localDateString(
-        addLocalDays(parseLocalDate(currentRunWeekKey), 7),
+        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
       );
       const weekSchedule = profile.weekSchedule ?? [];
       const runTarget = getWeeklyRunTarget(profile) || 3;
@@ -499,13 +536,13 @@ export function useProgram() {
     if (iterations === 0) return;
 
     logger.log(
-      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`,
+      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
     );
 
     saveProgram(rolling)
       .then(() => {
         toast.success(
-          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`,
+          `Week advanced — ${iterations} week${iterations > 1 ? "s" : ""}`
         );
       })
       .catch((err) => {
@@ -530,10 +567,12 @@ export function useProgram() {
       const updated: ProgramState = {
         ...programState,
         workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, completed: true, skipped: false } : d,
+          i === dayIndex ? { ...d, completed: true, skipped: false } : d
         ),
         // Clear next-workout override if completing the overridden day
-        ...(programState.nextWorkoutOverride === dayIndex && { nextWorkoutOverride: undefined }),
+        ...(programState.nextWorkoutOverride === dayIndex && {
+          nextWorkoutOverride: undefined,
+        }),
       };
 
       await saveProgram(updated);
@@ -578,12 +617,13 @@ export function useProgram() {
         });
 
         const tonnage = exercises.reduce(
-          (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-          0,
+          (t, ex) =>
+            t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+          0
         );
         const completedSetCount = exercises.reduce(
           (c, ex) => c + ex.sets.length,
-          0,
+          0
         );
 
         // Require bodyweight to compute a sensible burn. If it's missing we
@@ -592,13 +632,14 @@ export function useProgram() {
         const bodyweightKg = profile?.weightKg ?? 0;
         if (bodyweightKg <= 0) {
           logger.warn(
-            "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0",
+            "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0"
           );
         }
 
-        const durationMinutes = sessionData?.durationMinutes && sessionData.durationMinutes > 0
-          ? sessionData.durationMinutes
-          : 0;
+        const durationMinutes =
+          sessionData?.durationMinutes && sessionData.durationMinutes > 0
+            ? sessionData.durationMinutes
+            : 0;
 
         const totalCalories = estimateLiftBurn({
           durationMinutes,
@@ -615,7 +656,8 @@ export function useProgram() {
           // completedSetCount × 3 fallback drives burn — record that same
           // effective duration so downstream analytics see a consistent
           // value. No more `exercises.length × 5` placeholder.
-          durationMinutes: durationMinutes > 0 ? durationMinutes : completedSetCount * 3,
+          durationMinutes:
+            durationMinutes > 0 ? durationMinutes : completedSetCount * 3,
           notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
           createdAt: Timestamp.now(),
           source: "programme",
@@ -624,18 +666,25 @@ export function useProgram() {
         // default) for visibility + caption. Returns null if they
         // declined to share. Replaces the old autoPostWorkouts flag —
         // see src/lib/shareComposer.ts for the preference store.
-        const effectiveDurationMin = durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+        const effectiveDurationMin =
+          durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
         const decision = await compose({
           type: "workout",
           title: day.dayName,
           meta: [
             `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0 ? `${Math.round(tonnage).toLocaleString()}kg volume` : "",
+            tonnage > 0
+              ? `${Math.round(tonnage).toLocaleString()}kg volume`
+              : "",
             effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
           ].filter(Boolean),
         });
         if (decision) {
-          const uniqueCategories = [...new Set(day.exercises.map(ex => ex.movementCategory).filter(Boolean))];
+          const uniqueCategories = [
+            ...new Set(
+              day.exercises.map((ex) => ex.movementCategory).filter(Boolean)
+            ),
+          ];
           // Map composer-side visibility → postActivity API visibility.
           // 'crews' is composer-only; under the hood it's a followers
           // post tagged with crewId so it surfaces on the crew page.
@@ -643,14 +692,17 @@ export function useProgram() {
           // posts on the crew surface; 'followers' explicitly does not
           // (the user picked the broader audience without opting in
           // to the crew page).
-          const apiVisibility = decision.visibility === 'crews' ? 'followers' : decision.visibility;
+          const apiVisibility =
+            decision.visibility === "crews" ? "followers" : decision.visibility;
           const includeCrewId =
-            (decision.visibility === 'crews' || decision.visibility === 'public') && !!profile?.crewId;
+            (decision.visibility === "crews" ||
+              decision.visibility === "public") &&
+            !!profile?.crewId;
           const payload = {
             authorId: user.uid,
-            authorName: profile?.displayName || 'Athlete',
+            authorName: profile?.displayName || "Athlete",
             ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: 'workout' as const,
+            type: "workout" as const,
             visibility: apiVisibility,
             ...(decision.caption ? { caption: decision.caption } : {}),
             workoutName: day.dayName,
@@ -666,7 +718,7 @@ export function useProgram() {
             // string. ActivityCard renders only the top 3 visually
             // for compactness; the rest sit on the doc for the routine
             // copy flow.
-            exercises: exercises.map(ex => {
+            exercises: exercises.map((ex) => {
               const setCount = ex.sets.length;
               const targetReps = ex.sets[0]?.reps ?? 0;
               const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
@@ -687,7 +739,8 @@ export function useProgram() {
             // ShareComposerSheet's drain effect retry on reconnect.
             // Auth/identity errors still surface as a warning since
             // those won't recover by retrying.
-            const isNetwork = typeof navigator !== "undefined" && navigator.onLine === false;
+            const isNetwork =
+              typeof navigator !== "undefined" && navigator.onLine === false;
             if (isNetwork) {
               enqueueShare(payload);
               showQueuedToast();
@@ -702,10 +755,12 @@ export function useProgram() {
 
       const allDone = updated.workouts.every((d) => d.completed || d.skipped);
       if (allDone) {
-        toast.success("All workouts complete! Advance to next week when ready.");
+        toast.success(
+          "All workouts complete! Advance to next week when ready."
+        );
       }
     },
-    [programState, user, saveProgram, profile],
+    [programState, user, saveProgram, profile]
   );
 
   // Skip a workout day (no stats, no social post)
@@ -715,12 +770,12 @@ export function useProgram() {
       const updated: ProgramState = {
         ...programState,
         workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, skipped: true } : d,
+          i === dayIndex ? { ...d, skipped: true } : d
         ),
       };
       await saveProgram(updated);
     },
-    [programState, user, saveProgram],
+    [programState, user, saveProgram]
   );
 
   // Set a specific day as the next workout (override default progression)
@@ -729,61 +784,58 @@ export function useProgram() {
       if (!programState) return;
       await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
     },
-    [programState, saveProgram],
+    [programState, saveProgram]
   );
 
   // Manually advance to next week (called from UI)
-  const advanceToNextWeek = useCallback(
-    async () => {
-      if (!programState) return;
-      if (!shouldAdvanceWeek(programState.workouts)) return;
+  const advanceToNextWeek = useCallback(async () => {
+    if (!programState) return;
+    if (!shouldAdvanceWeek(programState.workouts)) return;
 
-      const advanced = advanceWeek(programState);
+    const advanced = advanceWeek(programState);
 
-      // Refresh run days for new week. PR-0b-ii: V2 writers + next-
-      // week date vantage so the saved runDays carry next-week
-      // dates / weekKey. `currentWeek` increments to track week-
-      // since-plan-start; `totalWeeks` preserved from prev so the
-      // race-strip "Week N of M" display stays consistent.
-      if (profile?.runMode && profile.runMode !== "freeform") {
-        const weekSchedule = profile.weekSchedule ?? [];
-        const runTarget = getWeeklyRunTarget(profile) || 3;
-        const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
-        const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
+    // Refresh run days for new week. PR-0b-ii: V2 writers + next-
+    // week date vantage so the saved runDays carry next-week
+    // dates / weekKey. `currentWeek` increments to track week-
+    // since-plan-start; `totalWeeks` preserved from prev so the
+    // race-strip "Week N of M" display stays consistent.
+    if (profile?.runMode && profile.runMode !== "freeform") {
+      const weekSchedule = profile.weekSchedule ?? [];
+      const runTarget = getWeeklyRunTarget(profile) || 3;
+      const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
+      const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
 
-        if (profile.runMode === "race_prep" && profile.raceGoal) {
-          const plan = generateRacePlanV2({
-            weekSchedule,
-            raceGoal: profile.raceGoal,
-            weeklyRunDays: runTarget,
-            currentDate: nextWeekCurrentDate,
-            weekStart: nextWeekStart,
-          });
-          advanced.runDays = plan.weeks[0] ?? [];
-          advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
-            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
-            totalWeeks: advanced.runPlan?.totalWeeks,
-          });
-        } else {
-          advanced.runDays = scheduleStructuredWeekV2({
-            weekSchedule,
-            weekNumber: advanced.weekNumber,
-            weekStart: nextWeekStart,
-          });
-        }
-      }
-
-      await saveProgram(advanced);
-
-      const rx = generateWeekPrescription(advanced.weekNumber);
-      if (rx.deload) {
-        toast.info("Deload week — reduce intensity and recover");
+      if (profile.runMode === "race_prep" && profile.raceGoal) {
+        const plan = generateRacePlanV2({
+          weekSchedule,
+          raceGoal: profile.raceGoal,
+          weeklyRunDays: runTarget,
+          currentDate: nextWeekCurrentDate,
+          weekStart: nextWeekStart,
+        });
+        advanced.runDays = plan.weeks[0] ?? [];
+        advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
+          currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+          totalWeeks: advanced.runPlan?.totalWeeks,
+        });
       } else {
-        toast.success(`Week ${advanced.weekNumber} started`);
+        advanced.runDays = scheduleStructuredWeekV2({
+          weekSchedule,
+          weekNumber: advanced.weekNumber,
+          weekStart: nextWeekStart,
+        });
       }
-    },
-    [programState, profile, saveProgram],
-  );
+    }
+
+    await saveProgram(advanced);
+
+    const rx = generateWeekPrescription(advanced.weekNumber);
+    if (rx.deload) {
+      toast.info("Deload week — reduce intensity and recover");
+    } else {
+      toast.success(`Week ${advanced.weekNumber} started`);
+    }
+  }, [programState, profile, saveProgram]);
 
   // P0-6: Mark a run day as completed.
   //
@@ -809,10 +861,12 @@ export function useProgram() {
       const targetIndex =
         typeof idOrDayIndex === "string"
           ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
-          : programState.runDays.findIndex((rd) => rd.dayIndex === idOrDayIndex);
+          : programState.runDays.findIndex(
+              (rd) => rd.dayIndex === idOrDayIndex
+            );
       if (targetIndex === -1) {
         logger.warn(
-          `[completeRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+          `[completeRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
         return;
       }
@@ -829,10 +883,14 @@ export function useProgram() {
       // completed_exact → completed_exact illegal transition and
       // we skip + log instead of double-completing.
       const fromStatus = getScheduledRunStatus(targetDay);
-      const toStatus: ScheduledRunStatus = "completed_exact";
+      // PR-J Q8 P102: destination is a legacy value (will be
+      // removed entirely by PR-J's completeRunDay deletion per Q2).
+      // Type the local var as the legacy union so the assignment
+      // type-checks against the now-narrower ScheduledRunStatus.
+      const toStatus: LegacyScheduledRunStatus = "completed_exact";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
-          `[completeRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`,
+          `[completeRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
         return;
       }
@@ -863,10 +921,10 @@ export function useProgram() {
         programState.runPlan
       ) {
         const recoveryWeeks = recoveryWeeksForDistance(
-          raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+          raceGoal.distance as "5k" | "10k" | "half" | "marathon"
         );
         const recoveryEndDate = localDateString(
-          addLocalDays(parseLocalDate(raceGoal.targetDate), recoveryWeeks * 7),
+          addLocalDays(parseLocalDate(raceGoal.targetDate), recoveryWeeks * 7)
         );
         updatedRunPlan = {
           ...programState.runPlan,
@@ -889,12 +947,14 @@ export function useProgram() {
       // Without this parity, a user who skipped one lift but finished
       // every run would never see "Ready for next week" from the run
       // path even though they would from the lift path.
-      const allLiftsDone = updated.workouts.every((d) => d.completed || d.skipped);
+      const allLiftsDone = updated.workouts.every(
+        (d) => d.completed || d.skipped
+      );
       if (allRunsDone && allLiftsDone) {
         toast.success("All workouts & runs complete! Ready for next week.");
       }
     },
-    [programState, user, saveProgram, profile?.runMode],
+    [programState, user, saveProgram, profile?.runMode]
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -909,10 +969,12 @@ export function useProgram() {
       const targetIndex =
         typeof idOrDayIndex === "string"
           ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
-          : programState.runDays.findIndex((rd) => rd.dayIndex === idOrDayIndex);
+          : programState.runDays.findIndex(
+              (rd) => rd.dayIndex === idOrDayIndex
+            );
       if (targetIndex === -1) {
         logger.warn(
-          `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+          `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
         return;
       }
@@ -927,7 +989,7 @@ export function useProgram() {
       const toStatus: ScheduledRunStatus = "skipped";
       if (!transitionStatus(fromStatus, toStatus)) {
         logger.warn(
-          `[skipRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`,
+          `[skipRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
         return;
       }
@@ -942,7 +1004,7 @@ export function useProgram() {
       };
       await saveProgram({ ...programState, runDays: updatedDays });
     },
-    [programState, user, saveProgram],
+    [programState, user, saveProgram]
   );
 
   // Override a run day template. Refuses to write when the target
@@ -976,7 +1038,7 @@ export function useProgram() {
           : programState.runDays.find((rd) => rd.dayIndex === idOrDayIndex);
       if (!target) {
         logger.warn(
-          `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`,
+          `[overrideRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
         return;
       }
@@ -988,7 +1050,7 @@ export function useProgram() {
       const status = getScheduledRunStatus(target);
       if (!isScheduledRunEditable(status)) {
         logger.warn(
-          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`,
+          `[overrideRunDay] refusing to swap template on non-editable runDay (status="${status}", id=${target.id ?? target.dayIndex}); use Configure Plan to rebuild instead`
         );
         return;
       }
@@ -1003,14 +1065,14 @@ export function useProgram() {
           (target.id && rd.id === target.id) ||
           (!target.id && rd.dayIndex === target.dayIndex)
             ? { ...rd, templateId, userOverride: templateId }
-            : rd,
+            : rd
         ),
       };
 
       await saveProgram(updated);
       // No success toast — the schedule UI shows the new run-day state.
     },
-    [programState, saveProgram],
+    [programState, saveProgram]
   );
 
   // Log exercise performance with auto-progression
@@ -1019,12 +1081,16 @@ export function useProgram() {
       dayIndex: number,
       exerciseIndex: number,
       actualReps: number,
-      actualWeight: number,
+      actualWeight: number
     ) => {
       if (!programState) return;
 
-      const settings = programState.settings ?? { autoProgression: true, microloading: true };
-      const exercise = programState.workouts[dayIndex]?.exercises[exerciseIndex];
+      const settings = programState.settings ?? {
+        autoProgression: true,
+        microloading: true,
+      };
+      const exercise =
+        programState.workouts[dayIndex]?.exercises[exerciseIndex];
       if (!exercise) return;
 
       let updatedExercise: ProgramExercise;
@@ -1034,7 +1100,7 @@ export function useProgram() {
           actualReps,
           actualWeight,
           programState.goal,
-          settings.microloading,
+          settings.microloading
         );
       } else {
         updatedExercise = {
@@ -1049,7 +1115,10 @@ export function useProgram() {
         };
       }
 
-      if (updatedExercise.plateauCount > 0 && updatedExercise.plateauCount !== exercise.plateauCount) {
+      if (
+        updatedExercise.plateauCount > 0 &&
+        updatedExercise.plateauCount !== exercise.plateauCount
+      ) {
         toast("Plateau detected — variation may rotate", { icon: "⚠️" });
       }
 
@@ -1058,19 +1127,23 @@ export function useProgram() {
         return {
           ...day,
           exercises: day.exercises.map((ex, ei) =>
-            ei === exerciseIndex ? updatedExercise : ex,
+            ei === exerciseIndex ? updatedExercise : ex
           ),
         };
       });
 
       await saveProgram({ ...programState, workouts: updatedWorkouts });
     },
-    [programState, saveProgram],
+    [programState, saveProgram]
   );
 
   // Update exercise manually (weight override)
   const updateExercise = useCallback(
-    async (dayIndex: number, exerciseIndex: number, updates: Partial<ProgramExercise>) => {
+    async (
+      dayIndex: number,
+      exerciseIndex: number,
+      updates: Partial<ProgramExercise>
+    ) => {
       if (!programState) return;
 
       const updatedWorkouts = programState.workouts.map((day, di) => {
@@ -1078,25 +1151,28 @@ export function useProgram() {
         return {
           ...day,
           exercises: day.exercises.map((ex, ei) =>
-            ei === exerciseIndex ? { ...ex, ...updates } : ex,
+            ei === exerciseIndex ? { ...ex, ...updates } : ex
           ),
         };
       });
 
       await saveProgram({ ...programState, workouts: updatedWorkouts });
     },
-    [programState, saveProgram],
+    [programState, saveProgram]
   );
 
   // Update settings
   const updateSettings = useCallback(
     async (updates: Partial<ProgramSettings>) => {
       if (!programState) return;
-      const current = programState.settings ?? { autoProgression: true, microloading: true };
+      const current = programState.settings ?? {
+        autoProgression: true,
+        microloading: true,
+      };
       const newSettings = { ...current, ...updates };
       await saveProgram({ ...programState, settings: newSettings });
     },
-    [programState, saveProgram],
+    [programState, saveProgram]
   );
 
   // Regenerate program (goal or split change).
@@ -1115,12 +1191,16 @@ export function useProgram() {
     async (
       goalOverride?: string,
       weeklyTargetOverride?: number,
-      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
+      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
     ) => {
       if (!profile) return;
 
-      const goal = (goalOverride ?? programState?.goal ?? profile.program?.goal ?? "recomp") as ProgramState["goal"];
-      const weeklyTarget = weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
+      const goal = (goalOverride ??
+        programState?.goal ??
+        profile.program?.goal ??
+        "recomp") as ProgramState["goal"];
+      const weeklyTarget =
+        weeklyTargetOverride ?? profile.weeklyWorkoutsTarget ?? 4;
       // Prefer programState's persisted primaryGoal (set at onboarding),
       // falling back to the profile value. Regenerate with goal-aware reps.
       const primaryGoal = programState?.primaryGoal ?? profile.primaryGoal;
@@ -1128,7 +1208,7 @@ export function useProgram() {
         goal,
         weeklyTarget,
         programState?.workouts,
-        primaryGoal,
+        primaryGoal
       );
 
       // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen
@@ -1137,8 +1217,10 @@ export function useProgram() {
       let runDays: ScheduledRunDay[] | undefined;
       let runPlan: ProgramState["runPlan"];
       if (profile.runMode && profile.runMode !== "freeform") {
-        const runTarget = overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
-        const effectiveSchedule = overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+        const runTarget =
+          overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+        const effectiveSchedule =
+          overrides?.weekSchedule ?? profile.weekSchedule ?? [];
         const weekStart = localWeekKey();
         if (profile.runMode === "race_prep" && profile.raceGoal) {
           const plan = generateRacePlanV2({
@@ -1176,7 +1258,10 @@ export function useProgram() {
         workouts,
         fatigueScore: programState?.fatigueScore ?? 0,
         updatedAt: Date.now(),
-        settings: programState?.settings ?? { autoProgression: true, microloading: true },
+        settings: programState?.settings ?? {
+          autoProgression: true,
+          microloading: true,
+        },
         weekHistory: [],
         // PR-0b-ii: explicit schema version on regenerate so the
         // freshly-rebuilt state matches the current contract. Pre-
@@ -1200,7 +1285,7 @@ export function useProgram() {
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram, updateProfile],
+    [profile, programState, saveProgram, updateProfile]
   );
 
   // Refresh run schedule without resetting program (called when
@@ -1214,8 +1299,10 @@ export function useProgram() {
       if (!programState || !profile) return;
       if (!profile.runMode || profile.runMode === "freeform") return;
 
-      const weekSchedule = overrides?.weekSchedule ?? profile.weekSchedule ?? [];
-      const runTarget = overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
+      const weekSchedule =
+        overrides?.weekSchedule ?? profile.weekSchedule ?? [];
+      const runTarget =
+        overrides?.weeklyRunDaysTarget ?? (getWeeklyRunTarget(profile) || 3);
       const weekStart = localWeekKey();
       let runDays: ScheduledRunDay[];
       let runPlan = programState.runPlan;
@@ -1299,7 +1386,7 @@ export function useProgram() {
 
       await saveProgram({ ...programState, runDays, runPlan });
     },
-    [programState, profile, saveProgram],
+    [programState, profile, saveProgram]
   );
 
   // PR-C: skip-recovery-early writer. Atomic phase clear + mode
@@ -1316,49 +1403,51 @@ export function useProgram() {
   // would lag and refresh would still emit easy_30. By doing the
   // whole transition in one saveProgram call, we sidestep the
   // closure-lag problem.
-  const skipRecoveryEarly = useCallback(
-    async () => {
-      if (!programState || !profile) return;
-      if (programState.runPlan?.phase !== "recovery") return;
+  const skipRecoveryEarly = useCallback(async () => {
+    if (!programState || !profile) return;
+    if (programState.runPlan?.phase !== "recovery") return;
 
-      const weekSchedule = profile.weekSchedule ?? [];
-      const runTarget = getWeeklyRunTarget(profile) || 3;
-      const weekStart = localWeekKey();
+    const weekSchedule = profile.weekSchedule ?? [];
+    const runTarget = getWeeklyRunTarget(profile) || 3;
+    const weekStart = localWeekKey();
 
-      // User skipping early = "I'm done with the race-prep arc,
-      // give me structured training now." Flip profile.runMode and
-      // regenerate runDays with the structured generator.
-      const runDays = scheduleStructuredWeekV2({
-        weekSchedule,
-        weekNumber: programState.weekNumber,
-        weekStart,
-      });
-      const runPlan = { mode: "structured" as const };
+    // User skipping early = "I'm done with the race-prep arc,
+    // give me structured training now." Flip profile.runMode and
+    // regenerate runDays with the structured generator.
+    const runDays = scheduleStructuredWeekV2({
+      weekSchedule,
+      weekNumber: programState.weekNumber,
+      weekStart,
+    });
+    const runPlan = { mode: "structured" as const };
 
-      logger.log(
-        `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`,
-      );
+    logger.log(
+      `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`
+    );
 
-      await Promise.all([
-        updateProfile({ runMode: "structured", ...runTargetWriteFields(runTarget) }),
-        saveProgram({ ...programState, runDays, runPlan }),
-      ]);
-    },
-    [programState, profile, saveProgram, updateProfile],
-  );
+    await Promise.all([
+      updateProfile({
+        runMode: "structured",
+        ...runTargetWriteFields(runTarget),
+      }),
+      saveProgram({ ...programState, runDays, runPlan }),
+    ]);
+  }, [programState, profile, saveProgram, updateProfile]);
 
   // Week navigation
   const viewWeek = useCallback((historyIndex: number | null) => {
     setViewingHistoryIndex(historyIndex);
   }, []);
 
-  const viewedWorkouts = viewingHistoryIndex !== null
-    ? programState?.weekHistory?.[viewingHistoryIndex]?.workouts ?? null
-    : null;
+  const viewedWorkouts =
+    viewingHistoryIndex !== null
+      ? (programState?.weekHistory?.[viewingHistoryIndex]?.workouts ?? null)
+      : null;
 
-  const viewedWeekNumber = viewingHistoryIndex !== null
-    ? programState?.weekHistory?.[viewingHistoryIndex]?.weekNumber ?? null
-    : null;
+  const viewedWeekNumber =
+    viewingHistoryIndex !== null
+      ? (programState?.weekHistory?.[viewingHistoryIndex]?.weekNumber ?? null)
+      : null;
 
   const prescription = programState
     ? generateWeekPrescription(programState.weekNumber)
