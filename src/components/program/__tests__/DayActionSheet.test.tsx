@@ -595,6 +595,144 @@ describe("DayActionSheet — Q5 P74 same-date paradox hint (chunk B3f)", () => {
   });
 });
 
+describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", () => {
+  function setupSkipped(templateId = "easy_30") {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      }))
+    );
+    const runDay = makeRunDay({
+      id: "runday_skipped_b3h",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "skipped",
+      templateId,
+    });
+    return {
+      profile,
+      programState: makeProgramState([runDay]),
+      callbacks: commonCallbacks(),
+      runDay,
+    };
+  }
+
+  it("skipped slot with same-date extra surfaces hint + Mark complete (no Skip button)", () => {
+    // User skipped the slot earlier in the day, then went out and
+    // ran something that didn't claim the slot (e.g. sub-threshold).
+    // P86 reconciliation: the sheet should let them recover by
+    // marking the slot done — markManualComplete handles the two-
+    // step `skipped → planned → manualCompletions` internally per
+    // Q2 P20.
+    const { profile, programState, callbacks } = setupSkipped();
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "extra-after-skip", distance: 2000 })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.getByText(/An extra run is logged for this date/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Mark this skipped slot as done/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    // Skip button is gone — slot is already skipped.
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+  });
+
+  it("Mark complete on a skipped+extra slot calls markManualComplete (writer handles the two-step)", () => {
+    const { profile, programState, callbacks, runDay } = setupSkipped();
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "extra-after-skip" })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    fireEvent.click(screen.getByText(/Mark complete \(manual\)/i));
+    // markManualComplete is the same writer used for planned slots;
+    // it transitions `skipped → planned` first then writes the
+    // manualCompletions map (Q2 P20 / useProgram L887-895).
+    expect(callbacks.markManualComplete).toHaveBeenCalledWith(runDay.id);
+  });
+
+  it("skipped slot WITHOUT a same-date extra stays locked (no actions surface)", () => {
+    // Sanity check the gate — the P86 hint only surfaces when both
+    // conditions hold. A plain skipped slot keeps its terminal-state
+    // treatment: locked badge, no actions.
+    const { profile, programState, callbacks } = setupSkipped();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("race-day skipped slot with extra still suppresses the P86 path (Q1 P4 / Q2 P21)", () => {
+    // Race-day completion is strictly real-saved-run-only. Even when
+    // a saved race-day run exists but failed strict-95% (so it sits
+    // as an extra), the user cannot manually mark the race-day slot
+    // as done. Gate is in the visibility condition itself — both
+    // hint and Mark complete suppress.
+    const { profile, programState, callbacks } = setupSkipped("race");
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "race-dnf", distance: 18000 })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("DayActionSheet — lift section", () => {
   function setup(workoutOverrides: Partial<WorkoutDay> = {}) {
     const profile = makeProfile(
