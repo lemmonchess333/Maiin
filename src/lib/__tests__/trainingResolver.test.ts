@@ -24,11 +24,11 @@ import {
   resolveTrainingDayForDate,
   resolveTrainingWindow,
 } from "../trainingResolver";
+import type { AnyScheduledRunStatus } from "../scheduledRunStatus";
 import type { UserProfile } from "@/lib/auth";
 import type {
   ProgramState,
   ScheduledRunDay,
-  ScheduledRunStatus,
   WorkoutDay,
 } from "@/features/program/programTypes";
 
@@ -62,9 +62,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   } as UserProfile;
 }
 
-function makeProgramState(
-  overrides: Partial<ProgramState> = {},
-): ProgramState {
+function makeProgramState(overrides: Partial<ProgramState> = {}): ProgramState {
   return {
     goal: "recomp",
     currentPhase: "base",
@@ -91,13 +89,15 @@ describe("resolveRunDayForDate — priority 1 (exact date)", () => {
   it("matches a runDay whose `date` equals the target", () => {
     const runDays = [makeRunDay({ date: THIS_MON, dayIndex: 1 })];
     expect(resolveRunDayForDate(THIS_MON, runDays, CURRENT_WEEK_KEY)).toBe(
-      runDays[0],
+      runDays[0]
     );
   });
 
   it("does NOT match a runDay whose `date` is for a different calendar day", () => {
     const runDays = [makeRunDay({ date: THIS_MON, dayIndex: 1 })];
-    expect(resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)).toBeNull();
+    expect(
+      resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)
+    ).toBeNull();
   });
 });
 
@@ -107,7 +107,7 @@ describe("resolveRunDayForDate — priority 2 (current-week weekKey)", () => {
       makeRunDay({ weekKey: CURRENT_WEEK_KEY, dayIndex: 1, date: undefined }),
     ];
     expect(resolveRunDayForDate(THIS_MON, runDays, CURRENT_WEEK_KEY)).toBe(
-      runDays[0],
+      runDays[0]
     );
   });
 
@@ -116,7 +116,9 @@ describe("resolveRunDayForDate — priority 2 (current-week weekKey)", () => {
       makeRunDay({ weekKey: CURRENT_WEEK_KEY, dayIndex: 1, date: undefined }),
     ];
     // Target next Mon → its weekKey is 2026-05-24, doesn't match
-    expect(resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)).toBeNull();
+    expect(
+      resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)
+    ).toBeNull();
   });
 });
 
@@ -126,7 +128,7 @@ describe("resolveRunDayForDate — priority 3 (legacy guarded fallback)", () => 
       makeRunDay({ date: undefined, weekKey: undefined, dayIndex: 1 }),
     ];
     expect(resolveRunDayForDate(THIS_MON, runDays, CURRENT_WEEK_KEY)).toBe(
-      runDays[0],
+      runDays[0]
     );
   });
 
@@ -134,22 +136,26 @@ describe("resolveRunDayForDate — priority 3 (legacy guarded fallback)", () => 
     const runDays = [
       makeRunDay({ date: undefined, weekKey: undefined, dayIndex: 1 }),
     ];
-    expect(resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)).toBeNull();
+    expect(
+      resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)
+    ).toBeNull();
   });
 
   it("does NOT fall back when a runDay HAS date/weekKey (priority 1/2 fail without falling through)", () => {
     // A runDay with a `date` that doesn't match the target shouldn't
     // be reached by the legacy path either.
-    const runDays = [
-      makeRunDay({ date: "2026-04-13", dayIndex: 1 }),
-    ];
-    expect(resolveRunDayForDate(THIS_MON, runDays, CURRENT_WEEK_KEY)).toBeNull();
+    const runDays = [makeRunDay({ date: "2026-04-13", dayIndex: 1 })];
+    expect(
+      resolveRunDayForDate(THIS_MON, runDays, CURRENT_WEEK_KEY)
+    ).toBeNull();
   });
 });
 
 describe("resolveRunDayForDate — empty / undefined", () => {
   it("returns null for undefined runDays", () => {
-    expect(resolveRunDayForDate(THIS_MON, undefined, CURRENT_WEEK_KEY)).toBeNull();
+    expect(
+      resolveRunDayForDate(THIS_MON, undefined, CURRENT_WEEK_KEY)
+    ).toBeNull();
   });
   it("returns null for empty runDays array", () => {
     expect(resolveRunDayForDate(THIS_MON, [], CURRENT_WEEK_KEY)).toBeNull();
@@ -246,28 +252,69 @@ describe("resolveTrainingDayForDate — status surfacing", () => {
   // `race_no_show` is now PR-D's recoverable inferred state —
   // terminal=false because the reconciliation flow allows
   // race_no_show → completed_*.
+  // PR-J Q8 P102: status union widened to cover both active +
+  // legacy values (the test iterates across both).
   const cases: Array<{
-    status: ScheduledRunStatus;
+    status: AnyScheduledRunStatus;
     startable: boolean;
     terminal: boolean;
     completed: boolean;
     hasStartUrl: boolean;
   }> = [
-    { status: "planned", startable: true, terminal: false, completed: false, hasStartUrl: true },
-    { status: "completed_exact", startable: false, terminal: true, completed: true, hasStartUrl: false },
-    { status: "completed_modified", startable: false, terminal: true, completed: true, hasStartUrl: false },
-    { status: "completed_late", startable: false, terminal: true, completed: true, hasStartUrl: false },
-    { status: "skipped", startable: false, terminal: true, completed: false, hasStartUrl: false },
-    { status: "race_no_show", startable: false, terminal: false, completed: false, hasStartUrl: false },
+    {
+      status: "planned",
+      startable: true,
+      terminal: false,
+      completed: false,
+      hasStartUrl: true,
+    },
+    {
+      status: "completed_exact",
+      startable: false,
+      terminal: true,
+      completed: true,
+      hasStartUrl: false,
+    },
+    {
+      status: "completed_modified",
+      startable: false,
+      terminal: true,
+      completed: true,
+      hasStartUrl: false,
+    },
+    {
+      status: "completed_late",
+      startable: false,
+      terminal: true,
+      completed: true,
+      hasStartUrl: false,
+    },
+    {
+      status: "skipped",
+      startable: false,
+      terminal: true,
+      completed: false,
+      hasStartUrl: false,
+    },
+    {
+      status: "race_no_show",
+      startable: false,
+      terminal: false,
+      completed: false,
+      hasStartUrl: false,
+    },
   ];
 
   cases.forEach((c) => {
     it(`status="${c.status}" surfaces correct flags`, () => {
       const profile = makeProfile({
         weekSchedule: [
-          { day: 0, type: "rest" }, { day: 1, type: "run" },
-          { day: 2, type: "rest" }, { day: 3, type: "rest" },
-          { day: 4, type: "rest" }, { day: 5, type: "rest" },
+          { day: 0, type: "rest" },
+          { day: 1, type: "run" },
+          { day: 2, type: "rest" },
+          { day: 3, type: "rest" },
+          { day: 4, type: "rest" },
+          { day: 5, type: "rest" },
           { day: 6, type: "rest" },
         ],
       });
@@ -300,9 +347,12 @@ describe("resolveTrainingDayForDate — status surfacing", () => {
   it("startUrl includes template + scheduledRunId for planned", () => {
     const profile = makeProfile({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "run" },
-        { day: 2, type: "rest" }, { day: 3, type: "rest" },
-        { day: 4, type: "rest" }, { day: 5, type: "rest" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "run" },
+        { day: 2, type: "rest" },
+        { day: 3, type: "rest" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "rest" },
         { day: 6, type: "rest" },
       ],
     });
@@ -343,18 +393,27 @@ describe("resolveTrainingDayForDate — lift index mapping", () => {
       ],
     });
     const programState = makeProgramState({
-      workouts: [makeWorkout({ dayName: "Push" }), makeWorkout({ dayName: "Pull" })],
+      workouts: [
+        makeWorkout({ dayName: "Push" }),
+        makeWorkout({ dayName: "Pull" }),
+      ],
     });
     const mon = resolveTrainingDayForDate({
-      dateKey: THIS_MON, profile, programState,
+      dateKey: THIS_MON,
+      profile,
+      programState,
       currentWeekKey: CURRENT_WEEK_KEY,
     });
     const wed = resolveTrainingDayForDate({
-      dateKey: "2026-05-20", profile, programState,
+      dateKey: "2026-05-20",
+      profile,
+      programState,
       currentWeekKey: CURRENT_WEEK_KEY,
     });
     const tue = resolveTrainingDayForDate({
-      dateKey: "2026-05-19", profile, programState,
+      dateKey: "2026-05-19",
+      profile,
+      programState,
       currentWeekKey: CURRENT_WEEK_KEY,
     });
     expect(mon.lift.index).toBe(0);
@@ -368,9 +427,12 @@ describe("resolveTrainingDayForDate — lift index mapping", () => {
   it("surfaces completed / skipped lift status when set", () => {
     const profile = makeProfile({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "lift" },
-        { day: 2, type: "rest" }, { day: 3, type: "rest" },
-        { day: 4, type: "rest" }, { day: 5, type: "rest" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "lift" },
+        { day: 2, type: "rest" },
+        { day: 3, type: "rest" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "rest" },
         { day: 6, type: "rest" },
       ],
     });
@@ -401,9 +463,12 @@ describe("resolveTrainingDayForDate — lift index mapping", () => {
   it("returns lift.workout=null when schedule says lift but workouts[] is shorter (plan drift)", () => {
     const profile = makeProfile({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "lift" },
-        { day: 2, type: "rest" }, { day: 3, type: "lift" },
-        { day: 4, type: "rest" }, { day: 5, type: "rest" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "lift" },
+        { day: 2, type: "rest" },
+        { day: 3, type: "lift" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "rest" },
         { day: 6, type: "rest" },
       ],
     });
@@ -461,9 +526,12 @@ describe("resolveTrainingWindow", () => {
     // The Mon in the strip is NEXT week's Mon (2026-05-25).
     const profile = makeProfile({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "run" },
-        { day: 2, type: "rest" }, { day: 3, type: "rest" },
-        { day: 4, type: "rest" }, { day: 5, type: "rest" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "run" },
+        { day: 2, type: "rest" },
+        { day: 3, type: "rest" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "rest" },
         { day: 6, type: "rest" },
       ],
     });
@@ -471,14 +539,20 @@ describe("resolveTrainingWindow", () => {
       runDays: [
         // Legacy doc with no date/weekKey, dayIndex=1 (Monday).
         makeRunDay({
-          dayIndex: 1, date: undefined, weekKey: undefined,
-          status: "completed_exact", completed: true,
+          dayIndex: 1,
+          date: undefined,
+          weekKey: undefined,
+          status: "completed_exact",
+          completed: true,
         }),
       ],
     });
     const fri = new Date(2026, 4, 22);
     const window = resolveTrainingWindow({
-      startDate: fri, days: 7, profile, programState,
+      startDate: fri,
+      days: 7,
+      profile,
+      programState,
     });
     // Find the Mon strip day
     const stripMon = window.find((d) => d.dateKey === "2026-05-25");
