@@ -169,6 +169,37 @@ After PR 1 ships, the following pre-launch risks are **still open**:
 
 PR 1 closes the largest gap (personal data exfiltration via direct `activities` query). PR 2 + PR 3 are needed to fully close the social-integrity tier.
 
+## Remaining risk after PR 2
+
+PR 2 closes findings **#2 (counter forgery)** and **#5 (crew memberCount forgery)** by:
+
+- Moving `kudos/{aid}/users/{uid}` create+delete to `toggleKudosCallable`. Rule layer denies direct client writes (`allow create, delete: if false`).
+- Moving `comments/{aid}/items/{cid}` create+delete to `addCommentCallable` / `deleteCommentCallable`. Server validates text length (1-1000 chars), trims, and caps `authorName` at 100 chars. Rules deny direct writes.
+- Moving `groups/{crewId}/members/{userId}` writes + `memberCount` mutation to `setCrewMembershipCallable`. Server flips the member sub-doc and the parent doc's counter inside one transaction; the operation is idempotent (no-op when already in/out state). Rules deny direct writes to both.
+- Tightening `/activities` update to **owner-only visibility update** — the prior non-owner counter affectedKeys path is gone.
+- All four CFs apply `accountDeletionLocks.assertCallableActorNotDeleting` — replaces the rule-layer freeze that lived on `/groups/{crewId}/members/{userId}` and adds equivalent protection for kudos/comments.
+
+Still open after PR 2:
+
+- **Feed + notification spam (#3, #6):** unchanged from post-PR-1. PR 3 will route these via server-side fan-out.
+- **Rate limiting on social writes (#12):** partial — `toggleKudosCallable` (30/60s), `addCommentCallable` (20/60s), `setCrewMembershipCallable` (10/60s) all apply per-uid limits. Direct-write paths in PR 3's scope still uncapped.
+- **Challenge spam (#4):** unchanged from post-PR-1.
+- **Storage MIME / SVG XSS (#8):** unchanged.
+- **CSP `unsafe-inline` (#9):** unchanged.
+- **Vertex response log (#10):** unchanged.
+
+**Severity scoring (post-PR 2):**
+
+| Area                     | Pre-PR-1     | Post-PR-1 | Post-PR-2   |
+| ------------------------ | ------------ | --------- | ----------- |
+| Authentication           | 8/10         | 8/10      | 8/10        |
+| Personal data protection | 4/10         | 8/10      | 8/10        |
+| Social system integrity  | 3/10         | 5/10      | 7/10        |
+| Abuse resistance         | 3/10         | 4/10      | 5/10        |
+| Storage security         | 7/10         | 7/10      | 7/10        |
+| Infrastructure           | 8/10         | 8/10      | 8/10        |
+| **Overall**              | **5.5–6/10** | **~7/10** | **~7.5/10** |
+
 ## Suggested verification tests after PR 1
 
 - `firestore.rules.test.ts` emulator suite adds:

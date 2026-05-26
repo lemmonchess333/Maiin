@@ -39,7 +39,12 @@ interface ProtectedPath {
 
 const PROTECTED_PATHS: ProtectedPath[] = [
   // ── User-owned subcollections (write-frozen via isOwnerAndNotDeleting) ──
-  { pathPattern: "match /users/{uid}", sides: ["owner"], notes: "root user doc create/update only — delete is intentionally not frozen so deleteMyAccount remains accessible" },
+  {
+    pathPattern: "match /users/{uid}",
+    sides: ["owner"],
+    notes:
+      "root user doc create/update only — delete is intentionally not frozen so deleteMyAccount remains accessible",
+  },
   { pathPattern: "match /users/{uid}/meals/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/savedRoutines/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/workouts/{doc}", sides: ["owner"] },
@@ -59,14 +64,47 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/privacyZones/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/errors/{doc}", sides: ["owner"] },
   // ── Cross-user paths ──
-  { pathPattern: "match /feeds/{uid}/items/{doc}", sides: ["owner", "writer"], notes: "create requires !isDeleting on feed owner AND on poster" },
-  { pathPattern: "match /following/{uid}/users/{targetUid}", sides: ["owner", "target"], notes: "create/delete requires !isDeleting on follower AND followee" },
-  { pathPattern: "match /followers/{uid}/users/{followerUid}", sides: ["owner", "writer"], notes: "create/delete requires !isDeleting on recipient AND follower" },
-  { pathPattern: "match /notifications/{uid}/items/{doc}", sides: ["owner", "writer"], notes: "create requires !isDeleting on recipient AND fromUserId" },
-  { pathPattern: "match /blocks/{uid}/users/{targetUid}", sides: ["owner"], notes: "target is NOT checked — blocking a deleting user is allowed" },
-  { pathPattern: "match /reports/{reportId}", sides: ["actor"], notes: "deleting users cannot file new reports" },
-  { pathPattern: "match /groups/{crewId}", sides: ["actor"], notes: "deleting users cannot create/update crews" },
-  { pathPattern: "match /groups/{crewId}/members/{userId}", sides: ["actor"], notes: "deleting users cannot join crews" },
+  {
+    pathPattern: "match /feeds/{uid}/items/{doc}",
+    sides: ["owner", "writer"],
+    notes: "create requires !isDeleting on feed owner AND on poster",
+  },
+  {
+    pathPattern: "match /following/{uid}/users/{targetUid}",
+    sides: ["owner", "target"],
+    notes: "create/delete requires !isDeleting on follower AND followee",
+  },
+  {
+    pathPattern: "match /followers/{uid}/users/{followerUid}",
+    sides: ["owner", "writer"],
+    notes: "create/delete requires !isDeleting on recipient AND follower",
+  },
+  {
+    pathPattern: "match /notifications/{uid}/items/{doc}",
+    sides: ["owner", "writer"],
+    notes: "create requires !isDeleting on recipient AND fromUserId",
+  },
+  {
+    pathPattern: "match /blocks/{uid}/users/{targetUid}",
+    sides: ["owner"],
+    notes: "target is NOT checked — blocking a deleting user is allowed",
+  },
+  {
+    pathPattern: "match /reports/{reportId}",
+    sides: ["actor"],
+    notes: "deleting users cannot file new reports",
+  },
+  {
+    pathPattern: "match /groups/{crewId}",
+    sides: ["actor"],
+    notes: "deleting users cannot create/update crews",
+  },
+  // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} is now
+  // server-only (write `if false`). R1A protection moved to the CF
+  // (`setCrewMembershipCallable` in functions/index.js) which checks
+  // `accountDeletionLocks.shouldSystemWriteProceed` before any write.
+  // Excluded from PROTECTED_PATHS because there's no client-writable
+  // rule for R1A to guard at the rule layer.
 ];
 
 /**
@@ -101,7 +139,10 @@ describe("static rules coverage — every protected path has the write-freeze", 
   for (const p of PROTECTED_PATHS) {
     it(`${p.pathPattern} carries the freeze on writes (sides: ${p.sides.join(", ")})`, () => {
       const block = extractMatchBlock(p.pathPattern);
-      expect(block, `match block not found for ${p.pathPattern}`).not.toBeNull();
+      expect(
+        block,
+        `match block not found for ${p.pathPattern}`
+      ).not.toBeNull();
       const allowedExempt = block!.includes("@r1a-no-freeze:");
       // The freeze appears as either `isOwnerAndNotDeleting(...)` (combined
       // form) or as `!isDeleting(...)` (multi-side form). Either one
@@ -112,7 +153,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
       if (!allowedExempt) {
         expect(
           hasAnyFreeze,
-          `${p.pathPattern} write rule must call isOwnerAndNotDeleting(...) or !isDeleting(...) — found neither`,
+          `${p.pathPattern} write rule must call isOwnerAndNotDeleting(...) or !isDeleting(...) — found neither`
         ).toBe(true);
       }
     });
@@ -127,12 +168,15 @@ describe("static rules coverage — every protected path has the write-freeze", 
         //   - `!isDeleting(...)` covers whichever uid is passed
         //     explicitly (target, writer, recipient, etc.).
         // For a 2-side rule the total of these forms must be >= 2.
-        const explicitNotDeleting = (block!.match(/!\s*isDeleting\s*\(/g) || []).length;
-        const ownerCombined = (block!.match(/isOwnerAndNotDeleting\s*\(/g) || []).length;
+        const explicitNotDeleting = (block!.match(/!\s*isDeleting\s*\(/g) || [])
+          .length;
+        const ownerCombined = (
+          block!.match(/isOwnerAndNotDeleting\s*\(/g) || []
+        ).length;
         const totalFreezeApplications = explicitNotDeleting + ownerCombined;
         expect(
           totalFreezeApplications,
-          `${p.pathPattern} must apply freeze for each declared side (${p.sides.join(", ")}); found ${explicitNotDeleting} explicit !isDeleting + ${ownerCombined} isOwnerAndNotDeleting = ${totalFreezeApplications}`,
+          `${p.pathPattern} must apply freeze for each declared side (${p.sides.join(", ")}); found ${explicitNotDeleting} explicit !isDeleting + ${ownerCombined} isOwnerAndNotDeleting = ${totalFreezeApplications}`
         ).toBeGreaterThanOrEqual(p.sides.length);
       });
     }
@@ -158,10 +202,11 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (Chunk 2.C reconciliation: 27 paths)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (26 paths post-2026-05-26 audit PR 2)", () => {
     // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
     // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
-    // drift fails fast here, not silently in CI.
-    expect(PROTECTED_PATHS.length).toBe(27);
+    // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
+    // /groups/{crewId}/members/{userId} moved to server-only.
+    expect(PROTECTED_PATHS.length).toBe(26);
   });
 });

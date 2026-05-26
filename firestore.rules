@@ -422,18 +422,16 @@ service cloud.firestore {
           || request.resource.data.crewId.size() <= 200
         );
 
-      // Update contract unchanged from W1f. Counter value validation
-      // (audit finding #2 — increments-only) is deferred to PR 2.
-      allow update: if request.auth != null && (
-        // Owner: can only touch visibility post-creation.
-        (resource.data.authorId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['visibility']))
-        // Non-owner: kudosCount / commentCount field-set restricted.
-        // Value validation (audit #2) deferred to PR 2.
-        || (request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['kudosCount', 'commentCount']))
-      );
+      // 2026-05-26 audit PR 2 (finding #2) — counter writes are now
+      // SERVER-ONLY. Client direct writes to kudosCount/commentCount
+      // are denied; mutations route through toggleKudosCallable +
+      // addCommentCallable + deleteCommentCallable in functions/index.js
+      // which flip the counter and underlying kudos/comment doc in
+      // one Firestore transaction.
+      allow update: if request.auth != null
+        && resource.data.authorId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['visibility']);
       allow delete: if request.auth != null
         && resource.data.authorId == request.auth.uid;
     }
@@ -517,10 +515,13 @@ service cloud.firestore {
     // Social: Kudos
     // H7: userId (doc ID) must match authenticated user
     // ========================================
+    // 2026-05-26 audit PR 2 (finding #2) — kudos doc writes are
+    // server-only via toggleKudosCallable, which flips the kudos
+    // sub-doc + the activity's kudosCount atomically. Reads stay
+    // open so the "Props from" list can render.
     match /kudos/{activityId}/users/{userId} {
       allow read: if request.auth != null;
-      allow create, delete: if request.auth != null
-        && request.auth.uid == userId;
+      allow create, delete: if false;
     }
 
     // ========================================
@@ -534,12 +535,13 @@ service cloud.firestore {
     // delete rule that enforces the same "author only" policy
     // server-side.
     // ========================================
+    // 2026-05-26 audit PR 2 (finding #2) — comment writes are
+    // server-only via addCommentCallable / deleteCommentCallable
+    // which manage the commentCount atomically with the comment doc.
+    // Reads stay open.
     match /comments/{activityId}/items/{commentId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid;
-      allow delete: if request.auth != null
-        && resource.data.authorId == request.auth.uid;
+      allow create, delete: if false;
     }
 
     // ========================================
@@ -643,36 +645,30 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.createdBy == request.auth.uid
         && !isDeleting(request.auth.uid);
+      // 2026-05-26 audit PR 2 (finding #5) — memberCount writes are
+      // now SERVER-ONLY via setCrewMembershipCallable. Pre-PR-2 any
+      // authed user could write `memberCount` to any value as long
+      // as it was the only changed field. Now: only the creator can
+      // edit, and the field allowlist excludes memberCount.
       allow update: if request.auth != null
         && !isDeleting(request.auth.uid)
-        && (
-          // Creator can edit any field on the crew they made.
-          resource.data.createdBy == request.auth.uid
-          // Any authed user can bump memberCount (join/leave flow).
-          || request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['memberCount'])
-        );
+        && resource.data.createdBy == request.auth.uid;
       allow delete: if request.auth != null
         && resource.data.createdBy == request.auth.uid;
     }
 
     // ========================================
-    // Crew members — authenticated read, self-write, write-frozen during deletion
+    // Crew members — authenticated read, server-only writes
+    //
+    // 2026-05-26 audit PR 2 (finding #5) — member doc writes are
+    // server-only via setCrewMembershipCallable, which manages the
+    // memberCount field atomically with the member sub-doc. Reads
+    // stay open. The crew creator's "kick a member" path uses
+    // Admin SDK (bypasses rules) via the same callable.
     // ========================================
     match /groups/{crewId}/members/{userId} {
       allow read: if request.auth != null;
-      // R1A-Deletion: a deleting user cannot join new crews. Leaving
-      // a crew (delete) remains allowed even during deletion so the
-      // executor's per-member cleanup can use the same delete path.
-      // However the executor uses Admin SDK which bypasses rules
-      // entirely; the rule here protects against client-driven
-      // races mid-deletion.
-      allow create, update: if request.auth != null
-        && request.auth.uid == userId
-        && !isDeleting(userId);
-      allow delete: if request.auth != null
-        && (request.auth.uid == userId
-            || get(/databases/$(database)/documents/groups/$(crewId)).data.createdBy == request.auth.uid);
+      allow create, update, delete: if false;
     }
 
     // ========================================

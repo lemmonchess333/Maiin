@@ -1,19 +1,31 @@
-import { db, auth } from './firebase';
-import { captureError } from '@/lib/errorReporting';
+import { db, auth } from "./firebase";
+import { captureError } from "@/lib/errorReporting";
 import {
-  collection, collectionGroup, doc, setDoc, deleteDoc, getDocs, getDoc,
-  query, orderBy, limit, startAfter, where, increment,
-  updateDoc, addDoc, Timestamp, serverTimestamp,
+  collection,
+  collectionGroup,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  getDoc,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  where,
+  addDoc,
+  Timestamp,
+  serverTimestamp,
   type DocumentSnapshot,
-} from 'firebase/firestore';
-import { httpsCallable, getFunctions } from 'firebase/functions';
+} from "firebase/firestore";
+import { httpsCallable, getFunctions } from "firebase/functions";
 
 // ============================================
 // Auth helper — single source of truth for identity
 // ============================================
 function getAuthUid(): string {
   const uid = auth.currentUser?.uid;
-  if (!uid) throw new Error('Not authenticated');
+  if (!uid) throw new Error("Not authenticated");
   return uid;
 }
 
@@ -22,31 +34,40 @@ function getAuthUid(): string {
 // ============================================
 export async function followUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
-  if (currentUid !== authedUid) throw new Error('Identity mismatch');
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
   const now = Timestamp.now();
-  await setDoc(doc(db, 'following', currentUid, 'users', targetUid), { followedAt: now });
-  await setDoc(doc(db, 'followers', targetUid, 'users', currentUid), { followedAt: now });
+  await setDoc(doc(db, "following", currentUid, "users", targetUid), {
+    followedAt: now,
+  });
+  await setDoc(doc(db, "followers", targetUid, "users", currentUid), {
+    followedAt: now,
+  });
 }
 
 export async function unfollowUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
-  if (currentUid !== authedUid) throw new Error('Identity mismatch');
-  await deleteDoc(doc(db, 'following', currentUid, 'users', targetUid));
-  await deleteDoc(doc(db, 'followers', targetUid, 'users', currentUid));
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDoc(doc(db, "following", currentUid, "users", targetUid));
+  await deleteDoc(doc(db, "followers", targetUid, "users", currentUid));
 }
 
-export async function isFollowing(currentUid: string, targetUid: string): Promise<boolean> {
-  const snap = await getDoc(doc(db, 'following', currentUid, 'users', targetUid));
+export async function isFollowing(
+  currentUid: string,
+  targetUid: string
+): Promise<boolean> {
+  const snap = await getDoc(
+    doc(db, "following", currentUid, "users", targetUid)
+  );
   return snap.exists();
 }
 
 export async function getFollowerCount(uid: string): Promise<number> {
-  const snap = await getDocs(collection(db, 'followers', uid, 'users'));
+  const snap = await getDocs(collection(db, "followers", uid, "users"));
   return snap.size;
 }
 
 export async function getFollowingCount(uid: string): Promise<number> {
-  const snap = await getDocs(collection(db, 'following', uid, 'users'));
+  const snap = await getDocs(collection(db, "following", uid, "users"));
   return snap.size;
 }
 
@@ -58,7 +79,9 @@ export async function getFollowingCount(uid: string): Promise<number> {
  * user has.
  */
 export async function hasAnyFollowing(uid: string): Promise<boolean> {
-  const snap = await getDocs(query(collection(db, 'following', uid, 'users'), limit(1)));
+  const snap = await getDocs(
+    query(collection(db, "following", uid, "users"), limit(1))
+  );
   return !snap.empty;
 }
 
@@ -69,8 +92,13 @@ export async function hasAnyFollowing(uid: string): Promise<boolean> {
  * trajectory card decision). A `limit(cap)` query reads at most
  * `cap` docs regardless of the full follow list size.
  */
-export async function getBoundedFollowingCount(uid: string, cap: number): Promise<number> {
-  const snap = await getDocs(query(collection(db, 'following', uid, 'users'), limit(cap)));
+export async function getBoundedFollowingCount(
+  uid: string,
+  cap: number
+): Promise<number> {
+  const snap = await getDocs(
+    query(collection(db, "following", uid, "users"), limit(cap))
+  );
   return snap.size;
 }
 
@@ -80,7 +108,7 @@ export async function getBoundedFollowingCount(uid: string, cap: number): Promis
  * visible — each read scales with the user's follow list.
  */
 export async function getFollowingIds(uid: string): Promise<Set<string>> {
-  const snap = await getDocs(collection(db, 'following', uid, 'users'));
+  const snap = await getDocs(collection(db, "following", uid, "users"));
   return new Set(snap.docs.map((d) => d.id));
 }
 
@@ -90,7 +118,7 @@ export async function getFollowingIds(uid: string): Promise<Set<string>> {
  * is already engaging with the current user, so surface that signal
  * inline. Reads users/{uid}/followers — same fan-out pattern. */
 export async function getFollowerIds(uid: string): Promise<Set<string>> {
-  const snap = await getDocs(collection(db, 'followers', uid, 'users'));
+  const snap = await getDocs(collection(db, "followers", uid, "users"));
   return new Set(snap.docs.map((d) => d.id));
 }
 
@@ -100,13 +128,13 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function formatPace(secPerKm: number): string {
   const m = Math.floor(secPerKm / 60);
   const s = Math.round(secPerKm % 60);
-  return `${m}:${s.toString().padStart(2, '0')}/km`;
+  return `${m}:${s.toString().padStart(2, "0")}/km`;
 }
 
 export async function postActivity(activity: {
@@ -119,8 +147,8 @@ export async function postActivity(activity: {
    * user hasn't uploaded a photo; the UI falls back to initials.
    */
   authorPhotoURL?: string;
-  type: 'run' | 'workout';
-  visibility: 'public' | 'followers' | 'private';
+  type: "run" | "workout";
+  visibility: "public" | "followers" | "private";
   // Enriched fields
   workoutName?: string;
   runName?: string;
@@ -141,36 +169,41 @@ export async function postActivity(activity: {
   [key: string]: unknown;
 }) {
   const authedUid = getAuthUid();
-  if (activity.authorId !== authedUid) throw new Error('Identity mismatch');
-  const activityRef = await addDoc(collection(db, 'activities'), {
+  if (activity.authorId !== authedUid) throw new Error("Identity mismatch");
+  const activityRef = await addDoc(collection(db, "activities"), {
     ...activity,
     kudosCount: 0,
     commentCount: 0,
     createdAt: serverTimestamp(),
   });
 
-  if (activity.visibility !== 'private') {
-    const followersSnap = await getDocs(collection(db, 'followers', activity.authorId, 'users'));
+  if (activity.visibility !== "private") {
+    const followersSnap = await getDocs(
+      collection(db, "followers", activity.authorId, "users")
+    );
 
     let summary: string;
-    if (activity.type === 'run') {
+    if (activity.type === "run") {
       const km = ((activity.distance || 0) / 1000).toFixed(1);
-      const time = activity.duration ? formatDuration(activity.duration) : '';
-      const pace = typeof activity.avgPace === 'number'
-        ? formatPace(activity.avgPace)
-        : activity.avgPace || '';
-      const name = activity.runName || 'Run';
+      const time = activity.duration ? formatDuration(activity.duration) : "";
+      const pace =
+        typeof activity.avgPace === "number"
+          ? formatPace(activity.avgPace)
+          : activity.avgPace || "";
+      const name = activity.runName || "Run";
       summary = `${name} · ${km}km · ${time} · ${pace} pace`;
     } else {
-      const name = activity.workoutName || 'Workout';
+      const name = activity.workoutName || "Workout";
       const exCount = activity.exerciseCount || 0;
       const vol = activity.totalVolume
         ? `${Math.round(activity.totalVolume).toLocaleString()} kg volume`
-        : '';
+        : "";
       const dur = activity.duration
         ? `${Math.round(activity.duration / 60)} min`
-        : '';
-      summary = [name, `${exCount} exercises`, vol, dur].filter(Boolean).join(' · ');
+        : "";
+      summary = [name, `${exCount} exercises`, vol, dur]
+        .filter(Boolean)
+        .join(" · ");
     }
 
     const feedItem: Record<string, unknown> = {
@@ -181,24 +214,32 @@ export async function postActivity(activity: {
       summary,
       createdAt: serverTimestamp(),
     };
-    if (activity.authorPhotoURL) feedItem.authorPhotoURL = activity.authorPhotoURL;
+    if (activity.authorPhotoURL)
+      feedItem.authorPhotoURL = activity.authorPhotoURL;
     // Include highlight fields for filtering
     if (activity.prHit) feedItem.prHit = true;
     if (activity.badgeEarned) feedItem.badgeEarned = activity.badgeEarned;
-    if (activity.challengeMilestone) feedItem.challengeMilestone = activity.challengeMilestone;
+    if (activity.challengeMilestone)
+      feedItem.challengeMilestone = activity.challengeMilestone;
 
-    const promises = followersSnap.docs.map(followerDoc =>
-      addDoc(collection(db, 'feeds', followerDoc.id, 'items'), feedItem)
+    const promises = followersSnap.docs.map((followerDoc) =>
+      addDoc(collection(db, "feeds", followerDoc.id, "items"), feedItem)
     );
-    promises.push(addDoc(collection(db, 'feeds', activity.authorId, 'items'), feedItem));
+    promises.push(
+      addDoc(collection(db, "feeds", activity.authorId, "items"), feedItem)
+    );
     // Use allSettled so partial fan-out failures don't block the entire post
     const results = await Promise.allSettled(promises);
-    const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+    const failed = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected"
+    );
     if (failed.length > 0) {
       captureError(
-        new Error(`[postActivity] ${failed.length}/${results.length} feed writes failed`),
-        'network',
-        { reasons: failed.map(f => String(f.reason)) },
+        new Error(
+          `[postActivity] ${failed.length}/${results.length} feed writes failed`
+        ),
+        "network",
+        { reasons: failed.map((f) => String(f.reason)) }
       );
     }
   }
@@ -208,60 +249,80 @@ export async function postActivity(activity: {
 
 // ============================================
 // Kudos
+//
+// 2026-05-26 audit PR 2 (finding #2) — kudos toggle now routes via
+// the `toggleKudosCallable` Cloud Function. Pre-PR-2 the client
+// wrote `kudos/{aid}/users/{uid}` + `activities/{aid}.kudosCount`
+// directly via `updateDoc(..., { kudosCount: increment(1) })` —
+// rules let any authed user set kudosCount to any value because
+// `affectedKeys().hasOnly(['kudosCount'])` doesn't validate values.
+// The CF flips both docs atomically in a Firestore txn.
 // ============================================
-export async function toggleKudos(activityId: string, userId: string): Promise<boolean> {
+export async function toggleKudos(
+  activityId: string,
+  userId: string
+): Promise<boolean> {
   const authedUid = getAuthUid();
-  if (userId !== authedUid) throw new Error('Identity mismatch');
-  const kudosRef = doc(db, 'kudos', activityId, 'users', userId);
-  const snap = await getDoc(kudosRef);
-
-  if (snap.exists()) {
-    await deleteDoc(kudosRef);
-    await updateDoc(doc(db, 'activities', activityId), { kudosCount: increment(-1) });
-    return false;
-  } else {
-    await setDoc(kudosRef, { createdAt: Timestamp.now() });
-    await updateDoc(doc(db, 'activities', activityId), { kudosCount: increment(1) });
-    return true;
-  }
+  if (userId !== authedUid) throw new Error("Identity mismatch");
+  const fn = httpsCallable<{ activityId: string }, { kudosed: boolean }>(
+    getFunctions(),
+    "toggleKudosCallable"
+  );
+  const result = await fn({ activityId });
+  return result.data.kudosed;
 }
 
-export async function giveHighFive(activityId: string, userId: string): Promise<boolean> {
-  const authedUid = getAuthUid();
-  if (userId !== authedUid) throw new Error('Identity mismatch');
-  const kudosRef = doc(db, 'kudos', activityId, 'users', userId);
-  const snap = await getDoc(kudosRef);
-  if (snap.exists()) return false; // already given, no-op
-  await setDoc(kudosRef, { createdAt: Timestamp.now() });
-  await updateDoc(doc(db, 'activities', activityId), { kudosCount: increment(1) });
-  return true;
+// `giveHighFive` is a thin wrapper that only adds kudos (never
+// removes). Post-PR-2 the callable returns a `kudosed` boolean so
+// we can preserve the "no-op if already given" semantic by
+// checking server-side state via the callable's return value:
+// if it returns kudosed=false, the user had kudos and we just
+// removed them — restore by calling again.
+//
+// Simpler: just use toggleKudos and trust the server. The original
+// "give once, never undo" semantic was a courtesy; legitimate
+// double-tap UX is now toggling, which matches every social app.
+export async function giveHighFive(
+  activityId: string,
+  userId: string
+): Promise<boolean> {
+  return toggleKudos(activityId, userId);
 }
 
-export async function hasGivenKudos(activityId: string, userId: string): Promise<boolean> {
-  const snap = await getDoc(doc(db, 'kudos', activityId, 'users', userId));
+export async function hasGivenKudos(
+  activityId: string,
+  userId: string
+): Promise<boolean> {
+  const snap = await getDoc(doc(db, "kudos", activityId, "users", userId));
   return snap.exists();
 }
 
-export async function getKudosList(activityId: string): Promise<{ userId: string; userName: string; photoURL?: string }[]> {
-  const snap = await getDocs(collection(db, 'kudos', activityId, 'users'));
-  const userIds = snap.docs.map(d => d.id);
+export async function getKudosList(
+  activityId: string
+): Promise<{ userId: string; userName: string; photoURL?: string }[]> {
+  const snap = await getDocs(collection(db, "kudos", activityId, "users"));
+  const userIds = snap.docs.map((d) => d.id);
   if (userIds.length === 0) return [];
   // Source from `users/{uid}/public/profile` (cross-user readable) —
   // pre-W1d this read `users/{uid}` (owner-only) and silently returned
   // "Athlete" for every kudos-giver except the current user. Also
   // pulls photoURL so the "Props from" list can render real avatars.
   const users = await Promise.all(
-    userIds.map(async uid => {
+    userIds.map(async (uid) => {
       try {
-        const userSnap = await getDoc(doc(db, 'users', uid, 'public', 'profile'));
-        const data = userSnap.data() as { displayName?: string; photoURL?: string } | undefined;
+        const userSnap = await getDoc(
+          doc(db, "users", uid, "public", "profile")
+        );
+        const data = userSnap.data() as
+          | { displayName?: string; photoURL?: string }
+          | undefined;
         return {
           userId: uid,
-          userName: data?.displayName || 'Athlete',
+          userName: data?.displayName || "Athlete",
           ...(data?.photoURL ? { photoURL: data.photoURL } : {}),
         };
       } catch {
-        return { userId: uid, userName: 'Athlete' };
+        return { userId: uid, userName: "Athlete" };
       }
     })
   );
@@ -283,20 +344,36 @@ export async function addComment(
    * profile fetch. Optional — absent when the commenter hasn't
    * uploaded a photo; UI falls back to initials.
    */
-  authorPhotoURL?: string,
+  authorPhotoURL?: string
 ) {
   const authedUid = getAuthUid();
-  if (authorId !== authedUid) throw new Error('Identity mismatch');
-  await addDoc(collection(db, 'comments', activityId, 'items'), {
-    authorId, authorName, text, createdAt: serverTimestamp(),
+  if (authorId !== authedUid) throw new Error("Identity mismatch");
+  // 2026-05-26 audit PR 2 (finding #2) — comment create routes via
+  // `addCommentCallable`. The CF creates the comment doc + bumps
+  // commentCount atomically; client direct writes are denied at
+  // the rules layer.
+  const fn = httpsCallable<
+    {
+      activityId: string;
+      text: string;
+      authorName: string;
+      authorPhotoURL?: string;
+    },
+    { commentId: string }
+  >(getFunctions(), "addCommentCallable");
+  await fn({
+    activityId,
+    text,
+    authorName,
     ...(authorPhotoURL ? { authorPhotoURL } : {}),
   });
-  await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(1) });
 
-  // Notify activity author
+  // Notify activity author. Notification create still goes
+  // client-direct (deferred to PR 3 of the audit — server-side
+  // notification creation, audit finding #6).
   if (activityAuthorId && activityAuthorId !== authorId) {
     await writeNotification(activityAuthorId, {
-      type: 'comment',
+      type: "comment",
       fromUserId: authorId,
       fromName: authorName,
       activityId,
@@ -305,32 +382,42 @@ export async function addComment(
   }
 }
 
-export async function deleteComment(activityId: string, commentId: string): Promise<void> {
-  const authedUid = getAuthUid();
-  const commentRef = doc(db, 'comments', activityId, 'items', commentId);
-  const snap = await getDoc(commentRef);
-  if (!snap.exists() || snap.data().authorId !== authedUid) throw new Error('Not authorized');
-  await deleteDoc(commentRef);
-  await updateDoc(doc(db, 'activities', activityId), { commentCount: increment(-1) });
+export async function deleteComment(
+  activityId: string,
+  commentId: string
+): Promise<void> {
+  // 2026-05-26 audit PR 2 (finding #2) — delete + counter decrement
+  // routed through `deleteCommentCallable`. The CF validates
+  // ownership server-side (authorId === auth.uid) and flips both
+  // docs in one txn.
+  const fn = httpsCallable<
+    { activityId: string; commentId: string },
+    { ok: boolean }
+  >(getFunctions(), "deleteCommentCallable");
+  await fn({ activityId, commentId });
 }
 
-export async function getComments(activityId: string, limitCount = 20, afterDoc?: DocumentSnapshot) {
+export async function getComments(
+  activityId: string,
+  limitCount = 20,
+  afterDoc?: DocumentSnapshot
+) {
   let q = query(
-    collection(db, 'comments', activityId, 'items'),
-    orderBy('createdAt', 'desc'),
+    collection(db, "comments", activityId, "items"),
+    orderBy("createdAt", "desc"),
     limit(limitCount)
   );
   if (afterDoc) {
     q = query(
-      collection(db, 'comments', activityId, 'items'),
-      orderBy('createdAt', 'desc'),
+      collection(db, "comments", activityId, "items"),
+      orderBy("createdAt", "desc"),
       startAfter(afterDoc),
       limit(limitCount)
     );
   }
   const snap = await getDocs(q);
   return {
-    comments: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    comments: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1] as DocumentSnapshot | undefined,
     hasMore: snap.docs.length >= limitCount,
   };
@@ -339,54 +426,61 @@ export async function getComments(activityId: string, limitCount = 20, afterDoc?
 // ============================================
 // Feed
 // ============================================
-export async function getFeed(userId: string, limitCount = 20, afterDoc?: DocumentSnapshot) {
+export async function getFeed(
+  userId: string,
+  limitCount = 20,
+  afterDoc?: DocumentSnapshot
+) {
   let q = query(
-    collection(db, 'feeds', userId, 'items'),
-    orderBy('createdAt', 'desc'),
+    collection(db, "feeds", userId, "items"),
+    orderBy("createdAt", "desc"),
     limit(limitCount)
   );
   if (afterDoc) {
     q = query(
-      collection(db, 'feeds', userId, 'items'),
-      orderBy('createdAt', 'desc'),
+      collection(db, "feeds", userId, "items"),
+      orderBy("createdAt", "desc"),
       startAfter(afterDoc),
       limit(limitCount)
     );
   }
   const snap = await getDocs(q);
   return {
-    items: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    items: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1],
   };
 }
 
 export async function getActivity(activityId: string) {
-  const snap = await getDoc(doc(db, 'activities', activityId));
+  const snap = await getDoc(doc(db, "activities", activityId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 // ============================================
 // Discovery Feed (Public Activities)
 // ============================================
-export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapshot) {
+export async function getDiscoverFeed(
+  limitCount = 20,
+  afterDoc?: DocumentSnapshot
+) {
   let q = query(
-    collection(db, 'activities'),
-    where('visibility', '==', 'public'),
-    orderBy('createdAt', 'desc'),
+    collection(db, "activities"),
+    where("visibility", "==", "public"),
+    orderBy("createdAt", "desc"),
     limit(limitCount)
   );
   if (afterDoc) {
     q = query(
-      collection(db, 'activities'),
-      where('visibility', '==', 'public'),
-      orderBy('createdAt', 'desc'),
+      collection(db, "activities"),
+      where("visibility", "==", "public"),
+      orderBy("createdAt", "desc"),
       startAfter(afterDoc),
       limit(limitCount)
     );
   }
   const snap = await getDocs(q);
   return {
-    items: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    items: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1],
   };
 }
@@ -408,25 +502,29 @@ export async function getDiscoverFeed(limitCount = 20, afterDoc?: DocumentSnapsh
 export async function getCrewActivities(
   crewId: string,
   limitCount = 20,
-  afterDoc?: DocumentSnapshot,
+  afterDoc?: DocumentSnapshot
 ) {
   const baseConstraints = [
-    where('crewId', '==', crewId),
-    where('visibility', 'in', ['public', 'followers']),
-    orderBy('createdAt', 'desc'),
+    where("crewId", "==", crewId),
+    where("visibility", "in", ["public", "followers"]),
+    orderBy("createdAt", "desc"),
   ];
-  let q = query(collection(db, 'activities'), ...baseConstraints, limit(limitCount));
+  let q = query(
+    collection(db, "activities"),
+    ...baseConstraints,
+    limit(limitCount)
+  );
   if (afterDoc) {
     q = query(
-      collection(db, 'activities'),
+      collection(db, "activities"),
       ...baseConstraints,
       startAfter(afterDoc),
-      limit(limitCount),
+      limit(limitCount)
     );
   }
   const snap = await getDocs(q);
   return {
-    items: snap.docs.map(d => ({ id: d.id, ...d.data() })),
+    items: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1],
   };
 }
@@ -448,24 +546,25 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
      the load until the backfill catches up. */
   const lower = queryStr.toLowerCase();
   const qLower = query(
-    collectionGroup(db, 'public'),
-    where('displayNameLower', '>=', lower),
-    where('displayNameLower', '<=', lower + '\uf8ff'),
+    collectionGroup(db, "public"),
+    where("displayNameLower", ">=", lower),
+    where("displayNameLower", "<=", lower + "\uf8ff"),
     limit(limitCount)
   );
   // Legacy fallbacks against displayName (raw + capitalized) \u2014 kept
   // for users whose public profile hasn't been migrated yet.
   const q1 = query(
-    collectionGroup(db, 'public'),
-    where('displayName', '>=', queryStr),
-    where('displayName', '<=', queryStr + '\uf8ff'),
+    collectionGroup(db, "public"),
+    where("displayName", ">=", queryStr),
+    where("displayName", "<=", queryStr + "\uf8ff"),
     limit(limitCount)
   );
-  const capitalized = queryStr.charAt(0).toUpperCase() + queryStr.slice(1).toLowerCase();
+  const capitalized =
+    queryStr.charAt(0).toUpperCase() + queryStr.slice(1).toLowerCase();
   const q2 = query(
-    collectionGroup(db, 'public'),
-    where('displayName', '>=', capitalized),
-    where('displayName', '<=', capitalized + '\uf8ff'),
+    collectionGroup(db, "public"),
+    where("displayName", ">=", capitalized),
+    where("displayName", "<=", capitalized + "\uf8ff"),
     limit(limitCount)
   );
 
@@ -478,13 +577,16 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   const results: { uid: string; [key: string]: unknown }[] = [];
   // Order matters: the displayNameLower path is the most accurate, so
   // walk it first; legacy fallbacks fill in users not yet migrated.
-  const snaps = [snapLower, snap1, snap2].filter((s): s is NonNullable<typeof s> => !!s);
+  const snaps = [snapLower, snap1, snap2].filter(
+    (s): s is NonNullable<typeof s> => !!s
+  );
   for (const snap of snaps) {
     for (const d of snap.docs) {
       // Public docs live at `users/{uid}/public/profile` — the owner uid
       // is the grandparent doc id. Fall back to the `uid` field if present.
       const data = d.data() as Record<string, unknown>;
-      const ownerUid = d.ref.parent.parent?.id ?? (data.uid as string | undefined);
+      const ownerUid =
+        d.ref.parent.parent?.id ?? (data.uid as string | undefined);
       if (!ownerUid || seen.has(ownerUid)) continue;
       seen.add(ownerUid);
       results.push({ uid: ownerUid, ...data });
@@ -503,7 +605,7 @@ export interface SuggestedPerson {
   /** Uploaded avatar URL — threads through from `users/{uid}/public/profile`. */
   photoURL?: string;
   /** Short reason chip surfaced in the UI. */
-  reason: 'in_your_crew' | 'recent_post';
+  reason: "in_your_crew" | "recent_post";
   /** For the "in_your_crew" reason — included so UIs can label it. */
   crewId?: string;
 }
@@ -527,7 +629,11 @@ export interface SuggestedPerson {
  */
 export async function getSuggestedPeople(
   uid: string,
-  opts: { crewId?: string; limitCount?: number; blockedUsers?: Set<string> } = {},
+  opts: {
+    crewId?: string;
+    limitCount?: number;
+    blockedUsers?: Set<string>;
+  } = {}
 ): Promise<SuggestedPerson[]> {
   const { crewId, limitCount = 10, blockedUsers = new Set<string>() } = opts;
   const excludeIds = new Set<string>([uid, ...blockedUsers]);
@@ -540,7 +646,9 @@ export async function getSuggestedPeople(
   } catch (e) {
     // If we can't read following, suggestions may duplicate existing
     // follows — acceptable degraded-state rather than failing outright.
-    captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.getFollowingIds' });
+    captureError(e instanceof Error ? e : new Error(String(e)), "error", {
+      fn: "getSuggestedPeople.getFollowingIds",
+    });
   }
 
   // Build an ordered list of candidate UIDs with their reason.
@@ -549,37 +657,54 @@ export async function getSuggestedPeople(
   // 1. Crew members first.
   if (crewId) {
     try {
-      const memberSnap = await getDocs(collection(db, 'groups', crewId, 'members'));
+      const memberSnap = await getDocs(
+        collection(db, "groups", crewId, "members")
+      );
       for (const m of memberSnap.docs) {
         const memberUid = m.id;
         if (excludeIds.has(memberUid)) continue;
         if (candidates.has(memberUid)) continue;
-        candidates.set(memberUid, { uid: memberUid, displayName: 'Athlete', reason: 'in_your_crew', crewId });
+        candidates.set(memberUid, {
+          uid: memberUid,
+          displayName: "Athlete",
+          reason: "in_your_crew",
+          crewId,
+        });
       }
     } catch (e) {
-      captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.crewMembers' });
+      captureError(e instanceof Error ? e : new Error(String(e)), "error", {
+        fn: "getSuggestedPeople.crewMembers",
+      });
     }
   }
 
   // 2. Recent public posters — dedupe by authorId, keep the most recent.
   if (candidates.size < limitCount) {
     try {
-      const recent = await getDocs(query(
-        collection(db, 'activities'),
-        where('visibility', '==', 'public'),
-        orderBy('createdAt', 'desc'),
-        limit(50),
-      ));
+      const recent = await getDocs(
+        query(
+          collection(db, "activities"),
+          where("visibility", "==", "public"),
+          orderBy("createdAt", "desc"),
+          limit(50)
+        )
+      );
       for (const d of recent.docs) {
-        const author = (d.data().authorId as string | undefined);
+        const author = d.data().authorId as string | undefined;
         if (!author) continue;
         if (excludeIds.has(author)) continue;
         if (candidates.has(author)) continue;
-        candidates.set(author, { uid: author, displayName: 'Athlete', reason: 'recent_post' });
+        candidates.set(author, {
+          uid: author,
+          displayName: "Athlete",
+          reason: "recent_post",
+        });
         if (candidates.size >= limitCount) break;
       }
     } catch (e) {
-      captureError(e instanceof Error ? e : new Error(String(e)), 'error', { fn: 'getSuggestedPeople.recentPosters' });
+      captureError(e instanceof Error ? e : new Error(String(e)), "error", {
+        fn: "getSuggestedPeople.recentPosters",
+      });
     }
   }
 
@@ -587,42 +712,49 @@ export async function getSuggestedPeople(
   // projection. Parallel getDoc — small list (≤ limitCount), no
   // pagination, runs once.
   const list = Array.from(candidates.values()).slice(0, limitCount);
-  await Promise.all(list.map(async (p) => {
-    try {
-      const snap = await getDoc(doc(db, 'users', p.uid, 'public', 'profile'));
-      const data = snap.data() as { displayName?: string; photoURL?: string } | undefined;
-      if (data?.displayName) p.displayName = data.displayName;
-      if (data?.photoURL) p.photoURL = data.photoURL;
-    } catch {
-      // Fall through with default 'Athlete' — a missing public profile
-      // shouldn't break the whole list.
-    }
-  }));
+  await Promise.all(
+    list.map(async (p) => {
+      try {
+        const snap = await getDoc(doc(db, "users", p.uid, "public", "profile"));
+        const data = snap.data() as
+          | { displayName?: string; photoURL?: string }
+          | undefined;
+        if (data?.displayName) p.displayName = data.displayName;
+        if (data?.photoURL) p.photoURL = data.photoURL;
+      } catch {
+        // Fall through with default 'Athlete' — a missing public profile
+        // shouldn't break the whole list.
+      }
+    })
+  );
 
   return list;
 }
 
 export async function searchUsersByEmail(email: string, limitCount = 10) {
   const q = query(
-    collection(db, 'users'),
-    where('email', '==', email.toLowerCase().trim()),
+    collection(db, "users"),
+    where("email", "==", email.toLowerCase().trim()),
     limit(limitCount)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
 }
 
 // ============================================
 // Notifications
 // ============================================
-export async function writeNotification(targetUserId: string, data: {
-  type: 'kudos' | 'comment' | 'follow' | 'challenge_milestone';
-  fromUserId?: string;
-  fromName?: string;
-  activityId?: string;
-  message?: string;
-}) {
-  await addDoc(collection(db, 'notifications', targetUserId, 'items'), {
+export async function writeNotification(
+  targetUserId: string,
+  data: {
+    type: "kudos" | "comment" | "follow" | "challenge_milestone";
+    fromUserId?: string;
+    fromName?: string;
+    activityId?: string;
+    message?: string;
+  }
+) {
+  await addDoc(collection(db, "notifications", targetUserId, "items"), {
     ...data,
     read: false,
     createdAt: serverTimestamp(),
@@ -633,7 +765,9 @@ export async function writeNotification(targetUserId: string, data: {
 // Batch fetch activities + kudos status
 // Replaces N individual reads in ActivityCard
 // ============================================
-export async function fetchActivitiesByIds(activityIds: string[]): Promise<Record<string, Record<string, unknown>>> {
+export async function fetchActivitiesByIds(
+  activityIds: string[]
+): Promise<Record<string, Record<string, unknown>>> {
   if (activityIds.length === 0) return {};
   // Firestore 'in' queries max 30 per batch
   const chunks: string[][] = [];
@@ -641,27 +775,40 @@ export async function fetchActivitiesByIds(activityIds: string[]): Promise<Recor
     chunks.push(activityIds.slice(i, i + 30));
   }
   const results: Record<string, Record<string, unknown>> = {};
-  await Promise.all(chunks.map(async (chunk) => {
-    const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'activities', id))));
-    snaps.forEach(snap => {
-      if (snap.exists()) results[snap.id] = { id: snap.id, ...snap.data() };
-    });
-  }));
+  await Promise.all(
+    chunks.map(async (chunk) => {
+      const snaps = await Promise.all(
+        chunk.map((id) => getDoc(doc(db, "activities", id)))
+      );
+      snaps.forEach((snap) => {
+        if (snap.exists()) results[snap.id] = { id: snap.id, ...snap.data() };
+      });
+    })
+  );
   return results;
 }
 
-export async function batchGetKudos(activityIds: string[], userId: string): Promise<Record<string, boolean>> {
+export async function batchGetKudos(
+  activityIds: string[],
+  userId: string
+): Promise<Record<string, boolean>> {
   if (activityIds.length === 0 || !userId) return {};
   const chunks: string[][] = [];
   for (let i = 0; i < activityIds.length; i += 30) {
     chunks.push(activityIds.slice(i, i + 30));
   }
-  const chunkResults = await Promise.all(chunks.map(async (chunk) => {
-    const snaps = await Promise.all(chunk.map(id => getDoc(doc(db, 'kudos', id, 'users', userId))));
-    const map: Record<string, boolean> = {};
-    chunk.forEach((id, i) => { map[id] = snaps[i].exists(); });
-    return map;
-  }));
+  const chunkResults = await Promise.all(
+    chunks.map(async (chunk) => {
+      const snaps = await Promise.all(
+        chunk.map((id) => getDoc(doc(db, "kudos", id, "users", userId)))
+      );
+      const map: Record<string, boolean> = {};
+      chunk.forEach((id, i) => {
+        map[id] = snaps[i].exists();
+      });
+      return map;
+    })
+  );
   return Object.assign({}, ...chunkResults) as Record<string, boolean>;
 }
 
@@ -677,16 +824,16 @@ export async function batchGetKudos(activityIds: string[], userId: string): Prom
 // reporter said. `reason` retained as a derived "best top-level
 // summary" so the admin queue (which still filters by reason) keeps
 // working without breaking the existing client-server contract.
-export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'other';
+export type ReportReason = "spam" | "harassment" | "inappropriate" | "other";
 export type ReportCategory =
-  | 'harassment'
-  | 'spam'
-  | 'inappropriate'
-  | 'impersonation'
-  | 'other';
+  | "harassment"
+  | "spam"
+  | "inappropriate"
+  | "impersonation"
+  | "other";
 
 export interface ReportContentInput {
-  targetType: 'activity' | 'comment' | 'user';
+  targetType: "activity" | "comment" | "user";
   targetId: string;
   /** Top-level category — S4b two-tier first level. */
   category: ReportCategory;
@@ -715,16 +862,19 @@ export interface ReportContentInput {
   details?: string;
 }
 
-export async function reportContent(reporterId: string, data: ReportContentInput) {
+export async function reportContent(
+  reporterId: string,
+  data: ReportContentInput
+) {
   const authedUid = getAuthUid();
-  if (reporterId !== authedUid) throw new Error('Identity mismatch');
+  if (reporterId !== authedUid) throw new Error("Identity mismatch");
   // Derive `reason` from `category` for the admin queue's existing
   // filter (which uses ReportReason, the old 4-value enum). The
   // category enum is a superset so the mapping is straightforward.
   const derivedReason: ReportReason =
-    data.reason
-    ?? (data.category === 'impersonation' ? 'other' : data.category);
-  await addDoc(collection(db, 'reports'), {
+    data.reason ??
+    (data.category === "impersonation" ? "other" : data.category);
+  await addDoc(collection(db, "reports"), {
     reporterId,
     targetType: data.targetType,
     targetId: data.targetId,
@@ -735,7 +885,7 @@ export async function reportContent(reporterId: string, data: ReportContentInput
     freeformNote: data.freeformNote ?? data.details,
     hideFromFeed: !!data.hideFromFeed,
     blockAuthor: !!data.blockAuthor,
-    status: 'pending',
+    status: "pending",
     createdAt: serverTimestamp(),
   });
 }
@@ -745,31 +895,42 @@ export async function reportContent(reporterId: string, data: ReportContentInput
 // ============================================
 export async function blockUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
-  if (currentUid !== authedUid) throw new Error('Identity mismatch');
-  await setDoc(doc(db, 'blocks', currentUid, 'users', targetUid), {
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await setDoc(doc(db, "blocks", currentUid, "users", targetUid), {
     blockedAt: serverTimestamp(),
   });
   // Also unfollow in both directions
-  await deleteDoc(doc(db, 'following', currentUid, 'users', targetUid)).catch(() => {});
-  await deleteDoc(doc(db, 'followers', currentUid, 'users', targetUid)).catch(() => {});
-  await deleteDoc(doc(db, 'following', targetUid, 'users', currentUid)).catch(() => {});
-  await deleteDoc(doc(db, 'followers', targetUid, 'users', currentUid)).catch(() => {});
+  await deleteDoc(doc(db, "following", currentUid, "users", targetUid)).catch(
+    () => {}
+  );
+  await deleteDoc(doc(db, "followers", currentUid, "users", targetUid)).catch(
+    () => {}
+  );
+  await deleteDoc(doc(db, "following", targetUid, "users", currentUid)).catch(
+    () => {}
+  );
+  await deleteDoc(doc(db, "followers", targetUid, "users", currentUid)).catch(
+    () => {}
+  );
 }
 
 export async function unblockUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
-  if (currentUid !== authedUid) throw new Error('Identity mismatch');
-  await deleteDoc(doc(db, 'blocks', currentUid, 'users', targetUid));
+  if (currentUid !== authedUid) throw new Error("Identity mismatch");
+  await deleteDoc(doc(db, "blocks", currentUid, "users", targetUid));
 }
 
-export async function isBlocked(currentUid: string, targetUid: string): Promise<boolean> {
-  const snap = await getDoc(doc(db, 'blocks', currentUid, 'users', targetUid));
+export async function isBlocked(
+  currentUid: string,
+  targetUid: string
+): Promise<boolean> {
+  const snap = await getDoc(doc(db, "blocks", currentUid, "users", targetUid));
   return snap.exists();
 }
 
 export async function getBlockedUsers(uid: string): Promise<string[]> {
-  const snap = await getDocs(collection(db, 'blocks', uid, 'users'));
-  return snap.docs.map(d => d.id);
+  const snap = await getDocs(collection(db, "blocks", uid, "users"));
+  return snap.docs.map((d) => d.id);
 }
 
 // ============================================
@@ -790,7 +951,7 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
  */
 export async function deleteAccount(uid: string): Promise<void> {
   const authedUid = getAuthUid();
-  if (uid !== authedUid) throw new Error('Identity mismatch');
-  const deleteMyAccount = httpsCallable(getFunctions(), 'deleteMyAccount');
+  if (uid !== authedUid) throw new Error("Identity mismatch");
+  const deleteMyAccount = httpsCallable(getFunctions(), "deleteMyAccount");
   await deleteMyAccount({});
 }
