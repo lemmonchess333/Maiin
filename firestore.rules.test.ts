@@ -25,7 +25,13 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -35,7 +41,7 @@ if (REQUIRE_EMULATOR && !EMULATOR_HOST) {
   // set REQUIRE_FIRESTORE_EMULATOR=1 to ensure rules evidence is real.
   throw new Error(
     "FIRESTORE_EMULATOR_HOST is required when REQUIRE_FIRESTORE_EMULATOR=1. " +
-      "Start the Firestore emulator (e.g. `firebase emulators:exec --only firestore,auth ...`) before running this test.",
+      "Start the Firestore emulator (e.g. `firebase emulators:exec --only firestore,auth ...`) before running this test."
   );
 }
 const suite = EMULATOR_HOST ? describe : describe.skip;
@@ -84,19 +90,31 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     });
 
     const otherDb = env.authenticatedContext(OTHER_UID).firestore();
-    await assertSucceeds(getDoc(doc(otherDb, "users", OWNER_UID, "public", "profile")));
+    await assertSucceeds(
+      getDoc(doc(otherDb, "users", OWNER_UID, "public", "profile"))
+    );
   });
 
   it("unauthed user reads a public profile — fails", async () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "users", OWNER_UID, "public", "profile"),
-        { uid: OWNER_UID, displayName: "Owner", photoURL: null, athleteType: "Lifter", currentStreak: 0, longestStreak: 0, createdAt: serverTimestamp() },
+        {
+          uid: OWNER_UID,
+          displayName: "Owner",
+          photoURL: null,
+          athleteType: "Lifter",
+          currentStreak: 0,
+          longestStreak: 0,
+          createdAt: serverTimestamp(),
+        }
       );
     });
 
     const anonDb = env.unauthenticatedContext().firestore();
-    await assertFails(getDoc(doc(anonDb, "users", OWNER_UID, "public", "profile")));
+    await assertFails(
+      getDoc(doc(anonDb, "users", OWNER_UID, "public", "profile"))
+    );
   });
 
   it("owner writes all allowlisted fields — succeeds", async () => {
@@ -110,8 +128,11 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
         currentStreak: 3,
         longestStreak: 7,
         createdAt: serverTimestamp(),
-        badgeSummary: { earnedMap: { first_step: "2026-01-01T00:00:00Z" }, count: 1 },
-      }),
+        badgeSummary: {
+          earnedMap: { first_step: "2026-01-01T00:00:00Z" },
+          count: 1,
+        },
+      })
     );
   });
 
@@ -121,27 +142,24 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { badgeSummary: { earnedMap: {}, count: 0 } },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
   it("owner writes an unknown field — fails (fail-closed)", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
-      setDoc(
-        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-        {
-          uid: OWNER_UID,
-          displayName: "Owner",
-          photoURL: null,
-          athleteType: "Lifter",
-          currentStreak: 0,
-          longestStreak: 0,
-          createdAt: serverTimestamp(),
-          pwned: true, // <- disallowed by hasOnly()
-        },
-      ),
+      setDoc(doc(ownerDb, "users", OWNER_UID, "public", "profile"), {
+        uid: OWNER_UID,
+        displayName: "Owner",
+        photoURL: null,
+        athleteType: "Lifter",
+        currentStreak: 0,
+        longestStreak: 0,
+        createdAt: serverTimestamp(),
+        pwned: true, // <- disallowed by hasOnly()
+      })
     );
   });
 
@@ -151,8 +169,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(otherDb, "users", OWNER_UID, "public", "profile"),
         { displayName: "Hacked" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -169,8 +187,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: null },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -180,8 +198,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: "" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -194,8 +212,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
           photoURL:
             "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media",
         },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -204,9 +222,11 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     await assertSucceeds(
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
-        { photoURL: "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c" },
-        { merge: true },
-      ),
+        {
+          photoURL: "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+        },
+        { merge: true }
+      )
     );
   });
 
@@ -216,8 +236,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -231,8 +251,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: "https://pixel-tracker.example/pixel?uid=victim" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -248,8 +268,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
           photoURL:
             "https://lh3.googleusercontent.com.evil.com/a/ACg8ocIabcdefg=s96-c",
         },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -261,8 +281,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: "javascript:alert(1)" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -273,11 +293,10 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         {
-          photoURL:
-            "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
+          photoURL: "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
         },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -290,8 +309,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoURL: "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -304,8 +323,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { currentStreak: 5, longestStreak: 9 },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -320,8 +339,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoStoragePath: `profile-photos/${OWNER_UID}/avatar.jpg` },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -331,8 +350,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoStoragePath: null },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -342,8 +361,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoStoragePath: "" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -356,8 +375,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoStoragePath: `profile-photos/${OTHER_UID}/avatar.jpg` },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -369,8 +388,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { photoStoragePath: `../etc/passwd` },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -381,8 +400,8 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID, "public", "profile"),
         { displayName: "Owner" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 });
@@ -443,7 +462,7 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
     });
     const db = env.authenticatedContext(OWNER_UID).firestore();
@@ -454,7 +473,7 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
     });
     const db = env.unauthenticatedContext().firestore();
@@ -464,42 +483,42 @@ suite("firestore.rules — /challenges", () => {
   it("authed user creates a weekly-prefix challenge — succeeds", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData)
     );
   });
 
   it("authed user creates a monthly-prefix challenge — succeeds", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "challenges", "monthly-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "monthly-2026-01-01"), validChallengeData)
     );
   });
 
   it("authed user creates a seasonal-prefix challenge — succeeds", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "challenges", "seasonal-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "seasonal-2026-01-01"), validChallengeData)
     );
   });
 
   it("authed user creates a fastest-5k-prefix challenge — succeeds", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), validChallengeData)
     );
   });
 
   it("authed user creates a group-goal-prefix challenge — succeeds", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "challenges", "group-goal-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "group-goal-2026-01-01"), validChallengeData)
     );
   });
 
   it("authed user creates a junk-id challenge — fails (docId pattern guard)", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(
-      setDoc(doc(db, "challenges", "asdfasdf"), validChallengeData),
+      setDoc(doc(db, "challenges", "asdfasdf"), validChallengeData)
     );
   });
 
@@ -507,7 +526,7 @@ suite("firestore.rules — /challenges", () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
     // No leading hyphen → doesn't match `weekly-.*`
     await assertFails(
-      setDoc(doc(db, "challenges", "weeklyfake"), validChallengeData),
+      setDoc(doc(db, "challenges", "weeklyfake"), validChallengeData)
     );
   });
 
@@ -515,7 +534,7 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
     });
     const db = env.authenticatedContext(OWNER_UID).firestore();
@@ -523,15 +542,15 @@ suite("firestore.rules — /challenges", () => {
       setDoc(
         doc(db, "challenges", "weekly-2026-01-01"),
         { name: "Hijacked" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
   it("unauthed user creates a valid-prefix challenge — fails", async () => {
     const db = env.unauthenticatedContext().firestore();
     await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData),
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData)
     );
   });
 
@@ -539,15 +558,15 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
     });
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
       setDoc(
         doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
-        { progress: 3, tier: "bronze" },
-      ),
+        { progress: 3, tier: "bronze" }
+      )
     );
   });
 
@@ -555,15 +574,15 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
     });
     const db = env.authenticatedContext(OTHER_UID).firestore();
     await assertFails(
       setDoc(
         doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
-        { progress: 99, tier: "gold" },
-      ),
+        { progress: 99, tier: "gold" }
+      )
     );
   });
 
@@ -571,18 +590,24 @@ suite("firestore.rules — /challenges", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
-        validChallengeData,
+        validChallengeData
       );
       await setDoc(
-        doc(ctx.firestore(), "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
-        { progress: 5, tier: "silver" },
+        doc(
+          ctx.firestore(),
+          "challenges",
+          "weekly-2026-01-01",
+          "participants",
+          OWNER_UID
+        ),
+        { progress: 5, tier: "silver" }
       );
     });
     const db = env.authenticatedContext(OTHER_UID).firestore();
     await assertSucceeds(
       getDoc(
-        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
-      ),
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID)
+      )
     );
   });
 });
@@ -641,7 +666,7 @@ suite("firestore.rules — /audit_checkout_sessions", () => {
       setDoc(doc(db, "audit_checkout_sessions", "forged"), {
         uid: OWNER_UID,
         stripeSessionId: "cs_forged",
-      }),
+      })
     );
   });
 
@@ -659,7 +684,7 @@ suite("firestore.rules — /audit_checkout_sessions", () => {
       setDoc(doc(db, "audit_checkout_sessions", "seeded"), {
         uid: OWNER_UID,
         stripeSessionId: "cs_overwritten",
-      }),
+      })
     );
   });
 });
@@ -729,7 +754,10 @@ suite("firestore.rules — users/{uid}/runs/{doc} (plan metadata)", () => {
     // field constraint, this test surfaces it.
     const db = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
-      setDoc(doc(db, "users", OWNER_UID, "runs", "r1"), fullPlanMetadataRunDoc()),
+      setDoc(
+        doc(db, "users", OWNER_UID, "runs", "r1"),
+        fullPlanMetadataRunDoc()
+      )
     );
   });
 
@@ -755,7 +783,7 @@ suite("firestore.rules — users/{uid}/runs/{doc} (plan metadata)", () => {
         offPlan: false,
         planWeekIndex: null,
         planTotalWeeks: null,
-      }),
+      })
     );
   });
 
@@ -766,8 +794,8 @@ suite("firestore.rules — users/{uid}/runs/{doc} (plan metadata)", () => {
     await assertFails(
       setDoc(
         doc(otherDb, "users", OWNER_UID, "runs", "r3"),
-        fullPlanMetadataRunDoc(),
-      ),
+        fullPlanMetadataRunDoc()
+      )
     );
   });
 
@@ -778,13 +806,11 @@ suite("firestore.rules — users/{uid}/runs/{doc} (plan metadata)", () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "users", OWNER_UID, "runs", "r4"),
-        fullPlanMetadataRunDoc(),
+        fullPlanMetadataRunDoc()
       );
     });
     const anonDb = env.unauthenticatedContext().firestore();
-    await assertFails(
-      getDoc(doc(anonDb, "users", OWNER_UID, "runs", "r4")),
-    );
+    await assertFails(getDoc(doc(anonDb, "users", OWNER_UID, "runs", "r4")));
   });
 });
 
@@ -863,7 +889,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
       setDoc(doc(ownerDb, "users", OWNER_UID, "meals", "m1"), {
         text: "test",
         createdAt: serverTimestamp(),
-      }),
+      })
     );
   });
 
@@ -875,7 +901,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
         setDoc(doc(ownerDb, "users", OWNER_UID, "meals", "m1"), {
           text: "test",
           createdAt: serverTimestamp(),
-        }),
+        })
       );
     });
   }
@@ -888,7 +914,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
         setDoc(doc(ownerDb, "users", OWNER_UID, "meals", "m1"), {
           text: "test",
           createdAt: serverTimestamp(),
-        }),
+        })
       );
     });
   }
@@ -897,10 +923,14 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     await seedDeletionStatus(OWNER_UID, "running");
     // seed a meal doc bypass-rules so the read path can be tested
     await env.withSecurityRulesDisabled(async (ctx) => {
-      await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "meals", "m1"), { text: "x" });
+      await setDoc(doc(ctx.firestore(), "users", OWNER_UID, "meals", "m1"), {
+        text: "x",
+      });
     });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(getDoc(doc(ownerDb, "users", OWNER_UID, "meals", "m1")));
+    await assertSucceeds(
+      getDoc(doc(ownerDb, "users", OWNER_UID, "meals", "m1"))
+    );
   });
 
   it("owner writes to users/{uid} root FAIL during running status", async () => {
@@ -910,8 +940,8 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
       setDoc(
         doc(ownerDb, "users", OWNER_UID),
         { displayName: "Renamed mid-deletion" },
-        { merge: true },
-      ),
+        { merge: true }
+      )
     );
   });
 
@@ -927,7 +957,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
         currentStreak: 0,
         longestStreak: 0,
         createdAt: serverTimestamp(),
-      }),
+      })
     );
   });
 
@@ -938,7 +968,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
         createdAt: serverTimestamp(),
-      }),
+      })
     );
   });
 
@@ -948,7 +978,7 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
     await assertFails(
       setDoc(doc(ownerDb, "following", OWNER_UID, "users", OTHER_UID), {
         createdAt: serverTimestamp(),
-      }),
+      })
     );
   });
 });
@@ -985,7 +1015,9 @@ suite("firestore.rules — R1A operational collections", () => {
       });
     });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(getDoc(doc(ownerDb, "accountDeletionRequests", OWNER_UID)));
+    await assertSucceeds(
+      getDoc(doc(ownerDb, "accountDeletionRequests", OWNER_UID))
+    );
   });
 
   it("non-owner reads someone else's accountDeletionRequests doc — fails", async () => {
@@ -996,7 +1028,9 @@ suite("firestore.rules — R1A operational collections", () => {
       });
     });
     const otherDb = env.authenticatedContext(OTHER_UID).firestore();
-    await assertFails(getDoc(doc(otherDb, "accountDeletionRequests", OWNER_UID)));
+    await assertFails(
+      getDoc(doc(otherDb, "accountDeletionRequests", OWNER_UID))
+    );
   });
 
   it("client cannot write to accountDeletionRequests — server-only", async () => {
@@ -1005,21 +1039,27 @@ suite("firestore.rules — R1A operational collections", () => {
       setDoc(doc(ownerDb, "accountDeletionRequests", OWNER_UID), {
         uid: OWNER_UID,
         status: "running",
-      }),
+      })
     );
   });
 
   it("client cannot read or write deletedAccounts tombstone", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(getDoc(doc(ownerDb, "deletedAccounts", OWNER_UID)));
-    await assertFails(setDoc(doc(ownerDb, "deletedAccounts", OWNER_UID), { uid: OWNER_UID }));
+    await assertFails(
+      setDoc(doc(ownerDb, "deletedAccounts", OWNER_UID), { uid: OWNER_UID })
+    );
   });
 
   it("client cannot read or write deletedBillingIdentities", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(getDoc(doc(ownerDb, "deletedBillingIdentities", "some-hash")));
     await assertFails(
-      setDoc(doc(ownerDb, "deletedBillingIdentities", "some-hash"), { provider: "apple" }),
+      getDoc(doc(ownerDb, "deletedBillingIdentities", "some-hash"))
+    );
+    await assertFails(
+      setDoc(doc(ownerDb, "deletedBillingIdentities", "some-hash"), {
+        provider: "apple",
+      })
     );
   });
 
@@ -1027,7 +1067,772 @@ suite("firestore.rules — R1A operational collections", () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertFails(getDoc(doc(ownerDb, "paymentEventsPostDeletion", "ev1")));
     await assertFails(
-      setDoc(doc(ownerDb, "paymentEventsPostDeletion", "ev1"), { provider: "apple" }),
+      setDoc(doc(ownerDb, "paymentEventsPostDeletion", "ev1"), {
+        provider: "apple",
+      })
     );
   });
 });
+
+// ========================================
+// /activities — 2026-05-26 audit findings #1 + #7 + #11
+//
+// Pinned-by-test invariants:
+//   - Reads are visibility-aware: public open, private owner-only,
+//     followers-only requires actual follower relation.
+//   - Creates enforce strict field allowlist + enum checks + numeric
+//     bounds + payload-size caps.
+//   - Valid activity creation still works (regression guard for the
+//     production `postActivity` shape).
+// ========================================
+
+const FOLLOWER_UID = "follower-uid";
+const STRANGER_UID = "stranger-uid";
+
+function makeValidActivity(overrides: Record<string, unknown> = {}) {
+  return {
+    authorId: OWNER_UID,
+    authorName: "Owner",
+    type: "run",
+    visibility: "public",
+    createdAt: serverTimestamp(),
+    kudosCount: 0,
+    commentCount: 0,
+    ...overrides,
+  };
+}
+
+suite("firestore.rules — /activities visibility-aware reads (audit #1)", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  // Helper to seed an activity + a follower relation via the
+  // rules-disabled admin bypass.
+  async function seed({
+    activityId,
+    visibility,
+    follower,
+  }: {
+    activityId: string;
+    visibility: "public" | "followers" | "private";
+    follower?: string;
+  }) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "activities", activityId), {
+        ...makeValidActivity({ visibility }),
+        createdAt: new Date(),
+      });
+      if (follower) {
+        await setDoc(doc(db, "followers", OWNER_UID, "users", follower), {
+          followedAt: new Date(),
+        });
+      }
+    });
+  }
+
+  it("public activity — readable by any authed user", async () => {
+    await seed({ activityId: "pub-1", visibility: "public" });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    await assertSucceeds(getDoc(doc(strangerDb, "activities", "pub-1")));
+  });
+
+  it("private activity — NOT readable by another user (THE audit #1 fix)", async () => {
+    await seed({ activityId: "priv-1", visibility: "private" });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    await assertFails(getDoc(doc(strangerDb, "activities", "priv-1")));
+  });
+
+  it("private activity — readable by the owner", async () => {
+    await seed({ activityId: "priv-2", visibility: "private" });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, "activities", "priv-2")));
+  });
+
+  it("followers-only activity — readable by a valid follower", async () => {
+    await seed({
+      activityId: "fol-1",
+      visibility: "followers",
+      follower: FOLLOWER_UID,
+    });
+    const followerDb = env.authenticatedContext(FOLLOWER_UID).firestore();
+    await assertSucceeds(getDoc(doc(followerDb, "activities", "fol-1")));
+  });
+
+  it("followers-only activity — NOT readable by a non-follower", async () => {
+    await seed({
+      activityId: "fol-2",
+      visibility: "followers",
+      follower: FOLLOWER_UID,
+    });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    await assertFails(getDoc(doc(strangerDb, "activities", "fol-2")));
+  });
+
+  it("followers-only activity — readable by the owner", async () => {
+    await seed({ activityId: "fol-3", visibility: "followers" });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, "activities", "fol-3")));
+  });
+});
+
+suite(
+  "firestore.rules — /activities create schema + payload limits (audit #7 + #11)",
+  () => {
+    let env: RulesTestEnvironment;
+
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await env?.cleanup();
+    });
+
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    it("valid activity (mandatory fields only) creates successfully", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(doc(ownerDb, "activities", "valid-min"), makeValidActivity())
+      );
+    });
+
+    it("valid activity with full populated shape creates successfully (regression guard for postActivity)", async () => {
+      // Mirror what src/lib/socialApi.ts postActivity writes for a
+      // typical workout post. If the rule allowlist drifts from the
+      // client shape, this test catches it.
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "valid-full"),
+          makeValidActivity({
+            type: "workout",
+            visibility: "followers",
+            authorPhotoURL: "https://firebasestorage.googleapis.com/foo",
+            workoutName: "Push day",
+            exerciseCount: 6,
+            totalVolume: 5400,
+            duration: 3600,
+            muscleGroups: ["chest", "triceps", "shoulders"],
+            prHit: true,
+            prExercise: "Bench press",
+            prWeight: 90,
+            prCount: 1,
+            challengeMilestone: "Week 3 complete",
+            badgeEarned: "consistency-7",
+            crewId: "crew-abc",
+          })
+        )
+      );
+    });
+
+    it("authorId mismatch — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-author"),
+          makeValidActivity({ authorId: STRANGER_UID })
+        )
+      );
+    });
+
+    it("invalid visibility enum value — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-vis"),
+          makeValidActivity({ visibility: "world" })
+        )
+      );
+    });
+
+    it("invalid type enum value — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-type"),
+          makeValidActivity({ type: "meal" })
+        )
+      );
+    });
+
+    it("non-zero initial kudosCount — rejected (counter-forgery on create)", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-kudos"),
+          makeValidActivity({ kudosCount: 99999 })
+        )
+      );
+    });
+
+    it("unknown field — rejected (fail-closed allowlist)", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-extra"),
+          makeValidActivity({ secretAdminFlag: true })
+        )
+      );
+    });
+
+    it("oversized routePreview (>5000 points) — rejected (audit #11)", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      // 5001 entries — one over the cap.
+      const bigRoute = Array.from({ length: 5001 }, (_, i) => ({
+        lat: 51 + i * 0.00001,
+        lon: -1 + i * 0.00001,
+      }));
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-route"),
+          makeValidActivity({ routePreview: bigRoute })
+        )
+      );
+    });
+
+    it("routePreview at the cap (5000 points) — accepted", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const cappedRoute = Array.from({ length: 5000 }, (_, i) => ({
+        lat: 51 + i * 0.00001,
+        lon: -1 + i * 0.00001,
+      }));
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "ok-route"),
+          makeValidActivity({ routePreview: cappedRoute })
+        )
+      );
+    });
+
+    it("oversized exercises array (>100) — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const bigExercises = Array.from({ length: 101 }, (_, i) => ({
+        name: `Ex ${i}`,
+        summary: "5x10",
+      }));
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-ex"),
+          makeValidActivity({ exercises: bigExercises })
+        )
+      );
+    });
+
+    it("oversized muscleGroups array (>20) — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const bigMuscles = Array.from({ length: 21 }, (_, i) => `group${i}`);
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-mg"),
+          makeValidActivity({ muscleGroups: bigMuscles })
+        )
+      );
+    });
+
+    it("oversized workoutName (>200 chars) — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const longName = "x".repeat(201);
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-name"),
+          makeValidActivity({ workoutName: longName })
+        )
+      );
+    });
+
+    it("negative distance — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-dist-neg"),
+          makeValidActivity({ distance: -100 })
+        )
+      );
+    });
+
+    it("absurd distance (>500km) — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-dist-huge"),
+          makeValidActivity({ distance: 999999999 })
+        )
+      );
+    });
+
+    it("duration > 24h — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-dur"),
+          makeValidActivity({ duration: 100000 })
+        )
+      );
+    });
+
+    it("blank authorName — rejected", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "bad-blank-name"),
+          makeValidActivity({ authorName: "" })
+        )
+      );
+    });
+  }
+);
+
+// ========================================
+// /kudos + /comments + /groups counter-write DENIALS
+// 2026-05-26 audit PR 2 (findings #2 + #5)
+//
+// Pre-PR-2 any authed user could:
+//   - setDoc(kudos/{aid}/users/{uid})  → kudos forgery
+//   - updateDoc(activities/{aid}, { kudosCount: 999999 })  → counter forgery
+//   - updateDoc(groups/{cid}, { memberCount: 1000000 })  → crew count forgery
+// Post-PR-2 those writes are server-only (via the callables in
+// functions/index.js); these tests pin the deny-from-client contract.
+// ========================================
+suite(
+  "firestore.rules — counter writes denied at client (audit #2 + #5)",
+  () => {
+    let env: RulesTestEnvironment;
+
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await env?.cleanup();
+    });
+
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    it("client cannot directly write kudos sub-doc (server-only)", async () => {
+      // Seed an activity so the kudos-doc target is meaningful.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot directly delete kudos sub-doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+        await setDoc(doc(db, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(ownerDb, "kudos", "A1", "users", OWNER_UID))
+      );
+    });
+
+    it("non-owner cannot write kudosCount/commentCount on an activity (audit #2 — counter forgery)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      // updateDoc not imported in this file; use setDoc with merge.
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "activities", "A1"),
+          { kudosCount: 999999 },
+          { merge: true }
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "activities", "A1"),
+          { commentCount: -50 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("owner cannot write kudosCount/commentCount either (server-only)", async () => {
+      // Defensive — even the activity owner has no business setting
+      // these directly. The CFs are the only writer.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { kudosCount: 42 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("owner CAN still update visibility on their activity (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { visibility: "private" },
+          { merge: true }
+        )
+      );
+    });
+
+    it("client cannot directly write comment doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "comments", "A1", "items", "C1"), {
+          authorId: OWNER_UID,
+          authorName: "Owner",
+          text: "Nice run!",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot directly write crew memberCount (audit #5 — count forgery)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "groups", "crew-a"),
+          { memberCount: 1000000 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("client cannot directly write member sub-doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "groups", "crew-a", "members", OWNER_UID), {
+          joinedAt: new Date(),
+          displayName: "Owner",
+        })
+      );
+    });
+
+    it("crew creator CAN still update non-counter fields on their crew (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "groups", "crew-a"),
+          { name: "Crew A Renamed" },
+          { merge: true }
+        )
+      );
+    });
+
+    it("kudos reads stay open (regression guard — UI still renders 'Props from' list)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+        await setDoc(doc(db, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(strangerDb, "kudos", "A1", "users", OWNER_UID))
+      );
+    });
+  }
+);
+
+// ════════════════════════════════════════════════════════════════════
+// audit PR 3 (#3 + #6 + #12) — feed + notification creates are now
+// server-only. Pre-PR-3 the client wrote `/feeds/{recipient}/items`
+// and `/notifications/{recipient}/items` directly. `authorId ==
+// auth.uid` stopped impersonation but couldn't gate volume — a
+// script could fan out 100k items into any follower's feed or push
+// fake-looking notifications. Rules now deny client create; the
+// onActivityCreated trigger handles feed fan-out, and notification
+// creation is folded into toggleKudosCallable + addCommentCallable.
+//
+// Owner can still read + delete their own feed / notifications.
+// Delete is gated by `isOwnerAndNotDeleting` to preserve the
+// "deleting users do not write anywhere" R1A invariant.
+// ════════════════════════════════════════════════════════════════════
+suite(
+  "firestore.rules — feed + notification writes denied at client (audit #3 + #6)",
+  () => {
+    let env: RulesTestEnvironment;
+
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await env?.cleanup();
+    });
+
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    it("client cannot directly create a feed item in their own feed (server-only)", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OWNER_UID,
+          summary: "tried to inject a feed item",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot fan-out into another user's feed (audit #3 — feed spam)", async () => {
+      const attackerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(doc(attackerDb, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: STRANGER_UID, // matches sender — pre-PR-3 this passed
+          summary: "spam content",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("owner can still read their own feed (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OTHER_UID,
+          summary: "from a friend",
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("owner can still delete their own feed item (regression guard — UI inbox clear)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OTHER_UID,
+          summary: "from a friend",
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        deleteDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("stranger cannot delete someone else's feed item", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OWNER_UID,
+          summary: "private feed item",
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(strangerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("client cannot directly create a notification in their own inbox", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OWNER_UID,
+          message: "self-notification attempt",
+          read: false,
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot push notifications into another user's inbox (audit #6 — notification spam)", async () => {
+      const attackerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(doc(attackerDb, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: STRANGER_UID, // matches sender — pre-PR-3 this passed
+          message: "Tropos: click here to claim your prize",
+          read: false,
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("owner can still read their notifications (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+
+    it("owner can delete their own notification (mark-as-read replacement)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        deleteDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+
+    it("stranger cannot delete someone else's notification", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(strangerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+  }
+);
