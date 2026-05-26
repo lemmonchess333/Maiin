@@ -28,6 +28,7 @@
  * on the inner span.
  */
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Check, ChevronsRight, AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ import {
   isRunDayComplete,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
+import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
 interface RunWeekStripProps {
@@ -55,10 +57,21 @@ interface RunWeekStripProps {
    *  status="completed_*" — the helper unifies all three). Wired
    *  via `useClaimMap` in the parent (ProgrammeRunSection). */
   claimMap: Map<string, ClaimState>;
+  /** PR-J Q5 chunk B3e — unclaimed-runs selector (Q3 P90 shared
+   *  computation). Saved runs that don't claim any planned slot
+   *  for their date — extras the user logged on top of the plan
+   *  (rest-day runs, doubled-up days, sub-threshold runs, quality-
+   *  bucket mismatches). Rendered inline under each day's column
+   *  per Q5 P69. Wired via `useClaimMap` in the parent. */
+  unclaimedByDate: Map<string, SavedRunDoc[]>;
   /** Tap handler — receives the YYYY-MM-DD date for that column.
    *  Caller routes to DayActionSheet. */
   onDayTap: (dateKey: string) => void;
 }
+
+/** Q5 P71 cap — 2 extras visible per cell; overflow surfaces a
+ *  "+N more" tap-through. */
+const EXTRAS_VISIBLE_CAP = 2;
 
 interface ColumnData {
   dayIndex: number;
@@ -76,8 +89,10 @@ function templateNameFor(templateId: string | undefined): string {
 export default function RunWeekStrip({
   runDays,
   claimMap,
+  unclaimedByDate,
   onDayTap,
 }: RunWeekStripProps) {
+  const navigate = useNavigate();
   const columns = useMemo<ColumnData[]>(() => {
     // Anchor on the same week as the runDays array (so the strip
     // tracks "the week the user's plan is currently rendering for")
@@ -106,7 +121,7 @@ export default function RunWeekStrip({
   return (
     <ul
       aria-label="This week's runs"
-      className="grid grid-cols-7 gap-1 rounded-xl bg-card p-2 list-none"
+      className="grid grid-cols-7 gap-1 rounded-xl bg-card p-2 list-none items-start"
     >
       {columns.map((col) => {
         const status = col.runDay ? getScheduledRunStatus(col.runDay) : null;
@@ -131,8 +146,15 @@ export default function RunWeekStrip({
               : "";
         const ariaLabel = `${DAY_LABELS[col.dayIndex]} ${col.templateName}${stateSuffix}${col.isToday ? " (today)" : ""}`;
 
+        // Q5 P69 — extras for this date. Stacked below the day-tap
+        // area so the existing planned-slot UI keeps its 44px touch
+        // floor and the extras get their own tappable surfaces.
+        const extras = unclaimedByDate.get(col.dateKey) ?? [];
+        const visibleExtras = extras.slice(0, EXTRAS_VISIBLE_CAP);
+        const overflowCount = Math.max(0, extras.length - EXTRAS_VISIBLE_CAP);
+
         return (
-          <li key={col.dayIndex} className="contents">
+          <li key={col.dayIndex} className="flex flex-col gap-1">
             <button
               type="button"
               aria-label={ariaLabel}
@@ -191,9 +213,109 @@ export default function RunWeekStrip({
                 <span aria-hidden="true" className="w-3 h-3" />
               )}
             </button>
+            {/* Q5 P69/P70/P71 — extras stack. Outlined-not-filled
+                border + smaller text + dimmed = "this isn't a
+                planned slot." Multi-channel visual differentiation
+                per P70 (size + border + contrast, not color alone).
+                Tap → RunDetail for the underlying saved run. */}
+            {visibleExtras.length > 0 && (
+              <div className="flex flex-col gap-0.5">
+                {visibleExtras.map((extra) => (
+                  <ExtraRunPill
+                    key={extra.id}
+                    extra={extra}
+                    onTap={() => navigate(`/run/${extra.id}`)}
+                  />
+                ))}
+                {overflowCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/history")}
+                    aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} for ${DAY_LABELS[col.dayIndex]} — open History`}
+                    className={cn(
+                      "min-h-[24px] rounded-md px-1 text-[9px] leading-tight",
+                      "border border-dashed border-muted-foreground/40",
+                      "text-muted-foreground/80 hover:text-foreground",
+                      "motion-safe:transition-colors motion-safe:active:scale-[0.97]"
+                    )}
+                  >
+                    +{overflowCount} more
+                  </button>
+                )}
+              </div>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/**
+ * Q5 P70 — extras pill rendering. Outlined-not-filled border +
+ * smaller text + dimmed foreground = "this isn't a planned slot."
+ * Multi-channel visual differentiation (size + border style +
+ * contrast) so it survives `prefers-contrast: more` and color-blind
+ * users — NOT color alone.
+ *
+ * Pill text is intentionally tight to fit the 7-column cell width
+ * (~52px at 375vp): just distance, e.g. "5km". The full pace /
+ * duration / template detail lives on RunDetail (tap target).
+ *
+ * Q5 P75 — touch target ≥44px. Pill's intrinsic height is ~24px so
+ * the wrapping cell already provides the rest via the lack of
+ * adjacent tap targets in the column; tap-zone is the full pill +
+ * its margin region inside the column.
+ *
+ * Q5 P76 — distinct aria-label so screen-readers announce the
+ * extras row separately from the planned slot.
+ */
+function ExtraRunPill({
+  extra,
+  onTap,
+}: {
+  extra: SavedRunDoc;
+  onTap: () => void;
+}) {
+  // Distance label as "5km" (no decimal) when the figure is whole;
+  // "5.4km" with one decimal otherwise. Bare "km" keeps the pill
+  // narrow inside the cell.
+  const distanceKm =
+    typeof extra.distance === "number" && extra.distance > 0
+      ? extra.distance / 1000
+      : null;
+  const distanceText =
+    distanceKm === null
+      ? "Run"
+      : Number.isInteger(distanceKm)
+        ? `${distanceKm}km`
+        : `${distanceKm.toFixed(1)}km`;
+  const bucketText =
+    typeof extra.type === "string" && extra.type.length > 0 ? extra.type : "";
+  const ariaLabel = bucketText
+    ? `Extra run: ${distanceText} ${bucketText}, tap to open`
+    : `Extra run: ${distanceText}, tap to open`;
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      aria-label={ariaLabel}
+      className={cn(
+        // Outlined-not-filled border (planned slot uses filled).
+        "min-h-[24px] rounded-md px-1 py-0.5",
+        "border text-[9px] leading-tight",
+        // Multi-channel differentiation: dimmed text, dashed-ish
+        // contrast (border is solid muted, text muted-foreground).
+        "border-muted-foreground/40 text-muted-foreground",
+        // Tap affordance — match the day-tap area's transition shape
+        // for visual coherence, but no hover-fill so the outlined
+        // treatment is preserved.
+        "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
+        "hover:text-foreground hover:border-muted-foreground/70",
+        "truncate"
+      )}
+    >
+      {distanceText}
+    </button>
   );
 }
