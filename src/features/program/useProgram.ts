@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
-  LegacyScheduledRunStatus,
+  ManualCompletion,
   ProgramState,
   ProgramSettings,
   ProgramExercise,
@@ -51,7 +51,6 @@ import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
-  recoveryWeeksForDistance,
 } from "./runScheduler";
 import {
   localWeekKey,
@@ -851,110 +850,95 @@ export function useProgram() {
   // already terminal) logs a warning and falls through without
   // writing — completing the same scheduled run twice shouldn't
   // double-fire the "ready for next week" toast.
-  const completeRunDay = useCallback(
-    async (idOrDayIndex: string | number, savedRunId?: string) => {
+  /**
+   * PR-J Q2 (a'''') — Manual mark-complete writer.
+   *
+   * Records explicit user intent to mark a runDay slot complete
+   * via `programState.manualCompletions[runDayId]`. The derivation
+   * (Q2 P27) reads the map alongside saved-run claims + legacy
+   * status to surface the ✅ in UI. NO synthetic saved-run write —
+   * gamification (streaks, PI, badges, challenges) only consumes
+   * real activity per Q2 P25.
+   *
+   * Behavior pins inherited from the lock:
+   * - P20 (skipped → planned → map): when target is `skipped`,
+   *   first transitions back to `planned` then writes the map key.
+   * - P21 (race-day UI suppression): caller responsibility — this
+   *   writer doesn't enforce it because the writer is the lower
+   *   layer. DayActionSheet hides the button on race-day slots.
+   *
+   * Q1 P9 + linkedRunId: not written (the field is dropped from
+   * the type by this PR).
+   */
+  const markManualComplete = useCallback(
+    async (runDayId: string) => {
       if (!programState?.runDays || !user) return;
-
-      // Resolve which runDay we're completing. By-id path takes
-      // precedence (P0-6 entry) but falls back to legacy by-index
-      // when the caller has only a dayIndex.
-      const targetIndex =
-        typeof idOrDayIndex === "string"
-          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
-          : programState.runDays.findIndex(
-              (rd) => rd.dayIndex === idOrDayIndex
-            );
+      const targetIndex = programState.runDays.findIndex(
+        (rd) => rd.id === runDayId
+      );
       if (targetIndex === -1) {
         logger.warn(
-          `[completeRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+          `[markManualComplete] no runDay matched id=${runDayId}; skipping`
         );
         return;
       }
       const targetDay = programState.runDays[targetIndex];
 
-      // Status transition gate. PR-D: race_no_show → completed_*
-      // is now legal (recovery from inferred no-show state via
-      // the reconciliation flow). transitionStatus enforces the
-      // updated LEGAL_TRANSITIONS table.
-      // PR-0b-iii: legacy-completed-aware status read via the
-      // central helper. A pre-status doc with completed: true +
-      // status: undefined resolves to "completed_exact" (not
-      // "planned"), so transitionStatus refuses the
-      // completed_exact → completed_exact illegal transition and
-      // we skip + log instead of double-completing.
+      // P20: skipped → planned two-step. The transition gate uses
+      // the updated LEGAL_TRANSITIONS table that now permits
+      // skipped → planned (Q1 P7).
+      let updatedDays = programState.runDays;
       const fromStatus = getScheduledRunStatus(targetDay);
-      // PR-J Q8 P102: destination is a legacy value (will be
-      // removed entirely by PR-J's completeRunDay deletion per Q2).
-      // Type the local var as the legacy union so the assignment
-      // type-checks against the now-narrower ScheduledRunStatus.
-      const toStatus: LegacyScheduledRunStatus = "completed_exact";
-      if (!transitionStatus(fromStatus, toStatus)) {
-        logger.warn(
-          `[completeRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
-        );
-        return;
-      }
-
-      const updatedDays = programState.runDays.slice();
-      updatedDays[targetIndex] = {
-        ...targetDay,
-        completed: true,
-        status: toStatus,
-        // PR-D: write linkedRunId when present so a future
-        // "tap completed run → view saved run" navigation hook
-        // can resolve the connection. Optional — DayActionSheet's
-        // manual "Mark complete" calls without a savedRunId.
-        ...(savedRunId ? { linkedRunId: savedRunId } : {}),
-      };
-
-      // PR-D: when the just-completed runDay is the race day for a
-      // race_prep user, also enter the recovery phase. Distance-
-      // scaled duration: 5K=1w, 10K=2w, half=3w, marathon=4w.
-      // Auto-enter only on completion (not on no-show — Q17 in
-      // the design grill).
-      let updatedRunPlan = programState.runPlan;
-      const raceGoal = programState.runPlan?.raceGoal;
-      if (
-        profile?.runMode === "race_prep" &&
-        raceGoal &&
-        targetDay.date === raceGoal.targetDate &&
-        programState.runPlan
-      ) {
-        const recoveryWeeks = recoveryWeeksForDistance(
-          raceGoal.distance as "5k" | "10k" | "half" | "marathon"
-        );
-        const recoveryEndDate = localDateString(
-          addLocalDays(parseLocalDate(raceGoal.targetDate), recoveryWeeks * 7)
-        );
-        updatedRunPlan = {
-          ...programState.runPlan,
-          phase: "recovery",
-          recoveryEndDate,
+      if (fromStatus === "skipped") {
+        if (!transitionStatus(fromStatus, "planned")) {
+          logger.warn(
+            `[markManualComplete] invalid transition ${fromStatus} → planned for runDay ${targetDay.id}; skipping`
+          );
+          return;
+        }
+        updatedDays = programState.runDays.slice();
+        updatedDays[targetIndex] = {
+          ...targetDay,
+          status: "planned" as ScheduledRunStatus,
+          completed: false,
         };
       }
+
+      const updatedMap: Record<string, ManualCompletion> = {
+        ...(programState.manualCompletions ?? {}),
+        [runDayId]: { completedAt: new Date() },
+      };
 
       const updated: ProgramState = {
         ...programState,
         runDays: updatedDays,
-        runPlan: updatedRunPlan,
+        manualCompletions: updatedMap,
       };
-
       await saveProgram(updated);
-
-      const allRunsDone = updated.runDays!.every((rd) => rd.completed);
-      // Skipped lifts count as "done for the week" — same rule as
-      // completeWorkoutDay's `allDone` check uses (`completed || skipped`).
-      // Without this parity, a user who skipped one lift but finished
-      // every run would never see "Ready for next week" from the run
-      // path even though they would from the lift path.
-      const allLiftsDone = updated.workouts.every(
-        (d) => d.completed || d.skipped
-      );
-      if (allRunsDone && allLiftsDone) {
-        toast.success("All workouts & runs complete! Ready for next week.");
-      }
     },
-    [programState, user, saveProgram, profile?.runMode]
+    [programState, user, saveProgram]
+  );
+
+  /**
+   * PR-J Q2 P11 — Undo a manual mark-complete.
+   *
+   * Drops the map key. Per Q7 P96 the UI surfaces a separate toast
+   * ("Marked as planned again") from the saved-run-deletion toast
+   * — DayActionSheet wires the copy.
+   */
+  const unmarkManualComplete = useCallback(
+    async (runDayId: string) => {
+      if (!programState?.manualCompletions || !user) return;
+      if (!(runDayId in programState.manualCompletions)) return;
+      const next = { ...programState.manualCompletions };
+      delete next[runDayId];
+      const updated: ProgramState = {
+        ...programState,
+        manualCompletions: next,
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -1466,7 +1450,8 @@ export function useProgram() {
     updateSettings,
     regenerateProgram,
     saveProgram,
-    completeRunDay,
+    markManualComplete,
+    unmarkManualComplete,
     skipRunDay,
     overrideRunDay,
     refreshRunSchedule,
