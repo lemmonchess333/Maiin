@@ -44,6 +44,7 @@ import { format } from "date-fns";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { useClaimMap } from "@/hooks/useClaimMap";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { FitnessGoal } from "@/lib/tdee";
@@ -171,6 +172,10 @@ export default function Home() {
   }, []);
   const todayKey = localDateString(today);
   const currentWeekKey = localWeekKey(today);
+  // PR-J Q3 chunk B3c — single source of truth for derived run-day
+  // completion across all of Home's surfaces (WeekStrip dot, DayPeek
+  // "Run completed" copy, today-resolver's run.isCompleted).
+  const { claimMap } = useClaimMap();
   const resolvedToday = useMemo(
     function () {
       return resolveTrainingDayForDate({
@@ -178,9 +183,10 @@ export default function Home() {
         profile,
         programState,
         currentWeekKey,
+        claimMap,
       });
     },
-    [todayKey, profile, programState, currentWeekKey]
+    [todayKey, profile, programState, currentWeekKey, claimMap]
   );
 
   const todayType = resolvedToday.scheduleType;
@@ -724,6 +730,7 @@ export default function Home() {
           dayMap={weeklyDayMap}
           profile={profile}
           programState={programState}
+          claimMap={claimMap}
           selectedDate={peekDate}
           onDayTap={handleDayTap}
         />
@@ -740,6 +747,7 @@ export default function Home() {
               dateKey={peekDate}
               profile={profile}
               programState={programState}
+              claimMap={claimMap}
               workouts={peekW}
               dailyTotals={peekT}
               onClose={function () {
