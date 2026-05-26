@@ -99,7 +99,9 @@ describe("applySubscriptionToUser — security invariants", () => {
     // base64 decode and granted Pro on trust.
     const { firestore, writes } = makeFirestoreStub();
     const verifyTransaction = async () => {
-      throw new Error("VerificationException: Failed to verify the JWS signature");
+      throw new Error(
+        "VerificationException: Failed to verify the JWS signature"
+      );
     };
 
     await expect(
@@ -108,7 +110,7 @@ describe("applySubscriptionToUser — security invariants", () => {
         verifyTransaction,
         signedTransactionInfo: "forged.jws.payload",
         uid: UID,
-      }),
+      })
     ).rejects.toThrow(/Failed to verify/);
 
     expect(writes).toHaveLength(0);
@@ -137,7 +139,7 @@ describe("applySubscriptionToUser — security invariants", () => {
         verifyTransaction,
         signedTransactionInfo: "x",
         uid: UID,
-      }),
+      })
     ).rejects.toThrow();
 
     expect(runTransactionCalled).toBe(false);
@@ -158,7 +160,7 @@ describe("applySubscriptionToUser — security invariants", () => {
         verifyTransaction,
         signedTransactionInfo: "x",
         uid: UID,
-      }),
+      })
     ).rejects.toThrow(/Bundle mismatch: com\.other-app\.evil/);
 
     expect(writes).toHaveLength(0);
@@ -330,7 +332,7 @@ describe("applySubscriptionToUser — staleness guard", () => {
     expect(writes).toHaveLength(1);
     expect(writes[0].data.subscriptionTier).toBe("pro");
     expect(writes[0].data.subscriptionExpiresAt).toBe(
-      newIncoming.toISOString(),
+      newIncoming.toISOString()
     );
   });
 });
@@ -473,5 +475,136 @@ describe("applySubscriptionToUser — Firestore write shape", () => {
 
     expect(stub.writes[0].ref).toBe(stub.userRefMarker);
     expect(stub.txnGetCalls[0]).toBe(stub.userRefMarker);
+  });
+});
+
+describe("applySubscriptionToUser — Sub1 P2.5 Stripe auto-cancel", () => {
+  it("Cycle 1 (tracer): IAP override on stripe-Pro user invokes cancelDisplacedStripeSub", async () => {
+    // Existing user is Pro via stripe — incoming IAP triggers the
+    // cross-platform conflict + the auto-cancel callback.
+    const stub = makeFirestoreStub({
+      existing: { subscriptionTier: "pro", subscriptionSource: "stripe" },
+    });
+    const verifyTransaction = async () => makeValidTx();
+    const cancelCalls = [];
+    const cancelDisplacedStripeSub = async ({ uid }) => {
+      cancelCalls.push({ uid });
+    };
+
+    const result = await applySubscriptionToUser({
+      firestore: stub.firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+      cancelDisplacedStripeSub,
+    });
+
+    expect(result.crossPlatformConflict).toBe(true);
+    expect(cancelCalls).toHaveLength(1);
+    expect(cancelCalls[0].uid).toBe(UID);
+    // IAP write still committed despite the conflict — the user IS
+    // Pro on ios_iap after this call returns.
+    expect(stub.writes[0].data.subscriptionTier).toBe("pro");
+    expect(stub.writes[0].data.subscriptionSource).toBe("ios_iap");
+  });
+
+  it("Cycle 2: no prior source (fresh user) → no auto-cancel call", async () => {
+    const stub = makeFirestoreStub({ existing: {} });
+    const verifyTransaction = async () => makeValidTx();
+    const cancelCalls = [];
+    const cancelDisplacedStripeSub = async ({ uid }) => {
+      cancelCalls.push({ uid });
+    };
+
+    const result = await applySubscriptionToUser({
+      firestore: stub.firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+      cancelDisplacedStripeSub,
+    });
+
+    expect(result.crossPlatformConflict).toBe(false);
+    expect(cancelCalls).toHaveLength(0);
+  });
+
+  it("Cycle 3: same-platform renewal (ios_iap → ios_iap) → no auto-cancel call", async () => {
+    const stub = makeFirestoreStub({
+      existing: { subscriptionTier: "pro", subscriptionSource: "ios_iap" },
+    });
+    const verifyTransaction = async () => makeValidTx();
+    const cancelCalls = [];
+    const cancelDisplacedStripeSub = async ({ uid }) => {
+      cancelCalls.push({ uid });
+    };
+
+    const result = await applySubscriptionToUser({
+      firestore: stub.firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+      cancelDisplacedStripeSub,
+    });
+
+    expect(result.crossPlatformConflict).toBe(false);
+    expect(cancelCalls).toHaveLength(0);
+  });
+
+  it("Cycle 4: auto-cancel callback throws → IAP success is still returned (fail-soft)", async () => {
+    // Stripe outage on the cancel call MUST NOT break the IAP path.
+    // The user IS Pro on ios_iap; a stale Stripe sub is the ops
+    // follow-up case, not a webhook-failure case.
+    const stub = makeFirestoreStub({
+      existing: { subscriptionTier: "pro", subscriptionSource: "stripe" },
+    });
+    const verifyTransaction = async () => makeValidTx();
+    const cancelDisplacedStripeSub = async () => {
+      throw new Error("Stripe is down");
+    };
+    const logged = [];
+    const logger = {
+      log: () => {},
+      info: () => {},
+      warn: (msg, ctx) => logged.push({ msg, ctx }),
+      error: () => {},
+    };
+
+    const result = await applySubscriptionToUser({
+      firestore: stub.firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+      cancelDisplacedStripeSub,
+      logger,
+    });
+
+    expect(result.crossPlatformConflict).toBe(true);
+    expect(result.tier).toBe("pro");
+    // The failure is logged as a warning, not thrown.
+    const failureLog = logged.find(
+      (l) => l.msg === "applySubscriptionToUser.auto_cancel_failed"
+    );
+    expect(failureLog).toBeDefined();
+    expect(failureLog.ctx.error).toMatch(/Stripe is down/);
+  });
+
+  it("Cycle 5: cancelDisplacedStripeSub absent (legacy callers) → conflict logged, no error", async () => {
+    // Pre-#P2.5 caller doesn't inject the callback. The conflict
+    // log still fires; no crash.
+    const stub = makeFirestoreStub({
+      existing: { subscriptionTier: "pro", subscriptionSource: "stripe" },
+    });
+    const verifyTransaction = async () => makeValidTx();
+
+    const result = await applySubscriptionToUser({
+      firestore: stub.firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+      // No cancelDisplacedStripeSub passed
+    });
+
+    expect(result.crossPlatformConflict).toBe(true);
+    expect(result.tier).toBe("pro");
   });
 });
