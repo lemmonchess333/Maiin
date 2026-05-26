@@ -40,6 +40,7 @@ import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
@@ -58,6 +59,14 @@ interface DayActionSheetProps {
    *  the parent (ProgrammeRunSection). Closes the last resolver
    *  back-compat fallback B3c left open. */
   claimMap: Map<string, ClaimState>;
+  /** PR-J Q5 chunk B3f — unclaimed-runs selector. Used to detect
+   *  the same-date paradox (P74): when a planned slot remains
+   *  unclaimed but a saved run for the same date IS present as an
+   *  extra (distance-fail or bucket-fail), surface a contextual
+   *  hint above the Mark complete button so the user can resolve
+   *  the friction with one tap. Wired via `useClaimMap` in the
+   *  parent. */
+  unclaimedByDate: Map<string, SavedRunDoc[]>;
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
   /** PR-J Q2 chunk B2: replaces the deleted completeRunDay.
    *  Writes to programState.manualCompletions[runDayId]; derivation
@@ -74,6 +83,7 @@ export default function DayActionSheet({
   profile,
   programState,
   claimMap,
+  unclaimedByDate,
   overrideRunDay,
   markManualComplete,
   skipRunDay,
@@ -98,6 +108,19 @@ export default function DayActionSheet({
     if (!dateKey) return "";
     return format(parseLocalDate(dateKey), "EEE d MMM");
   }, [dateKey]);
+
+  // Q5 P74 same-date paradox (chunk B3f). When a saved run exists
+  // for THIS date but didn't claim a planned slot (distance-fail or
+  // quality-bucket-fail), the run sits in `unclaimedByDate` keyed
+  // by its date. Surface a contextual hint so the user can resolve
+  // by marking the slot manually. Race day is excluded at the
+  // render site (Q1 P4 / Q2 P21 — race-day completion is real-
+  // saved-run-only).
+  const hasSameDateExtra = useMemo(() => {
+    if (!dateKey) return false;
+    const extras = unclaimedByDate.get(dateKey);
+    return !!extras && extras.length > 0;
+  }, [dateKey, unclaimedByDate]);
 
   if (!open || !resolved) return null;
 
@@ -230,6 +253,23 @@ export default function DayActionSheet({
                     button per runDay.templateId === "race". */}
               {run.isStartable && !run.isCompleted && (
                 <div className="space-y-2">
+                  {/* Q5 P74 same-date paradox hint (chunk B3f).
+                      When a saved run exists for this date but
+                      didn't claim the slot (distance-fail or
+                      quality-bucket-fail per Q1 P2/P3), surface a
+                      contextual prompt so the user can resolve the
+                      friction with one tap. Hidden on race-day slots
+                      (race-day completion is strictly real-saved-run-
+                      only — Q1 P4 / Q2 P21 inheritance). */}
+                  {hasSameDateExtra && run.runDay?.templateId !== "race" && (
+                    <p
+                      role="status"
+                      className="text-xs text-muted-foreground bg-muted/40 rounded-md px-2 py-1.5"
+                    >
+                      An extra run is logged for this date. Mark this planned
+                      slot as done?
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={async () => {
