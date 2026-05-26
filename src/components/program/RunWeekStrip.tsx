@@ -34,6 +34,7 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { DAY_LABELS, DAY_LABELS_SHORT } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import Coachmark from "@/components/ui/Coachmark";
 import ExtrasExpandSheet from "./ExtrasExpandSheet";
 import {
   addLocalDays,
@@ -125,6 +126,23 @@ export default function RunWeekStrip({
       };
     });
   }, [runDays]);
+
+  // Q5 P79 (chunk B3l) — first-extra coachmark anchor. Pin the
+  // coachmark to the first visible extras pill across all 7 columns
+  // (column-major then date-ASC). Composite key (date + saved-run
+  // id) so the same pill stays anchored even if columns reorder.
+  // Returns null when no extras render this week — in that case no
+  // coachmark mounts. Single-shot per user via `useCoachMarks`'s
+  // localStorage persistence.
+  const coachmarkAnchorKey = useMemo(() => {
+    for (const col of columns) {
+      const extras = unclaimedByDate.get(col.dateKey) ?? [];
+      if (extras.length > 0) {
+        return `${col.dateKey}:${extras[0].id}`;
+      }
+    }
+    return null;
+  }, [columns, unclaimedByDate]);
 
   return (
     <>
@@ -256,13 +274,32 @@ export default function RunWeekStrip({
                 Tap → RunDetail for the underlying saved run. */}
               {visibleExtras.length > 0 && (
                 <div className="flex flex-col gap-0.5">
-                  {visibleExtras.map((extra) => (
-                    <ExtraRunPill
-                      key={extra.id}
-                      extra={extra}
-                      onTap={() => navigate(`/run/${extra.id}`)}
-                    />
-                  ))}
+                  {visibleExtras.map((extra) => {
+                    const pill = (
+                      <ExtraRunPill
+                        extra={extra}
+                        onTap={() => navigate(`/run/${extra.id}`)}
+                      />
+                    );
+                    // Q5 P79 (chunk B3l) — anchor the first-extra
+                    // coachmark to the first visible pill across the
+                    // week. Single-shot per user; once dismissed, the
+                    // coachmark stops mounting and the pill renders
+                    // bare.
+                    if (coachmarkAnchorKey === `${col.dateKey}:${extra.id}`) {
+                      return (
+                        <Coachmark
+                          key={extra.id}
+                          storageKey="extras-pill-v1"
+                          placement="top"
+                          content="Your logged runs show here · Tap to open"
+                        >
+                          {pill}
+                        </Coachmark>
+                      );
+                    }
+                    return <div key={extra.id}>{pill}</div>;
+                  })}
                   {overflowCount > 0 && (
                     <button
                       type="button"
