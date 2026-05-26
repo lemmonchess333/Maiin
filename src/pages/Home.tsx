@@ -175,8 +175,9 @@ export default function Home() {
   // PR-J Q3 chunk B3c — single source of truth for derived run-day
   // completion across all of Home's surfaces (WeekStrip dot, DayPeek
   // "Run completed" copy, today-resolver's run.isCompleted). Q5
-  // chunk B3f also forwards unclaimedByDate to DayActionSheet so
-  // the same-date paradox hint (P74) surfaces on Home's manage flow.
+  // chunk B3f forwards unclaimedByDate to DayActionSheet for the
+  // same-date paradox hint (P74), and Q5 chunk B3g forwards it to
+  // DayPeekCard for the extras rows.
   const { claimMap, unclaimedByDate } = useClaimMap();
   const resolvedToday = useMemo(
     function () {
@@ -750,6 +751,7 @@ export default function Home() {
               profile={profile}
               programState={programState}
               claimMap={claimMap}
+              extras={unclaimedByDate.get(peekDate) ?? []}
               workouts={peekW}
               dailyTotals={peekT}
               onClose={function () {
