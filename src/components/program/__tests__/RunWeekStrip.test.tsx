@@ -560,3 +560,91 @@ describe("RunWeekStrip — Q5 extras pills (chunk B3e)", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("RunWeekStrip — Q5 P79 first-extra coachmark (chunk B3l)", () => {
+  // useCoachMarks persists dismissal in localStorage. Clear before
+  // each test so the coachmark renders fresh.
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("renders the coachmark anchored to the first visible extras pill", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-12", [savedRun({ id: "first-extra", distance: 5000 })]],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    expect(screen.getByText(/Your logged runs show here/i)).toBeInTheDocument();
+  });
+
+  it("does NOT render the coachmark when there are no extras anywhere in the week", () => {
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.queryByText(/Your logged runs show here/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("does NOT render the coachmark when dismissal has been persisted (one-shot per user)", () => {
+    // Pre-populate the same storageKey the Coachmark primitive uses
+    // so the hook's `showCoachMarks` returns false on mount.
+    window.localStorage.setItem(
+      "tropos-coach-marks-dismissed:extras-pill-v1",
+      "1"
+    );
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-12", [savedRun({ id: "first-extra", distance: 5000 })]],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.queryByText(/Your logged runs show here/i)
+    ).not.toBeInTheDocument();
+    // The pill still renders normally — only the coachmark is gone.
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    ).toBeInTheDocument();
+  });
+
+  it("anchors to the EARLIEST date's pill when multiple days have extras", () => {
+    // Two days with extras (Tuesday + Thursday). Coachmark should
+    // pin to Tuesday's first pill — column-order (date ASC) anchor
+    // pick. Easier for the user to spot on first scan since the
+    // strip reads left-to-right.
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-12", [savedRun({ id: "tue-extra", distance: 5000 })]],
+      ["2026-05-14", [savedRun({ id: "thu-extra", distance: 3000 })]],
+    ]);
+    const { container } = renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    // Coachmark renders exactly once.
+    expect(screen.getAllByText(/Your logged runs show here/i)).toHaveLength(1);
+    // Both pills still render — coachmark is just an overlay anchor.
+    expect(container.textContent).toContain("5km");
+    expect(container.textContent).toContain("3km");
+  });
+});
