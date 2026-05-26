@@ -610,6 +610,124 @@ suite("firestore.rules — /challenges", () => {
       )
     );
   });
+
+  // ── 2026-05-26 audit PR 4 (finding #4) — body schema validation ──
+  // Pre-PR-4 the create rule only checked the ID prefix. A hostile
+  // user could ship `weekly-attack` with `name: "Tropos: pay $500"`
+  // and the rule would accept it. Body validation rejects malformed
+  // payloads at the rule layer.
+
+  it("create with unknown extra field — fails (allowlist guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        attackerInjected: "<a href='evil'>click</a>",
+      })
+    );
+  });
+
+  it("create with bogus type — fails (enum guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        type: "scam",
+      })
+    );
+  });
+
+  it("create with bogus metric — fails (enum guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        metric: "dollar_amount",
+      })
+    );
+  });
+
+  it("create with oversized name — fails (length cap)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        name: "A".repeat(101),
+      })
+    );
+  });
+
+  it("create with empty name — fails (length floor)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        name: "",
+      })
+    );
+  });
+
+  it("create with oversized description — fails (length cap)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        description: "X".repeat(501),
+      })
+    );
+  });
+
+  it("create with participantCount != 0 — fails (counter forgery guard)", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        participantCount: 999999,
+      })
+    );
+  });
+
+  it("create with malformed tiers (missing silver) — fails", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        tiers: { bronze: 1, gold: 10 },
+      })
+    );
+  });
+
+  it("create with negative tier values — fails", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
+        ...validChallengeData,
+        tiers: { bronze: -5, silver: 4, gold: 6 },
+      })
+    );
+  });
+
+  it("create with optional targetDistance (positive) — succeeds", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), {
+        ...validChallengeData,
+        metric: "fastest_effort",
+        targetDistance: 5000,
+      })
+    );
+  });
+
+  it("create with non-numeric targetDistance — fails", async () => {
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), {
+        ...validChallengeData,
+        metric: "fastest_effort",
+        targetDistance: "5km",
+      })
+    );
+  });
 });
 
 /**
