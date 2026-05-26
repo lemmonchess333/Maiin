@@ -733,6 +733,119 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
   });
 });
 
+describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3j)", () => {
+  function setupPlannedRace() {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      }))
+    );
+    const runDay = makeRunDay({
+      id: "runday_race_b3j",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "planned",
+      templateId: "race",
+    });
+    return {
+      profile,
+      programState: makeProgramState([runDay]),
+      callbacks: commonCallbacks(),
+      runDay,
+    };
+  }
+
+  it("race-day planned slot hides Mark complete (manual) — Skip stays visible", () => {
+    // Q1 P4 / Q2 P21: race-day completion is strictly real-saved-
+    // run-only (≥95% planned distance). Manual override would
+    // bypass the strict rule AND incorrectly trigger recovery
+    // entry. Pre-B3j the button was visible; B3j hides it.
+    // Skip stays available — Q1 P7 (skip is reversible).
+    const { profile, programState, callbacks } = setupPlannedRace();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+    // Skip is the legitimate planned-state action and stays.
+    expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+  });
+
+  it("race-day planned slot suppresses Mark complete even when a same-date extra exists", () => {
+    // Real edge: user runs a sub-95% race-day distance (DNF). The
+    // saved run lands as an extra (didn't clear Q1 P4 strict gate).
+    // The hint suppression we landed in B3f keeps the hint hidden;
+    // B3j extends the suppression to the Mark complete button so
+    // the user can't bypass via the planned race-day surface either.
+    const { profile, programState, callbacks } = setupPlannedRace();
+    const extras = new Map<string, SavedRunDoc[]>([
+      [todayKey(), [savedRun({ id: "race-dnf", distance: 18000 })]],
+    ]);
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        {...callbacks}
+      />
+    );
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/An extra run is logged for this date/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("non-race templates keep Mark complete visible (sanity — gate is specific to templateId === 'race')", () => {
+    // The B3j gate must not over-fire. A planned easy_30 / tempo /
+    // long slot continues to show Mark complete as before.
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      }))
+    );
+    const runDay = makeRunDay({
+      id: "runday_easy_control",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "planned",
+      templateId: "easy_30",
+    });
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={makeProgramState([runDay])}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...commonCallbacks()}
+      />
+    );
+    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+  });
+});
+
 describe("DayActionSheet — lift section", () => {
   function setup(workoutOverrides: Partial<WorkoutDay> = {}) {
     const profile = makeProfile(
