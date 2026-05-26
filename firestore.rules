@@ -486,29 +486,28 @@ service cloud.firestore {
     }
 
     // ========================================
-    // Social: Feeds — user can only read/write their own feed
+    // Social: Feeds — user can read their own feed; writes are
+    // server-only via the onActivityCreated trigger.
     //
-    // Feed writes happen during fan-out from postActivity — the
-    // poster writes a feed item into each follower's /feeds/{followerUid}/items
-    // collection. Pre-W1f the create rule allowed any authenticated
-    // user to push arbitrary docs into any other user's feed. Now
-    // the inserted doc must carry an authorId equal to the writer's
-    // auth.uid, so user A can only fan out their OWN activities —
-    // no impersonating user C into user B's feed.
+    // 2026-05-26 audit PR 3 (finding #3) — pre-PR-3 the client did
+    // fan-out from postActivity, writing one feed item per follower
+    // directly. The `authorId == auth.uid` check stopped
+    // impersonation but couldn't gate volume — a script could push
+    // 100k items into any follower's feed. Now create is server-only
+    // (via socialFanout.fanoutActivityToFeeds, invoked from the
+    // onActivityCreated trigger). Author-side R1A is enforced in the
+    // trigger via shouldSystemWriteProceed + compensating delete;
+    // recipient-side cleanup is via the deletion executor's Phase D
+    // sweep of feeds/{uid}/items.
+    //
+    // Delete stays client-writable so users can clear their own feed.
+    // Owner freeze applied on delete to keep the deletion-actor
+    // invariant ("a deleting user does not write anywhere") consistent.
     // ========================================
     match /feeds/{uid}/items/{doc} {
       allow read: if isOwner(uid);
-      // R1A-Deletion: feed-item creation freezes when EITHER the feed
-      // owner (recipient) OR the writer (poster) is being deleted —
-      // the rule already enforces writer = authorId, so checking
-      // !isDeleting(uid) (feed owner) AND !isDeleting(request.auth.uid)
-      // (poster) covers both. Self-fan-out (writer == owner) is also
-      // gated.
-      allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid
-        && !isDeleting(uid)
-        && !isDeleting(request.auth.uid);
-      allow delete: if isOwner(uid);
+      allow create: if false;
+      allow delete: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================
@@ -570,27 +569,26 @@ service cloud.firestore {
     }
 
     // ========================================
-    // Social: Notifications — owner-only read
+    // Social: Notifications — owner-only read; writes are server-only.
     //
-    // Pre-W1f any authenticated user could write any notification
-    // for any other user with any content — impersonation surface.
-    // Now the created doc must have `fromUserId == auth.uid` so
-    // spam / impersonation notifications ("Tropos: you owe us $500")
-    // can't be forged. Kudos / comment / follow notifications from
-    // writeNotification() already set fromUserId to the sender.
+    // 2026-05-26 audit PR 3 (finding #6) — pre-PR-3 the client wrote
+    // notification docs directly. The `fromUserId == auth.uid` check
+    // stopped impersonation but couldn't gate content (a script could
+    // push fake-looking "Tropos: you owe us $500" notifications) or
+    // volume (notification spam). Now create is server-only, folded
+    // into toggleKudosCallable + addCommentCallable via
+    // socialFanout.createNotification — that helper validates the
+    // type union, length-caps strings, and forces fromUserId to the
+    // authenticated caller (no client override).
     //
-    // Update is not permitted from clients — notifications are
-    // immutable once written (the `read` flag is flipped via delete
-    // + replace rather than mutation).
+    // Delete stays client-writable so users can clear their inbox.
+    // Owner freeze on delete keeps the "deleting users do not write
+    // anywhere" invariant consistent.
     // ========================================
     match /notifications/{uid}/items/{doc} {
-      allow read, delete: if isOwner(uid);
-      // R1A-Deletion: freeze writes when either fromUserId (writer)
-      // or uid (recipient) is being deleted.
-      allow create: if request.auth != null
-        && request.resource.data.fromUserId == request.auth.uid
-        && !isDeleting(request.auth.uid)
-        && !isDeleting(uid);
+      allow read: if isOwner(uid);
+      allow create: if false;
+      allow delete: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================

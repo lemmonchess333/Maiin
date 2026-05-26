@@ -200,6 +200,39 @@ Still open after PR 2:
 | Infrastructure           | 8/10         | 8/10      | 8/10        |
 | **Overall**              | **5.5–6/10** | **~7/10** | **~7.5/10** |
 
+## Remaining risk after PR 3
+
+PR 3 closes findings **#3 (feed spam)**, **#6 (notification spam)**, and **#12 (rate limiting on social writes)**:
+
+- **Feed fan-out moved server-side.** `postActivity` writes only the `/activities/{aid}` doc; the `onActivityCreated` Firestore trigger reads followers, builds the summary, and writes feed items. `/feeds/{uid}/items` create is `if false` at the rules layer; delete stays owner-only (`isOwnerAndNotDeleting`) so users can still clear their feed.
+- **Notification creation moved server-side.** Kudos notifications fold into `toggleKudosCallable` and comment notifications into `addCommentCallable` — both write the recipient's notification doc atomically via `socialFanout.createNotification`. The helper forces `fromUserId` to the authed caller (no client override), validates the type union, and length-caps strings. `/notifications/{uid}/items` create is `if false`; delete stays owner-only.
+- **Rate limiting now applies to social writes.** The existing `isRateLimited` helper on the parent callables (toggleKudos 30/60s, addComment 20/60s) gates kudos / comment spam directly. Feed fan-out is gated indirectly by the rate at which `/activities` docs can be created (PR 1's strict schema + per-actor lock + the trigger itself sets the cap on follower-feed volume).
+- **R1A invariant preserved.** Author-side freeze on activity fan-out lives in the trigger via `accountDeletionLocks.shouldSystemWriteProceed(authorId)` with compensating delete. Notification writes inside kudos/comment CFs inherit the callables' `assertCallableActorNotDeleting` guard. The owner-side delete freeze on `/feeds` and `/notifications` keeps the "deleting users do not write anywhere" invariant intact.
+
+Trade-offs accepted:
+
+- **Fan-out latency.** Feed items appear ~1-3s after activity post (trigger latency) instead of synchronously. Acceptable for the security + rate-limit win — every reference app (Strava, NRC, Garmin) shows the same async-feed pattern.
+- **No per-recipient R1A check in fan-out.** Skipping deleting recipients would cost N extra reads per post. The deletion executor's Phase D sweeps `feeds/{uid}/items` regardless, so any feed item written between deletion start and Phase D is cleaned within the cascade.
+
+Still open after PR 3:
+
+- **Challenge spam (#4):** unchanged from post-PR-2. PR 4 will tighten challenge create.
+- **Storage MIME / SVG XSS (#8):** unchanged.
+- **CSP `unsafe-inline` (#9):** unchanged.
+- **Vertex response log (#10):** unchanged.
+
+**Severity scoring (post-PR 3):**
+
+| Area                     | Pre-PR-1     | Post-PR-1 | Post-PR-2   | Post-PR-3 |
+| ------------------------ | ------------ | --------- | ----------- | --------- |
+| Authentication           | 8/10         | 8/10      | 8/10        | 8/10      |
+| Personal data protection | 4/10         | 8/10      | 8/10        | 8/10      |
+| Social system integrity  | 3/10         | 5/10      | 7/10        | 9/10      |
+| Abuse resistance         | 3/10         | 4/10      | 5/10        | 7/10      |
+| Storage security         | 7/10         | 7/10      | 7/10        | 7/10      |
+| Infrastructure           | 8/10         | 8/10      | 8/10        | 8/10      |
+| **Overall**              | **5.5–6/10** | **~7/10** | **~7.5/10** | **~8/10** |
+
 ## Suggested verification tests after PR 1
 
 - `firestore.rules.test.ts` emulator suite adds:
