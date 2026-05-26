@@ -66,6 +66,20 @@ vi.mock("@/lib/auth", () => ({
   }),
 }));
 
+// PR-J chunk B3b — ProgrammeRunSection now consumes useClaimMap,
+// which calls useProgram + Firestore onSnapshot. Tests render the
+// component without a Firestore environment, so we mock useClaimMap
+// to return an empty claim map. The hook surface is already covered
+// by src/hooks/__tests__/useClaimMap.test.ts.
+vi.mock("@/hooks/useClaimMap", () => ({
+  useClaimMap: () => ({
+    claimMap: new Map(),
+    unclaimedByDate: new Map(),
+    today: "2026-05-12",
+    loading: false,
+  }),
+}));
+
 // PR-4: ProgrammeRunSection now consumes useRunningStats. Mock it
 // so tests don't try to hit Firestore. Per-test override via
 // `mockRecentRuns` / `mockWeeklyData` for the freeform-hero cases.
