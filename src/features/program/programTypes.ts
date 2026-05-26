@@ -179,8 +179,10 @@ export type RunPlannedType = "easy" | "tempo" | "intervals" | "long" | "race";
  *    skipped → completed_* (without explicit reconciliation)
  *
  *  Note on "missing" statuses:
- *    "missed" is DERIVED at view time, not stored. A run is "missed"
- *      when `date < localToday && status === "planned" && !linkedRunId`.
+ *    "missed" is DERIVED at view time, not stored. PR-J Q1 + Q5
+ *      refined: a runDay is missed when it has no claim in the
+ *      computed claim map AND date < today − 7d (Q5 P83 derived
+ *      `expired` threshold). See `scheduledRunCompletion.ts`.
  *    "moved" is METADATA (movedFromDate/movedToDate), not a status —
  *      a moved run stays `status: "planned"` on its new date.
  *    "freeform_extra" lives on the saved RUN DOCUMENT's planMetadata,
@@ -263,8 +265,12 @@ export interface ScheduledRunDay {
    *  `scheduledRunStatus.ts` per Q2 P27's derivation formula. */
   status?: ScheduledRunStatus | LegacyScheduledRunStatus;
 
-  /** Reference to the saved run document once executed. */
-  linkedRunId?: string;
+  // PR-J Q1 P9: `linkedRunId` removed. The "navigation hook from
+  // completed runDay → saved run" the field was reserved for is
+  // deferred until needed; the link is recomputable at click time
+  // from (runDay.date, runDay.templateId) → saved-run lookup.
+  // Existing docs may carry the field; the type widening allows
+  // extra unread properties, so no runtime cleanup is needed.
 
   /** Original scheduled date before user moved this instance. The
    *  `id` is preserved across moves; `date` + `dayIndex` update.
@@ -325,27 +331,25 @@ const LEGAL_TRANSITIONS: Record<
   AnyScheduledRunStatus,
   AnyScheduledRunStatus[]
 > = {
-  planned: [
-    "completed_exact",
-    "completed_modified",
-    "completed_late",
-    "skipped",
-    "race_no_show",
-  ],
-  // PR-D: race_no_show is recoverable. The auto-transition in
-  // useProgram's load effect writes it as an inferred state when
-  // race day passes without a logged run; if the user later logs
-  // the race (via the scheduled-URL flow or RunSummary's
-  // reconciliation), the slot transitions to completed_*.
-  race_no_show: ["completed_exact", "completed_modified", "completed_late"],
-  // Hard terminal states — no legal outgoing transitions.
-  // PR-J Q1 P7 + Q2 P15 will add skipped → planned and
-  // race_no_show → planned in PR-J itself; the precursor doesn't
-  // touch the table semantically.
+  // PR-J Q2 chunk B2: completeRunDay deleted, so planned no longer
+  // transitions to completed_* via the writer (completion is now
+  // derived per Q1 P27). Legacy completed_* values remain in the
+  // table as terminal so existing data type-checks; new writers
+  // can only produce active-union values.
+  planned: ["skipped", "race_no_show"],
+  // PR-D: race_no_show is recoverable.
+  // PR-J Q2 P15: race_no_show → planned is the reversal path when
+  // a matching saved run lands post-no-show. The race-no-show
+  // effect performs this transition automatically (chunk B4).
+  race_no_show: ["planned"],
+  // PR-J Q1 P7: skipped is reversible — a user who manual-completes
+  // a skipped slot follows the two-step transition
+  // skipped → planned → manualCompletions[id] (Q2 P20).
+  skipped: ["planned"],
+  // Hard terminal — legacy values stay terminal forever.
   completed_exact: [],
   completed_modified: [],
   completed_late: [],
-  skipped: [],
 };
 
 /** Returns true iff `to` is a legal transition from `from`.
