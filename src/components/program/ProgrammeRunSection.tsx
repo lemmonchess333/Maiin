@@ -50,21 +50,36 @@ import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
 import { useAuth } from "@/lib/auth";
-import { DAY_LABELS, getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
+import {
+  DAY_LABELS,
+  getWeeklyRunTarget,
+  runTargetWriteFields,
+} from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { getRacePhaseLabel, isCurrentWeekInTaper } from "@/features/program/runScheduler";
+import {
+  getRacePhaseLabel,
+  isCurrentWeekInTaper,
+} from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
 import { Banner } from "@/components/ui/Banner";
-import { localDateString, localWeekKey, addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  addLocalDays,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
-import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 
 type RunMode = "freeform" | "structured" | "race_prep";
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
@@ -84,7 +99,9 @@ interface ProgrammeRunSectionProps {
    *  regardless. */
   runsTarget: number;
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
-  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
+   *  manualCompletions map; derivation surfaces ✅. */
+  markManualComplete: (runDayId: string) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
   /** PR-B: inline mode-change handler dispatches writes directly.
@@ -92,7 +109,9 @@ interface ProgrammeRunSectionProps {
    *  — its overrides arg lets us pass the user's confirmed
    *  weekSchedule + target instead of reading from a stale auth
    *  closure (PR-0b-ii). */
-  refreshRunSchedule: (overrides?: RefreshRunScheduleOverrides) => Promise<void>;
+  refreshRunSchedule: (
+    overrides?: RefreshRunScheduleOverrides
+  ) => Promise<void>;
   /** PR-C: atomic writer to exit the recovery phase early. Clears
    *  `runPlan.phase` + `runPlan.recoveryEndDate` AND flips
    *  `profile.runMode` to "structured" in a coordinated pair of
@@ -106,7 +125,7 @@ export default function ProgrammeRunSection({
   programState,
   runsTarget,
   overrideRunDay,
-  completeRunDay,
+  markManualComplete,
   skipRunDay,
   skipWorkoutDay,
   refreshRunSchedule,
@@ -144,12 +163,16 @@ export default function ProgrammeRunSection({
   // a goal (the malformed state PR-0d's stub used to handle). For
   // any other entry path the user taps the Race Prep chip first.
   const [showRaceForm, setShowRaceForm] = useState<boolean>(
-    () => (profile.runMode ?? "freeform") === "race_prep" && !programState?.runPlan?.raceGoal,
+    () =>
+      (profile.runMode ?? "freeform") === "race_prep" &&
+      !programState?.runPlan?.raceGoal
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    (profile.raceGoal?.distance as RaceDistance) ?? "10k",
+    (profile.raceGoal?.distance as RaceDistance) ?? "10k"
   );
-  const [raceTargetDate, setRaceTargetDate] = useState<string>(profile.raceGoal?.targetDate ?? "");
+  const [raceTargetDate, setRaceTargetDate] = useState<string>(
+    profile.raceGoal?.targetDate ?? ""
+  );
   const [savingRaceGoal, setSavingRaceGoal] = useState(false);
 
   // Run7 Q10 — per-week dismissibility for action-prompting banners.
@@ -161,14 +184,16 @@ export default function ProgrammeRunSection({
   // the race is still elapsed.
   const thisWeekKeyForDismissal = useMemo(() => localWeekKey(new Date()), []);
   const raceElapsedDismissKey = `tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
-  const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(raceElapsedDismissKey) === "1";
-    } catch {
-      return false;
+  const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.localStorage.getItem(raceElapsedDismissKey) === "1";
+      } catch {
+        return false;
+      }
     }
-  });
+  );
   function dismissRaceElapsedBanner() {
     setRaceElapsedDismissed(true);
     try {
@@ -193,7 +218,10 @@ export default function ProgrammeRunSection({
   // Memoised: `programState?.runDays ?? []` produces a fresh array
   // reference on every render when the field is undefined, which
   // would invalidate the downstream useMemo deps.
-  const runDays = useMemo(() => programState?.runDays ?? [], [programState?.runDays]);
+  const runDays = useMemo(
+    () => programState?.runDays ?? [],
+    [programState?.runDays]
+  );
 
   // Race-elapsed is a cheap render-time derivation; not memoised
   // because the comparison against "now" is impure and useMemo
@@ -224,12 +252,20 @@ export default function ProgrammeRunSection({
   const raceDayRunDay = raceGoal
     ? runDays.find((rd) => rd.date === raceGoal.targetDate)
     : null;
-  const raceDayStatus = raceDayRunDay ? getScheduledRunStatus(raceDayRunDay) : null;
+  const raceDayStatus = raceDayRunDay
+    ? getScheduledRunStatus(raceDayRunDay)
+    : null;
   const phase = programState?.runPlan?.phase;
   const recoveryEndDate = programState?.runPlan?.recoveryEndDate;
   const todayKeyDerivation = localDateString(new Date());
-  const inRecovery = phase === "recovery" && !!recoveryEndDate && todayKeyDerivation < recoveryEndDate;
-  const recoveryEnded = phase === "recovery" && !!recoveryEndDate && todayKeyDerivation >= recoveryEndDate;
+  const inRecovery =
+    phase === "recovery" &&
+    !!recoveryEndDate &&
+    todayKeyDerivation < recoveryEndDate;
+  const recoveryEnded =
+    phase === "recovery" &&
+    !!recoveryEndDate &&
+    todayKeyDerivation >= recoveryEndDate;
   const isNoShow = raceDayStatus === "race_no_show";
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
@@ -245,8 +281,9 @@ export default function ProgrammeRunSection({
   const nextStartable: ScheduledRunDay | null = useMemo(() => {
     if (currentMode === "freeform") return null;
     return (
-      runDays.find((rd) => isScheduledRunStartable(getScheduledRunStatus(rd))) ??
-      null
+      runDays.find((rd) =>
+        isScheduledRunStartable(getScheduledRunStatus(rd))
+      ) ?? null
     );
   }, [currentMode, runDays]);
 
@@ -259,15 +296,15 @@ export default function ProgrammeRunSection({
   const nextStartUrl = useMemo(() => {
     if (!nextStartable) return null;
     const params: string[] = [];
-    if (nextStartableTemplate) params.push("template=" + nextStartableTemplate.id);
-    if (nextStartable.id) params.push("scheduledRunId=" + encodeURIComponent(nextStartable.id));
+    if (nextStartableTemplate)
+      params.push("template=" + nextStartableTemplate.id);
+    if (nextStartable.id)
+      params.push("scheduledRunId=" + encodeURIComponent(nextStartable.id));
     return "/run" + (params.length ? "?" + params.join("&") : "");
   }, [nextStartable, nextStartableTemplate]);
 
   const allRunsDone =
-    currentMode !== "freeform" &&
-    runDays.length > 0 &&
-    !nextStartable;
+    currentMode !== "freeform" && runDays.length > 0 && !nextStartable;
 
   // PR-F: temporal-anchored label for the "Next planned run" card.
   // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
@@ -302,7 +339,11 @@ export default function ProgrammeRunSection({
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
 
   const modeLabel =
-    currentMode === "race_prep" ? "Race prep" : currentMode === "structured" ? "Structured" : "Freeform";
+    currentMode === "race_prep"
+      ? "Race prep"
+      : currentMode === "structured"
+        ? "Structured"
+        : "Freeform";
 
   // PR-B1: composing handler — the single safe path for inline
   // mode changes. Sequences updateProfile (mode + mode-specific
@@ -356,12 +397,20 @@ export default function ProgrammeRunSection({
         try {
           await refreshRunSchedule({ weekSchedule: profile.weekSchedule });
         } catch (e) {
-          logger.warn("[handleModeChange] freeform refresh failed once, retrying", e);
+          logger.warn(
+            "[handleModeChange] freeform refresh failed once, retrying",
+            e
+          );
           try {
             await refreshRunSchedule({ weekSchedule: profile.weekSchedule });
           } catch (e2) {
-            logger.error("[handleModeChange] freeform refresh failed twice", e2);
-            setModeError("Mode changed, but the run schedule didn't refresh. Try Change plan if it stays stuck.");
+            logger.error(
+              "[handleModeChange] freeform refresh failed twice",
+              e2
+            );
+            setModeError(
+              "Mode changed, but the run schedule didn't refresh. Try Change plan if it stays stuck."
+            );
           }
         }
       } else {
@@ -373,7 +422,7 @@ export default function ProgrammeRunSection({
             runMode: "structured",
             ...runTargetWriteFields(target),
           },
-          { throwOnError: true },
+          { throwOnError: true }
         );
         try {
           await refreshRunSchedule({
@@ -381,15 +430,23 @@ export default function ProgrammeRunSection({
             weeklyRunDaysTarget: target,
           });
         } catch (e) {
-          logger.warn("[handleModeChange] structured refresh failed once, retrying", e);
+          logger.warn(
+            "[handleModeChange] structured refresh failed once, retrying",
+            e
+          );
           try {
             await refreshRunSchedule({
               weekSchedule: profile.weekSchedule,
               weeklyRunDaysTarget: target,
             });
           } catch (e2) {
-            logger.error("[handleModeChange] structured refresh failed twice", e2);
-            setModeError("Mode changed, but the run schedule didn't refresh. Try Change plan if it stays stuck.");
+            logger.error(
+              "[handleModeChange] structured refresh failed twice",
+              e2
+            );
+            setModeError(
+              "Mode changed, but the run schedule didn't refresh. Try Change plan if it stays stuck."
+            );
           }
         }
       }
@@ -402,7 +459,9 @@ export default function ProgrammeRunSection({
       // by throwOnError.
       logger.error("[handleModeChange] updateProfile failed", e);
       setIntentMode(null);
-      setModeError("Couldn't change mode. Check your connection and try again.");
+      setModeError(
+        "Couldn't change mode. Check your connection and try again."
+      );
     } finally {
       setModeChangePending(false);
     }
@@ -437,9 +496,13 @@ export default function ProgrammeRunSection({
       toast.error("Target date is in the past", { id: "race-goal" });
       return;
     }
-    const weeksAway = Math.round((target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const weeksAway = Math.round(
+      (target.getTime() - now.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
     if (weeksAway < 3) {
-      toast.error("Target date must be at least 3 weeks away", { id: "race-goal" });
+      toast.error("Target date must be at least 3 weeks away", {
+        id: "race-goal",
+      });
       return;
     }
     setSavingRaceGoal(true);
@@ -455,7 +518,7 @@ export default function ProgrammeRunSection({
         // auth.tsx one. Also short-circuits refreshRunSchedule below
         // — without throwing, a failed runMode write would still let
         // the plan regen run against the OLD runMode. See Run7 Q9.
-        { throwOnError: true },
+        { throwOnError: true }
       );
       const target3 = getWeeklyRunTarget(profile) || 3;
       try {
@@ -472,14 +535,18 @@ export default function ProgrammeRunSection({
           });
         } catch (e2) {
           logger.error("[handleSaveRaceGoal] refresh failed twice", e2);
-          setModeError("Race goal saved, but the plan didn't regenerate. Try Change plan if it stays stuck.");
+          setModeError(
+            "Race goal saved, but the plan didn't regenerate. Try Change plan if it stays stuck."
+          );
         }
       }
       toast.success("Race plan created!", { id: "race-goal" });
       setShowRaceForm(false);
     } catch (e) {
       logger.error("[handleSaveRaceGoal] updateProfile failed", e);
-      toast.error("Couldn't save your race goal. Please try again.", { id: "race-goal" });
+      toast.error("Couldn't save your race goal. Please try again.", {
+        id: "race-goal",
+      });
     } finally {
       setSavingRaceGoal(false);
     }
@@ -511,31 +578,39 @@ export default function ProgrammeRunSection({
       {/* Warning: race day has passed (legacy elapsed fallback).
           Dismissible per-week — once the user acknowledges, it stays
           hidden until Monday rollover when the dismissal key resets. */}
-      {currentMode === "race_prep" && raceGoal && raceElapsed
-        && !inRecovery && !recoveryEnded && !isNoShow
-        && !raceElapsedDismissed && (
-        <Banner
-          variant="warning"
-          title="Race day has passed"
-          description={
-            <>
-              {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Switch to structured or set a new race goal via the chip row.
-            </>
-          }
-          onDismiss={dismissRaceElapsedBanner}
-          dismissLabel="Dismiss race elapsed banner"
-        />
-      )}
+      {currentMode === "race_prep" &&
+        raceGoal &&
+        raceElapsed &&
+        !inRecovery &&
+        !recoveryEnded &&
+        !isNoShow &&
+        !raceElapsedDismissed && (
+          <Banner
+            variant="warning"
+            title="Race day has passed"
+            description={
+              <>
+                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}.
+                Switch to structured or set a new race goal via the chip row.
+              </>
+            }
+            onDismiss={dismissRaceElapsedBanner}
+            dismissLabel="Dismiss race elapsed banner"
+          />
+        )}
 
       {/* Warning: plan compressed (state-derived — visibility tracks
           runPlan.compressed; user can't dismiss). */}
-      {currentMode === "race_prep" && raceGoal && !raceElapsed && raceCompressed && (
-        <Banner
-          variant="warning"
-          title="Plan is compressed"
-          description="Your target date is sooner than the ideal build for this distance, so we've trimmed interval work and shortened the long-run progression to keep the plan safe."
-        />
-      )}
+      {currentMode === "race_prep" &&
+        raceGoal &&
+        !raceElapsed &&
+        raceCompressed && (
+          <Banner
+            variant="warning"
+            title="Plan is compressed"
+            description="Your target date is sooner than the ideal build for this distance, so we've trimmed interval work and shortened the long-run progression to keep the plan safe."
+          />
+        )}
 
       {/* Warning: race-day no-show. Hosts critical actions (Log race
           now / Set next race / Switch to structured) so the banner
@@ -552,7 +627,9 @@ export default function ProgrammeRunSection({
                 onClick={() => {
                   if (raceDayRunDay?.id) {
                     haptic();
-                    navigate(`/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`);
+                    navigate(
+                      `/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`
+                    );
                   }
                 }}
                 className="w-full py-2 rounded-lg text-xs font-bold text-white"
@@ -592,7 +669,10 @@ export default function ProgrammeRunSection({
           action={
             <button
               type="button"
-              onClick={() => { haptic(); navigate("/settings/training"); }}
+              onClick={() => {
+                haptic();
+                navigate("/settings/training");
+              }}
               className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
             >
               Configure plan
@@ -683,11 +763,17 @@ export default function ProgrammeRunSection({
                   "flex-1 min-h-[44px] px-3 rounded-lg text-xs font-medium",
                   "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
                   isSelected ? "text-white" : "bg-muted text-muted-foreground",
-                  modeChangePending && !isSelected && "opacity-40 cursor-not-allowed",
+                  modeChangePending &&
+                    !isSelected &&
+                    "opacity-40 cursor-not-allowed"
                 )}
-                style={isSelected ? { backgroundColor: THEME.running } : undefined}
+                style={
+                  isSelected ? { backgroundColor: THEME.running } : undefined
+                }
               >
-                {mode === "race_prep" ? "Race Prep" : mode.charAt(0).toUpperCase() + mode.slice(1)}
+                {mode === "race_prep"
+                  ? "Race Prep"
+                  : mode.charAt(0).toUpperCase() + mode.slice(1)}
               </button>
             );
           })}
@@ -728,7 +814,9 @@ export default function ProgrammeRunSection({
             </span>
           </div>
           <fieldset>
-            <legend className="text-xs text-muted-foreground uppercase tracking-wider">Distance</legend>
+            <legend className="text-xs text-muted-foreground uppercase tracking-wider">
+              Distance
+            </legend>
             <div className="flex gap-1.5 mt-1">
               {(["5k", "10k", "half", "marathon"] as const).map((d) => (
                 <button
@@ -739,10 +827,14 @@ export default function ProgrammeRunSection({
                     "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
                     raceDistance === d
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
-                  {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
+                  {d === "half"
+                    ? "Half"
+                    : d === "marathon"
+                      ? "Full"
+                      : d.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -776,7 +868,11 @@ export default function ProgrammeRunSection({
               disabled={savingRaceGoal || !raceTargetDate}
               className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
             >
-              {savingRaceGoal ? "Creating plan..." : profile.raceGoal ? "Save race goal" : "Create race plan"}
+              {savingRaceGoal
+                ? "Creating plan..."
+                : profile.raceGoal
+                  ? "Save race goal"
+                  : "Create race plan"}
             </button>
           </div>
         </div>
@@ -806,14 +902,24 @@ export default function ProgrammeRunSection({
               className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               style={{ backgroundColor: `${THEME.running}1A` }}
             >
-              <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
+              <Footprints
+                className="w-5 h-5"
+                style={{ color: THEME.running }}
+              />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5" style={{ color: THEME.running }}>
+              <p
+                className="text-xs font-semibold mb-0.5"
+                style={{ color: THEME.running }}
+              >
                 Start a run
               </p>
-              <p className="text-sm font-bold text-foreground">Pick your pace today</p>
-              <p className="text-micro text-muted-foreground">Easy, tempo, intervals or just go</p>
+              <p className="text-sm font-bold text-foreground">
+                Pick your pace today
+              </p>
+              <p className="text-micro text-muted-foreground">
+                Easy, tempo, intervals or just go
+              </p>
             </div>
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm shrink-0"
@@ -832,8 +938,14 @@ export default function ProgrammeRunSection({
               No spinner is shown over the Start CTA above. */}
           {runsLoading ? (
             <div className="space-y-1.5">
-              <div className="h-3.5 rounded bg-muted/60 animate-pulse" style={{ width: "70%" }} />
-              <div className="h-3.5 rounded bg-muted/60 animate-pulse" style={{ width: "55%" }} />
+              <div
+                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                style={{ width: "70%" }}
+              />
+              <div
+                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                style={{ width: "55%" }}
+              />
             </div>
           ) : runs.length === 0 ? (
             <p className="text-xs text-muted-foreground">
@@ -855,7 +967,9 @@ export default function ProgrammeRunSection({
                     </>
                   )}
                   {" · "}
-                  {formatDistanceToNowStrict(lastRun.completedAt, { addSuffix: true })}
+                  {formatDistanceToNowStrict(lastRun.completedAt, {
+                    addSuffix: true,
+                  })}
                 </p>
               )}
               {thisWeek && (
@@ -901,12 +1015,16 @@ export default function ProgrammeRunSection({
           inside the operational card below still shows "Taper" as the
           phase label — this header acts as the prominent surface
           callout, the row stays as the at-a-glance week marker. */}
-      {currentMode === "race_prep" && raceGoal && !raceElapsed && !showRaceForm
-        && isCurrentWeekInTaper(
+      {currentMode === "race_prep" &&
+        raceGoal &&
+        !raceElapsed &&
+        !showRaceForm &&
+        isCurrentWeekInTaper(
           programState?.runPlan?.currentWeek,
           programState?.runPlan?.totalWeeks,
-          raceGoal.distance as RaceDistance,
-        ) && (() => {
+          raceGoal.distance as RaceDistance
+        ) &&
+        (() => {
           const daysToRace = (() => {
             try {
               const target = parseLocalDate(raceGoal.targetDate);
@@ -914,8 +1032,8 @@ export default function ProgrammeRunSection({
               return Math.max(
                 0,
                 Math.round(
-                  (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
-                ),
+                  (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
+                )
               );
             } catch {
               return null;
@@ -942,60 +1060,73 @@ export default function ProgrammeRunSection({
           );
         })()}
 
-      {currentMode === "race_prep" && raceGoal && !raceElapsed && !showRaceForm && (
-        <div className="p-3 rounded-xl bg-card space-y-2">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-foreground">
-              <span className="text-muted-foreground">Race goal: </span>
-              <span className="font-medium">
-                {raceGoal.distance.toUpperCase()}
-                {" · "}
-                {(() => {
-                  try {
-                    return format(parseLocalDate(raceGoal.targetDate), "d MMM yyyy");
-                  } catch {
-                    return raceGoal.targetDate;
-                  }
-                })()}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowRaceForm(true)}
-              className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
-              aria-label="Edit race goal"
-            >
-              Edit
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          {programState?.runPlan?.totalWeeks && programState.runPlan.currentWeek != null && (
-            <>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground uppercase tracking-wider">Week</span>
-                <span className="text-sm font-medium text-foreground">
-                  {programState.runPlan.currentWeek + 1} / {programState.runPlan.totalWeeks}
+      {currentMode === "race_prep" &&
+        raceGoal &&
+        !raceElapsed &&
+        !showRaceForm && (
+          <div className="p-3 rounded-xl bg-card space-y-2">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm text-foreground">
+                <span className="text-muted-foreground">Race goal: </span>
+                <span className="font-medium">
+                  {raceGoal.distance.toUpperCase()}
                   {" · "}
-                  {getRacePhaseLabel(
-                    programState.runPlan.currentWeek,
-                    programState.runPlan.totalWeeks,
-                    programState.runPlan.raceGoal!.distance as RaceDistance,
-                  )}
+                  {(() => {
+                    try {
+                      return format(
+                        parseLocalDate(raceGoal.targetDate),
+                        "d MMM yyyy"
+                      );
+                    } catch {
+                      return raceGoal.targetDate;
+                    }
+                  })()}
                 </span>
-              </div>
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{
-                    width:
-                      ((programState.runPlan.currentWeek + 1) / programState.runPlan.totalWeeks) * 100 + "%",
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowRaceForm(true)}
+                className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
+                aria-label="Edit race goal"
+              >
+                Edit
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {programState?.runPlan?.totalWeeks &&
+              programState.runPlan.currentWeek != null && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                      Week
+                    </span>
+                    <span className="text-sm font-medium text-foreground">
+                      {programState.runPlan.currentWeek + 1} /{" "}
+                      {programState.runPlan.totalWeeks}
+                      {" · "}
+                      {getRacePhaseLabel(
+                        programState.runPlan.currentWeek,
+                        programState.runPlan.totalWeeks,
+                        programState.runPlan.raceGoal!.distance as RaceDistance
+                      )}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{
+                        width:
+                          ((programState.runPlan.currentWeek + 1) /
+                            programState.runPlan.totalWeeks) *
+                            100 +
+                          "%",
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+          </div>
+        )}
 
       {/* ── Next planned run (structured + race_prep with goal) ──
           Same URL pattern as RunCTACard / trainingResolver.startUrl.
@@ -1025,7 +1156,10 @@ export default function ProgrammeRunSection({
             <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold mb-0.5" style={{ color: THEME.running }}>
+            <p
+              className="text-xs font-semibold mb-0.5"
+              style={{ color: THEME.running }}
+            >
               Next · {nextStartableLabel}
             </p>
             <p className="text-sm font-bold text-foreground truncate">
@@ -1083,7 +1217,10 @@ export default function ProgrammeRunSection({
       <div className="flex justify-end pt-2 border-t border-border/30">
         <button
           type="button"
-          onClick={() => { haptic(); navigate("/settings/training"); }}
+          onClick={() => {
+            haptic();
+            navigate("/settings/training");
+          }}
           className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
         >
           Change plan
@@ -1099,11 +1236,10 @@ export default function ProgrammeRunSection({
         profile={profile}
         programState={programState}
         overrideRunDay={overrideRunDay}
-        completeRunDay={completeRunDay}
+        markManualComplete={markManualComplete}
         skipRunDay={skipRunDay}
         skipWorkoutDay={skipWorkoutDay}
       />
     </section>
   );
 }
-

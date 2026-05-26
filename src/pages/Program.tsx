@@ -108,7 +108,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     viewedWorkouts,
     viewedWeekNumber,
     overrideRunDay,
-    completeRunDay,
+    markManualComplete,
     skipRunDay,
     refreshRunSchedule,
     skipRecoveryEarly,
@@ -813,7 +813,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             programState={programState}
             runsTarget={runsTarget}
             overrideRunDay={overrideRunDay}
-            completeRunDay={completeRunDay}
+            markManualComplete={markManualComplete}
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
             refreshRunSchedule={refreshRunSchedule}
