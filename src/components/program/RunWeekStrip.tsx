@@ -31,10 +31,7 @@ import { useMemo } from "react";
 import { Check, ChevronsRight, AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import {
-  DAY_LABELS,
-  DAY_LABELS_SHORT,
-} from "@/lib/scheduleUtils";
+import { DAY_LABELS, DAY_LABELS_SHORT } from "@/lib/scheduleUtils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   addLocalDays,
@@ -43,10 +40,21 @@ import {
   parseLocalDate,
 } from "@/lib/dateHelpers";
 import { getScheduledRunStatus } from "@/lib/scheduledRunStatus";
+import {
+  isRunDayComplete,
+  type ClaimState,
+} from "@/lib/scheduledRunCompletion";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
 interface RunWeekStripProps {
   runDays: ScheduledRunDay[];
+  /** PR-J Q3 chunk B3b — derived completion source of truth. The
+   *  legacy `runDay.status === "completed_*"` read is gone; ✅
+   *  surfaces when `isRunDayComplete(runDay.id, claimMap)` returns
+   *  true (manual completion, saved-run claim, or legacy doc with
+   *  status="completed_*" — the helper unifies all three). Wired
+   *  via `useClaimMap` in the parent (ProgrammeRunSection). */
+  claimMap: Map<string, ClaimState>;
   /** Tap handler — receives the YYYY-MM-DD date for that column.
    *  Caller routes to DayActionSheet. */
   onDayTap: (dateKey: string) => void;
@@ -65,7 +73,11 @@ function templateNameFor(templateId: string | undefined): string {
   return RUN_TEMPLATES.find((t) => t.id === templateId)?.name ?? templateId;
 }
 
-export default function RunWeekStrip({ runDays, onDayTap }: RunWeekStripProps) {
+export default function RunWeekStrip({
+  runDays,
+  claimMap,
+  onDayTap,
+}: RunWeekStripProps) {
   const columns = useMemo<ColumnData[]>(() => {
     // Anchor on the same week as the runDays array (so the strip
     // tracks "the week the user's plan is currently rendering for")
@@ -79,7 +91,7 @@ export default function RunWeekStrip({ runDays, onDayTap }: RunWeekStripProps) {
       const dateKey = localDateString(date);
       const runDay = runDays.find((rd) => rd.dayIndex === dayIndex) ?? null;
       const templateName = templateNameFor(
-        runDay?.userOverride ?? runDay?.templateId,
+        runDay?.userOverride ?? runDay?.templateId
       );
       return {
         dayIndex,
@@ -98,10 +110,13 @@ export default function RunWeekStrip({ runDays, onDayTap }: RunWeekStripProps) {
     >
       {columns.map((col) => {
         const status = col.runDay ? getScheduledRunStatus(col.runDay) : null;
-        const isCompleted =
-          status === "completed_exact"
-          || status === "completed_modified"
-          || status === "completed_late";
+        // PR-J Q3 chunk B3b — completion is derived from the claim
+        // map, not from runDay.status. The helper unifies three
+        // completion sources (manual, saved-run-claim, legacy
+        // doc) so this component doesn't care which produced it.
+        const isCompleted = !!(
+          col.runDay?.id && isRunDayComplete(col.runDay.id, claimMap)
+        );
         const isSkipped = status === "skipped";
         const isNoShow = status === "race_no_show";
 
@@ -126,58 +141,55 @@ export default function RunWeekStrip({ runDays, onDayTap }: RunWeekStripProps) {
                 "flex flex-col items-center justify-center gap-0.5",
                 "min-h-[44px] rounded-lg px-1 py-1.5",
                 "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
-                "hover:bg-muted/50",
+                "hover:bg-muted/50"
               )}
             >
-            <span
-              className={cn(
-                "text-[10px] font-semibold uppercase tracking-wide leading-none",
-                col.isToday ? "" : "text-muted-foreground",
-              )}
-              style={col.isToday ? { color: THEME.running } : undefined}
-            >
-              {DAY_LABELS_SHORT[col.dayIndex]}
-            </span>
-            {col.isToday ? (
               <span
-                aria-hidden="true"
-                className="w-1 h-1 rounded-full"
-                style={{ backgroundColor: THEME.running }}
-              />
-            ) : (
-              <span aria-hidden="true" className="w-1 h-1" />
-            )}
-            <span
-              className={cn(
-                "text-[10px] leading-tight max-w-full truncate text-center",
-                isCompleted || isSkipped
-                  ? "line-through text-muted-foreground"
-                  : col.runDay
-                    ? "text-foreground font-medium"
-                    : "text-muted-foreground",
+                className={cn(
+                  "text-[10px] font-semibold uppercase tracking-wide leading-none",
+                  col.isToday ? "" : "text-muted-foreground"
+                )}
+                style={col.isToday ? { color: THEME.running } : undefined}
+              >
+                {DAY_LABELS_SHORT[col.dayIndex]}
+              </span>
+              {col.isToday ? (
+                <span
+                  aria-hidden="true"
+                  className="w-1 h-1 rounded-full"
+                  style={{ backgroundColor: THEME.running }}
+                />
+              ) : (
+                <span aria-hidden="true" className="w-1 h-1" />
               )}
-            >
-              {col.templateName}
-            </span>
-            {isCompleted ? (
-              <Check
-                aria-hidden="true"
-                className="w-3 h-3 text-green-600"
-              />
-            ) : isSkipped ? (
-              <ChevronsRight
-                aria-hidden="true"
-                className="w-3 h-3 text-muted-foreground"
-              />
-            ) : isNoShow ? (
-              <AlertTriangle
-                aria-hidden="true"
-                className="w-3 h-3"
-                style={{ color: THEME.running }}
-              />
-            ) : (
-              <span aria-hidden="true" className="w-3 h-3" />
-            )}
+              <span
+                className={cn(
+                  "text-[10px] leading-tight max-w-full truncate text-center",
+                  isCompleted || isSkipped
+                    ? "line-through text-muted-foreground"
+                    : col.runDay
+                      ? "text-foreground font-medium"
+                      : "text-muted-foreground"
+                )}
+              >
+                {col.templateName}
+              </span>
+              {isCompleted ? (
+                <Check aria-hidden="true" className="w-3 h-3 text-green-600" />
+              ) : isSkipped ? (
+                <ChevronsRight
+                  aria-hidden="true"
+                  className="w-3 h-3 text-muted-foreground"
+                />
+              ) : isNoShow ? (
+                <AlertTriangle
+                  aria-hidden="true"
+                  className="w-3 h-3"
+                  style={{ color: THEME.running }}
+                />
+              ) : (
+                <span aria-hidden="true" className="w-3 h-3" />
+              )}
             </button>
           </li>
         );
