@@ -14,9 +14,13 @@ import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
-import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import {
+  getCompletionKind,
+  type ClaimState,
+} from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 
@@ -221,13 +225,31 @@ export default function DayPeekCard({
                   />
                   <span className="text-foreground">
                     {resolved.run.isCompleted ? (
-                      <span className="inline-flex items-center gap-1">
-                        Run completed
-                        <Check
-                          className="w-3 h-3"
-                          style={{ color: THEME.success }}
-                        />
-                      </span>
+                      // Q2 P24 — distinguish real vs manual ✅. Real /
+                      // legacy show solid green check + "Run completed."
+                      // Manual shows dimmed check + "Marked complete"
+                      // so the user can tell what kind of credit
+                      // landed here without digging into the action
+                      // sheet.
+                      (() => {
+                        const runDayId = resolved.run.runDay?.id;
+                        const completionKind = runDayId
+                          ? getCompletionKind(runDayId, claimMap)
+                          : null;
+                        const isManual = completionKind === "manual";
+                        return (
+                          <span className="inline-flex items-center gap-1">
+                            {isManual ? "Marked complete" : "Run completed"}
+                            <Check
+                              className={cn(
+                                "w-3 h-3",
+                                isManual && "opacity-50"
+                              )}
+                              style={{ color: THEME.success }}
+                            />
+                          </span>
+                        );
+                      })()
                     ) : resolved.run.status === "skipped" ? (
                       <span style={{ color: "hsl(var(--muted-foreground))" }}>
                         Run skipped
