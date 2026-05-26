@@ -1,14 +1,31 @@
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, ClipboardList, Footprints, X, Check, Settings2 } from "lucide-react";
+import {
+  Dumbbell,
+  ClipboardList,
+  Footprints,
+  X,
+  Check,
+  Settings2,
+} from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { IconButton } from "@/components/ui/IconButton";
 
-export default function DayPeekCard({ dateKey, profile, programState, workouts, dailyTotals, onClose, onManage }: {
+export default function DayPeekCard({
+  dateKey,
+  profile,
+  programState,
+  claimMap,
+  workouts,
+  dailyTotals,
+  onClose,
+  onManage,
+}: {
   dateKey: string;
   /** P1-4 / PR-0c: profile + programState replace the previous
    *  `schedule` + `runDays` props. The peek calls the shared
@@ -18,8 +35,22 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
    *  `runDays.find(r => r.dayIndex === dow)` bug). */
   profile: UserProfile | null;
   programState: ProgramState | null;
-  workouts: { exercises?: { sets?: { weightKg?: number; reps?: number }[] }[]; durationMinutes?: number }[];
-  dailyTotals: { calories: number; protein: number; carbs: number; fat: number; mealCount: number };
+  /** PR-J Q3 chunk B3c — derived completion source of truth.
+   *  Forwarded to the resolver so the "Run completed" copy and
+   *  Check icon track manual / saved-run-claim / legacy
+   *  completions uniformly. Wired via `useClaimMap` in Home. */
+  claimMap: Map<string, ClaimState>;
+  workouts: {
+    exercises?: { sets?: { weightKg?: number; reps?: number }[] }[];
+    durationMinutes?: number;
+  }[];
+  dailyTotals: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    mealCount: number;
+  };
   onClose: () => void;
   /** PR-1: opens DayActionSheet for this date. Only rendered as a
    *  secondary CTA when there's actionable training for the day
@@ -32,17 +63,32 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
     profile,
     programState,
     currentWeekKey: localWeekKey(new Date()),
+    claimMap,
   });
   const st = resolved.scheduleType;
   const dayLabel = format(parseLocalDate(dateKey), "EEE d MMM");
-  const typeLabel = st === "lift" ? "Lift day" : st === "run" ? "Run day" : st === "both" ? "Lift + Run day" : "Rest day";
-  const typeColor = st === "lift" ? THEME.lifting : st === "run" ? THEME.running : st === "both" ? THEME.lifting : THEME.textMuted;
+  const typeLabel =
+    st === "lift"
+      ? "Lift day"
+      : st === "run"
+        ? "Run day"
+        : st === "both"
+          ? "Lift + Run day"
+          : "Rest day";
+  const typeColor =
+    st === "lift"
+      ? THEME.lifting
+      : st === "run"
+        ? THEME.running
+        : st === "both"
+          ? THEME.lifting
+          : THEME.textMuted;
   let tonnage = 0;
   let totalMinutes = 0;
-  workouts.forEach(function(w) {
+  workouts.forEach(function (w) {
     totalMinutes += w.durationMinutes || 0;
-    (w.exercises || []).forEach(function(ex) {
-      (ex.sets || []).forEach(function(s) {
+    (w.exercises || []).forEach(function (ex) {
+      (ex.sets || []).forEach(function (s) {
         tonnage += (s.weightKg || 0) * (s.reps || 0);
       });
     });
@@ -51,13 +97,26 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
   const hasM = dailyTotals.mealCount > 0;
   const hasRun = resolved.run.runDay !== null;
   return (
-    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
+      className="overflow-hidden"
+    >
       <div className="pt-1 pb-0.5 px-1">
         <div className="rounded-2xl bg-card px-3 py-1.5 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-foreground">{dayLabel}</span>
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeColor + "18", color: typeColor }}>{typeLabel}</span>
+              <span className="text-xs font-semibold text-foreground">
+                {dayLabel}
+              </span>
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: typeColor + "18", color: typeColor }}
+              >
+                {typeLabel}
+              </span>
             </div>
             <IconButton
               onClick={onClose}
@@ -72,31 +131,40 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
               onManage. Home remains glance-first: this is the only
               affordance that exposes day-level actions; the summary
               rows above stay informational. */}
-          {onManage && (resolved.run.runDay !== null || resolved.lift.workout !== null) && (
-            <button
-              type="button"
-              onClick={() => onManage(dateKey)}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
-            >
-              <Settings2 className="w-3 h-3" />
-              Manage day
-            </button>
-          )}
-          {(hasW || hasM || hasRun) ? (
+          {onManage &&
+            (resolved.run.runDay !== null ||
+              resolved.lift.workout !== null) && (
+              <button
+                type="button"
+                onClick={() => onManage(dateKey)}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
+              >
+                <Settings2 className="w-3 h-3" />
+                Manage day
+              </button>
+            )}
+          {hasW || hasM || hasRun ? (
             <div className="space-y-1 text-xs">
               {hasW && (
                 <div className="flex items-center gap-1.5">
-                  <Dumbbell className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.lifting }} />
+                  <Dumbbell
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: THEME.lifting }}
+                  />
                   <span className="text-foreground font-mono tabular-nums">
                     {workouts.length} session{workouts.length !== 1 ? "s" : ""}
                     {totalMinutes > 0 && (
                       <span className="text-muted-foreground">
-                        {" · "}{totalMinutes} min
+                        {" · "}
+                        {totalMinutes} min
                       </span>
                     )}
                     {tonnage > 0 && (
                       <span className="text-muted-foreground">
-                        {" · "}{tonnage >= 1000 ? (tonnage / 1000).toFixed(1) + "k kg" : Math.round(tonnage) + " kg"}
+                        {" · "}
+                        {tonnage >= 1000
+                          ? (tonnage / 1000).toFixed(1) + "k kg"
+                          : Math.round(tonnage) + " kg"}
                       </span>
                     )}
                   </span>
@@ -104,8 +172,14 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
               )}
               {hasM && (
                 <div className="flex items-center gap-1.5">
-                  <ClipboardList className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.success }} />
-                  <span className="text-foreground font-mono tabular-nums">{dailyTotals.calories.toLocaleString()} cal {"·"} {Math.round(dailyTotals.protein)}g protein</span>
+                  <ClipboardList
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: THEME.success }}
+                  />
+                  <span className="text-foreground font-mono tabular-nums">
+                    {dailyTotals.calories.toLocaleString()} cal {"·"}{" "}
+                    {Math.round(dailyTotals.protein)}g protein
+                  </span>
                 </div>
               )}
               {/* PR-0c: run-day status row. Resolver delivers a
@@ -115,17 +189,27 @@ export default function DayPeekCard({ dateKey, profile, programState, workouts, 
                   "Run scheduled" line for an inherited slot. */}
               {hasRun && (
                 <div className="flex items-center gap-1.5">
-                  <Footprints className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.running }} />
+                  <Footprints
+                    className="w-3.5 h-3.5 shrink-0"
+                    style={{ color: THEME.running }}
+                  />
                   <span className="text-foreground">
                     {resolved.run.isCompleted ? (
                       <span className="inline-flex items-center gap-1">
                         Run completed
-                        <Check className="w-3 h-3" style={{ color: THEME.success }} />
+                        <Check
+                          className="w-3 h-3"
+                          style={{ color: THEME.success }}
+                        />
                       </span>
                     ) : resolved.run.status === "skipped" ? (
-                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Run skipped</span>
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>
+                        Run skipped
+                      </span>
                     ) : resolved.run.status === "race_no_show" ? (
-                      <span style={{ color: "hsl(var(--muted-foreground))" }}>Race day passed</span>
+                      <span style={{ color: "hsl(var(--muted-foreground))" }}>
+                        Race day passed
+                      </span>
                     ) : (
                       <span>Run scheduled</span>
                     )}
