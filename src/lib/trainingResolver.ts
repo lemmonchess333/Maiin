@@ -43,7 +43,6 @@
 import type {
   ProgramState,
   ScheduledRunDay,
-  ScheduledRunStatus,
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { UserProfile } from "@/lib/auth";
@@ -65,6 +64,7 @@ import {
   isScheduledRunStartable,
   isScheduledRunTerminal,
   isScheduledRunCompleted,
+  type AnyScheduledRunStatus,
 } from "@/lib/scheduledRunStatus";
 
 /** Lift-slot status projected from `workout.completed` / `workout.skipped`.
@@ -90,8 +90,14 @@ export interface ResolvedRun {
   /** `"none"` only when there's no matching runDay (no plan, freeform
    *  user, or guarded-fallback gate fired). When a runDay matches,
    *  this is the result of `getScheduledRunStatus` — so a missing-
-   *  status legacy doc still gets a sensible projection. */
-  status: ScheduledRunStatus | "none";
+   *  status legacy doc still gets a sensible projection.
+   *
+   *  PR-J Q8 P102: widened to `AnyScheduledRunStatus | "none"` so
+   *  callers projecting from `getScheduledRunStatus` (which can
+   *  return a legacy value) type-check at the boundary. UI
+   *  consumers that compare against specific statuses can narrow
+   *  via `isLegacyCompleted` for the legacy branch. */
+  status: AnyScheduledRunStatus | "none";
   isTerminal: boolean;
   isStartable: boolean;
   isCompleted: boolean;
@@ -126,7 +132,7 @@ export interface ResolvedTrainingDay {
 export function resolveRunDayForDate(
   dateKey: string,
   runDays: ScheduledRunDay[] | undefined,
-  currentWeekKey: string,
+  currentWeekKey: string
 ): ScheduledRunDay | null {
   if (!runDays || runDays.length === 0) return null;
   const targetDate = parseLocalDate(dateKey);
@@ -141,7 +147,7 @@ export function resolveRunDayForDate(
   // Priority 2 — same-week weekKey + dayIndex. Catches V2-shaped
   // docs that have `weekKey` but no `date` (mid-migration).
   const byWeekKey = runDays.find(
-    (rd) => rd.weekKey === targetWeekKey && rd.dayIndex === targetDow,
+    (rd) => rd.weekKey === targetWeekKey && rd.dayIndex === targetDow
   );
   if (byWeekKey) return byWeekKey;
 
@@ -151,7 +157,7 @@ export function resolveRunDayForDate(
   // window returns null rather than borrowing this-week's status.
   if (targetWeekKey !== currentWeekKey) return null;
   const legacy = runDays.find(
-    (rd) => !rd.date && !rd.weekKey && rd.dayIndex === targetDow,
+    (rd) => !rd.date && !rd.weekKey && rd.dayIndex === targetDow
   );
   return legacy ?? null;
 }
@@ -185,7 +191,7 @@ export function resolveTrainingDayForDate(args: {
       ? profile.weekSchedule
       : generateSchedule(
           profile?.weeklyWorkoutsTarget ?? 3,
-          getWeeklyRunTarget(profile),
+          getWeeklyRunTarget(profile)
         );
   const scheduleType: DayType =
     schedule.find((s) => s.day === dayIndex)?.type ?? "rest";
@@ -218,7 +224,7 @@ export function resolveTrainingDayForDate(args: {
   const runDay = resolveRunDayForDate(
     dateKey,
     programState?.runDays,
-    currentWeekKey,
+    currentWeekKey
   );
   let run: ResolvedRun;
   if (!runDay) {
@@ -235,12 +241,13 @@ export function resolveTrainingDayForDate(args: {
     const status = getScheduledRunStatus(runDay);
     const template =
       RUN_TEMPLATES.find(
-        (t) => t.id === (runDay.userOverride || runDay.templateId),
+        (t) => t.id === (runDay.userOverride || runDay.templateId)
       ) ?? null;
     const startable = isScheduledRunStartable(status);
     const params: string[] = [];
     if (template) params.push("template=" + template.id);
-    if (runDay.id) params.push("scheduledRunId=" + encodeURIComponent(runDay.id));
+    if (runDay.id)
+      params.push("scheduledRunId=" + encodeURIComponent(runDay.id));
     run = {
       runDay,
       template,
@@ -284,7 +291,7 @@ export function resolveTrainingWindow(args: {
         profile: args.profile,
         programState: args.programState,
         currentWeekKey,
-      }),
+      })
     );
   }
   return out;

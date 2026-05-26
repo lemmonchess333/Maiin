@@ -28,8 +28,16 @@
  *   - Eager Cloud Function migration (lazy on read is the v1 strategy)
  */
 
-import type { ProgramState, ScheduledRunDay, ScheduledRunStatus } from "./programTypes";
-import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "./programTypes";
+import type {
+  LegacyScheduledRunStatus,
+  ProgramState,
+  ScheduledRunDay,
+  ScheduledRunStatus,
+} from "./programTypes";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  CURRENT_WEEKSCHEDULE_VERSION,
+} from "./programTypes";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
@@ -86,13 +94,18 @@ interface ProfileLike {
  */
 function migrateScheduledRunDay(
   rd: ScheduledRunDay,
-  weekStartDate: Date,
+  weekStartDate: Date
 ): ScheduledRunDay {
   // ── Shape repair (fill missing fields) ──
   const weekKey = rd.weekKey ?? localWeekKey(weekStartDate);
-  const date = rd.date ?? localDateString(addLocalDays(weekStartDate, rd.dayIndex));
+  const date =
+    rd.date ?? localDateString(addLocalDays(weekStartDate, rd.dayIndex));
   const id =
-    rd.id ?? generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
+    rd.id ??
+    generateScheduledRunId(
+      { dayIndex: rd.dayIndex, templateId: rd.templateId },
+      weekKey
+    );
 
   // ── Status repair ──
   // Default: planned. Promote to completed_exact when legacy
@@ -101,7 +114,10 @@ function migrateScheduledRunDay(
   // default (rather than completed_modified) because we can't
   // know post-hoc whether the user did the planned template;
   // pinning to exact preserves the on-plan rate at migration.
-  const status: ScheduledRunStatus =
+  // PR-J Q8 P102: type accepts both unions — the migration writes
+  // either a fresh "planned" or the legacy "completed_exact"
+  // depending on the pre-status `completed` boolean.
+  const status: ScheduledRunStatus | LegacyScheduledRunStatus =
     rd.status ?? (rd.completed ? "completed_exact" : "planned");
 
   // ── Semantic repair: completed ↔ status alignment ──
@@ -158,7 +174,7 @@ function migrateScheduledRunDay(
  */
 export function migrateProgramState(
   state: ProgramState,
-  weekStart: string = localWeekKey(),
+  weekStart: string = localWeekKey()
 ): ProgramState {
   // Defensive normalisation: callers may pass today's date
   // (mid-week). We always want the Sunday on or before so derived
@@ -171,7 +187,7 @@ export function migrateProgramState(
 
   const runDays = state.runDays ?? [];
   const migratedRunDays = runDays.map((rd) =>
-    migrateScheduledRunDay(rd, weekStartDate),
+    migrateScheduledRunDay(rd, weekStartDate)
   );
 
   // Reference-equality check on every runDay — true only when
@@ -180,7 +196,8 @@ export function migrateProgramState(
   // how we keep the returned reference === input when nothing
   // needs repair.
   const runDaysChanged = migratedRunDays.some((rd, i) => rd !== runDays[i]);
-  const versionChanged = state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
+  const versionChanged =
+    state.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION;
 
   if (!runDaysChanged && !versionChanged) {
     return state;
@@ -208,7 +225,7 @@ export function migrateProgramState(
  * weekly structure to render against.
  */
 export function backfillWeekScheduleIfMissing(
-  profile: ProfileLike,
+  profile: ProfileLike
 ): Partial<ProfileLike> | null {
   // Already at current version with a structurally valid schedule
   // — no work. `isValidWeekSchedule` is stricter than
@@ -225,8 +242,7 @@ export function backfillWeekScheduleIfMissing(
   // Resolve the run-day target via the existing two-field convention
   // (matches scheduleUtils.getWeeklyRunTarget logic).
   const liftDays = profile.weeklyWorkoutsTarget ?? 3;
-  const runDays =
-    profile.weeklyRunDaysTarget ?? profile.weeklyRunsTarget ?? 0;
+  const runDays = profile.weeklyRunDaysTarget ?? profile.weeklyRunsTarget ?? 0;
 
   const weekSchedule = generateSchedule(liftDays, runDays);
 
