@@ -23,6 +23,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
+const socialCounters = require("./lib/socialCounters");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -3290,4 +3291,252 @@ exports.resolveReport = functions
 
     await batch.commit();
     return { ok: true };
+  });
+
+// ══════════════════════════════════════════════
+// SOCIAL COUNTERS — 2026-05-26 audit PR 2
+//
+// Closes findings #2 + #5. Pre-PR-2, kudosCount / commentCount /
+// memberCount were client-writable via direct Firestore updateDoc.
+// `affectedKeys().hasOnly([...])` in the rules restricted WHICH
+// fields could change but not the VALUES — any authed user could
+// set a counter to 999999. Post-PR-2 those fields are denied at
+// the rules layer; mutations route through these callables, which
+// flip the counter and the underlying member/kudos/comment doc in
+// one Firestore transaction.
+// ══════════════════════════════════════════════
+
+exports.toggleKudosCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const activityId = data && data.activityId;
+    if (typeof activityId !== "string" || !activityId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock. A user mid-deletion cannot
+    // mutate kudos on other users' activities on the way out — the
+    // counter+sub-doc write would leak past the cascade.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "toggleKudos",
+      30,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many kudos updates. Slow down."
+      );
+    }
+    try {
+      const result = await socialCounters.toggleKudos({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      return result;
+    } catch (err) {
+      functions.logger.warn("toggleKudosCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Kudos toggle failed."
+      );
+    }
+  });
+
+exports.addCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { activityId, text, authorName, authorPhotoURL } = data || {};
+    if (typeof activityId !== "string" || !activityId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock — deleting users cannot
+    // post new comments mid-cascade.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "addComment",
+      20,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many comments. Slow down."
+      );
+    }
+    try {
+      const result = await socialCounters.addComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        text,
+        authorName,
+        authorPhotoURL,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      return result;
+    } catch (err) {
+      functions.logger.warn("addCommentCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Comment create failed."
+      );
+    }
+  });
+
+exports.deleteCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { activityId, commentId } = data || {};
+    if (
+      typeof activityId !== "string" ||
+      !activityId.trim() ||
+      typeof commentId !== "string" ||
+      !commentId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId + commentId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock — author-checked delete still
+    // needs the freeze gate; the cascade will tear down the user's
+    // comments in Phase D and a mid-cascade self-delete would race.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    try {
+      await socialCounters.deleteComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        increment: admin.firestore.FieldValue.increment,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("deleteCommentCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        error: err && err.message,
+      });
+      // "not authorized" → permission-denied; other errors →
+      // failed-precondition.
+      const isAuthz = err && /not authorized/.test(err.message || "");
+      throw new functions.https.HttpsError(
+        isAuthz ? "permission-denied" : "failed-precondition",
+        (err && err.message) || "Comment delete failed."
+      );
+    }
+  });
+
+exports.setCrewMembershipCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { crewId, action, displayName } = data || {};
+    if (
+      typeof crewId !== "string" ||
+      !crewId.trim() ||
+      (action !== "join" && action !== "leave")
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "crewId + action required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock. Replaces the rule-layer
+    // freeze that previously lived on /groups/{crewId}/members/{userId}
+    // (now `write: if false` — server-only). The cascade clears crew
+    // memberships in Phase D; a mid-cascade write here would race.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "setCrewMembership",
+      10,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many crew membership changes. Slow down."
+      );
+    }
+    try {
+      await socialCounters.setCrewMembership({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        crewId,
+        action,
+        displayName,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("setCrewMembershipCallable.error", {
+        uid: context.auth.uid,
+        crewId,
+        action,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Crew membership update failed."
+      );
+    }
   });

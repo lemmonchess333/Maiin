@@ -25,7 +25,13 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -1402,6 +1408,240 @@ suite(
           doc(ownerDb, "activities", "bad-blank-name"),
           makeValidActivity({ authorName: "" })
         )
+      );
+    });
+  }
+);
+
+// ========================================
+// /kudos + /comments + /groups counter-write DENIALS
+// 2026-05-26 audit PR 2 (findings #2 + #5)
+//
+// Pre-PR-2 any authed user could:
+//   - setDoc(kudos/{aid}/users/{uid})  → kudos forgery
+//   - updateDoc(activities/{aid}, { kudosCount: 999999 })  → counter forgery
+//   - updateDoc(groups/{cid}, { memberCount: 1000000 })  → crew count forgery
+// Post-PR-2 those writes are server-only (via the callables in
+// functions/index.js); these tests pin the deny-from-client contract.
+// ========================================
+suite(
+  "firestore.rules — counter writes denied at client (audit #2 + #5)",
+  () => {
+    let env: RulesTestEnvironment;
+
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await env?.cleanup();
+    });
+
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    it("client cannot directly write kudos sub-doc (server-only)", async () => {
+      // Seed an activity so the kudos-doc target is meaningful.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot directly delete kudos sub-doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+        await setDoc(doc(db, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(ownerDb, "kudos", "A1", "users", OWNER_UID))
+      );
+    });
+
+    it("non-owner cannot write kudosCount/commentCount on an activity (audit #2 — counter forgery)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      // updateDoc not imported in this file; use setDoc with merge.
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "activities", "A1"),
+          { kudosCount: 999999 },
+          { merge: true }
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "activities", "A1"),
+          { commentCount: -50 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("owner cannot write kudosCount/commentCount either (server-only)", async () => {
+      // Defensive — even the activity owner has no business setting
+      // these directly. The CFs are the only writer.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { kudosCount: 42 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("owner CAN still update visibility on their activity (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "A1"),
+          { visibility: "private" },
+          { merge: true }
+        )
+      );
+    });
+
+    it("client cannot directly write comment doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "comments", "A1", "items", "C1"), {
+          authorId: OWNER_UID,
+          authorName: "Owner",
+          text: "Nice run!",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot directly write crew memberCount (audit #5 — count forgery)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(strangerDb, "groups", "crew-a"),
+          { memberCount: 1000000 },
+          { merge: true }
+        )
+      );
+    });
+
+    it("client cannot directly write member sub-doc (server-only)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "groups", "crew-a", "members", OWNER_UID), {
+          joinedAt: new Date(),
+          displayName: "Owner",
+        })
+      );
+    });
+
+    it("crew creator CAN still update non-counter fields on their crew (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "groups", "crew-a"), {
+          name: "Crew A",
+          memberCount: 10,
+          leaderboardMetric: "workout_count",
+          type: "custom",
+          createdBy: OWNER_UID,
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "groups", "crew-a"),
+          { name: "Crew A Renamed" },
+          { merge: true }
+        )
+      );
+    });
+
+    it("kudos reads stay open (regression guard — UI still renders 'Props from' list)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", "A1"), {
+          ...makeValidActivity(),
+          createdAt: new Date(),
+        });
+        await setDoc(doc(db, "kudos", "A1", "users", OWNER_UID), {
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(strangerDb, "kudos", "A1", "users", OWNER_UID))
       );
     });
   }
