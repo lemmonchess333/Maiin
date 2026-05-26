@@ -30,14 +30,20 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
 import type { UserProfile } from "@/lib/auth";
-import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 
 // A1c cleanup — the "Change plan" link now deeplinks to
 // /settings/training instead of opening the legacy ConfigurePlanModal.
 // Mock useNavigate so tests can assert the route.
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
   return {
     ...actual,
     useNavigate: () => navigateMock,
@@ -51,7 +57,7 @@ beforeEach(() => {
 // PR-B: ProgrammeRunSection now consumes useAuth() directly (to
 // call updateProfile from the inline mode-change handler). Mock
 // it so the component renders standalone.
-const mockUpdateProfile = vi.fn(async () => ({ ok: true } as { ok: true }));
+const mockUpdateProfile = vi.fn(async () => ({ ok: true }) as { ok: true });
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "u-1" },
@@ -73,7 +79,12 @@ let mockRecentRuns: Array<{
   activityType: string;
   completedAt: Date;
 }> = [];
-let mockWeeklyData: Array<{ week: string; totalDistance: number; runCount: number; avgPace: number }> = [];
+let mockWeeklyData: Array<{
+  week: string;
+  totalDistance: number;
+  runCount: number;
+  avgPace: number;
+}> = [];
 let mockRunsLoading = false;
 vi.mock("@/hooks/useRunningStats", () => ({
   useRunningStats: () => ({
@@ -94,7 +105,10 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   } as UserProfile;
 }
 
-function makeProgramState(runDays: ScheduledRunDay[], overrides: Partial<ProgramState> = {}): ProgramState {
+function makeProgramState(
+  runDays: ScheduledRunDay[],
+  overrides: Partial<ProgramState> = {}
+): ProgramState {
   return {
     goal: "recomp",
     currentPhase: "base",
@@ -136,7 +150,9 @@ function commonProps() {
     profile: makeProfile(),
     runsTarget: 2,
     overrideRunDay: vi.fn(),
-    completeRunDay: vi.fn(async () => {}),
+    // PR-J Q2 chunk B2: completeRunDay deleted; replaced by
+    // markManualComplete which writes to manualCompletions.
+    markManualComplete: vi.fn(async () => {}),
     skipRunDay: vi.fn(async () => {}),
     skipWorkoutDay: vi.fn(async () => {}),
     // PR-B: refreshRunSchedule is the composing handler's second
@@ -147,11 +163,14 @@ function commonProps() {
   };
 }
 
-function renderSection(props: ReturnType<typeof commonProps>, programState: ProgramState) {
+function renderSection(
+  props: ReturnType<typeof commonProps>,
+  programState: ProgramState
+) {
   return render(
     <MemoryRouter>
       <ProgrammeRunSection {...props} programState={programState} />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -179,7 +198,9 @@ describe("ProgrammeRunSection — runDay rendering", () => {
     const col = screen.getByRole("button", { name: /Tue.*skipped/i });
     const label = col.querySelector(".line-through");
     expect(label).not.toBeNull();
-    expect(screen.queryByText(/Race completed separately/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Race completed separately/i)
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -196,7 +217,7 @@ describe("ProgrammeRunSection — A1c 'Change plan' deeplink", () => {
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: /Change plan/i }));
     expect(navigateMock).toHaveBeenCalledTimes(1);
@@ -210,8 +231,10 @@ describe("ProgrammeRunSection — A1c 'Change plan' deeplink", () => {
       <ProgrammeRunSection
         {...props}
         profile={profile}
-        programState={makeProgramState([makeRunDay()], { runPlan: { mode: "structured" } })}
-      />,
+        programState={makeProgramState([makeRunDay()], {
+          runPlan: { mode: "structured" },
+        })}
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: /Change plan/i }));
     expect(navigateMock).toHaveBeenCalledWith("/settings/training");
@@ -231,7 +254,9 @@ describe("ProgrammeRunSection — A1c 'Change plan' deeplink", () => {
   it("footer is a single Change plan link with no 'Running mode:' status prefix", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
     expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Change plan/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Change plan/i })
+    ).toBeInTheDocument();
   });
 
   // Run7 Q5 — race goal form collapses to a one-line summary when a
@@ -273,7 +298,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     expect(screen.getByText(/Start a run/i)).toBeInTheDocument();
   });
@@ -289,10 +314,12 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     expect(
-      screen.getByText(/Track your first run to see weekly distance and pace trends here\./i),
+      screen.getByText(
+        /Track your first run to see weekly distance and pace trends here\./i
+      )
     ).toBeInTheDocument();
   });
 
@@ -314,13 +341,19 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     // a hardcoded historical week. Use the runtime week key.
     const todayWeekKey = (() => {
       const d = new Date();
-      const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+      const sunday = new Date(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate() - d.getDay()
+      );
       const y = sunday.getFullYear();
       const m = String(sunday.getMonth() + 1).padStart(2, "0");
       const day = String(sunday.getDate()).padStart(2, "0");
       return `${y}-${m}-${day}`;
     })();
-    mockWeeklyData = [{ week: todayWeekKey, totalDistance: 12.3, runCount: 2, avgPace: 330 }];
+    mockWeeklyData = [
+      { week: todayWeekKey, totalDistance: 12.3, runCount: 2, avgPace: 330 },
+    ];
     const props = commonProps();
     const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(
@@ -329,7 +362,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     expect(screen.getByText(/Last run/i)).toBeInTheDocument();
     expect(screen.getByText(/This week/i)).toBeInTheDocument();
@@ -348,7 +381,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     expect(container.querySelector("section")).not.toBeNull();
     expect(screen.getByText(/Run training/i)).toBeInTheDocument();
@@ -367,9 +400,9 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         profile={profile}
         programState={makeProgramState(
           [makeRunDay({ status: "planned", dayIndex: 3 })],
-          { runPlan: { mode: "structured" } },
+          { runPlan: { mode: "structured" } }
         )}
-      />,
+      />
     );
     expect(screen.getByText(/^Next ·/i)).toBeInTheDocument();
   });
@@ -383,9 +416,9 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         profile={profile}
         programState={makeProgramState(
           [makeRunDay({ status: "completed_exact", completed: true })],
-          { runPlan: { mode: "structured" } },
+          { runPlan: { mode: "structured" } }
         )}
-      />,
+      />
     );
     expect(screen.getByText(/All runs done this week/i)).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
@@ -400,7 +433,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: { mode: "structured" } })}
-      />,
+      />
     );
     expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
   });
@@ -413,12 +446,14 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     // PR-B4: the PR-0d "Race prep not set up yet" stub is replaced
     // by the PR-B3 inline race-goal form, which auto-opens when
     // race_prep is the active mode but no raceGoal exists.
-    expect(screen.queryByText(/Race prep not set up yet/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Race prep not set up yet/i)
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/Set your race goal/i)).toBeInTheDocument();
     // The inline date input IS now present (it's the form).
     expect(container.querySelector('input[type="date"]')).not.toBeNull();
@@ -432,7 +467,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     // PR-B: tapping Race Prep chip reveals the inline form. No
     // wizard / onOpenConfigurePlan call.
@@ -461,7 +496,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -477,11 +512,11 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         weeklyRunDaysTarget: 3,
         weeklyRunsTarget: 3,
       }),
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
     // refreshRunSchedule called with the override target
     expect(props.refreshRunSchedule).toHaveBeenCalledWith(
-      expect.objectContaining({ weeklyRunDaysTarget: 3 }),
+      expect.objectContaining({ weeklyRunDaysTarget: 3 })
     );
     // NOT routed through the wizard
     expect(navigateMock).not.toHaveBeenCalled();
@@ -498,8 +533,10 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       <ProgrammeRunSection
         {...props}
         profile={profile}
-        programState={makeProgramState([makeRunDay({ status: "planned" })], { runPlan: { mode: "structured" } })}
-      />,
+        programState={makeProgramState([makeRunDay({ status: "planned" })], {
+          runPlan: { mode: "structured" },
+        })}
+      />
     );
 
     await act(async () => {
@@ -508,7 +545,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ runMode: "freeform" }),
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
     expect(props.refreshRunSchedule).toHaveBeenCalled();
     expect(navigateMock).not.toHaveBeenCalled();
@@ -522,7 +559,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -543,7 +580,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -569,7 +606,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -580,7 +617,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     expect(screen.getByText(/Edit race goal/i)).toBeInTheDocument();
     // Date input prefilled
     const dateInput = document.getElementById(
-      "programme-race-target-date",
+      "programme-race-target-date"
     ) as HTMLInputElement | null;
     expect(dateInput?.value).toBe("2027-09-15");
   });
@@ -607,7 +644,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -623,7 +660,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     expect(freeformChip.getAttribute("aria-checked")).toBe("true");
     // Inline error surfaces.
     expect(
-      screen.getByText(/Couldn't change mode\. Check your connection/i),
+      screen.getByText(/Couldn't change mode\. Check your connection/i)
     ).toBeInTheDocument();
   });
 
@@ -640,7 +677,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     await act(async () => {
@@ -649,7 +686,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
 
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({ runMode: "structured" }),
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
   });
 
@@ -666,7 +703,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
       () =>
         new Promise<{ ok: true }>((resolve) => {
           resolveUpdate = () => resolve({ ok: true });
-        }),
+        })
     );
     const props = commonProps();
     const profile = makeProfile({
@@ -680,7 +717,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
@@ -690,7 +727,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     const structuredChip = screen.getByRole("radio", { name: /^Structured$/i });
     expect(structuredChip.getAttribute("aria-checked")).toBe("true");
     expect(
-      screen.getByText(/Auto-assigns run templates to your run days/i),
+      screen.getByText(/Auto-assigns run templates to your run days/i)
     ).toBeInTheDocument();
 
     // Resolve the in-flight write so the test cleans up.
@@ -712,7 +749,7 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         {...props}
         profile={profile}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     const group = screen.getByRole("radiogroup", { name: /run mode/i });
     expect(group).toBeInTheDocument();
@@ -724,7 +761,10 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
     // Slow refresh to make the handler stay in flight long enough
     // for the assertion to land before it resolves.
     const slowRefresh = vi.fn(
-      () => new Promise<void>(() => { /* never resolves */ }),
+      () =>
+        new Promise<void>(() => {
+          /* never resolves */
+        })
     );
     const props = { ...commonProps(), refreshRunSchedule: slowRefresh };
     const profile = makeProfile({
@@ -738,13 +778,15 @@ describe("ProgrammeRunSection — PR-B inline mode chips (composing handler)", (
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole("radio", { name: /^Structured$/i }));
     // While the handler is mid-flight, the not-yet-selected chips
     // disable to prevent a double-tap race.
-    const freeformChip = screen.getByRole("radio", { name: /^Freeform$/i }) as HTMLButtonElement;
+    const freeformChip = screen.getByRole("radio", {
+      name: /^Freeform$/i,
+    }) as HTMLButtonElement;
     expect(freeformChip.disabled).toBe(true);
   });
 });
@@ -773,12 +815,16 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       },
     });
     renderWith(
-      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
     );
     const banner = screen.getByRole("alert");
     expect(banner.textContent).toContain("Plan is compressed");
     expect(
-      screen.queryByRole("button", { name: /dismiss/i }),
+      screen.queryByRole("button", { name: /dismiss/i })
     ).not.toBeInTheDocument();
   });
 
@@ -796,7 +842,11 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       },
     });
     const { unmount } = renderWith(
-      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
     );
     const dismissBtn = screen.getByRole("button", {
       name: /Dismiss race elapsed banner/i,
@@ -808,7 +858,11 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     // Remount → still hidden (localStorage persisted).
     unmount();
     renderWith(
-      <ProgrammeRunSection {...props} profile={profile} programState={programState} />,
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
     );
     expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
   });
@@ -826,11 +880,11 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
         profile={profile}
         runsTarget={0}
         programState={makeProgramState([], { runPlan: undefined })}
-      />,
+      />
     );
     expect(screen.getByText(/Configure your runs/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /^Configure plan$/i }),
+      screen.getByRole("button", { name: /^Configure plan$/i })
     ).toBeInTheDocument();
   });
 });
