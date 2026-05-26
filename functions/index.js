@@ -2085,6 +2085,313 @@ exports.dailyPerformanceRefresh = functions.pubsub
   });
 
 // ══════════════════════════════════════════════
+// PR-L L1 + L3 — daily race-reconciliation sweep
+// ══════════════════════════════════════════════
+//
+// Server-authoritative replacement for two `useEffect`-driven writes
+// that today live in `useProgram.ts`:
+//
+//   L1 (race-no-show): when a user is in race_prep mode, the race
+//   date passed >3 days ago, and no real race-templated saved run
+//   matched the race-day slot, transition `runDay.status` from
+//   "planned" to "race_no_show". Mirrors the client effect at
+//   `useProgram.ts:364-403` so non-React clients (Apple Watch,
+//   future native) reach the same state without per-client logic.
+//
+//   L3 (recovery-exit): when `runPlan.phase === "recovery"` and
+//   today is past `recoveryEndDate + 7d` (PR-C's grace window),
+//   clear `runPlan.phase` + `recoveryEndDate`. Mirrors the client
+//   effect at `useProgram.ts:421-443`.
+//
+// Both passes share the same user-iteration scaffolding from
+// `weeklyPerformanceRollup` — bounded `lastActiveAt >= now - 30d`
+// query so a single bad write can't run away across the full users
+// collection. Per-user writes are idempotent (transition gate +
+// phase guard) so re-runs are safe.
+//
+// The PR-L L5 chunk (later in the arc) deletes the client effects
+// once these triggers are production-verified. Until then the
+// client effects + server triggers both run; their idempotency
+// makes overlap safe — last-writer-wins on the same shape, and
+// they write the same shape.
+
+const RACE_NO_SHOW_GRACE_DAYS = 3;
+const RECOVERY_EXIT_GRACE_DAYS = 7;
+const RACE_STRICT_DISTANCE_RATIO_FNS = 0.95;
+const PLANNED_RACE_DISTANCE_METERS_FNS = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097,
+  marathon: 42195,
+};
+
+/** YYYY-MM-DD in UTC. Server runs in UTC; users' local dates differ
+ *  by ≤24h, which is well within the 3-day no-show grace and the
+ *  7-day recovery-exit grace, so timezone drift can't trip either
+ *  trigger early. */
+function _utcDateString(d = new Date()) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Parse a YYYY-MM-DD into a UTC Date at 00:00. Used for grace-
+ *  window math; not for displaying to users. */
+function _parseUtcDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+/** Server-side equivalent of Q1 P4's strict race-day match check.
+ *  Iterates a bounded list of saved runs (date-filtered before the
+ *  call) and returns true if any one of them matches the race
+ *  template at ≥95% planned distance. */
+function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
+  if (!Array.isArray(savedRunsForDate) || savedRunsForDate.length === 0) {
+    return false;
+  }
+  for (const r of savedRunsForDate) {
+    if (r.templateId !== "race") continue;
+    if (typeof r.distance !== "number") continue;
+    if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
+      // Defensive — without a planned distance we can't gate on the
+      // strict ratio. Treat any race-templated run as a match in
+      // that case (matches client behavior at Q1 P29 fallback).
+      return true;
+    }
+    if (r.distance / plannedDistanceMeters >= RACE_STRICT_DISTANCE_RATIO_FNS) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Whether the race-no-show pass needs to fetch the bounded
+ *  saved-run query for this user. Pure; called BEFORE the read so
+ *  we can skip the I/O when grace / mode / status disqualify the
+ *  user. */
+function _needsRaceNoShowEvaluation(profile, programState, nowMs) {
+  if (!profile || profile.runMode !== "race_prep") return false;
+  const runPlan = (programState && programState.runPlan) || null;
+  if (!runPlan || !runPlan.raceGoal) return false;
+  const raceDate = runPlan.raceGoal.targetDate;
+  if (typeof raceDate !== "string") return false;
+  const raceDayRunDay = ((programState && programState.runDays) || []).find(
+    (rd) => rd && rd.date === raceDate
+  );
+  if (!raceDayRunDay || raceDayRunDay.status !== "planned") return false;
+  const dayMs = 24 * 60 * 60 * 1000;
+  const daysPast = Math.floor(
+    (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
+  );
+  return daysPast > RACE_NO_SHOW_GRACE_DAYS;
+}
+
+/** Pure decision function — given the user's profile, programState,
+ *  the bounded saved-runs-for-race-date list, and `now`, returns
+ *  the Firestore update payload to apply (or null when nothing
+ *  needs to change). Idempotent — a second call with the post-write
+ *  state returns null. Easy to test exhaustively without Firestore. */
+function _decideReconciliationActions(
+  profile,
+  programState,
+  savedRunsForRaceDate,
+  nowMs
+) {
+  const updatePayload = {};
+  let noShowWritten = false;
+  let recoveryCleared = false;
+
+  // ── L1 decision ────────────────────────────────────────────────
+  if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
+    const runPlan = programState.runPlan;
+    const raceDate = runPlan.raceGoal.targetDate;
+    const raceDayRunDay = programState.runDays.find(
+      (rd) => rd && rd.date === raceDate
+    );
+    const plannedDistance =
+      PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
+    if (!_hasStrictRaceMatch(savedRunsForRaceDate, plannedDistance)) {
+      const updatedRunDays = programState.runDays.map((rd) =>
+        rd === raceDayRunDay ? { ...rd, status: "race_no_show" } : rd
+      );
+      updatePayload.runDays = updatedRunDays;
+      noShowWritten = true;
+    }
+  }
+
+  // ── L3 decision ────────────────────────────────────────────────
+  const runPlan = (programState && programState.runPlan) || null;
+  if (
+    runPlan &&
+    runPlan.phase === "recovery" &&
+    typeof runPlan.recoveryEndDate === "string"
+  ) {
+    const exitMs = _parseUtcDate(runPlan.recoveryEndDate).getTime();
+    const graceEndMs = exitMs + RECOVERY_EXIT_GRACE_DAYS * 24 * 60 * 60 * 1000;
+    if (nowMs >= graceEndMs) {
+      const cleared = { ...runPlan };
+      delete cleared.phase;
+      delete cleared.recoveryEndDate;
+      updatePayload.runPlan = cleared;
+      recoveryCleared = true;
+    }
+  }
+
+  if (!noShowWritten && !recoveryCleared) {
+    return { payload: null, noShowWritten, recoveryCleared };
+  }
+  return { payload: updatePayload, noShowWritten, recoveryCleared };
+}
+
+/** Per-user worker. Thin I/O wrapper around `_decideReconciliationActions`.
+ *  Reads profile + programState, fetches the race-day saved-runs
+ *  bucket when the decision function says it'll need it, then
+ *  applies the update (with the R1A tombstone guard immediately
+ *  before the write). Returns a log payload for the outer loop. */
+async function _runDailyRaceReconciliationForUser(uid) {
+  const userRef = db.collection("users").doc(uid);
+  const programRef = userRef.collection("programState").doc("current");
+  const [userSnap, programSnap] = await Promise.all([
+    userRef.get(),
+    programRef.get(),
+  ]);
+  if (!userSnap.exists || !programSnap.exists) {
+    return { noShowWritten: false, recoveryCleared: false };
+  }
+  const profile = userSnap.data() || {};
+  const programState = programSnap.data() || {};
+  const nowMs = Date.now();
+
+  // Only do the bounded saved-runs query when the L1 pass would
+  // need it — saves an I/O round trip for the common case where
+  // the user isn't in race_prep / their race hasn't passed grace /
+  // their slot is already terminal.
+  let savedRunsForRaceDate = [];
+  if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
+    const raceDate = programState.runPlan.raceGoal.targetDate;
+    try {
+      const runsSnap = await userRef
+        .collection("runs")
+        .where("date", "==", raceDate)
+        .get();
+      savedRunsForRaceDate = runsSnap.docs.map((d) => d.data() || {});
+    } catch (err) {
+      console.warn(
+        `dailyRaceReconciliationSweep: runs query failed for ${uid}: ${err.message}`
+      );
+    }
+  }
+
+  const { payload, noShowWritten, recoveryCleared } =
+    _decideReconciliationActions(
+      profile,
+      programState,
+      savedRunsForRaceDate,
+      nowMs
+    );
+
+  if (!payload) {
+    return { noShowWritten, recoveryCleared };
+  }
+
+  // R1A: tombstone guard immediately before the write — per spec
+  // systemWriterCheckTiming, the active-users query happened
+  // seconds-to-minutes ago and the user may have started deletion
+  // since.
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "dailyRaceReconciliationSweep"
+    ))
+  ) {
+    return { noShowWritten: false, recoveryCleared: false };
+  }
+  await programRef.set(payload, { merge: true });
+  return { noShowWritten, recoveryCleared };
+}
+
+// ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
+
+exports.dailyRaceReconciliationSweep = functions.pubsub
+  .schedule("0 4 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("dailyRaceReconciliationSweep: starting");
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db
+          .collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (err) {
+        // Fail loud — do NOT fall back to scanning the full users
+        // collection. Mirrors weeklyPerformanceRollup's discipline.
+        console.error(
+          "dailyRaceReconciliationSweep: lastActiveAt query failed, skipping run:",
+          err.message
+        );
+        return null;
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(
+        `dailyRaceReconciliationSweep: evaluating ${uids.length} users`
+      );
+
+      let totalNoShow = 0;
+      let totalRecoveryCleared = 0;
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              const { noShowWritten, recoveryCleared } =
+                await _runDailyRaceReconciliationForUser(uid);
+              if (noShowWritten) totalNoShow += 1;
+              if (recoveryCleared) totalRecoveryCleared += 1;
+            } catch (err) {
+              console.error(
+                `dailyRaceReconciliationSweep: failed for ${uid}:`,
+                err.message
+              );
+            }
+          })
+        );
+      }
+
+      console.log(
+        `dailyRaceReconciliationSweep: done — ` +
+          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}`
+      );
+    } catch (err) {
+      console.error("dailyRaceReconciliationSweep: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+// Test surface — the per-user worker is the meaningful unit. Export
+// it (and the helpers) under leading-underscore aliases so unit
+// tests can drive specific paths without spinning up the pubsub
+// harness end-to-end.
+exports._runDailyRaceReconciliationForUser = _runDailyRaceReconciliationForUser;
+exports._hasStrictRaceMatch = _hasStrictRaceMatch;
+exports._utcDateString = _utcDateString;
+exports._decideReconciliationActions = _decideReconciliationActions;
+exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
+
+// ══════════════════════════════════════════════
 // CHALLENGE AUTO-PROGRESS HELPER
 // ══════════════════════════════════════════════
 
