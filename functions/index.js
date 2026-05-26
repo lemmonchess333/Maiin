@@ -2392,6 +2392,170 @@ exports._decideReconciliationActions = _decideReconciliationActions;
 exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
 
 // ══════════════════════════════════════════════
+// PR-L L2 — recovery-entry on onRunCreated
+// ══════════════════════════════════════════════
+//
+// Server-authoritative recovery-entry write. When a saved race-day
+// run lands AND it satisfies Q1 P4 (strict ≥95% on a race-templated
+// run) AND that race-day runDay's id hasn't already entered
+// recovery (Q2 P28 per-race tracking via runPlan.completedRaces[]),
+// write the recovery phase + end date.
+//
+// Replaces a piece of the previously-deleted `completeRunDay`
+// writer's responsibility. Lives on `onRunCreated` rather than on
+// the client because Apple Watch (and future native clients) will
+// also write saved-runs but can't run the React state machine.
+//
+// Idempotency:
+//   - Per-race via `completedRaces[]` (Q2 P28 — supersedes P14).
+//     Same runDay claimed twice (e.g. user logged a race, deleted
+//     it, re-logged it) writes recovery once.
+//   - Multi-race plans (Round 3 stress #52) can enter recovery
+//     per-race; the array grows with each completion.
+//   - Self-correcting: if a previous race already entered recovery
+//     and a newer race lands, the recoveryEndDate updates to the
+//     new race's window (later race's recovery overrides).
+
+const RECOVERY_WEEKS_BY_DISTANCE_FNS = {
+  "5k": 1,
+  "10k": 2,
+  half: 3,
+  marathon: 4,
+};
+
+/** Pure decision function for the recovery-entry write triggered
+ *  by `onRunCreated`. Returns `{ write, payload?, raceDayRunDayId?,
+ *  recoveryEndDate? }`. Easy to test exhaustively without Firestore
+ *  — same pattern as L1+L3's `_decideReconciliationActions`. */
+function _decideRecoveryEntry(profile, programState, savedRun) {
+  // Gate 1 — user must be in race_prep mode with a race goal +
+  // active runPlan.
+  if (!profile || profile.runMode !== "race_prep") {
+    return { write: false };
+  }
+  const runPlan = (programState && programState.runPlan) || null;
+  if (!runPlan || !runPlan.raceGoal || !runPlan.raceGoal.targetDate) {
+    return { write: false };
+  }
+  const raceDate = runPlan.raceGoal.targetDate;
+
+  // Gate 2 — saved run must be on the race date. Q1 P4 is strict
+  // on date for race claims (no day-late / day-early forgiveness).
+  if (!savedRun || savedRun.date !== raceDate) {
+    return { write: false };
+  }
+
+  // Gate 3 — saved run must be race-templated.
+  if (savedRun.templateId !== "race") {
+    return { write: false };
+  }
+
+  // Gate 4 — saved run must clear the ≥95% planned-distance bar
+  // (Q1 P4 strict). Defensive 0-planned fallback per Q1 P29 —
+  // unconfigured race goal accepts any distance.
+  const plannedDistance =
+    PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
+  if (plannedDistance > 0) {
+    if (typeof savedRun.distance !== "number") return { write: false };
+    if (savedRun.distance / plannedDistance < RACE_STRICT_DISTANCE_RATIO_FNS) {
+      return { write: false };
+    }
+  }
+
+  // Gate 5 — race-day runDay must exist in the plan.
+  const raceDayRunDay = ((programState && programState.runDays) || []).find(
+    (rd) => rd && rd.date === raceDate
+  );
+  if (!raceDayRunDay || !raceDayRunDay.id) {
+    return { write: false };
+  }
+
+  // Gate 6 — per-race idempotency (Q2 P28). If this runDay's id is
+  // already in completedRaces, recovery already entered for this
+  // race; no-op even if the user re-logs.
+  const completedRaces = Array.isArray(runPlan.completedRaces)
+    ? runPlan.completedRaces
+    : [];
+  if (completedRaces.includes(raceDayRunDay.id)) {
+    return { write: false };
+  }
+
+  // All gates passed — compute the recovery end date and build the
+  // runPlan update. Recovery clock anchors on the race date so the
+  // user's countdown reads correctly even if the trigger fires
+  // hours after the actual run.
+  const distanceKey = runPlan.raceGoal.distance;
+  const recoveryWeeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[distanceKey];
+  if (typeof recoveryWeeks !== "number") {
+    // Unknown distance string — defensive bail. Real values are
+    // gated by the onboarding UI; this guard protects against
+    // schema drift.
+    return { write: false };
+  }
+  const recoveryEndMs =
+    _parseUtcDate(raceDate).getTime() + recoveryWeeks * 7 * 24 * 60 * 60 * 1000;
+  const recoveryEndDate = _utcDateString(new Date(recoveryEndMs));
+
+  const updatedRunPlan = {
+    ...runPlan,
+    phase: "recovery",
+    recoveryEndDate,
+    completedRaces: [...completedRaces, raceDayRunDay.id],
+  };
+
+  return {
+    write: true,
+    payload: { runPlan: updatedRunPlan },
+    raceDayRunDayId: raceDayRunDay.id,
+    recoveryEndDate,
+  };
+}
+
+/** Side-effect wrapper. Reads profile + programState for the user,
+ *  runs the pure decision, applies the write when needed. Callable
+ *  from `onRunCreated` after the existing flow finishes. Errors
+ *  are caught + logged — recovery entry is best-effort, not worth
+ *  taking down the rest of the trigger over.
+ *
+ *  No R1A guard here: the calling trigger (`onRunCreated`) already
+ *  checks `shouldSystemWriteProceed` at the top. If the user is
+ *  tombstoned, the trigger early-returns before reaching this
+ *  function. */
+async function _maybeWriteRecoveryEntryForRun(uid, savedRun) {
+  try {
+    const userRef = db.collection("users").doc(uid);
+    const programRef = userRef.collection("programState").doc("current");
+    const [userSnap, programSnap] = await Promise.all([
+      userRef.get(),
+      programRef.get(),
+    ]);
+    if (!userSnap.exists || !programSnap.exists) {
+      return;
+    }
+    const profile = userSnap.data() || {};
+    const programState = programSnap.data() || {};
+
+    const decision = _decideRecoveryEntry(profile, programState, savedRun);
+    if (!decision.write) {
+      return;
+    }
+
+    await programRef.set(decision.payload, { merge: true });
+    console.log(
+      `onRunCreated: recovery-entry written for ${uid} ` +
+        `(runDay=${decision.raceDayRunDayId}, endDate=${decision.recoveryEndDate})`
+    );
+  } catch (err) {
+    console.error(
+      `onRunCreated: recovery-entry failed for ${uid}: ${err.message}`
+    );
+  }
+}
+
+exports._decideRecoveryEntry = _decideRecoveryEntry;
+exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
+
+// ══════════════════════════════════════════════
 // CHALLENGE AUTO-PROGRESS HELPER
 // ══════════════════════════════════════════════
 
@@ -2725,6 +2889,12 @@ exports.onRunCreated = functions
         await releaseLock(uid, false, err.message);
         console.error(`onRunCreated: compute error for ${uid}:`, err.message);
       }
+
+      // PR-L L2: recovery-entry write. Runs AFTER the performance
+      // compute so a slow programState read can't delay the rest of
+      // the trigger. The wrapper catches its own errors — best-
+      // effort, not worth taking down the trigger.
+      await _maybeWriteRecoveryEntryForRun(uid, data);
     } catch (err) {
       console.error("onRunCreated: fatal error:", {
         uid,
