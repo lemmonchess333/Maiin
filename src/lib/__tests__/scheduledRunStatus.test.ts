@@ -27,11 +27,18 @@ import {
   isScheduledRunStartable,
   isScheduledRunEditable,
   isScheduledRunCompleted,
+  isLegacyCompleted,
   COMPLETED_STATUSES,
+  type AnyScheduledRunStatus,
 } from "../scheduledRunStatus";
-import type { ScheduledRunDay, ScheduledRunStatus } from "@/features/program/programTypes";
+import type {
+  ScheduledRunDay,
+  ScheduledRunStatus,
+} from "@/features/program/programTypes";
 
-const ALL_STATUSES: ScheduledRunStatus[] = [
+// PR-J Q8 P102: union typed via AnyScheduledRunStatus so tests can
+// iterate across both active + legacy values.
+const ALL_STATUSES: AnyScheduledRunStatus[] = [
   "planned",
   "completed_exact",
   "completed_modified",
@@ -52,9 +59,15 @@ function makeRunDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
 
 describe("getScheduledRunStatus", () => {
   it("returns the present status field when set", () => {
-    expect(getScheduledRunStatus(makeRunDay({ status: "skipped" }))).toBe("skipped");
-    expect(getScheduledRunStatus(makeRunDay({ status: "completed_late" }))).toBe("completed_late");
-    expect(getScheduledRunStatus(makeRunDay({ status: "race_no_show" }))).toBe("race_no_show");
+    expect(getScheduledRunStatus(makeRunDay({ status: "skipped" }))).toBe(
+      "skipped"
+    );
+    expect(
+      getScheduledRunStatus(makeRunDay({ status: "completed_late" }))
+    ).toBe("completed_late");
+    expect(getScheduledRunStatus(makeRunDay({ status: "race_no_show" }))).toBe(
+      "race_no_show"
+    );
   });
 
   it("resolves legacy completed: true + no status → completed_exact", () => {
@@ -70,7 +83,11 @@ describe("getScheduledRunStatus", () => {
   });
 
   it("resolves missing completed + missing status → planned (defensive)", () => {
-    const rd = { dayIndex: 0, templateId: "easy_30", type: "easy" } as ScheduledRunDay;
+    const rd = {
+      dayIndex: 0,
+      templateId: "easy_30",
+      type: "easy",
+    } as ScheduledRunDay;
     expect(getScheduledRunStatus(rd)).toBe("planned");
   });
 
@@ -141,6 +158,24 @@ describe("isScheduledRunEditable", () => {
   });
 });
 
+describe("isLegacyCompleted (PR-J Q8 P103)", () => {
+  it("returns true for the three legacy completed values", () => {
+    expect(isLegacyCompleted("completed_exact")).toBe(true);
+    expect(isLegacyCompleted("completed_modified")).toBe(true);
+    expect(isLegacyCompleted("completed_late")).toBe(true);
+  });
+
+  it("returns false for all active-union values", () => {
+    expect(isLegacyCompleted("planned")).toBe(false);
+    expect(isLegacyCompleted("skipped")).toBe(false);
+    expect(isLegacyCompleted("race_no_show")).toBe(false);
+  });
+
+  it("returns false for undefined", () => {
+    expect(isLegacyCompleted(undefined)).toBe(false);
+  });
+});
+
 describe("isScheduledRunCompleted", () => {
   it("true for all completed_* states", () => {
     expect(isScheduledRunCompleted("completed_exact")).toBe(true);
@@ -156,7 +191,13 @@ describe("isScheduledRunCompleted", () => {
 
   it("COMPLETED_STATUSES set is the same source-of-truth as the helper", () => {
     for (const s of ALL_STATUSES) {
-      expect(isScheduledRunCompleted(s)).toBe(COMPLETED_STATUSES.has(s));
+      // PR-J Q8 P102: COMPLETED_STATUSES is typed as
+      // ReadonlySet<LegacyScheduledRunStatus>; cast at the test
+      // boundary to compare across the full union. The helper
+      // itself accepts the union.
+      expect(isScheduledRunCompleted(s)).toBe(
+        COMPLETED_STATUSES.has(s as never)
+      );
     }
   });
 });

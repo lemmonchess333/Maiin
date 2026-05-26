@@ -21,7 +21,7 @@
 
 import { describe, it, expect } from "vitest";
 import { transitionStatus } from "../programTypes";
-import type { ScheduledRunStatus } from "../programTypes";
+import type { AnyScheduledRunStatus } from "@/lib/scheduledRunStatus";
 
 describe("transitionStatus · legal forward transitions", () => {
   it("planned → completed_exact", () => {
@@ -92,13 +92,16 @@ describe("transitionStatus · disallowed reverts", () => {
 });
 
 describe("transitionStatus · completed/skipped states are hard-terminal", () => {
-  const hardTerminalStates: ScheduledRunStatus[] = [
+  // PR-J Q8 P102: post-split, the type that covers the legacy
+  // completed_* triple is LegacyScheduledRunStatus; tests use the
+  // union via `AnyScheduledRunStatus` from scheduledRunStatus.ts.
+  const hardTerminalStates: AnyScheduledRunStatus[] = [
     "completed_exact",
     "completed_modified",
     "completed_late",
     "skipped",
   ];
-  const allStates: ScheduledRunStatus[] = [
+  const allStates: AnyScheduledRunStatus[] = [
     "planned",
     "completed_exact",
     "completed_modified",
