@@ -15,7 +15,13 @@ export type MovementCategory =
   | "arms_triceps"
   | "core";
 
-export type SplitType = "full_body" | "upper_lower" | "ppl" | "ppl_ul" | "ppl_x2" | "ppl_x2_fb";
+export type SplitType =
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "ppl_ul"
+  | "ppl_x2"
+  | "ppl_x2_fb";
 
 export type Goal = "cut" | "lean bulk" | "recomp";
 
@@ -31,7 +37,12 @@ export type Goal = "cut" | "lean bulk" | "recomp";
  * who declared "strength" at onboarding silently got hypertrophy reps on
  * every regenerate. `PrimaryGoal` + `GoalProfile` below fix that seam.
  */
-export type PrimaryGoal = "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
+export type PrimaryGoal =
+  | "hypertrophy"
+  | "strength"
+  | "fat_loss"
+  | "general"
+  | "running";
 
 /**
  * Training-stimulus parameters derived from the user's `PrimaryGoal`.
@@ -174,13 +185,24 @@ export type RunPlannedType = "easy" | "tempo" | "intervals" | "long" | "race";
  *      a moved run stays `status: "planned"` on its new date.
  *    "freeform_extra" lives on the saved RUN DOCUMENT's planMetadata,
  *      not on ScheduledRunDay — extras aren't planned-day states. */
-export type ScheduledRunStatus =
-  | "planned"
+/** Active status union — the values writers produce going forward.
+ *  PR-J Q4 P59 + Q8 P102: split from the legacy completed_* triple
+ *  so the post-PR-J writer surface (which produces only these
+ *  values) is type-distinct from the legacy values still readable
+ *  on past runDays. */
+export type ScheduledRunStatus = "planned" | "skipped" | "race_no_show";
+
+/** Legacy status union — values that exist on past runDays but
+ *  will never be written by post-PR-J code. PR-J Q1 P8 commits to
+ *  keeping them readable forever; the derivation's
+ *  `isLegacyCompleted` branch (Q2 P27) treats any of these as
+ *  "completion holds." A migration write to drop them would lose
+ *  the original recorded state with no upside — the field stays
+ *  as-is on existing docs. */
+export type LegacyScheduledRunStatus =
   | "completed_exact"
   | "completed_modified"
-  | "completed_late"
-  | "skipped"
-  | "race_no_show";
+  | "completed_late";
 // PR-D: `race_completed_unlinked` dropped from the enum. Defined
 // pre-PR-D but never written by any code path — paper status with
 // dead UI branches across DayPeekCard, DayActionSheet,
@@ -232,8 +254,14 @@ export interface ScheduledRunDay {
 
   /** Authoritative status enum (v7+). Optional in v1 type because
    *  legacy docs lack the field; migration backfills based on
-   *  `completed`. New code (planBuilder, runScheduler) always sets it. */
-  status?: ScheduledRunStatus;
+   *  `completed`. New code (planBuilder, runScheduler) always sets
+   *  it.
+   *
+   *  PR-J Q8 P102: accepts both the active union (what writers
+   *  produce going forward) and the legacy union (preserved on
+   *  past docs). Readers narrow via `isLegacyCompleted` from
+   *  `scheduledRunStatus.ts` per Q2 P27's derivation formula. */
+  status?: ScheduledRunStatus | LegacyScheduledRunStatus;
 
   /** Reference to the saved run document once executed. */
   linkedRunId?: string;
@@ -281,7 +309,16 @@ export interface RunPlan {
    illegal transitions. Use case: RunSummary.completeRunDay validates
    `transitionStatus(current, "completed_exact")` before writing. */
 
-const LEGAL_TRANSITIONS: Record<ScheduledRunStatus, ScheduledRunStatus[]> = {
+/** Status union accepted by `transitionStatus` and `LEGAL_TRANSITIONS`
+ *  keys + values. PR-J Q8 P104: the function consumes both unions so
+ *  callers don't need to narrow at the boundary; legacy values are
+ *  hard-terminal (no outgoing transitions) per the existing semantics. */
+type AnyScheduledRunStatus = ScheduledRunStatus | LegacyScheduledRunStatus;
+
+const LEGAL_TRANSITIONS: Record<
+  AnyScheduledRunStatus,
+  AnyScheduledRunStatus[]
+> = {
   planned: [
     "completed_exact",
     "completed_modified",
@@ -296,6 +333,9 @@ const LEGAL_TRANSITIONS: Record<ScheduledRunStatus, ScheduledRunStatus[]> = {
   // reconciliation), the slot transitions to completed_*.
   race_no_show: ["completed_exact", "completed_modified", "completed_late"],
   // Hard terminal states — no legal outgoing transitions.
+  // PR-J Q1 P7 + Q2 P15 will add skipped → planned and
+  // race_no_show → planned in PR-J itself; the precursor doesn't
+  // touch the table semantically.
   completed_exact: [],
   completed_modified: [],
   completed_late: [],
@@ -304,8 +344,16 @@ const LEGAL_TRANSITIONS: Record<ScheduledRunStatus, ScheduledRunStatus[]> = {
 
 /** Returns true iff `to` is a legal transition from `from`.
  *  Callers should throw on `false` rather than silently no-op so
- *  illegal writes surface in dev rather than corrupt data in prod. */
-export function transitionStatus(from: ScheduledRunStatus, to: ScheduledRunStatus): boolean {
+ *  illegal writes surface in dev rather than corrupt data in prod.
+ *
+ *  PR-J Q8 P104: accepts the union so callers like
+ *  `getScheduledRunStatus` (which may return a legacy value) can
+ *  pass through without narrowing. Legacy values are terminal in
+ *  the table → false for any outgoing transition. */
+export function transitionStatus(
+  from: AnyScheduledRunStatus,
+  to: AnyScheduledRunStatus
+): boolean {
   return LEGAL_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
@@ -369,11 +417,14 @@ export interface WeeklyPrescription {
    BACKWARD-COMPAT NORMALIZER
 ================================ */
 
-export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string; exerciseId: string }): ProgramExercise {
+export function normalizeExercise(
+  ex: Partial<ProgramExercise> & { name: string; exerciseId: string }
+): ProgramExercise {
   return {
     name: ex.name,
     exerciseId: ex.exerciseId,
-    movementCategory: ex.movementCategory ?? inferMovementCategory(ex.name, ex.exerciseId),
+    movementCategory:
+      ex.movementCategory ?? inferMovementCategory(ex.name, ex.exerciseId),
     sets: ex.sets ?? 3,
     reps: ex.reps ?? 8,
     baseReps: ex.baseReps ?? ex.reps ?? 8,
@@ -391,7 +442,7 @@ export function normalizeExercise(ex: Partial<ProgramExercise> & { name: string;
 
 export function normalizeProgramState(
   state: ProgramState,
-  backfill?: { primaryGoal?: PrimaryGoal },
+  backfill?: { primaryGoal?: PrimaryGoal }
 ): ProgramState {
   return {
     ...state,
