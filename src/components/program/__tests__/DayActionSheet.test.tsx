@@ -360,16 +360,21 @@ describe("DayActionSheet — terminal run states locked", () => {
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
 
-  it("manual completion on planned runDay surfaces 'Completed' badge AND hides Mark/Skip buttons (PR-J chunk B3d)", () => {
+  it("manual completion on planned runDay surfaces 'Marked complete' badge AND hides Mark/Skip buttons (PR-J chunks B3d + B3k)", () => {
     // The B2 writer leaves runDay.status="planned" but writes
     // manualCompletions[id]. Pre-B3d the resolver wasn't claim-map-
-    // aware, so isCompleted=false → "Completed" badge missing AND
-    // isStartable=true → Mark/Skip buttons stayed visible.
+    // aware, so isCompleted=false → no badge AND isStartable=true →
+    // Mark/Skip buttons stayed visible.
     //
     // Post-B3d:
     //   - resolver derives isCompleted via the claim map → badge shows
     //   - DayActionSheet gates buttons on `!isCompleted && isStartable`
     //     so the buttons hide once any completion source flips on.
+    //
+    // Post-B3k (Q2 P24):
+    //   - manual completion specifically renders "Marked complete"
+    //     (vs "Completed" for real / legacy) so the user can tell
+    //     which source flipped the slot.
     const { profile, programState, callbacks, runDay } = setupWithStatus(
       "planned",
       false
@@ -386,7 +391,10 @@ describe("DayActionSheet — terminal run states locked", () => {
         {...callbacks}
       />
     );
-    expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+    expect(screen.getByText("Marked complete")).toBeInTheDocument();
+    // Sanity — the bare "Completed" label is the real-source copy
+    // and should NOT appear for a manual completion.
+    expect(screen.queryByText(/^Completed$/)).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Mark complete \(manual\)/i)
     ).not.toBeInTheDocument();
