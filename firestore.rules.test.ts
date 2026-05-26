@@ -1646,3 +1646,193 @@ suite(
     });
   }
 );
+
+// ════════════════════════════════════════════════════════════════════
+// audit PR 3 (#3 + #6 + #12) — feed + notification creates are now
+// server-only. Pre-PR-3 the client wrote `/feeds/{recipient}/items`
+// and `/notifications/{recipient}/items` directly. `authorId ==
+// auth.uid` stopped impersonation but couldn't gate volume — a
+// script could fan out 100k items into any follower's feed or push
+// fake-looking notifications. Rules now deny client create; the
+// onActivityCreated trigger handles feed fan-out, and notification
+// creation is folded into toggleKudosCallable + addCommentCallable.
+//
+// Owner can still read + delete their own feed / notifications.
+// Delete is gated by `isOwnerAndNotDeleting` to preserve the
+// "deleting users do not write anywhere" R1A invariant.
+// ════════════════════════════════════════════════════════════════════
+suite(
+  "firestore.rules — feed + notification writes denied at client (audit #3 + #6)",
+  () => {
+    let env: RulesTestEnvironment;
+
+    beforeAll(async () => {
+      const [host, portStr] = (EMULATOR_HOST || "").split(":");
+      env = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+          rules: readFileSync("firestore.rules", "utf8"),
+          host,
+          port: Number(portStr),
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await env?.cleanup();
+    });
+
+    beforeEach(async () => {
+      await env.clearFirestore();
+    });
+
+    it("client cannot directly create a feed item in their own feed (server-only)", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OWNER_UID,
+          summary: "tried to inject a feed item",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot fan-out into another user's feed (audit #3 — feed spam)", async () => {
+      const attackerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(doc(attackerDb, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: STRANGER_UID, // matches sender — pre-PR-3 this passed
+          summary: "spam content",
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("owner can still read their own feed (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OTHER_UID,
+          summary: "from a friend",
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("owner can still delete their own feed item (regression guard — UI inbox clear)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OTHER_UID,
+          summary: "from a friend",
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        deleteDoc(doc(ownerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("stranger cannot delete someone else's feed item", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "feeds", OWNER_UID, "items", "I1"), {
+          activityId: "act1",
+          authorId: OWNER_UID,
+          summary: "private feed item",
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(strangerDb, "feeds", OWNER_UID, "items", "I1"))
+      );
+    });
+
+    it("client cannot directly create a notification in their own inbox", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        setDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OWNER_UID,
+          message: "self-notification attempt",
+          read: false,
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("client cannot push notifications into another user's inbox (audit #6 — notification spam)", async () => {
+      const attackerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        setDoc(doc(attackerDb, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: STRANGER_UID, // matches sender — pre-PR-3 this passed
+          message: "Tropos: click here to claim your prize",
+          read: false,
+          createdAt: new Date(),
+        })
+      );
+    });
+
+    it("owner can still read their notifications (regression guard)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        getDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+
+    it("owner can delete their own notification (mark-as-read replacement)", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(
+        deleteDoc(doc(ownerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+
+    it("stranger cannot delete someone else's notification", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "notifications", OWNER_UID, "items", "N1"), {
+          type: "kudos",
+          fromUserId: OTHER_UID,
+          message: "you got props",
+          read: false,
+          createdAt: new Date(),
+        });
+      });
+      const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+      await assertFails(
+        deleteDoc(doc(strangerDb, "notifications", OWNER_UID, "items", "N1"))
+      );
+    });
+  }
+);

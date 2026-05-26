@@ -123,20 +123,14 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 }
 
 // ============================================
-// Post Activity + Fan-out to Followers
+// Post Activity
+//
+// 2026-05-26 audit PR 3 (finding #3) — only the activity doc is
+// written client-side; fan-out to follower feeds runs in the
+// `onActivityCreated` Firestore trigger. `formatDuration` and
+// `formatPace` moved into `functions/lib/socialFanout.js` along
+// with `buildFeedItem`.
 // ============================================
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function formatPace(secPerKm: number): string {
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  return `${m}:${s.toString().padStart(2, "0")}/km`;
-}
-
 export async function postActivity(activity: {
   authorId: string;
   authorName: string;
@@ -170,80 +164,22 @@ export async function postActivity(activity: {
 }) {
   const authedUid = getAuthUid();
   if (activity.authorId !== authedUid) throw new Error("Identity mismatch");
+  // 2026-05-26 audit PR 3 (finding #3) — only the activity doc is
+  // written client-side. Fan-out to follower feeds + author feed
+  // happens server-side via the `onActivityCreated` Firestore
+  // trigger (functions/index.js). The trigger reads followers,
+  // builds the summary, and writes feed items — `/feeds/*` is
+  // rule-denied for client writes post-PR-3.
+  //
+  // Trade-off: fan-out is now async — a few seconds of latency
+  // before the activity appears on followers' feeds. Acceptable
+  // for the security + rate-limit win.
   const activityRef = await addDoc(collection(db, "activities"), {
     ...activity,
     kudosCount: 0,
     commentCount: 0,
     createdAt: serverTimestamp(),
   });
-
-  if (activity.visibility !== "private") {
-    const followersSnap = await getDocs(
-      collection(db, "followers", activity.authorId, "users")
-    );
-
-    let summary: string;
-    if (activity.type === "run") {
-      const km = ((activity.distance || 0) / 1000).toFixed(1);
-      const time = activity.duration ? formatDuration(activity.duration) : "";
-      const pace =
-        typeof activity.avgPace === "number"
-          ? formatPace(activity.avgPace)
-          : activity.avgPace || "";
-      const name = activity.runName || "Run";
-      summary = `${name} · ${km}km · ${time} · ${pace} pace`;
-    } else {
-      const name = activity.workoutName || "Workout";
-      const exCount = activity.exerciseCount || 0;
-      const vol = activity.totalVolume
-        ? `${Math.round(activity.totalVolume).toLocaleString()} kg volume`
-        : "";
-      const dur = activity.duration
-        ? `${Math.round(activity.duration / 60)} min`
-        : "";
-      summary = [name, `${exCount} exercises`, vol, dur]
-        .filter(Boolean)
-        .join(" · ");
-    }
-
-    const feedItem: Record<string, unknown> = {
-      activityId: activityRef.id,
-      authorId: activity.authorId,
-      authorName: activity.authorName,
-      type: activity.type,
-      summary,
-      createdAt: serverTimestamp(),
-    };
-    if (activity.authorPhotoURL)
-      feedItem.authorPhotoURL = activity.authorPhotoURL;
-    // Include highlight fields for filtering
-    if (activity.prHit) feedItem.prHit = true;
-    if (activity.badgeEarned) feedItem.badgeEarned = activity.badgeEarned;
-    if (activity.challengeMilestone)
-      feedItem.challengeMilestone = activity.challengeMilestone;
-
-    const promises = followersSnap.docs.map((followerDoc) =>
-      addDoc(collection(db, "feeds", followerDoc.id, "items"), feedItem)
-    );
-    promises.push(
-      addDoc(collection(db, "feeds", activity.authorId, "items"), feedItem)
-    );
-    // Use allSettled so partial fan-out failures don't block the entire post
-    const results = await Promise.allSettled(promises);
-    const failed = results.filter(
-      (r): r is PromiseRejectedResult => r.status === "rejected"
-    );
-    if (failed.length > 0) {
-      captureError(
-        new Error(
-          `[postActivity] ${failed.length}/${results.length} feed writes failed`
-        ),
-        "network",
-        { reasons: failed.map((f) => String(f.reason)) }
-      );
-    }
-  }
-
   return activityRef.id;
 }
 
@@ -260,33 +196,36 @@ export async function postActivity(activity: {
 // ============================================
 export async function toggleKudos(
   activityId: string,
-  userId: string
+  userId: string,
+  opts?: { fromName?: string }
 ): Promise<boolean> {
   const authedUid = getAuthUid();
   if (userId !== authedUid) throw new Error("Identity mismatch");
-  const fn = httpsCallable<{ activityId: string }, { kudosed: boolean }>(
-    getFunctions(),
-    "toggleKudosCallable"
-  );
-  const result = await fn({ activityId });
+  // 2026-05-26 audit PR 3 (finding #6) — `fromName` is forwarded to
+  // the callable so the server-side notification carries the
+  // sender's display name. The CF sanitises and length-caps it; the
+  // recipient uid is read server-side from the activity doc (no
+  // client trust on target).
+  const fn = httpsCallable<
+    { activityId: string; fromName?: string },
+    { kudosed: boolean }
+  >(getFunctions(), "toggleKudosCallable");
+  const result = await fn({
+    activityId,
+    ...(opts?.fromName ? { fromName: opts.fromName } : {}),
+  });
   return result.data.kudosed;
 }
 
-// `giveHighFive` is a thin wrapper that only adds kudos (never
-// removes). Post-PR-2 the callable returns a `kudosed` boolean so
-// we can preserve the "no-op if already given" semantic by
-// checking server-side state via the callable's return value:
-// if it returns kudosed=false, the user had kudos and we just
-// removed them — restore by calling again.
-//
-// Simpler: just use toggleKudos and trust the server. The original
+// `giveHighFive` is a thin wrapper around toggleKudos. The original
 // "give once, never undo" semantic was a courtesy; legitimate
-// double-tap UX is now toggling, which matches every social app.
+// double-tap UX is now toggling (matches every social app).
 export async function giveHighFive(
   activityId: string,
-  userId: string
+  userId: string,
+  opts?: { fromName?: string }
 ): Promise<boolean> {
-  return toggleKudos(activityId, userId);
+  return toggleKudos(activityId, userId, opts);
 }
 
 export async function hasGivenKudos(
@@ -367,19 +306,10 @@ export async function addComment(
     authorName,
     ...(authorPhotoURL ? { authorPhotoURL } : {}),
   });
-
-  // Notify activity author. Notification create still goes
-  // client-direct (deferred to PR 3 of the audit — server-side
-  // notification creation, audit finding #6).
-  if (activityAuthorId && activityAuthorId !== authorId) {
-    await writeNotification(activityAuthorId, {
-      type: "comment",
-      fromUserId: authorId,
-      fromName: authorName,
-      activityId,
-      message: `${authorName} commented on your activity`,
-    });
-  }
+  // 2026-05-26 audit PR 3 (finding #6) — comment notification is
+  // now written server-side by `addCommentCallable` itself. The
+  // client no longer touches /notifications/* — rule layer denies it.
+  void activityAuthorId;
 }
 
 export async function deleteComment(
@@ -743,23 +673,13 @@ export async function searchUsersByEmail(email: string, limitCount = 10) {
 
 // ============================================
 // Notifications
+//
+// 2026-05-26 audit PR 3 (finding #6) — client no longer writes
+// notification docs. Kudos + comment notifications are emitted
+// server-side from `toggleKudosCallable` + `addCommentCallable`.
+// `/notifications/*` create is `if false` in firestore.rules.
+// Owner can still read + delete their own notifications.
 // ============================================
-export async function writeNotification(
-  targetUserId: string,
-  data: {
-    type: "kudos" | "comment" | "follow" | "challenge_milestone";
-    fromUserId?: string;
-    fromName?: string;
-    activityId?: string;
-    message?: string;
-  }
-) {
-  await addDoc(collection(db, "notifications", targetUserId, "items"), {
-    ...data,
-    read: false,
-    createdAt: serverTimestamp(),
-  });
-}
 
 // ============================================
 // Batch fetch activities + kudos status

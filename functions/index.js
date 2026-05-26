@@ -24,6 +24,7 @@ const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
+const socialFanout = require("./lib/socialFanout");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -2965,36 +2966,91 @@ exports.onActivityCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("activities/{activityId}")
   .onCreate(async (snap, context) => {
+    const activityId = context.params.activityId;
+    const data = snap.data();
+    const authorId = data && data.authorId;
+
+    // 2026-05-26 audit PR 3 (finding #3) — R1A-Deletion: compensating
+    // delete if author is mid-deletion. Mirrors onWorkoutCreated /
+    // onRunCreated pattern: the activity doc landed via the client
+    // create, but if the cascade is in flight we tear it down here
+    // and skip both profanity scan AND fanout. Author-side gate;
+    // recipient-side gate is intentionally omitted (deletion executor
+    // Phase D sweeps feeds anyway, and per-recipient checks would
+    // cost N extra reads per post).
+    if (authorId) {
+      const proceed = await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        authorId,
+        "onActivityCreated"
+      );
+      if (!proceed) {
+        try {
+          await snap.ref.delete();
+        } catch (err) {
+          console.warn(
+            `onActivityCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`
+          );
+        }
+        return;
+      }
+    }
+
+    // Profanity scan + auto-flag. Runs before fanout so flagged posts
+    // get visibility=private and are then skipped by the fanout block
+    // below.
     try {
-      const data = snap.data();
-      // Allow-list the text fields we scan — the activity schema
-      // is dynamic (it carries enriched fields like prExercise,
-      // badgeEarned) and we don't want to false-positive on a
-      // user-supplied displayName or a system-generated label
-      // that happens to share letters with a blocked word.
       const SCAN_FIELDS = ["caption", "workoutName", "runName"];
       const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
-      if (!flaggedField) return;
-
-      functions.logger.warn("onActivityCreated.auto_flag", {
-        activityId: context.params.activityId,
-        authorId: data.authorId,
-        flaggedField,
+      if (flaggedField) {
+        functions.logger.warn("onActivityCreated.auto_flag", {
+          activityId,
+          authorId,
+          flaggedField,
+        });
+        await snap.ref.update({
+          flagged: true,
+          autoFlagged: true,
+          flaggedField,
+          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          visibility: "private",
+        });
+        // Flagged → don't fan out. Author retains read access via
+        // owner rules; followers never see it.
+        return;
+      }
+    } catch (err) {
+      functions.logger.error("onActivityCreated.profanity_error", {
+        activityId,
+        message: err.message,
       });
+      // Fall through to fanout — a profanity-scan failure shouldn't
+      // strand the activity. Re-flag manually via the report queue
+      // if false-positive.
+    }
 
-      await snap.ref.update({
-        flagged: true,
-        autoFlagged: true,
-        flaggedField,
-        flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-        // Drop visibility to private so the post is hidden from
-        // public + follower feeds. Author retains read access via
-        // owner rules.
-        visibility: "private",
+    // 2026-05-26 audit PR 3 — server-side fan-out. Replaces the
+    // client `postActivity` fan-out loop. /feeds writes are
+    // server-only post-PR-3 so this is the only path that can
+    // populate follower feeds.
+    if (!authorId) return;
+    try {
+      const fanoutResult = await socialFanout.fanoutActivityToFeeds({
+        firestore: admin.firestore(),
+        activityId,
+        authorId,
+        activityData: data,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      functions.logger.info("onActivityCreated.fanout_complete", {
+        activityId,
+        authorId,
+        fanned: fanoutResult.fanned,
       });
     } catch (err) {
-      functions.logger.error("onActivityCreated.error", {
-        activityId: context.params.activityId,
+      functions.logger.error("onActivityCreated.fanout_error", {
+        activityId,
+        authorId,
         message: err.message,
       });
     }
@@ -3349,6 +3405,52 @@ exports.toggleKudosCallable = functions
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
+      // 2026-05-26 audit PR 3 (finding #6) — kudos notification is
+      // now written server-side, atomically with the kudos doc.
+      // Pre-PR-3 the client wrote `/notifications/...` directly
+      // after the callable returned; that path is now rule-denied.
+      // Only notify on the ADD edge (kudosed=true) so re-tapping
+      // doesn't spam the recipient.
+      if (result && result.kudosed) {
+        try {
+          const activitySnap = await admin
+            .firestore()
+            .collection("activities")
+            .doc(activityId)
+            .get();
+          const activity = activitySnap.exists ? activitySnap.data() : null;
+          if (
+            activity &&
+            activity.authorId &&
+            activity.authorId !== context.auth.uid
+          ) {
+            const fromName =
+              (data && typeof data.fromName === "string" && data.fromName) ||
+              "Someone";
+            await socialFanout.createNotification({
+              firestore: admin.firestore(),
+              fromUid: context.auth.uid,
+              toUid: activity.authorId,
+              data: {
+                type: "kudos",
+                fromName,
+                activityId,
+                message: `${fromName} gave you props`,
+              },
+              serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            });
+          }
+        } catch (notifErr) {
+          // Notification write failure is non-fatal — the kudos
+          // already landed. Log and continue so the client still
+          // sees kudosed=true and the UI stays consistent.
+          functions.logger.warn("toggleKudosCallable.notification_failed", {
+            uid: context.auth.uid,
+            activityId,
+            error: notifErr && notifErr.message,
+          });
+        }
+      }
       return result;
     } catch (err) {
       functions.logger.warn("toggleKudosCallable.error", {
@@ -3408,6 +3510,43 @@ exports.addCommentCallable = functions
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
+      // 2026-05-26 audit PR 3 (finding #6) — comment notification is
+      // now written server-side. Lookup activity author so we don't
+      // trust client-supplied target uid (no impersonation surface).
+      try {
+        const activitySnap = await admin
+          .firestore()
+          .collection("activities")
+          .doc(activityId)
+          .get();
+        const activity = activitySnap.exists ? activitySnap.data() : null;
+        if (
+          activity &&
+          activity.authorId &&
+          activity.authorId !== context.auth.uid
+        ) {
+          const fromName =
+            (typeof authorName === "string" && authorName) || "Someone";
+          await socialFanout.createNotification({
+            firestore: admin.firestore(),
+            fromUid: context.auth.uid,
+            toUid: activity.authorId,
+            data: {
+              type: "comment",
+              fromName,
+              activityId,
+              message: `${fromName} commented on your activity`,
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          });
+        }
+      } catch (notifErr) {
+        functions.logger.warn("addCommentCallable.notification_failed", {
+          uid: context.auth.uid,
+          activityId,
+          error: notifErr && notifErr.message,
+        });
+      }
       return result;
     } catch (err) {
       functions.logger.warn("addCommentCallable.error", {

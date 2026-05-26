@@ -64,10 +64,17 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/privacyZones/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/errors/{doc}", sides: ["owner"] },
   // ── Cross-user paths ──
+  // 2026-05-26 audit PR 3 (finding #3) — feed-item create is now
+  // server-only via the onActivityCreated trigger; the writer-side
+  // freeze moved into the trigger as
+  // `accountDeletionLocks.shouldSystemWriteProceed(authorId)` plus a
+  // compensating delete (matches onWorkoutCreated pattern). Only the
+  // owner-side freeze on delete remains client-visible.
   {
     pathPattern: "match /feeds/{uid}/items/{doc}",
-    sides: ["owner", "writer"],
-    notes: "create requires !isDeleting on feed owner AND on poster",
+    sides: ["owner"],
+    notes:
+      "delete is owner-only with freeze; create is server-only (R1A guard in onActivityCreated trigger)",
   },
   {
     pathPattern: "match /following/{uid}/users/{targetUid}",
@@ -79,10 +86,18 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     sides: ["owner", "writer"],
     notes: "create/delete requires !isDeleting on recipient AND follower",
   },
+  // 2026-05-26 audit PR 3 (finding #6) — notification create is now
+  // server-only via `toggleKudosCallable` + `addCommentCallable`,
+  // which fold in the notification write via
+  // `socialFanout.createNotification`. Writer-side freeze lives in
+  // the parent callables (they already apply
+  // `assertCallableActorNotDeleting`). Only the owner-side freeze on
+  // delete remains client-visible.
   {
     pathPattern: "match /notifications/{uid}/items/{doc}",
-    sides: ["owner", "writer"],
-    notes: "create requires !isDeleting on recipient AND fromUserId",
+    sides: ["owner"],
+    notes:
+      "delete is owner-only with freeze; create is server-only (R1A guards in kudos/comment callables)",
   },
   {
     pathPattern: "match /blocks/{uid}/users/{targetUid}",
