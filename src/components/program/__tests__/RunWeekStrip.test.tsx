@@ -135,6 +135,9 @@ describe("RunWeekStrip — status visuals", () => {
     // PR-J chunk B3b — manualCompleted in the claim map drives the
     // ✅. Replaces the legacy "set status=completed_exact on the
     // runDay" path; same UI, different source of truth.
+    // Q2 P24 (chunk B3k) — manual ✅ uses "marked complete" copy
+    // (vs "completed" for real / legacy) so the user can tell what
+    // kind of completion landed.
     const rd = runDay();
     const { container } = render(
       <RunWeekStrip
@@ -146,7 +149,7 @@ describe("RunWeekStrip — status visuals", () => {
     );
     expect(container.querySelector(".line-through")).not.toBeNull();
     expect(
-      screen.getByRole("button", { name: /completed/i })
+      screen.getByRole("button", { name: /marked complete/i })
     ).toBeInTheDocument();
   });
 
@@ -231,6 +234,94 @@ describe("RunWeekStrip — status visuals", () => {
     expect(
       screen.queryByRole("button", { name: /completed/i })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("RunWeekStrip — Q2 P24 manual vs real ✅ differentiation (chunk B3k)", () => {
+  it("real completion (saved-run claim) reads as 'completed' in the a11y label", () => {
+    const rd = runDay();
+    render(
+      <RunWeekStrip
+        runDays={[rd]}
+        claimMap={claimMapWith([[rd.id!, { claimedSavedRunId: "saved-real" }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", {
+        name: /Tue.*completed.*\(today\)|Tue.*completed/i,
+      })
+    ).toBeInTheDocument();
+    // Specifically NOT "marked complete."
+    expect(
+      screen.queryByRole("button", { name: /marked complete/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("manual completion reads as 'marked complete' in the a11y label", () => {
+    const rd = runDay();
+    render(
+      <RunWeekStrip
+        runDays={[rd]}
+        claimMap={claimMapWith([[rd.id!, { manualCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /marked complete/i })
+    ).toBeInTheDocument();
+  });
+
+  it("legacy completed_* docs read as 'completed' (legacy = real per P24 helper)", () => {
+    const rd = runDay({ status: "completed_exact" });
+    render(
+      <RunWeekStrip
+        runDays={[rd]}
+        claimMap={claimMapWith([[rd.id!, { legacyCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Tue.*completed/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /marked complete/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("manual completion renders the Check icon at reduced opacity (visual differentiation)", () => {
+    const rd = runDay();
+    const { container } = render(
+      <RunWeekStrip
+        runDays={[rd]}
+        claimMap={claimMapWith([[rd.id!, { manualCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    // The completion icon should carry the opacity-50 modifier for
+    // manual completions; real completions render the same icon at
+    // full opacity (no opacity-50).
+    const dimmedCheck = container.querySelector(".lucide-check.opacity-50");
+    expect(dimmedCheck).not.toBeNull();
+  });
+
+  it("real completion renders the Check icon at full opacity (no opacity-50)", () => {
+    const rd = runDay();
+    const { container } = render(
+      <RunWeekStrip
+        runDays={[rd]}
+        claimMap={claimMapWith([[rd.id!, { claimedSavedRunId: "saved-real" }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(container.querySelector(".lucide-check.opacity-50")).toBeNull();
+    // A full-opacity Check IS still present.
+    expect(container.querySelector(".lucide-check")).not.toBeNull();
   });
 });
 

@@ -19,6 +19,8 @@ import {
   computeClaims as computeClaimsTs,
   isRunDayComplete as isRunDayCompleteTs,
   isRaceDayCompletedStrictly as isRaceDayCompletedStrictlyTs,
+  getCompletionKind,
+  type ClaimState,
 } from "../scheduledRunCompletion";
 import type { CompletionDeps, SavedRunLike } from "../scheduledRunCompletion";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
@@ -210,5 +212,84 @@ describe("scheduledRunCompletion — TS / JS parity", () => {
         deps
       )
     );
+  });
+});
+
+describe("getCompletionKind (TS-only — PR-J Q2 P24 / chunk B3k)", () => {
+  // Helper isn't ported to JS — it's a UI-level discriminator used
+  // by RunWeekStrip / DayPeekCard / DayActionSheet to render the
+  // manual ✅ visually distinct from real ✅. Server-side has no
+  // analogous need (PR-L recomputes claim state on triggers, not
+  // render).
+  function entry(partial: Partial<ClaimState>): ClaimState {
+    return {
+      claimedSavedRunId: undefined,
+      manualCompleted: false,
+      legacyCompleted: false,
+      ...partial,
+    };
+  }
+
+  it("returns null when the entry isn't in the map", () => {
+    expect(getCompletionKind("nope", new Map())).toBeNull();
+  });
+
+  it("returns null when the entry exists but no completion source is set", () => {
+    const m = new Map<string, ClaimState>([["rd-1", entry({})]]);
+    expect(getCompletionKind("rd-1", m)).toBeNull();
+  });
+
+  it("returns 'real' for an organic saved-run claim", () => {
+    const m = new Map<string, ClaimState>([
+      ["rd-1", entry({ claimedSavedRunId: "saved-a" })],
+    ]);
+    expect(getCompletionKind("rd-1", m)).toBe("real");
+  });
+
+  it("returns 'real' for a legacy completed_* doc", () => {
+    // P24 bucketing: legacy docs represent actual activity recorded
+    // under the old writer — they read as 'real' so the UI doesn't
+    // misclassify archived weeks as manual.
+    const m = new Map<string, ClaimState>([
+      ["rd-1", entry({ legacyCompleted: true })],
+    ]);
+    expect(getCompletionKind("rd-1", m)).toBe("real");
+  });
+
+  it("returns 'manual' for a manualCompletions-only entry", () => {
+    const m = new Map<string, ClaimState>([
+      ["rd-1", entry({ manualCompleted: true })],
+    ]);
+    expect(getCompletionKind("rd-1", m)).toBe("manual");
+  });
+
+  it("prefers 'real' when both real-source AND manual are present", () => {
+    // Defensive precedence — if a real saved-run match landed AFTER
+    // a manual completion was already written, the real source wins
+    // for display purposes (the actual activity is the stronger
+    // signal). manualCompletions cleanup is a separate concern.
+    const m = new Map<string, ClaimState>([
+      [
+        "rd-1",
+        entry({
+          claimedSavedRunId: "saved-a",
+          manualCompleted: true,
+        }),
+      ],
+    ]);
+    expect(getCompletionKind("rd-1", m)).toBe("real");
+  });
+
+  it("prefers 'real' when legacyCompleted AND manualCompleted are both set", () => {
+    const m = new Map<string, ClaimState>([
+      [
+        "rd-1",
+        entry({
+          legacyCompleted: true,
+          manualCompleted: true,
+        }),
+      ],
+    ]);
+    expect(getCompletionKind("rd-1", m)).toBe("real");
   });
 });
