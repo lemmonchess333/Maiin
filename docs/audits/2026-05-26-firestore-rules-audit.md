@@ -233,6 +233,27 @@ Still open after PR 3:
 | Infrastructure           | 8/10         | 8/10      | 8/10        | 8/10      |
 | **Overall**              | **5.5–6/10** | **~7/10** | **~7.5/10** | **~8/10** |
 
+## Remaining risk after PR 4
+
+PR 4 closes the four remaining findings — **all twelve audit findings are now resolved**.
+
+- **#4 Challenge body validation.** The `/challenges` create rule adds a body schema gate on top of the existing ID-prefix check (`firestore.rules:isValidChallengeBody`): `keys().hasOnly([...])`, `type` and `metric` enum matching, `name` / `description` / `icon` length caps, `tiers` shape lock (`bronze` + `silver` + `gold` required, all non-negative), `participantCount == 0` on create, optional `targetDistance` / `collectiveTarget` positive when present. A hostile user can no longer ship a challenge with `name: "Tropos: pay $500"` and have it surface in every user's challenges UI.
+- **#8 Storage SVG MIME closed.** `storage.rules` restricts profile + progress photo uploads to `request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp']` via the `isAllowedImageMime()` helper. SVGs (which can carry inline `<script>` payloads) are rejected at the rule layer. Tropos's current render paths use `<img src>` (sandboxed), but the rule removes the future-regression risk class entirely.
+- **#9 CSP `unsafe-inline` removed from `script-src`.** The pre-React dark-mode init + GitHub Pages SPA redirect script moved out of an inline `<script>` block in `index.html` and into `public/init.js`. The relative `./init.js` path resolves to `/init.js` in dev / Capacitor and `/Maiin/init.js` in the web prod build. Synchronous (no `async`/`defer`) preserves the before-paint behaviour the inline script had. `style-src` keeps `'unsafe-inline'` because Tailwind / Vite inject critical CSS inline at build time — tightening that is a larger refactor with its own trade-offs and isn't in audit scope.
+- **#10 Vertex AI log redaction.** All six `JSON.stringify(data)` / `JSON.stringify(result)` sites in `functions/index.js` (`analyzeFood`, `analyzeFoodText`, `askGeminiText`) now route through `redactVertexResponse` (`functions/lib/vertexLogRedaction.js`), which returns structural metadata only — `httpStatus`, `hasError`, `errorCode`, `errorStatus`, `hasCandidates`, `hasPredictions`, `finishReason`, `promptFeedbackBlockReason`. The success-path full-body log was dropped entirely (it was only useful as raw evidence during initial bring-up). User-supplied food names, nutrition descriptions, and coaching prompts no longer surface in Cloud Logging.
+
+**Severity scoring (post-PR 4):**
+
+| Area                     | Pre-PR-1     | Post-PR-1 | Post-PR-2   | Post-PR-3 | Post-PR-4   |
+| ------------------------ | ------------ | --------- | ----------- | --------- | ----------- |
+| Authentication           | 8/10         | 8/10      | 8/10        | 8/10      | 8/10        |
+| Personal data protection | 4/10         | 8/10      | 8/10        | 8/10      | 9/10        |
+| Social system integrity  | 3/10         | 5/10      | 7/10        | 9/10      | 9/10        |
+| Abuse resistance         | 3/10         | 4/10      | 5/10        | 7/10      | 8/10        |
+| Storage security         | 7/10         | 7/10      | 7/10        | 7/10      | 9/10        |
+| Infrastructure           | 8/10         | 8/10      | 8/10        | 8/10      | 9/10        |
+| **Overall**              | **5.5–6/10** | **~7/10** | **~7.5/10** | **~8/10** | **~8.7/10** |
+
 ## Suggested verification tests after PR 1
 
 - `firestore.rules.test.ts` emulator suite adds:
