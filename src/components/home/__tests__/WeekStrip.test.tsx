@@ -17,9 +17,30 @@ import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WeekStrip from "@/components/home/WeekStrip";
 import type { UserProfile } from "@/lib/auth";
-import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+
+const emptyClaimMap: Map<string, ClaimState> = new Map();
+
+function claimMapWith(
+  entries: Array<[string, Partial<ClaimState>]>
+): Map<string, ClaimState> {
+  const m = new Map<string, ClaimState>();
+  for (const [id, partial] of entries) {
+    m.set(id, {
+      claimedSavedRunId: undefined,
+      manualCompleted: false,
+      legacyCompleted: false,
+      ...partial,
+    });
+  }
+  return m;
+}
 
 function makeSchedule(types: ScheduleDay["type"][]): ScheduleDay[] {
   return types.map((type, day) => ({ day, type }));
@@ -68,7 +89,15 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     const todayDow = today.getDay();
     const todayKey = localDateString(today);
     const todayWeekKey = localWeekKey(today);
-    const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
+    const schedule = makeSchedule([
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+    ]);
     const profile = makeProfile(schedule);
     const programState = makeProgramState([
       makeRunDay({ dayIndex: todayDow, date: todayKey, weekKey: todayWeekKey }),
@@ -79,9 +108,10 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
         dayMap={new Map()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         selectedDate={null}
         onDayTap={vi.fn()}
-      />,
+      />
     );
 
     // Coral rhombus — planned, not completed.
@@ -93,27 +123,85 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
   });
 
   it("renders a Check icon for a completed run day (precedence over recurring rhombus)", () => {
+    // PR-J chunk B3c — resolver-derived completion. The legacy
+    // doc carries status="completed_exact" + the claim map's
+    // `legacyCompleted` entry is what surfaces the ✅ (matches
+    // what `computeClaims` produces in the real wiring).
     const today = new Date();
     const todayDow = today.getDay();
     const todayKey = localDateString(today);
     const todayWeekKey = localWeekKey(today);
-    const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
-    const profile = makeProfile(schedule);
-    const programState = makeProgramState([
-      makeRunDay({
-        dayIndex: todayDow, date: todayKey, weekKey: todayWeekKey,
-        completed: true, status: "completed_exact",
-      }),
+    const schedule = makeSchedule([
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
     ]);
+    const profile = makeProfile(schedule);
+    const legacyRunDay = makeRunDay({
+      dayIndex: todayDow,
+      date: todayKey,
+      weekKey: todayWeekKey,
+      completed: true,
+      status: "completed_exact",
+    });
+    const programState = makeProgramState([legacyRunDay]);
 
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
         profile={profile}
         programState={programState}
+        claimMap={claimMapWith([[legacyRunDay.id!, { legacyCompleted: true }]])}
         selectedDate={null}
         onDayTap={vi.fn()}
-      />,
+      />
+    );
+
+    const checks = container.querySelectorAll(".lucide-check");
+    expect(checks.length).toBeGreaterThan(0);
+  });
+
+  it("renders a Check icon when the claim map carries a manual completion (B2 writer)", () => {
+    // PR-J chunk B3c — the new manualCompletions writer path:
+    // runDay.status stays "planned", but the ✅ surfaces because
+    // the claim map says manualCompleted.
+    const today = new Date();
+    const todayDow = today.getDay();
+    const todayKey = localDateString(today);
+    const todayWeekKey = localWeekKey(today);
+    const schedule = makeSchedule([
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+    ]);
+    const profile = makeProfile(schedule);
+    const plannedRunDay = makeRunDay({
+      dayIndex: todayDow,
+      date: todayKey,
+      weekKey: todayWeekKey,
+      status: "planned",
+    });
+    const programState = makeProgramState([plannedRunDay]);
+
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMapWith([
+          [plannedRunDay.id!, { manualCompleted: true }],
+        ])}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+      />
     );
 
     const checks = container.querySelectorAll(".lucide-check");
@@ -126,7 +214,15 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     // legacy-shaped runDay (no date/weekKey) matches by dayIndex,
     // the resolver's currentWeekKey gate prevents it from
     // surfacing on next-week strip dates.
-    const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
+    const schedule = makeSchedule([
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+    ]);
     const profile = makeProfile(schedule);
     const today = new Date();
     const todayDow = today.getDay();
@@ -142,17 +238,26 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
           weekKey: undefined,
           completed: true,
           status: "completed_exact",
-        }),
+        })
       );
 
+    // Claim map carries `legacyCompleted: true` for every legacy
+    // doc — the resolver's currentWeekKey gate is what prevents
+    // those entries from leaking onto next-week strip positions
+    // (the runDay match returns null before the claim map is even
+    // consulted).
+    const claimMap = claimMapWith(
+      runDays.map((rd) => [rd.id!, { legacyCompleted: true }])
+    );
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
         profile={profile}
         programState={makeProgramState(runDays)}
+        claimMap={claimMap}
         selectedDate={null}
         onDayTap={vi.fn()}
-      />,
+      />
     );
 
     // The strip iterates today + 6 forward. Of those, only strip
@@ -165,7 +270,15 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
   });
 
   it("renders the recurring rhombus when programState is omitted (back-compat)", () => {
-    const schedule = makeSchedule(["run", "run", "run", "run", "run", "run", "run"]);
+    const schedule = makeSchedule([
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+      "run",
+    ]);
     const profile = makeProfile(schedule);
 
     const { container } = render(
@@ -173,9 +286,10 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
         dayMap={new Map()}
         profile={profile}
         programState={null}
+        claimMap={emptyClaimMap}
         selectedDate={null}
         onDayTap={vi.fn()}
-      />,
+      />
     );
 
     const rhombuses = container.querySelectorAll(".rotate-45");

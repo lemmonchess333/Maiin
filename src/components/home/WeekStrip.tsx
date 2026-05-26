@@ -5,10 +5,21 @@ import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { parseLocalDate } from "@/lib/dateHelpers";
 
-export default function WeekStrip({ dayMap, profile, programState, selectedDate, onDayTap }: {
-  dayMap: Map<string, { workouts: number; meals: number; caloriesHit: boolean }>;
+export default function WeekStrip({
+  dayMap,
+  profile,
+  programState,
+  claimMap,
+  selectedDate,
+  onDayTap,
+}: {
+  dayMap: Map<
+    string,
+    { workouts: number; meals: number; caloriesHit: boolean }
+  >;
   /** P1-4 / PR-0c: profile + programState replace the previous
    *  `schedule` + `runDays` props. The strip resolves a 7-day
    *  window via the shared training resolver — every day inherits
@@ -17,6 +28,11 @@ export default function WeekStrip({ dayMap, profile, programState, selectedDate,
    *  old `inSameWeek` heuristic + dayIndex-only match bug). */
   profile: UserProfile | null;
   programState: ProgramState | null;
+  /** PR-J Q3 chunk B3c — derived completion source of truth.
+   *  Forwarded to `resolveTrainingWindow` so the strip's run-day ✅
+   *  reflects manual / saved-run-claim / legacy completions
+   *  uniformly. Wired via `useClaimMap` in Home. */
+  claimMap: Map<string, ClaimState>;
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
 }) {
@@ -31,6 +47,7 @@ export default function WeekStrip({ dayMap, profile, programState, selectedDate,
       days: 7,
       profile,
       programState,
+      claimMap,
     });
     return resolved.map((r) => {
       const data = dayMap.get(r.dateKey);
@@ -45,19 +62,24 @@ export default function WeekStrip({ dayMap, profile, programState, selectedDate,
         runSkipped: r.run.status === "skipped",
       };
     });
-  }, [dayMap, profile, programState, selectedDate]);
+  }, [dayMap, profile, programState, claimMap, selectedDate]);
   return (
     <div className="flex items-center justify-between px-1">
-      {days.map(function(day) {
+      {days.map(function (day) {
         // Today: 48px filled purple + halo (matches Program DayStepper's
         // Rule 3). Others: 40px. Selected-not-today: 40px filled purple
         // to match Program Rule 5. Default: 40px filled grey.
         const isBig = day.isToday;
-        let cls = (isBig ? "size-12 " : "size-10 ") + "rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
+        let cls =
+          (isBig ? "size-12 " : "size-10 ") +
+          "rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
         let st: React.CSSProperties = {};
         if (day.isToday) {
           cls += " text-white font-semibold";
-          st = { backgroundColor: THEME.brand, boxShadow: `0 0 0 4px ${THEME.brand}1A, 0 4px 14px ${THEME.brand}40` };
+          st = {
+            backgroundColor: THEME.brand,
+            boxShadow: `0 0 0 4px ${THEME.brand}1A, 0 4px 14px ${THEME.brand}40`,
+          };
         } else if (day.isSelected) {
           cls += " text-white font-semibold";
           st = { backgroundColor: THEME.brand };
@@ -65,14 +87,30 @@ export default function WeekStrip({ dayMap, profile, programState, selectedDate,
           cls += " text-muted-foreground bg-muted";
         }
         return (
-          <button key={day.key} onClick={function() { onDayTap(day.key); }} aria-label={format(day.date, "EEEE, MMMM d") + (day.hasActivity ? " (activity logged)" : "") + (day.isToday ? " (today)" : "")} className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center">
-            <span className="text-xs text-muted-foreground">{format(day.date, "EEE").charAt(0)}</span>
+          <button
+            key={day.key}
+            onClick={function () {
+              onDayTap(day.key);
+            }}
+            aria-label={
+              format(day.date, "EEEE, MMMM d") +
+              (day.hasActivity ? " (activity logged)" : "") +
+              (day.isToday ? " (today)" : "")
+            }
+            className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center"
+          >
+            <span className="text-xs text-muted-foreground">
+              {format(day.date, "EEE").charAt(0)}
+            </span>
             <div className={cls} style={st}>
               {day.date.getDate()}
             </div>
             <div className="flex items-center gap-1">
               {(day.sType === "both" || day.sType === "lift") && (
-                <div className="w-[7px] h-[7px] rounded-full" style={{ backgroundColor: THEME.lifting }} />
+                <div
+                  className="w-[7px] h-[7px] rounded-full"
+                  style={{ backgroundColor: THEME.lifting }}
+                />
               )}
               {/* PR-0c: actual-state precedence on run indicator.
                   Resolver-aware: completed renders Check, skipped
@@ -80,21 +118,27 @@ export default function WeekStrip({ dayMap, profile, programState, selectedDate,
                   recurring rhombus. Future strip days that don't
                   have a matched runDay just show the rhombus from
                   the recurring weekSchedule. */}
-              {(day.sType === "both" || day.sType === "run") && day.runCompleted && (
-                <Check className="w-[10px] h-[10px]" style={{ color: THEME.running }} strokeWidth={3} />
-              )}
-              {(day.sType === "both" || day.sType === "run") && !day.runCompleted && (
-                <div
-                  className="w-[7px] h-[7px] rotate-45"
-                  style={{
-                    backgroundColor: day.runSkipped ? "hsl(var(--muted-foreground))" : THEME.running,
-                    opacity: day.runSkipped ? 0.4 : 1,
-                  }}
-                />
-              )}
-              {day.sType === "rest" && (
-                <div className="w-[7px] h-[7px]" />
-              )}
+              {(day.sType === "both" || day.sType === "run") &&
+                day.runCompleted && (
+                  <Check
+                    className="w-[10px] h-[10px]"
+                    style={{ color: THEME.running }}
+                    strokeWidth={3}
+                  />
+                )}
+              {(day.sType === "both" || day.sType === "run") &&
+                !day.runCompleted && (
+                  <div
+                    className="w-[7px] h-[7px] rotate-45"
+                    style={{
+                      backgroundColor: day.runSkipped
+                        ? "hsl(var(--muted-foreground))"
+                        : THEME.running,
+                      opacity: day.runSkipped ? 0.4 : 1,
+                    }}
+                  />
+                )}
+              {day.sType === "rest" && <div className="w-[7px] h-[7px]" />}
             </div>
           </button>
         );
