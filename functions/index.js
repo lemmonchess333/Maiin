@@ -2085,6 +2085,477 @@ exports.dailyPerformanceRefresh = functions.pubsub
   });
 
 // ══════════════════════════════════════════════
+// PR-L L1 + L3 — daily race-reconciliation sweep
+// ══════════════════════════════════════════════
+//
+// Server-authoritative replacement for two `useEffect`-driven writes
+// that today live in `useProgram.ts`:
+//
+//   L1 (race-no-show): when a user is in race_prep mode, the race
+//   date passed >3 days ago, and no real race-templated saved run
+//   matched the race-day slot, transition `runDay.status` from
+//   "planned" to "race_no_show". Mirrors the client effect at
+//   `useProgram.ts:364-403` so non-React clients (Apple Watch,
+//   future native) reach the same state without per-client logic.
+//
+//   L3 (recovery-exit): when `runPlan.phase === "recovery"` and
+//   today is past `recoveryEndDate + 7d` (PR-C's grace window),
+//   clear `runPlan.phase` + `recoveryEndDate`. Mirrors the client
+//   effect at `useProgram.ts:421-443`.
+//
+// Both passes share the same user-iteration scaffolding from
+// `weeklyPerformanceRollup` — bounded `lastActiveAt >= now - 30d`
+// query so a single bad write can't run away across the full users
+// collection. Per-user writes are idempotent (transition gate +
+// phase guard) so re-runs are safe.
+//
+// The PR-L L5 chunk (later in the arc) deletes the client effects
+// once these triggers are production-verified. Until then the
+// client effects + server triggers both run; their idempotency
+// makes overlap safe — last-writer-wins on the same shape, and
+// they write the same shape.
+
+const RACE_NO_SHOW_GRACE_DAYS = 3;
+const RECOVERY_EXIT_GRACE_DAYS = 7;
+const RACE_STRICT_DISTANCE_RATIO_FNS = 0.95;
+const PLANNED_RACE_DISTANCE_METERS_FNS = {
+  "5k": 5000,
+  "10k": 10000,
+  half: 21097,
+  marathon: 42195,
+};
+
+/** YYYY-MM-DD in UTC. Server runs in UTC; users' local dates differ
+ *  by ≤24h, which is well within the 3-day no-show grace and the
+ *  7-day recovery-exit grace, so timezone drift can't trip either
+ *  trigger early. */
+function _utcDateString(d = new Date()) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Parse a YYYY-MM-DD into a UTC Date at 00:00. Used for grace-
+ *  window math; not for displaying to users. */
+function _parseUtcDate(dateStr) {
+  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
+/** Server-side equivalent of Q1 P4's strict race-day match check.
+ *  Iterates a bounded list of saved runs (date-filtered before the
+ *  call) and returns true if any one of them matches the race
+ *  template at ≥95% planned distance. */
+function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
+  if (!Array.isArray(savedRunsForDate) || savedRunsForDate.length === 0) {
+    return false;
+  }
+  for (const r of savedRunsForDate) {
+    if (r.templateId !== "race") continue;
+    if (typeof r.distance !== "number") continue;
+    if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
+      // Defensive — without a planned distance we can't gate on the
+      // strict ratio. Treat any race-templated run as a match in
+      // that case (matches client behavior at Q1 P29 fallback).
+      return true;
+    }
+    if (r.distance / plannedDistanceMeters >= RACE_STRICT_DISTANCE_RATIO_FNS) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Whether the race-no-show pass needs to fetch the bounded
+ *  saved-run query for this user. Pure; called BEFORE the read so
+ *  we can skip the I/O when grace / mode / status disqualify the
+ *  user. */
+function _needsRaceNoShowEvaluation(profile, programState, nowMs) {
+  if (!profile || profile.runMode !== "race_prep") return false;
+  const runPlan = (programState && programState.runPlan) || null;
+  if (!runPlan || !runPlan.raceGoal) return false;
+  const raceDate = runPlan.raceGoal.targetDate;
+  if (typeof raceDate !== "string") return false;
+  const raceDayRunDay = ((programState && programState.runDays) || []).find(
+    (rd) => rd && rd.date === raceDate
+  );
+  if (!raceDayRunDay || raceDayRunDay.status !== "planned") return false;
+  const dayMs = 24 * 60 * 60 * 1000;
+  const daysPast = Math.floor(
+    (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
+  );
+  return daysPast > RACE_NO_SHOW_GRACE_DAYS;
+}
+
+/** Pure decision function — given the user's profile, programState,
+ *  the bounded saved-runs-for-race-date list, and `now`, returns
+ *  the Firestore update payload to apply (or null when nothing
+ *  needs to change). Idempotent — a second call with the post-write
+ *  state returns null. Easy to test exhaustively without Firestore. */
+function _decideReconciliationActions(
+  profile,
+  programState,
+  savedRunsForRaceDate,
+  nowMs
+) {
+  const updatePayload = {};
+  let noShowWritten = false;
+  let recoveryCleared = false;
+
+  // ── L1 decision ────────────────────────────────────────────────
+  if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
+    const runPlan = programState.runPlan;
+    const raceDate = runPlan.raceGoal.targetDate;
+    const raceDayRunDay = programState.runDays.find(
+      (rd) => rd && rd.date === raceDate
+    );
+    const plannedDistance =
+      PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
+    if (!_hasStrictRaceMatch(savedRunsForRaceDate, plannedDistance)) {
+      const updatedRunDays = programState.runDays.map((rd) =>
+        rd === raceDayRunDay ? { ...rd, status: "race_no_show" } : rd
+      );
+      updatePayload.runDays = updatedRunDays;
+      noShowWritten = true;
+    }
+  }
+
+  // ── L3 decision ────────────────────────────────────────────────
+  const runPlan = (programState && programState.runPlan) || null;
+  if (
+    runPlan &&
+    runPlan.phase === "recovery" &&
+    typeof runPlan.recoveryEndDate === "string"
+  ) {
+    const exitMs = _parseUtcDate(runPlan.recoveryEndDate).getTime();
+    const graceEndMs = exitMs + RECOVERY_EXIT_GRACE_DAYS * 24 * 60 * 60 * 1000;
+    if (nowMs >= graceEndMs) {
+      const cleared = { ...runPlan };
+      delete cleared.phase;
+      delete cleared.recoveryEndDate;
+      updatePayload.runPlan = cleared;
+      recoveryCleared = true;
+    }
+  }
+
+  if (!noShowWritten && !recoveryCleared) {
+    return { payload: null, noShowWritten, recoveryCleared };
+  }
+  return { payload: updatePayload, noShowWritten, recoveryCleared };
+}
+
+/** Per-user worker. Thin I/O wrapper around `_decideReconciliationActions`.
+ *  Reads profile + programState, fetches the race-day saved-runs
+ *  bucket when the decision function says it'll need it, then
+ *  applies the update (with the R1A tombstone guard immediately
+ *  before the write). Returns a log payload for the outer loop. */
+async function _runDailyRaceReconciliationForUser(uid) {
+  const userRef = db.collection("users").doc(uid);
+  const programRef = userRef.collection("programState").doc("current");
+  const [userSnap, programSnap] = await Promise.all([
+    userRef.get(),
+    programRef.get(),
+  ]);
+  if (!userSnap.exists || !programSnap.exists) {
+    return { noShowWritten: false, recoveryCleared: false };
+  }
+  const profile = userSnap.data() || {};
+  const programState = programSnap.data() || {};
+  const nowMs = Date.now();
+
+  // Only do the bounded saved-runs query when the L1 pass would
+  // need it — saves an I/O round trip for the common case where
+  // the user isn't in race_prep / their race hasn't passed grace /
+  // their slot is already terminal.
+  let savedRunsForRaceDate = [];
+  if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
+    const raceDate = programState.runPlan.raceGoal.targetDate;
+    try {
+      const runsSnap = await userRef
+        .collection("runs")
+        .where("date", "==", raceDate)
+        .get();
+      savedRunsForRaceDate = runsSnap.docs.map((d) => d.data() || {});
+    } catch (err) {
+      console.warn(
+        `dailyRaceReconciliationSweep: runs query failed for ${uid}: ${err.message}`
+      );
+    }
+  }
+
+  const { payload, noShowWritten, recoveryCleared } =
+    _decideReconciliationActions(
+      profile,
+      programState,
+      savedRunsForRaceDate,
+      nowMs
+    );
+
+  if (!payload) {
+    return { noShowWritten, recoveryCleared };
+  }
+
+  // R1A: tombstone guard immediately before the write — per spec
+  // systemWriterCheckTiming, the active-users query happened
+  // seconds-to-minutes ago and the user may have started deletion
+  // since.
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "dailyRaceReconciliationSweep"
+    ))
+  ) {
+    return { noShowWritten: false, recoveryCleared: false };
+  }
+  await programRef.set(payload, { merge: true });
+  return { noShowWritten, recoveryCleared };
+}
+
+// ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
+
+exports.dailyRaceReconciliationSweep = functions.pubsub
+  .schedule("0 4 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("dailyRaceReconciliationSweep: starting");
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db
+          .collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (err) {
+        // Fail loud — do NOT fall back to scanning the full users
+        // collection. Mirrors weeklyPerformanceRollup's discipline.
+        console.error(
+          "dailyRaceReconciliationSweep: lastActiveAt query failed, skipping run:",
+          err.message
+        );
+        return null;
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(
+        `dailyRaceReconciliationSweep: evaluating ${uids.length} users`
+      );
+
+      let totalNoShow = 0;
+      let totalRecoveryCleared = 0;
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              const { noShowWritten, recoveryCleared } =
+                await _runDailyRaceReconciliationForUser(uid);
+              if (noShowWritten) totalNoShow += 1;
+              if (recoveryCleared) totalRecoveryCleared += 1;
+            } catch (err) {
+              console.error(
+                `dailyRaceReconciliationSweep: failed for ${uid}:`,
+                err.message
+              );
+            }
+          })
+        );
+      }
+
+      console.log(
+        `dailyRaceReconciliationSweep: done — ` +
+          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}`
+      );
+    } catch (err) {
+      console.error("dailyRaceReconciliationSweep: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+// Test surface — the per-user worker is the meaningful unit. Export
+// it (and the helpers) under leading-underscore aliases so unit
+// tests can drive specific paths without spinning up the pubsub
+// harness end-to-end.
+exports._runDailyRaceReconciliationForUser = _runDailyRaceReconciliationForUser;
+exports._hasStrictRaceMatch = _hasStrictRaceMatch;
+exports._utcDateString = _utcDateString;
+exports._decideReconciliationActions = _decideReconciliationActions;
+exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
+
+// ══════════════════════════════════════════════
+// PR-L L2 — recovery-entry on onRunCreated
+// ══════════════════════════════════════════════
+//
+// Server-authoritative recovery-entry write. When a saved race-day
+// run lands AND it satisfies Q1 P4 (strict ≥95% on a race-templated
+// run) AND that race-day runDay's id hasn't already entered
+// recovery (Q2 P28 per-race tracking via runPlan.completedRaces[]),
+// write the recovery phase + end date.
+//
+// Replaces a piece of the previously-deleted `completeRunDay`
+// writer's responsibility. Lives on `onRunCreated` rather than on
+// the client because Apple Watch (and future native clients) will
+// also write saved-runs but can't run the React state machine.
+//
+// Idempotency:
+//   - Per-race via `completedRaces[]` (Q2 P28 — supersedes P14).
+//     Same runDay claimed twice (e.g. user logged a race, deleted
+//     it, re-logged it) writes recovery once.
+//   - Multi-race plans (Round 3 stress #52) can enter recovery
+//     per-race; the array grows with each completion.
+//   - Self-correcting: if a previous race already entered recovery
+//     and a newer race lands, the recoveryEndDate updates to the
+//     new race's window (later race's recovery overrides).
+
+const RECOVERY_WEEKS_BY_DISTANCE_FNS = {
+  "5k": 1,
+  "10k": 2,
+  half: 3,
+  marathon: 4,
+};
+
+/** Pure decision function for the recovery-entry write triggered
+ *  by `onRunCreated`. Returns `{ write, payload?, raceDayRunDayId?,
+ *  recoveryEndDate? }`. Easy to test exhaustively without Firestore
+ *  — same pattern as L1+L3's `_decideReconciliationActions`. */
+function _decideRecoveryEntry(profile, programState, savedRun) {
+  // Gate 1 — user must be in race_prep mode with a race goal +
+  // active runPlan.
+  if (!profile || profile.runMode !== "race_prep") {
+    return { write: false };
+  }
+  const runPlan = (programState && programState.runPlan) || null;
+  if (!runPlan || !runPlan.raceGoal || !runPlan.raceGoal.targetDate) {
+    return { write: false };
+  }
+  const raceDate = runPlan.raceGoal.targetDate;
+
+  // Gate 2 — saved run must be on the race date. Q1 P4 is strict
+  // on date for race claims (no day-late / day-early forgiveness).
+  if (!savedRun || savedRun.date !== raceDate) {
+    return { write: false };
+  }
+
+  // Gate 3 — saved run must be race-templated.
+  if (savedRun.templateId !== "race") {
+    return { write: false };
+  }
+
+  // Gate 4 — saved run must clear the ≥95% planned-distance bar
+  // (Q1 P4 strict). Defensive 0-planned fallback per Q1 P29 —
+  // unconfigured race goal accepts any distance.
+  const plannedDistance =
+    PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
+  if (plannedDistance > 0) {
+    if (typeof savedRun.distance !== "number") return { write: false };
+    if (savedRun.distance / plannedDistance < RACE_STRICT_DISTANCE_RATIO_FNS) {
+      return { write: false };
+    }
+  }
+
+  // Gate 5 — race-day runDay must exist in the plan.
+  const raceDayRunDay = ((programState && programState.runDays) || []).find(
+    (rd) => rd && rd.date === raceDate
+  );
+  if (!raceDayRunDay || !raceDayRunDay.id) {
+    return { write: false };
+  }
+
+  // Gate 6 — per-race idempotency (Q2 P28). If this runDay's id is
+  // already in completedRaces, recovery already entered for this
+  // race; no-op even if the user re-logs.
+  const completedRaces = Array.isArray(runPlan.completedRaces)
+    ? runPlan.completedRaces
+    : [];
+  if (completedRaces.includes(raceDayRunDay.id)) {
+    return { write: false };
+  }
+
+  // All gates passed — compute the recovery end date and build the
+  // runPlan update. Recovery clock anchors on the race date so the
+  // user's countdown reads correctly even if the trigger fires
+  // hours after the actual run.
+  const distanceKey = runPlan.raceGoal.distance;
+  const recoveryWeeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[distanceKey];
+  if (typeof recoveryWeeks !== "number") {
+    // Unknown distance string — defensive bail. Real values are
+    // gated by the onboarding UI; this guard protects against
+    // schema drift.
+    return { write: false };
+  }
+  const recoveryEndMs =
+    _parseUtcDate(raceDate).getTime() + recoveryWeeks * 7 * 24 * 60 * 60 * 1000;
+  const recoveryEndDate = _utcDateString(new Date(recoveryEndMs));
+
+  const updatedRunPlan = {
+    ...runPlan,
+    phase: "recovery",
+    recoveryEndDate,
+    completedRaces: [...completedRaces, raceDayRunDay.id],
+  };
+
+  return {
+    write: true,
+    payload: { runPlan: updatedRunPlan },
+    raceDayRunDayId: raceDayRunDay.id,
+    recoveryEndDate,
+  };
+}
+
+/** Side-effect wrapper. Reads profile + programState for the user,
+ *  runs the pure decision, applies the write when needed. Callable
+ *  from `onRunCreated` after the existing flow finishes. Errors
+ *  are caught + logged — recovery entry is best-effort, not worth
+ *  taking down the rest of the trigger over.
+ *
+ *  No R1A guard here: the calling trigger (`onRunCreated`) already
+ *  checks `shouldSystemWriteProceed` at the top. If the user is
+ *  tombstoned, the trigger early-returns before reaching this
+ *  function. */
+async function _maybeWriteRecoveryEntryForRun(uid, savedRun) {
+  try {
+    const userRef = db.collection("users").doc(uid);
+    const programRef = userRef.collection("programState").doc("current");
+    const [userSnap, programSnap] = await Promise.all([
+      userRef.get(),
+      programRef.get(),
+    ]);
+    if (!userSnap.exists || !programSnap.exists) {
+      return;
+    }
+    const profile = userSnap.data() || {};
+    const programState = programSnap.data() || {};
+
+    const decision = _decideRecoveryEntry(profile, programState, savedRun);
+    if (!decision.write) {
+      return;
+    }
+
+    await programRef.set(decision.payload, { merge: true });
+    console.log(
+      `onRunCreated: recovery-entry written for ${uid} ` +
+        `(runDay=${decision.raceDayRunDayId}, endDate=${decision.recoveryEndDate})`
+    );
+  } catch (err) {
+    console.error(
+      `onRunCreated: recovery-entry failed for ${uid}: ${err.message}`
+    );
+  }
+}
+
+exports._decideRecoveryEntry = _decideRecoveryEntry;
+exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
+
+// ══════════════════════════════════════════════
 // CHALLENGE AUTO-PROGRESS HELPER
 // ══════════════════════════════════════════════
 
@@ -2418,6 +2889,12 @@ exports.onRunCreated = functions
         await releaseLock(uid, false, err.message);
         console.error(`onRunCreated: compute error for ${uid}:`, err.message);
       }
+
+      // PR-L L2: recovery-entry write. Runs AFTER the performance
+      // compute so a slow programState read can't delay the rest of
+      // the trigger. The wrapper catches its own errors — best-
+      // effort, not worth taking down the trigger.
+      await _maybeWriteRecoveryEntryForRun(uid, data);
     } catch (err) {
       console.error("onRunCreated: fatal error:", {
         uid,
@@ -3696,3 +4173,308 @@ exports.setCrewMembershipCallable = functions
       );
     }
   });
+
+// ══════════════════════════════════════════════
+// PR-L L4 — weekly fell-behind detection
+// ══════════════════════════════════════════════
+//
+// New surface (not a port — this didn't exist client-side before).
+// Once per week, check whether each active user actually ran ≥50%
+// of their weekly target the prior week. If not, set
+// `programState.pendingFellBehindPrompt` so the client can surface
+// the adaptive-plan prompt on next app open (per the Q24 lock —
+// shift / compress / skip-and-continue).
+//
+// Schedule: Mondays 05:00 UTC. Runs AFTER `weeklyPerformanceRollup`
+// (Sundays 23:15 UTC) so any week-end reconciliation has settled
+// before the fell-behind check evaluates the prior week.
+//
+// Bounded reads — same `lastActiveAt >= now - 30d` discipline as
+// other sweep functions; we don't iterate the full users collection
+// even on query failure.
+//
+// Implementation notes:
+//   - "Prior week" is Sun..Sat in UTC. The server runs in UTC and
+//     `date` fields on saved runs are local-date strings — close
+//     enough at the 50% threshold that timezone edges don't matter
+//     for the prompt trigger.
+//   - "Real saved run" mirrors the volume-eligibility predicate
+//     from `onRunCreated`: not invalid, not save-anyway, distance
+//     ≥50m, duration ≥30s. Q5 P25 ("real activity only" for
+//     gamification) carried forward.
+//   - Freeform users + recovery-phase users are skipped — neither
+//     has a prescriptive weekly target to fall behind on.
+//   - Pure decision function (`_decideFellBehindFlag`) so the
+//     logic gets exhaustive coverage without Firestore.
+
+const FELL_BEHIND_THRESHOLD = 0.5;
+
+/** Compute the prior-week boundaries given a "now" timestamp. The
+ *  trigger fires Monday 05:00 UTC; prior week is the Sun..Sat
+ *  block immediately preceding today. */
+function _priorWeekUtcRange(nowMs) {
+  // Anchor on UTC midnight of "today" so dates align cleanly with
+  // the saved-runs `date` field (which is a local-date string that
+  // happens to look like a UTC date for the purpose of >=/<=
+  // ordering).
+  const now = new Date(nowMs);
+  const todayUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const todayDow = todayUtc.getUTCDay(); // 0=Sun..6=Sat
+  // Last Saturday = today - (todayDow + 1) days. Monday → -2 days.
+  // Sunday → -1 day. Etc.
+  const lastSaturday = new Date(todayUtc.getTime());
+  lastSaturday.setUTCDate(lastSaturday.getUTCDate() - todayDow - 1);
+  const lastSunday = new Date(lastSaturday.getTime());
+  lastSunday.setUTCDate(lastSunday.getUTCDate() - 6);
+  return {
+    weekStart: _utcDateString(lastSunday),
+    weekEnd: _utcDateString(lastSaturday),
+    weekKey: _utcDateString(lastSunday),
+  };
+}
+
+/** Same volume-eligibility shape as `onRunCreated` — defends
+ *  against zombie / save-anyway / invalid runs counting toward the
+ *  prior-week tally. Inline rather than imported because
+ *  `functions/` is plain CommonJS without the TS path alias. */
+function _isVolumeEligibleRun(data) {
+  if (!data) return false;
+  if (data.isInvalid === true) return false;
+  if (data.savedAnyway === true) return false;
+  if (!(Number(data.distance) || 0) || Number(data.distance) < 50) return false;
+  if (!(Number(data.duration) || 0) || Number(data.duration) < 30) return false;
+  return true;
+}
+
+/** Pure decision function for the fell-behind flag. Returns
+ *  `{ payload, action }` where `action` is one of:
+ *    - "set": new fell-behind state → write flag
+ *    - "clear": previously fell-behind but this week clears it →
+ *      delete the flag (write `null`)
+ *    - "noop": nothing to do this week
+ *  Easy to test exhaustively without Firestore. */
+function _decideFellBehindFlag(
+  profile,
+  programState,
+  priorWeekRuns,
+  priorWeekKey
+) {
+  // Gate 1 — freeform users have no prescriptive target; skip.
+  const runMode = profile && profile.runMode;
+  if (!runMode || runMode === "freeform") {
+    return { action: "noop" };
+  }
+
+  // Gate 2 — users in active recovery phase aren't falling behind
+  // on training; they're recovering by design. The "prescription"
+  // for the recovery weeks is easy_30s at the same frequency, but
+  // missing those isn't fell-behind territory.
+  const runPlan = (programState && programState.runPlan) || null;
+  if (runPlan && runPlan.phase === "recovery") {
+    return { action: "noop" };
+  }
+
+  // Gate 3 — read the user's weekly run target. 0 means
+  // structured/race_prep but with no target configured (malformed
+  // state); treat as freeform for fell-behind purposes.
+  const weeklyTarget =
+    (profile && profile.weeklyRunDaysTarget) ||
+    (profile && profile.weeklyRunsTarget) ||
+    0;
+  if (weeklyTarget < 1) {
+    return { action: "noop" };
+  }
+
+  // Count volume-eligible runs in the prior week.
+  const realRunCount = (priorWeekRuns || []).filter(
+    _isVolumeEligibleRun
+  ).length;
+  const completedRatio = realRunCount / weeklyTarget;
+  const fellBehind = completedRatio < FELL_BEHIND_THRESHOLD;
+
+  const existingFlag =
+    (programState && programState.pendingFellBehindPrompt) || null;
+
+  if (fellBehind) {
+    // Idempotent: if the same flag is already present (re-firing on
+    // the same week), no-op so we don't generate spurious writes.
+    if (
+      existingFlag &&
+      existingFlag.weekKey === priorWeekKey &&
+      existingFlag.completedRatio === completedRatio
+    ) {
+      return { action: "noop" };
+    }
+    return {
+      action: "set",
+      payload: {
+        pendingFellBehindPrompt: {
+          weekKey: priorWeekKey,
+          completedRatio,
+          realRunCount,
+          weeklyTarget,
+        },
+      },
+    };
+  }
+
+  // Not fell-behind this week. If a flag for an OLDER week is still
+  // present (user dismissed the previous one slowly), leave it —
+  // the client owns the dismissal. Only clear if the flag belongs
+  // to THIS evaluation's week (defensive — caller shouldn't have
+  // re-evaluated the same week twice, but be safe).
+  if (existingFlag && existingFlag.weekKey === priorWeekKey) {
+    return {
+      action: "clear",
+      payload: { pendingFellBehindPrompt: null },
+    };
+  }
+  return { action: "noop" };
+}
+
+/** Per-user worker. Reads profile + programState + prior-week
+ *  saved runs, runs the pure decision, applies the write when
+ *  needed. Errors caught + logged per-user — one bad user doesn't
+ *  break the sweep. */
+async function _runWeeklyFellBehindCheckForUser(uid, range) {
+  const userRef = db.collection("users").doc(uid);
+  const programRef = userRef.collection("programState").doc("current");
+  const [userSnap, programSnap] = await Promise.all([
+    userRef.get(),
+    programRef.get(),
+  ]);
+  if (!userSnap.exists || !programSnap.exists) {
+    return { action: "noop" };
+  }
+  const profile = userSnap.data() || {};
+  const programState = programSnap.data() || {};
+
+  // Bounded query — only the prior week, never the full subscription.
+  let priorWeekRuns = [];
+  try {
+    const runsSnap = await userRef
+      .collection("runs")
+      .where("date", ">=", range.weekStart)
+      .where("date", "<=", range.weekEnd)
+      .get();
+    priorWeekRuns = runsSnap.docs.map((d) => d.data() || {});
+  } catch (err) {
+    console.warn(
+      `weeklyFellBehindCheck: runs query failed for ${uid}: ${err.message}`
+    );
+  }
+
+  const decision = _decideFellBehindFlag(
+    profile,
+    programState,
+    priorWeekRuns,
+    range.weekKey
+  );
+  if (decision.action === "noop") {
+    return decision;
+  }
+
+  // R1A: tombstone guard immediately before the write.
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "weeklyFellBehindCheck"
+    ))
+  ) {
+    return { action: "noop" };
+  }
+
+  if (decision.action === "clear") {
+    // Use FieldValue.delete() to actually drop the field rather
+    // than setting it to null (cleaner read shape on the client).
+    await programRef.set(
+      {
+        pendingFellBehindPrompt: admin.firestore.FieldValue.delete(),
+      },
+      { merge: true }
+    );
+  } else {
+    // "set"
+    await programRef.set(decision.payload, { merge: true });
+  }
+  return decision;
+}
+
+// ── Scheduled: weekly fell-behind check (Mondays 05:00 UTC) ──
+
+exports.weeklyFellBehindCheck = functions.pubsub
+  .schedule("0 5 * * 1")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("weeklyFellBehindCheck: starting");
+
+      const range = _priorWeekUtcRange(Date.now());
+      console.log(
+        `weeklyFellBehindCheck: evaluating week ${range.weekKey} ` +
+          `(${range.weekStart}..${range.weekEnd})`
+      );
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db
+          .collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (err) {
+        console.error(
+          "weeklyFellBehindCheck: lastActiveAt query failed, skipping run:",
+          err.message
+        );
+        return null;
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(`weeklyFellBehindCheck: evaluating ${uids.length} users`);
+
+      let setCount = 0;
+      let clearCount = 0;
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              const decision = await _runWeeklyFellBehindCheckForUser(
+                uid,
+                range
+              );
+              if (decision.action === "set") setCount += 1;
+              if (decision.action === "clear") clearCount += 1;
+            } catch (err) {
+              console.error(
+                `weeklyFellBehindCheck: failed for ${uid}:`,
+                err.message
+              );
+            }
+          })
+        );
+      }
+
+      console.log(
+        `weeklyFellBehindCheck: done — set=${setCount}, clear=${clearCount}`
+      );
+    } catch (err) {
+      console.error("weeklyFellBehindCheck: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+exports._priorWeekUtcRange = _priorWeekUtcRange;
+exports._isVolumeEligibleRun = _isVolumeEligibleRun;
+exports._decideFellBehindFlag = _decideFellBehindFlag;
+exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
