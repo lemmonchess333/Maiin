@@ -51,7 +51,10 @@ interface DayActionSheetProps {
   profile: UserProfile | null;
   programState: ProgramState | null;
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
-  completeRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  /** PR-J Q2 chunk B2: replaces the deleted completeRunDay.
+   *  Writes to programState.manualCompletions[runDayId]; derivation
+   *  surfaces ✅ via the claim map (Q2 P27). */
+  markManualComplete: (runDayId: string) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
 }
@@ -63,7 +66,7 @@ export default function DayActionSheet({
   profile,
   programState,
   overrideRunDay,
-  completeRunDay,
+  markManualComplete,
   skipRunDay,
   skipWorkoutDay,
 }: DayActionSheetProps) {
@@ -141,10 +144,16 @@ export default function DayActionSheet({
             }}
           >
             <div className="flex items-center gap-2">
-              <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+              <Footprints
+                className="w-4 h-4"
+                style={{ color: THEME.running }}
+              />
               <p className="text-sm font-semibold text-foreground">Run</p>
               {run.isCompleted && (
-                <span className="ml-auto text-xs font-medium" style={{ color: THEME.success }}>
+                <span
+                  className="ml-auto text-xs font-medium"
+                  style={{ color: THEME.success }}
+                >
                   Completed
                 </span>
               )}
@@ -170,64 +179,69 @@ export default function DayActionSheet({
             <>
               {/* Template swap — only enabled when startable. */}
               <label className="block">
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                    Template
-                  </span>
-                  <select
-                    value={run.runDay.userOverride || run.runDay.templateId}
-                    onChange={(e) =>
-                      overrideRunDay(
-                        run.runDay!.id ?? run.runDay!.dayIndex,
-                        e.target.value,
-                      )
-                    }
-                    disabled={!run.isStartable}
-                    aria-label={
-                      run.isStartable
-                        ? "Run template"
-                        : `${run.status} — template locked`
-                    }
-                    className="w-full mt-1 bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {RUN_TEMPLATES.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} ({t.type})
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Template
+                </span>
+                <select
+                  value={run.runDay.userOverride || run.runDay.templateId}
+                  onChange={(e) =>
+                    overrideRunDay(
+                      run.runDay!.id ?? run.runDay!.dayIndex,
+                      e.target.value
+                    )
+                  }
+                  disabled={!run.isStartable}
+                  aria-label={
+                    run.isStartable
+                      ? "Run template"
+                      : `${run.status} — template locked`
+                  }
+                  className="w-full mt-1 bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {RUN_TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.type})
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                {/* Skip + Mark complete — only when startable. Terminal
-                    states already render the status badge above; the
-                    write APIs (completeRunDay / skipRunDay) refuse
-                    non-planned anyway via PR-0b-iii's transition gate. */}
-                {run.isStartable && (
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await completeRunDay(
-                          run.runDay!.id ?? run.runDay!.dayIndex,
-                        );
-                        onClose();
-                      }}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
-                    >
-                      <Check className="w-4 h-4" style={{ color: THEME.success }} />
-                      Mark complete (manual)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex);
-                        onClose();
-                      }}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
-                    >
-                      Skip this run
-                    </button>
-                  </div>
-                )}
+              {/* Skip + Mark complete — only when startable.
+                    PR-J Q2 chunk B2: markManualComplete writes to
+                    the manualCompletions map (Q2 P11). Q2 P21:
+                    UI-suppression on race day will land in chunk B3
+                    when ProgrammeRunSection rewires to gate this
+                    button per runDay.templateId === "race". */}
+              {run.isStartable && (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (run.runDay?.id) {
+                        await markManualComplete(run.runDay.id);
+                      }
+                      onClose();
+                    }}
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
+                  >
+                    <Check
+                      className="w-4 h-4"
+                      style={{ color: THEME.success }}
+                    />
+                    Mark complete (manual)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex);
+                      onClose();
+                    }}
+                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                  >
+                    Skip this run
+                  </button>
+                </div>
+              )}
             </>
           </section>
         )}
@@ -248,7 +262,10 @@ export default function DayActionSheet({
                 {lift.workout.dayName || "Lift"}
               </p>
               {lift.status === "completed" && (
-                <span className="ml-auto text-xs font-medium" style={{ color: THEME.success }}>
+                <span
+                  className="ml-auto text-xs font-medium"
+                  style={{ color: THEME.success }}
+                >
                   Completed
                 </span>
               )}
@@ -268,7 +285,7 @@ export default function DayActionSheet({
                 }}
                 className={cn(
                   "w-full py-2.5 rounded-xl text-sm font-semibold",
-                  "bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform",
+                  "bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
                 )}
               >
                 Skip this lift
