@@ -2,6 +2,24 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // 2026-05-26 audit PR 4 (finding #8) — MIME allowlist.
+    // Pre-PR-4 `image/.*` accepted `image/svg+xml`. SVGs can carry
+    // inline `<script>` payloads that execute if ever rendered
+    // inline (e.g. via direct DOM injection rather than `<img src>`).
+    // Tropos's current render paths all use `<img src>` which sandboxes
+    // the SVG, but the rule was a future-proof / defense-in-depth gap:
+    // a template change three years from now that drops a profile
+    // avatar into an `<svg>` inline-include would resurrect the XSS
+    // surface. Closed-set MIME types remove the risk class entirely.
+    //
+    // raster-only formats are sufficient for both surfaces:
+    //   - Progress photos: real camera / gallery output
+    //   - Profile photos: OAuth provider thumbnails (Google / Apple
+    //     return JPEG; client-resized uploads are JPEG / PNG / WEBP)
+    function isAllowedImageMime() {
+      return request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+    }
+
     // Default: deny all
     match /{allPaths=**} {
       allow read, write: if false;
@@ -12,7 +30,7 @@ service firebase.storage {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null && request.auth.uid == uid
         && request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && isAllowedImageMime();
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -21,7 +39,7 @@ service firebase.storage {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid
         && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && isAllowedImageMime();
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
   }
