@@ -18,9 +18,30 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import type { UserProfile } from "@/lib/auth";
-import type { ProgramState, ScheduledRunDay } from "@/features/program/programTypes";
+import type {
+  ProgramState,
+  ScheduledRunDay,
+} from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+
+const emptyClaimMap: Map<string, ClaimState> = new Map();
+
+function claimMapWith(
+  entries: Array<[string, Partial<ClaimState>]>
+): Map<string, ClaimState> {
+  const m = new Map<string, ClaimState>();
+  for (const [id, partial] of entries) {
+    m.set(id, {
+      claimedSavedRunId: undefined,
+      manualCompleted: false,
+      legacyCompleted: false,
+      ...partial,
+    });
+  }
+  return m;
+}
 
 function makeSchedule(types: ScheduleDay["type"][]): ScheduleDay[] {
   return types.map((type, day) => ({ day, type }));
@@ -88,7 +109,15 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
   it("renders 'Run scheduled' for a planned run day with date+weekKey set", () => {
     const tueKey = dayOfThisWeek(2);
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
-    const schedule = makeSchedule(["rest", "lift", "run", "lift", "run", "rest", "lift"]);
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
     const profile = makeProfile(schedule);
     const programState = makeProgramState([
       makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey }),
@@ -99,10 +128,11 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         dateKey={tueKey}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText("Run scheduled")).toBeInTheDocument();
@@ -111,7 +141,15 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
     const tueKey = dayOfThisWeek(2);
-    const schedule = makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"]);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+    ]);
     const profile = makeProfile(schedule);
 
     render(
@@ -119,37 +157,95 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText("No activity logged")).toBeInTheDocument();
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
   });
 
-  it("renders 'Run completed' with a check when the runDay is marked completed", () => {
+  it("renders 'Run completed' with a check when the runDay is marked completed via legacy status", () => {
+    // PR-J chunk B3c — the resolver now derives completion via the
+    // claim map. Legacy completed_* docs surface as completed when
+    // the claim map carries `legacyCompleted: true` (which
+    // `computeClaims` sets automatically — here we hand-construct
+    // it to keep the test focused on the DayPeekCard surface).
     const tueKey = dayOfThisWeek(2);
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
-    const schedule = makeSchedule(["rest", "lift", "run", "lift", "run", "rest", "lift"]);
-    const profile = makeProfile(schedule);
-    const programState = makeProgramState([
-      makeRunDay({
-        dayIndex: 2, date: tueKey, weekKey: tueWeekKey,
-        completed: true, status: "completed_exact",
-      }),
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
     ]);
+    const profile = makeProfile(schedule);
+    const legacyRunDay = makeRunDay({
+      dayIndex: 2,
+      date: tueKey,
+      weekKey: tueWeekKey,
+      completed: true,
+      status: "completed_exact",
+    });
+    const programState = makeProgramState([legacyRunDay]);
 
     render(
       <DayPeekCard
         dateKey={tueKey}
         profile={profile}
         programState={programState}
+        claimMap={claimMapWith([[legacyRunDay.id!, { legacyCompleted: true }]])}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
-      />,
+      />
+    );
+
+    expect(screen.getByText("Run completed")).toBeInTheDocument();
+  });
+
+  it("renders 'Run completed' when the claim map carries a manual completion (B2 writer)", () => {
+    // PR-J chunk B3c — the new manualCompletions writer path. The
+    // runDay's status stays `planned`; manualCompleted in the claim
+    // map drives the ✅ + "Run completed" copy.
+    const tueKey = dayOfThisWeek(2);
+    const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
+    const profile = makeProfile(schedule);
+    const plannedRunDay = makeRunDay({
+      dayIndex: 2,
+      date: tueKey,
+      weekKey: tueWeekKey,
+      status: "planned",
+    });
+    const programState = makeProgramState([plannedRunDay]);
+
+    render(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMapWith([
+          [plannedRunDay.id!, { manualCompleted: true }],
+        ])}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
     );
 
     expect(screen.getByText("Run completed")).toBeInTheDocument();
@@ -158,10 +254,23 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
   it("renders 'Run skipped' for a skipped runDay", () => {
     const tueKey = dayOfThisWeek(2);
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
-    const schedule = makeSchedule(["rest", "lift", "run", "lift", "run", "rest", "lift"]);
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
     const profile = makeProfile(schedule);
     const programState = makeProgramState([
-      makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey, status: "skipped" }),
+      makeRunDay({
+        dayIndex: 2,
+        date: tueKey,
+        weekKey: tueWeekKey,
+        status: "skipped",
+      }),
     ]);
 
     render(
@@ -169,10 +278,11 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         dateKey={tueKey}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText("Run skipped")).toBeInTheDocument();
@@ -181,7 +291,15 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
   it("stacks the run row alongside workout + meal lines when all are present", () => {
     const tueKey = dayOfThisWeek(2);
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
-    const schedule = makeSchedule(["rest", "lift", "both", "lift", "run", "rest", "lift"]);
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "both",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
     const profile = makeProfile(schedule);
     const programState = makeProgramState([
       makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey }),
@@ -192,10 +310,16 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         dateKey={tueKey}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         workouts={[{ durationMinutes: 45 }]}
-        dailyTotals={{ ...emptyTotals(), calories: 1800, protein: 120, mealCount: 3 }}
+        dailyTotals={{
+          ...emptyTotals(),
+          calories: 1800,
+          protein: 120,
+          mealCount: 3,
+        }}
         onClose={vi.fn()}
-      />,
+      />
     );
 
     expect(screen.getByText("Run scheduled")).toBeInTheDocument();
@@ -214,7 +338,15 @@ describe("DayPeekCard — PR-0c: next-week date does NOT inherit this-week runDa
     nextTue.setDate(nextTue.getDate() + 7);
     const nextTueKey = `${nextTue.getFullYear()}-${String(nextTue.getMonth() + 1).padStart(2, "0")}-${String(nextTue.getDate()).padStart(2, "0")}`;
 
-    const schedule = makeSchedule(["rest", "lift", "run", "lift", "run", "rest", "lift"]);
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
     const profile = makeProfile(schedule);
     const programState = makeProgramState([
       makeRunDay({
@@ -226,16 +358,30 @@ describe("DayPeekCard — PR-0c: next-week date does NOT inherit this-week runDa
       }),
     ]);
 
-    // Render the peek for NEXT Tuesday
+    // Render the peek for NEXT Tuesday. The claim map carries the
+    // legacy completion entry for THIS Tuesday's runDay — but the
+    // resolver won't match the runDay to next Tuesday at all
+    // (date+weekKey both fail), so the legacy entry never reaches
+    // the rendered output. The contract being pinned here.
+    const thisTueRunDay = makeRunDay({
+      dayIndex: 2,
+      date: thisTueKey,
+      weekKey: thisTueWeekKey,
+      status: "completed_exact",
+      completed: true,
+    });
     render(
       <DayPeekCard
         dateKey={nextTueKey}
         profile={profile}
         programState={programState}
+        claimMap={claimMapWith([
+          [thisTueRunDay.id!, { legacyCompleted: true }],
+        ])}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
-      />,
+      />
     );
 
     // The runDay's `date` is this Tuesday — exact match fails for
