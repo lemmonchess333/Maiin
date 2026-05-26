@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +18,7 @@ import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { IconButton } from "@/components/ui/IconButton";
+import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
  *  shown inline before an overflow "+N more" tap-through. */
@@ -71,6 +73,9 @@ export default function DayPeekCard({
   onManage?: (dateKey: string) => void;
 }) {
   const navigate = useNavigate();
+  // Q5 P71 — overflow expand-sheet state. Mirrors RunWeekStrip's
+  // local handling (the parent doesn't need to know about overflow).
+  const [extrasSheetOpen, setExtrasSheetOpen] = useState(false);
   const resolved = resolveTrainingDayForDate({
     dateKey,
     profile,
@@ -251,8 +256,8 @@ export default function DayPeekCard({
               {overflowCount > 0 && (
                 <button
                   type="button"
-                  onClick={() => navigate("/history")}
-                  aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open History`}
+                  onClick={() => setExtrasSheetOpen(true)}
+                  aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open all`}
                   className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md active:scale-[0.97]"
                 >
                   <Footprints
@@ -271,6 +276,12 @@ export default function DayPeekCard({
           )}
         </div>
       </div>
+      <ExtrasExpandSheet
+        open={extrasSheetOpen}
+        onClose={() => setExtrasSheetOpen(false)}
+        dateKey={dateKey}
+        extras={extras}
+      />
     </motion.div>
   );
 }
