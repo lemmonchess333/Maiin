@@ -65,6 +65,7 @@ import {
   isCurrentWeekInTaper,
 } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
+import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
@@ -140,6 +141,11 @@ export default function ProgrammeRunSection({
   // clause; returns a `loading` flag the hero shell consumes for
   // non-blocking paint.
   const { runs, weeklyData, loading: runsLoading } = useRunningStats(30);
+  // PR-J Q3 chunk B3b — single source of truth for derived
+  // completion. Subscribes to users/{uid}/runs + reads
+  // programState.manualCompletions; forwarded to RunWeekStrip so
+  // the strip's ✅ tracks manual/saved-run/legacy completions.
+  const { claimMap } = useClaimMap();
   // PR-B: chip + race-form state.
   //   modeChangePending — double-tap guard while updateProfile +
   //     refreshRunSchedule are in flight.
@@ -1206,6 +1212,7 @@ export default function ProgrammeRunSection({
       {currentMode !== "freeform" && runDays.length > 0 && (
         <RunWeekStrip
           runDays={runDays}
+          claimMap={claimMap}
           onDayTap={(dateKey) => setManageDate(dateKey)}
         />
       )}
