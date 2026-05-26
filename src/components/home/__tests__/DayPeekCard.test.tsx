@@ -14,8 +14,9 @@
  * PR-0c correctness contract: a next-week date never inherits
  * this-week's runDay status.
  */
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import type { UserProfile } from "@/lib/auth";
 import type {
@@ -24,9 +25,25 @@ import type {
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 
+// B3g — DayPeekCard's extras rows tap-through via useNavigate.
+// Mock so we can assert destinations without a full Router tree.
+const navigateMock = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
 const emptyClaimMap: Map<string, ClaimState> = new Map();
+const emptyExtras: SavedRunDoc[] = [];
 
 function claimMapWith(
   entries: Array<[string, Partial<ClaimState>]>
@@ -41,6 +58,22 @@ function claimMapWith(
     });
   }
   return m;
+}
+
+function savedRun(overrides: Partial<SavedRunDoc> = {}): SavedRunDoc {
+  return {
+    id: "saved-1",
+    date: "2026-05-12",
+    distance: 5000,
+    avgPace: 330,
+    templateId: "easy_30",
+    type: "easy",
+    ...overrides,
+  };
+}
+
+function renderCard(node: React.ReactElement) {
+  return render(<MemoryRouter>{node}</MemoryRouter>);
 }
 
 function makeSchedule(types: ScheduleDay["type"][]): ScheduleDay[] {
@@ -129,6 +162,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -158,6 +192,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         profile={profile}
         programState={makeProgramState([])}
         claimMap={emptyClaimMap}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -201,6 +236,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         profile={profile}
         programState={programState}
         claimMap={claimMapWith([[legacyRunDay.id!, { legacyCompleted: true }]])}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -242,6 +278,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         claimMap={claimMapWith([
           [plannedRunDay.id!, { manualCompleted: true }],
         ])}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -279,6 +316,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -311,6 +349,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
         profile={profile}
         programState={programState}
         claimMap={emptyClaimMap}
+        extras={emptyExtras}
         workouts={[{ durationMinutes: 45 }]}
         dailyTotals={{
           ...emptyTotals(),
@@ -378,6 +417,7 @@ describe("DayPeekCard — PR-0c: next-week date does NOT inherit this-week runDa
         claimMap={claimMapWith([
           [thisTueRunDay.id!, { legacyCompleted: true }],
         ])}
+        extras={emptyExtras}
         workouts={[]}
         dailyTotals={emptyTotals()}
         onClose={vi.fn()}
@@ -392,5 +432,159 @@ describe("DayPeekCard — PR-0c: next-week date does NOT inherit this-week runDa
     expect(screen.queryByText("Run completed")).not.toBeInTheDocument();
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.getByText("No activity logged")).toBeInTheDocument();
+  });
+});
+
+describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
+  beforeEach(() => {
+    navigateMock.mockClear();
+  });
+
+  it("renders an extras row when an unclaimed saved run exists for this date", () => {
+    const tueKey = dayOfThisWeek(2);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+    ]);
+    const profile = makeProfile(schedule);
+    renderCard(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={[savedRun({ id: "extra-1", distance: 5000, type: "easy" })]}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    ).toBeInTheDocument();
+    // Activity section took over — fallback empty-state copy hidden.
+    expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
+  });
+
+  it("tapping an extras row navigates to RunDetail (/run/:id)", () => {
+    const tueKey = dayOfThisWeek(2);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+    ]);
+    const profile = makeProfile(schedule);
+    renderCard(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={[savedRun({ id: "tap-target" })]}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    );
+    expect(navigateMock).toHaveBeenCalledWith("/run/tap-target");
+  });
+
+  it("caps visible extras at 2 and surfaces a '+N more' tap-through to /history", () => {
+    const tueKey = dayOfThisWeek(2);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+    ]);
+    const profile = makeProfile(schedule);
+    renderCard(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={[
+          savedRun({ id: "ex-1", distance: 3000, type: "easy" }),
+          savedRun({ id: "ex-2", distance: 4000, type: "tempo" }),
+          savedRun({ id: "ex-3", distance: 5000, type: "long" }),
+          savedRun({ id: "ex-4", distance: 6000, type: "easy" }),
+        ]}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    // First two render as inline rows.
+    expect(
+      screen.getByRole("button", { name: /Extra run: 3km easy/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extra run: 4km tempo/i })
+    ).toBeInTheDocument();
+    // The 3rd + 4th are hidden behind the overflow indicator.
+    expect(
+      screen.queryByRole("button", { name: /Extra run: 5km long/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /2 more extra runs/i })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /2 more extra runs/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/history");
+  });
+
+  it("extras render alongside a planned-run row when both exist for the date", () => {
+    // Real-world scenario: the user has a planned 5km easy slot on
+    // Tuesday AND logged a 3km run that didn't claim the slot
+    // (sub-threshold). DayPeek shows the planned row + the extras
+    // row side-by-side so the user sees both facts at a glance.
+    const tueKey = dayOfThisWeek(2);
+    const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
+    const schedule = makeSchedule([
+      "rest",
+      "lift",
+      "run",
+      "lift",
+      "run",
+      "rest",
+      "lift",
+    ]);
+    const profile = makeProfile(schedule);
+    const programState = makeProgramState([
+      makeRunDay({ dayIndex: 2, date: tueKey, weekKey: tueWeekKey }),
+    ]);
+    renderCard(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        extras={[
+          savedRun({ id: "sub-threshold", distance: 3000, type: "easy" }),
+        ]}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText("Run scheduled")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extra run: 3km easy/i })
+    ).toBeInTheDocument();
   });
 });
