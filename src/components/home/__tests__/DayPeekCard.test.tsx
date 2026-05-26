@@ -246,10 +246,13 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.getByText("Run completed")).toBeInTheDocument();
   });
 
-  it("renders 'Run completed' when the claim map carries a manual completion (B2 writer)", () => {
+  it("renders 'Marked complete' when the claim map carries a manual completion (B2 writer + B3k visual)", () => {
     // PR-J chunk B3c — the new manualCompletions writer path. The
     // runDay's status stays `planned`; manualCompleted in the claim
-    // map drives the ✅ + "Run completed" copy.
+    // map drives the ✅.
+    // Q2 P24 (chunk B3k) — manual completions render as "Marked
+    // complete" (dimmed check) so the user can tell at a glance
+    // whether the check is from a real logged run or a manual mark.
     const tueKey = dayOfThisWeek(2);
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
     const schedule = makeSchedule([
@@ -285,7 +288,8 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Run completed")).toBeInTheDocument();
+    expect(screen.getByText("Marked complete")).toBeInTheDocument();
+    expect(screen.queryByText("Run completed")).not.toBeInTheDocument();
   });
 
   it("renders 'Run skipped' for a skipped runDay", () => {
