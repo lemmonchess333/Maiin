@@ -130,9 +130,14 @@ function computeFingerprint(
   return `${savedRuns.length}|${sumUpdated}|${manualKeys}|${today}`;
 }
 
-interface SavedRunDoc extends SavedRunLike {
-  // Firestore-shaped extras the hook reads but the helper doesn't
-  // care about — kept here for type tolerance.
+/**
+ * Saved-run row as the hook exposes it — the `SavedRunLike` shape
+ * the helper consumes, plus the Firestore-shaped extras (duration,
+ * type) the UI reads when rendering Q5 "extras" pills. Exported so
+ * RunWeekStrip / DayPeekCard / DayActionSheet can type their own
+ * extras-display props without importing the shape twice.
+ */
+export interface SavedRunDoc extends SavedRunLike {
   duration?: number;
   type?: string;
 }

@@ -39,6 +39,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
@@ -50,6 +51,13 @@ interface DayActionSheetProps {
   dateKey: string | null;
   profile: UserProfile | null;
   programState: ProgramState | null;
+  /** PR-J Q3 chunk B3d — derived completion source of truth.
+   *  Forwarded to the shared `resolveTrainingDayForDate` call so
+   *  the sheet's "Completed" badge tracks manual / saved-run-claim
+   *  / legacy completions uniformly. Wired via `useClaimMap` in
+   *  the parent (ProgrammeRunSection). Closes the last resolver
+   *  back-compat fallback B3c left open. */
+  claimMap: Map<string, ClaimState>;
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
   /** PR-J Q2 chunk B2: replaces the deleted completeRunDay.
    *  Writes to programState.manualCompletions[runDayId]; derivation
@@ -65,6 +73,7 @@ export default function DayActionSheet({
   dateKey,
   profile,
   programState,
+  claimMap,
   overrideRunDay,
   markManualComplete,
   skipRunDay,
@@ -81,8 +90,9 @@ export default function DayActionSheet({
       profile,
       programState,
       currentWeekKey: localWeekKey(new Date()),
+      claimMap,
     });
-  }, [dateKey, profile, programState]);
+  }, [dateKey, profile, programState, claimMap]);
 
   const dayLabel = useMemo(() => {
     if (!dateKey) return "";
@@ -206,13 +216,19 @@ export default function DayActionSheet({
                 </select>
               </label>
 
-              {/* Skip + Mark complete — only when startable.
+              {/* Skip + Mark complete — only when startable AND not
+                    already completed. PR-J Q3 chunk B3d adds the
+                    `!run.isCompleted` gate: with the claim map wired
+                    a manual completion leaves runDay.status="planned"
+                    (so isStartable stays true) but isCompleted flips
+                    via the claim map. Without this gate the buttons
+                    would still show next to the "Completed" badge.
                     PR-J Q2 chunk B2: markManualComplete writes to
                     the manualCompletions map (Q2 P11). Q2 P21:
                     UI-suppression on race day will land in chunk B3
                     when ProgrammeRunSection rewires to gate this
                     button per runDay.templateId === "race". */}
-              {run.isStartable && (
+              {run.isStartable && !run.isCompleted && (
                 <div className="space-y-2">
                   <button
                     type="button"
