@@ -239,65 +239,72 @@ export default function DayActionSheet({
                 </select>
               </label>
 
-              {/* Skip + Mark complete — only when startable AND not
-                    already completed. PR-J Q3 chunk B3d adds the
-                    `!run.isCompleted` gate: with the claim map wired
-                    a manual completion leaves runDay.status="planned"
-                    (so isStartable stays true) but isCompleted flips
-                    via the claim map. Without this gate the buttons
-                    would still show next to the "Completed" badge.
-                    PR-J Q2 chunk B2: markManualComplete writes to
-                    the manualCompletions map (Q2 P11). Q2 P21:
-                    UI-suppression on race day will land in chunk B3
-                    when ProgrammeRunSection rewires to gate this
-                    button per runDay.templateId === "race". */}
-              {run.isStartable && !run.isCompleted && (
-                <div className="space-y-2">
-                  {/* Q5 P74 same-date paradox hint (chunk B3f).
-                      When a saved run exists for this date but
-                      didn't claim the slot (distance-fail or
-                      quality-bucket-fail per Q1 P2/P3), surface a
-                      contextual prompt so the user can resolve the
-                      friction with one tap. Hidden on race-day slots
-                      (race-day completion is strictly real-saved-run-
-                      only — Q1 P4 / Q2 P21 inheritance). */}
-                  {hasSameDateExtra && run.runDay?.templateId !== "race" && (
-                    <p
-                      role="status"
-                      className="text-xs text-muted-foreground bg-muted/40 rounded-md px-2 py-1.5"
+              {/* Action block (Mark complete + Skip + same-date hint).
+                    Two entry conditions, each with !isCompleted:
+                      - Planned (existing B3d): isStartable → full
+                        block, Mark + Skip + optional hint
+                      - Skipped + same-date extra (Q5 P86 / B3h): the
+                        hint + Mark complete surface; Skip is hidden
+                        (already skipped). markManualComplete handles
+                        the two-step `skipped → planned → manualComps`
+                        transition internally per Q2 P20.
+                    The skipped+extra entry is race-day-suppressed in
+                    the gate itself (race-day completion is strictly
+                    real-saved-run-only — Q1 P4 / Q2 P21 inheritance).
+                    The planned race-day case is unchanged from B3d
+                    (a unified Q2 P21 race-day suppression rule across
+                    the planned Mark complete path lands separately). */}
+              {!run.isCompleted &&
+                (run.isStartable ||
+                  (run.status === "skipped" &&
+                    hasSameDateExtra &&
+                    run.runDay?.templateId !== "race")) && (
+                  <div className="space-y-2">
+                    {hasSameDateExtra && run.runDay?.templateId !== "race" && (
+                      <p
+                        role="status"
+                        className="text-xs text-muted-foreground bg-muted/40 rounded-md px-2 py-1.5"
+                      >
+                        An extra run is logged for this date. Mark this{" "}
+                        {run.status === "skipped" ? "skipped" : "planned"} slot
+                        as done?
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (run.runDay?.id) {
+                          await markManualComplete(run.runDay.id);
+                        }
+                        onClose();
+                      }}
+                      className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
                     >
-                      An extra run is logged for this date. Mark this planned
-                      slot as done?
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (run.runDay?.id) {
-                        await markManualComplete(run.runDay.id);
-                      }
-                      onClose();
-                    }}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
-                  >
-                    <Check
-                      className="w-4 h-4"
-                      style={{ color: THEME.success }}
-                    />
-                    Mark complete (manual)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await skipRunDay(run.runDay!.id ?? run.runDay!.dayIndex);
-                      onClose();
-                    }}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
-                  >
-                    Skip this run
-                  </button>
-                </div>
-              )}
+                      <Check
+                        className="w-4 h-4"
+                        style={{ color: THEME.success }}
+                      />
+                      Mark complete (manual)
+                    </button>
+                    {/* Skip — only on planned slots. A skipped slot
+                      surfaced for the P86 reconciliation path
+                      shouldn't offer "skip" again. */}
+                    {run.isStartable && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await skipRunDay(
+                            run.runDay!.id ?? run.runDay!.dayIndex
+                          );
+                          onClose();
+                        }}
+                        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                      >
+                        Skip this run
+                      </button>
+                    )}
+                  </div>
+                )}
             </>
           </section>
         )}
