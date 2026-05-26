@@ -243,6 +243,43 @@ export function isRunDayComplete(
   );
 }
 
+/**
+ * PR-J Q2 P24 — Dominant completion source for a runDay's ✅.
+ *
+ * Q2 P24 calls for a "visually distinct manual ✅ vs real ✅"
+ * across RunWeekStrip + DayPeekCard + DayActionSheet — the user
+ * needs to know whether the slot is checked because a real GPS run
+ * matched it, or because they tapped Mark complete (manual). Legacy
+ * docs (pre-soft-link-reframe completed_*) read as "real" — they
+ * represent actual user activity recorded under the old writer.
+ *
+ * Order of precedence when multiple sources are set on the same
+ * entry:
+ *   1. `claimedSavedRunId` → "real" (organic saved-run match — the
+ *      strongest signal, since it means an actual run landed in
+ *      the date window + passed the distance + bucket gates).
+ *   2. `legacyCompleted` → "real" — pre-reframe docs are also
+ *      actual activity; bucketed alongside organic for UI purposes.
+ *   3. `manualCompleted` → "manual" — explicit user-intent without
+ *      a matching saved run.
+ *   4. None set → null (slot is not completed).
+ *
+ * Returns null for an entry that isn't in the map at all. Pure
+ * lookup; safe to call from render.
+ */
+export type CompletionKind = "real" | "manual" | null;
+
+export function getCompletionKind(
+  runDayId: string,
+  claimMap: Map<string, ClaimState>
+): CompletionKind {
+  const entry = claimMap.get(runDayId);
+  if (!entry) return null;
+  if (entry.claimedSavedRunId || entry.legacyCompleted) return "real";
+  if (entry.manualCompleted) return "manual";
+  return null;
+}
+
 export function isRaceDayCompletedStrictly(
   runDayId: string,
   claimMap: Map<string, ClaimState>,
