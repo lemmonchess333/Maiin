@@ -375,14 +375,31 @@ describe("RunWeekStrip — Q5 extras pills (chunk B3e)", () => {
     ).toBeInTheDocument();
   });
 
-  it("tapping '+N more' navigates to /history", () => {
+  it("tapping '+N more' opens the dedicated extras expand sheet (Q5 P71, chunk B3i)", () => {
+    // Pre-B3i this navigated to /history as a functional fallback.
+    // Post-B3i a date-scoped sheet opens listing every unclaimed
+    // saved run for that day with full detail (pace + duration).
     const extras = new Map<string, SavedRunDoc[]>([
       [
         "2026-05-12",
         [
-          savedRun({ id: "saved-1" }),
-          savedRun({ id: "saved-2" }),
-          savedRun({ id: "saved-3" }),
+          savedRun({
+            id: "saved-1",
+            distance: 3000,
+            type: "easy",
+            avgPace: 330,
+            duration: 990,
+          }),
+          savedRun({
+            id: "saved-2",
+            distance: 4000,
+            type: "tempo",
+          }),
+          savedRun({
+            id: "saved-3",
+            distance: 5000,
+            type: "long",
+          }),
         ],
       ],
     ]);
@@ -395,7 +412,16 @@ describe("RunWeekStrip — Q5 extras pills (chunk B3e)", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /1 more extra run/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/history");
+    // Sheet content surfaces inside the same document (vaul portal).
+    // Match the eyebrow exactly to avoid colliding with the
+    // sr-only Drawer.Title ("Extra runs on …") that vaul renders.
+    expect(screen.getByText("Extra runs")).toBeInTheDocument();
+    // The 3rd (overflowed) saved run is now listed in the sheet.
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5\.0 km, long/i })
+    ).toBeInTheDocument();
+    // No navigation happened (overflow tap is a local sheet open).
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("renders extras even when no planned slot exists for that date (standalone case — Q5 scenario 1)", () => {
