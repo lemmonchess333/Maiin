@@ -299,6 +299,12 @@ export interface RunPlan {
    *  by the card to display "N days left" and by the load effect
    *  to detect phase-end. */
   recoveryEndDate?: string;
+  /** PR-J Q2 P28: race-day runDay IDs that have already triggered
+   *  the recovery-entry effect. Prevents the effect from re-firing
+   *  on the same race after exit (P14 → P28 refinement). Supports
+   *  multi-race plans (Round 3 stress #52) by tracking per-race
+   *  entry rather than a single boolean. */
+  completedRaces?: string[];
 }
 
 /* ================================
@@ -357,6 +363,16 @@ export function transitionStatus(
   return LEGAL_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
+/** PR-J Q2 P11: explicit user intent to mark a runDay slot complete
+ *  without a real saved run. Distinct from the legacy `completed: true`
+ *  boolean (which migrated to `status: "completed_exact"`) — this map
+ *  records the INTENT, the derivation produces the visible ✅. Stored
+ *  on `programState` rather than on the runDay so plan-regenerate
+ *  cleanup (P19) can drop orphan keys in a single pass. */
+export interface ManualCompletion {
+  completedAt: { seconds: number; nanoseconds: number } | Date | number;
+}
+
 export interface ProgramState {
   goal: Goal;
   currentPhase: string;
@@ -370,6 +386,18 @@ export interface ProgramState {
   runDays?: ScheduledRunDay[];
   runPlan?: RunPlan;
   nextWorkoutOverride?: number;
+  /** PR-J Q2 P11: manualCompletions map keyed by `runDay.id`.
+   *  Optional + sparse — only contains entries for slots the user
+   *  has explicitly marked complete via DayActionSheet → "Mark
+   *  complete (manual)". The derivation (Q2 P27) ORs this map's
+   *  presence against saved-run matching + legacy status to surface
+   *  the slot's ✅ state. Cleanup sweep on auto-rollover + plan
+   *  regenerate (P19) drops orphan keys.
+   *
+   *  Optional in v2 type so existing v2 docs without the map field
+   *  read cleanly via TS (treated as empty map by readers).
+   *  `migrateProgramState` doesn't backfill — empty is correct. */
+  manualCompletions?: Record<string, ManualCompletion>;
   /**
    * Lifting goal declared at onboarding. Added in W1a so the procedural
    * engine can scale rep ranges to the user's actual request on regen,
