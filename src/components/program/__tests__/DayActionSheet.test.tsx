@@ -35,6 +35,24 @@ import type {
   ScheduledRunDay,
   WorkoutDay,
 } from "@/features/program/programTypes";
+import type { ClaimState } from "@/lib/scheduledRunCompletion";
+
+const emptyClaimMap: Map<string, ClaimState> = new Map();
+
+function claimMapWith(
+  entries: Array<[string, Partial<ClaimState>]>
+): Map<string, ClaimState> {
+  const m = new Map<string, ClaimState>();
+  for (const [id, partial] of entries) {
+    m.set(id, {
+      claimedSavedRunId: undefined,
+      manualCompleted: false,
+      legacyCompleted: false,
+      ...partial,
+    });
+  }
+  return m;
+}
 
 function makeProfile(
   weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[]
@@ -133,6 +151,7 @@ describe("DayActionSheet — empty / null state", () => {
         dateKey={todayKey()}
         profile={makeProfile([])}
         programState={null}
+        claimMap={emptyClaimMap}
         {...commonCallbacks()}
       />
     );
@@ -156,6 +175,7 @@ describe("DayActionSheet — empty / null state", () => {
           { day: 6, type: "rest" },
         ])}
         programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
         {...commonCallbacks()}
       />
     );
@@ -194,6 +214,7 @@ describe("DayActionSheet — planned run", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -212,6 +233,7 @@ describe("DayActionSheet — planned run", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -228,6 +250,7 @@ describe("DayActionSheet — planned run", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -244,6 +267,7 @@ describe("DayActionSheet — planned run", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -277,13 +301,21 @@ describe("DayActionSheet — terminal run states locked", () => {
     });
     return {
       profile,
+      runDay,
       programState: makeProgramState([runDay]),
       callbacks: commonCallbacks(),
     };
   }
 
-  it("completed_exact: select disabled, no Skip / Complete buttons", () => {
-    const { profile, programState, callbacks } = setupWithStatus(
+  it("completed_exact (legacy doc): select disabled, no Skip / Complete buttons, 'Completed' badge", () => {
+    // PR-J chunk B3d — the resolver now derives `run.isCompleted`
+    // from the claim map. For legacy completed_* docs the claim
+    // map carries `legacyCompleted: true` (which `computeClaims`
+    // sets from `isLegacyStatus(rd.status)`); the badge surfaces
+    // through that path. The status-driven select-disabled +
+    // isStartable gating still keys off `getScheduledRunStatus`
+    // — completed_* status means !isStartable means no buttons.
+    const { profile, programState, callbacks, runDay } = setupWithStatus(
       "completed_exact",
       true
     );
@@ -294,6 +326,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={claimMapWith([[runDay.id!, { legacyCompleted: true }]])}
         {...callbacks}
       />
     );
@@ -306,6 +339,66 @@ describe("DayActionSheet — terminal run states locked", () => {
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
 
+  it("manual completion on planned runDay surfaces 'Completed' badge AND hides Mark/Skip buttons (PR-J chunk B3d)", () => {
+    // The B2 writer leaves runDay.status="planned" but writes
+    // manualCompletions[id]. Pre-B3d the resolver wasn't claim-map-
+    // aware, so isCompleted=false → "Completed" badge missing AND
+    // isStartable=true → Mark/Skip buttons stayed visible.
+    //
+    // Post-B3d:
+    //   - resolver derives isCompleted via the claim map → badge shows
+    //   - DayActionSheet gates buttons on `!isCompleted && isStartable`
+    //     so the buttons hide once any completion source flips on.
+    const { profile, programState, callbacks, runDay } = setupWithStatus(
+      "planned",
+      false
+    );
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMapWith([[runDay.id!, { manualCompleted: true }]])}
+        {...callbacks}
+      />
+    );
+    expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+  });
+
+  it("saved-run claim on planned runDay also hides Mark/Skip + shows 'Completed' (PR-J chunk B3d)", () => {
+    // Same shape as the manual-completion case but driven by an
+    // organic saved-run match. Both completion sources share the
+    // same `isRunDayComplete` derivation, so the UI treatment is
+    // uniform.
+    const { profile, programState, callbacks, runDay } = setupWithStatus(
+      "planned",
+      false
+    );
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMapWith([
+          [runDay.id!, { claimedSavedRunId: "saved-1" }],
+        ])}
+        {...callbacks}
+      />
+    );
+    expect(screen.getByText(/Completed/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
+  });
+
   it("skipped: select disabled, no Skip / Complete buttons, 'Skipped' badge", () => {
     const { profile, programState, callbacks } = setupWithStatus("skipped");
     render(
@@ -315,6 +408,7 @@ describe("DayActionSheet — terminal run states locked", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -358,6 +452,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -373,6 +468,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -389,6 +485,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
@@ -405,6 +502,7 @@ describe("DayActionSheet — lift section", () => {
         dateKey={todayKey()}
         profile={profile}
         programState={programState}
+        claimMap={emptyClaimMap}
         {...callbacks}
       />
     );
