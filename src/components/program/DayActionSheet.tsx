@@ -270,22 +270,34 @@ export default function DayActionSheet({
                         as done?
                       </p>
                     )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (run.runDay?.id) {
-                          await markManualComplete(run.runDay.id);
-                        }
-                        onClose();
-                      }}
-                      className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
-                    >
-                      <Check
-                        className="w-4 h-4"
-                        style={{ color: THEME.success }}
-                      />
-                      Mark complete (manual)
-                    </button>
+                    {/* Q2 P21 (chunk B3j) — Mark complete suppressed
+                        on race-day slots. Race-day completion is
+                        strictly real-saved-run-only via Q1 P4
+                        (templateId === "race" + ≥95% distance);
+                        manual override would bypass the strict rule
+                        and incorrectly trigger recovery entry.
+                        Users on race day must log the run for real
+                        (or wait for Strava sync) to complete the
+                        slot. Skip stays available — see Q1 P7 (skip
+                        is reversible). */}
+                    {run.runDay?.templateId !== "race" && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (run.runDay?.id) {
+                            await markManualComplete(run.runDay.id);
+                          }
+                          onClose();
+                        }}
+                        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
+                      >
+                        <Check
+                          className="w-4 h-4"
+                          style={{ color: THEME.success }}
+                        />
+                        Mark complete (manual)
+                      </button>
+                    )}
                     {/* Skip — only on planned slots. A skipped slot
                       surfaced for the P86 reconciliation path
                       shouldn't offer "skip" again. */}
