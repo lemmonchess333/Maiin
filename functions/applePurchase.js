@@ -82,7 +82,17 @@ async function applySubscriptionToUser({
   now = () => new Date(),
   serverTimestamp = () => null,
   logger = console,
+  // Sub1 P2.5 — when set, called after the txn commits if the IAP
+  // write displaced a stripe sub. Receives { previousSource }. Caller
+  // is responsible for the actual Stripe SDK call (see
+  // `functions/lib/stripeAutoCancel.js cancelDisplacedStripeSub`).
+  // No-op when null (matches pre-#P2.5 behaviour — forensic log
+  // only, manual ops follow-up).
+  cancelDisplacedStripeSub = null,
 }) {
+  // Track the previous source so we can decide whether to invoke
+  // the Stripe auto-cancel callback after the txn commits.
+  let displacedSource = null;
   // VERIFY before we trust any field. verifyTransaction throws if
   // the JWS doesn't chain to Apple's roots OR if the bundle ID
   // doesn't match OR if the payload fails schema validation. We
@@ -105,88 +115,118 @@ async function applySubscriptionToUser({
 
   const userRef = firestore.collection("users").doc(uid);
 
-  return firestore.runTransaction(async (txn) => {
-    const userSnap = await txn.get(userRef);
-    const userData = userSnap.exists ? userSnap.data() : {};
+  return firestore
+    .runTransaction(async (txn) => {
+      const userSnap = await txn.get(userRef);
+      const userData = userSnap.exists ? userSnap.data() : {};
 
-    // Lifetime protection — subscription events can NEVER
-    // downgrade a one-time purchase entitlement.
-    if (userData.planKind === "lifetime") {
-      logger.log(
-        `applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`
+      // Lifetime protection — subscription events can NEVER
+      // downgrade a one-time purchase entitlement.
+      if (userData.planKind === "lifetime") {
+        logger.log(
+          `applySubscriptionToUser: skipping for uid=${uid} — lifetime entitlement`
+        );
+        return {
+          tier: userData.subscriptionTier || "pro",
+          expiresAt: userData.subscriptionExpiresAt || null,
+          skipped: "lifetime",
+        };
+      }
+
+      // Staleness guard. If the stored expiresAt is later than the
+      // incoming transaction's expiresAt, this is a late delivery
+      // for a transaction Apple has already superseded — ignore
+      // rather than overwrite. Pre-PR-D this overwrote on every
+      // event, so a late EXPIRED arriving after a DID_RENEW would
+      // silently downgrade a paying user.
+      const storedExpiresAtRaw = userData.subscriptionExpiresAt;
+      const storedExpiresMs = storedExpiresAtRaw
+        ? new Date(storedExpiresAtRaw).getTime()
+        : 0;
+      if (storedExpiresMs > expiresMs) {
+        logger.log(
+          `applySubscriptionToUser: skipping stale tx for uid=${uid} ` +
+            `(stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`
+        );
+        return {
+          tier: userData.subscriptionTier || "free",
+          expiresAt: storedExpiresAtRaw || null,
+          skipped: "stale",
+        };
+      }
+
+      // Sub1 P2 — every Pro write is platform-tagged so the
+      // cross-platform reconciliation guard (Upgrade.tsx + the
+      // duplicate-detection alert layer) can compare current vs new
+      // source. Helper handles downgrades by nulling the source.
+      const { writeTier, writeSource, conflict, conflictReason } =
+        resolveSubscriptionUpdate({
+          currentTier: userData.subscriptionTier,
+          currentSource: userData.subscriptionSource,
+          incomingTier: isActive ? "pro" : "free",
+          incomingSource: isActive ? SOURCE_IOS_IAP : SOURCE_IOS_IAP,
+        });
+
+      txn.set(
+        userRef,
+        {
+          subscriptionTier: writeTier,
+          subscriptionSource: writeSource,
+          appleOriginalTransactionId: originalTransactionId,
+          appleProductId: productId,
+          subscriptionExpiresAt: expiresAt.toISOString(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
       );
+
+      if (conflict) {
+        // Forensic-review breadcrumb in Cloud Logging. Auto-cancel
+        // (Sub1 P2.5) runs OUTSIDE the txn — see the post-txn block
+        // below. If that callback isn't injected, ops still handles
+        // the displaced sub manually using the forensic log.
+        logger.warn("applySubscriptionToUser.cross_platform_conflict", {
+          uid,
+          conflictReason,
+          newSource: writeSource,
+          previousSource: userData.subscriptionSource,
+        });
+        displacedSource = userData.subscriptionSource || null;
+      }
+
       return {
-        tier: userData.subscriptionTier || "pro",
-        expiresAt: userData.subscriptionExpiresAt || null,
-        skipped: "lifetime",
+        tier: writeTier,
+        expiresAt: expiresAt.toISOString(),
+        crossPlatformConflict: conflict,
       };
-    }
-
-    // Staleness guard. If the stored expiresAt is later than the
-    // incoming transaction's expiresAt, this is a late delivery
-    // for a transaction Apple has already superseded — ignore
-    // rather than overwrite. Pre-PR-D this overwrote on every
-    // event, so a late EXPIRED arriving after a DID_RENEW would
-    // silently downgrade a paying user.
-    const storedExpiresAtRaw = userData.subscriptionExpiresAt;
-    const storedExpiresMs = storedExpiresAtRaw
-      ? new Date(storedExpiresAtRaw).getTime()
-      : 0;
-    if (storedExpiresMs > expiresMs) {
-      logger.log(
-        `applySubscriptionToUser: skipping stale tx for uid=${uid} ` +
-          `(stored=${storedExpiresAtRaw}, incoming=${expiresAt.toISOString()})`
-      );
-      return {
-        tier: userData.subscriptionTier || "free",
-        expiresAt: storedExpiresAtRaw || null,
-        skipped: "stale",
-      };
-    }
-
-    // Sub1 P2 — every Pro write is platform-tagged so the
-    // cross-platform reconciliation guard (Upgrade.tsx + the
-    // duplicate-detection alert layer) can compare current vs new
-    // source. Helper handles downgrades by nulling the source.
-    const { writeTier, writeSource, conflict, conflictReason } =
-      resolveSubscriptionUpdate({
-        currentTier: userData.subscriptionTier,
-        currentSource: userData.subscriptionSource,
-        incomingTier: isActive ? "pro" : "free",
-        incomingSource: isActive ? SOURCE_IOS_IAP : SOURCE_IOS_IAP,
-      });
-
-    txn.set(
-      userRef,
-      {
-        subscriptionTier: writeTier,
-        subscriptionSource: writeSource,
-        appleOriginalTransactionId: originalTransactionId,
-        appleProductId: productId,
-        subscriptionExpiresAt: expiresAt.toISOString(),
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-
-    if (conflict) {
-      // Forensic-review breadcrumb. Production wires Cloud Logging
-      // (structured) so an operator sees the cross-platform overlap
-      // and can manually cancel/refund the older platform's sub
-      // (Sub1 P2.5, deferred — auto-refund not wired in this slice).
-      logger.warn("applySubscriptionToUser.cross_platform_conflict", {
-        uid,
-        conflictReason,
-        newSource: writeSource,
-      });
-    }
-
-    return {
-      tier: writeTier,
-      expiresAt: expiresAt.toISOString(),
-      crossPlatformConflict: conflict,
-    };
-  });
+    })
+    .then(async (txnResult) => {
+      // Sub1 P2.5 — IAP override on a stripe-Pro account cancels the
+      // displaced Stripe sub (prorated credit-note, not card refund).
+      // Inverse direction (stripe overriding ios_iap) has NO admin
+      // analog — Apple doesn't expose a programmatic cancel for IAP
+      // subs, so we leave that forensic-log-only.
+      //
+      // Wrapped in try/catch — a Stripe outage here MUST NOT cause
+      // the IAP success path to fail. The txn is already committed
+      // (the user IS Pro on ios_iap); a stale Stripe sub is the
+      // ops-followup case.
+      if (
+        txnResult.crossPlatformConflict &&
+        displacedSource === "stripe" &&
+        typeof cancelDisplacedStripeSub === "function"
+      ) {
+        try {
+          await cancelDisplacedStripeSub({ uid, logger });
+        } catch (err) {
+          logger.warn("applySubscriptionToUser.auto_cancel_failed", {
+            uid,
+            error: (err && err.message) || String(err),
+          });
+        }
+      }
+      return txnResult;
+    });
 }
 
 module.exports = {
