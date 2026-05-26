@@ -112,6 +112,11 @@ const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
 const TRIGGER_CAP = { maxInstances: 50 };
 
+// 2026-05-26 audit PR 4 (finding #10) — Vertex AI response redactor.
+// Logs structural metadata only; never the actual user-facing text /
+// inputs. See functions/lib/vertexLogRedaction.js for the contract.
+const { redactVertexResponse } = require("./lib/vertexLogRedaction");
+
 // ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
 // ══════════════════════════════════════════════
@@ -891,10 +896,13 @@ exports.analyzeFood = functions
         });
 
         const data = await response.json();
-        console.log("Vertex AI response:", JSON.stringify(data));
-
+        // 2026-05-26 audit PR 4 (finding #10) — success-path full-body
+        // log dropped; structural-metadata log on the error path only.
         if (!response.ok) {
-          console.error("Vertex AI error:", JSON.stringify(data));
+          console.error(
+            "Vertex AI error:",
+            redactVertexResponse(data, { httpStatus: response.status })
+          );
           res.status(500).json({ error: "AI service error" });
           return;
         }
@@ -910,7 +918,10 @@ exports.analyzeFood = functions
         } else if (data.predictions && data.predictions[0]) {
           responseText = data.predictions[0];
         } else {
-          console.error("Unexpected response format:", JSON.stringify(data));
+          console.error(
+            "Unexpected response format:",
+            redactVertexResponse(data, { httpStatus: response.status })
+          );
           res.status(500).json({ error: "Unexpected AI response format" });
           return;
         }
@@ -1064,7 +1075,10 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
         const data = await response.json();
 
         if (!response.ok) {
-          console.error("Vertex AI error:", JSON.stringify(data));
+          console.error(
+            "Vertex AI error:",
+            redactVertexResponse(data, { httpStatus: response.status })
+          );
           res.status(500).json({ error: "AI service error" });
           return;
         }
@@ -1078,7 +1092,10 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
         ) {
           responseText = data.candidates[0].content.parts[0].text;
         } else {
-          console.error("Unexpected response format:", JSON.stringify(data));
+          console.error(
+            "Unexpected response format:",
+            redactVertexResponse(data, { httpStatus: response.status })
+          );
           res.status(500).json({ error: "Unexpected AI response format" });
           return;
         }
@@ -1170,7 +1187,7 @@ exports.askGeminiText = functions
       if (!response.ok) {
         console.error(
           "askGeminiText: Vertex AI error:",
-          JSON.stringify(result)
+          redactVertexResponse(result, { httpStatus: response.status })
         );
         throw new functions.https.HttpsError("internal", "AI service error");
       }
@@ -1186,7 +1203,7 @@ exports.askGeminiText = functions
       } else {
         console.error(
           "askGeminiText: unexpected response format:",
-          JSON.stringify(result)
+          redactVertexResponse(result, { httpStatus: response.status })
         );
         throw new functions.https.HttpsError(
           "internal",
