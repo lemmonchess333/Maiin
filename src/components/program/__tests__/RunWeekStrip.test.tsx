@@ -4,11 +4,32 @@
  * Pin the 7-column shape, status visuals, and tap-through behaviour
  * so a refactor can't silently regress to the legacy dropdown stack.
  */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import RunWeekStrip from "../RunWeekStrip";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import type { SavedRunDoc } from "@/hooks/useClaimMap";
+
+// PR-J chunk B3e — extras pills navigate via react-router-dom's
+// useNavigate. Mock it so tests can assert the destination without
+// rendering a full Router tree.
+const navigateMock = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
+  return {
+    ...actual,
+    useNavigate: () => navigateMock,
+  };
+});
+
+function renderStrip(node: React.ReactElement) {
+  return render(<MemoryRouter>{node}</MemoryRouter>);
+}
 
 function runDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
   return {
@@ -25,6 +46,7 @@ function runDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
 }
 
 const emptyClaimMap: Map<string, ClaimState> = new Map();
+const emptyUnclaimed: Map<string, SavedRunDoc[]> = new Map();
 
 function claimMapWith(
   entries: Array<[string, Partial<ClaimState>]>
@@ -41,12 +63,25 @@ function claimMapWith(
   return m;
 }
 
+function savedRun(overrides: Partial<SavedRunDoc> = {}): SavedRunDoc {
+  return {
+    id: "saved-1",
+    date: "2026-05-12",
+    distance: 5000,
+    avgPace: 330,
+    templateId: "easy_30",
+    type: "easy",
+    ...overrides,
+  };
+}
+
 describe("RunWeekStrip — shape", () => {
   it("renders exactly 7 columns even with sparse runDays", () => {
     render(
       <RunWeekStrip
         runDays={[runDay()]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -59,6 +94,7 @@ describe("RunWeekStrip — shape", () => {
       <RunWeekStrip
         runDays={[runDay()]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -73,6 +109,7 @@ describe("RunWeekStrip — shape", () => {
       <RunWeekStrip
         runDays={[runDay({ templateId: "long_10k", dayIndex: 6 })]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -84,6 +121,7 @@ describe("RunWeekStrip — shape", () => {
       <RunWeekStrip
         runDays={[runDay({ templateId: "easy_30", userOverride: "5x1k" })]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -102,6 +140,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[rd]}
         claimMap={claimMapWith([[rd.id!, { manualCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -117,6 +156,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[rd]}
         claimMap={claimMapWith([[rd.id!, { claimedSavedRunId: "saved-1" }]])}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -136,6 +176,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[rd]}
         claimMap={claimMapWith([[rd.id!, { legacyCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -150,6 +191,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[runDay({ status: "skipped" })]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -164,6 +206,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[runDay({ status: "race_no_show" })]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -180,6 +223,7 @@ describe("RunWeekStrip — status visuals", () => {
       <RunWeekStrip
         runDays={[runDay()]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -200,6 +244,7 @@ describe("RunWeekStrip — tap behaviour", () => {
           runDay({ dayIndex: 2, date: "2026-05-12", weekKey: "2026-05-10" }),
         ]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={onDayTap}
       />
     );
@@ -213,6 +258,7 @@ describe("RunWeekStrip — tap behaviour", () => {
       <RunWeekStrip
         runDays={[runDay({ dayIndex: 2, weekKey: "2026-05-10" })]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={onDayTap}
       />
     );
@@ -226,6 +272,7 @@ describe("RunWeekStrip — tap behaviour", () => {
       <RunWeekStrip
         runDays={[runDay()]}
         claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
         onDayTap={() => {}}
       />
     );
@@ -234,5 +281,165 @@ describe("RunWeekStrip — tap behaviour", () => {
     buttons.forEach((btn) => {
       expect(btn.className).toContain("min-h-[44px]");
     });
+  });
+});
+
+describe("RunWeekStrip — Q5 extras pills (chunk B3e)", () => {
+  beforeEach(() => {
+    navigateMock.mockClear();
+  });
+
+  it("renders no extras pills when unclaimedByDate is empty", () => {
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    // No buttons with the extras-pill aria-label.
+    expect(
+      screen.queryByRole("button", { name: /Extra run/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a single extras pill for a date with one unclaimed saved run (Q5 P69)", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-12", [savedRun({ id: "saved-extra-1", distance: 5000 })]],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    ).toBeInTheDocument();
+  });
+
+  it("tapping an extras pill navigates to RunDetail (/run/:id)", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-12", [savedRun({ id: "saved-extra-tap" })]],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    );
+    expect(navigateMock).toHaveBeenCalledWith("/run/saved-extra-tap");
+  });
+
+  it("caps visible extras at 2 and surfaces a '+N more' indicator (Q5 P71)", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      [
+        "2026-05-12",
+        [
+          savedRun({ id: "saved-1", distance: 3000 }),
+          savedRun({ id: "saved-2", distance: 4000 }),
+          savedRun({ id: "saved-3", distance: 5000 }),
+          savedRun({ id: "saved-4", distance: 6000 }),
+        ],
+      ],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    // Only the first two saved runs render as visible pills.
+    expect(
+      screen.getByRole("button", { name: /Extra run: 3km easy/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extra run: 4km easy/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Extra run: 5km easy/i })
+    ).not.toBeInTheDocument();
+    // Overflow indicator surfaces with the residual count.
+    expect(
+      screen.getByRole("button", { name: /2 more extra runs/i })
+    ).toBeInTheDocument();
+  });
+
+  it("tapping '+N more' navigates to /history", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      [
+        "2026-05-12",
+        [
+          savedRun({ id: "saved-1" }),
+          savedRun({ id: "saved-2" }),
+          savedRun({ id: "saved-3" }),
+        ],
+      ],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /1 more extra run/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/history");
+  });
+
+  it("renders extras even when no planned slot exists for that date (standalone case — Q5 scenario 1)", () => {
+    // A rest-day Wednesday (dayIndex 3) with no runDay but an extras
+    // entry for that date. Pill should still surface.
+    const extras = new Map<string, SavedRunDoc[]>([
+      ["2026-05-13", [savedRun({ id: "wed-extra", date: "2026-05-13" })]],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay({ dayIndex: 2, weekKey: "2026-05-10" })]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5km easy/i })
+    ).toBeInTheDocument();
+  });
+
+  it("renders distance as a whole number when integer km, otherwise 1-decimal (Q5 P70 compact label)", () => {
+    const extras = new Map<string, SavedRunDoc[]>([
+      [
+        "2026-05-12",
+        [
+          savedRun({ id: "saved-int", distance: 10000, type: "freerun" }),
+          savedRun({ id: "saved-frac", distance: 5432, type: "tempo" }),
+        ],
+      ],
+    ]);
+    renderStrip(
+      <RunWeekStrip
+        runDays={[runDay()]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={extras}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Extra run: 10km freerun/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5\.4km tempo/i })
+    ).toBeInTheDocument();
   });
 });
