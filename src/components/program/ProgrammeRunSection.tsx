@@ -1242,6 +1242,7 @@ export default function ProgrammeRunSection({
         dateKey={manageDate}
         profile={profile}
         programState={programState}
+        claimMap={claimMap}
         overrideRunDay={overrideRunDay}
         markManualComplete={markManualComplete}
         skipRunDay={skipRunDay}
