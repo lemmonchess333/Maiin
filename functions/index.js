@@ -23,6 +23,8 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
+const socialCounters = require("./lib/socialCounters");
+const socialFanout = require("./lib/socialFanout");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -2964,36 +2966,91 @@ exports.onActivityCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("activities/{activityId}")
   .onCreate(async (snap, context) => {
+    const activityId = context.params.activityId;
+    const data = snap.data();
+    const authorId = data && data.authorId;
+
+    // 2026-05-26 audit PR 3 (finding #3) — R1A-Deletion: compensating
+    // delete if author is mid-deletion. Mirrors onWorkoutCreated /
+    // onRunCreated pattern: the activity doc landed via the client
+    // create, but if the cascade is in flight we tear it down here
+    // and skip both profanity scan AND fanout. Author-side gate;
+    // recipient-side gate is intentionally omitted (deletion executor
+    // Phase D sweeps feeds anyway, and per-recipient checks would
+    // cost N extra reads per post).
+    if (authorId) {
+      const proceed = await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        authorId,
+        "onActivityCreated"
+      );
+      if (!proceed) {
+        try {
+          await snap.ref.delete();
+        } catch (err) {
+          console.warn(
+            `onActivityCreated: compensating delete failed for ${snap.ref.path}: ${err.message}`
+          );
+        }
+        return;
+      }
+    }
+
+    // Profanity scan + auto-flag. Runs before fanout so flagged posts
+    // get visibility=private and are then skipped by the fanout block
+    // below.
     try {
-      const data = snap.data();
-      // Allow-list the text fields we scan — the activity schema
-      // is dynamic (it carries enriched fields like prExercise,
-      // badgeEarned) and we don't want to false-positive on a
-      // user-supplied displayName or a system-generated label
-      // that happens to share letters with a blocked word.
       const SCAN_FIELDS = ["caption", "workoutName", "runName"];
       const flaggedField = profanityFilter.findProfaneField(data, SCAN_FIELDS);
-      if (!flaggedField) return;
-
-      functions.logger.warn("onActivityCreated.auto_flag", {
-        activityId: context.params.activityId,
-        authorId: data.authorId,
-        flaggedField,
+      if (flaggedField) {
+        functions.logger.warn("onActivityCreated.auto_flag", {
+          activityId,
+          authorId,
+          flaggedField,
+        });
+        await snap.ref.update({
+          flagged: true,
+          autoFlagged: true,
+          flaggedField,
+          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          visibility: "private",
+        });
+        // Flagged → don't fan out. Author retains read access via
+        // owner rules; followers never see it.
+        return;
+      }
+    } catch (err) {
+      functions.logger.error("onActivityCreated.profanity_error", {
+        activityId,
+        message: err.message,
       });
+      // Fall through to fanout — a profanity-scan failure shouldn't
+      // strand the activity. Re-flag manually via the report queue
+      // if false-positive.
+    }
 
-      await snap.ref.update({
-        flagged: true,
-        autoFlagged: true,
-        flaggedField,
-        flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-        // Drop visibility to private so the post is hidden from
-        // public + follower feeds. Author retains read access via
-        // owner rules.
-        visibility: "private",
+    // 2026-05-26 audit PR 3 — server-side fan-out. Replaces the
+    // client `postActivity` fan-out loop. /feeds writes are
+    // server-only post-PR-3 so this is the only path that can
+    // populate follower feeds.
+    if (!authorId) return;
+    try {
+      const fanoutResult = await socialFanout.fanoutActivityToFeeds({
+        firestore: admin.firestore(),
+        activityId,
+        authorId,
+        activityData: data,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      functions.logger.info("onActivityCreated.fanout_complete", {
+        activityId,
+        authorId,
+        fanned: fanoutResult.fanned,
       });
     } catch (err) {
-      functions.logger.error("onActivityCreated.error", {
-        activityId: context.params.activityId,
+      functions.logger.error("onActivityCreated.fanout_error", {
+        activityId,
+        authorId,
         message: err.message,
       });
     }
@@ -3290,4 +3347,335 @@ exports.resolveReport = functions
 
     await batch.commit();
     return { ok: true };
+  });
+
+// ══════════════════════════════════════════════
+// SOCIAL COUNTERS — 2026-05-26 audit PR 2
+//
+// Closes findings #2 + #5. Pre-PR-2, kudosCount / commentCount /
+// memberCount were client-writable via direct Firestore updateDoc.
+// `affectedKeys().hasOnly([...])` in the rules restricted WHICH
+// fields could change but not the VALUES — any authed user could
+// set a counter to 999999. Post-PR-2 those fields are denied at
+// the rules layer; mutations route through these callables, which
+// flip the counter and the underlying member/kudos/comment doc in
+// one Firestore transaction.
+// ══════════════════════════════════════════════
+
+exports.toggleKudosCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const activityId = data && data.activityId;
+    if (typeof activityId !== "string" || !activityId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock. A user mid-deletion cannot
+    // mutate kudos on other users' activities on the way out — the
+    // counter+sub-doc write would leak past the cascade.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "toggleKudos",
+      30,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many kudos updates. Slow down."
+      );
+    }
+    try {
+      const result = await socialCounters.toggleKudos({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      // 2026-05-26 audit PR 3 (finding #6) — kudos notification is
+      // now written server-side, atomically with the kudos doc.
+      // Pre-PR-3 the client wrote `/notifications/...` directly
+      // after the callable returned; that path is now rule-denied.
+      // Only notify on the ADD edge (kudosed=true) so re-tapping
+      // doesn't spam the recipient.
+      if (result && result.kudosed) {
+        try {
+          const activitySnap = await admin
+            .firestore()
+            .collection("activities")
+            .doc(activityId)
+            .get();
+          const activity = activitySnap.exists ? activitySnap.data() : null;
+          if (
+            activity &&
+            activity.authorId &&
+            activity.authorId !== context.auth.uid
+          ) {
+            const fromName =
+              (data && typeof data.fromName === "string" && data.fromName) ||
+              "Someone";
+            await socialFanout.createNotification({
+              firestore: admin.firestore(),
+              fromUid: context.auth.uid,
+              toUid: activity.authorId,
+              data: {
+                type: "kudos",
+                fromName,
+                activityId,
+                message: `${fromName} gave you props`,
+              },
+              serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            });
+          }
+        } catch (notifErr) {
+          // Notification write failure is non-fatal — the kudos
+          // already landed. Log and continue so the client still
+          // sees kudosed=true and the UI stays consistent.
+          functions.logger.warn("toggleKudosCallable.notification_failed", {
+            uid: context.auth.uid,
+            activityId,
+            error: notifErr && notifErr.message,
+          });
+        }
+      }
+      return result;
+    } catch (err) {
+      functions.logger.warn("toggleKudosCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Kudos toggle failed."
+      );
+    }
+  });
+
+exports.addCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { activityId, text, authorName, authorPhotoURL } = data || {};
+    if (typeof activityId !== "string" || !activityId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock — deleting users cannot
+    // post new comments mid-cascade.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "addComment",
+      20,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many comments. Slow down."
+      );
+    }
+    try {
+      const result = await socialCounters.addComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        text,
+        authorName,
+        authorPhotoURL,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      // 2026-05-26 audit PR 3 (finding #6) — comment notification is
+      // now written server-side. Lookup activity author so we don't
+      // trust client-supplied target uid (no impersonation surface).
+      try {
+        const activitySnap = await admin
+          .firestore()
+          .collection("activities")
+          .doc(activityId)
+          .get();
+        const activity = activitySnap.exists ? activitySnap.data() : null;
+        if (
+          activity &&
+          activity.authorId &&
+          activity.authorId !== context.auth.uid
+        ) {
+          const fromName =
+            (typeof authorName === "string" && authorName) || "Someone";
+          await socialFanout.createNotification({
+            firestore: admin.firestore(),
+            fromUid: context.auth.uid,
+            toUid: activity.authorId,
+            data: {
+              type: "comment",
+              fromName,
+              activityId,
+              message: `${fromName} commented on your activity`,
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          });
+        }
+      } catch (notifErr) {
+        functions.logger.warn("addCommentCallable.notification_failed", {
+          uid: context.auth.uid,
+          activityId,
+          error: notifErr && notifErr.message,
+        });
+      }
+      return result;
+    } catch (err) {
+      functions.logger.warn("addCommentCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Comment create failed."
+      );
+    }
+  });
+
+exports.deleteCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { activityId, commentId } = data || {};
+    if (
+      typeof activityId !== "string" ||
+      !activityId.trim() ||
+      typeof commentId !== "string" ||
+      !commentId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId + commentId required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock — author-checked delete still
+    // needs the freeze gate; the cascade will tear down the user's
+    // comments in Phase D and a mid-cascade self-delete would race.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    try {
+      await socialCounters.deleteComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        increment: admin.firestore.FieldValue.increment,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("deleteCommentCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        error: err && err.message,
+      });
+      // "not authorized" → permission-denied; other errors →
+      // failed-precondition.
+      const isAuthz = err && /not authorized/.test(err.message || "");
+      throw new functions.https.HttpsError(
+        isAuthz ? "permission-denied" : "failed-precondition",
+        (err && err.message) || "Comment delete failed."
+      );
+    }
+  });
+
+exports.setCrewMembershipCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { crewId, action, displayName } = data || {};
+    if (
+      typeof crewId !== "string" ||
+      !crewId.trim() ||
+      (action !== "join" && action !== "leave")
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "crewId + action required."
+      );
+    }
+    // R1A-Deletion: callable-actor lock. Replaces the rule-layer
+    // freeze that previously lived on /groups/{crewId}/members/{userId}
+    // (now `write: if false` — server-only). The cascade clears crew
+    // memberships in Phase D; a mid-cascade write here would race.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "setCrewMembership",
+      10,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many crew membership changes. Slow down."
+      );
+    }
+    try {
+      await socialCounters.setCrewMembership({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        crewId,
+        action,
+        displayName,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("setCrewMembershipCallable.error", {
+        uid: context.auth.uid,
+        crewId,
+        action,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Crew membership update failed."
+      );
+    }
   });
