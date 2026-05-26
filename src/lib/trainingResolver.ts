@@ -66,6 +66,10 @@ import {
   isScheduledRunCompleted,
   type AnyScheduledRunStatus,
 } from "@/lib/scheduledRunStatus";
+import {
+  isRunDayComplete,
+  type ClaimState,
+} from "@/lib/scheduledRunCompletion";
 
 /** Lift-slot status projected from `workout.completed` / `workout.skipped`.
  *  `none` covers "today isn't a lift+both slot" AND "today is a lift
@@ -182,8 +186,18 @@ export function resolveTrainingDayForDate(args: {
   profile: UserProfile | null;
   programState: ProgramState | null;
   currentWeekKey: string;
+  /** PR-J Q3 chunk B3c — optional derived-completion source. When
+   *  supplied, `run.isCompleted` derives from `isRunDayComplete`
+   *  (manual / saved-run-claim / legacy unified). When omitted,
+   *  falls back to the legacy `isScheduledRunCompleted(status)`
+   *  read so callers that haven't migrated yet keep working —
+   *  they'll surface stale completion state until they're
+   *  upgraded. New code (Home / DayPeekCard / WeekStrip) always
+   *  passes it; transitional callers (DayActionSheet) will be
+   *  wired in a follow-up chunk. */
+  claimMap?: Map<string, ClaimState>;
 }): ResolvedTrainingDay {
-  const { dateKey, profile, programState, currentWeekKey } = args;
+  const { dateKey, profile, programState, currentWeekKey, claimMap } = args;
   const dayIndex = parseLocalDate(dateKey).getDay();
 
   const schedule: ScheduleDay[] =
@@ -248,13 +262,22 @@ export function resolveTrainingDayForDate(args: {
     if (template) params.push("template=" + template.id);
     if (runDay.id)
       params.push("scheduledRunId=" + encodeURIComponent(runDay.id));
+    // PR-J Q3 chunk B3c — derived completion when callers supply a
+    // claim map. The helper unifies manual / claimed-saved-run /
+    // legacy sources, so the resolver doesn't have to know which
+    // produced the "✅" — callers below this layer (DayPeekCard,
+    // WeekStrip) just read `run.isCompleted`.
+    const isCompletedDerived =
+      claimMap && runDay.id
+        ? isRunDayComplete(runDay.id, claimMap)
+        : isScheduledRunCompleted(status);
     run = {
       runDay,
       template,
       status,
       isTerminal: isScheduledRunTerminal(status),
       isStartable: startable,
-      isCompleted: isScheduledRunCompleted(status),
+      isCompleted: isCompletedDerived,
       startUrl: startable
         ? "/run" + (params.length ? "?" + params.join("&") : "")
         : null,
@@ -279,6 +302,9 @@ export function resolveTrainingWindow(args: {
   days: number;
   profile: UserProfile | null;
   programState: ProgramState | null;
+  /** PR-J Q3 chunk B3c — forwarded to `resolveTrainingDayForDate`
+   *  for derived completion. WeekStrip is the primary caller. */
+  claimMap?: Map<string, ClaimState>;
 }): ResolvedTrainingDay[] {
   const currentWeekKey = localWeekKey(args.startDate);
   const out: ResolvedTrainingDay[] = [];
@@ -291,6 +317,7 @@ export function resolveTrainingWindow(args: {
         profile: args.profile,
         programState: args.programState,
         currentWeekKey,
+        claimMap: args.claimMap,
       })
     );
   }

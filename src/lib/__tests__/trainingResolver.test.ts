@@ -565,3 +565,107 @@ describe("resolveTrainingWindow", () => {
     expect(stripMon!.run.isCompleted).toBe(false);
   });
 });
+
+describe("resolveTrainingDayForDate — PR-J Q3 chunk B3c (claimMap-derived completion)", () => {
+  // The claim map is the single source of truth for `run.isCompleted`
+  // when supplied. The helper unifies three completion sources
+  // (manual / claimed-saved-run / legacy), so the resolver doesn't
+  // care which produced the ✅. When claimMap is omitted, the
+  // resolver falls back to legacy `isScheduledRunCompleted(status)`
+  // — the back-compat path the rest of this file already covers.
+
+  const PROFILE = makeProfile({
+    weekSchedule: [
+      { day: 0, type: "rest" },
+      { day: 1, type: "run" },
+      { day: 2, type: "rest" },
+      { day: 3, type: "rest" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "rest" },
+      { day: 6, type: "rest" },
+    ],
+  });
+  const RUN_DAY = makeRunDay({
+    id: "runday_b3c_mon",
+    date: THIS_MON,
+    weekKey: CURRENT_WEEK_KEY,
+    dayIndex: 1,
+    status: "planned",
+  });
+  const PROGRAM = makeProgramState({ runDays: [RUN_DAY] });
+
+  it("claimMap with manualCompleted=true surfaces run.isCompleted (status stays planned)", () => {
+    const claimMap = new Map([
+      [
+        RUN_DAY.id!,
+        {
+          claimedSavedRunId: undefined,
+          manualCompleted: true,
+          legacyCompleted: false,
+        },
+      ],
+    ]);
+    const r = resolveTrainingDayForDate({
+      dateKey: THIS_MON,
+      profile: PROFILE,
+      programState: PROGRAM,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      claimMap,
+    });
+    expect(r.run.status).toBe("planned");
+    expect(r.run.isCompleted).toBe(true);
+  });
+
+  it("claimMap with claimedSavedRunId surfaces run.isCompleted", () => {
+    const claimMap = new Map([
+      [
+        RUN_DAY.id!,
+        {
+          claimedSavedRunId: "saved-xyz",
+          manualCompleted: false,
+          legacyCompleted: false,
+        },
+      ],
+    ]);
+    const r = resolveTrainingDayForDate({
+      dateKey: THIS_MON,
+      profile: PROFILE,
+      programState: PROGRAM,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      claimMap,
+    });
+    expect(r.run.isCompleted).toBe(true);
+  });
+
+  it("claimMap with no entry for the runDay → run.isCompleted=false (overrides legacy status)", () => {
+    // Even when the runDay carries a legacy `status="completed_exact"`,
+    // an empty claim map says "no completion derived" and the
+    // resolver respects that. This is the precise semantic that
+    // makes the claim map authoritative when supplied.
+    const legacyProgram = makeProgramState({
+      runDays: [{ ...RUN_DAY, status: "completed_exact", completed: true }],
+    });
+    const r = resolveTrainingDayForDate({
+      dateKey: THIS_MON,
+      profile: PROFILE,
+      programState: legacyProgram,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      claimMap: new Map(),
+    });
+    expect(r.run.isCompleted).toBe(false);
+  });
+
+  it("omitting claimMap entirely falls back to legacy status check (back-compat)", () => {
+    const legacyProgram = makeProgramState({
+      runDays: [{ ...RUN_DAY, status: "completed_exact", completed: true }],
+    });
+    const r = resolveTrainingDayForDate({
+      dateKey: THIS_MON,
+      profile: PROFILE,
+      programState: legacyProgram,
+      currentWeekKey: CURRENT_WEEK_KEY,
+      // no claimMap — back-compat path
+    });
+    expect(r.run.isCompleted).toBe(true);
+  });
+});
