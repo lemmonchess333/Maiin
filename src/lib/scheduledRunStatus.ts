@@ -35,7 +35,22 @@
  * components without creating cycles.
  */
 
-import type { ScheduledRunDay, ScheduledRunStatus } from "@/features/program/programTypes";
+import type {
+  LegacyScheduledRunStatus,
+  ScheduledRunDay,
+  ScheduledRunStatus,
+} from "@/features/program/programTypes";
+
+/** Convenience alias — the union of all status values readers may
+ *  encounter on a runDay. Active values (PR-J Q4 P59) plus legacy
+ *  values preserved per Q1 P8.
+ *
+ *  Exported so cross-feature consumers (streaks, PI, badges,
+ *  scheduler) can type their signatures against the same surface
+ *  the helper produces. */
+export type AnyScheduledRunStatus =
+  | ScheduledRunStatus
+  | LegacyScheduledRunStatus;
 
 /**
  * Effective status of a ScheduledRunDay. Resolves legacy docs
@@ -45,14 +60,42 @@ import type { ScheduledRunDay, ScheduledRunStatus } from "@/features/program/pro
  * here for any caller that hasn't gone through the migration
  * path yet (e.g. an analytics surface that reads a raw doc).
  *
- *   status present                          → return it
+ *   status present                          → return it (may be legacy)
  *   status missing + completed: true        → "completed_exact"
  *   status missing + completed: false       → "planned"
  *   status missing + completed: undefined   → "planned" (defensive)
+ *
+ * PR-J Q8 P103: return type widened to the union so consumers see
+ * the legacy values rather than getting silently narrowed.
  */
-export function getScheduledRunStatus(rd: ScheduledRunDay): ScheduledRunStatus {
+export function getScheduledRunStatus(
+  rd: ScheduledRunDay
+): AnyScheduledRunStatus {
   if (rd.status) return rd.status;
   return rd.completed ? "completed_exact" : "planned";
+}
+
+/**
+ * Returns true when `status` is one of the legacy completed values
+ * — `completed_exact`, `completed_modified`, or `completed_late`.
+ *
+ * PR-J Q8 P103: load-bearing for the derivation in Q2 P27. Readers
+ * use this to short-circuit legacy runDays in the completion check
+ * without inlining the three-string OR across N call sites.
+ *
+ * Boolean `completed: true` on pre-status legacy docs is handled
+ * at the caller boundary via `getScheduledRunStatus` (which maps
+ * it to `completed_exact`), so this helper only needs to compare
+ * status strings.
+ */
+export function isLegacyCompleted(
+  status: AnyScheduledRunStatus | undefined
+): boolean {
+  return (
+    status === "completed_exact" ||
+    status === "completed_modified" ||
+    status === "completed_late"
+  );
 }
 
 /**
@@ -61,15 +104,20 @@ export function getScheduledRunStatus(rd: ScheduledRunDay): ScheduledRunStatus {
  * set — that status is recoverable via the reconciliation flow
  * (race_no_show → completed_*). Terminal here means
  * "no legal outgoing transition exists at all".
+ *
+ * PR-J Q8 P104: typed as the union — `skipped` is the only active
+ * terminal pre-PR-J (PR-J Q1 P7 will add `skipped → planned` later);
+ * the three legacy values are terminal forever.
  */
-const TERMINAL_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
-  "completed_exact",
-  "completed_modified",
-  "completed_late",
-  "skipped",
-]);
+const TERMINAL_STATUSES: ReadonlySet<AnyScheduledRunStatus> =
+  new Set<AnyScheduledRunStatus>([
+    "completed_exact",
+    "completed_modified",
+    "completed_late",
+    "skipped",
+  ]);
 
-export function isScheduledRunTerminal(status: ScheduledRunStatus): boolean {
+export function isScheduledRunTerminal(status: AnyScheduledRunStatus): boolean {
   return TERMINAL_STATUSES.has(status);
 }
 
@@ -81,8 +129,13 @@ export function isScheduledRunTerminal(status: ScheduledRunStatus): boolean {
  * day-to-day "start a fresh run flow against this slot" semantic
  * doesn't apply; the user logs the race retrospectively via a
  * regular saved-run flow, which then reconciles.
+ *
+ * PR-J Q8 P104: signature widened to the union so callers passing
+ * legacy values get a clean `false` without narrowing first.
  */
-export function isScheduledRunStartable(status: ScheduledRunStatus): boolean {
+export function isScheduledRunStartable(
+  status: AnyScheduledRunStatus
+): boolean {
   return status === "planned";
 }
 
@@ -91,7 +144,7 @@ export function isScheduledRunStartable(status: ScheduledRunStatus): boolean {
  * type via in-place edits (ProgrammeRunSection per-day list,
  * DayActionSheet). Only `planned` qualifies.
  */
-export function isScheduledRunEditable(status: ScheduledRunStatus): boolean {
+export function isScheduledRunEditable(status: AnyScheduledRunStatus): boolean {
   return status === "planned";
 }
 
@@ -100,13 +153,21 @@ export function isScheduledRunEditable(status: ScheduledRunStatus): boolean {
  * Shared with `migrations.ts` so the alignment of
  * `completed: boolean` with `status` enum has one source of
  * truth.
+ *
+ * PR-J Q8 P102: typed as `LegacyScheduledRunStatus` — these three
+ * values are exactly the legacy completed values; the active
+ * union (planned / skipped / race_no_show) has no completed
+ * member post-PR-J (completion is derived per Q1 + Q2).
  */
-export const COMPLETED_STATUSES: ReadonlySet<ScheduledRunStatus> = new Set([
-  "completed_exact",
-  "completed_modified",
-  "completed_late",
-]);
+export const COMPLETED_STATUSES: ReadonlySet<LegacyScheduledRunStatus> =
+  new Set<LegacyScheduledRunStatus>([
+    "completed_exact",
+    "completed_modified",
+    "completed_late",
+  ]);
 
-export function isScheduledRunCompleted(status: ScheduledRunStatus): boolean {
-  return COMPLETED_STATUSES.has(status);
+export function isScheduledRunCompleted(
+  status: AnyScheduledRunStatus
+): boolean {
+  return isLegacyCompleted(status);
 }
