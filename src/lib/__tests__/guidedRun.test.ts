@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  auditGuidedWorkouts,
   getSegmentColor,
   GUIDED_WORKOUTS,
   type SegmentType,
@@ -33,13 +34,57 @@ describe("GUIDED_WORKOUTS", () => {
     }
   });
 
-  it("segment durations sum to approximately totalMinutes * 60", () => {
+  it("segment durations sum exactly to totalMinutes * 60", () => {
     for (const workout of GUIDED_WORKOUTS) {
-      const sum = workout.segments.reduce((acc, s) => acc + s.durationSeconds, 0);
+      const sum = workout.segments.reduce(
+        (acc, s) => acc + s.durationSeconds,
+        0
+      );
       const expected = workout.totalMinutes * 60;
-      // Allow up to 15% tolerance (some workouts have brief segments)
-      expect(sum).toBeGreaterThanOrEqual(expected * 0.85);
-      expect(sum).toBeLessThanOrEqual(expected * 1.15);
+      expect(sum).toBe(expected);
     }
+  });
+
+  it("passes a strict metadata integrity audit", () => {
+    const issues = auditGuidedWorkouts(GUIDED_WORKOUTS);
+    expect(issues).toEqual([]);
+  });
+});
+
+describe("auditGuidedWorkouts", () => {
+  it("reports invalid programme issues with actionable codes", () => {
+    const issues = auditGuidedWorkouts([
+      {
+        id: "dup",
+        name: "Broken 1",
+        description: "Broken",
+        totalMinutes: 1,
+        difficulty: "easy",
+        color: "#fff",
+        segments: [],
+      },
+      {
+        id: "dup",
+        name: "Broken 2",
+        description: "Broken",
+        totalMinutes: 1,
+        difficulty: "hard",
+        color: "#000",
+        segments: [
+          { type: "hard", durationSeconds: 0, label: " ", instruction: "" },
+        ],
+      },
+    ]);
+
+    expect(issues.map((i) => i.code)).toEqual(
+      expect.arrayContaining([
+        "segment_missing",
+        "segment_duration_non_positive",
+        "segment_label_blank",
+        "segment_instruction_blank",
+        "total_duration_mismatch",
+        "workout_id_duplicate",
+      ])
+    );
   });
 });
