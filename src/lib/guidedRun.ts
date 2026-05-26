@@ -140,13 +140,13 @@ export const GUIDED_WORKOUTS: GuidedRunWorkout[] = [
     id: "hard-and-fast",
     name: "Hard & Fast",
     description: "High-intensity intervals — short bursts with rest periods",
-    totalMinutes: 30,
+    totalMinutes: 25.5,
     difficulty: "hard",
     color: "#ef4444",
     segments: [
       {
         type: "warmup",
-        durationSeconds: 420,
+        durationSeconds: 300,
         label: "Warm Up",
         instruction: "Easy jog with dynamic stretches",
       },
@@ -212,7 +212,7 @@ export const GUIDED_WORKOUTS: GuidedRunWorkout[] = [
       },
       {
         type: "moderate",
-        durationSeconds: 450,
+        durationSeconds: 300,
         label: "Tempo Finish",
         instruction: "Moderate pace to burn out",
       },
