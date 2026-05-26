@@ -273,17 +273,164 @@ service cloud.firestore {
     // which let clients rewrite authorName / visibility / kudosCount
     // / commentCount freely.
     // ========================================
+    // ========================================
+    // Social: Activity feed posts
+    //
+    // 2026-05-26 audit findings #1 + #7 + #11 — activity contract
+    // hardening. Three properties pinned by `firestore.rules.test.ts`:
+    //
+    //   (a) Reads are VISIBILITY-AWARE. Pre-2026-05-26 this allowed
+    //       any authed user to query the entire `/activities`
+    //       collection, including private + followers-only docs.
+    //       Now: public is read by any authed; followers-only is
+    //       read by owner + actual followers; private is owner-only.
+    //
+    //   (b) Creates enforce a STRICT FIELD ALLOWLIST + enums + value
+    //       bounds + size caps. Pre-audit any field could be written
+    //       with any value — pathological payloads (10K-point GPS
+    //       arrays, negative distances, junk visibility values)
+    //       were accepted.
+    //
+    //   (c) Update + delete contracts unchanged from W1f. Counter
+    //       value validation (#2 — kudos/comment increments-only)
+    //       is a separate PR; this audit explicitly defers it.
+    //
+    // Field allowlist mirrors the postActivity write in
+    // src/lib/socialApi.ts. Adding a new field there requires adding
+    // it here too — fail-closed by design (unknown field rejects the
+    // whole write).
+    // ========================================
     match /activities/{activityId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (
+        // Public — any authed user
+        resource.data.visibility == 'public'
+        // Owner — always
+        || resource.data.authorId == request.auth.uid
+        // Followers-only — read iff caller is a follower of the author
+        || (
+          resource.data.visibility == 'followers'
+          && exists(/databases/$(database)/documents/followers/$(resource.data.authorId)/users/$(request.auth.uid))
+        )
+      );
+
       allow create: if request.auth != null
-        && request.resource.data.authorId == request.auth.uid;
+        && request.resource.data.authorId == request.auth.uid
+        // Field allowlist — fail-closed; adding a field to
+        // postActivity requires adding it here too.
+        && request.resource.data.keys().hasOnly([
+          'authorId', 'authorName', 'authorPhotoURL',
+          'type', 'visibility',
+          'createdAt', 'kudosCount', 'commentCount',
+          'workoutName', 'runName', 'activityTitle',
+          'exerciseCount', 'totalVolume', 'duration',
+          'distance', 'avgPace', 'elevationGain', 'calories',
+          'muscleGroups', 'exercises',
+          'prHit', 'prExercise', 'prWeight', 'prCount',
+          'challengeMilestone', 'badgeEarned', 'crewId',
+          'routePreview'
+        ])
+        // Required fields + types
+        && request.resource.data.authorName is string
+        && request.resource.data.authorName.size() > 0
+        && request.resource.data.authorName.size() <= 100
+        && request.resource.data.type in ['run', 'workout']
+        && request.resource.data.visibility in ['public', 'followers', 'private']
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.kudosCount == 0
+        && request.resource.data.commentCount == 0
+        // Payload size caps — pathological payload prevention
+        && (
+          !('routePreview' in request.resource.data.keys())
+          || request.resource.data.routePreview.size() <= 5000
+        )
+        && (
+          !('exercises' in request.resource.data.keys())
+          || request.resource.data.exercises.size() <= 100
+        )
+        && (
+          !('muscleGroups' in request.resource.data.keys())
+          || request.resource.data.muscleGroups.size() <= 20
+        )
+        // Numeric bounds — when present, must be in plausible range
+        && (
+          !('distance' in request.resource.data.keys())
+          || (request.resource.data.distance >= 0
+              && request.resource.data.distance <= 500000)  // 500 km — covers ultras
+        )
+        && (
+          !('duration' in request.resource.data.keys())
+          || (request.resource.data.duration >= 0
+              && request.resource.data.duration <= 86400)  // 24 h
+        )
+        && (
+          !('elevationGain' in request.resource.data.keys())
+          || (request.resource.data.elevationGain >= 0
+              && request.resource.data.elevationGain <= 20000)  // 20 km vertical
+        )
+        && (
+          !('calories' in request.resource.data.keys())
+          || (request.resource.data.calories >= 0
+              && request.resource.data.calories <= 50000)  // ultra-endurance ceiling
+        )
+        && (
+          !('totalVolume' in request.resource.data.keys())
+          || (request.resource.data.totalVolume >= 0
+              && request.resource.data.totalVolume <= 1000000)  // 1M kg per session is plenty
+        )
+        && (
+          !('exerciseCount' in request.resource.data.keys())
+          || (request.resource.data.exerciseCount >= 0
+              && request.resource.data.exerciseCount <= 200)
+        )
+        && (
+          !('prWeight' in request.resource.data.keys())
+          || (request.resource.data.prWeight >= 0
+              && request.resource.data.prWeight <= 1000)
+        )
+        && (
+          !('prCount' in request.resource.data.keys())
+          || (request.resource.data.prCount >= 0
+              && request.resource.data.prCount <= 1000)
+        )
+        // String length caps
+        && (
+          !('workoutName' in request.resource.data.keys())
+          || request.resource.data.workoutName.size() <= 200
+        )
+        && (
+          !('runName' in request.resource.data.keys())
+          || request.resource.data.runName.size() <= 200
+        )
+        && (
+          !('activityTitle' in request.resource.data.keys())
+          || request.resource.data.activityTitle.size() <= 200
+        )
+        && (
+          !('prExercise' in request.resource.data.keys())
+          || request.resource.data.prExercise.size() <= 200
+        )
+        && (
+          !('challengeMilestone' in request.resource.data.keys())
+          || request.resource.data.challengeMilestone.size() <= 200
+        )
+        && (
+          !('badgeEarned' in request.resource.data.keys())
+          || request.resource.data.badgeEarned.size() <= 200
+        )
+        && (
+          !('crewId' in request.resource.data.keys())
+          || request.resource.data.crewId.size() <= 200
+        );
+
+      // Update contract unchanged from W1f. Counter value validation
+      // (audit finding #2 — increments-only) is deferred to PR 2.
       allow update: if request.auth != null && (
         // Owner: can only touch visibility post-creation.
         (resource.data.authorId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['visibility']))
-        // Non-owner: kudosCount / commentCount increments only. No
-        // other field can change in the same write.
+        // Non-owner: kudosCount / commentCount field-set restricted.
+        // Value validation (audit #2) deferred to PR 2.
         || (request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['kudosCount', 'commentCount']))
       );
