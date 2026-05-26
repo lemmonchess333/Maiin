@@ -36,7 +36,9 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 
-function makeProfile(weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[]): UserProfile {
+function makeProfile(
+  weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[]
+): UserProfile {
   return {
     uid: "u-1",
     displayName: "Test",
@@ -71,7 +73,7 @@ function makeWorkout(overrides: Partial<WorkoutDay> = {}): WorkoutDay {
 
 function makeProgramState(
   runDays: ScheduledRunDay[],
-  workouts: WorkoutDay[] = [],
+  workouts: WorkoutDay[] = []
 ): ProgramState {
   return {
     goal: "recomp",
@@ -97,7 +99,11 @@ function todayKey() {
 }
 function todayWeekKey() {
   const d = new Date();
-  const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay());
+  const sunday = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate() - d.getDay()
+  );
   return `${sunday.getFullYear()}-${String(sunday.getMonth() + 1).padStart(2, "0")}-${String(sunday.getDate()).padStart(2, "0")}`;
 }
 function todayDow() {
@@ -111,7 +117,8 @@ beforeEach(() => {
 function commonCallbacks() {
   return {
     overrideRunDay: vi.fn(),
-    completeRunDay: vi.fn(async () => {}),
+    // PR-J Q2 chunk B2: markManualComplete replaces completeRunDay.
+    markManualComplete: vi.fn(async () => {}),
     skipRunDay: vi.fn(async () => {}),
     skipWorkoutDay: vi.fn(async () => {}),
   };
@@ -127,7 +134,7 @@ describe("DayActionSheet — empty / null state", () => {
         profile={makeProfile([])}
         programState={null}
         {...commonCallbacks()}
-      />,
+      />
     );
     // Sheet returns null when closed — no body, no portal content.
     expect(screen.queryByText(/Manage day/i)).not.toBeInTheDocument();
@@ -140,16 +147,21 @@ describe("DayActionSheet — empty / null state", () => {
         onClose={() => {}}
         dateKey={todayKey()}
         profile={makeProfile([
-          { day: 0, type: "rest" }, { day: 1, type: "rest" },
-          { day: 2, type: "rest" }, { day: 3, type: "rest" },
-          { day: 4, type: "rest" }, { day: 5, type: "rest" },
+          { day: 0, type: "rest" },
+          { day: 1, type: "rest" },
+          { day: 2, type: "rest" },
+          { day: 3, type: "rest" },
+          { day: 4, type: "rest" },
+          { day: 5, type: "rest" },
           { day: 6, type: "rest" },
         ])}
         programState={makeProgramState([])}
         {...commonCallbacks()}
-      />,
+      />
     );
-    expect(screen.getByText(/Nothing scheduled for this day\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Nothing scheduled for this day\./i)
+    ).toBeInTheDocument();
   });
 });
 
@@ -159,7 +171,7 @@ describe("DayActionSheet — planned run", () => {
       Array.from({ length: 7 }, (_, i) => ({
         day: i,
         type: i === todayDow() ? ("run" as const) : ("rest" as const),
-      })),
+      }))
     );
     const runDay = makeRunDay({
       id: "runday_target",
@@ -183,7 +195,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(false);
@@ -191,7 +203,7 @@ describe("DayActionSheet — planned run", () => {
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
   });
 
-  it("Mark complete calls completeRunDay with the runDay's id (id-preferring)", () => {
+  it("Mark complete calls markManualComplete with the runDay's id (PR-J Q2)", () => {
     const { profile, programState, callbacks, runDay } = setup();
     render(
       <DayActionSheet
@@ -201,10 +213,10 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     fireEvent.click(screen.getByText(/Mark complete \(manual\)/i));
-    expect(callbacks.completeRunDay).toHaveBeenCalledWith(runDay.id);
+    expect(callbacks.markManualComplete).toHaveBeenCalledWith(runDay.id);
   });
 
   it("Skip this run calls skipRunDay with the runDay's id", () => {
@@ -217,7 +229,7 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     fireEvent.click(screen.getByText(/Skip this run/i));
     expect(callbacks.skipRunDay).toHaveBeenCalledWith(runDay.id);
@@ -233,21 +245,27 @@ describe("DayActionSheet — planned run", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     fireEvent.change(select, { target: { value: "tempo_20" } });
-    expect(callbacks.overrideRunDay).toHaveBeenCalledWith(runDay.id, "tempo_20");
+    expect(callbacks.overrideRunDay).toHaveBeenCalledWith(
+      runDay.id,
+      "tempo_20"
+    );
   });
 });
 
 describe("DayActionSheet — terminal run states locked", () => {
-  function setupWithStatus(status: ScheduledRunDay["status"], completed = false) {
+  function setupWithStatus(
+    status: ScheduledRunDay["status"],
+    completed = false
+  ) {
     const profile = makeProfile(
       Array.from({ length: 7 }, (_, i) => ({
         day: i,
         type: i === todayDow() ? ("run" as const) : ("rest" as const),
-      })),
+      }))
     );
     const runDay = makeRunDay({
       id: "runday_terminal",
@@ -257,11 +275,18 @@ describe("DayActionSheet — terminal run states locked", () => {
       status,
       completed,
     });
-    return { profile, programState: makeProgramState([runDay]), callbacks: commonCallbacks() };
+    return {
+      profile,
+      programState: makeProgramState([runDay]),
+      callbacks: commonCallbacks(),
+    };
   }
 
   it("completed_exact: select disabled, no Skip / Complete buttons", () => {
-    const { profile, programState, callbacks } = setupWithStatus("completed_exact", true);
+    const { profile, programState, callbacks } = setupWithStatus(
+      "completed_exact",
+      true
+    );
     render(
       <DayActionSheet
         open={true}
@@ -270,11 +295,13 @@ describe("DayActionSheet — terminal run states locked", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(true);
-    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
@@ -289,11 +316,13 @@ describe("DayActionSheet — terminal run states locked", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(true);
-    expect(screen.queryByText(/Mark complete \(manual\)/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Mark complete \(manual\)/i)
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     // The "Skipped" badge is the run-section status indicator.
     expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
@@ -311,7 +340,7 @@ describe("DayActionSheet — lift section", () => {
       Array.from({ length: 7 }, (_, i) => ({
         day: i,
         type: i === todayDow() ? ("lift" as const) : ("rest" as const),
-      })),
+      }))
     );
     return {
       profile,
@@ -330,7 +359,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     expect(screen.getByText(/Skip this lift/i)).toBeInTheDocument();
   });
@@ -345,7 +374,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     fireEvent.click(screen.getByText(/Skip this lift/i));
     expect(callbacks.skipWorkoutDay).toHaveBeenCalledWith(0);
@@ -361,7 +390,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     expect(screen.queryByText(/Skip this lift/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
@@ -377,7 +406,7 @@ describe("DayActionSheet — lift section", () => {
         profile={profile}
         programState={programState}
         {...callbacks}
-      />,
+      />
     );
     expect(screen.queryByText(/Skip this lift/i)).not.toBeInTheDocument();
     expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
