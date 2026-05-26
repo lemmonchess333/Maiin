@@ -4173,3 +4173,308 @@ exports.setCrewMembershipCallable = functions
       );
     }
   });
+
+// ══════════════════════════════════════════════
+// PR-L L4 — weekly fell-behind detection
+// ══════════════════════════════════════════════
+//
+// New surface (not a port — this didn't exist client-side before).
+// Once per week, check whether each active user actually ran ≥50%
+// of their weekly target the prior week. If not, set
+// `programState.pendingFellBehindPrompt` so the client can surface
+// the adaptive-plan prompt on next app open (per the Q24 lock —
+// shift / compress / skip-and-continue).
+//
+// Schedule: Mondays 05:00 UTC. Runs AFTER `weeklyPerformanceRollup`
+// (Sundays 23:15 UTC) so any week-end reconciliation has settled
+// before the fell-behind check evaluates the prior week.
+//
+// Bounded reads — same `lastActiveAt >= now - 30d` discipline as
+// other sweep functions; we don't iterate the full users collection
+// even on query failure.
+//
+// Implementation notes:
+//   - "Prior week" is Sun..Sat in UTC. The server runs in UTC and
+//     `date` fields on saved runs are local-date strings — close
+//     enough at the 50% threshold that timezone edges don't matter
+//     for the prompt trigger.
+//   - "Real saved run" mirrors the volume-eligibility predicate
+//     from `onRunCreated`: not invalid, not save-anyway, distance
+//     ≥50m, duration ≥30s. Q5 P25 ("real activity only" for
+//     gamification) carried forward.
+//   - Freeform users + recovery-phase users are skipped — neither
+//     has a prescriptive weekly target to fall behind on.
+//   - Pure decision function (`_decideFellBehindFlag`) so the
+//     logic gets exhaustive coverage without Firestore.
+
+const FELL_BEHIND_THRESHOLD = 0.5;
+
+/** Compute the prior-week boundaries given a "now" timestamp. The
+ *  trigger fires Monday 05:00 UTC; prior week is the Sun..Sat
+ *  block immediately preceding today. */
+function _priorWeekUtcRange(nowMs) {
+  // Anchor on UTC midnight of "today" so dates align cleanly with
+  // the saved-runs `date` field (which is a local-date string that
+  // happens to look like a UTC date for the purpose of >=/<=
+  // ordering).
+  const now = new Date(nowMs);
+  const todayUtc = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const todayDow = todayUtc.getUTCDay(); // 0=Sun..6=Sat
+  // Last Saturday = today - (todayDow + 1) days. Monday → -2 days.
+  // Sunday → -1 day. Etc.
+  const lastSaturday = new Date(todayUtc.getTime());
+  lastSaturday.setUTCDate(lastSaturday.getUTCDate() - todayDow - 1);
+  const lastSunday = new Date(lastSaturday.getTime());
+  lastSunday.setUTCDate(lastSunday.getUTCDate() - 6);
+  return {
+    weekStart: _utcDateString(lastSunday),
+    weekEnd: _utcDateString(lastSaturday),
+    weekKey: _utcDateString(lastSunday),
+  };
+}
+
+/** Same volume-eligibility shape as `onRunCreated` — defends
+ *  against zombie / save-anyway / invalid runs counting toward the
+ *  prior-week tally. Inline rather than imported because
+ *  `functions/` is plain CommonJS without the TS path alias. */
+function _isVolumeEligibleRun(data) {
+  if (!data) return false;
+  if (data.isInvalid === true) return false;
+  if (data.savedAnyway === true) return false;
+  if (!(Number(data.distance) || 0) || Number(data.distance) < 50) return false;
+  if (!(Number(data.duration) || 0) || Number(data.duration) < 30) return false;
+  return true;
+}
+
+/** Pure decision function for the fell-behind flag. Returns
+ *  `{ payload, action }` where `action` is one of:
+ *    - "set": new fell-behind state → write flag
+ *    - "clear": previously fell-behind but this week clears it →
+ *      delete the flag (write `null`)
+ *    - "noop": nothing to do this week
+ *  Easy to test exhaustively without Firestore. */
+function _decideFellBehindFlag(
+  profile,
+  programState,
+  priorWeekRuns,
+  priorWeekKey
+) {
+  // Gate 1 — freeform users have no prescriptive target; skip.
+  const runMode = profile && profile.runMode;
+  if (!runMode || runMode === "freeform") {
+    return { action: "noop" };
+  }
+
+  // Gate 2 — users in active recovery phase aren't falling behind
+  // on training; they're recovering by design. The "prescription"
+  // for the recovery weeks is easy_30s at the same frequency, but
+  // missing those isn't fell-behind territory.
+  const runPlan = (programState && programState.runPlan) || null;
+  if (runPlan && runPlan.phase === "recovery") {
+    return { action: "noop" };
+  }
+
+  // Gate 3 — read the user's weekly run target. 0 means
+  // structured/race_prep but with no target configured (malformed
+  // state); treat as freeform for fell-behind purposes.
+  const weeklyTarget =
+    (profile && profile.weeklyRunDaysTarget) ||
+    (profile && profile.weeklyRunsTarget) ||
+    0;
+  if (weeklyTarget < 1) {
+    return { action: "noop" };
+  }
+
+  // Count volume-eligible runs in the prior week.
+  const realRunCount = (priorWeekRuns || []).filter(
+    _isVolumeEligibleRun
+  ).length;
+  const completedRatio = realRunCount / weeklyTarget;
+  const fellBehind = completedRatio < FELL_BEHIND_THRESHOLD;
+
+  const existingFlag =
+    (programState && programState.pendingFellBehindPrompt) || null;
+
+  if (fellBehind) {
+    // Idempotent: if the same flag is already present (re-firing on
+    // the same week), no-op so we don't generate spurious writes.
+    if (
+      existingFlag &&
+      existingFlag.weekKey === priorWeekKey &&
+      existingFlag.completedRatio === completedRatio
+    ) {
+      return { action: "noop" };
+    }
+    return {
+      action: "set",
+      payload: {
+        pendingFellBehindPrompt: {
+          weekKey: priorWeekKey,
+          completedRatio,
+          realRunCount,
+          weeklyTarget,
+        },
+      },
+    };
+  }
+
+  // Not fell-behind this week. If a flag for an OLDER week is still
+  // present (user dismissed the previous one slowly), leave it —
+  // the client owns the dismissal. Only clear if the flag belongs
+  // to THIS evaluation's week (defensive — caller shouldn't have
+  // re-evaluated the same week twice, but be safe).
+  if (existingFlag && existingFlag.weekKey === priorWeekKey) {
+    return {
+      action: "clear",
+      payload: { pendingFellBehindPrompt: null },
+    };
+  }
+  return { action: "noop" };
+}
+
+/** Per-user worker. Reads profile + programState + prior-week
+ *  saved runs, runs the pure decision, applies the write when
+ *  needed. Errors caught + logged per-user — one bad user doesn't
+ *  break the sweep. */
+async function _runWeeklyFellBehindCheckForUser(uid, range) {
+  const userRef = db.collection("users").doc(uid);
+  const programRef = userRef.collection("programState").doc("current");
+  const [userSnap, programSnap] = await Promise.all([
+    userRef.get(),
+    programRef.get(),
+  ]);
+  if (!userSnap.exists || !programSnap.exists) {
+    return { action: "noop" };
+  }
+  const profile = userSnap.data() || {};
+  const programState = programSnap.data() || {};
+
+  // Bounded query — only the prior week, never the full subscription.
+  let priorWeekRuns = [];
+  try {
+    const runsSnap = await userRef
+      .collection("runs")
+      .where("date", ">=", range.weekStart)
+      .where("date", "<=", range.weekEnd)
+      .get();
+    priorWeekRuns = runsSnap.docs.map((d) => d.data() || {});
+  } catch (err) {
+    console.warn(
+      `weeklyFellBehindCheck: runs query failed for ${uid}: ${err.message}`
+    );
+  }
+
+  const decision = _decideFellBehindFlag(
+    profile,
+    programState,
+    priorWeekRuns,
+    range.weekKey
+  );
+  if (decision.action === "noop") {
+    return decision;
+  }
+
+  // R1A: tombstone guard immediately before the write.
+  if (
+    !(await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "weeklyFellBehindCheck"
+    ))
+  ) {
+    return { action: "noop" };
+  }
+
+  if (decision.action === "clear") {
+    // Use FieldValue.delete() to actually drop the field rather
+    // than setting it to null (cleaner read shape on the client).
+    await programRef.set(
+      {
+        pendingFellBehindPrompt: admin.firestore.FieldValue.delete(),
+      },
+      { merge: true }
+    );
+  } else {
+    // "set"
+    await programRef.set(decision.payload, { merge: true });
+  }
+  return decision;
+}
+
+// ── Scheduled: weekly fell-behind check (Mondays 05:00 UTC) ──
+
+exports.weeklyFellBehindCheck = functions.pubsub
+  .schedule("0 5 * * 1")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("weeklyFellBehindCheck: starting");
+
+      const range = _priorWeekUtcRange(Date.now());
+      console.log(
+        `weeklyFellBehindCheck: evaluating week ${range.weekKey} ` +
+          `(${range.weekStart}..${range.weekEnd})`
+      );
+
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+      let usersSnap;
+      try {
+        usersSnap = await db
+          .collection("users")
+          .where("lastActiveAt", ">=", cutoffTs)
+          .get();
+      } catch (err) {
+        console.error(
+          "weeklyFellBehindCheck: lastActiveAt query failed, skipping run:",
+          err.message
+        );
+        return null;
+      }
+
+      const uids = usersSnap.docs.map((d) => d.id);
+      console.log(`weeklyFellBehindCheck: evaluating ${uids.length} users`);
+
+      let setCount = 0;
+      let clearCount = 0;
+      for (let i = 0; i < uids.length; i += 10) {
+        const batch = uids.slice(i, i + 10);
+        await Promise.all(
+          batch.map(async (uid) => {
+            try {
+              const decision = await _runWeeklyFellBehindCheckForUser(
+                uid,
+                range
+              );
+              if (decision.action === "set") setCount += 1;
+              if (decision.action === "clear") clearCount += 1;
+            } catch (err) {
+              console.error(
+                `weeklyFellBehindCheck: failed for ${uid}:`,
+                err.message
+              );
+            }
+          })
+        );
+      }
+
+      console.log(
+        `weeklyFellBehindCheck: done — set=${setCount}, clear=${clearCount}`
+      );
+    } catch (err) {
+      console.error("weeklyFellBehindCheck: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+exports._priorWeekUtcRange = _priorWeekUtcRange;
+exports._isVolumeEligibleRun = _isVolumeEligibleRun;
+exports._decideFellBehindFlag = _decideFellBehindFlag;
+exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
