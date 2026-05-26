@@ -662,7 +662,11 @@ export async function getSuggestedPeople(
 }
 
 export async function searchUsersByEmail(email: string, limitCount = 10) {
+  // Read-only query against the top-level users collection. The
+  // deletion executor cleans `users/{uid}` via the `userRoot`
+  // inventory entry; this search path doesn't create new state.
   const q = query(
+    // @deletion-classified: userRoot
     collection(db, "users"),
     where("email", "==", email.toLowerCase().trim()),
     limit(limitCount)
