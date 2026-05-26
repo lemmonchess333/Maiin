@@ -501,7 +501,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     expect(navigateMock).toHaveBeenCalledWith("/run/tap-target");
   });
 
-  it("caps visible extras at 2 and surfaces a '+N more' tap-through to /history", () => {
+  it("caps visible extras at 2 and surfaces a '+N more' overflow indicator (Q5 P71)", () => {
     const tueKey = dayOfThisWeek(2);
     const schedule = makeSchedule([
       "rest",
@@ -544,8 +544,52 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     expect(
       screen.getByRole("button", { name: /2 more extra runs/i })
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /2 more extra runs/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/history");
+  });
+
+  it("tapping '+N more' opens the dedicated extras expand sheet (Q5 P71, chunk B3i)", () => {
+    // Pre-B3i this navigated to /history as a functional fallback.
+    // Post-B3i a date-scoped sheet opens with the full list +
+    // per-run pace/duration detail.
+    const tueKey = dayOfThisWeek(2);
+    const schedule = makeSchedule([
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+      "rest",
+    ]);
+    const profile = makeProfile(schedule);
+    renderCard(
+      <DayPeekCard
+        dateKey={tueKey}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={[
+          savedRun({ id: "ex-1", distance: 3000, type: "easy" }),
+          savedRun({ id: "ex-2", distance: 4000, type: "tempo" }),
+          savedRun({
+            id: "ex-3",
+            distance: 5000,
+            type: "long",
+            avgPace: 360,
+          }),
+        ]}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /1 more extra run/i }));
+    // Sheet header + previously-overflowed entry are now visible.
+    // Exact match to avoid colliding with the sr-only Drawer.Title.
+    expect(screen.getByText("Extra runs")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Extra run: 5\.0 km, long/i })
+    ).toBeInTheDocument();
+    expect(navigateMock).not.toHaveBeenCalled();
   });
 
   it("extras render alongside a planned-run row when both exist for the date", () => {
