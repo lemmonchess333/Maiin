@@ -145,7 +145,9 @@ export default function ProgrammeRunSection({
   // completion. Subscribes to users/{uid}/runs + reads
   // programState.manualCompletions; forwarded to RunWeekStrip so
   // the strip's ✅ tracks manual/saved-run/legacy completions.
-  const { claimMap } = useClaimMap();
+  // Q5 chunk B3e — also forwards unclaimedByDate for the extras
+  // pills (saved runs that don't claim any planned slot).
+  const { claimMap, unclaimedByDate } = useClaimMap();
   // PR-B: chip + race-form state.
   //   modeChangePending — double-tap guard while updateProfile +
   //     refreshRunSchedule are in flight.
@@ -1213,6 +1215,7 @@ export default function ProgrammeRunSection({
         <RunWeekStrip
           runDays={runDays}
           claimMap={claimMap}
+          unclaimedByDate={unclaimedByDate}
           onDayTap={(dateKey) => setManageDate(dateKey)}
         />
       )}
