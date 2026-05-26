@@ -71,7 +71,9 @@ const PROTECTED_PATHS = [
   "match /blocks/{uid}/users/{targetUid}",
   "match /reports/{reportId}",
   "match /groups/{crewId}",
-  "match /groups/{crewId}/members/{userId}",
+  // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} removed
+  // from PROTECTED_PATHS — the rule is now `if false` (server-only).
+  // R1A protection moved to setCrewMembershipCallable.
 ];
 
 export const EXPECTED_PROTECTED_PATH_COUNT = PROTECTED_PATHS.length;
@@ -139,6 +141,12 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // for clients. No user-keyed data on the doc; not in scope for the
   // deletion freeze.
   "match /audit_checkout_sessions/{doc}",
+  // 2026-05-26 audit PR 2 — crew member sub-docs are now server-only.
+  // Client writes denied at the rules layer (`allow create, update,
+  // delete: if false`); reads are allowed for the Suggested-People
+  // crew-member lookup. R1A protection lives in
+  // `setCrewMembershipCallable` via `assertCallableActorNotDeleting`.
+  "match /groups/{crewId}/members/{userId}",
 ];
 
 /**
@@ -251,14 +259,12 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 27 (Chunk 2.C reconciliation)", () => {
-    // Chunk 2 prose said "22 protected paths" — that was a count
-    // drift, not a deliberate scope claim. Chunk 2.B asserted >= 25
-    // in the cover test and the actual list grew to the current 27
-    // as savedRoutines / public / groups / groups-members entries
-    // were properly classified. Counting methodology is unchanged
-    // from Chunk 2: one `match /PATH {` block with at least one
-    // client-write rule = one path.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(27);
+  it("authoritative count is 26 (post-2026-05-26 audit PR 2)", () => {
+    // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
+    // 2026-05-26 audit PR 2 moves /groups/{crewId}/members/{userId}
+    // to server-only (write `if false`), so the protected-path
+    // count drops by one. Counting methodology unchanged: one
+    // `match /PATH {` block with at least one client-write rule.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(26);
   });
 });
