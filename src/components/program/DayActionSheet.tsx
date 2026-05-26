@@ -39,7 +39,10 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
-import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import {
+  getCompletionKind,
+  type ClaimState,
+} from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -182,14 +185,30 @@ export default function DayActionSheet({
                 style={{ color: THEME.running }}
               />
               <p className="text-sm font-semibold text-foreground">Run</p>
-              {run.isCompleted && (
-                <span
-                  className="ml-auto text-xs font-medium"
-                  style={{ color: THEME.success }}
-                >
-                  Completed
-                </span>
-              )}
+              {run.isCompleted &&
+                (() => {
+                  // Q2 P24 — distinguish manual ✅ vs real ✅ in the
+                  // sheet's status badge. Real / legacy → solid
+                  // "Completed". Manual → dimmed "Marked complete"
+                  // so the user can tell which source flipped the
+                  // slot when they reopen the sheet.
+                  const runDayId = run.runDay?.id;
+                  const completionKind = runDayId
+                    ? getCompletionKind(runDayId, claimMap)
+                    : null;
+                  const isManual = completionKind === "manual";
+                  return (
+                    <span
+                      className={cn(
+                        "ml-auto text-xs font-medium",
+                        isManual && "opacity-70"
+                      )}
+                      style={{ color: THEME.success }}
+                    >
+                      {isManual ? "Marked complete" : "Completed"}
+                    </span>
+                  );
+                })()}
               {run.status === "skipped" && (
                 <span className="ml-auto text-xs font-medium text-muted-foreground">
                   Skipped
