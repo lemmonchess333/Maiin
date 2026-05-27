@@ -1,10 +1,16 @@
-import { useMemo, useState, useRef, useId, type ReactNode } from 'react';
-import { THEME } from '../../lib/theme';
-import { haptic } from '../../lib/haptic';
-import { calculatePace, rollingPace, totalElevationGain, estimateRunCalories, calculateSplits } from '../../lib/gps';
-import type { GPSPoint, Split } from '../../lib/gps';
-import { RunControlButton } from '@/components/ui/RunControlButton';
-import { Dialog } from '@/components/ui/Dialog';
+import { useMemo, useState, useRef, useId, type ReactNode } from "react";
+import { THEME } from "../../lib/theme";
+import { haptic } from "../../lib/haptic";
+import {
+  calculatePace,
+  rollingPace,
+  totalElevationGain,
+  estimateRunCalories,
+  calculateSplits,
+} from "../../lib/gps";
+import type { GPSPoint, Split } from "../../lib/gps";
+import { RunControlButton } from "@/components/ui/RunControlButton";
+import { Dialog } from "@/components/ui/Dialog";
 
 interface RunBottomSheetProps {
   elapsed: number;
@@ -42,21 +48,49 @@ function SplitsStrip({ splits }: { splits: Split[] }) {
   if (splits.length === 0) return null;
   const last3 = splits.slice(-3);
   // Best pace across all splits to determine colour
-  const bestPace = Math.min(...splits.map(s => s.paceSeconds));
+  const bestPace = Math.min(...splits.map((s) => s.paceSeconds));
 
   return (
     <div className="flex gap-2 justify-center mt-1">
       {last3.map((s, i) => {
         const isBest = s.paceSeconds === bestPace;
-        const isFast = s.paceSeconds < (splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length) - 5;
-        const color = isBest ? THEME.teal : isFast ? THEME.success : 'rgba(255,255,255,0.5)';
+        const isFast =
+          s.paceSeconds <
+          splits.reduce((a, b) => a + b.paceSeconds, 0) / splits.length - 5;
+        const color = isBest
+          ? THEME.teal
+          : isFast
+            ? THEME.success
+            : "rgba(255,255,255,0.5)";
         return (
-          <div key={i} className="text-center px-3 py-1.5 rounded-xl"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
+          <div
+            key={i}
+            className="text-center px-3 py-1.5 rounded-xl"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color,
+                fontVariantNumeric: "tabular-nums",
+                fontFamily: "var(--font-mono)",
+              }}
+            >
               {s.pace}
             </p>
-            <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>km {s.km}</p>
+            <p
+              style={{
+                fontSize: 8,
+                color: "rgba(255,255,255,0.25)",
+                marginTop: 1,
+              }}
+            >
+              km {s.km}
+            </p>
           </div>
         );
       })}
@@ -71,14 +105,37 @@ function KmProgress({ distance }: { distance: number }) {
   const next = kmDone + 1;
   return (
     <div className="flex items-center gap-2 px-1">
-      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 28, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+      <p
+        style={{
+          fontSize: 9,
+          color: "rgba(255,255,255,0.3)",
+          width: 28,
+          textAlign: "right",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
         {kmDone}km
       </p>
-      <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-        <div className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${progress * 100}%`, background: `linear-gradient(90deg, ${THEME.teal}, ${THEME.brand})` }} />
+      <div
+        className="flex-1 h-1 rounded-full overflow-hidden"
+        style={{ background: "rgba(255,255,255,0.08)" }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{
+            width: `${progress * 100}%`,
+            background: `linear-gradient(90deg, ${THEME.teal}, ${THEME.brand})`,
+          }}
+        />
       </div>
-      <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 28, fontVariantNumeric: 'tabular-nums' }}>
+      <p
+        style={{
+          fontSize: 9,
+          color: "rgba(255,255,255,0.3)",
+          width: 28,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
         {next}km
       </p>
     </div>
@@ -87,10 +144,19 @@ function KmProgress({ distance }: { distance: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function RunBottomSheet({
-  elapsed, distance, points, formatTime,
-  onPause, onLock, isPaused, onResume, onStop, onDiscard,
+  elapsed,
+  distance,
+  points,
+  formatTime,
+  onPause,
+  onLock,
+  isPaused,
+  onResume,
+  onStop,
+  onDiscard,
   isInvalid = false,
-  intervalDisplay, weightKg,
+  intervalDisplay,
+  weightKg,
 }: RunBottomSheetProps) {
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
@@ -111,43 +177,83 @@ export default function RunBottomSheet({
   const splits = useMemo(() => calculateSplits(points), [points]);
   const sheetTop = `${(1 - SNAPS[snapIdx]) * 100}vh`;
 
-  const dragStart = (y: number) => { dragY.current = y; };
+  const dragStart = (y: number) => {
+    dragY.current = y;
+  };
   const dragEnd = (y: number) => {
     if (dragY.current === null) return;
     const d = y - dragY.current;
     dragY.current = null;
-    if (d > 55 && snapIdx > 0) { setSnapIdx((s) => (s - 1) as 0|1|2); haptic('light'); }
-    else if (d < -55 && snapIdx < 2) { setSnapIdx((s) => (s + 1) as 0|1|2); haptic('light'); }
+    if (d > 55 && snapIdx > 0) {
+      setSnapIdx((s) => (s - 1) as 0 | 1 | 2);
+      haptic("light");
+    } else if (d < -55 && snapIdx < 2) {
+      setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
+      haptic("light");
+    }
   };
 
   return (
     <>
       {/* Tap map to re-expand */}
       {!isExpanded && (
-        <div className="fixed inset-0 z-30" style={{ bottom: `${SNAPS[snapIdx] * 100}vh` }}
-          role="button" tabIndex={0} aria-label="Expand bottom sheet"
-          onClick={() => { setSnapIdx(2); haptic('light'); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setSnapIdx(2); haptic('light'); } }} />
+        <div
+          className="fixed inset-0 z-30"
+          style={{ bottom: `${SNAPS[snapIdx] * 100}vh` }}
+          role="button"
+          tabIndex={0}
+          aria-label="Expand bottom sheet"
+          onClick={() => {
+            setSnapIdx(2);
+            haptic("light");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              setSnapIdx(2);
+              haptic("light");
+            }
+          }}
+        />
       )}
 
-      <div className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
+      <div
+        className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
           top: sheetTop,
           background: `linear-gradient(180deg, ${THEME.surface} 0%, ${THEME.bg} 100%)`,
-          transition: 'top 0.32s cubic-bezier(0.32, 0.72, 0, 1)',
-          boxShadow: '0 -12px 60px rgba(0,0,0,0.7)',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          transition: "top 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+          boxShadow: "0 -12px 60px rgba(0,0,0,0.7)",
+          borderTop: "1px solid rgba(255,255,255,0.07)",
         }}
       >
         {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
-          role="button" tabIndex={0} aria-label="Drag to resize"
-          onMouseDown={e => dragStart(e.clientY)} onMouseUp={e => dragEnd(e.clientY)}
-          onTouchStart={e => dragStart(e.touches[0].clientY)}
-          onTouchEnd={e => dragEnd(e.changedTouches[0].clientY)}
-          onKeyDown={e => { if (e.key === 'ArrowUp' && snapIdx < 2) { setSnapIdx((s) => (s + 1) as 0|1|2); haptic('light'); } else if (e.key === 'ArrowDown' && snapIdx > 0) { setSnapIdx((s) => (s - 1) as 0|1|2); haptic('light'); } }}
+        <div
+          className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+          role="button"
+          tabIndex={0}
+          aria-label="Drag to resize"
+          onMouseDown={(e) => dragStart(e.clientY)}
+          onMouseUp={(e) => dragEnd(e.clientY)}
+          onTouchStart={(e) => dragStart(e.touches[0].clientY)}
+          onTouchEnd={(e) => dragEnd(e.changedTouches[0].clientY)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowUp" && snapIdx < 2) {
+              setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
+              haptic("light");
+            } else if (e.key === "ArrowDown" && snapIdx > 0) {
+              setSnapIdx((s) => (s - 1) as 0 | 1 | 2);
+              haptic("light");
+            }
+          }}
         >
-          <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.18)' }} />
+          <div
+            style={{
+              width: 36,
+              height: 4,
+              borderRadius: 99,
+              background: "rgba(255,255,255,0.18)",
+            }}
+          />
         </div>
 
         {/* ── EXPANDED VIEW ── */}
@@ -157,31 +263,91 @@ export default function RunBottomSheet({
             <div className="flex flex-col items-center justify-center flex-1 gap-3">
               {/* Time — hero number */}
               <div className="text-center">
-                <p style={{
-                  fontSize: 68, fontWeight: 800, fontVariantNumeric: 'tabular-nums',
-                  fontFamily: 'var(--font-mono)', color: THEME.teal, lineHeight: 1,
-                  letterSpacing: '-2px', textShadow: `0 0 40px ${THEME.teal}55`
-                }}>
+                <p
+                  style={{
+                    fontSize: 68,
+                    fontWeight: 800,
+                    fontVariantNumeric: "tabular-nums",
+                    fontFamily: "var(--font-mono)",
+                    color: THEME.teal,
+                    lineHeight: 1,
+                    letterSpacing: "-2px",
+                    textShadow: `0 0 40px ${THEME.teal}55`,
+                  }}
+                >
                   {formatTime(elapsed)}
                 </p>
-                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 4 }}>TIME</p>
+                <p
+                  style={{
+                    fontSize: 9,
+                    color: "rgba(255,255,255,0.28)",
+                    letterSpacing: "0.12em",
+                    marginTop: 4,
+                  }}
+                >
+                  TIME
+                </p>
               </div>
 
               {/* Distance + Pace */}
               <div className="flex gap-12 items-end">
                 <div className="text-center">
-                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                  <p
+                    style={{
+                      fontSize: 46,
+                      fontWeight: 700,
+                      color: "#fff",
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                      lineHeight: 1,
+                    }}
+                  >
                     {(distance / 1000).toFixed(2)}
                   </p>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>KM</p>
+                  <p
+                    style={{
+                      fontSize: 9,
+                      color: "rgba(255,255,255,0.28)",
+                      letterSpacing: "0.12em",
+                      marginTop: 3,
+                    }}
+                  >
+                    KM
+                  </p>
                 </div>
                 <div className="text-center">
-                  <p style={{ fontSize: 46, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', lineHeight: 1 }}>
+                  <p
+                    style={{
+                      fontSize: 46,
+                      fontWeight: 700,
+                      color: "#fff",
+                      fontVariantNumeric: "tabular-nums",
+                      fontFamily: "var(--font-mono)",
+                      lineHeight: 1,
+                    }}
+                  >
                     {livePace}
                   </p>
-                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', marginTop: 3 }}>/KM · LIVE</p>
-                  {pace !== '--:--' && pace !== livePace && (
-                    <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)', marginTop: 4 }}>
+                  <p
+                    style={{
+                      fontSize: 9,
+                      color: "rgba(255,255,255,0.28)",
+                      letterSpacing: "0.12em",
+                      marginTop: 3,
+                    }}
+                  >
+                    /KM · LIVE
+                  </p>
+                  {pace !== "--:--" && pace !== livePace && (
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: "rgba(255,255,255,0.35)",
+                        fontVariantNumeric: "tabular-nums",
+                        fontFamily: "var(--font-mono)",
+                        marginTop: 4,
+                      }}
+                    >
                       AVG {pace}
                     </p>
                   )}
@@ -196,21 +362,95 @@ export default function RunBottomSheet({
             </div>
 
             {/* Secondary stats pill */}
-            <div className="flex items-center justify-around py-3 mb-5 rounded-2xl flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div
+              className="flex items-center justify-around py-3 mb-5 rounded-2xl flex-shrink-0"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.07)",
+              }}
+            >
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{calories}</p>
-                <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>CAL</p>
+                <p
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.65)",
+                    fontVariantNumeric: "tabular-nums",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {calories}
+                </p>
+                <p
+                  style={{
+                    fontSize: 8,
+                    color: "rgba(255,255,255,0.25)",
+                    letterSpacing: "0.1em",
+                    marginTop: 2,
+                  }}
+                >
+                  CAL
+                </p>
               </div>
-              <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
+              <div
+                style={{
+                  width: 1,
+                  height: 28,
+                  background: "rgba(255,255,255,0.08)",
+                }}
+              />
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{elevation}m</p>
-                <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>ELEV</p>
+                <p
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.65)",
+                    fontVariantNumeric: "tabular-nums",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {elevation}m
+                </p>
+                <p
+                  style={{
+                    fontSize: 8,
+                    color: "rgba(255,255,255,0.25)",
+                    letterSpacing: "0.1em",
+                    marginTop: 2,
+                  }}
+                >
+                  ELEV
+                </p>
               </div>
-              <div style={{ width: 1, height: 28, background: 'rgba(255,255,255,0.08)' }} />
+              <div
+                style={{
+                  width: 1,
+                  height: 28,
+                  background: "rgba(255,255,255,0.08)",
+                }}
+              />
               <div className="text-center">
-                <p style={{ fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.65)', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{splits.length}</p>
-                <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginTop: 2 }}>SPLITS</p>
+                <p
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: "rgba(255,255,255,0.65)",
+                    fontVariantNumeric: "tabular-nums",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {splits.length}
+                </p>
+                <p
+                  style={{
+                    fontSize: 8,
+                    color: "rgba(255,255,255,0.25)",
+                    letterSpacing: "0.1em",
+                    marginTop: 2,
+                  }}
+                >
+                  SPLITS
+                </p>
               </div>
             </div>
 
@@ -235,10 +475,23 @@ export default function RunBottomSheet({
                   label="LOCK"
                   size="sm"
                   variant="neutral"
-                  onClick={() => { onLock(); haptic('light'); }}
+                  onClick={() => {
+                    onLock();
+                    haptic("light");
+                  }}
                   icon={
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    <svg
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.45)"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
                   }
                 />
@@ -249,17 +502,34 @@ export default function RunBottomSheet({
                   label="PAUSE"
                   size="lg"
                   variant="neutral"
-                  onClick={() => { onPause(); haptic('medium'); }}
+                  onClick={() => {
+                    onPause();
+                    haptic("medium");
+                  }}
                   icon={
                     <div className="flex gap-[7px]">
-                      <div style={{ width: 11, height: 30, background: 'white', borderRadius: 6 }} />
-                      <div style={{ width: 11, height: 30, background: 'white', borderRadius: 6 }} />
+                      <div
+                        style={{
+                          width: 11,
+                          height: 30,
+                          background: "white",
+                          borderRadius: 6,
+                        }}
+                      />
+                      <div
+                        style={{
+                          width: 11,
+                          height: 30,
+                          background: "white",
+                          borderRadius: 6,
+                        }}
+                      />
                     </div>
                   }
                 />
 
                 {/* Spacer — visual balance, not interactive. */}
-                <div className="w-14 h-14" aria-hidden="true" />
+                <div className="size-14" aria-hidden="true" />
               </div>
             ) : (
               <div className="flex items-center justify-center gap-12 flex-shrink-0">
@@ -269,7 +539,16 @@ export default function RunBottomSheet({
                   size="lg"
                   variant="danger"
                   onClick={() => setShowStopConfirm(true)}
-                  icon={<div style={{ width: 22, height: 22, background: '#EF4444', borderRadius: 5 }} />}
+                  icon={
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        background: "#EF4444",
+                        borderRadius: 5,
+                      }}
+                    />
+                  }
                 />
 
                 {/* Resume */}
@@ -279,9 +558,17 @@ export default function RunBottomSheet({
                   size="lg"
                   variant="primary"
                   glow
-                  onClick={() => { onResume(); haptic('medium'); }}
+                  onClick={() => {
+                    onResume();
+                    haptic("medium");
+                  }}
                   icon={
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="white"
+                    >
                       <polygon points="6,3 20,12 6,21" />
                     </svg>
                   }
@@ -295,20 +582,70 @@ export default function RunBottomSheet({
         {!isExpanded && (
           <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
+              <p
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: "white",
+                  fontVariantNumeric: "tabular-nums",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
                 {formatTime(elapsed)}
               </p>
-              <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>TIME</p>
+              <p
+                style={{
+                  fontSize: 8,
+                  color: "rgba(255,255,255,0.25)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                TIME
+              </p>
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: THEME.teal, fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>
+              <p
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: THEME.teal,
+                  fontVariantNumeric: "tabular-nums",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
                 {(distance / 1000).toFixed(2)}
               </p>
-              <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>KM</p>
+              <p
+                style={{
+                  fontSize: 8,
+                  color: "rgba(255,255,255,0.25)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                KM
+              </p>
             </div>
             <div className="text-center">
-              <p style={{ fontSize: 22, fontWeight: 700, color: 'white', fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}>{livePace}</p>
-              <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>/KM</p>
+              <p
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: "white",
+                  fontVariantNumeric: "tabular-nums",
+                  fontFamily: "var(--font-mono)",
+                }}
+              >
+                {livePace}
+              </p>
+              <p
+                style={{
+                  fontSize: 8,
+                  color: "rgba(255,255,255,0.25)",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                /KM
+              </p>
             </div>
             {/* Collapsed-bar toggle stays bespoke at 48px (the primitive's
                 sm size is 56px and would push the bar 8px taller). The
@@ -319,14 +656,45 @@ export default function RunBottomSheet({
             <button
               type="button"
               aria-label={isPaused ? "Resume run" : "Pause run"}
-              onClick={() => { if (isPaused) { onResume(); } else { onPause(); } haptic('medium'); }}
-              className="w-12 h-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              style={{ background: isPaused ? THEME.teal : 'rgba(255,255,255,0.1)', border: '2px solid rgba(255,255,255,0.18)' }}>
-              <span aria-hidden="true" className="inline-flex">
-                {isPaused
-                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="6,3 20,12 6,21" /></svg>
-                  : <div className="flex gap-1"><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /><div style={{ width: 5, height: 18, background: 'white', borderRadius: 3 }} /></div>
+              onClick={() => {
+                if (isPaused) {
+                  onResume();
+                } else {
+                  onPause();
                 }
+                haptic("medium");
+              }}
+              className="size-12 rounded-full flex items-center justify-center active:scale-[0.92] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              style={{
+                background: isPaused ? THEME.teal : "rgba(255,255,255,0.1)",
+                border: "2px solid rgba(255,255,255,0.18)",
+              }}
+            >
+              <span aria-hidden="true" className="inline-flex">
+                {isPaused ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                    <polygon points="6,3 20,12 6,21" />
+                  </svg>
+                ) : (
+                  <div className="flex gap-1">
+                    <div
+                      style={{
+                        width: 5,
+                        height: 18,
+                        background: "white",
+                        borderRadius: 3,
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 5,
+                        height: 18,
+                        background: "white",
+                        borderRadius: 3,
+                      }}
+                    />
+                  </div>
+                )}
               </span>
             </button>
           </div>
@@ -353,21 +721,46 @@ export default function RunBottomSheet({
       >
         <div
           className="p-6 rounded-2xl"
-          style={{ background: THEME.surface, border: '1px solid rgba(255,255,255,0.1)' }}
+          style={{
+            background: THEME.surface,
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
         >
-          <h3 id={stopTitleId} className="text-lg font-bold text-white text-center mb-4">End run?</h3>
+          <h3
+            id={stopTitleId}
+            className="text-lg font-bold text-white text-center mb-4"
+          >
+            End run?
+          </h3>
           <div className="flex justify-around mb-6">
             <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{(distance / 1000).toFixed(2)}</p>
-              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>KM</p>
+              <p
+                className="text-2xl font-bold font-mono text-white"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {(distance / 1000).toFixed(2)}
+              </p>
+              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>KM</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(elapsed)}</p>
-              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>TIME</p>
+              <p
+                className="text-2xl font-bold font-mono text-white"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {formatTime(elapsed)}
+              </p>
+              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>
+                TIME
+              </p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold font-mono text-white" style={{ fontVariantNumeric: 'tabular-nums' }}>{pace}</p>
-              <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>/KM</p>
+              <p
+                className="text-2xl font-bold font-mono text-white"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {pace}
+              </p>
+              <p style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>/KM</p>
             </div>
           </div>
           {/* Primary-action swap: for sub-threshold runs the safest
@@ -382,39 +775,78 @@ export default function RunBottomSheet({
               summary screen and choose then. */}
           {isInvalid && onDiscard ? (
             <div className="space-y-2">
-              <button type="button" onClick={() => { setShowStopConfirm(false); onDiscard(); }}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStopConfirm(false);
+                  onDiscard();
+                }}
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: '#EF4444' }}>
+                style={{ background: "#EF4444" }}
+              >
                 Discard Run
               </button>
-              <button type="button" onClick={() => setShowStopConfirm(false)}
+              <button
+                type="button"
+                onClick={() => setShowStopConfirm(false)}
                 className="w-full py-3.5 rounded-xl font-semibold text-sm"
-                style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                style={{
+                  color: "rgba(255,255,255,0.6)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
                 Keep Going
               </button>
-              <button type="button" onClick={() => { setShowStopConfirm(false); onStop(); }}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStopConfirm(false);
+                  onStop();
+                }}
                 className="w-full py-2 text-xs"
-                style={{ color: 'rgba(255,255,255,0.5)' }}>
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
                 Review anyway
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <button type="button" onClick={() => { setShowStopConfirm(false); onStop(); }}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowStopConfirm(false);
+                  onStop();
+                }}
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: '#EF4444' }}>
+                style={{ background: "#EF4444" }}
+              >
                 End Run
               </button>
               {onDiscard && (
-                <button type="button" onClick={() => { setShowStopConfirm(false); onDiscard(); }}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStopConfirm(false);
+                    onDiscard();
+                  }}
                   className="w-full py-3.5 rounded-xl font-semibold text-sm"
-                  style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                  style={{
+                    color: "rgba(255,255,255,0.6)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                  }}
+                >
                   Discard Run
                 </button>
               )}
-              <button type="button" onClick={() => setShowStopConfirm(false)}
+              <button
+                type="button"
+                onClick={() => setShowStopConfirm(false)}
                 className="w-full py-3.5 rounded-xl font-semibold text-sm"
-                style={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                style={{
+                  color: "rgba(255,255,255,0.6)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
                 Keep Going
               </button>
             </div>

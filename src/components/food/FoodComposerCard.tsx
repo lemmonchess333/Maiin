@@ -117,7 +117,7 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
       onUpgrade,
       onManualOpen,
     },
-    suggestionsRef,
+    suggestionsRef
   ) {
     return (
       <div className="pb-2">
@@ -125,8 +125,8 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
           <PenLine
             aria-hidden="true"
             className={cn(
-              "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors",
-              inputFocused ? "" : "text-muted-foreground",
+              "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 transition-colors",
+              inputFocused ? "" : "text-muted-foreground"
             )}
             style={
               inputFocused ? { color: THEME.semantic.nutrition } : undefined
@@ -191,11 +191,11 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
               aria-label="Log meal"
               className={cn(
                 "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90",
-                nlParsing ? "opacity-50" : "",
+                nlParsing ? "opacity-50" : ""
               )}
               style={{ color: THEME.semantic.nutrition }}
             >
-              <SendHorizontal className="w-5 h-5" />
+              <SendHorizontal className="size-5" />
             </button>
           )}
           {!nlInput.trim() && targetMeal && (
@@ -208,7 +208,7 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
               aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg active:scale-90 text-muted-foreground"
             >
-              <X className="w-4 h-4" />
+              <X className="size-4" />
             </button>
           )}
           {showSuggestions && (
@@ -249,7 +249,7 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
                   "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
                   selected
                     ? "border-transparent text-white"
-                    : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60",
+                    : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
                 )}
                 style={
                   selected
@@ -304,7 +304,7 @@ const FoodComposerCard = forwardRef<HTMLDivElement, FoodComposerCardProps>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 export default FoodComposerCard;

@@ -3,7 +3,11 @@ import { Link } from "react-router-dom";
 import { Bookmark, Trash2, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { listSavedRoutines, deleteSavedRoutine, type SavedRoutine } from "@/lib/savedRoutines";
+import {
+  listSavedRoutines,
+  deleteSavedRoutine,
+  type SavedRoutine,
+} from "@/lib/savedRoutines";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 
@@ -70,13 +74,22 @@ export default function SavedRoutinesSection() {
   return (
     <section className="pt-6 space-y-2" aria-label="Saved routines">
       <div className="flex items-center gap-2">
-        <Bookmark className="w-4 h-4" style={{ color: THEME.brand }} aria-hidden="true" />
-        <h2 className="text-sm font-semibold text-foreground">Saved routines</h2>
+        <Bookmark
+          className="size-4"
+          style={{ color: THEME.brand }}
+          aria-hidden="true"
+        />
+        <h2 className="text-sm font-semibold text-foreground">
+          Saved routines
+        </h2>
       </div>
 
       <div className="space-y-2">
         {routines.map((routine) => {
-          const setCount = routine.exercises.reduce((s, ex) => s + (ex.setCount || 0), 0);
+          const setCount = routine.exercises.reduce(
+            (s, ex) => s + (ex.setCount || 0),
+            0
+          );
           return (
             /* Row body links to the runnable session; trash icon is a
                sibling so its click doesn't bubble through the Link. */
@@ -89,16 +102,19 @@ export default function SavedRoutinesSection() {
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                  className="size-9 rounded-lg flex items-center justify-center shrink-0"
                   style={{ background: `${THEME.brand}14` }}
                   aria-hidden="true"
                 >
-                  <Play className="w-4 h-4" style={{ color: THEME.brand }} />
+                  <Play className="size-4" style={{ color: THEME.brand }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{routine.name}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {routine.name}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    From {routine.sourceAuthorName} · {routine.exercises.length} exercise
+                    From {routine.sourceAuthorName} · {routine.exercises.length}{" "}
+                    exercise
                     {routine.exercises.length === 1 ? "" : "s"}
                     {setCount > 0 ? ` · ${setCount} sets` : ""}
                   </p>
@@ -115,7 +131,7 @@ export default function SavedRoutinesSection() {
                 aria-label={`Remove ${routine.name}`}
                 className="p-2 -m-2 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
               </button>
             </div>
           );

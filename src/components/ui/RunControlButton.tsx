@@ -76,9 +76,9 @@ const BASE_BUTTON = [
 
 const SIZE_CLASSES: Record<RunControlSize, string> = {
   // sm = 56px (3.5rem). Lock + tray toggles + spacer placeholders.
-  sm: "w-14 h-14",
+  sm: "size-14",
   // lg = 76px. Pause / resume / stop — the dominant action.
-  lg: "w-[76px] h-[76px]",
+  lg: "size-[76px]",
 };
 
 /**
@@ -90,7 +90,7 @@ const SIZE_CLASSES: Record<RunControlSize, string> = {
  */
 function variantStyle(
   variant: RunControlVariant,
-  glow: boolean,
+  glow: boolean
 ): React.CSSProperties {
   switch (variant) {
     case "primary":
@@ -140,7 +140,7 @@ const RunControlButton = forwardRef<HTMLButtonElement, RunControlButtonProps>(
       className,
       ...rest
     },
-    ref,
+    ref
   ) {
     return (
       <div className="flex flex-col items-center gap-2">
@@ -173,7 +173,7 @@ const RunControlButton = forwardRef<HTMLButtonElement, RunControlButtonProps>(
         ) : null}
       </div>
     );
-  },
+  }
 );
 
 export { RunControlButton };

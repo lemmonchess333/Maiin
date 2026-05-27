@@ -57,7 +57,7 @@ export default function SettingsRecentlyDeleted() {
 
   // Sort by deletedAt DESC — most recent at top per F5c spec pin (6).
   const sorted = [...deletedMeals].sort(
-    (a, b) => deletedAtMs(b) - deletedAtMs(a),
+    (a, b) => deletedAtMs(b) - deletedAtMs(a)
   );
 
   async function handleRestore(meal: Meal) {
@@ -104,11 +104,12 @@ export default function SettingsRecentlyDeleted() {
         <div className="rounded-xl bg-card border border-border/40 p-4 text-center space-y-1">
           <Utensils
             aria-hidden="true"
-            className="w-5 h-5 mx-auto text-muted-foreground"
+            className="size-5 mx-auto text-muted-foreground"
           />
           <p className="text-sm text-foreground">No recently deleted meals</p>
           <p className="text-xs text-muted-foreground">
-            Meals you delete appear here for 24 hours before being permanently removed.
+            Meals you delete appear here for 24 hours before being permanently
+            removed.
           </p>
         </div>
       ) : (
@@ -117,7 +118,10 @@ export default function SettingsRecentlyDeleted() {
             const isPending = pendingId === meal.id;
             const relative = formatRelative(deletedAtMs(meal));
             return (
-              <li key={meal.id} className="rounded-xl bg-card border border-border/40 p-3">
+              <li
+                key={meal.id}
+                className="rounded-xl bg-card border border-border/40 p-3"
+              >
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
@@ -140,7 +144,7 @@ export default function SettingsRecentlyDeleted() {
                     aria-label={`Restore ${meal.foodName || "meal"}`}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary-strong text-primary-foreground text-xs font-semibold motion-safe:active:scale-[0.98] disabled:opacity-50"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <RotateCcw className="size-3.5" />
                     Restore
                   </button>
                   <button
@@ -149,9 +153,12 @@ export default function SettingsRecentlyDeleted() {
                     disabled={isPending}
                     aria-label={`Permanently delete ${meal.foodName || "meal"}`}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg text-xs font-semibold motion-safe:active:scale-[0.98] disabled:opacity-50"
-                    style={{ backgroundColor: "hsl(var(--destructive) / 0.1)", color: "hsl(var(--destructive))" }}
+                    style={{
+                      backgroundColor: "hsl(var(--destructive) / 0.1)",
+                      color: "hsl(var(--destructive))",
+                    }}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="size-3.5" />
                     Delete
                   </button>
                 </div>

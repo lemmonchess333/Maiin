@@ -111,8 +111,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   ghost: "bg-transparent text-foreground hover:bg-muted",
-  outline:
-    "bg-transparent text-foreground border border-border hover:bg-muted",
+  outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "text-white",
   "sport-tinted": "",
 };
@@ -122,7 +121,10 @@ const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
   // 10% coral tint surface + full-saturation coral text — pairs with
   // the standard destructive variant for sport-discipline actions
   // that aren't genuinely destructive.
-  "sport-tinted": { backgroundColor: `${THEME.running}1A`, color: THEME.running },
+  "sport-tinted": {
+    backgroundColor: `${THEME.running}1A`,
+    color: THEME.running,
+  },
 };
 
 /**
@@ -150,7 +152,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     style,
     ...rest
   },
-  ref,
+  ref
 ) {
   const isInteractive = !disabled && !loading;
   const variantStyle = VARIANT_INLINE_STYLES[variant];
@@ -168,7 +170,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         fullWidth && "w-full",
-        className,
+        className
       )}
       // Variant inline style (sport / sport-tinted) merges under any
       // caller-supplied `style` so consumers can still override.
@@ -180,7 +182,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
           aria-hidden="true"
           className={cn(
             "animate-spin",
-            size === "sm" ? "w-3.5 h-3.5" : size === "lg" ? "w-5 h-5" : "w-4 h-4",
+            size === "sm" ? "size-3.5" : size === "lg" ? "size-5" : "size-4"
           )}
         />
       ) : (

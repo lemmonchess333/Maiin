@@ -42,8 +42,8 @@ const RING_ARC_LENGTH = RING_CIRCUMFERENCE * 0.75;
 function EmptyState() {
   return (
     <div className="flex items-center gap-6">
-      <div className="relative w-24 h-24 flex-shrink-0">
-        <svg viewBox="0 0 100 100" className="w-full h-full -rotate-[135deg]">
+      <div className="relative size-24 flex-shrink-0">
+        <svg viewBox="0 0 100 100" className="size-full -rotate-[135deg]">
           <circle
             cx="50"
             cy="50"
@@ -105,7 +105,7 @@ export default function PerformanceHeroCard({
       >
         <div className="flex items-center gap-2 mb-3">
           <Activity
-            className="w-4 h-4"
+            className="size-4"
             style={{ color: THEME.text.muted }}
             aria-hidden="true"
           />
@@ -139,7 +139,7 @@ export default function PerformanceHeroCard({
       >
         <div className="flex items-center gap-2 mb-3">
           <Activity
-            className="w-4 h-4"
+            className="size-4"
             style={{ color: THEME.text.muted }}
             aria-hidden="true"
           />
@@ -193,7 +193,7 @@ export default function PerformanceHeroCard({
     >
       <div className="flex items-center gap-2 mb-3">
         <Activity
-          className="w-4 h-4"
+          className="size-4"
           style={{ color: hue }}
           aria-hidden="true"
         />
@@ -202,10 +202,10 @@ export default function PerformanceHeroCard({
         </p>
       </div>
       <div className="flex items-center gap-6">
-        <div className="relative w-24 h-24 flex-shrink-0">
+        <div className="relative size-24 flex-shrink-0">
           <svg
             viewBox="0 0 100 100"
-            className="w-full h-full -rotate-[135deg] motion-safe:transition-[filter] motion-safe:duration-300"
+            className="size-full -rotate-[135deg] motion-safe:transition-[filter] motion-safe:duration-300"
             style={{
               /* Glow synchronises with the ring fill. PI3 spec uses
                  drop-shadow blur scaling 0..10px across PI 45-100;
@@ -292,9 +292,9 @@ export default function PerformanceHeroCard({
                 }}
               >
                 {delta > 0 ? (
-                  <TrendingUp className="w-3 h-3" aria-hidden="true" />
+                  <TrendingUp className="size-3" aria-hidden="true" />
                 ) : (
-                  <TrendingDown className="w-3 h-3" aria-hidden="true" />
+                  <TrendingDown className="size-3" aria-hidden="true" />
                 )}
                 {delta > 0 ? "+" : ""}
                 {delta} from last week
