@@ -437,12 +437,6 @@ export default function FoodAnalyzer({
         source: meal.barcode ? "barcode" : "photo",
       });
 
-      try {
-        localStorage.setItem("tropos_ever_scanned", "1");
-      } catch {
-        // Safari private mode — non-essential flag, swallow.
-      }
-
       setSaving(false);
       setSaved(true);
 
