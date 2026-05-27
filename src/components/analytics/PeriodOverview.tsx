@@ -1,6 +1,6 @@
-import { THEME } from '@/lib/theme';
-import { Footprints, Dumbbell, UtensilsCrossed } from 'lucide-react';
-import { formatVolumeSub } from '@/utils/formatters';
+import { THEME } from "@/lib/theme";
+import { Footprints, Dumbbell, UtensilsCrossed } from "lucide-react";
+import { formatVolumeSub } from "@/utils/formatters";
 
 interface PeriodOverviewProps {
   runCount: number;
@@ -19,15 +19,40 @@ interface PeriodOverviewProps {
   rangeDays: number;
 }
 
-function Ring({ value, max, color, size = 44 }: { value: number; max: number; color: string; size?: number }) {
+function Ring({
+  value,
+  max,
+  color,
+  size = 44,
+}: {
+  value: number;
+  max: number;
+  color: string;
+  size?: number;
+}) {
   const r = size / 2 - 5;
   const circ = 2 * Math.PI * r;
   const pct = Math.min(value / Math.max(max, 1), 1);
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={`${color}33`} strokeWidth="4" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="4"
-        strokeDasharray={`${circ * pct} ${circ}`} strokeLinecap="round" />
+    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={`${color}33`}
+        strokeWidth="4"
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth="4"
+        strokeDasharray={`${circ * pct} ${circ}`}
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -40,14 +65,27 @@ function Ring({ value, max, color, size = 44 }: { value: number; max: number; co
  * (Performance Index compact strip) per Hist5b's Performance fold.
  */
 export default function PeriodOverview({
-  runCount, runDistance, liftCount, liftVolume, avgCalories, nutritionAdherence, timeRange, rangeDays,
+  runCount,
+  runDistance,
+  liftCount,
+  liftVolume,
+  avgCalories,
+  nutritionAdherence,
+  timeRange,
+  rangeDays,
 }: PeriodOverviewProps) {
-  const rangeLabel = timeRange === "1W" ? "This Week"
-    : timeRange === "1M" ? "This Month"
-    : timeRange === "3M" ? "Last 3 Months"
-    : timeRange === "6M" ? "Last 6 Months"
-    : timeRange === "1Y" ? "This Year"
-    : "This Week";
+  const rangeLabel =
+    timeRange === "1W"
+      ? "This Week"
+      : timeRange === "1M"
+        ? "This Month"
+        : timeRange === "3M"
+          ? "Last 3 Months"
+          : timeRange === "6M"
+            ? "Last 6 Months"
+            : timeRange === "1Y"
+              ? "This Year"
+              : "This Week";
 
   // Targets prorated from a 5/week aspirational rate. Keeping the ring
   // hardcoded at max=5 meant any range longer than 1W maxed out the
@@ -59,32 +97,53 @@ export default function PeriodOverview({
 
   const stats = [
     {
-      icon: <Footprints className="w-4 h-4" style={{ color: THEME.running }} />,
-      label: 'Runs', value: runCount,
-      sub: runDistance > 0 ? `${runDistance.toFixed(1)} km` : '—',
-      color: THEME.running, ringVal: runCount, ringMax: runsTarget,
+      icon: <Footprints className="size-4" style={{ color: THEME.running }} />,
+      label: "Runs",
+      value: runCount,
+      sub: runDistance > 0 ? `${runDistance.toFixed(1)} km` : "—",
+      color: THEME.running,
+      ringVal: runCount,
+      ringMax: runsTarget,
     },
     {
-      icon: <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />,
-      label: 'Sessions', value: liftCount, sub: formatVolumeSub(liftVolume),
-      color: THEME.lifting, ringVal: liftCount, ringMax: sessionsTarget,
+      icon: <Dumbbell className="size-4" style={{ color: THEME.lifting }} />,
+      label: "Sessions",
+      value: liftCount,
+      sub: formatVolumeSub(liftVolume),
+      color: THEME.lifting,
+      ringVal: liftCount,
+      ringMax: sessionsTarget,
     },
     {
-      icon: <UtensilsCrossed className="w-4 h-4" style={{ color: THEME.semantic.nutrition }} />,
-      label: 'Adherence', value: `${nutritionAdherence}%`,
-      sub: avgCalories > 0 ? `${avgCalories.toLocaleString()} kcal/day` : '—',
-      color: THEME.semantic.nutrition, ringVal: nutritionAdherence, ringMax: 100,
+      icon: (
+        <UtensilsCrossed
+          className="size-4"
+          style={{ color: THEME.semantic.nutrition }}
+        />
+      ),
+      label: "Adherence",
+      value: `${nutritionAdherence}%`,
+      sub: avgCalories > 0 ? `${avgCalories.toLocaleString()} kcal/day` : "—",
+      color: THEME.semantic.nutrition,
+      ringVal: nutritionAdherence,
+      ringMax: 100,
     },
   ];
 
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">{rangeLabel}</p>
+      <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">
+        {rangeLabel}
+      </p>
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => {
           const isEmpty = s.ringVal === 0;
           return (
-            <div key={s.label} className="flex flex-col items-center gap-2" style={isEmpty ? { opacity: 0.4 } : undefined}>
+            <div
+              key={s.label}
+              className="flex flex-col items-center gap-2"
+              style={isEmpty ? { opacity: 0.4 } : undefined}
+            >
               <div className="relative">
                 <Ring value={s.ringVal} max={s.ringMax} color={s.color} />
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -92,7 +151,9 @@ export default function PeriodOverview({
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold font-mono tabular-nums text-foreground leading-none">{s.value}</p>
+                <p className="text-xl font-bold font-mono tabular-nums text-foreground leading-none">
+                  {s.value}
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
               </div>
             </div>

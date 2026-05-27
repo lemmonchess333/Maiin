@@ -58,7 +58,7 @@ function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   return (
     <svg
       viewBox="0 0 200 80"
-      className="w-full h-full"
+      className="size-full"
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="Run route map"
@@ -282,7 +282,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           )}
           {(activity.elevationGain || 0) > 0 && (
             <div className="flex items-start gap-1">
-              <Mountain className="w-4 h-4 text-muted-foreground mt-1" />
+              <Mountain className="size-4 text-muted-foreground mt-1" />
               <div>
                 <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                   {activity.elevationGain}m
@@ -443,7 +443,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           {(prCount ?? 0) > 0 && (
             <div>
               <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                <Star className="size-4 text-yellow-500 fill-yellow-500" />
                 <p className="text-lg font-bold font-mono tabular-nums leading-none text-yellow-500">
                   {prCount}
                 </p>
@@ -571,12 +571,12 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                   <div className="flex items-center gap-1 text-muted-foreground">
                     {isRun ? (
                       <Footprints
-                        className="w-3.5 h-3.5"
+                        className="size-3.5"
                         style={{ color: THEME.running }}
                       />
                     ) : (
                       <Dumbbell
-                        className="w-3.5 h-3.5"
+                        className="size-3.5"
                         style={{ color: THEME.lifting }}
                       />
                     )}
@@ -648,7 +648,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 )}
                 {(activity.elevationGain || 0) > 0 && (
                   <div className="flex items-start gap-1">
-                    <Mountain className="w-4 h-4 text-muted-foreground mt-1" />
+                    <Mountain className="size-4 text-muted-foreground mt-1" />
                     <div>
                       <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                         {activity.elevationGain}m
@@ -684,7 +684,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               border: "1px solid rgba(255, 215, 0, 0.2)",
             }}
           >
-            <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
+            <Trophy className="size-4 text-yellow-500 shrink-0" />
             <p className="text-xs font-medium text-yellow-500">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
@@ -705,7 +705,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             }}
           >
             <Target
-              className="w-4 h-4 shrink-0"
+              className="size-4 shrink-0"
               style={{ color: THEME.brand }}
             />
             <p className="text-xs font-medium" style={{ color: THEME.brand }}>
@@ -720,6 +720,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         <div className="flex items-center gap-5 pt-2.5 border-t border-border/20">
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={handleHighFive}
               disabled={liked}
               aria-label={liked ? "Props given" : "Give props"}
@@ -736,7 +737,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               }}
             >
               <Flame
-                className={`w-5 h-5 ${liked ? "fill-current" : ""}`}
+                className={`size-5 ${liked ? "fill-current" : ""}`}
                 style={{
                   color: liked ? "#F59E0B" : "var(--color-muted-foreground)",
                   opacity: liked ? 1 : 0.5,
@@ -745,6 +746,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             </button>
             {kudosCount > 0 && (
               <button
+                type="button"
                 onClick={handleShowKudosList}
                 aria-label={`${kudosCount} props — show list`}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -754,11 +756,12 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             )}
           </div>
           <button
+            type="button"
             onClick={() => setShowCommentSheet(true)}
             aria-label="View comments"
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="size-5" />
             {(activity?.commentCount ?? 0) > 0 && (
               <span className="text-xs font-medium">
                 {activity!.commentCount}
@@ -767,20 +770,22 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           </button>
           {canSaveRoutine && (
             <button
+              type="button"
               onClick={() => setShowSaveRoutine(true)}
               aria-label="Save as routine"
               className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
-              <BookmarkPlus className="w-5 h-5" />
+              <BookmarkPlus className="size-5" />
             </button>
           )}
           {onShare && (
             <button
+              type="button"
               onClick={() => onShare(feedItem)}
               aria-label="Share activity"
               className="ml-auto p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="size-5" />
             </button>
           )}
         </div>
@@ -908,12 +913,13 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     return (
       <div className="relative">
         <button
+          type="button"
           onClick={() => setShowMenu(!showMenu)}
           aria-label="More options"
           aria-expanded={showMenu}
           className="p-2.5 rounded-lg hover:bg-muted transition-colors"
         >
-          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+          <MoreHorizontal className="size-4 text-muted-foreground" />
         </button>
         {showMenu && (
           <>
@@ -935,6 +941,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               }}
             >
               <button
+                type="button"
                 role="menuitem"
                 onClick={() => {
                   setShowMenu(false);
@@ -942,10 +949,11 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors"
               >
-                <Flag className="w-4 h-4 text-muted-foreground" />
+                <Flag className="size-4 text-muted-foreground" />
                 Report activity
               </button>
               <button
+                type="button"
                 role="menuitem"
                 onClick={() => {
                   setShowMenu(false);
@@ -953,7 +961,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted transition-colors"
               >
-                <Ban className="w-4 h-4" />
+                <Ban className="size-4" />
                 Block user
               </button>
             </div>

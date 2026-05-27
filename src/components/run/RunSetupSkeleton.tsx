@@ -21,12 +21,12 @@ export default function RunSetupSkeleton() {
         {/* Context-strip placeholder — purple-tinted like the real strip */}
         <div
           className="h-7 rounded-xl animate-pulse"
-          style={{ background: 'rgba(123,114,233,0.10)' }}
+          style={{ background: "rgba(123,114,233,0.10)" }}
           aria-hidden="true"
         />
         {/* Selected-run card placeholder — matches the real card shape */}
         <div className="w-full rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-muted/60 animate-pulse shrink-0" />
+          <div className="size-11 rounded-xl bg-muted/60 animate-pulse shrink-0" />
           <div className="flex-1 space-y-2">
             <div className="h-4 w-32 rounded-md bg-muted/60 animate-pulse" />
             <div className="h-3 w-48 rounded-md bg-muted/40 animate-pulse" />

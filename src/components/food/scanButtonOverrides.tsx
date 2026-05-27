@@ -12,7 +12,7 @@ export function useScanButtonOverrides(
   remaining: number,
   isUnlimited: boolean,
   onUpgrade: () => void,
-  onScan: () => void,
+  onScan: () => void
 ): { style: React.CSSProperties; onClick: () => void; icon: React.ReactNode } {
   if (isUnlimited || remaining > 0) {
     return {
@@ -26,6 +26,8 @@ export function useScanButtonOverrides(
   return {
     style: { background: "#D1D5DB" },
     onClick: onUpgrade,
-    icon: <Lock className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 text-muted-foreground" />,
+    icon: (
+      <Lock className="size-3.5 absolute -bottom-0.5 -right-0.5 text-muted-foreground" />
+    ),
   };
 }

@@ -29,7 +29,11 @@ function formatResetDate(date: Date): string {
  * Paid / unlimited users: parent gates rendering so this component
  * never sees them — no nullish render needed here.
  */
-export default function ScanQuotaIndicator({ remaining, resetDate, onUpgrade }: ScanQuotaIndicatorProps) {
+export default function ScanQuotaIndicator({
+  remaining,
+  resetDate,
+  onUpgrade,
+}: ScanQuotaIndicatorProps) {
   // 0 remaining — preserved from earlier behaviour. Muted upgrade
   // CTA + reset date so the user knows when scans return.
   if (remaining === 0) {
@@ -37,6 +41,7 @@ export default function ScanQuotaIndicator({ remaining, resetDate, onUpgrade }: 
     return (
       <div className="flex justify-center">
         <button
+          type="button"
           onClick={onUpgrade}
           className="text-xs text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
@@ -49,13 +54,10 @@ export default function ScanQuotaIndicator({ remaining, resetDate, onUpgrade }: 
   // > 0 remaining — quiet footnote. No upgrade tap; users with
   // scans left can upgrade via Settings if they want preemptive
   // unlimited. The footnote is purely informational.
-  const label = remaining === 1
-    ? "1 scan left this month"
-    : `${remaining} scans left this month`;
+  const label =
+    remaining === 1
+      ? "1 scan left this month"
+      : `${remaining} scans left this month`;
 
-  return (
-    <p className="text-center text-xs text-muted-foreground">
-      {label}
-    </p>
-  );
+  return <p className="text-center text-xs text-muted-foreground">{label}</p>;
 }

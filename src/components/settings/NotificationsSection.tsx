@@ -40,7 +40,8 @@ export default function NotificationsSection({
   // Permission state for the inline denied-banner. Re-poll on every toggle
   // action below so if the user opts in, hits the OS prompt, and denies,
   // the banner appears without them needing to close/reopen Settings.
-  const [permission, setPermission] = useState<NotificationPermissionState>("default");
+  const [permission, setPermission] =
+    useState<NotificationPermissionState>("default");
   useEffect(() => {
     let alive = true;
     getNotificationPermissionState().then((state) => {
@@ -112,9 +113,14 @@ export default function NotificationsSection({
    * the schedule code currently uses small integers — we approximate
    * by scanning the title.
    */
-  const nextForCategory = (kind: TestNotificationKind): PendingNotification | null => {
+  const nextForCategory = (
+    kind: TestNotificationKind
+  ): PendingNotification | null => {
     if (kind === "generic") return null;
-    const titleNeedles: Record<Exclude<TestNotificationKind, "generic">, string[]> = {
+    const titleNeedles: Record<
+      Exclude<TestNotificationKind, "generic">,
+      string[]
+    > = {
       meal: ["meal", "breakfast", "lunch", "dinner", "eat"],
       workout: ["workout", "training", "lift", "session"],
       streak: ["streak", "log"],
@@ -137,7 +143,12 @@ export default function NotificationsSection({
     mealReminders.enabled || workoutReminders.enabled || streakReminder.enabled;
 
   return (
-    <AccordionSection inline={inline} icon={<Bell className="w-5 h-5 text-primary" />} title="Notifications" subtitle="Meal, workout & streak reminders">
+    <AccordionSection
+      inline={inline}
+      icon={<Bell className="size-5 text-primary" />}
+      title="Notifications"
+      subtitle="Meal, workout & streak reminders"
+    >
       {/* Permission-denied banner — only shown when the user has at least one
           reminder turned on AND the OS is blocking delivery. Silent failure
           is confusing: the toggle says "on" but nothing fires. Surfacing the
@@ -147,12 +158,12 @@ export default function NotificationsSection({
           role="alert"
           className="flex items-start gap-3 p-3 rounded-lg border border-amber-400/50 bg-amber-50 text-amber-900"
         >
-          <AlertTriangle className="w-4 h-4 mt-[2px] shrink-0" />
+          <AlertTriangle className="size-4 mt-[2px] shrink-0" />
           <div className="space-y-1">
             <p className="text-sm font-medium">Notifications are blocked</p>
             <p className="text-xs leading-snug opacity-80">
-              Reminders won&apos;t fire until you enable notifications for Tropos
-              in your device settings.
+              Reminders won&apos;t fire until you enable notifications for
+              Tropos in your device settings.
             </p>
           </div>
         </div>
@@ -165,14 +176,20 @@ export default function NotificationsSection({
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Enable meal reminders</p>
-            <p className="text-xs text-muted-foreground">Get notified when it&apos;s time to eat</p>
+            <p className="text-xs text-muted-foreground">
+              Get notified when it&apos;s time to eat
+            </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !mealReminders.enabled;
-              trackSettingsEvent("settings_toggle_changed", { toggle: "meal_reminders", value: next });
-              if (next && permission === 'default') {
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "meal_reminders",
+                value: next,
+              });
+              if (next && permission === "default") {
                 /* Route via lib/notifications.requestNotificationPermission
                    so iOS Capacitor triggers a native LocalNotifications
                    prompt rather than the WebView Notification API
@@ -184,9 +201,19 @@ export default function NotificationsSection({
             }}
             role="switch"
             aria-checked={mealReminders.enabled}
-            className={cn("w-10 h-6 rounded-full transition-colors relative", mealReminders.enabled ? "bg-primary" : "bg-muted border border-border")}
+            className={cn(
+              "w-10 h-6 rounded-full transition-colors relative",
+              mealReminders.enabled
+                ? "bg-primary"
+                : "bg-muted border border-border"
+            )}
           >
-            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", mealReminders.enabled ? "translate-x-5" : "translate-x-1")} />
+            <div
+              className={cn(
+                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                mealReminders.enabled ? "translate-x-5" : "translate-x-1"
+              )}
+            />
           </button>
         </div>
 
@@ -201,20 +228,50 @@ export default function NotificationsSection({
               onTest={() => handleTestNotification("meal")}
             />
             {(["breakfast", "lunch", "dinner"] as const).map((meal) => (
-              <div key={meal} className="flex items-center justify-between p-4 rounded-lg bg-muted">
+              <div
+                key={meal}
+                className="flex items-center justify-between p-4 rounded-lg bg-muted"
+              >
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => { haptic("light"); updateMealReminders({ [meal]: { ...mealReminders[meal], enabled: !mealReminders[meal].enabled } }); }}
-                    className={cn("w-8 h-5 rounded-full transition-colors relative", mealReminders[meal].enabled ? "bg-primary" : "bg-muted border border-border")}
+                    type="button"
+                    onClick={() => {
+                      haptic("light");
+                      updateMealReminders({
+                        [meal]: {
+                          ...mealReminders[meal],
+                          enabled: !mealReminders[meal].enabled,
+                        },
+                      });
+                    }}
+                    className={cn(
+                      "w-8 h-5 rounded-full transition-colors relative",
+                      mealReminders[meal].enabled
+                        ? "bg-primary"
+                        : "bg-muted border border-border"
+                    )}
                   >
-                    <div className={cn("w-3.5 h-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm", mealReminders[meal].enabled ? "translate-x-[14px]" : "translate-x-[3px]")} />
+                    <div
+                      className={cn(
+                        "size-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm",
+                        mealReminders[meal].enabled
+                          ? "translate-x-[14px]"
+                          : "translate-x-[3px]"
+                      )}
+                    />
                   </button>
-                  <span className="text-sm text-foreground capitalize">{meal}</span>
+                  <span className="text-sm text-foreground capitalize">
+                    {meal}
+                  </span>
                 </div>
                 <input
                   type="time"
                   value={mealReminders[meal].time}
-                  onChange={(e) => updateMealReminders({ [meal]: { ...mealReminders[meal], time: e.target.value } })}
+                  onChange={(e) =>
+                    updateMealReminders({
+                      [meal]: { ...mealReminders[meal], time: e.target.value },
+                    })
+                  }
                   className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
                   disabled={!mealReminders[meal].enabled}
                 />
@@ -231,14 +288,20 @@ export default function NotificationsSection({
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Enable workout reminders</p>
-            <p className="text-xs text-muted-foreground">Get notified when it&apos;s time to train</p>
+            <p className="text-xs text-muted-foreground">
+              Get notified when it&apos;s time to train
+            </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !workoutReminders.enabled;
-              trackSettingsEvent("settings_toggle_changed", { toggle: "workout_reminders", value: next });
-              if (next && permission === 'default') {
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "workout_reminders",
+                value: next,
+              });
+              if (next && permission === "default") {
                 /* Route via lib/notifications.requestNotificationPermission
                    so iOS Capacitor triggers a native LocalNotifications
                    prompt rather than the WebView Notification API
@@ -250,9 +313,19 @@ export default function NotificationsSection({
             }}
             role="switch"
             aria-checked={workoutReminders.enabled}
-            className={cn("w-10 h-6 rounded-full transition-colors relative", workoutReminders.enabled ? "bg-primary" : "bg-muted border border-border")}
+            className={cn(
+              "w-10 h-6 rounded-full transition-colors relative",
+              workoutReminders.enabled
+                ? "bg-primary"
+                : "bg-muted border border-border"
+            )}
           >
-            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", workoutReminders.enabled ? "translate-x-5" : "translate-x-1")} />
+            <div
+              className={cn(
+                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                workoutReminders.enabled ? "translate-x-5" : "translate-x-1"
+              )}
+            />
           </button>
         </div>
 
@@ -295,11 +368,15 @@ export default function NotificationsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !streakReminder.enabled;
-              trackSettingsEvent("settings_toggle_changed", { toggle: "streak_reminder", value: next });
-              if (next && permission === 'default') {
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "streak_reminder",
+                value: next,
+              });
+              if (next && permission === "default") {
                 /* Route via lib/notifications.requestNotificationPermission
                    so iOS Capacitor triggers a native LocalNotifications
                    prompt rather than the WebView Notification API
@@ -314,9 +391,19 @@ export default function NotificationsSection({
             }}
             role="switch"
             aria-checked={streakReminder.enabled}
-            className={cn("w-10 h-6 rounded-full transition-colors relative shrink-0", streakReminder.enabled ? "bg-primary" : "bg-muted border border-border")}
+            className={cn(
+              "w-10 h-6 rounded-full transition-colors relative shrink-0",
+              streakReminder.enabled
+                ? "bg-primary"
+                : "bg-muted border border-border"
+            )}
           >
-            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", streakReminder.enabled ? "translate-x-5" : "translate-x-1")} />
+            <div
+              className={cn(
+                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                streakReminder.enabled ? "translate-x-5" : "translate-x-1"
+              )}
+            />
           </button>
         </div>
 
@@ -377,14 +464,15 @@ function ReminderDiagnostics({
       <div className="text-xs text-muted-foreground">
         {relative ? (
           <>
-            Next: <span className="font-medium text-foreground">{relative}</span>
+            Next:{" "}
+            <span className="font-medium text-foreground">{relative}</span>
           </>
         ) : (
           // Empty pending list on web is the default state — explain
           // why so users don't think the reminder is broken.
           <span>
-            Web reminders fire while the app is open. Install Tropos for
-            durable native delivery.
+            Web reminders fire while the app is open. Install Tropos for durable
+            native delivery.
           </span>
         )}
       </div>
