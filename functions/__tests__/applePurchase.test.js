@@ -40,8 +40,12 @@ const UID = "user-abc";
  * captures everything written via `txn.set` so the test can assert
  * the payload shape.
  */
-function makeFirestoreStub({ existing = {}, exists = true } = {}) {
-  const writes = [];
+function makeFirestoreStub({
+  existing = {},
+  exists = true,
+  lookupExisting = null,
+} = {}) {
+  const allWrites = [];
   const txnGetCalls = [];
   const userRefMarker = { __isUserRef: true };
 
@@ -50,6 +54,8 @@ function makeFirestoreStub({ existing = {}, exists = true } = {}) {
       return {
         doc: (id) => {
           if (name === "users" && id === UID) return userRefMarker;
+          if (name === "appleSubscriptions")
+            return { __isLookupRef: true, __id: id };
           return { __collection: name, __id: id };
         },
       };
@@ -58,10 +64,16 @@ function makeFirestoreStub({ existing = {}, exists = true } = {}) {
       const txn = {
         get: async (ref) => {
           txnGetCalls.push(ref);
+          if (ref && ref.__isLookupRef) {
+            return {
+              exists: lookupExisting !== null,
+              data: () => (lookupExisting ? { ...lookupExisting } : {}),
+            };
+          }
           return { exists, data: () => ({ ...existing }) };
         },
         set: (ref, data, options) => {
-          writes.push({ ref, data, options });
+          allWrites.push({ ref, data, options });
           return txn;
         },
       };
@@ -69,7 +81,18 @@ function makeFirestoreStub({ existing = {}, exists = true } = {}) {
     },
   };
 
-  return { firestore, writes, txnGetCalls, userRefMarker };
+  // `writes` filtered to user-doc writes only (the tests assert
+  // against subscription state on the user doc; the lookup-doc
+  // claim is asserted separately where relevant).
+  const writes = new Proxy([], {
+    get(_, prop) {
+      const userWrites = allWrites.filter((w) => w.ref === userRefMarker);
+      if (prop === "length") return userWrites.length;
+      return userWrites[prop];
+    },
+  });
+
+  return { firestore, writes, allWrites, txnGetCalls, userRefMarker };
 }
 
 /**
@@ -606,5 +629,87 @@ describe("applySubscriptionToUser — Sub1 P2.5 Stripe auto-cancel", () => {
 
     expect(result.crossPlatformConflict).toBe(true);
     expect(result.tier).toBe("pro");
+  });
+});
+
+describe("applySubscriptionToUser — uniqueness guard", () => {
+  // The denormalised `appleSubscriptions/{originalTransactionId}`
+  // lookup binds one transaction id to one uid. Restore /
+  // verify flows that re-use a foreign transaction id are
+  // rejected before any user-doc write happens.
+
+  it("rejects when the transaction id is already bound to a different uid", async () => {
+    const { firestore, writes, allWrites } = makeFirestoreStub({
+      existing: {},
+      lookupExisting: { uid: "other-victim-uid", productId: "x" },
+    });
+    const verifyTransaction = async () =>
+      makeValidTx({ originalTransactionId: "1000000000000099" });
+
+    await expect(
+      applySubscriptionToUser({
+        firestore,
+        verifyTransaction,
+        signedTransactionInfo: "x",
+        uid: UID,
+      })
+    ).rejects.toThrow(/different account/);
+
+    // No user-doc write and no lookup-doc write — both blocked by
+    // the in-txn ownership check.
+    expect(writes).toHaveLength(0);
+    expect(allWrites).toHaveLength(0);
+  });
+
+  it("accepts when the transaction id is already bound to the SAME uid (legit renewal)", async () => {
+    // The "Apple renewal lands as a new ASSN V2 notification for
+    // the same transaction id" case — the lookup already exists
+    // bound to this user; the transaction must proceed and refresh
+    // expiresAt.
+    const { firestore, writes, allWrites } = makeFirestoreStub({
+      existing: {},
+      lookupExisting: { uid: UID, productId: "x" },
+    });
+    const futureExpires = new Date();
+    futureExpires.setMonth(futureExpires.getMonth() + 1);
+    const verifyTransaction = async () =>
+      makeValidTx({
+        expiresDate: futureExpires.getTime(),
+        originalTransactionId: "1000000000000099",
+      });
+
+    const result = await applySubscriptionToUser({
+      firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+    });
+
+    expect(result.tier).toBe("pro");
+    // One user-doc write + one lookup-doc refresh.
+    expect(writes).toHaveLength(1);
+    expect(allWrites).toHaveLength(2);
+  });
+
+  it("claims the lookup doc on a brand-new transaction id", async () => {
+    const { firestore, allWrites } = makeFirestoreStub({
+      existing: {},
+      // lookupExisting: null → first-time claim path
+    });
+    const verifyTransaction = async () =>
+      makeValidTx({ originalTransactionId: "1000000000000099" });
+
+    await applySubscriptionToUser({
+      firestore,
+      verifyTransaction,
+      signedTransactionInfo: "x",
+      uid: UID,
+    });
+
+    // Lookup doc write should include uid + originalTransactionId
+    // binding so the next call under a different uid can detect it.
+    const lookupWrite = allWrites.find((w) => w.ref && w.ref.__isLookupRef);
+    expect(lookupWrite).toBeDefined();
+    expect(lookupWrite.data.uid).toBe(UID);
   });
 });
