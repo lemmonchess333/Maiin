@@ -464,6 +464,67 @@ Needs a 24h + 1-week observation cycle in production to see each trigger fire at
 - [ ] `weeklyFellBehindCheck` (Pub/Sub, Mondays 05:00 UTC) — confirm first natural firing (next Monday after deploy). Logs should read `evaluating week YYYY-MM-DD (Sun..Sat)` → `done — set=X, clear=Y`. Spot-check a user who ran <50% of their weekly target the prior week — their `programState.pendingFellBehindPrompt` should be present.
 - [ ] L4 client UI — once any user has `pendingFellBehindPrompt` set, log in as them, confirm the `FellBehindSheet` auto-opens on Home with the correct copy ("X of N runs (Y%)") and that all three buttons (shift / compress / skip) write the expected programState change.
 
+### PR-L bugfix verification (PR #815)
+
+Affects: `functions/index.js`, `src/pages/RunSummary.tsx`. Eight verified bugs in the PR-L arc fixed; the production-impact ones below need post-deploy spot-checks because the bugs were silently-broken-not-loud.
+
+- [ ] Real race-templated saved run on race date has the new top-level `date: "YYYY-MM-DD"` field — confirm via Firestore console
+- [ ] `dailyRaceReconciliationSweep` logs no longer report false `race_no_show` for users who completed their race
+- [ ] `weeklyFellBehindCheck` Monday log line shows realistic `set=N` count (pre-fix it would have been every-active-user every Monday because the runs query returned 0 docs)
+- [ ] Recovery-entry path writes `phase: 'recovery'` on the first race-templated save after race date — check `programState/current` doc for the affected user
+- [ ] L3 clear writes `phase: null` and `recoveryEndDate: null` (not omitted) — the user actually exits recovery
+- [ ] On a BST day, `weeklyPerformanceRollup` and `dailyPerformanceRefresh` log timestamps confirm the timezone fix landed (23:15 UTC and 02:10 UTC respectively — was 22:15 / 01:10 pre-fix due to Europe/London)
+- [ ] On a real workout save, `onWorkoutCreated` logs include challenge-progress increments (pre-fix this silently TypeErrored on `participantSnap.exists()` and was swallowed)
+
+### Public profile uid binding (PR #818)
+
+Affects: `firestore.rules` lines ~200-215.
+
+- [ ] From the client SDK, attempt `setDoc(doc(db, 'users/<me>/public/profile'), { uid: '<other-uid>', displayName: 'Victim' }, { merge: true })` — must be rejected with `permission-denied`. Same write WITHOUT the `uid` field (or with `uid: '<me>'`) should still succeed.
+
+### Subscription expiresAt client-side guard (PR #818)
+
+Affects: `src/lib/subscription.ts`.
+
+- [ ] Manually set `subscriptionTier: "pro"` + `subscriptionExpiresAt: <past ISO>` on a test user's doc. Open the app — `useSubscription().isPro` should return `false`. Tests pin this but want a real client roundtrip too because `Date.parse` of the stored string is locale-sensitive.
+
+### Offline + share queue uid scoping (PR #820)
+
+Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
+
+- [ ] Two-account device test. Sign in as A, go offline, log a workout. Sign out, sign in as B (same device). Confirm A's queued workout does NOT appear under B's account, and that `localStorage['tropos_offline_queue']` still contains the entry tagged `uid: <A>`. Sign back in as A, return online — confirm the queue flushes under A's auth.
+- [ ] Same flow for the share composer queue (`tropos.share.queue`) — queue an offline share as A, switch to B, confirm no posts appear in B's feed; return to A, confirm A's post finally lands.
+- [ ] Confirm legacy pre-deploy items are dropped on first read (the migration is a one-time filter in `getQueue`). Users who upgraded with pending queued writes will lose those — intended, but worth a release-note line.
+
+### Apple subscription uniqueness binding (PR #822)
+
+Affects: `functions/applePurchase.js`, new `appleSubscriptions/{originalTransactionId}` collection.
+
+- [ ] First real iOS purchase post-deploy — confirm a new `appleSubscriptions/<originalTransactionId>` doc is created with `uid` matching the purchaser, plus `productId` and `expiresAt`.
+- [ ] Restore-purchase flow on the same Apple ID under the same Tropos account — confirm the lookup doc updates in-place (timestamp changes, uid stays).
+- [ ] Negative test: attempt to call `restoreApplePurchases` from a second test account using the first user's `originalTransactionId` (intercept via debug). Expect the function to throw `"different account"` and no user-doc write to land.
+
+### Stripe webhook transactional dedup (PR #822)
+
+Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}` doc shape.
+
+- [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
+- [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
+
+### App Check enforcement rollout — operator-in-loop
+
+Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.
+
+Client-side App Check is already initialised via `src/lib/appCheck.ts` (reCAPTCHA v3 on web, no-op on native until the Capacitor plugin lands). Server-side enforcement is OFF. Flipping enforcement without first verifying token flow would lock out web users whose reCAPTCHA fetch fails and break all native traffic.
+
+Rollout sequence (operator, not agent):
+
+- [ ] Verify `VITE_RECAPTCHA_V3_SITE_KEY` is set in the Vite prod env AND the matching site key is registered in **Firebase Console → App Check → Apps**. Without this the web client never initialises App Check and the APIs tab shows 0% verified.
+- [ ] Wait 24–48h post-deploy for telemetry to populate.
+- [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
+- [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
+- [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints (e.g. `askGeminiText`). Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+
 ## Agent skills
 
 ### Issue tracker
