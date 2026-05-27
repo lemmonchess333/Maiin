@@ -29,6 +29,7 @@ import {
 import { paceMinSec } from "@/lib/runLabels";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
+import SessionStructureView from "./SessionStructureView";
 import type { GuidedRunWorkout } from "@/lib/guidedRun";
 import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
@@ -359,6 +360,7 @@ export default function RunSetupModal({
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showChooser, setShowChooser] = useState(false);
+  const [showCustomise, setShowCustomise] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [selectedGuided, setSelectedGuided] = useState<GuidedRunWorkout | null>(
@@ -626,90 +628,121 @@ export default function RunSetupModal({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
+              className="overflow-hidden space-y-2"
             >
-              <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
-                <h3 className="text-sm font-semibold">Interval Setup</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    {
-                      label: "Repeats",
-                      field: "reps" as const,
-                      value: intervalConfig.reps,
-                      min: 1,
-                      max: 20,
-                      step: 1,
-                    },
-                    {
-                      label: "Work (m)",
-                      field: "workDistance" as const,
-                      value: intervalConfig.workDistance ?? 1000,
-                      min: 100,
-                      max: 5000,
-                      step: 100,
-                    },
-                    {
-                      label: "Rest (s)",
-                      field: "restDuration" as const,
-                      value: intervalConfig.restDuration,
-                      min: 10,
-                      max: 300,
-                      step: 10,
-                    },
-                  ].map((f) => (
-                    <div key={f.field}>
-                      <label
-                        htmlFor={`interval-${f.field}`}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {f.label}
-                      </label>
-                      <input
-                        id={`interval-${f.field}`}
-                        type="number"
-                        min={f.min}
-                        max={f.max}
-                        step={f.step}
-                        value={f.value}
-                        onChange={(e) =>
-                          updateConfig({
-                            intervals: {
-                              ...intervalConfig,
-                              [f.field]: Number(e.target.value),
-                            },
-                          })
-                        }
-                        className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
-                      />
+              <SessionStructureView
+                kind="intervals"
+                intervals={intervalConfig}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCustomise((v) => !v)}
+                aria-expanded={showCustomise}
+                aria-controls="interval-customise-panel"
+                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-medium active:scale-[0.98] transition-transform"
+              >
+                <span>Customise</span>
+                {showCustomise ? (
+                  <ChevronUp size={16} className="text-muted-foreground" />
+                ) : (
+                  <ChevronDown size={16} className="text-muted-foreground" />
+                )}
+              </button>
+              <AnimatePresence>
+                {showCustomise && (
+                  <motion.div
+                    id="interval-customise-panel"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-4 rounded-xl border border-border space-y-3 bg-card">
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          {
+                            label: "Repeats",
+                            field: "reps" as const,
+                            value: intervalConfig.reps,
+                            min: 1,
+                            max: 20,
+                            step: 1,
+                          },
+                          {
+                            label: "Work (m)",
+                            field: "workDistance" as const,
+                            value: intervalConfig.workDistance ?? 1000,
+                            min: 100,
+                            max: 5000,
+                            step: 100,
+                          },
+                          {
+                            label: "Rest (s)",
+                            field: "restDuration" as const,
+                            value: intervalConfig.restDuration,
+                            min: 10,
+                            max: 300,
+                            step: 10,
+                          },
+                        ].map((f) => (
+                          <div key={f.field}>
+                            <label
+                              htmlFor={`interval-${f.field}`}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {f.label}
+                            </label>
+                            <input
+                              id={`interval-${f.field}`}
+                              type="number"
+                              min={f.min}
+                              max={f.max}
+                              step={f.step}
+                              value={f.value}
+                              onChange={(e) =>
+                                updateConfig({
+                                  intervals: {
+                                    ...intervalConfig,
+                                    [f.field]: Number(e.target.value),
+                                  },
+                                })
+                              }
+                              className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            />
+                          </div>
+                        ))}
+                        <div>
+                          <label
+                            htmlFor="interval-target-pace"
+                            className="text-xs text-muted-foreground"
+                          >
+                            Target pace (/km)
+                          </label>
+                          <input
+                            id="interval-target-pace"
+                            type="text"
+                            placeholder="4:30"
+                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            onChange={(e) => {
+                              const [m, s] = e.target.value
+                                .split(":")
+                                .map(Number);
+                              if (Number.isFinite(m) && Number.isFinite(s)) {
+                                updateConfig({
+                                  intervals: {
+                                    ...intervalConfig,
+                                    workPace: m * 60 + s,
+                                  },
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                  <div>
-                    <label
-                      htmlFor="interval-target-pace"
-                      className="text-xs text-muted-foreground"
-                    >
-                      Target pace (/km)
-                    </label>
-                    <input
-                      id="interval-target-pace"
-                      type="text"
-                      placeholder="4:30"
-                      className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
-                      onChange={(e) => {
-                        const [m, s] = e.target.value.split(":").map(Number);
-                        if (Number.isFinite(m) && Number.isFinite(s)) {
-                          updateConfig({
-                            intervals: {
-                              ...intervalConfig,
-                              workPace: m * 60 + s,
-                            },
-                          });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -721,7 +754,7 @@ export default function RunSetupModal({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
+              className="overflow-hidden space-y-2"
             >
               <GuidedRunPicker
                 selected={selectedGuided}
@@ -730,6 +763,9 @@ export default function RunSetupModal({
                   updateConfig({ guidedWorkout: w });
                 }}
               />
+              {selectedGuided && (
+                <SessionStructureView kind="guided" workout={selectedGuided} />
+              )}
             </motion.div>
           )}
         </AnimatePresence>
