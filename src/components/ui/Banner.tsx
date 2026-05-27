@@ -117,7 +117,7 @@ export function Banner({
         // element on white. Matches existing banner pattern in
         // ProgrammeRunSection (THEME.running}30 etc).
         "border",
-        className,
+        className
       )}
       style={{ background: style.background, borderColor: `${style.accent}30` }}
     >
@@ -126,7 +126,7 @@ export function Banner({
         className="flex-shrink-0 mt-0.5"
         style={{ color: style.accent }}
       >
-        {icon ?? <IconComponent className="w-4 h-4" />}
+        {icon ?? <IconComponent className="size-4" />}
       </span>
       <div className="flex-1 min-w-0 space-y-0.5">
         <p className="font-semibold text-foreground">{title}</p>
@@ -144,7 +144,7 @@ export function Banner({
           // action so we sit just below the 44px floor deliberately.
           className="flex-shrink-0 -m-1 p-1 rounded-md text-muted-foreground hover:text-foreground active:scale-95"
         >
-          <X className="w-4 h-4" />
+          <X className="size-4" />
         </button>
       ) : null}
     </div>

@@ -526,7 +526,7 @@ export default function ProgrammeRunSection({
       <header className="flex items-center gap-1.5">
         <Footprints
           aria-hidden="true"
-          className="w-3.5 h-3.5"
+          className="size-3.5"
           style={{ color: THEME.running }}
         />
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -608,13 +608,10 @@ export default function ProgrammeRunSection({
             }}
           >
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+              className="size-10 rounded-lg flex items-center justify-center shrink-0"
               style={{ backgroundColor: `${THEME.running}1A` }}
             >
-              <Footprints
-                className="w-5 h-5"
-                style={{ color: THEME.running }}
-              />
+              <Footprints className="size-5" style={{ color: THEME.running }} />
             </div>
             <div className="flex-1 min-w-0">
               <p
@@ -637,7 +634,7 @@ export default function ProgrammeRunSection({
                 color: "white",
               }}
             >
-              <Play className="w-3 h-3" fill="white" />
+              <Play className="size-3" fill="white" />
               Go
             </div>
           </button>
@@ -797,7 +794,7 @@ export default function ProgrammeRunSection({
               aria-label="Edit race goal"
             >
               Edit
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="size-3.5" />
             </button>
           </div>
           {programState?.runPlan?.totalWeeks &&
@@ -846,7 +843,7 @@ export default function ProgrammeRunSection({
           Tapping the card body navigates to /run (Start). Tapping
           `...` opens DayActionSheet for that runDay's date for
           mark-complete / skip / template-swap. Restructured from
-          single <button> to <div role="button"> so the overflow
+          single <button type="button"> to <div role="button"> so the overflow
           button can live as a child without nested-button HTML. */}
       {currentMode !== "freeform" && nextStartable && nextStartUrl && (
         <div
@@ -871,10 +868,10 @@ export default function ProgrammeRunSection({
           }}
         >
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            className="size-9 rounded-lg flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${THEME.running}1A` }}
           >
-            <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+            <Footprints className="size-4" style={{ color: THEME.running }} />
           </div>
           <div className="flex-1 min-w-0">
             <p
@@ -900,7 +897,7 @@ export default function ProgrammeRunSection({
             }}
             aria-hidden="true"
           >
-            <Play className="w-3 h-3" fill="white" />
+            <Play className="size-3" fill="white" />
             Start
           </div>
           {/* Run8 PR1c — overflow visible only on the four hero
@@ -918,9 +915,9 @@ export default function ProgrammeRunSection({
                 setManageDate(nextStartable.date ?? null);
               }}
               aria-label="More options for this run"
-              className="shrink-0 w-9 h-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
+              className="shrink-0 size-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
             >
-              <MoreVertical className="w-5 h-5" aria-hidden="true" />
+              <MoreVertical className="size-5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -935,7 +932,7 @@ export default function ProgrammeRunSection({
             color: THEME.success,
           }}
         >
-          <Check className="w-3.5 h-3.5" />
+          <Check className="size-3.5" />
           <span className="font-medium">All runs done this week</span>
         </div>
       )}
@@ -970,7 +967,7 @@ export default function ProgrammeRunSection({
           className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
         >
           Manage Run Plan
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="size-3.5" />
         </button>
       </div>
 

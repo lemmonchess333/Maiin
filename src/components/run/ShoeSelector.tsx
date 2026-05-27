@@ -26,12 +26,12 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
         onClick={() => navigate("/settings")}
         className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
       >
-        <Footprints className="w-4 h-4 text-muted-foreground shrink-0" />
+        <Footprints className="size-4 text-muted-foreground shrink-0" />
         <span className="flex-1 text-sm text-muted-foreground">
           Track your shoe mileage
         </span>
         <span className="flex items-center gap-1 text-xs font-semibold text-primary">
-          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          <Plus className="size-3.5" aria-hidden="true" />
           Add shoes
         </span>
       </button>
@@ -39,12 +39,12 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
   }
 
   const selected = selectedShoeId
-    ? activeShoes.find((s) => s.id === selectedShoeId) ?? defaultShoe
+    ? (activeShoes.find((s) => s.id === selectedShoeId) ?? defaultShoe)
     : defaultShoe;
 
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card">
-      <Footprints className="w-4 h-4 text-muted-foreground shrink-0" />
+      <Footprints className="size-4 text-muted-foreground shrink-0" />
       <select
         value={selected?.id ?? ""}
         onChange={(e) => onSelect(e.target.value)}

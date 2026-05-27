@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { X, Image as ImageIcon, RefreshCw, CameraOff, Keyboard } from "lucide-react";
+import {
+  X,
+  Image as ImageIcon,
+  RefreshCw,
+  CameraOff,
+  Keyboard,
+} from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { logger } from "@/lib/logger";
 
@@ -79,7 +85,9 @@ export default function FoodCameraModal({
   const [tab, setTab] = useState<TabMode>("food");
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
-  const [barcodeHint, setBarcodeHint] = useState<string>("Align barcode in frame");
+  const [barcodeHint, setBarcodeHint] = useState<string>(
+    "Align barcode in frame"
+  );
   const [cameraState, setCameraState] = useState<CameraState>("idle");
 
   // Keep onClose stable across renders so effects don't tear down / rebuild
@@ -144,7 +152,11 @@ export default function FoodCameraModal({
         // errors) falls into "unavailable" — user can still upload
         // a photo from library or type the meal in manually.
         const name = (e as { name?: string } | null)?.name;
-        setCameraState(name === "NotAllowedError" || name === "PermissionDeniedError" ? "denied" : "unavailable");
+        setCameraState(
+          name === "NotAllowedError" || name === "PermissionDeniedError"
+            ? "denied"
+            : "unavailable"
+        );
       }
     };
 
@@ -179,13 +191,26 @@ export default function FoodCameraModal({
         setBarcodeHint("Scanning…");
 
         const mod = await import("@zxing/browser");
-        const { BrowserMultiFormatReader } = mod as unknown as { BrowserMultiFormatReader: new () => { decodeFromVideoElement: (el: HTMLVideoElement, cb: (result: { getText?: () => string; text?: string } | null, err: unknown) => void) => Promise<{ stop: () => void }> } };
+        const { BrowserMultiFormatReader } = mod as unknown as {
+          BrowserMultiFormatReader: new () => {
+            decodeFromVideoElement: (
+              el: HTMLVideoElement,
+              cb: (
+                result: { getText?: () => string; text?: string } | null,
+                err: unknown
+              ) => void
+            ) => Promise<{ stop: () => void }>;
+          };
+        };
 
         const reader = new BrowserMultiFormatReader();
 
         const controls = await reader.decodeFromVideoElement(
           videoEl,
-          async (result: { getText?: () => string; text?: string } | null, err: unknown) => {
+          async (
+            result: { getText?: () => string; text?: string } | null,
+            err: unknown
+          ) => {
             // ignore noisy errors
             if (err) void err;
             if (!result) return;
@@ -287,60 +312,85 @@ export default function FoodCameraModal({
   if (!open) return null;
 
   const disableShutter = loading || busy || tab === "barcode";
-  const cameraBlocked = cameraState === "denied" || cameraState === "unavailable";
+  const cameraBlocked =
+    cameraState === "denied" || cameraState === "unavailable";
 
   // Permission denied / camera unavailable — render a fallback surface
   // instead of the camera preview. Gives the user a clear path back to
   // the happy case (upload from library or type the meal manually)
   // rather than silently closing the modal.
   if (cameraBlocked) {
-    const deniedCopy = cameraState === "denied"
-      ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes — no photos are stored from the scanner."
-      : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+    const deniedCopy =
+      cameraState === "denied"
+        ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes — no photos are stored from the scanner."
+        : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
-      <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Camera unavailable" className="fixed inset-0 z-[60] bg-background flex flex-col">
+      <div
+        ref={focusTrapRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Camera unavailable"
+        className="fixed inset-0 z-[60] bg-background flex flex-col"
+      >
         <div className="flex items-center justify-between p-4">
           <button
+            type="button"
             onClick={onClose}
-            className="h-10 w-10 rounded-full bg-muted text-foreground flex items-center justify-center"
+            className="size-10 rounded-full bg-muted text-foreground flex items-center justify-center"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-5 -mt-16">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: "rgba(217,136,78,0.12)", border: "1px solid rgba(217,136,78,0.25)" }}
+            className="size-16 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "rgba(217,136,78,0.12)",
+              border: "1px solid rgba(217,136,78,0.25)",
+            }}
           >
-            <CameraOff className="w-7 h-7" style={{ color: "#D9884E" }} />
+            <CameraOff className="size-7" style={{ color: "#D9884E" }} />
           </div>
           <div className="space-y-2 max-w-[320px]">
             <p className="text-base font-semibold text-foreground">
-              {cameraState === "denied" ? "Camera access needed" : "Camera unavailable"}
+              {cameraState === "denied"
+                ? "Camera access needed"
+                : "Camera unavailable"}
             </p>
-            <p className="text-sm text-muted-foreground leading-relaxed">{deniedCopy}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {deniedCopy}
+            </p>
             {cameraState === "denied" && (
               <p className="text-xs text-muted-foreground leading-relaxed pt-1">
-                To re-enable, update camera permissions for Tropos in your device or browser settings.
+                To re-enable, update camera permissions for Tropos in your
+                device or browser settings.
               </p>
             )}
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
             <button
-              onClick={() => { haptic("light"); fileInputRef.current?.click(); }}
+              type="button"
+              onClick={() => {
+                haptic("light");
+                fileInputRef.current?.click();
+              }}
               className="w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
               style={{ background: "#D9884E" }}
             >
-              <ImageIcon className="w-4 h-4" />
+              <ImageIcon className="size-4" />
               Upload a photo instead
             </button>
             {onRequestTypedInput && (
               <button
-                onClick={() => { haptic("light"); onRequestTypedInput(); }}
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  onRequestTypedInput();
+                }}
                 className="w-full h-12 rounded-xl bg-muted text-foreground font-medium text-sm flex items-center justify-center gap-2"
               >
-                <Keyboard className="w-4 h-4" />
+                <Keyboard className="size-4" />
                 Type it instead
               </button>
             )}
@@ -358,22 +408,29 @@ export default function FoodCameraModal({
   }
 
   return (
-    <div ref={focusTrapRef} role="dialog" aria-modal="true" aria-label="Food camera" className="fixed inset-0 z-[60] bg-black">
+    <div
+      ref={focusTrapRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Food camera"
+      className="fixed inset-0 z-[60] bg-black"
+    >
       {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button
+          type="button"
           onClick={onClose}
-          className="h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+          className="size-10 rounded-full bg-black/50 text-white flex items-center justify-center"
           aria-label="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="size-5" />
         </button>
       </div>
 
       {/* camera */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 size-full object-cover"
         muted
         playsInline
         autoPlay
@@ -400,17 +457,17 @@ export default function FoodCameraModal({
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center pb-[220px]">
         {tab === "food" ? (
           <div className="w-[86%] max-w-[420px] aspect-square relative rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]">
-            <div className="absolute top-0 left-0 w-8 h-8 border-l-[3px] border-t-[3px] border-white/90 rounded-tl-2xl" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-r-[3px] border-t-[3px] border-white/90 rounded-tr-2xl" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-[3px] border-b-[3px] border-white/90 rounded-bl-2xl" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-[3px] border-b-[3px] border-white/90 rounded-br-2xl" />
+            <div className="absolute top-0 left-0 size-8 border-l-[3px] border-t-[3px] border-white/90 rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 size-8 border-r-[3px] border-t-[3px] border-white/90 rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 size-8 border-l-[3px] border-b-[3px] border-white/90 rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 size-8 border-r-[3px] border-b-[3px] border-white/90 rounded-br-2xl" />
           </div>
         ) : (
           <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
-            <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
-            <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
-            <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
-            <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
+            <div className="absolute top-0 left-0 size-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 size-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 size-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 size-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
           </div>
         )}
       </div>
@@ -420,14 +477,18 @@ export default function FoodCameraModal({
         <div className="mx-auto max-w-[520px] space-y-3">
           {/* tabs — pill/segment pattern matching app style */}
           <div className="flex gap-1.5 justify-center bg-black/30 rounded-full p-1">
-            {([
+            {[
               { key: "food" as const, label: "Scan Food" },
               { key: "barcode" as const, label: "Barcode" },
               { key: "label" as const, label: "Food label" },
-            ]).map(({ key, label }) => (
+            ].map(({ key, label }) => (
               <button
+                type="button"
                 key={key}
-                onClick={() => { haptic("light"); setTab(key); }}
+                onClick={() => {
+                  haptic("light");
+                  setTab(key);
+                }}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all",
                   tab === key
@@ -450,7 +511,10 @@ export default function FoodCameraModal({
               row's height + crossfading the text keeps the scaffold
               stable; AnimatePresence is keyed on the hint string so a
               hint change ("Scanning…" → "Found!") also crossfades. */}
-          <div className="h-4 flex items-center justify-center" aria-live="polite">
+          <div
+            className="h-4 flex items-center justify-center"
+            aria-live="polite"
+          >
             <AnimatePresence mode="wait">
               {tab === "barcode" && (
                 <motion.p
@@ -471,12 +535,13 @@ export default function FoodCameraModal({
           <div className="flex items-center justify-between">
             {/* Photo library */}
             <button
+              type="button"
               onClick={pickFromLibrary}
-              className="h-12 w-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
               aria-label="Photo library"
               disabled={loading || busy}
             >
-              <ImageIcon className="w-5 h-5" />
+              <ImageIcon className="size-5" />
             </button>
 
             {/* Shutter — only rendered in modes that actually capture
@@ -490,28 +555,38 @@ export default function FoodCameraModal({
                 modes. */}
             {tab !== "barcode" ? (
               <button
-                onClick={() => { haptic("medium"); takePhoto(); }}
+                type="button"
+                onClick={() => {
+                  haptic("medium");
+                  takePhoto();
+                }}
                 disabled={disableShutter}
                 className={cn(
-                  "h-[72px] w-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                  "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
                   disableShutter && "opacity-50"
                 )}
                 style={{ borderColor: "#FF6B4A" }}
                 aria-label="Capture"
               >
-                <div className="w-[60px] h-[60px] rounded-full bg-white" />
+                <div className="size-[60px] rounded-full bg-white" />
               </button>
             ) : (
-              <div className="h-[72px] w-[72px]" aria-hidden="true" />
+              <div className="size-[72px]" aria-hidden="true" />
             )}
 
             {/* Flip camera — balances the library icon on the left */}
             <button
-              onClick={() => { haptic("light"); setFacing((p) => (p === "environment" ? "user" : "environment")); }}
-              className="h-12 w-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setFacing((p) =>
+                  p === "environment" ? "user" : "environment"
+                );
+              }}
+              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
               aria-label="Flip camera"
             >
-              <RefreshCw className="w-5 h-5" />
+              <RefreshCw className="size-5" />
             </button>
           </div>
 

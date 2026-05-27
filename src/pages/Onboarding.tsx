@@ -12,11 +12,26 @@ import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
-import type { ProgramTemplate, TemplateExercise } from "@/features/program/templates";
-import { matchTemplate, applyInjuryFilters } from "@/features/program/matchTemplate";
-import type { ProgramState, WorkoutDay, ProgramExercise, SplitType } from "@/features/program/programTypes";
+import type {
+  ProgramTemplate,
+  TemplateExercise,
+} from "@/features/program/templates";
+import {
+  matchTemplate,
+  applyInjuryFilters,
+} from "@/features/program/matchTemplate";
+import type {
+  ProgramState,
+  WorkoutDay,
+  ProgramExercise,
+  SplitType,
+} from "@/features/program/programTypes";
 import { buildPlan } from "@/features/program/planBuilder";
-import { generateSchedule, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  generateSchedule,
+  SCHEDULE_TYPE_META,
+  type ScheduleDay,
+} from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import {
   ChevronRight,
@@ -48,11 +63,21 @@ import { validateDisplayName } from "@/lib/displayName";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "under-16" | "16-24" | "25-34" | "35-44" | "45-54" | "55+";
-type PrimaryGoal = "hypertrophy" | "strength" | "fat_loss" | "general" | "running";
+type PrimaryGoal =
+  | "hypertrophy"
+  | "strength"
+  | "fat_loss"
+  | "general"
+  | "running";
 type Experience = "beginner" | "intermediate" | "advanced";
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
 type Equipment = "full_gym" | "home_gym" | "minimal";
-type PreferredSplit = "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto";
+type PreferredSplit =
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "bro_split"
+  | "auto";
 type RunFrequency = "regular" | "occasional" | "none";
 type RunMode = "freeform" | "structured" | "race_prep";
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
@@ -78,10 +103,14 @@ function goalToFitnessGoal(g: PrimaryGoal): FitnessGoal {
 
 function templateSplitToSplitType(s: ProgramTemplate["split"]): SplitType {
   switch (s) {
-    case "full_body": return "full_body";
-    case "upper_lower": return "upper_lower";
-    case "ppl": return "ppl";
-    case "bro_split": return "ppl"; // closest match
+    case "full_body":
+      return "full_body";
+    case "upper_lower":
+      return "upper_lower";
+    case "ppl":
+      return "ppl";
+    case "bro_split":
+      return "ppl"; // closest match
   }
 }
 
@@ -113,11 +142,14 @@ function templateExToProgEx(te: TemplateExercise): ProgramExercise {
   };
 }
 
-function templateToProgramState(template: ProgramTemplate, goal: FitnessGoal): ProgramState {
+function templateToProgramState(
+  template: ProgramTemplate,
+  goal: FitnessGoal
+): ProgramState {
   const week1 = template.weeks[0];
   const workouts: WorkoutDay[] = week1.days
-    .filter(d => d.type === "lift")
-    .map(d => ({
+    .filter((d) => d.type === "lift")
+    .map((d) => ({
       dayName: d.name,
       dayType: d.type,
       exercises: d.exercises.map(templateExToProgEx),
@@ -139,45 +171,64 @@ function templateToProgramState(template: ProgramTemplate, goal: FitnessGoal): P
 
 function splitLabel(s: PreferredSplit): string {
   switch (s) {
-    case "full_body": return "Full Body";
-    case "upper_lower": return "Upper / Lower";
-    case "ppl": return "Push / Pull / Legs";
-    case "bro_split": return "Bro Split";
-    case "auto": return "Auto-assigned";
+    case "full_body":
+      return "Full Body";
+    case "upper_lower":
+      return "Upper / Lower";
+    case "ppl":
+      return "Push / Pull / Legs";
+    case "bro_split":
+      return "Bro Split";
+    case "auto":
+      return "Auto-assigned";
   }
 }
 
 function goalLabel(g: PrimaryGoal): string {
   switch (g) {
-    case "hypertrophy": return "Hypertrophy focus";
-    case "strength": return "Strength focus";
-    case "fat_loss": return "Fat loss focus";
-    case "general": return "General fitness";
-    case "running": return "Running focus";
+    case "hypertrophy":
+      return "Hypertrophy focus";
+    case "strength":
+      return "Strength focus";
+    case "fat_loss":
+      return "Fat loss focus";
+    case "general":
+      return "General fitness";
+    case "running":
+      return "Running focus";
   }
 }
 
 function runFreqLabel(r: RunFrequency): string {
   switch (r) {
-    case "regular": return "Runs 3x/week integrated";
-    case "occasional": return "Runs 1-2x/week integrated";
-    case "none": return "No running";
+    case "regular":
+      return "Runs 3x/week integrated";
+    case "occasional":
+      return "Runs 1-2x/week integrated";
+    case "none":
+      return "No running";
   }
 }
 
 function experienceLabel(e: Experience): string {
   switch (e) {
-    case "beginner": return "Beginner";
-    case "intermediate": return "Intermediate";
-    case "advanced": return "Advanced";
+    case "beginner":
+      return "Beginner";
+    case "intermediate":
+      return "Intermediate";
+    case "advanced":
+      return "Advanced";
   }
 }
 
 function equipmentLabel(e: Equipment): string {
   switch (e) {
-    case "full_gym": return "Full gym";
-    case "home_gym": return "Home gym";
-    case "minimal": return "Minimal";
+    case "full_gym":
+      return "Full gym";
+    case "home_gym":
+      return "Home gym";
+    case "minimal":
+      return "Minimal";
   }
 }
 
@@ -198,19 +249,52 @@ const TOTAL_STEPS = 13;
 // Onboarding, ConfigurePlanModal, and Programme Week tab.
 
 const STEP_META: { title: string; subtitle: string }[] = [
-  { title: "What should we call you?", subtitle: "We'll show this on your profile and to friends." },
-  { title: "What's your gender?", subtitle: "This helps us personalize your plan" },
-  { title: "How old are you?", subtitle: "We'll tailor intensity recommendations" },
-  { title: "Your body metrics", subtitle: "Used to calculate calories and macros" },
-  { title: "What's your primary goal?", subtitle: "We'll build your program around this" },
-  { title: "Experience level", subtitle: "So we program the right volume and intensity" },
-  { title: "Training days per week", subtitle: "How many days can you commit?" },
-  { title: "Equipment access", subtitle: "We'll choose exercises you can actually do" },
-  { title: "Preferred training style", subtitle: "Pick a split or let us decide" },
+  {
+    title: "What should we call you?",
+    subtitle: "We'll show this on your profile and to friends.",
+  },
+  {
+    title: "What's your gender?",
+    subtitle: "This helps us personalize your plan",
+  },
+  {
+    title: "How old are you?",
+    subtitle: "We'll tailor intensity recommendations",
+  },
+  {
+    title: "Your body metrics",
+    subtitle: "Used to calculate calories and macros",
+  },
+  {
+    title: "What's your primary goal?",
+    subtitle: "We'll build your program around this",
+  },
+  {
+    title: "Experience level",
+    subtitle: "So we program the right volume and intensity",
+  },
+  {
+    title: "Training days per week",
+    subtitle: "How many days can you commit?",
+  },
+  {
+    title: "Equipment access",
+    subtitle: "We'll choose exercises you can actually do",
+  },
+  {
+    title: "Preferred training style",
+    subtitle: "Pick a split or let us decide",
+  },
   { title: "Do you run?", subtitle: "We'll weave runs into your schedule" },
   { title: "Any injuries?", subtitle: "We'll program around limitations" },
-  { title: "Your week at a glance", subtitle: "Here's how we'll lay out your training week" },
-  { title: "Your plan is ready", subtitle: "Review your selections and let's go" },
+  {
+    title: "Your week at a glance",
+    subtitle: "Here's how we'll lay out your training week",
+  },
+  {
+    title: "Your plan is ready",
+    subtitle: "Review your selections and let's go",
+  },
 ];
 
 /* ============================
@@ -236,7 +320,9 @@ export default function Onboarding() {
   // Pre-populated from Firebase Auth's displayName when available (e.g. Google
   // / Apple signin often supplies one). Users can edit it. Empty string when
   // plain email signup — the input collects it.
-  const [displayName, setDisplayName] = useState<string>(user?.displayName || "");
+  const [displayName, setDisplayName] = useState<string>(
+    user?.displayName || ""
+  );
   // Tracks first blur — the validation hint only appears after the user has
   // interacted with the input, not on the initial empty state.
   const [displayNameTouched, setDisplayNameTouched] = useState(false);
@@ -286,8 +372,10 @@ export default function Onboarding() {
       if (profile.ageRange) setAgeRange(profile.ageRange);
       if (profile.heightCm) setHeightCm(profile.heightCm);
       if (profile.weightKg) setWeightKg(profile.weightKg);
-      if (profile.preferredHeightUnit) setHeightUnit(profile.preferredHeightUnit);
-      if (profile.preferredWeightUnit) setWeightUnit(profile.preferredWeightUnit);
+      if (profile.preferredHeightUnit)
+        setHeightUnit(profile.preferredHeightUnit);
+      if (profile.preferredWeightUnit)
+        setWeightUnit(profile.preferredWeightUnit);
       if (profile.primaryGoal) setPrimaryGoal(profile.primaryGoal);
       if (profile.experience) setExperience(profile.experience);
       if (profile.daysPerWeek) setDaysPerWeek(profile.daysPerWeek);
@@ -300,7 +388,10 @@ export default function Onboarding() {
       // runFrequency control — a "regular runner" can still be in
       // race_prep, etc.
       if (profile.runMode) setRunMode(profile.runMode as RunMode);
-      if (typeof profile.weeklyRunDaysTarget === "number" && profile.weeklyRunDaysTarget > 0) {
+      if (
+        typeof profile.weeklyRunDaysTarget === "number" &&
+        profile.weeklyRunDaysTarget > 0
+      ) {
         setWeeklyRunDays(profile.weeklyRunDaysTarget);
       }
       if (profile.raceGoal) {
@@ -308,23 +399,32 @@ export default function Onboarding() {
         setRaceTargetDate(profile.raceGoal.targetDate);
       }
       if (profile.injuries) {
-        const knownInjuries = ["none", "lower_back", "shoulder", "knee", "wrist", "elbow"];
+        const knownInjuries = [
+          "none",
+          "lower_back",
+          "shoulder",
+          "knee",
+          "wrist",
+          "elbow",
+        ];
         // Pre-W1c "other" / free-text injury values are ignored on retake —
         // the filter only acts on the three known categories, so surfacing
         // stale free-text would only re-confuse the user.
-        setInjuries(profile.injuries.filter(i => knownInjuries.includes(i)));
+        setInjuries(profile.injuries.filter((i) => knownInjuries.includes(i)));
       }
     }
   }, [isRetake, profile]);
 
   // ── Derived values
-  const displayHeight = heightUnit === "ft"
-    ? `${Math.floor(heightCm / 30.48)}'${Math.round((heightCm % 30.48) / 2.54)}"`
-    : `${heightCm} cm`;
+  const displayHeight =
+    heightUnit === "ft"
+      ? `${Math.floor(heightCm / 30.48)}'${Math.round((heightCm % 30.48) / 2.54)}"`
+      : `${heightCm} cm`;
 
-  const displayWeight = weightUnit === "lbs"
-    ? `${Math.round(weightKg * 2.205)} lbs`
-    : `${weightKg} kg`;
+  const displayWeight =
+    weightUnit === "lbs"
+      ? `${Math.round(weightKg * 2.205)} lbs`
+      : `${weightKg} kg`;
 
   const heightStepSize = heightUnit === "ft" ? 2.54 : 1; // ~1 inch or 1 cm
   const weightStepSize = weightUnit === "lbs" ? 0.45 : 1; // ~1 lb or 1 kg
@@ -338,14 +438,15 @@ export default function Onboarding() {
 
   // TDEE computation
   const tdee = useMemo(
-    () => calculateTDEE(
-      weightKg,
-      heightCm,
-      AGE_MIDPOINTS[ageRange],
-      activityLevel,
-      goalToFitnessGoal(primaryGoal),
-      gender === "female" ? "female" : "male",
-    ),
+    () =>
+      calculateTDEE(
+        weightKg,
+        heightCm,
+        AGE_MIDPOINTS[ageRange],
+        activityLevel,
+        goalToFitnessGoal(primaryGoal),
+        gender === "female" ? "female" : "male"
+      ),
     [weightKg, heightCm, ageRange, activityLevel, primaryGoal, gender]
   );
 
@@ -368,7 +469,7 @@ export default function Onboarding() {
   // Both days appear automatically when liftDays + runDays > 7.
   const previewWeekSchedule = useMemo<ScheduleDay[]>(
     () => generateSchedule(daysPerWeek, effectiveRunDays),
-    [daysPerWeek, effectiveRunDays],
+    [daysPerWeek, effectiveRunDays]
   );
 
   // Split compatibility check
@@ -385,23 +486,23 @@ export default function Onboarding() {
 
   // Can advance per step
   const canAdvance: boolean[] = [
-    displayNameValidation.valid,            // 0: display name (2-30 chars after trim)
-    true,                                   // 1: gender (always has default)
-    ageRange !== "under-16",                // 2: age range (blocks under 16)
-    weightKg > 0 && heightCm > 0,           // 3: body metrics
-    true,                                   // 4: primary goal
-    true,                                   // 5: experience
-    true,                                   // 6: days per week
-    true,                                   // 7: equipment
-    !isSplitDisabled(preferredSplit),        // 8: preferred split
+    displayNameValidation.valid, // 0: display name (2-30 chars after trim)
+    true, // 1: gender (always has default)
+    ageRange !== "under-16", // 2: age range (blocks under 16)
+    weightKg > 0 && heightCm > 0, // 3: body metrics
+    true, // 4: primary goal
+    true, // 5: experience
+    true, // 6: days per week
+    true, // 7: equipment
+    !isSplitDisabled(preferredSplit), // 8: preferred split
     // P0-5: doubles blocker dropped. `daysPerWeek + weeklyRunDays > 7`
     // is no longer a constraint — generateSchedule emits Both days
     // when the total exceeds 7 (see P0-B). The only remaining
     // run-step gate is the race-prep date selector.
     runFrequency === "none" || runMode !== "race_prep" || raceTargetDate !== "", // 9: run frequency + mode
-    injuries.length > 0,                    // 10: injuries (must select at least one, including "none")
-    true,                                   // 11: weekly preview (always advanceable)
-    true,                                   // 12: confirmation
+    injuries.length > 0, // 10: injuries (must select at least one, including "none")
+    true, // 11: weekly preview (always advanceable)
+    true, // 12: confirmation
   ];
 
   // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
@@ -478,7 +579,12 @@ export default function Onboarding() {
         daysPerWeek,
         equipment,
         gender,
-        preferredSplit: preferredSplit as "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto",
+        preferredSplit: preferredSplit as
+          | "full_body"
+          | "upper_lower"
+          | "ppl"
+          | "bro_split"
+          | "auto",
         primaryGoal,
         experience,
         runFrequency,
@@ -496,7 +602,7 @@ export default function Onboarding() {
       // internally with the same primaryGoal threaded through.
       const matchResult = matchTemplate(
         profileForMatch as Parameters<typeof matchTemplate>[0],
-        PROGRAM_TEMPLATES,
+        PROGRAM_TEMPLATES
       );
       let existingStateSeed: ProgramState | undefined;
       let templateIdForState: string | undefined;
@@ -504,7 +610,7 @@ export default function Onboarding() {
         const filtered = applyInjuryFilters(
           matchResult.template,
           injuriesForSave,
-          PROGRAM_TEMPLATES,
+          PROGRAM_TEMPLATES
         );
         existingStateSeed = templateToProgramState(filtered, fitnessGoal);
         existingStateSeed.primaryGoal = primaryGoal;
@@ -520,7 +626,7 @@ export default function Onboarding() {
         experience,
         liftDays: daysPerWeek,
         preferredSplit: preferredSplit as SplitType,
-        runMode: runFrequency === "none" ? "freeform" as const : runMode,
+        runMode: runFrequency === "none" ? ("freeform" as const) : runMode,
         weeklyRunDays: effectiveRunDays,
         ...(runMode === "race_prep" && runFrequency !== "none" && raceTargetDate
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
@@ -557,11 +663,12 @@ export default function Onboarding() {
       // top-level field. validatePlanPayload reads either the
       // top-level field or profileData.weekSchedule; sending both
       // keeps the contract explicit on the wire.
-      const callCF = () => completeOnboarding({
-        profileData,
-        programState,
-        weekSchedule: plan.weekSchedule,
-      });
+      const callCF = () =>
+        completeOnboarding({
+          profileData,
+          programState,
+          weekSchedule: plan.weekSchedule,
+        });
       try {
         await callCF();
       } catch (err) {
@@ -583,9 +690,15 @@ export default function Onboarding() {
       // called window.location.reload() with no toast which read as
       // the app crashing.
       try {
-        await updateProfile({ onboardingComplete: true } as Partial<UserProfile>, { allowProtected: true });
+        await updateProfile(
+          { onboardingComplete: true } as Partial<UserProfile>,
+          { allowProtected: true }
+        );
       } catch (localUpdateErr) {
-        logger.warn("Onboarding: local profile update failed; reloading to pick up server state", localUpdateErr);
+        logger.warn(
+          "Onboarding: local profile update failed; reloading to pick up server state",
+          localUpdateErr
+        );
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
@@ -602,17 +715,22 @@ export default function Onboarding() {
           doc(db, "users", user.uid, "public", "profile"),
           {
             uid: user.uid,
-            displayName: (profileData.displayName as string | undefined) || null,
+            displayName:
+              (profileData.displayName as string | undefined) || null,
             photoURL: (profileData.photoURL as string | undefined) || null,
-            athleteType: (profileData.athleteType as string | undefined) ?? "Lifter",
+            athleteType:
+              (profileData.athleteType as string | undefined) ?? "Lifter",
             currentStreak: 0,
             longestStreak: 0,
             createdAt: serverTimestamp(),
           },
-          { merge: true },
+          { merge: true }
         );
       } catch (publicErr) {
-        logger.warn("Onboarding: public profile seed failed (will be populated lazily):", publicErr);
+        logger.warn(
+          "Onboarding: public profile seed failed (will be populated lazily):",
+          publicErr
+        );
       }
     } catch (err) {
       // Sprint 2: the raw fallback toast used to leak Firebase
@@ -624,13 +742,17 @@ export default function Onboarding() {
       const code = (err as { code?: string })?.code;
       const msg = (err as { message?: string })?.message || String(err);
       if (code === "permission-denied") {
-        toast.error("We couldn't save your setup. Try again, or contact support if it keeps happening.");
+        toast.error(
+          "We couldn't save your setup. Try again, or contact support if it keeps happening."
+        );
       } else if (
         code === "unavailable" ||
         code === "deadline-exceeded" ||
         msg.includes("INTERNAL")
       ) {
-        toast.error("Connection issue — check your internet and tap Continue again.");
+        toast.error(
+          "Connection issue — check your internet and tap Continue again."
+        );
       } else if (code === "unauthenticated" || code === "permission-denied") {
         toast.error("Please sign in again to finish setting up your account.");
       } else if (code === "resource-exhausted") {
@@ -641,15 +763,23 @@ export default function Onboarding() {
            "Something went wrong" — which is what happened on
            Tropos's first lived recovery scenario — leads users
            to keep tapping, which compounds the rate-limit hit. */
-        toast.error(msg || "You're trying too fast — wait a minute and try Continue again.");
+        toast.error(
+          msg ||
+            "You're trying too fast — wait a minute and try Continue again."
+        );
       } else if (code === "invalid-argument") {
         /* Validation failures from the Cloud Function — missing
            profileData / programState fields, malformed payload,
            etc. The server msg is specific enough to act on
            ("Missing required field: weightKg"). */
-        toast.error(msg || "Some setup details are missing — go back and check your inputs.");
+        toast.error(
+          msg ||
+            "Some setup details are missing — go back and check your inputs."
+        );
       } else {
-        toast.error("Something went wrong. Tap Continue to try again, or contact support if it keeps happening.");
+        toast.error(
+          "Something went wrong. Tap Continue to try again, or contact support if it keeps happening."
+        );
       }
     } finally {
       setSaving(false);
@@ -702,9 +832,7 @@ export default function Onboarding() {
           <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
             Step {step - START_STEP + 1} of {VISIBLE_STEPS}
           </p>
-          <h1 className="text-2xl font-bold mb-1">
-            {STEP_META[step].title}
-          </h1>
+          <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
             {STEP_META[step].subtitle}
           </p>
@@ -728,7 +856,9 @@ export default function Onboarding() {
                 }}
                 placeholder="Your name"
                 aria-label="Your name"
-                aria-invalid={displayNameTouched && !displayNameValidation.valid}
+                aria-invalid={
+                  displayNameTouched && !displayNameValidation.valid
+                }
                 // Dedicated single-input onboarding step; focus is the
                 // intended behaviour. iOS Safari may still withhold the
                 // keyboard until tap — accepted platform constraint.
@@ -739,13 +869,10 @@ export default function Onboarding() {
                 autoCorrect="off"
                 spellCheck={false}
                 inputMode="text"
-                className="w-full px-4 py-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
+                className="w-full p-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
               />
               {displayNameTouched && !displayNameValidation.valid && (
-                <p
-                  className="text-xs text-destructive"
-                  role="alert"
-                >
+                <p className="text-xs text-destructive" role="alert">
                   Please enter a name between 2 and 30 characters.
                 </p>
               )}
@@ -757,11 +884,23 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 1 && (
             <div className="space-y-2">
-              {([
-                { id: "male" as Gender, label: "Male", icon: <User size={22} style={{ color: THEME.lifting }} /> },
-                { id: "female" as Gender, label: "Female", icon: <Heart size={22} style={{ color: THEME.running }} /> },
-                { id: "unspecified" as Gender, label: "Prefer not to say", icon: <User size={22} className="text-muted-foreground" /> },
-              ]).map((opt, i) => (
+              {[
+                {
+                  id: "male" as Gender,
+                  label: "Male",
+                  icon: <User size={22} style={{ color: THEME.lifting }} />,
+                },
+                {
+                  id: "female" as Gender,
+                  label: "Female",
+                  icon: <Heart size={22} style={{ color: THEME.running }} />,
+                },
+                {
+                  id: "unspecified" as Gender,
+                  label: "Prefer not to say",
+                  icon: <User size={22} className="text-muted-foreground" />,
+                },
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={gender === opt.id}
@@ -779,14 +918,14 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 2 && (
             <div className="space-y-2">
-              {([
+              {[
                 { id: "under-16" as AgeRange, label: "Under 16" },
                 { id: "16-24" as AgeRange, label: "16 – 24" },
                 { id: "25-34" as AgeRange, label: "25 – 34" },
                 { id: "35-44" as AgeRange, label: "35 – 44" },
                 { id: "45-54" as AgeRange, label: "45 – 54" },
                 { id: "55+" as AgeRange, label: "55+" },
-              ]).map((opt, i) => (
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={ageRange === opt.id}
@@ -799,11 +938,12 @@ export default function Onboarding() {
               {ageRange === "under-16" && (
                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
                   <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <AlertTriangle className="size-4 shrink-0" />
                     <span className="font-medium">Age requirement not met</span>
                   </div>
                   <p className="text-xs text-red-500/80 dark:text-red-400/80">
-                    Tropos is only available for users aged 16 and over. Please check back when you meet the age requirement.
+                    Tropos is only available for users aged 16 and over. Please
+                    check back when you meet the age requirement.
                   </p>
                 </div>
               )}
@@ -823,14 +963,19 @@ export default function Onboarding() {
                     <span className="text-xs font-medium">Height</span>
                   </div>
                   <div className="flex gap-1">
-                    {(["cm", "ft"] as const).map(u => (
+                    {(["cm", "ft"] as const).map((u) => (
                       <button
+                        type="button"
                         key={u}
                         onClick={() => setHeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
                         style={{
-                          background: heightUnit === u ? THEME.teal : "hsl(var(--muted))",
-                          color: heightUnit === u ? "#000" : "hsl(var(--muted-foreground))",
+                          background:
+                            heightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                          color:
+                            heightUnit === u
+                              ? "#000"
+                              : "hsl(var(--muted-foreground))",
                         }}
                       >
                         {u}
@@ -842,8 +987,16 @@ export default function Onboarding() {
                   label="Height"
                   value={heightCm}
                   displayValue={displayHeight}
-                  onDecrement={() => setHeightCm(v => Math.max(100, Math.round(v - heightStepSize)))}
-                  onIncrement={() => setHeightCm(v => Math.min(250, Math.round(v + heightStepSize)))}
+                  onDecrement={() =>
+                    setHeightCm((v) =>
+                      Math.max(100, Math.round(v - heightStepSize))
+                    )
+                  }
+                  onIncrement={() =>
+                    setHeightCm((v) =>
+                      Math.min(250, Math.round(v + heightStepSize))
+                    )
+                  }
                 />
               </div>
 
@@ -855,14 +1008,19 @@ export default function Onboarding() {
                     <span className="text-xs font-medium">Weight</span>
                   </div>
                   <div className="flex gap-1">
-                    {(["kg", "lbs"] as const).map(u => (
+                    {(["kg", "lbs"] as const).map((u) => (
                       <button
+                        type="button"
                         key={u}
                         onClick={() => setWeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
                         style={{
-                          background: weightUnit === u ? THEME.teal : "hsl(var(--muted))",
-                          color: weightUnit === u ? "#000" : "hsl(var(--muted-foreground))",
+                          background:
+                            weightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                          color:
+                            weightUnit === u
+                              ? "#000"
+                              : "hsl(var(--muted-foreground))",
                         }}
                       >
                         {u}
@@ -874,8 +1032,16 @@ export default function Onboarding() {
                   label="Weight"
                   value={weightKg}
                   displayValue={displayWeight}
-                  onDecrement={() => setWeightKg(v => Math.max(30, parseFloat((v - weightStepSize).toFixed(1))))}
-                  onIncrement={() => setWeightKg(v => Math.min(250, parseFloat((v + weightStepSize).toFixed(1))))}
+                  onDecrement={() =>
+                    setWeightKg((v) =>
+                      Math.max(30, parseFloat((v - weightStepSize).toFixed(1)))
+                    )
+                  }
+                  onIncrement={() =>
+                    setWeightKg((v) =>
+                      Math.min(250, parseFloat((v + weightStepSize).toFixed(1)))
+                    )
+                  }
                 />
               </div>
             </div>
@@ -886,13 +1052,40 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 4 && (
             <div className="space-y-2">
-              {([
-                { id: "hypertrophy" as PrimaryGoal, label: "Build muscle", desc: "Maximize muscle growth with hypertrophy training", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
-                { id: "strength" as PrimaryGoal, label: "Get stronger", desc: "Focus on compound lifts and progressive overload", icon: <Zap size={22} style={{ color: THEME.warning }} /> },
-                { id: "fat_loss" as PrimaryGoal, label: "Lose fat", desc: "Calorie deficit with muscle preservation", icon: <Flame size={22} style={{ color: THEME.running }} /> },
-                { id: "general" as PrimaryGoal, label: "General fitness", desc: "Balanced strength, cardio, and mobility", icon: <Heart size={22} style={{ color: THEME.success }} /> },
-                { id: "running" as PrimaryGoal, label: "Improve running", desc: "Run-focused with complementary strength work", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
-              ]).map((opt, i) => (
+              {[
+                {
+                  id: "hypertrophy" as PrimaryGoal,
+                  label: "Build muscle",
+                  desc: "Maximize muscle growth with hypertrophy training",
+                  icon: <Dumbbell size={22} style={{ color: THEME.lifting }} />,
+                },
+                {
+                  id: "strength" as PrimaryGoal,
+                  label: "Get stronger",
+                  desc: "Focus on compound lifts and progressive overload",
+                  icon: <Zap size={22} style={{ color: THEME.warning }} />,
+                },
+                {
+                  id: "fat_loss" as PrimaryGoal,
+                  label: "Lose fat",
+                  desc: "Calorie deficit with muscle preservation",
+                  icon: <Flame size={22} style={{ color: THEME.running }} />,
+                },
+                {
+                  id: "general" as PrimaryGoal,
+                  label: "General fitness",
+                  desc: "Balanced strength, cardio, and mobility",
+                  icon: <Heart size={22} style={{ color: THEME.success }} />,
+                },
+                {
+                  id: "running" as PrimaryGoal,
+                  label: "Improve running",
+                  desc: "Run-focused with complementary strength work",
+                  icon: (
+                    <Footprints size={22} style={{ color: THEME.running }} />
+                  ),
+                },
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={primaryGoal === opt.id}
@@ -911,11 +1104,26 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 5 && (
             <div className="space-y-2">
-              {([
-                { id: "beginner" as Experience, label: "Beginner", desc: "0 – 6 months of consistent training", icon: <Target size={22} style={{ color: THEME.success }} /> },
-                { id: "intermediate" as Experience, label: "Intermediate", desc: "6 months – 2 years of training", icon: <Award size={22} style={{ color: THEME.brand }} /> },
-                { id: "advanced" as Experience, label: "Advanced", desc: "2+ years of structured training", icon: <Sparkles size={22} style={{ color: THEME.warning }} /> },
-              ]).map((opt, i) => (
+              {[
+                {
+                  id: "beginner" as Experience,
+                  label: "Beginner",
+                  desc: "0 – 6 months of consistent training",
+                  icon: <Target size={22} style={{ color: THEME.success }} />,
+                },
+                {
+                  id: "intermediate" as Experience,
+                  label: "Intermediate",
+                  desc: "6 months – 2 years of training",
+                  icon: <Award size={22} style={{ color: THEME.brand }} />,
+                },
+                {
+                  id: "advanced" as Experience,
+                  label: "Advanced",
+                  desc: "2+ years of structured training",
+                  icon: <Sparkles size={22} style={{ color: THEME.warning }} />,
+                },
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={experience === opt.id}
@@ -934,13 +1142,18 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 6 && (
             <div className="grid grid-cols-5 gap-2">
-              {([2, 3, 4, 5, 6] as DaysPerWeek[]).map(d => (
+              {([2, 3, 4, 5, 6] as DaysPerWeek[]).map((d) => (
                 <button
+                  type="button"
                   key={d}
                   onClick={() => {
                     setDaysPerWeek(d);
                     // Reset split if incompatible
-                    if (d < 5 && (preferredSplit === "ppl" || preferredSplit === "bro_split")) {
+                    if (
+                      d < 5 &&
+                      (preferredSplit === "ppl" ||
+                        preferredSplit === "bro_split")
+                    ) {
                       setPreferredSplit("auto");
                     }
                     if (d < 4 && preferredSplit === "upper_lower") {
@@ -949,17 +1162,28 @@ export default function Onboarding() {
                   }}
                   className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all active:scale-[0.95]"
                   style={{
-                    background: daysPerWeek === d ? `${THEME.teal}20` : "hsl(var(--muted) / 0.5)",
+                    background:
+                      daysPerWeek === d
+                        ? `${THEME.teal}20`
+                        : "hsl(var(--muted) / 0.5)",
                     border: `1px solid ${daysPerWeek === d ? THEME.teal + "50" : "hsl(var(--muted))"}`,
                   }}
                 >
                   <span
                     className="text-2xl font-bold font-mono"
-                    style={{ color: daysPerWeek === d ? THEME.teal : "hsl(var(--muted-foreground))" }}
+                    style={{
+                      color:
+                        daysPerWeek === d
+                          ? THEME.teal
+                          : "hsl(var(--muted-foreground))",
+                    }}
                   >
                     {d}
                   </span>
-                  <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <span
+                    className="text-xs"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     days
                   </span>
                 </button>
@@ -972,11 +1196,28 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 7 && (
             <div className="space-y-2">
-              {([
-                { id: "full_gym" as Equipment, label: "Full gym", desc: "Barbells, dumbbells, cables, machines", icon: <Warehouse size={22} style={{ color: THEME.lifting }} /> },
-                { id: "home_gym" as Equipment, label: "Home gym", desc: "Dumbbells, bench, pull-up bar", icon: <Dumbbell size={22} style={{ color: THEME.brand }} /> },
-                { id: "minimal" as Equipment, label: "Minimal / bodyweight", desc: "Bands, bodyweight, maybe dumbbells", icon: <User size={22} style={{ color: THEME.success }} /> },
-              ]).map((opt, i) => (
+              {[
+                {
+                  id: "full_gym" as Equipment,
+                  label: "Full gym",
+                  desc: "Barbells, dumbbells, cables, machines",
+                  icon: (
+                    <Warehouse size={22} style={{ color: THEME.lifting }} />
+                  ),
+                },
+                {
+                  id: "home_gym" as Equipment,
+                  label: "Home gym",
+                  desc: "Dumbbells, bench, pull-up bar",
+                  icon: <Dumbbell size={22} style={{ color: THEME.brand }} />,
+                },
+                {
+                  id: "minimal" as Equipment,
+                  label: "Minimal / bodyweight",
+                  desc: "Bands, bodyweight, maybe dumbbells",
+                  icon: <User size={22} style={{ color: THEME.success }} />,
+                },
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={equipment === opt.id}
@@ -995,13 +1236,38 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 8 && (
             <div className="space-y-2">
-              {([
-                { id: "full_body" as PreferredSplit, label: "Full Body", desc: "Hit everything each session", icon: <User size={22} style={{ color: THEME.success }} /> },
-                { id: "upper_lower" as PreferredSplit, label: "Upper / Lower", desc: "Alternate upper and lower days (4+ days)", icon: <LayoutGrid size={22} style={{ color: THEME.brand }} /> },
-                { id: "ppl" as PreferredSplit, label: "Push / Pull / Legs", desc: "Classic PPL rotation (5-6 days)", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
-                { id: "bro_split" as PreferredSplit, label: "Bro Split", desc: "One muscle group per day (5-6 days)", icon: <Flame size={22} style={{ color: THEME.running }} /> },
-                { id: "auto" as PreferredSplit, label: "No preference", desc: "We'll pick the best split for you", icon: <Sparkles size={22} style={{ color: THEME.teal }} /> },
-              ]).map((opt, i) => (
+              {[
+                {
+                  id: "full_body" as PreferredSplit,
+                  label: "Full Body",
+                  desc: "Hit everything each session",
+                  icon: <User size={22} style={{ color: THEME.success }} />,
+                },
+                {
+                  id: "upper_lower" as PreferredSplit,
+                  label: "Upper / Lower",
+                  desc: "Alternate upper and lower days (4+ days)",
+                  icon: <LayoutGrid size={22} style={{ color: THEME.brand }} />,
+                },
+                {
+                  id: "ppl" as PreferredSplit,
+                  label: "Push / Pull / Legs",
+                  desc: "Classic PPL rotation (5-6 days)",
+                  icon: <Dumbbell size={22} style={{ color: THEME.lifting }} />,
+                },
+                {
+                  id: "bro_split" as PreferredSplit,
+                  label: "Bro Split",
+                  desc: "One muscle group per day (5-6 days)",
+                  icon: <Flame size={22} style={{ color: THEME.running }} />,
+                },
+                {
+                  id: "auto" as PreferredSplit,
+                  label: "No preference",
+                  desc: "We'll pick the best split for you",
+                  icon: <Sparkles size={22} style={{ color: THEME.teal }} />,
+                },
+              ].map((opt, i) => (
                 <OptionCard
                   key={opt.id}
                   selected={preferredSplit === opt.id}
@@ -1026,11 +1292,32 @@ export default function Onboarding() {
           {step === 9 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                {([
-                  { id: "regular" as RunFrequency, label: "Regular runner", desc: "3+ runs per week", icon: <Footprints size={22} style={{ color: THEME.running }} /> },
-                  { id: "occasional" as RunFrequency, label: "Occasional runner", desc: "1 – 2 runs per week", icon: <Footprints size={22} style={{ color: THEME.warning }} /> },
-                  { id: "none" as RunFrequency, label: "I don't run", desc: "Lifting only, no cardio programming", icon: <Dumbbell size={22} style={{ color: THEME.lifting }} /> },
-                ]).map((opt, i) => (
+                {[
+                  {
+                    id: "regular" as RunFrequency,
+                    label: "Regular runner",
+                    desc: "3+ runs per week",
+                    icon: (
+                      <Footprints size={22} style={{ color: THEME.running }} />
+                    ),
+                  },
+                  {
+                    id: "occasional" as RunFrequency,
+                    label: "Occasional runner",
+                    desc: "1 – 2 runs per week",
+                    icon: (
+                      <Footprints size={22} style={{ color: THEME.warning }} />
+                    ),
+                  },
+                  {
+                    id: "none" as RunFrequency,
+                    label: "I don't run",
+                    desc: "Lifting only, no cardio programming",
+                    icon: (
+                      <Dumbbell size={22} style={{ color: THEME.lifting }} />
+                    ),
+                  },
+                ].map((opt, i) => (
                   <OptionCard
                     key={opt.id}
                     selected={runFrequency === opt.id}
@@ -1056,21 +1343,38 @@ export default function Onboarding() {
               {/* Run mode sub-questions — only if they run */}
               {runFrequency !== "none" && (
                 <div className="space-y-3 pt-2">
-                  <p className="text-xs font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <p
+                    className="text-xs font-medium"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
                     How should we schedule your runs?
                   </p>
                   <div className="space-y-2">
-                    {([
-                      { id: "freeform" as RunMode, label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
-                      { id: "structured" as RunMode, label: "Structured", desc: "Auto-assign run types to your run days" },
-                      { id: "race_prep" as RunMode, label: "Race Prep", desc: "Periodised plan for a specific race" },
-                    ]).map((opt, i) => (
+                    {[
+                      {
+                        id: "freeform" as RunMode,
+                        label: "Freeform",
+                        desc: "Run whenever you want, no auto-scheduling",
+                      },
+                      {
+                        id: "structured" as RunMode,
+                        label: "Structured",
+                        desc: "Auto-assign run types to your run days",
+                      },
+                      {
+                        id: "race_prep" as RunMode,
+                        label: "Race Prep",
+                        desc: "Periodised plan for a specific race",
+                      },
+                    ].map((opt, i) => (
                       <OptionCard
                         key={opt.id}
                         selected={runMode === opt.id}
                         onSelect={() => setRunMode(opt.id)}
                         index={i}
-                        icon={<Target size={20} style={{ color: THEME.running }} />}
+                        icon={
+                          <Target size={20} style={{ color: THEME.running }} />
+                        }
                         label={opt.label}
                         desc={opt.desc}
                       />
@@ -1080,7 +1384,10 @@ export default function Onboarding() {
                   {/* Run days slider for structured/race_prep */}
                   {runMode !== "freeform" && (
                     <div>
-                      <label className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <label
+                        className="text-xs"
+                        style={{ color: "hsl(var(--muted-foreground))" }}
+                      >
                         Run days per week ({weeklyRunDays})
                       </label>
                       <input
@@ -1088,7 +1395,9 @@ export default function Onboarding() {
                         min="1"
                         max={7}
                         value={weeklyRunDays}
-                        onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                        onChange={(e) =>
+                          setWeeklyRunDays(Number(e.target.value))
+                        }
                         className="w-full accent-primary"
                       />
                       {daysPerWeek + weeklyRunDays > 7 && (
@@ -1098,8 +1407,24 @@ export default function Onboarding() {
                         // + one run). The copy stays informational so
                         // users understand the implication of the
                         // combination they're picking.
-                        <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
-                          {daysPerWeek} lift + {weeklyRunDays} run = {daysPerWeek + weeklyRunDays}. You'll see {Math.min(daysPerWeek + weeklyRunDays - 7, Math.min(daysPerWeek, weeklyRunDays))} double day{Math.min(daysPerWeek + weeklyRunDays - 7, Math.min(daysPerWeek, weeklyRunDays)) === 1 ? "" : "s"} (lift + run on the same day).
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: "hsl(var(--muted-foreground))" }}
+                        >
+                          {daysPerWeek} lift + {weeklyRunDays} run ={" "}
+                          {daysPerWeek + weeklyRunDays}. You'll see{" "}
+                          {Math.min(
+                            daysPerWeek + weeklyRunDays - 7,
+                            Math.min(daysPerWeek, weeklyRunDays)
+                          )}{" "}
+                          double day
+                          {Math.min(
+                            daysPerWeek + weeklyRunDays - 7,
+                            Math.min(daysPerWeek, weeklyRunDays)
+                          ) === 1
+                            ? ""
+                            : "s"}{" "}
+                          (lift + run on the same day).
                         </p>
                       )}
                     </div>
@@ -1109,27 +1434,46 @@ export default function Onboarding() {
                   {runMode === "race_prep" && (
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p
+                          className="text-xs uppercase tracking-wider mb-1.5"
+                          style={{ color: "hsl(var(--muted-foreground))" }}
+                        >
                           Race distance
                         </p>
                         <div className="grid grid-cols-4 gap-1.5">
-                          {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map((d) => (
+                          {(
+                            ["5k", "10k", "half", "marathon"] as RaceDistance[]
+                          ).map((d) => (
                             <button
+                              type="button"
                               key={d}
                               onClick={() => setRaceDistance(d)}
                               className="py-2 rounded-lg text-xs font-medium transition-all"
                               style={{
-                                background: raceDistance === d ? THEME.running : "hsl(var(--muted) / 0.7)",
-                                color: raceDistance === d ? "#000" : "hsl(var(--muted-foreground))",
+                                background:
+                                  raceDistance === d
+                                    ? THEME.running
+                                    : "hsl(var(--muted) / 0.7)",
+                                color:
+                                  raceDistance === d
+                                    ? "#000"
+                                    : "hsl(var(--muted-foreground))",
                               }}
                             >
-                              {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
+                              {d === "half"
+                                ? "Half"
+                                : d === "marathon"
+                                  ? "Full"
+                                  : d.toUpperCase()}
                             </button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-wider mb-1.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p
+                          className="text-xs uppercase tracking-wider mb-1.5"
+                          style={{ color: "hsl(var(--muted-foreground))" }}
+                        >
                           Target date
                         </p>
                         <input
@@ -1143,7 +1487,6 @@ export default function Onboarding() {
                   )}
                 </div>
               )}
-
             </div>
           )}
 
@@ -1152,14 +1495,54 @@ export default function Onboarding() {
           ════════════════════════════════ */}
           {step === 10 && (
             <div className="space-y-2">
-              {([
-                { id: "none", label: "No injuries", desc: "All clear — no limitations", icon: <Check size={22} style={{ color: THEME.success }} /> },
-                { id: "lower_back", label: "Lower back", desc: "We'll avoid heavy axial loading", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-                { id: "shoulder", label: "Shoulder", desc: "We'll modify pressing movements", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-                { id: "knee", label: "Knee", desc: "We'll adjust squat and lunge variations", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-                { id: "elbow", label: "Elbow", desc: "We'll swap heavy curls and dips for cable/machine work", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-                { id: "wrist", label: "Wrist", desc: "We'll pick neutral-grip and machine variants", icon: <AlertTriangle size={22} style={{ color: THEME.warning }} /> },
-              ]).map((opt, i) => {
+              {[
+                {
+                  id: "none",
+                  label: "No injuries",
+                  desc: "All clear — no limitations",
+                  icon: <Check size={22} style={{ color: THEME.success }} />,
+                },
+                {
+                  id: "lower_back",
+                  label: "Lower back",
+                  desc: "We'll avoid heavy axial loading",
+                  icon: (
+                    <AlertTriangle size={22} style={{ color: THEME.warning }} />
+                  ),
+                },
+                {
+                  id: "shoulder",
+                  label: "Shoulder",
+                  desc: "We'll modify pressing movements",
+                  icon: (
+                    <AlertTriangle size={22} style={{ color: THEME.warning }} />
+                  ),
+                },
+                {
+                  id: "knee",
+                  label: "Knee",
+                  desc: "We'll adjust squat and lunge variations",
+                  icon: (
+                    <AlertTriangle size={22} style={{ color: THEME.warning }} />
+                  ),
+                },
+                {
+                  id: "elbow",
+                  label: "Elbow",
+                  desc: "We'll swap heavy curls and dips for cable/machine work",
+                  icon: (
+                    <AlertTriangle size={22} style={{ color: THEME.warning }} />
+                  ),
+                },
+                {
+                  id: "wrist",
+                  label: "Wrist",
+                  desc: "We'll pick neutral-grip and machine variants",
+                  icon: (
+                    <AlertTriangle size={22} style={{ color: THEME.warning }} />
+                  ),
+                },
+              ].map((opt, i) => {
                 const isSelected = injuries.includes(opt.id);
                 const isNone = opt.id === "none";
                 return (
@@ -1171,10 +1554,10 @@ export default function Onboarding() {
                       if (isNone) {
                         setInjuries(isSelected ? [] : ["none"]);
                       } else {
-                        setInjuries(prev => {
-                          const withoutNone = prev.filter(i => i !== "none");
+                        setInjuries((prev) => {
+                          const withoutNone = prev.filter((i) => i !== "none");
                           return isSelected
-                            ? withoutNone.filter(i => i !== opt.id)
+                            ? withoutNone.filter((i) => i !== opt.id)
                             : [...withoutNone, opt.id];
                         });
                       }
@@ -1234,15 +1617,20 @@ export default function Onboarding() {
               <div className="flex items-center gap-3 flex-wrap pt-1">
                 {(["lift", "run", "both", "rest"] as const).map((t) => {
                   const meta = SCHEDULE_TYPE_META[t];
-                  const count = previewWeekSchedule.filter((d) => d.type === t).length;
+                  const count = previewWeekSchedule.filter(
+                    (d) => d.type === t
+                  ).length;
                   if (count === 0) return null;
                   return (
                     <div key={t} className="flex items-center gap-1.5">
                       <span
-                        className="w-2 h-2 rounded-full"
+                        className="size-2 rounded-full"
                         style={{ background: meta.color }}
                       />
-                      <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <span
+                        className="text-xs"
+                        style={{ color: "hsl(var(--muted-foreground))" }}
+                      >
                         {count} {meta.label.toLowerCase()}
                       </span>
                     </div>
@@ -1272,11 +1660,34 @@ export default function Onboarding() {
               }}
             >
               {[
-                { label: "Your plan", value: splitLabel(preferredSplit), color: THEME.teal },
-                { label: "Schedule", value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`, color: THEME.brand },
-                { label: "Setup", value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`, color: THEME.lifting },
-                { label: "Running", value: runFrequency === "none" ? "No running" : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`, color: THEME.running },
-                { label: "Metrics", value: `${displayHeight} · ${displayWeight}`, color: THEME.warning },
+                {
+                  label: "Your plan",
+                  value: splitLabel(preferredSplit),
+                  color: THEME.teal,
+                },
+                {
+                  label: "Schedule",
+                  value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`,
+                  color: THEME.brand,
+                },
+                {
+                  label: "Setup",
+                  value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
+                  color: THEME.lifting,
+                },
+                {
+                  label: "Running",
+                  value:
+                    runFrequency === "none"
+                      ? "No running"
+                      : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`,
+                  color: THEME.running,
+                },
+                {
+                  label: "Metrics",
+                  value: `${displayHeight} · ${displayWeight}`,
+                  color: THEME.warning,
+                },
                 {
                   label: "Daily targets",
                   value: `${tdee.targetCalories} cal · ${tdee.protein}g P · ${tdee.carbs}g C · ${tdee.fat}g F`,
@@ -1295,7 +1706,7 @@ export default function Onboarding() {
                   }}
                 >
                   <div
-                    className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                    className="size-2 rounded-full mt-1.5 flex-shrink-0"
                     style={{ background: row.color }}
                   />
                   <div>
@@ -1318,7 +1729,8 @@ export default function Onboarding() {
       <div className="flex items-center gap-3 pt-6">
         {step > START_STEP ? (
           <button
-            onClick={() => setStep(s => s - 1)}
+            type="button"
+            onClick={() => setStep((s) => s - 1)}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
             style={{
               background: "hsl(var(--muted))",
@@ -1329,6 +1741,7 @@ export default function Onboarding() {
           </button>
         ) : isRetake ? (
           <button
+            type="button"
             onClick={async () => {
               // Entry handler flipped this to false before sending the user
               // into retake; restore it so bailing out doesn't leave the app
@@ -1346,9 +1759,10 @@ export default function Onboarding() {
           </button>
         ) : null}
         <button
+          type="button"
           onClick={() => {
             if (step < TOTAL_STEPS - 1) {
-              setStep(s => s + 1);
+              setStep((s) => s + 1);
             } else {
               handleFinish();
             }
@@ -1365,12 +1779,12 @@ export default function Onboarding() {
               "Setting up..."
             ) : (
               <>
-                Start my program <ChevronRight className="w-4 h-4" />
+                Start my program <ChevronRight className="size-4" />
               </>
             )
           ) : (
             <>
-              Continue <ChevronRight className="w-4 h-4" />
+              Continue <ChevronRight className="size-4" />
             </>
           )}
         </button>
@@ -1378,12 +1792,22 @@ export default function Onboarding() {
 
       {/* Validation hint when button is disabled */}
       {!canAdvance[step] && !saving && (
-        <p className="text-center text-xs" style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}>
-          {step === 2 && ageRange === 'under-16' && 'You must be 16 or older to use Tropos'}
-          {step === 3 && 'Enter your height and weight to continue'}
-          {step === 8 && 'This split requires more training days'}
-          {step === 9 && runMode === 'race_prep' && !raceTargetDate && 'Select a target race date'}
-          {step === 10 && injuries.length === 0 && 'Select at least one option (or "None")'}
+        <p
+          className="text-center text-xs"
+          style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
+        >
+          {step === 2 &&
+            ageRange === "under-16" &&
+            "You must be 16 or older to use Tropos"}
+          {step === 3 && "Enter your height and weight to continue"}
+          {step === 8 && "This split requires more training days"}
+          {step === 9 &&
+            runMode === "race_prep" &&
+            !raceTargetDate &&
+            "Select a target race date"}
+          {step === 10 &&
+            injuries.length === 0 &&
+            'Select at least one option (or "None")'}
         </p>
       )}
     </div>
