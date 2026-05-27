@@ -42,6 +42,7 @@ import {
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { paceMinSec } from "../lib/runLabels";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
@@ -539,6 +540,51 @@ export default function RunSummary() {
       return `${heroTemplateName} · custom`;
     }
     return "Great run!";
+  })();
+
+  // Run8 PR3d — context-aware primary stat. Intervals get a
+  // work-set summary ("N × distance @ pace") instead of the raw
+  // session avg pace (which mixes work + rest and reads slow); race
+  // runs lead with elapsed time (the metric runners care about). All
+  // other activity types fall through to the existing 3-col stats
+  // grid where distance / time / pace are equal-weighted.
+  const primaryStat = (() => {
+    if (activityType === "intervals") {
+      const iv = runConfig?.intervals;
+      if (!iv) return null;
+      const distLabel =
+        iv.workDistance && iv.workDistance >= 1000
+          ? `${(iv.workDistance / 1000).toFixed(iv.workDistance % 1000 === 0 ? 0 : 1)}K`
+          : iv.workDistance
+            ? `${iv.workDistance}m`
+            : iv.workDuration
+              ? `${Math.round(iv.workDuration / 60)} min`
+              : null;
+      if (!distLabel) return null;
+      const paceLabel = iv.workPace ? ` @ ${paceMinSec(iv.workPace)}/km` : "";
+      return {
+        kind: "intervals" as const,
+        value: `${iv.reps} × ${distLabel}${paceLabel}`,
+        label: iv.workPace ? "work-set target pace" : "work-set structure",
+      };
+    }
+    if (activityType === "race") {
+      const secs = elapsed ?? 0;
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      const timeStr =
+        h > 0
+          ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
+          : `${m}:${s.toString().padStart(2, "0")}`;
+      return {
+        kind: "race" as const,
+        value: timeStr,
+        label:
+          distance > 0 ? `Race · ${(distance / 1000).toFixed(2)} km` : "Race",
+      };
+    }
+    return null;
   })();
 
   // Run8 PR3c — plan-progress row. Surfaces "X of N runs this week"
@@ -1176,6 +1222,27 @@ export default function RunSummary() {
                 darkMode={!!profile?.darkMode}
               />
               <PaceLegend />
+            </div>
+          )}
+
+          {/* Run8 PR3d — context-aware primary stat. Renders above
+              the standard 3-col grid for intervals + race; everything
+              else falls through and the 3-col grid below is the
+              primary read. */}
+          {primaryStat && (
+            <div
+              className="mx-4 mb-3 p-4 rounded-2xl text-center shadow-sm"
+              style={{ background: `${THEME.running}14` }}
+            >
+              <p
+                className="text-3xl font-extrabold font-mono tabular-nums leading-tight"
+                style={{ color: THEME.running }}
+              >
+                {primaryStat.value}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {primaryStat.label}
+              </p>
             </div>
           )}
 
