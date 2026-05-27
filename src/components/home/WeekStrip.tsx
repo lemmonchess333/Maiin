@@ -6,7 +6,7 @@ import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 
 export default function WeekStrip({
   dayMap,
@@ -38,7 +38,7 @@ export default function WeekStrip({
 }) {
   const days = useMemo(() => {
     const today = new Date();
-    const todayKey = format(today, "yyyy-MM-dd");
+    const todayKey = localDateString(today);
     // PR-0c: the resolver handles the rolling 7-day window. Each
     // resolved day already carries scheduleType + run status with
     // the date-inheritance guard baked in.
