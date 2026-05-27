@@ -1,6 +1,10 @@
 import BottomSheet from "@/components/ui/BottomSheet";
 import { THEME } from "@/lib/theme";
-import { formatCalories, formatMacro, CALORIE_UNIT } from "@/utils/formatNutrition";
+import {
+  formatCalories,
+  formatMacro,
+  CALORIE_UNIT,
+} from "@/utils/formatNutrition";
 import { clampPct } from "@/lib/percentageHelpers";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
@@ -37,7 +41,9 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
           {label}
         </span>
         <span className="font-mono tabular-nums text-sm">
-          <span className="font-semibold text-foreground">{formatMacro(consumed)}</span>
+          <span className="font-semibold text-foreground">
+            {formatMacro(consumed)}
+          </span>
           <span className="text-muted-foreground">
             {" / "}
             {formatMacro(target)}g
@@ -100,7 +106,7 @@ export default function HeroDrillDownSheet({
       title="Nutrition breakdown"
       description={dateLabel}
     >
-      <div className="px-4 py-4 space-y-5 overflow-y-auto">
+      <div className="p-4 space-y-5 overflow-y-auto">
         {/* Calorie summary */}
         <section className="space-y-2">
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
@@ -127,7 +133,8 @@ export default function HeroDrillDownSheet({
               className="h-full rounded-full transition-all"
               style={{
                 width: `${consumedPct}%`,
-                background: remaining < 0 ? THEME.semantic.nutrition : "var(--primary)",
+                background:
+                  remaining < 0 ? THEME.semantic.nutrition : "var(--primary)",
               }}
             />
           </div>
@@ -178,7 +185,8 @@ export default function HeroDrillDownSheet({
                 <div className="flex justify-between">
                   <span className="text-foreground">Lifting</span>
                   <span className="font-mono tabular-nums text-muted-foreground">
-                    +{formatCalories(dailyTargets.actualLiftBurn)} {CALORIE_UNIT}
+                    +{formatCalories(dailyTargets.actualLiftBurn)}{" "}
+                    {CALORIE_UNIT}
                   </span>
                 </div>
               )}
@@ -191,7 +199,9 @@ export default function HeroDrillDownSheet({
                 </div>
               )}
               <div className="flex justify-between pt-1.5 border-t border-border/40">
-                <span className="font-semibold text-foreground">Total burn applied</span>
+                <span className="font-semibold text-foreground">
+                  Total burn applied
+                </span>
                 <span className="font-mono tabular-nums font-semibold text-foreground">
                   +{formatCalories(dailyTargets.effectiveBonus)} {CALORIE_UNIT}
                 </span>

@@ -6,13 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { format, subDays, startOfWeek, addDays } from "date-fns";
 import { Info } from "lucide-react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from "recharts";
 
 const WEEK_OPTIONS = ["This wk", "Last wk", "2 wk ago", "3 wk ago"];
 
@@ -27,7 +21,9 @@ export function WeeklyEnergyChart() {
 
   const data = useMemo(() => {
     const now = new Date();
-    const weekStart = startOfWeek(subDays(now, weekOffset * 7), { weekStartsOn: 1 });
+    const weekStart = startOfWeek(subDays(now, weekOffset * 7), {
+      weekStartsOn: 1,
+    });
 
     const days = Array.from({ length: 7 }, (_, i) => {
       const date = addDays(weekStart, i);
@@ -40,7 +36,9 @@ export function WeeklyEnergyChart() {
 
       // Estimated burn from logged activities only
       const dayWorkouts = workouts.filter((w) => w.date === dateStr);
-      const dayRuns = runs.filter((r) => format(r.completedAt, "yyyy-MM-dd") === dateStr);
+      const dayRuns = runs.filter(
+        (r) => format(r.completedAt, "yyyy-MM-dd") === dateStr
+      );
 
       const hasActivity = dayWorkouts.length > 0 || dayRuns.length > 0;
 
@@ -55,7 +53,7 @@ export function WeeklyEnergyChart() {
       // Workouts: weight_kg x duration_minutes x MET(~5) / 60
       dayWorkouts.forEach((w) => {
         const mins = w.durationMinutes || 0;
-        burned += Math.round(weightKg * mins * 5 / 60);
+        burned += Math.round((weightKg * mins * 5) / 60);
       });
 
       return { day: dayLabel, consumed, burned, hasActivity };
@@ -80,7 +78,9 @@ export function WeeklyEnergyChart() {
 
   const selected = data[selectedDay] || data[0];
 
-  const handleBarClick = (dayData: { activeLabel?: string | number } | null) => {
+  const handleBarClick = (
+    dayData: { activeLabel?: string | number } | null
+  ) => {
     if (!dayData?.activeLabel) return;
     const label = String(dayData.activeLabel);
     const idx = data.findIndex((d) => d.day === label);
@@ -96,6 +96,7 @@ export function WeeklyEnergyChart() {
         <div className="flex gap-1">
           {WEEK_OPTIONS.map((label, i) => (
             <button
+              type="button"
               key={i}
               onClick={() => setWeekOffset(i)}
               className={`text-xs px-2 py-1 rounded-full transition-all ${
@@ -118,19 +119,23 @@ export function WeeklyEnergyChart() {
             ? `Est. burn: ${selected.burned.toLocaleString()} cal`
             : "No activity tracked"}
         </span>
-        <span style={{ color: THEME.success }}>Consumed: {selected.consumed.toLocaleString()} cal</span>
+        <span style={{ color: THEME.success }}>
+          Consumed: {selected.consumed.toLocaleString()} cal
+        </span>
       </div>
 
       {/* Info subtitle */}
       <div className="flex items-center gap-1.5">
-        <Info className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+        <Info className="size-3 text-muted-foreground flex-shrink-0" />
         <p className="text-xs text-muted-foreground">
           Based on your logged workouts and runs
         </p>
       </div>
 
       {totals.consumed === 0 && (
-        <p className="text-xs text-muted-foreground text-center">Log meals to see your energy balance</p>
+        <p className="text-xs text-muted-foreground text-center">
+          Log meals to see your energy balance
+        </p>
       )}
 
       <div className="h-40">
@@ -147,10 +152,23 @@ export function WeeklyEnergyChart() {
               axisLine={false}
               tickLine={false}
               width={30}
-              tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+              tickFormatter={(v) =>
+                v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v
+              }
             />
-            <Bar dataKey="burned" name="Estimated burn" fill={THEME.warning} radius={[4, 4, 0, 0]} barSize={14} />
-            <Bar dataKey="consumed" fill={THEME.success} radius={[4, 4, 0, 0]} barSize={14} />
+            <Bar
+              dataKey="burned"
+              name="Estimated burn"
+              fill={THEME.warning}
+              radius={[4, 4, 0, 0]}
+              barSize={14}
+            />
+            <Bar
+              dataKey="consumed"
+              fill={THEME.success}
+              radius={[4, 4, 0, 0]}
+              barSize={14}
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>

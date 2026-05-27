@@ -53,21 +53,93 @@ interface SectionRow {
 /** Section catalogue. Order matches the iOS Settings convention
  *  (identity → preferences → app → support → account at bottom). */
 const SECTIONS: SectionRow[] = [
-  { slug: "profile",            label: "Profile",             description: "Name, photo, body metrics",          icon: User,        migrated: true },
-  { slug: "training",           label: "Training",            description: "Programme, run mode, retake setup",  icon: Target,      migrated: true },
-  { slug: "nutrition",          label: "Nutrition",           description: "Calorie targets, activity level",    icon: Apple,       migrated: true },
-  { slug: "workout-prefs",      label: "Workout preferences", description: "Rest timer, audio cues",             icon: Dumbbell,    migrated: true },
-  { slug: "units-appearance",   label: "Units & Appearance",  description: "Weight, height units, dark mode",    icon: Palette,     migrated: true },
-  { slug: "privacy",            label: "Social & Privacy",    description: "Visibility, crew, GPS zones",        icon: Lock,        migrated: true },
-  { slug: "shoes",              label: "My Shoes",            description: "Track mileage per pair",             icon: Footprints,  migrated: true },
-  { slug: "notifications",      label: "Notifications",       description: "Meal, workout, streak reminders",    icon: Bell,        migrated: true },
-  { slug: "subscription",       label: "Subscription",        description: "Plan, billing, restore",             icon: Crown,       migrated: true },
-  { slug: "support-legal",      label: "Support & Legal",     description: "Help, privacy policy, terms",        icon: HelpCircle,  migrated: true },
-  { slug: "account",            label: "Account",             description: "Sign out, delete account",           icon: Cog,         migrated: true },
+  {
+    slug: "profile",
+    label: "Profile",
+    description: "Name, photo, body metrics",
+    icon: User,
+    migrated: true,
+  },
+  {
+    slug: "training",
+    label: "Training",
+    description: "Programme, run mode, retake setup",
+    icon: Target,
+    migrated: true,
+  },
+  {
+    slug: "nutrition",
+    label: "Nutrition",
+    description: "Calorie targets, activity level",
+    icon: Apple,
+    migrated: true,
+  },
+  {
+    slug: "workout-prefs",
+    label: "Workout preferences",
+    description: "Rest timer, audio cues",
+    icon: Dumbbell,
+    migrated: true,
+  },
+  {
+    slug: "units-appearance",
+    label: "Units & Appearance",
+    description: "Weight, height units, dark mode",
+    icon: Palette,
+    migrated: true,
+  },
+  {
+    slug: "privacy",
+    label: "Social & Privacy",
+    description: "Visibility, crew, GPS zones",
+    icon: Lock,
+    migrated: true,
+  },
+  {
+    slug: "shoes",
+    label: "My Shoes",
+    description: "Track mileage per pair",
+    icon: Footprints,
+    migrated: true,
+  },
+  {
+    slug: "notifications",
+    label: "Notifications",
+    description: "Meal, workout, streak reminders",
+    icon: Bell,
+    migrated: true,
+  },
+  {
+    slug: "subscription",
+    label: "Subscription",
+    description: "Plan, billing, restore",
+    icon: Crown,
+    migrated: true,
+  },
+  {
+    slug: "support-legal",
+    label: "Support & Legal",
+    description: "Help, privacy policy, terms",
+    icon: HelpCircle,
+    migrated: true,
+  },
+  {
+    slug: "account",
+    label: "Account",
+    description: "Sign out, delete account",
+    icon: Cog,
+    migrated: true,
+  },
   // F5c — soft-delete archive. Sits under Account/Data semantically;
   // surfaces as its own index row so it's discoverable without
   // drilling through the Account page.
-  { slug: "recently-deleted-meals", label: "Recently deleted meals", description: "Restore meals you deleted in the last 24 hours", icon: Trash2,      migrated: true },
+  {
+    slug: "recently-deleted-meals",
+    label: "Recently deleted meals",
+    description: "Restore meals you deleted in the last 24 hours",
+    icon: Trash2,
+    migrated: true,
+  },
 ];
 
 export default function SettingsIndex() {
@@ -80,15 +152,27 @@ export default function SettingsIndex() {
       className="space-y-4 pb-8"
       initial="hidden"
       animate="visible"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.04 } },
+      }}
     >
-      <motion.header variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}>
+      <motion.header
+        variants={{
+          hidden: { opacity: 0, y: 6 },
+          visible: { opacity: 1, y: 0 },
+        }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {profile ? <SettingsAvatar profile={profile} /> : null}
             <div>
-              <h1 className="text-xl font-extrabold text-foreground">Settings</h1>
-              <p className="text-sm text-muted-foreground">Customize your experience</p>
+              <h1 className="text-xl font-extrabold text-foreground">
+                Settings
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Customize your experience
+              </p>
             </div>
           </div>
           {user && (
@@ -108,17 +192,24 @@ export default function SettingsIndex() {
 
       {tier === "pro" || isInTrial ? (
         <motion.div
-          variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}
+          variants={{
+            hidden: { opacity: 0, y: 6 },
+            visible: { opacity: 1, y: 0 },
+          }}
           className="rounded-xl bg-card border border-primary/20 p-3 flex items-center gap-3"
         >
-          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Crown className="w-4 h-4 text-primary" />
+          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Crown className="size-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              {isInTrial ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left` : "Pro"}
+              {isInTrial
+                ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`
+                : "Pro"}
             </p>
-            <p className="text-xs text-muted-foreground">All features unlocked</p>
+            <p className="text-xs text-muted-foreground">
+              All features unlocked
+            </p>
           </div>
         </motion.div>
       ) : null}
@@ -133,7 +224,9 @@ export default function SettingsIndex() {
       >
         {SECTIONS.map((section) => {
           const Icon = section.icon;
-          const href = section.migrated ? `/settings/${section.slug}` : `/settings/legacy#${section.slug}`;
+          const href = section.migrated
+            ? `/settings/${section.slug}`
+            : `/settings/legacy#${section.slug}`;
           return (
             <li key={section.slug}>
               <button
@@ -144,14 +237,21 @@ export default function SettingsIndex() {
                 }}
                 className="w-full px-4 py-3 min-h-[56px] flex items-center gap-3 text-left motion-safe:transition-colors motion-safe:active:scale-[0.99] hover:bg-muted/30"
               >
-                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-muted-foreground" />
+                <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Icon className="size-4 text-muted-foreground" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{section.label}</p>
-                  <p className="text-xs text-muted-foreground truncate">{section.description}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {section.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {section.description}
+                  </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
+                <ChevronRight
+                  className="size-4 text-muted-foreground shrink-0"
+                  aria-hidden="true"
+                />
               </button>
             </li>
           );

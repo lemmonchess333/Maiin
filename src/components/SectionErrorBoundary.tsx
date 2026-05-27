@@ -34,7 +34,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
       // ErrorState primitive. Same visual idiom (centred card +
       // retry) but consistent destructive-tinted icon and retry
       // delegated to the Button primitive (focus ring, 44px touch
-      // target, type=button) instead of a bespoke <button> with
+      // target, type=button) instead of a bespoke <button type="button"> with
       // primary/10 styling.
       return (
         <ErrorState
