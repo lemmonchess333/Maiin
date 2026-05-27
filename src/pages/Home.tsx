@@ -424,9 +424,20 @@ export default function Home() {
   const [manageDate, setManageDate] = useState<string | null>(null);
   // PR-L L4 — fell-behind prompt. The sheet opens automatically
   // when the server-written flag is present AND the user hasn't
-  // dismissed it this session yet. Local dismissed-for-session
-  // shadow prevents a re-open within the same session if the
-  // server-write race condition would otherwise re-set the flag.
+  // dismissed it this session yet.
+  //
+  // The session-shadow latch is what makes the "soft dismissal"
+  // path tolerable. The three action buttons (skip/shift/compress)
+  // each call a writer that clears `programState.pendingFellBehindPrompt`
+  // via the usual setProgramState path, so the sheet unmounts
+  // naturally on success. But the BottomSheet primitive also
+  // dismisses on outside-tap / Escape / swipe (FellBehindSheet's
+  // `onOpenChange={(o) => !o && onClose()}` wires this through) —
+  // those paths leave the Firestore flag in place by design
+  // (sheet re-opens on next app launch). Without this latch, the
+  // sheet would immediately re-render open within the same
+  // session, since `useProgram` doesn't onSnapshot programState
+  // and pendingFellBehindPrompt stays set in local state.
   const [fellBehindDismissedFor, setFellBehindDismissedFor] = useState<
     string | null
   >(null);
