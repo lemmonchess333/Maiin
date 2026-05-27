@@ -57,6 +57,7 @@ import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import DayActionSheet from "@/components/program/DayActionSheet";
+import FellBehindSheet from "@/components/program/FellBehindSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import InsightStrip from "@/components/home/InsightStrip";
@@ -91,6 +92,9 @@ export default function Home() {
     markManualComplete,
     skipRunDay,
     skipWorkoutDay,
+    dismissFellBehindPrompt,
+    shiftRacePlanBackOneWeek,
+    compressRacePlan,
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
@@ -409,6 +413,17 @@ export default function Home() {
   // sheet (the sheet is a temporary overlay, the peek is a longer-
   // lived summary).
   const [manageDate, setManageDate] = useState<string | null>(null);
+  // PR-L L4 — fell-behind prompt. The sheet opens automatically
+  // when the server-written flag is present AND the user hasn't
+  // dismissed it this session yet. Local dismissed-for-session
+  // shadow prevents a re-open within the same session if the
+  // server-write race condition would otherwise re-set the flag.
+  const [fellBehindDismissedFor, setFellBehindDismissedFor] = useState<
+    string | null
+  >(null);
+  const fellBehindPrompt = programState?.pendingFellBehindPrompt;
+  const fellBehindOpen =
+    !!fellBehindPrompt && fellBehindDismissedFor !== fellBehindPrompt.weekKey;
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
@@ -1049,6 +1064,20 @@ export default function Home() {
         skipRunDay={skipRunDay}
         skipWorkoutDay={skipWorkoutDay}
       />
+
+      {fellBehindPrompt && (
+        <FellBehindSheet
+          open={fellBehindOpen}
+          onClose={() => setFellBehindDismissedFor(fellBehindPrompt.weekKey)}
+          prompt={fellBehindPrompt}
+          dismissFellBehindPrompt={dismissFellBehindPrompt}
+          shiftRacePlanBackOneWeek={shiftRacePlanBackOneWeek}
+          compressRacePlan={compressRacePlan}
+          raceModeActive={
+            profile?.runMode === "race_prep" && !!profile.raceGoal
+          }
+        />
+      )}
 
       <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
 
