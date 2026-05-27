@@ -1558,26 +1558,51 @@ exports.stripeWebhook = functions
 
     // PR D (audit P0 #2): idempotency via stripeEvents/{event.id}.
     // Stripe retries every webhook on 5xx; without a dedup record a
-    // duplicate delivery re-runs the same write. We claim the event
-    // before processing and finalise after. If `claim` already exists
-    // we acknowledge (200) and skip — Stripe stops retrying.
+    // duplicate delivery re-runs the same write.
+    //
+    // Atomic claim via Firestore transaction: read + claim happen
+    // in one logical unit so two parallel retries can't both pass
+    // the "doesn't exist" check (the previous get-then-set shape
+    // left a multi-second race window between the read at the top
+    // and the finalise write after the switch — both invocations
+    // would see exists=false, both would process, both would
+    // commit the same idempotent write twice).
     const eventRef = dbRef.collection("stripeEvents").doc(event.id);
+    let isDuplicate = false;
     try {
-      const existing = await eventRef.get();
-      if (existing.exists) {
-        console.log(
-          `stripeWebhook: duplicate delivery for ${event.id}, skipping`
-        );
-        res.status(200).json({ received: true, duplicate: true });
-        return;
-      }
+      await dbRef.runTransaction(async (txn) => {
+        const snap = await txn.get(eventRef);
+        if (snap.exists) {
+          isDuplicate = true;
+          return;
+        }
+        txn.set(eventRef, {
+          type: event.type,
+          created: event.created || null,
+          claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
     } catch (err) {
-      // Failure to read the dedup doc shouldn't break webhook processing
-      // entirely, but log it loudly — we lose idempotency for this event.
+      // Failure to claim shouldn't be papered over — Stripe should
+      // retry. 500 triggers a retry; the next attempt will either
+      // see our partial write (treated as duplicate, safe) or
+      // succeed the claim cleanly.
       console.error(
-        `stripeWebhook: idempotency lookup failed for ${event.id}:`,
+        `stripeWebhook: idempotency claim failed for ${event.id}:`,
         err.message
       );
+      res
+        .status(500)
+        .json({ error: "Idempotency claim failed; retrying recommended" });
+      return;
+    }
+
+    if (isDuplicate) {
+      console.log(
+        `stripeWebhook: duplicate delivery for ${event.id}, skipping`
+      );
+      res.status(200).json({ received: true, duplicate: true });
+      return;
     }
 
     try {
@@ -1872,17 +1897,20 @@ exports.stripeWebhook = functions
       }
 
       // PR D: finalise idempotency record AFTER successful processing.
-      // Storing the event.id with a TTL-ish expiresAt for ops cleanup.
+      // Merge over the claim doc so `claimedAt` is preserved (useful
+      // for ops post-mortem on duplicate-retry windows).
       try {
-        await eventRef.set({
-          type: event.type,
-          created: event.created || null,
-          processedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        await eventRef.set(
+          {
+            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
       } catch (err) {
-        // Already processed but we couldn't write the record — Stripe
-        // may retry. The handlers above are idempotent on retry because
-        // of the out-of-order/sub-id-match guards.
+        // The claim doc still exists with claimedAt set, so Stripe
+        // retries will be treated as duplicate and skipped. The
+        // handlers above are idempotent on retry, so worst-case
+        // a retry re-runs the same write before being skipped.
         console.error(
           `stripeWebhook: failed to record processed event ${event.id}:`,
           err.message
@@ -1892,6 +1920,19 @@ exports.stripeWebhook = functions
       res.status(200).json({ received: true });
     } catch (err) {
       console.error("stripeWebhook: processing error:", err.message);
+      // Release the claim so Stripe's retry can re-attempt this
+      // event. Without this, the claim doc would persist and the
+      // retry would be silently skipped as a duplicate, stranding
+      // the unprocessed event. Best-effort — if the delete fails,
+      // the handler stays idempotent as a fallback.
+      try {
+        await eventRef.delete();
+      } catch (deleteErr) {
+        console.error(
+          `stripeWebhook: failed to release claim for ${event.id} after error:`,
+          deleteErr.message
+        );
+      }
       res.status(500).json({ error: "Webhook processing failed" });
     }
   });
