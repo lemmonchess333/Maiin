@@ -2033,7 +2033,7 @@ async function sweepActiveUsers({ name, cutoffDays, perUser }) {
 
 exports.weeklyPerformanceRollup = functions.pubsub
   .schedule("15 23 * * 0")
-  .timeZone("Europe/London")
+  .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
       console.log("weeklyPerformanceRollup: starting");
@@ -2070,7 +2070,7 @@ exports.weeklyPerformanceRollup = functions.pubsub
 
 exports.dailyPerformanceRefresh = functions.pubsub
   .schedule("10 2 * * *")
-  .timeZone("Europe/London")
+  .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
       console.log("dailyPerformanceRefresh: starting");
@@ -2565,7 +2565,7 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
         .collection("participants")
         .doc(uid);
       const participantSnap = await participantRef.get();
-      if (!participantSnap.exists()) continue;
+      if (!participantSnap.exists) continue;
 
       const current = participantSnap.data().currentValue || 0;
       const newValue = current + incrementBy;
@@ -2632,7 +2632,7 @@ async function syncFastestEffortProgress(
         .collection("participants")
         .doc(uid);
       const participantSnap = await participantRef.get();
-      if (!participantSnap.exists()) continue;
+      if (!participantSnap.exists) continue;
 
       const existingBest = participantSnap.data().currentValue || 0;
       // 0 = no best yet, so first qualifying run always wins.
@@ -2939,12 +2939,10 @@ function _isoWeekKey(date) {
   return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, "0")}`;
 }
 
-function _toDateKey(date) {
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(date.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+// _toDateKey just delegates to the shared utcDateString helper —
+// preserved as a local alias so the existing callsites don't need
+// touching.
+const _toDateKey = utcDateString;
 
 async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
   const [runsSnap, workoutsSnap] = await Promise.all([
