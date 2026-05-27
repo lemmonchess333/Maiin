@@ -99,6 +99,59 @@ function makeRunPlanRecord(
   };
 }
 
+/**
+ * Centralised race-plan regeneration recipe.
+ *
+ * Eight call sites previously repeated the same sequence — build
+ * generator args → call `generateRacePlanV2` → slice `weeks[0]` for
+ * runDays → wrap in `makeRunPlanRecord` → optionally re-attach
+ * `completedRaces[]`. Drift across sites was the symptom: PR-L L4's
+ * shift/compress writers landed without the `currentWeek` carry
+ * that `refreshRunSchedule` already used, and without the
+ * `completedRaces` re-attach that multi-race plans need.
+ *
+ * The helper accepts everything explicitly so callers stay in
+ * control of which week / schedule / target they feed in (varies
+ * per site — load uses today, week-advance uses next-week start,
+ * editor-apply uses an overridden schedule).
+ */
+function regenerateRacePlan({
+  raceGoal,
+  weekSchedule,
+  weeklyRunDays,
+  currentDate,
+  weekStart,
+  carry,
+}: {
+  raceGoal: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
+  weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[];
+  weeklyRunDays: number;
+  currentDate: string;
+  weekStart: string;
+  carry?: {
+    currentWeek?: number;
+    totalWeeks?: number;
+    completedRaces?: string[];
+  };
+}): { runDays: ScheduledRunDay[]; runPlan: RunPlan } {
+  const v2 = generateRacePlanV2({
+    raceGoal,
+    weekSchedule,
+    weeklyRunDays,
+    currentDate,
+    weekStart,
+  });
+  const runDays = v2.weeks[0] ?? [];
+  const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
+  if (carry?.completedRaces) {
+    runPlan.completedRaces = carry.completedRaces;
+  }
+  return { runDays, runPlan };
+}
+
 interface RefreshRunScheduleOverrides {
   /** Confirmed week schedule from the editor's apply path —
    *  threaded explicitly so a freshly-`updateProfile`'d schedule
@@ -208,15 +261,13 @@ export function useProgram() {
           let runPlan = migrated.runPlan;
 
           if (profile.runMode === "race_prep" && profile.raceGoal) {
-            const plan = generateRacePlanV2({
-              weekSchedule,
+            ({ runDays, runPlan } = regenerateRacePlan({
               raceGoal: profile.raceGoal,
+              weekSchedule,
               weeklyRunDays: runTarget,
               currentDate: localDateString(),
               weekStart,
-            });
-            runDays = plan.weeks[0] ?? [];
-            runPlan = makeRunPlanRecord(plan, profile.raceGoal);
+            }));
           } else {
             runDays = scheduleStructuredWeekV2({
               weekSchedule,
@@ -261,15 +312,13 @@ export function useProgram() {
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           if (profile.runMode === "race_prep" && profile.raceGoal) {
-            const plan = generateRacePlanV2({
-              weekSchedule,
+            ({ runDays, runPlan } = regenerateRacePlan({
               raceGoal: profile.raceGoal,
+              weekSchedule,
               weeklyRunDays: runTarget,
               currentDate: localDateString(),
               weekStart,
-            });
-            runDays = plan.weeks[0] ?? [];
-            runPlan = makeRunPlanRecord(plan, profile.raceGoal);
+            }));
           } else {
             runDays = scheduleStructuredWeekV2({
               weekSchedule,
@@ -436,18 +485,20 @@ export function useProgram() {
       const runTarget = getWeeklyRunTarget(profile) || 3;
 
       if (profile.runMode === "race_prep" && profile.raceGoal) {
-        const plan = generateRacePlanV2({
-          weekSchedule,
+        const r = regenerateRacePlan({
           raceGoal: profile.raceGoal,
+          weekSchedule,
           weeklyRunDays: runTarget,
           currentDate: nextWeekCurrentDate,
           weekStart: nextWeekStart,
+          carry: {
+            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+            totalWeeks: advanced.runPlan?.totalWeeks,
+            completedRaces: advanced.runPlan?.completedRaces,
+          },
         });
-        advanced.runDays = plan.weeks[0] ?? [];
-        advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
-          currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
-          totalWeeks: advanced.runPlan?.totalWeeks,
-        });
+        advanced.runDays = r.runDays;
+        advanced.runPlan = r.runPlan;
       } else {
         advanced.runDays = scheduleStructuredWeekV2({
           weekSchedule,
@@ -734,18 +785,20 @@ export function useProgram() {
       const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
 
       if (profile.runMode === "race_prep" && profile.raceGoal) {
-        const plan = generateRacePlanV2({
-          weekSchedule,
+        const r = regenerateRacePlan({
           raceGoal: profile.raceGoal,
+          weekSchedule,
           weeklyRunDays: runTarget,
           currentDate: nextWeekCurrentDate,
           weekStart: nextWeekStart,
+          carry: {
+            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
+            totalWeeks: advanced.runPlan?.totalWeeks,
+            completedRaces: advanced.runPlan?.completedRaces,
+          },
         });
-        advanced.runDays = plan.weeks[0] ?? [];
-        advanced.runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
-          currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
-          totalWeeks: advanced.runPlan?.totalWeeks,
-        });
+        advanced.runDays = r.runDays;
+        advanced.runPlan = r.runPlan;
       } else {
         advanced.runDays = scheduleStructuredWeekV2({
           weekSchedule,
@@ -1136,15 +1189,13 @@ export function useProgram() {
           overrides?.weekSchedule ?? profile.weekSchedule ?? [];
         const weekStart = localWeekKey();
         if (profile.runMode === "race_prep" && profile.raceGoal) {
-          const plan = generateRacePlanV2({
-            weekSchedule: effectiveSchedule,
+          ({ runDays, runPlan } = regenerateRacePlan({
             raceGoal: profile.raceGoal,
+            weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
             currentDate: localDateString(),
             weekStart,
-          });
-          runDays = plan.weeks[0] ?? [];
-          runPlan = makeRunPlanRecord(plan, profile.raceGoal);
+          }));
         } else {
           runDays = scheduleStructuredWeekV2({
             weekSchedule: effectiveSchedule,
@@ -1254,14 +1305,6 @@ export function useProgram() {
         runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
         runPlan = { ...programState.runPlan! };
       } else if (profile.runMode === "race_prep" && profile.raceGoal) {
-        const plan = generateRacePlanV2({
-          weekSchedule,
-          raceGoal: profile.raceGoal,
-          weeklyRunDays: runTarget,
-          currentDate: localDateString(),
-          weekStart,
-        });
-        runDays = plan.weeks[0] ?? [];
         // Refresh preserves currentWeek + totalWeeks so the user's
         // race-strip position stays put across mid-week schedule
         // edits. Only `compressed` updates (V2 may flip it if the
@@ -1270,10 +1313,18 @@ export function useProgram() {
         // — if user has aged out of recovery (recoveryEndDate
         // passed) and we're re-rendering race_prep, drop phase
         // and recoveryEndDate.
-        runPlan = makeRunPlanRecord(plan, profile.raceGoal, {
-          currentWeek: programState.runPlan?.currentWeek,
-          totalWeeks: programState.runPlan?.totalWeeks,
-        });
+        ({ runDays, runPlan } = regenerateRacePlan({
+          raceGoal: profile.raceGoal,
+          weekSchedule,
+          weeklyRunDays: runTarget,
+          currentDate: localDateString(),
+          weekStart,
+          carry: {
+            currentWeek: programState.runPlan?.currentWeek,
+            totalWeeks: programState.runPlan?.totalWeeks,
+            completedRaces: programState.runPlan?.completedRaces,
+          },
+        }));
       } else {
         runDays = scheduleStructuredWeekV2({
           weekSchedule,
@@ -1386,34 +1437,28 @@ export function useProgram() {
     const newDate = addLocalDays(oldDate, 7);
     const newTargetDate = localDateString(newDate);
     const newRaceGoal = { ...profile.raceGoal, targetDate: newTargetDate };
-    const weekStart = localWeekKey();
-    const weeklyRunDays = getWeeklyRunTarget(profile) || 3;
-    const v2 = generateRacePlanV2({
+    const prevRunPlan = programState.runPlan;
+    // Carry currentWeek + completedRaces — the shift adds a week at
+    // the end but the user is still in whichever week they were
+    // before, and multi-race plans must keep their per-race
+    // idempotency history (would re-trigger recovery on re-sync
+    // otherwise).
+    const { runDays, runPlan } = regenerateRacePlan({
       raceGoal: newRaceGoal,
       weekSchedule: profile.weekSchedule ?? [],
-      weeklyRunDays,
+      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       currentDate: localDateString(),
-      weekStart,
+      weekStart: localWeekKey(),
+      carry: {
+        currentWeek: prevRunPlan?.currentWeek,
+        completedRaces: prevRunPlan?.completedRaces,
+      },
     });
-    const runDays = v2.weeks[0] ?? [];
-    // Preserve the user's progress through the plan. The shift adds
-    // a week at the end — the user is still in whichever week they
-    // were before — so carry `currentWeek` forward. Also carry
-    // `completedRaces[]` so multi-race plans don't lose per-race
-    // idempotency (would re-trigger recovery entry if an existing
-    // race-day saved run re-syncs after the shift).
-    const prevRunPlan = programState.runPlan;
-    const runPlan = makeRunPlanRecord(v2, newRaceGoal, {
-      currentWeek: prevRunPlan?.currentWeek,
-    });
-    if (prevRunPlan?.completedRaces) {
-      runPlan.completedRaces = prevRunPlan.completedRaces;
-    }
     const next = { ...programState, runDays, runPlan };
     delete next.pendingFellBehindPrompt;
     logger.log(
       `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}, ` +
-        `regenerated plan (totalWeeks=${v2.totalWeeks}, compressed=${v2.compressed})`
+        `regenerated plan (totalWeeks=${runPlan.totalWeeks}, compressed=${runPlan.compressed})`
     );
     await Promise.all([
       updateProfile({ raceGoal: newRaceGoal }),
@@ -1429,40 +1474,30 @@ export function useProgram() {
     if (!programState || !profile) return;
     if (!programState.pendingFellBehindPrompt) return;
     if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
-    const next = { ...programState };
-    delete next.pendingFellBehindPrompt;
-    // Regenerate the race plan. generateRacePlanV2 reads the
-    // weeks-to-race delta from raceGoal.targetDate vs now; if it's
-    // below the ideal-build threshold, `compressed: true` lands
-    // on the new runPlan.
-    const weekStart = localWeekKey();
-    const weeklyRunDays = getWeeklyRunTarget(profile) || 3;
-    const v2 = generateRacePlanV2({
+    // Regenerate the race plan against the unchanged race date.
+    // generateRacePlanV2 reads the weeks-to-race delta from
+    // raceGoal.targetDate vs now; if it's below the ideal-build
+    // threshold, `compressed: true` lands on the new runPlan.
+    // Preserve currentWeek + completedRaces (see shift writer above
+    // for the same rationale).
+    const prevRunPlan = programState.runPlan;
+    const { runDays, runPlan } = regenerateRacePlan({
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
-      weeklyRunDays,
+      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       currentDate: localDateString(),
-      weekStart,
+      weekStart: localWeekKey(),
+      carry: {
+        currentWeek: prevRunPlan?.currentWeek,
+        completedRaces: prevRunPlan?.completedRaces,
+      },
     });
-    const runDays = v2.weeks[0] ?? [];
-    // Preserve the user's progress through the plan (currentWeek)
-    // and per-race idempotency state (completedRaces[]). Compress
-    // shortens the remaining timeline but the user has still
-    // completed whatever weeks they were through — wiping
-    // currentWeek to 0 makes the action indistinguishable from a
-    // fresh plan, and dropping completedRaces would let a previously
-    // recorded race re-trigger recovery entry on re-sync.
-    const prevRunPlan = programState.runPlan;
-    const runPlan = makeRunPlanRecord(v2, profile.raceGoal, {
-      currentWeek: prevRunPlan?.currentWeek,
-    });
-    if (prevRunPlan?.completedRaces) {
-      runPlan.completedRaces = prevRunPlan.completedRaces;
-    }
+    const next = { ...programState, runDays, runPlan };
+    delete next.pendingFellBehindPrompt;
     logger.log(
-      `[fellBehind] compressing remaining plan, compressed=${v2.compressed}`
+      `[fellBehind] compressing remaining plan, compressed=${runPlan.compressed}`
     );
-    await saveProgram({ ...next, runDays, runPlan });
+    await saveProgram(next);
   }, [programState, profile, saveProgram]);
 
   // Week navigation
