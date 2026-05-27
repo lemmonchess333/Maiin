@@ -1370,7 +1370,13 @@ export function useProgram() {
     await saveProgram(next);
   }, [programState, saveProgram]);
 
-  /** Q24 (ii) — shift the race date forward by 7 days and regen. */
+  /** Q24 (ii) — shift the race date forward by 7 days and regen.
+   *  Regenerates the plan inline so the user sees runDays + runPlan
+   *  aligned to the new race date immediately; otherwise the load
+   *  effect's `!migrated.runDays` gate would short-circuit and leave
+   *  stale runDays / a stale `runPlan.raceGoal.targetDate` until
+   *  the user manually opened the plan editor (which is the only
+   *  surface that calls `refreshRunSchedule`). */
   const shiftRacePlanBackOneWeek = useCallback(async () => {
     if (!programState || !profile) return;
     if (!programState.pendingFellBehindPrompt) return;
@@ -1378,20 +1384,28 @@ export function useProgram() {
     const oldDate = parseLocalDate(profile.raceGoal.targetDate);
     const newDate = addLocalDays(oldDate, 7);
     const newTargetDate = localDateString(newDate);
-    const next = { ...programState };
+    const newRaceGoal = { ...profile.raceGoal, targetDate: newTargetDate };
+    const weekStart = localWeekKey();
+    const weeklyRunDays = getWeeklyRunTarget(profile) || 3;
+    const v2 = generateRacePlanV2({
+      raceGoal: newRaceGoal,
+      weekSchedule: profile.weekSchedule ?? [],
+      weeklyRunDays,
+      currentDate: localDateString(),
+      weekStart,
+    });
+    const runDays = v2.weeks[0] ?? [];
+    const runPlan = makeRunPlanRecord(v2, newRaceGoal);
+    const next = { ...programState, runDays, runPlan };
     delete next.pendingFellBehindPrompt;
     logger.log(
-      `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}`
+      `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}, ` +
+        `regenerated plan (totalWeeks=${v2.totalWeeks}, compressed=${v2.compressed})`
     );
     await Promise.all([
-      updateProfile({
-        raceGoal: { ...profile.raceGoal, targetDate: newTargetDate },
-      }),
+      updateProfile({ raceGoal: newRaceGoal }),
       saveProgram(next),
     ]);
-    // The race-prep generator will rebuild runDays on the next
-    // refreshRunSchedule call (typically triggered by the editor
-    // or the load effect after profile change).
   }, [programState, profile, saveProgram, updateProfile]);
 
   /** Q24 (iii) — compress remaining weeks. Date unchanged; the
