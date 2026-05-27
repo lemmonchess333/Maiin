@@ -209,6 +209,21 @@ service cloud.firestore {
           'createdAt',
           'badgeSummary'
         ])
+        /* uid identity gate.
+           The 'uid' field is allowed for back-compat (some clients
+           mirror the grandparent path into the doc body for easier
+           single-doc reads), but the value MUST equal the path's
+           {uid}. Without this check, an owner could write
+           `{ uid: 'victim-uid', displayName: 'Victim' }` to their
+           own public profile and impersonate that uid in any
+           consumer that trusts the body's `uid` field over the
+           grandparent doc id (searchUsers, crew member lookups,
+           follow-suggestion render). Field-absent and matching-value
+           both allowed; mismatching value rejected. */
+        && (
+          !('uid' in request.resource.data)
+          || request.resource.data.uid == uid
+        )
         /* photoURL value gate.
            Blocks tracking-pixel injection / arbitrary external URLs.
            Allowed:
