@@ -158,7 +158,7 @@ export default function DayActionSheet({
             aria-label="Close"
             className="p-2 -m-2 rounded-lg text-muted-foreground active:scale-95"
           >
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </button>
         </div>
 
@@ -180,10 +180,7 @@ export default function DayActionSheet({
             }}
           >
             <div className="flex items-center gap-2">
-              <Footprints
-                className="w-4 h-4"
-                style={{ color: THEME.running }}
-              />
+              <Footprints className="size-4" style={{ color: THEME.running }} />
               <p className="text-sm font-semibold text-foreground">Run</p>
               {run.isCompleted &&
                 (() => {
@@ -311,7 +308,7 @@ export default function DayActionSheet({
                         className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
                       >
                         <Check
-                          className="w-4 h-4"
+                          className="size-4"
                           style={{ color: THEME.success }}
                         />
                         Mark complete (manual)
@@ -392,7 +389,7 @@ export default function DayActionSheet({
             }}
           >
             <div className="flex items-center gap-2">
-              <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
+              <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
               <p className="text-sm font-semibold text-foreground">
                 {lift.workout.dayName || "Lift"}
               </p>

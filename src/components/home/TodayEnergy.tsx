@@ -62,6 +62,7 @@ export default function TodayEnergy({
     <div className="rounded-2xl bg-card overflow-hidden">
       {/* Calorie header -- tappable to expand */}
       <button
+        type="button"
         onClick={function () {
           haptic();
           setExpanded(function (e) {
@@ -106,9 +107,9 @@ export default function TodayEnergy({
             )}
           </div>
           {expanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" />
+            <ChevronUp className="size-3.5 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            <ChevronDown className="size-3.5 text-muted-foreground" />
           )}
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
@@ -157,7 +158,7 @@ export default function TodayEnergy({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 py-4 space-y-2.5">
+            <div className="p-4 space-y-2.5">
               <BreakdownRow
                 label={"Base TDEE (" + burn.phaseLabel + ")"}
                 value={burn.phaseAdjustedTdee}
@@ -233,7 +234,7 @@ export default function TodayEnergy({
                   <div className="h-px bg-border/50" />
                   <div className="flex items-start gap-2">
                     <span
-                      className="w-1.5 h-1.5 rounded-full mt-1 shrink-0"
+                      className="size-1.5 rounded-full mt-1 shrink-0"
                       style={{
                         background:
                           nutritionInsight.type === "positive"
@@ -320,11 +321,11 @@ export default function TodayEnergy({
             aria-label="No meals logged today. Log a meal to see your daily energy."
           >
             <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center mb-2"
+              className="size-10 rounded-lg flex items-center justify-center mb-2"
               style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
             >
               <UtensilsCrossed
-                className="w-5 h-5"
+                className="size-5"
                 style={{ color: THEME.semantic.nutrition }}
               />
             </div>

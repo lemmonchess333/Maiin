@@ -96,16 +96,16 @@ export default function ContextualTipBanner({
                 className="inline-flex items-center gap-0.5 mt-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 {ctaLabel}
-                <ChevronRight aria-hidden="true" className="w-3 h-3" />
+                <ChevronRight aria-hidden="true" className="size-3" />
               </Link>
             </div>
             <button
               type="button"
               onClick={handleDismiss}
               aria-label={`Dismiss tip: ${title}`}
-              className="w-7 h-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
+              className="size-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
             >
-              <X aria-hidden="true" className="w-4 h-4" />
+              <X aria-hidden="true" className="size-4" />
             </button>
           </div>
         </motion.div>

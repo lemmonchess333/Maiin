@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface TreadmillModeProps {
   elapsed: number;
@@ -11,11 +11,17 @@ interface TreadmillModeProps {
      never locked outdoors and the user chose "Track without GPS").
      Branch only the user-visible copy — the input id stays
      `treadmill-distance` to keep accessibility selectors stable. */
-  mode?: 'treadmill' | 'manual';
+  mode?: "treadmill" | "manual";
 }
 
-export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, mode = 'treadmill' }: TreadmillModeProps) {
-  const [distance, setDistance] = useState('');
+export default function TreadmillMode({
+  elapsed,
+  formatTime,
+  onSave,
+  onDiscard,
+  mode = "treadmill",
+}: TreadmillModeProps) {
+  const [distance, setDistance] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   /* Mode-aware copy. Treadmill users read distance off the
@@ -26,19 +32,23 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
      underlying input is identical. The helper text below the
      input nudges the user toward the right action without making
      it feel like a tutorial. */
-  const title = mode === 'manual' ? 'Manual Run' : 'Treadmill Run';
-  const saveLabel = mode === 'manual' ? 'Save Manual Run' : 'Save Treadmill Run';
-  const distanceLabel = mode === 'manual' ? 'Distance covered' : 'Distance from treadmill';
-  const helperCopy = mode === 'manual'
-    ? 'Record time now, then enter distance covered.'
-    : 'Enter the distance shown on the treadmill.';
+  const title = mode === "manual" ? "Manual Run" : "Treadmill Run";
+  const saveLabel =
+    mode === "manual" ? "Save Manual Run" : "Save Treadmill Run";
+  const distanceLabel =
+    mode === "manual" ? "Distance covered" : "Distance from treadmill";
+  const helperCopy =
+    mode === "manual"
+      ? "Record time now, then enter distance covered."
+      : "Enter the distance shown on the treadmill.";
 
   /* Confirm only when there's data at stake. A long timer running but
      no distance entered still counts (the elapsed time is the user's
      work). A typed distance even with elapsed under 30s also counts.
      Below both thresholds — fresh entry, accidental tap — discard
      immediately so the user isn't gated by a redundant confirm. */
-  const hasDataAtStake = elapsed >= 30 || (distance !== '' && Number(distance) > 0);
+  const hasDataAtStake =
+    elapsed >= 30 || (distance !== "" && Number(distance) > 0);
   const handleDiscardClick = () => {
     if (hasDataAtStake) setShowDiscardConfirm(true);
     else onDiscard();
@@ -47,12 +57,18 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
   return (
     <div className="space-y-6 px-6">
       <div className="text-center">
-        <p className="text-xs text-white/50 uppercase tracking-widest">{title}</p>
-        <p className="text-6xl font-mono tabular-nums font-bold mt-2">{formatTime(elapsed)}</p>
+        <p className="text-xs text-white/50 uppercase tracking-widest">
+          {title}
+        </p>
+        <p className="text-6xl font-mono tabular-nums font-bold mt-2">
+          {formatTime(elapsed)}
+        </p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="treadmill-distance" className="text-sm text-white/60">{distanceLabel}</label>
+        <label htmlFor="treadmill-distance" className="text-sm text-white/60">
+          {distanceLabel}
+        </label>
         <div className="flex items-center gap-2">
           <input
             id="treadmill-distance"
@@ -80,6 +96,7 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
 
       <div className="space-y-2">
         <button
+          type="button"
           onClick={() => onSave(Number(distance) * 1000)}
           disabled={!distance || Number(distance) < 0.05}
           /* Disabled state previously dropped the whole button to
@@ -92,7 +109,11 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
         >
           {saveLabel}
         </button>
-        <button onClick={handleDiscardClick} className="w-full py-2 text-sm text-red-400">
+        <button
+          type="button"
+          onClick={handleDiscardClick}
+          className="w-full py-2 text-sm text-red-400"
+        >
           Discard
         </button>
       </div>
@@ -102,7 +123,10 @@ export default function TreadmillMode({ elapsed, formatTime, onSave, onDiscard, 
         description="This cannot be undone."
         confirmLabel="Discard"
         destructive
-        onConfirm={() => { setShowDiscardConfirm(false); onDiscard(); }}
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          onDiscard();
+        }}
         onCancel={() => setShowDiscardConfirm(false)}
       />
     </div>

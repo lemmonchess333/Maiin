@@ -101,7 +101,7 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
             aria-label="Deload week recommended"
           >
             <Flame
-              className="w-5 h-5 shrink-0 mt-0.5"
+              className="size-5 shrink-0 mt-0.5"
               style={{ color: THEME.warning }}
               aria-hidden="true"
             />
@@ -121,9 +121,9 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
               type="button"
               onClick={handleDismiss}
               aria-label="Dismiss deload banner"
-              className="w-7 h-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
+              className="size-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
             >
-              <X className="w-4 h-4" aria-hidden="true" />
+              <X className="size-4" aria-hidden="true" />
             </button>
           </div>
         </motion.div>
