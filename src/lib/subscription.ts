@@ -19,20 +19,16 @@ import { useAuth } from "./auth";
 //      surface-level (Sub2d pin #1 prefers surface-level lock icons
 //      over whole-card blur). Add a new `ProFeatureKey` to
 //      `src/lib/proFeatures.ts` for the modal hero copy.
-//   2. Wrap the gated surface in `<ProGate featureKey="...">` for
-//      the wholesale pattern, OR consult `useSubscription().isPro`
-//      directly for partial gating (the post-Sub2c-#3 pattern in
-//      `AdaptiveTDEECard.tsx`).
+//   2. Consult `useSubscription().isPro` directly at the gated
+//      surface; ad-hoc surface-level checks are the active pattern
+//      (the old `ProGate` wrapper component was removed because it
+//      had zero callsites).
 //   3. If you need the user-visible copy to live on a feature
 //      registry rather than scattered in components, extend
 //      `proFeatures.ts`.
 //
-// Current real Pro gates (search `<ProGate` + `useSubscription`
-// destructuring across `src/`):
-//   - `AdaptiveTDEECard.tsx` — adaptive_tdee partial gating
-//     (Sub2c pin #3; header free, callouts Pro)
-//   - `AdaptiveSummary.tsx` — Apply button gated by direct
-//     `isPro` check
+// Current real Pro gates (search `useSubscription` destructuring
+// across `src/`):
 //   - `useScanUsage.ts` — `isUnlimited = isPro || isInTrial`
 //     drives the AI-scan ceiling. Post-F1b uses daily windows +
 //     per-action counters (DAILY_AI_LIMITS below).
@@ -87,9 +83,23 @@ export function getSubscriptionInfo(
     return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
   }
 
-  // Dev override or Stripe webhook: subscriptionTier manually set to "pro"
+  // Dev override or webhook: subscriptionTier manually set to "pro".
+  // Defence-in-depth — if subscriptionExpiresAt has elapsed, treat as
+  // free even when the tier is still "pro". Apple EXPIRED notifications
+  // can be dropped after Apple's retry window (lost / 500 / replay
+  // collision) and Stripe webhook delivery has rare gaps; either path
+  // can leave a user stuck on a paid tier with no auto-recovery
+  // without this check. If the timestamp is absent (legacy doc / dev
+  // override / Stripe path that hasn't been backfilled), fall through
+  // to the original behaviour.
   if (profile.subscriptionTier === "pro") {
-    return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true };
+    const expiresRaw = profile.subscriptionExpiresAt;
+    const expiresMs = expiresRaw ? Date.parse(expiresRaw) : NaN;
+    if (Number.isFinite(expiresMs) && expiresMs < Date.now()) {
+      // Expired — fall through to trial / free check below.
+    } else {
+      return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true };
+    }
   }
 
   // Check trial
