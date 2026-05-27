@@ -765,12 +765,17 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
     };
   }
 
-  it("race-day planned slot hides Mark complete (manual) — Skip stays visible", () => {
+  it("race-day planned slot hides Mark complete (manual) — DNF + DNS stay visible", () => {
     // Q1 P4 / Q2 P21: race-day completion is strictly real-saved-
     // run-only (≥95% planned distance). Manual override would
     // bypass the strict rule AND incorrectly trigger recovery
     // entry. Pre-B3j the button was visible; B3j hides it.
     // Skip stays available — Q1 P7 (skip is reversible).
+    //
+    // Run8 PR1d: the generic "Skip this run" button is replaced by
+    // race-aware DNF / DNS variants for templateId === "race". Both
+    // call skipRunDay (the state machine doesn't distinguish), the
+    // split is UX-only.
     const { profile, programState, callbacks } = setupPlannedRace();
     render(
       <DayActionSheet
@@ -787,8 +792,51 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
     expect(
       screen.queryByText(/Mark complete \(manual\)/i)
     ).not.toBeInTheDocument();
-    // Skip is the legitimate planned-state action and stays.
-    expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+    // Race-day skip — the generic "Skip this run" no longer renders;
+    // the two race-aware variants do.
+    expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/DNF — Started but didn't finish/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/DNS — Didn't start/i)).toBeInTheDocument();
+  });
+
+  it("race-day DNF + DNS buttons both call skipRunDay with the runDay id", () => {
+    // Race-day variant is UX-only; both buttons fire the same
+    // skipRunDay transition. The test pins that contract so a future
+    // refactor doesn't silently wire DNS into a different action.
+    const { profile, programState, callbacks, runDay } = setupPlannedRace();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    fireEvent.click(screen.getByText(/DNF — Started but didn't finish/i));
+    expect(callbacks.skipRunDay).toHaveBeenCalledWith(runDay.id);
+
+    cleanup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    fireEvent.click(screen.getByText(/DNS — Didn't start/i));
+    expect(callbacks.skipRunDay).toHaveBeenCalledTimes(2);
+    expect(callbacks.skipRunDay).toHaveBeenLastCalledWith(runDay.id);
   });
 
   it("race-day planned slot suppresses Mark complete even when a same-date extra exists", () => {
