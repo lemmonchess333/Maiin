@@ -30,7 +30,17 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, X, Footprints, Dumbbell, Flag, Target, Sparkles, Apple } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Footprints,
+  Dumbbell,
+  Flag,
+  Target,
+  Sparkles,
+  Apple,
+} from "lucide-react";
 import { toast } from "sonner";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
@@ -40,7 +50,12 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import OptionCard from "@/components/onboarding/OptionCard";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { generateSchedule, getWeeklyRunTarget, SCHEDULE_TYPE_META, type ScheduleDay } from "@/lib/scheduleUtils";
+import {
+  generateSchedule,
+  getWeeklyRunTarget,
+  SCHEDULE_TYPE_META,
+  type ScheduleDay,
+} from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import type {
   PrimaryGoal,
@@ -77,11 +92,31 @@ interface ConfigurePlanModalProps {
 export const CONFIGURE_PLAN_RUNNING_STEP = 3;
 
 const STEP_META: { title: string; subtitle: string; icon: typeof Target }[] = [
-  { title: "Training focus", subtitle: "What are you optimising for?", icon: Target },
-  { title: "Nutrition phase", subtitle: "Cutting, bulking, or staying put?", icon: Apple },
-  { title: "Lifting", subtitle: "Days per week and split style", icon: Dumbbell },
-  { title: "Running", subtitle: "How runs slot into your week", icon: Footprints },
-  { title: "Your week at a glance", subtitle: "Here's how we'll lay it out", icon: Sparkles },
+  {
+    title: "Training focus",
+    subtitle: "What are you optimising for?",
+    icon: Target,
+  },
+  {
+    title: "Nutrition phase",
+    subtitle: "Cutting, bulking, or staying put?",
+    icon: Apple,
+  },
+  {
+    title: "Lifting",
+    subtitle: "Days per week and split style",
+    icon: Dumbbell,
+  },
+  {
+    title: "Running",
+    subtitle: "How runs slot into your week",
+    icon: Footprints,
+  },
+  {
+    title: "Your week at a glance",
+    subtitle: "Here's how we'll lay it out",
+    icon: Sparkles,
+  },
   { title: "Confirm", subtitle: "Review and rebuild your plan", icon: Flag },
 ];
 
@@ -107,25 +142,33 @@ export default function ConfigurePlanModal({
   // not unmount) when !open, so without re-hydration the draft
   // would be stale on every subsequent open.
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
-    (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
+    (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy"
   );
   const [nutritionPhase, setNutritionPhase] = useState<Goal>(
-    (profile.program?.goal as Goal) ?? "recomp",
+    (profile.program?.goal as Goal) ?? "recomp"
   );
-  const [liftDays, setLiftDays] = useState<number>(profile.weeklyWorkoutsTarget ?? 4);
+  const [liftDays, setLiftDays] = useState<number>(
+    profile.weeklyWorkoutsTarget ?? 4
+  );
   const [preferredSplit, setPreferredSplit] = useState<SplitType | "auto">(
-    (profile.preferredSplit as SplitType | "auto") ?? "auto",
+    (profile.preferredSplit as SplitType | "auto") ?? "auto"
   );
-  const [runMode, setRunMode] = useState<RunMode>(profile.runMode ?? "freeform");
+  const [runMode, setRunMode] = useState<RunMode>(
+    profile.runMode ?? "freeform"
+  );
   // PR-0c canonical reader — falls back to 2 only when totally unset
   // (the slider on this step has min=1 and renders only when
   // runMode is non-freeform, so 2 is the sensible default for a
   // user who has just affirmatively picked structured/race_prep).
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(getWeeklyRunTarget(profile) || 2);
-  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    (profile.raceGoal?.distance as RaceDistance) ?? "10k",
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
+    getWeeklyRunTarget(profile) || 2
   );
-  const [raceTargetDate, setRaceTargetDate] = useState<string>(profile.raceGoal?.targetDate ?? "");
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
+    (profile.raceGoal?.distance as RaceDistance) ?? "10k"
+  );
+  const [raceTargetDate, setRaceTargetDate] = useState<string>(
+    profile.raceGoal?.targetDate ?? ""
+  );
 
   // PR-0d: hydrate draft state on every open transition. The modal
   // returns null when !open but does not unmount, so the useState
@@ -162,7 +205,7 @@ export default function ConfigurePlanModal({
   // Onboarding's preview step so the layout pattern is consistent.
   const previewWeekSchedule = useMemo<ScheduleDay[]>(
     () => generateSchedule(liftDays, effectiveRunDays),
-    [liftDays, effectiveRunDays],
+    [liftDays, effectiveRunDays]
   );
 
   // Per-step advance gate.
@@ -195,15 +238,20 @@ export default function ConfigurePlanModal({
       const plan = buildPlan({
         primaryGoal,
         nutritionPhase,
-        experience: (profile.experience as "beginner" | "intermediate" | "advanced") ?? "intermediate",
+        experience:
+          (profile.experience as "beginner" | "intermediate" | "advanced") ??
+          "intermediate",
         liftDays,
-        preferredSplit: preferredSplit === "auto" ? "full_body" : preferredSplit,
+        preferredSplit:
+          preferredSplit === "auto" ? "full_body" : preferredSplit,
         runMode,
         weeklyRunDays: effectiveRunDays,
         ...(runMode === "race_prep" && raceTargetDate
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
-        equipment: (profile.equipment as "full_gym" | "home_gym" | "minimal") ?? "full_gym",
+        equipment:
+          (profile.equipment as "full_gym" | "home_gym" | "minimal") ??
+          "full_gym",
         injuries: profile.injuries ?? [],
         currentDate: localDateString(new Date()),
         existingState: programState ?? undefined,
@@ -229,7 +277,10 @@ export default function ConfigurePlanModal({
       const code = (err as { code?: string })?.code;
       if (code === "functions/unauthenticated" || code === "unauthenticated") {
         toast.error("Please sign in again to update your plan.");
-      } else if (code === "functions/invalid-argument" || code === "invalid-argument") {
+      } else if (
+        code === "functions/invalid-argument" ||
+        code === "invalid-argument"
+      ) {
         toast.error("Plan didn't validate — try a different combination.");
       } else {
         toast.error("Couldn't save your plan. Please try again.");
@@ -258,6 +309,7 @@ export default function ConfigurePlanModal({
         {/* Top bar — close + step indicator */}
         <header className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-pt">
           <button
+            type="button"
             onClick={() => {
               reset();
               onClose();
@@ -266,7 +318,7 @@ export default function ConfigurePlanModal({
             className="p-2 -ml-2 rounded-lg active:scale-95 transition-transform"
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-muted-foreground" />
+            <X className="size-5 text-muted-foreground" />
           </button>
           <span className="text-xs uppercase tracking-wider text-muted-foreground">
             Step {step + 1} of {TOTAL_STEPS}
@@ -306,22 +358,46 @@ export default function ConfigurePlanModal({
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <StepIcon className="w-5 h-5" style={{ color: THEME.brand }} />
+                  <StepIcon className="size-5" style={{ color: THEME.brand }} />
                   <h1 className="text-xl font-bold">{STEP_META[step].title}</h1>
                 </div>
-                <p className="text-sm text-muted-foreground">{STEP_META[step].subtitle}</p>
+                <p className="text-sm text-muted-foreground">
+                  {STEP_META[step].subtitle}
+                </p>
               </div>
 
               {/* Step 0 — Training focus */}
               {step === 0 && (
                 <div className="space-y-2">
-                  {([
-                    { id: "hypertrophy", label: "Build muscle", desc: "Higher reps, more volume" },
-                    { id: "strength", label: "Get stronger", desc: "Lower reps, heavier compounds" },
-                    { id: "fat_loss", label: "Lose fat", desc: "Higher density, more conditioning" },
-                    { id: "general", label: "Stay fit", desc: "Balanced general training" },
-                    { id: "running", label: "Running support", desc: "Lifting that complements your runs" },
-                  ] as { id: PrimaryGoal; label: string; desc: string }[]).map((opt, i) => (
+                  {(
+                    [
+                      {
+                        id: "hypertrophy",
+                        label: "Build muscle",
+                        desc: "Higher reps, more volume",
+                      },
+                      {
+                        id: "strength",
+                        label: "Get stronger",
+                        desc: "Lower reps, heavier compounds",
+                      },
+                      {
+                        id: "fat_loss",
+                        label: "Lose fat",
+                        desc: "Higher density, more conditioning",
+                      },
+                      {
+                        id: "general",
+                        label: "Stay fit",
+                        desc: "Balanced general training",
+                      },
+                      {
+                        id: "running",
+                        label: "Running support",
+                        desc: "Lifting that complements your runs",
+                      },
+                    ] as { id: PrimaryGoal; label: string; desc: string }[]
+                  ).map((opt, i) => (
                     <OptionCard
                       key={opt.id}
                       selected={primaryGoal === opt.id}
@@ -338,11 +414,25 @@ export default function ConfigurePlanModal({
               {/* Step 1 — Nutrition phase */}
               {step === 1 && (
                 <div className="space-y-2">
-                  {([
-                    { id: "cut", label: "Cutting", desc: "Calorie deficit — lose fat while preserving muscle" },
-                    { id: "lean bulk", label: "Lean bulk", desc: "Small surplus — build muscle slowly" },
-                    { id: "recomp", label: "Recomp", desc: "Maintenance — recompose body at current weight" },
-                  ] as { id: Goal; label: string; desc: string }[]).map((opt, i) => (
+                  {(
+                    [
+                      {
+                        id: "cut",
+                        label: "Cutting",
+                        desc: "Calorie deficit — lose fat while preserving muscle",
+                      },
+                      {
+                        id: "lean bulk",
+                        label: "Lean bulk",
+                        desc: "Small surplus — build muscle slowly",
+                      },
+                      {
+                        id: "recomp",
+                        label: "Recomp",
+                        desc: "Maintenance — recompose body at current weight",
+                      },
+                    ] as { id: Goal; label: string; desc: string }[]
+                  ).map((opt, i) => (
                     <OptionCard
                       key={opt.id}
                       selected={nutritionPhase === opt.id}
@@ -366,13 +456,14 @@ export default function ConfigurePlanModal({
                     <div className="flex gap-2">
                       {[2, 3, 4, 5, 6].map((d) => (
                         <button
+                          type="button"
                           key={d}
                           onClick={() => setLiftDays(d)}
                           className={cn(
                             "flex-1 py-3 rounded-xl text-sm font-bold transition-all active:scale-95",
                             liftDays === d
                               ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground",
+                              : "bg-muted text-muted-foreground"
                           )}
                         >
                           {d}
@@ -385,18 +476,45 @@ export default function ConfigurePlanModal({
                       Preferred split
                     </p>
                     <div className="space-y-2">
-                      {([
-                        { id: "auto", label: "Auto", desc: "Let us pick the best split for your day count" },
-                        { id: "full_body", label: "Full body", desc: "Every session hits everything" },
-                        { id: "upper_lower", label: "Upper / lower", desc: "Split by region (≥4 days)" },
-                        { id: "ppl", label: "Push / pull / legs", desc: "Classic 3-way split (≥5 days)" },
-                      ] as { id: SplitType | "auto"; label: string; desc: string }[]).map((opt, i) => (
+                      {(
+                        [
+                          {
+                            id: "auto",
+                            label: "Auto",
+                            desc: "Let us pick the best split for your day count",
+                          },
+                          {
+                            id: "full_body",
+                            label: "Full body",
+                            desc: "Every session hits everything",
+                          },
+                          {
+                            id: "upper_lower",
+                            label: "Upper / lower",
+                            desc: "Split by region (≥4 days)",
+                          },
+                          {
+                            id: "ppl",
+                            label: "Push / pull / legs",
+                            desc: "Classic 3-way split (≥5 days)",
+                          },
+                        ] as {
+                          id: SplitType | "auto";
+                          label: string;
+                          desc: string;
+                        }[]
+                      ).map((opt, i) => (
                         <OptionCard
                           key={opt.id}
                           selected={preferredSplit === opt.id}
                           onSelect={() => setPreferredSplit(opt.id)}
                           index={i}
-                          icon={<Dumbbell size={20} style={{ color: THEME.lifting }} />}
+                          icon={
+                            <Dumbbell
+                              size={20}
+                              style={{ color: THEME.lifting }}
+                            />
+                          }
                           label={opt.label}
                           desc={opt.desc}
                         />
@@ -410,17 +528,34 @@ export default function ConfigurePlanModal({
               {step === 3 && (
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    {([
-                      { id: "freeform" as RunMode, label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
-                      { id: "structured" as RunMode, label: "Structured", desc: "Auto-assign run types to your run days" },
-                      { id: "race_prep" as RunMode, label: "Race prep", desc: "Periodised plan for a specific race" },
-                    ]).map((opt, i) => (
+                    {[
+                      {
+                        id: "freeform" as RunMode,
+                        label: "Freeform",
+                        desc: "Run whenever you want, no auto-scheduling",
+                      },
+                      {
+                        id: "structured" as RunMode,
+                        label: "Structured",
+                        desc: "Auto-assign run types to your run days",
+                      },
+                      {
+                        id: "race_prep" as RunMode,
+                        label: "Race prep",
+                        desc: "Periodised plan for a specific race",
+                      },
+                    ].map((opt, i) => (
                       <OptionCard
                         key={opt.id}
                         selected={runMode === opt.id}
                         onSelect={() => setRunMode(opt.id)}
                         index={i}
-                        icon={<Footprints size={20} style={{ color: THEME.running }} />}
+                        icon={
+                          <Footprints
+                            size={20}
+                            style={{ color: THEME.running }}
+                          />
+                        }
                         label={opt.label}
                         desc={opt.desc}
                       />
@@ -429,7 +564,10 @@ export default function ConfigurePlanModal({
 
                   {runMode !== "freeform" && (
                     <div>
-                      <label htmlFor="configure-run-days" className="text-xs uppercase tracking-wider text-muted-foreground">
+                      <label
+                        htmlFor="configure-run-days"
+                        className="text-xs uppercase tracking-wider text-muted-foreground"
+                      >
                         Run days per week ({weeklyRunDays})
                       </label>
                       <input
@@ -438,14 +576,30 @@ export default function ConfigurePlanModal({
                         min={1}
                         max={7}
                         value={weeklyRunDays}
-                        onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                        onChange={(e) =>
+                          setWeeklyRunDays(Number(e.target.value))
+                        }
                         className="w-full mt-1 accent-primary"
                       />
                       {liftDays + weeklyRunDays > 7 && (
-                        <p className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
-                          {liftDays} lift + {weeklyRunDays} run = {liftDays + weeklyRunDays}. You'll see{" "}
-                          {Math.min(liftDays + weeklyRunDays - 7, Math.min(liftDays, weeklyRunDays))} double day
-                          {Math.min(liftDays + weeklyRunDays - 7, Math.min(liftDays, weeklyRunDays)) === 1 ? "" : "s"}.
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: "hsl(var(--muted-foreground))" }}
+                        >
+                          {liftDays} lift + {weeklyRunDays} run ={" "}
+                          {liftDays + weeklyRunDays}. You'll see{" "}
+                          {Math.min(
+                            liftDays + weeklyRunDays - 7,
+                            Math.min(liftDays, weeklyRunDays)
+                          )}{" "}
+                          double day
+                          {Math.min(
+                            liftDays + weeklyRunDays - 7,
+                            Math.min(liftDays, weeklyRunDays)
+                          ) === 1
+                            ? ""
+                            : "s"}
+                          .
                         </p>
                       )}
                     </div>
@@ -458,24 +612,34 @@ export default function ConfigurePlanModal({
                           Distance
                         </p>
                         <div className="flex gap-1.5">
-                          {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map((d) => (
+                          {(
+                            ["5k", "10k", "half", "marathon"] as RaceDistance[]
+                          ).map((d) => (
                             <button
+                              type="button"
                               key={d}
                               onClick={() => setRaceDistance(d)}
                               className={cn(
                                 "flex-1 py-2 rounded-lg text-xs font-medium transition-all",
                                 raceDistance === d
                                   ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground",
+                                  : "bg-muted text-muted-foreground"
                               )}
                             >
-                              {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
+                              {d === "half"
+                                ? "Half"
+                                : d === "marathon"
+                                  ? "Full"
+                                  : d.toUpperCase()}
                             </button>
                           ))}
                         </div>
                       </div>
                       <div>
-                        <label htmlFor="configure-race-date" className="text-xs uppercase tracking-wider text-muted-foreground">
+                        <label
+                          htmlFor="configure-race-date"
+                          className="text-xs uppercase tracking-wider text-muted-foreground"
+                        >
                           Target date
                         </label>
                         <input
@@ -518,7 +682,9 @@ export default function ConfigurePlanModal({
                         >
                           <p
                             className="text-[10px] uppercase tracking-wider"
-                            style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
+                            style={{
+                              color: "hsl(var(--muted-foreground) / 0.7)",
+                            }}
                           >
                             {dayLetters[i]}
                           </p>
@@ -535,12 +701,20 @@ export default function ConfigurePlanModal({
                   <div className="flex items-center gap-3 flex-wrap pt-1">
                     {(["lift", "run", "both", "rest"] as const).map((t) => {
                       const meta = SCHEDULE_TYPE_META[t];
-                      const count = previewWeekSchedule.filter((d) => d.type === t).length;
+                      const count = previewWeekSchedule.filter(
+                        (d) => d.type === t
+                      ).length;
                       if (count === 0) return null;
                       return (
                         <div key={t} className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
-                          <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ background: meta.color }}
+                          />
+                          <span
+                            className="text-xs"
+                            style={{ color: "hsl(var(--muted-foreground))" }}
+                          >
                             {count} {meta.label.toLowerCase()}
                           </span>
                         </div>
@@ -568,8 +742,16 @@ export default function ConfigurePlanModal({
                   }}
                 >
                   {[
-                    { label: "Focus", value: primaryGoal.replace("_", " "), color: THEME.brand },
-                    { label: "Nutrition", value: nutritionPhase, color: THEME.warning },
+                    {
+                      label: "Focus",
+                      value: primaryGoal.replace("_", " "),
+                      color: THEME.brand,
+                    },
+                    {
+                      label: "Nutrition",
+                      value: nutritionPhase,
+                      color: THEME.warning,
+                    },
                     {
                       label: "Lifting",
                       value: `${liftDays} days/week · ${preferredSplit === "auto" ? "Auto-split" : preferredSplit.replace("_", " ")}`,
@@ -593,21 +775,28 @@ export default function ConfigurePlanModal({
                       transition={{ delay: i * 0.08, duration: 0.3 }}
                       className="flex items-start gap-3 py-3"
                       style={{
-                        borderBottom: i < arr.length - 1 ? "1px solid hsl(var(--border))" : "none",
+                        borderBottom:
+                          i < arr.length - 1
+                            ? "1px solid hsl(var(--border))"
+                            : "none",
                       }}
                     >
                       <div
-                        className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                        className="size-2 rounded-full mt-1.5 flex-shrink-0"
                         style={{ background: row.color }}
                       />
                       <div>
                         <p
                           className="text-xs uppercase tracking-wider"
-                          style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
+                          style={{
+                            color: "hsl(var(--muted-foreground) / 0.7)",
+                          }}
                         >
                           {row.label}
                         </p>
-                        <p className="text-sm font-semibold mt-0.5 capitalize">{row.value}</p>
+                        <p className="text-sm font-semibold mt-0.5 capitalize">
+                          {row.value}
+                        </p>
                       </div>
                     </motion.div>
                   ))}
@@ -621,6 +810,7 @@ export default function ConfigurePlanModal({
         <div className="flex items-center gap-3 px-4 py-3 border-t border-border safe-area-pb">
           {step > 0 && (
             <button
+              type="button"
               onClick={() => setStep((s) => s - 1)}
               disabled={saving}
               className="px-4 py-3 rounded-xl text-sm font-medium active:scale-95"
@@ -629,10 +819,11 @@ export default function ConfigurePlanModal({
                 color: "hsl(var(--muted-foreground))",
               }}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
             </button>
           )}
           <button
+            type="button"
             onClick={() => {
               if (step < TOTAL_STEPS - 1) {
                 setStep((s) => s + 1);
@@ -643,7 +834,7 @@ export default function ConfigurePlanModal({
             disabled={!canAdvance[step] || saving}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all active:scale-95",
-              (!canAdvance[step] || saving) && "opacity-40",
+              (!canAdvance[step] || saving) && "opacity-40"
             )}
             style={{ background: THEME.teal, color: "#000" }}
           >
@@ -652,12 +843,12 @@ export default function ConfigurePlanModal({
                 "Rebuilding…"
               ) : (
                 <>
-                  Rebuild plan <ChevronRight className="w-4 h-4" />
+                  Rebuild plan <ChevronRight className="size-4" />
                 </>
               )
             ) : (
               <>
-                Continue <ChevronRight className="w-4 h-4" />
+                Continue <ChevronRight className="size-4" />
               </>
             )}
           </button>

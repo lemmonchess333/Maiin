@@ -268,11 +268,11 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             </div>
             {demo.tip && (
               <div
-                className="mt-4 flex gap-3 rounded-xl px-3 py-3"
+                className="mt-4 flex gap-3 rounded-xl p-3"
                 style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
               >
                 <AlertTriangle
-                  className="mt-0.5 h-4 w-4 shrink-0"
+                  className="mt-0.5 size-4 shrink-0"
                   style={{ color: THEME.semantic.nutrition }}
                 />
                 <div>
@@ -294,17 +294,18 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           </div>
           {overflows && (
             <button
+              type="button"
               onClick={() => setShowInstructions(!showInstructions)}
               className="flex items-center gap-1 mt-2 text-[15px] font-medium"
               style={{ color: THEME.lifting }}
             >
               {showInstructions ? (
                 <>
-                  <ChevronUp className="w-4 h-4" /> Hide
+                  <ChevronUp className="size-4" /> Hide
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-4 h-4" /> Show full instructions
+                  <ChevronDown className="size-4" /> Show full instructions
                 </>
               )}
             </button>

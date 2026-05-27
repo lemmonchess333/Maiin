@@ -159,7 +159,7 @@ export default function AdminModeration() {
     return (
       <div className="px-4 py-8 max-w-md mx-auto">
         <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <ShieldAlert className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <ShieldAlert className="size-8 text-muted-foreground mx-auto mb-3" />
           <h1 className="text-base font-semibold">Not authorised</h1>
           <p className="text-sm text-muted-foreground mt-2">
             This page is for Tropos moderators only.
@@ -190,14 +190,14 @@ export default function AdminModeration() {
 
       {reports === null && !error && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
           <span>Loading pending reports…</span>
         </div>
       )}
 
       {reports && reports.length === 0 && (
         <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <Check className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <Check className="size-8 text-muted-foreground mx-auto mb-3" />
           <p className="text-sm font-semibold">All clear.</p>
           <p className="text-xs text-muted-foreground mt-1">
             No pending reports.
@@ -266,7 +266,7 @@ export default function AdminModeration() {
                       onClick={() => void resolveReport(report.reportId, true)}
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
-                      <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+                      <EyeOff className="size-3.5" aria-hidden="true" />
                       Hide content
                     </button>
                   )}
@@ -286,7 +286,7 @@ export default function AdminModeration() {
                       aria-label="Restrict user — they can't search, follow, or invite from the Find tab until admin lifts."
                       className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive/80 text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                     >
-                      <UserX className="w-3.5 h-3.5" aria-hidden="true" />
+                      <UserX className="size-3.5" aria-hidden="true" />
                       Restrict user
                     </button>
                   )}

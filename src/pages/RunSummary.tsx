@@ -105,6 +105,7 @@ function RetryBanner({
         </p>
       </div>
       <button
+        type="button"
         onClick={onRetry}
         className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
         style={{ background: THEME.running }}
@@ -240,6 +241,7 @@ function InvalidRunReview({
             </p>
           )}
           <button
+            type="button"
             onClick={onDone}
             className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
             style={{
@@ -267,6 +269,7 @@ function InvalidRunReview({
         <div className="pt-1">
           {!editing ? (
             <button
+              type="button"
               onClick={startEditing}
               className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground border border-border"
             >
@@ -297,12 +300,14 @@ function InvalidRunReview({
               )}
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setEditing(false)}
                   className="flex-1 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={commitEdit}
                   disabled={!editValid}
                   className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
@@ -320,6 +325,7 @@ function InvalidRunReview({
         <div className="space-y-2 pt-1">
           {showSaveAnyway && (
             <button
+              type="button"
               onClick={onSave}
               disabled={saveStatus === "saving"}
               className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-muted text-foreground border border-border"
@@ -329,6 +335,7 @@ function InvalidRunReview({
           )}
           {showDiscard && (
             <button
+              type="button"
               onClick={onDiscard}
               className="w-full py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
             >
@@ -952,10 +959,11 @@ export default function RunSummary() {
     >
       <div className="px-4 pt-4">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="size-4" />
           Back
         </button>
       </div>
@@ -1106,6 +1114,7 @@ export default function RunSummary() {
                   </div>
                   <div className="grid grid-cols-1 gap-2">
                     <button
+                      type="button"
                       disabled={reconciliationBusy}
                       onClick={async () => {
                         setReconciliationBusy(true);
@@ -1139,6 +1148,7 @@ export default function RunSummary() {
                       Mark scheduled run complete
                     </button>
                     <button
+                      type="button"
                       disabled={reconciliationBusy}
                       onClick={async () => {
                         setReconciliationBusy(true);
@@ -1159,6 +1169,7 @@ export default function RunSummary() {
                       Skip scheduled run
                     </button>
                     <button
+                      type="button"
                       disabled={reconciliationBusy}
                       onClick={() => {
                         setReconciliation("dismissed");
@@ -1492,6 +1503,7 @@ export default function RunSummary() {
 
             {canShowNormalSave({ isInvalid: false, saveStatus }) && (
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
                 className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90"
@@ -1506,6 +1518,7 @@ export default function RunSummary() {
              same primary-action slot as Save Run so the user's eye
              doesn't move when the state transitions saved → saved. */
               <button
+                type="button"
                 onClick={() => navigate("/")}
                 className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
                 style={{
@@ -1536,6 +1549,7 @@ export default function RunSummary() {
                 <div className="flex gap-2">
                   {showGpx && (
                     <button
+                      type="button"
                       onClick={handleExportGPX}
                       className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
                     >
@@ -1544,6 +1558,7 @@ export default function RunSummary() {
                   )}
                   {showShare && (
                     <button
+                      type="button"
                       onClick={handleShare}
                       disabled={sharing}
                       className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform"
@@ -1556,6 +1571,7 @@ export default function RunSummary() {
             })()}
             {canShowDiscard({ saveStatus }) && (
               <button
+                type="button"
                 onClick={handleDiscard}
                 className="w-full py-2 text-sm text-red-400"
               >

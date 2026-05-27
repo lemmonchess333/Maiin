@@ -3,8 +3,14 @@ import { Camera, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { UserProfile } from "@/lib/auth";
 import { useAuth } from "@/lib/auth";
-import { processProfilePhoto, ProfilePhotoProcessingError } from "@/lib/profilePhotoProcessor";
-import { uploadProfilePhoto, removeProfilePhoto } from "@/lib/profilePhotoUpload";
+import {
+  processProfilePhoto,
+  ProfilePhotoProcessingError,
+} from "@/lib/profilePhotoProcessor";
+import {
+  uploadProfilePhoto,
+  removeProfilePhoto,
+} from "@/lib/profilePhotoUpload";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import Avatar from "@/components/Avatar";
@@ -31,7 +37,12 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
   const hasPhoto = !!profile.photoURL;
   const name = profile.displayName || "";
   const initials = name
-    ? name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+    ? name
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "";
 
   const handlePick = useCallback(() => {
@@ -72,20 +83,26 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
           logger.error("uploadProfilePhoto failed:", err);
           const code = (err as { code?: string } | null)?.code;
           if (code === "storage/unauthorized" || code === "permission-denied") {
-            toast.error("Upload not permitted. Try again in a minute — the server may need to update.");
+            toast.error(
+              "Upload not permitted. Try again in a minute — the server may need to update."
+            );
           } else if (code === "storage/canceled") {
             toast.error("Upload cancelled.");
           } else if (code === "storage/retry-limit-exceeded") {
             toast.error("Network is slow. Try again on a stronger connection.");
           } else {
-            toast.error(code ? `Couldn't upload (${code}). Try again.` : "Couldn't upload. Try again.");
+            toast.error(
+              code
+                ? `Couldn't upload (${code}). Try again.`
+                : "Couldn't upload. Try again."
+            );
           }
         }
       } finally {
         setBusy(null);
       }
     },
-    [user, refreshProfile],
+    [user, refreshProfile]
   );
 
   const handleRemove = useCallback(async () => {
@@ -111,7 +128,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Change profile photo"
-        className="relative w-14 h-14 shrink-0 rounded-full active:scale-[0.97] transition-transform"
+        className="relative size-14 shrink-0 rounded-full active:scale-[0.97] transition-transform"
       >
         {hasPhoto ? (
           <Avatar
@@ -119,19 +136,19 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
             displayName={name || "You"}
             fallbackInitial={initials || undefined}
             size="xl"
-            className="w-14 h-14"
+            className="size-14"
           />
         ) : (
-          <div className="w-full h-full rounded-full bg-primary/20 flex items-center justify-center">
+          <div className="size-full rounded-full bg-primary/20 flex items-center justify-center">
             {initials ? (
               <span className="text-lg font-bold text-primary">{initials}</span>
             ) : (
-              <Camera className="w-6 h-6 text-primary" />
+              <Camera className="size-6 text-primary" />
             )}
           </div>
         )}
-        <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-primary flex items-center justify-center border-2 border-card">
-          <Camera className="w-3 h-3 text-primary-foreground" />
+        <div className="absolute -bottom-0.5 -right-0.5 size-6 rounded-full bg-primary flex items-center justify-center border-2 border-card">
+          <Camera className="size-3 text-primary-foreground" />
         </div>
       </button>
 
@@ -174,7 +191,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
               </>
             ) : (
               <>
-                <Camera className="w-4 h-4" />
+                <Camera className="size-4" />
                 {hasPhoto ? "Choose a new photo" : "Choose a photo"}
               </>
             )}
@@ -194,7 +211,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="size-4" />
                   Remove photo
                 </>
               )}

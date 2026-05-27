@@ -32,10 +32,7 @@ export default function AiUsageSection() {
         className="w-full flex items-center gap-3 p-4 rounded-2xl bg-card"
         aria-busy="true"
       >
-        <Sparkles
-          className="w-5 h-5 text-muted-foreground"
-          aria-hidden="true"
-        />
+        <Sparkles className="size-5 text-muted-foreground" aria-hidden="true" />
         <div className="flex-1 h-5 rounded bg-muted/40" />
       </div>
     );
@@ -52,7 +49,7 @@ export default function AiUsageSection() {
         role="group"
         aria-label="AI usage today"
       >
-        <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
+        <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
           <p className="text-sm font-medium text-foreground">AI usage today</p>
           <p className="text-xs text-muted-foreground tabular-nums">
@@ -75,7 +72,7 @@ export default function AiUsageSection() {
       aria-label="AI usage today — upgrade to Pro"
     >
       <div className="flex items-center gap-3">
-        <Sparkles className="w-5 h-5 text-primary" aria-hidden="true" />
+        <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
           <p className="text-sm font-medium text-foreground">AI usage today</p>
           <p className="text-xs text-muted-foreground tabular-nums">
@@ -84,7 +81,7 @@ export default function AiUsageSection() {
         </div>
       </div>
       <ChevronRight
-        className="w-4 h-4 text-muted-foreground"
+        className="size-4 text-muted-foreground"
         aria-hidden="true"
       />
     </button>
