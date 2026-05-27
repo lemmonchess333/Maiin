@@ -10,7 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { stripUndefined } from "../lib/firestoreGuards";
-import { localDateString } from "../lib/dateHelpers";
+import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
@@ -42,6 +42,9 @@ import {
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import { useRunningStats } from "../hooks/useRunningStats";
+import { getWeeklyRunTarget } from "../lib/scheduleUtils";
+import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "sonner";
 import {
@@ -365,6 +368,10 @@ export default function RunSummary() {
   // "yes I did do this scheduled run" reconciliation path
   // (Q5 P74 — DayActionSheet's contextual hint).
   const { markManualComplete, skipRunDay, programState } = useProgram();
+  // Run8 PR3c — this-week run count for the plan-progress row. Hook
+  // must sit above the early-return guard at line ~470 to satisfy
+  // rules-of-hooks. Used further below in the component body.
+  const { runs: weekRunsRaw } = useRunningStats(7);
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -533,6 +540,30 @@ export default function RunSummary() {
     }
     return "Great run!";
   })();
+
+  // Run8 PR3c — plan-progress row. Surfaces "X of N runs this week"
+  // for structured / race_prep users; freeform users see nothing.
+  // The just-saved run is counted optimistically (saved && eligible)
+  // so the user sees their new total without waiting for the
+  // useRunningStats query to refetch.
+  const weeklyRunTarget =
+    profile?.runMode && profile.runMode !== "freeform"
+      ? getWeeklyRunTarget(profile)
+      : 0;
+  const thisWeekKey = localWeekKey(new Date());
+  const eligibleRunsThisWeek = weekRunsRaw.filter(
+    (r) => isVolumeEligible(r) && localWeekKey(r.completedAt) === thisWeekKey
+  ).length;
+  // Optimistic count: include the just-saved run if it cleared the
+  // eligibility threshold (distance >= 50 && duration >= 30 — same
+  // gate isVolumeEligible uses on persisted runs). Hooked on the
+  // current saveStatus so it lights up the moment the save lands,
+  // before useRunningStats refetches the new doc.
+  const currentRunIsEligible = (distance ?? 0) >= 50 && (elapsed ?? 0) >= 30;
+  // `saveStatus`/`saved` are declared further down in this component;
+  // we recompute the "include current run" flag inline at render.
+  const runPlanCurrentWeek = programState?.runPlan?.currentWeek;
+  const runPlanTotalWeeks = programState?.runPlan?.totalWeeks;
 
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
@@ -1235,6 +1266,47 @@ export default function RunSummary() {
                   aria-label={`Plan adherence: ${adherenceLabel}`}
                 >
                   {adherenceLabel}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Run8 PR3c — plan-progress row. Only renders for
+              structured / race_prep users (weeklyRunTarget > 0).
+              Includes the just-saved run optimistically once the
+              save lands so the user sees their new total without
+              waiting for useRunningStats to refetch. Race-prep adds
+              the "Week X of Y" anchor. */}
+          {weeklyRunTarget > 0 && (
+            <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center gap-1.5 text-xs">
+              {profile?.runMode === "race_prep" &&
+                runPlanTotalWeeks &&
+                runPlanCurrentWeek != null && (
+                  <>
+                    <span className="font-semibold text-foreground">
+                      Week {runPlanCurrentWeek + 1} of {runPlanTotalWeeks}
+                    </span>
+                    <span className="text-muted-foreground">·</span>
+                  </>
+                )}
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {Math.min(
+                  weeklyRunTarget,
+                  eligibleRunsThisWeek + (saved && currentRunIsEligible ? 1 : 0)
+                )}
+              </span>
+              <span className="text-muted-foreground">of</span>
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {weeklyRunTarget}
+              </span>
+              <span className="text-muted-foreground">runs this week</span>
+              {saved && currentRunIsEligible && (
+                <span
+                  className="ml-1 text-xs font-semibold"
+                  style={{ color: THEME.success }}
+                  aria-label="this run counts"
+                >
+                  +1 ✓
                 </span>
               )}
             </div>
