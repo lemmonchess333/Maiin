@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { doc, onSnapshot, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { format } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 
 export interface WaterLog {
   glasses: number;
@@ -17,12 +17,15 @@ export function useWaterLog() {
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const skipNextSnapshot = useRef(false);
 
-  const today = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+  const today = useMemo(() => localDateString(), []);
   const target = profile?.targetWaterGlasses || 8;
 
   useEffect(() => {
     if (!user) {
-      const reset = () => { setGlasses(0); setLoading(false); };
+      const reset = () => {
+        setGlasses(0);
+        setLoading(false);
+      };
       reset();
       return;
     }
@@ -60,7 +63,9 @@ export function useWaterLog() {
           glasses: newGlasses,
           targetGlasses: target,
           updatedAt: Timestamp.now(),
-        }).catch(() => { skipNextSnapshot.current = false; });
+        }).catch(() => {
+          skipNextSnapshot.current = false;
+        });
       }, 500);
     },
     [user, today, target]
