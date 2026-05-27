@@ -16,29 +16,37 @@ export default function SettingsSubscription() {
   const navigate = useNavigate();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
 
-  const statusLabel = tier === "pro"
-    ? "Pro — Full access"
-    : isInTrial
-      ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
-      : "Free — Upgrade for full access";
+  const statusLabel =
+    tier === "pro"
+      ? "Pro — Full access"
+      : isInTrial
+        ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
+        : "Free — Upgrade for full access";
 
   return (
     <SettingsSection title="Subscription" subtitle="Plan, billing">
       <button
         type="button"
-        onClick={() => { haptic(); navigate("/upgrade"); }}
+        onClick={() => {
+          haptic();
+          navigate("/upgrade");
+        }}
         className="w-full flex items-center justify-between p-4 rounded-2xl bg-card motion-safe:active:scale-[0.99]"
       >
         <div className="flex items-center gap-3">
-          <Crown className="w-5 h-5 text-primary" />
+          <Crown className="size-5 text-primary" />
           <div className="text-left">
             <p className="text-sm font-medium text-foreground">
-              {tier === "pro" ? "Pro" : isInTrial ? "Pro trial" : "Upgrade to Pro"}
+              {tier === "pro"
+                ? "Pro"
+                : isInTrial
+                  ? "Pro trial"
+                  : "Upgrade to Pro"}
             </p>
             <p className="text-xs text-muted-foreground">{statusLabel}</p>
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </button>
     </SettingsSection>
   );

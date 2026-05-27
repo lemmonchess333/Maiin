@@ -36,8 +36,7 @@ function formatDuration(secs: number): string {
 }
 
 function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
-  if (preview.length < 2)
-    return <div className="w-full h-full bg-muted rounded" />;
+  if (preview.length < 2) return <div className="size-full bg-muted rounded" />;
   const lats = preview.map((p) => p.lat);
   const lons = preview.map((p) => p.lon);
   const minLat = Math.min(...lats),
@@ -55,7 +54,7 @@ function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   return (
     <svg
       viewBox="0 0 100 60"
-      className="w-full h-full"
+      className="size-full"
       preserveAspectRatio="xMidYMid meet"
     >
       <polyline
@@ -113,6 +112,7 @@ function RunCard({
 
   return (
     <button
+      type="button"
       onClick={() => navigate(`/run/${run.id}`)}
       className="w-full text-left p-3 rounded-xl bg-card border border-border flex gap-3 items-center active:scale-[0.98]"
     >
@@ -120,8 +120,8 @@ function RunCard({
         {run.routePreview && run.routePreview.length > 1 ? (
           <MiniRoute preview={run.routePreview} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Footprints className="w-4 h-4 text-green-500" />
+          <div className="size-full flex items-center justify-center">
+            <Footprints className="size-4 text-green-500" />
           </div>
         )}
       </div>
@@ -189,7 +189,7 @@ function RunCard({
           })}
         </p>
         <svg
-          className="w-3.5 h-3.5 text-muted-foreground/40 ml-auto mt-1"
+          className="size-3.5 text-muted-foreground/40 ml-auto mt-1"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

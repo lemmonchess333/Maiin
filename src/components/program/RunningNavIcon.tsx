@@ -58,10 +58,14 @@ export default function RunningNavIcon({ className, ref }: Props) {
           shape so a finger that lands near (but not on) the circle
           still registers. */}
       <span
-        className="flex items-center justify-center w-7 h-7 rounded-full"
+        className="flex items-center justify-center size-7 rounded-full"
         style={{ backgroundColor: `${THEME.running}24` }}
       >
-        <Footprints size={14} aria-hidden="true" style={{ color: THEME.running }} />
+        <Footprints
+          size={14}
+          aria-hidden="true"
+          style={{ color: THEME.running }}
+        />
       </span>
     </motion.button>
   );

@@ -16,7 +16,7 @@ describe("RunControlButton — base contract", () => {
       <RunControlButton
         aria-label="Pause run"
         icon={<svg data-testid="icon" />}
-      />,
+      />
     );
     const btn = screen.getByRole("button", { name: "Pause run" });
     expect(btn).toBeTruthy();
@@ -29,7 +29,9 @@ describe("RunControlButton — base contract", () => {
 
   it("press scale is 0.92 (calmer than the regular Button's 0.97)", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} />);
-    expect(screen.getByRole("button").className).toContain("active:scale-[0.92]");
+    expect(screen.getByRole("button").className).toContain(
+      "active:scale-[0.92]"
+    );
   });
 
   it("circular shape — rounded-full (not the app's rounded-xl)", () => {
@@ -44,7 +46,9 @@ describe("RunControlButton — base contract", () => {
   });
 
   it("wraps the icon in aria-hidden (SR reads aria-label only)", () => {
-    render(<RunControlButton aria-label="Pause" icon={<svg data-testid="i" />} />);
+    render(
+      <RunControlButton aria-label="Pause" icon={<svg data-testid="i" />} />
+    );
     const wrapper = screen.getByTestId("i").parentElement;
     expect(wrapper?.getAttribute("aria-hidden")).toBe("true");
   });
@@ -53,26 +57,29 @@ describe("RunControlButton — base contract", () => {
 describe("RunControlButton — sizes", () => {
   it("lg is the default (76px)", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} />);
-    expect(screen.getByRole("button").className).toContain("w-[76px]");
+    expect(screen.getByRole("button").className).toContain("size-[76px]");
   });
 
-  it("sm is 56px (w-14 h-14)", () => {
+  it("sm is 56px (size-14)", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} size="sm" />);
     const cls = screen.getByRole("button").className;
-    expect(cls).toContain("w-14");
-    expect(cls).toContain("h-14");
+    expect(cls).toContain("size-14");
   });
 });
 
 describe("RunControlButton — variants", () => {
   it("primary variant applies the teal background via inline style", () => {
-    render(<RunControlButton aria-label="Resume" icon={<svg />} variant="primary" />);
+    render(
+      <RunControlButton aria-label="Resume" icon={<svg />} variant="primary" />
+    );
     const style = screen.getByRole("button").getAttribute("style") || "";
     expect(style).toContain("rgb(82, 163, 189)");
   });
 
   it("danger variant applies the red border via inline style", () => {
-    render(<RunControlButton aria-label="Stop" icon={<svg />} variant="danger" />);
+    render(
+      <RunControlButton aria-label="Stop" icon={<svg />} variant="danger" />
+    );
     const style = screen.getByRole("button").getAttribute("style") || "";
     expect(style).toContain("rgb(239, 68, 68)");
   });
@@ -85,7 +92,9 @@ describe("RunControlButton — variants", () => {
 
   it("glow prop is opt-in for variants other than primary", () => {
     // primary has glow always on; neutral/danger respect the prop
-    render(<RunControlButton aria-label="X" icon={<svg />} variant="neutral" />);
+    render(
+      <RunControlButton aria-label="X" icon={<svg />} variant="neutral" />
+    );
     const styleNoGlow = screen.getByRole("button").getAttribute("style") || "";
     // neutral always has a drop-shadow but no teal-tinted glow
     expect(styleNoGlow).not.toMatch(/rgba\(82,\s*163,\s*189/);
@@ -95,22 +104,14 @@ describe("RunControlButton — variants", () => {
 describe("RunControlButton — visible label (decorative)", () => {
   it("renders the visible label below the button when provided", () => {
     render(
-      <RunControlButton
-        aria-label="Pause run"
-        label="PAUSE"
-        icon={<svg />}
-      />,
+      <RunControlButton aria-label="Pause run" label="PAUSE" icon={<svg />} />
     );
     expect(screen.getByText("PAUSE")).toBeTruthy();
   });
 
   it("the visible label is aria-hidden (decorative — accessible name is aria-label)", () => {
     render(
-      <RunControlButton
-        aria-label="Pause run"
-        label="PAUSE"
-        icon={<svg />}
-      />,
+      <RunControlButton aria-label="Pause run" label="PAUSE" icon={<svg />} />
     );
     // The label <p> is aria-hidden so screen readers ignore it.
     const label = screen.getByText("PAUSE");
@@ -126,11 +127,15 @@ describe("RunControlButton — visible label (decorative)", () => {
 describe("RunControlButton — disabled state", () => {
   it("respects the disabled prop", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} disabled />);
-    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(
+      true
+    );
   });
 
   it("applies the disabled visual class", () => {
     render(<RunControlButton aria-label="X" icon={<svg />} disabled />);
-    expect(screen.getByRole("button").className).toContain("disabled:opacity-50");
+    expect(screen.getByRole("button").className).toContain(
+      "disabled:opacity-50"
+    );
   });
 });

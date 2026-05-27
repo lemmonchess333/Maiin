@@ -4,27 +4,27 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
-import {
-  Play,
-  RotateCcw,
-  Check,
-  X,
-  Dumbbell,
-  Trophy,
-} from "lucide-react";
+import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { buildPRMap, checkSetPR, repBucketLabel, type PRMap, type RepBucket, getRepBucket } from "@/lib/prTracking";
+import {
+  buildPRMap,
+  checkSetPR,
+  repBucketLabel,
+  type PRMap,
+  type RepBucket,
+  getRepBucket,
+} from "@/lib/prTracking";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
 import StallModal from "@/components/workout/StallModal";
-const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
+const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 
 function playChime() {
   try {
@@ -57,11 +57,26 @@ interface WorkoutDay {
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
 
-const SET_TYPE_CONFIG: Record<SetType, { label: string; color: string; bg: string }> = {
+const SET_TYPE_CONFIG: Record<
+  SetType,
+  { label: string; color: string; bg: string }
+> = {
   working: { label: "W", color: "text-foreground", bg: "" },
-  warmup: { label: "W", color: "text-yellow-600", bg: "bg-yellow-50 dark:bg-yellow-950/30" },
-  dropset: { label: "D", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/30" },
-  failure: { label: "F", color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30" },
+  warmup: {
+    label: "W",
+    color: "text-yellow-600",
+    bg: "bg-yellow-50 dark:bg-yellow-950/30",
+  },
+  dropset: {
+    label: "D",
+    color: "text-purple-600",
+    bg: "bg-purple-50 dark:bg-purple-950/30",
+  },
+  failure: {
+    label: "F",
+    color: "text-red-600",
+    bg: "bg-red-50 dark:bg-red-950/30",
+  },
 };
 
 const SET_TYPE_ORDER: SetType[] = ["working", "warmup", "dropset", "failure"];
@@ -93,40 +108,68 @@ interface SetLog {
 interface Props {
   day: WorkoutDay;
   dayIndex: number;
-  onLogExercise: (dayIndex: number, exIndex: number, reps: number, weight: number) => Promise<void>;
+  onLogExercise: (
+    dayIndex: number,
+    exIndex: number,
+    reps: number,
+    weight: number
+  ) => Promise<void>;
   onCompleteDay: (
     dayIndex: number,
     sessionData?: {
       durationMinutes: number;
-      setLogs: Array<Array<{ weight: number; reps: number; completed: boolean }>>;
-    },
+      setLogs: Array<
+        Array<{ weight: number; reps: number; completed: boolean }>
+      >;
+    }
   ) => Promise<void>;
   onClose: () => void;
 }
 
-export default function WorkoutSession({ day, dayIndex, onLogExercise, onCompleteDay, onClose }: Props) {
+export default function WorkoutSession({
+  day,
+  dayIndex,
+  onLogExercise,
+  onCompleteDay,
+  onClose,
+}: Props) {
   const { user, profile } = useAuth();
-  const { load: loadDraft, save: saveDraft, clear: clearDraft } = useWorkoutDraft(dayIndex);
+  const {
+    load: loadDraft,
+    save: saveDraft,
+    clear: clearDraft,
+  } = useWorkoutDraft(dayIndex);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
-  const [showResumePrompt, setShowResumePrompt] = useState(initialDraft !== null);
-  const [currentExIndex, setCurrentExIndex] = useState(initialDraft?.currentExIndex ?? 0);
+  const [showResumePrompt, setShowResumePrompt] = useState(
+    initialDraft !== null
+  );
+  const [currentExIndex, setCurrentExIndex] = useState(
+    initialDraft?.currentExIndex ?? 0
+  );
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [setLogs, setSetLogs] = useState<SetLog[][]>(() =>
-    initialDraft?.setLogs as SetLog[][] ??
-    day.exercises.map((ex) =>
-      Array.from({ length: ex.sets }, () => ({
-        reps: ex.reps,
-        weight: ex.weight,
-        completed: false,
-        type: "working" as SetType,
-      }))
-    )
+  const [setLogs, setSetLogs] = useState<SetLog[][]>(
+    () =>
+      (initialDraft?.setLogs as SetLog[][]) ??
+      day.exercises.map((ex) =>
+        Array.from({ length: ex.sets }, () => ({
+          reps: ex.reps,
+          weight: ex.weight,
+          completed: false,
+          type: "working" as SetType,
+        }))
+      )
   );
   const [showRPE, setShowRPE] = useState(false);
-  const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(initialDraft?.exerciseNotes ?? {});
+  const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(
+    initialDraft?.exerciseNotes ?? {}
+  );
   const [typePopover, setTypePopover] = useState<number | null>(null);
-  const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({ top: 0, left: 0, bottom: 0 });
+  const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({
+    top: 0,
+    left: 0,
+    bottom: 0,
+  });
   const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
   useEffect(() => {
@@ -140,13 +183,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // Auto-scroll exercise tabs when active exercise changes
   useEffect(() => {
     const container = tabsRef.current;
-    const activeBtn = container?.children[currentExIndex] as HTMLElement | undefined;
-    activeBtn?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const activeBtn = container?.children[currentExIndex] as
+      | HTMLElement
+      | undefined;
+    activeBtn?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
   }, [currentExIndex]);
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
-  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>({});
+  const [sessionCounts, setSessionCounts] = useState<Record<string, number>>(
+    {}
+  );
   const [firedPRs, setFiredPRs] = useState<Map<string, RepBucket[]>>(new Map());
 
   // Pre-fill weights/reps from most recent previous session + build PR map
@@ -155,21 +206,29 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
     const fetchPreviousWeights = async () => {
       const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(50)));
+      const snap = await getDocs(
+        query(workoutsRef, orderBy("date", "desc"), limit(50))
+      );
 
-      const prevWeights: Record<string, { weight: number; reps: number }[]> = {};
+      const prevWeights: Record<string, { weight: number; reps: number }[]> =
+        {};
 
       snap.docs.forEach((d) => {
         const data = d.data();
-        (data.exercises || []).forEach((ex: { exerciseName: string; sets?: { weightKg?: number; reps?: number }[] }) => {
-          const name = ex.exerciseName;
-          if (!prevWeights[name] && ex.sets?.length && ex.sets.length > 0) {
-            prevWeights[name] = ex.sets.map((s) => ({
-              weight: s.weightKg || 0,
-              reps: s.reps || 0,
-            }));
+        (data.exercises || []).forEach(
+          (ex: {
+            exerciseName: string;
+            sets?: { weightKg?: number; reps?: number }[];
+          }) => {
+            const name = ex.exerciseName;
+            if (!prevWeights[name] && ex.sets?.length && ex.sets.length > 0) {
+              prevWeights[name] = ex.sets.map((s) => ({
+                weight: s.weightKg || 0,
+                reps: s.reps || 0,
+              }));
+            }
           }
-        });
+        );
       });
 
       setSetLogs((prev) => {
@@ -180,7 +239,9 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           if (prevSets && updated[i]) {
             updated[i] = updated[i].map((set, si) => ({
               ...set,
-              weight: set.weight || (prevSets[si]?.weight ?? prevSets[0]?.weight ?? 0),
+              weight:
+                set.weight ||
+                (prevSets[si]?.weight ?? prevSets[0]?.weight ?? 0),
               reps: set.reps || (prevSets[si]?.reps ?? prevSets[0]?.reps ?? 0),
             }));
           }
@@ -191,8 +252,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       // Load persisted PR map, or build from history if not available
       let prMapLoaded = false;
       try {
-        const { doc: fbDoc, getDoc: fbGetDoc } = await import('firebase/firestore');
-        const prMapDoc = await fbGetDoc(fbDoc(db, "users", user.uid, "stats", "prMap"));
+        const { doc: fbDoc, getDoc: fbGetDoc } =
+          await import("firebase/firestore");
+        const prMapDoc = await fbGetDoc(
+          fbDoc(db, "users", user.uid, "stats", "prMap")
+        );
         if (prMapDoc.exists()) {
           const data = prMapDoc.data();
           setPrMap(data.map as PRMap);
@@ -207,14 +271,22 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
       if (!prMapLoaded) {
         // Fall back to building from last 50 workouts
-        const history = snap.docs.map(d => {
+        const history = snap.docs.map((d) => {
           const data = d.data();
           return {
             date: data.date as string,
-            exercises: (data.exercises || []).map((ex: { exerciseName: string; sets: { weightKg: number; reps: number }[] }) => ({
-              exerciseName: ex.exerciseName,
-              sets: (ex.sets || []).map(s => ({ weightKg: s.weightKg || 0, reps: s.reps || 0 })),
-            })),
+            exercises: (data.exercises || []).map(
+              (ex: {
+                exerciseName: string;
+                sets: { weightKg: number; reps: number }[];
+              }) => ({
+                exerciseName: ex.exerciseName,
+                sets: (ex.sets || []).map((s) => ({
+                  weightKg: s.weightKg || 0,
+                  reps: s.reps || 0,
+                })),
+              })
+            ),
           };
         });
         setPrMap(buildPRMap(history));
@@ -238,9 +310,11 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   }, [user?.uid, day.exercises]);
 
   // Elapsed workout timer
-  const [elapsedSeconds, setElapsedSeconds] = useState(initialDraft?.elapsedSeconds ?? 0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(
+    initialDraft?.elapsedSeconds ?? 0
+  );
   useEffect(() => {
-    const id = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
+    const id = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -249,9 +323,13 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // nav); elapsedSeconds is snapshotted via ref so we don't write every
   // second. Only persists once the user has completed at least one set.
   const elapsedSecondsRef = useRef(elapsedSeconds);
-  useEffect(() => { elapsedSecondsRef.current = elapsedSeconds; }, [elapsedSeconds]);
   useEffect(() => {
-    const hasProgress = setLogs.some((exSets) => exSets.some((s) => s.completed));
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+  useEffect(() => {
+    const hasProgress = setLogs.some((exSets) =>
+      exSets.some((s) => s.completed)
+    );
     if (!hasProgress) return;
     saveDraft({
       dayIndex,
@@ -261,13 +339,21 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       elapsedSeconds: elapsedSecondsRef.current,
       currentExIndex,
     });
-  }, [setLogs, exerciseNotes, currentExIndex, dayIndex, day.dayName, saveDraft]);
+  }, [
+    setLogs,
+    exerciseNotes,
+    currentExIndex,
+    dayIndex,
+    day.dayName,
+    saveDraft,
+  ]);
 
   const formatElapsed = (s: number): string => {
     const hrs = Math.floor(s / 3600);
     const mins = Math.floor((s % 3600) / 60);
     const secs = s % 60;
-    if (hrs > 0) return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    if (hrs > 0)
+      return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
     return `${mins}:${String(secs).padStart(2, "0")}`;
   };
 
@@ -278,9 +364,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   // profile with a 90s fallback for users who haven't set one.
   const [restSeconds, setRestSeconds] = useState(0);
   const [restTarget, setRestTarget] = useState(
-    typeof profile?.defaultRestSeconds === "number" && profile.defaultRestSeconds > 0
+    typeof profile?.defaultRestSeconds === "number" &&
+      profile.defaultRestSeconds > 0
       ? profile.defaultRestSeconds
-      : 90,
+      : 90
   );
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -292,7 +379,10 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(0);
 
   // Stall detection
-  const [stallExercise, setStallExercise] = useState<{name: string, weight: number} | null>(null);
+  const [stallExercise, setStallExercise] = useState<{
+    name: string;
+    weight: number;
+  } | null>(null);
 
   // Undo last set. PR E: extended with optional PR-context so undo
   // can revert the prMap mutation AND firedPRs entry, not just the
@@ -390,7 +480,12 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     });
   };
 
-  const updateSetLog = (exIdx: number, setIdx: number, field: "reps" | "weight", value: number) => {
+  const updateSetLog = (
+    exIdx: number,
+    setIdx: number,
+    field: "reps" | "weight",
+    value: number
+  ) => {
     setSetLogs((prev) => {
       const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
       updated[exIdx][setIdx][field] = value;
@@ -404,8 +499,8 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       completeSet();
     } else {
       haptic(50);
-      setSetLogs(prev => {
-        const updated = prev.map(sets => sets.map(s => ({ ...s })));
+      setSetLogs((prev) => {
+        const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
         updated[currentExIndex][setIdx].completed = true;
         return updated;
       });
@@ -465,7 +560,14 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
     // the History view if it really IS a PR.
     let prContext: NonNullable<typeof lastCompleted>["pr"] | undefined;
     if (!validation.warn) {
-      const prBucket = checkSetPR(exName, set.weight, set.reps, prMap, sessionCounts, 3);
+      const prBucket = checkSetPR(
+        exName,
+        set.weight,
+        set.reps,
+        prMap,
+        sessionCounts,
+        3
+      );
       const alreadyFired = firedPRs.get(exName) || [];
       if (prBucket && !alreadyFired.includes(prBucket)) {
         // Capture the previous PR for this bucket BEFORE we mutate it
@@ -480,16 +582,41 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         });
         setPrMap((prev) => {
           const updated = { ...prev };
-          if (!updated[exName]) updated[exName] = { '1rm': null, '3rm': null, '5rm': null, '8rm': null, '10rm': null };
-          updated[exName] = { ...updated[exName], [prBucket]: { weight: set.weight, reps: set.reps, date: new Date().toISOString().split('T')[0] } };
+          if (!updated[exName])
+            updated[exName] = {
+              "1rm": null,
+              "3rm": null,
+              "5rm": null,
+              "8rm": null,
+              "10rm": null,
+            };
+          updated[exName] = {
+            ...updated[exName],
+            [prBucket]: {
+              weight: set.weight,
+              reps: set.reps,
+              date: new Date().toISOString().split("T")[0],
+            },
+          };
           return updated;
         });
-        lazyConfetti().then(confetti => {
+        lazyConfetti().then((confetti) => {
           confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          setTimeout(() => confetti({ particleCount: 30, spread: 90, origin: { y: 0.65 }, startVelocity: 15 }), 200);
+          setTimeout(
+            () =>
+              confetti({
+                particleCount: 30,
+                spread: 90,
+                origin: { y: 0.65 },
+                startVelocity: 15,
+              }),
+            200
+          );
         });
         haptic(50);
-        toast.success(`New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`);
+        toast.success(
+          `New ${repBucketLabel(prBucket)}! ${set.weight}kg × ${set.reps} on ${exName}`
+        );
       }
     } else {
       // Surface the warn message so the user knows why no PR
@@ -516,7 +643,9 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       await onLogExercise(dayIndex, currentExIndex, set.reps, set.weight);
 
       if (isLastExercise) {
-        setSessionDurationMinutes(Math.round((Date.now() - sessionStartRef.current) / 60000));
+        setSessionDurationMinutes(
+          Math.round((Date.now() - sessionStartRef.current) / 60000)
+        );
         setSessionComplete(true);
       } else {
         // Move to next exercise
@@ -555,7 +684,7 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         const existing = updated.get(pr.exName) || [];
         updated.set(
           pr.exName,
-          existing.filter((b) => b !== pr.bucket),
+          existing.filter((b) => b !== pr.bucket)
         );
         return updated;
       });
@@ -587,28 +716,48 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
 
     const checkStalls = async () => {
       const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(query(workoutsRef, orderBy("date", "desc"), limit(20)));
-      const history = snap.docs.map(d => d.data());
+      const snap = await getDocs(
+        query(workoutsRef, orderBy("date", "desc"), limit(20))
+      );
+      const history = snap.docs.map((d) => d.data());
 
       for (const ex of day.exercises) {
         // Check localStorage cooldown
         const cooldownKey = `tropos_stall_${ex.name}`;
         const lastPopup = localStorage.getItem(cooldownKey);
-        if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000) continue; // 3 weeks cooldown
+        if (lastPopup && Date.now() - Number(lastPopup) < 3 * 7 * 86400000)
+          continue; // 3 weeks cooldown
 
         const lastThree = history
-          .filter(w => (w.exercises || []).some((e: { exerciseName: string }) => e.exerciseName === ex.name))
+          .filter((w) =>
+            (w.exercises || []).some(
+              (e: { exerciseName: string }) => e.exerciseName === ex.name
+            )
+          )
           .slice(0, 3);
 
         if (lastThree.length < 3) continue;
 
-        const weights = lastThree.map(w => {
-          const found = (w.exercises || []).find((e: { exerciseName: string }) => e.exerciseName === ex.name);
-          return found?.sets?.map((s: { weightKg?: number }) => s.weightKg).join(',') || '';
+        const weights = lastThree.map((w) => {
+          const found = (w.exercises || []).find(
+            (e: { exerciseName: string }) => e.exerciseName === ex.name
+          );
+          return (
+            found?.sets
+              ?.map((s: { weightKg?: number }) => s.weightKg)
+              .join(",") || ""
+          );
         });
 
-        if (weights[0] && weights[0] === weights[1] && weights[1] === weights[2]) {
-          const w = lastThree[0].exercises.find((e: { exerciseName: string }) => e.exerciseName === ex.name)?.sets?.[0]?.weightKg || 0;
+        if (
+          weights[0] &&
+          weights[0] === weights[1] &&
+          weights[1] === weights[2]
+        ) {
+          const w =
+            lastThree[0].exercises.find(
+              (e: { exerciseName: string }) => e.exerciseName === ex.name
+            )?.sets?.[0]?.weightKg || 0;
           setStallExercise({ name: ex.name, weight: w });
           break;
         }
@@ -632,20 +781,24 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           weight: s.weight,
           reps: s.reps,
           completed: s.completed,
-        })),
+        }))
       ),
     });
 
     // Persist PR map to Firestore for history beyond 50-session window
     if (user?.uid && Object.keys(prMap).length > 0) {
       try {
-        const { doc: fbDoc, setDoc } = await import('firebase/firestore');
-        const { Timestamp } = await import('firebase/firestore');
-        await setDoc(fbDoc(db, "users", user.uid, "stats", "prMap"), {
-          map: prMap,
-          sessionCounts,
-          updatedAt: Timestamp.now(),
-        }, { merge: true });
+        const { doc: fbDoc, setDoc } = await import("firebase/firestore");
+        const { Timestamp } = await import("firebase/firestore");
+        await setDoc(
+          fbDoc(db, "users", user.uid, "stats", "prMap"),
+          {
+            map: prMap,
+            sessionCounts,
+            updatedAt: Timestamp.now(),
+          },
+          { merge: true }
+        );
       } catch {
         // Non-critical — map can be rebuilt from history
       }
@@ -660,14 +813,16 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
   };
 
   const handleStartFresh = () => {
-    setSetLogs(day.exercises.map((ex) =>
-      Array.from({ length: ex.sets }, () => ({
-        reps: ex.reps,
-        weight: ex.weight,
-        completed: false,
-        type: "working" as SetType,
-      }))
-    ));
+    setSetLogs(
+      day.exercises.map((ex) =>
+        Array.from({ length: ex.sets }, () => ({
+          reps: ex.reps,
+          weight: ex.weight,
+          completed: false,
+          type: "working" as SetType,
+        }))
+      )
+    );
     setExerciseNotes({});
     setElapsedSeconds(0);
     setCurrentExIndex(0);
@@ -693,15 +848,20 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
           onClose={onClose}
         />
         {stallExercise && (
-          <StallModal exercise={stallExercise} onClose={() => setStallExercise(null)} />
+          <StallModal
+            exercise={stallExercise}
+            onClose={() => setStallExercise(null)}
+          />
         )}
       </>
     );
   }
 
-
   const draftCompletedSets = initialDraft
-    ? initialDraft.setLogs.reduce((sum, exSets) => sum + exSets.filter((s) => s.completed).length, 0)
+    ? initialDraft.setLogs.reduce(
+        (sum, exSets) => sum + exSets.filter((s) => s.completed).length,
+        0
+      )
     : 0;
 
   return (
@@ -713,27 +873,37 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             animate={{ y: 0, opacity: 1 }}
             className="w-full max-w-md bg-card rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 shadow-xl"
           >
-            <h3 className="text-lg font-bold text-foreground">Resume workout?</h3>
+            <h3 className="text-lg font-bold text-foreground">
+              Resume workout?
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               You left this workout in progress earlier.
             </p>
             <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                <span className="font-mono tabular-nums">{draftCompletedSets}</span> sets logged
+                <span className="font-mono tabular-nums">
+                  {draftCompletedSets}
+                </span>{" "}
+                sets logged
               </span>
               <span>·</span>
               <span>
-                <span className="font-mono tabular-nums">{formatElapsed(initialDraft.elapsedSeconds)}</span> elapsed
+                <span className="font-mono tabular-nums">
+                  {formatElapsed(initialDraft.elapsedSeconds)}
+                </span>{" "}
+                elapsed
               </span>
             </div>
             <div className="mt-5 flex gap-2">
               <button
+                type="button"
                 onClick={() => setShowResumePrompt(false)}
                 className="flex-1 h-11 rounded-xl font-semibold text-sm bg-primary text-primary-foreground transition-transform active:scale-[0.97]"
               >
                 Resume
               </button>
               <button
+                type="button"
                 onClick={handleStartFresh}
                 className="flex-1 h-11 rounded-xl font-semibold text-sm bg-muted text-foreground transition-transform active:scale-[0.97]"
               >
@@ -749,11 +919,17 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         <div>
           <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
           <p className="text-xs text-muted-foreground">
-            {totalSetsCompleted}/{totalSetsTotal} sets · {formatElapsed(elapsedSeconds)}
+            {totalSetsCompleted}/{totalSetsTotal} sets ·{" "}
+            {formatElapsed(elapsedSeconds)}
           </p>
         </div>
-        <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="Close workout">
-          <X className="w-5 h-5 text-muted-foreground" />
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label="Close workout"
+        >
+          <X className="size-5 text-muted-foreground" />
         </button>
       </div>
 
@@ -761,23 +937,32 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       <div className="h-1 bg-muted">
         <div
           className="h-full bg-primary transition-all duration-300"
-          style={{ width: `${totalSetsTotal > 0 ? (totalSetsCompleted / totalSetsTotal) * 100 : 0}%` }}
+          style={{
+            width: `${totalSetsTotal > 0 ? (totalSetsCompleted / totalSetsTotal) * 100 : 0}%`,
+          }}
         />
       </div>
 
       {/* Exercise navigation pills */}
       <div className="relative">
-        <div ref={tabsRef} className="flex gap-1.5 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <div
+          ref={tabsRef}
+          className="flex gap-1.5 px-4 py-3 overflow-x-auto"
+          style={{ scrollbarWidth: "none" }}
+        >
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
             const done = setsForEx.every((s) => s.completed);
             const active = i === currentExIndex;
             return (
               <button
+                type="button"
                 key={i}
                 onClick={() => {
                   setCurrentExIndex(i);
-                  const nextIncomplete = setsForEx.findIndex((s) => !s.completed);
+                  const nextIncomplete = setsForEx.findIndex(
+                    (s) => !s.completed
+                  );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
                 className={cn(
@@ -786,10 +971,17 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                     ? "bg-green-500 text-white font-medium"
                     : active
                       ? "bg-primary text-primary-foreground font-bold"
-                      : "bg-muted text-muted-foreground",
+                      : "bg-muted text-muted-foreground"
                 )}
               >
-                {done ? <span className="flex items-center gap-1"><Check className="w-3 h-3" />{ex.name}</span> : ex.name}
+                {done ? (
+                  <span className="flex items-center gap-1">
+                    <Check className="size-3" />
+                    {ex.name}
+                  </span>
+                ) : (
+                  ex.name
+                )}
               </button>
             );
           })}
@@ -800,11 +992,14 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       {/* Exercise name + set counter — always visible above scroll */}
       <div className="text-center px-4 pt-2 pb-1">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Dumbbell className="w-5 h-5" style={{ color: THEME.lifting }} />
-          <h2 className="text-lg font-bold text-foreground">{currentExercise?.name}</h2>
+          <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+          <h2 className="text-lg font-bold text-foreground">
+            {currentExercise?.name}
+          </h2>
         </div>
         <p className="text-xs text-muted-foreground">
-          Set {currentSetIndex + 1} of {currentSets.length} · {completedSetsInExercise} done
+          Set {currentSetIndex + 1} of {currentSets.length} ·{" "}
+          {completedSetsInExercise} done
         </p>
       </div>
 
@@ -817,7 +1012,12 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             placeholder="Notes (e.g. Level 8, 6.0 incline)"
             aria-label="Exercise notes"
             value={exerciseNotes[currentExIndex] || ""}
-            onChange={(e) => setExerciseNotes(prev => ({ ...prev, [currentExIndex]: e.target.value }))}
+            onChange={(e) =>
+              setExerciseNotes((prev) => ({
+                ...prev,
+                [currentExIndex]: e.target.value,
+              }))
+            }
             className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-xs text-foreground placeholder:text-muted-foreground/60"
           />
         </div>
@@ -838,9 +1038,16 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         <div className="bg-card rounded-2xl">
           {(() => {
             const prev = currentExercise?.lastPerformance;
-            const isBWExercise = currentExercise ? getExerciseById(currentExercise.exerciseId)?.equipment === "Bodyweight" : false;
+            const isBWExercise = currentExercise
+              ? getExerciseById(currentExercise.exerciseId)?.equipment ===
+                "Bodyweight"
+              : false;
             const prevLabel = prev
-              ? (prev.weight > 0 ? `${prev.weight}×${prev.reps}` : isBWExercise ? `BW×${prev.reps}` : "—")
+              ? prev.weight > 0
+                ? `${prev.weight}×${prev.reps}`
+                : isBWExercise
+                  ? `BW×${prev.reps}`
+                  : "—"
               : "—";
             const canFillPrev = prev != null && prev.weight > 0;
 
@@ -860,38 +1067,77 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                       <div
                         className={cn(
                           "grid grid-cols-12 gap-1 items-center px-3 py-2.5 border-t border-border/30",
-                          setIdx === currentSetIndex && !set.completed && "bg-primary/5",
-                          set.completed && "opacity-70",
+                          setIdx === currentSetIndex &&
+                            !set.completed &&
+                            "bg-primary/5",
+                          set.completed && "opacity-70"
                         )}
                       >
                         <div className="col-span-1 flex justify-center relative">
                           <button
-                            ref={(el) => { if (typePopover === setIdx && el) { const r = el.getBoundingClientRect(); popoverPosRef.current = { top: r.top, left: r.right + 8, bottom: r.bottom }; } }}
+                            type="button"
+                            ref={(el) => {
+                              if (typePopover === setIdx && el) {
+                                const r = el.getBoundingClientRect();
+                                popoverPosRef.current = {
+                                  top: r.top,
+                                  left: r.right + 8,
+                                  bottom: r.bottom,
+                                };
+                              }
+                            }}
                             onClick={() => {
                               if (!set.completed) {
                                 haptic(10);
-                                setTypePopover(typePopover === setIdx ? null : setIdx);
+                                setTypePopover(
+                                  typePopover === setIdx ? null : setIdx
+                                );
                               }
                             }}
                             disabled={set.completed}
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
-                            style={set.type !== "working" ? { backgroundColor: TYPE_COLORS[set.type], color: "white" } : undefined}
+                            className="size-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                            style={
+                              set.type !== "working"
+                                ? {
+                                    backgroundColor: TYPE_COLORS[set.type],
+                                    color: "white",
+                                  }
+                                : undefined
+                            }
                             title={`Set type: ${set.type}`}
                           >
-                            {set.type === "working" ? setIdx + 1 : typeConfig.label}
+                            {set.type === "working"
+                              ? setIdx + 1
+                              : typeConfig.label}
                           </button>
                         </div>
                         <div className="col-span-2">
                           <button
+                            type="button"
                             onClick={() => {
                               if (canFillPrev && !set.completed && prev) {
                                 haptic(10);
-                                updateSetLog(currentExIndex, setIdx, "weight", prev.weight);
-                                updateSetLog(currentExIndex, setIdx, "reps", prev.reps);
+                                updateSetLog(
+                                  currentExIndex,
+                                  setIdx,
+                                  "weight",
+                                  prev.weight
+                                );
+                                updateSetLog(
+                                  currentExIndex,
+                                  setIdx,
+                                  "reps",
+                                  prev.reps
+                                );
                               }
                             }}
                             disabled={set.completed || !canFillPrev}
-                            className={cn("text-[13px] text-center w-full", canFillPrev && !set.completed ? "text-primary active:opacity-70" : "text-muted-foreground")}
+                            className={cn(
+                              "text-[13px] text-center w-full",
+                              canFillPrev && !set.completed
+                                ? "text-primary active:opacity-70"
+                                : "text-muted-foreground"
+                            )}
                           >
                             {prevLabel}
                           </button>
@@ -900,9 +1146,22 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                           <input
                             type="number"
                             value={set.weight || ""}
-                            placeholder={set.weight === 0 ? (isBWExercise ? "BW" : "0") : ""}
+                            placeholder={
+                              set.weight === 0
+                                ? isBWExercise
+                                  ? "BW"
+                                  : "0"
+                                : ""
+                            }
                             aria-label={`Set ${setIdx + 1} weight`}
-                            onChange={(e) => updateSetLog(currentExIndex, setIdx, "weight", Number(e.target.value) || 0)}
+                            onChange={(e) =>
+                              updateSetLog(
+                                currentExIndex,
+                                setIdx,
+                                "weight",
+                                Number(e.target.value) || 0
+                              )
+                            }
                             disabled={set.completed}
                             className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
                           />
@@ -912,53 +1171,71 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
                             type="number"
                             value={set.reps || ""}
                             aria-label={`Set ${setIdx + 1} reps`}
-                            onChange={(e) => updateSetLog(currentExIndex, setIdx, "reps", Number(e.target.value) || 0)}
+                            onChange={(e) =>
+                              updateSetLog(
+                                currentExIndex,
+                                setIdx,
+                                "reps",
+                                Number(e.target.value) || 0
+                              )
+                            }
                             disabled={set.completed}
                             className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
                           {set.completed ? (
-                            <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} transition={{ duration: 0.15 }}>
-                              <Check className="w-5 h-5 text-green-500" />
+                            <motion.div
+                              initial={{ scale: 0.5 }}
+                              animate={{ scale: 1 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Check className="size-5 text-green-500" />
                             </motion.div>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => completeInlineSet(setIdx)}
-                              className="w-7 h-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
+                              className="size-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
                             />
                           )}
                         </div>
                       </div>
-                {/* RPE selector for completed sets */}
-                {showRPE && set.completed && (
-                  <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
-                    <span className="text-xs text-muted-foreground mr-1 self-center">RPE:</span>
-                    {RPE_OPTIONS.map((rpe) => (
-                      <button
-                        key={rpe}
-                        onClick={() => updateSetRPE(currentExIndex, setIdx, rpe)}
-                        className={cn(
-                          "text-xs px-1.5 py-0.5 rounded transition-colors",
-                          set.rpe === rpe
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        {rpe}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-                    );
-                  })}
+                      {/* RPE selector for completed sets */}
+                      {showRPE && set.completed && (
+                        <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
+                          <span className="text-xs text-muted-foreground mr-1 self-center">
+                            RPE:
+                          </span>
+                          {RPE_OPTIONS.map((rpe) => (
+                            <button
+                              type="button"
+                              key={rpe}
+                              onClick={() =>
+                                updateSetRPE(currentExIndex, setIdx, rpe)
+                              }
+                              className={cn(
+                                "text-xs px-1.5 py-0.5 rounded transition-colors",
+                                set.rpe === rpe
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground hover:text-foreground"
+                              )}
+                            >
+                              {rpe}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </>
             );
           })()}
 
           {/* Add Set button */}
           <button
+            type="button"
             onClick={() => addSet(currentExIndex)}
             className="w-full py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -967,41 +1244,57 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
         </div>
 
         {/* Set type popover — portal to document.body to escape all parent constraints */}
-        {typePopover !== null && createPortal(
-          <>
-            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-            <div className="fixed inset-0" style={{ zIndex: 9990 }} onClick={() => setTypePopover(null)} />
-            <div
-              className="fixed bg-card rounded-2xl shadow-lg border border-border/50"
-              style={{
-                zIndex: 9991,
-                width: 160,
-                left: popoverPosRef.current.left,
-                ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
-                  ? { bottom: window.innerHeight - popoverPosRef.current.top + 4 }
-                  : { top: popoverPosRef.current.top }),
-              }}
-            >
-              {SET_TYPE_ORDER.map(type => (
-                <button
-                  key={type}
-                  onClick={() => { setSetType(currentExIndex, typePopover, type); setTypePopover(null); haptic(10); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-foreground hover:bg-muted transition-colors"
-                >
-                  {type === "working" ? (
-                    <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/30" />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: TYPE_COLORS[type] }}>
-                      {TYPE_LABELS[type].charAt(0)}
-                    </div>
-                  )}
-                  {TYPE_LABELS[type]}
-                </button>
-              ))}
-            </div>
-          </>,
-          document.body
-        )}
+        {typePopover !== null &&
+          createPortal(
+            <>
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+              <div
+                className="fixed inset-0"
+                style={{ zIndex: 9990 }}
+                onClick={() => setTypePopover(null)}
+              />
+              <div
+                className="fixed bg-card rounded-2xl shadow-lg border border-border/50"
+                style={{
+                  zIndex: 9991,
+                  width: 160,
+                  left: popoverPosRef.current.left,
+                  ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
+                    ? {
+                        bottom:
+                          window.innerHeight - popoverPosRef.current.top + 4,
+                      }
+                    : { top: popoverPosRef.current.top }),
+                }}
+              >
+                {SET_TYPE_ORDER.map((type) => (
+                  <button
+                    type="button"
+                    key={type}
+                    onClick={() => {
+                      setSetType(currentExIndex, typePopover, type);
+                      setTypePopover(null);
+                      haptic(10);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-foreground hover:bg-muted transition-colors"
+                  >
+                    {type === "working" ? (
+                      <div className="size-6 rounded-full border-2 border-muted-foreground/30" />
+                    ) : (
+                      <div
+                        className="size-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                        style={{ backgroundColor: TYPE_COLORS[type] }}
+                      >
+                        {TYPE_LABELS[type].charAt(0)}
+                      </div>
+                    )}
+                    {TYPE_LABELS[type]}
+                  </button>
+                ))}
+              </div>
+            </>,
+            document.body
+          )}
 
         {/* Undo last set */}
         <AnimatePresence>
@@ -1013,17 +1306,20 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
               onClick={handleUndo}
               className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Undo last set
+              <RotateCcw className="size-3.5" /> Undo last set
             </motion.button>
           )}
         </AnimatePresence>
 
         {/* RPE toggle */}
         <button
+          type="button"
           onClick={() => setShowRPE(!showRPE)}
           className={cn(
             "text-xs px-3 py-1.5 rounded-lg transition-colors mx-auto block",
-            showRPE ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+            showRPE
+              ? "bg-primary/10 text-primary"
+              : "bg-muted text-muted-foreground"
           )}
         >
           {showRPE ? "Hide RPE" : "Show RPE"}
@@ -1035,7 +1331,8 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
             Target: {currentExercise.sets}&times;{currentExercise.reps}
             {currentExercise.weight > 0
               ? ` @ ${currentExercise.weight}kg`
-              : getExerciseById(currentExercise.exerciseId)?.equipment === "Bodyweight"
+              : getExerciseById(currentExercise.exerciseId)?.equipment ===
+                  "Bodyweight"
                 ? " @ Bodyweight"
                 : ""}
           </p>
@@ -1046,47 +1343,58 @@ export default function WorkoutSession({ day, dayIndex, onLogExercise, onComplet
       <div className="px-4 py-3 border-t border-border/50 bg-background">
         {isResting ? (
           <button
+            type="button"
             onClick={stopRest}
             className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
           >
-            <Play className="w-4 h-4" /> Ready — Start Next Set
+            <Play className="size-4" /> Ready — Start Next Set
           </button>
-        ) : (() => {
-          const allSetsComplete = currentSets.every(s => s.completed);
-          const isLastExercise = currentExIndex >= day.exercises.length - 1;
+        ) : (
+          (() => {
+            const allSetsComplete = currentSets.every((s) => s.completed);
+            const isLastExercise = currentExIndex >= day.exercises.length - 1;
 
-          if (allSetsComplete && isLastExercise) {
+            if (allSetsComplete && isLastExercise) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => setSessionComplete(true)}
+                  className="w-full py-3.5 rounded-xl bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                >
+                  <Trophy className="size-4" /> Finish Workout
+                </button>
+              );
+            }
+            if (allSetsComplete) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentExIndex((prev) => prev + 1);
+                    setCurrentSetIndex(0);
+                  }}
+                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                >
+                  <Play className="size-4" /> Next Exercise →
+                </button>
+              );
+            }
             return (
               <button
-                onClick={() => setSessionComplete(true)}
-                className="w-full py-3.5 rounded-xl bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                type="button"
+                onClick={completeSet}
+                disabled={
+                  !currentSets[currentSetIndex] ||
+                  currentSets[currentSetIndex]?.completed
+                }
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                <Trophy className="w-4 h-4" /> Finish Workout
+                <Check className="size-4" /> Complete Set {currentSetIndex + 1}
               </button>
             );
-          }
-          if (allSetsComplete) {
-            return (
-              <button
-                onClick={() => { setCurrentExIndex(prev => prev + 1); setCurrentSetIndex(0); }}
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-              >
-                <Play className="w-4 h-4" /> Next Exercise →
-              </button>
-            );
-          }
-          return (
-            <button
-              onClick={completeSet}
-              disabled={!currentSets[currentSetIndex] || currentSets[currentSetIndex]?.completed}
-              className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
-            >
-              <Check className="w-4 h-4" /> Complete Set {currentSetIndex + 1}
-            </button>
-          );
-        })()}
+          })()
+        )}
       </div>
     </div>
   );
 }
-
