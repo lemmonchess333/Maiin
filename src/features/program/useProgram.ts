@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { format } from "date-fns";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -572,7 +571,7 @@ export function useProgram() {
         // Local date key so the written workout is picked up by the
         // useEffectiveTargets / useHomeData filters, which both format in
         // the viewer's local timezone via isWorkoutOnDate.
-        const today = format(new Date(), "yyyy-MM-dd");
+        const today = localDateString();
         const workoutId = `${today}-prog-${Date.now()}`;
         const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
 

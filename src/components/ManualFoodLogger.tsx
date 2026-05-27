@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { validateFoodEntry } from "@/lib/foodValidation";
@@ -51,12 +51,21 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
     if (!user) return;
     setSaving(true);
     try {
-      const logDate = date || format(new Date(), "yyyy-MM-dd");
+      const logDate = date || localDateString();
       const id = `${logDate}_${Date.now()}`;
       await setDoc(doc(db, "users", user.uid, "meals", id), {
         date: logDate,
         foodName: entry.name,
-        items: [{ name: entry.name, portionSize: "1 serving", calories: entry.calories, protein: entry.protein, carbs: entry.carbs, fat: entry.fat }],
+        items: [
+          {
+            name: entry.name,
+            portionSize: "1 serving",
+            calories: entry.calories,
+            protein: entry.protein,
+            carbs: entry.carbs,
+            fat: entry.fat,
+          },
+        ],
         totalCalories: entry.calories,
         totalProtein: entry.protein,
         totalCarbs: entry.carbs,
@@ -96,7 +105,9 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
         onClose();
       }, 1500);
     } catch {
-      toast.error("Couldn't save this meal. Try again.", { id: "food-save-error" });
+      toast.error("Couldn't save this meal. Try again.", {
+        id: "food-save-error",
+      });
     } finally {
       setSaving(false);
     }
@@ -147,119 +158,129 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
   return (
     <>
-    {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
+      {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
         BottomSheet. Title rendered in children because the bespoke
         two-line title ("Log a Meal" + "Manual entry" subtitle) doesn't
         fit the primitive's single-line title strip. hideHeader keeps
         the drag handle visible but skips the header row; sr-only
         Drawer.Title preserves aria-labelledby. */}
-    <BottomSheet
-      open={open}
-      onOpenChange={(o) => !o && onClose()}
-      title="Log a Meal"
-      hideHeader
-      maxHeight="max-h-[60vh]"
-      className="border-t border-border"
-    >
-      <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
-        {/* Drag handle */}
-        <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
+      <BottomSheet
+        open={open}
+        onOpenChange={(o) => !o && onClose()}
+        title="Log a Meal"
+        hideHeader
+        maxHeight="max-h-[60vh]"
+        className="border-t border-border"
+      >
+        <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
+          {/* Drag handle */}
+          <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
 
-        {/* Title */}
-        <div className="mb-5">
-          <p className="text-lg font-bold text-foreground">Log a Meal</p>
-          <p className="text-xs text-muted-foreground">Manual entry</p>
-        </div>
-
-            {/* Meal name input */}
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Meal name (e.g. Chicken & rice)"
-              aria-label="Meal name"
-              className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
-            />
-
-            {/* Macro input grid */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              {[
-                { label: "Calories", value: calories, set: setCalories, unit: "kcal" },
-                { label: "Protein", value: protein, set: setProtein, unit: "g" },
-                { label: "Carbs", value: carbs, set: setCarbs, unit: "g" },
-                { label: "Fat", value: fat, set: setFat, unit: "g" },
-              ].map((field) => (
-                <div key={field.label} className="space-y-1.5">
-                  <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1">
-                    {field.label} ({field.unit})
-                  </label>
-                  <input
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={field.value}
-                    onChange={(e) => field.set(e.target.value)}
-                    placeholder={field.unit}
-                    className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
-                  />
-                </div>
-              ))}
-            </div>
-
+          {/* Title */}
+          <div className="mb-5">
+            <p className="text-lg font-bold text-foreground">Log a Meal</p>
+            <p className="text-xs text-muted-foreground">Manual entry</p>
           </div>
-          {/* Sticky save footer. Pre-F2 the button lived inside the
+
+          {/* Meal name input */}
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Meal name (e.g. Chicken & rice)"
+            aria-label="Meal name"
+            className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
+          />
+
+          {/* Macro input grid */}
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            {[
+              {
+                label: "Calories",
+                value: calories,
+                set: setCalories,
+                unit: "kcal",
+              },
+              { label: "Protein", value: protein, set: setProtein, unit: "g" },
+              { label: "Carbs", value: carbs, set: setCarbs, unit: "g" },
+              { label: "Fat", value: fat, set: setFat, unit: "g" },
+            ].map((field) => (
+              <div key={field.label} className="space-y-1.5">
+                <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1">
+                  {field.label} ({field.unit})
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={field.value}
+                  onChange={(e) => field.set(e.target.value)}
+                  placeholder={field.unit}
+                  className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Sticky save footer. Pre-F2 the button lived inside the
               overflow-y-auto container, so on small iPhone viewports
               with the keyboard up + form filled the Save button
               could scroll below the keyboard and become unreachable.
               Lifting it into a non-scrolling footer with safe-area
               bottom padding keeps it pinned regardless of scroll
               state. */}
-          <div className="px-5 pt-3 pb-5 border-t border-border safe-area-pb">
-            <AnimatePresence mode="wait">
-              <motion.button
-                key={saved ? "saved" : "save"}
-                initial={{ scale: 0.95 }}
-                animate={{ scale: 1 }}
-                onClick={handleSave}
-                disabled={saving || !name.trim()}
-                className={cn(
-                  "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2",
-                  saved
-                    ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
-                    : "text-white active:scale-95",
-                  (saving || !name.trim()) && !saved && "opacity-50 cursor-not-allowed"
-                )}
-                style={!saved ? {
-                  backgroundColor: "#7C6BF0",
-                  boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
-                } : undefined}
-              >
-                {saved ? (
-                  <>
-                    <Check className="w-4 h-4" /> Meal Logged!
-                  </>
-                ) : saving ? (
-                  "Saving meal..."
-                ) : (
-                  "Log This Meal"
-                )}
-              </motion.button>
-            </AnimatePresence>
-          </div>
-    </BottomSheet>
-    {/* Suspicious-but-possible high-value override prompt. Cancel
+        <div className="px-5 pt-3 pb-5 border-t border-border safe-area-pb">
+          <AnimatePresence mode="wait">
+            <motion.button
+              key={saved ? "saved" : "save"}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              onClick={handleSave}
+              disabled={saving || !name.trim()}
+              className={cn(
+                "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2",
+                saved
+                  ? "bg-green-500 text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
+                  : "text-white active:scale-95",
+                (saving || !name.trim()) &&
+                  !saved &&
+                  "opacity-50 cursor-not-allowed"
+              )}
+              style={
+                !saved
+                  ? {
+                      backgroundColor: "#7C6BF0",
+                      boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
+                    }
+                  : undefined
+              }
+            >
+              {saved ? (
+                <>
+                  <Check className="w-4 h-4" /> Meal Logged!
+                </>
+              ) : saving ? (
+                "Saving meal..."
+              ) : (
+                "Log This Meal"
+              )}
+            </motion.button>
+          </AnimatePresence>
+        </div>
+      </BottomSheet>
+      {/* Suspicious-but-possible high-value override prompt. Cancel
         leaves the form intact so the user can adjust; Save anyway
         commits the entry as typed. Negative / NaN values are
         blocked outright via toast and never reach this dialog. */}
-    <ConfirmDialog
-      open={warnTitle !== null}
-      title={warnTitle ?? ""}
-      description={warnDescription}
-      confirmLabel="Save anyway"
-      cancelLabel="Edit"
-      onConfirm={handleConfirmOverride}
-      onCancel={() => setWarnTitle(null)}
-    />
+      <ConfirmDialog
+        open={warnTitle !== null}
+        title={warnTitle ?? ""}
+        description={warnDescription}
+        confirmLabel="Save anyway"
+        cancelLabel="Edit"
+        onConfirm={handleConfirmOverride}
+        onCancel={() => setWarnTitle(null)}
+      />
     </>
   );
 }
