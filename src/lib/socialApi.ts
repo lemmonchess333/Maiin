@@ -513,10 +513,15 @@ export async function searchUsers(queryStr: string, limitCount = 10) {
   for (const snap of snaps) {
     for (const d of snap.docs) {
       // Public docs live at `users/{uid}/public/profile` — the owner uid
-      // is the grandparent doc id. Fall back to the `uid` field if present.
-      const data = d.data() as Record<string, unknown>;
-      const ownerUid =
-        d.ref.parent.parent?.id ?? (data.uid as string | undefined);
+      // is the grandparent doc id. We deliberately do NOT trust a `uid`
+      // field on the document body: the Firestore rule allows the
+      // field to be present but never validates its value, so an
+      // owner could write { uid: 'victim-uid', ... } and impersonate
+      // someone in search results. Spread `data` first so the
+      // trusted grandparent id always wins the merge.
+      const rawData = d.data() as Record<string, unknown>;
+      const { uid: _ignoredUid, ...data } = rawData;
+      const ownerUid = d.ref.parent.parent?.id;
       if (!ownerUid || seen.has(ownerUid)) continue;
       seen.add(ownerUid);
       results.push({ uid: ownerUid, ...data });
