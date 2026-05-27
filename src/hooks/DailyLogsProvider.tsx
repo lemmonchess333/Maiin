@@ -15,13 +15,8 @@ import {
   onSnapshot,
   Timestamp,
 } from "firebase/firestore";
-import {
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  format,
-} from "date-fns";
+import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeMerge } from "@/lib/offlineQueue";
@@ -92,7 +87,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
       q,
       (snapshot) => {
         const data = snapshot.docs.map((d) =>
-          parseDailyLog(d.id, d.data()),
+          parseDailyLog(d.id, d.data())
         ) as DailyLog[];
         setLogs(data);
         setLoading(false);
@@ -100,7 +95,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
       (error) => {
         logger.error("[DailyLogsProvider] subscribe failed:", error);
         setLoading(false);
-      },
+      }
     );
 
     return unsubscribe;
@@ -114,7 +109,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
         createdAt: Timestamp.now(),
       });
     },
-    [user],
+    [user]
   );
 
   // Derived slices — all memo'd on `logs` + profile targets. Re-derivation
@@ -122,8 +117,8 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
 
   const weeklyStats = useMemo<WeeklyStats>(() => {
     const now = new Date();
-    const start = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const end = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const start = localDateString(startOfWeek(now, { weekStartsOn: 1 }));
+    const end = localDateString(endOfWeek(now, { weekStartsOn: 1 }));
     let workouts = 0;
     let meals = 0;
     let pr = false;
@@ -144,8 +139,8 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
 
   const monthlyStats = useMemo<WeeklyStats>(() => {
     const now = new Date();
-    const start = format(startOfMonth(now), "yyyy-MM-dd");
-    const end = format(endOfMonth(now), "yyyy-MM-dd");
+    const start = localDateString(startOfMonth(now));
+    const end = localDateString(endOfMonth(now));
     let workouts = 0;
     let meals = 0;
     let pr = false;
@@ -166,8 +161,8 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
 
   const weeklyDayMap = useMemo(() => {
     const now = new Date();
-    const start = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-    const end = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+    const start = localDateString(startOfWeek(now, { weekStartsOn: 1 }));
+    const end = localDateString(endOfWeek(now, { weekStartsOn: 1 }));
     const map = new Map<string, WeeklyDayEntry>();
     for (const l of logs) {
       if (l.date < start || l.date > end) continue;
@@ -202,7 +197,7 @@ function useDailyLogsContext(): DailyLogsValue {
   const ctx = useContext(DailyLogsContext);
   if (!ctx) {
     throw new Error(
-      "useDailyLogs/useWeeklyStats/useMonthlyStats/useWeeklyDayMap must be used inside <DailyLogsProvider>",
+      "useDailyLogs/useWeeklyStats/useMonthlyStats/useWeeklyDayMap must be used inside <DailyLogsProvider>"
     );
   }
   return ctx;
