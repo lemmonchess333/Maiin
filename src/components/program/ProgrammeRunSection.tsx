@@ -42,7 +42,13 @@
 
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Footprints, Check, Play, ChevronRight } from "lucide-react";
+import {
+  Footprints,
+  Check,
+  Play,
+  ChevronRight,
+  MoreVertical,
+} from "lucide-react";
 import { formatDistanceToNowStrict, format } from "date-fns";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
@@ -812,18 +818,32 @@ export default function ProgrammeRunSection({
           Same URL pattern as RunCTACard / trainingResolver.startUrl.
           Skipped when every runDay in the week is already terminal
           (we render a "done this week" affirmation instead).
-          Run7 Q7: subtle coral 6% tint (was 6.25%), icon container
-          coral ~10% (was ~13%), Start button flat coral solid (was
-          coral→light gradient), description line-clamp-2 (was single-
-          line truncate). Eyebrow stays semibold. */}
+          Run7 Q7: subtle coral 6% tint, icon container coral ~10%,
+          Start button flat coral solid, description line-clamp-2.
+
+          Run8 PR1b — adds a `...` overflow button in the top-right.
+          Tapping the card body navigates to /run (Start). Tapping
+          `...` opens DayActionSheet for that runDay's date for
+          mark-complete / skip / template-swap. Restructured from
+          single <button> to <div role="button"> so the overflow
+          button can live as a child without nested-button HTML. */}
       {currentMode !== "freeform" && nextStartable && nextStartUrl && (
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={`Start ${nextStartableTemplate?.name ?? "run"}`}
           onClick={() => {
             haptic();
             navigate(nextStartUrl);
           }}
-          className="w-full rounded-xl p-3 text-left flex items-center gap-3"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              haptic();
+              navigate(nextStartUrl);
+            }
+          }}
+          className="w-full rounded-xl p-3 text-left flex items-center gap-3 cursor-pointer motion-safe:active:scale-[0.99] motion-safe:transition-transform"
           style={{
             background: `${THEME.running}0F`,
             border: `1px solid ${THEME.running}30`,
@@ -857,11 +877,24 @@ export default function ProgrammeRunSection({
               background: THEME.running,
               color: "white",
             }}
+            aria-hidden="true"
           >
             <Play className="w-3 h-3" fill="white" />
             Start
           </div>
-        </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              haptic();
+              setManageDate(nextStartable.date ?? null);
+            }}
+            aria-label="More options for this run"
+            className="shrink-0 w-9 h-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
+          >
+            <MoreVertical className="w-5 h-5" aria-hidden="true" />
+          </button>
+        </div>
       )}
 
       {currentMode !== "freeform" && allRunsDone && (
