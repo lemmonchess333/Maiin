@@ -322,7 +322,7 @@ Currently still the Vite template. Should cover:
 
 - App overview
 - Setup steps
-- Environment variables (long list now — VITE*FIREBASE*\*,
+- Environment variables (long list now — `VITE_FIREBASE_*`,
   VITE_RECAPTCHA_V3_SITE_KEY, VITE_APP_CHECK_DEBUG_TOKEN,
   VITE_FIREBASE_STORAGE_BUCKET)
 - Firebase setup
