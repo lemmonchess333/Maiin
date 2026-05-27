@@ -7,7 +7,14 @@ interface StepperProps {
   unit?: string;
 }
 
-export default function Stepper({ label, value, displayValue, onDecrement, onIncrement, unit }: StepperProps) {
+export default function Stepper({
+  label,
+  value,
+  displayValue,
+  onDecrement,
+  onIncrement,
+  unit,
+}: StepperProps) {
   return (
     <div
       className="rounded-2xl p-4 text-center"
@@ -25,7 +32,7 @@ export default function Stepper({ label, value, displayValue, onDecrement, onInc
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={onDecrement}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
+          className="size-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
           style={{ background: "rgba(255,255,255,0.1)" }}
         >
           −
@@ -35,7 +42,7 @@ export default function Stepper({ label, value, displayValue, onDecrement, onInc
         </span>
         <button
           onClick={onIncrement}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
+          className="size-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
           style={{ background: "rgba(255,255,255,0.1)" }}
         >
           +

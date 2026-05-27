@@ -51,7 +51,10 @@ function FoodDateBar({
       style={{ top: "var(--safe-top)" }}
     >
       <button
-        onClick={() => { haptic(); onPrev(); }}
+        onClick={() => {
+          haptic();
+          onPrev();
+        }}
         disabled={!canGoBack}
         aria-label="Previous day"
         /* min 44×44 hit area per iOS HIG / WCAG. Pre-F1 was p-2
@@ -59,16 +62,21 @@ function FoodDateBar({
            unchanged, only the tappable region grows. */
         className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
-        <ChevronLeft aria-hidden="true" className="w-4 h-4 text-foreground" />
+        <ChevronLeft aria-hidden="true" className="size-4 text-foreground" />
       </button>
       <button
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
         className="text-center flex items-center gap-2"
       >
-        <CalendarDays aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
+        <CalendarDays
+          aria-hidden="true"
+          className="size-3.5 text-muted-foreground"
+        />
         <p className="text-xs font-medium text-foreground">
-          {isToday ? "Today" : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
+          {isToday
+            ? "Today"
+            : format(new Date(selectedDate + "T12:00:00"), "EEE, MMMM d")}
         </p>
       </button>
       <input
@@ -82,12 +90,15 @@ function FoodDateBar({
         className="sr-only"
       />
       <button
-        onClick={() => { haptic(); onNext(); }}
+        onClick={() => {
+          haptic();
+          onNext();
+        }}
         disabled={!canGoForward}
         aria-label="Next day"
         className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
-        <ChevronRight aria-hidden="true" className="w-4 h-4 text-foreground" />
+        <ChevronRight aria-hidden="true" className="size-4 text-foreground" />
       </button>
     </motion.div>
   );

@@ -34,16 +34,22 @@ function PIGauge({ score }: { score: number }) {
   const dashOffset = arcLength * (1 - progress);
 
   const color =
-    clamped >= 80 ? THEME.success :
-    clamped >= 60 ? THEME.teal :
-    clamped >= 40 ? THEME.warning :
-    THEME.running;
+    clamped >= 80
+      ? THEME.success
+      : clamped >= 60
+        ? THEME.teal
+        : clamped >= 40
+          ? THEME.warning
+          : THEME.running;
 
   const band =
-    clamped >= 80 ? "Peak" :
-    clamped >= 60 ? "Building" :
-    clamped >= 40 ? "Moderate" :
-    "Recovery";
+    clamped >= 80
+      ? "Peak"
+      : clamped >= 60
+        ? "Building"
+        : clamped >= 40
+          ? "Moderate"
+          : "Recovery";
 
   // Needle tip point
   const angle = Math.PI - progress * Math.PI; // 180° → 0°
@@ -83,8 +89,10 @@ function PIGauge({ score }: { score: number }) {
         />
         {/* Needle */}
         <line
-          x1={CX} y1={CY}
-          x2={nx} y2={ny}
+          x1={CX}
+          y1={CY}
+          x2={nx}
+          y2={ny}
           stroke="hsl(var(--foreground))"
           strokeWidth={2}
           strokeLinecap="round"
@@ -92,13 +100,40 @@ function PIGauge({ score }: { score: number }) {
         />
         <circle cx={CX} cy={CY} r={4} fill="hsl(var(--foreground))" />
         {/* Labels */}
-        <text x={14} y={98} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">0</text>
-        <text x={90} y={16} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">50</text>
-        <text x={166} y={98} fontSize={10} fill="hsl(var(--muted-foreground))" textAnchor="middle">100</text>
+        <text
+          x={14}
+          y={98}
+          fontSize={10}
+          fill="hsl(var(--muted-foreground))"
+          textAnchor="middle"
+        >
+          0
+        </text>
+        <text
+          x={90}
+          y={16}
+          fontSize={10}
+          fill="hsl(var(--muted-foreground))"
+          textAnchor="middle"
+        >
+          50
+        </text>
+        <text
+          x={166}
+          y={98}
+          fontSize={10}
+          fill="hsl(var(--muted-foreground))"
+          textAnchor="middle"
+        >
+          100
+        </text>
       </svg>
       {/* Score */}
       <div className="text-center -mt-2">
-        <p className="text-4xl font-extrabold font-mono tabular-nums" style={{ color }}>
+        <p
+          className="text-4xl font-extrabold font-mono tabular-nums"
+          style={{ color }}
+        >
           {Math.round(clamped)}
         </p>
         <p className="text-xs font-semibold mt-0.5" style={{ color }}>
@@ -112,7 +147,7 @@ function PIGauge({ score }: { score: number }) {
               aria-label="About Performance Index"
               className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
             >
-              <Info className="w-3 h-3" aria-hidden="true" />
+              <Info className="size-3" aria-hidden="true" />
             </button>
           </UITooltip>
         </div>
@@ -122,12 +157,22 @@ function PIGauge({ score }: { score: number }) {
 }
 
 // Mini bar for breakdown scores
-function ScoreBar({ label, value, color }: { label: string; value: number; color: string }) {
+function ScoreBar({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xs font-bold tabular-nums" style={{ color }}>{Math.round(value)}</p>
+        <p className="text-xs font-bold tabular-nums" style={{ color }}>
+          {Math.round(value)}
+        </p>
       </div>
       <div className="h-1.5 rounded-full overflow-hidden bg-muted">
         <div
@@ -160,15 +205,20 @@ export default function PerformanceTab() {
       <div className="p-4 rounded-2xl bg-card">
         <h3 className="text-sm font-semibold text-foreground">Performance</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          No performance weeks yet. Log workouts/runs and your weekly index will appear here.
+          No performance weeks yet. Log workouts/runs and your weekly index will
+          appear here.
         </p>
       </div>
     );
   }
 
   const prev = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
-  const delta = prev ? Math.round(currentWeek.performanceIndex - prev.performanceIndex) : null;
-  const trendData = weeks.slice(-8).map(w => ({ week: w.weekKey, score: Math.round(w.performanceIndex) }));
+  const delta = prev
+    ? Math.round(currentWeek.performanceIndex - prev.performanceIndex)
+    : null;
+  const trendData = weeks
+    .slice(-8)
+    .map((w) => ({ week: w.weekKey, score: Math.round(w.performanceIndex) }));
   const b = currentWeek.breakdown;
   const m = currentWeek.multipliers;
 
@@ -177,23 +227,42 @@ export default function PerformanceTab() {
   const { headline, body } = getPlainLanguageSummary(pi, loadBand, delta);
 
   const summaryColor =
-    pi >= 80 ? THEME.success :
-    pi >= 60 ? THEME.teal :
-    pi >= 40 ? THEME.warning :
-    THEME.running;
+    pi >= 80
+      ? THEME.success
+      : pi >= 60
+        ? THEME.teal
+        : pi >= 40
+          ? THEME.warning
+          : THEME.running;
 
   const insightBullets = currentWeek.insight?.bullets;
-  const planAdj = (currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }).planAdjustments;
+  const planAdj = (
+    currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }
+  ).planAdjustments;
 
   return (
     <div className="space-y-4">
       {/* Deload banner */}
       {currentWeek.flags?.deloadRecommended && (
-        <div className="p-4 rounded-2xl flex items-start gap-3" style={{ background: THEME.warning + "14" }}>
-          <Flame className="w-5 h-5 shrink-0 mt-0.5" style={{ color: THEME.warning }} />
+        <div
+          className="p-4 rounded-2xl flex items-start gap-3"
+          style={{ background: THEME.warning + "14" }}
+        >
+          <Flame
+            className="size-5 shrink-0 mt-0.5"
+            style={{ color: THEME.warning }}
+          />
           <div>
-            <p className="text-sm font-semibold" style={{ color: THEME.warning }}>Consider a deload week</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger.</p>
+            <p
+              className="text-sm font-semibold"
+              style={{ color: THEME.warning }}
+            >
+              Consider a deload week
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Your training load has been high with signs of reduced recovery. A
+              lighter week can help you come back stronger.
+            </p>
           </div>
         </div>
       )}
@@ -201,10 +270,7 @@ export default function PerformanceTab() {
       {/* Plain language summary card */}
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
         <div className="flex items-center justify-between mb-1">
-          <h3
-            className="text-base font-bold"
-            style={{ color: summaryColor }}
-          >
+          <h3 className="text-base font-bold" style={{ color: summaryColor }}>
             {headline}
           </h3>
           {delta !== null && (
@@ -215,23 +281,29 @@ export default function PerformanceTab() {
                 background: `${delta >= 0 ? THEME.success : THEME.running}18`,
               }}
             >
-              {delta >= 0 ? "+" : ""}{delta} pts
+              {delta >= 0 ? "+" : ""}
+              {delta} pts
             </span>
           )}
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-3xl font-extrabold tabular-nums" style={{ color: summaryColor }}>
+          <span
+            className="text-3xl font-extrabold tabular-nums"
+            style={{ color: summaryColor }}
+          >
             {pi}
           </span>
-          <span className="text-xs text-muted-foreground">/100 Performance Index</span>
+          <span className="text-xs text-muted-foreground">
+            /100 Performance Index
+          </span>
           <UITooltip content={PI_EXPLAINER}>
             <button
               type="button"
               aria-label="About Performance Index"
               className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
             >
-              <Info className="w-3 h-3" aria-hidden="true" />
+              <Info className="size-3" aria-hidden="true" />
             </button>
           </UITooltip>
         </div>
@@ -240,11 +312,19 @@ export default function PerformanceTab() {
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
         <div className="p-4 rounded-2xl bg-card space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Weekly Insights</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Weekly Insights
+          </h3>
           <ul className="space-y-1.5">
             {insightBullets.map((bullet, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed">
-                <span className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: THEME.brand }} />
+              <li
+                key={i}
+                className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed"
+              >
+                <span
+                  className="size-1 rounded-full mt-1.5 shrink-0"
+                  style={{ background: THEME.brand }}
+                />
                 {bullet}
               </li>
             ))}
@@ -263,7 +343,7 @@ export default function PerformanceTab() {
         {showTechnical ? "Hide technical details" : "Show technical details"}
         <ChevronDown
           className={cn(
-            "h-3.5 w-3.5 transition-transform duration-200",
+            "size-3.5 transition-transform duration-200",
             showTechnical && "rotate-180"
           )}
         />
@@ -284,14 +364,19 @@ export default function PerformanceTab() {
               {/* Gauge card */}
               <div className="p-4 rounded-2xl border border-border/50 bg-card">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-foreground">This Week</h3>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    This Week
+                  </h3>
                   {delta !== null && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
                       style={{
                         color: delta >= 0 ? THEME.success : THEME.running,
                         background: `${delta >= 0 ? THEME.success : THEME.running}18`,
-                      }}>
-                      {delta >= 0 ? "+" : ""}{delta} pts
+                      }}
+                    >
+                      {delta >= 0 ? "+" : ""}
+                      {delta} pts
                     </span>
                   )}
                 </div>
@@ -302,8 +387,13 @@ export default function PerformanceTab() {
               {trendData.length >= 2 && (
                 <div className="p-4 rounded-2xl border border-border/50 bg-card">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">Performance Index — last 8 weeks</h3>
-                    <span className="text-2xl font-extrabold tabular-nums" style={{ color: THEME.brand }}>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Performance Index — last 8 weeks
+                    </h3>
+                    <span
+                      className="text-2xl font-extrabold tabular-nums"
+                      style={{ color: THEME.brand }}
+                    >
                       {Math.round(currentWeek.performanceIndex)}
                     </span>
                   </div>
@@ -316,7 +406,7 @@ export default function PerformanceTab() {
                         axisLine={false}
                         tickLine={false}
                         tickFormatter={(v: string) => {
-                          const parts = v.split('-W');
+                          const parts = v.split("-W");
                           if (parts.length === 2) {
                             const weekNum = parseInt(parts[1], 10);
                             return `W${weekNum}`;
@@ -326,13 +416,13 @@ export default function PerformanceTab() {
                       />
                       <Tooltip
                         contentStyle={{
-                          background: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
+                          background: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
                           borderRadius: 8,
                           fontSize: 12,
-                          color: 'hsl(var(--foreground))',
+                          color: "hsl(var(--foreground))",
                         }}
-                        labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                        labelStyle={{ color: "hsl(var(--muted-foreground))" }}
                         itemStyle={{ color: THEME.brand }}
                       />
                       <Line
@@ -350,11 +440,29 @@ export default function PerformanceTab() {
 
               {/* Breakdown bars */}
               <div className="p-4 rounded-2xl bg-card space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">Breakdown</h3>
-                <ScoreBar label="Lift Load" value={b.liftLoadScore} color={THEME.lifting} />
-                <ScoreBar label="Run Load" value={b.runLoadScore} color={THEME.running} />
-                <ScoreBar label="Recovery" value={b.recoveryScore} color={THEME.success} />
-                <ScoreBar label="Adherence" value={b.adherenceScore} color={THEME.teal} />
+                <h3 className="text-sm font-semibold text-foreground">
+                  Breakdown
+                </h3>
+                <ScoreBar
+                  label="Lift Load"
+                  value={b.liftLoadScore}
+                  color={THEME.lifting}
+                />
+                <ScoreBar
+                  label="Run Load"
+                  value={b.runLoadScore}
+                  color={THEME.running}
+                />
+                <ScoreBar
+                  label="Recovery"
+                  value={b.recoveryScore}
+                  color={THEME.success}
+                />
+                <ScoreBar
+                  label="Adherence"
+                  value={b.adherenceScore}
+                  color={THEME.teal}
+                />
               </div>
 
               {/* Trend chart */}
@@ -370,61 +478,107 @@ export default function PerformanceTab() {
                 />
                 <StatCard
                   label="Avg PI (12w)"
-                  value={String(Math.round(weeks.reduce((s, w) => s + w.performanceIndex, 0) / weeks.length))}
+                  value={String(
+                    Math.round(
+                      weeks.reduce((s, w) => s + w.performanceIndex, 0) /
+                        weeks.length
+                    )
+                  )}
                   unit="/100"
                   accentColor={THEME.brand}
                 />
               </div>
 
               <div className="p-4 rounded-2xl bg-card">
-                <h3 className="text-sm font-semibold text-foreground mb-2">This Week Adjustments</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  This Week Adjustments
+                </h3>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>
                     Lifting progression:{" "}
-                    <span className="text-foreground font-medium">{pctSigned(m.liftProgression - 1)}</span>
+                    <span className="text-foreground font-medium">
+                      {pctSigned(m.liftProgression - 1)}
+                    </span>
                   </li>
                   <li>
                     Run volume:{" "}
-                    <span className="text-foreground font-medium">{pctSigned(m.runVolume - 1)}</span>
+                    <span className="text-foreground font-medium">
+                      {pctSigned(m.runVolume - 1)}
+                    </span>
                   </li>
                   <li>
                     Run pace adjustment:{" "}
-                    <span className="text-foreground font-medium">{pctSigned(m.runPaceAdjustmentPct)}</span>
+                    <span className="text-foreground font-medium">
+                      {pctSigned(m.runPaceAdjustmentPct)}
+                    </span>
                   </li>
                 </ul>
               </div>
 
               {/* Plan adjustments from engine */}
-              {planAdj && (planAdj.lift.length > 0 || planAdj.run.length > 0) && (
-                <div className="space-y-3">
-                  {planAdj.lift.length > 0 && (
-                    <div className="p-4 rounded-2xl" style={{ background: THEME.lifting + "14" }}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Dumbbell className="w-4 h-4" style={{ color: THEME.lifting }} />
-                        <h3 className="text-sm font-semibold" style={{ color: THEME.lifting }}>Lifting Suggestions</h3>
+              {planAdj &&
+                (planAdj.lift.length > 0 || planAdj.run.length > 0) && (
+                  <div className="space-y-3">
+                    {planAdj.lift.length > 0 && (
+                      <div
+                        className="p-4 rounded-2xl"
+                        style={{ background: THEME.lifting + "14" }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Dumbbell
+                            className="size-4"
+                            style={{ color: THEME.lifting }}
+                          />
+                          <h3
+                            className="text-sm font-semibold"
+                            style={{ color: THEME.lifting }}
+                          >
+                            Lifting Suggestions
+                          </h3>
+                        </div>
+                        <ul className="space-y-1">
+                          {planAdj.lift.map((s, i) => (
+                            <li
+                              key={i}
+                              className="text-xs text-muted-foreground leading-relaxed"
+                            >
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-1">
-                        {planAdj.lift.map((s, i) => (
-                          <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {planAdj.run.length > 0 && (
-                    <div className="p-4 rounded-2xl" style={{ background: THEME.running + "14" }}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
-                        <h3 className="text-sm font-semibold" style={{ color: THEME.running }}>Running Suggestions</h3>
+                    )}
+                    {planAdj.run.length > 0 && (
+                      <div
+                        className="p-4 rounded-2xl"
+                        style={{ background: THEME.running + "14" }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Footprints
+                            className="size-4"
+                            style={{ color: THEME.running }}
+                          />
+                          <h3
+                            className="text-sm font-semibold"
+                            style={{ color: THEME.running }}
+                          >
+                            Running Suggestions
+                          </h3>
+                        </div>
+                        <ul className="space-y-1">
+                          {planAdj.run.map((s, i) => (
+                            <li
+                              key={i}
+                              className="text-xs text-muted-foreground leading-relaxed"
+                            >
+                              {s}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <ul className="space-y-1">
-                        {planAdj.run.map((s, i) => (
-                          <li key={i} className="text-xs text-muted-foreground leading-relaxed">{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
             </div>
           </motion.div>
         )}

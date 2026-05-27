@@ -455,7 +455,7 @@ export default function RunSetupModal({
           onClick={onCancel}
           className="flex items-center gap-1.5 text-sm text-muted-foreground active:scale-95"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="size-4" />
           Back
         </button>
       </header>
@@ -502,12 +502,12 @@ export default function RunSetupModal({
                   selected-run card sits within a sport-discipline
                   context; brand purple is reserved for lifting. */}
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                className="size-11 rounded-xl flex items-center justify-center shrink-0"
                 style={{ background: `${THEME.running}1A` }}
               >
                 {SelectedIcon && (
                   <SelectedIcon
-                    className="w-5 h-5"
+                    className="size-5"
                     style={{ color: THEME.running }}
                   />
                 )}
@@ -532,7 +532,7 @@ export default function RunSetupModal({
                 </div>
               </div>
               <ChevronRight
-                className="w-4 h-4 text-muted-foreground shrink-0"
+                className="size-4 text-muted-foreground shrink-0"
                 aria-hidden="true"
               />
             </button>
@@ -1235,9 +1235,9 @@ export default function RunSetupModal({
                 )}
               </div>
               {showAdvanced ? (
-                <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                <ChevronUp className="size-4 text-muted-foreground shrink-0 mt-1" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                <ChevronDown className="size-4 text-muted-foreground shrink-0 mt-1" />
               )}
             </button>
           );
@@ -1291,7 +1291,7 @@ export default function RunSetupModal({
                       }}
                     >
                       <div
-                        className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                        className="absolute top-0.5 size-5 bg-white rounded-full shadow transition-transform"
                         style={{
                           transform: config[setting.key]
                             ? "translateX(20px)"
@@ -1334,7 +1334,7 @@ export default function RunSetupModal({
                           }}
                         >
                           <div
-                            className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                            className="absolute top-0.5 size-5 bg-white rounded-full shadow transition-transform"
                             style={{
                               transform: config.paceAlerts
                                 ? "translateX(20px)"
@@ -1403,7 +1403,7 @@ export default function RunSetupModal({
               className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
               style={{ background: THEME.running }}
             >
-              <Icon className="inline w-5 h-5 mr-1" /> Start {selected.name}
+              <Icon className="inline size-5 mr-1" /> Start {selected.name}
             </button>
           );
         })()}
@@ -1472,7 +1472,7 @@ export default function RunSetupModal({
                       }
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        className="size-10 rounded-xl flex items-center justify-center shrink-0"
                         style={{
                           background: isActive
                             ? `${THEME.running}2E`
@@ -1481,7 +1481,7 @@ export default function RunSetupModal({
                       >
                         {IC && (
                           <IC
-                            className="w-5 h-5"
+                            className="size-5"
                             style={{
                               color: isActive
                                 ? THEME.running
@@ -1512,7 +1512,7 @@ export default function RunSetupModal({
                       </div>
                       {isActive && (
                         <Check
-                          className="w-4 h-4 shrink-0"
+                          className="size-4 shrink-0"
                           style={{ color: THEME.running }}
                           aria-label="Selected"
                         />

@@ -27,7 +27,9 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
    Lazy-loaded so the heavier chart machinery doesn't ship on
    Analytics's first paint. PerformanceTab itself already lazy-loads
    PerformanceIndexChart internally. */
-const PerformanceTab = lazy(() => import("@/components/analytics/PerformanceTab"));
+const PerformanceTab = lazy(
+  () => import("@/components/analytics/PerformanceTab")
+);
 
 const EXPANDED_HASH = "#performance-expanded";
 
@@ -66,8 +68,10 @@ export default function PerformanceSection() {
     mountedRef.current = true;
     if (typeof window === "undefined") return;
     const hash = window.location.hash;
-    if ((hash === "#performance" || hash === "#performance-expanded")
-        && sectionRef.current) {
+    if (
+      (hash === "#performance" || hash === "#performance-expanded") &&
+      sectionRef.current
+    ) {
       /* Tiny delay so the section's content has mounted (lazy-load
          + Suspense fallback) before we scroll — otherwise the
          scrollIntoView target is unstable. */
@@ -95,7 +99,9 @@ export default function PerformanceSection() {
      PI1's PerformanceHeroCard on Home (current week, not window
      average) so the two surfaces never disagree. */
   const pi = currentWeek ? Math.round(currentWeek.performanceIndex ?? 0) : 0;
-  const loadBand = (currentWeek?.labels?.loadBand ?? currentWeek?.loadBand ?? "moderate") as LoadBand;
+  const loadBand = (currentWeek?.labels?.loadBand ??
+    currentWeek?.loadBand ??
+    "moderate") as LoadBand;
   const deloadRecommended = currentWeek?.flags?.deloadRecommended ?? false;
   const verb = getVerb(loadBand, deloadRecommended);
   const { hue } = getCardColour(pi, loadBand, deloadRecommended);
@@ -177,15 +183,19 @@ export default function PerformanceSection() {
           <p className="text-sm font-semibold" style={{ color: hue }}>
             {verb.label}
           </p>
-          <p className="text-xs text-muted-foreground">Current week · tap for details</p>
+          <p className="text-xs text-muted-foreground">
+            Current week · tap for details
+          </p>
         </div>
         <motion.div
-          animate={prefersReducedMotion ? undefined : { rotate: expanded ? 180 : 0 }}
+          animate={
+            prefersReducedMotion ? undefined : { rotate: expanded ? 180 : 0 }
+          }
           transition={{ duration: 0.2 }}
           aria-hidden="true"
         >
           <ChevronDown
-            className="w-5 h-5 shrink-0"
+            className="size-5 shrink-0"
             style={{ color: THEME.text.muted }}
           />
         </motion.div>
@@ -196,9 +206,17 @@ export default function PerformanceSection() {
           <motion.div
             key="performance-detail"
             id="analytics-performance-detail"
-            initial={prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
-            animate={prefersReducedMotion ? { opacity: 1 } : { height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            initial={
+              prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }
+            }
+            animate={
+              prefersReducedMotion
+                ? { opacity: 1 }
+                : { height: "auto", opacity: 1 }
+            }
+            exit={
+              prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
+            }
             transition={{ duration: 0.3, ease: "easeOut" }}
             style={{ overflow: "hidden" }}
             className="mt-3"

@@ -232,10 +232,16 @@ const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
 };
 
 function RoutePrefetcher() {
-  const location = useLocation();
+  // Pull pathname out of the react-router location object before the
+  // effect so the dep array reads a primitive — react-doctor's
+  // "mutable in deps" heuristic flags `location.*` patterns by name
+  // (assuming `window.location`) even though react-router's
+  // `useLocation()` returns a fresh object per navigation. Extracting
+  // makes the dep explicit and lint-clean without changing semantics.
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    const prefetches = PREFETCH_MAP[location.pathname];
+    const prefetches = PREFETCH_MAP[pathname];
     if (!prefetches) return;
 
     const rIC =
@@ -250,7 +256,7 @@ function RoutePrefetcher() {
     });
 
     return () => cIC(id);
-  }, [location.pathname]);
+  }, [pathname]);
 
   return null;
 }

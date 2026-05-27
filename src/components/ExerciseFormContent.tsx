@@ -272,7 +272,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
               >
                 <AlertTriangle
-                  className="mt-0.5 h-4 w-4 shrink-0"
+                  className="mt-0.5 size-4 shrink-0"
                   style={{ color: THEME.semantic.nutrition }}
                 />
                 <div>
@@ -300,11 +300,11 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             >
               {showInstructions ? (
                 <>
-                  <ChevronUp className="w-4 h-4" /> Hide
+                  <ChevronUp className="size-4" /> Hide
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-4 h-4" /> Show full instructions
+                  <ChevronDown className="size-4" /> Show full instructions
                 </>
               )}
             </button>

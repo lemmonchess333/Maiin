@@ -29,7 +29,7 @@ export default function HybridBalanceCard({
         <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell
-            className="w-6 h-6 mx-auto"
+            className="size-6 mx-auto"
             style={{ color: THEME.lifting }}
           />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
@@ -102,7 +102,7 @@ export default function HybridBalanceCard({
             >
               {balanceLabel}
             </span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+            <ChevronRight className="size-3.5 text-muted-foreground" />
           </div>
         </div>
 
@@ -167,7 +167,7 @@ export default function HybridBalanceCard({
         {/* Stats row — sessions + volume/distance with labels */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
-            <Dumbbell className="w-3 h-3" style={{ color: THEME.lifting }} />
+            <Dumbbell className="size-3" style={{ color: THEME.lifting }} />
             <span className="text-muted-foreground">Lifts</span>
             <span className="font-mono tabular-nums">
               <span className="font-semibold text-foreground">
@@ -184,7 +184,7 @@ export default function HybridBalanceCard({
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <Footprints className="w-3 h-3" style={{ color: THEME.running }} />
+            <Footprints className="size-3" style={{ color: THEME.running }} />
             <span className="text-muted-foreground">Runs</span>
             <span className="font-mono tabular-nums">
               <span className="font-semibold text-foreground">

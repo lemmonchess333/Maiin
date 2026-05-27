@@ -1,17 +1,14 @@
-import {
-  Palette,
-  Weight,
-  Ruler,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { Palette, Weight, Ruler, Moon, Sun } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import type { UserProfile } from "@/lib/auth";
 
 interface UnitsAppearanceSectionProps {
   profile: UserProfile;
-  toggleUnit: (key: "preferredWeightUnit" | "preferredHeightUnit", current: string) => void;
+  toggleUnit: (
+    key: "preferredWeightUnit" | "preferredHeightUnit",
+    current: string
+  ) => void;
   toggleDark: () => void;
   inline?: boolean;
 }
@@ -23,7 +20,12 @@ export default function UnitsAppearanceSection({
   inline = false,
 }: UnitsAppearanceSectionProps) {
   return (
-    <AccordionSection inline={inline} icon={<Palette className="w-5 h-5 text-primary" />} title="Units & Appearance" subtitle="Weight, height, dark mode">
+    <AccordionSection
+      inline={inline}
+      icon={<Palette className="size-5 text-primary" />}
+      title="Units & Appearance"
+      subtitle="Weight, height, dark mode"
+    >
       <div className="space-y-2">
         <button
           onClick={() => {
@@ -32,13 +34,16 @@ export default function UnitsAppearanceSection({
             // "user picked this state" rather than "user was on this
             // state". toggleUnit() handles the actual flip + persist.
             const next = profile.preferredWeightUnit === "kg" ? "lbs" : "kg";
-            trackSettingsEvent("settings_toggle_changed", { toggle: "weight_unit", value: next });
+            trackSettingsEvent("settings_toggle_changed", {
+              toggle: "weight_unit",
+              value: next,
+            });
             toggleUnit("preferredWeightUnit", profile.preferredWeightUnit);
           }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <Weight className="w-5 h-5" />
+            <Weight className="size-5" />
             <span>Weight Unit</span>
           </div>
           <span className="font-medium">
@@ -49,13 +54,16 @@ export default function UnitsAppearanceSection({
         <button
           onClick={() => {
             const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
-            trackSettingsEvent("settings_toggle_changed", { toggle: "distance_unit", value: next });
+            trackSettingsEvent("settings_toggle_changed", {
+              toggle: "distance_unit",
+              value: next,
+            });
             toggleUnit("preferredHeightUnit", profile.preferredHeightUnit);
           }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <Ruler className="w-5 h-5" />
+            <Ruler className="size-5" />
             <span>Height Unit</span>
           </div>
           <span className="font-medium">
@@ -65,22 +73,23 @@ export default function UnitsAppearanceSection({
 
         <button
           onClick={() => {
-            trackSettingsEvent("settings_toggle_changed", { toggle: "theme", value: profile.darkMode ? "light" : "dark" });
+            trackSettingsEvent("settings_toggle_changed", {
+              toggle: "theme",
+              value: profile.darkMode ? "light" : "dark",
+            });
             toggleDark();
           }}
           className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
         >
           <div className="flex items-center gap-3">
             {profile.darkMode ? (
-              <Moon className="w-5 h-5" />
+              <Moon className="size-5" />
             ) : (
-              <Sun className="w-5 h-5" />
+              <Sun className="size-5" />
             )}
             <span>Dark Mode</span>
           </div>
-          <span className="font-medium">
-            {profile.darkMode ? "ON" : "OFF"}
-          </span>
+          <span className="font-medium">{profile.darkMode ? "ON" : "OFF"}</span>
         </button>
       </div>
     </AccordionSection>

@@ -33,7 +33,7 @@ export default function WelcomeBackCard() {
           aria-label="Dismiss welcome message"
           className="p-1.5 -m-0.5 rounded-lg hover:bg-muted transition-colors"
         >
-          <X aria-hidden="true" className="w-3.5 h-3.5 text-muted-foreground" />
+          <X aria-hidden="true" className="size-3.5 text-muted-foreground" />
         </button>
       </div>
     </motion.div>

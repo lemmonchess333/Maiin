@@ -82,7 +82,11 @@ interface EditServingsSheetProps {
  * traps the Save/Cancel buttons, and wires +/- with explicit
  * aria-labels so screen readers announce the stepper action.
  */
-function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps) {
+function EditServingsSheet({
+  source,
+  onCancel,
+  onSave,
+}: EditServingsSheetProps) {
   // The parent mounts this sheet conditionally and keys it on the
   // group id, so each open is a fresh instance — useState's initial
   // value is the source-of-truth for the stepper. No reset effect:
@@ -96,7 +100,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   // distinguish "slot change requested" from "slot unchanged but
   // count changed" cleanly.
   const [pickedMeal, setPickedMeal] = useState<MealKey | null>(
-    source?.currentMeal ?? null,
+    source?.currentMeal ?? null
   );
   // F5a: rename. Input is uncontrolled-ish — initialised from the
   // source's foodName once. The "changed" check compares trimmed
@@ -110,7 +114,12 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   // String state (not number) so partial input — "12." or empty
   // mid-edit — doesn't shimmer the input value or fight the user's
   // typing. Parsed at compare/save time.
-  const initialPerServing = ((): { cal: number; pro: number; car: number; fat: number } => {
+  const initialPerServing = ((): {
+    cal: number;
+    pro: number;
+    car: number;
+    fat: number;
+  } => {
     if (!source) return { cal: 0, pro: 0, car: 0, fat: 0 };
     const div = Math.max(1, source.currentCount);
     return {
@@ -120,16 +129,25 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
       fat: Math.round(source.currentTotalFat / div),
     };
   })();
-  const [pickedCal, setPickedCal] = useState<string>(String(initialPerServing.cal));
-  const [pickedPro, setPickedPro] = useState<string>(String(initialPerServing.pro));
-  const [pickedCar, setPickedCar] = useState<string>(String(initialPerServing.car));
-  const [pickedFat, setPickedFat] = useState<string>(String(initialPerServing.fat));
+  const [pickedCal, setPickedCal] = useState<string>(
+    String(initialPerServing.cal)
+  );
+  const [pickedPro, setPickedPro] = useState<string>(
+    String(initialPerServing.pro)
+  );
+  const [pickedCar, setPickedCar] = useState<string>(
+    String(initialPerServing.car)
+  );
+  const [pickedFat, setPickedFat] = useState<string>(
+    String(initialPerServing.fat)
+  );
   const [saving, setSaving] = useState(false);
 
   if (!source) return null;
 
   const { foodName, currentCount, currentTotalCalories, currentMeal } = source;
-  const perServingCal = currentCount > 0 ? currentTotalCalories / currentCount : 0;
+  const perServingCal =
+    currentCount > 0 ? currentTotalCalories / currentCount : 0;
   const previewCal = Math.round(perServingCal * target);
   const countDelta = target - currentCount;
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
@@ -169,7 +187,8 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
   }
   const macrosChanged = Object.keys(macroOverrides).length > 0;
 
-  const unchanged = countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
+  const unchanged =
+    countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
 
   const handleSave = async () => {
     if (unchanged || saving) return;
@@ -221,7 +240,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
               "w-full text-center text-base font-semibold text-foreground bg-transparent",
               "rounded-lg px-3 py-1.5 border border-transparent",
               "focus:outline-none focus:border-border focus:bg-muted/50 transition-colors",
-              "disabled:opacity-60",
+              "disabled:opacity-60"
             )}
           />
           <p className="text-xs text-muted-foreground">
@@ -259,7 +278,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
                     "px-3 py-1 rounded-full text-[12px] font-semibold transition-colors active:scale-[0.97]",
                     isPicked
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
                   {MEAL_LABELS[slot]}
@@ -285,10 +304,30 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
           <div className="grid grid-cols-4 gap-2">
             {(
               [
-                { id: "edit-meal-cal", label: "Cal", value: pickedCal, setter: setPickedCal },
-                { id: "edit-meal-pro", label: "Protein", value: pickedPro, setter: setPickedPro },
-                { id: "edit-meal-car", label: "Carbs", value: pickedCar, setter: setPickedCar },
-                { id: "edit-meal-fat", label: "Fat", value: pickedFat, setter: setPickedFat },
+                {
+                  id: "edit-meal-cal",
+                  label: "Cal",
+                  value: pickedCal,
+                  setter: setPickedCal,
+                },
+                {
+                  id: "edit-meal-pro",
+                  label: "Protein",
+                  value: pickedPro,
+                  setter: setPickedPro,
+                },
+                {
+                  id: "edit-meal-car",
+                  label: "Carbs",
+                  value: pickedCar,
+                  setter: setPickedCar,
+                },
+                {
+                  id: "edit-meal-fat",
+                  label: "Fat",
+                  value: pickedFat,
+                  setter: setPickedFat,
+                },
               ] as const
             ).map(({ id, label, value, setter }) => (
               <div key={id} className="flex flex-col items-center gap-1">
@@ -312,7 +351,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
                     "rounded-lg px-2 py-1.5 border border-transparent",
                     "focus:outline-none focus:border-border focus:bg-card transition-colors",
                     "disabled:opacity-60",
-                    "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                    "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   )}
                 />
               </div>
@@ -323,10 +362,13 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
         {/* Stepper */}
         <div className="flex items-center justify-center gap-4">
           <button
-            onClick={() => { haptic("light"); setTarget((n) => Math.max(1, n - 1)); }}
+            onClick={() => {
+              haptic("light");
+              setTarget((n) => Math.max(1, n - 1));
+            }}
             disabled={target <= 1 || saving}
             aria-label="Decrease servings"
-            className="h-12 w-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
           >
             −
           </button>
@@ -342,10 +384,13 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
             </p>
           </div>
           <button
-            onClick={() => { haptic("light"); setTarget((n) => n + 1); }}
+            onClick={() => {
+              haptic("light");
+              setTarget((n) => n + 1);
+            }}
             disabled={saving}
             aria-label="Increase servings"
-            className="h-12 w-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
+            className="size-12 rounded-full bg-muted text-foreground text-xl font-semibold flex items-center justify-center disabled:opacity-30 active:scale-90"
           >
             +
           </button>
@@ -359,8 +404,13 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
             <span>
               ~ {previewCal} cal
               {countDelta !== 0 && (
-                <span className="ml-2" style={{ color: countDelta > 0 ? "#D9884E" : "#8E8E93" }}>
-                  ({countDelta > 0 ? "+" : ""}{countDelta} {Math.abs(countDelta) === 1 ? "serving" : "servings"})
+                <span
+                  className="ml-2"
+                  style={{ color: countDelta > 0 ? "#D9884E" : "#8E8E93" }}
+                >
+                  ({countDelta > 0 ? "+" : ""}
+                  {countDelta}{" "}
+                  {Math.abs(countDelta) === 1 ? "serving" : "servings"})
                 </span>
               )}
               {mealChanged && pickedMeal && (
@@ -393,7 +443,7 @@ function EditServingsSheet({ source, onCancel, onSave }: EditServingsSheetProps)
               "flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98]",
               unchanged || saving
                 ? "bg-muted text-muted-foreground"
-                : "bg-primary text-primary-foreground",
+                : "bg-primary text-primary-foreground"
             )}
           >
             {saving ? "Saving…" : "Save"}

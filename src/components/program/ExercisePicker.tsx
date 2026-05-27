@@ -19,31 +19,45 @@ interface Props {
   onRemoveExercise?: (exerciseId: string) => void;
 }
 
-export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose, headerTitle = "Select Exercise", existingExerciseIds, onRemoveExercise }: Props) {
+export default function ExercisePicker({
+  open,
+  onSelect,
+  onMultiSelect,
+  onClose,
+  headerTitle = "Select Exercise",
+  existingExerciseIds,
+  onRemoveExercise,
+}: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(existingExerciseIds ?? []));
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(existingExerciseIds ?? [])
+  );
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const preExistingIds = useMemo(() => new Set(existingExerciseIds ?? []), [existingExerciseIds]);
+  const preExistingIds = useMemo(
+    () => new Set(existingExerciseIds ?? []),
+    [existingExerciseIds]
+  );
 
   const filteredExercises = useMemo(() => {
-    const getAll = () => EXERCISE_CATEGORIES.flatMap(cat => getExercisesByCategory(cat));
+    const getAll = () =>
+      EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return getAll().filter(e => e.name.toLowerCase().includes(q));
+      return getAll().filter((e) => e.name.toLowerCase().includes(q));
     }
     if (selectedCategory === "All") return getAll();
     return getExercisesByCategory(selectedCategory);
   }, [searchQuery, selectedCategory]);
 
   const allExercises = useMemo(() => {
-    return EXERCISE_CATEGORIES.flatMap(cat => getExercisesByCategory(cat));
+    return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
   }, []);
 
   const newlySelectedCount = useMemo(() => {
-    return [...selectedIds].filter(id => !preExistingIds.has(id)).length;
+    return [...selectedIds].filter((id) => !preExistingIds.has(id)).length;
   }, [selectedIds, preExistingIds]);
 
   const toggleSelection = (id: string) => {
@@ -51,22 +65,32 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
     if (preExistingIds.has(id)) {
       if (selectedIds.has(id)) {
         onRemoveExercise?.(id);
-        setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
       } else {
-        setSelectedIds(prev => new Set(prev).add(id));
+        setSelectedIds((prev) => new Set(prev).add(id));
       }
     } else {
-      setSelectedIds(prev => {
+      setSelectedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(id)) next.delete(id); else next.add(id);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
         return next;
       });
     }
   };
 
   const handleAddSelected = () => {
-    const newlySelected = allExercises.filter(e => selectedIds.has(e.id) && !preExistingIds.has(e.id));
-    if (newlySelected.length === 0) { onClose(); return; }
+    const newlySelected = allExercises.filter(
+      (e) => selectedIds.has(e.id) && !preExistingIds.has(e.id)
+    );
+    if (newlySelected.length === 0) {
+      onClose();
+      return;
+    }
     if (onMultiSelect) {
       onMultiSelect(newlySelected);
     } else {
@@ -89,10 +113,10 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
+      if (e.key === "Escape") handleClose();
     };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, handleClose]);
 
   const confirmDiscard = () => {
@@ -134,11 +158,16 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             <div className="flex items-center justify-between px-4 pt-3 pb-2 safe-area-pt">
               <button
                 onClick={handleClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-muted"
+                className="size-8 flex items-center justify-center rounded-full bg-muted"
               >
-                <X className="w-4 h-4 text-muted-foreground" />
+                <X className="size-4 text-muted-foreground" />
               </button>
-              <p className="text-foreground" style={{ fontSize: 17, fontWeight: 600 }}>{headerTitle}</p>
+              <p
+                className="text-foreground"
+                style={{ fontSize: 17, fontWeight: 600 }}
+              >
+                {headerTitle}
+              </p>
               <div style={{ width: 32 }} />
             </div>
 
@@ -153,12 +182,20 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                   className="overflow-hidden px-4 pb-3"
                 >
                   <div className="flex items-center justify-between p-3 rounded-xl bg-muted">
-                    <p className="text-sm text-foreground">Discard {newlySelectedCount} selections?</p>
+                    <p className="text-sm text-foreground">
+                      Discard {newlySelectedCount} selections?
+                    </p>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setShowDiscardConfirm(false)} className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card">
+                      <button
+                        onClick={() => setShowDiscardConfirm(false)}
+                        className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
+                      >
                         Keep Browsing
                       </button>
-                      <button onClick={confirmDiscard} className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-500/10 rounded-lg">
+                      <button
+                        onClick={confirmDiscard}
+                        className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-500/10 rounded-lg"
+                      >
                         Discard
                       </button>
                     </div>
@@ -170,7 +207,7 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             {/* Search bar */}
             <div className="px-4 pb-2 flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   ref={searchRef}
                   type="text"
@@ -199,7 +236,10 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
             </div>
 
             {/* Filter pills */}
-            <div className="flex overflow-x-auto gap-2 px-4 pb-2" style={{ scrollbarWidth: "none" }}>
+            <div
+              className="flex overflow-x-auto gap-2 px-4 pb-2"
+              style={{ scrollbarWidth: "none" }}
+            >
               {ALL_CATEGORIES.map((cat) => (
                 <button
                   key={cat}
@@ -218,8 +258,13 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
 
             {/* Section label */}
             {!searchQuery && (
-              <div className="px-4 pt-1 pb-2 text-muted-foreground uppercase" style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>
-                {selectedCategory === "All" ? `All · ${filteredExercises.length} exercises` : `${selectedCategory} · ${filteredExercises.length} exercises`}
+              <div
+                className="px-4 pt-1 pb-2 text-muted-foreground uppercase"
+                style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}
+              >
+                {selectedCategory === "All"
+                  ? `All · ${filteredExercises.length} exercises`
+                  : `${selectedCategory} · ${filteredExercises.length} exercises`}
               </div>
             )}
 
@@ -235,13 +280,30 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                       onClick={() => toggleSelection(exercise.id)}
                       className={cn(
                         "flex items-center pr-4 transition-colors duration-100 active:bg-muted cursor-pointer",
-                        isSelected && "bg-green-500/10",
+                        isSelected && "bg-green-500/10"
                       )}
-                      style={{ paddingLeft: 16, paddingTop: 12, paddingBottom: 12, minHeight: 68 }}
+                      style={{
+                        paddingLeft: 16,
+                        paddingTop: 12,
+                        paddingBottom: 12,
+                        minHeight: 68,
+                      }}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-foreground" style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.25 }}>{exercise.name}</p>
-                        <p className="text-muted-foreground" style={{ fontSize: 13, marginTop: 2 }}>
+                        <p
+                          className="text-foreground"
+                          style={{
+                            fontSize: 17,
+                            fontWeight: 600,
+                            lineHeight: 1.25,
+                          }}
+                        >
+                          {exercise.name}
+                        </p>
+                        <p
+                          className="text-muted-foreground"
+                          style={{ fontSize: 13, marginTop: 2 }}
+                        >
                           {exercise.muscleGroup} · {exercise.equipment}
                         </p>
                       </div>
@@ -251,29 +313,38 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                           initial={false}
                           animate={{ scale: isSelected ? [0.9, 1] : 1 }}
                           transition={{ duration: 0.15 }}
-                          className="w-9 h-9 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: isSelected ? "#4CAF50" : "#7C6BF0" }}
+                          className="size-9 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor: isSelected ? "#4CAF50" : "#7C6BF0",
+                          }}
                         >
                           {isSelected ? (
-                            <Check className="w-4 h-4 text-white" />
+                            <Check className="size-4 text-white" />
                           ) : (
-                            <Plus className="w-4 h-4 text-white" />
+                            <Plus className="size-4 text-white" />
                           )}
                         </motion.div>
                       </div>
                     </div>
                     {/* Indented divider */}
                     {idx < filteredExercises.length - 1 && (
-                      <div className="bg-border" style={{ height: 0.5, marginLeft: 16 }} />
+                      <div
+                        className="bg-border"
+                        style={{ height: 0.5, marginLeft: 16 }}
+                      />
                     )}
                   </div>
                 );
               })}
               {filteredExercises.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 px-8">
-                  <Search className="w-12 h-12 text-muted-foreground/30 mb-3" />
-                  <p className="text-base font-semibold text-foreground">No exercises found</p>
-                  <p className="text-sm text-muted-foreground mt-1 text-center">Try a different search term or browse by muscle group</p>
+                  <Search className="size-12 text-muted-foreground/30 mb-3" />
+                  <p className="text-base font-semibold text-foreground">
+                    No exercises found
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1 text-center">
+                    Try a different search term or browse by muscle group
+                  </p>
                 </div>
               )}
             </div>
@@ -298,7 +369,9 @@ export default function ExercisePicker({ open, onSelect, onMultiSelect, onClose,
                       boxShadow: "0 6px 24px rgba(124,107,240,0.3)",
                     }}
                   >
-                    {newlySelectedCount} exercise{newlySelectedCount !== 1 ? "s" : ""} selected — Add to workout
+                    {newlySelectedCount} exercise
+                    {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
+                    workout
                   </motion.button>
                 </motion.div>
               )}

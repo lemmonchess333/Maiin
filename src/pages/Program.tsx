@@ -460,7 +460,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           onClick={() => window.location.reload()}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
         >
-          <RefreshCw className="w-4 h-4" /> Retry
+          <RefreshCw className="size-4" /> Retry
         </button>
       </div>
     );
@@ -688,7 +688,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     className="p-2 rounded-lg hover:bg-muted transition-colors"
                     style={{ minWidth: 44, minHeight: 44 }}
                   >
-                    <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+                    <ArrowUpDown className="size-4 text-muted-foreground" />
                   </button>
                 ))}
               <button
@@ -697,7 +697,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 style={{ minWidth: 44, minHeight: 44 }}
                 aria-label="More options"
               >
-                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                <MoreHorizontal className="size-4 text-muted-foreground" />
               </button>
             </div>
           </div>
@@ -796,7 +796,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               disabled={advancing}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              <FastForward className="w-4 h-4" />
+              <FastForward className="size-4" />
               {advancing ? "Advancing..." : "Advance to Next Week"}
             </button>
           </div>
@@ -856,7 +856,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       {/* ── Session Header ── */}
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0"
+                          className="size-9 rounded-[10px] flex items-center justify-center shrink-0"
                           style={{
                             backgroundColor:
                               status === "completed" || status === "skipped"
@@ -868,13 +868,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         >
                           {status === "completed" ? (
                             <Check
-                              className="w-[18px] h-[18px]"
+                              className="size-[18px]"
                               style={{ color: "#4CAF50" }}
                               strokeWidth={2.5}
                             />
                           ) : (
                             <Dumbbell
-                              className={`w-[18px] h-[18px] ${status === "today" ? "" : "text-muted-foreground"}`}
+                              className={`size-[18px] ${status === "today" ? "" : "text-muted-foreground"}`}
                               style={
                                 status === "today"
                                   ? { color: "#7C6BF0" }
@@ -1063,7 +1063,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           }}
                           className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                         >
-                          <Plus className="w-4 h-4" /> Add Exercise
+                          <Plus className="size-4" /> Add Exercise
                         </button>
                       )}
 
@@ -1130,7 +1130,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
                     style={{ background: THEME.gradient.brand }}
                   >
-                    <Play className="w-4 h-4" /> Begin Workout
+                    <Play className="size-4" /> Begin Workout
                   </button>
                   <div className="flex items-center justify-center mt-2">
                     <button
@@ -1153,7 +1153,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   }}
                 >
                   <Check
-                    className="w-4 h-4"
+                    className="size-4"
                     style={{ color: "#4CAF50" }}
                     strokeWidth={2.5}
                   />
@@ -1223,7 +1223,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Repeat className="w-4 h-4 text-muted-foreground" /> Replace
+                <Repeat className="size-4 text-muted-foreground" /> Replace
                 Exercise
               </button>
               <button
@@ -1233,7 +1233,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Trash2 className="w-4 h-4" /> Remove Exercise
+                <Trash2 className="size-4" /> Remove Exercise
               </button>
               <button
                 onClick={() => {
@@ -1242,7 +1242,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 disabled={contextMenu.exIndex === 0}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
               >
-                <ArrowUp className="w-4 h-4 text-muted-foreground" /> Move Up
+                <ArrowUp className="size-4 text-muted-foreground" /> Move Up
               </button>
               <button
                 onClick={() => {
@@ -1256,8 +1256,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
               >
-                <ArrowDown className="w-4 h-4 text-muted-foreground" /> Move
-                Down
+                <ArrowDown className="size-4 text-muted-foreground" /> Move Down
               </button>
             </motion.div>
           </>
@@ -1421,7 +1420,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <CalendarDays className="w-4.5 h-4.5 text-muted-foreground" />
+                  <CalendarDays className="size-4.5 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground flex-1">
                     Edit weekly layout
                   </span>
@@ -1441,12 +1440,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <Sparkles className="w-4.5 h-4.5 text-muted-foreground" />
+                  <Sparkles className="size-4.5 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground flex-1">
                     Configure programme
                   </span>
                   {phaseLocked && (
-                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Lock className="size-3.5 text-muted-foreground" />
                   )}
                 </button>
                 <button
@@ -1461,12 +1460,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <Settings2 className="w-4.5 h-4.5 text-muted-foreground" />
+                  <Settings2 className="size-4.5 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground flex-1">
                     Programme settings
                   </span>
                   {phaseLocked && (
-                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Lock className="size-3.5 text-muted-foreground" />
                   )}
                 </button>
                 {/* PR-2: "Reset programme" replaces "Refresh Programme".
@@ -1489,7 +1488,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 >
                   <RefreshCw
                     className={cn(
-                      "w-4.5 h-4.5 text-muted-foreground",
+                      "size-4.5 text-muted-foreground",
                       regenerating && "animate-spin"
                     )}
                   />
@@ -1497,7 +1496,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     Reset programme
                   </span>
                   {phaseLocked && (
-                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Lock className="size-3.5 text-muted-foreground" />
                   )}
                 </button>
               </div>
@@ -1587,13 +1586,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    className="size-10 rounded-xl flex items-center justify-center"
                     style={{ backgroundColor: `${THEME.lifting}15` }}
                   >
-                    <Lock
-                      className="w-5 h-5"
-                      style={{ color: THEME.lifting }}
-                    />
+                    <Lock className="size-5" style={{ color: THEME.lifting }} />
                   </div>
                   <div>
                     <p className="text-base font-semibold text-foreground">

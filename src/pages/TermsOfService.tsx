@@ -11,12 +11,14 @@ export default function TermsOfService() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="size-4" />
           Back
         </button>
 
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">Terms of Service</h1>
+          <h1 className="text-xl font-extrabold text-foreground">
+            Terms of Service
+          </h1>
           <p className="text-xs text-muted-foreground mt-1">
             Last updated: March 2026
           </p>
@@ -59,9 +61,7 @@ export default function TermsOfService() {
               4. Subscriptions &amp; Payments
             </h2>
             <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-              <li>
-                Tropos offers free and Pro subscription tiers.
-              </li>
+              <li>Tropos offers free and Pro subscription tiers.</li>
               <li>
                 Subscriptions auto-renew at the selected interval (monthly or
                 annually) unless cancelled at least 24 hours before the end of
@@ -124,9 +124,9 @@ export default function TermsOfService() {
             <p>
               Tropos is a fitness tracking tool, not a medical device. The App
               does not provide medical advice, diagnosis, or treatment.
-              AI-generated nutrition and training suggestions are estimates only.
-              Always consult a qualified healthcare professional before making
-              changes to your diet or exercise routine.
+              AI-generated nutrition and training suggestions are estimates
+              only. Always consult a qualified healthcare professional before
+              making changes to your diet or exercise routine.
             </p>
           </section>
 

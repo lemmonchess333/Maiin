@@ -1,8 +1,29 @@
 import { useState, type ComponentType } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Clock, Trophy, ChevronDown, ChevronUp, LogOut, Footprints, Sprout, Sun, Leaf, Snowflake } from "lucide-react";
-import type { Challenge, ChallengeParticipant, ChallengeTier } from "./useChallenges";
-import { TIER_COLORS, computeTier, getTimeRemaining, isTierAchieved } from "./useChallenges";
+import {
+  Users,
+  Clock,
+  Trophy,
+  ChevronDown,
+  ChevronUp,
+  LogOut,
+  Footprints,
+  Sprout,
+  Sun,
+  Leaf,
+  Snowflake,
+} from "lucide-react";
+import type {
+  Challenge,
+  ChallengeParticipant,
+  ChallengeTier,
+} from "./useChallenges";
+import {
+  TIER_COLORS,
+  computeTier,
+  getTimeRemaining,
+  isTierAchieved,
+} from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 
@@ -18,14 +39,21 @@ interface ChallengeCardProps {
   onLeave: () => void | Promise<void>;
 }
 
-const TIER_LABELS: Record<ChallengeTier, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
+const TIER_LABELS: Record<ChallengeTier, string> = {
+  bronze: "Bronze",
+  silver: "Silver",
+  gold: "Gold",
+};
 
 /* Icon map for challenge cards. The seed definitions in
    useChallenges.ts store lucide icon names as strings ("footprints",
    "trophy", etc.) — the previous render just printed those strings
    as text inside the icon container, producing visible "ootprints"
    leakage on the Crews tab once challenges actually started seeding. */
-const CHALLENGE_ICON_MAP: Record<string, ComponentType<{ size?: number; className?: string }>> = {
+const CHALLENGE_ICON_MAP: Record<
+  string,
+  ComponentType<{ size?: number; className?: string }>
+> = {
   trophy: Trophy,
   footprints: Footprints,
   sprout: Sprout,
@@ -45,11 +73,22 @@ function formatChallengeValue(metric: string, value: number): string {
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
   if (metric === "total_km") return `${value.toFixed(1)}km`;
-  if (metric === "total_volume") return `${Math.round(value).toLocaleString()}kg`;
+  if (metric === "total_volume")
+    return `${Math.round(value).toLocaleString()}kg`;
   return Math.round(value).toLocaleString();
 }
 
-function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value: number; max: number; achieved: boolean }) {
+function TierMarker({
+  tier,
+  value,
+  max,
+  achieved,
+}: {
+  tier: ChallengeTier;
+  value: number;
+  max: number;
+  achieved: boolean;
+}) {
   const pct = Math.min((value / max) * 100, 100);
   /* The unachieved fallback used to be a hardcoded
      `rgba(255,255,255,0.2)` which rendered invisibly on the white
@@ -59,9 +98,12 @@ function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value
      light mode — the markers should always be visible, just dim
      until they're achieved. */
   return (
-    <div className="absolute top-0 -translate-x-1/2 flex flex-col items-center" style={{ left: `${pct}%` }}>
+    <div
+      className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+      style={{ left: `${pct}%` }}
+    >
       <div
-        className={`w-2.5 h-2.5 rounded-full border-2 border-background ${achieved ? "" : "bg-muted-foreground/30"}`}
+        className={`size-2.5 rounded-full border-2 border-background ${achieved ? "" : "bg-muted-foreground/30"}`}
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
       <span
@@ -74,18 +116,33 @@ function TierMarker({ tier, value, max, achieved }: { tier: ChallengeTier; value
   );
 }
 
-export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined, onJoin, onLeave }: ChallengeCardProps) {
+export function ChallengeCard({
+  challenge,
+  myProgress,
+  leaderboard = [],
+  joined,
+  onJoin,
+  onLeave,
+}: ChallengeCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState<"joining" | "leaving" | null>(null);
   const handleJoin = async () => {
     if (busy) return;
     setBusy("joining");
-    try { await onJoin(); } finally { setBusy(null); }
+    try {
+      await onJoin();
+    } finally {
+      setBusy(null);
+    }
   };
   const handleLeave = async () => {
     if (busy) return;
     setBusy("leaving");
-    try { await onLeave(); } finally { setBusy(null); }
+    try {
+      await onLeave();
+    } finally {
+      setBusy(null);
+    }
   };
   const currentValue = myProgress?.currentValue || 0;
   const currentTier = myProgress?.tierAchieved;
@@ -93,7 +150,13 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
   const pct = Math.min((currentValue / maxTier) * 100, 100);
   const timeLeft = getTimeRemaining(challenge.endDate);
 
-  const nextTier: ChallengeTier | null = !currentTier ? "bronze" : currentTier === "bronze" ? "silver" : currentTier === "silver" ? "gold" : null;
+  const nextTier: ChallengeTier | null = !currentTier
+    ? "bronze"
+    : currentTier === "bronze"
+      ? "silver"
+      : currentTier === "silver"
+        ? "gold"
+        : null;
   const nextValue = nextTier ? challenge.tiers[nextTier] : null;
 
   return (
@@ -106,7 +169,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         {/* Header */}
         <div className="flex items-start gap-3">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            className="size-10 rounded-xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: THEME.brand + "20" }}
           >
             {(() => {
@@ -123,15 +186,19 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             })()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">{challenge.name}</p>
-            <p className="text-[13px] text-muted-foreground">{challenge.description}</p>
+            <p className="text-sm font-semibold text-foreground">
+              {challenge.name}
+            </p>
+            <p className="text-[13px] text-muted-foreground">
+              {challenge.description}
+            </p>
           </div>
           {currentTier && (
             <div
-              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+              className="size-6 rounded-full flex items-center justify-center shrink-0"
               style={{ backgroundColor: TIER_COLORS[currentTier] }}
             >
-              <Trophy className="w-3.5 h-3.5 text-white" />
+              <Trophy className="size-3.5 text-white" />
             </div>
           )}
         </div>
@@ -139,11 +206,11 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
         {/* Meta row */}
         <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="size-3.5" />
             {timeLeft}
           </span>
           <span className="flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" />
+            <Users className="size-3.5" />
             {challenge.participantCount} joined
           </span>
           {challenge.season && (
@@ -165,13 +232,30 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             {leaderboard.slice(0, 3).map((p, i) => {
               const tier = computeTier(p.currentValue, challenge.tiers);
               return (
-                <div key={p.uid || i} className="flex items-center gap-2 text-xs">
-                  <span className="w-4 text-right font-medium text-muted-foreground">{i + 1}</span>
-                  <BlockAwareAvatar uid={p.uid} photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
-                  <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
-                  <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
+                <div
+                  key={p.uid || i}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="w-4 text-right font-medium text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <BlockAwareAvatar
+                    uid={p.uid}
+                    photoURL={p.photoURL}
+                    displayName={p.displayName || "Athlete"}
+                    size="xs"
+                  />
+                  <span className="flex-1 truncate text-foreground">
+                    {p.displayName || "Athlete"}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {formatChallengeValue(challenge.metric, p.currentValue)}
+                  </span>
                   {tier && (
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] }} />
+                    <div
+                      className="size-2 rounded-full"
+                      style={{ backgroundColor: TIER_COLORS[tier] }}
+                    />
                   )}
                 </div>
               );
@@ -198,7 +282,10 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
              contribution is surfaced underneath as a "you contributed"
              line so the personal stake is still legible. */
           (() => {
-            const collectiveTotal = leaderboard.reduce((s, p) => s + (p.currentValue || 0), 0);
+            const collectiveTotal = leaderboard.reduce(
+              (s, p) => s + (p.currentValue || 0),
+              0
+            );
             const target = challenge.collectiveTarget!;
             const collPct = Math.min((collectiveTotal / target) * 100, 100);
             const reached = collectiveTotal >= target;
@@ -211,7 +298,11 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                       animate={{ width: `${collPct}%` }}
                       transition={{ duration: 0.6 }}
                       className="h-full rounded-full"
-                      style={{ backgroundColor: reached ? TIER_COLORS.gold : THEME.brand }}
+                      style={{
+                        backgroundColor: reached
+                          ? TIER_COLORS.gold
+                          : THEME.brand,
+                      }}
                     />
                   </div>
                 </div>
@@ -222,7 +313,8 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   / {formatChallengeValue(challenge.metric, target)} together
                 </p>
                 <p className="text-[11px] text-center text-muted-foreground/70">
-                  You contributed {formatChallengeValue(challenge.metric, currentValue)}
+                  You contributed{" "}
+                  {formatChallengeValue(challenge.metric, currentValue)}
                 </p>
               </div>
             );
@@ -262,13 +354,15 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   animate={{
                     width:
                       challenge.metric === "fastest_effort"
-                        ? `${currentValue > 0 ? Math.min(((maxTier / Math.max(currentValue, 1)) * 100), 100) : 0}%`
+                        ? `${currentValue > 0 ? Math.min((maxTier / Math.max(currentValue, 1)) * 100, 100) : 0}%`
                         : `${pct}%`,
                   }}
                   transition={{ duration: 0.6 }}
                   className="h-full rounded-full"
                   style={{
-                    backgroundColor: currentTier ? TIER_COLORS[currentTier] : THEME.brand,
+                    backgroundColor: currentTier
+                      ? TIER_COLORS[currentTier]
+                      : THEME.brand,
                   }}
                 />
               </div>
@@ -277,12 +371,36 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   marker is just a comparison instead of repeating the
                   metric branch three times. */}
               <div className="relative mt-1">
-                <TierMarker tier="bronze" value={challenge.tiers.bronze} max={maxTier}
-                  achieved={isTierAchieved(currentValue, challenge.tiers.bronze, challenge.metric)} />
-                <TierMarker tier="silver" value={challenge.tiers.silver} max={maxTier}
-                  achieved={isTierAchieved(currentValue, challenge.tiers.silver, challenge.metric)} />
-                <TierMarker tier="gold" value={challenge.tiers.gold} max={maxTier}
-                  achieved={isTierAchieved(currentValue, challenge.tiers.gold, challenge.metric)} />
+                <TierMarker
+                  tier="bronze"
+                  value={challenge.tiers.bronze}
+                  max={maxTier}
+                  achieved={isTierAchieved(
+                    currentValue,
+                    challenge.tiers.bronze,
+                    challenge.metric
+                  )}
+                />
+                <TierMarker
+                  tier="silver"
+                  value={challenge.tiers.silver}
+                  max={maxTier}
+                  achieved={isTierAchieved(
+                    currentValue,
+                    challenge.tiers.silver,
+                    challenge.metric
+                  )}
+                />
+                <TierMarker
+                  tier="gold"
+                  value={challenge.tiers.gold}
+                  max={maxTier}
+                  achieved={isTierAchieved(
+                    currentValue,
+                    challenge.tiers.gold,
+                    challenge.metric
+                  )}
+                />
               </div>
             </div>
 
@@ -292,7 +410,12 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               {currentTier === "gold" ? (
                 <span>
                   <Trophy size={14} className="inline text-yellow-500" />{" "}
-                  <span className="font-semibold" style={{ color: TIER_COLORS.gold }}>Gold achieved!</span>
+                  <span
+                    className="font-semibold"
+                    style={{ color: TIER_COLORS.gold }}
+                  >
+                    Gold achieved!
+                  </span>
                   {" — "}
                   {formatChallengeValue(challenge.metric, currentValue)}
                 </span>
@@ -302,10 +425,15 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
                   <span className="font-semibold text-foreground">
                     {formatChallengeValue(challenge.metric, currentValue)}
                   </span>
-                  {" — "}{TIER_LABELS[nextTier]} at {formatChallengeValue(challenge.metric, nextValue)}
+                  {" — "}
+                  {TIER_LABELS[nextTier]} at{" "}
+                  {formatChallengeValue(challenge.metric, nextValue)}
                 </span>
               ) : (
-                <span>Progress: {formatChallengeValue(challenge.metric, currentValue)}</span>
+                <span>
+                  Progress:{" "}
+                  {formatChallengeValue(challenge.metric, currentValue)}
+                </span>
               )}
             </p>
           </div>
@@ -318,7 +446,11 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             className="flex items-center gap-1 text-xs text-muted-foreground mx-auto hover:text-foreground transition-colors"
           >
             {expanded ? "Hide" : "Full"} leaderboard
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {expanded ? (
+              <ChevronUp className="size-3" />
+            ) : (
+              <ChevronDown className="size-3" />
+            )}
           </button>
         )}
       </div>
@@ -336,13 +468,33 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
               {leaderboard.map((p, i) => {
                 const tier = computeTier(p.currentValue, challenge.tiers);
                 return (
-                  <div key={p.uid || i} className="flex items-center gap-2 text-xs">
-                    <span className="w-5 text-right font-medium text-muted-foreground">{i + 1}</span>
-                    <BlockAwareAvatar uid={p.uid} photoURL={p.photoURL} displayName={p.displayName || "Athlete"} size="xs" />
-                    <span className="flex-1 truncate text-foreground">{p.displayName || "Athlete"}</span>
-                    <span className="font-medium tabular-nums">{formatChallengeValue(challenge.metric, p.currentValue)}</span>
+                  <div
+                    key={p.uid || i}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <span className="w-5 text-right font-medium text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <BlockAwareAvatar
+                      uid={p.uid}
+                      photoURL={p.photoURL}
+                      displayName={p.displayName || "Athlete"}
+                      size="xs"
+                    />
+                    <span className="flex-1 truncate text-foreground">
+                      {p.displayName || "Athlete"}
+                    </span>
+                    <span className="font-medium tabular-nums">
+                      {formatChallengeValue(challenge.metric, p.currentValue)}
+                    </span>
                     {tier && (
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: TIER_COLORS[tier] + "20", color: TIER_COLORS[tier] }}>
+                      <span
+                        className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: TIER_COLORS[tier] + "20",
+                          color: TIER_COLORS[tier],
+                        }}
+                      >
                         {TIER_LABELS[tier]}
                       </span>
                     )}
@@ -362,7 +514,7 @@ export function ChallengeCard({ challenge, myProgress, leaderboard = [], joined,
             disabled={busy === "leaving"}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto disabled:opacity-60"
           >
-            <LogOut className="w-3 h-3" />
+            <LogOut className="size-3" />
             {busy === "leaving" ? "Leaving…" : "Leave Challenge"}
           </button>
         </div>

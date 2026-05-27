@@ -613,9 +613,9 @@ export default function Home() {
             <Link
               to="/settings"
               aria-label="Settings"
-              className="inline-flex items-center justify-center w-11 h-11 rounded-xl text-muted-foreground/60 hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="inline-flex items-center justify-center size-11 rounded-xl text-muted-foreground/60 hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <SettingsIcon aria-hidden="true" className="w-5 h-5" />
+              <SettingsIcon aria-hidden="true" className="size-5" />
             </Link>
           </div>
         </motion.div>
@@ -640,7 +640,7 @@ export default function Home() {
         >
           <Sparkles
             className={cn(
-              "w-3.5 h-3.5 shrink-0",
+              "size-3.5 shrink-0",
               trialDaysLeft <= 2 ? "text-orange-500" : "text-primary"
             )}
           />
@@ -677,7 +677,7 @@ export default function Home() {
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left bg-primary/8 transition-colors"
         >
-          <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+          <Sparkles className="size-3.5 text-primary shrink-0" />
           <span className="text-xs font-medium text-foreground flex-1">
             Upgrade to Pro
           </span>
@@ -705,12 +705,12 @@ export default function Home() {
               aria-label="Dismiss welcome message"
               className="p-1 rounded-lg hover:bg-muted"
             >
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
+              <X className="size-3.5 text-muted-foreground" />
             </button>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Dumbbell className="w-4 h-4 text-primary shrink-0" />
+              <Dumbbell className="size-4 text-primary shrink-0" />
               <span>
                 Tap <strong className="text-foreground">Programme</strong> to
                 start a workout
@@ -718,7 +718,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Footprints
-                className="w-4 h-4 shrink-0"
+                className="size-4 shrink-0"
                 style={{ color: THEME.running }}
               />
               <span>
@@ -727,7 +727,7 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Target className="w-4 h-4 text-primary shrink-0" />
+              <Target className="size-4 text-primary shrink-0" />
               <span>
                 Check <strong className="text-foreground">History</strong> to
                 view your progress
@@ -753,7 +753,7 @@ export default function Home() {
               borderColor: "rgba(249,115,22,0.2)",
             }}
           >
-            <Flame className="w-5 h-5 text-orange-500 shrink-0" />
+            <Flame className="size-5 text-orange-500 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-orange-500">
                 {streak}-day streak at risk
@@ -993,7 +993,7 @@ export default function Home() {
                   >
                     <X
                       aria-hidden="true"
-                      className="w-4 h-4 text-muted-foreground"
+                      className="size-4 text-muted-foreground"
                     />
                   </button>
                 </div>
@@ -1013,9 +1013,9 @@ export default function Home() {
                       adjustWeight(-0.1);
                     }}
                     aria-label="Decrease by 0.1"
-                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
+                    className="size-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
                   >
-                    <Minus className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Minus className="size-3.5 text-muted-foreground" />
                   </button>
                   <input
                     type="text"
@@ -1038,9 +1038,9 @@ export default function Home() {
                       adjustWeight(0.1);
                     }}
                     aria-label="Increase by 0.1"
-                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
+                    className="size-9 rounded-full flex items-center justify-center flex-shrink-0 bg-muted border border-border/50 active:scale-95 transition-transform"
                   >
-                    <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+                    <Plus className="size-3.5 text-muted-foreground" />
                   </button>
                 </div>
                 <motion.button
@@ -1067,7 +1067,7 @@ export default function Home() {
                         animate={{ scale: 1, opacity: 1 }}
                         className="inline-flex items-center gap-2"
                       >
-                        <Check className="w-5 h-5" /> Saved!
+                        <Check className="size-5" /> Saved!
                       </motion.span>
                     ) : (
                       <motion.span
@@ -1154,7 +1154,7 @@ export default function Home() {
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto rounded-2xl bg-card p-6 space-y-4 shadow-xl border border-border/50"
             >
               <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
+                <Sparkles className="size-5 text-primary" />
                 <p className="text-base font-semibold text-foreground">
                   Your free trial has ended
                 </p>

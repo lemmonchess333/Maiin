@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../lib/auth';
-import { getComments, addComment } from '../../lib/socialApi';
-import { getTimeAgo } from '../../lib/timeAgo';
-import type { DocumentSnapshot } from 'firebase/firestore';
-import BlockAwareAvatar from './BlockAwareAvatar';
-import { toast } from 'sonner';
-import { logger } from '../../lib/logger';
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../lib/auth";
+import { getComments, addComment } from "../../lib/socialApi";
+import { getTimeAgo } from "../../lib/timeAgo";
+import type { DocumentSnapshot } from "firebase/firestore";
+import BlockAwareAvatar from "./BlockAwareAvatar";
+import { toast } from "sonner";
+import { logger } from "../../lib/logger";
 
 interface Comment {
   id: string;
@@ -16,16 +16,26 @@ interface Comment {
   createdAt?: { toDate?: () => Date };
 }
 
-export default function CommentSection({ activityId, activityAuthorId, prefillText, onPrefillConsumed }: { activityId: string; activityAuthorId?: string; prefillText?: string; onPrefillConsumed?: () => void }) {
+export default function CommentSection({
+  activityId,
+  activityAuthorId,
+  prefillText,
+  onPrefillConsumed,
+}: {
+  activityId: string;
+  activityAuthorId?: string;
+  prefillText?: string;
+  onPrefillConsumed?: () => void;
+}) {
   const { user, profile } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
 
   useEffect(() => {
-    getComments(activityId).then(result => {
+    getComments(activityId).then((result) => {
       setComments(result.comments as Comment[]);
       lastDocRef.current = result.lastDoc;
       setHasMore(result.hasMore);
@@ -42,7 +52,7 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
   const handleLoadMore = async () => {
     if (!lastDocRef.current) return;
     const result = await getComments(activityId, 20, lastDocRef.current);
-    setComments(prev => [...prev, ...(result.comments as Comment[])]);
+    setComments((prev) => [...prev, ...(result.comments as Comment[])]);
     lastDocRef.current = result.lastDoc;
     setHasMore(result.hasMore);
   };
@@ -51,8 +61,15 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
     if (!user || !text.trim()) return;
     setSending(true);
     try {
-      await addComment(activityId, user.uid, profile?.displayName || 'User', text.trim(), activityAuthorId, profile?.photoURL || undefined);
-      setText('');
+      await addComment(
+        activityId,
+        user.uid,
+        profile?.displayName || "User",
+        text.trim(),
+        activityAuthorId,
+        profile?.photoURL || undefined
+      );
+      setText("");
       const result = await getComments(activityId);
       setComments(result.comments as Comment[]);
       lastDocRef.current = result.lastDoc;
@@ -62,7 +79,7 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
       // Surface the failure via toast — bare await previously left
       // the send button locked on `sending=true` forever if the write
       // failed, with no user-visible signal.
-      logger.error('[CommentSection] send failed', err);
+      logger.error("[CommentSection] send failed", err);
       toast.error("Couldn't post comment. Try again.");
     } finally {
       setSending(false);
@@ -72,15 +89,27 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
   return (
     <div className="mt-3 pt-3 border-t border-border/50 space-y-3">
       {comments.map((c) => {
-        const timeAgo = c.createdAt?.toDate ? getTimeAgo(c.createdAt.toDate()) : '';
+        const timeAgo = c.createdAt?.toDate
+          ? getTimeAgo(c.createdAt.toDate())
+          : "";
         return (
           <div key={c.id} className="flex gap-2">
-            <BlockAwareAvatar uid={c.authorId} photoURL={c.authorPhotoURL} displayName={c.authorName} size="sm" className="w-6 h-6" />
+            <BlockAwareAvatar
+              uid={c.authorId}
+              photoURL={c.authorPhotoURL}
+              displayName={c.authorName}
+              size="sm"
+              className="size-6"
+            />
             <div>
               <p className="text-xs">
-                <span className="font-semibold">{c.authorName}</span>{' '}
+                <span className="font-semibold">{c.authorName}</span>{" "}
                 <span className="text-muted-foreground">{c.text}</span>
-                {timeAgo && <span className="text-xs text-muted-foreground ml-1">{timeAgo}</span>}
+                {timeAgo && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {timeAgo}
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -88,20 +117,30 @@ export default function CommentSection({ activityId, activityAuthorId, prefillTe
       })}
 
       {hasMore && (
-        <button onClick={handleLoadMore}
-          className="text-xs text-primary font-medium hover:underline">
+        <button
+          onClick={handleLoadMore}
+          className="text-xs text-primary font-medium hover:underline"
+        >
           Load more comments
         </button>
       )}
 
       <div className="flex gap-2">
-        <input value={text} onChange={e => setText(e.target.value)}
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
           data-comment-input={activityId}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Add a comment..." aria-label="Add a comment" disabled={sending}
-          className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border" />
-        <button onClick={handleSend} disabled={sending || !text.trim()}
-          className="text-xs px-3 py-2 rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40">
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          placeholder="Add a comment..."
+          aria-label="Add a comment"
+          disabled={sending}
+          className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border"
+        />
+        <button
+          onClick={handleSend}
+          disabled={sending || !text.trim()}
+          className="text-xs px-3 py-2 rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40"
+        >
           Send
         </button>
       </div>

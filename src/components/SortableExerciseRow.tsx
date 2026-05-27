@@ -13,7 +13,13 @@ interface Props {
   showHandle?: boolean;
 }
 
-export default function SortableExerciseRow({ id, children, justDropped, onDelete, showHandle = true }: Props) {
+export default function SortableExerciseRow({
+  id,
+  children,
+  justDropped,
+  onDelete,
+  showHandle = true,
+}: Props) {
   const {
     attributes,
     listeners,
@@ -43,7 +49,8 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
 
     if (!directionLocked.current) {
       if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return;
-      directionLocked.current = Math.abs(deltaX) > Math.abs(deltaY) ? "horizontal" : "vertical";
+      directionLocked.current =
+        Math.abs(deltaX) > Math.abs(deltaY) ? "horizontal" : "vertical";
     }
 
     if (directionLocked.current !== "horizontal") return;
@@ -79,7 +86,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
       className={cn(
         "relative overflow-hidden transition-colors",
         isDragging && "scale-[1.02] shadow-lg opacity-90",
-        justDropped && "bg-green-50 dark:bg-green-950/20",
+        justDropped && "bg-green-50 dark:bg-green-950/20"
       )}
     >
       {/* Delete panel behind the card */}
@@ -93,7 +100,7 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
           style={{ background: "#FF3B30", borderRadius: 10 }}
           aria-label="Delete exercise"
         >
-          <Trash2 className="w-5 h-5 text-white" />
+          <Trash2 className="size-5 text-white" />
         </button>
       )}
 
@@ -120,9 +127,24 @@ export default function SortableExerciseRow({ id, children, justDropped, onDelet
             className="touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
             style={{ width: 28, minHeight: 44 }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 3px)", gap: 3 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 3px)",
+                gap: 3,
+              }}
+            >
               {[0, 1, 2, 3, 4, 5].map((j) => (
-                <div key={j} style={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#8E8E93", opacity: 0.22 }} />
+                <div
+                  key={j}
+                  style={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: "50%",
+                    backgroundColor: "#8E8E93",
+                    opacity: 0.22,
+                  }}
+                />
               ))}
             </div>
           </button>

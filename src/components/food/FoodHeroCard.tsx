@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Beef, Wheat, Info, Settings as SettingsIcon, X, ChevronRight } from "lucide-react";
+import {
+  Beef,
+  Wheat,
+  Info,
+  Settings as SettingsIcon,
+  X,
+  ChevronRight,
+} from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -21,7 +28,7 @@ interface DailyTotals {
 }
 
 interface FoodHeroCardProps {
-  selectedDate: string;   // ISO date "YYYY-MM-DD"
+  selectedDate: string; // ISO date "YYYY-MM-DD"
   isToday: boolean;
   /** From useEffectiveTargets() — includes effective finalTarget and caption */
   dailyTargets: EffectiveTargets;
@@ -161,7 +168,10 @@ export default function FoodHeroCard({
         }
       })();
       const todayKey = todayIsoDate();
-      if (celebrated !== todayKey && didJustCompleteAll(prev, dailyTotals, targets)) {
+      if (
+        celebrated !== todayKey &&
+        didJustCompleteAll(prev, dailyTotals, targets)
+      ) {
         shouldCelebrate = true;
         try {
           window.localStorage.setItem(CELEBRATED_STORAGE_KEY, todayKey);
@@ -189,9 +199,15 @@ export default function FoodHeroCard({
         setCelebrating(true);
         setShowCelebrationCaption(true);
       }, 0);
-      celebrationHapticTimer = setTimeout(() => haptic("light"), LOG_MOMENT_MS + 100);
+      celebrationHapticTimer = setTimeout(
+        () => haptic("light"),
+        LOG_MOMENT_MS + 100
+      );
       celebrationGlowTimer = setTimeout(() => setCelebrating(false), 800);
-      celebrationCaptionTimer = setTimeout(() => setShowCelebrationCaption(false), 2200);
+      celebrationCaptionTimer = setTimeout(
+        () => setShowCelebrationCaption(false),
+        2200
+      );
     }
 
     return () => {
@@ -201,7 +217,13 @@ export default function FoodHeroCard({
       if (celebrationGlowTimer) clearTimeout(celebrationGlowTimer);
       if (celebrationCaptionTimer) clearTimeout(celebrationCaptionTimer);
     };
-  }, [dailyTotals, dailyTargets.protein, dailyTargets.carbs, dailyTargets.fat, isToday]);
+  }, [
+    dailyTotals,
+    dailyTargets.protein,
+    dailyTargets.carbs,
+    dailyTargets.fat,
+    isToday,
+  ]);
 
   // ── Toast: reset on date change ──────────────────────────────────────
   useEffect(() => {
@@ -363,8 +385,13 @@ export default function FoodHeroCard({
                   {caption.trainingType}
                   {caption.adjustment && (
                     <>
-                      {' · '}
-                      <span className="font-semibold" style={{ color: THEME.lifting }}>{caption.adjustment}</span>
+                      {" · "}
+                      <span
+                        className="font-semibold"
+                        style={{ color: THEME.lifting }}
+                      >
+                        {caption.adjustment}
+                      </span>
                     </>
                   )}
                 </motion.p>
@@ -377,7 +404,7 @@ export default function FoodHeroCard({
             onClick={() => haptic("light")}
             className="shrink-0 -mt-1 -mr-1 p-1.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
           >
-            <SettingsIcon className="w-4 h-4" aria-hidden="true" />
+            <SettingsIcon className="size-4" aria-hidden="true" />
           </Link>
         </div>
 
@@ -394,12 +421,13 @@ export default function FoodHeroCard({
             >
               <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50">
                 <Info
-                  className="w-3.5 h-3.5 mt-0.5 shrink-0"
+                  className="size-3.5 mt-0.5 shrink-0"
                   style={{ color: THEME.lifting }}
                   aria-hidden="true"
                 />
                 <p className="flex-1 text-xs leading-snug text-muted-foreground">
-                  Your calorie target is higher today to fuel your planned workout.
+                  Your calorie target is higher today to fuel your planned
+                  workout.
                 </p>
                 <button
                   type="button"
@@ -410,7 +438,7 @@ export default function FoodHeroCard({
                   aria-label="Dismiss explainer"
                   className="p-0.5 -m-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="size-3.5" />
                 </button>
               </div>
             </motion.div>
@@ -460,7 +488,7 @@ export default function FoodHeroCard({
               className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
             >
               <span>Details</span>
-              <ChevronRight aria-hidden="true" className="w-3 h-3" />
+              <ChevronRight aria-hidden="true" className="size-3" />
             </button>
           </div>
         )}

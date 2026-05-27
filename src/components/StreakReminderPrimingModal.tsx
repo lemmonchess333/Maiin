@@ -53,8 +53,7 @@ export function StreakReminderPrimingModal() {
       if (document.visibilityState === "visible") checkRef.current();
     };
     document.addEventListener("visibilitychange", onVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
 
   // One-shot seed: fire the check exactly once, the first render where
@@ -153,13 +152,13 @@ function PrimingDialog({
       >
         <div className="flex justify-center">
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center"
+            className="size-14 rounded-full flex items-center justify-center"
             style={{
               backgroundColor: "rgba(255,120,50,0.12)",
               border: "1.5px solid rgba(255,120,50,0.35)",
             }}
           >
-            <Flame className="w-7 h-7" color="#ff7832" strokeWidth={2.25} />
+            <Flame className="size-7" color="#ff7832" strokeWidth={2.25} />
           </div>
         </div>
         <div className="space-y-1">

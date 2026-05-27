@@ -526,7 +526,7 @@ export default function Social() {
                 onClick={() => setTab("crews")}
                 className="flex items-center gap-3 flex-1 text-left"
               >
-                <Users className="w-5 h-5 text-primary shrink-0" />
+                <Users className="size-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground">
                     Join a crew to connect with others
@@ -620,7 +620,7 @@ export default function Social() {
                         {hasNew && (
                           <span
                             aria-hidden="true"
-                            className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary"
+                            className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-primary"
                           />
                         )}
                       </button>
@@ -658,7 +658,7 @@ export default function Social() {
                       <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/40">
                         <div className="flex items-center gap-3 min-w-0">
                           <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            className="size-8 rounded-lg flex items-center justify-center shrink-0"
                             style={{ background: `${THEME.brand}14` }}
                           >
                             <Users size={16} style={{ color: THEME.brand }} />
@@ -828,7 +828,7 @@ export default function Social() {
                         <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
                           <div className="flex items-center gap-3 min-w-0">
                             <div
-                              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                              className="size-8 rounded-lg flex items-center justify-center shrink-0"
                               style={{ background: `${THEME.brand}14` }}
                             >
                               <Users size={16} style={{ color: THEME.brand }} />
@@ -941,7 +941,7 @@ export default function Social() {
                           className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40"
                         >
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                            className="size-10 rounded-xl flex items-center justify-center shrink-0"
                             style={{ background: `${THEME.brand}14` }}
                           >
                             {IconComp && (
@@ -983,7 +983,7 @@ export default function Social() {
                             type="button"
                             onClick={() => dismissSuggestedCrew(crew.id)}
                             aria-label={`Dismiss suggestion: ${crew.name}`}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-90 transition-all"
+                            className="size-7 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-90 transition-all"
                           >
                             <X size={14} aria-hidden="true" />
                           </button>
@@ -1382,7 +1382,7 @@ export default function Social() {
                   </p>
                   <div className="relative">
                     <Search
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
                       aria-hidden="true"
                     />
                     <input
@@ -1422,9 +1422,9 @@ export default function Social() {
                         type="button"
                         onClick={() => handleSearchInputChange("")}
                         aria-label="Clear search"
-                        className="absolute right-1 top-1 h-10 w-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                        className="absolute right-1 top-1 size-10 flex items-center justify-center text-muted-foreground hover:text-foreground"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="size-4" />
                       </button>
                     ) : null}
                   </div>
@@ -1672,11 +1672,11 @@ export default function Social() {
                   >
                     <div className="flex items-start gap-3 mb-2">
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                        className="size-9 rounded-xl flex items-center justify-center shrink-0"
                         style={{ background: `${THEME.brand}25` }}
                       >
                         <Share2
-                          className="w-4 h-4"
+                          className="size-4"
                           style={{ color: THEME.brand }}
                         />
                       </div>

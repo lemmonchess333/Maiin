@@ -49,7 +49,7 @@ export default function SettingsSection({
         aria-label="Back to Settings"
         className="inline-flex items-center gap-1 -ml-2 px-2 py-2 min-h-[44px] rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="size-5" />
         <span>Settings</span>
       </button>
 

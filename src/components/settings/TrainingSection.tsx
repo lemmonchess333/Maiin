@@ -431,7 +431,7 @@ export default function TrainingSection({
             {hasRaceGoal && !showRaceForm && (
               <div className="rounded-xl bg-card border border-border/40 px-3 py-2.5 flex items-center gap-2.5">
                 <Flag
-                  className="w-4 h-4 shrink-0"
+                  className="size-4 shrink-0"
                   style={{ color: THEME.running }}
                   aria-hidden="true"
                 />
@@ -466,7 +466,7 @@ export default function TrainingSection({
               <div className="rounded-xl bg-card border border-border/40 px-3 py-3 space-y-3">
                 <div className="flex items-center gap-2">
                   <Flag
-                    className="w-4 h-4"
+                    className="size-4"
                     style={{ color: THEME.running }}
                     aria-hidden="true"
                   />
@@ -508,7 +508,7 @@ export default function TrainingSection({
                     htmlFor="settings-race-target-date"
                     className="text-xs text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"
                   >
-                    <Calendar className="w-3 h-3" aria-hidden="true" />
+                    <Calendar className="size-3" aria-hidden="true" />
                     Target date
                   </label>
                   <input
@@ -556,9 +556,9 @@ export default function TrainingSection({
               aria-label="Decrease run days"
               onClick={() => handleRunDaysChange(-1)}
               disabled={pending !== null || runDays <= 0}
-              className="w-9 h-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="size-4" />
             </button>
             <span className="font-mono tabular-nums text-sm font-semibold min-w-[1.5rem] text-center">
               {runDays}
@@ -568,9 +568,9 @@ export default function TrainingSection({
               aria-label="Increase run days"
               onClick={() => handleRunDaysChange(1)}
               disabled={pending !== null || runDays >= 7}
-              className="w-9 h-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="size-4" />
             </button>
           </div>
         </div>
@@ -593,9 +593,9 @@ export default function TrainingSection({
               aria-label="Decrease lift days"
               onClick={() => handleLiftDaysChange(-1)}
               disabled={pending !== null || liftDays <= 2}
-              className="w-9 h-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="size-4" />
             </button>
             <span className="font-mono tabular-nums text-sm font-semibold min-w-[1.5rem] text-center">
               {liftDays}
@@ -605,9 +605,9 @@ export default function TrainingSection({
               aria-label="Increase lift days"
               onClick={() => handleLiftDaysChange(1)}
               disabled={pending !== null || liftDays >= 7}
-              className="w-9 h-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="size-4" />
             </button>
           </div>
         </div>
@@ -642,7 +642,7 @@ export default function TrainingSection({
                   )}
                 >
                   {isSelected ? (
-                    <Check className="w-3 h-3" aria-hidden="true" />
+                    <Check className="size-3" aria-hidden="true" />
                   ) : null}
                   {opt.label}
                 </button>
@@ -673,7 +673,7 @@ export default function TrainingSection({
               Choose which days are lift, run, or rest
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="size-4 text-muted-foreground" />
         </button>
       </div>
 
@@ -686,14 +686,14 @@ export default function TrainingSection({
         }}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors"
       >
-        <Target className="w-4 h-4 text-primary" />
+        <Target className="size-4 text-primary" />
         <div className="flex-1 text-left">
           <p className="text-sm font-medium">Open Programme</p>
           <p className="text-xs text-muted-foreground">
             Today's training, week strip, run history
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </button>
 
       <motion.button
@@ -705,7 +705,7 @@ export default function TrainingSection({
         }}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
       >
-        <RefreshCw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+        <RefreshCw className="size-4 text-amber-600 dark:text-amber-400" />
         <div className="flex-1 text-left">
           <p className="text-sm font-medium">Edit programme</p>
           <p className="text-xs text-muted-foreground">
@@ -713,7 +713,7 @@ export default function TrainingSection({
             your plan
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </motion.button>
     </div>
   );

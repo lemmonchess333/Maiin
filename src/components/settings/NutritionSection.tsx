@@ -1,13 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
-import {
-  Calculator,
-  ChevronDown,
-  ChevronUp,
-  Flame,
-  Zap,
-} from "lucide-react";
+import { Calculator, ChevronDown, ChevronUp, Flame, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
@@ -33,7 +27,10 @@ interface NutritionSectionProps {
     fat: number;
     deficit: number;
   };
-  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
+  updateProfile: (
+    data: Partial<UserProfile>,
+    opts?: { allowProtected?: boolean }
+  ) => Promise<UpdateProfileResult>;
   onPhaseChange: (phase: "cut" | "lean bulk" | "recomp") => void;
   inline?: boolean;
 }
@@ -56,21 +53,28 @@ export default function NutritionSection({
   const [showTDEE, setShowTDEE] = useState(false);
   const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const handleMealsChange = useCallback((val: number) => {
-    const prev = profile.weeklyMealsTarget ?? 10;
-    setMealsTarget(val);
-    clearTimeout(mealsTimerRef.current);
-    mealsTimerRef.current = setTimeout(async () => {
-      const result = await updateProfile({ weeklyMealsTarget: val });
-      if (!result.ok) setMealsTarget(prev);
-    }, 500);
-  }, [setMealsTarget, updateProfile, profile.weeklyMealsTarget]);
+  const handleMealsChange = useCallback(
+    (val: number) => {
+      const prev = profile.weeklyMealsTarget ?? 10;
+      setMealsTarget(val);
+      clearTimeout(mealsTimerRef.current);
+      mealsTimerRef.current = setTimeout(async () => {
+        const result = await updateProfile({ weeklyMealsTarget: val });
+        if (!result.ok) setMealsTarget(prev);
+      }, 500);
+    },
+    [setMealsTarget, updateProfile, profile.weeklyMealsTarget]
+  );
 
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   return (
-    <AccordionSection inline={inline} icon={<Calculator className="w-5 h-5 text-primary" />} title="Nutrition" subtitle="TDEE, phase, macros, meal target">
-
+    <AccordionSection
+      inline={inline}
+      icon={<Calculator className="size-5 text-primary" />}
+      title="Nutrition"
+      subtitle="TDEE, phase, macros, meal target"
+    >
       {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">
         <button
@@ -78,25 +82,32 @@ export default function NutritionSection({
           className="w-full flex items-center justify-between p-4"
         >
           <div className="flex items-center gap-3">
-            <Calculator className="w-5 h-5 text-primary" />
+            <Calculator className="size-5 text-primary" />
             <div className="text-left">
-              <p className="text-sm font-medium text-foreground">TDEE Calculator</p>
+              <p className="text-sm font-medium text-foreground">
+                TDEE Calculator
+              </p>
               <p className="text-xs text-muted-foreground">
                 {tdee.targetCalories} cal/day target
               </p>
             </div>
           </div>
           {showTDEE ? (
-            <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            <ChevronUp className="size-4 text-muted-foreground" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <ChevronDown className="size-4 text-muted-foreground" />
           )}
         </button>
 
         {showTDEE && (
           <div className="px-4 pb-4 space-y-4 border-t border-border/50 pt-4">
             <div>
-              <label htmlFor="tdee-age" className="text-sm text-muted-foreground">Age</label>
+              <label
+                htmlFor="tdee-age"
+                className="text-sm text-muted-foreground"
+              >
+                Age
+              </label>
               <input
                 id="tdee-age"
                 type="number"
@@ -113,22 +124,28 @@ export default function NutritionSection({
             </div>
 
             <div>
-              <span className="text-sm text-muted-foreground">Activity Level</span>
+              <span className="text-sm text-muted-foreground">
+                Activity Level
+              </span>
               <div className="mt-1 space-y-1">
-                {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(([key, label]) => (
+                {(
+                  Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]
+                ).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={async () => {
                       const prev = activityLevel;
                       setActivityLevel(key);
-                      const result = await updateProfile({ activityLevel: key });
+                      const result = await updateProfile({
+                        activityLevel: key,
+                      });
                       if (!result.ok) setActivityLevel(prev);
                     }}
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-xs transition-colors",
                       activityLevel === key
                         ? "bg-primary/10 text-primary font-medium"
-                        : "bg-muted text-muted-foreground hover:text-foreground",
+                        : "bg-muted text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {label}
@@ -155,9 +172,11 @@ export default function NutritionSection({
       {/* Training Phase */}
       <div className="bg-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <Zap className="w-5 h-5 text-primary" />
+          <Zap className="size-5 text-primary" />
           <div>
-            <p className="text-sm font-medium text-foreground">Training Phase</p>
+            <p className="text-sm font-medium text-foreground">
+              Training Phase
+            </p>
             <p className="text-xs text-muted-foreground">
               Adjusts macro targets and performance insights
             </p>
@@ -165,11 +184,26 @@ export default function NutritionSection({
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          {([
-            { value: "lean bulk" as const, label: "Lean Bulk", desc: "Muscle gain", color: "#22c55e" },
-            { value: "cut" as const, label: "Cut", desc: "Fat loss", color: "#ef4444" },
-            { value: "recomp" as const, label: "Recomp", desc: "Body recomp", color: "#a855f7" },
-          ]).map((phase) => (
+          {[
+            {
+              value: "lean bulk" as const,
+              label: "Lean Bulk",
+              desc: "Muscle gain",
+              color: "#22c55e",
+            },
+            {
+              value: "cut" as const,
+              label: "Cut",
+              desc: "Fat loss",
+              color: "#ef4444",
+            },
+            {
+              value: "recomp" as const,
+              label: "Recomp",
+              desc: "Body recomp",
+              color: "#a855f7",
+            },
+          ].map((phase) => (
             <button
               key={phase.value}
               onClick={() => {
@@ -185,13 +219,17 @@ export default function NutritionSection({
               )}
             >
               <div
-                className="w-2 h-2 rounded-full mx-auto mb-2"
+                className="size-2 rounded-full mx-auto mb-2"
                 style={{ backgroundColor: phase.color }}
               />
-              <p className={cn(
-                "text-xs font-medium",
-                trainingPhase === phase.value ? "text-primary" : "text-foreground"
-              )}>
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  trainingPhase === phase.value
+                    ? "text-primary"
+                    : "text-foreground"
+                )}
+              >
                 {phase.label}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -210,12 +248,25 @@ export default function NutritionSection({
             </div>
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Phase ({trainingPhase === "lean bulk" ? "Lean Bulk" : trainingPhase === "cut" ? "Cut" : "Recomp"})</span>
-                <span>{tdee.deficit > 0 ? "+" : ""}{tdee.deficit} cal</span>
+                <span>
+                  Phase (
+                  {trainingPhase === "lean bulk"
+                    ? "Lean Bulk"
+                    : trainingPhase === "cut"
+                      ? "Cut"
+                      : "Recomp"}
+                  )
+                </span>
+                <span>
+                  {tdee.deficit > 0 ? "+" : ""}
+                  {tdee.deficit} cal
+                </span>
               </div>
             )}
             <div className="border-t border-border/50 pt-1 flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">Daily target</span>
+              <span className="text-xs font-medium text-foreground">
+                Daily target
+              </span>
               <motion.span
                 key={tdee.targetCalories}
                 initial={{ opacity: 0.5, scale: 0.95 }}
@@ -229,17 +280,34 @@ export default function NutritionSection({
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <motion.div key={tdee.protein} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
-              <p className="text-sm font-bold text-blue-500">{tdee.protein} g</p>
+            <motion.div
+              key={tdee.protein}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              className="text-center flex-1"
+            >
+              <p className="text-sm font-bold text-blue-500">
+                {tdee.protein} g
+              </p>
               <p className="text-xs text-muted-foreground">protein</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
-            <motion.div key={tdee.carbs} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
+            <motion.div
+              key={tdee.carbs}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              className="text-center flex-1"
+            >
               <p className="text-sm font-bold text-amber-500">{tdee.carbs} g</p>
               <p className="text-xs text-muted-foreground">carbs</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
-            <motion.div key={tdee.fat} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} className="text-center flex-1">
+            <motion.div
+              key={tdee.fat}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              className="text-center flex-1"
+            >
               <p className="text-sm font-bold text-pink-500">{tdee.fat} g</p>
               <p className="text-xs text-muted-foreground">fat</p>
             </motion.div>
@@ -248,12 +316,17 @@ export default function NutritionSection({
           {/* Custom calorie override */}
           <div className="mt-3 pt-3 border-t border-border/50">
             <div className="flex items-center justify-between">
-              <label htmlFor="tdee-custom-target" className="text-sm text-muted-foreground">
+              <label
+                htmlFor="tdee-custom-target"
+                className="text-sm text-muted-foreground"
+              >
                 Override daily target (optional)
               </label>
               {profile?.customCalorieTarget && (
                 <button
-                  onClick={() => updateProfile({ customCalorieTarget: undefined })}
+                  onClick={() =>
+                    updateProfile({ customCalorieTarget: undefined })
+                  }
                   className="text-xs text-primary font-medium"
                 >
                   Reset to calculated
@@ -308,7 +381,7 @@ export default function NutritionSection({
           type="button"
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Flame className="w-5 h-5 text-primary shrink-0" />
+            <Flame className="size-5 text-primary shrink-0" />
             <div className="text-left min-w-0">
               <p className="text-sm font-medium text-foreground">
                 Adjust calories for training
@@ -324,15 +397,15 @@ export default function NutritionSection({
               "w-12 h-7 rounded-full transition-colors relative shrink-0",
               profile.adjustCaloriesForTraining !== false
                 ? "bg-primary"
-                : "bg-muted border border-border",
+                : "bg-muted border border-border"
             )}
           >
             <div
               className={cn(
-                "w-5 h-5 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                "size-5 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
                 profile.adjustCaloriesForTraining !== false
                   ? "translate-x-6"
-                  : "translate-x-1",
+                  : "translate-x-1"
               )}
             />
           </div>

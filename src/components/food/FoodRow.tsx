@@ -85,7 +85,9 @@ function formatQuantityLabel(group: FoodRowGroup): string {
 
   const totalQty = qty * count;
   // Strip trailing zero on whole totals: "2.0 cup" -> "2 cups"
-  const qtyStr = Number.isInteger(totalQty) ? String(totalQty) : String(totalQty);
+  const qtyStr = Number.isInteger(totalQty)
+    ? String(totalQty)
+    : String(totalQty);
 
   const pluralUnit =
     totalQty > 1 && !unit.endsWith("s") && !unit.endsWith("S")
@@ -149,18 +151,19 @@ export default function FoodRow({
   // ── Reduced-motion fallback: static trash icon, no drag gesture ─────────
   if (reduce) {
     return (
-      <div className="flex items-center justify-between px-3 py-2.5" data-food-row>
+      <div
+        className="flex items-center justify-between px-3 py-2.5"
+        data-food-row
+      >
         <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
           <span
-            className="w-2 h-2 rounded-full shrink-0"
+            className="size-2 rounded-full shrink-0"
             style={{ backgroundColor: dot }}
             aria-hidden="true"
           />
           <p className="text-sm text-foreground truncate">{group.foodName}</p>
           {group.count > 1 && (
-            <span
-              className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums"
-            >
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums">
               {quantityLabel}
             </span>
           )}
@@ -170,7 +173,7 @@ export default function FoodRow({
               aria-label="Edited"
               title="Edited"
             >
-              <Pencil className="w-2.5 h-2.5" aria-hidden="true" />
+              <Pencil className="size-2.5" aria-hidden="true" />
               Edited
             </span>
           )}
@@ -185,7 +188,7 @@ export default function FoodRow({
               aria-label={`Edit ${group.foodName}`}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
             >
-              <Pencil aria-hidden="true" className="w-3 h-3" />
+              <Pencil aria-hidden="true" className="size-3" />
             </button>
           )}
           <button
@@ -193,7 +196,7 @@ export default function FoodRow({
             aria-label={`Delete ${group.foodName}`}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
           >
-            <Trash2 aria-hidden="true" className="w-3 h-3" />
+            <Trash2 aria-hidden="true" className="size-3" />
           </button>
         </div>
       </div>
@@ -215,7 +218,10 @@ export default function FoodRow({
           row collapses to a single wider delete button for back-
           compat with callers that only want the original behaviour.
         */}
-        <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: Math.abs(OPEN_OFFSET) }}>
+        <div
+          className="absolute right-0 top-0 bottom-0 flex"
+          style={{ width: Math.abs(OPEN_OFFSET) }}
+        >
           {onEdit && (
             <button
               type="button"
@@ -224,7 +230,11 @@ export default function FoodRow({
               className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide active:opacity-80 transition-opacity"
               style={{ background: EDIT_COLOR, width: ACTION_WIDTH }}
             >
-              <Pencil className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
+              <Pencil
+                className="size-[18px]"
+                strokeWidth={1.75}
+                aria-hidden="true"
+              />
               Edit
             </button>
           )}
@@ -235,7 +245,11 @@ export default function FoodRow({
             className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide flex-1 active:opacity-80 transition-opacity"
             style={{ background: DELETE_COLOR }}
           >
-            <Trash2 className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
+            <Trash2
+              className="size-[18px]"
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
             Delete
           </button>
         </div>
@@ -251,20 +265,18 @@ export default function FoodRow({
           animate={{ x: targetX }}
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
           className={cn(
-            "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y",
+            "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y"
           )}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
             <span
-              className="w-2 h-2 rounded-full shrink-0"
+              className="size-2 rounded-full shrink-0"
               style={{ backgroundColor: dot }}
               aria-hidden="true"
             />
             <p className="text-sm text-foreground truncate">{group.foodName}</p>
             {group.count > 1 && (
-              <span
-                className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums"
-              >
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums">
                 {quantityLabel}
               </span>
             )}
@@ -274,7 +286,7 @@ export default function FoodRow({
                 aria-label="Edited"
                 title="Edited"
               >
-                <Pencil className="w-2.5 h-2.5" aria-hidden="true" />
+                <Pencil className="size-2.5" aria-hidden="true" />
                 Edited
               </span>
             )}

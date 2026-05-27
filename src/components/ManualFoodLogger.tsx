@@ -257,7 +257,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             >
               {saved ? (
                 <>
-                  <Check className="w-4 h-4" /> Meal Logged!
+                  <Check className="size-4" /> Meal Logged!
                 </>
               ) : saving ? (
                 "Saving meal..."

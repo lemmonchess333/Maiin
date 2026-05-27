@@ -24,7 +24,9 @@ describe("Button — base contract", () => {
 
   it("applies the canonical 0.97 press scale", () => {
     render(<Button>Press</Button>);
-    expect(screen.getByRole("button").className).toContain("active:scale-[0.97]");
+    expect(screen.getByRole("button").className).toContain(
+      "active:scale-[0.97]"
+    );
   });
 
   it("applies the canonical rounded-xl shape", () => {
@@ -88,7 +90,7 @@ describe("Button — variants", () => {
     const btn = screen.getByRole("button") as HTMLButtonElement;
     // 10% (1A hex) tint of coral
     expect(btn.style.backgroundColor.replace(/\s/g, "")).toMatch(
-      /rgba\(212,99,122,0\.1/,
+      /rgba\(212,99,122,0\.1/
     );
     expect(btn.style.color).toBe("rgb(212, 99, 122)");
   });
@@ -97,11 +99,11 @@ describe("Button — variants", () => {
     render(
       <Button variant="sport" style={{ backgroundColor: "rgb(0, 0, 0)" }}>
         Override
-      </Button>,
+      </Button>
     );
-    expect((screen.getByRole("button") as HTMLButtonElement).style.backgroundColor).toBe(
-      "rgb(0, 0, 0)",
-    );
+    expect(
+      (screen.getByRole("button") as HTMLButtonElement).style.backgroundColor
+    ).toBe("rgb(0, 0, 0)");
   });
 });
 
@@ -130,7 +132,9 @@ describe("Button — loading state", () => {
 
   it("disables interaction when loading (so double-clicks can't fire)", () => {
     render(<Button loading>Saving</Button>);
-    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(
+      true
+    );
   });
 
   it("does NOT set aria-busy when not loading", () => {
@@ -152,12 +156,16 @@ describe("Button — loading state", () => {
 describe("Button — disabled state", () => {
   it("respects the disabled prop", () => {
     render(<Button disabled>Cannot</Button>);
-    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(
+      true
+    );
   });
 
   it("applies the disabled visual class so opacity reduces", () => {
     render(<Button disabled>Cannot</Button>);
-    expect(screen.getByRole("button").className).toContain("disabled:opacity-50");
+    expect(screen.getByRole("button").className).toContain(
+      "disabled:opacity-50"
+    );
   });
 });
 
@@ -169,7 +177,7 @@ describe("Button — composition", () => {
         rightIcon={<span data-testid="right">R</span>}
       >
         Label
-      </Button>,
+      </Button>
     );
     const left = screen.getByTestId("left");
     const right = screen.getByTestId("right");
@@ -178,7 +186,9 @@ describe("Button — composition", () => {
     // Children element order: left → "Label" → right
     const btn = screen.getByRole("button");
     expect(btn.textContent).toContain("Label");
-    expect(btn.textContent?.indexOf("L")).toBeLessThan(btn.textContent?.indexOf("Label") ?? 0);
+    expect(btn.textContent?.indexOf("L")).toBeLessThan(
+      btn.textContent?.indexOf("Label") ?? 0
+    );
   });
 
   it("fullWidth applies w-full", () => {
@@ -198,7 +208,7 @@ describe("IconButton — base contract", () => {
       <IconButton
         aria-label="Close dialog"
         icon={<svg data-testid="close-icon" />}
-      />,
+      />
     );
     const btn = screen.getByRole("button", { name: "Close dialog" });
     expect(btn).toBeTruthy();
@@ -213,8 +223,7 @@ describe("IconButton — base contract", () => {
   it("md size produces a 44x44 square touch target", () => {
     render(<IconButton aria-label="X" icon={<svg />} />);
     const cls = screen.getByRole("button").className;
-    expect(cls).toContain("w-11");
-    expect(cls).toContain("h-11");
+    expect(cls).toContain("size-11");
   });
 
   it("applies the same focus ring + press scale + rounded-xl as Button", () => {
@@ -239,7 +248,9 @@ describe("IconButton — base contract", () => {
   });
 
   it("destructive variant pipes through to bg-destructive", () => {
-    render(<IconButton aria-label="Delete" variant="destructive" icon={<svg />} />);
+    render(
+      <IconButton aria-label="Delete" variant="destructive" icon={<svg />} />
+    );
     const cls = screen.getByRole("button").className;
     expect(cls).toContain("bg-destructive");
     expect(cls).toContain("text-destructive-foreground");

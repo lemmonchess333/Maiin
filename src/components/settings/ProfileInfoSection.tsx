@@ -49,7 +49,13 @@ export default function ProfileInfoSection({
   inline = false,
 }: ProfileInfoSectionProps) {
   return (
-    <AccordionSection inline={inline} icon={<User className="w-5 h-5 text-primary" />} title="Profile" subtitle="Name, weight, height" defaultOpen>
+    <AccordionSection
+      inline={inline}
+      icon={<User className="size-5 text-primary" />}
+      title="Profile"
+      subtitle="Name, weight, height"
+      defaultOpen
+    >
       <input
         type="text"
         value={name}
@@ -65,7 +71,12 @@ export default function ProfileInfoSection({
       />
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="profile-weight" className="text-sm text-muted-foreground">Weight (kg)</label>
+          <label
+            htmlFor="profile-weight"
+            className="text-sm text-muted-foreground"
+          >
+            Weight (kg)
+          </label>
           <input
             id="profile-weight"
             type="number"
@@ -79,10 +90,17 @@ export default function ProfileInfoSection({
             }}
             className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
-          <p className="text-xs text-muted-foreground/60 mt-1">For TDEE calc. Log daily weight from Home.</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">
+            For TDEE calc. Log daily weight from Home.
+          </p>
         </div>
         <div>
-          <label htmlFor="profile-height" className="text-sm text-muted-foreground">Height (cm)</label>
+          <label
+            htmlFor="profile-height"
+            className="text-sm text-muted-foreground"
+          >
+            Height (cm)
+          </label>
           <input
             id="profile-height"
             type="number"
@@ -118,10 +136,12 @@ export default function ProfileInfoSection({
                     : "border-border/50 bg-muted/30 hover:border-border"
                 )}
               >
-                <p className={cn(
-                  "text-xs font-medium leading-tight",
-                  selected ? "text-primary" : "text-foreground"
-                )}>
+                <p
+                  className={cn(
+                    "text-xs font-medium leading-tight",
+                    selected ? "text-primary" : "text-foreground"
+                  )}
+                >
                   {opt.label}
                 </p>
               </button>
@@ -149,10 +169,12 @@ export default function ProfileInfoSection({
                     : "border-border/50 bg-muted/30 hover:border-border"
                 )}
               >
-                <p className={cn(
-                  "text-xs font-medium leading-tight",
-                  selected ? "text-primary" : "text-foreground"
-                )}>
+                <p
+                  className={cn(
+                    "text-xs font-medium leading-tight",
+                    selected ? "text-primary" : "text-foreground"
+                  )}
+                >
                   {opt.label}
                 </p>
               </button>

@@ -32,49 +32,65 @@ interface SessionCompleteScreenProps {
 }
 
 export default function SessionCompleteScreen({
-  dayName, dayType, exercises, setLogs, firedPRs,
-  sessionDurationMinutes, completing, onFinish, onClose,
+  dayName,
+  dayType,
+  exercises,
+  setLogs,
+  firedPRs,
+  sessionDurationMinutes,
+  completing,
+  onFinish,
+  onClose,
 }: SessionCompleteScreenProps) {
   const { profile } = useAuth();
   const [showShareCard, setShowShareCard] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
-  const durationDisplay = sessionDurationMinutes >= 60
-    ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
-    : `${sessionDurationMinutes}m`;
+  const durationDisplay =
+    sessionDurationMinutes >= 60
+      ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
+      : `${sessionDurationMinutes}m`;
 
-  const totalVolume = setLogs.flat()
-    .filter(s => s.completed && s.type !== 'warmup')
-    .reduce((sum, s) => sum + (s.weight * s.reps), 0);
+  const totalVolume = setLogs
+    .flat()
+    .filter((s) => s.completed && s.type !== "warmup")
+    .reduce((sum, s) => sum + s.weight * s.reps, 0);
 
-  const totalVolumeDisplay = totalVolume >= 1000
-    ? `${(totalVolume / 1000).toFixed(1)}k`
-    : `${Math.round(totalVolume)}`;
+  const totalVolumeDisplay =
+    totalVolume >= 1000
+      ? `${(totalVolume / 1000).toFixed(1)}k`
+      : `${Math.round(totalVolume)}`;
 
-  const totalSetsCompleted = setLogs.flat().filter(s => s.completed).length;
+  const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
 
   const prDetails = Array.from(firedPRs.entries()).flatMap(([name, buckets]) =>
-    buckets.map(bucket => ({ name, label: repBucketLabel(bucket) }))
+    buckets.map((bucket) => ({ name, label: repBucketLabel(bucket) }))
   );
   const prCount = prDetails.length;
 
-  const exerciseSummary = exercises.map((ex, exIdx) => {
-    const logs = setLogs[exIdx].filter(s => s.completed);
-    const workingSets = logs.filter(s => s.type !== 'warmup');
-    const bestSet = workingSets.length > 0
-      ? workingSets.reduce((best, s) =>
-          (s.weight * s.reps > best.weight * best.reps) ? s : best, workingSets[0])
-      : null;
-    return {
-      name: ex.name,
-      setsCompleted: workingSets.length,
-      totalSets: ex.sets,
-      bestWeight: bestSet?.weight || 0,
-      bestReps: bestSet?.reps || 0,
-      isPR: firedPRs.has(ex.name),
-      prLabels: (firedPRs.get(ex.name) || []).map(b => repBucketLabel(b)),
-    };
-  }).filter(e => e.setsCompleted > 0);
+  const exerciseSummary = exercises
+    .map((ex, exIdx) => {
+      const logs = setLogs[exIdx].filter((s) => s.completed);
+      const workingSets = logs.filter((s) => s.type !== "warmup");
+      const bestSet =
+        workingSets.length > 0
+          ? workingSets.reduce(
+              (best, s) =>
+                s.weight * s.reps > best.weight * best.reps ? s : best,
+              workingSets[0]
+            )
+          : null;
+      return {
+        name: ex.name,
+        setsCompleted: workingSets.length,
+        totalSets: ex.sets,
+        bestWeight: bestSet?.weight || 0,
+        bestReps: bestSet?.reps || 0,
+        isPR: firedPRs.has(ex.name),
+        prLabels: (firedPRs.get(ex.name) || []).map((b) => repBucketLabel(b)),
+      };
+    })
+    .filter((e) => e.setsCompleted > 0);
 
   const funComparison = getVolumeComparison(totalVolume);
 
@@ -85,7 +101,6 @@ export default function SessionCompleteScreen({
       className="fixed inset-0 z-50 bg-background overflow-y-auto safe-area-pb"
     >
       <div className="max-w-md mx-auto px-5 py-8 space-y-6">
-
         {/* Hero Section */}
         <motion.div
           className="text-center space-y-3"
@@ -96,12 +111,21 @@ export default function SessionCompleteScreen({
           <motion.div
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
+            transition={{
+              type: "spring",
+              stiffness: 200,
+              damping: 12,
+              delay: 0.2,
+            }}
           >
-            <Trophy className="w-14 h-14 text-yellow-500 mx-auto" />
+            <Trophy className="size-14 text-yellow-500 mx-auto" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-foreground">Workout Complete</h2>
-          <p className="text-sm text-muted-foreground">{dayName} · {dayType}</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Workout Complete
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {dayName} · {dayType}
+          </p>
         </motion.div>
 
         {/* Stat Cards Row */}
@@ -112,19 +136,55 @@ export default function SessionCompleteScreen({
           transition={{ delay: 0.3 }}
         >
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Clock className="w-4 h-4 mx-auto" style={{ color: THEME.text.muted }} />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">{durationDisplay}</p>
-            <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Duration</p>
+            <Clock
+              className="size-4 mx-auto"
+              style={{ color: THEME.text.muted }}
+            />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {durationDisplay}
+            </p>
+            <p
+              className="text-xs uppercase tracking-wider"
+              style={{ color: THEME.text.muted }}
+            >
+              Duration
+            </p>
           </div>
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Dumbbell className="w-4 h-4 mx-auto" style={{ color: THEME.lifting }} />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalVolumeDisplay}<span className="text-xs font-normal" style={{ color: THEME.text.muted }}>kg</span></p>
-            <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Volume</p>
+            <Dumbbell
+              className="size-4 mx-auto"
+              style={{ color: THEME.lifting }}
+            />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {totalVolumeDisplay}
+              <span
+                className="text-xs font-normal"
+                style={{ color: THEME.text.muted }}
+              >
+                kg
+              </span>
+            </p>
+            <p
+              className="text-xs uppercase tracking-wider"
+              style={{ color: THEME.text.muted }}
+            >
+              Volume
+            </p>
           </div>
           <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Target className="w-4 h-4 mx-auto" style={{ color: THEME.semantic.positive }} />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">{totalSetsCompleted}</p>
-            <p className="text-xs uppercase tracking-wider" style={{ color: THEME.text.muted }}>Sets</p>
+            <Target
+              className="size-4 mx-auto"
+              style={{ color: THEME.semantic.positive }}
+            />
+            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+              {totalSetsCompleted}
+            </p>
+            <p
+              className="text-xs uppercase tracking-wider"
+              style={{ color: THEME.text.muted }}
+            >
+              Sets
+            </p>
           </div>
         </motion.div>
 
@@ -141,14 +201,17 @@ export default function SessionCompleteScreen({
             transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
           >
             <div className="flex items-center justify-center gap-2">
-              <Zap className="w-5 h-5" style={{ color: THEME.brand }} />
+              <Zap className="size-5" style={{ color: THEME.brand }} />
               <p className="text-sm font-bold text-foreground">
                 {prCount} Personal Record{prCount > 1 ? "s" : ""}!
               </p>
             </div>
             <div className="space-y-0.5">
-              {prDetails.map(pr => (
-                <p key={`${pr.name}-${pr.label}`} className="text-xs text-muted-foreground">
+              {prDetails.map((pr) => (
+                <p
+                  key={`${pr.name}-${pr.label}`}
+                  className="text-xs text-muted-foreground"
+                >
                   {pr.name} — {pr.label}
                 </p>
               ))}
@@ -177,7 +240,10 @@ export default function SessionCompleteScreen({
           transition={{ delay: 0.4 }}
         >
           <div className="px-4 pt-4 pb-2">
-            <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: THEME.text.muted }}>
+            <p
+              className="text-sm font-semibold uppercase tracking-wider"
+              style={{ color: THEME.text.muted }}
+            >
               Exercises
             </p>
           </div>
@@ -193,17 +259,32 @@ export default function SessionCompleteScreen({
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   {ex.isPR && (
                     <>
-                      <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: THEME.brand }} fill={THEME.brand} />
-                      {ex.prLabels.map(label => (
-                        <span key={label} className="text-xs font-medium" style={{ color: THEME.brand }}>{label}</span>
+                      <Zap
+                        className="size-3.5 shrink-0"
+                        style={{ color: THEME.brand }}
+                        fill={THEME.brand}
+                      />
+                      {ex.prLabels.map((label) => (
+                        <span
+                          key={label}
+                          className="text-xs font-medium"
+                          style={{ color: THEME.brand }}
+                        >
+                          {label}
+                        </span>
                       ))}
                     </>
                   )}
                   <p className="text-sm text-foreground truncate">{ex.name}</p>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                  <p className="text-sm font-mono tabular-nums font-semibold" style={{ color: THEME.lifting }}>
-                    {ex.bestWeight > 0 ? `${ex.bestWeight} kg × ${ex.bestReps}` : `${ex.bestReps} reps`}
+                  <p
+                    className="text-sm font-mono tabular-nums font-semibold"
+                    style={{ color: THEME.lifting }}
+                  >
+                    {ex.bestWeight > 0
+                      ? `${ex.bestWeight} kg × ${ex.bestReps}`
+                      : `${ex.bestReps} reps`}
                   </p>
                   <p className="text-xs" style={{ color: THEME.text.muted }}>
                     {ex.setsCompleted}/{ex.totalSets} sets
@@ -233,7 +314,7 @@ export default function SessionCompleteScreen({
             onClick={() => setShowShareCard(true)}
             className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="size-4" />
             Share Workout
           </button>
 
@@ -244,7 +325,6 @@ export default function SessionCompleteScreen({
             Close without saving
           </button>
         </motion.div>
-
       </div>
 
       {/* Share Card Modal */}
@@ -267,16 +347,23 @@ export default function SessionCompleteScreen({
             >
               <div className="max-w-md mx-auto p-5 space-y-4">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <ShareCard ref={shareRef} data={{
-                  type: 'workout',
-                  userName: profile?.displayName || 'Athlete',
-                  date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                  exerciseCount: exerciseSummary.length,
-                  totalVolume: totalVolume,
-                  prsHit: prCount,
-                }} />
+                <ShareCard
+                  ref={shareRef}
+                  data={{
+                    type: "workout",
+                    userName: profile?.displayName || "Athlete",
+                    date: new Date().toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }),
+                    exerciseCount: exerciseSummary.length,
+                    totalVolume: totalVolume,
+                    prsHit: prCount,
+                  }}
+                />
                 <div className="flex gap-3">
-                  {(['dark', 'light', 'transparent'] as const).map((theme) => (
+                  {(["dark", "light", "transparent"] as const).map((theme) => (
                     <button
                       key={theme}
                       onClick={() => {

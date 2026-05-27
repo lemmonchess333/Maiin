@@ -36,11 +36,11 @@ export default function WeightStepsTiles({
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: THEME.iconBg }}
           >
             <Scale
-              className="w-3.5 h-3.5"
+              className="size-3.5"
               style={{ color: THEME.semantic.activity }}
               aria-hidden="true"
             />
@@ -66,7 +66,7 @@ export default function WeightStepsTiles({
           {lastWeightDate}
         </p>
         <ChevronRight
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3"
           style={{ color: THEME.text.muted }}
           aria-hidden="true"
         />
@@ -81,11 +81,11 @@ export default function WeightStepsTiles({
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: THEME.iconBg }}
           >
             <Footprints
-              className="w-3.5 h-3.5"
+              className="size-3.5"
               style={{ color: THEME.semantic.positive }}
               aria-hidden="true"
             />
@@ -102,7 +102,7 @@ export default function WeightStepsTiles({
             Connect Health
           </span>
           <ArrowRight
-            className="w-3 h-3"
+            className="size-3"
             style={{ color: THEME.brand }}
             aria-hidden="true"
           />

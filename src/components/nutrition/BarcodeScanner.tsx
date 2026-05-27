@@ -58,13 +58,28 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
         name: p.product_name || "Unknown Product",
         brand: p.brands || undefined,
         servingSize: serving,
-        calories: Math.round(n["energy-kcal_serving"] || n["energy-kcal_100g"] || 0),
-        protein: Math.round((n.proteins_serving || n.proteins_100g || 0) * 10) / 10,
-        carbs: Math.round((n.carbohydrates_serving || n.carbohydrates_100g || 0) * 10) / 10,
+        calories: Math.round(
+          n["energy-kcal_serving"] || n["energy-kcal_100g"] || 0
+        ),
+        protein:
+          Math.round((n.proteins_serving || n.proteins_100g || 0) * 10) / 10,
+        carbs:
+          Math.round(
+            (n.carbohydrates_serving || n.carbohydrates_100g || 0) * 10
+          ) / 10,
         fat: Math.round((n.fat_serving || n.fat_100g || 0) * 10) / 10,
-        fiber: n.fiber_serving != null ? Math.round(n.fiber_serving * 10) / 10 : undefined,
-        sugar: n.sugars_serving != null ? Math.round(n.sugars_serving * 10) / 10 : undefined,
-        sodium: n.sodium_serving != null ? Math.round(n.sodium_serving * 1000) : undefined,
+        fiber:
+          n.fiber_serving != null
+            ? Math.round(n.fiber_serving * 10) / 10
+            : undefined,
+        sugar:
+          n.sugars_serving != null
+            ? Math.round(n.sugars_serving * 10) / 10
+            : undefined,
+        sodium:
+          n.sodium_serving != null
+            ? Math.round(n.sodium_serving * 1000)
+            : undefined,
         barcode,
       });
     } catch {
@@ -86,20 +101,18 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
       const reader = new BrowserMultiFormatReader();
       readerRef.current = reader;
 
-      reader.decodeFromVideoDevice(
-        undefined,
-        videoEl!,
-        (result) => {
+      reader
+        .decodeFromVideoDevice(undefined, videoEl!, (result) => {
           if (result) {
             const code = result.getText();
             setScanning(false);
             fetchProduct(code);
           }
-        }
-      ).catch(() => {
-        setError("Camera access denied. Please allow camera permissions.");
-        setScanning(false);
-      });
+        })
+        .catch(() => {
+          setError("Camera access denied. Please allow camera permissions.");
+          setScanning(false);
+        });
     }
 
     initScanner();
@@ -116,10 +129,10 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
       clearTimeout(timeout);
       // Stop any active video streams
       if (videoEl?.srcObject) {
-        (videoEl.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+        (videoEl.srcObject as MediaStream).getTracks().forEach((t) => t.stop());
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanning, fetchProduct]);
 
   const handleConfirm = () => {
@@ -131,11 +144,15 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <ScanLine className="w-4 h-4 text-primary" />
+          <ScanLine className="size-4 text-primary" />
           Barcode Scanner
         </h3>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted" aria-label="Close scanner">
-          <X className="w-4 h-4 text-muted-foreground" />
+        <button
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-muted"
+          aria-label="Close scanner"
+        >
+          <X className="size-4 text-muted-foreground" />
         </button>
       </div>
 
@@ -150,7 +167,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           >
             <video
               ref={videoRef}
-              className="w-full h-full object-cover"
+              className="size-full object-cover"
               playsInline
               muted
             />
@@ -171,14 +188,26 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
         {(scanning || error) && !loading && !product && (
           <div className="mt-3">
             <div className="flex gap-2">
-              <input type="text" inputMode="numeric" pattern="[0-9]*"
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="Enter barcode manually"
                 value={manualBarcode}
                 onChange={(e) => setManualBarcode(e.target.value)}
-                className="flex-1 px-3 py-2.5 rounded-xl bg-muted border border-border text-sm" />
-              <button onClick={() => { if (manualBarcode.trim()) { setScanning(false); setError(null); fetchProduct(manualBarcode.trim()); } }}
+                className="flex-1 px-3 py-2.5 rounded-xl bg-muted border border-border text-sm"
+              />
+              <button
+                onClick={() => {
+                  if (manualBarcode.trim()) {
+                    setScanning(false);
+                    setError(null);
+                    fetchProduct(manualBarcode.trim());
+                  }
+                }}
                 disabled={!manualBarcode.trim()}
-                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+                className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+              >
                 Look up
               </button>
             </div>
@@ -195,7 +224,9 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             <div className="flex justify-center mb-3">
               <Spinner size="lg" variant="primary" label="Looking up product" />
             </div>
-            <p className="text-sm text-muted-foreground">Looking up product...</p>
+            <p className="text-sm text-muted-foreground">
+              Looking up product...
+            </p>
           </motion.div>
         )}
 
@@ -207,11 +238,14 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 space-y-3"
           >
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500" />
+              <AlertCircle className="size-4 text-red-500" />
               <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
             <button
-              onClick={() => { setError(null); setScanning(true); }}
+              onClick={() => {
+                setError(null);
+                setScanning(true);
+              }}
               className="w-full py-2 rounded-xl bg-muted text-sm font-medium"
             >
               Try Again
@@ -228,9 +262,13 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           >
             <div className="p-4 rounded-2xl bg-card space-y-3">
               <div>
-                <p className="text-sm font-semibold text-foreground">{product.name}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {product.name}
+                </p>
                 {product.brand && (
-                  <p className="text-xs text-muted-foreground">{product.brand}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {product.brand}
+                  </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Serving: {product.servingSize}
@@ -238,37 +276,71 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               </div>
 
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
-                  <p className="text-sm font-bold" style={{ color: macroText.nutrition }}>
+                <div
+                  className="rounded-lg p-2"
+                  style={{ backgroundColor: `${accent.nutrition}1A` }}
+                >
+                  <p
+                    className="text-sm font-bold"
+                    style={{ color: macroText.nutrition }}
+                  >
                     {Math.round(product.calories * servings)}
                   </p>
                   <p className="text-xs text-muted-foreground">cal</p>
                 </div>
-                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
-                  <p className="text-sm font-bold" style={{ color: macroText.protein }}>
+                <div
+                  className="rounded-lg p-2"
+                  style={{ backgroundColor: `${accent.protein}1A` }}
+                >
+                  <p
+                    className="text-sm font-bold"
+                    style={{ color: macroText.protein }}
+                  >
                     {Math.round(product.protein * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">protein</p>
                 </div>
-                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
-                  <p className="text-sm font-bold" style={{ color: macroText.carbs }}>
+                <div
+                  className="rounded-lg p-2"
+                  style={{ backgroundColor: `${accent.carbs}1A` }}
+                >
+                  <p
+                    className="text-sm font-bold"
+                    style={{ color: macroText.carbs }}
+                  >
                     {Math.round(product.carbs * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">carbs</p>
                 </div>
-                <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
-                  <p className="text-sm font-bold" style={{ color: macroText.fat }}>
+                <div
+                  className="rounded-lg p-2"
+                  style={{ backgroundColor: `${accent.fat}1A` }}
+                >
+                  <p
+                    className="text-sm font-bold"
+                    style={{ color: macroText.fat }}
+                  >
                     {Math.round(product.fat * servings)}g
                   </p>
                   <p className="text-xs text-muted-foreground">fat</p>
                 </div>
               </div>
 
-              {(product.fiber != null || product.sugar != null || product.sodium != null) && (
+              {(product.fiber != null ||
+                product.sugar != null ||
+                product.sodium != null) && (
                 <div className="flex gap-3 text-xs text-muted-foreground border-t border-border/30 pt-2">
-                  {product.fiber != null && <span>Fiber: {Math.round(product.fiber * servings)}g</span>}
-                  {product.sugar != null && <span>Sugar: {Math.round(product.sugar * servings)}g</span>}
-                  {product.sodium != null && <span>Sodium: {Math.round(product.sodium * servings)}mg</span>}
+                  {product.fiber != null && (
+                    <span>Fiber: {Math.round(product.fiber * servings)}g</span>
+                  )}
+                  {product.sugar != null && (
+                    <span>Sugar: {Math.round(product.sugar * servings)}g</span>
+                  )}
+                  {product.sodium != null && (
+                    <span>
+                      Sodium: {Math.round(product.sodium * servings)}mg
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -276,9 +348,9 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-                className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+                className="size-10 rounded-full bg-muted flex items-center justify-center"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="size-4" />
               </button>
               <div className="text-center">
                 <p className="text-2xl font-bold text-foreground">{servings}</p>
@@ -286,15 +358,19 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               </div>
               <button
                 onClick={() => setServings(servings + 0.5)}
-                className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+                className="size-10 rounded-full bg-muted flex items-center justify-center"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="size-4" />
               </button>
             </div>
 
             <div className="flex gap-2">
               <button
-                onClick={() => { setProduct(null); setScanning(true); setServings(1); }}
+                onClick={() => {
+                  setProduct(null);
+                  setScanning(true);
+                  setServings(1);
+                }}
                 className="flex-1 py-3 rounded-xl bg-muted text-sm font-medium"
               >
                 Scan Again
@@ -303,7 +379,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                 onClick={handleConfirm}
                 className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Log Food
+                <Check className="size-4" /> Log Food
               </button>
             </div>
           </motion.div>

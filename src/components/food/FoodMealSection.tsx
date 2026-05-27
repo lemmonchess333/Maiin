@@ -181,13 +181,13 @@ export default function FoodMealSection({
           onClick={() => onTargetMeal(mealKey)}
           aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
           className={cn(
-            "w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90",
+            "size-6 rounded-full flex items-center justify-center transition-all active:scale-90",
             targetMeal === mealKey
               ? "bg-primary text-white"
               : "border border-black/[0.12] text-muted-foreground"
           )}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="size-3.5" />
         </button>
       </div>
 
@@ -219,7 +219,7 @@ export default function FoodMealSection({
           aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
           className="w-full flex items-center justify-center gap-1.5 px-3.5 py-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-[0.99]"
         >
-          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          <Plus className="size-3.5" aria-hidden="true" />
           Add to {MEAL_LABELS[mealKey]}
         </button>
       ) : (
@@ -278,7 +278,7 @@ export default function FoodMealSection({
             aria-label={`Add another to ${MEAL_LABELS[mealKey]}`}
             className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.99]"
           >
-            <Plus className="w-3 h-3" aria-hidden="true" />
+            <Plus className="size-3" aria-hidden="true" />
             Add another
           </button>
         </>

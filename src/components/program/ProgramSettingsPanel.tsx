@@ -12,7 +12,9 @@ interface ProgramSettingsPanelProps {
   settings: { autoProgression: boolean; microloading: boolean };
   onClose: () => void;
   onRegenerate: (goal?: Goal, weeklyTarget?: number) => void;
-  onUpdateSettings: (patch: Partial<{ autoProgression: boolean; microloading: boolean }>) => void;
+  onUpdateSettings: (
+    patch: Partial<{ autoProgression: boolean; microloading: boolean }>
+  ) => void;
 }
 
 function goalLabel(g: Goal): string {
@@ -21,12 +23,23 @@ function goalLabel(g: Goal): string {
   return "Recomp";
 }
 
-type PendingAction =
-  | { kind: "goal"; goal: Goal }
-  | { kind: "reset" };
+type PendingAction = { kind: "goal"; goal: Goal } | { kind: "reset" };
 
-const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProps>(
-  ({ currentGoal, currentSplit, settings, onClose, onRegenerate, onUpdateSettings }, ref) => {
+const ProgramSettingsPanel = forwardRef<
+  HTMLDivElement,
+  ProgramSettingsPanelProps
+>(
+  (
+    {
+      currentGoal,
+      currentSplit,
+      settings,
+      onClose,
+      onRegenerate,
+      onUpdateSettings,
+    },
+    ref
+  ) => {
     const [pending, setPending] = useState<PendingAction | null>(null);
 
     const confirmPending = () => {
@@ -72,16 +85,25 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
           className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb pointer-events-auto max-h-[85vh] overflow-y-auto"
-          style={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", boxShadow: "0 -4px 24px rgba(0,0,0,0.12)" }}
+          style={{
+            background: "hsl(var(--background))",
+            border: "1px solid hsl(var(--border))",
+            boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="max-w-md mx-auto p-4 space-y-4">
             <div className="w-10 h-1 rounded-full bg-border mx-auto" />
 
             <div className="flex items-center justify-between">
-              <p className="text-base font-semibold text-foreground">Programme Settings</p>
+              <p className="text-base font-semibold text-foreground">
+                Programme Settings
+              </p>
               <div className="flex items-center gap-2">
-                <button onClick={onClose} className="text-sm font-medium text-primary">
+                <button
+                  onClick={onClose}
+                  className="text-sm font-medium text-primary"
+                >
                   Done
                 </button>
                 <IconButton
@@ -100,17 +122,22 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 the underlying field on programState stays as `goal`
                 for back-compat, only the user-facing label changes. */}
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Nutrition phase</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Nutrition phase
+              </p>
               <div className="flex gap-1">
                 {(["cut", "recomp", "lean bulk"] as Goal[]).map((g) => (
                   <button
                     key={g}
                     onClick={() => {
-                      if (g !== currentGoal) setPending({ kind: "goal", goal: g });
+                      if (g !== currentGoal)
+                        setPending({ kind: "goal", goal: g });
                     }}
                     className={cn(
                       "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
-                      currentGoal === g ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
+                      currentGoal === g
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground hover:bg-muted/80"
                     )}
                   >
                     {goalLabel(g)}
@@ -127,13 +154,16 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 the 6 supported splits while bundling them with hidden
                 day-count changes. */}
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">Split</p>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Split
+              </p>
               <div className="px-3 py-2.5 rounded-lg bg-muted">
                 <p className="text-sm font-medium text-foreground">
                   {splitLabel(currentSplit as SplitType)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Auto-derived from your training days. To change, open the overflow menu &rarr; Edit weekly layout.
+                  Auto-derived from your training days. To change, open the
+                  overflow menu &rarr; Edit weekly layout.
                 </p>
               </div>
             </div>
@@ -144,16 +174,31 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 <div>
                   <p className="text-sm text-foreground">Auto Progression</p>
                   <p className="text-xs text-muted-foreground">
-                    Bumps next session&apos;s weight when you complete every set cleanly
+                    Bumps next session&apos;s weight when you complete every set
+                    cleanly
                   </p>
                 </div>
                 <button
-                  onClick={() => onUpdateSettings({ autoProgression: !settings.autoProgression })}
-                  className={cn("w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3", settings.autoProgression ? "bg-primary" : "bg-muted")}
+                  onClick={() =>
+                    onUpdateSettings({
+                      autoProgression: !settings.autoProgression,
+                    })
+                  }
+                  className={cn(
+                    "w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3",
+                    settings.autoProgression ? "bg-primary" : "bg-muted"
+                  )}
                   aria-pressed={settings.autoProgression}
                   aria-label="Auto progression"
                 >
-                  <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.autoProgression ? "translate-x-5" : "translate-x-1")} />
+                  <div
+                    className={cn(
+                      "size-4 rounded-full bg-white absolute top-1 transition-transform",
+                      settings.autoProgression
+                        ? "translate-x-5"
+                        : "translate-x-1"
+                    )}
+                  />
                 </button>
               </div>
 
@@ -161,16 +206,27 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 <div>
                   <p className="text-sm text-foreground">Microloading</p>
                   <p className="text-xs text-muted-foreground">
-                    Use ½ kg jumps on smaller lifts (curls, raises) so progression keeps moving past stalls
+                    Use ½ kg jumps on smaller lifts (curls, raises) so
+                    progression keeps moving past stalls
                   </p>
                 </div>
                 <button
-                  onClick={() => onUpdateSettings({ microloading: !settings.microloading })}
-                  className={cn("w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3", settings.microloading ? "bg-primary" : "bg-muted")}
+                  onClick={() =>
+                    onUpdateSettings({ microloading: !settings.microloading })
+                  }
+                  className={cn(
+                    "w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3",
+                    settings.microloading ? "bg-primary" : "bg-muted"
+                  )}
                   aria-pressed={settings.microloading}
                   aria-label="Microloading"
                 >
-                  <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform", settings.microloading ? "translate-x-5" : "translate-x-1")} />
+                  <div
+                    className={cn(
+                      "size-4 rounded-full bg-white absolute top-1 transition-transform",
+                      settings.microloading ? "translate-x-5" : "translate-x-1"
+                    )}
+                  />
                 </button>
               </div>
             </div>
@@ -210,12 +266,22 @@ const ProgramSettingsPanel = forwardRef<HTMLDivElement, ProgramSettingsPanelProp
                 className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "rgba(245,158,11,0.12)" }}>
-                    <AlertTriangle className="w-4 h-4" style={{ color: "#f59e0b" }} />
+                  <div
+                    className="size-9 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: "rgba(245,158,11,0.12)" }}
+                  >
+                    <AlertTriangle
+                      className="size-4"
+                      style={{ color: "#f59e0b" }}
+                    />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground">{pendingTitle}</h3>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{pendingBody}</p>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {pendingTitle}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      {pendingBody}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2 pt-1">

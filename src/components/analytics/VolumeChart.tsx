@@ -39,7 +39,7 @@ export default function VolumeChart({
       {data.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[140px] gap-2">
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="size-10 rounded-xl flex items-center justify-center"
             style={{ background: `${accentColor}15` }}
           >
             <svg

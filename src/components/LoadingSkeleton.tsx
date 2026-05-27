@@ -17,9 +17,11 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
         className
       )}
       style={{
-        backgroundImage: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
+        backgroundImage:
+          "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
         backgroundSize: "200% 100%",
-        animation: "pulse 2s ease-in-out infinite, shimmer 1.5s ease-in-out infinite",
+        animation:
+          "pulse 2s ease-in-out infinite, shimmer 1.5s ease-in-out infinite",
         animationDelay: stagger != null ? `${stagger * 80}ms` : undefined,
         opacity: stagger != null ? 0 : undefined,
         animationFillMode: stagger != null ? "forwards" : undefined,
@@ -30,7 +32,10 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
 
 export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
-    <div className="bg-card rounded-2xl p-4 space-y-3" style={{ animationDelay: `${stagger * 80}ms` }}>
+    <div
+      className="bg-card rounded-2xl p-4 space-y-3"
+      style={{ animationDelay: `${stagger * 80}ms` }}
+    >
       <Skeleton className="h-4 w-1/3" stagger={stagger} />
       <Skeleton className="h-8 w-full" stagger={stagger + 1} />
       <Skeleton className="h-4 w-2/3" stagger={stagger + 2} />
@@ -40,7 +45,10 @@ export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
 
 export function ChartSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
-    <div className="bg-card rounded-2xl p-4 space-y-3" style={{ animationDelay: `${stagger * 80}ms` }}>
+    <div
+      className="bg-card rounded-2xl p-4 space-y-3"
+      style={{ animationDelay: `${stagger * 80}ms` }}
+    >
       <Skeleton className="h-4 w-1/4" stagger={stagger} />
       <Skeleton className="h-48 w-full rounded-lg" stagger={stagger + 1} />
     </div>
@@ -60,7 +68,7 @@ export function ActivityCardSkeleton({ stagger = 0 }: { stagger?: number }) {
       <div className="p-4 space-y-3">
         {/* Author row — avatar + name + time */}
         <div className="flex items-center gap-3">
-          <Skeleton className="w-10 h-10 rounded-full" stagger={stagger} />
+          <Skeleton className="size-10 rounded-full" stagger={stagger} />
           <div className="flex-1 space-y-1.5">
             <Skeleton className="h-3 w-24" stagger={stagger + 1} />
             <Skeleton className="h-2.5 w-14" stagger={stagger + 1} />

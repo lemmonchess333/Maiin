@@ -1,6 +1,14 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, BarChart3, Dumbbell, Users, WifiOff, Check, UtensilsCrossed } from "lucide-react";
+import {
+  Home,
+  BarChart3,
+  Dumbbell,
+  Users,
+  WifiOff,
+  Check,
+  UtensilsCrossed,
+} from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import { getQueueLength } from "@/lib/offlineQueue";
@@ -11,12 +19,18 @@ import { useEffect, useSyncExternalStore, useCallback } from "react";
 
 /** Subscribe to offline queue length — polls every 3s while offline */
 function useQueueCount(isOnline: boolean): number {
-  const subscribe = useCallback((cb: () => void) => {
-    if (isOnline) return () => {};
-    const id = setInterval(cb, 3000);
-    return () => clearInterval(id);
-  }, [isOnline]);
-  const getSnapshot = useCallback(() => isOnline ? 0 : getQueueLength(), [isOnline]);
+  const subscribe = useCallback(
+    (cb: () => void) => {
+      if (isOnline) return () => {};
+      const id = setInterval(cb, 3000);
+      return () => clearInterval(id);
+    },
+    [isOnline]
+  );
+  const getSnapshot = useCallback(
+    () => (isOnline ? 0 : getQueueLength()),
+    [isOnline]
+  );
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
@@ -30,7 +44,7 @@ const tabs: { to: string; icon: typeof Home; label: string }[] = [
 
 export default function Layout() {
   const location = useLocation();
-  const hideNav = location.pathname === '/run';
+  const hideNav = location.pathname === "/run";
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
@@ -39,19 +53,19 @@ export default function Layout() {
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
     const fixDrift = () => {
-      const bar = document.querySelector('nav[data-tab-bar]');
+      const bar = document.querySelector("nav[data-tab-bar]");
       if (bar) {
         const rect = bar.getBoundingClientRect();
         if (rect.bottom > window.innerHeight + 2) {
-          (bar as HTMLElement).style.bottom = '0px';
+          (bar as HTMLElement).style.bottom = "0px";
         }
       }
     };
-    window.addEventListener('resize', fixDrift);
-    document.addEventListener('visibilitychange', fixDrift);
+    window.addEventListener("resize", fixDrift);
+    document.addEventListener("visibilitychange", fixDrift);
     return () => {
-      window.removeEventListener('resize', fixDrift);
-      document.removeEventListener('visibilitychange', fixDrift);
+      window.removeEventListener("resize", fixDrift);
+      document.removeEventListener("visibilitychange", fixDrift);
     };
   }, []);
 
@@ -89,43 +103,55 @@ export default function Layout() {
           aria-live="polite" announces the banner text regardless of
           whether the transition plays. */}
       <div aria-live="polite">
-      <AnimatePresence>
-        {!isOnline && (
-          <motion.div
-            key="offline"
-            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="ds-status-banner ds-status-banner--warning">
-              <WifiOff className="w-3.5 h-3.5 shrink-0" />
-              <span>
-                You're offline
-                {queueCount > 0
-                  ? ` — ${queueCount} change${queueCount > 1 ? "s" : ""} saved locally`
-                  : " — changes will sync when reconnected"}
-              </span>
-            </div>
-          </motion.div>
-        )}
-        {isOnline && wasOffline && (
-          <motion.div
-            key="back-online"
-            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="ds-status-banner ds-status-banner--success">
-              <Check className="w-3.5 h-3.5 shrink-0" />
-              <span>Back online — syncing changes</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {!isOnline && (
+            <motion.div
+              key="offline"
+              initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { height: 0, opacity: 0 }
+              }
+              transition={
+                prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
+              }
+              className="overflow-hidden"
+            >
+              <div className="ds-status-banner ds-status-banner--warning">
+                <WifiOff className="size-3.5 shrink-0" />
+                <span>
+                  You're offline
+                  {queueCount > 0
+                    ? ` — ${queueCount} change${queueCount > 1 ? "s" : ""} saved locally`
+                    : " — changes will sync when reconnected"}
+                </span>
+              </div>
+            </motion.div>
+          )}
+          {isOnline && wasOffline && (
+            <motion.div
+              key="back-online"
+              initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={
+                prefersReducedMotion
+                  ? { opacity: 0 }
+                  : { height: 0, opacity: 0 }
+              }
+              transition={
+                prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
+              }
+              className="overflow-hidden"
+            >
+              <div className="ds-status-banner ds-status-banner--success">
+                <Check className="size-3.5 shrink-0" />
+                <span>Back online — syncing changes</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Page fade also gated on reduced motion — the cross-page
@@ -136,7 +162,9 @@ export default function Layout() {
           key={location.pathname}
           initial={prefersReducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }}
+          transition={
+            prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }
+          }
         >
           <Outlet />
         </motion.div>
@@ -144,14 +172,14 @@ export default function Layout() {
 
       {/* Bottom tab bar */}
       {!hideNav && (
-      <nav
-        aria-label="Main navigation"
-        data-tab-bar
-        className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30"
-        style={{ overflow: "visible" }}
-      >
-        <LayoutGroup>
-        {/* The wrapping <nav aria-label="Main navigation"> on the
+        <nav
+          aria-label="Main navigation"
+          data-tab-bar
+          className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30"
+          style={{ overflow: "visible" }}
+        >
+          <LayoutGroup>
+            {/* The wrapping <nav aria-label="Main navigation"> on the
             parent element already gives this surface the correct
             semantics. The Codex PR added role="tablist" but a real
             tablist needs role="tab" + aria-selected + roving tabindex
@@ -159,91 +187,114 @@ export default function Layout() {
             page-navigation pattern. Removing the role rather than
             implementing a half-tablist that would confuse screen
             readers. */}
-        <div className="max-w-md mx-auto flex items-end px-1.5">
-          {tabs.map((tab) => {
-            const hasBadge = tab.to === "/social" && unreadCount > 0;
-            const Icon = tab.icon;
-            return (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                end={tab.to === "/"}
-                aria-label={tab.label}
-                onClick={() => {
-                  haptic('light');
-                  if (tab.to === "/social") markSeen();
-                  /* Soc5 cross-cutting pin (3): tap on already-active
+            <div className="max-w-md mx-auto flex items-end px-1.5">
+              {tabs.map((tab) => {
+                const hasBadge = tab.to === "/social" && unreadCount > 0;
+                const Icon = tab.icon;
+                return (
+                  <NavLink
+                    key={tab.to}
+                    to={tab.to}
+                    end={tab.to === "/"}
+                    aria-label={tab.label}
+                    onClick={() => {
+                      haptic("light");
+                      if (tab.to === "/social") markSeen();
+                      /* Soc5 cross-cutting pin (3): tap on already-active
                      Social tab → scroll-to-top + dispatch a retap event
                      so the visible feed refreshes. Standard iOS pattern
                      (Twitter/X). Scoped to /social by the lock — other
                      tabs keep their default Link behaviour. */
-                  if (tab.to === "/social" && location.pathname === "/social") {
-                    try {
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    } catch {
-                      window.scrollTo(0, 0);
+                      if (
+                        tab.to === "/social" &&
+                        location.pathname === "/social"
+                      ) {
+                        try {
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        } catch {
+                          window.scrollTo(0, 0);
+                        }
+                        window.dispatchEvent(
+                          new CustomEvent("tropos:social-tab-retap")
+                        );
+                      }
+                    }}
+                    className={({ isActive }) =>
+                      cn(
+                        // `min-w-0` lets flex-1 actually shrink the cells
+                        // on iPhone SE width so the "Programme" label
+                        // (the longest of the five) doesn't push siblings
+                        // off-screen.
+                        "flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
+                        isActive
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
+                      )
                     }
-                    window.dispatchEvent(new CustomEvent("tropos:social-tab-retap"));
-                  }
-                }}
-                className={({ isActive }) =>
-                  cn(
-                    // `min-w-0` lets flex-1 actually shrink the cells
-                    // on iPhone SE width so the "Programme" label
-                    // (the longest of the five) doesn't push siblings
-                    // off-screen.
-                    "flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <motion.div
-                      className="relative"
-                      whileTap={prefersReducedMotion ? undefined : { scale: 0.85 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                      <motion.div
-                        initial={false}
-                        animate={!prefersReducedMotion && isActive ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
-                      >
-                        <Icon
-                          aria-hidden="true"
-                          className={cn("w-5 h-5", isActive && "ds-tab-active-icon")}
-                          fill={isActive ? "currentColor" : "none"}
-                          strokeWidth={isActive ? 2 : 1.75}
-                        />
-                      </motion.div>
-                      {/* Notification badge */}
-                      {hasBadge && (
-                        <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-destructive" />
-                      )}
-                      {/* Active indicator dot */}
-                      {isActive && (
-                        prefersReducedMotion ? (
-                          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-                        ) : (
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <motion.div
+                          className="relative"
+                          whileTap={
+                            prefersReducedMotion ? undefined : { scale: 0.85 }
+                          }
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 17,
+                          }}
+                        >
                           <motion.div
-                            layoutId="tab-indicator"
-                            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                          />
-                        )
-                      )}
-                    </motion.div>
-                    <span className="max-w-full truncate text-xs font-medium tracking-wide">{tab.label}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
-        </div>
-        </LayoutGroup>
-      </nav>
+                            initial={false}
+                            animate={
+                              !prefersReducedMotion && isActive
+                                ? { scale: [1, 1.15, 1] }
+                                : { scale: 1 }
+                            }
+                            transition={{ duration: 0.25, ease: "easeOut" }}
+                          >
+                            <Icon
+                              aria-hidden="true"
+                              className={cn(
+                                "size-5",
+                                isActive && "ds-tab-active-icon"
+                              )}
+                              fill={isActive ? "currentColor" : "none"}
+                              strokeWidth={isActive ? 2 : 1.75}
+                            />
+                          </motion.div>
+                          {/* Notification badge */}
+                          {hasBadge && (
+                            <div className="absolute -top-1 -right-1 size-2 rounded-full bg-destructive" />
+                          )}
+                          {/* Active indicator dot */}
+                          {isActive &&
+                            (prefersReducedMotion ? (
+                              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" />
+                            ) : (
+                              <motion.div
+                                layoutId="tab-indicator"
+                                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary"
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 500,
+                                  damping: 30,
+                                }}
+                              />
+                            ))}
+                        </motion.div>
+                        <span className="max-w-full truncate text-xs font-medium tracking-wide">
+                          {tab.label}
+                        </span>
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          </LayoutGroup>
+        </nav>
       )}
     </div>
   );

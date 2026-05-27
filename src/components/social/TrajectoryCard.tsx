@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Zap, TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
-import { getPersonalTrajectory, type PersonalTrajectory } from '@/lib/personalTrajectory';
-import { THEME } from '@/lib/theme';
-import Tooltip from '@/components/ui/Tooltip';
-import { Spinner } from '@/components/ui/Spinner';
+import { useEffect, useState, useCallback } from "react";
+import { Zap, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import {
+  getPersonalTrajectory,
+  type PersonalTrajectory,
+} from "@/lib/personalTrajectory";
+import { THEME } from "@/lib/theme";
+import Tooltip from "@/components/ui/Tooltip";
+import { Spinner } from "@/components/ui/Spinner";
 
 /**
  * Solo-user alternative to LeaderboardCard. Surfaces this week's
@@ -39,7 +42,9 @@ export default function TrajectoryCard() {
     load().catch(() => {
       if (cancelled) return;
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [load]);
 
   const thisWeek = data?.thisWeek;
@@ -48,26 +53,28 @@ export default function TrajectoryCard() {
 
   // Colour the delta: green = improvement, coral = regression,
   // muted grey = flat / no baseline.
-  const deltaColor = deltaPct == null
-    ? THEME.text.muted
-    : deltaPct > 0
-      ? THEME.success
-      : deltaPct < 0
-        ? THEME.running
-        : THEME.text.muted;
+  const deltaColor =
+    deltaPct == null
+      ? THEME.text.muted
+      : deltaPct > 0
+        ? THEME.success
+        : deltaPct < 0
+          ? THEME.running
+          : THEME.text.muted;
 
-  const DeltaIcon = deltaPct == null
-    ? Minus
-    : deltaPct > 0
-      ? TrendingUp
-      : deltaPct < 0
-        ? TrendingDown
-        : Minus;
+  const DeltaIcon =
+    deltaPct == null
+      ? Minus
+      : deltaPct > 0
+        ? TrendingUp
+        : deltaPct < 0
+          ? TrendingDown
+          : Minus;
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
-        <Zap className="w-5 h-5" style={{ color: THEME.brand }} />
+        <Zap className="size-5" style={{ color: THEME.brand }} />
         <div className="flex-1">
           <h3 className="text-sm font-bold">Your trajectory</h3>
         </div>
@@ -93,9 +100,11 @@ export default function TrajectoryCard() {
               className="text-3xl font-mono tabular-nums font-extrabold"
               style={{ color: THEME.brand }}
             >
-              {thisWeek.score === 0 ? '0' : thisWeek.score.toLocaleString()}
+              {thisWeek.score === 0 ? "0" : thisWeek.score.toLocaleString()}
             </span>
-            <span className="text-sm text-muted-foreground font-medium">pts</span>
+            <span className="text-sm text-muted-foreground font-medium">
+              pts
+            </span>
             {thisWeek.score > 0 && (
               /* The delta compares against last week's running total at
                  the same elapsed point in the week (fair like-for-like)
@@ -115,12 +124,15 @@ export default function TrajectoryCard() {
                 <button
                   type="button"
                   className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold"
-                  style={{ backgroundColor: `${deltaColor}14`, color: deltaColor }}
+                  style={{
+                    backgroundColor: `${deltaColor}14`,
+                    color: deltaColor,
+                  }}
                 >
                   <DeltaIcon size={12} />
                   {deltaPct == null
-                    ? 'new'
-                    : `${deltaPct > 0 ? '+' : ''}${deltaPct}%`}
+                    ? "new"
+                    : `${deltaPct > 0 ? "+" : ""}${deltaPct}%`}
                 </button>
               </Tooltip>
             )}
@@ -130,21 +142,33 @@ export default function TrajectoryCard() {
               a target to beat. */}
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
             <span>Last week</span>
-            <span className="font-mono tabular-nums">{lastWeek.score.toLocaleString()} pts</span>
+            <span className="font-mono tabular-nums">
+              {lastWeek.score.toLocaleString()} pts
+            </span>
           </div>
 
           {/* Breakdown — km + kg split */}
           <div className="flex items-center gap-4 pt-3 border-t border-border/30">
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Running</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Running
+              </p>
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
-                {thisWeek.km.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">km</span>
+                {thisWeek.km.toFixed(1)}{" "}
+                <span className="text-xs text-muted-foreground font-normal">
+                  km
+                </span>
               </p>
             </div>
             <div className="flex-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Lifting</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                Lifting
+              </p>
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
-                {thisWeek.kg.toLocaleString()} <span className="text-xs text-muted-foreground font-normal">kg</span>
+                {thisWeek.kg.toLocaleString()}{" "}
+                <span className="text-xs text-muted-foreground font-normal">
+                  kg
+                </span>
               </p>
             </div>
           </div>
@@ -153,8 +177,8 @@ export default function TrajectoryCard() {
           {thisWeek.score === 0 && (
             <p className="text-xs text-muted-foreground text-center mt-3">
               {lastWeek.score > 0
-                ? 'Start your week — beat last week'
-                : 'Start your week with your first workout or run'}
+                ? "Start your week — beat last week"
+                : "Start your week with your first workout or run"}
             </p>
           )}
         </>
