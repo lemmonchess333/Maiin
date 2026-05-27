@@ -208,6 +208,7 @@ export default function Settings() {
           </div>
           {user && (
             <button
+              type="button"
               onClick={() => navigate(`/user/${user.uid}`)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
             >
@@ -242,7 +243,7 @@ export default function Settings() {
           accordion chrome here so the visual stays unchanged. */}
       <TrackSettingsSectionView section="training">
         <AccordionSection
-          icon={<Target className="w-5 h-5 text-primary" />}
+          icon={<Target className="size-5 text-primary" />}
           title="Training"
           subtitle="Plan structure"
         >
@@ -342,11 +343,12 @@ export default function Settings() {
       {/* 9. Subscription — navigation row, not accordion */}
       <TrackSettingsSectionView section="subscription">
         <button
+          type="button"
           onClick={() => navigate("/upgrade")}
           className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
         >
           <div className="flex items-center gap-3">
-            <Crown className="w-5 h-5 text-primary" />
+            <Crown className="size-5 text-primary" />
             <div className="text-left">
               <p className="text-sm font-medium text-foreground">
                 Subscription
@@ -360,7 +362,7 @@ export default function Settings() {
               </p>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="size-4 text-muted-foreground" />
         </button>
       </TrackSettingsSectionView>
 

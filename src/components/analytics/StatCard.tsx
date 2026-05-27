@@ -1,4 +1,4 @@
-import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area } from "recharts";
 
 /**
  * Direction tells us which way is "good" so the delta chip can colour
@@ -26,9 +26,17 @@ interface StatCardProps {
 }
 
 export default function StatCard({
-  label, value, unit, delta, direction = "up-good", target, sparklineData, accentColor = '#7B72E9', onClick,
+  label,
+  value,
+  unit,
+  delta,
+  direction = "up-good",
+  target,
+  sparklineData,
+  accentColor = "#7B72E9",
+  onClick,
 }: StatCardProps) {
-  const gradientId = `spark-${label.replace(/\s/g, '-')}`;
+  const gradientId = `spark-${label.replace(/\s/g, "-")}`;
 
   // Resolve delta sentiment from the direction prop. "neutral" always
   // greys the chip; otherwise good/bad maps to emerald/red.
@@ -49,10 +57,15 @@ export default function StatCard({
   const showSparkline = !!sparklineData && sparklineData.length > 2;
 
   return (
-    <button onClick={onClick}
+    <button
+      type="button"
+      onClick={onClick}
       className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98]"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}>
-      <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">{label}</p>
+      style={{ boxShadow: "var(--ds-shadow-card)" }}
+    >
+      <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">
+        {label}
+      </p>
 
       {/* Value + unit on their own full-width row. Side-by-side layout
           with the sparkline doesn't fit on phone-sized stat cards once
@@ -61,7 +74,9 @@ export default function StatCard({
           sparkline below as a thin full-width band gives every realistic
           value enough room without truncation. */}
       <div className="flex items-baseline gap-1">
-        <span className="text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap">{value}</span>
+        <span className="text-3xl font-extrabold font-mono tabular-nums text-foreground leading-none whitespace-nowrap">
+          {value}
+        </span>
         {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
       </div>
 
@@ -71,12 +86,22 @@ export default function StatCard({
         // is a glance at the shape of the trend, not an interactive
         // chart. `pointerEvents: none` removes the misleading hover
         // affordance.
-        <div className="w-full h-5 mt-2 -mx-1" style={{ pointerEvents: "none" }}>
+        <div
+          className="w-full h-5 mt-2 -mx-1"
+          style={{ pointerEvents: "none" }}
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={sparklineData!.map((v, i) => ({ v, i }))} margin={{ top: 1, right: 0, bottom: 0, left: 0 }}>
+            <AreaChart
+              data={sparklineData!.map((v, i) => ({ v, i }))}
+              margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
+            >
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accentColor} stopOpacity={0.35} />
+                  <stop
+                    offset="0%"
+                    stopColor={accentColor}
+                    stopOpacity={0.35}
+                  />
                   <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -96,8 +121,10 @@ export default function StatCard({
       )}
 
       {delta && (
-        <p className={`text-xs mt-1.5 font-medium flex items-center gap-0.5 ${deltaColor}`}>
-          <span>{delta.positive ? '↑' : '↓'}</span>
+        <p
+          className={`text-xs mt-1.5 font-medium flex items-center gap-0.5 ${deltaColor}`}
+        >
+          <span>{delta.positive ? "↑" : "↓"}</span>
           <span>{delta.value} vs last</span>
         </p>
       )}

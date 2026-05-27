@@ -18,14 +18,14 @@ export default function PRBadge({ isNew = false }: PRBadgeProps) {
 
   if (!isNew) {
     return (
-      <div className="w-5 h-5 flex items-center justify-center opacity-40">
+      <div className="size-5 flex items-center justify-center opacity-40">
         <Zap size={14} color={THEME.warning} fill={THEME.warning} />
       </div>
     );
   }
 
   return (
-    <div className="relative w-6 h-6 flex items-center justify-center">
+    <div className="relative size-6 flex items-center justify-center">
       {/* Glow on landing */}
       <motion.div
         className="absolute inset-[-2px] rounded-full"

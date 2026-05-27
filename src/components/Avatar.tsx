@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 const SIZE_CLASSES: Record<AvatarSize, string> = {
-  xs: 'w-5 h-5 text-[10px]',
-  sm: 'w-7 h-7 text-xs',
-  md: 'w-9 h-9 text-sm',
-  lg: 'w-11 h-11 text-base',
-  xl: 'w-14 h-14 text-lg',
+  xs: "size-5 text-[10px]",
+  sm: "size-7 text-xs",
+  md: "size-9 text-sm",
+  lg: "size-11 text-base",
+  xl: "size-14 text-lg",
 };
 
 interface AvatarProps {
@@ -55,7 +55,7 @@ interface AvatarProps {
 export default function Avatar({
   photoURL,
   displayName,
-  size = 'md',
+  size = "md",
   ringColor,
   fallbackBg,
   fallbackColor,
@@ -69,9 +69,9 @@ export default function Avatar({
      real initial in the fallback circle. Falls through to the
      displayName-first-letter, then '?' if both are empty. */
   const initial = (
-    fallbackInitial?.trim().charAt(0)
-    || displayName?.trim().charAt(0)
-    || '?'
+    fallbackInitial?.trim().charAt(0) ||
+    displayName?.trim().charAt(0) ||
+    "?"
   ).toUpperCase();
   const sizeCls = SIZE_CLASSES[size];
 
@@ -88,18 +88,18 @@ export default function Avatar({
   return (
     <div
       className={cn(
-        'rounded-full overflow-hidden flex items-center justify-center shrink-0 font-bold',
-        useDefaultFallback && 'bg-muted text-foreground/70',
+        "rounded-full overflow-hidden flex items-center justify-center shrink-0 font-bold",
+        useDefaultFallback && "bg-muted text-foreground/70",
         sizeCls,
-        className,
+        className
       )}
       style={Object.keys(style).length ? style : undefined}
     >
       {showImage ? (
         <img
           src={photoURL}
-          alt={displayName ? `${displayName}'s avatar` : 'Avatar'}
-          className="w-full h-full object-cover"
+          alt={displayName ? `${displayName}'s avatar` : "Avatar"}
+          className="size-full object-cover"
           onError={() => setImageFailed(true)}
           loading="lazy"
         />
