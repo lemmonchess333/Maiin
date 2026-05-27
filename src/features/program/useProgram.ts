@@ -10,6 +10,7 @@ import type {
   ProgramState,
   ProgramSettings,
   ProgramExercise,
+  RunPlan,
   ScheduledRunDay,
   ScheduledRunStatus,
 } from "./programTypes";
@@ -88,7 +89,7 @@ function makeRunPlanRecord(
     targetDate: string;
   },
   carry: { currentWeek?: number; totalWeeks?: number } = {}
-): ProgramState["runPlan"] {
+): RunPlan {
   return {
     mode: "race_prep",
     raceGoal,
@@ -1395,7 +1396,19 @@ export function useProgram() {
       weekStart,
     });
     const runDays = v2.weeks[0] ?? [];
-    const runPlan = makeRunPlanRecord(v2, newRaceGoal);
+    // Preserve the user's progress through the plan. The shift adds
+    // a week at the end — the user is still in whichever week they
+    // were before — so carry `currentWeek` forward. Also carry
+    // `completedRaces[]` so multi-race plans don't lose per-race
+    // idempotency (would re-trigger recovery entry if an existing
+    // race-day saved run re-syncs after the shift).
+    const prevRunPlan = programState.runPlan;
+    const runPlan = makeRunPlanRecord(v2, newRaceGoal, {
+      currentWeek: prevRunPlan?.currentWeek,
+    });
+    if (prevRunPlan?.completedRaces) {
+      runPlan.completedRaces = prevRunPlan.completedRaces;
+    }
     const next = { ...programState, runDays, runPlan };
     delete next.pendingFellBehindPrompt;
     logger.log(
@@ -1432,7 +1445,20 @@ export function useProgram() {
       weekStart,
     });
     const runDays = v2.weeks[0] ?? [];
-    const runPlan = makeRunPlanRecord(v2, profile.raceGoal);
+    // Preserve the user's progress through the plan (currentWeek)
+    // and per-race idempotency state (completedRaces[]). Compress
+    // shortens the remaining timeline but the user has still
+    // completed whatever weeks they were through — wiping
+    // currentWeek to 0 makes the action indistinguishable from a
+    // fresh plan, and dropping completedRaces would let a previously
+    // recorded race re-trigger recovery entry on re-sync.
+    const prevRunPlan = programState.runPlan;
+    const runPlan = makeRunPlanRecord(v2, profile.raceGoal, {
+      currentWeek: prevRunPlan?.currentWeek,
+    });
+    if (prevRunPlan?.completedRaces) {
+      runPlan.completedRaces = prevRunPlan.completedRaces;
+    }
     logger.log(
       `[fellBehind] compressing remaining plan, compressed=${v2.compressed}`
     );

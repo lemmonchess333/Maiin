@@ -2146,13 +2146,20 @@ function _parseUtcDate(dateStr) {
 /** Server-side equivalent of Q1 P4's strict race-day match check.
  *  Iterates a bounded list of saved runs (date-filtered before the
  *  call) and returns true if any one of them matches the race
- *  template at ≥95% planned distance. */
+ *  template at ≥95% planned distance.
+ *
+ *  Saved-run docs carry the planMetadata flattened: `actualTemplateId`
+ *  is what RunSummary writes — there is no plain `templateId` field.
+ *  Also defends against `isInvalid` / `savedAnyway` runs counting
+ *  as a race match (a "Save anyway" on a borked GPS trace must not
+ *  clear no-show). */
 function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
   if (!Array.isArray(savedRunsForDate) || savedRunsForDate.length === 0) {
     return false;
   }
   for (const r of savedRunsForDate) {
-    if (r.templateId !== "race") continue;
+    if (!r || r.isInvalid === true || r.savedAnyway === true) continue;
+    if (r.actualTemplateId !== "race") continue;
     if (typeof r.distance !== "number") continue;
     if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
       // Defensive — without a planned distance we can't gate on the
@@ -2231,10 +2238,19 @@ function _decideReconciliationActions(
     const exitMs = _parseUtcDate(runPlan.recoveryEndDate).getTime();
     const graceEndMs = exitMs + RECOVERY_EXIT_GRACE_DAYS * 24 * 60 * 60 * 1000;
     if (nowMs >= graceEndMs) {
-      const cleared = { ...runPlan };
-      delete cleared.phase;
-      delete cleared.recoveryEndDate;
-      updatePayload.runPlan = cleared;
+      // Firestore `set(merge: true)` does a *recursive* merge of
+      // nested maps — fields omitted from `runPlan` inside the
+      // payload remain untouched in storage. JS-side `delete cleared.phase`
+      // is therefore a no-op at the wire level and the user stays
+      // stuck in `phase: 'recovery'` forever. Writing explicit
+      // `null` overwrites the stored value; downstream readers all
+      // check `phase === 'recovery'` and `typeof recoveryEndDate
+      // === 'string'`, both of which falsify against null.
+      updatePayload.runPlan = {
+        ...runPlan,
+        phase: null,
+        recoveryEndDate: null,
+      };
       recoveryCleared = true;
     }
   }
@@ -2445,8 +2461,18 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
     return { write: false };
   }
 
-  // Gate 3 — saved run must be race-templated.
-  if (savedRun.templateId !== "race") {
+  // Gate 2b — reject invalid / save-anyway runs. A user who hit
+  // "Save anyway" on a borked GPS trace (impossible pace, partial
+  // crash recovery) must not trip recovery entry off a junk save
+  // that they explicitly flagged as invalid.
+  if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
+    return { write: false };
+  }
+
+  // Gate 3 — saved run must be race-templated. RunSummary stores the
+  // resolved template as `actualTemplateId` (planMetadata flattened
+  // to top-level); there is no plain `templateId` field on the doc.
+  if (savedRun.actualTemplateId !== "race") {
     return { write: false };
   }
 
@@ -2859,6 +2885,16 @@ exports.onRunCreated = functions
         );
       }
 
+      // PR-L L2: recovery-entry write. Runs BEFORE the rolling-window
+      // and cooldown gates because recovery entry is independent of
+      // the performance recompute — a race run logged late (poor
+      // connectivity, Garmin sync delay) or arriving while another
+      // run holds the per-user cooldown lock still needs to flip the
+      // user into the recovery phase. The wrapper catches its own
+      // errors and reads/writes only programState (not the
+      // performance write surface), so failures here can't cascade.
+      await _maybeWriteRecoveryEntryForRun(uid, data);
+
       if (data.completedAt) {
         const runDate = data.completedAt.toDate
           ? data.completedAt.toDate()
@@ -2889,12 +2925,6 @@ exports.onRunCreated = functions
         await releaseLock(uid, false, err.message);
         console.error(`onRunCreated: compute error for ${uid}:`, err.message);
       }
-
-      // PR-L L2: recovery-entry write. Runs AFTER the performance
-      // compute so a slow programState read can't delay the rest of
-      // the trigger. The wrapper catches its own errors — best-
-      // effort, not worth taking down the trigger.
-      await _maybeWriteRecoveryEntryForRun(uid, data);
     } catch (err) {
       console.error("onRunCreated: fatal error:", {
         uid,
@@ -4276,12 +4306,15 @@ function _decideFellBehindFlag(
     return { action: "noop" };
   }
 
-  // Gate 3 — read the user's weekly run target. 0 means
-  // structured/race_prep but with no target configured (malformed
-  // state); treat as freeform for fell-behind purposes.
+  // Gate 3 — read the user's weekly run target. Use `??` (not `||`)
+  // to mirror `getWeeklyRunTarget` in src/lib/scheduleUtils.ts — a
+  // user with an explicit `weeklyRunDaysTarget: 0` (e.g. a zeroed
+  // taper week) should treat the new field as authoritative rather
+  // than falling back to the legacy `weeklyRunsTarget`. After
+  // resolution, 0 still falls through to the `< 1` guard below.
   const weeklyTarget =
-    (profile && profile.weeklyRunDaysTarget) ||
-    (profile && profile.weeklyRunsTarget) ||
+    (profile && profile.weeklyRunDaysTarget) ??
+    (profile && profile.weeklyRunsTarget) ??
     0;
   if (weeklyTarget < 1) {
     return { action: "noop" };
