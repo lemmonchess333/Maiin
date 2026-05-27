@@ -184,13 +184,25 @@ export default function Social() {
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
 
-  // Crew banner dismiss state
-  const [crewBannerDismissed, setCrewBannerDismissed] = useState(
-    () => !!localStorage.getItem("tropos_crew_banner_dismissed")
-  );
+  // Crew banner dismiss state. localStorage access wrapped in
+  // try/catch — Safari private mode + strict-cookie iframes throw
+  // SecurityError synchronously, which would otherwise crash the
+  // whole Social page on mount via the useState initialiser.
+  const [crewBannerDismissed, setCrewBannerDismissed] = useState(() => {
+    try {
+      return !!localStorage.getItem("tropos_crew_banner_dismissed");
+    } catch {
+      return false;
+    }
+  });
   const dismissCrewBanner = () => {
     setCrewBannerDismissed(true);
-    localStorage.setItem("tropos_crew_banner_dismissed", "1");
+    try {
+      localStorage.setItem("tropos_crew_banner_dismissed", "1");
+    } catch {
+      // Best-effort persistence — in private mode the dismissal
+      // simply doesn't survive a reload.
+    }
   };
 
   // Feed hooks — discover only fetches when active (#7)
