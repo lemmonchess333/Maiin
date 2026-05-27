@@ -62,12 +62,19 @@ export default function SustainedOfflineBanner({
             key={bannerKey}
             initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
-            exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
-            transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+            exit={
+              prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
+            }
+            transition={
+              prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
+            }
             className="overflow-hidden"
           >
             <div className="flex items-start gap-2 px-3 py-2 mt-2 rounded-lg bg-muted/60 text-xs text-muted-foreground">
-              <WifiOff aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <WifiOff
+                aria-hidden="true"
+                className="size-3.5 shrink-0 mt-0.5"
+              />
               <p className="leading-snug">{children}</p>
             </div>
           </motion.div>

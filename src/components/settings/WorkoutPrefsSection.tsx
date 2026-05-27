@@ -27,29 +27,48 @@ export default function WorkoutPrefsSection({
   inline = false,
 }: WorkoutPrefsSectionProps) {
   return (
-    <AccordionSection inline={inline} icon={<Timer className="w-5 h-5 text-primary" />} title="Workout Preferences" subtitle="Rest timer, audio cues">
+    <AccordionSection
+      inline={inline}
+      icon={<Timer className="size-5 text-primary" />}
+      title="Workout Preferences"
+      subtitle="Rest timer, audio cues"
+    >
       <div className="space-y-3">
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Auto-start rest timer</p>
-            <p className="text-xs text-muted-foreground">Timer starts after completing a set</p>
+            <p className="text-xs text-muted-foreground">
+              Timer starts after completing a set
+            </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = autoRestTimer;
               const next = !autoRestTimer;
               setAutoRestTimer(next);
-              trackSettingsEvent("settings_toggle_changed", { toggle: "auto_rest_timer", value: next });
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "auto_rest_timer",
+                value: next,
+              });
               const result = await updateProfile({ autoRestTimer: next });
               if (!result.ok) setAutoRestTimer(prev);
             }}
             aria-label="Toggle auto-start rest timer"
             role="switch"
             aria-checked={autoRestTimer}
-            className={cn("w-10 h-6 rounded-full transition-colors relative", autoRestTimer ? "bg-primary" : "bg-muted border border-border")}
+            className={cn(
+              "w-10 h-6 rounded-full transition-colors relative",
+              autoRestTimer ? "bg-primary" : "bg-muted border border-border"
+            )}
           >
-            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", autoRestTimer ? "translate-x-5" : "translate-x-1")} />
+            <div
+              className={cn(
+                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                autoRestTimer ? "translate-x-5" : "translate-x-1"
+              )}
+            />
           </button>
         </div>
 
@@ -79,9 +98,12 @@ export default function WorkoutPrefsSection({
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Audio cues</p>
-            <p className="text-xs text-muted-foreground">Voice announcements during runs</p>
+            <p className="text-xs text-muted-foreground">
+              Voice announcements during runs
+            </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = audioCues;
@@ -93,9 +115,17 @@ export default function WorkoutPrefsSection({
             aria-label="Toggle audio cues"
             role="switch"
             aria-checked={audioCues}
-            className={cn("w-10 h-6 rounded-full transition-colors relative", audioCues ? "bg-primary" : "bg-muted border border-border")}
+            className={cn(
+              "w-10 h-6 rounded-full transition-colors relative",
+              audioCues ? "bg-primary" : "bg-muted border border-border"
+            )}
           >
-            <div className={cn("w-4 h-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm", audioCues ? "translate-x-5" : "translate-x-1")} />
+            <div
+              className={cn(
+                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
+                audioCues ? "translate-x-5" : "translate-x-1"
+              )}
+            />
           </button>
         </div>
       </div>

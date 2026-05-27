@@ -34,34 +34,31 @@ describe("IconButton — defaults", () => {
 
   it("respects an explicit type prop", () => {
     render(
-      <IconButton aria-label="Submit" type="submit" icon={<StubIcon />} />,
+      <IconButton aria-label="Submit" type="submit" icon={<StubIcon />} />
     );
     expect(
-      screen.getByRole("button", { name: "Submit" }).getAttribute("type"),
+      screen.getByRole("button", { name: "Submit" }).getAttribute("type")
     ).toBe("submit");
   });
 
   it("applies default size=md classes (44px square)", () => {
     render(<IconButton aria-label="Menu" icon={<StubIcon />} />);
     const btn = screen.getByRole("button", { name: "Menu" });
-    expect(btn.className).toContain("w-11");
-    expect(btn.className).toContain("h-11");
+    expect(btn.className).toContain("size-11");
   });
 });
 
 describe("IconButton — size variants", () => {
-  it("size='sm' applies 36px (w-9 h-9)", () => {
+  it("size='sm' applies 36px (size-9)", () => {
     render(<IconButton aria-label="X" size="sm" icon={<StubIcon />} />);
     const btn = screen.getByRole("button", { name: "X" });
-    expect(btn.className).toContain("w-9");
-    expect(btn.className).toContain("h-9");
+    expect(btn.className).toContain("size-9");
   });
 
-  it("size='lg' applies 48px (w-12 h-12)", () => {
+  it("size='lg' applies 48px (size-12)", () => {
     render(<IconButton aria-label="X" size="lg" icon={<StubIcon />} />);
     const btn = screen.getByRole("button", { name: "X" });
-    expect(btn.className).toContain("w-12");
-    expect(btn.className).toContain("h-12");
+    expect(btn.className).toContain("size-12");
   });
 });
 
@@ -76,9 +73,7 @@ describe("IconButton — icon rendering", () => {
 
   it("exposes the aria-label to screen readers", () => {
     render(<IconButton aria-label="Close dialog" icon={<StubIcon />} />);
-    expect(
-      screen.getByRole("button", { name: "Close dialog" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Close dialog" })).toBeDefined();
   });
 });
 
@@ -114,8 +109,7 @@ describe("IconButton — disabled state", () => {
   it("sets disabled when the prop is true", () => {
     render(<IconButton aria-label="X" disabled icon={<StubIcon />} />);
     expect(
-      (screen.getByRole("button", { name: "X" }) as HTMLButtonElement)
-        .disabled,
+      (screen.getByRole("button", { name: "X" }) as HTMLButtonElement).disabled
     ).toBe(true);
   });
 
@@ -127,7 +121,7 @@ describe("IconButton — disabled state", () => {
         disabled
         onClick={onClick}
         icon={<StubIcon />}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: "X" }));
     expect(onClick).not.toHaveBeenCalled();
@@ -137,9 +131,7 @@ describe("IconButton — disabled state", () => {
 describe("IconButton — onClick", () => {
   it("calls onClick when the button is clicked", () => {
     const onClick = vi.fn();
-    render(
-      <IconButton aria-label="X" onClick={onClick} icon={<StubIcon />} />,
-    );
+    render(<IconButton aria-label="X" onClick={onClick} icon={<StubIcon />} />);
     fireEvent.click(screen.getByRole("button", { name: "X" }));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
@@ -152,7 +144,7 @@ describe("IconButton — variants", () => {
         aria-label="Delete"
         variant="destructive"
         icon={<StubIcon />}
-      />,
+      />
     );
     const btn = screen.getByRole("button", { name: "Delete" });
     expect(btn.className).toContain("bg-destructive");
@@ -160,7 +152,7 @@ describe("IconButton — variants", () => {
 
   it("applies inline style for sport variant (theme.running color)", () => {
     render(
-      <IconButton aria-label="Start" variant="sport" icon={<StubIcon />} />,
+      <IconButton aria-label="Start" variant="sport" icon={<StubIcon />} />
     );
     const btn = screen.getByRole("button", { name: "Start" });
     /* sport variant carries an inline backgroundColor (THEME.running)
@@ -179,7 +171,7 @@ describe("IconButton — forwardRef", () => {
         ref={(el) => {
           captured = el;
         }}
-      />,
+      />
     );
     expect(captured).toBeInstanceOf(HTMLButtonElement);
   });
