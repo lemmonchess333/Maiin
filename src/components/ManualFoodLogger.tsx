@@ -189,7 +189,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             onChange={(e) => setName(e.target.value)}
             placeholder="Meal name (e.g. Chicken & rice)"
             aria-label="Meal name"
-            className="w-full px-3.5 py-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
+            className="w-full p-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
           />
 
           {/* Macro input grid */}
@@ -216,7 +216,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                   value={field.value}
                   onChange={(e) => field.set(e.target.value)}
                   placeholder={field.unit}
-                  className="w-full px-3 py-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
+                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground/40 bg-muted/40 border border-border"
                 />
               </div>
             ))}
@@ -257,7 +257,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             >
               {saved ? (
                 <>
-                  <Check className="w-4 h-4" /> Meal Logged!
+                  <Check className="size-4" /> Meal Logged!
                 </>
               ) : saving ? (
                 "Saving meal..."

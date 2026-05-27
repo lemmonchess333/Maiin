@@ -97,6 +97,7 @@ export default function FollowButton({
 
   return (
     <button
+      type="button"
       onClick={handleToggle}
       disabled={showSpinner || disabled}
       aria-label={

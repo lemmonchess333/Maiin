@@ -29,10 +29,7 @@ export default function DayStepper({
   if (days.length === 0) return null;
 
   return (
-    <div
-      role="tablist"
-      className="flex px-3 pt-1 pb-3 gap-1"
-    >
+    <div role="tablist" className="flex px-3 pt-1 pb-3 gap-1">
       {days.map((day, index) => {
         const isToday = index === todayIndex;
         const isSelected = index === selectedIndex;
@@ -62,7 +59,11 @@ export default function DayStepper({
           bWidth = 1;
           bColor = SKIPPED + "55";
           content = (
-            <Ban className="w-4 h-4" style={{ color: SKIPPED }} strokeWidth={2.25} />
+            <Ban
+              className="size-4"
+              style={{ color: SKIPPED }}
+              strokeWidth={2.25}
+            />
           );
           labelColor = SKIPPED;
         } else if (isToday && isCompleted) {
@@ -72,9 +73,7 @@ export default function DayStepper({
           bWidth = 0;
           bColor = "transparent";
           glow = `0 0 0 4px ${GREEN}1A, 0 4px 14px ${GREEN}33`;
-          content = (
-            <Check className="w-5 h-5 text-white" strokeWidth={3} />
-          );
+          content = <Check className="size-5 text-white" strokeWidth={3} />;
           labelColor = GREEN;
         } else if (isCompleted) {
           // Rule 2: Completed (selected or not)
@@ -82,9 +81,7 @@ export default function DayStepper({
           fill = GREEN;
           bWidth = 0;
           bColor = "transparent";
-          content = (
-            <Check className="w-4 h-4 text-white" strokeWidth={3} />
-          );
+          content = <Check className="size-4 text-white" strokeWidth={3} />;
           labelColor = GREEN;
         } else if (isToday && isSelected) {
           // Rule 3: Today AND selected → 48px purple + glow
@@ -144,6 +141,7 @@ export default function DayStepper({
             className="flex flex-col items-center flex-1 min-w-0"
           >
             <button
+              type="button"
               role="tab"
               aria-selected={isSelected}
               aria-label={`Day ${day.dayNumber}, ${day.label}${isCompleted ? ", completed" : isSkipped ? ", skipped" : isToday ? ", today" : ""}`}

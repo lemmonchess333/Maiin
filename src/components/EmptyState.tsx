@@ -14,7 +14,13 @@ interface EmptyStateProps {
   accentColor?: string;
 }
 
-export function EmptyState({ icon, title, description, action, accentColor = '#7B72E9' }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  accentColor = "#7B72E9",
+}: EmptyStateProps) {
   // Sprint 1: CTA migrated to the <Button> primitive. accentColor
   // continues to drive the icon container colour (per-surface
   // theming for run/lift/food empty states), but the CTA itself
@@ -23,9 +29,12 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
   return (
     <div className="text-center py-12 px-6 space-y-4" role="status">
       <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
+        className="size-16 rounded-2xl flex items-center justify-center mx-auto"
         aria-hidden="true"
-        style={{ background: `${accentColor}15`, border: `1px solid ${accentColor}25` }}
+        style={{
+          background: `${accentColor}15`,
+          border: `1px solid ${accentColor}25`,
+        }}
       >
         <div style={{ color: accentColor }}>{icon}</div>
       </div>
@@ -35,11 +44,11 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
           {description}
         </p>
       </div>
-      {action && (
-        action.href ? (
+      {action &&
+        (action.href ? (
           // Sprint 1: <Link> rendered with the same canonical
           // classes the Button primitive uses for size="sm"
-          // primary. <a> elements can't be wrapped in <button>
+          // primary. <a> elements can't be wrapped in <button type="button">
           // (invalid HTML), so we replicate Button's class shape
           // directly here. Keep this in sync with
           // src/components/ui/Button.tsx if Button's primary
@@ -54,8 +63,7 @@ export function EmptyState({ icon, title, description, action, accentColor = '#7
           <Button onClick={action.onClick} size="sm">
             {action.label}
           </Button>
-        )
-      )}
+        ))}
     </div>
   );
 }

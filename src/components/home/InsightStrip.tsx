@@ -22,13 +22,13 @@ export default function InsightStrip({
           : THEME.semantic.positive;
   const iconEl =
     loadBand === "overreach" ? (
-      <Flame className="w-5 h-5" />
+      <Flame className="size-5" />
     ) : loadBand === "high" ? (
-      <Zap className="w-5 h-5" />
+      <Zap className="size-5" />
     ) : loadBand === "moderate" ? (
-      <Dumbbell className="w-5 h-5" />
+      <Dumbbell className="size-5" />
     ) : (
-      <Leaf className="w-5 h-5" />
+      <Leaf className="size-5" />
     );
   const iconLabel =
     loadBand === "overreach"
@@ -62,7 +62,7 @@ export default function InsightStrip({
         </div>
         <div className="flex items-center gap-1 shrink-0 mt-0.5">
           <span className="text-xs text-primary font-medium">Details</span>
-          <ChevronRight className="w-3.5 h-3.5 text-primary" />
+          <ChevronRight className="size-3.5 text-primary" />
         </div>
       </motion.div>
     </Link>

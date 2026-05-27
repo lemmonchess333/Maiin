@@ -1,7 +1,11 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useUserPRMap } from "@/hooks/useUserPRMap";
-import { getRepBucket, repBucketLabel, type ExercisePR } from "@/lib/prTracking";
+import {
+  getRepBucket,
+  repBucketLabel,
+  type ExercisePR,
+} from "@/lib/prTracking";
 import { THEME } from "@/lib/theme";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -82,76 +86,81 @@ export default function ExerciseCompareSheet({
       description={`Comparing best at ${repBucketLabel(bucket).toLowerCase()}`}
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
+        {/* Their set */}
+        <div className="rounded-xl bg-muted/50 px-3.5 py-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+            Their set
+          </p>
+          <p className="text-sm font-mono tabular-nums text-foreground mt-1">
+            {authorSummary ||
+              `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg}kg`}
+          </p>
+        </div>
 
-            {/* Their set */}
+        {/* Your best */}
+        {loading && (
+          <div className="rounded-xl bg-muted/50 px-3.5 py-3 flex items-center gap-2">
+            <Spinner size="xs" variant="muted" label="Looking up your best" />
+            <span className="text-xs text-muted-foreground">
+              Looking up your best…
+            </span>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="rounded-xl bg-muted/50 px-3.5 py-3">
+            <p className="text-xs text-muted-foreground">
+              Couldn&apos;t load your history. Try again later.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && !yourPR && (
+          <div className="rounded-xl bg-muted/50 px-3.5 py-3">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+              Your best
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              No record yet — log this exercise to start tracking.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && yourPR && (
+          <>
             <div className="rounded-xl bg-muted/50 px-3.5 py-3">
               <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Their set
+                Your best
               </p>
-              <p className="text-sm font-mono tabular-nums text-foreground mt-1">
-                {authorSummary || `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg}kg`}
-              </p>
+              <div className="flex items-baseline justify-between mt-1">
+                <p className="text-sm font-mono tabular-nums text-foreground">
+                  {yourPR.reps}×{yourPR.weight}kg
+                </p>
+                <p className="text-xs text-muted-foreground/70 tabular-nums">
+                  {formatDate(yourPR.date)}
+                </p>
+              </div>
             </div>
 
-            {/* Your best */}
-            {loading && (
-              <div className="rounded-xl bg-muted/50 px-3.5 py-3 flex items-center gap-2">
-                <Spinner size="xs" variant="muted" label="Looking up your best" />
-                <span className="text-xs text-muted-foreground">Looking up your best…</span>
-              </div>
-            )}
-
-            {!loading && error && (
-              <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-                <p className="text-xs text-muted-foreground">
-                  Couldn&apos;t load your history. Try again later.
-                </p>
-              </div>
-            )}
-
-            {!loading && !error && !yourPR && (
-              <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  Your best
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  No record yet — log this exercise to start tracking.
-                </p>
-              </div>
-            )}
-
-            {!loading && !error && yourPR && (
-              <>
-                <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-                  <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                    Your best
-                  </p>
-                  <div className="flex items-baseline justify-between mt-1">
-                    <p className="text-sm font-mono tabular-nums text-foreground">
-                      {yourPR.reps}×{yourPR.weight}kg
-                    </p>
-                    <p className="text-xs text-muted-foreground/70 tabular-nums">
-                      {formatDate(yourPR.date)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Delta chip — purely informative; no failure-state
+            {/* Delta chip — purely informative; no failure-state
                     framing because being below someone else's lift
                     isn't a regression. */}
-                <div
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl"
-                  style={{ background: `${deltaColor(delta)}14`, color: deltaColor(delta) }}
-                >
-                  <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <p className="text-xs font-semibold tabular-nums">
-                    {delta === 0
-                      ? "Matched"
-                      : `${deltaSign}${delta.toFixed(1)}kg vs them`}
-                  </p>
-                </div>
-              </>
-            )}
+            <div
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl"
+              style={{
+                background: `${deltaColor(delta)}14`,
+                color: deltaColor(delta),
+              }}
+            >
+              <Icon className="size-4 shrink-0" aria-hidden="true" />
+              <p className="text-xs font-semibold tabular-nums">
+                {delta === 0
+                  ? "Matched"
+                  : `${deltaSign}${delta.toFixed(1)}kg vs them`}
+              </p>
+            </div>
+          </>
+        )}
 
         <button
           type="button"

@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  act,
+} from "@testing-library/react";
 import Coachmark from "../Coachmark";
 
 /* Coachmark composes Tooltip + useCoachMarks. Tooltip behaviour is
@@ -21,8 +27,8 @@ describe("Coachmark", () => {
   it("opens on first mount when not previously dismissed", () => {
     render(
       <Coachmark storageKey="test-coachmark-v1" content="Hint copy">
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     expect(screen.getByRole("tooltip")).toHaveTextContent("Hint copy");
   });
@@ -34,8 +40,8 @@ describe("Coachmark", () => {
         content="Hint copy"
         autoDismissMs={50}
       >
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
 
@@ -53,8 +59,8 @@ describe("Coachmark", () => {
     window.localStorage.setItem(STORAGE_KEY, "1");
     render(
       <Coachmark storageKey="test-coachmark-v1" content="Hint copy">
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
@@ -73,8 +79,8 @@ describe("Coachmark", () => {
         autoDismissMs={50}
         onDismiss={onDismiss}
       >
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     await waitFor(() => expect(onDismiss).toHaveBeenCalledTimes(1));
     /* Wait a frame more to confirm no double-fire from the unmount /
@@ -93,8 +99,8 @@ describe("Coachmark", () => {
         content="Hint copy"
         onDismiss={onDismiss}
       >
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Escape" });
@@ -109,8 +115,8 @@ describe("Coachmark", () => {
         content="Hint copy"
         onDismiss={onDismiss}
       >
-        <button>Anchor</button>
-      </Coachmark>,
+        <button type="button">Anchor</button>
+      </Coachmark>
     );
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(onDismiss).toHaveBeenCalledTimes(1));
@@ -125,4 +131,3 @@ describe("Coachmark", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });
-

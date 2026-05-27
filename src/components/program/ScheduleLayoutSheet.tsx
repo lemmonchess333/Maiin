@@ -44,13 +44,15 @@ export interface ScheduleLayoutSheetProps {
   profile: UserProfile | null;
   updateProfile: (
     data: Partial<UserProfile>,
-    opts?: { allowProtected?: boolean },
+    opts?: { allowProtected?: boolean }
   ) => Promise<UpdateProfileResult>;
-  refreshRunSchedule: (overrides?: RefreshRunScheduleOverrides) => Promise<void>;
+  refreshRunSchedule: (
+    overrides?: RefreshRunScheduleOverrides
+  ) => Promise<void>;
   regenerateProgram: (
     goalOverride?: string,
     weeklyTargetOverride?: number,
-    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
+    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
   ) => Promise<void>;
 }
 
@@ -122,7 +124,10 @@ function ScheduleLayoutSheetBody({
         <p className="text-xs text-muted-foreground mt-0.5">
           Tap any day to cycle Rest &rarr; Lift &rarr; Run &rarr; Both.
           {hasUnsavedScheduleChanges && (
-            <span style={{ color: "#d97706", fontWeight: 500 }}> · unsaved changes</span>
+            <span style={{ color: "#d97706", fontWeight: 500 }}>
+              {" "}
+              · unsaved changes
+            </span>
           )}
         </p>
       </div>
@@ -150,32 +155,45 @@ function ScheduleLayoutSheetBody({
                     : "Rest";
             return (
               <button
+                type="button"
                 key={s.day}
                 onClick={() => handleDayToggle(s.day)}
                 className={cn(
                   "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all text-center",
                   s.type !== "rest"
                     ? "border-primary/30 bg-primary/5"
-                    : "border-border/50 bg-muted/30",
+                    : "border-border/50 bg-muted/30"
                 )}
               >
                 <span className="text-xs text-muted-foreground">
                   {DAY_LABELS[s.day].charAt(0)}
                 </span>
                 {s.type === "both" ? (
-                  <div className="w-3 h-3 rounded-full overflow-hidden flex">
-                    <div className="w-1/2 h-full" style={{ backgroundColor: THEME.lifting }} />
-                    <div className="w-1/2 h-full" style={{ backgroundColor: THEME.running }} />
+                  <div className="size-3 rounded-full overflow-hidden flex">
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ backgroundColor: THEME.lifting }}
+                    />
+                    <div
+                      className="w-1/2 h-full"
+                      style={{ backgroundColor: THEME.running }}
+                    />
                   </div>
                 ) : color ? (
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <div
+                    className="size-3 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
                 ) : (
-                  <div className="w-3 h-3 rounded-full bg-muted" />
+                  <div className="size-3 rounded-full bg-muted" />
                 )}
                 <span
                   className="text-xs font-medium"
                   style={{
-                    color: s.type === "both" ? THEME.lifting : color || "hsl(var(--muted-foreground))",
+                    color:
+                      s.type === "both"
+                        ? THEME.lifting
+                        : color || "hsl(var(--muted-foreground))",
                   }}
                 >
                   {label}
@@ -202,7 +220,7 @@ function ScheduleLayoutSheetBody({
             "flex-1 py-3 rounded-xl text-sm font-semibold transition-all",
             hasUnsavedScheduleChanges
               ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed",
+              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
           )}
         >
           Apply changes
@@ -231,31 +249,42 @@ function ScheduleLayoutSheetBody({
             aria-modal="true"
             className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] bg-card rounded-2xl p-4 space-y-4 max-w-sm mx-auto shadow-xl"
           >
-            <h3 className="text-base font-semibold text-foreground">Restructure programme?</h3>
+            <h3 className="text-base font-semibold text-foreground">
+              Restructure programme?
+            </h3>
             <p className="text-sm text-muted-foreground">
-              Changing your training days will restructure your programme. Your workout
-              history won&apos;t be affected, but your programme will be rebuilt. This
-              cannot be undone.
+              Changing your training days will restructure your programme. Your
+              workout history won&apos;t be affected, but your programme will be
+              rebuilt. This cannot be undone.
             </p>
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
-              <span className="text-primary">{splitLabel(chooseSplit(pendingLiftDays))}</span> split.
+              <span className="text-primary">
+                {splitLabel(chooseSplit(pendingLiftDays))}
+              </span>{" "}
+              split.
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={cancelRestructure}
                 className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleConfirmAndClose}
                 disabled={restructuring}
                 className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
               >
                 {restructuring ? (
                   <>
-                    <Spinner size="sm" variant="inverse" label="Rebuilding programme" />
+                    <Spinner
+                      size="sm"
+                      variant="inverse"
+                      label="Rebuilding programme"
+                    />
                     Rebuilding...
                   </>
                 ) : (
