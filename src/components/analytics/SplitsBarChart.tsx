@@ -1,5 +1,13 @@
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell } from 'recharts';
-import type { Split } from '../../lib/gps';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Cell,
+} from "recharts";
+import type { Split } from "../../lib/gps";
+import { paceLabel } from "../../lib/runLabels";
 
 interface SplitsBarChartProps {
   splits: Split[];
@@ -7,7 +15,11 @@ interface SplitsBarChartProps {
   accentColor?: string;
 }
 
-export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '#00D4AA' }: SplitsBarChartProps) {
+export default function SplitsBarChart({
+  splits,
+  avgPaceSeconds,
+  accentColor = "#00D4AA",
+}: SplitsBarChartProps) {
   if (splits.length === 0) return null;
 
   const maxPace = Math.max(...splits.map((s) => s.paceSeconds));
@@ -25,18 +37,26 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Splits</h3>
         <p className="text-xs text-muted-foreground">
-          avg {Math.floor(avgPaceSeconds / 60)}:{(Math.floor(avgPaceSeconds) % 60).toString().padStart(2, '0')}/km
+          avg {paceLabel(avgPaceSeconds)}
         </p>
       </div>
 
       <ResponsiveContainer width="100%" height={160}>
         <BarChart data={data} barCategoryGap="20%">
-          <XAxis dataKey="km" tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.3 }} axisLine={false} tickLine={false} />
+          <XAxis
+            dataKey="km"
+            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.3 }}
+            axisLine={false}
+            tickLine={false}
+          />
           <YAxis hide />
           <Bar dataKey="invertedPace" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
-              <Cell key={i} fill={accentColor}
-                fillOpacity={entry.isFast ? 1 : entry.isSlow ? 0.35 : 0.65} />
+              <Cell
+                key={i}
+                fill={accentColor}
+                fillOpacity={entry.isFast ? 1 : entry.isSlow ? 0.35 : 0.65}
+              />
             ))}
           </Bar>
         </BarChart>
@@ -44,9 +64,16 @@ export default function SplitsBarChart({ splits, avgPaceSeconds, accentColor = '
 
       <div className="flex justify-around mt-1">
         {data.map((d, i) => (
-          <p key={i} className={`text-xs font-mono tabular-nums ${
-            d.isFast ? 'text-emerald-500' : d.isSlow ? 'text-red-500' : 'text-muted-foreground'
-          }`}>
+          <p
+            key={i}
+            className={`text-xs font-mono tabular-nums ${
+              d.isFast
+                ? "text-emerald-500"
+                : d.isSlow
+                  ? "text-red-500"
+                  : "text-muted-foreground"
+            }`}
+          >
             {d.paceLabel}
           </p>
         ))}

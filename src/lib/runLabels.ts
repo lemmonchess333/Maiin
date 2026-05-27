@@ -8,6 +8,21 @@
  */
 
 /**
+ * Format a pace value (seconds per km) as `M:SS` (no unit suffix).
+ * Used by surfaces that render the unit separately ("M:SS /km" with
+ * spacing, or alongside a "/km" pill, or in best-effort displays
+ * where the unit is implied by context). Returns `"--:--"` for
+ * missing / non-positive pace to keep the column-width stable in
+ * tabular UIs.
+ */
+export function paceMinSec(paceSec: number): string {
+  if (!paceSec || paceSec <= 0) return "--:--";
+  const m = Math.floor(paceSec / 60);
+  const s = Math.round(paceSec % 60);
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/**
  * Format a pace value (seconds per km) as `M:SS/km`. Returns the
  * em-dash placeholder when pace is missing or non-positive (a
  * stationary or zero-distance leg shouldn't display "0:00/km").
