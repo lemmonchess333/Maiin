@@ -319,8 +319,49 @@ export default function DayActionSheet({
                     )}
                     {/* Skip — only on planned slots. A skipped slot
                       surfaced for the P86 reconciliation path
-                      shouldn't offer "skip" again. */}
-                    {run.isStartable && (
+                      shouldn't offer "skip" again.
+
+                      Race-day variant (Run8 PR1d): templateId === "race"
+                      swaps the single Skip button for two race-aware
+                      options — DNF (started but didn't finish) and
+                      DNS (didn't start). Both call skipRunDay with
+                      the same underlying transition (the runDay
+                      state machine doesn't distinguish the two);
+                      the split is purely UX so race-day language
+                      matches the reality the user is recording. A
+                      real "Finished" path is deliberately absent —
+                      race-day completion is strictly real-saved-
+                      run-only (Q1 P4 / Q2 P21); logging the run via
+                      Start Run is the only valid completion path. */}
+                    {run.isStartable && run.runDay?.templateId === "race" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await skipRunDay(
+                              run.runDay!.id ?? run.runDay!.dayIndex
+                            );
+                            onClose();
+                          }}
+                          className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                        >
+                          DNF — Started but didn&apos;t finish
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await skipRunDay(
+                              run.runDay!.id ?? run.runDay!.dayIndex
+                            );
+                            onClose();
+                          }}
+                          className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                        >
+                          DNS — Didn&apos;t start
+                        </button>
+                      </>
+                    )}
+                    {run.isStartable && run.runDay?.templateId !== "race" && (
                       <button
                         type="button"
                         onClick={async () => {
