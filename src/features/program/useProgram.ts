@@ -149,6 +149,17 @@ function regenerateRacePlan({
   if (carry?.completedRaces) {
     runPlan.completedRaces = carry.completedRaces;
   }
+  // Compress / late-mid-week regen can produce a smaller totalWeeks
+  // than the carried currentWeek (user on week 5 of 8, plan compresses
+  // to 3 → "Week 5 of 3" surfaces in the race-strip and downstream
+  // phase math). Clamp here once so every caller is covered.
+  if (
+    typeof runPlan.currentWeek === "number" &&
+    typeof runPlan.totalWeeks === "number" &&
+    runPlan.currentWeek > runPlan.totalWeeks
+  ) {
+    runPlan.currentWeek = runPlan.totalWeeks;
+  }
   return { runDays, runPlan };
 }
 
