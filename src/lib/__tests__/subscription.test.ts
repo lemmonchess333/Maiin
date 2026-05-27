@@ -209,5 +209,5 @@ describe("getSubscriptionInfo", () => {
 // The `featureAccess` flag map previously tested here was deleted
 // in the 2026-05-24 Sub2 audit follow-up; 6 of its 7 flags were
 // never read at any callsite. Real Pro gating is verified at the
-// gated surfaces themselves (e.g. AdaptiveTDEECard.test.tsx for
-// the Sub2c pin #3 partial gate).
+// gated surfaces themselves (search `useSubscription().isPro` —
+// Home, Program, Food, Upgrade, useScanUsage).
