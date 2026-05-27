@@ -78,6 +78,41 @@ describe("getSubscriptionInfo", () => {
     expect(info.isInTrial).toBe(false);
   });
 
+  it("treats subscriptionTier=pro with an elapsed expiresAt as free (dropped-webhook defence)", () => {
+    // Apple's EXPIRED notification or a Stripe webhook can be lost
+    // — without the client-side expiry check, the user would remain
+    // Pro indefinitely on stale state.
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const info = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionSource: "ios_iap",
+        subscriptionExpiresAt: past,
+      })
+    );
+    expect(info.tier).toBe("free");
+    expect(info.isPro).toBe(false);
+  });
+
+  it("keeps pro when subscriptionExpiresAt is in the future", () => {
+    const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const info = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionSource: "stripe",
+        subscriptionExpiresAt: future,
+      })
+    );
+    expect(info.tier).toBe("pro");
+    expect(info.isPro).toBe(true);
+  });
+
+  it("keeps pro when subscriptionExpiresAt is absent (legacy / Stripe back-compat)", () => {
+    const info = getSubscriptionInfo(makeProfile({ subscriptionTier: "pro" }));
+    expect(info.tier).toBe("pro");
+    expect(info.isPro).toBe(true);
+  });
+
   it("trial expiry at exact midnight boundary is expired", () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
