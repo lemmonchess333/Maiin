@@ -73,10 +73,7 @@ const CATEGORIES: CategoryDef[] = [
   {
     value: "impersonation",
     label: "Impersonation",
-    subReasons: [
-      "Pretending to be someone else",
-      "Brand or organisation",
-    ],
+    subReasons: ["Pretending to be someone else", "Brand or organisation"],
   },
   {
     value: "other",
@@ -117,7 +114,8 @@ export default function ReportModal({
   // Submit disabled if no category picked OR nothing checked OR
   // (when Report is checked) no sub-reason selected for categories
   // that have sub-reasons. "Other" has no sub-reasons, so it skips.
-  const subReasonRequired = !!activeCategory && activeCategory.subReasons.length > 0 && doReport;
+  const subReasonRequired =
+    !!activeCategory && activeCategory.subReasons.length > 0 && doReport;
   const subReasonMissing = subReasonRequired && !subReason;
   const nothingChecked = !doReport && !doHide && !doBlock;
   const canSubmit = !!category && !subReasonMissing && !nothingChecked;
@@ -155,7 +153,8 @@ export default function ReportModal({
       const parts: string[] = [];
       if (doReport) parts.push("Report submitted");
       if (doBlock && blockAvailable) parts.push("user blocked");
-      if (doHide && targetType === "activity") parts.push("hidden from your feed");
+      if (doHide && targetType === "activity")
+        parts.push("hidden from your feed");
       toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Done.");
       onClose();
     } catch {
@@ -174,8 +173,11 @@ export default function ReportModal({
       labelledBy="report-modal-title"
     >
       <div className="flex items-center gap-2 pr-6">
-        <Flag className="w-4 h-4 text-destructive" aria-hidden="true" />
-        <h3 id="report-modal-title" className="text-base font-semibold text-foreground">
+        <Flag className="size-4 text-destructive" aria-hidden="true" />
+        <h3
+          id="report-modal-title"
+          className="text-base font-semibold text-foreground"
+        >
           Report {targetType}
         </h3>
       </div>
@@ -185,7 +187,11 @@ export default function ReportModal({
         <legend className="text-sm text-muted-foreground">
           Why are you reporting this {targetType}?
         </legend>
-        <div role="radiogroup" aria-label="Report category" className="space-y-1.5">
+        <div
+          role="radiogroup"
+          aria-label="Report category"
+          className="space-y-1.5"
+        >
           {CATEGORIES.map((c) => {
             const isSelected = category === c.value;
             return (
@@ -203,7 +209,7 @@ export default function ReportModal({
                   "motion-safe:transition-colors",
                   isSelected
                     ? "border-primary bg-primary/10 text-foreground"
-                    : "border-border/50 bg-muted text-muted-foreground hover:bg-muted/80",
+                    : "border-border/50 bg-muted text-muted-foreground hover:bg-muted/80"
                 )}
               >
                 {c.label}
@@ -221,7 +227,11 @@ export default function ReportModal({
           <legend className="text-xs uppercase tracking-wider text-muted-foreground">
             More specifically
           </legend>
-          <div role="radiogroup" aria-label="Sub-reason" className="flex flex-wrap gap-1.5">
+          <div
+            role="radiogroup"
+            aria-label="Sub-reason"
+            className="flex flex-wrap gap-1.5"
+          >
             {activeCategory.subReasons.map((sr) => {
               const isSelected = subReason === sr;
               return (
@@ -236,7 +246,7 @@ export default function ReportModal({
                     "motion-safe:transition-colors",
                     isSelected
                       ? "bg-primary-strong text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
+                      : "bg-muted text-muted-foreground"
                   )}
                 >
                   {sr}
@@ -324,7 +334,12 @@ interface ActionCheckboxProps {
   onChange: (next: boolean) => void;
 }
 
-function ActionCheckbox({ label, description, checked, onChange }: ActionCheckboxProps) {
+function ActionCheckbox({
+  label,
+  description,
+  checked,
+  onChange,
+}: ActionCheckboxProps) {
   return (
     <button
       type="button"
@@ -336,23 +351,27 @@ function ActionCheckbox({ label, description, checked, onChange }: ActionCheckbo
         "motion-safe:transition-colors motion-safe:active:scale-[0.99]",
         checked
           ? "border-primary/30 bg-primary/5"
-          : "border-border/50 bg-card hover:bg-muted/30",
+          : "border-border/50 bg-card hover:bg-muted/30"
       )}
     >
       <span
         className={cn(
-          "mt-0.5 w-4 h-4 rounded shrink-0 inline-flex items-center justify-center border",
+          "mt-0.5 size-4 rounded shrink-0 inline-flex items-center justify-center border",
           checked
             ? "bg-primary-strong border-primary-strong text-primary-foreground"
-            : "border-border",
+            : "border-border"
         )}
         aria-hidden="true"
       >
-        {checked ? <Check className="w-3 h-3" strokeWidth={3} /> : null}
+        {checked ? <Check className="size-3" strokeWidth={3} /> : null}
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-sm font-medium text-foreground">{label}</span>
-        <span className="block text-xs text-muted-foreground">{description}</span>
+        <span className="block text-sm font-medium text-foreground">
+          {label}
+        </span>
+        <span className="block text-xs text-muted-foreground">
+          {description}
+        </span>
       </span>
     </button>
   );

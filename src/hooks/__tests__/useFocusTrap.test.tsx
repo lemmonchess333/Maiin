@@ -35,9 +35,13 @@ function Modal({
     <div ref={ref} data-testid="modal">
       {hasInputs && (
         <>
-          <button data-testid="first">First</button>
+          <button type="button" data-testid="first">
+            First
+          </button>
           <input data-testid="middle" />
-          <button data-testid="last">Last</button>
+          <button type="button" data-testid="last">
+            Last
+          </button>
         </>
       )}
     </div>

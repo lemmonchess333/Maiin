@@ -23,7 +23,15 @@ interface AccordionSectionProps {
   children: React.ReactNode;
 }
 
-export default function AccordionSection({ icon, title, subtitle, defaultOpen = false, inline = false, onFirstOpen, children }: AccordionSectionProps) {
+export default function AccordionSection({
+  icon,
+  title,
+  subtitle,
+  defaultOpen = false,
+  inline = false,
+  onFirstOpen,
+  children,
+}: AccordionSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   const triggerId = `${id}-trigger`;
@@ -70,6 +78,7 @@ export default function AccordionSection({ icon, title, subtitle, defaultOpen = 
   return (
     <div className="bg-card rounded-2xl overflow-hidden">
       <button
+        type="button"
         id={triggerId}
         onClick={handleToggle}
         className="w-full flex items-center justify-between p-4"
@@ -80,10 +89,16 @@ export default function AccordionSection({ icon, title, subtitle, defaultOpen = 
           {icon}
           <div className="text-left">
             <p className="text-sm font-medium text-foreground">{title}</p>
-            {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+            {subtitle && (
+              <p className="text-xs text-muted-foreground">{subtitle}</p>
+            )}
           </div>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        {open ? (
+          <ChevronUp className="size-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="size-4 text-muted-foreground" />
+        )}
       </button>
       <AnimatePresence>
         {open && (
