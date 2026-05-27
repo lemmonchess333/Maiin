@@ -180,7 +180,7 @@ export function useWorkouts() {
         completedSetCount,
       });
 
-      await safeMerge(db, `users/${user.uid}/workouts`, workoutId, {
+      await safeMerge(db, user.uid, `users/${user.uid}/workouts`, workoutId, {
         ...workout,
         date,
         totalCalories,
