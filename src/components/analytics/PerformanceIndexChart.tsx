@@ -12,6 +12,7 @@ import {
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import { THEME } from "@/lib/theme";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
+import { CHART_TOOLTIP_STYLE } from "./chartStyles";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -131,14 +132,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
           />
 
           <Tooltip
-            contentStyle={{
-              background: THEME.chartTooltipBg,
-              border: "none",
-              borderRadius: 12,
-              fontSize: 12,
-              color: THEME.textPrimary,
-              padding: "8px 12px",
-            }}
+            contentStyle={CHART_TOOLTIP_STYLE}
             labelFormatter={(label) => {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
