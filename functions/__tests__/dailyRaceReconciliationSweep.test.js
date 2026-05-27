@@ -94,9 +94,12 @@ describe("_hasStrictRaceMatch", () => {
     expect(_hasStrictRaceMatch([], 10000)).toBe(false);
   });
 
-  it("returns false when no saved run has templateId='race'", () => {
+  it("returns false when no saved run has actualTemplateId='race'", () => {
     expect(
-      _hasStrictRaceMatch([{ templateId: "tempo", distance: 10000 }], 10000)
+      _hasStrictRaceMatch(
+        [{ actualTemplateId: "tempo", distance: 10000 }],
+        10000
+      )
     ).toBe(false);
   });
 
@@ -104,19 +107,22 @@ describe("_hasStrictRaceMatch", () => {
     // 9 km on a 10K (90%) — DNF, sits as a Q5 extra rather than
     // claiming the slot.
     expect(
-      _hasStrictRaceMatch([{ templateId: "race", distance: 9000 }], 10000)
+      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 9000 }], 10000)
     ).toBe(false);
   });
 
   it("returns true at exactly 95% of planned (≥ boundary)", () => {
     expect(
-      _hasStrictRaceMatch([{ templateId: "race", distance: 9500 }], 10000)
+      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 9500 }], 10000)
     ).toBe(true);
   });
 
   it("returns true above 95%", () => {
     expect(
-      _hasStrictRaceMatch([{ templateId: "race", distance: 10200 }], 10000)
+      _hasStrictRaceMatch(
+        [{ actualTemplateId: "race", distance: 10200 }],
+        10000
+      )
     ).toBe(true);
   });
 
@@ -125,12 +131,33 @@ describe("_hasStrictRaceMatch", () => {
     // race-templated run is accepted as a match to preserve the
     // client's lenient behavior in this edge.
     expect(
-      _hasStrictRaceMatch([{ templateId: "race", distance: 5000 }], 0)
+      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 5000 }], 0)
     ).toBe(true);
   });
 
   it("returns false when the race-templated run lacks a distance field", () => {
-    expect(_hasStrictRaceMatch([{ templateId: "race" }], 10000)).toBe(false);
+    expect(_hasStrictRaceMatch([{ actualTemplateId: "race" }], 10000)).toBe(
+      false
+    );
+  });
+
+  it("returns false for an isInvalid race-templated run (junk save)", () => {
+    // "Save anyway" on a borked GPS trace must not satisfy the
+    // strict-race gate. The user explicitly flagged the save as
+    // invalid — race_no_show should still trigger after the grace.
+    expect(
+      _hasStrictRaceMatch(
+        [
+          {
+            actualTemplateId: "race",
+            distance: 10500,
+            isInvalid: true,
+            savedAnyway: true,
+          },
+        ],
+        10000
+      )
+    ).toBe(false);
   });
 });
 
@@ -240,7 +267,7 @@ describe("_decideReconciliationActions — L1 race-no-show", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState(),
-      [{ templateId: "race", distance: 10500 }],
+      [{ actualTemplateId: "race", distance: 10500 }],
       FIXED_NOW_MS
     );
     expect(result.payload).toBeNull();
@@ -253,7 +280,7 @@ describe("_decideReconciliationActions — L1 race-no-show", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState(),
-      [{ templateId: "race", distance: 9000 }],
+      [{ actualTemplateId: "race", distance: 9000 }],
       FIXED_NOW_MS
     );
     expect(result.payload).not.toBeNull();
@@ -341,8 +368,10 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
     );
     expect(result.payload).not.toBeNull();
     expect(result.recoveryCleared).toBe(true);
-    expect(result.payload.runPlan.phase).toBeUndefined();
-    expect(result.payload.runPlan.recoveryEndDate).toBeUndefined();
+    // Explicit null — set(merge: true) doesn't remove fields omitted
+    // from a nested map, so we overwrite with null to actually clear.
+    expect(result.payload.runPlan.phase).toBeNull();
+    expect(result.payload.runPlan.recoveryEndDate).toBeNull();
     // Other runPlan fields preserved.
     expect(result.payload.runPlan.totalWeeks).toBe(8);
     expect(result.payload.runPlan.currentWeek).toBe(7);
@@ -427,7 +456,9 @@ describe("_decideReconciliationActions — idempotency + combined", () => {
     expect(result.noShowWritten).toBe(true);
     expect(result.recoveryCleared).toBe(true);
     expect(result.payload.runDays[0].status).toBe("race_no_show");
-    expect(result.payload.runPlan.phase).toBeUndefined();
+    // Cleared via explicit null overwrite — set(merge:true) doesn't
+    // remove fields omitted from a nested map.
+    expect(result.payload.runPlan.phase).toBeNull();
   });
 });
 
