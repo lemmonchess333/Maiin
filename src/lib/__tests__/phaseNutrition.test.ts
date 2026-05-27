@@ -37,18 +37,23 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 }
 
 describe("getDayAdjustment", () => {
+  // carbAdjustment is derived from calorieAdjustment / 4 so the
+  // rendered macros reconcile with the displayed calorie total
+  // (pre-fix carbAdjustment was hardcoded independently of
+  // calorieAdjustment — the extra cal had no macro home).
+
   // ---- Lift day ----
   describe("lift day", () => {
-    it("returns +200 cal and +20 carb for non-strength, non-cut lift day", () => {
+    it("returns +200 cal / +50g carbs for non-strength, non-cut lift day", () => {
       const adj = getDayAdjustment("lift", "hypertrophy");
       expect(adj.calorieAdjustment).toBe(200);
-      expect(adj.carbAdjustment).toBe(20);
+      expect(adj.carbAdjustment).toBe(50); // 200 / 4
     });
 
-    it("returns +400 cal for strength phase lift day", () => {
+    it("returns +400 cal / +100g carbs for strength phase lift day", () => {
       const adj = getDayAdjustment("lift", "strength");
       expect(adj.calorieAdjustment).toBe(400);
-      expect(adj.carbAdjustment).toBe(20);
+      expect(adj.carbAdjustment).toBe(100); // 400 / 4
     });
 
     it("returns +150 cal for cut goal lift day", () => {
@@ -90,10 +95,10 @@ describe("getDayAdjustment", () => {
 
   // ---- Run day ----
   describe("run day", () => {
-    it("returns +200 cal and +30 carb for non-cut run day", () => {
+    it("returns +200 cal / +50g carbs for non-cut run day", () => {
       const adj = getDayAdjustment("run", "base");
       expect(adj.calorieAdjustment).toBe(200);
-      expect(adj.carbAdjustment).toBe(30);
+      expect(adj.carbAdjustment).toBe(50); // 200 / 4
     });
 
     it("returns +100 cal for cut goal run day", () => {
@@ -114,10 +119,10 @@ describe("getDayAdjustment", () => {
 
   // ---- Both day ----
   describe("both day", () => {
-    it("returns +350 cal and +40 carb for non-strength, non-cut both day", () => {
+    it("returns +350 cal / +88g carbs for non-strength, non-cut both day", () => {
       const adj = getDayAdjustment("both", "hypertrophy");
       expect(adj.calorieAdjustment).toBe(350);
-      expect(adj.carbAdjustment).toBe(40);
+      expect(adj.carbAdjustment).toBe(88); // Math.round(350 / 4)
     });
 
     it("returns +500 cal for strength phase both day", () => {
@@ -193,8 +198,9 @@ describe("getAdjustedTargets", () => {
     expect(result.calories).toBe(2700);
     // protein = round(2.0 * 80) = 160
     expect(result.protein).toBe(160);
-    // carbs = 300 + 20 = 320
-    expect(result.carbs).toBe(320);
+    // carbs = 300 + (200 / 4 = 50) = 350 — the extra calories are
+    // funnelled entirely into carbs so macros reconcile to total.
+    expect(result.carbs).toBe(350);
     // fat unchanged
     expect(result.fat).toBe(70);
     expect(result.annotation).toContain("Lift day");
@@ -205,7 +211,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "run");
     expect(result.calories).toBe(2700); // 2500 + 200
     expect(result.protein).toBe(160); // round(2.0 * 80)
-    expect(result.carbs).toBe(330); // 300 + 30
+    expect(result.carbs).toBe(350); // 300 + (200 / 4 = 50)
     expect(result.fat).toBe(70);
   });
 
@@ -213,7 +219,7 @@ describe("getAdjustedTargets", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "both");
     expect(result.calories).toBe(2850); // 2500 + 350
-    expect(result.carbs).toBe(340); // 300 + 40
+    expect(result.carbs).toBe(388); // 300 + round(350 / 4 = 88)
   });
 
   it("returns correct values for a rest day", () => {
@@ -269,7 +275,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "lift");
     // defaults: cal=2200, carbs=250, fat=60
     expect(result.calories).toBe(2400); // 2200 + 200
-    expect(result.carbs).toBe(270); // 250 + 20
+    expect(result.carbs).toBe(300); // 250 + (200 / 4 = 50)
     expect(result.fat).toBe(60);
     // protein = round(2.0 * 70) = 140 (default weight 70)
     expect(result.protein).toBe(140);
@@ -312,6 +318,6 @@ describe("getAdjustedTargets", () => {
     // cut overrides: +250 cal (cut takes precedence over strength for both)
     expect(result.calories).toBe(2750); // 2500 + 250
     expect(result.protein).toBe(Math.round(2.2 * 85)); // 187 — cut goal uses cut protein multiplier
-    expect(result.carbs).toBe(340); // 300 + 40
+    expect(result.carbs).toBe(363); // 300 + round(250 / 4 = 63)
   });
 });

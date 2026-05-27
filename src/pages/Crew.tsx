@@ -2,7 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Users, Trophy, RefreshCw, Share2 } from "lucide-react";
 import { httpsCallable, getFunctions } from "firebase/functions";
-import { collection, doc, getDoc, getDocs, limit, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+} from "firebase/firestore";
 import Avatar from "../components/Avatar";
 import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
@@ -10,7 +17,10 @@ import { useAuth } from "../lib/auth";
 import { logger } from "../lib/logger";
 import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
 import { cn } from "../lib/utils";
-import { formatScore, formatTotalForMetric } from "../lib/crewLeaderboardFormat";
+import {
+  formatScore,
+  formatTotalForMetric,
+} from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
@@ -24,7 +34,6 @@ const itemVariant = {
   hidden: { opacity: 0, y: 8 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.24 } },
 };
-
 
 /**
  * Per-crew home page (PR 3 core).
@@ -59,14 +68,18 @@ export default function Crew() {
   /* Top members for the preview row beneath the crew header. Just
      the first ~5 by join order — gives the page some human texture
      without an N+1 read against each user's public profile. */
-  const [memberPreviews, setMemberPreviews] = useState<{ uid: string; displayName: string; photoURL: string | null }[]>([]);
+  const [memberPreviews, setMemberPreviews] = useState<
+    { uid: string; displayName: string; photoURL: string | null }[]
+  >([]);
   // Sprint 5: leaderboard avatar hydration. CrewLeaderboardEntry
   // (written by crewWeeklyLeaderboardRollup) carries only uid +
   // displayName, not photoURL. Until the rollup CF denormalises
   // photoURL onto leaderboard entries, the client hydrates from the
   // cross-user-readable users/{uid}/public/profile. Keys are uids;
   // values may be null when the user has no profile photo.
-  const [leaderboardAvatars, setLeaderboardAvatars] = useState<Record<string, string | null>>({});
+  const [leaderboardAvatars, setLeaderboardAvatars] = useState<
+    Record<string, string | null>
+  >({});
 
   // Try the in-memory crews list first (covers the navigated-from-Social
   // case without a refetch); fall back to a direct read if the user
@@ -85,8 +98,13 @@ export default function Crew() {
         const snap = await getDoc(doc(db, "groups", crewId));
         if (cancelled) return;
         if (snap.exists()) {
+          // Don't trust a stored `id` field on the document — the
+          // /groups create rule doesn't lock the keyset, so a
+          // creator could store `{ id: 'other-crew', ... }` and
+          // alias their crew over an unrelated one. Spread data
+          // first, then `id` from the doc path wins.
           const data = snap.data() as Omit<CrewType, "id">;
-          setCrewDoc({ id: snap.id, ...data });
+          setCrewDoc({ ...data, id: snap.id });
         } else {
           setCrewDoc(null);
         }
@@ -111,7 +129,9 @@ export default function Crew() {
           activityId: act.id,
           authorId: (act.authorId as string) ?? "",
           authorName: (act.authorName as string) ?? "Athlete",
-          ...(act.authorPhotoURL ? { authorPhotoURL: act.authorPhotoURL as string } : {}),
+          ...(act.authorPhotoURL
+            ? { authorPhotoURL: act.authorPhotoURL as string }
+            : {}),
           type: (act.type as "run" | "workout") ?? "workout",
           summary: "",
           createdAt: act.createdAt,
@@ -145,7 +165,7 @@ export default function Crew() {
     void (async () => {
       try {
         const snap = await getDocs(
-          query(collection(db, "groups", crewId, "members"), limit(5)),
+          query(collection(db, "groups", crewId, "members"), limit(5))
         );
         if (cancelled) return;
         // Sprint 5: hydrate photoURL from each member's public
@@ -162,13 +182,17 @@ export default function Crew() {
         const hydrated = await Promise.all(
           base.map(async (m) => {
             try {
-              const profileSnap = await getDoc(doc(db, "users", m.uid, "public", "profile"));
-              const data = profileSnap.data() as { photoURL?: string } | undefined;
+              const profileSnap = await getDoc(
+                doc(db, "users", m.uid, "public", "profile")
+              );
+              const data = profileSnap.data() as
+                | { photoURL?: string }
+                | undefined;
               return { ...m, photoURL: data?.photoURL ?? null };
             } catch {
               return { ...m, photoURL: null };
             }
-          }),
+          })
         );
         if (cancelled) return;
         setMemberPreviews(hydrated);
@@ -185,7 +209,9 @@ export default function Crew() {
   // Effect keyed on the joined uid list so it only re-runs when the
   // top-N leaderboard membership changes, not on every crew-doc
   // update.
-  const boardUidsKey = (crewDoc?.currentLeaderboard ?? []).map((e) => e.uid).join(",");
+  const boardUidsKey = (crewDoc?.currentLeaderboard ?? [])
+    .map((e) => e.uid)
+    .join(",");
   useEffect(() => {
     if (!crewDoc) return;
     const entries = crewDoc.currentLeaderboard ?? [];
@@ -198,13 +224,17 @@ export default function Crew() {
       const pairs = await Promise.all(
         entries.map(async (e): Promise<[string, string | null]> => {
           try {
-            const profileSnap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
-            const data = profileSnap.data() as { photoURL?: string } | undefined;
+            const profileSnap = await getDoc(
+              doc(db, "users", e.uid, "public", "profile")
+            );
+            const data = profileSnap.data() as
+              | { photoURL?: string }
+              | undefined;
             return [e.uid, data?.photoURL ?? null];
           } catch {
             return [e.uid, null];
           }
-        }),
+        })
       );
       if (cancelled) return;
       setLeaderboardAvatars(Object.fromEntries(pairs));
@@ -247,7 +277,9 @@ export default function Crew() {
      and contains every active member's score. Active = currentValue
      > 0, which means they've logged something this week toward the
      crew metric. */
-  const activeThisWeek = (crewDoc.currentLeaderboard ?? []).filter((e) => (e.score ?? 0) > 0).length;
+  const activeThisWeek = (crewDoc.currentLeaderboard ?? []).filter(
+    (e) => (e.score ?? 0) > 0
+  ).length;
   /* The "active this week · N members" inline header used to repeat
      what the This-week stat band now shows numerically, so the header
      is reduced to a plain member count to avoid redundancy on iPhone
@@ -308,7 +340,10 @@ export default function Crew() {
       initial="hidden"
       animate="visible"
       className="px-4 pt-4 pb-8 space-y-4"
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.06 } } }}
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.06 } },
+      }}
     >
       {/* Back link */}
       <motion.div variants={itemVariant}>
@@ -338,7 +373,9 @@ export default function Crew() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-extrabold text-foreground truncate">{crewDoc.name}</h1>
+            <h1 className="text-xl font-extrabold text-foreground truncate">
+              {crewDoc.name}
+            </h1>
             {crewDoc.description?.trim() && (
               <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
                 {crewDoc.description}
@@ -444,7 +481,9 @@ export default function Crew() {
         return (
           <motion.div variants={itemVariant} className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">This week</h2>
+              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                This week
+              </h2>
               {isMember && (
                 <button
                   type="button"
@@ -458,13 +497,19 @@ export default function Crew() {
                       // arg, so passing the wrong region just 404s
                       // silently. Default = us-central1 matches deploy.
                       const fns = getFunctions();
-                      const refresh = httpsCallable(fns, "refreshMyCrewLeaderboard");
+                      const refresh = httpsCallable(
+                        fns,
+                        "refreshMyCrewLeaderboard"
+                      );
                       await refresh();
                       // Mutate the in-memory crew doc by re-fetching so
                       // the standings re-render without a page reload.
                       const snap = await getDoc(doc(db, "groups", crewId));
                       if (snap.exists()) {
-                        setCrewDoc({ id: snap.id, ...(snap.data() as Omit<CrewType, "id">) });
+                        setCrewDoc({
+                          id: snap.id,
+                          ...(snap.data() as Omit<CrewType, "id">),
+                        });
                       }
                       toast.success("Leaderboard refreshed");
                     } catch (err) {
@@ -481,7 +526,12 @@ export default function Crew() {
                   aria-label="Refresh leaderboard"
                   className="text-xs font-medium text-primary disabled:opacity-50 flex items-center gap-1"
                 >
-                  <RefreshCw size={12} className={refreshingLeaderboard ? "animate-spin" : undefined} />
+                  <RefreshCw
+                    size={12}
+                    className={
+                      refreshingLeaderboard ? "animate-spin" : undefined
+                    }
+                  />
                   Refresh
                 </button>
               )}
@@ -499,7 +549,9 @@ export default function Crew() {
               return (
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-card border border-border/40 p-3">
-                    <p className="text-xs text-muted-foreground">Active this week</p>
+                    <p className="text-xs text-muted-foreground">
+                      Active this week
+                    </p>
                     <p className="text-lg font-mono tabular-nums font-bold text-foreground mt-0.5">
                       {activeThisWeek}
                       <span className="text-xs font-sans text-muted-foreground font-normal ml-1">
@@ -508,7 +560,9 @@ export default function Crew() {
                     </p>
                   </div>
                   <div className="rounded-xl bg-card border border-border/40 p-3">
-                    <p className="text-xs text-muted-foreground">{totalLabel.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalLabel.label}
+                    </p>
                     <p className="text-lg font-mono tabular-nums font-bold text-foreground mt-0.5">
                       {hasActivity ? totalLabel.value : "—"}
                       {hasActivity && totalLabel.unit && (
@@ -531,19 +585,23 @@ export default function Crew() {
                   <Trophy size={16} style={{ color: THEME.brand }} />
                 </div>
                 <p className="text-[13px] text-muted-foreground leading-snug">
-                  No activity yet this week. Be the first to put {crewDoc.name} on the board.
+                  No activity yet this week. Be the first to put {crewDoc.name}{" "}
+                  on the board.
                 </p>
               </div>
             ) : (
               <div className="rounded-xl bg-card border border-border/40 divide-y divide-border/20">
                 {board.map((entry) => (
-                  <div key={entry.uid} className="flex items-center gap-3 px-3.5 py-2.5">
+                  <div
+                    key={entry.uid}
+                    className="flex items-center gap-3 px-3.5 py-2.5"
+                  >
                     <span
                       className={cn(
                         "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
                         entry.rank === 1
                           ? "bg-primary/15 text-primary"
-                          : "text-muted-foreground",
+                          : "text-muted-foreground"
                       )}
                     >
                       {entry.rank}
@@ -570,7 +628,9 @@ export default function Crew() {
 
       {/* Recent activity */}
       <motion.div variants={itemVariant} className="space-y-2">
-        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Recent activity</h2>
+        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Recent activity
+        </h2>
 
         {activitiesLoading && (
           <div className="space-y-2">

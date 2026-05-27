@@ -19,7 +19,7 @@ const db = admin.firestore();
 const PI_WEIGHTS = {
   load: 0.65,
   recovery: 0.25,
-  adherence: 0.10,
+  adherence: 0.1,
   liftInLoad: 0.5,
   runInLoad: 0.5,
 };
@@ -76,7 +76,10 @@ function currentWindow(computeKey) {
  */
 function baselineWindow(computeKey) {
   const baselineEndStr = dateKeyMinusN(computeKey, WINDOW_DAYS); // day BEFORE current window starts
-  const baselineStartStr = dateKeyMinusN(computeKey, WINDOW_DAYS + BASELINE_DAYS - 1);
+  const baselineStartStr = dateKeyMinusN(
+    computeKey,
+    WINDOW_DAYS + BASELINE_DAYS - 1
+  );
   const start = new Date(baselineStartStr + "T00:00:00Z");
   const end = new Date(baselineEndStr + "T00:00:00Z"); // exclusive — start of day baselineEndStr+1 minus one ms is ugly; using end-of-day below
   end.setUTCDate(end.getUTCDate() + 1);
@@ -119,22 +122,40 @@ async function fetchWindowData(uid, windowStart, windowEnd) {
   const startStr = windowStart.toISOString().split("T")[0];
   const endStr = windowEnd.toISOString().split("T")[0];
 
-  // Workouts — date is "YYYY-MM-DD"
-  const workoutsSnap = await userRef
-    .collection("workouts")
-    .where("date", ">=", startStr)
-    .where("date", "<=", endStr)
-    .get();
+  // The four queries are independent — fan out in parallel rather
+  // than four serial round-trips. Pre-fix this added 4×RTT to every
+  // performance recompute (onWorkoutCreated, onRunCreated, weekly
+  // rollup, daily refresh — fired thousands of times per day at the
+  // target user base).
+  const [workoutsSnap, runsSnap, mealsResult, bwResult] = await Promise.all([
+    userRef
+      .collection("workouts")
+      .where("date", ">=", startStr)
+      .where("date", "<=", endStr)
+      .get(),
+    userRef
+      .collection("runs")
+      .where("completedAt", ">=", startTs)
+      .where("completedAt", "<=", endTs)
+      .get(),
+    userRef
+      .collection("meals")
+      .where("date", ">=", startStr)
+      .where("date", "<=", endStr)
+      .get()
+      .catch(() => null),
+    userRef
+      .collection("bodyweightLogs")
+      .where("date", ">=", startStr)
+      .where("date", "<=", endStr)
+      .get()
+      .catch(() => null),
+  ]);
+
   const workouts = workoutsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  // Runs — completedAt is a Timestamp.
   // Volume-eligibility filter mirrors src/lib/runStatsEligibility.ts
   // (functions/ is plain JS, no path alias for direct import).
-  const runsSnap = await userRef
-    .collection("runs")
-    .where("completedAt", ">=", startTs)
-    .where("completedAt", "<=", endTs)
-    .get();
   const runs = runsSnap.docs
     .filter((d) => {
       const data = d.data();
@@ -146,31 +167,12 @@ async function fetchWindowData(uid, windowStart, windowEnd) {
     })
     .map((d) => ({ id: d.id, ...d.data() }));
 
-  // Meals — date is "YYYY-MM-DD"
-  let meals = [];
-  try {
-    const mealsSnap = await userRef
-      .collection("meals")
-      .where("date", ">=", startStr)
-      .where("date", "<=", endStr)
-      .get();
-    meals = mealsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  } catch (_) {
-    // Collection may not exist — that's fine
-  }
-
-  // Bodyweight logs — date is "YYYY-MM-DD"
-  let bodyweightLogs = [];
-  try {
-    const bwSnap = await userRef
-      .collection("bodyweightLogs")
-      .where("date", ">=", startStr)
-      .where("date", "<=", endStr)
-      .get();
-    bodyweightLogs = bwSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  } catch (_) {
-    // Collection may not exist
-  }
+  const meals = mealsResult
+    ? mealsResult.docs.map((d) => ({ id: d.id, ...d.data() }))
+    : [];
+  const bodyweightLogs = bwResult
+    ? bwResult.docs.map((d) => ({ id: d.id, ...d.data() }))
+    : [];
 
   return { workouts, runs, meals, bodyweightLogs };
 }
@@ -190,46 +192,55 @@ async function fetchLifetimeData(uid) {
     lastRunCompletedAt: null, // Date
   };
 
-  try {
-    const snap = await userRef.collection("workouts").count().get();
-    result.lifetimeWorkoutCount = snap.data().count;
-  } catch (err) {
-    console.warn("fetchLifetimeData: workouts count failed", { uid, message: err.message });
+  // Same parallelisation as fetchWindowData — four independent
+  // aggregations / one-shot lookups should not be a serial 4×RTT
+  // chain on every recompute. allSettled keeps partial-failure
+  // semantics: each branch independently falls back to its default.
+  const [workoutsCountRes, runsCountRes, lastWorkoutRes, lastRunRes] =
+    await Promise.allSettled([
+      userRef.collection("workouts").count().get(),
+      userRef.collection("runs").count().get(),
+      userRef.collection("workouts").orderBy("date", "desc").limit(1).get(),
+      userRef.collection("runs").orderBy("completedAt", "desc").limit(1).get(),
+    ]);
+
+  if (workoutsCountRes.status === "fulfilled") {
+    result.lifetimeWorkoutCount = workoutsCountRes.value.data().count;
+  } else {
+    console.warn("fetchLifetimeData: workouts count failed", {
+      uid,
+      message: workoutsCountRes.reason && workoutsCountRes.reason.message,
+    });
   }
 
-  try {
-    const snap = await userRef.collection("runs").count().get();
-    result.lifetimeRunCount = snap.data().count;
-  } catch (err) {
-    console.warn("fetchLifetimeData: runs count failed", { uid, message: err.message });
+  if (runsCountRes.status === "fulfilled") {
+    result.lifetimeRunCount = runsCountRes.value.data().count;
+  } else {
+    console.warn("fetchLifetimeData: runs count failed", {
+      uid,
+      message: runsCountRes.reason && runsCountRes.reason.message,
+    });
   }
 
-  try {
-    const snap = await userRef
-      .collection("workouts")
-      .orderBy("date", "desc")
-      .limit(1)
-      .get();
-    if (!snap.empty) {
-      const d = snap.docs[0].data();
-      if (typeof d.date === "string") result.lastWorkoutDateStr = d.date;
-    }
-  } catch (err) {
-    console.warn("fetchLifetimeData: last workout query failed", { uid, message: err.message });
+  if (lastWorkoutRes.status === "fulfilled" && !lastWorkoutRes.value.empty) {
+    const d = lastWorkoutRes.value.docs[0].data();
+    if (typeof d.date === "string") result.lastWorkoutDateStr = d.date;
+  } else if (lastWorkoutRes.status === "rejected") {
+    console.warn("fetchLifetimeData: last workout query failed", {
+      uid,
+      message: lastWorkoutRes.reason && lastWorkoutRes.reason.message,
+    });
   }
 
-  try {
-    const snap = await userRef
-      .collection("runs")
-      .orderBy("completedAt", "desc")
-      .limit(1)
-      .get();
-    if (!snap.empty) {
-      const d = snap.docs[0].data();
-      if (d.completedAt && d.completedAt.toDate) result.lastRunCompletedAt = d.completedAt.toDate();
-    }
-  } catch (err) {
-    console.warn("fetchLifetimeData: last run query failed", { uid, message: err.message });
+  if (lastRunRes.status === "fulfilled" && !lastRunRes.value.empty) {
+    const d = lastRunRes.value.docs[0].data();
+    if (d.completedAt && d.completedAt.toDate)
+      result.lastRunCompletedAt = d.completedAt.toDate();
+  } else if (lastRunRes.status === "rejected") {
+    console.warn("fetchLifetimeData: last run query failed", {
+      uid,
+      message: lastRunRes.reason && lastRunRes.reason.message,
+    });
   }
 
   return result;
@@ -270,7 +281,8 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
   let runSessions = 0;
 
   runs.forEach((r) => {
-    const d = r.completedAt && r.completedAt.toDate ? r.completedAt.toDate() : null;
+    const d =
+      r.completedAt && r.completedAt.toDate ? r.completedAt.toDate() : null;
     if (!d || d < start || d >= end) return;
     runSessions++;
     const km = (r.distance || 0) / 1000;
@@ -309,7 +321,8 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     else if (d >= prevStart && d < start) bwPrev.push(l.weight);
   });
 
-  const avg = (arr) => (arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+  const avg = (arr) =>
+    arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
 
   // Day count of window — used for baseline normalisation in
   // computeBaselineFromAgg(). end is exclusive so subtract.
@@ -324,8 +337,10 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     runQualityCount,
     runSessions,
     mealDaysLogged,
-    avgDailyCalories: mealDaysLogged > 0 ? Math.round(totalCal / mealDaysLogged) : 0,
-    avgDailyProtein: mealDaysLogged > 0 ? Math.round(totalProt / mealDaysLogged) : 0,
+    avgDailyCalories:
+      mealDaysLogged > 0 ? Math.round(totalCal / mealDaysLogged) : 0,
+    avgDailyProtein:
+      mealDaysLogged > 0 ? Math.round(totalProt / mealDaysLogged) : 0,
     bwCurrent7dAvg: avg(bwCurrent),
     bwPrevious7dAvg: avg(bwPrev),
     dayCount,
@@ -386,7 +401,12 @@ function computeRecoveryScore(agg) {
   return clamp(score);
 }
 
-function computeAdherenceScore(agg, targetWorkouts, targetCalories, targetProtein) {
+function computeAdherenceScore(
+  agg,
+  targetWorkouts,
+  targetCalories,
+  targetProtein
+) {
   let score = 0;
   let factors = 0;
   if (targetWorkouts > 0) {
@@ -397,9 +417,10 @@ function computeAdherenceScore(agg, targetWorkouts, targetCalories, targetProtei
   }
   if (targetCalories && agg.mealDaysLogged >= 3 && agg.avgDailyCalories > 0) {
     const calRatio = agg.avgDailyCalories / targetCalories;
-    const calScore = calRatio >= 0.85 && calRatio <= 1.15
-      ? 100
-      : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
+    const calScore =
+      calRatio >= 0.85 && calRatio <= 1.15
+        ? 100
+        : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
     score += calScore;
     factors++;
   }
@@ -432,9 +453,15 @@ function computeLoadBand(pi) {
   return "deload";
 }
 
-function shouldRecommendDeload(currentPI, recoveryScore, adherenceScore, previousComputePI) {
+function shouldRecommendDeload(
+  currentPI,
+  recoveryScore,
+  adherenceScore,
+  previousComputePI
+) {
   if (currentPI >= 80 && recoveryScore < 45) return true;
-  if (currentPI >= 75 && previousComputePI != null && previousComputePI >= 75) return true;
+  if (currentPI >= 75 && previousComputePI != null && previousComputePI >= 75)
+    return true;
   if (currentPI >= 70 && adherenceScore < 50) return true;
   return false;
 }
@@ -480,7 +507,9 @@ function computeSignals({
     if (days < daysSinceLastTraining) daysSinceLastTraining = days;
   }
   if (lifetimeData.lastRunCompletedAt) {
-    const days = Math.floor((today.getTime() - lifetimeData.lastRunCompletedAt.getTime()) / 86400000);
+    const days = Math.floor(
+      (today.getTime() - lifetimeData.lastRunCompletedAt.getTime()) / 86400000
+    );
     if (days < daysSinceLastTraining) daysSinceLastTraining = days;
   }
   if (!Number.isFinite(daysSinceLastTraining)) daysSinceLastTraining = 0;
@@ -501,23 +530,59 @@ function computeSignals({
 // ── Insights (unchanged from weekly engine) ──
 
 function generateInsight(doc) {
-  const { performanceIndex: pi, liftLoadScore: lls, runLoadScore: rls, recoveryScore: rs, adherenceScore: as_, deloadRecommended, liftProgression: lp, runVolume: rv } = doc;
+  const {
+    performanceIndex: pi,
+    liftLoadScore: lls,
+    runLoadScore: rls,
+    recoveryScore: rs,
+    adherenceScore: as_,
+    deloadRecommended,
+    liftProgression: lp,
+    runVolume: rv,
+  } = doc;
   let title;
   if (pi >= 75) title = "Momentum: High";
   else if (pi >= 45) title = "Momentum: Stable";
   else title = "Momentum: Low";
   const bullets = [];
-  if (deloadRecommended) bullets.push("Consider a deload week — sustained high load with limited recovery signals.");
-  if (lls >= 70 && rls >= 70) bullets.push("Both lifting and running loads are strong this week — solid hybrid output.");
-  else if (lls >= 70 && rls < 40) bullets.push("Lifting is on point but running volume is low. Add an easy run if schedule allows.");
-  else if (rls >= 70 && lls < 40) bullets.push("Running volume is great but lifting load dropped. Prioritise your next session.");
-  if (rs < 50 && bullets.length < 3) bullets.push("Recovery signals are low — check sleep, hydration, and nutrition consistency.");
-  if (as_ < 50 && bullets.length < 3) bullets.push("Adherence dipped — focus on showing up consistently over hitting PRs.");
-  if (lp > 1.15 && bullets.length < 3) bullets.push(`Lifting tonnage is ${Math.round((lp - 1) * 100)}% above baseline — great progression.`);
-  if (rv > 1.2 && bullets.length < 3) bullets.push(`Running volume ${Math.round((rv - 1) * 100)}% above baseline — watch for overuse.`);
+  if (deloadRecommended)
+    bullets.push(
+      "Consider a deload week — sustained high load with limited recovery signals."
+    );
+  if (lls >= 70 && rls >= 70)
+    bullets.push(
+      "Both lifting and running loads are strong this week — solid hybrid output."
+    );
+  else if (lls >= 70 && rls < 40)
+    bullets.push(
+      "Lifting is on point but running volume is low. Add an easy run if schedule allows."
+    );
+  else if (rls >= 70 && lls < 40)
+    bullets.push(
+      "Running volume is great but lifting load dropped. Prioritise your next session."
+    );
+  if (rs < 50 && bullets.length < 3)
+    bullets.push(
+      "Recovery signals are low — check sleep, hydration, and nutrition consistency."
+    );
+  if (as_ < 50 && bullets.length < 3)
+    bullets.push(
+      "Adherence dipped — focus on showing up consistently over hitting PRs."
+    );
+  if (lp > 1.15 && bullets.length < 3)
+    bullets.push(
+      `Lifting tonnage is ${Math.round((lp - 1) * 100)}% above baseline — great progression.`
+    );
+  if (rv > 1.2 && bullets.length < 3)
+    bullets.push(
+      `Running volume ${Math.round((rv - 1) * 100)}% above baseline — watch for overuse.`
+    );
   if (bullets.length === 0) {
     if (pi >= 45) bullets.push("Consistent week. Keep the rhythm going.");
-    else bullets.push("Light week — a good time to focus on mobility and recovery.");
+    else
+      bullets.push(
+        "Light week — a good time to focus on mobility and recovery."
+      );
   }
   return { title, bullets: bullets.slice(0, 3) };
 }
@@ -527,15 +592,21 @@ function generatePlanAdjustments(doc) {
   const run = [];
   if (doc.deloadRecommended) {
     lift.push("Reduce working sets by 30–40% or drop accessory work.");
-    run.push("Cap runs at easy pace. Replace one session with active recovery.");
+    run.push(
+      "Cap runs at easy pace. Replace one session with active recovery."
+    );
     return { lift, run };
   }
   if (doc.loadBand === "overreach") {
     lift.push("Maintain intensity but consider reducing total volume 10–15%.");
     run.push("Keep long run but drop one mid-week session if fatigued.");
   } else if (doc.loadBand === "low" || doc.loadBand === "deload") {
-    if (doc.liftLoadScore < 30) lift.push("Focus on progressive overload — small weight jumps or extra set.");
-    if (doc.runLoadScore < 30) run.push("Add one easy 20-min run to rebuild aerobic base.");
+    if (doc.liftLoadScore < 30)
+      lift.push(
+        "Focus on progressive overload — small weight jumps or extra set."
+      );
+    if (doc.runLoadScore < 30)
+      run.push("Add one easy 20-min run to rebuild aerobic base.");
   }
   return { lift, run };
 }
@@ -575,11 +646,25 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
 
     // Aggregate current rolling window
     const { start: cStart, end: cEnd } = currentWindow(computeKey);
-    const currentAgg = aggregateWindow(cStart, cEnd, workouts, runs, meals, bodyweightLogs);
+    const currentAgg = aggregateWindow(
+      cStart,
+      cEnd,
+      workouts,
+      runs,
+      meals,
+      bodyweightLogs
+    );
 
     // Aggregate baseline window
     const { start: bStart, end: bEnd } = baselineWindow(computeKey);
-    const baselineAgg = aggregateWindow(bStart, bEnd, workouts, runs, meals, bodyweightLogs);
+    const baselineAgg = aggregateWindow(
+      bStart,
+      bEnd,
+      workouts,
+      runs,
+      meals,
+      bodyweightLogs
+    );
 
     // Normalise baseline to a 7-day-equivalent for ratio comparisons
     const bl = computeBaselineFromAgg(baselineAgg);
@@ -592,14 +677,16 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       currentAgg,
       profile.weeklyWorkoutsTarget || 4,
       profile.targetCalories || null,
-      profile.targetProtein || null,
+      profile.targetProtein || null
     );
 
-    const loadScore = PI_WEIGHTS.liftInLoad * liftLoadScore + PI_WEIGHTS.runInLoad * runLoadScore;
+    const loadScore =
+      PI_WEIGHTS.liftInLoad * liftLoadScore +
+      PI_WEIGHTS.runInLoad * runLoadScore;
     const pi = clamp(
       PI_WEIGHTS.load * loadScore +
-      PI_WEIGHTS.recovery * recoveryScore +
-      PI_WEIGHTS.adherence * adherenceScore,
+        PI_WEIGHTS.recovery * recoveryScore +
+        PI_WEIGHTS.adherence * adherenceScore
     );
 
     const liftProgression = safeRatio(currentAgg.liftTonnage, bl.liftTonnage);
@@ -614,13 +701,35 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
     let previousComputePI = null;
     try {
       const prevKey = dateKeyMinusN(computeKey, WINDOW_DAYS);
-      const prevDoc = await db.collection("users").doc(uid).collection("performance").doc(prevKey).get();
+      const prevDoc = await db
+        .collection("users")
+        .doc(uid)
+        .collection("performance")
+        .doc(prevKey)
+        .get();
       if (prevDoc.exists) previousComputePI = prevDoc.data().performanceIndex;
-    } catch (_) { /* no previous doc, that's fine */ }
+    } catch (_) {
+      /* no previous doc, that's fine */
+    }
 
-    const deloadRecommended = shouldRecommendDeload(pi, recoveryScore, adherenceScore, previousComputePI);
+    const deloadRecommended = shouldRecommendDeload(
+      pi,
+      recoveryScore,
+      adherenceScore,
+      previousComputePI
+    );
 
-    const partial = { performanceIndex: pi, liftLoadScore, runLoadScore, recoveryScore, adherenceScore, liftProgression, runVolume, loadBand, deloadRecommended };
+    const partial = {
+      performanceIndex: pi,
+      liftLoadScore,
+      runLoadScore,
+      recoveryScore,
+      adherenceScore,
+      liftProgression,
+      runVolume,
+      loadBand,
+      deloadRecommended,
+    };
     const insight = generateInsight(partial);
     const planAdjustments = generatePlanAdjustments(partial);
 
@@ -661,13 +770,26 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
     };
 
     await db
-      .collection("users").doc(uid)
-      .collection("performance").doc(computeKey)
+      .collection("users")
+      .doc(uid)
+      .collection("performance")
+      .doc(computeKey)
       .set(perfDoc, { merge: true });
 
-    return { ok: true, weekKey: computeKey, performanceIndex: pi, confidence, loadBand };
+    return {
+      ok: true,
+      weekKey: computeKey,
+      performanceIndex: pi,
+      confidence,
+      loadBand,
+    };
   } catch (error) {
-    console.error("computeAndWritePerformanceForUser error:", { uid, computeKeyOverride, message: error.message, stack: error.stack });
+    console.error("computeAndWritePerformanceForUser error:", {
+      uid,
+      computeKeyOverride,
+      message: error.message,
+      stack: error.stack,
+    });
     throw error;
   }
 }
@@ -680,39 +802,60 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
  */
 async function acquireCooldownLock(uid) {
   try {
-    const lockRef = db.collection("users").doc(uid).collection("_engine").doc("performanceLock");
+    const lockRef = db
+      .collection("users")
+      .doc(uid)
+      .collection("_engine")
+      .doc("performanceLock");
     const lockSnap = await lockRef.get();
 
     if (lockSnap.exists) {
       const data = lockSnap.data();
-      const nextAllowed = data.nextAllowedAt && data.nextAllowedAt.toDate
-        ? data.nextAllowedAt.toDate()
-        : new Date(0);
+      const nextAllowed =
+        data.nextAllowedAt && data.nextAllowedAt.toDate
+          ? data.nextAllowedAt.toDate()
+          : new Date(0);
       if (new Date() < nextAllowed) {
         return false;
       }
     }
 
-    await lockRef.set({
-      inProgress: true,
-      nextAllowedAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + COOLDOWN_MS)),
-      lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    await lockRef.set(
+      {
+        inProgress: true,
+        nextAllowedAt: admin.firestore.Timestamp.fromDate(
+          new Date(Date.now() + COOLDOWN_MS)
+        ),
+        lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     return true;
   } catch (error) {
-    console.error("acquireCooldownLock error:", { uid, message: error.message, stack: error.stack });
+    console.error("acquireCooldownLock error:", {
+      uid,
+      message: error.message,
+      stack: error.stack,
+    });
     throw error;
   }
 }
 
 async function releaseLock(uid, ok, error) {
-  const lockRef = db.collection("users").doc(uid).collection("_engine").doc("performanceLock");
-  await lockRef.set({
-    inProgress: false,
-    lastRunOk: ok,
-    lastError: error || null,
-  }, { merge: true });
+  const lockRef = db
+    .collection("users")
+    .doc(uid)
+    .collection("_engine")
+    .doc("performanceLock");
+  await lockRef.set(
+    {
+      inProgress: false,
+      lastRunOk: ok,
+      lastError: error || null,
+    },
+    { merge: true }
+  );
 }
 
 // ── Exports ──────────────────────────────────
