@@ -100,6 +100,15 @@ export interface UserProfileSubscription {
    *  ios_iap-Pro user opening the web page sees a "Manage on App
    *  Store" message instead of a duplicate-charge checkout. */
   subscriptionSource?: "stripe" | "ios_iap" | "android_iap" | null;
+  /** ISO timestamp of the current subscription period end. Written
+   *  server-side (Stripe webhook for stripe-sourced subs, Apple IAP
+   *  webhook + applySubscriptionToUser for ios_iap). The client uses
+   *  this as a defence-in-depth expiry check — if `subscriptionTier`
+   *  is `pro` but the timestamp has elapsed, the client falls back
+   *  to free entitlement, which guards against a dropped Apple
+   *  EXPIRED notification or a missed Stripe webhook leaving a
+   *  user permanently Pro on stale data. */
+  subscriptionExpiresAt?: string | null;
   /** Sub1a P1 — lifetime trial-shopping protection.
    *  Set to true by `functions/lib/checkoutTrial.js` when a trial
    *  Stripe checkout session is created, in the same Firestore txn
