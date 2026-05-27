@@ -816,7 +816,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             markManualComplete={markManualComplete}
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
-            refreshRunSchedule={refreshRunSchedule}
             skipRecoveryEarly={skipRecoveryEarly}
           />
         </div>
