@@ -104,7 +104,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
   const saveLog = useCallback(
     async (log: Omit<DailyLog, "id" | "createdAt">) => {
       if (!user) return;
-      await safeMerge(db, `users/${user.uid}/logs`, log.date, {
+      await safeMerge(db, user.uid, `users/${user.uid}/logs`, log.date, {
         ...log,
         createdAt: Timestamp.now(),
       });

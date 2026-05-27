@@ -256,8 +256,8 @@ export function useHomeData(
       const todayWorkouts = workouts.filter(function (w) {
         return w.date === todayStr;
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing nudge when no workouts today
       if (todayWorkouts.length === 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing nudge when no workouts today
         setPostWorkoutNudge(null);
         return;
       }

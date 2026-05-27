@@ -89,7 +89,13 @@ function prefKey(type: ShareType): string {
 function readAlways(type: ShareType): AlwaysPref {
   try {
     const raw = localStorage.getItem(prefKey(type));
-    if (raw === "followers" || raw === "crews" || raw === "public" || raw === "never") return raw;
+    if (
+      raw === "followers" ||
+      raw === "crews" ||
+      raw === "public" ||
+      raw === "never"
+    )
+      return raw;
   } catch {
     /* localStorage unavailable (private mode, etc.) */
   }
@@ -116,7 +122,9 @@ export function getShareDefault(type: ShareType): AlwaysPref {
 
 // ── compose / resolve ────────────────────────────────────────────
 
-export function compose(preview: ActivityPreview): Promise<ShareDecision | null> {
+export function compose(
+  preview: ActivityPreview
+): Promise<ShareDecision | null> {
   const pref = readAlways(preview.type);
   if (pref === "never") return Promise.resolve(null);
   if (pref === "followers" || pref === "crews" || pref === "public") {
@@ -134,7 +142,10 @@ export function compose(preview: ActivityPreview): Promise<ShareDecision | null>
  * means "Don't share this one". When `remember` is true, the choice is
  * persisted as the always-pref for this type.
  */
-export function resolveCompose(decision: ShareDecision | null, remember: boolean): void {
+export function resolveCompose(
+  decision: ShareDecision | null,
+  remember: boolean
+): void {
   const type = state.type;
   if (resolveCb) {
     const cb = resolveCb;
@@ -149,11 +160,23 @@ export function resolveCompose(decision: ShareDecision | null, remember: boolean
 }
 
 // ── Offline queue ────────────────────────────────────────────────
+//
+// Each pending share carries the originating uid so a queued post
+// can never replay under a different user's session. Pre-uid-scoping,
+// a share queued by user A would replay under user B's auth on the
+// next online → drainQueue tick (`postActivity` throws "Identity
+// mismatch" on user B but the item stayed queued; once user A
+// signed back in the stale post — long since forgotten — landed as
+// a fresh activity with the original authorId).
 
 const QUEUE_KEY = "tropos.share.queue";
 
 export interface PendingShare {
   id: string;
+  /** Owner of this pending share — the only user whose session can
+   *  drain it. Items missing this field are legacy pre-scoping
+   *  writes and are dropped on next read. */
+  uid: string;
   payload: Record<string, unknown>;
   queuedAt: number;
 }
@@ -161,7 +184,15 @@ export interface PendingShare {
 function readQueue(): PendingShare[] {
   try {
     const raw = localStorage.getItem(QUEUE_KEY);
-    return raw ? (JSON.parse(raw) as PendingShare[]) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is PendingShare =>
+        item != null &&
+        typeof item === "object" &&
+        typeof (item as { uid?: unknown }).uid === "string"
+    );
   } catch {
     return [];
   }
@@ -175,27 +206,37 @@ function writeQueue(items: PendingShare[]) {
   }
 }
 
-export function enqueueShare(payload: Record<string, unknown>): void {
+export function enqueueShare(
+  uid: string,
+  payload: Record<string, unknown>
+): void {
   const items = readQueue();
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  items.push({ id, payload, queuedAt: Date.now() });
+  items.push({ id, uid, payload, queuedAt: Date.now() });
   writeQueue(items);
 }
 
-export function getQueueLength(): number {
-  return readQueue().length;
+export function getQueueLength(uid?: string): number {
+  const items = readQueue();
+  return uid ? items.filter((q) => q.uid === uid).length : items.length;
 }
 
-/** Replay queued shares. Caller supplies the post fn (typically
- *  `postActivity`). Items that throw stay in the queue for the next
- *  drain attempt. */
+/** Replay queued shares for `uid`. Caller supplies the post fn
+ *  (typically `postActivity`). Items belonging to other uids are
+ *  left in the queue for that user's next sign-in. Items that throw
+ *  stay in the queue for the next drain attempt. */
 export async function drainQueue(
-  post: (payload: Record<string, unknown>) => Promise<unknown>,
+  uid: string,
+  post: (payload: Record<string, unknown>) => Promise<unknown>
 ): Promise<void> {
   const items = readQueue();
   if (items.length === 0) return;
   const remaining: PendingShare[] = [];
   for (const item of items) {
+    if (item.uid !== uid) {
+      remaining.push(item);
+      continue;
+    }
     try {
       await post(item.payload);
     } catch {
