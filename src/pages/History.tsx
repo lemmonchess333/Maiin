@@ -22,6 +22,7 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { paceMinSec } from "@/lib/runLabels";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -521,12 +522,6 @@ export default function History() {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const formatPace = (secPerKm: number) => {
-      const m = Math.floor(secPerKm / 60);
-      const s = Math.round(secPerKm % 60);
-      return `${m}:${s.toString().padStart(2, "0")}`;
-    };
-
     /* Pace and outdoor-distance PRs require pace eligibility:
        outdoor GPS source (treadmill / manual record their distance
        from user input, so a 2km / 5:17 treadmill entry shouldn't
@@ -588,13 +583,13 @@ export default function History() {
       }> = [
         {
           label: "Fastest 1K",
-          value: best1k ? formatPace(best1k.avgPace) : "--",
+          value: best1k ? paceMinSec(best1k.avgPace) : "--",
           date: best1k ? fmtDate(best1k.completedAt) : "",
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
         },
         {
           label: "Fastest 5K",
-          value: best5k ? formatPace(best5k.avgPace) : "--",
+          value: best5k ? paceMinSec(best5k.avgPace) : "--",
           date: best5k ? fmtDate(best5k.completedAt) : "",
           isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
         },
