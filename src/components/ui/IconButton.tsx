@@ -71,8 +71,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   ghost: "bg-transparent text-foreground hover:bg-muted",
-  outline:
-    "bg-transparent text-foreground border border-border hover:bg-muted",
+  outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "text-white",
   "sport-tinted": "",
 };
@@ -81,7 +80,10 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
 // inline style rather than Tailwind classes.
 const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
   sport: { backgroundColor: THEME.running },
-  "sport-tinted": { backgroundColor: `${THEME.running}1A`, color: THEME.running },
+  "sport-tinted": {
+    backgroundColor: `${THEME.running}1A`,
+    color: THEME.running,
+  },
 };
 
 /**
@@ -89,15 +91,15 @@ const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
  * outer square is the touch target, the icon visual is centred.
  */
 const SIZE_CLASSES: Record<IconButtonSize, string> = {
-  sm: "w-9 h-9",
-  md: "w-11 h-11",
-  lg: "w-12 h-12",
+  sm: "size-9",
+  md: "size-11",
+  lg: "size-12",
 };
 
 const ICON_SIZE_CLASS: Record<IconButtonSize, string> = {
-  sm: "w-4 h-4",
-  md: "w-5 h-5",
-  lg: "w-6 h-6",
+  sm: "size-4",
+  md: "size-5",
+  lg: "size-6",
 };
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
@@ -113,7 +115,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       style,
       ...rest
     },
-    ref,
+    ref
   ) {
     const isInteractive = !disabled && !loading;
     const variantStyle = VARIANT_INLINE_STYLES[variant];
@@ -127,7 +129,7 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
           BASE_CLASSES,
           VARIANT_CLASSES[variant],
           SIZE_CLASSES[size],
-          className,
+          className
         )}
         style={variantStyle ? { ...variantStyle, ...style } : style}
         {...rest}
@@ -138,13 +140,16 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
             className={cn("animate-spin", ICON_SIZE_CLASS[size])}
           />
         ) : (
-          <span aria-hidden="true" className={cn("inline-flex", ICON_SIZE_CLASS[size])}>
+          <span
+            aria-hidden="true"
+            className={cn("inline-flex", ICON_SIZE_CLASS[size])}
+          >
             {icon}
           </span>
         )}
       </button>
     );
-  },
+  }
 );
 
 export { IconButton };

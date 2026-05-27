@@ -75,7 +75,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
   const e1rm = epley1RM(pr.weight, pr.reps);
   const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString(
     "en-GB",
-    { day: "numeric", month: "short" },
+    { day: "numeric", month: "short" }
   );
   const exercise = EXERCISES.find((e) => e.name === pr.name);
   const isBW = exercise?.equipment === "Bodyweight";
@@ -100,23 +100,23 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
             className="text-sm font-bold font-mono tabular-nums"
             style={{ color: THEME.lifting }}
           >
-            {isBW && pr.weight === 0
-              ? "BW"
-              : isBW && pr.weight > 0
-                ? `+${pr.weight} kg`
-                : pr.weight > 0
-                  ? `${pr.weight} kg`
-                  : <span className="text-muted-foreground">— kg</span>}
-            {" "}× {pr.reps}
+            {isBW && pr.weight === 0 ? (
+              "BW"
+            ) : isBW && pr.weight > 0 ? (
+              `+${pr.weight} kg`
+            ) : pr.weight > 0 ? (
+              `${pr.weight} kg`
+            ) : (
+              <span className="text-muted-foreground">— kg</span>
+            )}{" "}
+            × {pr.reps}
           </p>
           {isBW && pr.weight === 0 ? null : pr.weight > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              ~{e1rm} kg 1RM
-            </p>
+            <p className="text-xs text-muted-foreground">~{e1rm} kg 1RM</p>
           ) : null}
         </div>
         <ChevronRight
-          className="w-4 h-4 text-muted-foreground/60 shrink-0"
+          className="size-4 text-muted-foreground/60 shrink-0"
           aria-hidden="true"
         />
       </div>
@@ -143,7 +143,8 @@ function LiftPRList({
   collapseAfter?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const collapsed = collapseAfter != null && !expanded && prs.length > collapseAfter;
+  const collapsed =
+    collapseAfter != null && !expanded && prs.length > collapseAfter;
   const visible = collapsed ? prs.slice(0, collapseAfter) : prs;
   const hiddenCount = prs.length - visible.length;
 
@@ -154,13 +155,17 @@ function LiftPRList({
     >
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-amber-500" />
-        <h3 className="text-sm font-semibold text-foreground flex-1">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground flex-1">
+          {title}
+        </h3>
         <span className="text-xs text-muted-foreground">{subtitle}</span>
       </div>
       {prs.length > 0 ? (
         <>
           <div className="divide-y divide-border/20">
-            {visible.map((pr) => <LiftPRRow key={pr.name} pr={pr} />)}
+            {visible.map((pr) => (
+              <LiftPRRow key={pr.name} pr={pr} />
+            ))}
           </div>
           {hiddenCount > 0 && (
             <button
@@ -211,7 +216,7 @@ export default function PRsTab({
       <section aria-label="Personal Records" className="space-y-3 mt-4">
         <div className="p-6 rounded-2xl bg-card text-center space-y-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto"
+            className="size-12 rounded-xl flex items-center justify-center mx-auto"
             style={{ background: `${THEME.brand}15` }}
           >
             <Trophy size={24} style={{ color: THEME.brand }} />
@@ -221,7 +226,8 @@ export default function PRsTab({
               Your PRs will appear here
             </p>
             <p className="text-xs text-muted-foreground">
-              Log your first run or workout to set your starting personal records.
+              Log your first run or workout to set your starting personal
+              records.
             </p>
           </div>
           <div className="flex gap-2 justify-center pt-1">
@@ -230,7 +236,10 @@ export default function PRsTab({
               className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
               style={{ background: THEME.running }}
             >
-              <Footprints className="w-3.5 h-3.5 inline-block mr-1" aria-hidden="true" />
+              <Footprints
+                className="size-3.5 inline-block mr-1"
+                aria-hidden="true"
+              />
               Start Run
             </Link>
             <Link

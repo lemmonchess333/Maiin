@@ -40,7 +40,10 @@ import { cn } from "@/lib/utils";
 export type SpinnerSize = "xs" | "sm" | "md" | "lg";
 export type SpinnerVariant = "primary" | "inverse" | "muted";
 
-interface SpinnerProps extends Omit<HTMLAttributes<HTMLSpanElement>, "aria-label"> {
+interface SpinnerProps extends Omit<
+  HTMLAttributes<HTMLSpanElement>,
+  "aria-label"
+> {
   size?: SpinnerSize;
   variant?: SpinnerVariant;
   /** Accessible label announced by screen readers. Defaults to "Loading". */
@@ -48,10 +51,10 @@ interface SpinnerProps extends Omit<HTMLAttributes<HTMLSpanElement>, "aria-label
 }
 
 const SIZE_CLASSES: Record<SpinnerSize, string> = {
-  xs: "w-3 h-3",
-  sm: "w-4 h-4",
-  md: "w-6 h-6",
-  lg: "w-8 h-8",
+  xs: "size-3",
+  sm: "size-4",
+  md: "size-6",
+  lg: "size-8",
 };
 
 const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
@@ -62,7 +65,7 @@ const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
 
 const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
   { size = "sm", variant = "primary", label = "Loading", className, ...rest },
-  ref,
+  ref
 ) {
   return (
     <span
@@ -74,7 +77,11 @@ const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
     >
       <Loader2
         aria-hidden="true"
-        className={cn("animate-spin", SIZE_CLASSES[size], VARIANT_CLASSES[variant])}
+        className={cn(
+          "animate-spin",
+          SIZE_CLASSES[size],
+          VARIANT_CLASSES[variant]
+        )}
       />
     </span>
   );

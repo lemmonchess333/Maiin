@@ -1,11 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  Scale,
-  Mail,
-  Shield,
-  ChevronRight,
-  Flag,
-} from "lucide-react";
+import { Scale, Mail, Shield, ChevronRight, Flag } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 
 declare const __APP_VERSION__: string;
@@ -27,7 +21,8 @@ declare const __APP_VERSION__: string;
 // agent, and a short bug-report scaffold arrive in the same inbox slot as
 // the complaint, which roughly halves back-and-forth before a fix.
 function buildSupportMailto(): string {
-  const version = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
+  const version =
+    typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const ua = typeof navigator !== "undefined" ? navigator.userAgent : "unknown";
   const body = [
     "Describe what you were doing and what went wrong:",
@@ -47,7 +42,8 @@ function buildSupportMailto(): string {
 // subject prefix lets the inbox sort moderation tickets from
 // general support tickets without a separate alias.
 function buildModerationMailto(): string {
-  const version = typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
+  const version =
+    typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "unknown";
   const body = [
     "Describe the content you're reporting and where you saw it:",
     "",
@@ -63,21 +59,30 @@ interface SupportLegalSectionProps {
   inline?: boolean;
 }
 
-export default function SupportLegalSection({ inline = false }: SupportLegalSectionProps = {}) {
+export default function SupportLegalSection({
+  inline = false,
+}: SupportLegalSectionProps = {}) {
   return (
-    <AccordionSection inline={inline} icon={<Scale className="w-5 h-5 text-primary" />} title="Support & Legal" subtitle="Help, privacy policy, terms">
+    <AccordionSection
+      inline={inline}
+      icon={<Scale className="size-5 text-primary" />}
+      title="Support & Legal"
+      subtitle="Help, privacy policy, terms"
+    >
       <a
         href={buildSupportMailto()}
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Mail className="w-5 h-5" />
+          <Mail className="size-5" />
           <div>
             <p className="text-sm text-foreground">Help & Support</p>
-            <p className="text-xs text-muted-foreground">support@troposfit.com</p>
+            <p className="text-xs text-muted-foreground">
+              support@troposfit.com
+            </p>
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </a>
 
       <a
@@ -85,13 +90,17 @@ export default function SupportLegalSection({ inline = false }: SupportLegalSect
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Flag className="w-5 h-5" />
+          <Flag className="size-5" />
           <div>
-            <p className="text-sm text-foreground">Report objectionable content</p>
-            <p className="text-xs text-muted-foreground">support@troposfit.com</p>
+            <p className="text-sm text-foreground">
+              Report objectionable content
+            </p>
+            <p className="text-xs text-muted-foreground">
+              support@troposfit.com
+            </p>
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </a>
 
       <Link
@@ -99,10 +108,10 @@ export default function SupportLegalSection({ inline = false }: SupportLegalSect
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Shield className="w-5 h-5" />
+          <Shield className="size-5" />
           <span className="text-sm text-foreground">Privacy Policy</span>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </Link>
 
       <Link
@@ -110,10 +119,10 @@ export default function SupportLegalSection({ inline = false }: SupportLegalSect
         className="flex items-center justify-between p-4 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Shield className="w-5 h-5" />
+          <Shield className="size-5" />
           <span className="text-sm text-foreground">Terms of Service</span>
         </div>
-        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        <ChevronRight className="size-4 text-muted-foreground" />
       </Link>
     </AccordionSection>
   );

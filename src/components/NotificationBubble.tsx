@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, createContext, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
 
@@ -12,32 +18,63 @@ interface BubbleData {
 }
 
 interface NotificationBubbleContextValue {
-  showBubble: (title: string, subtitle?: string, variant?: BubbleVariant) => void;
+  showBubble: (
+    title: string,
+    subtitle?: string,
+    variant?: BubbleVariant
+  ) => void;
 }
 
-const NotificationBubbleContext = createContext<NotificationBubbleContextValue>({
-  showBubble: () => {},
-});
+const NotificationBubbleContext = createContext<NotificationBubbleContextValue>(
+  {
+    showBubble: () => {},
+  }
+);
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useNotificationBubble() {
   return useContext(NotificationBubbleContext);
 }
 
-const VARIANT_CONFIG: Record<BubbleVariant, { icon: typeof Trophy; color: string; bg: string; border: string }> = {
-  pr: { icon: Trophy, color: "#ffd700", bg: "rgba(255, 215, 0, 0.08)", border: "rgba(255, 215, 0, 0.15)" },
-  complete: { icon: CheckCircle, color: "#14b8a6", bg: "rgba(20, 184, 166, 0.08)", border: "rgba(20, 184, 166, 0.15)" },
-  generic: { icon: Bell, color: "#7B72E9", bg: "rgba(123, 114, 233, 0.07)", border: "rgba(123, 114, 233, 0.12)" },
+const VARIANT_CONFIG: Record<
+  BubbleVariant,
+  { icon: typeof Trophy; color: string; bg: string; border: string }
+> = {
+  pr: {
+    icon: Trophy,
+    color: "#ffd700",
+    bg: "rgba(255, 215, 0, 0.08)",
+    border: "rgba(255, 215, 0, 0.15)",
+  },
+  complete: {
+    icon: CheckCircle,
+    color: "#14b8a6",
+    bg: "rgba(20, 184, 166, 0.08)",
+    border: "rgba(20, 184, 166, 0.15)",
+  },
+  generic: {
+    icon: Bell,
+    color: "#7B72E9",
+    bg: "rgba(123, 114, 233, 0.07)",
+    border: "rgba(123, 114, 233, 0.12)",
+  },
 };
 
-export function NotificationBubbleProvider({ children }: { children: React.ReactNode }) {
+export function NotificationBubbleProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [bubble, setBubble] = useState<BubbleData | null>(null);
   const [progress, setProgress] = useState(1);
 
-  const showBubble = useCallback((title: string, subtitle?: string, variant: BubbleVariant = "generic") => {
-    setBubble({ id: Date.now(), title, subtitle, variant });
-    setProgress(1);
-  }, []);
+  const showBubble = useCallback(
+    (title: string, subtitle?: string, variant: BubbleVariant = "generic") => {
+      setBubble({ id: Date.now(), title, subtitle, variant });
+      setProgress(1);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!bubble) return;
@@ -54,10 +91,15 @@ export function NotificationBubbleProvider({ children }: { children: React.React
       else setBubble(null);
     };
     rafId = requestAnimationFrame(frame);
-    return () => { cancelled = true; cancelAnimationFrame(rafId); };
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+    };
   }, [bubble]);
 
-  const config = bubble ? VARIANT_CONFIG[bubble.variant] : VARIANT_CONFIG.generic;
+  const config = bubble
+    ? VARIANT_CONFIG[bubble.variant]
+    : VARIANT_CONFIG.generic;
   const Icon = config.icon;
 
   return (
@@ -96,15 +138,19 @@ export function NotificationBubbleProvider({ children }: { children: React.React
               />
 
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                className="size-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: config.bg }}
               >
-                <Icon className="w-4.5 h-4.5" style={{ color: config.color }} />
+                <Icon className="size-4.5" style={{ color: config.color }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{bubble.title}</p>
+                <p className="text-sm font-semibold text-white truncate">
+                  {bubble.title}
+                </p>
                 {bubble.subtitle && (
-                  <p className="text-xs text-white/60 truncate">{bubble.subtitle}</p>
+                  <p className="text-xs text-white/60 truncate">
+                    {bubble.subtitle}
+                  </p>
                 )}
               </div>
             </div>

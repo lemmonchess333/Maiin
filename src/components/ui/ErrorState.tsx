@@ -55,11 +55,11 @@ export function ErrorState({
       aria-live="assertive"
     >
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto bg-destructive/10"
+        className="size-12 rounded-2xl flex items-center justify-center mx-auto bg-destructive/10"
         aria-hidden="true"
       >
         <span className="text-destructive inline-flex">
-          {icon ?? <AlertTriangle className="w-5 h-5" />}
+          {icon ?? <AlertTriangle className="size-5" />}
         </span>
       </div>
       <div className="space-y-1">
