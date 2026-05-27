@@ -13,6 +13,7 @@ import {
   computePlanMetadata,
   finalisePlanMetadata,
   freeformPlanMetadata,
+  getAdherenceLabel,
   shouldCompleteRunDay,
   type RunPlanMetadata,
 } from "../runPlanMetadata";
@@ -49,7 +50,7 @@ function makeRunDay(
   templateId: string,
   type: string,
   completed = false,
-  userOverride?: string,
+  userOverride?: string
 ): ScheduledRunDay {
   return {
     dayIndex,
@@ -129,9 +130,7 @@ describe("computePlanMetadata — programme today_plan", () => {
   });
 
   it("userOverride wins over the scheduled templateId", () => {
-    const days = [
-      makeRunDay(MONDAY, "long_10k", "long", false, "tempo_20"),
-    ];
+    const days = [makeRunDay(MONDAY, "long_10k", "long", false, "tempo_20")];
     const { metadata, prefill } = computePlanMetadata({
       profileRunMode: "race_prep",
       todayDayIndex: MONDAY,
@@ -500,9 +499,9 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
 
   // Scenario 6: exact planned-template match completes the day.
   it("completes when all six gates pass", () => {
-    expect(
-      shouldCompleteRunDay({ metadata: onPlanMatch, isValid: true }),
-    ).toBe(true);
+    expect(shouldCompleteRunDay({ metadata: onPlanMatch, isValid: true })).toBe(
+      true
+    );
   });
 
   // Scenario 5: user switched type → matchedPlanExact false.
@@ -529,7 +528,9 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
       matchedPlanType: true,
       offPlan: true,
     };
-    expect(shouldCompleteRunDay({ metadata: sameType, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: sameType, isValid: true })).toBe(
+      false
+    );
   });
 
   it("does NOT complete when offPlan is true", () => {
@@ -539,9 +540,9 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
 
   it("does NOT complete when plannedRunDayIndex is null (rest day)", () => {
     const restDay = freeformPlanMetadata("race_prep");
-    expect(
-      shouldCompleteRunDay({ metadata: restDay, isValid: true }),
-    ).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: restDay, isValid: true })).toBe(
+      false
+    );
   });
 
   it("does NOT complete when plannedTemplateId is null (completed-day extra run)", () => {
@@ -555,7 +556,9 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
       matchedPlanType: null,
       offPlan: true,
     };
-    expect(shouldCompleteRunDay({ metadata: completed, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: completed, isValid: true })).toBe(
+      false
+    );
   });
 
   it("does NOT complete when actualTemplateId is null", () => {
@@ -565,21 +568,23 @@ describe("shouldCompleteRunDay — programme reconciliation gating", () => {
       matchedPlanExact: false,
       offPlan: true,
     };
-    expect(shouldCompleteRunDay({ metadata: noActual, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: noActual, isValid: true })).toBe(
+      false
+    );
   });
 
   // Scenario 7: invalid saved-anyway run never completes.
   it("does NOT complete when the run is invalid (saved anyway)", () => {
     expect(
-      shouldCompleteRunDay({ metadata: onPlanMatch, isValid: false }),
+      shouldCompleteRunDay({ metadata: onPlanMatch, isValid: false })
     ).toBe(false);
   });
 
   it("freeform runs never complete a programme day", () => {
     const freeform = freeformPlanMetadata("freeform");
-    expect(
-      shouldCompleteRunDay({ metadata: freeform, isValid: true }),
-    ).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: freeform, isValid: true })).toBe(
+      false
+    );
   });
 });
 
@@ -837,7 +842,9 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
     expect(final.offPlan).toBe(true);
     // Slot does NOT auto-complete. The P3-1 reconciliation card
     // will fire on save instead.
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
+      false
+    );
   });
 });
 
@@ -877,7 +884,9 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     // will NOT call completeRunDay against Tuesday's scheduled
     // slot. The slot stays open; the saved run carries off-plan
     // metadata for analytics; the P3-1 prompt fires.
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
+      false
+    );
   });
 
   it("user opens ?template=tempo_20 on a Tuesday with a planned long_10k → both same-type & exact mismatch, no completion", () => {
@@ -904,7 +913,9 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     expect(final.matchedPlanExact).toBe(false);
     expect(final.matchedPlanType).toBe(false);
     expect(final.offPlan).toBe(true);
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(false);
+    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
+      false
+    );
   });
 });
 
@@ -978,5 +989,88 @@ describe("PR-0a — prefill distance unit (metres)", () => {
       type: "distance",
       value: 42200,
     });
+  });
+});
+
+// ─── Run8-Vocab adherence label ─────────────────────────────────────
+//
+// Locked vocab: Planned / Custom / Extra (see plan file row
+// `Run8-Vocab`). Pin every branch so a vocab drift renaming any
+// of the three strings — or flipping the mapping from
+// matchedPlanExact / offPlan inputs — fails CI loudly.
+
+describe("getAdherenceLabel", () => {
+  function basePlanMetadata(
+    overrides: Partial<RunPlanMetadata> = {}
+  ): RunPlanMetadata {
+    return {
+      planMode: "structured",
+      planSource: "today_plan",
+      plannedRunDayIndex: 2,
+      plannedTemplateId: "easy_30",
+      plannedTemplateType: "easy",
+      actualTemplateId: "easy_30",
+      matchedPlanExact: true,
+      matchedPlanType: true,
+      offPlan: false,
+      planWeekIndex: 0,
+      planTotalWeeks: 8,
+      scheduledRunId: "runday-tue-easy",
+      ...overrides,
+    };
+  }
+
+  it("returns 'Planned' when matchedPlanExact is true (and not off-plan)", () => {
+    expect(getAdherenceLabel(basePlanMetadata())).toBe("Planned");
+  });
+
+  it("returns 'Custom' when matchedPlanExact is false but planned slot existed (not off-plan)", () => {
+    // User did the Tuesday tempo template but tweaked the interval count.
+    expect(
+      getAdherenceLabel(
+        basePlanMetadata({ matchedPlanExact: false, offPlan: false })
+      )
+    ).toBe("Custom");
+  });
+
+  it("returns 'Extra' when offPlan is true (regardless of matchedPlanExact)", () => {
+    // No planned slot for this day — user did a bonus run.
+    expect(
+      getAdherenceLabel(
+        basePlanMetadata({
+          offPlan: true,
+          plannedRunDayIndex: null,
+          plannedTemplateId: null,
+          matchedPlanExact: null,
+        })
+      )
+    ).toBe("Extra");
+  });
+
+  it("returns 'Extra' even when matchedPlanExact is false (offPlan overrides)", () => {
+    // Belt-and-braces: the offPlan branch takes precedence in the
+    // (theoretically impossible but defensively handled) case where
+    // both flags coexist.
+    expect(
+      getAdherenceLabel(
+        basePlanMetadata({ offPlan: true, matchedPlanExact: false })
+      )
+    ).toBe("Extra");
+  });
+
+  it("returns null when matchedPlanExact is null (freeform — no plan to grade against)", () => {
+    expect(getAdherenceLabel(freeformPlanMetadata("freeform"))).toBeNull();
+  });
+
+  it("returns null when matchedPlanExact is null even if planMode is race_prep (elapsed plan)", () => {
+    // Race-prep user post-elapsed-plan with a manual run carries
+    // planMode='race_prep' for analytics continuity but no
+    // matchedPlanExact comparison is possible.
+    expect(getAdherenceLabel(freeformPlanMetadata("race_prep"))).toBeNull();
+  });
+
+  it("returns null for null / undefined planMetadata (legacy or missing field)", () => {
+    expect(getAdherenceLabel(null)).toBeNull();
+    expect(getAdherenceLabel(undefined)).toBeNull();
   });
 });
