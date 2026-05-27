@@ -135,6 +135,43 @@ export function freeformPlanMetadata(planMode: PlanMode): RunPlanMetadata {
   };
 }
 
+// ─── Adherence label (Run8-Vocab) ───────────────────────────────────
+//
+// Three-state classification for the RunSummary adherence chip.
+// Locked decision in `.claude/plans/programme-run-followups.md` row
+// `Run8-Vocab`; full plan in `/root/.claude/plans/gentle-giggling-creek.md`.
+//
+//   Planned = matchedPlanExact === true
+//             Run matched the planned template exactly (same id +
+//             same parameters). "Planned" is descriptive, not
+//             grading — avoids "Exact" reading as a school grade.
+//   Custom  = planned slot matched but params changed
+//             (matchedPlanExact === false && offPlan === false).
+//             Pairs with PR-setup's "Customise" disclosure verb so
+//             the verb at the start of the journey matches the noun
+//             at the end.
+//   Extra   = no planned slot for this day
+//             (offPlan === true). Positive framing that rewards
+//             bonus effort instead of flagging "Off-plan" as
+//             deviation.
+//
+// Returns null when there's no plan context (freeform users, legacy
+// runs without planMetadata, or pre-planMetadata era saves). Callers
+// render the chip only when the label is non-null.
+
+export type AdherenceLabel = "Planned" | "Custom" | "Extra";
+
+export function getAdherenceLabel(
+  planMetadata: RunPlanMetadata | null | undefined
+): AdherenceLabel | null {
+  if (!planMetadata) return null;
+  if (planMetadata.offPlan === true) return "Extra";
+  // matchedPlanExact === null means no plan to match (freeform).
+  // No chip — the run has no plan context to grade against.
+  if (planMetadata.matchedPlanExact === null) return null;
+  return planMetadata.matchedPlanExact ? "Planned" : "Custom";
+}
+
 // ─── Inputs ─────────────────────────────────────────────────────────
 
 export interface ComputePlanInputs {
@@ -211,7 +248,9 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
   // param is absent or doesn't resolve.
   function findRunDayByUrlId(): ScheduledRunDay | null {
     if (!inputs.urlScheduledRunId || !inputs.runDays) return null;
-    return inputs.runDays.find((d) => d.id === inputs.urlScheduledRunId) ?? null;
+    return (
+      inputs.runDays.find((d) => d.id === inputs.urlScheduledRunId) ?? null
+    );
   }
   function findTodayIncompleteRunDay(): ScheduledRunDay | null {
     // PR-0b-iii: status-aware "pickable" check via the central
@@ -221,7 +260,9 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     // race_completed_unlinked all refuse.
     return (
       inputs.runDays?.find(
-        (d) => d.dayIndex === inputs.todayDayIndex && isScheduledRunStartable(getScheduledRunStatus(d)),
+        (d) =>
+          d.dayIndex === inputs.todayDayIndex &&
+          isScheduledRunStartable(getScheduledRunStatus(d))
       ) ?? null
     );
   }
@@ -258,7 +299,9 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       metadata: {
         planMode,
         planSource: "url_template",
-        plannedRunDayIndex: resolvedPlannedDay ? resolvedPlannedDay.dayIndex : null,
+        plannedRunDayIndex: resolvedPlannedDay
+          ? resolvedPlannedDay.dayIndex
+          : null,
         plannedTemplateId: plannedTemplate?.id ?? null,
         plannedTemplateType: plannedTemplate?.type ?? null,
         actualTemplateId: tmpl.id,
@@ -289,7 +332,9 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       metadata: {
         planMode,
         planSource: "url_template",
-        plannedRunDayIndex: resolvedPlannedDay ? resolvedPlannedDay.dayIndex : null,
+        plannedRunDayIndex: resolvedPlannedDay
+          ? resolvedPlannedDay.dayIndex
+          : null,
         plannedTemplateId: plannedTemplate?.id ?? null,
         plannedTemplateType: plannedTemplate?.type ?? null,
         actualTemplateId: null,
@@ -326,9 +371,11 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     // completed_day branch — that's a "today is done but user opened
     // Run again" path and doesn't take URL pins (the URL-pinned id
     // would have routed through 3b above already).
-    const todayDay = resolvedPlannedDay && inputs.urlScheduledRunId
-      ? resolvedPlannedDay
-      : inputs.runDays.find((d) => d.dayIndex === inputs.todayDayIndex) ?? null;
+    const todayDay =
+      resolvedPlannedDay && inputs.urlScheduledRunId
+        ? resolvedPlannedDay
+        : (inputs.runDays.find((d) => d.dayIndex === inputs.todayDayIndex) ??
+          null);
 
     // PR-0b-iii: branch via the central status helper. Pre-
     // PR-0b-iii these branches read `todayDay.completed` which
@@ -368,7 +415,10 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
       if (!plannedTemplate) {
         // Missing template ID — caller logs, no prefill.
         return {
-          metadata: { ...freeformPlanMetadata(planMode), scheduledRunId: todayDay.id ?? null },
+          metadata: {
+            ...freeformPlanMetadata(planMode),
+            scheduledRunId: todayDay.id ?? null,
+          },
           prefill: {},
         };
       }
@@ -442,7 +492,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
  */
 export function finalisePlanMetadata(
   metadata: RunPlanMetadata,
-  actualActivityType: string,
+  actualActivityType: string
 ): RunPlanMetadata {
   // Look up what the prefill's template type was. If the user's final
   // activityType differs from the prefilled plannedTemplateType (when
@@ -453,7 +503,9 @@ export function finalisePlanMetadata(
     : null;
 
   const userDiverged =
-    prefillType !== null && prefillType !== undefined && actualActivityType !== prefillType;
+    prefillType !== null &&
+    prefillType !== undefined &&
+    actualActivityType !== prefillType;
 
   const actualTemplateId = userDiverged ? null : metadata.actualTemplateId;
 
@@ -591,7 +643,10 @@ function templateToPrefill(tmpl: RunTemplate): RunPlanPrefill {
     // here so the contract holds end-to-end — RunSetupModal
     // renders `value / 1000`, Run.tsx audio cues read metres
     // directly, no scattered multipliers.
-    prefill.target = { type: "distance", value: tmpl.config.targetDistance * 1000 };
+    prefill.target = {
+      type: "distance",
+      value: tmpl.config.targetDistance * 1000,
+    };
   } else if (tmpl.config.targetPace) {
     prefill.target = { type: "pace", value: tmpl.config.targetPace };
   }
