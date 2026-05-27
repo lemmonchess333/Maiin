@@ -1346,6 +1346,85 @@ export function useProgram() {
     ]);
   }, [programState, profile, saveProgram, updateProfile]);
 
+  // ── PR-L L4: fell-behind prompt writers ──────────────────────
+  //
+  // `weeklyFellBehindCheck` (Cloud Function, Mondays 05:00 UTC)
+  // sets `programState.pendingFellBehindPrompt` when a user ran
+  // <50% of their weekly target the prior week. Per Q24 the user
+  // has three choices when the prompt surfaces:
+  //
+  //   1. Skip-and-continue → just clear the flag
+  //   2. Shift plan back 1 week → race date +7d + regenerate plan
+  //   3. Compress remaining weeks → re-regen plan (date unchanged);
+  //      generator computes the `compressed` flag on its own
+  //
+  // All three clear the flag so the sheet doesn't re-prompt.
+
+  /** Q24 (i) — dismiss the prompt without changing the plan. */
+  const dismissFellBehindPrompt = useCallback(async () => {
+    if (!programState) return;
+    if (!programState.pendingFellBehindPrompt) return;
+    const next = { ...programState };
+    delete next.pendingFellBehindPrompt;
+    logger.log("[fellBehind] dismissed without plan change");
+    await saveProgram(next);
+  }, [programState, saveProgram]);
+
+  /** Q24 (ii) — shift the race date forward by 7 days and regen. */
+  const shiftRacePlanBackOneWeek = useCallback(async () => {
+    if (!programState || !profile) return;
+    if (!programState.pendingFellBehindPrompt) return;
+    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
+    const oldDate = parseLocalDate(profile.raceGoal.targetDate);
+    const newDate = addLocalDays(oldDate, 7);
+    const newTargetDate = localDateString(newDate);
+    const next = { ...programState };
+    delete next.pendingFellBehindPrompt;
+    logger.log(
+      `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}`
+    );
+    await Promise.all([
+      updateProfile({
+        raceGoal: { ...profile.raceGoal, targetDate: newTargetDate },
+      }),
+      saveProgram(next),
+    ]);
+    // The race-prep generator will rebuild runDays on the next
+    // refreshRunSchedule call (typically triggered by the editor
+    // or the load effect after profile change).
+  }, [programState, profile, saveProgram, updateProfile]);
+
+  /** Q24 (iii) — compress remaining weeks. Date unchanged; the
+   *  generator recomputes the `compressed` flag based on the new
+   *  weeks-to-race delta (which got shorter as time passed). The
+   *  user accepts a tighter prep instead of pushing the race. */
+  const compressRacePlan = useCallback(async () => {
+    if (!programState || !profile) return;
+    if (!programState.pendingFellBehindPrompt) return;
+    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
+    const next = { ...programState };
+    delete next.pendingFellBehindPrompt;
+    // Regenerate the race plan. generateRacePlanV2 reads the
+    // weeks-to-race delta from raceGoal.targetDate vs now; if it's
+    // below the ideal-build threshold, `compressed: true` lands
+    // on the new runPlan.
+    const weekStart = localWeekKey();
+    const weeklyRunDays = getWeeklyRunTarget(profile) || 3;
+    const v2 = generateRacePlanV2({
+      raceGoal: profile.raceGoal,
+      weekSchedule: profile.weekSchedule ?? [],
+      weeklyRunDays,
+      currentDate: localDateString(),
+      weekStart,
+    });
+    const runDays = v2.weeks[0] ?? [];
+    const runPlan = makeRunPlanRecord(v2, profile.raceGoal);
+    logger.log(
+      `[fellBehind] compressing remaining plan, compressed=${v2.compressed}`
+    );
+    await saveProgram({ ...next, runDays, runPlan });
+  }, [programState, profile, saveProgram]);
+
   // Week navigation
   const viewWeek = useCallback((historyIndex: number | null) => {
     setViewingHistoryIndex(historyIndex);
@@ -1384,6 +1463,9 @@ export function useProgram() {
     overrideRunDay,
     refreshRunSchedule,
     skipRecoveryEarly,
+    dismissFellBehindPrompt,
+    shiftRacePlanBackOneWeek,
+    compressRacePlan,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,
