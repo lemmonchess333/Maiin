@@ -2,20 +2,28 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { THEME } from "@/lib/theme";
 import { X } from "lucide-react";
-import { format } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 
 export default function WelcomeBackCard() {
-  const todayKey = format(new Date(), "yyyy-MM-dd");
+  const todayKey = localDateString();
   const storageKey = "wb-dismissed-" + todayKey;
-  const [dismissed, setDismissed] = useState(function() {
-    try { return localStorage.getItem(storageKey) === "1"; } catch { return false; }
+  const [dismissed, setDismissed] = useState(function () {
+    try {
+      return localStorage.getItem(storageKey) === "1";
+    } catch {
+      return false;
+    }
   });
 
   if (dismissed) return null;
 
   function handleDismiss() {
     setDismissed(true);
-    try { localStorage.setItem(storageKey, "1"); } catch { /* noop */ }
+    try {
+      localStorage.setItem(storageKey, "1");
+    } catch {
+      /* noop */
+    }
   }
 
   return (
@@ -30,7 +38,9 @@ export default function WelcomeBackCard() {
         className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
         style={{ backgroundColor: THEME.brand + "0F" }}
       >
-        <span className="text-sm" aria-hidden="true">👋</span>
+        <span className="text-sm" aria-hidden="true">
+          👋
+        </span>
         <p className="flex-1 text-xs font-medium text-foreground">
           Welcome back! Pick up where you left off.
         </p>

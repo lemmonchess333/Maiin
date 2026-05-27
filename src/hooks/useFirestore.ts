@@ -10,7 +10,8 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 
 export interface DailyLog {
   id: string;
@@ -48,14 +49,21 @@ export function useHistoryData(days: number = 30) {
 
   useEffect(() => {
     if (!user) {
-      const reset = () => { setData([]); setLoading(false); };
+      const reset = () => {
+        setData([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
 
-    const startDate = format(subDays(new Date(), days), "yyyy-MM-dd");
+    const startDate = localDateString(subDays(new Date(), days));
     const logsRef = collection(db, "users", user.uid, "logs");
-    const q = query(logsRef, where("date", ">=", startDate), orderBy("date", "asc"));
+    const q = query(
+      logsRef,
+      where("date", ">=", startDate),
+      orderBy("date", "asc")
+    );
 
     getDocs(q)
       .then((snapshot) => {
