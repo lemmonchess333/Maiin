@@ -17,7 +17,6 @@
  * Surfaces using this config:
  *   - src/pages/Upgrade.tsx                (full pricing page)
  *   - src/components/ProModal.tsx          (gated-feature paywall)
- *   - src/components/AdaptiveSummary.tsx   (locked-Pro pricing line)
  *   - src/hooks/useProCheckout.ts          (shared checkout hook)
  *
  * If you change a price here, update the matching Stripe price /
@@ -116,7 +115,7 @@ export function getRenewalDisclosure(
 
 /**
  * Short inline price summary used on locked-Pro cards that don't
- * have room for a full plan tile (e.g. AdaptiveSummary). Renders as
+ * have room for a full plan tile. Renders as
  * "£3.99/month or £34.99/year". Pulls from PRO_PLANS so the locked
  * copy can't drift from the actual checkout prices.
  */
