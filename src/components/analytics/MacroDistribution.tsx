@@ -1,6 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import { THEME } from "@/lib/theme";
+import { CHART_TOOLTIP_STYLE } from "./chartStyles";
 
 interface MacroDistributionProps {
   protein: number;
@@ -8,16 +9,11 @@ interface MacroDistributionProps {
   fat: number;
 }
 
-/* Hist5f S2 + P3: Tooltip matches PerformanceIndexChart + VolumeChart's
-   style (THEME.chartTooltipBg). Reference style per Hist5f-P3 so the
-   three Analytics charts read as a coherent set. */
-const TOOLTIP_STYLE = {
-  background: THEME.chartTooltipBg,
-  border: "none" as const,
-  borderRadius: 12,
-  fontSize: 12,
-  color: THEME.textPrimary,
-  padding: "8px 12px",
+type MacroSlice = {
+  name: string;
+  value: number;
+  color: string;
+  grams: number;
 };
 
 // Average daily macro split as a donut. Reads calories-by-macro, not
@@ -40,7 +36,7 @@ export default function MacroDistribution({
 
   if (total === 0) return null;
 
-  const data = [
+  const data: MacroSlice[] = [
     {
       name: "Protein",
       value: pCal,
@@ -65,7 +61,11 @@ export default function MacroDistribution({
         {/* Donut is decorative re: VoiceOver — the legend below it
             already announces the same percentages + grams as text.
             aria-hidden on the chart container prevents the screen
-            reader from reading "image" twice. */}
+            reader from reading "image" twice. Pair with
+            `rootTabIndex={-1}` on Pie so the focusable wrapper
+            Recharts injects (default tabIndex=0) doesn't leave a
+            tab-stop inside an aria-hidden subtree — that's the
+            axe-core aria-hidden-focus violation. */}
         <div className="w-24 h-24 shrink-0 relative" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -75,14 +75,11 @@ export default function MacroDistribution({
                   carries, surfaced at the slice for users reading
                   the donut directly. */}
               <Tooltip
-                contentStyle={TOOLTIP_STYLE}
+                contentStyle={CHART_TOOLTIP_STYLE}
                 formatter={(_value, _name, item) => {
-                  const p = item?.payload as
-                    | { name: string; value: number; grams: number }
-                    | undefined;
+                  const p = item?.payload as MacroSlice | undefined;
                   if (!p) return ["", ""];
-                  const sharePct = Math.round((p.value / total) * 100);
-                  return [`${sharePct}% · ${p.grams}g`, p.name] as [
+                  return [`${pct(p.value)}% · ${p.grams}g`, p.name] as [
                     string,
                     string,
                   ];
@@ -97,21 +94,19 @@ export default function MacroDistribution({
                 endAngle={-270}
                 stroke="none"
                 isAnimationActive={false}
+                rootTabIndex={-1}
                 /* Hist5f S1 + P4: tap-attempt telemetry. Fires on
                    slice click with the macro name as binKey + the
                    calorie-share % as value. P6 honoured — a slice
-                   with value === 0 is render-suppressed by
-                   Recharts already, but guard explicitly so the
-                   handler reads cleanly. */
+                   with value === 0 short-circuits via the falsy
+                   guard below (`!e?.value`). */
                 onClick={(entry) => {
-                  const e = entry as
-                    | { name?: string; value?: number }
-                    | undefined;
-                  if (!e || !e.value || e.value === 0) return;
+                  const e = entry as MacroSlice | undefined;
+                  if (!e?.value) return;
                   trackHistoryEvent("history_chart_tap_attempted", {
                     chart: "macro",
-                    binKey: e.name ?? "",
-                    value: Math.round((e.value / total) * 100),
+                    binKey: String(e.name ?? ""),
+                    value: pct(e.value),
                   });
                 }}
               >
