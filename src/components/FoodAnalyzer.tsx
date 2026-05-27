@@ -16,7 +16,10 @@ import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
-import { validateFoodEntry, checkAggregateAgainstTarget } from "@/lib/foodValidation";
+import {
+  validateFoodEntry,
+  checkAggregateAgainstTarget,
+} from "@/lib/foodValidation";
 import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
 
@@ -133,7 +136,14 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
-export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, onRequestTypedInput, onRequestManualLog, effectiveDailyTarget }: Props) {
+export default function FoodAnalyzer({
+  date,
+  meal: targetMealCategory,
+  onSaved,
+  onRequestTypedInput,
+  onRequestManualLog,
+  effectiveDailyTarget,
+}: Props) {
   const { user } = useAuth();
   const { addFavourite } = useFoodFavourites();
 
@@ -165,7 +175,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
      AI-detected items in the editor) reads "Review items".
      Defaults to "Edit" — matches the F1 wording. */
   const [warnCancelLabel, setWarnCancelLabel] = useState<string>("Edit");
-  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(null);
+  const [pendingSave, setPendingSave] = useState<(() => Promise<void>) | null>(
+    null
+  );
 
   // Auto-open camera with 150ms delay to avoid jarring
   useEffect(() => {
@@ -229,7 +241,8 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
      - Single-item AI results would mean only one row to edit, and the
        global totals are already the per-item totals — adding an editor
        would be redundant chrome. */
-  const isMultiItem = !!activeResult && activeResult.items.length > 1 && !isBarcode;
+  const isMultiItem =
+    !!activeResult && activeResult.items.length > 1 && !isBarcode;
 
   /* Derived: each item annotated with its current multiplier + removed
      flag. The base item is preserved untouched so `saveMeal` can
@@ -251,7 +264,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
 
   const activeItems = useMemo(
     () => editedItems.filter((it) => !it.removed),
-    [editedItems],
+    [editedItems]
   );
 
   /* When the user has removed every item, saving a 0-calorie meal is
@@ -275,7 +288,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
           carbs: sum.carbs + safeNum(item.carbs) * item.multiplier,
           fat: sum.fat + safeNum(item.fat) * item.multiplier,
         }),
-        { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
       );
     }
     const factor = isBarcode ? servings : 1;
@@ -337,38 +350,39 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
   const performSave = async (meal: MealResult) => {
     if (!user) return;
     setSaving(true);
-
-    /* For barcode + single-item AI we keep the original "scale by global
+    try {
+      /* For barcode + single-item AI we keep the original "scale by global
        servings stepper" behaviour. For multi-item AI we use the per-item
        multiplier edits and skip removed items entirely. The two paths
        converge on the same persisted shape. */
-    const s = isBarcode ? servings : 1;
+      const s = isBarcode ? servings : 1;
 
-    const persistedItems = isMultiItem
-      ? activeItems.map((item) => ({
-          name: item.name,
-          /* Annotate the portionSize with the multiplier when it isn't
+      const persistedItems = isMultiItem
+        ? activeItems.map((item) => ({
+            name: item.name,
+            /* Annotate the portionSize with the multiplier when it isn't
              1× so the saved entry reads accurately in the diary
              ("1.5x 1 cup pasta"). Mirrors the existing barcode treatment. */
-          portionSize:
-            item.multiplier !== 1
-              ? `${item.multiplier}x ${item.portionSize}`
-              : item.portionSize,
-          calories: Math.round(safeNum(item.calories) * item.multiplier),
-          protein: Math.round(safeNum(item.protein) * item.multiplier),
-          carbs: Math.round(safeNum(item.carbs) * item.multiplier),
-          fat: Math.round(safeNum(item.fat) * item.multiplier),
-        }))
-      : meal.items.map((item) => ({
-          ...item,
-          portionSize: s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
-          calories: Math.round(item.calories * s),
-          protein: Math.round(item.protein * s),
-          carbs: Math.round(item.carbs * s),
-          fat: Math.round(item.fat * s),
-        }));
+            portionSize:
+              item.multiplier !== 1
+                ? `${item.multiplier}x ${item.portionSize}`
+                : item.portionSize,
+            calories: Math.round(safeNum(item.calories) * item.multiplier),
+            protein: Math.round(safeNum(item.protein) * item.multiplier),
+            carbs: Math.round(safeNum(item.carbs) * item.multiplier),
+            fat: Math.round(safeNum(item.fat) * item.multiplier),
+          }))
+        : meal.items.map((item) => ({
+            ...item,
+            portionSize:
+              s !== 1 ? `${s}x ${item.portionSize}` : item.portionSize,
+            calories: Math.round(item.calories * s),
+            protein: Math.round(item.protein * s),
+            carbs: Math.round(item.carbs * s),
+            fat: Math.round(item.fat * s),
+          }));
 
-    /* Diary row name derived from items, not from the AI's
+      /* Diary row name derived from items, not from the AI's
        generated container title. F4 audit found that the model
        (Gemini 2.0 Flash) interprets the prompt's "name of the
        food/meal" as a category label and returns titles like
@@ -383,57 +397,75 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
        multi-item scans). Barcode results pass an explicit
        fallback so single-product entries keep their product
        name when items happen to be empty. */
-    const derivedFoodName = isBarcode
-      ? meal.foodName
-      : buildFoodNameFromItems(persistedItems, meal.foodName);
+      const derivedFoodName = isBarcode
+        ? meal.foodName
+        : buildFoodNameFromItems(persistedItems, meal.foodName);
 
-    const mealRef = doc(collection(db, "users", user.uid, "meals"));
-    await setDoc(mealRef, {
-      date,
-      foodName: derivedFoodName,
-      items: persistedItems,
-      totalCalories: Math.round(displayTotals.calories),
-      totalProtein: Math.round(displayTotals.protein),
-      totalCarbs: Math.round(displayTotals.carbs),
-      totalFat: Math.round(displayTotals.fat),
-      confidence: meal.confidence,
-      barcode: meal.barcode || null,
-      brand: meal.brand || null,
-      imageUrl: meal.imageUrl || null,
-      createdAt: Timestamp.now(),
-      ...(targetMealCategory ? { meal: targetMealCategory } : {}),
-    });
+      const mealRef = doc(collection(db, "users", user.uid, "meals"));
+      await setDoc(mealRef, {
+        date,
+        foodName: derivedFoodName,
+        items: persistedItems,
+        totalCalories: Math.round(displayTotals.calories),
+        totalProtein: Math.round(displayTotals.protein),
+        totalCarbs: Math.round(displayTotals.carbs),
+        totalFat: Math.round(displayTotals.fat),
+        confidence: meal.confidence,
+        barcode: meal.barcode || null,
+        brand: meal.brand || null,
+        imageUrl: meal.imageUrl || null,
+        createdAt: Timestamp.now(),
+        ...(targetMealCategory ? { meal: targetMealCategory } : {}),
+      });
 
-    // Preserve favourites functionality — favourite reflects the
-    // edited totals, not the original AI estimate, so a re-log via
-    // the favourite chip lands on the same numbers the user saved.
-    /* Favourite uses the same derived name as the diary row so
+      // Preserve favourites functionality — favourite reflects the
+      // edited totals, not the original AI estimate, so a re-log via
+      // the favourite chip lands on the same numbers the user saved.
+      /* Favourite uses the same derived name as the diary row so
        re-logging via the Quick Add chip lands on the same label
        the user saw in the diary — pre-F5.1 the favourite carried
        the AI's container title ("Breakfast Ingredients") while
        the diary now reads correctly, which would have been a
        confusing inconsistency. */
-    await addFavourite({
-      name: derivedFoodName,
-      calories: Math.round(displayTotals.calories),
-      protein: Math.round(displayTotals.protein),
-      carbs: Math.round(displayTotals.carbs),
-      fat: Math.round(displayTotals.fat),
-      servingSize: persistedItems[0]?.portionSize ?? "1 serving",
-      source: meal.barcode ? "barcode" : "photo",
-    });
+      await addFavourite({
+        name: derivedFoodName,
+        calories: Math.round(displayTotals.calories),
+        protein: Math.round(displayTotals.protein),
+        carbs: Math.round(displayTotals.carbs),
+        fat: Math.round(displayTotals.fat),
+        servingSize: persistedItems[0]?.portionSize ?? "1 serving",
+        source: meal.barcode ? "barcode" : "photo",
+      });
 
-    localStorage.setItem("tropos_ever_scanned", "1");
+      try {
+        localStorage.setItem("tropos_ever_scanned", "1");
+      } catch {
+        // Safari private mode — non-essential flag, swallow.
+      }
 
-    setSaving(false);
-    setSaved(true);
+      setSaving(false);
+      setSaved(true);
 
-    setTimeout(() => {
-      setSaved(false);
-      handleResetAll();
-      setCameraOpen(false);
-      onSaved?.();
-    }, 1200);
+      setTimeout(() => {
+        setSaved(false);
+        handleResetAll();
+        setCameraOpen(false);
+        onSaved?.();
+      }, 1200);
+    } catch (err) {
+      // Catch every throw on the save path — pre-fix any error
+      // (offline setDoc, addFavourite quota, localStorage in
+      // private mode) left `saving=true` forever with no toast,
+      // making the save button stuck and the camera modal unable
+      // to close. Toast + reset so the user gets feedback and can
+      // retry.
+      setSaving(false);
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Couldn't save — please try again.";
+      toast.error(message);
+    }
   };
 
   /* Suspicious-value gate. AI photo + multi-item AI are user-input
@@ -460,7 +492,7 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
     if (meal.confidence !== "barcode") {
       const aggregateVerdict = checkAggregateAgainstTarget(
         displayTotals.calories,
-        effectiveDailyTarget,
+        effectiveDailyTarget
       );
       if (aggregateVerdict) {
         setWarnTitle(aggregateVerdict.title);
@@ -590,22 +622,32 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
         loading={showLoading}
-        onRequestTypedInput={onRequestTypedInput ? () => {
-          setCameraOpen(false);
-          onRequestTypedInput();
-        } : undefined}
+        onRequestTypedInput={
+          onRequestTypedInput
+            ? () => {
+                setCameraOpen(false);
+                onRequestTypedInput();
+              }
+            : undefined
+        }
       />
 
       {showLoading && (
         <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-          <Spinner size="sm" variant="muted" label={barcodeLoading ? "Fetching nutrition" : "Analyzing food"} />
+          <Spinner
+            size="sm"
+            variant="muted"
+            label={barcodeLoading ? "Fetching nutrition" : "Analyzing food"}
+          />
           {barcodeLoading ? "Fetching nutrition..." : "Analyzing..."}
         </div>
       )}
 
       {showError && !activeResult && (
         <div className="bg-red-50 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-red-600">Couldn't identify food. Try manual entry.</p>
+          <p className="text-sm text-red-600">
+            Couldn't identify food. Try manual entry.
+          </p>
           <div className="flex gap-3">
             <button
               onClick={handleResetAll}
@@ -615,7 +657,10 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
               <RotateCcw className="w-3.5 h-3.5" /> Try again
             </button>
             <button
-              onClick={() => { handleResetAll(); setCameraOpen(false); }}
+              onClick={() => {
+                handleResetAll();
+                setCameraOpen(false);
+              }}
               className="text-sm text-primary font-medium"
             >
               Switch to manual entry
@@ -636,13 +681,20 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
       {aiResultIsEmpty && !showError && !showLoading && (
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
           <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">Couldn't identify food</p>
-            <p className="text-sm text-muted-foreground">Try another photo, or log it manually.</p>
+            <p className="text-base font-semibold text-foreground">
+              Couldn't identify food
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Try another photo, or log it manually.
+            </p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => { handleResetAll(); setCameraOpen(true); }}
+              onClick={() => {
+                handleResetAll();
+                setCameraOpen(true);
+              }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
               style={{ backgroundColor: "#7C6BF0" }}
             >
@@ -698,8 +750,12 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
               >
                 <span aria-hidden="true">⚠</span>
                 <div className="text-xs leading-relaxed">
-                  <span className="font-semibold">AI estimate — review carefully.</span>
-                  <span className="ml-1 opacity-80">Some items may need correcting before you save.</span>
+                  <span className="font-semibold">
+                    AI estimate — review carefully.
+                  </span>
+                  <span className="ml-1 opacity-80">
+                    Some items may need correcting before you save.
+                  </span>
                 </div>
               </div>
             )}
@@ -771,7 +827,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                   <div className="space-y-1.5 border-t border-border/40 pt-2.5">
                     {editedItems.map((item) => {
                       const i = item.index;
-                      const itemCal = Math.round(safeNum(item.calories) * item.multiplier);
+                      const itemCal = Math.round(
+                        safeNum(item.calories) * item.multiplier
+                      );
                       if (item.removed) {
                         return (
                           <div
@@ -799,16 +857,23 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                           className="flex items-center gap-2"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm text-foreground truncate">{item.name}</p>
+                            <p className="text-sm text-foreground truncate">
+                              {item.name}
+                            </p>
                             <p className="text-xs text-muted-foreground truncate">
                               {item.portionSize}
                             </p>
                           </div>
                           {isMultiItem && (
-                            <div className="flex items-center gap-1 shrink-0" aria-label={`${item.name} portion`}>
+                            <div
+                              className="flex items-center gap-1 shrink-0"
+                              aria-label={`${item.name} portion`}
+                            >
                               <button
                                 type="button"
-                                onClick={() => setItemMultiplier(i, item.multiplier - 0.5)}
+                                onClick={() =>
+                                  setItemMultiplier(i, item.multiplier - 0.5)
+                                }
                                 aria-label={`Decrease ${item.name} portion`}
                                 disabled={item.multiplier <= 0.5}
                                 className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
@@ -820,7 +885,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                               </span>
                               <button
                                 type="button"
-                                onClick={() => setItemMultiplier(i, item.multiplier + 0.5)}
+                                onClick={() =>
+                                  setItemMultiplier(i, item.multiplier + 0.5)
+                                }
                                 aria-label={`Increase ${item.name} portion`}
                                 disabled={item.multiplier >= 4}
                                 className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
@@ -913,7 +980,9 @@ export default function FoodAnalyzer({ date, meal: targetMealCategory, onSaved, 
                       <Minus className="w-4 h-4" />
                     </button>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-foreground">{servings}</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {servings}
+                      </p>
                       <p className="text-xs text-muted-foreground">servings</p>
                     </div>
                     <button
