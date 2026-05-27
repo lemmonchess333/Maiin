@@ -52,11 +52,11 @@ export default function ShoeMileageSection() {
       style={{ boxShadow: "var(--ds-shadow-card)" }}
     >
       <div className="flex items-center gap-2">
-        <Footprints className="w-4 h-4 text-muted-foreground" />
+        <Footprints className="size-4 text-muted-foreground" />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex-1">
           Shoe Mileage
         </p>
-        <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
+        <ChevronRight className="size-4 text-muted-foreground/60" />
       </div>
       <div className="space-y-3">
         {activeShoes.slice(0, 3).map((shoe) => (

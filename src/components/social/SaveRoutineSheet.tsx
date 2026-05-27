@@ -57,21 +57,29 @@ function ExerciseSummary({
     if (isBodyweightExerciseId(exerciseId)) {
       return (
         <span>
-          <span className={num}>{sets}×{reps}</span>
+          <span className={num}>
+            {sets}×{reps}
+          </span>
           <span className={unit}> BW</span>
         </span>
       );
     }
     return (
       <span>
-        <span className={num}>{sets}×{reps}</span>
+        <span className={num}>
+          {sets}×{reps}
+        </span>
       </span>
     );
   }
-  const weightStr = Number.isInteger(weight) ? String(weight) : weight.toFixed(1);
+  const weightStr = Number.isInteger(weight)
+    ? String(weight)
+    : weight.toFixed(1);
   return (
     <span>
-      <span className={num}>{sets}×{reps}×{weightStr}</span>
+      <span className={num}>
+        {sets}×{reps}×{weightStr}
+      </span>
       <span className={unit}>kg</span>
     </span>
   );
@@ -183,82 +191,87 @@ export default function SaveRoutineSheet({
       description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from your Programme.`}
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
+        {/* Name input */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="routine-name"
+            className="text-xs font-medium text-muted-foreground"
+          >
+            Name
+          </label>
+          <input
+            id="routine-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
+            placeholder="e.g. Push A"
+            className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
 
-            {/* Name input */}
-            <div className="space-y-1.5">
-              <label htmlFor="routine-name" className="text-xs font-medium text-muted-foreground">
-                Name
-              </label>
-              <input
-                id="routine-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value.slice(0, NAME_MAX))}
-                placeholder="e.g. Push A"
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
-            </div>
-
-            {/* Exercise preview — read-only list of what will be saved.
+        {/* Exercise preview — read-only list of what will be saved.
                 Capped at 6 visible rows so the sheet stays compact;
                 a longer routine still saves all exercises, just shows
                 "+ N more" below the visible six. */}
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">
-                Exercises ({exercises.length})
-              </p>
-              <div className="rounded-xl bg-muted/40 p-3 space-y-1.5">
-                {exercises.slice(0, 6).map((ex, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-foreground truncate">{ex.name}</span>
-                    <span className="shrink-0 text-xs">
-                      <ExerciseSummary
-                        setCount={ex.setCount}
-                        targetReps={ex.targetReps}
-                        targetWeightKg={ex.targetWeightKg}
-                        exerciseId={ex.exerciseId}
-                      />
-                    </span>
-                  </div>
-                ))}
-                {exercises.length > 6 && (
-                  <p className="text-xs text-muted-foreground/70 pt-1">
-                    + {exercises.length - 6} more
-                  </p>
-                )}
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground">
+            Exercises ({exercises.length})
+          </p>
+          <div className="rounded-xl bg-muted/40 p-3 space-y-1.5">
+            {exercises.slice(0, 6).map((ex, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-2 text-sm"
+              >
+                <span className="text-foreground truncate">{ex.name}</span>
+                <span className="shrink-0 text-xs">
+                  <ExerciseSummary
+                    setCount={ex.setCount}
+                    targetReps={ex.targetReps}
+                    targetWeightKg={ex.targetWeightKg}
+                    exerciseId={ex.exerciseId}
+                  />
+                </span>
               </div>
-            </div>
+            ))}
+            {exercises.length > 6 && (
+              <p className="text-xs text-muted-foreground/70 pt-1">
+                + {exercises.length - 6} more
+              </p>
+            )}
+          </div>
+        </div>
 
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={saving || saved}
-                className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || saved || !name.trim()}
-                aria-live="polite"
-                className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition-colors flex items-center justify-center gap-1.5"
-                style={{
-                  backgroundColor: saved ? THEME.success : THEME.brandStrong,
-                }}
-              >
-                {saved ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Saved
-                  </>
-                ) : saving ? (
-                  "Saving…"
-                ) : (
-                  "Save"
-                )}
-              </button>
+        <div className="flex gap-2 pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving || saved}
+            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || saved || !name.trim()}
+            aria-live="polite"
+            className="flex-1 py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.98] disabled:opacity-90 transition-colors flex items-center justify-center gap-1.5"
+            style={{
+              backgroundColor: saved ? THEME.success : THEME.brandStrong,
+            }}
+          >
+            {saved ? (
+              <>
+                <Check className="size-4" />
+                Saved
+              </>
+            ) : saving ? (
+              "Saving…"
+            ) : (
+              "Save"
+            )}
+          </button>
         </div>
       </div>
     </BottomSheet>

@@ -169,7 +169,7 @@ export default function DayPeekCard({
                 onClick={() => onManage(dateKey)}
                 className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
               >
-                <Settings2 className="w-3 h-3" />
+                <Settings2 className="size-3" />
                 Manage day
               </button>
             )}
@@ -178,7 +178,7 @@ export default function DayPeekCard({
               {hasW && (
                 <div className="flex items-center gap-1.5">
                   <Dumbbell
-                    className="w-3.5 h-3.5 shrink-0"
+                    className="size-3.5 shrink-0"
                     style={{ color: THEME.lifting }}
                   />
                   <span className="text-foreground font-mono tabular-nums">
@@ -203,7 +203,7 @@ export default function DayPeekCard({
               {hasM && (
                 <div className="flex items-center gap-1.5">
                   <ClipboardList
-                    className="w-3.5 h-3.5 shrink-0"
+                    className="size-3.5 shrink-0"
                     style={{ color: THEME.success }}
                   />
                   <span className="text-foreground font-mono tabular-nums">
@@ -220,7 +220,7 @@ export default function DayPeekCard({
               {hasRun && (
                 <div className="flex items-center gap-1.5">
                   <Footprints
-                    className="w-3.5 h-3.5 shrink-0"
+                    className="size-3.5 shrink-0"
                     style={{ color: THEME.running }}
                   />
                   <span className="text-foreground">
@@ -241,10 +241,7 @@ export default function DayPeekCard({
                           <span className="inline-flex items-center gap-1">
                             {isManual ? "Marked complete" : "Run completed"}
                             <Check
-                              className={cn(
-                                "w-3 h-3",
-                                isManual && "opacity-50"
-                              )}
+                              className={cn("size-3", isManual && "opacity-50")}
                               style={{ color: THEME.success }}
                             />
                           </span>
@@ -283,7 +280,7 @@ export default function DayPeekCard({
                   className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md active:scale-[0.97]"
                 >
                   <Footprints
-                    className="w-3.5 h-3.5 shrink-0 opacity-50"
+                    className="size-3.5 shrink-0 opacity-50"
                     style={{ color: THEME.running }}
                   />
                   <span>
@@ -312,7 +309,7 @@ export default function DayPeekCard({
  * Q5 P70 — extras row rendering inside DayPeekCard. Mirrors the
  * RunWeekStrip pill's visual language for cross-surface coherence:
  * outlined / dimmed Footprints (vs the solid coral on the planned-
- * slot row), muted-foreground text. Whole `<button>` is the tap
+ * slot row), muted-foreground text. Whole `<button type="button">` is the tap
  * target so the row meets the iOS HIG touch floor inside the card.
  *
  * Distance label format: "5km" when whole-km, "5.4km" otherwise.
@@ -348,7 +345,7 @@ function ExtraRunRow({
       className="inline-flex items-center gap-1.5 -ml-1 px-1 py-0.5 rounded-md text-foreground/80 hover:text-foreground active:scale-[0.97]"
     >
       <Footprints
-        className="w-3.5 h-3.5 shrink-0 opacity-50"
+        className="size-3.5 shrink-0 opacity-50"
         style={{ color: THEME.running }}
       />
       <span className="text-muted-foreground">

@@ -88,6 +88,7 @@ export default function WeekStrip({
         }
         return (
           <button
+            type="button"
             key={day.key}
             onClick={function () {
               onDayTap(day.key);
@@ -108,7 +109,7 @@ export default function WeekStrip({
             <div className="flex items-center gap-1">
               {(day.sType === "both" || day.sType === "lift") && (
                 <div
-                  className="w-[7px] h-[7px] rounded-full"
+                  className="size-[7px] rounded-full"
                   style={{ backgroundColor: THEME.lifting }}
                 />
               )}
@@ -121,7 +122,7 @@ export default function WeekStrip({
               {(day.sType === "both" || day.sType === "run") &&
                 day.runCompleted && (
                   <Check
-                    className="w-[10px] h-[10px]"
+                    className="size-[10px]"
                     style={{ color: THEME.running }}
                     strokeWidth={3}
                   />
@@ -129,7 +130,7 @@ export default function WeekStrip({
               {(day.sType === "both" || day.sType === "run") &&
                 !day.runCompleted && (
                   <div
-                    className="w-[7px] h-[7px] rotate-45"
+                    className="size-[7px] rotate-45"
                     style={{
                       backgroundColor: day.runSkipped
                         ? "hsl(var(--muted-foreground))"
@@ -138,7 +139,7 @@ export default function WeekStrip({
                     }}
                   />
                 )}
-              {day.sType === "rest" && <div className="w-[7px] h-[7px]" />}
+              {day.sType === "rest" && <div className="size-[7px]" />}
             </div>
           </button>
         );
