@@ -70,7 +70,10 @@ function savedRun(overrides = {}) {
   return {
     id: "saved-race",
     date: RACE_DATE,
-    templateId: "race",
+    // Saved-run docs carry the planMetadata flattened — the
+    // resolved template lives at top-level as `actualTemplateId`.
+    // There is no plain `templateId` on a saved run.
+    actualTemplateId: "race",
     distance: 10000,
     avgPace: 280,
     ...overrides,
@@ -118,11 +121,24 @@ describe("_decideRecoveryEntry — gate-by-gate negative cases", () => {
     expect(result.write).toBe(false);
   });
 
-  it("does not write when the saved run's templateId is not 'race'", () => {
+  it("does not write when the saved run's actualTemplateId is not 'race'", () => {
     const result = _decideRecoveryEntry(
       profile(),
       programState(),
-      savedRun({ templateId: "tempo" })
+      savedRun({ actualTemplateId: "tempo" })
+    );
+    expect(result.write).toBe(false);
+  });
+
+  it("does not write when the saved run is flagged isInvalid (junk save)", () => {
+    // "Save anyway" on a borked GPS trace must not trigger recovery
+    // entry. The user explicitly flagged the run as invalid; the
+    // recovery hero / phase shouldn't reorganise their plan around
+    // a save they themselves rejected.
+    const result = _decideRecoveryEntry(
+      profile(),
+      programState(),
+      savedRun({ isInvalid: true, savedAnyway: true })
     );
     expect(result.write).toBe(false);
   });
