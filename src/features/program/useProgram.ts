@@ -347,100 +347,28 @@ export function useProgram() {
     [user]
   );
 
-  // PR-D: race-day auto-transition effect. When the race date has
-  // passed AND the race-day runDay is still `planned`, infer a
-  // no-show and transition the status. Fires on programState
-  // load and on subsequent programState changes (idempotent —
-  // once the status is no-show or completed_*, this skips).
+  // PR-L L5 — the race-no-show transition (PR-D) and recovery-phase
+  // exit (PR-E) effects used to live here as `useEffect`s that wrote
+  // to programState. They moved to server-side Cloud Functions per
+  // the PR-L plan so non-React clients (Apple Watch, future native)
+  // reach the same state without per-client logic.
   //
-  // Conditions:
-  //   - profile.runMode === "race_prep" AND profile.raceGoal exists
-  //   - a runDay with `date === raceGoal.targetDate` AND `status === "planned"`
-  //   - today - 3 days > race date (the 3-day grace period locked in Q5)
+  // The replacements are:
+  //   - Race-no-show: `dailyRaceReconciliationSweep` (Pub/Sub, 04:00
+  //     UTC daily). Reads programState + the race-date saved-runs
+  //     bucket; writes `runDay.status: race_no_show` when the 3-day
+  //     grace has passed and no real race-templated saved-run matched.
+  //   - Recovery-exit: same scheduled function. Clears
+  //     `runPlan.phase` + `recoveryEndDate` when today is past
+  //     `recoveryEndDate + 7d`.
+  //   - Recovery-entry: `onRunCreated` extension (`_maybeWriteRecoveryEntry
+  //     ForRun`). Writes recovery state when a saved run is a strict
+  //     race-day match.
   //
-  // Recoverability: race_no_show → completed_* is legal (per PR-D's
-  // LEGAL_TRANSITIONS update). If the user later logs the race via
-  // RunSummary's reconciliation flow, the slot transitions onward.
-  useEffect(() => {
-    if (!programState || !profile) return;
-    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
-
-    const raceDate = profile.raceGoal.targetDate;
-    const raceDay = programState.runDays?.find((rd) => rd.date === raceDate);
-    if (!raceDay) return;
-
-    const status = getScheduledRunStatus(raceDay);
-    if (status !== "planned") return;
-
-    // 3-day grace period — auto-transition only fires when the
-    // race date is more than 3 days in the past. Users who
-    // upload late get the chance to reconcile before we infer
-    // no-show.
-    const gracePassed =
-      new Date().getTime() - parseLocalDate(raceDate).getTime() >
-      3 * 24 * 60 * 60 * 1000;
-    if (!gracePassed) return;
-
-    // Transition gate. transitionStatus(planned, race_no_show) is
-    // legal per LEGAL_TRANSITIONS. Defense in depth — refuses if
-    // the transition table changes underneath us.
-    if (!transitionStatus(status, "race_no_show")) return;
-
-    const updatedRunDays = programState.runDays!.map((rd) =>
-      rd === raceDay
-        ? { ...rd, status: "race_no_show" as ScheduledRunStatus }
-        : rd
-    );
-
-    logger.log(
-      `[auto-transition] race-day runDay ${raceDay.id ?? raceDay.dayIndex} → race_no_show ` +
-        `(date ${raceDate}, ${Math.floor((new Date().getTime() - parseLocalDate(raceDate).getTime()) / 86400000)} days past)`
-    );
-
-    saveProgram({ ...programState, runDays: updatedRunDays }).catch((err) => {
-      logger.warn("[auto-transition] save failed", err);
-    });
-  }, [programState, profile, saveProgram]);
-
-  // PR-E: recovery-phase exit effect. When the user has been in
-  // recovery and the grace period (recoveryEndDate + 7 days) has
-  // passed, silently clear `phase` and `recoveryEndDate` from
-  // runPlan. The 7-day window between `recoveryEndDate` and the
-  // grace-end is when PR-C's "Recovery ended — what's next?"
-  // card variant prompts the user to pick their next direction;
-  // if they ignore it for a full week, we auto-promote back to
-  // normal training shape.
-  //
-  // Mid-recovery (today < recoveryEndDate): no-op, this effect
-  // skips. The card shows "Recovering — N days left."
-  // Post-recovery, in grace (today >= recoveryEndDate, today <
-  // recoveryEndDate + 7d): no-op here either. PR-C's variant 3
-  // renders. Phase stays "recovery" so refreshRunSchedule keeps
-  // emitting easy_30 (the user's still in the soft window).
-  // Post-grace (today >= recoveryEndDate + 7d): silent clear.
-  useEffect(() => {
-    if (!programState?.runPlan) return;
-    if (programState.runPlan.phase !== "recovery") return;
-    if (!programState.runPlan.recoveryEndDate) return;
-
-    const gracePost = parseLocalDate(programState.runPlan.recoveryEndDate);
-    gracePost.setDate(gracePost.getDate() + 7);
-    const todayKey = localDateString();
-    const graceEndKey = localDateString(gracePost);
-    if (todayKey < graceEndKey) return;
-
-    const cleared = { ...programState.runPlan };
-    delete cleared.phase;
-    delete cleared.recoveryEndDate;
-
-    logger.log(
-      `[recovery-exit] phase cleared after grace (recoveryEndDate ${programState.runPlan.recoveryEndDate}, today ${todayKey})`
-    );
-
-    saveProgram({ ...programState, runPlan: cleared }).catch((err) => {
-      logger.warn("[recovery-exit] save failed", err);
-    });
-  }, [programState, saveProgram]);
+  // No client write path remains for these transitions. The hook is
+  // now a pure Firestore reader + UI dispatcher for race-day state.
+  // Latency trade-off: recovery hero pops in 3-10s vs <1s pre-L5
+  // (next Cloud Function invocation); acceptable per the PR-L scope.
 
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
