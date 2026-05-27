@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { stripUndefined } from "../lib/firestoreGuards";
+import { localDateString } from "../lib/dateHelpers";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { logger } from "../lib/logger";
@@ -576,6 +577,14 @@ export default function RunSummary() {
         new Date(points[0]?.timestamp || Date.now())
       ),
       completedAt: Timestamp.now(),
+      // PR-L bugfix — saved-run docs now persist a local-date string
+      // alongside the completedAt Timestamp. The PR-L scheduled
+      // functions (dailyRaceReconciliationSweep, weeklyFellBehindCheck)
+      // and the onRunCreated recovery-entry path all filter runs by
+      // this field; without it the queries return empty for every
+      // user and the reconciliation flow silently mis-fires. Matches
+      // the workouts convention (saved workouts already carry both).
+      date: localDateString(new Date()),
       notes: notes.trim(),
       visibility: "followers" as const,
       type: "run",
