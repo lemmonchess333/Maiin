@@ -5,7 +5,11 @@ import { doc, setDoc, Timestamp } from "firebase/firestore";
 import { logger } from "../lib/logger";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
-import { getSavedRoutine, type SavedRoutine, type SavedRoutineExercise } from "../lib/savedRoutines";
+import {
+  getSavedRoutine,
+  type SavedRoutine,
+  type SavedRoutineExercise,
+} from "../lib/savedRoutines";
 import { normalizeExercise } from "../features/program/programTypes";
 import type { ProgramExercise } from "../features/program/programTypes";
 import { Skeleton } from "../components/LoadingSkeleton";
@@ -33,7 +37,8 @@ function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
      analytics + MuscleHeatMap, so getting it right matters. */
   return normalizeExercise({
     name: ex.name,
-    exerciseId: ex.exerciseId || `routine-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
+    exerciseId:
+      ex.exerciseId || `routine-${ex.name.toLowerCase().replace(/\s+/g, "-")}`,
     sets: Math.max(1, ex.setCount || 1),
     reps: Math.max(1, ex.targetReps || 8),
     weight: ex.targetWeightKg || 0,
@@ -108,8 +113,10 @@ export default function Routine() {
       _dayIndex: number,
       sessionData?: {
         durationMinutes: number;
-        setLogs: Array<Array<{ weight: number; reps: number; completed: boolean }>>;
-      },
+        setLogs: Array<
+          Array<{ weight: number; reps: number; completed: boolean }>
+        >;
+      }
     ) => {
       if (!user || !routine || !synthDay) return;
 
@@ -123,7 +130,11 @@ export default function Routine() {
           const sets = logs
             ? logs
                 .filter((l) => l.completed)
-                .map((l, i) => ({ setNumber: i + 1, reps: l.reps, weightKg: l.weight }))
+                .map((l, i) => ({
+                  setNumber: i + 1,
+                  reps: l.reps,
+                  weightKg: l.weight,
+                }))
             : Array.from({ length: ex.sets }, (_, i) => ({
                 setNumber: i + 1,
                 reps: ex.reps,
@@ -139,21 +150,27 @@ export default function Routine() {
         });
 
         const tonnage = exercises.reduce(
-          (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-          0,
+          (t, ex) =>
+            t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+          0
         );
-        const completedSetCount = exercises.reduce((c, ex) => c + ex.sets.length, 0);
+        const completedSetCount = exercises.reduce(
+          (c, ex) => c + ex.sets.length,
+          0
+        );
         const bodyweightKg = profile?.weightKg ?? 0;
-        const durationMinutes = sessionData?.durationMinutes && sessionData.durationMinutes > 0
-          ? sessionData.durationMinutes
-          : 0;
+        const durationMinutes =
+          sessionData?.durationMinutes && sessionData.durationMinutes > 0
+            ? sessionData.durationMinutes
+            : 0;
         const totalCalories = estimateLiftBurn({
           durationMinutes,
           tonnageKg: tonnage,
           bodyweightKg,
           completedSetCount,
         });
-        const effectiveDurationMin = durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+        const effectiveDurationMin =
+          durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
 
         await setDoc(workoutRef, {
           date: today,
@@ -175,14 +192,19 @@ export default function Routine() {
           title: routine.name,
           meta: [
             `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0 ? `${Math.round(tonnage).toLocaleString()}kg volume` : "",
+            tonnage > 0
+              ? `${Math.round(tonnage).toLocaleString()}kg volume`
+              : "",
             effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
           ].filter(Boolean),
         });
         if (decision) {
-          const apiVisibility = decision.visibility === "crews" ? "followers" : decision.visibility;
+          const apiVisibility =
+            decision.visibility === "crews" ? "followers" : decision.visibility;
           const includeCrewId =
-            (decision.visibility === "crews" || decision.visibility === "public") && !!profile?.crewId;
+            (decision.visibility === "crews" ||
+              decision.visibility === "public") &&
+            !!profile?.crewId;
           const payload = {
             authorId: user.uid,
             authorName: profile?.displayName || "Athlete",
@@ -213,9 +235,10 @@ export default function Routine() {
           try {
             await postActivity(payload);
           } catch (socialErr) {
-            const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+            const isOffline =
+              typeof navigator !== "undefined" && navigator.onLine === false;
             if (isOffline) {
-              enqueueShare(payload);
+              enqueueShare(user.uid, payload);
               showQueuedToast();
             } else {
               logger.warn("Routine post failed:", socialErr);
@@ -241,7 +264,7 @@ export default function Routine() {
         toast.error("Couldn't save workout. Try again.");
       }
     },
-    [user, routine, synthDay, profile, navigate],
+    [user, routine, synthDay, profile, navigate]
   );
 
   if (loading) {
@@ -257,7 +280,9 @@ export default function Routine() {
   if (!routine || !synthDay) {
     return (
       <div className="p-6 text-center space-y-3">
-        <p className="text-sm font-semibold text-foreground">Routine not found</p>
+        <p className="text-sm font-semibold text-foreground">
+          Routine not found
+        </p>
         <button
           type="button"
           onClick={() => navigate("/program")}
