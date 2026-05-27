@@ -727,14 +727,14 @@ export default function RunSummary() {
               const lostNet =
                 typeof navigator !== "undefined" && navigator.onLine === false;
               if (lostNet) {
-                enqueueShare(payload);
+                enqueueShare(user.uid, payload);
                 showQueuedToast();
               } else {
                 logger.warn("[RunSave] postActivity failed:", socialErr);
               }
             }
           } else {
-            enqueueShare(payload);
+            enqueueShare(user.uid, payload);
             showQueuedToast();
           }
         }
