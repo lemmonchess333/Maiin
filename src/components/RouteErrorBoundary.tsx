@@ -72,12 +72,14 @@ export default class RouteErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-muted-foreground">{errorText}</p>
             <div className="flex gap-2 justify-center">
               <button
+                type="button"
                 onClick={() => this.setState({ hasError: false, error: null })}
                 className="px-4 py-2.5 rounded-xl text-sm font-medium bg-card text-foreground"
               >
                 Try again
               </button>
               <button
+                type="button"
                 onClick={() => {
                   window.location.href = import.meta.env.BASE_URL;
                 }}

@@ -179,12 +179,14 @@ function PrimingDialog({
         </div>
         <div className="space-y-2 pt-2">
           <button
+            type="button"
             onClick={onYes}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
           >
             Yes, remind me
           </button>
           <button
+            type="button"
             onClick={onNo}
             className="w-full py-3 rounded-xl bg-muted text-muted-foreground font-medium text-sm"
           >

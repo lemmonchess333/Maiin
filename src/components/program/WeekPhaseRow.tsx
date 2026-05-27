@@ -27,6 +27,7 @@ export default function WeekPhaseRow({
       {showChevrons &&
         (canGoPrev ? (
           <button
+            type="button"
             onClick={onPrevWeek}
             className="p-1 active:scale-95 transition-transform"
             aria-label="Previous week"
@@ -59,6 +60,7 @@ export default function WeekPhaseRow({
       {showChevrons &&
         (canGoNext ? (
           <button
+            type="button"
             onClick={onNextWeek}
             className="p-1 active:scale-95 transition-transform"
             aria-label="Next week"

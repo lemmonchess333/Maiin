@@ -31,6 +31,7 @@ export default function Stepper({
       </p>
       <div className="flex items-center justify-center gap-3">
         <button
+          type="button"
           onClick={onDecrement}
           className="size-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
           style={{ background: "rgba(255,255,255,0.1)" }}
@@ -41,6 +42,7 @@ export default function Stepper({
           {displayValue ?? value}
         </span>
         <button
+          type="button"
           onClick={onIncrement}
           className="size-8 rounded-full flex items-center justify-center text-lg font-bold active:scale-[0.95]"
           style={{ background: "rgba(255,255,255,0.1)" }}

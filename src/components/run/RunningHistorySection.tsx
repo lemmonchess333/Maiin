@@ -112,6 +112,7 @@ function RunCard({
 
   return (
     <button
+      type="button"
       onClick={() => navigate(`/run/${run.id}`)}
       className="w-full text-left p-3 rounded-xl bg-card border border-border flex gap-3 items-center active:scale-[0.98]"
     >

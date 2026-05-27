@@ -184,6 +184,7 @@ export default function FoodRow({
           </span>
           {onEdit && (
             <button
+              type="button"
               onClick={onEdit}
               aria-label={`Edit ${group.foodName}`}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
@@ -192,6 +193,7 @@ export default function FoodRow({
             </button>
           )}
           <button
+            type="button"
             onClick={onDelete}
             aria-label={`Delete ${group.foodName}`}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"

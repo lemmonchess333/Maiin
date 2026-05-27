@@ -116,6 +116,7 @@ export function WaterTracker() {
         {/* Buttons */}
         <div className="flex justify-center gap-3">
           <button
+            type="button"
             onClick={handleRemove}
             disabled={glasses <= 0}
             className="size-10 rounded-xl bg-muted flex items-center justify-center active:scale-90 transition-all disabled:opacity-30"
@@ -123,6 +124,7 @@ export function WaterTracker() {
             <Minus className="size-5 text-muted-foreground" />
           </button>
           <button
+            type="button"
             onClick={handleAdd}
             className="size-10 rounded-xl flex items-center justify-center active:scale-90 transition-all"
             style={{ backgroundColor: `${THEME.semantic.hydration}26` }}

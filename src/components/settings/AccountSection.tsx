@@ -279,6 +279,7 @@ export default function AccountSection({
             { label: "Export Bodyweight (CSV)", key: "bodyweight" },
           ].map(({ label, key }) => (
             <button
+              type="button"
               key={key}
               disabled={exporting !== null}
               onClick={async () => {
@@ -321,6 +322,7 @@ export default function AccountSection({
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
         <button
+          type="button"
           onClick={() => {
             haptic("error");
             // P0b: route through the Apple-cancel warning when the
@@ -450,6 +452,7 @@ export default function AccountSection({
                 />
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={closeAndReset}
                     disabled={modalState.phase === "deleting"}
                     className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
@@ -457,6 +460,7 @@ export default function AccountSection({
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleSubmitDelete}
                     disabled={
                       deleteConfirmText !== "DELETE" ||
@@ -522,6 +526,7 @@ export default function AccountSection({
                 <div className="space-y-2">
                   {providers.map((p) => (
                     <button
+                      type="button"
                       key={p}
                       onClick={() => handleReauth(p)}
                       disabled={
@@ -547,6 +552,7 @@ export default function AccountSection({
                 </div>
 
                 <button
+                  type="button"
                   onClick={closeAndReset}
                   disabled={inReauthFlight}
                   className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"

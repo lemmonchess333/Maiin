@@ -8,6 +8,7 @@ export default function TermsOfService() {
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >

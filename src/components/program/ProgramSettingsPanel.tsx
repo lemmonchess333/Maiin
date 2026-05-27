@@ -101,6 +101,7 @@ const ProgramSettingsPanel = forwardRef<
               </p>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={onClose}
                   className="text-sm font-medium text-primary"
                 >
@@ -128,6 +129,7 @@ const ProgramSettingsPanel = forwardRef<
               <div className="flex gap-1">
                 {(["cut", "recomp", "lean bulk"] as Goal[]).map((g) => (
                   <button
+                    type="button"
                     key={g}
                     onClick={() => {
                       if (g !== currentGoal)
@@ -179,6 +181,7 @@ const ProgramSettingsPanel = forwardRef<
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() =>
                     onUpdateSettings({
                       autoProgression: !settings.autoProgression,
@@ -211,6 +214,7 @@ const ProgramSettingsPanel = forwardRef<
                   </p>
                 </div>
                 <button
+                  type="button"
                   onClick={() =>
                     onUpdateSettings({ microloading: !settings.microloading })
                   }
@@ -232,6 +236,7 @@ const ProgramSettingsPanel = forwardRef<
             </div>
 
             <button
+              type="button"
               onClick={() => setPending({ kind: "reset" })}
               className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors pointer-events-auto"
             >
@@ -286,12 +291,14 @@ const ProgramSettingsPanel = forwardRef<
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button
+                    type="button"
                     onClick={() => setPending(null)}
                     className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={confirmPending}
                     className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
                   >

@@ -48,7 +48,7 @@ export function EmptyState({
         (action.href ? (
           // Sprint 1: <Link> rendered with the same canonical
           // classes the Button primitive uses for size="sm"
-          // primary. <a> elements can't be wrapped in <button>
+          // primary. <a> elements can't be wrapped in <button type="button">
           // (invalid HTML), so we replicate Button's class shape
           // directly here. Keep this in sync with
           // src/components/ui/Button.tsx if Button's primary

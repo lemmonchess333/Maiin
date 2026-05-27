@@ -141,6 +141,7 @@ export default function DayStepper({
             className="flex flex-col items-center flex-1 min-w-0"
           >
             <button
+              type="button"
               role="tab"
               aria-selected={isSelected}
               aria-label={`Day ${day.dayNumber}, ${day.label}${isCompleted ? ", completed" : isSkipped ? ", skipped" : isToday ? ", today" : ""}`}

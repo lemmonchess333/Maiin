@@ -162,6 +162,7 @@ export default function RunDetail() {
           />
           {/* Back button over map */}
           <button
+            type="button"
             onClick={() => navigate(-1)}
             className="absolute top-4 left-4 size-9 rounded-full flex items-center justify-center backdrop-blur-md z-10"
             style={{
@@ -184,6 +185,7 @@ export default function RunDetail() {
           </button>
           {/* Replay button */}
           <button
+            type="button"
             onClick={startReplay}
             disabled={replaying}
             className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
@@ -201,6 +203,7 @@ export default function RunDetail() {
         /* No map — show back button inline */
         <div className="flex items-center gap-3 px-4 pt-12 pb-2">
           <button
+            type="button"
             onClick={() => navigate(-1)}
             className="size-9 rounded-full flex items-center justify-center bg-muted"
           >
@@ -295,6 +298,7 @@ export default function RunDetail() {
               </h1>
             </div>
             <button
+              type="button"
               onClick={handleShare}
               disabled={sharing}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium active:scale-[0.97] transition-transform"

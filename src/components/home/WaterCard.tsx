@@ -102,6 +102,7 @@ export default function WaterCard({
         </div>
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={function (e) {
               e.stopPropagation();
               haptic();
@@ -125,6 +126,7 @@ export default function WaterCard({
             />
           </button>
           <button
+            type="button"
             onClick={function (e) {
               e.stopPropagation();
               haptic();

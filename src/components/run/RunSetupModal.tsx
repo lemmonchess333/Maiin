@@ -452,6 +452,7 @@ export default function RunSetupModal({
           where the sticky CTA pulls upward). */}
       <header className="px-5 pt-4 pb-2">
         <button
+          type="button"
           onClick={onCancel}
           className="flex items-center gap-1.5 text-sm text-muted-foreground active:scale-95"
         >
@@ -785,6 +786,7 @@ export default function RunSetupModal({
               <div className="flex gap-2">
                 {(["none", "distance", "time", "pace"] as const).map((t) => (
                   <button
+                    type="button"
                     key={t}
                     onClick={() =>
                       updateConfig({
@@ -857,6 +859,7 @@ export default function RunSetupModal({
                           const active = currentValueM === m;
                           return (
                             <button
+                              type="button"
                               key={m}
                               onClick={() =>
                                 updateConfig({
@@ -883,6 +886,7 @@ export default function RunSetupModal({
                           );
                         })}
                         <button
+                          type="button"
                           onClick={() => {
                             if (!isCustom)
                               updateConfig({
@@ -970,6 +974,7 @@ export default function RunSetupModal({
                           const active = currentValueS === s;
                           return (
                             <button
+                              type="button"
                               key={s}
                               onClick={() =>
                                 updateConfig({
@@ -996,6 +1001,7 @@ export default function RunSetupModal({
                           );
                         })}
                         <button
+                          type="button"
                           onClick={() => {
                             if (!isCustom)
                               updateConfig({
@@ -1078,6 +1084,7 @@ export default function RunSetupModal({
                           const active = currentValueS === s;
                           return (
                             <button
+                              type="button"
                               key={s}
                               onClick={() =>
                                 updateConfig({
@@ -1104,6 +1111,7 @@ export default function RunSetupModal({
                           );
                         })}
                         <button
+                          type="button"
                           onClick={() => {
                             if (!isCustom)
                               updateConfig({
@@ -1218,6 +1226,7 @@ export default function RunSetupModal({
           const summary = summaryParts.join(" · ");
           return (
             <button
+              type="button"
               onClick={() => setShowAdvanced((v) => !v)}
               className="flex items-start justify-between w-full py-2.5 text-left gap-3"
             >
@@ -1277,6 +1286,7 @@ export default function RunSetupModal({
                   >
                     <span className="text-sm">{setting.label}</span>
                     <button
+                      type="button"
                       onClick={() =>
                         updateConfig({ [setting.key]: !config[setting.key] })
                       }
@@ -1320,6 +1330,7 @@ export default function RunSetupModal({
                       <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
                         <span className="text-sm">Pace alerts</span>
                         <button
+                          type="button"
                           onClick={() =>
                             updateConfig({ paceAlerts: !config.paceAlerts })
                           }
@@ -1390,6 +1401,7 @@ export default function RunSetupModal({
             config.activityType === "treadmill" ? Dumbbell : Footprints;
           return (
             <button
+              type="button"
               onClick={() => {
                 if (!targetError) onStart(config);
               }}
@@ -1456,6 +1468,7 @@ export default function RunSetupModal({
                   const isActive = config.activityType === at.type;
                   return (
                     <button
+                      type="button"
                       key={at.type}
                       onClick={() => {
                         updateConfig({ activityType: at.type });

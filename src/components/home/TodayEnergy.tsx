@@ -62,6 +62,7 @@ export default function TodayEnergy({
     <div className="rounded-2xl bg-card overflow-hidden">
       {/* Calorie header -- tappable to expand */}
       <button
+        type="button"
         onClick={function () {
           haptic();
           setExpanded(function (e) {

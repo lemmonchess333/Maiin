@@ -174,6 +174,7 @@ class ErrorBoundary extends Component<
             )}
 
             <button
+              type="button"
               onClick={async () => {
                 // Purge the stale-chunk recovery latch so lazyRetry can
                 // reload-and-retry again on the next failure. Previously

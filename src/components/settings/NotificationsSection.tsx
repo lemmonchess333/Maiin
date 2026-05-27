@@ -181,6 +181,7 @@ export default function NotificationsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !mealReminders.enabled;
@@ -233,6 +234,7 @@ export default function NotificationsSection({
               >
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => {
                       haptic("light");
                       updateMealReminders({
@@ -291,6 +293,7 @@ export default function NotificationsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !workoutReminders.enabled;
@@ -365,6 +368,7 @@ export default function NotificationsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const next = !streakReminder.enabled;

@@ -624,6 +624,7 @@ export default function Home() {
       {/* Persistent trial / upgrade strip */}
       {isInTrial && (
         <button
+          type="button"
           onClick={function () {
             if (trialDaysLeft <= 2) {
               setShowProModal(true);
@@ -672,6 +673,7 @@ export default function Home() {
       )}
       {!isPro && !isInTrial && profile?.trialExpiresAt && (
         <button
+          type="button"
           onClick={function () {
             setShowProModal(true);
           }}
@@ -701,6 +703,7 @@ export default function Home() {
               Welcome to Tropos!
             </p>
             <button
+              type="button"
               onClick={dismissCoachMarks}
               aria-label="Dismiss welcome message"
               className="p-1 rounded-lg hover:bg-muted"
@@ -985,6 +988,7 @@ export default function Home() {
                     Log Weight
                   </p>
                   <button
+                    type="button"
                     onClick={function () {
                       setShowWeightSheet(false);
                     }}
@@ -1008,6 +1012,7 @@ export default function Home() {
                 )}
                 <div className="flex items-center gap-2">
                   <button
+                    type="button"
                     onClick={function () {
                       haptic();
                       adjustWeight(-0.1);
@@ -1033,6 +1038,7 @@ export default function Home() {
                     className="flex-1 px-4 py-3 rounded-xl bg-muted border border-border/50 text-foreground text-xl font-bold font-mono tabular-nums text-center"
                   />
                   <button
+                    type="button"
                     onClick={function () {
                       haptic();
                       adjustWeight(0.1);
@@ -1165,6 +1171,7 @@ export default function Home() {
               </p>
               <div className="flex gap-3">
                 <button
+                  type="button"
                   onClick={function () {
                     setShowTrialExpiredModal(false);
                     updateProfile({ trialExpiryPromptShown: true });
@@ -1174,6 +1181,7 @@ export default function Home() {
                   Maybe later
                 </button>
                 <button
+                  type="button"
                   onClick={function () {
                     setShowTrialExpiredModal(false);
                     updateProfile({ trialExpiryPromptShown: true });

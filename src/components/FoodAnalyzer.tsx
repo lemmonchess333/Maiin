@@ -644,6 +644,7 @@ export default function FoodAnalyzer({
           </p>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={handleResetAll}
               aria-label="Try food analysis again"
               className="text-sm text-red-500 font-medium flex items-center gap-1"
@@ -651,6 +652,7 @@ export default function FoodAnalyzer({
               <RotateCcw className="size-3.5" /> Try again
             </button>
             <button
+              type="button"
               onClick={() => {
                 handleResetAll();
                 setCameraOpen(false);
@@ -967,6 +969,7 @@ export default function FoodAnalyzer({
                 {isBarcode && (
                   <div className="flex items-center justify-center gap-4 pt-1">
                     <button
+                      type="button"
                       onClick={() => setServings(Math.max(0.5, servings - 0.5))}
                       aria-label="Decrease servings"
                       className="size-9 rounded-full bg-muted flex items-center justify-center"
@@ -980,6 +983,7 @@ export default function FoodAnalyzer({
                       <p className="text-xs text-muted-foreground">servings</p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setServings(servings + 0.5)}
                       aria-label="Increase servings"
                       className="size-9 rounded-full bg-muted flex items-center justify-center"
@@ -1001,6 +1005,7 @@ export default function FoodAnalyzer({
                 Behaviour unchanged; this is purely visual reweighting. */}
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={handleResetAll}
                 aria-label="Reset food analysis"
                 className="px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
@@ -1014,6 +1019,7 @@ export default function FoodAnalyzer({
                   module-level cached constant — no per-mount cost. */}
               {isPhotoShareSupported() && capturedBase64 && (
                 <button
+                  type="button"
                   onClick={handleSavePhoto}
                   aria-label="Save photo to Photos library"
                   className="size-11 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center shrink-0 active:scale-95"
@@ -1023,6 +1029,7 @@ export default function FoodAnalyzer({
               )}
 
               <button
+                type="button"
                 onClick={handleSave}
                 /* Disabled when:
                    - already saving (prevents double-tap)

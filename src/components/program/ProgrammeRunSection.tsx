@@ -843,7 +843,7 @@ export default function ProgrammeRunSection({
           Tapping the card body navigates to /run (Start). Tapping
           `...` opens DayActionSheet for that runDay's date for
           mark-complete / skip / template-swap. Restructured from
-          single <button> to <div role="button"> so the overflow
+          single <button type="button"> to <div role="button"> so the overflow
           button can live as a child without nested-button HTML. */}
       {currentMode !== "freeform" && nextStartable && nextStartUrl && (
         <div

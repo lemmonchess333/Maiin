@@ -9,6 +9,7 @@ export default function PrivacyPolicy() {
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Back button */}
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >

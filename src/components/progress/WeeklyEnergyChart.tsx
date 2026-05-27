@@ -96,6 +96,7 @@ export function WeeklyEnergyChart() {
         <div className="flex gap-1">
           {WEEK_OPTIONS.map((label, i) => (
             <button
+              type="button"
               key={i}
               onClick={() => setWeekOffset(i)}
               className={`text-xs px-2 py-1 rounded-full transition-all ${

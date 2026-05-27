@@ -334,6 +334,7 @@ export default function FoodCameraModal({
       >
         <div className="flex items-center justify-between p-4">
           <button
+            type="button"
             onClick={onClose}
             className="size-10 rounded-full bg-muted text-foreground flex items-center justify-center"
             aria-label="Close"
@@ -369,6 +370,7 @@ export default function FoodCameraModal({
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
             <button
+              type="button"
               onClick={() => {
                 haptic("light");
                 fileInputRef.current?.click();
@@ -381,6 +383,7 @@ export default function FoodCameraModal({
             </button>
             {onRequestTypedInput && (
               <button
+                type="button"
                 onClick={() => {
                   haptic("light");
                   onRequestTypedInput();
@@ -415,6 +418,7 @@ export default function FoodCameraModal({
       {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
         <button
+          type="button"
           onClick={onClose}
           className="size-10 rounded-full bg-black/50 text-white flex items-center justify-center"
           aria-label="Close"
@@ -479,6 +483,7 @@ export default function FoodCameraModal({
               { key: "label" as const, label: "Food label" },
             ].map(({ key, label }) => (
               <button
+                type="button"
                 key={key}
                 onClick={() => {
                   haptic("light");
@@ -530,6 +535,7 @@ export default function FoodCameraModal({
           <div className="flex items-center justify-between">
             {/* Photo library */}
             <button
+              type="button"
               onClick={pickFromLibrary}
               className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
               aria-label="Photo library"
@@ -549,6 +555,7 @@ export default function FoodCameraModal({
                 modes. */}
             {tab !== "barcode" ? (
               <button
+                type="button"
                 onClick={() => {
                   haptic("medium");
                   takePhoto();
@@ -569,6 +576,7 @@ export default function FoodCameraModal({
 
             {/* Flip camera — balances the library icon on the left */}
             <button
+              type="button"
               onClick={() => {
                 haptic("light");
                 setFacing((p) =>

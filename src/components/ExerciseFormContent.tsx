@@ -294,6 +294,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           </div>
           {overflows && (
             <button
+              type="button"
               onClick={() => setShowInstructions(!showInstructions)}
               className="flex items-center gap-1 mt-2 text-[15px] font-medium"
               style={{ color: THEME.lifting }}

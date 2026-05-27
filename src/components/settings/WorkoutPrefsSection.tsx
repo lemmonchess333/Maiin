@@ -42,6 +42,7 @@ export default function WorkoutPrefsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = autoRestTimer;
@@ -102,6 +103,7 @@ export default function WorkoutPrefsSection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = audioCues;

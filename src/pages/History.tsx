@@ -144,6 +144,7 @@ function FilterPills({
           const tabColor = THEME.brand;
           return (
             <button
+              type="button"
               key={f}
               onClick={() => setFilter(f)}
               className={[

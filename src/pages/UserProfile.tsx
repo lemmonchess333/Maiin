@@ -328,6 +328,7 @@ export default function UserProfile() {
           {!isOwnProfile && uid && (
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setShowMenu(!showMenu)}
                 className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
                 aria-label="More options"
@@ -349,6 +350,7 @@ export default function UserProfile() {
                   />
                   <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
                     <button
+                      type="button"
                       onClick={() => {
                         setShowMenu(false);
                         setShowReport(true);
@@ -359,6 +361,7 @@ export default function UserProfile() {
                       Report user
                     </button>
                     <button
+                      type="button"
                       onClick={() => {
                         setShowMenu(false);
                         setShowBlockConfirm(true);

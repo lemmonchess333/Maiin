@@ -88,6 +88,7 @@ export default function WeekStrip({
         }
         return (
           <button
+            type="button"
             key={day.key}
             onClick={function () {
               onDayTap(day.key);

@@ -78,6 +78,7 @@ export default function AccordionSection({
   return (
     <div className="bg-card rounded-2xl overflow-hidden">
       <button
+        type="button"
         id={triggerId}
         onClick={handleToggle}
         className="w-full flex items-center justify-between p-4"

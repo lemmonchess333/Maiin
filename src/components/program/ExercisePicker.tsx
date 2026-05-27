@@ -157,6 +157,7 @@ export default function ExercisePicker({
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-3 pb-2 safe-area-pt">
               <button
+                type="button"
                 onClick={handleClose}
                 className="size-8 flex items-center justify-center rounded-full bg-muted"
               >
@@ -187,12 +188,14 @@ export default function ExercisePicker({
                     </p>
                     <div className="flex items-center gap-2">
                       <button
+                        type="button"
                         onClick={() => setShowDiscardConfirm(false)}
                         className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
                       >
                         Keep Browsing
                       </button>
                       <button
+                        type="button"
                         onClick={confirmDiscard}
                         className="px-3 py-1.5 text-xs font-medium text-red-500 bg-red-500/10 rounded-lg"
                       >
@@ -242,6 +245,7 @@ export default function ExercisePicker({
             >
               {ALL_CATEGORIES.map((cat) => (
                 <button
+                  type="button"
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(

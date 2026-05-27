@@ -360,6 +360,7 @@ export default function ProgressPhotos() {
         <div className="flex gap-2">
           {photos.length >= 2 && (
             <button
+              type="button"
               onClick={() => {
                 setCompareMode(!compareMode);
                 setSelected([]);
@@ -371,6 +372,7 @@ export default function ProgressPhotos() {
             </button>
           )}
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             aria-label="Add progress photo"
             className="text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium min-h-[44px]"
@@ -393,6 +395,7 @@ export default function ProgressPhotos() {
           Keep photos private
         </span>
         <button
+          type="button"
           onClick={() => setIsPrivate((v) => !v)}
           aria-label={isPrivate ? "Make photos public" : "Make photos private"}
           role="switch"
@@ -434,6 +437,7 @@ export default function ProgressPhotos() {
           */}
           {pendingFileRef.current && (
             <button
+              type="button"
               onClick={retryUpload}
               aria-label="Retry photo upload"
               className="flex items-center gap-1 text-xs font-medium text-destructive shrink-0"
@@ -443,6 +447,7 @@ export default function ProgressPhotos() {
             </button>
           )}
           <button
+            type="button"
             onClick={dismissError}
             aria-label="Dismiss error"
             className="p-0.5 text-destructive/70 hover:text-destructive shrink-0"
@@ -468,6 +473,7 @@ export default function ProgressPhotos() {
       <div className="grid grid-cols-3 gap-2">
         {photos.map((photo) => (
           <button
+            type="button"
             key={photo.id}
             aria-label={`Progress photo from ${photo.date}${compareMode ? ", tap to select for comparison" : ""}`}
             onClick={() => {

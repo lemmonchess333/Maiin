@@ -28,6 +28,7 @@ export default function UnitsAppearanceSection({
     >
       <div className="space-y-2">
         <button
+          type="button"
           onClick={() => {
             // The current value flips on the next render; we capture
             // the value BEFORE the flip so the telemetry reads as
@@ -52,6 +53,7 @@ export default function UnitsAppearanceSection({
         </button>
 
         <button
+          type="button"
           onClick={() => {
             const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
             trackSettingsEvent("settings_toggle_changed", {
@@ -72,6 +74,7 @@ export default function UnitsAppearanceSection({
         </button>
 
         <button
+          type="button"
           onClick={() => {
             trackSettingsEvent("settings_toggle_changed", {
               toggle: "theme",

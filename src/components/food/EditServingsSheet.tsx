@@ -362,6 +362,7 @@ function EditServingsSheet({
         {/* Stepper */}
         <div className="flex items-center justify-center gap-4">
           <button
+            type="button"
             onClick={() => {
               haptic("light");
               setTarget((n) => Math.max(1, n - 1));
@@ -384,6 +385,7 @@ function EditServingsSheet({
             </p>
           </div>
           <button
+            type="button"
             onClick={() => {
               haptic("light");
               setTarget((n) => n + 1);
@@ -430,6 +432,7 @@ function EditServingsSheet({
 
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={onCancel}
             disabled={saving}
             className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
@@ -437,6 +440,7 @@ function EditServingsSheet({
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={unchanged || saving}
             className={cn(

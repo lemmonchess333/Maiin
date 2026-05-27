@@ -92,6 +92,7 @@ export default function SortableExerciseRow({
       {/* Delete panel behind the card */}
       {onDelete && (
         <button
+          type="button"
           onClick={() => {
             haptic("light");
             onDelete();
@@ -121,6 +122,7 @@ export default function SortableExerciseRow({
         {/* Drag handle — only shown when showHandle is true */}
         {showHandle && (
           <button
+            type="button"
             {...attributes}
             {...listeners}
             onPointerDown={() => haptic("light")}

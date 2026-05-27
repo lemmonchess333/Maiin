@@ -303,6 +303,7 @@ export default function SessionCompleteScreen({
           transition={{ delay: 0.7 }}
         >
           <button
+            type="button"
             onClick={onFinish}
             disabled={completing}
             className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.97]"
@@ -311,6 +312,7 @@ export default function SessionCompleteScreen({
           </button>
 
           <button
+            type="button"
             onClick={() => setShowShareCard(true)}
             className="w-full py-3 rounded-xl border border-border/50 text-foreground font-medium text-sm active:scale-[0.97] flex items-center justify-center gap-2"
           >
@@ -319,6 +321,7 @@ export default function SessionCompleteScreen({
           </button>
 
           <button
+            type="button"
             onClick={onClose}
             className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
           >
@@ -365,6 +368,7 @@ export default function SessionCompleteScreen({
                 <div className="flex gap-3">
                   {(["dark", "light", "transparent"] as const).map((theme) => (
                     <button
+                      type="button"
                       key={theme}
                       onClick={() => {
                         const node = shareRef.current;

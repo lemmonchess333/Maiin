@@ -348,6 +348,7 @@ export default function Crew() {
       {/* Back link */}
       <motion.div variants={itemVariant}>
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >

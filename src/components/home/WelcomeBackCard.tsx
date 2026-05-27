@@ -29,6 +29,7 @@ export default function WelcomeBackCard() {
           Welcome back! Pick up where you left off.
         </p>
         <button
+          type="button"
           onClick={dismiss}
           aria-label="Dismiss welcome message"
           className="p-1.5 -m-0.5 rounded-lg hover:bg-muted transition-colors"

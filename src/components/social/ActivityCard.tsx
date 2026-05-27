@@ -720,6 +720,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         <div className="flex items-center gap-5 pt-2.5 border-t border-border/20">
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={handleHighFive}
               disabled={liked}
               aria-label={liked ? "Props given" : "Give props"}
@@ -745,6 +746,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             </button>
             {kudosCount > 0 && (
               <button
+                type="button"
                 onClick={handleShowKudosList}
                 aria-label={`${kudosCount} props — show list`}
                 className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -754,6 +756,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             )}
           </div>
           <button
+            type="button"
             onClick={() => setShowCommentSheet(true)}
             aria-label="View comments"
             className="flex items-center gap-1.5 p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
@@ -767,6 +770,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           </button>
           {canSaveRoutine && (
             <button
+              type="button"
               onClick={() => setShowSaveRoutine(true)}
               aria-label="Save as routine"
               className="p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
@@ -776,6 +780,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           )}
           {onShare && (
             <button
+              type="button"
               onClick={() => onShare(feedItem)}
               aria-label="Share activity"
               className="ml-auto p-3 -m-3 text-muted-foreground active:scale-90 transition-transform"
@@ -908,6 +913,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     return (
       <div className="relative">
         <button
+          type="button"
           onClick={() => setShowMenu(!showMenu)}
           aria-label="More options"
           aria-expanded={showMenu}
@@ -935,6 +941,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               }}
             >
               <button
+                type="button"
                 role="menuitem"
                 onClick={() => {
                   setShowMenu(false);
@@ -946,6 +953,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 Report activity
               </button>
               <button
+                type="button"
                 role="menuitem"
                 onClick={() => {
                   setShowMenu(false);

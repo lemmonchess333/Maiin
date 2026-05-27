@@ -181,6 +181,7 @@ export default function CommentSheet({
                 </div>
                 {isOwn && (
                   <button
+                    type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
                     className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all shrink-0"
@@ -196,6 +197,7 @@ export default function CommentSheet({
 
         {hasMore && (
           <button
+            type="button"
             onClick={handleLoadMore}
             className="text-xs text-primary font-medium hover:underline w-full text-center py-1"
           >
@@ -210,6 +212,7 @@ export default function CommentSheet({
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             {quickChips.map((chip) => (
               <button
+                type="button"
                 key={chip}
                 onClick={() => setText(chip)}
                 className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-primary"
@@ -231,6 +234,7 @@ export default function CommentSheet({
             className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
           />
           <button
+            type="button"
             onClick={handleSend}
             disabled={sending || !text.trim()}
             className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-40"

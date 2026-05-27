@@ -95,6 +95,7 @@ export default function PrivacySection({
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setShowCrewPicker(!showCrewPicker)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground"
             >
@@ -105,6 +106,7 @@ export default function PrivacySection({
             <div className="space-y-2 pt-2 border-t border-border/50">
               {defaultCrews.map((crew) => (
                 <button
+                  type="button"
                   key={crew.id}
                   onClick={async () => {
                     await joinCrew(crew.id);
@@ -132,6 +134,7 @@ export default function PrivacySection({
               ))}
               {currentCrew && (
                 <button
+                  type="button"
                   onClick={() => setShowLeaveCrewConfirm(true)}
                   className="w-full text-center text-xs text-muted-foreground hover:text-red-400 py-1"
                 >
@@ -174,6 +177,7 @@ export default function PrivacySection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = autoPostRuns;
@@ -208,6 +212,7 @@ export default function PrivacySection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               const prev = autoPostWorkouts;
@@ -249,6 +254,7 @@ export default function PrivacySection({
             </p>
           </div>
           <button
+            type="button"
             onClick={async () => {
               haptic("light");
               // The field is undefined-default-on: treat any non-false
@@ -310,6 +316,7 @@ export default function PrivacySection({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => removeZone(z.id)}
                 className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
               >
@@ -338,6 +345,7 @@ export default function PrivacySection({
             </select>
           </div>
           <button
+            type="button"
             onClick={async () => {
               if (!newZoneName.trim()) {
                 toast.error("Enter a zone name");
@@ -385,6 +393,7 @@ export default function PrivacySection({
             </div>
             {!blockedUsersLoaded && (
               <button
+                type="button"
                 onClick={async () => {
                   if (!user) return;
                   setBlockedUsersLoading(true);
@@ -442,6 +451,7 @@ export default function PrivacySection({
                       {bu.displayName}
                     </span>
                     <button
+                      type="button"
                       onClick={async () => {
                         if (!user) return;
                         await unblockUser(user.uid, bu.uid);

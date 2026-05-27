@@ -133,6 +133,7 @@ export default function ShoesManager() {
         <div className="flex items-center gap-3">
           {activeShoes.length > 0 && (
             <button
+              type="button"
               onClick={handleRecalculate}
               disabled={recalculating}
               aria-label="Recalculate mileage from run history"
@@ -145,6 +146,7 @@ export default function ShoesManager() {
             </button>
           )}
           <button
+            type="button"
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-1 text-xs text-primary font-medium"
           >
@@ -240,6 +242,7 @@ export default function ShoesManager() {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={handleAdd}
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
               >
@@ -279,6 +282,7 @@ export default function ShoesManager() {
             </div>
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => setDefault(shoe.id)}
                 className={cn(
                   "p-1.5 rounded-lg transition-colors",
@@ -294,6 +298,7 @@ export default function ShoesManager() {
                 />
               </button>
               <button
+                type="button"
                 onClick={() => retireShoe(shoe.id)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors"
                 title="Retire shoe"

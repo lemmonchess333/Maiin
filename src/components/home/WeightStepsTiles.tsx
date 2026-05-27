@@ -26,6 +26,7 @@ export default function WeightStepsTiles({
   return (
     <div className="grid grid-cols-2 gap-2">
       <button
+        type="button"
         onClick={function () {
           haptic();
           trackHomeEvent("home_card_tapped", { card: "weight" });
@@ -72,6 +73,7 @@ export default function WeightStepsTiles({
         />
       </button>
       <button
+        type="button"
         onClick={function () {
           haptic();
           trackHomeEvent("home_card_tapped", { card: "steps" });

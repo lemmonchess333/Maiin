@@ -148,6 +148,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           Barcode Scanner
         </h3>
         <button
+          type="button"
           onClick={onClose}
           className="p-1 rounded-lg hover:bg-muted"
           aria-label="Close scanner"
@@ -198,6 +199,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                 className="flex-1 px-3 py-2.5 rounded-xl bg-muted border border-border text-sm"
               />
               <button
+                type="button"
                 onClick={() => {
                   if (manualBarcode.trim()) {
                     setScanning(false);
@@ -242,6 +244,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
               <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
             </div>
             <button
+              type="button"
               onClick={() => {
                 setError(null);
                 setScanning(true);
@@ -347,6 +350,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
 
             <div className="flex items-center justify-center gap-4">
               <button
+                type="button"
                 onClick={() => setServings(Math.max(0.5, servings - 0.5))}
                 className="size-10 rounded-full bg-muted flex items-center justify-center"
               >
@@ -357,6 +361,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                 <p className="text-xs text-muted-foreground">servings</p>
               </div>
               <button
+                type="button"
                 onClick={() => setServings(servings + 0.5)}
                 className="size-10 rounded-full bg-muted flex items-center justify-center"
               >
@@ -366,6 +371,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
 
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setProduct(null);
                   setScanning(true);
@@ -376,6 +382,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                 Scan Again
               </button>
               <button
+                type="button"
                 onClick={handleConfirm}
                 className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-1.5"
               >

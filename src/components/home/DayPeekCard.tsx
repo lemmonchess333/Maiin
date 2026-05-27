@@ -309,7 +309,7 @@ export default function DayPeekCard({
  * Q5 P70 — extras row rendering inside DayPeekCard. Mirrors the
  * RunWeekStrip pill's visual language for cross-surface coherence:
  * outlined / dimmed Footprints (vs the solid coral on the planned-
- * slot row), muted-foreground text. Whole `<button>` is the tap
+ * slot row), muted-foreground text. Whole `<button type="button">` is the tap
  * target so the row meets the iOS HIG touch floor inside the card.
  *
  * Distance label format: "5km" when whole-km, "5.4km" otherwise.

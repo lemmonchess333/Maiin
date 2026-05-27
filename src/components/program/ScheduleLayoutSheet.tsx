@@ -155,6 +155,7 @@ function ScheduleLayoutSheetBody({
                     : "Rest";
             return (
               <button
+                type="button"
                 key={s.day}
                 onClick={() => handleDayToggle(s.day)}
                 className={cn(
@@ -265,12 +266,14 @@ function ScheduleLayoutSheetBody({
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={cancelRestructure}
                 className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleConfirmAndClose}
                 disabled={restructuring}
                 className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"

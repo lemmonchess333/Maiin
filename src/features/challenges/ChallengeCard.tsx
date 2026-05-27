@@ -266,6 +266,7 @@ export function ChallengeCard({
         {/* Join button or progress */}
         {!joined ? (
           <button
+            type="button"
             onClick={handleJoin}
             disabled={busy === "joining"}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
@@ -442,6 +443,7 @@ export function ChallengeCard({
         {/* Expand toggle */}
         {joined && leaderboard.length > 3 && (
           <button
+            type="button"
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 text-xs text-muted-foreground mx-auto hover:text-foreground transition-colors"
           >
@@ -510,6 +512,7 @@ export function ChallengeCard({
       {joined && (
         <div className="px-4 pb-3">
           <button
+            type="button"
             onClick={handleLeave}
             disabled={busy === "leaving"}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto disabled:opacity-60"

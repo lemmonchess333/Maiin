@@ -896,12 +896,14 @@ export default function WorkoutSession({
             </div>
             <div className="mt-5 flex gap-2">
               <button
+                type="button"
                 onClick={() => setShowResumePrompt(false)}
                 className="flex-1 h-11 rounded-xl font-semibold text-sm bg-primary text-primary-foreground transition-transform active:scale-[0.97]"
               >
                 Resume
               </button>
               <button
+                type="button"
                 onClick={handleStartFresh}
                 className="flex-1 h-11 rounded-xl font-semibold text-sm bg-muted text-foreground transition-transform active:scale-[0.97]"
               >
@@ -922,6 +924,7 @@ export default function WorkoutSession({
           </p>
         </div>
         <button
+          type="button"
           onClick={onClose}
           className="p-2 rounded-lg hover:bg-muted transition-colors"
           aria-label="Close workout"
@@ -953,6 +956,7 @@ export default function WorkoutSession({
             const active = i === currentExIndex;
             return (
               <button
+                type="button"
                 key={i}
                 onClick={() => {
                   setCurrentExIndex(i);
@@ -1071,6 +1075,7 @@ export default function WorkoutSession({
                       >
                         <div className="col-span-1 flex justify-center relative">
                           <button
+                            type="button"
                             ref={(el) => {
                               if (typePopover === setIdx && el) {
                                 const r = el.getBoundingClientRect();
@@ -1108,6 +1113,7 @@ export default function WorkoutSession({
                         </div>
                         <div className="col-span-2">
                           <button
+                            type="button"
                             onClick={() => {
                               if (canFillPrev && !set.completed && prev) {
                                 haptic(10);
@@ -1188,6 +1194,7 @@ export default function WorkoutSession({
                             </motion.div>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => completeInlineSet(setIdx)}
                               className="size-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
                             />
@@ -1202,6 +1209,7 @@ export default function WorkoutSession({
                           </span>
                           {RPE_OPTIONS.map((rpe) => (
                             <button
+                              type="button"
                               key={rpe}
                               onClick={() =>
                                 updateSetRPE(currentExIndex, setIdx, rpe)
@@ -1227,6 +1235,7 @@ export default function WorkoutSession({
 
           {/* Add Set button */}
           <button
+            type="button"
             onClick={() => addSet(currentExIndex)}
             className="w-full py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -1260,6 +1269,7 @@ export default function WorkoutSession({
               >
                 {SET_TYPE_ORDER.map((type) => (
                   <button
+                    type="button"
                     key={type}
                     onClick={() => {
                       setSetType(currentExIndex, typePopover, type);
@@ -1303,6 +1313,7 @@ export default function WorkoutSession({
 
         {/* RPE toggle */}
         <button
+          type="button"
           onClick={() => setShowRPE(!showRPE)}
           className={cn(
             "text-xs px-3 py-1.5 rounded-lg transition-colors mx-auto block",
@@ -1332,6 +1343,7 @@ export default function WorkoutSession({
       <div className="px-4 py-3 border-t border-border/50 bg-background">
         {isResting ? (
           <button
+            type="button"
             onClick={stopRest}
             className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
           >
@@ -1345,6 +1357,7 @@ export default function WorkoutSession({
             if (allSetsComplete && isLastExercise) {
               return (
                 <button
+                  type="button"
                   onClick={() => setSessionComplete(true)}
                   className="w-full py-3.5 rounded-xl bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
@@ -1355,6 +1368,7 @@ export default function WorkoutSession({
             if (allSetsComplete) {
               return (
                 <button
+                  type="button"
                   onClick={() => {
                     setCurrentExIndex((prev) => prev + 1);
                     setCurrentSetIndex(0);
@@ -1367,6 +1381,7 @@ export default function WorkoutSession({
             }
             return (
               <button
+                type="button"
                 onClick={completeSet}
                 disabled={
                   !currentSets[currentSetIndex] ||

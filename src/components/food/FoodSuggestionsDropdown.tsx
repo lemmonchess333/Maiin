@@ -114,6 +114,7 @@ const FoodSuggestionsDropdown = forwardRef<
           </div>
           {pantryResults.map((p) => (
             <button
+              type="button"
               key={`pantry-${p.id}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectPantry(p)}
@@ -137,6 +138,7 @@ const FoodSuggestionsDropdown = forwardRef<
         <div>
           {suggestions.map((s, i) => (
             <button
+              type="button"
               key={`ai-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(s)}
@@ -163,6 +165,7 @@ const FoodSuggestionsDropdown = forwardRef<
         >
           {offResults.map((food, i) => (
             <button
+              type="button"
               key={`off-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectOff(food)}

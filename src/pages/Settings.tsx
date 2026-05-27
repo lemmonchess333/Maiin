@@ -208,6 +208,7 @@ export default function Settings() {
           </div>
           {user && (
             <button
+              type="button"
               onClick={() => navigate(`/user/${user.uid}`)}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
             >
@@ -342,6 +343,7 @@ export default function Settings() {
       {/* 9. Subscription — navigation row, not accordion */}
       <TrackSettingsSectionView section="subscription">
         <button
+          type="button"
           onClick={() => navigate("/upgrade")}
           className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
         >

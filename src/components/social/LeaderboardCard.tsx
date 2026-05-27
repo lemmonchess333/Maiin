@@ -272,6 +272,7 @@ export default function LeaderboardCard({
 
       {!loading && entries.length > 0 && onViewFull && (
         <button
+          type="button"
           onClick={onViewFull}
           className="flex items-center justify-center gap-1 w-full mt-3 pt-3 border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >

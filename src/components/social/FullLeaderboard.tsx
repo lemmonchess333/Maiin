@@ -86,6 +86,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
       {/* Header */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onBack}
           className="p-2.5 rounded-lg hover:bg-muted transition-colors"
           aria-label="Back"
@@ -99,6 +100,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
       <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
         {TABS.map((t) => (
           <button
+            type="button"
             key={t.key}
             onClick={() => setActiveTab(t.key)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${

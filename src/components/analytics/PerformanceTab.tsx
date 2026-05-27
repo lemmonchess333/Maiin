@@ -334,6 +334,7 @@ export default function PerformanceTab() {
 
       {/* Technical details toggle */}
       <button
+        type="button"
         onClick={() => setShowTechnical((v) => !v)}
         className={cn(
           "flex items-center gap-1.5 text-xs font-medium text-muted-foreground",

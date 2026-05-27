@@ -113,7 +113,7 @@ export default function TrajectoryCard() {
                  resolve why the percentage doesn't match the visible
                  "Last week N pts" baseline row below it (which is
                  intentionally the full prior week, kept as an
-                 aspirational target). The chip is a real <button> so
+                 aspirational target). The chip is a real <button type="button"> so
                  the Tooltip can wire aria-describedby and keyboard
                  focus correctly — Tooltip provides the accessible
                  name so the prior aria-label has been dropped. */

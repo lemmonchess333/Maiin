@@ -118,6 +118,7 @@ export default function CommentSection({
 
       {hasMore && (
         <button
+          type="button"
           onClick={handleLoadMore}
           className="text-xs text-primary font-medium hover:underline"
         >
@@ -137,6 +138,7 @@ export default function CommentSection({
           className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border"
         />
         <button
+          type="button"
           onClick={handleSend}
           disabled={sending || !text.trim()}
           className="text-xs px-3 py-2 rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40"

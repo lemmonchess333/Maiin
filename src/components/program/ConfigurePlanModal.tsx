@@ -309,6 +309,7 @@ export default function ConfigurePlanModal({
         {/* Top bar — close + step indicator */}
         <header className="flex items-center justify-between px-4 py-3 border-b border-border safe-area-pt">
           <button
+            type="button"
             onClick={() => {
               reset();
               onClose();
@@ -455,6 +456,7 @@ export default function ConfigurePlanModal({
                     <div className="flex gap-2">
                       {[2, 3, 4, 5, 6].map((d) => (
                         <button
+                          type="button"
                           key={d}
                           onClick={() => setLiftDays(d)}
                           className={cn(
@@ -614,6 +616,7 @@ export default function ConfigurePlanModal({
                             ["5k", "10k", "half", "marathon"] as RaceDistance[]
                           ).map((d) => (
                             <button
+                              type="button"
                               key={d}
                               onClick={() => setRaceDistance(d)}
                               className={cn(
@@ -807,6 +810,7 @@ export default function ConfigurePlanModal({
         <div className="flex items-center gap-3 px-4 py-3 border-t border-border safe-area-pb">
           {step > 0 && (
             <button
+              type="button"
               onClick={() => setStep((s) => s - 1)}
               disabled={saving}
               className="px-4 py-3 rounded-xl text-sm font-medium active:scale-95"
@@ -819,6 +823,7 @@ export default function ConfigurePlanModal({
             </button>
           )}
           <button
+            type="button"
             onClick={() => {
               if (step < TOTAL_STEPS - 1) {
                 setStep((s) => s + 1);

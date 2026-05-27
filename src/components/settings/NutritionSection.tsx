@@ -78,6 +78,7 @@ export default function NutritionSection({
       {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">
         <button
+          type="button"
           onClick={() => setShowTDEE(!showTDEE)}
           className="w-full flex items-center justify-between p-4"
         >
@@ -132,6 +133,7 @@ export default function NutritionSection({
                   Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]
                 ).map(([key, label]) => (
                   <button
+                    type="button"
                     key={key}
                     onClick={async () => {
                       const prev = activityLevel;
@@ -205,6 +207,7 @@ export default function NutritionSection({
             },
           ].map((phase) => (
             <button
+              type="button"
               key={phase.value}
               onClick={() => {
                 haptic("medium");
@@ -324,6 +327,7 @@ export default function NutritionSection({
               </label>
               {profile?.customCalorieTarget && (
                 <button
+                  type="button"
                   onClick={() =>
                     updateProfile({ customCalorieTarget: undefined })
                   }

@@ -51,6 +51,7 @@ function FoodDateBar({
       style={{ top: "var(--safe-top)" }}
     >
       <button
+        type="button"
         onClick={() => {
           haptic();
           onPrev();
@@ -65,6 +66,7 @@ function FoodDateBar({
         <ChevronLeft aria-hidden="true" className="size-4 text-foreground" />
       </button>
       <button
+        type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
         className="text-center flex items-center gap-2"
@@ -90,6 +92,7 @@ function FoodDateBar({
         className="sr-only"
       />
       <button
+        type="button"
         onClick={() => {
           haptic();
           onNext();

@@ -965,6 +965,7 @@ export default function Onboarding() {
                   <div className="flex gap-1">
                     {(["cm", "ft"] as const).map((u) => (
                       <button
+                        type="button"
                         key={u}
                         onClick={() => setHeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
@@ -1009,6 +1010,7 @@ export default function Onboarding() {
                   <div className="flex gap-1">
                     {(["kg", "lbs"] as const).map((u) => (
                       <button
+                        type="button"
                         key={u}
                         onClick={() => setWeightUnit(u)}
                         className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
@@ -1142,6 +1144,7 @@ export default function Onboarding() {
             <div className="grid grid-cols-5 gap-2">
               {([2, 3, 4, 5, 6] as DaysPerWeek[]).map((d) => (
                 <button
+                  type="button"
                   key={d}
                   onClick={() => {
                     setDaysPerWeek(d);
@@ -1442,6 +1445,7 @@ export default function Onboarding() {
                             ["5k", "10k", "half", "marathon"] as RaceDistance[]
                           ).map((d) => (
                             <button
+                              type="button"
                               key={d}
                               onClick={() => setRaceDistance(d)}
                               className="py-2 rounded-lg text-xs font-medium transition-all"
@@ -1725,6 +1729,7 @@ export default function Onboarding() {
       <div className="flex items-center gap-3 pt-6">
         {step > START_STEP ? (
           <button
+            type="button"
             onClick={() => setStep((s) => s - 1)}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
             style={{
@@ -1736,6 +1741,7 @@ export default function Onboarding() {
           </button>
         ) : isRetake ? (
           <button
+            type="button"
             onClick={async () => {
               // Entry handler flipped this to false before sending the user
               // into retake; restore it so bailing out doesn't leave the app
@@ -1753,6 +1759,7 @@ export default function Onboarding() {
           </button>
         ) : null}
         <button
+          type="button"
           onClick={() => {
             if (step < TOTAL_STEPS - 1) {
               setStep((s) => s + 1);

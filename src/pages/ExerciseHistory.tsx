@@ -272,6 +272,7 @@ export default function ExerciseHistory() {
         className="space-y-4 pt-2"
       >
         <button
+          type="button"
           onClick={goBack}
           className="flex items-center gap-1 text-sm text-muted-foreground active:scale-95"
         >
@@ -303,6 +304,7 @@ export default function ExerciseHistory() {
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={goBack}
           aria-label="Back"
           className="size-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
@@ -383,6 +385,7 @@ export default function ExerciseHistory() {
       <div className="flex gap-1 bg-muted rounded-full p-0.5">
         {(["progress", "form"] as const).map((t) => (
           <button
+            type="button"
             key={t}
             onClick={() => {
               haptic("light");
@@ -466,6 +469,7 @@ export default function ExerciseHistory() {
           >
             {RANGE_ORDER.map((r) => (
               <button
+                type="button"
                 key={r}
                 onClick={() => {
                   haptic("light");
@@ -504,6 +508,7 @@ export default function ExerciseHistory() {
                 <div className="flex gap-1 bg-muted rounded-full p-0.5">
                   {metricOptions.map((m) => (
                     <button
+                      type="button"
                       key={m}
                       onClick={() => {
                         haptic("light");

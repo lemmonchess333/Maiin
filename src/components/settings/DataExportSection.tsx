@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { exportWorkoutsCSV, exportMealsCSV, exportBodyweightCSV, downloadCSV } from "@/lib/export";
+import {
+  exportWorkoutsCSV,
+  exportMealsCSV,
+  exportBodyweightCSV,
+  downloadCSV,
+} from "@/lib/export";
 import type { User } from "firebase/auth";
 import { logger } from "@/lib/logger";
 
@@ -19,6 +24,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
         { label: "Export Bodyweight (CSV)", key: "bodyweight" },
       ].map(({ label, key }) => (
         <button
+          type="button"
           key={key}
           disabled={exporting !== null}
           onClick={async () => {
@@ -29,8 +35,13 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
               if (key === "workouts") csv = await exportWorkoutsCSV(user.uid);
               else if (key === "meals") csv = await exportMealsCSV(user.uid);
               else csv = await exportBodyweightCSV(user.uid);
-              downloadCSV(csv, `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`);
-              toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} exported!`);
+              downloadCSV(
+                csv,
+                `tropos-${key}-${new Date().toISOString().split("T")[0]}.csv`
+              );
+              toast.success(
+                `${key.charAt(0).toUpperCase() + key.slice(1)} exported!`
+              );
             } catch (err) {
               toast.error("Couldn't export your data. Please try again.");
               logger.error(err);

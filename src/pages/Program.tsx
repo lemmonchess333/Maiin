@@ -457,6 +457,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           Failed to load programme
         </p>
         <button
+          type="button"
           onClick={() => window.location.reload()}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
         >
@@ -676,6 +677,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 (programState?.workouts?.length ?? 0) > 0 &&
                 (reorderMode ? (
                   <button
+                    type="button"
                     onClick={() => setReorderMode(false)}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
                   >
@@ -683,6 +685,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => setReorderMode(true)}
                     aria-label="Reorder exercises"
                     className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -692,6 +695,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                 ))}
               <button
+                type="button"
                 onClick={() => setShowOverflow(true)}
                 className="p-2 rounded-lg hover:bg-muted transition-colors"
                 style={{ minWidth: 44, minHeight: 44 }}
@@ -720,6 +724,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               ] as { id: ProgramTab; label: string }[]
             ).map((t) => (
               <button
+                type="button"
                 key={t.id}
                 role="tab"
                 aria-selected={activeTab === t.id}
@@ -792,6 +797,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         !phaseLocked && (
           <div className="pt-4 pb-2">
             <button
+              type="button"
               onClick={handleAdvanceWeek}
               disabled={advancing}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -1013,6 +1019,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                   onDelete={() => removeExFromDay(idx, i)}
                                 >
                                   <button
+                                    type="button"
                                     onClick={() =>
                                       navigate(
                                         `/history/exercise/${encodeURIComponent(ex.name)}`,
@@ -1057,6 +1064,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                       {/* ── + Add Exercise (not on completed/skipped) ── */}
                       {status !== "completed" && status !== "skipped" && (
                         <button
+                          type="button"
                           onClick={() => {
                             setAddPickerDayIndex(idx);
                             setShowAddPicker(true);
@@ -1123,6 +1131,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               {status === "today" && !selectedWorkout?.completed ? (
                 <>
                   <button
+                    type="button"
                     onClick={() => {
                       haptic("light");
                       setSessionDayIndex(idx);
@@ -1134,6 +1143,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </button>
                   <div className="flex items-center justify-center mt-2">
                     <button
+                      type="button"
                       onClick={() => {
                         setSkipTargetDay(idx);
                         setShowSkipConfirm(true);
@@ -1214,6 +1224,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               }}
             >
               <button
+                type="button"
                 onClick={() => {
                   setReplaceTarget({
                     dayIndex: contextMenu.dayIndex,
@@ -1227,6 +1238,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 Exercise
               </button>
               <button
+                type="button"
                 onClick={() => {
                   removeExFromDay(contextMenu.dayIndex, contextMenu.exIndex);
                   setContextMenu(null);
@@ -1236,6 +1248,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <Trash2 className="size-4" /> Remove Exercise
               </button>
               <button
+                type="button"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, -1);
                 }}
@@ -1245,6 +1258,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <ArrowUp className="size-4 text-muted-foreground" /> Move Up
               </button>
               <button
+                type="button"
                 onClick={() => {
                   moveExercise(contextMenu.dayIndex, contextMenu.exIndex, 1);
                 }}
@@ -1413,6 +1427,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     keep their Pro gate (plan-shape change, phase
                     settings, full reset). */}
                 <button
+                  type="button"
                   onClick={() => {
                     setShowOverflow(false);
                     openEditLayout();
@@ -1429,6 +1444,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     configurePlan CF on Confirm. Deliberate plan-shape
                     change (not a day toggle), so Pro-locked. */}
                 <button
+                  type="button"
                   onClick={() => {
                     setShowOverflow(false);
                     if (phaseLocked) {
@@ -1449,6 +1465,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   )}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowOverflow(false);
                     if (phaseLocked) {
@@ -1474,6 +1491,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     Calling it Refresh invited accidental taps; the new
                     label discloses the destructive nature. */}
                 <button
+                  type="button"
                   onClick={() => {
                     setShowOverflow(false);
                     if (phaseLocked) {
@@ -1542,12 +1560,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </p>
               <div className="flex gap-2 pt-1">
                 <button
+                  type="button"
                   onClick={() => setShowRefreshConfirm(false)}
                   className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={async () => {
                     setShowRefreshConfirm(false);
                     await handleRegenerate();
@@ -1601,6 +1621,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowProSheet(false);
                     navigate("/upgrade");

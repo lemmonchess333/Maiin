@@ -178,6 +178,7 @@ export default function FoodMealSection({
           {formatCalories(mealCals)} {CALORIE_UNIT.toUpperCase()}
         </p>
         <button
+          type="button"
           onClick={() => onTargetMeal(mealKey)}
           aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
           className={cn(

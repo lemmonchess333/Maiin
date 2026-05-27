@@ -124,6 +124,7 @@ export default function ProfileInfoSection({
             const selected = profile.gender === opt.value;
             return (
               <button
+                type="button"
                 key={opt.value}
                 onClick={async () => {
                   haptic("light");
@@ -157,6 +158,7 @@ export default function ProfileInfoSection({
             const selected = profile.ageRange === opt.value;
             return (
               <button
+                type="button"
                 key={opt.value}
                 onClick={async () => {
                   haptic("light");

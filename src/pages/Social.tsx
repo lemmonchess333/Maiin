@@ -523,6 +523,7 @@ export default function Social() {
               style={{ background: `${THEME.brand}14` }}
             >
               <button
+                type="button"
                 onClick={() => setTab("crews")}
                 className="flex items-center gap-3 flex-1 text-left"
               >
@@ -537,6 +538,7 @@ export default function Social() {
                 </div>
               </button>
               <button
+                type="button"
                 onClick={dismissCrewBanner}
                 className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Dismiss"
@@ -571,6 +573,7 @@ export default function Social() {
           <div className="flex gap-1 p-1.5 rounded-xl bg-muted">
             {(["feed", "crews", "find"] as SocialTab[]).map((t) => (
               <button
+                type="button"
                 key={t}
                 onClick={() => setTab(t)}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
@@ -595,6 +598,7 @@ export default function Social() {
                       st === "following" ? followingHasNew : exploreHasNew;
                     return (
                       <button
+                        type="button"
                         key={st}
                         onClick={() => {
                           setFeedSubTab(st);
@@ -705,6 +709,7 @@ export default function Social() {
                       {followingFeed.error}
                     </p>
                     <button
+                      type="button"
                       onClick={followingFeed.refresh}
                       className="text-xs font-medium text-destructive underline ml-2 shrink-0"
                     >
@@ -733,6 +738,7 @@ export default function Social() {
                         Couldn't load the community feed. Check your connection.
                       </p>
                       <button
+                        type="button"
                         onClick={exploreFeed.refresh}
                         className="text-xs font-medium text-destructive underline ml-2 shrink-0"
                       >
@@ -907,6 +913,7 @@ export default function Social() {
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowCreateGroup(true);
                       trackSocialEvent("social_create_crew_tapped");
@@ -1008,6 +1015,7 @@ export default function Social() {
                   <div className="flex gap-1 p-1 rounded-full bg-muted shrink-0">
                     {(["popular", "new", "alpha"] as const).map((s) => (
                       <button
+                        type="button"
                         key={s}
                         onClick={() => setCrewSort(s)}
                         className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
@@ -1109,6 +1117,7 @@ export default function Social() {
                           </div>
                         </Link>
                         <button
+                          type="button"
                           onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1163,6 +1172,7 @@ export default function Social() {
                     className={crews.length >= 5 ? "flex justify-center" : ""}
                   >
                     <button
+                      type="button"
                       onClick={() => {
                         setShowCreateGroup(true);
                         trackSocialEvent("social_create_crew_tapped");
@@ -1206,6 +1216,7 @@ export default function Social() {
                     </p>
                     <div className="flex gap-2">
                       <button
+                        type="button"
                         onClick={() => setLeavingCrewId(null)}
                         disabled={leavingInFlight}
                         className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm disabled:opacity-60"
@@ -1213,6 +1224,7 @@ export default function Social() {
                         Cancel
                       </button>
                       <button
+                        type="button"
                         onClick={async () => {
                           if (leavingInFlight) return;
                           setLeavingInFlight(true);
@@ -1285,6 +1297,7 @@ export default function Social() {
                         { name: "sunrise", Icon: Sunrise },
                       ].map(({ name, Icon }) => (
                         <button
+                          type="button"
                           key={name}
                           onClick={() => setNewGroupIcon(name)}
                           className={`p-2.5 rounded-lg ${newGroupIcon === name ? "bg-primary/20 ring-2 ring-primary" : "bg-muted"}`}
@@ -1301,6 +1314,7 @@ export default function Social() {
                       ))}
                     </div>
                     <button
+                      type="button"
                       onClick={async () => {
                         if (!newGroupName.trim() || creatingCrew) return;
                         setCreatingCrew(true);
@@ -1498,6 +1512,7 @@ export default function Social() {
                     >
                       <p className="text-xs text-destructive">{searchError}</p>
                       <button
+                        type="button"
                         onClick={() => handleSearch()}
                         className="text-xs font-medium text-destructive underline ml-2 shrink-0"
                       >
@@ -1524,6 +1539,7 @@ export default function Social() {
                     </p>
                     {suggestedPeople.length > 0 && !suggestedLoading && (
                       <button
+                        type="button"
                         onClick={refreshSuggestions}
                         className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         aria-label="Refresh suggestions"
@@ -1702,6 +1718,7 @@ export default function Social() {
                         }
                       >
                         <button
+                          type="button"
                           onClick={handleShareInvite}
                           disabled={isRestricted}
                           aria-label={
@@ -1717,6 +1734,7 @@ export default function Social() {
                       </Coachmark>
                     ) : (
                       <button
+                        type="button"
                         onClick={handleShareInvite}
                         disabled={isRestricted}
                         aria-label={

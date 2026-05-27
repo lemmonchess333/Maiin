@@ -77,6 +77,7 @@ export default function RestTimerRing({
 
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onStop}
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium"
         >
@@ -85,6 +86,7 @@ export default function RestTimerRing({
         <div className="flex gap-1">
           {REST_PRESETS.map((t) => (
             <button
+              type="button"
               key={t}
               onClick={() => onChangeTarget(t)}
               className={cn(

@@ -1056,6 +1056,7 @@ export default function Run() {
                    they record a real time and add distance after. */
                   <div className="w-full">
                     <button
+                      type="button"
                       onClick={handleSwitchToManual}
                       className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
                       style={{ background: THEME.teal, color: "#000" }}
@@ -1071,6 +1072,7 @@ export default function Run() {
                   </div>
                 )}
                 <button
+                  type="button"
                   onClick={() => {
                     gps.stop();
                     dispatch({ type: "CANCEL_ACQUIRING" });
