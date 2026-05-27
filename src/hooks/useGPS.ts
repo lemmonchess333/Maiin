@@ -1,8 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { KalmanFilter, isValidReading, haversine } from '../lib/gps';
-import type { GPSPoint } from '../lib/gps';
+import { useState, useRef, useCallback, useEffect } from "react";
+import { KalmanFilter, isValidReading, haversine } from "../lib/gps";
+import type { GPSPoint } from "../lib/gps";
 
-export type GPSSignalQuality = 'searching' | 'weak' | 'fair' | 'good' | 'strong';
+export type GPSSignalQuality =
+  | "searching"
+  | "weak"
+  | "fair"
+  | "good"
+  | "strong";
 
 interface GPSState {
   points: GPSPoint[];
@@ -24,11 +29,11 @@ interface GPSState {
 }
 
 function getSignalQuality(accuracy: number | null): GPSSignalQuality {
-  if (accuracy === null) return 'searching';
-  if (accuracy <= 8) return 'strong';
-  if (accuracy <= 15) return 'good';
-  if (accuracy <= 30) return 'fair';
-  return 'weak';
+  if (accuracy === null) return "searching";
+  if (accuracy <= 8) return "strong";
+  if (accuracy <= 15) return "good";
+  if (accuracy <= 30) return "fair";
+  return "weak";
 }
 
 export function useGPS(elapsedSeconds = 0) {
@@ -40,7 +45,7 @@ export function useGPS(elapsedSeconds = 0) {
     error: null,
     gpsAccuracy: null,
     permissionState: null,
-    signalQuality: 'searching',
+    signalQuality: "searching",
     lastFixAt: null,
   });
 
@@ -53,17 +58,37 @@ export function useGPS(elapsedSeconds = 0) {
   // scoring. Pre-PR-H `isValidReading` silently dropped poor fixes
   // and we had no aggregate signal to surface on the run summary.
   const rejectedFixCountRef = useRef(0);
-  useEffect(() => { elapsedRef.current = elapsedSeconds; }, [elapsedSeconds]);
+  useEffect(() => {
+    elapsedRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
 
   // Check geolocation permission on mount
   useEffect(() => {
     if (!navigator.permissions) return;
-    navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-      setState((s) => ({ ...s, permissionState: result.state }));
-      result.addEventListener('change', () => {
+    let cancelled = false;
+    let permStatus: PermissionStatus | null = null;
+    const onChange = () => {
+      if (permStatus) {
+        setState((s) => ({ ...s, permissionState: permStatus!.state }));
+      }
+    };
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((result) => {
+        if (cancelled) return;
+        permStatus = result;
         setState((s) => ({ ...s, permissionState: result.state }));
-      });
-    }).catch(() => {});
+        result.addEventListener("change", onChange);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      // PermissionStatus objects are long-lived and shared across the
+      // browser session — without removing the listener on unmount,
+      // every consumer mount accumulates a fresh listener (and calls
+      // setState on a stale component instance after unmount).
+      if (permStatus) permStatus.removeEventListener("change", onChange);
+    };
   }, []);
 
   // Pre-warm: fire a quick getCurrentPosition first so the browser/OS
@@ -86,7 +111,7 @@ export function useGPS(elapsedSeconds = 0) {
 
   const start = useCallback(() => {
     if (!navigator.geolocation) {
-      setState((s) => ({ ...s, error: 'Geolocation not supported' }));
+      setState((s) => ({ ...s, error: "Geolocation not supported" }));
       return;
     }
 
@@ -113,21 +138,31 @@ export function useGPS(elapsedSeconds = 0) {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, accuracy, altitude, speed } = pos.coords;
-        const lastPoint = pointsRef.current[pointsRef.current.length - 1] || null;
-        const elapsedMs = pointsRef.current.length > 0
-          ? Date.now() - pointsRef.current[0].timestamp
-          : 0;
+        const lastPoint =
+          pointsRef.current[pointsRef.current.length - 1] || null;
+        const elapsedMs =
+          pointsRef.current.length > 0
+            ? Date.now() - pointsRef.current[0].timestamp
+            : 0;
 
         // Always update accuracy display even if reading is rejected
         const quality = getSignalQuality(accuracy);
-        setState((s) => ({ ...s, gpsAccuracy: accuracy, signalQuality: quality }));
+        setState((s) => ({
+          ...s,
+          gpsAccuracy: accuracy,
+          signalQuality: quality,
+        }));
 
         if (!isValidReading(pos.coords, lastPoint, elapsedMs / 1000)) {
           rejectedFixCountRef.current += 1;
           return;
         }
 
-        const smoothed = kalmanRef.current.process(latitude, longitude, accuracy);
+        const smoothed = kalmanRef.current.process(
+          latitude,
+          longitude,
+          accuracy
+        );
         const point: GPSPoint = {
           lat: smoothed.lat,
           lon: smoothed.lon,
@@ -140,7 +175,12 @@ export function useGPS(elapsedSeconds = 0) {
         };
 
         if (lastPoint) {
-          distanceRef.current += haversine(lastPoint.lat, lastPoint.lon, point.lat, point.lon);
+          distanceRef.current += haversine(
+            lastPoint.lat,
+            lastPoint.lon,
+            point.lat,
+            point.lon
+          );
         }
 
         pointsRef.current.push(point);
@@ -156,7 +196,12 @@ export function useGPS(elapsedSeconds = 0) {
           lastFixAt: point.timestamp,
         }));
       },
-      (err) => setState((s) => ({ ...s, error: err.message, signalQuality: 'searching' })),
+      (err) =>
+        setState((s) => ({
+          ...s,
+          error: err.message,
+          signalQuality: "searching",
+        })),
       options
     );
 
@@ -185,7 +230,10 @@ export function useGPS(elapsedSeconds = 0) {
   /** PR H (audit P1 #9): snapshot of rejected-fix count for the
    *  current tracking session. Read at save time alongside getPoints
    *  to populate the run doc's routeQuality metrics. */
-  const getRejectedFixCount = useCallback(() => rejectedFixCountRef.current, []);
+  const getRejectedFixCount = useCallback(
+    () => rejectedFixCountRef.current,
+    []
+  );
 
   /**
    * Phase B3: rehydrate the GPS point buffer from a persisted
@@ -205,7 +253,7 @@ export function useGPS(elapsedSeconds = 0) {
         restored[i - 1].lat,
         restored[i - 1].lon,
         restored[i].lat,
-        restored[i].lon,
+        restored[i].lon
       );
     }
     pointsRef.current = [...pointsRef.current, ...restored];
@@ -224,5 +272,13 @@ export function useGPS(elapsedSeconds = 0) {
     }));
   }, []);
 
-  return { ...state, preWarm, start, stop, getPoints, getRejectedFixCount, appendPoints };
+  return {
+    ...state,
+    preWarm,
+    start,
+    stop,
+    getPoints,
+    getRejectedFixCount,
+    appendPoints,
+  };
 }
