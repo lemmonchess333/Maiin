@@ -41,6 +41,7 @@ import {
   getAdherenceLabel,
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
+import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "sonner";
 import {
@@ -502,6 +503,37 @@ export default function RunSummary() {
   // `.claude/plans/programme-run-followups.md` row `Run8-Vocab`.
   const adherenceLabel = getAdherenceLabel(runConfig?.planMetadata);
 
+  // Run8 PR3b — state-aware completion hero copy. When the run was
+  // tied to a planned template AND was at least somewhat-sized
+  // (>200m + >60s, matching the existing "Great run!" threshold),
+  // surface the template name + adherence verb so the user sees
+  // "Easy 30 complete ✓" rather than the generic "Great run!". The
+  // verb tracks adherence:
+  //   Planned → "complete ✓"
+  //   Custom  → "· custom"
+  //   Extra / null → fall through to the generic celebratory copy.
+  // Source of truth for template name: RUN_TEMPLATES looked up by
+  // plannedTemplateId or actualTemplateId.
+  const heroTemplateName = (() => {
+    const pm = runConfig?.planMetadata;
+    if (!pm) return null;
+    const tmplId = pm.plannedTemplateId || pm.actualTemplateId;
+    if (!tmplId) return null;
+    const tmpl = RUN_TEMPLATES.find((t) => t.id === tmplId);
+    return tmpl?.name ?? null;
+  })();
+  const heroCopy = (() => {
+    const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
+    if (!sized) return (distance || 0) > 0 ? "Run saved" : "Run recorded";
+    if (heroTemplateName && adherenceLabel === "Planned") {
+      return `${heroTemplateName} complete ✓`;
+    }
+    if (heroTemplateName && adherenceLabel === "Custom") {
+      return `${heroTemplateName} · custom`;
+    }
+    return "Great run!";
+  })();
+
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
      in InvalidRunReview because we can't reason about the mode.
@@ -883,11 +915,7 @@ export default function RunSummary() {
         <>
           <div className="text-center pb-4 px-4">
             <h1 className="text-xl font-extrabold text-foreground">
-              {(distance || 0) > 200 && (elapsed || 0) > 60
-                ? "Great run!"
-                : (distance || 0) > 0
-                  ? "Run saved"
-                  : "Run recorded"}
+              {heroCopy}
             </h1>
             <p className="text-sm text-muted-foreground">
               {new Date().toLocaleDateString("en-US", {
