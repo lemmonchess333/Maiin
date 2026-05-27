@@ -38,6 +38,7 @@ import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import {
   freeformPlanMetadata,
+  getAdherenceLabel,
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
 import { clearStoredRun } from "../lib/runResumeStorage";
@@ -494,6 +495,12 @@ export default function RunSummary() {
   const distanceKm = (distance ?? 0) / 1000;
   const elapsedSeconds = elapsed ?? 0;
   const activityType = runConfig?.activityType;
+
+  // Run8-Vocab — adherence chip in the summary header.
+  // Maps runConfig.planMetadata → "Planned" / "Custom" / "Extra"
+  // (or null when there's no plan context). Locked vocab in
+  // `.claude/plans/programme-run-followups.md` row `Run8-Vocab`.
+  const adherenceLabel = getAdherenceLabel(runConfig?.planMetadata);
 
   /* When activityType is missing (legacy runs / malformed payload),
      treat as valid. Better to show a real summary than trap the user
@@ -1158,21 +1165,50 @@ export default function RunSummary() {
             </div>
           </div>
 
-          {/* Pace Trend Badge */}
-          {paceTrend && paceTrend.trend !== "no-data" && (
-            <div className="mx-4 mb-4 flex justify-center">
-              <span
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
-                style={{
-                  background: paceTrend.bgColor,
-                  color: paceTrend.color,
-                }}
-              >
-                {paceTrend.trend === "pr" && (
-                  <Trophy size={16} className="text-amber-500" />
-                )}{" "}
-                {paceTrend.label}
-              </span>
+          {/* Pace Trend Badge + Run8-Vocab Adherence chip.
+              Adherence chip surfaces "Planned" / "Custom" / "Extra"
+              against the user's plan when planMetadata is present
+              (null for freeform / legacy runs — chip hidden). Sits
+              alongside the pace-trend badge in the same centered
+              row so the user reads both signals together. */}
+          {((paceTrend && paceTrend.trend !== "no-data") || adherenceLabel) && (
+            <div className="mx-4 mb-4 flex justify-center flex-wrap gap-2">
+              {paceTrend && paceTrend.trend !== "no-data" && (
+                <span
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
+                  style={{
+                    background: paceTrend.bgColor,
+                    color: paceTrend.color,
+                  }}
+                >
+                  {paceTrend.trend === "pr" && (
+                    <Trophy size={16} className="text-amber-500" />
+                  )}{" "}
+                  {paceTrend.label}
+                </span>
+              )}
+              {adherenceLabel && (
+                <span
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold"
+                  style={{
+                    background:
+                      adherenceLabel === "Extra"
+                        ? `${THEME.running}1A`
+                        : adherenceLabel === "Custom"
+                          ? `${THEME.text.muted}1A`
+                          : `${THEME.success}1A`,
+                    color:
+                      adherenceLabel === "Extra"
+                        ? THEME.running
+                        : adherenceLabel === "Custom"
+                          ? THEME.text.muted
+                          : THEME.success,
+                  }}
+                  aria-label={`Plan adherence: ${adherenceLabel}`}
+                >
+                  {adherenceLabel}
+                </span>
+              )}
             </div>
           )}
 
