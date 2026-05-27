@@ -784,14 +784,19 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
   });
 });
 
-// ─── PR-D — race-day auto-transition effect ─────────────────────────
+// ─── PR-L L5 — race-no-show no longer written client-side ────────────
 
-describe("PR-D — auto-transition writes race_no_show after grace period", () => {
-  // The load effect in useProgram walks `runDays` for an entry
-  // matching `date === raceGoal.targetDate`. If the entry is still
-  // `planned` more than 3 days past the race date, it transitions
-  // to `race_no_show`. Idempotent — once status is non-planned,
-  // the effect skips.
+describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () => {
+  // The client `useEffect` that used to write race_no_show after a
+  // 3-day grace was deleted in L5. The server-side trigger
+  // (`dailyRaceReconciliationSweep`) now owns this transition, so
+  // non-React clients (Apple Watch, future native) reach the same
+  // state without per-client logic.
+  //
+  // These tests pin the post-L5 contract: given the exact state
+  // that used to trigger the client effect, NO setDoc happens from
+  // the hook's render path. The previous PR-D tests asserted the
+  // client write; the new tests assert its absence.
 
   function pastDateOffset(daysAgo: number): string {
     const d = new Date();
@@ -802,64 +807,8 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
     return `${y}-${m}-${day}`;
   }
 
-  it("transitions planned race-day runDay to race_no_show once 3-day grace expires", async () => {
-    const raceDate = pastDateOffset(5); // 5 days ago, past the 3-day grace
-    mockProfile = raceProfile(raceDate);
-    mockDocData = {
-      goal: "recomp",
-      currentPhase: "base",
-      weekNumber: 1,
-      splitType: "ppl",
-      workouts: [],
-      fatigueScore: 0,
-      updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
-      weekHistory: [],
-      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: [
-        {
-          id: "race_day",
-          dayIndex: new Date(raceDate + "T00:00:00").getDay(),
-          date: raceDate,
-          weekKey: raceDate,
-          templateId: "10k_race",
-          type: "race",
-          status: "planned",
-          completed: false,
-        } as ScheduledRunDay,
-      ],
-      runPlan: {
-        mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: raceDate },
-      },
-    } as ProgramState;
-    mockDocExists = true;
-
-    const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 2000,
-    });
-    // Allow the auto-transition effect to fire and write. PR-G's
-    // auto-rollover runs immediately after and archives the
-    // (now-race_no_show) runDay into weekHistory, so we can't
-    // assert against the last write. Instead, scan ALL writes for
-    // the one PR-D produced — that's the race_no_show write,
-    // regardless of what PR-G does next.
-    await waitFor(
-      () => {
-        const wroteRaceNoShow = setDocCalls.some((c) => {
-          const data = c.data as ProgramState | undefined;
-          const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
-          return raceRunDay?.status === "race_no_show";
-        });
-        expect(wroteRaceNoShow).toBe(true);
-      },
-      { timeout: 2000 }
-    );
-  });
-
-  it("does NOT transition within the 3-day grace window", async () => {
-    const raceDate = pastDateOffset(1); // 1 day ago, inside grace
+  it("does NOT write race_no_show even when the 3-day grace has passed (server now owns the transition)", async () => {
+    const raceDate = pastDateOffset(5); // 5 days ago — pre-L5 this would have triggered the client effect
     mockProfile = raceProfile(raceDate);
     mockDocData = {
       goal: "recomp",
@@ -896,53 +845,17 @@ describe("PR-D — auto-transition writes race_no_show after grace period", () =
       timeout: 2000,
     });
     setDocCalls.length = 0;
-    // Wait a beat to ensure no auto-transition fires.
-    await new Promise((r) => setTimeout(r, 100));
-    // No writes happened during grace.
-    expect(setDocCalls.length).toBe(0);
-  });
-
-  it("is idempotent — does not re-write race_no_show on second load", async () => {
-    const raceDate = pastDateOffset(5);
-    mockProfile = raceProfile(raceDate);
-    mockDocData = {
-      goal: "recomp",
-      currentPhase: "base",
-      weekNumber: 1,
-      splitType: "ppl",
-      workouts: [],
-      fatigueScore: 0,
-      updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
-      weekHistory: [],
-      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: [
-        {
-          id: "race_day",
-          dayIndex: new Date(raceDate + "T00:00:00").getDay(),
-          date: raceDate,
-          weekKey: raceDate,
-          templateId: "10k_race",
-          type: "race",
-          // Already race_no_show — second pass should skip.
-          status: "race_no_show",
-          completed: false,
-        } as ScheduledRunDay,
-      ],
-      runPlan: {
-        mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: raceDate },
-      },
-    } as ProgramState;
-    mockDocExists = true;
-
-    const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 2000,
+    // Wait long enough for any post-load effect to have fired.
+    await new Promise((r) => setTimeout(r, 200));
+    // Scan all writes — none should carry race_no_show for the
+    // race-day runDay. PR-G's auto-rollover may still fire if the
+    // weekKey is stale, but it won't change the race-day status.
+    const wroteRaceNoShow = setDocCalls.some((c) => {
+      const data = c.data as ProgramState | undefined;
+      const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
+      return raceRunDay?.status === "race_no_show";
     });
-    setDocCalls.length = 0;
-    await new Promise((r) => setTimeout(r, 100));
-    expect(setDocCalls.length).toBe(0);
+    expect(wroteRaceNoShow).toBe(false);
   });
 });
 
@@ -1012,8 +925,19 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     expect(lastWrite.runPlan?.phase).toBe("recovery");
   });
 
-  it("recovery-exit effect clears phase after recoveryEndDate + 7d grace", async () => {
-    // recoveryEndDate is 8 days in the past — past the 7-day grace.
+  // PR-L L5: the recovery-exit `useEffect` that used to clear phase
+  // after `recoveryEndDate + 7d` was deleted. Server-side
+  // `dailyRaceReconciliationSweep` now owns that clear. The previous
+  // two PR-E tests (asserting the client write happened past grace
+  // AND was suppressed within grace) are replaced by a single test
+  // that pins the post-L5 contract: no client write fires from
+  // recovery state, regardless of how stale `recoveryEndDate` is.
+
+  it("PR-L L5 — useProgram does NOT clear recovery phase client-side past the 7-day grace", async () => {
+    // 8 days past recoveryEndDate. Pre-L5 the client effect would
+    // fire and clear phase + recoveryEndDate. Post-L5 the client is
+    // a pure reader; the server (`dailyRaceReconciliationSweep`)
+    // owns the clear.
     const eightDaysAgo = (() => {
       const d = new Date();
       d.setDate(d.getDate() - 8);
@@ -1022,7 +946,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       const day = String(d.getDate()).padStart(2, "0");
       return `${y}-${m}-${day}`;
     })();
-    mockProfile = raceProfile("2099-09-15"); // raceGoal future to avoid auto-transition
+    mockProfile = raceProfile("2099-09-15");
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -1048,60 +972,22 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-
-    // The exit effect should fire and clear phase + recoveryEndDate.
-    await waitFor(
-      () => {
-        const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as
-          | ProgramState
-          | undefined;
-        expect(lastWrite?.runPlan?.phase).toBeUndefined();
-        expect(lastWrite?.runPlan?.recoveryEndDate).toBeUndefined();
-      },
-      { timeout: 2000 }
-    );
-  });
-
-  it("recovery-exit effect does NOT fire within the 7-day grace window", async () => {
-    // recoveryEndDate is 3 days in the past — inside the 7-day grace.
-    const threeDaysAgo = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 3);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    })();
-    mockProfile = raceProfile("2099-09-15");
-    mockDocData = {
-      goal: "recomp",
-      currentPhase: "base",
-      weekNumber: 1,
-      splitType: "ppl",
-      workouts: [],
-      fatigueScore: 0,
-      updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
-      weekHistory: [],
-      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: [],
-      runPlan: {
-        mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
-        phase: "recovery",
-        recoveryEndDate: threeDaysAgo,
-      },
-    } as ProgramState;
-    mockDocExists = true;
-
-    const { result } = renderHook(() => useProgram());
-    await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 2000,
-    });
     setDocCalls.length = 0;
-    await new Promise((r) => setTimeout(r, 100));
-    // No writes during grace — phase preserved.
-    expect(setDocCalls.length).toBe(0);
+    await new Promise((r) => setTimeout(r, 200));
+    // No writes from the deleted recovery-exit effect. Scan all
+    // captured writes — none should clear the phase. (PR-G's
+    // auto-rollover may still fire and rewrite runDays, but it
+    // doesn't touch runPlan.phase.)
+    const clearedPhase = setDocCalls.some((c) => {
+      const data = c.data as ProgramState | undefined;
+      return data?.runPlan !== undefined && data.runPlan.phase === undefined;
+    });
+    expect(clearedPhase).toBe(false);
+    // Hook still surfaces the recovery state for the UI to read.
+    expect(result.current.programState?.runPlan?.phase).toBe("recovery");
+    expect(result.current.programState?.runPlan?.recoveryEndDate).toBe(
+      eightDaysAgo
+    );
   });
 });
 
