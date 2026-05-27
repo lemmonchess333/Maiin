@@ -38,7 +38,10 @@ describe("compose / resolveCompose", function () {
     await Promise.resolve();
     expect(settled).toBe(false);
     resolveCompose({ visibility: "followers", caption: "" }, false);
-    await expect(promise).resolves.toEqual({ visibility: "followers", caption: "" });
+    await expect(promise).resolves.toEqual({
+      visibility: "followers",
+      caption: "",
+    });
   });
 
   it("short-circuits with the saved 'always' preference instead of opening the sheet", async function () {
@@ -51,7 +54,10 @@ describe("compose / resolveCompose", function () {
     resolveCompose({ visibility: "public", caption: "" }, true);
     await first;
     const second = compose(WORKOUT_PREVIEW);
-    await expect(second).resolves.toEqual({ visibility: "public", caption: "" });
+    await expect(second).resolves.toEqual({
+      visibility: "public",
+      caption: "",
+    });
     expect(getShareDefault("workout")).toBe("public");
   });
 
@@ -94,41 +100,60 @@ describe("compose / resolveCompose", function () {
     resolveCompose({ visibility: "crews", caption: "" }, true);
     await first;
     expect(getShareDefault("run")).toBe("crews");
-    await expect(compose(RUN_PREVIEW)).resolves.toEqual({ visibility: "crews", caption: "" });
+    await expect(compose(RUN_PREVIEW)).resolves.toEqual({
+      visibility: "crews",
+      caption: "",
+    });
   });
 });
 
 describe("offline queue", function () {
+  const UID_A = "user-a";
+  const UID_B = "user-b";
+
   it("enqueueShare appends payloads and getQueueLength reflects them", function () {
-    enqueueShare({ type: "workout", workoutName: "Push Day" });
-    enqueueShare({ type: "run", runName: "Easy 5k" });
+    enqueueShare(UID_A, { type: "workout", workoutName: "Push Day" });
+    enqueueShare(UID_A, { type: "run", runName: "Easy 5k" });
     expect(getQueueLength()).toBe(2);
+    expect(getQueueLength(UID_A)).toBe(2);
   });
 
   it("drainQueue posts each item and empties the queue on success", async function () {
-    enqueueShare({ type: "workout", workoutName: "Push Day" });
-    enqueueShare({ type: "run", runName: "Easy 5k" });
+    enqueueShare(UID_A, { type: "workout", workoutName: "Push Day" });
+    enqueueShare(UID_A, { type: "run", runName: "Easy 5k" });
     const post = vi.fn().mockResolvedValue(undefined);
-    await drainQueue(post);
+    await drainQueue(UID_A, post);
     expect(post).toHaveBeenCalledTimes(2);
     expect(getQueueLength()).toBe(0);
   });
 
   it("drainQueue keeps failed items in the queue for the next attempt", async function () {
-    enqueueShare({ id: "a" });
-    enqueueShare({ id: "b" });
+    enqueueShare(UID_A, { id: "a" });
+    enqueueShare(UID_A, { id: "b" });
     const post = vi
       .fn()
       .mockResolvedValueOnce(undefined)
       .mockRejectedValueOnce(new Error("network"));
-    await drainQueue(post);
+    await drainQueue(UID_A, post);
     expect(post).toHaveBeenCalledTimes(2);
     expect(getQueueLength()).toBe(1);
   });
 
   it("drainQueue is a no-op on an empty queue", async function () {
     const post = vi.fn();
-    await drainQueue(post);
+    await drainQueue(UID_A, post);
     expect(post).not.toHaveBeenCalled();
+  });
+
+  it("drainQueue only replays items belonging to the given uid", async function () {
+    enqueueShare(UID_A, { type: "workout", workoutName: "A's push day" });
+    enqueueShare(UID_B, { type: "run", runName: "B's 10k" });
+    enqueueShare(UID_A, { type: "run", runName: "A's easy 5k" });
+    const post = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(UID_A, post);
+    expect(post).toHaveBeenCalledTimes(2); // both A items
+    // B's item still pending — preserved for B's next sign-in.
+    expect(getQueueLength()).toBe(1);
+    expect(getQueueLength(UID_B)).toBe(1);
   });
 });

@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useDismissOnce } from "@/hooks/useDismissOnce";
 
 /** localStorage key prefix for per-tip dismissal flags. */
 const DISMISSED_STORAGE_PREFIX = "tropos-home-tip-dismissed";
@@ -49,37 +49,36 @@ export default function ContextualTipBanner({
   ctaLabel = "Open Settings",
   ctaHref = "/settings",
 }: ContextualTipBannerProps) {
-  const storageKey = `${DISMISSED_STORAGE_PREFIX}:${tipKey}`;
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return !!window.localStorage.getItem(storageKey);
-    } catch {
-      return false;
-    }
-  });
+  const { dismissed, dismiss } = useDismissOnce(
+    `${DISMISSED_STORAGE_PREFIX}:${tipKey}`
+  );
   const prefersReducedMotion = useReducedMotion();
 
   const shouldRender = visible && !dismissed;
 
   const handleDismiss = () => {
     haptic("light");
-    setDismissed(true);
-    try {
-      window.localStorage.setItem(storageKey, "1");
-    } catch {
-      /* private mode — in-memory dismissal still applies */
-    }
+    dismiss();
   };
 
   return (
     <AnimatePresence>
       {shouldRender && (
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: -6, height: 0 }}
+          initial={
+            prefersReducedMotion ? false : { opacity: 0, y: -6, height: 0 }
+          }
           animate={{ opacity: 1, y: 0, height: "auto" }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -6, height: 0 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25, ease: "easeOut" }}
+          exit={
+            prefersReducedMotion
+              ? { opacity: 0 }
+              : { opacity: 0, y: -6, height: 0 }
+          }
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.25, ease: "easeOut" }
+          }
           className="overflow-hidden"
         >
           <div
