@@ -64,7 +64,7 @@ const FEATURE_PREVIEWS: Partial<
   Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
 > = {
   ai_coaching: {
-    icon: <Brain className="w-6 h-6" style={{ color: THEME.teal }} />,
+    icon: <Brain className="size-6" style={{ color: THEME.teal }} />,
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
@@ -86,7 +86,7 @@ const FEATURE_PREVIEWS: Partial<
         </div>
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
           <div className="flex flex-col items-center gap-1">
-            <Brain className="w-7 h-7" style={{ color: THEME.teal }} />
+            <Brain className="size-7" style={{ color: THEME.teal }} />
             <p className="text-xs font-semibold text-foreground">
               Unlock insights
             </p>
@@ -96,7 +96,7 @@ const FEATURE_PREVIEWS: Partial<
     ),
   },
   ai_food_logging: {
-    icon: <Utensils className="w-6 h-6" style={{ color: THEME.warning }} />,
+    icon: <Utensils className="size-6" style={{ color: THEME.warning }} />,
     preview: (
       <div className="relative rounded-xl overflow-hidden">
         <div
@@ -127,7 +127,7 @@ const FEATURE_PREVIEWS: Partial<
         </div>
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
           <div className="flex flex-col items-center gap-1">
-            <Utensils className="w-7 h-7" style={{ color: THEME.warning }} />
+            <Utensils className="size-7" style={{ color: THEME.warning }} />
             <p className="text-xs font-semibold text-foreground">
               Unlock AI logging
             </p>
@@ -139,7 +139,7 @@ const FEATURE_PREVIEWS: Partial<
 };
 
 const DEFAULT_HERO = {
-  icon: <Sparkles className="w-6 h-6" style={{ color: THEME.brand }} />,
+  icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
   title: "Upgrade to Pro",
   tagline: "Unlock smarter logging, deeper insights and adaptive coaching.",
 };
@@ -151,25 +151,25 @@ const PRO_FEATURE_BULLETS: {
   color: string;
 }[] = [
   {
-    icon: <BarChart2 className="w-4 h-4" />,
+    icon: <BarChart2 className="size-4" />,
     label: "Performance Engine",
     sub: "Recovery, consistency and training-load signals.",
     color: THEME.brand,
   },
   {
-    icon: <Utensils className="w-4 h-4" />,
+    icon: <Utensils className="size-4" />,
     label: "Unlimited AI food photo logging",
     sub: "Log meals from a photo. No manual searching.",
     color: THEME.warning,
   },
   {
-    icon: <Brain className="w-4 h-4" />,
+    icon: <Brain className="size-4" />,
     label: "Adaptive macros",
     sub: "Targets that adjust to your weight and activity.",
     color: THEME.teal,
   },
   {
-    icon: <Zap className="w-4 h-4" />,
+    icon: <Zap className="size-4" />,
     label: "Advanced insights",
     sub: "Trends across food, lifting and running.",
     color: THEME.running,
@@ -300,9 +300,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           onClick={onClose}
           aria-label="Close upgrade modal"
           disabled={loading}
-          className="absolute top-2 right-3 w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
+          className="absolute top-2 right-3 size-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
         >
-          <X className="w-4 h-4" aria-hidden="true" />
+          <X className="size-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -311,7 +311,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         {/* Hero */}
         <div className="text-center space-y-2">
           <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto"
+            className="size-12 rounded-2xl flex items-center justify-center mx-auto"
             style={{ background: `${THEME.brand}14` }}
           >
             {hero.icon}
@@ -333,7 +333,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           {PRO_FEATURE_BULLETS.map((f) => (
             <li key={f.label} className="flex items-start gap-3">
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                className="size-8 rounded-xl flex items-center justify-center shrink-0"
                 aria-hidden="true"
                 style={{ background: `${f.color}1A`, color: f.color }}
               >
@@ -386,13 +386,13 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                      "size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
                       isSelected ? "border-primary" : "border-border"
                     )}
                     aria-hidden="true"
                   >
                     {isSelected ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      <div className="size-2.5 rounded-full bg-primary" />
                     ) : null}
                   </div>
                   <div>

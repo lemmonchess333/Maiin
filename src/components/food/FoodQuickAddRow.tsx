@@ -1,4 +1,9 @@
-import { forwardRef, useRef, type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent } from "react";
+import {
+  forwardRef,
+  useRef,
+  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -58,13 +63,17 @@ const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
     /* Per-chip gesture state. Refs (not state) so a long-press
        trigger doesn't re-render the row and tear down the timers
        mid-press. */
-    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
     /** True for GHOST_CLICK_SUPPRESS_MS after a long-press fired.
      *  Set via setTimeout (no clock reads) so the trailing
      *  iOS-synthesised click is swallowed without a "log AND
      *  remove" double-fire. */
     const suppressNextClickRef = useRef<boolean>(false);
-    const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
     const pressStartRef = useRef<{ x: number; y: number } | null>(null);
 
     const clearLongPressTimer = () => {
@@ -85,7 +94,10 @@ const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
       }, GHOST_CLICK_SUPPRESS_MS);
     };
 
-    const beginPress = (e: ReactPointerEvent<HTMLButtonElement>, meal: QuickAddItem) => {
+    const beginPress = (
+      e: ReactPointerEvent<HTMLButtonElement>,
+      meal: QuickAddItem
+    ) => {
       // Only arm the timer for chips that CAN be removed. Avoids
       // the gesture-conflict cost on non-favourite chips entirely.
       if (!meal.favouriteId || !onRemoveFavourite) return;
@@ -130,7 +142,7 @@ const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
     return (
       <div>
         <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Star className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+          <Star className="size-3.5 text-amber-500" aria-hidden="true" />
           Quick Add
         </p>
         <div className="relative">
@@ -179,7 +191,7 @@ const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
                 }}
                 className={cn(
                   "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
-                  adding !== null && "opacity-60 cursor-not-allowed",
+                  adding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
                 <span className="inline-flex items-center gap-1 max-w-full min-w-0">
@@ -202,7 +214,7 @@ const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
         </div>
       </div>
     );
-  },
+  }
 );
 
 export default FoodQuickAddRow;

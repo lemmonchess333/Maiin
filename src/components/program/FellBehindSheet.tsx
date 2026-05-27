@@ -102,10 +102,10 @@ export default function FellBehindSheet({
     >
       <div className="flex items-center gap-3">
         <div
-          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+          className="size-10 rounded-lg flex items-center justify-center shrink-0"
           style={{ backgroundColor: `${THEME.running}1A` }}
         >
-          <Footprints className="w-5 h-5" style={{ color: THEME.running }} />
+          <Footprints className="size-5" style={{ color: THEME.running }} />
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">

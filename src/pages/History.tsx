@@ -144,6 +144,7 @@ function FilterPills({
           const tabColor = THEME.brand;
           return (
             <button
+              type="button"
               key={f}
               onClick={() => setFilter(f)}
               className={[
@@ -1176,7 +1177,7 @@ export default function History() {
                     style={{ boxShadow: "var(--ds-shadow-card)" }}
                   >
                     <Footprints
-                      className="w-5 h-5 shrink-0"
+                      className="size-5 shrink-0"
                       style={{ color: THEME.running }}
                     />
                     <div className="flex-1">
@@ -1257,7 +1258,7 @@ export default function History() {
                     style={{ boxShadow: "var(--ds-shadow-card)" }}
                   >
                     <Trophy
-                      className="w-5 h-5 shrink-0"
+                      className="size-5 shrink-0"
                       style={{ color: THEME.lifting }}
                     />
                     <div className="flex-1">
@@ -1364,7 +1365,7 @@ export default function History() {
                       style={{ boxShadow: "var(--ds-shadow-card)" }}
                     >
                       <UtensilsCrossed
-                        className="w-5 h-5 shrink-0"
+                        className="size-5 shrink-0"
                         style={{ color: THEME.success }}
                       />
                       <div className="flex-1">
@@ -1585,7 +1586,7 @@ export default function History() {
                       style={{ boxShadow: "var(--ds-shadow-card)" }}
                     >
                       <Footprints
-                        className="w-4 h-4 mx-auto mb-1.5"
+                        className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.running }}
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
@@ -1602,7 +1603,7 @@ export default function History() {
                       style={{ boxShadow: "var(--ds-shadow-card)" }}
                     >
                       <Trophy
-                        className="w-4 h-4 mx-auto mb-1.5"
+                        className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.lifting }}
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
@@ -1622,7 +1623,7 @@ export default function History() {
                       style={{ boxShadow: "var(--ds-shadow-card)" }}
                     >
                       <UtensilsCrossed
-                        className="w-4 h-4 mx-auto mb-1.5"
+                        className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.success }}
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
