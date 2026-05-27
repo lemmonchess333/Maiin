@@ -268,7 +268,7 @@ export default function AccountSection({
     <>
       <AccordionSection
         inline={inline}
-        icon={<Download className="w-5 h-5 text-primary" />}
+        icon={<Download className="size-5 text-primary" />}
         title="Data & Account"
         subtitle="Export, sign out"
       >
@@ -279,6 +279,7 @@ export default function AccountSection({
             { label: "Export Bodyweight (CSV)", key: "bodyweight" },
           ].map(({ label, key }) => (
             <button
+              type="button"
               key={key}
               disabled={exporting !== null}
               onClick={async () => {
@@ -316,11 +317,12 @@ export default function AccountSection({
           onClick={signOut}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
         >
-          <LogOut className="w-4 h-4" /> Sign Out
+          <LogOut className="size-4" /> Sign Out
         </motion.button>
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
         <button
+          type="button"
           onClick={() => {
             haptic("error");
             // P0b: route through the Apple-cancel warning when the
@@ -335,7 +337,7 @@ export default function AccountSection({
           }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
         >
-          <Trash2 className="w-4 h-4" /> Delete Account
+          <Trash2 className="size-4" /> Delete Account
         </button>
       </AccordionSection>
 
@@ -450,6 +452,7 @@ export default function AccountSection({
                 />
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={closeAndReset}
                     disabled={modalState.phase === "deleting"}
                     className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
@@ -457,6 +460,7 @@ export default function AccountSection({
                     Cancel
                   </button>
                   <button
+                    type="button"
                     onClick={handleSubmitDelete}
                     disabled={
                       deleteConfirmText !== "DELETE" ||
@@ -522,6 +526,7 @@ export default function AccountSection({
                 <div className="space-y-2">
                   {providers.map((p) => (
                     <button
+                      type="button"
                       key={p}
                       onClick={() => handleReauth(p)}
                       disabled={
@@ -547,6 +552,7 @@ export default function AccountSection({
                 </div>
 
                 <button
+                  type="button"
                   onClick={closeAndReset}
                   disabled={inReauthFlight}
                   className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"

@@ -5,22 +5,20 @@ import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
 interface Props {
-  food:
-    | {
-        name: string;
-        brand: string;
-        calories: number;
-        protein: number;
-        carbs: number;
-        fat: number;
-        servingSize: string;
-        /** F2: when 'low', the macro numbers are per-100g (the OFF
-         *  product had no real serving_size string and we fell back
-         *  to "100g"). Renders the warning banner so the user knows
-         *  to confirm their actual portion before confirming. */
-        unitConfidence?: "high" | "low";
-      }
-    | null;
+  food: {
+    name: string;
+    brand: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    servingSize: string;
+    /** F2: when 'low', the macro numbers are per-100g (the OFF
+     *  product had no real serving_size string and we fell back
+     *  to "100g"). Renders the warning banner so the user knows
+     *  to confirm their actual portion before confirming. */
+    unitConfidence?: "high" | "low";
+  } | null;
   open: boolean;
   onClose: () => void;
   onConfirm: (servings: number) => void;
@@ -61,8 +59,12 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
         {/* Food header */}
         <div className="mb-4">
           <p className="text-sm font-semibold text-foreground">{food.name}</p>
-          {food.brand && <p className="text-xs text-muted-foreground">{food.brand}</p>}
-          <p className="text-xs text-muted-foreground mt-0.5">per {food.servingSize}</p>
+          {food.brand && (
+            <p className="text-xs text-muted-foreground">{food.brand}</p>
+          )}
+          <p className="text-xs text-muted-foreground mt-0.5">
+            per {food.servingSize}
+          </p>
         </div>
 
         {/* F2 low-confidence banner. OFF responses without a real
@@ -76,7 +78,10 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ background: `${THEME.warning}14`, color: THEME.warning }}
             role="status"
           >
-            <AlertTriangle aria-hidden="true" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+            <AlertTriangle
+              aria-hidden="true"
+              className="size-3.5 shrink-0 mt-0.5"
+            />
             <p>
               <span className="font-semibold">Per-100g data only.</span>{" "}
               <span className="text-foreground/80">
@@ -88,29 +93,61 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
 
         {/* Macro grid */}
         <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.nutrition}1A` }}>
-            <p className="text-lg font-bold tabular-nums" style={{ color: macroText.nutrition }}>
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: `${accent.nutrition}1A` }}
+          >
+            <p
+              className="text-lg font-bold tabular-nums"
+              style={{ color: macroText.nutrition }}
+            >
               {Math.round(food.calories * servings)}
             </p>
-            <p className="text-xs" style={{ color: macroText.nutrition }}>cal</p>
+            <p className="text-xs" style={{ color: macroText.nutrition }}>
+              cal
+            </p>
           </div>
-          <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.protein}1A` }}>
-            <p className="text-lg font-bold tabular-nums" style={{ color: macroText.protein }}>
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: `${accent.protein}1A` }}
+          >
+            <p
+              className="text-lg font-bold tabular-nums"
+              style={{ color: macroText.protein }}
+            >
               {Math.round(food.protein * servings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.protein }}>protein</p>
+            <p className="text-xs" style={{ color: macroText.protein }}>
+              protein
+            </p>
           </div>
-          <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.carbs}1A` }}>
-            <p className="text-lg font-bold tabular-nums" style={{ color: macroText.carbs }}>
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: `${accent.carbs}1A` }}
+          >
+            <p
+              className="text-lg font-bold tabular-nums"
+              style={{ color: macroText.carbs }}
+            >
               {Math.round(food.carbs * servings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.carbs }}>carbs</p>
+            <p className="text-xs" style={{ color: macroText.carbs }}>
+              carbs
+            </p>
           </div>
-          <div className="rounded-lg p-2" style={{ backgroundColor: `${accent.fat}1A` }}>
-            <p className="text-lg font-bold tabular-nums" style={{ color: macroText.fat }}>
+          <div
+            className="rounded-lg p-2"
+            style={{ backgroundColor: `${accent.fat}1A` }}
+          >
+            <p
+              className="text-lg font-bold tabular-nums"
+              style={{ color: macroText.fat }}
+            >
               {Math.round(food.fat * servings)}g
             </p>
-            <p className="text-xs" style={{ color: macroText.fat }}>fat</p>
+            <p className="text-xs" style={{ color: macroText.fat }}>
+              fat
+            </p>
           </div>
         </div>
 
@@ -120,9 +157,9 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             type="button"
             onClick={() => setServings(Math.max(0.5, servings - 0.5))}
             aria-label="Decrease servings"
-            className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+            className="size-9 rounded-full bg-muted flex items-center justify-center"
           >
-            <Minus className="w-4 h-4" aria-hidden="true" />
+            <Minus className="size-4" aria-hidden="true" />
           </button>
           <div className="text-center">
             <p className="text-2xl font-bold text-foreground">{servings}</p>
@@ -132,9 +169,9 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             type="button"
             onClick={() => setServings(servings + 0.5)}
             aria-label="Increase servings"
-            className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+            className="size-9 rounded-full bg-muted flex items-center justify-center"
           >
-            <Plus className="w-4 h-4" aria-hidden="true" />
+            <Plus className="size-4" aria-hidden="true" />
           </button>
         </div>
 

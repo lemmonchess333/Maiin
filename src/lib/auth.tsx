@@ -277,19 +277,6 @@ export interface PublicProfile {
   badgeSummary?: BadgeSummary;
 }
 
-/** Keys of PublicProfile — mirrors the rule allowlist. */
-export const PUBLIC_PROFILE_FIELDS = [
-  "uid",
-  "displayName",
-  "photoURL",
-  "photoStoragePath",
-  "athleteType",
-  "currentStreak",
-  "longestStreak",
-  "createdAt",
-  "badgeSummary",
-] as const satisfies ReadonlyArray<keyof PublicProfile>;
-
 /* ================================
    HELPERS
 ================================ */

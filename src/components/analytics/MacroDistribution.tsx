@@ -66,7 +66,7 @@ export default function MacroDistribution({
             Recharts injects (default tabIndex=0) doesn't leave a
             tab-stop inside an aria-hidden subtree — that's the
             axe-core aria-hidden-focus violation. */}
-        <div className="w-24 h-24 shrink-0 relative" aria-hidden="true">
+        <div className="size-24 shrink-0 relative" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               {/* Hist5f S2 + P3: tooltip matches the other two
@@ -130,7 +130,7 @@ export default function MacroDistribution({
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="w-2 h-2 rounded-full shrink-0"
+                  className="size-2 rounded-full shrink-0"
                   style={{ backgroundColor: d.color }}
                   aria-hidden="true"
                 />

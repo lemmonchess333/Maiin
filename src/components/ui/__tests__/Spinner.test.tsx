@@ -17,12 +17,16 @@ describe("Spinner — base contract", () => {
 
   it("default aria-label is 'Loading'", () => {
     render(<Spinner />);
-    expect(screen.getByRole("status").getAttribute("aria-label")).toBe("Loading");
+    expect(screen.getByRole("status").getAttribute("aria-label")).toBe(
+      "Loading"
+    );
   });
 
   it("accepts a custom aria-label", () => {
     render(<Spinner label="Loading runs" />);
-    expect(screen.getByRole("status").getAttribute("aria-label")).toBe("Loading runs");
+    expect(screen.getByRole("status").getAttribute("aria-label")).toBe(
+      "Loading runs"
+    );
   });
 
   it("the glyph is aria-hidden (SR reads the wrapper's aria-label only)", () => {
@@ -47,29 +51,25 @@ describe("Spinner — sizes", () => {
   it("sm is the default (16px)", () => {
     render(<Spinner />);
     const glyph = screen.getByRole("status").querySelector("svg");
-    expect(glyph?.getAttribute("class")).toContain("w-4");
-    expect(glyph?.getAttribute("class")).toContain("h-4");
+    expect(glyph?.getAttribute("class")).toContain("size-4");
   });
 
   it("xs is 12px", () => {
     render(<Spinner size="xs" />);
     const glyph = screen.getByRole("status").querySelector("svg");
-    expect(glyph?.getAttribute("class")).toContain("w-3");
-    expect(glyph?.getAttribute("class")).toContain("h-3");
+    expect(glyph?.getAttribute("class")).toContain("size-3");
   });
 
   it("md is 24px", () => {
     render(<Spinner size="md" />);
     const glyph = screen.getByRole("status").querySelector("svg");
-    expect(glyph?.getAttribute("class")).toContain("w-6");
-    expect(glyph?.getAttribute("class")).toContain("h-6");
+    expect(glyph?.getAttribute("class")).toContain("size-6");
   });
 
   it("lg is 32px", () => {
     render(<Spinner size="lg" />);
     const glyph = screen.getByRole("status").querySelector("svg");
-    expect(glyph?.getAttribute("class")).toContain("w-8");
-    expect(glyph?.getAttribute("class")).toContain("h-8");
+    expect(glyph?.getAttribute("class")).toContain("size-8");
   });
 });
 

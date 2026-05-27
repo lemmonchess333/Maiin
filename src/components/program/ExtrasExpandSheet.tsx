@@ -150,7 +150,7 @@ function ExtraRunListItem({
       onClick={onTap}
       aria-label={`Extra run: ${detailParts.join(", ")}. Tap to open.`}
       className={cn(
-        "w-full text-left rounded-xl px-3 py-3",
+        "w-full text-left rounded-xl p-3",
         "bg-card border border-border/60",
         "flex items-center gap-3",
         "min-h-[44px]",
@@ -159,10 +159,10 @@ function ExtraRunListItem({
       )}
     >
       <div
-        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+        className="size-8 rounded-lg flex items-center justify-center shrink-0"
         style={{ backgroundColor: `${THEME.running}1A` }}
       >
-        <Footprints className="w-4 h-4" style={{ color: THEME.running }} />
+        <Footprints className="size-4" style={{ color: THEME.running }} />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">

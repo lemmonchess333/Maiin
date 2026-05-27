@@ -35,7 +35,10 @@ export default function CalorieBalanceChart() {
   const sex = (profile?.sex as "male" | "female") ?? "male";
   const goal = profile?.program?.goal;
 
-  const bmr = useMemo(() => estimateBMR(weightKg, heightCm, age, sex), [weightKg, heightCm, age, sex]);
+  const bmr = useMemo(
+    () => estimateBMR(weightKg, heightCm, age, sex),
+    [weightKg, heightCm, age, sex]
+  );
 
   const data = useMemo(() => {
     const now = new Date();
@@ -45,7 +48,10 @@ export default function CalorieBalanceChart() {
       const dayLabel = format(date, "EEE");
 
       const dayMeals = meals.filter((m) => m.date === dateStr);
-      const consumed = dayMeals.reduce((sum, m) => sum + (m.totalCalories || 0), 0);
+      const consumed = dayMeals.reduce(
+        (sum, m) => sum + (m.totalCalories || 0),
+        0
+      );
 
       let activityBurn = 0;
       const dayWorkouts = workouts.filter((w) => w.date === dateStr);
@@ -108,7 +114,10 @@ export default function CalorieBalanceChart() {
 
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          >
             <XAxis
               dataKey="day"
               tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
@@ -122,9 +131,7 @@ export default function CalorieBalanceChart() {
               tickLine={false}
               width={35}
               tickFormatter={(v) =>
-                Math.abs(v) >= 1000
-                  ? `${(v / 1000).toFixed(1)}k`
-                  : String(v)
+                Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v)
               }
             />
             <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
@@ -146,7 +153,7 @@ export default function CalorieBalanceChart() {
                 const heading = point?.date
                   ? new Date(point.date + "T12:00:00").toLocaleDateString(
                       "en-GB",
-                      { day: "numeric", month: "short", year: "numeric" },
+                      { day: "numeric", month: "short", year: "numeric" }
                     )
                   : String(props.label ?? "");
                 const abs = Math.abs(Math.round(v)).toLocaleString();
@@ -178,13 +185,22 @@ export default function CalorieBalanceChart() {
                 );
               }}
             />
-            <Bar dataKey="balance" radius={[3, 3, 3, 3]} barSize={12} minPointSize={2}>
+            <Bar
+              dataKey="balance"
+              radius={[3, 3, 3, 3]}
+              barSize={12}
+              minPointSize={2}
+            >
               {data.map((entry) => {
                 const noData = entry.consumed === 0 && entry.balance !== 0;
                 return (
                   <Cell
                     key={entry.date}
-                    fill={noData ? "hsl(var(--muted-foreground))" : getBalanceColor(entry.balance, goal)}
+                    fill={
+                      noData
+                        ? "hsl(var(--muted-foreground))"
+                        : getBalanceColor(entry.balance, goal)
+                    }
                     opacity={noData ? 0.25 : 0.75}
                   />
                 );
@@ -234,14 +250,11 @@ export default function CalorieBalanceChart() {
               style={{ background: THEME.amber + "1A" }}
             >
               <AlertTriangle
-                className="w-3.5 h-3.5 shrink-0"
+                className="size-3.5 shrink-0"
                 style={{ color: THEME.amber }}
                 aria-hidden="true"
               />
-              <p
-                className="text-xs font-medium"
-                style={{ color: THEME.amber }}
-              >
+              <p className="text-xs font-medium" style={{ color: THEME.amber }}>
                 {alignment.message}
               </p>
             </div>
@@ -268,15 +281,16 @@ export default function CalorieBalanceChart() {
           meaningless noise at maintenance. Positive avgBalance = deficit
           convention (see data computation above), so positive → weight
           down, negative → weight up. */}
-      {Math.abs(avgBalance) >= 100 && (() => {
-        const kgPerWeek = (Math.abs(avgBalance) * 7) / 7700;
-        const direction = avgBalance > 0 ? "down" : "up";
-        return (
-          <p className="text-xs text-muted-foreground text-center">
-            At this rate, ~{kgPerWeek.toFixed(1)} kg/week {direction}
-          </p>
-        );
-      })()}
+      {Math.abs(avgBalance) >= 100 &&
+        (() => {
+          const kgPerWeek = (Math.abs(avgBalance) * 7) / 7700;
+          const direction = avgBalance > 0 ? "down" : "up";
+          return (
+            <p className="text-xs text-muted-foreground text-center">
+              At this rate, ~{kgPerWeek.toFixed(1)} kg/week {direction}
+            </p>
+          );
+        })()}
     </div>
   );
 }

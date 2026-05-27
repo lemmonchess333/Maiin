@@ -172,7 +172,7 @@ export default function ShareComposerSheet() {
             disabled={captionIsProfane}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
           >
-            <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <Users className="size-4 shrink-0" aria-hidden="true" />
             <span className="text-sm font-semibold">Share to followers</span>
           </button>
           {hasCrew && (
@@ -182,7 +182,7 @@ export default function ShareComposerSheet() {
               disabled={captionIsProfane}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
             >
-              <Trophy className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <Trophy className="size-4 shrink-0" aria-hidden="true" />
               <span className="text-sm font-semibold">Share to my crew</span>
             </button>
           )}
@@ -192,7 +192,7 @@ export default function ShareComposerSheet() {
             disabled={captionIsProfane}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
           >
-            <Globe className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <Globe className="size-4 shrink-0" aria-hidden="true" />
             <span className="text-sm font-semibold">Make public</span>
           </button>
           <button
@@ -200,7 +200,7 @@ export default function ShareComposerSheet() {
             onClick={skip}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground active:scale-[0.98] transition-transform"
           >
-            <EyeOff className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <EyeOff className="size-4 shrink-0" aria-hidden="true" />
             <span className="text-sm font-medium">
               Don&apos;t share this one
             </span>
@@ -213,7 +213,7 @@ export default function ShareComposerSheet() {
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="w-4 h-4 rounded border-border accent-[var(--brand-primary,#7B72E9)]"
+            className="size-4 rounded border-border accent-[var(--brand-primary,#7B72E9)]"
           />
           <span className="text-xs text-muted-foreground">
             {REMEMBER_LABEL[state.type]}
