@@ -4,7 +4,7 @@ Everything deferred or "you'll need to do this yourself" that's
 accumulated while Claude was shipping commits. Organised roughly
 by urgency.
 
-Status legend: ⚠️ blocking  ·  🟡 needed before submission  ·  🟢 V1.1 / nice-to-have
+Status legend: ⚠️ blocking · 🟡 needed before submission · 🟢 V1.1 / nice-to-have
 
 ---
 
@@ -164,6 +164,7 @@ items from the GPT 5.5 review. None block submission.
 ### 10. HealthKit integration
 
 The single biggest iOS-credibility upgrade. Priority order:
+
 - Steps (read)
 - Active Energy (read)
 - Body Weight (bidirectional)
@@ -181,6 +182,7 @@ Need native background location permission + Capacitor Geolocation
 plugin with `watchPosition` configured for background mode.
 
 Follow-ups:
+
 - Auto-pause when stationary
 - GPS confidence indicator
 - Route smoothing / Kalman filter (partially exists in `gps.ts`)
@@ -244,6 +246,7 @@ split is the real prerequisite work.
 ### 19. Moderation queue + profanity filter
 
 User-generated content surfaces (feed, comments, crews) have:
+
 - ✅ Report button (writes to `/reports/`)
 - ✅ Block user
 - ✅ Moderation UI for reviewing the reports — `/admin/moderation`
@@ -296,7 +299,7 @@ the same uid. Step-by-step:
    step's `env:` block (must match step 2 exactly):
 
    ```yaml
-   VITE_ADMIN_UIDS: 'THE_UID_HERE'
+   VITE_ADMIN_UIDS: "THE_UID_HERE"
    ```
 
    Commit + push to main; GitHub Pages auto-redeploys in ~3
@@ -316,9 +319,10 @@ and start filtering UGC the moment functions deploy.
 ### 20. README replacement
 
 Currently still the Vite template. Should cover:
+
 - App overview
 - Setup steps
-- Environment variables (long list now — VITE_FIREBASE_*,
+- Environment variables (long list now — VITE*FIREBASE*\*,
   VITE_RECAPTCHA_V3_SITE_KEY, VITE_APP_CHECK_DEBUG_TOKEN,
   VITE_FIREBASE_STORAGE_BUCKET)
 - Firebase setup
@@ -332,6 +336,7 @@ Currently still the Vite template. Should cover:
 
 `src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx`
 should explicitly cover:
+
 - AI food analysis is an estimate, not medical advice
 - GPS routes, privacy zones, public feed defaults
 - Progress photo encryption (client-side AES-GCM)
@@ -347,12 +352,15 @@ with the purple-orange gradient.
 
 ### 23. Tests for the 4 launch-blocker commits
 
-Haptics, Apple IAP verification, App Check init, deleteMyAccount
-Cloud Function — none have tests yet. Real test value would be
-especially high for:
-- IAP verification (mock a fake JWS, ensure it's rejected)
-- deleteMyAccount (mock Firestore, ensure auth delete is last)
-- Haptics platform branching
+Status update: **3 of 4 are now covered with concrete tests**:
+
+- ✅ IAP verification rejects forged/invalid JWS and blocks writes (`functions/__tests__/applePurchase.test.js`)
+- ✅ deleteMyAccount ordering invariant pinned (Auth delete is last) (`functions/__tests__/accountDeletion.test.js`)
+- ✅ Haptics platform branching pinned (web vibrate vs Capacitor native path) (`src/lib/__tests__/haptic.test.ts`)
+
+Still missing:
+
+- ⚠️ App Check init path coverage (web/native branch + failure handling)
 
 ### 24. 151 exercise copy rewrite
 
@@ -407,6 +415,7 @@ Xcode on a Mac.
 **The hard truth:** App Store submission is physically impossible
 without a Mac. Xcode is the only way to produce the `.ipa` that
 TestFlight accepts. Options:
+
 - Borrow a Mac for a day
 - Rent MacinCloud / MacStadium (~$20-40 for a day)
 - Buy a used Mac mini (~$400 M1)
@@ -421,9 +430,11 @@ Everything below is filtered by what's actually doable from Windows.
 Code side is ready. No code changes needed for any of these.
 
 ### Cloud Shell (browser — works on mobile in a pinch)
+
 1. Apply CORS (`#1` above) — fixes Progress photo upload
 
 ### Firebase CLI (works on Windows via `npm i -g firebase-tools`)
+
 2. `firebase functions:config:set apple.*` with `.p8` contents
    (`#2` above) — needs the `.p8` downloaded from App Store Connect
 3. `firebase deploy --only functions:verifyApplePurchase,functions:appleIAPWebhook,functions:restoreApplePurchases,functions:deleteMyAccount`
@@ -431,6 +442,7 @@ Code side is ready. No code changes needed for any of these.
    rules + fixes the `/crews/` → `/groups/` path bug
 
 ### App Store Connect (browser — needs active Apple Dev membership)
+
 5. Register IAP products `com.tropos.app.pro.monthly` and
    `com.tropos.app.pro.yearly` → "Ready to Submit"
 6. Generate App Store Server API key (download `.p8` once, save
@@ -439,6 +451,7 @@ Code side is ready. No code changes needed for any of these.
    at the deployed `appleIAPWebhook` URL from item 3
 
 ### reCAPTCHA + App Check (browser, ~30 min, do gradually)
+
 8. Register reCAPTCHA v3 site at
    https://www.google.com/recaptcha/admin — domains
    `lemmonchess333.github.io`, `troposfit.com`, `localhost`
