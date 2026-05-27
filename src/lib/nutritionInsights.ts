@@ -7,14 +7,14 @@ export interface MealEntry {
   protein: number;
   carbs: number;
   fat: number;
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  mealType: "breakfast" | "lunch" | "dinner" | "snack";
   date: string;
   time?: string;
 }
 
 export interface NutritionInsight {
   id: string;
-  type: 'positive' | 'warning' | 'tip';
+  type: "positive" | "warning" | "tip";
   title: string;
   message: string;
   priority: number;
@@ -40,26 +40,29 @@ export function analyzeNutritionPatterns(
   if (dates.length < 3) return insights;
 
   // Check protein consistency
-  const dailyProtein = dates.map(d => {
+  const dailyProtein = dates.map((d) => {
     const dayMeals = byDate.get(d) || [];
     return dayMeals.reduce((sum, m) => sum + m.protein, 0);
   });
-  const avgProtein = dailyProtein.reduce((a, b) => a + b, 0) / dailyProtein.length;
-  const proteinHitDays = dailyProtein.filter(p => p >= targets.protein * 0.9).length;
+  const avgProtein =
+    dailyProtein.reduce((a, b) => a + b, 0) / dailyProtein.length;
+  const proteinHitDays = dailyProtein.filter(
+    (p) => p >= targets.protein * 0.9
+  ).length;
 
   if (proteinHitDays >= dates.length * 0.8) {
     insights.push({
-      id: 'protein-consistent',
-      type: 'positive',
-      title: 'Protein consistency',
+      id: "protein-consistent",
+      type: "positive",
+      title: "Protein consistency",
       message: `You hit your protein target ${proteinHitDays}/${dates.length} days. Great consistency!`,
       priority: 1,
     });
   } else if (avgProtein < targets.protein * 0.7) {
     insights.push({
-      id: 'protein-low',
-      type: 'warning',
-      title: 'Low protein intake',
+      id: "protein-low",
+      type: "warning",
+      title: "Low protein intake",
       message: `Averaging ${Math.round(avgProtein)}g protein vs ${targets.protein}g target. Try adding a protein source to each meal.`,
       priority: 3,
     });
@@ -67,47 +70,52 @@ export function analyzeNutritionPatterns(
 
   // Check meal timing distribution
   const mealTypes = new Map<string, number>();
-  for (const meal of meals.filter(m => dates.includes(m.date))) {
+  for (const meal of meals.filter((m) => dates.includes(m.date))) {
     mealTypes.set(meal.mealType, (mealTypes.get(meal.mealType) || 0) + 1);
   }
 
-  const breakfastCount = mealTypes.get('breakfast') || 0;
-  if (breakfastCount < dates.length * 0.3) {
+  const breakfastCount = mealTypes.get("breakfast") || 0;
+  const breakfastThreshold = Math.ceil(dates.length * 0.3);
+  if (breakfastCount < breakfastThreshold) {
     insights.push({
-      id: 'skipping-breakfast',
-      type: 'tip',
-      title: 'Breakfast pattern',
-      message: 'You logged breakfast on fewer than 3 of the last 7 days. A high-protein breakfast can support your goals.',
+      id: "skipping-breakfast",
+      type: "tip",
+      title: "Breakfast pattern",
+      message: `You logged breakfast on ${breakfastCount} of the last ${dates.length} days. A high-protein breakfast can support your goals.`,
       priority: 2,
     });
   }
 
   // Check calorie consistency
-  const dailyCals = dates.map(d => {
+  const dailyCals = dates.map((d) => {
     const dayMeals = byDate.get(d) || [];
     return dayMeals.reduce((sum, m) => sum + m.calories, 0);
   });
   const avgCals = dailyCals.reduce((a, b) => a + b, 0) / dailyCals.length;
-  const calVariance = dailyCals.reduce((sum, c) => sum + Math.pow(c - avgCals, 2), 0) / dailyCals.length;
+  const calVariance =
+    dailyCals.reduce((sum, c) => sum + Math.pow(c - avgCals, 2), 0) /
+    dailyCals.length;
   const calStdDev = Math.sqrt(calVariance);
 
   if (calStdDev > avgCals * 0.3 && avgCals > 0) {
     insights.push({
-      id: 'calorie-inconsistent',
-      type: 'tip',
-      title: 'Calorie swings',
+      id: "calorie-inconsistent",
+      type: "tip",
+      title: "Calorie swings",
       message: `Your daily calories vary widely (${Math.round(avgCals - calStdDev)}–${Math.round(avgCals + calStdDev)} kcal). More consistency may help with your goals.`,
       priority: 2,
     });
   }
 
   // Check if hitting overall targets
-  const onTargetDays = dailyCals.filter(c => c >= targets.calories * 0.85 && c <= targets.calories * 1.15).length;
+  const onTargetDays = dailyCals.filter(
+    (c) => c >= targets.calories * 0.85 && c <= targets.calories * 1.15
+  ).length;
   if (onTargetDays >= dates.length * 0.7) {
     insights.push({
-      id: 'calories-on-target',
-      type: 'positive',
-      title: 'Great calorie control',
+      id: "calories-on-target",
+      type: "positive",
+      title: "Great calorie control",
       message: `You were within 15% of your calorie target on ${onTargetDays}/${dates.length} days.`,
       priority: 1,
     });
@@ -124,8 +132,8 @@ export function getMacroBalance(
   const totalCals = protein * 4 + carbs * 4 + fat * 9;
   if (totalCals === 0) return { proteinPct: 0, carbsPct: 0, fatPct: 0 };
   return {
-    proteinPct: Math.round((protein * 4 / totalCals) * 100),
-    carbsPct: Math.round((carbs * 4 / totalCals) * 100),
-    fatPct: Math.round((fat * 9 / totalCals) * 100),
+    proteinPct: Math.round(((protein * 4) / totalCals) * 100),
+    carbsPct: Math.round(((carbs * 4) / totalCals) * 100),
+    fatPct: Math.round(((fat * 9) / totalCals) * 100),
   };
 }

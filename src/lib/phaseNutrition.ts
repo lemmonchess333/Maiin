@@ -15,14 +15,25 @@ export function getDayAdjustment(
   goal?: string
 ): DayAdjustment {
   const isCut = goal === "cut" || (!goal && phase === "cut");
-  const proteinMultiplier = resolveProteinMultiplier(isCut ? "cut" : phase, goal);
+  const proteinMultiplier = resolveProteinMultiplier(
+    isCut ? "cut" : phase,
+    goal
+  );
+
+  // Extra training-day calories are funnelled entirely into carbs
+  // (fuel + recovery). Derive `carbAdjustment` from `calorieAdjustment`
+  // so the rendered total never disagrees with `protein*4 + carbs*4 +
+  // fat*9` — pre-fix the two were tuned independently (e.g. +400 cal
+  // but only +80 cal worth of carbs on a strength-phase lift day, the
+  // remaining 320 cal had no macro home).
+  const calAdjToCarbs = (cal: number): number => Math.round(cal / 4);
 
   switch (dayType) {
     case "lift": {
       const calAdj = isCut ? 150 : phase === "strength" ? 400 : 200;
       return {
         calorieAdjustment: calAdj,
-        carbAdjustment: 20,
+        carbAdjustment: calAdjToCarbs(calAdj),
         proteinMultiplier,
         reason: `Lift day — +${calAdj} cal for recovery`,
       };
@@ -31,7 +42,7 @@ export function getDayAdjustment(
       const calAdj = isCut ? 100 : 200;
       return {
         calorieAdjustment: calAdj,
-        carbAdjustment: 30,
+        carbAdjustment: calAdjToCarbs(calAdj),
         proteinMultiplier,
         reason: `Run day — +${calAdj} cal for fuel`,
       };
@@ -40,7 +51,7 @@ export function getDayAdjustment(
       const calAdj = isCut ? 250 : phase === "strength" ? 500 : 350;
       return {
         calorieAdjustment: calAdj,
-        carbAdjustment: 40,
+        carbAdjustment: calAdjToCarbs(calAdj),
         proteinMultiplier,
         reason: `Lift + Run day — +${calAdj} cal for recovery & fuel`,
       };
