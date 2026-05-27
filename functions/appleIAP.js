@@ -13,6 +13,12 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 
 const BUNDLE_ID = applePurchase.BUNDLE_ID;
 
+// Cost-runaway cap shared with all HTTP / webhook surfaces. CLAUDE.md
+// mandates `maxInstances` on every HTTP function — Apple IAP was
+// shipped without it, which means a misbehaving client / retry storm
+// could fan out to unbounded concurrent containers.
+const APPLE_IAP_CAP = { maxInstances: 100 };
+
 /**
  * Apple's public root CA certificates for IAP signing, used to
  * verify the full signature chain on every incoming JWS payload.
@@ -88,13 +94,28 @@ async function getVerifier(environment) {
  * Returns the decoded JWSTransactionDecodedPayload on success. Throws
  * if both environments fail — we do not fall back to unverified
  * decode.
+ *
+ * SECURITY: the Sandbox fallback is gated by `ALLOW_SANDBOX_IAP=1`.
+ * Production deploys must NOT set that env var; a StoreKit Sandbox
+ * JWS (free dev/TestFlight "purchase") would otherwise verify
+ * successfully via the SANDBOX chain and be applied as a real
+ * subscription. Local emulator runs and CI test fixtures can set
+ * the flag to keep the dev-loop healthy.
  */
+const ALLOW_SANDBOX_IAP = process.env.ALLOW_SANDBOX_IAP === "1";
+
+function _envsToTry() {
+  return ALLOW_SANDBOX_IAP
+    ? [Environment.PRODUCTION, Environment.SANDBOX]
+    : [Environment.PRODUCTION];
+}
+
 async function verifySignedTransaction(signedTransactionInfo) {
   if (typeof signedTransactionInfo !== "string") {
     throw new Error("signedTransactionInfo must be a string");
   }
   let lastErr = null;
-  for (const env of [Environment.PRODUCTION, Environment.SANDBOX]) {
+  for (const env of _envsToTry()) {
     try {
       const verifier = await getVerifier(env);
       return await verifier.verifyAndDecodeTransaction(signedTransactionInfo);
@@ -103,18 +124,19 @@ async function verifySignedTransaction(signedTransactionInfo) {
     }
   }
   throw new Error(
-    `Apple JWS verification failed in both environments: ${lastErr && lastErr.message}`
+    `Apple JWS verification failed: ${lastErr && lastErr.message}`
   );
 }
 
 /**
  * Same pattern for ASSN V2 notification payloads. The notification
  * wrapper carries a nested `signedTransactionInfo` inside; we verify
- * the outer wrapper first, then the inner transaction.
+ * the outer wrapper first, then the inner transaction. Production
+ * deploys reject Sandbox-signed payloads via the same gate.
  */
 async function verifyNotification(signedPayload) {
   let lastErr = null;
-  for (const env of [Environment.PRODUCTION, Environment.SANDBOX]) {
+  for (const env of _envsToTry()) {
     try {
       const verifier = await getVerifier(env);
       return await verifier.verifyAndDecodeNotification(signedPayload);
@@ -123,7 +145,7 @@ async function verifyNotification(signedPayload) {
     }
   }
   throw new Error(
-    `Apple notification verification failed in both environments: ${lastErr && lastErr.message}`
+    `Apple notification verification failed: ${lastErr && lastErr.message}`
   );
 }
 
@@ -215,153 +237,184 @@ async function applySubscriptionToUser(uid, signedTransactionInfo) {
 }
 
 // Called by the iOS client immediately after a StoreKit purchase completes.
-exports.verifyApplePurchase = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "Sign-in required."
+exports.verifyApplePurchase = functions
+  .runWith(APPLE_IAP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const uid = context.auth.uid;
+    // R1A-Deletion: actor lock. verifyApplePurchase writes users/{uid}
+    // subscription fields via applySubscriptionToUser → cannot run for
+    // a deleting account.
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
     );
-  }
-  const uid = context.auth.uid;
-  // R1A-Deletion: actor lock. verifyApplePurchase writes users/{uid}
-  // subscription fields via applySubscriptionToUser → cannot run for
-  // a deleting account.
-  await accountDeletionLocks.assertCallableActorNotDeleting(
-    admin.firestore(),
-    uid
-  );
-  const signedTransactionInfo = data && data.signedTransactionInfo;
-  if (!signedTransactionInfo || typeof signedTransactionInfo !== "string") {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "signedTransactionInfo required."
-    );
-  }
-  try {
-    return await applySubscriptionToUser(uid, signedTransactionInfo);
-  } catch (err) {
-    console.error(`verifyApplePurchase: uid=${uid}`, err);
-    throw new functions.https.HttpsError("internal", err.message);
-  }
-});
+    const signedTransactionInfo = data && data.signedTransactionInfo;
+    if (!signedTransactionInfo || typeof signedTransactionInfo !== "string") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "signedTransactionInfo required."
+      );
+    }
+    try {
+      return await applySubscriptionToUser(uid, signedTransactionInfo);
+    } catch (err) {
+      console.error(`verifyApplePurchase: uid=${uid}`, err);
+      throw new functions.https.HttpsError("internal", err.message);
+    }
+  });
 
 // App Store Server Notifications V2 webhook — configure the URL in App Store Connect.
-exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
-  try {
-    const signedPayload = req.body && req.body.signedPayload;
-    if (!signedPayload) {
-      res.status(400).json({ error: "Missing signedPayload" });
+exports.appleIAPWebhook = functions
+  .runWith(APPLE_IAP_CAP)
+  .https.onRequest(async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method not allowed" });
       return;
     }
-    // Verify the outer notification envelope — this also validates
-    // bundle ID and notification structure before we read anything.
-    const payload = await verifyNotification(signedPayload);
-    const notificationType = payload.notificationType;
-    const notificationUUID = payload.notificationUUID;
-    const signedTransactionInfo =
-      payload.data && payload.data.signedTransactionInfo;
-    if (!signedTransactionInfo) {
-      res.status(400).json({ error: "No signedTransactionInfo in payload" });
-      return;
-    }
-
-    // PR D (audit P0 #3): idempotency via appleNotifications/{uuid}.
-    // Apple retries notifications on 5xx; without dedup a re-delivery
-    // re-runs applySubscriptionToUser. The verified outer payload's
-    // notificationUUID is a stable per-delivery identifier.
-    if (notificationUUID) {
-      const notifRef = admin
-        .firestore()
-        .collection("appleNotifications")
-        .doc(notificationUUID);
-      try {
-        const existing = await notifRef.get();
-        if (existing.exists) {
-          console.log(
-            `appleIAPWebhook: duplicate delivery for ${notificationUUID}, skipping`
-          );
-          res.status(200).json({ ok: true, duplicate: true });
-          return;
-        }
-      } catch (err) {
-        // Failure to read dedup doc shouldn't block processing, but
-        // we lose idempotency for this delivery — log loudly.
-        console.error(
-          `appleIAPWebhook: idempotency lookup failed for ${notificationUUID}:`,
-          err.message
-        );
+    try {
+      const signedPayload = req.body && req.body.signedPayload;
+      if (!signedPayload) {
+        res.status(400).json({ error: "Missing signedPayload" });
+        return;
       }
-    }
+      // Verify the outer notification envelope — this also validates
+      // bundle ID and notification structure before we read anything.
+      const payload = await verifyNotification(signedPayload);
+      const notificationType = payload.notificationType;
+      const notificationUUID = payload.notificationUUID;
+      const signedTransactionInfo =
+        payload.data && payload.data.signedTransactionInfo;
+      if (!signedTransactionInfo) {
+        res.status(400).json({ error: "No signedTransactionInfo in payload" });
+        return;
+      }
 
-    // Verify the inner transaction JWS separately so the lookup by
-    // originalTransactionId uses a trusted value.
-    const tx = await verifySignedTransaction(signedTransactionInfo);
-    const originalTransactionId = tx.originalTransactionId;
-
-    const usersSnap = await admin
-      .firestore()
-      .collection("users")
-      .where("appleOriginalTransactionId", "==", originalTransactionId)
-      .limit(1)
-      .get();
-
-    if (usersSnap.empty) {
-      console.warn(
-        `appleIAPWebhook: no user for originalTransactionId=${originalTransactionId} type=${notificationType}`
-      );
-      // Still record the notification as processed so retries don't
-      // hammer the no-match case.
+      // PR D (audit P0 #3): idempotency via appleNotifications/{uuid}.
+      // Apple retries notifications on 5xx; without dedup a re-delivery
+      // re-runs applySubscriptionToUser. The verified outer payload's
+      // notificationUUID is a stable per-delivery identifier.
       if (notificationUUID) {
-        await admin
+        const notifRef = admin
           .firestore()
           .collection("appleNotifications")
-          .doc(notificationUUID)
-          .set({
-            type: notificationType,
-            originalTransactionId,
-            processedAt: admin.firestore.FieldValue.serverTimestamp(),
-            result: "no-user-match",
-          })
-          .catch((err) =>
-            console.error(
-              `appleIAPWebhook: dedup record write failed:`,
-              err.message
-            )
+          .doc(notificationUUID);
+        try {
+          const existing = await notifRef.get();
+          if (existing.exists) {
+            console.log(
+              `appleIAPWebhook: duplicate delivery for ${notificationUUID}, skipping`
+            );
+            res.status(200).json({ ok: true, duplicate: true });
+            return;
+          }
+        } catch (err) {
+          // Failure to read dedup doc shouldn't block processing, but
+          // we lose idempotency for this delivery — log loudly.
+          console.error(
+            `appleIAPWebhook: idempotency lookup failed for ${notificationUUID}:`,
+            err.message
           );
-      }
-      res.status(200).json({ ok: true });
-      return;
-    }
-
-    const uid = usersSnap.docs[0].id;
-
-    // R1A-Deletion: system-writer guard. If the resolved uid is mid-
-    // deletion or tombstoned, do NOT recreate the user doc via
-    // applySubscriptionToUser — log a minimised event to
-    // paymentEventsPostDeletion for operator review, dedup-record
-    // the notification so it's never reprocessed, and return 200 so
-    // Apple stops retrying.
-    if (
-      !(await accountDeletionLocks.shouldSystemWriteProceed(
-        admin.firestore(),
-        uid,
-        "appleIAPWebhook"
-      ))
-    ) {
-      await accountDeletionLocks.recordPaymentEventPostDeletion(
-        admin.firestore(),
-        {
-          provider: "apple",
-          externalTxnId: originalTransactionId,
-          providerEventId: payload.notificationUUID, // Apple-native idempotency key
-          eventType: notificationType,
-          uid,
         }
-      );
+      }
+
+      // Verify the inner transaction JWS separately so the lookup by
+      // originalTransactionId uses a trusted value.
+      const tx = await verifySignedTransaction(signedTransactionInfo);
+      const originalTransactionId = tx.originalTransactionId;
+
+      const usersSnap = await admin
+        .firestore()
+        .collection("users")
+        .where("appleOriginalTransactionId", "==", originalTransactionId)
+        .limit(1)
+        .get();
+
+      if (usersSnap.empty) {
+        console.warn(
+          `appleIAPWebhook: no user for originalTransactionId=${originalTransactionId} type=${notificationType}`
+        );
+        // Still record the notification as processed so retries don't
+        // hammer the no-match case.
+        if (notificationUUID) {
+          await admin
+            .firestore()
+            .collection("appleNotifications")
+            .doc(notificationUUID)
+            .set({
+              type: notificationType,
+              originalTransactionId,
+              processedAt: admin.firestore.FieldValue.serverTimestamp(),
+              result: "no-user-match",
+            })
+            .catch((err) =>
+              console.error(
+                `appleIAPWebhook: dedup record write failed:`,
+                err.message
+              )
+            );
+        }
+        res.status(200).json({ ok: true });
+        return;
+      }
+
+      const uid = usersSnap.docs[0].id;
+
+      // R1A-Deletion: system-writer guard. If the resolved uid is mid-
+      // deletion or tombstoned, do NOT recreate the user doc via
+      // applySubscriptionToUser — log a minimised event to
+      // paymentEventsPostDeletion for operator review, dedup-record
+      // the notification so it's never reprocessed, and return 200 so
+      // Apple stops retrying.
+      if (
+        !(await accountDeletionLocks.shouldSystemWriteProceed(
+          admin.firestore(),
+          uid,
+          "appleIAPWebhook"
+        ))
+      ) {
+        await accountDeletionLocks.recordPaymentEventPostDeletion(
+          admin.firestore(),
+          {
+            provider: "apple",
+            externalTxnId: originalTransactionId,
+            providerEventId: payload.notificationUUID, // Apple-native idempotency key
+            eventType: notificationType,
+            uid,
+          }
+        );
+        if (notificationUUID) {
+          try {
+            await admin
+              .firestore()
+              .collection("appleNotifications")
+              .doc(notificationUUID)
+              .set({
+                type: notificationType,
+                originalTransactionId,
+                uid,
+                processedAt: admin.firestore.FieldValue.serverTimestamp(),
+                result: "skipped_account_deleted",
+              });
+          } catch (err) {
+            console.error(
+              `appleIAPWebhook: failed to record post-deletion notification ${notificationUUID}:`,
+              err.message
+            );
+          }
+        }
+        res.status(200).json({ ok: true });
+        return;
+      }
+
+      const applied = await applySubscriptionToUser(uid, signedTransactionInfo);
+
+      // PR D: finalise dedup record after successful processing.
       if (notificationUUID) {
         try {
           await admin
@@ -373,56 +426,30 @@ exports.appleIAPWebhook = functions.https.onRequest(async (req, res) => {
               originalTransactionId,
               uid,
               processedAt: admin.firestore.FieldValue.serverTimestamp(),
-              result: "skipped_account_deleted",
+              result: applied.skipped || "applied",
             });
         } catch (err) {
           console.error(
-            `appleIAPWebhook: failed to record post-deletion notification ${notificationUUID}:`,
+            `appleIAPWebhook: failed to record processed notification ${notificationUUID}:`,
             err.message
           );
         }
       }
+
+      console.log(
+        `appleIAPWebhook: ${notificationType} applied for uid=${uid} (${applied.skipped || "applied"})`
+      );
       res.status(200).json({ ok: true });
-      return;
+    } catch (err) {
+      console.error("appleIAPWebhook: error", err);
+      res.status(500).json({ error: err.message });
     }
-
-    const applied = await applySubscriptionToUser(uid, signedTransactionInfo);
-
-    // PR D: finalise dedup record after successful processing.
-    if (notificationUUID) {
-      try {
-        await admin
-          .firestore()
-          .collection("appleNotifications")
-          .doc(notificationUUID)
-          .set({
-            type: notificationType,
-            originalTransactionId,
-            uid,
-            processedAt: admin.firestore.FieldValue.serverTimestamp(),
-            result: applied.skipped || "applied",
-          });
-      } catch (err) {
-        console.error(
-          `appleIAPWebhook: failed to record processed notification ${notificationUUID}:`,
-          err.message
-        );
-      }
-    }
-
-    console.log(
-      `appleIAPWebhook: ${notificationType} applied for uid=${uid} (${applied.skipped || "applied"})`
-    );
-    res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error("appleIAPWebhook: error", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+  });
 
 // Called by the iOS client on Restore Purchases.
-exports.restoreApplePurchases = functions.https.onCall(
-  async (data, context) => {
+exports.restoreApplePurchases = functions
+  .runWith(APPLE_IAP_CAP)
+  .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -569,5 +596,4 @@ exports.restoreApplePurchases = functions.https.onCall(
       if (err instanceof functions.https.HttpsError) throw err;
       throw new functions.https.HttpsError("internal", err.message);
     }
-  }
-);
+  });
