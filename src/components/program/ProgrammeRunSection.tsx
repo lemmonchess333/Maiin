@@ -59,6 +59,7 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
@@ -260,6 +261,26 @@ export default function ProgrammeRunSection({
 
   const allRunsDone =
     currentMode !== "freeform" && runDays.length > 0 && !nextStartable;
+
+  // Run8 PR1c — hero state machine. Single discriminator replaces
+  // the scattered `currentMode === X && raceGoal && ...` conjunctions
+  // for hero-adjacent decisions. Initially used to gate the L12
+  // overflow `...` button so it only renders on the four states the
+  // locked plan calls for (planned-today / catch-up / race-today /
+  // race-prep-week). Future renders can switch on the state name
+  // directly instead of re-deriving the conditions.
+  const tomorrowKeyDerivation = localDateString(addLocalDays(new Date(), 1));
+  const heroState = getRunHeroState({
+    mode: currentMode,
+    raceGoal: raceGoal ?? null,
+    phase: phase ?? null,
+    recoveryEndDate: recoveryEndDate ?? null,
+    nextStartable,
+    todayKey: todayKeyDerivation,
+    tomorrowKey: tomorrowKeyDerivation,
+    hasRunDays: runDays.length > 0,
+  });
+  const showHeroOverflow = shouldShowHeroOverflow(heroState);
 
   // PR-F: temporal-anchored label for the "Next planned run" card.
   // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
@@ -882,18 +903,26 @@ export default function ProgrammeRunSection({
             <Play className="w-3 h-3" fill="white" />
             Start
           </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              haptic();
-              setManageDate(nextStartable.date ?? null);
-            }}
-            aria-label="More options for this run"
-            className="shrink-0 w-9 h-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
-          >
-            <MoreVertical className="w-5 h-5" aria-hidden="true" />
-          </button>
+          {/* Run8 PR1c — overflow visible only on the four hero
+              states locked by L12 (planned-today / catch-up /
+              race-today / race-prep-week). Pre-PR1c the button
+              rendered on every nextStartable card including
+              tomorrow / future; that visibility is now driven by
+              the single hero discriminator. */}
+          {showHeroOverflow && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                haptic();
+                setManageDate(nextStartable.date ?? null);
+              }}
+              aria-label="More options for this run"
+              className="shrink-0 w-9 h-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
+            >
+              <MoreVertical className="w-5 h-5" aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
 
