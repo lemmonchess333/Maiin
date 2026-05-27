@@ -869,7 +869,7 @@ export default function Onboarding() {
                 autoCorrect="off"
                 spellCheck={false}
                 inputMode="text"
-                className="w-full px-4 py-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
+                className="w-full p-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
               />
               {displayNameTouched && !displayNameValidation.valid && (
                 <p className="text-xs text-destructive" role="alert">

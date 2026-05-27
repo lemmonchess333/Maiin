@@ -375,7 +375,7 @@ export default function TrainingSection({
         </p>
 
         {/* Mode picker — three pills */}
-        <div className="rounded-xl bg-card border border-border/40 px-3 py-3 space-y-2">
+        <div className="rounded-xl bg-card border border-border/40 p-3 space-y-2">
           <p className="text-sm font-medium text-foreground">Mode</p>
           <div role="radiogroup" aria-label="Run mode" className="flex gap-2">
             {(["freeform", "structured", "race_prep"] as const).map((mode) => {
@@ -463,7 +463,7 @@ export default function TrainingSection({
             )}
 
             {showRaceForm && (
-              <div className="rounded-xl bg-card border border-border/40 px-3 py-3 space-y-3">
+              <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
                 <div className="flex items-center gap-2">
                   <Flag
                     className="size-4"
@@ -663,7 +663,7 @@ export default function TrainingSection({
             haptic();
             onOpenWeeklyLayout();
           }}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-card border border-border/40 hover:bg-muted/50 transition-colors text-left"
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40 hover:bg-muted/50 transition-colors text-left"
         >
           <div className="flex-1">
             <p className="text-sm font-medium text-foreground">

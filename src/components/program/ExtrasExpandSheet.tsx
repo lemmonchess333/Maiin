@@ -150,7 +150,7 @@ function ExtraRunListItem({
       onClick={onTap}
       aria-label={`Extra run: ${detailParts.join(", ")}. Tap to open.`}
       className={cn(
-        "w-full text-left rounded-xl px-3 py-3",
+        "w-full text-left rounded-xl p-3",
         "bg-card border border-border/60",
         "flex items-center gap-3",
         "min-h-[44px]",

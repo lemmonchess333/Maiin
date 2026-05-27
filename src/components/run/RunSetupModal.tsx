@@ -1474,7 +1474,7 @@ export default function RunSetupModal({
                         updateConfig({ activityType: at.type });
                         setShowChooser(false);
                       }}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left motion-safe:transition-colors motion-safe:active:scale-[0.98]"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left motion-safe:transition-colors motion-safe:active:scale-[0.98]"
                       // Run7 Q4 — coral discipline. Selected card uses
                       // coral-tinted bg + coral icon container + coral
                       // checkmark, replacing the legacy purple-tinted

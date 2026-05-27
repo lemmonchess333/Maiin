@@ -268,7 +268,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             </div>
             {demo.tip && (
               <div
-                className="mt-4 flex gap-3 rounded-xl px-3 py-3"
+                className="mt-4 flex gap-3 rounded-xl p-3"
                 style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
               >
                 <AlertTriangle

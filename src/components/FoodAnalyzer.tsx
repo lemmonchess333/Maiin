@@ -1008,7 +1008,7 @@ export default function FoodAnalyzer({
                 type="button"
                 onClick={handleResetAll}
                 aria-label="Reset food analysis"
-                className="px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+                className="p-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
               >
                 Reset
               </button>

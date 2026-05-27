@@ -336,7 +336,7 @@ export default function PrivacySection({
             <select
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="px-2 py-2 rounded-lg bg-card border border-border text-sm"
+              className="p-2 rounded-lg bg-card border border-border text-sm"
             >
               <option value={200}>200m</option>
               <option value={500}>500m</option>

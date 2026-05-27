@@ -218,7 +218,7 @@ export default function FoodMealSection({
           type="button"
           onClick={() => onTargetMeal(mealKey)}
           aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
-          className="w-full flex items-center justify-center gap-1.5 px-3.5 py-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-[0.99]"
+          className="w-full flex items-center justify-center gap-1.5 p-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-[0.99]"
         >
           <Plus className="size-3.5" aria-hidden="true" />
           Add to {MEAL_LABELS[mealKey]}

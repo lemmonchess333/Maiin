@@ -158,7 +158,7 @@ export default function TodayEnergy({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 py-4 space-y-2.5">
+            <div className="p-4 space-y-2.5">
               <BreakdownRow
                 label={"Base TDEE (" + burn.phaseLabel + ")"}
                 value={burn.phaseAdjustedTdee}
