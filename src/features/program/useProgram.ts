@@ -731,7 +731,7 @@ export function useProgram() {
             const isNetwork =
               typeof navigator !== "undefined" && navigator.onLine === false;
             if (isNetwork) {
-              enqueueShare(payload);
+              enqueueShare(user.uid, payload);
               showQueuedToast();
             } else {
               logger.warn("Failed to post workout to feed:", socialErr);
