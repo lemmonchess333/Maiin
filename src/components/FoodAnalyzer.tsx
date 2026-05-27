@@ -644,13 +644,15 @@ export default function FoodAnalyzer({
           </p>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={handleResetAll}
               aria-label="Try food analysis again"
               className="text-sm text-red-500 font-medium flex items-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Try again
+              <RotateCcw className="size-3.5" /> Try again
             </button>
             <button
+              type="button"
               onClick={() => {
                 handleResetAll();
                 setCameraOpen(false);
@@ -692,7 +694,7 @@ export default function FoodAnalyzer({
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
               style={{ backgroundColor: "#7C6BF0" }}
             >
-              <RotateCcw className="w-4 h-4" /> Try again
+              <RotateCcw className="size-4" /> Try again
             </button>
             <button
               type="button"
@@ -763,7 +765,7 @@ export default function FoodAnalyzer({
                   <img
                     src={heroImageSrc}
                     alt={activeResult.foodName}
-                    className="w-full h-full object-cover"
+                    className="size-full object-cover"
                   />
                 </div>
               )}
@@ -839,7 +841,7 @@ export default function FoodAnalyzer({
                               aria-label={`Restore ${item.name}`}
                               className="flex items-center gap-1 text-xs font-medium text-primary hover:opacity-80 transition-opacity active:scale-95 shrink-0"
                             >
-                              <RotateCcw className="w-3 h-3" />
+                              <RotateCcw className="size-3" />
                               Restore
                             </button>
                           </div>
@@ -870,9 +872,9 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Decrease ${item.name} portion`}
                                 disabled={item.multiplier <= 0.5}
-                                className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
-                                <Minus className="w-3 h-3" />
+                                <Minus className="size-3" />
                               </button>
                               <span className="text-xs font-mono tabular-nums text-foreground w-9 text-center">
                                 {item.multiplier}×
@@ -884,9 +886,9 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Increase ${item.name} portion`}
                                 disabled={item.multiplier >= 4}
-                                className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
-                                <Plus className="w-3 h-3" />
+                                <Plus className="size-3" />
                               </button>
                             </div>
                           )}
@@ -898,9 +900,9 @@ export default function FoodAnalyzer({
                               type="button"
                               onClick={() => removeItem(i)}
                               aria-label={`Remove ${item.name}`}
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+                              className="size-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X className="size-3.5" />
                             </button>
                           )}
                         </div>
@@ -967,11 +969,12 @@ export default function FoodAnalyzer({
                 {isBarcode && (
                   <div className="flex items-center justify-center gap-4 pt-1">
                     <button
+                      type="button"
                       onClick={() => setServings(Math.max(0.5, servings - 0.5))}
                       aria-label="Decrease servings"
-                      className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                      className="size-9 rounded-full bg-muted flex items-center justify-center"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus className="size-4" />
                     </button>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-foreground">
@@ -980,11 +983,12 @@ export default function FoodAnalyzer({
                       <p className="text-xs text-muted-foreground">servings</p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => setServings(servings + 0.5)}
                       aria-label="Increase servings"
-                      className="w-9 h-9 rounded-full bg-muted flex items-center justify-center"
+                      className="size-9 rounded-full bg-muted flex items-center justify-center"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="size-4" />
                     </button>
                   </div>
                 )}
@@ -1001,9 +1005,10 @@ export default function FoodAnalyzer({
                 Behaviour unchanged; this is purely visual reweighting. */}
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={handleResetAll}
                 aria-label="Reset food analysis"
-                className="px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+                className="p-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
               >
                 Reset
               </button>
@@ -1014,15 +1019,17 @@ export default function FoodAnalyzer({
                   module-level cached constant — no per-mount cost. */}
               {isPhotoShareSupported() && capturedBase64 && (
                 <button
+                  type="button"
                   onClick={handleSavePhoto}
                   aria-label="Save photo to Photos library"
-                  className="w-11 h-11 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center shrink-0 active:scale-95"
+                  className="size-11 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center shrink-0 active:scale-95"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="size-4" />
                 </button>
               )}
 
               <button
+                type="button"
                 onClick={handleSave}
                 /* Disabled when:
                    - already saving (prevents double-tap)
@@ -1040,13 +1047,13 @@ export default function FoodAnalyzer({
               >
                 {saved ? (
                   <>
-                    <Check className="w-4 h-4" /> Saved!
+                    <Check className="size-4" /> Saved!
                   </>
                 ) : saving ? (
                   "Saving..."
                 ) : (
                   <>
-                    <Save className="w-4 h-4" /> Log meal
+                    <Save className="size-4" /> Log meal
                   </>
                 )}
               </button>

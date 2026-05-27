@@ -188,7 +188,7 @@ export default function Upgrade() {
             className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             aria-label="Back to Settings"
           >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <ArrowLeft className="size-5 text-foreground" />
           </button>
           <div>
             <h1 className="text-xl font-extrabold text-foreground">
@@ -218,18 +218,18 @@ export default function Upgrade() {
         >
           {statusBanner.kind === "success" && (
             <CheckCircle2
-              className="w-4 h-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0"
               aria-hidden="true"
             />
           )}
           {statusBanner.kind === "cancelled" && (
             <AlertCircle
-              className="w-4 h-4 mt-0.5 shrink-0"
+              className="size-4 mt-0.5 shrink-0"
               aria-hidden="true"
             />
           )}
           {statusBanner.kind === "error" && (
-            <XCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+            <XCircle className="size-4 mt-0.5 shrink-0" aria-hidden="true" />
           )}
           <p className="text-xs leading-snug">{statusBanner.message}</p>
         </div>
@@ -245,7 +245,7 @@ export default function Upgrade() {
           role="note"
         >
           <div className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
+            <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
               You&apos;re a Pro member via the App Store
             </p>
@@ -264,7 +264,7 @@ export default function Upgrade() {
               "hover:bg-muted/80 active:scale-[0.98] transition-transform duration-150"
             )}
           >
-            <ExternalLink className="w-4 h-4" aria-hidden="true" />
+            <ExternalLink className="size-4" aria-hidden="true" />
             <span>Open App Store subscriptions</span>
           </a>
         </div>
@@ -276,7 +276,7 @@ export default function Upgrade() {
           role="note"
         >
           <div className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
+            <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
               You&apos;re a Pro member on the web
             </p>
@@ -292,7 +292,7 @@ export default function Upgrade() {
       {!crossPlatformPro && tier === "pro" && !isInTrial && (
         <div className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Crown className="w-5 h-5 text-primary" aria-hidden="true" />
+            <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
               You&apos;re on Pro
             </p>
@@ -309,7 +309,7 @@ export default function Upgrade() {
             ].map((f) => (
               <li key={f} className="flex items-start gap-1.5">
                 <Check
-                  className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0"
+                  className="size-3.5 text-primary mt-0.5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>{f}</span>
@@ -336,7 +336,7 @@ export default function Upgrade() {
               />
             ) : (
               <>
-                <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                <ExternalLink className="size-4" aria-hidden="true" />
                 <span>Manage subscription</span>
               </>
             )}
@@ -348,7 +348,7 @@ export default function Upgrade() {
       {isInTrial && (
         <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
+            <Sparkles className="size-4 text-primary" aria-hidden="true" />
             <p className="text-sm font-medium text-foreground">
               Full Pro access
             </p>
@@ -396,7 +396,7 @@ export default function Upgrade() {
                   ].map((f) => (
                     <li key={f} className="flex items-start gap-1.5">
                       <Check
-                        className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0"
+                        className="size-3.5 text-primary mt-0.5 shrink-0"
                         aria-hidden="true"
                       />
                       <span>{f}</span>
@@ -443,13 +443,13 @@ export default function Upgrade() {
                   <div className="flex items-center gap-3">
                     <div
                       className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                        "size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
                         isSelected ? "border-primary" : "border-border"
                       )}
                       aria-hidden="true"
                     >
                       {isSelected ? (
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                        <div className="size-2.5 rounded-full bg-primary" />
                       ) : null}
                     </div>
                     <div>

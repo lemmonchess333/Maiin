@@ -1778,7 +1778,7 @@ export default function Food() {
                   aria-label={label}
                   className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="size-3.5" />
                   {label}
                 </button>
               </div>

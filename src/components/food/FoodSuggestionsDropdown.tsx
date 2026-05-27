@@ -93,7 +93,7 @@ const FoodSuggestionsDropdown = forwardRef<
     onSelectPantry,
     onLogManually,
   },
-  ref,
+  ref
 ) {
   return (
     <div
@@ -107,16 +107,14 @@ const FoodSuggestionsDropdown = forwardRef<
               dropdown stays scannable as one continuous list when
               local DB + OFF results follow. */}
           <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
-            <Star
-              aria-hidden="true"
-              className="w-3 h-3 text-amber-500"
-            />
+            <Star aria-hidden="true" className="size-3 text-amber-500" />
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
               Your pantry
             </span>
           </div>
           {pantryResults.map((p) => (
             <button
+              type="button"
               key={`pantry-${p.id}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectPantry(p)}
@@ -140,6 +138,7 @@ const FoodSuggestionsDropdown = forwardRef<
         <div>
           {suggestions.map((s, i) => (
             <button
+              type="button"
               key={`ai-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(s)}
@@ -166,6 +165,7 @@ const FoodSuggestionsDropdown = forwardRef<
         >
           {offResults.map((food, i) => (
             <button
+              type="button"
               key={`off-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectOff(food)}
@@ -192,7 +192,7 @@ const FoodSuggestionsDropdown = forwardRef<
                     <span className="text-xs">per {food.servingSize}</span>
                   </div>
                 </div>
-                <Plus className="w-4 h-4 text-primary shrink-0 mt-1" />
+                <Plus className="size-4 text-primary shrink-0 mt-1" />
               </div>
             </button>
           ))}

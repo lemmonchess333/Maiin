@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-const lazyConfetti = () => import("canvas-confetti").then(m => m.default);
+const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
 import { BADGE_ICONS, TIER_COLORS } from "./badges";
 import { BadgeHex } from "./BadgeHex";
@@ -37,18 +37,26 @@ function playChime() {
   }
 }
 
-function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismiss: () => void }) {
+function BadgeEarnedContent({
+  badge,
+  onDismiss,
+}: {
+  badge: EarnedBadge;
+  onDismiss: () => void;
+}) {
   const autoDismissRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const focusTrapRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
     const tierColor = TIER_COLORS[badge.tier];
-    lazyConfetti().then(confetti => confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.4 },
-      colors: [tierColor, "#7B72E9", "#fbbf24", "#34d399"],
-    }));
+    lazyConfetti().then((confetti) =>
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.4 },
+        colors: [tierColor, "#7B72E9", "#fbbf24", "#34d399"],
+      })
+    );
     playChime();
 
     autoDismissRef.current = setTimeout(onDismiss, 3500);
@@ -74,66 +82,67 @@ function BadgeEarnedContent({ badge, onDismiss }: { badge: EarnedBadge; onDismis
         exit={{ scale: 0.5, opacity: 0 }}
         transition={{ type: "spring", damping: 15, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
-            style={{
-              background: "var(--glass-bg)",
-              border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
-            }}
-          >
-            {/* Tier glow */}
-            <div
-              className="absolute inset-0 opacity-10 pointer-events-none"
-              style={{
-                background: `radial-gradient(circle at 50% 30%, ${TIER_COLORS[badge.tier]}, transparent 70%)`,
-              }}
-            />
+        className="w-full max-w-xs rounded-3xl p-8 text-center space-y-4 shadow-2xl relative overflow-hidden"
+        style={{
+          background: "var(--glass-bg)",
+          border: `1.5px solid ${TIER_COLORS[badge.tier]}40`,
+        }}
+      >
+        {/* Tier glow */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle at 50% 30%, ${TIER_COLORS[badge.tier]}, transparent 70%)`,
+          }}
+        />
 
-            {/* Auto-dismiss progress bar */}
-            <motion.div
-              initial={{ scaleX: 1 }}
-              animate={{ scaleX: 0 }}
-              transition={{ duration: 3.5, ease: "linear" }}
-              className="absolute top-0 left-0 right-0 h-0.5 origin-left"
-              style={{ backgroundColor: TIER_COLORS[badge.tier] }}
-            />
+        {/* Auto-dismiss progress bar */}
+        <motion.div
+          initial={{ scaleX: 1 }}
+          animate={{ scaleX: 0 }}
+          transition={{ duration: 3.5, ease: "linear" }}
+          className="absolute top-0 left-0 right-0 h-0.5 origin-left"
+          style={{ backgroundColor: TIER_COLORS[badge.tier] }}
+        />
 
-            <motion.div
-              animate={{ scale: [0.5, 1.4, 1], rotate: [0, 15, -15, 0] }}
-              transition={{ duration: 0.7, type: "spring" }}
-              className="relative z-10 flex justify-center"
-            >
-              <BadgeHex
-                Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
-                tier={badge.tier}
-                earned={true}
-                size={120}
-              />
-            </motion.div>
-
-            <div className="relative z-10">
-              <p
-                className="text-xs font-semibold uppercase tracking-widest mb-1"
-                style={{ color: TIER_COLORS[badge.tier] }}
-              >
-                {badge.tier} badge
-              </p>
-              <p className="text-xl font-bold text-white">{badge.name}</p>
-              <p className="text-sm text-white/60 mt-1">{badge.description}</p>
-            </div>
-
-            <button
-              onClick={onDismiss}
-              className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
-              style={{
-                backgroundColor: `${TIER_COLORS[badge.tier]}20`,
-                color: TIER_COLORS[badge.tier],
-                border: `1px solid ${TIER_COLORS[badge.tier]}30`,
-              }}
-            >
-              Awesome!
-            </button>
-          </motion.div>
+        <motion.div
+          animate={{ scale: [0.5, 1.4, 1], rotate: [0, 15, -15, 0] }}
+          transition={{ duration: 0.7, type: "spring" }}
+          className="relative z-10 flex justify-center"
+        >
+          <BadgeHex
+            Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
+            tier={badge.tier}
+            earned={true}
+            size={120}
+          />
         </motion.div>
+
+        <div className="relative z-10">
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-1"
+            style={{ color: TIER_COLORS[badge.tier] }}
+          >
+            {badge.tier} badge
+          </p>
+          <p className="text-xl font-bold text-white">{badge.name}</p>
+          <p className="text-sm text-white/60 mt-1">{badge.description}</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="relative z-10 w-full py-3 rounded-xl text-sm font-semibold transition-colors"
+          style={{
+            backgroundColor: `${TIER_COLORS[badge.tier]}20`,
+            color: TIER_COLORS[badge.tier],
+            border: `1px solid ${TIER_COLORS[badge.tier]}30`,
+          }}
+        >
+          Awesome!
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
 

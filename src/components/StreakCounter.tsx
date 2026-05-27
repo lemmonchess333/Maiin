@@ -16,11 +16,19 @@ export function StreakCounter({ streak }: StreakCounterProps) {
   const reducedMotion = useReducedMotion();
   if (streak <= 0) {
     return (
-      <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-muted/50 border border-border/50" role="status" aria-label="No active streak">
-        <Flame className="w-6 h-6 text-muted-foreground" aria-hidden="true" />
+      <div
+        className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-muted/50 border border-border/50"
+        role="status"
+        aria-label="No active streak"
+      >
+        <Flame className="size-6 text-muted-foreground" aria-hidden="true" />
         <div>
-          <p className="text-sm font-medium text-muted-foreground">No streak yet</p>
-          <p className="text-xs text-muted-foreground">Log a workout today to start your fire</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            No streak yet
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Log a workout today to start your fire
+          </p>
         </div>
       </div>
     );
@@ -50,7 +58,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
             : { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
         }
       >
-        <Flame className="w-7 h-7 text-orange-500 drop-shadow-sm" />
+        <Flame className="size-7 text-orange-500 drop-shadow-sm" />
       </motion.div>
 
       <div className="flex-1">
@@ -61,10 +69,10 @@ export function StreakCounter({ streak }: StreakCounterProps) {
           {streak >= 30
             ? "Legendary — you're unstoppable"
             : streak >= 14
-            ? "On absolute fire — keep this momentum"
-            : streak >= 7
-            ? "Crushing it — you're in the zone"
-            : "Building strong — one more day!"}
+              ? "On absolute fire — keep this momentum"
+              : streak >= 7
+                ? "Crushing it — you're in the zone"
+                : "Building strong — one more day!"}
         </p>
       </div>
 
