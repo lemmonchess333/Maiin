@@ -234,6 +234,20 @@ describe("_decideFellBehindFlag — set / no-set decisions", () => {
     expect(result.action).toBe("set");
     expect(result.payload.pendingFellBehindPrompt.weeklyTarget).toBe(4);
   });
+
+  it("treats explicit weeklyRunDaysTarget=0 as authoritative (no fallback to legacy field)", () => {
+    // `??` (not `||`) — an explicit zero on the new field shouldn't
+    // fall through to the legacy `weeklyRunsTarget`. Mirrors
+    // `getWeeklyRunTarget` in src/lib/scheduleUtils.ts so server +
+    // client agree on the resolved target.
+    const result = _decideFellBehindFlag(
+      profile({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 4 }),
+      programState(),
+      [],
+      WEEK_KEY
+    );
+    expect(result.action).toBe("noop");
+  });
 });
 
 describe("_decideFellBehindFlag — idempotency + clear path", () => {
