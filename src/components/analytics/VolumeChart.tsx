@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import { formatBinLabel, type ChartGranularity } from "@/lib/chartGranularity";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
-import { THEME } from "@/lib/theme";
+import { CHART_TOOLTIP_STYLE } from "./chartStyles";
 
 interface VolumeChartProps {
   data: { week: string; volume: number }[];
@@ -19,18 +19,6 @@ interface VolumeChartProps {
    *  weekly for backwards compatibility with any legacy callers. */
   granularity?: ChartGranularity;
 }
-
-/* Hist5f S2 + P3: Tooltip matches PerformanceIndexChart's existing
-   style (THEME.chartTooltipBg). Reference style per Hist5f-P3 so
-   the three Analytics charts read as a coherent set. */
-const TOOLTIP_STYLE = {
-  background: THEME.chartTooltipBg,
-  border: "none" as const,
-  borderRadius: 12,
-  fontSize: 12,
-  color: THEME.textPrimary,
-  padding: "8px 12px",
-};
 
 export default function VolumeChart({
   data,
@@ -126,7 +114,7 @@ export default function VolumeChart({
               }
             />
             <Tooltip
-              contentStyle={TOOLTIP_STYLE}
+              contentStyle={CHART_TOOLTIP_STYLE}
               labelFormatter={(v) => formatBinLabel(String(v), granularity)}
               formatter={(value) => {
                 const n =
