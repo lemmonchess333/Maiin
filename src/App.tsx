@@ -263,13 +263,25 @@ function AppRoutes() {
   const { user, profile, loading } = useAuth();
 
   useEffect(() => {
-    if (user && navigator.onLine) {
+    if (!user) return;
+    const uid = user.uid;
+    const tryFlush = () => {
+      if (!navigator.onLine) return;
+      // Lazy-load so this only ships when the user is signed in.
       import("@/lib/offlineQueue").then(({ flushQueue }) => {
         import("@/lib/firebase").then(({ db }) => {
-          flushQueue(db).catch(() => {});
+          flushQueue(db, uid).catch(() => {});
         });
       });
-    }
+    };
+    // Initial flush on sign-in (covers the resumed-session case
+    // where writes were queued in a prior tab / session).
+    tryFlush();
+    // Re-flush whenever the browser regains connectivity. Listener
+    // captures `uid` in closure so it can never flush under a
+    // different user — the cleanup removes it on auth change.
+    window.addEventListener("online", tryFlush);
+    return () => window.removeEventListener("online", tryFlush);
   }, [user]);
 
   if (loading) {
