@@ -13,7 +13,9 @@ export type MacroColumnKey = "protein" | "carbs" | "fat";
 // Accepts lucide-react icons and our own custom SVG icons (e.g. Avocado)
 // via a shared shape. Both export a component that takes SVG props,
 // className, and strokeWidth.
-type IconComponent = ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number | string }>;
+type IconComponent = ComponentType<
+  SVGProps<SVGSVGElement> & { strokeWidth?: number | string }
+>;
 
 interface MacroColumnProps {
   macroKey: MacroColumnKey;
@@ -67,9 +69,7 @@ export default function MacroColumn({
   // "maxed out + over by N" combined with the big number; an empty
   // bar would falsely read as "nothing left to eat").
   // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
-  const barFillPct = isLeftMode
-    ? (isOver ? 1 : 1 - pct)
-    : pct;
+  const barFillPct = isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
 
   // Overshoot — only when consumed exceeds target. Capped at one full
   // extra lap; going 3× over wouldn't read any differently than 2×.
@@ -83,7 +83,9 @@ export default function MacroColumn({
   // EATEN mode:
   //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
   const displayValue = isLeftMode
-    ? (isOver ? consumed - target : remaining)
+    ? isOver
+      ? consumed - target
+      : remaining
     : consumed;
 
   // LEFT mode:
@@ -96,9 +98,7 @@ export default function MacroColumn({
   // Rendering "eaten" makes the mode self-documenting at the cost of
   // one short word; over-target is signalled by the bar overshoot and
   // the tertiary "X / Yg" line.
-  const displayLabel = isLeftMode
-    ? (isOver ? "over" : "left")
-    : "eaten";
+  const displayLabel = isLeftMode ? (isOver ? "over" : "left") : "eaten";
 
   // Macro number + bar stay in the macro's own colour regardless of
   // over/under target. Previously the colour ramped amber → deep red
@@ -158,7 +158,12 @@ export default function MacroColumn({
       className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
       {/* Icon */}
-      <Icon className="w-6 h-6" style={{ color }} strokeWidth={2} aria-hidden="true" />
+      <Icon
+        className="size-6"
+        style={{ color }}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
 
       {/* Big number */}
       <p
@@ -236,7 +241,8 @@ export default function MacroColumn({
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        {" / "}{Math.round(target)}g
+        {" / "}
+        {Math.round(target)}g
       </p>
 
       {/* Uppercase macro label — intentionally muted (same tone as the

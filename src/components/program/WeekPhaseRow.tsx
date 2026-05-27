@@ -27,11 +27,12 @@ export default function WeekPhaseRow({
       {showChevrons &&
         (canGoPrev ? (
           <button
+            type="button"
             onClick={onPrevWeek}
             className="p-1 active:scale-95 transition-transform"
             aria-label="Previous week"
           >
-            <ChevronLeft className="w-[15px] h-[15px] text-muted-foreground" />
+            <ChevronLeft className="size-[15px] text-muted-foreground" />
           </button>
         ) : (
           <div className="w-[23px]" />
@@ -59,11 +60,12 @@ export default function WeekPhaseRow({
       {showChevrons &&
         (canGoNext ? (
           <button
+            type="button"
             onClick={onNextWeek}
             className="p-1 active:scale-95 transition-transform"
             aria-label="Next week"
           >
-            <ChevronRight className="w-[15px] h-[15px] text-muted-foreground" />
+            <ChevronRight className="size-[15px] text-muted-foreground" />
           </button>
         ) : (
           <div className="w-[23px]" />

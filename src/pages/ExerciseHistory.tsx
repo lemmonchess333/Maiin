@@ -8,8 +8,12 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
 
-const ExerciseProgressChart = lazy(() => import("@/components/analytics/ExerciseProgressChart"));
-const ExerciseFormContent = lazy(() => import("@/components/ExerciseFormContent"));
+const ExerciseProgressChart = lazy(
+  () => import("@/components/analytics/ExerciseProgressChart")
+);
+const ExerciseFormContent = lazy(
+  () => import("@/components/ExerciseFormContent")
+);
 
 // Time ranges available on the chart. Mirrors History's main time-range
 // pills so the mental model carries across pages.
@@ -18,7 +22,7 @@ const RANGE_DAYS: Record<string, number> = {
   "3M": 90,
   "6M": 180,
   "1Y": 365,
-  "All": Infinity,
+  All: Infinity,
 };
 const RANGE_ORDER = ["1M", "3M", "6M", "1Y", "All"] as const;
 
@@ -48,14 +52,19 @@ function epley1RM(weightKg: number, reps: number): number {
   return weightKg * (1 + reps / 30);
 }
 
-function topSetOf(sets: { reps: number; weightKg: number }[]): { reps: number; weightKg: number } | null {
+function topSetOf(
+  sets: { reps: number; weightKg: number }[]
+): { reps: number; weightKg: number } | null {
   if (sets.length === 0) return null;
   // Top set = highest e1rm. Ties broken by heaviest weight.
   let best: { reps: number; weightKg: number } = sets[0];
   let bestScore = epley1RM(best.weightKg, best.reps);
   for (const s of sets) {
     const score = epley1RM(s.weightKg, s.reps);
-    if (score > bestScore || (score === bestScore && s.weightKg > best.weightKg)) {
+    if (
+      score > bestScore ||
+      (score === bestScore && s.weightKg > best.weightKg)
+    ) {
       best = s;
       bestScore = score;
     }
@@ -80,7 +89,8 @@ export default function ExerciseHistory() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [timeRange, setTimeRange] = useState<typeof RANGE_ORDER[number]>("3M");
+  const [timeRange, setTimeRange] =
+    useState<(typeof RANGE_ORDER)[number]>("3M");
   const [metric, setMetric] = useState<Metric>("1RM");
   // Top-level tab: "progress" (chart + sessions) or "form" (muscle
   // diagrams + instructions). Default depends on entry point — opening
@@ -88,12 +98,14 @@ export default function ExerciseHistory() {
   // on Form; from History / PR list (where the user is asking "how am
   // I trending?") starts on Progress. The caller threads the intent
   // through `navigate(..., { state: { initialTab: "form" } })`.
-  const initialTab = (location.state as { initialTab?: "progress" | "form" } | null)?.initialTab;
+  const initialTab = (
+    location.state as { initialTab?: "progress" | "form" } | null
+  )?.initialTab;
   const [tab, setTab] = useState<"progress" | "form">(initialTab ?? "progress");
 
   const exercise = useMemo(
     () => EXERCISES.find((e) => e.name === decodedName),
-    [decodedName],
+    [decodedName]
   );
   const isBodyweight = exercise?.equipment === "Bodyweight";
 
@@ -229,8 +241,11 @@ export default function ExerciseHistory() {
 
   // For BW exercises, the metric toggle simplifies to Reps / Volume — no
   // weight-based options make sense when the weight is implicit.
-  const metricOptions: Metric[] = isBodyweight ? ["1RM", "Volume"] : ["1RM", "Max Weight", "Volume"];
-  const displayMetric = isBodyweight && metric === "Max Weight" ? "1RM" : metric;
+  const metricOptions: Metric[] = isBodyweight
+    ? ["1RM", "Volume"]
+    : ["1RM", "Max Weight", "Volume"];
+  const displayMetric =
+    isBodyweight && metric === "Max Weight" ? "1RM" : metric;
 
   const goBack = useCallback(() => {
     haptic("light");
@@ -257,15 +272,19 @@ export default function ExerciseHistory() {
         className="space-y-4 pt-2"
       >
         <button
+          type="button"
           onClick={goBack}
           className="flex items-center gap-1 text-sm text-muted-foreground active:scale-95"
         >
-          <ChevronLeft className="w-4 h-4" /> Back
+          <ChevronLeft className="size-4" /> Back
         </button>
         <div className="p-6 rounded-2xl bg-card text-center space-y-2">
-          <p className="text-sm font-semibold text-foreground">Exercise not found</p>
+          <p className="text-sm font-semibold text-foreground">
+            Exercise not found
+          </p>
           <p className="text-xs text-muted-foreground">
-            &ldquo;{decodedName}&rdquo; isn&apos;t in your logs or the exercise database.
+            &ldquo;{decodedName}&rdquo; isn&apos;t in your logs or the exercise
+            database.
           </p>
         </div>
       </motion.div>
@@ -285,15 +304,18 @@ export default function ExerciseHistory() {
       {/* ── Header ───────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={goBack}
           aria-label="Back"
-          className="w-11 h-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
+          className="size-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
           style={{ boxShadow: "var(--ds-shadow-card)" }}
         >
-          <ChevronLeft className="w-5 h-5 text-foreground" />
+          <ChevronLeft className="size-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-extrabold text-foreground truncate">{decodedName}</h1>
+          <h1 className="text-lg font-extrabold text-foreground truncate">
+            {decodedName}
+          </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
               <span
@@ -305,7 +327,9 @@ export default function ExerciseHistory() {
               >
                 {exercise.muscleGroup}
               </span>
-              <span className="text-xs text-muted-foreground">{exercise.equipment}</span>
+              <span className="text-xs text-muted-foreground">
+                {exercise.equipment}
+              </span>
             </div>
           )}
         </div>
@@ -313,25 +337,44 @@ export default function ExerciseHistory() {
 
       {/* ── Stat strip ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="p-3 rounded-xl bg-card" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+        <div
+          className="p-3 rounded-xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
+        >
           <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
             {isBodyweight ? "Max reps" : "Best 1RM"}
           </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-            {isBodyweight ? headerStats.maxReps || "—" : headerStats.best1RM ? `${headerStats.best1RM}` : "—"}
+            {isBodyweight
+              ? headerStats.maxReps || "—"
+              : headerStats.best1RM
+                ? `${headerStats.best1RM}`
+                : "—"}
             {!isBodyweight && headerStats.best1RM > 0 && (
-              <span className="text-xs font-normal text-muted-foreground ml-1">kg</span>
+              <span className="text-xs font-normal text-muted-foreground ml-1">
+                kg
+              </span>
             )}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-card" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Sessions</p>
+        <div
+          className="p-3 rounded-xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
+        >
+          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+            Sessions
+          </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSessions}
           </p>
         </div>
-        <div className="p-3 rounded-xl bg-card" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">Total sets</p>
+        <div
+          className="p-3 rounded-xl bg-card"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
+        >
+          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+            Total sets
+          </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSets}
           </p>
@@ -342,14 +385,18 @@ export default function ExerciseHistory() {
       <div className="flex gap-1 bg-muted rounded-full p-0.5">
         {(["progress", "form"] as const).map((t) => (
           <button
+            type="button"
             key={t}
-            onClick={() => { haptic("light"); setTab(t); }}
+            onClick={() => {
+              haptic("light");
+              setTab(t);
+            }}
             className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tab === t
-                ? "bg-card text-foreground"
-                : "text-muted-foreground"
+              tab === t ? "bg-card text-foreground" : "text-muted-foreground"
             }`}
-            style={tab === t ? { boxShadow: "var(--ds-shadow-card)" } : undefined}
+            style={
+              tab === t ? { boxShadow: "var(--ds-shadow-card)" } : undefined
+            }
           >
             {t === "progress" ? "Progress" : "Form"}
           </button>
@@ -357,8 +404,15 @@ export default function ExerciseHistory() {
       </div>
 
       {tab === "form" ? (
-        <div className="rounded-2xl bg-card p-4" style={{ boxShadow: "var(--ds-shadow-card)" }}>
-          <Suspense fallback={<div className="h-40 bg-muted/30 rounded animate-pulse" />}>
+        <div
+          className="rounded-2xl bg-card p-4"
+          style={{ boxShadow: "var(--ds-shadow-card)" }}
+        >
+          <Suspense
+            fallback={
+              <div className="h-40 bg-muted/30 rounded animate-pulse" />
+            }
+          >
             <ExerciseFormContent exerciseName={decodedName} />
           </Suspense>
         </div>
@@ -367,9 +421,12 @@ export default function ExerciseHistory() {
       ) : (
         <>
           {/* ── Rep-range PRs ───────────────────────────────────────── */}
-          <div className="rounded-2xl bg-card p-4 space-y-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+          <div
+            className="rounded-2xl bg-card p-4 space-y-3"
+            style={{ boxShadow: "var(--ds-shadow-card)" }}
+          >
             <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-amber-500" />
+              <Trophy className="size-4 text-amber-500" />
               <h3 className="text-sm font-semibold text-foreground">
                 {isBodyweight ? "Personal bests by reps" : "Rep-range PRs"}
               </h3>
@@ -383,13 +440,21 @@ export default function ExerciseHistory() {
                       {b}RM
                     </p>
                     <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
-                      {pr ? (isBodyweight && pr.weightKg === 0 ? "BW" : `${pr.weightKg}`) : "—"}
+                      {pr
+                        ? isBodyweight && pr.weightKg === 0
+                          ? "BW"
+                          : `${pr.weightKg}`
+                        : "—"}
                       {pr && pr.weightKg > 0 && !isBodyweight && (
-                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">kg</span>
+                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
+                          kg
+                        </span>
                       )}
                     </p>
                     {pr && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{formatDate(pr.date)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {formatDate(pr.date)}
+                      </p>
                     )}
                   </div>
                 );
@@ -398,11 +463,18 @@ export default function ExerciseHistory() {
           </div>
 
           {/* ── Time range pills ────────────────────────────────────── */}
-          <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <div
+            className="flex gap-1.5 overflow-x-auto"
+            style={{ scrollbarWidth: "none" }}
+          >
             {RANGE_ORDER.map((r) => (
               <button
+                type="button"
                 key={r}
-                onClick={() => { haptic("light"); setTimeRange(r); }}
+                onClick={() => {
+                  haptic("light");
+                  setTimeRange(r);
+                }}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0 ${
                   timeRange === r
                     ? "bg-primary text-primary-foreground"
@@ -416,13 +488,19 @@ export default function ExerciseHistory() {
 
           {/* ── Chart with metric toggle ────────────────────────────── */}
           {hasOnlyOneSession ? (
-            <div className="p-4 rounded-2xl bg-card text-center py-8" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+            <div
+              className="p-4 rounded-2xl bg-card text-center py-8"
+              style={{ boxShadow: "var(--ds-shadow-card)" }}
+            >
               <p className="text-sm text-muted-foreground">
                 Log more sessions to see progression
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl bg-card p-4 space-y-3" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+            <div
+              className="rounded-2xl bg-card p-4 space-y-3"
+              style={{ boxShadow: "var(--ds-shadow-card)" }}
+            >
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
                   Progression
@@ -430,77 +508,112 @@ export default function ExerciseHistory() {
                 <div className="flex gap-1 bg-muted rounded-full p-0.5">
                   {metricOptions.map((m) => (
                     <button
+                      type="button"
                       key={m}
-                      onClick={() => { haptic("light"); setMetric(m); }}
+                      onClick={() => {
+                        haptic("light");
+                        setMetric(m);
+                      }}
                       className={`px-2 py-1 rounded-full text-[11px] font-semibold transition-colors ${
                         displayMetric === m
                           ? "bg-card text-foreground"
                           : "text-muted-foreground"
                       }`}
-                      style={displayMetric === m ? { boxShadow: "var(--ds-shadow-card)" } : undefined}
+                      style={
+                        displayMetric === m
+                          ? { boxShadow: "var(--ds-shadow-card)" }
+                          : undefined
+                      }
                     >
                       {m}
                     </button>
                   ))}
                 </div>
               </div>
-              <Suspense fallback={<div className="h-40 bg-muted/30 rounded animate-pulse" />}>
-                <ExerciseProgressChart data={chartData} accent={THEME.lifting} />
+              <Suspense
+                fallback={
+                  <div className="h-40 bg-muted/30 rounded animate-pulse" />
+                }
+              >
+                <ExerciseProgressChart
+                  data={chartData}
+                  accent={THEME.lifting}
+                />
               </Suspense>
             </div>
           )}
 
           {/* ── Recent sessions list ────────────────────────────────── */}
-          <div className="rounded-2xl bg-card overflow-hidden" style={{ boxShadow: "var(--ds-shadow-card)" }}>
+          <div
+            className="rounded-2xl bg-card overflow-hidden"
+            style={{ boxShadow: "var(--ds-shadow-card)" }}
+          >
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
-              <h3 className="text-sm font-semibold text-foreground">Recent sessions</h3>
+              <h3 className="text-sm font-semibold text-foreground">
+                Recent sessions
+              </h3>
             </div>
             <div className="divide-y divide-border/20">
-              {[...filteredSessions].reverse().slice(0, 20).map((s) => {
-                const delta = prevDeltas.get(s.date);
-                const isPR = prDates.has(s.date);
-                return (
-                  <div key={s.date} className="flex items-center justify-between px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium text-foreground">{formatDate(s.date)}</p>
-                        {isPR && (
-                          <span
-                            className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-full"
-                            style={{ backgroundColor: THEME.semantic.nutrition, color: "white" }}
+              {[...filteredSessions]
+                .reverse()
+                .slice(0, 20)
+                .map((s) => {
+                  const delta = prevDeltas.get(s.date);
+                  const isPR = prDates.has(s.date);
+                  return (
+                    <div
+                      key={s.date}
+                      className="flex items-center justify-between px-4 py-3"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-medium text-foreground">
+                            {formatDate(s.date)}
+                          </p>
+                          {isPR && (
+                            <span
+                              className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-full"
+                              style={{
+                                backgroundColor: THEME.semantic.nutrition,
+                                color: "white",
+                              }}
+                            >
+                              PR
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {s.sets.length} set{s.sets.length !== 1 ? "s" : ""}
+                          {" · "}
+                          {isBodyweight
+                            ? `${s.totalReps} reps total`
+                            : `${Math.round(s.volume)} kg volume`}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className="text-sm font-bold font-mono tabular-nums text-foreground">
+                          {s.topSet
+                            ? `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
+                            : "—"}
+                        </p>
+                        {delta != null && delta !== 0 && (
+                          <p
+                            className="text-[10px] font-medium mt-0.5"
+                            style={{
+                              color:
+                                delta > 0 ? THEME.success : THEME.text.muted,
+                            }}
                           >
-                            PR
-                          </span>
+                            {delta > 0 ? "+" : ""}
+                            {delta} kg from last
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {s.sets.length} set{s.sets.length !== 1 ? "s" : ""}
-                        {" · "}
-                        {isBodyweight ? `${s.totalReps} reps total` : `${Math.round(s.volume)} kg volume`}
-                      </p>
                     </div>
-                    <div className="text-right flex-shrink-0 ml-3">
-                      <p className="text-sm font-bold font-mono tabular-nums text-foreground">
-                        {s.topSet
-                          ? `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
-                          : "—"}
-                      </p>
-                      {delta != null && delta !== 0 && (
-                        <p
-                          className="text-[10px] font-medium mt-0.5"
-                          style={{ color: delta > 0 ? THEME.success : THEME.text.muted }}
-                        >
-                          {delta > 0 ? "+" : ""}
-                          {delta} kg from last
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </div>
-
         </>
       )}
     </motion.div>
@@ -515,7 +628,7 @@ function EmptyState({ exerciseName }: { exerciseName: string }) {
   // (one accent colour driven by THEME.lifting, action via Button).
   return (
     <SharedEmptyState
-      icon={<Trophy className="w-5 h-5" />}
+      icon={<Trophy className="size-5" />}
       title="No sessions logged yet"
       description={`Log ${exerciseName} on a workout to start tracking your progression here.`}
       action={{ label: "Go to Program", href: "/program" }}

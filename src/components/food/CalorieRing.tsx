@@ -104,7 +104,8 @@ export default function CalorieRing({
 
   // Overshoot arc (only shown in LEFT mode when over target)
   const overshoot = isOver ? consumed - target : 0;
-  const overshootRatio = isOver && target > 0 ? Math.min(overshoot / target, 1) : 0;
+  const overshootRatio =
+    isOver && target > 0 ? Math.min(overshoot / target, 1) : 0;
   const overlapOffset = CIRCUMFERENCE * (1 - overshootRatio);
 
   const ringDurationSec = ringDurationMs / 1000;
@@ -121,15 +122,19 @@ export default function CalorieRing({
     <button
       type="button"
       onClick={onToggleMode}
-      aria-label={ariaLabel + ". Tap to toggle between calories left and calories eaten."}
-      className="relative w-40 h-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+      aria-label={
+        ariaLabel + ". Tap to toggle between calories left and calories eaten."
+      }
+      className="relative size-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
       style={{
         // Celebration glow — purple matching the ring itself.
-        filter: glowing ? "drop-shadow(0 0 16px rgba(123, 114, 233, 0.4))" : undefined,
+        filter: glowing
+          ? "drop-shadow(0 0 16px rgba(123, 114, 233, 0.4))"
+          : undefined,
         transition: "filter 800ms ease-in-out",
       }}
     >
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="size-full">
         <defs>
           {/* Apple Activity Rings-style gradient — lighter at the top of the
               arc (12 o'clock), deeper at the bottom. Uses userSpaceOnUse so
@@ -139,7 +144,10 @@ export default function CalorieRing({
               the arc start and deeper at the arc end. */}
           <linearGradient
             id={ringGradientId}
-            x1="0" y1="0" x2="0" y2={SIZE}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2={SIZE}
             gradientUnits="userSpaceOnUse"
           >
             <stop offset="0%" stopColor={COLOR_RING_LIGHT} />
@@ -150,7 +158,13 @@ export default function CalorieRing({
               a red "danger" state. The arc layers on top of the main ring
               and only extends up to 1× target (capped), so it looks like
               the ring has completed a second lap rather than broken. */}
-          <linearGradient id={overflowGradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient
+            id={overflowGradientId}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
             <stop offset="0%" stopColor={COLOR_RING} />
             <stop offset="100%" stopColor={COLOR_RING_DEEP} />
           </linearGradient>
@@ -159,12 +173,28 @@ export default function CalorieRing({
               flat painted shape. Uses feComposite operator="out" to invert
               the blur into a true inner shadow (regular drop-shadow would
               make it look like it's floating). */}
-          <filter id={trackFilterId} x="-50%" y="-50%" width="200%" height="200%">
+          <filter
+            id={trackFilterId}
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+          >
             <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
             <feOffset in="blur" dx="0" dy="1" result="offsetBlur" />
-            <feComposite in="offsetBlur" in2="SourceAlpha" operator="out" result="innerShadow" />
+            <feComposite
+              in="offsetBlur"
+              in2="SourceAlpha"
+              operator="out"
+              result="innerShadow"
+            />
             <feFlood floodColor="#000000" floodOpacity="0.08" result="colour" />
-            <feComposite in="colour" in2="innerShadow" operator="in" result="colouredShadow" />
+            <feComposite
+              in="colour"
+              in2="innerShadow"
+              operator="in"
+              result="colouredShadow"
+            />
             <feMerge>
               <feMergeNode in="SourceGraphic" />
               <feMergeNode in="colouredShadow" />
@@ -194,7 +224,9 @@ export default function CalorieRing({
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
-              initial={{ strokeDashoffset: reduce ? strokeDashoffset : CIRCUMFERENCE }}
+              initial={{
+                strokeDashoffset: reduce ? strokeDashoffset : CIRCUMFERENCE,
+              }}
               animate={{ strokeDashoffset }}
               transition={{
                 duration: reduce ? 0 : ringDurationSec,
@@ -220,7 +252,9 @@ export default function CalorieRing({
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
-              initial={{ strokeDashoffset: reduce ? overlapOffset : CIRCUMFERENCE }}
+              initial={{
+                strokeDashoffset: reduce ? overlapOffset : CIRCUMFERENCE,
+              }}
               animate={{ strokeDashoffset: overlapOffset }}
               transition={{
                 duration: reduce ? 0 : 1.5,
@@ -236,7 +270,10 @@ export default function CalorieRing({
           the outer button's aria-label already announces the same value
           (and the mode toggle hint), so without this VoiceOver reads
           the calorie number twice on focus. */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" aria-hidden="true">
+      <div
+        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+        aria-hidden="true"
+      >
         {hasTarget ? (
           <AnimatePresence mode="wait">
             <motion.div
@@ -249,16 +286,26 @@ export default function CalorieRing({
             >
               <p
                 className="text-4xl font-extrabold font-mono tabular-nums leading-none tracking-tight"
-                style={{ color: numberColor, opacity: displayValue === 0 ? 0.4 : 1 }}
+                style={{
+                  color: numberColor,
+                  opacity: displayValue === 0 ? 0.4 : 1,
+                }}
               >
-                <AnimatedNumber value={displayValue} duration={ringDurationSec} ease={RING_EASE} />
+                <AnimatedNumber
+                  value={displayValue}
+                  duration={ringDurationSec}
+                  ease={RING_EASE}
+                />
               </p>
               <p
                 className="text-[10px] font-semibold uppercase tracking-wider mt-1 flex items-center gap-1"
                 style={{ color: numberColor, opacity: 0.7 }}
               >
                 {CALORIE_UNIT} {labelMode}
-                <ArrowLeftRight className="w-2.5 h-2.5 opacity-60" aria-hidden="true" />
+                <ArrowLeftRight
+                  className="size-2.5 opacity-60"
+                  aria-hidden="true"
+                />
               </p>
               {trajectoryLabel && (
                 <p className="text-[10px] mt-1 text-muted-foreground/70 font-mono tabular-nums">
@@ -278,14 +325,17 @@ export default function CalorieRing({
                     transition={{ duration: reduce ? 0 : 0.2 }}
                     className="text-[10px] mt-1 text-muted-foreground/80 tabular-nums"
                   >
-                    +{Math.round(trainingBurnToast.delta)} · {trainingBurnToast.source}
+                    +{Math.round(trainingBurnToast.delta)} ·{" "}
+                    {trainingBurnToast.source}
                   </motion.p>
                 )}
               </AnimatePresence>
             </motion.div>
           </AnimatePresence>
         ) : (
-          <span className="text-4xl font-extrabold text-muted-foreground/40">&mdash;</span>
+          <span className="text-4xl font-extrabold text-muted-foreground/40">
+            &mdash;
+          </span>
         )}
       </div>
     </button>

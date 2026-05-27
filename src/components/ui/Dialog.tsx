@@ -148,7 +148,7 @@ export function Dialog({
               "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
               "rounded-2xl bg-card p-5 shadow-xl",
               SIZE_CLASSES[size],
-              className,
+              className
             )}
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -160,9 +160,9 @@ export function Dialog({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="absolute top-3 right-3 size-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                <X className="w-4 h-4" aria-hidden="true" />
+                <X className="size-4" aria-hidden="true" />
               </button>
             ) : null}
             {title ? (
@@ -174,10 +174,7 @@ export function Dialog({
               </p>
             ) : null}
             {description ? (
-              <p
-                id={descId}
-                className="text-sm text-muted-foreground mt-2"
-              >
+              <p id={descId} className="text-sm text-muted-foreground mt-2">
                 {description}
               </p>
             ) : null}

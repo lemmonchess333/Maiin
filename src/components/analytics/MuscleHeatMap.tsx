@@ -37,21 +37,21 @@ const CATEGORY_DISPLAY: Record<string, string> = {
  *  workout doc was saved against the previous movement-key taxonomy. */
 const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
   // Current taxonomy (EXERCISE_CATEGORIES)
-  "Chest": ["chest"],
-  "Back": ["upper-back", "lower-back"],
-  "Shoulders": ["front-deltoids", "back-deltoids"],
-  "Biceps": ["biceps"],
-  "Triceps": ["triceps"],
-  "Legs": ["quadriceps", "gluteal", "hamstring", "calves"],
-  "Core": ["abs", "obliques"],
+  Chest: ["chest"],
+  Back: ["upper-back", "lower-back"],
+  Shoulders: ["front-deltoids", "back-deltoids"],
+  Biceps: ["biceps"],
+  Triceps: ["triceps"],
+  Legs: ["quadriceps", "gluteal", "hamstring", "calves"],
+  Core: ["abs", "obliques"],
   "Full Body": ["chest", "upper-back", "quadriceps", "abs"],
-  "Cardio": [],
+  Cardio: [],
   // Legacy aliases via CATEGORY_DISPLAY
   "Quads & Glutes": ["quadriceps", "gluteal"],
   "Hamstrings & Back": ["hamstring", "upper-back", "lower-back"],
-  "Lats": ["upper-back"],
-  "Calves": ["calves"],
-  "Traps": ["trapezius"],
+  Lats: ["upper-back"],
+  Calves: ["calves"],
+  Traps: ["trapezius"],
 };
 
 const LOW_COLOR = THEME.liftingLight;
@@ -88,7 +88,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
   const isDark = useSyncExternalStore(
     subscribeDarkMode,
     getIsDark,
-    () => false,
+    () => false
   );
   // Light: near-white silhouette (#e8e8f0) → calm iOS grouped-bg vibe.
   // Dark: mid-neutral (#2A2A30) so the silhouette sits cleanly on
@@ -111,7 +111,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
      is 1W with 50 total sets or 1Y with 2,500 total sets. */
   const totalSets = useMemo(
     () => Object.values(normalizedData).reduce((sum, n) => sum + n, 0),
-    [normalizedData],
+    [normalizedData]
   );
 
   // Build exercise data for react-body-highlighter
@@ -138,7 +138,14 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
         Muscle Groups Trained
       </h3>
       <div className="flex flex-col items-center">
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: "16px 0" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            justifyContent: "center",
+            padding: "16px 0",
+          }}
+        >
           {/* Front view */}
           <Model
             data={exerciseData}
@@ -163,7 +170,7 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
             {trainedGroups.map(([group, sets]) => (
               <div key={group} className="flex items-center gap-1.5">
                 <div
-                  className="w-2 h-2 rounded-full"
+                  className="size-2 rounded-full"
                   style={{ background: getLegendDotColor(sets, totalSets) }}
                 />
                 <span className="text-xs text-muted-foreground font-medium">
