@@ -32,8 +32,7 @@
  *   more specific label when context matters ("Loading runs",
  *   "Uploading photo", etc.).
  */
-import { forwardRef } from "react";
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes, Ref } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +47,7 @@ interface SpinnerProps extends Omit<
   variant?: SpinnerVariant;
   /** Accessible label announced by screen readers. Defaults to "Loading". */
   label?: string;
+  ref?: Ref<HTMLSpanElement>;
 }
 
 const SIZE_CLASSES: Record<SpinnerSize, string> = {
@@ -63,10 +63,14 @@ const VARIANT_CLASSES: Record<SpinnerVariant, string> = {
   muted: "text-muted-foreground",
 };
 
-const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
-  { size = "sm", variant = "primary", label = "Loading", className, ...rest },
-  ref
-) {
+function Spinner({
+  size = "sm",
+  variant = "primary",
+  label = "Loading",
+  className,
+  ref,
+  ...rest
+}: SpinnerProps) {
   return (
     <span
       ref={ref}
@@ -85,6 +89,6 @@ const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
       />
     </span>
   );
-});
+}
 
 export { Spinner };

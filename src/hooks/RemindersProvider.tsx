@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, use, type ReactNode } from "react";
 import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
@@ -50,10 +50,10 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
 }
 
 function useRemindersContext(): RemindersValue {
-  const ctx = useContext(RemindersContext);
+  const ctx = use(RemindersContext);
   if (!ctx) {
     throw new Error(
-      "Reminder hooks must be used inside <RemindersProvider> (authenticated routes only)",
+      "Reminder hooks must be used inside <RemindersProvider> (authenticated routes only)"
     );
   }
   return ctx;
