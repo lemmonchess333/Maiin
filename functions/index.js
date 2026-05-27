@@ -20,6 +20,8 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
+const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
@@ -1943,6 +1945,90 @@ exports.computePerformanceWeek = functions
     }
   });
 
+// ══════════════════════════════════════════════
+// SHARED ACTIVE-USERS SWEEP SCAFFOLD
+// ══════════════════════════════════════════════
+//
+// Four scheduled functions iterate active users in lockstep:
+// weeklyPerformanceRollup, dailyPerformanceRefresh,
+// dailyRaceReconciliationSweep, weeklyFellBehindCheck. All share
+// the same shape:
+//
+//   1. Query `users` filtered by `lastActiveAt >= cutoff` (fail
+//      loud — never fall back to a full scan, runaway-cost risk).
+//   2. Chunk the uid list into batches of 10 and run each batch
+//      with `Promise.all` for bounded concurrency.
+//   3. Per-uid try/catch so one bad user doesn't break the sweep.
+//   4. Outer try/catch on the function body so an unexpected
+//      throw can't crash the pubsub container without a log.
+//
+// `sweepActiveUsers` centralises that scaffold. The R1A
+// `shouldSystemWriteProceed` guard placement varies per caller (some
+// place it in their per-user worker, some at the top of the callback)
+// so it stays caller-owned rather than baked into this helper.
+
+/**
+ * Shared read scaffold for per-user worker functions that need both
+ * the user's profile doc and their current programState. Three
+ * workers use it (PR-L L1+L3 sweep, L2 recovery-entry on
+ * onRunCreated, L4 weekly fell-behind check) — all read in parallel
+ * and early-return when either doc is missing. Returns null in that
+ * case so callers can `if (!ctx) return ...` cleanly.
+ */
+async function readUserProgramContext(uid) {
+  const userRef = db.collection("users").doc(uid);
+  const programRef = userRef.collection("programState").doc("current");
+  const [userSnap, programSnap] = await Promise.all([
+    userRef.get(),
+    programRef.get(),
+  ]);
+  if (!userSnap.exists || !programSnap.exists) {
+    return null;
+  }
+  return {
+    userRef,
+    programRef,
+    profile: userSnap.data() || {},
+    programState: programSnap.data() || {},
+  };
+}
+
+async function sweepActiveUsers({ name, cutoffDays, perUser }) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - cutoffDays);
+  const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
+
+  let usersSnap;
+  try {
+    usersSnap = await db
+      .collection("users")
+      .where("lastActiveAt", ">=", cutoffTs)
+      .get();
+  } catch (err) {
+    console.error(
+      `${name}: lastActiveAt query failed, skipping run:`,
+      err.message
+    );
+    return;
+  }
+
+  const uids = usersSnap.docs.map((d) => d.id);
+  console.log(`${name}: processing ${uids.length} users`);
+
+  for (let i = 0; i < uids.length; i += 10) {
+    const batch = uids.slice(i, i + 10);
+    await Promise.all(
+      batch.map(async (uid) => {
+        try {
+          await perUser(uid);
+        } catch (err) {
+          console.error(`${name}: failed for ${uid}:`, err.message);
+        }
+      })
+    );
+  }
+}
+
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
 
 exports.weeklyPerformanceRollup = functions.pubsub
@@ -1951,61 +2037,25 @@ exports.weeklyPerformanceRollup = functions.pubsub
   .onRun(async () => {
     try {
       console.log("weeklyPerformanceRollup: starting");
-
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-      let usersSnap;
-      try {
-        usersSnap = await db
-          .collection("users")
-          .where("lastActiveAt", ">=", cutoffTs)
-          .get();
-      } catch (err) {
-        // Fail loud — do NOT fall back to processing all users (runaway cost risk)
-        console.error(
-          "weeklyPerformanceRollup: lastActiveAt query failed, skipping run:",
-          err.message
-        );
-        return null;
-      }
-
-      const uids = usersSnap.docs.map((d) => d.id);
-      console.log(
-        `weeklyPerformanceRollup: computing for ${uids.length} users`
-      );
-
-      for (let i = 0; i < uids.length; i += 10) {
-        const batch = uids.slice(i, i + 10);
-        await Promise.all(
-          batch.map(async (uid) => {
-            try {
-              // R1A-Deletion: per-uid tombstone guard. The function
-              // read the active-users list seconds-to-minutes ago; a
-              // user may have started deletion since. Per spec
-              // systemWriterCheckTiming: check immediately before each
-              // per-uid write, not only at function entry.
-              if (
-                !(await accountDeletionLocks.shouldSystemWriteProceed(
-                  db,
-                  uid,
-                  "weeklyPerformanceRollup"
-                ))
-              ) {
-                return;
-              }
-              await computeAndWritePerformanceForUser(uid, null);
-            } catch (err) {
-              console.error(
-                `weeklyPerformanceRollup: failed for ${uid}:`,
-                err.message
-              );
-            }
-          })
-        );
-      }
-
+      await sweepActiveUsers({
+        name: "weeklyPerformanceRollup",
+        cutoffDays: 30,
+        perUser: async (uid) => {
+          // R1A-Deletion: per-uid tombstone guard. The function read
+          // the active-users list seconds-to-minutes ago; a user may
+          // have started deletion since.
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              db,
+              uid,
+              "weeklyPerformanceRollup"
+            ))
+          ) {
+            return;
+          }
+          await computeAndWritePerformanceForUser(uid, null);
+        },
+      });
       console.log("weeklyPerformanceRollup: done");
     } catch (err) {
       console.error("weeklyPerformanceRollup: fatal error:", {
@@ -2024,56 +2074,22 @@ exports.dailyPerformanceRefresh = functions.pubsub
   .onRun(async () => {
     try {
       console.log("dailyPerformanceRefresh: starting");
-
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 14);
-      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-      let usersSnap;
-      try {
-        usersSnap = await db
-          .collection("users")
-          .where("lastActiveAt", ">=", cutoffTs)
-          .get();
-      } catch (_) {
-        console.log(
-          "dailyPerformanceRefresh: lastActiveAt query failed, skipping"
-        );
-        return null;
-      }
-
-      const uids = usersSnap.docs.map((d) => d.id);
-      console.log(
-        `dailyPerformanceRefresh: computing for ${uids.length} users`
-      );
-
-      for (let i = 0; i < uids.length; i += 10) {
-        const batch = uids.slice(i, i + 10);
-        await Promise.all(
-          batch.map(async (uid) => {
-            try {
-              // R1A-Deletion: per-uid tombstone guard (same rationale
-              // as weeklyPerformanceRollup).
-              if (
-                !(await accountDeletionLocks.shouldSystemWriteProceed(
-                  db,
-                  uid,
-                  "dailyPerformanceRefresh"
-                ))
-              ) {
-                return;
-              }
-              await computeAndWritePerformanceForUser(uid, null);
-            } catch (err) {
-              console.error(
-                `dailyPerformanceRefresh: failed for ${uid}:`,
-                err.message
-              );
-            }
-          })
-        );
-      }
-
+      await sweepActiveUsers({
+        name: "dailyPerformanceRefresh",
+        cutoffDays: 14,
+        perUser: async (uid) => {
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              db,
+              uid,
+              "dailyPerformanceRefresh"
+            ))
+          ) {
+            return;
+          }
+          await computeAndWritePerformanceForUser(uid, null);
+        },
+      });
       console.log("dailyPerformanceRefresh: done");
     } catch (err) {
       console.error("dailyPerformanceRefresh: fatal error:", {
@@ -2125,23 +2141,12 @@ const PLANNED_RACE_DISTANCE_METERS_FNS = {
   marathon: 42195,
 };
 
-/** YYYY-MM-DD in UTC. Server runs in UTC; users' local dates differ
- *  by ≤24h, which is well within the 3-day no-show grace and the
- *  7-day recovery-exit grace, so timezone drift can't trip either
- *  trigger early. */
-function _utcDateString(d = new Date()) {
-  const y = d.getUTCFullYear();
-  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-/** Parse a YYYY-MM-DD into a UTC Date at 00:00. Used for grace-
- *  window math; not for displaying to users. */
-function _parseUtcDate(dateStr) {
-  const [y, m, d] = dateStr.split("-").map((n) => parseInt(n, 10));
-  return new Date(Date.UTC(y, m - 1, d));
-}
+// Date helpers — `utcDateString` (YYYY-MM-DD in UTC) and
+// `parseUtcDate` (YYYY-MM-DD → UTC 00:00 Date) live in
+// `./lib/dateUtils.js`. Aliased locally to keep the existing
+// `_utcDateString` / `_parseUtcDate` test-surface exports stable.
+const _utcDateString = utcDateString;
+const _parseUtcDate = parseUtcDate;
 
 /** Server-side equivalent of Q1 P4's strict race-day match check.
  *  Iterates a bounded list of saved runs (date-filtered before the
@@ -2267,17 +2272,11 @@ function _decideReconciliationActions(
  *  applies the update (with the R1A tombstone guard immediately
  *  before the write). Returns a log payload for the outer loop. */
 async function _runDailyRaceReconciliationForUser(uid) {
-  const userRef = db.collection("users").doc(uid);
-  const programRef = userRef.collection("programState").doc("current");
-  const [userSnap, programSnap] = await Promise.all([
-    userRef.get(),
-    programRef.get(),
-  ]);
-  if (!userSnap.exists || !programSnap.exists) {
+  const ctx = await readUserProgramContext(uid);
+  if (!ctx) {
     return { noShowWritten: false, recoveryCleared: false };
   }
-  const profile = userSnap.data() || {};
-  const programState = programSnap.data() || {};
+  const { userRef, programRef, profile, programState } = ctx;
   const nowMs = Date.now();
 
   // Only do the bounded saved-runs query when the L1 pass would
@@ -2337,53 +2336,18 @@ exports.dailyRaceReconciliationSweep = functions.pubsub
   .onRun(async () => {
     try {
       console.log("dailyRaceReconciliationSweep: starting");
-
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-      let usersSnap;
-      try {
-        usersSnap = await db
-          .collection("users")
-          .where("lastActiveAt", ">=", cutoffTs)
-          .get();
-      } catch (err) {
-        // Fail loud — do NOT fall back to scanning the full users
-        // collection. Mirrors weeklyPerformanceRollup's discipline.
-        console.error(
-          "dailyRaceReconciliationSweep: lastActiveAt query failed, skipping run:",
-          err.message
-        );
-        return null;
-      }
-
-      const uids = usersSnap.docs.map((d) => d.id);
-      console.log(
-        `dailyRaceReconciliationSweep: evaluating ${uids.length} users`
-      );
-
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
-      for (let i = 0; i < uids.length; i += 10) {
-        const batch = uids.slice(i, i + 10);
-        await Promise.all(
-          batch.map(async (uid) => {
-            try {
-              const { noShowWritten, recoveryCleared } =
-                await _runDailyRaceReconciliationForUser(uid);
-              if (noShowWritten) totalNoShow += 1;
-              if (recoveryCleared) totalRecoveryCleared += 1;
-            } catch (err) {
-              console.error(
-                `dailyRaceReconciliationSweep: failed for ${uid}:`,
-                err.message
-              );
-            }
-          })
-        );
-      }
-
+      await sweepActiveUsers({
+        name: "dailyRaceReconciliationSweep",
+        cutoffDays: 30,
+        perUser: async (uid) => {
+          const { noShowWritten, recoveryCleared } =
+            await _runDailyRaceReconciliationForUser(uid);
+          if (noShowWritten) totalNoShow += 1;
+          if (recoveryCleared) totalRecoveryCleared += 1;
+        },
+      });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
           `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}`
@@ -2549,17 +2513,11 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
  *  function. */
 async function _maybeWriteRecoveryEntryForRun(uid, savedRun) {
   try {
-    const userRef = db.collection("users").doc(uid);
-    const programRef = userRef.collection("programState").doc("current");
-    const [userSnap, programSnap] = await Promise.all([
-      userRef.get(),
-      programRef.get(),
-    ]);
-    if (!userSnap.exists || !programSnap.exists) {
+    const ctx = await readUserProgramContext(uid);
+    if (!ctx) {
       return;
     }
-    const profile = userSnap.data() || {};
-    const programState = programSnap.data() || {};
+    const { programRef, profile, programState } = ctx;
 
     const decision = _decideRecoveryEntry(profile, programState, savedRun);
     if (!decision.write) {
@@ -4265,18 +4223,10 @@ function _priorWeekUtcRange(nowMs) {
   };
 }
 
-/** Same volume-eligibility shape as `onRunCreated` — defends
- *  against zombie / save-anyway / invalid runs counting toward the
- *  prior-week tally. Inline rather than imported because
- *  `functions/` is plain CommonJS without the TS path alias. */
-function _isVolumeEligibleRun(data) {
-  if (!data) return false;
-  if (data.isInvalid === true) return false;
-  if (data.savedAnyway === true) return false;
-  if (!(Number(data.distance) || 0) || Number(data.distance) < 50) return false;
-  if (!(Number(data.duration) || 0) || Number(data.duration) < 30) return false;
-  return true;
-}
+// Volume-eligibility predicate lives in `./lib/runEligibility.js`
+// (mirrors `src/lib/runStatsEligibility.ts`). Aliased locally to
+// preserve the existing `_isVolumeEligibleRun` test-surface export.
+const _isVolumeEligibleRun = isVolumeEligibleRun;
 
 /** Pure decision function for the fell-behind flag. Returns
  *  `{ payload, action }` where `action` is one of:
@@ -4372,17 +4322,11 @@ function _decideFellBehindFlag(
  *  needed. Errors caught + logged per-user — one bad user doesn't
  *  break the sweep. */
 async function _runWeeklyFellBehindCheckForUser(uid, range) {
-  const userRef = db.collection("users").doc(uid);
-  const programRef = userRef.collection("programState").doc("current");
-  const [userSnap, programSnap] = await Promise.all([
-    userRef.get(),
-    programRef.get(),
-  ]);
-  if (!userSnap.exists || !programSnap.exists) {
+  const ctx = await readUserProgramContext(uid);
+  if (!ctx) {
     return { action: "noop" };
   }
-  const profile = userSnap.data() || {};
-  const programState = programSnap.data() || {};
+  const { userRef, programRef, profile, programState } = ctx;
 
   // Bounded query — only the prior week, never the full subscription.
   let priorWeekRuns = [];
@@ -4444,57 +4388,22 @@ exports.weeklyFellBehindCheck = functions.pubsub
   .onRun(async () => {
     try {
       console.log("weeklyFellBehindCheck: starting");
-
       const range = _priorWeekUtcRange(Date.now());
       console.log(
         `weeklyFellBehindCheck: evaluating week ${range.weekKey} ` +
           `(${range.weekStart}..${range.weekEnd})`
       );
-
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 30);
-      const cutoffTs = admin.firestore.Timestamp.fromDate(cutoff);
-
-      let usersSnap;
-      try {
-        usersSnap = await db
-          .collection("users")
-          .where("lastActiveAt", ">=", cutoffTs)
-          .get();
-      } catch (err) {
-        console.error(
-          "weeklyFellBehindCheck: lastActiveAt query failed, skipping run:",
-          err.message
-        );
-        return null;
-      }
-
-      const uids = usersSnap.docs.map((d) => d.id);
-      console.log(`weeklyFellBehindCheck: evaluating ${uids.length} users`);
-
       let setCount = 0;
       let clearCount = 0;
-      for (let i = 0; i < uids.length; i += 10) {
-        const batch = uids.slice(i, i + 10);
-        await Promise.all(
-          batch.map(async (uid) => {
-            try {
-              const decision = await _runWeeklyFellBehindCheckForUser(
-                uid,
-                range
-              );
-              if (decision.action === "set") setCount += 1;
-              if (decision.action === "clear") clearCount += 1;
-            } catch (err) {
-              console.error(
-                `weeklyFellBehindCheck: failed for ${uid}:`,
-                err.message
-              );
-            }
-          })
-        );
-      }
-
+      await sweepActiveUsers({
+        name: "weeklyFellBehindCheck",
+        cutoffDays: 30,
+        perUser: async (uid) => {
+          const decision = await _runWeeklyFellBehindCheckForUser(uid, range);
+          if (decision.action === "set") setCount += 1;
+          if (decision.action === "clear") clearCount += 1;
+        },
+      });
       console.log(
         `weeklyFellBehindCheck: done — set=${setCount}, clear=${clearCount}`
       );
