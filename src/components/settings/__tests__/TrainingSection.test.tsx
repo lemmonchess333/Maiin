@@ -13,9 +13,16 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 type UpdateProfileFn = (
   data: Partial<UserProfile>,
-  opts?: { allowProtected?: boolean; throwOnError?: boolean },
+  opts?: { allowProtected?: boolean; throwOnError?: boolean }
 ) => Promise<UpdateProfileResult>;
-type NavigateFn = (path: string, opts?: { state?: Record<string, unknown> }) => void;
+type NavigateFn = (
+  path: string,
+  opts?: { state?: Record<string, unknown> }
+) => void;
+type RefreshRunScheduleFn = (overrides?: {
+  weekSchedule?: unknown;
+  weeklyRunDaysTarget?: number;
+}) => Promise<void>;
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -33,19 +40,31 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 describe("TrainingSection — A1c plan-structure controls", () => {
   let updateProfile: ReturnType<typeof vi.fn> & UpdateProfileFn;
   let navigate: ReturnType<typeof vi.fn> & NavigateFn;
+  let refreshRunSchedule: ReturnType<typeof vi.fn> & RefreshRunScheduleFn;
+  let onOpenWeeklyLayout: ReturnType<typeof vi.fn> & (() => void);
 
   beforeEach(() => {
-    updateProfile = vi.fn(async () => ({ ok: true } as { ok: true })) as ReturnType<typeof vi.fn> & UpdateProfileFn;
+    updateProfile = vi.fn(
+      async () => ({ ok: true }) as { ok: true }
+    ) as ReturnType<typeof vi.fn> & UpdateProfileFn;
     navigate = vi.fn() as ReturnType<typeof vi.fn> & NavigateFn;
+    refreshRunSchedule = vi.fn(async () => {}) as ReturnType<typeof vi.fn> &
+      RefreshRunScheduleFn;
+    onOpenWeeklyLayout = vi.fn() as ReturnType<typeof vi.fn> & (() => void);
   });
 
   it("renders steppers initialized from profile fields", () => {
     render(
       <TrainingSection
-        profile={makeProfile({ weeklyWorkoutsTarget: 5, weeklyRunDaysTarget: 3 })}
+        profile={makeProfile({
+          weeklyWorkoutsTarget: 5,
+          weeklyRunDaysTarget: 3,
+        })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
     // Lift stepper shows 5; run stepper shows 3.
     expect(screen.getAllByText("5").length).toBeGreaterThan(0);
@@ -55,20 +74,27 @@ describe("TrainingSection — A1c plan-structure controls", () => {
   it("lift-days stepper writes weeklyWorkoutsTarget + a fresh weekSchedule with throwOnError", async () => {
     render(
       <TrainingSection
-        profile={makeProfile({ weeklyWorkoutsTarget: 4, weeklyRunDaysTarget: 2 })}
+        profile={makeProfile({
+          weeklyWorkoutsTarget: 4,
+          weeklyRunDaysTarget: 2,
+        })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Increase lift days/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Increase lift days/i })
+      );
     });
     expect(updateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         weeklyWorkoutsTarget: 5,
         weekSchedule: expect.any(Array),
       }),
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
   });
 
@@ -77,11 +103,15 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ weeklyRunDaysTarget: 2, weeklyRunsTarget: 2 })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Increase run days/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Increase run days/i })
+      );
     });
     expect(updateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -89,7 +119,7 @@ describe("TrainingSection — A1c plan-structure controls", () => {
         weeklyRunsTarget: 3,
         weekSchedule: expect.any(Array),
       }),
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
   });
 
@@ -98,8 +128,10 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ preferredSplit: "ppl" })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
     const group = screen.getByRole("radiogroup", { name: /lift split/i });
     expect(group).toBeInTheDocument();
@@ -109,7 +141,7 @@ describe("TrainingSection — A1c plan-structure controls", () => {
     });
     expect(updateProfile).toHaveBeenCalledWith(
       { preferredSplit: "upper_lower" },
-      expect.objectContaining({ throwOnError: true }),
+      expect.objectContaining({ throwOnError: true })
     );
   });
 
@@ -118,10 +150,14 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ weeklyWorkoutsTarget: 2 })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
-    const dec = screen.getByRole("button", { name: /Decrease lift days/i }) as HTMLButtonElement;
+    const dec = screen.getByRole("button", {
+      name: /Decrease lift days/i,
+    }) as HTMLButtonElement;
     expect(dec.disabled).toBe(true);
   });
 
@@ -130,10 +166,14 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 0 })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
-    const dec = screen.getByRole("button", { name: /Decrease run days/i }) as HTMLButtonElement;
+    const dec = screen.getByRole("button", {
+      name: /Decrease run days/i,
+    }) as HTMLButtonElement;
     expect(dec.disabled).toBe(true);
   });
 
@@ -142,10 +182,14 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ weeklyWorkoutsTarget: 7 })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
-    const inc = screen.getByRole("button", { name: /Increase lift days/i }) as HTMLButtonElement;
+    const inc = screen.getByRole("button", {
+      name: /Increase lift days/i,
+    }) as HTMLButtonElement;
     expect(inc.disabled).toBe(true);
   });
 
@@ -157,12 +201,16 @@ describe("TrainingSection — A1c plan-structure controls", () => {
       <TrainingSection
         profile={makeProfile({ weeklyWorkoutsTarget: 4 })}
         updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
         navigate={navigate}
-      />,
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
     );
     // Tap +, optimistic state shows 5 then reverts to 4 after rejection.
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: /Increase lift days/i }));
+      fireEvent.click(
+        screen.getByRole("button", { name: /Increase lift days/i })
+      );
     });
     // Final visible value is back to 4 (the saved profile value).
     // jsdom microtask flush via the act above covers the catch path.

@@ -14,6 +14,8 @@ import {
   useStreakReminder,
 } from "@/hooks/RemindersProvider";
 import { useCrews } from "@/hooks/useCrews";
+import { useProgram } from "@/features/program/useProgram";
+import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 
 import ProfileInfoSection from "@/components/settings/ProfileInfoSection";
 import TrainingSection from "@/components/settings/TrainingSection";
@@ -36,9 +38,12 @@ export default function Settings() {
   const { user, profile, updateProfile, signOut } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
   const { defaultCrews, currentCrew, joinCrew, leaveCrew } = useCrews();
-  // PR-2: Settings no longer owns the schedule editor — the hook
-  // and its restructure modal moved to Programme's "Edit weekly
-  // layout" sheet. TrainingSection is link-only here.
+  // Run8: TrainingSection gained mode + race writers; both need
+  // refreshRunSchedule. Legacy Settings page must continue working
+  // for /settings/legacy users — mount the same wiring as
+  // SettingsTraining (useProgram + ScheduleLayoutSheet).
+  const { refreshRunSchedule, regenerateProgram } = useProgram();
+  const [editLayoutOpen, setEditLayoutOpen] = useState(false);
 
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
@@ -244,7 +249,9 @@ export default function Settings() {
           <TrainingSection
             profile={profile}
             updateProfile={updateProfile}
+            refreshRunSchedule={refreshRunSchedule}
             navigate={navigate}
+            onOpenWeeklyLayout={() => setEditLayoutOpen(true)}
           />
         </AccordionSection>
       </TrackSettingsSectionView>
@@ -374,6 +381,19 @@ export default function Settings() {
       <p className="text-center text-xs text-muted-foreground">
         Tropos v{__APP_VERSION__}
       </p>
+
+      {/* Run8 — schedule layout editor mounted at page level so
+          TrainingSection's "Edit weekly layout" entry can launch it
+          without prop-drilling the sheet itself. Mirrors the wiring
+          in /settings/training (SettingsTraining.tsx). */}
+      <ScheduleLayoutSheet
+        open={editLayoutOpen}
+        onClose={() => setEditLayoutOpen(false)}
+        profile={profile}
+        updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
+        regenerateProgram={regenerateProgram}
+      />
     </motion.div>
   );
 }
