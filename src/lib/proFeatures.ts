@@ -1,17 +1,17 @@
 /**
  * Pro feature registry — typed source of truth for paywall lookups.
  *
- * Pre-unification ProGate accepted `feature?: string` and forwarded
- * the same string straight to ProModal as a hero key. Callsites
- * passed display labels like "Adaptive TDEE" — ProModal's
- * FEATURE_HEROES map was keyed on `performance` / `ai_coaching` /
- * `food_logging`, so the display strings never matched and the
- * feature-specific hero never rendered. Worse: any typo at a
- * callsite silently fell through to the generic hero.
+ * Pre-unification paywall callsites passed display labels like
+ * "Adaptive TDEE" straight through to ProModal as a hero key.
+ * ProModal's FEATURE_HEROES map was keyed on `performance` /
+ * `ai_coaching` / `food_logging`, so the display strings never
+ * matched and the feature-specific hero never rendered. Worse: any
+ * typo at a callsite silently fell through to the generic hero.
  *
- * `ProFeatureKey` is now a closed TypeScript union — `ProGate`,
- * `ProModal`, and AdaptiveSummary all share the same key shape, so
- * the compiler catches drift before runtime.
+ * `ProFeatureKey` is now a closed TypeScript union — the gating
+ * surfaces (currently `ProModal` + ad-hoc `useSubscription().isPro`
+ * checks across Home / Program / Food / Upgrade) all share the same
+ * key shape, so the compiler catches drift before runtime.
  *
  * `label` is the short noun used inline ("AI food photo logging").
  * `title` is the modal hero heading ("Unlock AI food logging").
@@ -80,5 +80,5 @@ export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
 /** Lookup helper. Returns null for an undefined key so callers can
  *  fall through to the generic hero without a try/catch. */
 export function getProFeature(key?: ProFeatureKey): ProFeatureConfig | null {
-  return key ? PRO_FEATURES[key] ?? null : null;
+  return key ? (PRO_FEATURES[key] ?? null) : null;
 }
