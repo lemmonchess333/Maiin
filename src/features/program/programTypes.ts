@@ -403,6 +403,24 @@ export interface ProgramState {
    *  `migrateProgramState` doesn't backfill — empty is correct. */
   manualCompletions?: Record<string, ManualCompletion>;
   /**
+   * PR-L L4: server-set flag indicating the user fell behind on
+   * their weekly run target the prior week (<50% of prescribed runs
+   * with real saved-run matches). Written by `weeklyFellBehindCheck`
+   * (Mondays 05:00 UTC). Read by the client on app open; rendered as
+   * the adaptive-plan bottom sheet (shift / compress / skip per Q24).
+   * Cleared by any of the three user choices.
+   *
+   * Optional — only present when the user fell behind a given week.
+   */
+  pendingFellBehindPrompt?: {
+    /** YYYY-MM-DD Sunday of the week the user fell behind on. */
+    weekKey: string;
+    /** Ratio of real runs / weekly target. e.g. 0.25 = 1/4. */
+    completedRatio: number;
+    realRunCount: number;
+    weeklyTarget: number;
+  };
+  /**
    * Lifting goal declared at onboarding. Added in W1a so the procedural
    * engine can scale rep ranges to the user's actual request on regen,
    * and so the Program page UI can surface "Built for [goal] · [split]"
