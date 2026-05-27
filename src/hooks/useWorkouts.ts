@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 import {
   collection,
   deleteDoc,
@@ -36,14 +37,14 @@ import { safeMerge } from "@/lib/offlineQueue";
  *   - unparseable string           → today (local), logged
  */
 function normaliseWorkoutDate(input: string | Date | undefined): string {
-  if (!input) return format(new Date(), "yyyy-MM-dd");
-  if (input instanceof Date) return format(input, "yyyy-MM-dd");
+  if (!input) return localDateString();
+  if (input instanceof Date) return localDateString(input);
   if (/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
   try {
-    return format(parseISO(input), "yyyy-MM-dd");
+    return localDateString(parseISO(input));
   } catch {
     logger.warn("saveWorkout: unparseable date, using today", input);
-    return format(new Date(), "yyyy-MM-dd");
+    return localDateString();
   }
 }
 
@@ -86,7 +87,10 @@ export function useWorkouts() {
 
   useEffect(() => {
     if (!user) {
-      const reset = () => { setWorkouts([]); setLoading(false); };
+      const reset = () => {
+        setWorkouts([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
@@ -99,7 +103,9 @@ export function useWorkouts() {
       (snapshot) => {
         const data = snapshot.docs
           .map((d) => ({ id: d.id, ...d.data() }) as Workout)
-          .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
+          .filter(
+            (d) => typeof d.date === "string" && Array.isArray(d.exercises)
+          );
         setWorkouts(data);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length >= PAGE_SIZE);
@@ -121,12 +127,17 @@ export function useWorkouts() {
   const loadMore = useCallback(async () => {
     if (!user || !lastDoc || !hasMore) return;
     const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const q = query(workoutsRef, orderBy("date", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+    const q = query(
+      workoutsRef,
+      orderBy("date", "desc"),
+      startAfter(lastDoc),
+      limit(PAGE_SIZE)
+    );
     const snapshot = await getDocs(q);
     const newData = snapshot.docs
       .map((d) => ({ id: d.id, ...d.data() }) as Workout)
-      .filter((d) => typeof d.date === 'string' && Array.isArray(d.exercises));
-    setWorkouts(prev => [...prev, ...newData]);
+      .filter((d) => typeof d.date === "string" && Array.isArray(d.exercises));
+    setWorkouts((prev) => [...prev, ...newData]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length >= PAGE_SIZE);
   }, [user, lastDoc, hasMore]);
@@ -148,18 +159,18 @@ export function useWorkouts() {
           t +
           (ex.sets ?? []).reduce(
             (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
-            0,
+            0
           ),
-        0,
+        0
       );
       const completedSetCount = workout.exercises.reduce(
         (c, ex) => c + (ex.sets?.length ?? 0),
-        0,
+        0
       );
       const bodyweightKg = profile?.weightKg ?? 0;
       if (bodyweightKg <= 0) {
         logger.warn(
-          "saveWorkout: profile.weightKg missing — workout will save with totalCalories=0",
+          "saveWorkout: profile.weightKg missing — workout will save with totalCalories=0"
         );
       }
       const totalCalories = estimateLiftBurn({
