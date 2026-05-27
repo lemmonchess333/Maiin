@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 
 /** localStorage key prefix for the per-week dismissal flag. Dismissal
@@ -47,15 +48,9 @@ interface DeloadBannerProps {
  * on every day-stepper tap).
  */
 export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
-  const storageKey = `${DISMISSED_STORAGE_PREFIX}:${weekKey}`;
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return !!window.localStorage.getItem(storageKey);
-    } catch {
-      return false;
-    }
-  });
+  const { dismissed, dismiss } = useDismissOnce(
+    `${DISMISSED_STORAGE_PREFIX}:${weekKey}`
+  );
   const prefersReducedMotion = useReducedMotion();
   // viewedFiredRef ensures the viewed event fires at most once per
   // mount-visible cycle. If the week changes or the flag re-trips
@@ -73,23 +68,30 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
 
   const handleDismiss = () => {
     haptic("light");
-    trackProgrammeEvent("programme_deload_banner_action", { action: "dismissed" });
-    setDismissed(true);
-    try {
-      window.localStorage.setItem(storageKey, "1");
-    } catch {
-      /* private mode — in-memory dismissal still applies */
-    }
+    trackProgrammeEvent("programme_deload_banner_action", {
+      action: "dismissed",
+    });
+    dismiss();
   };
 
   return (
     <AnimatePresence>
       {shouldRender && (
         <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: -8, height: 0 }}
+          initial={
+            prefersReducedMotion ? false : { opacity: 0, y: -8, height: 0 }
+          }
           animate={{ opacity: 1, y: 0, height: "auto" }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, height: 0 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25, ease: "easeOut" }}
+          exit={
+            prefersReducedMotion
+              ? { opacity: 0 }
+              : { opacity: 0, y: -8, height: 0 }
+          }
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.25, ease: "easeOut" }
+          }
           className="overflow-hidden"
         >
           <div
@@ -104,12 +106,15 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
               aria-hidden="true"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold" style={{ color: THEME.warning }}>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: THEME.warning }}
+              >
                 Consider a deload week
               </p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                Your training load has been high with signs of reduced recovery. A
-                lighter week can help you come back stronger.
+                Your training load has been high with signs of reduced recovery.
+                A lighter week can help you come back stronger.
               </p>
             </div>
             <button
