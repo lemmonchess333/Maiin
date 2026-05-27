@@ -1,8 +1,15 @@
-export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+export function haversine(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
   const R = 6371000;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -20,7 +27,11 @@ export class KalmanFilter {
     this.processNoise = processNoise;
   }
 
-  process(lat: number, lon: number, accuracy: number): { lat: number; lon: number } {
+  process(
+    lat: number,
+    lon: number,
+    accuracy: number
+  ): { lat: number; lon: number } {
     if (this.variance < 0) {
       this.lat = lat;
       this.lon = lon;
@@ -60,16 +71,26 @@ export interface Split {
   elevationLoss: number;
 }
 
-export function isValidReading(coords: GeolocationCoordinates, lastPoint: GPSPoint | null, elapsedSeconds?: number): boolean {
+export function isValidReading(
+  coords: GeolocationCoordinates,
+  lastPoint: GPSPoint | null,
+  elapsedSeconds?: number
+): boolean {
   // First point (no lastPoint): accept up to 150m accuracy to avoid stuck acquiring phase
   if (!lastPoint) {
     return coords.accuracy <= 150;
   }
 
-  const maxAccuracy = elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
+  const maxAccuracy =
+    elapsedSeconds !== undefined && elapsedSeconds < 15 ? 50 : 35;
   if (coords.accuracy > maxAccuracy) return false;
 
-  const dist = haversine(lastPoint.lat, lastPoint.lon, coords.latitude, coords.longitude);
+  const dist = haversine(
+    lastPoint.lat,
+    lastPoint.lon,
+    coords.latitude,
+    coords.longitude
+  );
   const timeDiff = (Date.now() - lastPoint.timestamp) / 1000;
   if (timeDiff <= 0) return false;
   const impliedSpeed = dist / timeDiff;
@@ -78,12 +99,15 @@ export function isValidReading(coords: GeolocationCoordinates, lastPoint: GPSPoi
   return true;
 }
 
-export function calculatePace(distanceMeters: number, timeSeconds: number): string {
-  if (distanceMeters < 10) return '--:--';
+export function calculatePace(
+  distanceMeters: number,
+  timeSeconds: number
+): string {
+  if (distanceMeters < 10) return "--:--";
   const paceSecsPerKm = (timeSeconds / distanceMeters) * 1000;
   const mins = Math.floor(paceSecsPerKm / 60);
   const secs = Math.floor(paceSecsPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
 /**
@@ -100,31 +124,42 @@ export function calculatePace(distanceMeters: number, timeSeconds: number): stri
  * Returns '--:--' when there's not enough data (need ≥10m AND ≥5s
  * within the window) — same convention as `calculatePace`.
  */
-export function rollingPace(points: GPSPoint[], windowSeconds: number = 30): string {
-  if (points.length < 2) return '--:--';
+export function rollingPace(
+  points: GPSPoint[],
+  windowSeconds: number = 30
+): string {
+  if (points.length < 2) return "--:--";
   const now = points[points.length - 1].timestamp;
   const windowMs = windowSeconds * 1000;
   /* Find the first point within the rolling window. Points are kept
      in chronological order by useGPS so a linear scan from the start
      is fine; the array is also bounded by the run duration. */
   const startIdx = points.findIndex((p) => now - p.timestamp <= windowMs);
-  if (startIdx === -1 || startIdx === points.length - 1) return '--:--';
+  if (startIdx === -1 || startIdx === points.length - 1) return "--:--";
 
   let dist = 0;
   for (let i = startIdx + 1; i < points.length; i++) {
-    dist += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
+    dist += haversine(
+      points[i - 1].lat,
+      points[i - 1].lon,
+      points[i].lat,
+      points[i].lon
+    );
   }
   const elapsedSec = (now - points[startIdx].timestamp) / 1000;
 
-  if (dist < 10 || elapsedSec < 5) return '--:--';
+  if (dist < 10 || elapsedSec < 5) return "--:--";
 
   const paceSecsPerKm = (elapsedSec / dist) * 1000;
   const mins = Math.floor(paceSecsPerKm / 60);
   const secs = Math.floor(paceSecsPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-export function paceAsNumber(distanceMeters: number, timeSeconds: number): number {
+export function paceAsNumber(
+  distanceMeters: number,
+  timeSeconds: number
+): number {
   if (distanceMeters < 10) return 0;
   return (timeSeconds / distanceMeters) * 1000;
 }
@@ -138,8 +173,20 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
   let currentKm = 1;
 
   for (let i = 1; i < points.length; i++) {
-    accDistance += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
-    if (accDistance >= currentKm * 1000) {
+    accDistance += haversine(
+      points[i - 1].lat,
+      points[i - 1].lon,
+      points[i].lat,
+      points[i].lon
+    );
+    // A single GPS segment can cross multiple km thresholds (signal
+    // drop + reappear with a multi-km jump). The previous one-emit-
+    // per-iteration shape would emit km N covering the whole jump,
+    // then km N+1 emitting on the tiny tail segment with a
+    // sub-second duration — UI displays "5km in 0:01" pace. Loop
+    // until accDistance no longer crosses, distributing the segment
+    // time proportionally across each km boundary it crossed.
+    while (accDistance >= currentKm * 1000) {
       const splitTime = (points[i].timestamp - splitStartTime) / 1000;
       let elevGain = 0;
       let elevLoss = 0;
@@ -181,16 +228,24 @@ export function totalElevationGain(points: GPSPoint[]): number {
 export function totalDistance(points: GPSPoint[]): number {
   let dist = 0;
   for (let i = 1; i < points.length; i++) {
-    dist += haversine(points[i - 1].lat, points[i - 1].lon, points[i].lat, points[i].lon);
+    dist += haversine(
+      points[i - 1].lat,
+      points[i - 1].lon,
+      points[i].lat,
+      points[i].lon
+    );
   }
   return dist;
 }
 
-export function detectBestEfforts(points: GPSPoint[], totalDistance: number): { distance: number; time: number; label: string }[] {
+export function detectBestEfforts(
+  points: GPSPoint[],
+  totalDistance: number
+): { distance: number; time: number; label: string }[] {
   const efforts = [
-    { target: 1000, label: '1K' },
-    { target: 5000, label: '5K' },
-    { target: 10000, label: '10K' },
+    { target: 1000, label: "1K" },
+    { target: 5000, label: "5K" },
+    { target: 10000, label: "10K" },
   ];
   const results: { distance: number; time: number; label: string }[] = [];
 
@@ -201,21 +256,37 @@ export function detectBestEfforts(points: GPSPoint[], totalDistance: number): { 
     let accDist = 0;
 
     for (let endIdx = 1; endIdx < points.length; endIdx++) {
-      accDist += haversine(points[endIdx - 1].lat, points[endIdx - 1].lon, points[endIdx].lat, points[endIdx].lon);
+      accDist += haversine(
+        points[endIdx - 1].lat,
+        points[endIdx - 1].lon,
+        points[endIdx].lat,
+        points[endIdx].lon
+      );
       while (startIdx < endIdx) {
-        const frontDist = haversine(points[startIdx].lat, points[startIdx].lon, points[startIdx + 1].lat, points[startIdx + 1].lon);
+        const frontDist = haversine(
+          points[startIdx].lat,
+          points[startIdx].lon,
+          points[startIdx + 1].lat,
+          points[startIdx + 1].lon
+        );
         if (accDist - frontDist >= effort.target) {
           accDist -= frontDist;
           startIdx++;
         } else break;
       }
       if (accDist >= effort.target) {
-        const segTime = (points[endIdx].timestamp - points[startIdx].timestamp) / 1000;
+        const segTime =
+          (points[endIdx].timestamp - points[startIdx].timestamp) / 1000;
         if (segTime < bestTime) bestTime = segTime;
       }
     }
 
-    if (bestTime < Infinity) results.push({ distance: effort.target, time: bestTime, label: effort.label });
+    if (bestTime < Infinity)
+      results.push({
+        distance: effort.target,
+        time: bestTime,
+        label: effort.label,
+      });
   }
 
   return results;
@@ -225,10 +296,11 @@ export function toGPX(points: GPSPoint[], name: string): string {
   const trkpts = points
     .map((p) => {
       const time = new Date(p.timestamp).toISOString();
-      const ele = p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : '';
+      const ele =
+        p.altitude != null ? `<ele>${p.altitude.toFixed(1)}</ele>` : "";
       return `      <trkpt lat="${p.lat}" lon="${p.lon}">${ele}<time>${time}</time></trkpt>`;
     })
-    .join('\n');
+    .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Tropos">
   <trk><name>${name}</name><trkseg>
@@ -237,6 +309,9 @@ ${trkpts}
 </gpx>`;
 }
 
-export function estimateRunCalories(distanceMeters: number, weightKg: number): number {
+export function estimateRunCalories(
+  distanceMeters: number,
+  weightKg: number
+): number {
   return Math.round((distanceMeters / 1000) * weightKg * 1.036);
 }

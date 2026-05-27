@@ -2358,8 +2358,14 @@ export function getExercisesByCategory(category: string): Exercise[] {
   return EXERCISES.filter((e) => e.category === category);
 }
 
+// O(1) id → exercise lookup. getExerciseById is called inside the
+// render path of WorkoutSession + Program tab (typically 8-12 calls
+// per render against a 2400-entry array) — replacing the linear
+// `find` with a Map cuts ~20k string comparisons per render to one.
+const EXERCISES_BY_ID = new Map(EXERCISES.map((e) => [e.id, e]));
+
 export function getExerciseById(id: string): Exercise | undefined {
-  return EXERCISES.find((e) => e.id === id);
+  return EXERCISES_BY_ID.get(id);
 }
 
 /**
@@ -2380,7 +2386,9 @@ export function getExerciseById(id: string): Exercise | undefined {
  *   - PR detection
  *   - Volume calculation
  */
-export function isBodyweightExerciseId(exerciseId: string | undefined): boolean {
+export function isBodyweightExerciseId(
+  exerciseId: string | undefined
+): boolean {
   if (!exerciseId) return false;
   return getExerciseById(exerciseId)?.equipment === "Bodyweight";
 }
@@ -2396,5 +2404,7 @@ export function estimateCalories(
   const minutesPerSet = (reps * 3) / 60 + 1;
   const totalMinutes = minutesPerSet * sets;
   const weightMultiplier = 1 + (weightKg / 100) * 0.3;
-  return Math.round(exercise.caloriesPerMinute * totalMinutes * weightMultiplier);
+  return Math.round(
+    exercise.caloriesPerMinute * totalMinutes * weightMultiplier
+  );
 }

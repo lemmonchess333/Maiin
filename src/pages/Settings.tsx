@@ -149,13 +149,24 @@ export default function Settings() {
     // Optimistic DOM + localStorage swap so the visual change is
     // instant; revert both if the Firestore write fails so the user
     // doesn't see a flicker (theme stays applied) while their setting
-    // was never saved.
+    // was never saved. localStorage.setItem is wrapped in try/catch
+    // — Safari private mode throws synchronously on setItem and
+    // would otherwise skip the Firestore write entirely, dropping
+    // the user's choice with no toast.
     document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("tropos-dark-mode", String(next));
+    try {
+      localStorage.setItem("tropos-dark-mode", String(next));
+    } catch {
+      // Best-effort persistence; Firestore is the source of truth.
+    }
     const result = await updateProfile({ darkMode: next });
     if (!result.ok) {
       document.documentElement.classList.toggle("dark", prev);
-      localStorage.setItem("tropos-dark-mode", String(prev));
+      try {
+        localStorage.setItem("tropos-dark-mode", String(prev));
+      } catch {
+        // see above
+      }
     }
   };
 
