@@ -177,4 +177,3 @@ const RunControlButton = forwardRef<HTMLButtonElement, RunControlButtonProps>(
 );
 
 export { RunControlButton };
-export default RunControlButton;

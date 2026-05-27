@@ -7,7 +7,7 @@ import type { Phase } from "./types";
 
 export type PhaseMode = Phase;
 
-export const phaseConfig: Record<
+const phaseConfig: Record<
   PhaseMode,
   {
     calorieMultiplier: number;
@@ -56,7 +56,12 @@ export function detectPlateau(
   sensitivity: number
 ): PlateauResult {
   // Guard against NaN/Infinity — return safe default
-  if (!isFinite(avgLiftChange) || !isFinite(avgWeightChange) || !isFinite(sensitivity) || sensitivity <= 0) {
+  if (
+    !isFinite(avgLiftChange) ||
+    !isFinite(avgWeightChange) ||
+    !isFinite(sensitivity) ||
+    sensitivity <= 0
+  ) {
     return {
       status: "progressing",
       message: "Insufficient data for plateau detection.",
@@ -81,7 +86,8 @@ export function detectPlateau(
   if (Math.abs(avgLiftChange) < threshold && Math.abs(avgWeightChange) < 0.2) {
     return {
       status: "stalling",
-      message: "Performance stagnant. Increase calories by ~150 to break plateau.",
+      message:
+        "Performance stagnant. Increase calories by ~150 to break plateau.",
       calorieAdjust: 150,
       volumeAdjust: 0,
       macroNote: "Add 20-30g carbs around training.",
@@ -91,7 +97,8 @@ export function detectPlateau(
   if (avgWeightChange > 0.4 && avgLiftChange < threshold) {
     return {
       status: "weight_only",
-      message: "Weight rising without strength gains. Shift macros toward protein and carbs.",
+      message:
+        "Weight rising without strength gains. Shift macros toward protein and carbs.",
       calorieAdjust: -100,
       volumeAdjust: 0,
       macroNote: "Reduce fat by 10g, increase protein by 15g.",
@@ -135,13 +142,16 @@ export function calculateAdaptiveMacros(
   if (avgLiftChange <= 0 && avgWeightChange <= 0) adjustment += 150;
   if (avgWeightChange > 0.5 && avgLiftChange <= 0) adjustment -= 100;
 
-  const adjustedCalories = Math.round((baseCalories + adjustment) * config.calorieMultiplier);
+  const adjustedCalories = Math.round(
+    (baseCalories + adjustment) * config.calorieMultiplier
+  );
   const protein = Math.round(bw * config.proteinRatio);
   const fats = Math.round((adjustedCalories * config.fatRatio) / 9);
   const rawCarbs = Math.round((adjustedCalories - protein * 4 - fats * 9) / 4);
   const carbs = Math.max(rawCarbs, 50);
   // Recalculate calories to stay consistent when carbs are clamped
-  const finalCalories = carbs !== rawCarbs ? protein * 4 + carbs * 4 + fats * 9 : adjustedCalories;
+  const finalCalories =
+    carbs !== rawCarbs ? protein * 4 + carbs * 4 + fats * 9 : adjustedCalories;
 
   return {
     calories: finalCalories,

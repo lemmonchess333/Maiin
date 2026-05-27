@@ -186,7 +186,7 @@ export function generateRacePlan(
    * testable. Once P0-3 lands the full runScheduler refactor this
    * back-compat default goes away.
    */
-  currentDate?: string,
+  currentDate?: string
 ): { totalWeeks: number; weeks: ScheduledRunDay[][] } {
   const config = RACE_CONFIGS[distance];
   const clampedLift = Math.max(0, Math.min(6, liftDayCount));
@@ -194,7 +194,10 @@ export function generateRacePlan(
   const now = currentDate ? new Date(currentDate) : new Date();
   const target = new Date(targetDate);
   const diffMs = target.getTime() - now.getTime();
-  const totalWeeks = Math.max(config.minWeeks, Math.ceil(diffMs / (7 * 86400000)));
+  const totalWeeks = Math.max(
+    config.minWeeks,
+    Math.ceil(diffMs / (7 * 86400000))
+  );
 
   const liftDays = new Set(
     liftDayIndices && liftDayIndices.length > 0
@@ -294,18 +297,10 @@ export function generateRacePlan(
   return { totalWeeks, weeks };
 }
 
-/** Get current week index from a race plan's start */
-export function getCurrentRaceWeek(totalWeeks: number, targetDate: string): number {
-  const target = new Date(targetDate);
-  const now = new Date();
-  const weeksLeft = Math.ceil((target.getTime() - now.getTime()) / (7 * 86400000));
-  return Math.max(0, Math.min(totalWeeks - 1, totalWeeks - weeksLeft));
-}
-
 export function getRacePhaseLabel(
   weekIndex: number,
   totalWeeks: number,
-  distance: "5k" | "10k" | "half" | "marathon",
+  distance: "5k" | "10k" | "half" | "marathon"
 ): string {
   const phase = getPhaseForWeek(weekIndex, totalWeeks, distance);
   return phase.charAt(0).toUpperCase() + phase.slice(1);
@@ -319,7 +314,7 @@ export function getRacePhaseLabel(
 export function isCurrentWeekInTaper(
   currentWeek: number | undefined,
   totalWeeks: number | undefined,
-  distance: "5k" | "10k" | "half" | "marathon" | undefined,
+  distance: "5k" | "10k" | "half" | "marathon" | undefined
 ): boolean {
   if (currentWeek == null || totalWeeks == null || !distance) return false;
   return getPhaseForWeek(currentWeek, totalWeeks, distance) === "taper";
@@ -358,13 +353,18 @@ export function isCurrentWeekInTaper(
  *  runDays in this shape directly. */
 export function enrichRunDayV2(
   rd: ScheduledRunDay,
-  weekStart: Date,
+  weekStart: Date
 ): ScheduledRunDay {
   // Already enriched? Don't double-process.
   if (rd.id && rd.date && rd.weekKey && rd.status) return rd;
   const weekKey = rd.weekKey ?? localWeekKey(weekStart);
   const date = rd.date ?? localDateString(addLocalDays(weekStart, rd.dayIndex));
-  const id = rd.id ?? generateScheduledRunId({ dayIndex: rd.dayIndex, templateId: rd.templateId }, weekKey);
+  const id =
+    rd.id ??
+    generateScheduledRunId(
+      { dayIndex: rd.dayIndex, templateId: rd.templateId },
+      weekKey
+    );
   return {
     ...rd,
     id,
@@ -381,11 +381,15 @@ export function enrichRunDayV2(
  *  weekend bias as V1) when no run-only slots exist. */
 function pickLongRunSlot(
   runEligibleSlots: number[],
-  weekSchedule: ScheduleDay[],
+  weekSchedule: ScheduleDay[]
 ): number {
   // Categorise: run-only (no lift on that day) vs both (lift+run)
-  const runOnlySlots = runEligibleSlots.filter((d) => weekSchedule[d]?.type === "run");
-  const bothSlots = runEligibleSlots.filter((d) => weekSchedule[d]?.type === "both");
+  const runOnlySlots = runEligibleSlots.filter(
+    (d) => weekSchedule[d]?.type === "run"
+  );
+  const bothSlots = runEligibleSlots.filter(
+    (d) => weekSchedule[d]?.type === "both"
+  );
 
   // Preference: weekend run-only > any run-only > weekend both > any both
   const weekendRunOnly = runOnlySlots.find((d) => d === 0 || d === 6);
@@ -406,7 +410,10 @@ function buildRunDayV2(args: {
   const weekKey = localWeekKey(args.weekStart);
   const date = localDateString(addLocalDays(args.weekStart, args.dayIndex));
   return {
-    id: generateScheduledRunId({ dayIndex: args.dayIndex, templateId: args.templateId }, weekKey),
+    id: generateScheduledRunId(
+      { dayIndex: args.dayIndex, templateId: args.templateId },
+      weekKey
+    ),
     weekKey,
     date,
     dayIndex: args.dayIndex,
@@ -420,7 +427,10 @@ function buildRunDayV2(args: {
 /** Resolve a long-run template ID by phase + race-distance peak.
  *  Centralised here so both structured + race-prep schedules pick
  *  the same way. */
-function pickLongTemplateId(peakLongKm: number, phase: "base" | "build" | "taper" | "race"): string {
+function pickLongTemplateId(
+  peakLongKm: number,
+  phase: "base" | "build" | "taper" | "race"
+): string {
   if (phase === "taper" || phase === "race") return "easy_30";
   return peakLongKm >= 15 ? "long_15k" : "long_10k";
 }
@@ -437,7 +447,9 @@ export interface StructuredWeekV2Input {
 
 /** V2 structured-week scheduler. Drives from `weekSchedule`, emits
  *  v2-shaped runDays. */
-export function scheduleStructuredWeekV2(input: StructuredWeekV2Input): ScheduledRunDay[] {
+export function scheduleStructuredWeekV2(
+  input: StructuredWeekV2Input
+): ScheduledRunDay[] {
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
     .map((d) => d.day);
@@ -450,12 +462,14 @@ export function scheduleStructuredWeekV2(input: StructuredWeekV2Input): Schedule
 
   // Long run (single — even at 4+ runs/week structured users get one
   // long, one quality, rest easy).
-  result.push(buildRunDayV2({
-    dayIndex: longSlot,
-    templateId: "long_10k",
-    type: "long",
-    weekStart,
-  }));
+  result.push(
+    buildRunDayV2({
+      dayIndex: longSlot,
+      templateId: "long_10k",
+      type: "long",
+      weekStart,
+    })
+  );
 
   if (remaining.length > 0) {
     // Quality session — tempo on even weeks, intervals on odd.
@@ -466,21 +480,25 @@ export function scheduleStructuredWeekV2(input: StructuredWeekV2Input): Schedule
       : input.weekNumber % 4 < 2
         ? "5x1k"
         : "8x400";
-    result.push(buildRunDayV2({
-      dayIndex: remaining[0],
-      templateId: qualityTemplateId,
-      type: qualityType,
-      weekStart,
-    }));
+    result.push(
+      buildRunDayV2({
+        dayIndex: remaining[0],
+        templateId: qualityTemplateId,
+        type: qualityType,
+        weekStart,
+      })
+    );
 
     // Remaining → easy
     for (let i = 1; i < remaining.length; i++) {
-      result.push(buildRunDayV2({
-        dayIndex: remaining[i],
-        templateId: "easy_30",
-        type: "easy",
-        weekStart,
-      }));
+      result.push(
+        buildRunDayV2({
+          dayIndex: remaining[i],
+          templateId: "easy_30",
+          type: "easy",
+          weekStart,
+        })
+      );
     }
   }
 
@@ -517,14 +535,17 @@ export function scheduleRecoveryWeekV2(input: {
         templateId: "easy_30",
         type: "easy",
         weekStart,
-      }),
+      })
     )
     .sort((a, b) => a.dayIndex - b.dayIndex);
 }
 
 export interface RacePlanV2Input {
   weekSchedule: ScheduleDay[];
-  raceGoal: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string };
+  raceGoal: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
   /** Total runs target per week. Used in v1 as the slot cap; in v2
    *  the weekSchedule is authoritative — this only seeds the structure
    *  for the race-prep generator's internal planning. */
@@ -580,19 +601,23 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 
     // Long run / race day
     if (phase === "race") {
-      week.push(buildRunDayV2({
-        dayIndex: longSlot,
-        templateId: pickRaceTemplateId(input.raceGoal.distance),
-        type: "race",
-        weekStart,
-      }));
+      week.push(
+        buildRunDayV2({
+          dayIndex: longSlot,
+          templateId: pickRaceTemplateId(input.raceGoal.distance),
+          type: "race",
+          weekStart,
+        })
+      );
     } else {
-      week.push(buildRunDayV2({
-        dayIndex: longSlot,
-        templateId: pickLongTemplateId(config.peakLongKm, phase),
-        type: phase === "taper" ? "easy" : "long",
-        weekStart,
-      }));
+      week.push(
+        buildRunDayV2({
+          dayIndex: longSlot,
+          templateId: pickLongTemplateId(config.peakLongKm, phase),
+          type: phase === "taper" ? "easy" : "long",
+          weekStart,
+        })
+      );
     }
 
     if (remaining.length > 0) {
@@ -605,12 +630,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       if (phase === "base") {
         // Base: all easy (compressed plans extend base proportionally
         // since there's no time for a real build phase)
-        remaining.forEach((d) => week.push(buildRunDayV2({
-          dayIndex: d,
-          templateId: "easy_30",
-          type: "easy",
-          weekStart,
-        })));
+        remaining.forEach((d) =>
+          week.push(
+            buildRunDayV2({
+              dayIndex: d,
+              templateId: "easy_30",
+              type: "easy",
+              weekStart,
+            })
+          )
+        );
       } else if (phase === "build") {
         const allowQuality = !hardCapApplies || w % 2 === 0;
         if (allowQuality && !skipIntervals) {
@@ -618,60 +647,84 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // the long run already consumed the week's quality budget)
           const qualityType = w % 2 === 0 ? "tempo" : "intervals";
           const qualityId = qualityType === "tempo" ? "tempo_20" : "5x1k";
-          week.push(buildRunDayV2({
-            dayIndex: remaining[0],
-            templateId: qualityId,
-            type: qualityType,
-            weekStart,
-          }));
-          remaining.slice(1).forEach((d) => week.push(buildRunDayV2({
-            dayIndex: d,
-            templateId: "easy_30",
-            type: "easy",
-            weekStart,
-          })));
+          week.push(
+            buildRunDayV2({
+              dayIndex: remaining[0],
+              templateId: qualityId,
+              type: qualityType,
+              weekStart,
+            })
+          );
+          remaining.slice(1).forEach((d) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                templateId: "easy_30",
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         } else {
           // Skip quality this week — all easy
-          remaining.forEach((d) => week.push(buildRunDayV2({
-            dayIndex: d,
-            templateId: "easy_30",
-            type: "easy",
-            weekStart,
-          })));
+          remaining.forEach((d) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                templateId: "easy_30",
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         }
       } else if (phase === "taper") {
         // Taper: 1 short quality + easy. Compressed plans skip the
         // taper quality entirely (already low volume).
         if (!compressed) {
-          week.push(buildRunDayV2({
-            dayIndex: remaining[0],
-            templateId: "8x400",
-            type: "intervals",
-            weekStart,
-          }));
-          remaining.slice(1).forEach((d) => week.push(buildRunDayV2({
-            dayIndex: d,
-            templateId: "easy_30",
-            type: "easy",
-            weekStart,
-          })));
+          week.push(
+            buildRunDayV2({
+              dayIndex: remaining[0],
+              templateId: "8x400",
+              type: "intervals",
+              weekStart,
+            })
+          );
+          remaining.slice(1).forEach((d) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                templateId: "easy_30",
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         } else {
-          remaining.forEach((d) => week.push(buildRunDayV2({
-            dayIndex: d,
-            templateId: "easy_30",
-            type: "easy",
-            weekStart,
-          })));
+          remaining.forEach((d) =>
+            week.push(
+              buildRunDayV2({
+                dayIndex: d,
+                templateId: "easy_30",
+                type: "easy",
+                weekStart,
+              })
+            )
+          );
         }
       } else {
         // Race week: 1 shakeout (the long slot already has the race),
         // rest easy
-        remaining.forEach((d) => week.push(buildRunDayV2({
-          dayIndex: d,
-          templateId: "easy_30",
-          type: "easy",
-          weekStart,
-        })));
+        remaining.forEach((d) =>
+          week.push(
+            buildRunDayV2({
+              dayIndex: d,
+              templateId: "easy_30",
+              type: "easy",
+              weekStart,
+            })
+          )
+        );
       }
     }
 
@@ -686,12 +739,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
  *  its own race template in RUN_TEMPLATES — pre-PR-0a this
  *  fallback returned "5k_race" for every distance, which
  *  collapsed 10K / half / marathon race days to a 5K prefill. */
-function pickRaceTemplateId(distance: "5k" | "10k" | "half" | "marathon"): string {
+function pickRaceTemplateId(
+  distance: "5k" | "10k" | "half" | "marathon"
+): string {
   switch (distance) {
-    case "5k": return "5k_race";
-    case "10k": return "10k_race";
-    case "half": return "half_race";
-    case "marathon": return "marathon_race";
+    case "5k":
+      return "5k_race";
+    case "10k":
+      return "10k_race";
+    case "half":
+      return "half_race";
+    case "marathon":
+      return "marathon_race";
   }
 }
 
@@ -701,11 +760,3 @@ function pickRaceTemplateId(distance: "5k" | "10k" | "half" | "marathon"): strin
  * race-day runDay transitions to completed_*. Standard coach
  * periodisation: bigger races → longer recovery.
  */
-export function recoveryWeeksForDistance(distance: "5k" | "10k" | "half" | "marathon"): number {
-  switch (distance) {
-    case "5k": return 1;
-    case "10k": return 2;
-    case "half": return 3;
-    case "marathon": return 4;
-  }
-}

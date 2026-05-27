@@ -187,5 +187,3 @@ export function Dialog({
     </AnimatePresence>
   );
 }
-
-export default Dialog;

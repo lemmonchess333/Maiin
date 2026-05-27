@@ -13,9 +13,9 @@
    ───────────────────────────────────────────── */
 
 /** ≥18% of total volume → high tier (saturated diagram fill). */
-export const HIGH_SHARE = 0.18;
+const HIGH_SHARE = 0.18;
 /** ≥8% → mid; otherwise → low. */
-export const MID_SHARE = 0.08;
+const MID_SHARE = 0.08;
 
 export type ShareTier = "high" | "mid" | "low";
 
@@ -34,7 +34,7 @@ export function getShareTier(sets: number, totalSets: number): ShareTier {
 
 export function getFrequencyForShare(
   sets: number,
-  totalSets: number,
+  totalSets: number
 ): 1 | 2 | 3 {
   const tier = getShareTier(sets, totalSets);
   if (tier === "low") return 1;

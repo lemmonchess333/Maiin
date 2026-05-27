@@ -33,11 +33,20 @@ async function fetchPRMap(uid: string): Promise<PRMap> {
       query(
         collection(db, "users", uid, "workouts"),
         orderBy("date", "desc"),
-        limit(FETCH_LIMIT),
-      ),
+        limit(FETCH_LIMIT)
+      )
     );
     const workouts = snap.docs
-      .map((d) => d.data() as { exercises: { exerciseName: string; sets: { weightKg: number; reps: number }[] }[]; date: string })
+      .map(
+        (d) =>
+          d.data() as {
+            exercises: {
+              exerciseName: string;
+              sets: { weightKg: number; reps: number }[];
+            }[];
+            date: string;
+          }
+      )
       .filter((w) => Array.isArray(w.exercises) && typeof w.date === "string");
     const map = buildPRMap(workouts);
     cache.set(uid, map);
@@ -66,8 +75,10 @@ export interface UseUserPRMap {
  *  uid change between mount and resolve doesn't show stale data for
  *  the new uid. */
 export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
-  const cached = uid ? cache.get(uid) ?? null : null;
-  const [fetched, setFetched] = useState<{ uid: string; map: PRMap } | null>(null);
+  const cached = uid ? (cache.get(uid) ?? null) : null;
+  const [fetched, setFetched] = useState<{ uid: string; map: PRMap } | null>(
+    null
+  );
   const [errored, setErrored] = useState<{ uid: string } | null>(null);
 
   useEffect(() => {
@@ -95,12 +106,4 @@ export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
   const error = !!errored && errored.uid === uid;
   const loading = !!uid && !prMap && !error;
   return { prMap, loading, error };
-}
-
-/** Test-only escape hatch — clears the module-level cache. Not used
- *  in production code; exposed so unit tests can run with isolated
- *  state and so a future "refresh PRs" button has a hook to drop. */
-export function _clearPRMapCache(): void {
-  cache.clear();
-  inflight.clear();
 }

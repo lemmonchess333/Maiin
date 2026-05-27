@@ -153,4 +153,3 @@ const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
 );
 
 export { IconButton };
-export default IconButton;

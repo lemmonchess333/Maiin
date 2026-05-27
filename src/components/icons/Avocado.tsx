@@ -29,5 +29,3 @@ export function Avocado(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
-export default Avocado;

@@ -54,7 +54,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 /**
  * Check whether notification permission is currently granted.
  */
-export async function hasNotificationPermission(): Promise<boolean> {
+async function hasNotificationPermission(): Promise<boolean> {
   try {
     if (isNative) {
       const result = await LocalNotifications.checkPermissions();
@@ -70,7 +70,11 @@ export async function hasNotificationPermission(): Promise<boolean> {
   }
 }
 
-export type NotificationPermissionState = "granted" | "denied" | "default" | "unsupported";
+export type NotificationPermissionState =
+  | "granted"
+  | "denied"
+  | "default"
+  | "unsupported";
 
 /**
  * Fine-grained permission state — lets callers distinguish "denied" (user
@@ -104,7 +108,9 @@ export async function getNotificationPermissionState(): Promise<NotificationPerm
  * Schedule or immediately fire a notification.
  * Returns true on success.
  */
-export async function scheduleNotification(payload: NotificationPayload): Promise<boolean> {
+export async function scheduleNotification(
+  payload: NotificationPayload
+): Promise<boolean> {
   const granted = await hasNotificationPermission();
   if (!granted) return false;
 
@@ -183,21 +189,6 @@ export async function cancelNotification(id: number): Promise<void> {
 }
 
 /**
- * Cancel all scheduled notifications.
- */
-export async function cancelAllNotifications(): Promise<void> {
-  if (!isNative) return;
-  try {
-    const pending = await LocalNotifications.getPending();
-    if (pending.notifications.length > 0) {
-      await LocalNotifications.cancel({ notifications: pending.notifications });
-    }
-  } catch (err) {
-    logger.error("cancelAllNotifications failed", err);
-  }
-}
-
-/**
  * PR I (audit P1 #10): pending-notifications diagnostics.
  *
  * Returns the list of notifications the OS has currently scheduled
@@ -222,7 +213,9 @@ export interface PendingNotification {
   scheduleAt: string | null;
 }
 
-export async function getPendingNotifications(): Promise<PendingNotification[]> {
+export async function getPendingNotifications(): Promise<
+  PendingNotification[]
+> {
   if (!isNative) return [];
   try {
     const result = await LocalNotifications.getPending();
@@ -234,7 +227,10 @@ export async function getPendingNotifications(): Promise<PendingNotification[]> 
       // it can also be undefined / cron-style on more complex
       // schedules. Defensive read.
       scheduleAt:
-        n.schedule && typeof n.schedule === "object" && "at" in n.schedule && n.schedule.at instanceof Date
+        n.schedule &&
+        typeof n.schedule === "object" &&
+        "at" in n.schedule &&
+        n.schedule.at instanceof Date
           ? n.schedule.at.toISOString()
           : null,
     }));
@@ -264,14 +260,31 @@ const TEST_NOTIFICATION_IDS: Record<TestNotificationKind, number> = {
   streak: 9993,
 };
 
-const TEST_NOTIFICATION_COPY: Record<TestNotificationKind, { title: string; body: string }> = {
-  generic: { title: "Tropos test notification", body: "If you can read this, notifications are working." },
-  meal: { title: "Meal reminder test", body: "This is what your meal reminders look like." },
-  workout: { title: "Workout reminder test", body: "This is what your workout reminders look like." },
-  streak: { title: "Streak reminder test", body: "This is what your streak reminders look like." },
+const TEST_NOTIFICATION_COPY: Record<
+  TestNotificationKind,
+  { title: string; body: string }
+> = {
+  generic: {
+    title: "Tropos test notification",
+    body: "If you can read this, notifications are working.",
+  },
+  meal: {
+    title: "Meal reminder test",
+    body: "This is what your meal reminders look like.",
+  },
+  workout: {
+    title: "Workout reminder test",
+    body: "This is what your workout reminders look like.",
+  },
+  streak: {
+    title: "Streak reminder test",
+    body: "This is what your streak reminders look like.",
+  },
 };
 
-export async function sendTestNotification(kind: TestNotificationKind = "generic"): Promise<boolean> {
+export async function sendTestNotification(
+  kind: TestNotificationKind = "generic"
+): Promise<boolean> {
   const copy = TEST_NOTIFICATION_COPY[kind];
   return scheduleNotification({
     id: TEST_NOTIFICATION_IDS[kind],

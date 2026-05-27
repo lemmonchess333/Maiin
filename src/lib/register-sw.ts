@@ -5,7 +5,7 @@ import { logger } from "./logger";
  * Clear all SW caches. Called when a chunk load fails to ensure
  * the next page load fetches fresh assets from the server.
  */
-export async function clearSWCaches(): Promise<void> {
+async function clearSWCaches(): Promise<void> {
   if (!("caches" in window)) return;
   try {
     const names = await caches.keys();
@@ -18,7 +18,10 @@ export async function clearSWCaches(): Promise<void> {
 
 /** Detect if running inside a native Capacitor shell (iOS/Android) */
 function isNativeApp(): boolean {
-  return typeof window !== "undefined" && !!(window as unknown as Record<string, unknown>).Capacitor;
+  return (
+    typeof window !== "undefined" &&
+    !!(window as unknown as Record<string, unknown>).Capacitor
+  );
 }
 
 export function registerServiceWorker() {

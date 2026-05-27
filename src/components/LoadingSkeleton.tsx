@@ -30,7 +30,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
   );
 }
 
-export function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
+function CardSkeleton({ stagger = 0 }: { stagger?: number }) {
   return (
     <div
       className="bg-card rounded-2xl p-4 space-y-3"

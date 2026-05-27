@@ -88,4 +88,3 @@ const Spinner = forwardRef<HTMLSpanElement, SpinnerProps>(function Spinner(
 });
 
 export { Spinner };
-export default Spinner;
