@@ -8,17 +8,11 @@ import {
   Timestamp,
   where,
 } from "firebase/firestore";
-import { format } from "date-fns";
+import { localDateString } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
-import {
-  getAdjustedTargets,
-  getDayAdjustment,
-} from "@/lib/phaseNutrition";
-import {
-  buildCaption,
-  type DailyTargetsCaption,
-} from "@/lib/captionBuilder";
+import { getAdjustedTargets, getDayAdjustment } from "@/lib/phaseNutrition";
+import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { computeEffectiveBonus } from "@/lib/effectiveTargets";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -134,14 +128,14 @@ function getDayTypeForDate(date: Date, schedule: ScheduleDay[]): DayType {
  */
 function computePlannedTargets(
   profile: UserProfile | null,
-  date: Date,
+  date: Date
 ): PlannedTargets {
   const schedule =
     profile?.weekSchedule && profile.weekSchedule.length === 7
       ? profile.weekSchedule
       : generateSchedule(
           profile?.weeklyWorkoutsTarget || 3,
-          getWeeklyRunTarget(profile) || 2,
+          getWeeklyRunTarget(profile) || 2
         );
 
   const dayType = getDayTypeForDate(date, schedule);
@@ -207,7 +201,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
 
     const windowStart = new Date();
     windowStart.setDate(windowStart.getDate() - WINDOW_DAYS);
-    const windowStartString = format(windowStart, "yyyy-MM-dd");
+    const windowStartString = localDateString(windowStart);
     const windowStartTs = Timestamp.fromDate(windowStart);
 
     const workoutsRef = collection(db, "users", user.uid, "workouts");
@@ -215,7 +209,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       workoutsRef,
       where("date", ">=", windowStartString),
       orderBy("date", "desc"),
-      limit(DOC_LIMIT),
+      limit(DOC_LIMIT)
     );
     const unsubWorkouts = onSnapshot(workoutsQ, (snap) => {
       const rows: WorkoutRow[] = snap.docs
@@ -235,7 +229,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       runsRef,
       where("completedAt", ">=", windowStartTs),
       orderBy("completedAt", "desc"),
-      limit(DOC_LIMIT),
+      limit(DOC_LIMIT)
     );
     const unsubRuns = onSnapshot(runsQ, (snap) => {
       // P0.5: drop non-countable runs at the snapshot stage so the
@@ -254,7 +248,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
             duration?: number;
           };
           if (!isVolumeEligible(raw)) return null;
-          const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
+          const ts =
+            raw.completedAt instanceof Timestamp ? raw.completedAt : null;
           return {
             completedAt: ts,
             calories: typeof raw.calories === "number" ? raw.calories : 0,
@@ -299,7 +294,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       };
     }
 
-    const targetKey = format(targetDate, "yyyy-MM-dd");
+    const targetKey = localDateString(targetDate);
 
     // Sum actual burn for this specific date. Date matching lives in the
     // shared isWorkoutOnDate helper so Home's workout-burn read (useHomeData)
@@ -311,7 +306,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const actualRunBurn = runs.reduce((sum, r) => {
       if (!r.completedAt) return sum;
       try {
-        const runKey = format(r.completedAt.toDate(), "yyyy-MM-dd");
+        const runKey = localDateString(r.completedAt.toDate());
         return runKey === targetKey ? sum + r.calories : sum;
       } catch {
         return sum;
