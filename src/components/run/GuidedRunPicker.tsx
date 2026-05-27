@@ -15,32 +15,44 @@ const DIFFICULTY_LABEL: Record<string, string> = {
 export default function GuidedRunPicker({ selected, onSelect }: Props) {
   return (
     <div className="space-y-2">
-      <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Pick a Guided Run</p>
+      <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
+        Pick a Guided Run
+      </p>
       <div className="space-y-2">
         {GUIDED_WORKOUTS.map((w) => {
           const isSelected = selected?.id === w.id;
           return (
             <button
+              type="button"
               key={w.id}
               onClick={() => onSelect(w)}
               className={cn(
-                "w-full p-3.5 rounded-xl text-left transition-all active:scale-[0.98]",
+                "w-full p-3.5 rounded-xl text-left transition-all active:scale-[0.98]"
               )}
-              style={isSelected ? {
-                background: `${w.color}15`,
-                border: `2px solid ${w.color}60`,
-                boxShadow: `0 0 0 3px ${w.color}20`,
-              } : {
-                background: "rgba(255,255,255,0.04)",
-                border: "2px solid rgba(255,255,255,0.08)",
-              }}
+              style={
+                isSelected
+                  ? {
+                      background: `${w.color}15`,
+                      border: `2px solid ${w.color}60`,
+                      boxShadow: `0 0 0 3px ${w.color}20`,
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.04)",
+                      border: "2px solid rgba(255,255,255,0.08)",
+                    }
+              }
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-bold" style={{ color: isSelected ? w.color : undefined }}>
+                <span
+                  className="text-sm font-bold"
+                  style={{ color: isSelected ? w.color : undefined }}
+                >
                   {w.name}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                  style={{ background: `${w.color}20`, color: w.color }}>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full font-medium"
+                  style={{ background: `${w.color}20`, color: w.color }}
+                >
                   {w.totalMinutes} min
                 </span>
               </div>

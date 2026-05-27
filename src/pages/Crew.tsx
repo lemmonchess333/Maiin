@@ -348,10 +348,11 @@ export default function Crew() {
       {/* Back link */}
       <motion.div variants={itemVariant}>
         <button
+          type="button"
           onClick={() => navigate(-1)}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className="size-4" />
           Back
         </button>
       </motion.div>
@@ -363,7 +364,7 @@ export default function Crew() {
       >
         <div className="flex items-start gap-3">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+            className="size-12 rounded-xl flex items-center justify-center shrink-0"
             style={{ background: `${THEME.brand}14` }}
           >
             {Icon ? (
@@ -443,7 +444,7 @@ export default function Crew() {
               onClick={handleInvite}
               className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="size-4" />
               Invite friends
             </button>
             <button
@@ -579,7 +580,7 @@ export default function Crew() {
             {board.length === 0 ? (
               <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  className="size-8 rounded-lg flex items-center justify-center shrink-0"
                   style={{ background: `${THEME.brand}14` }}
                 >
                   <Trophy size={16} style={{ color: THEME.brand }} />
@@ -598,7 +599,7 @@ export default function Crew() {
                   >
                     <span
                       className={cn(
-                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
+                        "size-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
                         entry.rank === 1
                           ? "bg-primary/15 text-primary"
                           : "text-muted-foreground"
@@ -647,7 +648,7 @@ export default function Crew() {
           <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                className="size-8 rounded-lg flex items-center justify-center shrink-0"
                 style={{ background: `${THEME.brand}14` }}
               >
                 <Users size={16} style={{ color: THEME.brand }} />

@@ -14,18 +14,32 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-muted-foreground">{Math.round(shoe.totalKm)} km</span>
+        <span className="text-muted-foreground">
+          {Math.round(shoe.totalKm)} km
+        </span>
         <span className="text-muted-foreground">{shoe.maxKm} km</span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, background: color }}
+        />
       </div>
     </div>
   );
 }
 
 export default function ShoesManager() {
-  const { shoes, activeShoes, addShoe, retireShoe, setDefault, reconcileMileageFromRuns, loading, error } = useShoes();
+  const {
+    shoes,
+    activeShoes,
+    addShoe,
+    retireShoe,
+    setDefault,
+    reconcileMileageFromRuns,
+    loading,
+    error,
+  } = useShoes();
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newBrand, setNewBrand] = useState("");
@@ -41,7 +55,10 @@ export default function ShoesManager() {
   const suggestions = useMemo<ShoeModel[]>(() => {
     if (!showSuggestions || !newName.trim()) return [];
     const matches = searchShoes(newName, 6);
-    if (matches.length === 1 && matches[0].name.toLowerCase() === newName.trim().toLowerCase()) {
+    if (
+      matches.length === 1 &&
+      matches[0].name.toLowerCase() === newName.trim().toLowerCase()
+    ) {
       return [];
     }
     return matches;
@@ -66,7 +83,7 @@ export default function ShoesManager() {
       toast.success(
         totalRuns > 0
           ? `Recalculated mileage from ${totalRuns} run${totalRuns === 1 ? "" : "s"}.`
-          : "No runs yet — nothing to recalculate.",
+          : "No runs yet — nothing to recalculate."
       );
     } catch (err) {
       logger.error("[ShoesManager] reconcileMileageFromRuns failed", err);
@@ -76,19 +93,23 @@ export default function ShoesManager() {
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center gap-2 py-4">
-      <Spinner size="sm" variant="primary" label="Loading shoes" />
-      <p className="text-xs text-muted-foreground">Loading shoes...</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div className="flex items-center gap-2 py-4">
+        <Spinner size="sm" variant="primary" label="Loading shoes" />
+        <p className="text-xs text-muted-foreground">Loading shoes...</p>
+      </div>
+    );
 
-  if (error) return (
-    <div className="text-center py-4">
-      <p className="text-xs text-destructive">Failed to load shoes</p>
-      <p className="text-xs text-muted-foreground mt-1">Please try again later</p>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="text-center py-4">
+        <p className="text-xs text-destructive">Failed to load shoes</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Please try again later
+        </p>
+      </div>
+    );
 
   const retired = shoes.filter((s) => s.retired);
 
@@ -106,26 +127,30 @@ export default function ShoesManager() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Footprints className="w-5 h-5 text-primary" />
+          <Footprints className="size-5 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">My Shoes</h3>
         </div>
         <div className="flex items-center gap-3">
           {activeShoes.length > 0 && (
             <button
+              type="button"
               onClick={handleRecalculate}
               disabled={recalculating}
               aria-label="Recalculate mileage from run history"
               className="flex items-center gap-1 text-xs text-muted-foreground font-medium disabled:opacity-50"
             >
-              <RotateCw className={cn("w-3.5 h-3.5", recalculating && "animate-spin")} />
+              <RotateCw
+                className={cn("size-3.5", recalculating && "animate-spin")}
+              />
               {recalculating ? "Recalculating…" : "Recalculate"}
             </button>
           )}
           <button
+            type="button"
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-1 text-xs text-primary font-medium"
           >
-            <Plus className="w-3.5 h-3.5" /> Add
+            <Plus className="size-3.5" /> Add
           </button>
         </div>
       </div>
@@ -139,7 +164,10 @@ export default function ShoesManager() {
             <input
               type="text"
               value={newName}
-              onChange={(e) => { setNewName(e.target.value); setShowSuggestions(true); }}
+              onChange={(e) => {
+                setNewName(e.target.value);
+                setShowSuggestions(true);
+              }}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => {
                 // 150ms delay so a mousedown on the suggestion row fires
@@ -168,7 +196,9 @@ export default function ShoesManager() {
                     className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors flex items-center justify-between gap-2 border-b border-border/40 last:border-0"
                   >
                     <span className="text-sm text-foreground">{s.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">{s.brand}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {s.brand}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -189,7 +219,10 @@ export default function ShoesManager() {
               The label + helper text make it clear this is the
               replacement-alert threshold, not some mystery number. */}
           <div className="space-y-1">
-            <label htmlFor="shoe-max-km" className="block text-xs font-medium text-foreground">
+            <label
+              htmlFor="shoe-max-km"
+              className="block text-xs font-medium text-foreground"
+            >
               Replace at
             </label>
             <div className="flex gap-2">
@@ -209,6 +242,7 @@ export default function ShoesManager() {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={handleAdd}
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
               >
@@ -216,7 +250,8 @@ export default function ShoesManager() {
               </button>
             </div>
             <p id="shoe-max-km-hint" className="text-xs text-muted-foreground">
-              We'll flag the shoe for replacement at this mileage. Most daily trainers last 500–800 km; racing flats closer to 250.
+              We'll flag the shoe for replacement at this mileage. Most daily
+              trainers last 500–800 km; racing flats closer to 250.
             </p>
           </div>
         </div>
@@ -224,35 +259,51 @@ export default function ShoesManager() {
 
       {activeShoes.length === 0 && !showAdd && (
         <div className="py-4 text-center space-y-1">
-          <p className="text-xs font-medium text-foreground">No shoes added yet</p>
-          <p className="text-xs text-muted-foreground">Track your mileage to know when to replace them</p>
+          <p className="text-xs font-medium text-foreground">
+            No shoes added yet
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Track your mileage to know when to replace them
+          </p>
         </div>
       )}
 
       {activeShoes.map((shoe) => (
-        <div key={shoe.id} className="p-3 rounded-xl bg-card border border-border space-y-2">
+        <div
+          key={shoe.id}
+          className="p-3 rounded-xl bg-card border border-border space-y-2"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">{shoe.name}</p>
-              {shoe.brand && <p className="text-xs text-muted-foreground">{shoe.brand}</p>}
+              {shoe.brand && (
+                <p className="text-xs text-muted-foreground">{shoe.brand}</p>
+              )}
             </div>
             <div className="flex items-center gap-1">
               <button
+                type="button"
                 onClick={() => setDefault(shoe.id)}
                 className={cn(
                   "p-1.5 rounded-lg transition-colors",
-                  shoe.isDefault ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"
+                  shoe.isDefault
+                    ? "text-yellow-500"
+                    : "text-muted-foreground hover:text-yellow-500"
                 )}
                 title="Set as default"
               >
-                <Star className="w-4 h-4" fill={shoe.isDefault ? "currentColor" : "none"} />
+                <Star
+                  className="size-4"
+                  fill={shoe.isDefault ? "currentColor" : "none"}
+                />
               </button>
               <button
+                type="button"
                 onClick={() => retireShoe(shoe.id)}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors"
                 title="Retire shoe"
               >
-                <Archive className="w-4 h-4" />
+                <Archive className="size-4" />
               </button>
             </div>
           </div>
@@ -262,12 +313,19 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">Retired</p>
+          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">
+            Retired
+          </p>
           {retired.map((shoe) => (
-            <div key={shoe.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 mb-1 opacity-60">
+            <div
+              key={shoe.id}
+              className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 mb-1 opacity-60"
+            >
               <div>
                 <p className="text-xs text-foreground">{shoe.name}</p>
-                <p className="text-xs text-muted-foreground">{Math.round(shoe.totalKm)} km logged</p>
+                <p className="text-xs text-muted-foreground">
+                  {Math.round(shoe.totalKm)} km logged
+                </p>
               </div>
             </div>
           ))}

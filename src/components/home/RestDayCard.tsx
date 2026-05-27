@@ -20,22 +20,20 @@ export default function RestDayCard() {
     <motion.div
       className="p-4 rounded-2xl flex items-center gap-4"
       style={{
-        background: "linear-gradient(135deg, rgba(123, 114, 233, 0.08), rgba(123, 114, 233, 0.02) 70%)",
+        background:
+          "linear-gradient(135deg, rgba(123, 114, 233, 0.08), rgba(123, 114, 233, 0.02) 70%)",
         boxShadow: "var(--ds-shadow-card), 0 0 0 1px rgba(123, 114, 233, 0.08)",
       }}
       whileTap={{ scale: 0.99 }}
     >
       <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+        className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
         style={{ backgroundColor: "rgba(123, 114, 233, 0.12)" }}
       >
-        <Leaf className="w-5 h-5" style={{ color: THEME.brand }} />
+        <Leaf className="size-5" style={{ color: THEME.brand }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p
-          className="text-xs font-semibold"
-          style={{ color: THEME.brand }}
-        >
+        <p className="text-xs font-semibold" style={{ color: THEME.brand }}>
           Today · Rest day
         </p>
         <p className="text-base font-bold text-foreground leading-tight">

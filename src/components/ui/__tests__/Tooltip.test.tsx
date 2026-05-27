@@ -23,8 +23,8 @@ describe("Tooltip", () => {
   it("does not render the body until the anchor is tapped", () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
@@ -32,8 +32,8 @@ describe("Tooltip", () => {
   it("opens on anchor click and renders the body via portal", () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     fireEvent.click(screen.getByRole("button", { name: "Anchor" }));
     const tip = screen.getByRole("tooltip");
@@ -46,8 +46,8 @@ describe("Tooltip", () => {
   it("wires aria-describedby between anchor and body when open", () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     const anchor = screen.getByRole("button", { name: "Anchor" });
     expect(anchor.getAttribute("aria-describedby")).toBeNull();
@@ -62,8 +62,8 @@ describe("Tooltip", () => {
   it("toggles closed when the anchor is tapped again", async () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     const anchor = screen.getByRole("button", { name: "Anchor" });
     fireEvent.click(anchor);
@@ -80,8 +80,8 @@ describe("Tooltip", () => {
   it("closes on Escape key press", async () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     fireEvent.click(screen.getByRole("button", { name: "Anchor" }));
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
@@ -96,15 +96,15 @@ describe("Tooltip", () => {
   it("respects controlled `open` prop", () => {
     const { rerender } = render(
       <Tooltip content="Body copy" open={false}>
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     expect(screen.queryByRole("tooltip")).toBeNull();
 
     rerender(
       <Tooltip content="Body copy" open>
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
     /* The dismiss-via-outside-tap → onOpenChange wiring is floating-
@@ -119,8 +119,8 @@ describe("Tooltip", () => {
   it("body width is capped at max-w-[280px] so narrow viewports don't overflow", () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     fireEvent.click(screen.getByRole("button", { name: "Anchor" }));
     expect(screen.getByRole("tooltip").className).toContain("max-w-[280px]");
@@ -129,8 +129,8 @@ describe("Tooltip", () => {
   it("portal renders at z-40 — sits above bottom nav (z-30) but BELOW vaul drawers (z-50)", () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     fireEvent.click(screen.getByRole("button", { name: "Anchor" }));
     /* Drawers (vaul) use z-50; bottom nav uses z-30. The tooltip MUST
@@ -143,8 +143,8 @@ describe("Tooltip", () => {
     vi.mocked(useReducedMotion).mockReturnValue(true);
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     fireEvent.click(screen.getByRole("button", { name: "Anchor" }));
     const tip = screen.getByRole("tooltip");
@@ -153,21 +153,23 @@ describe("Tooltip", () => {
        leaving only the opacity fade. The transform style ends up
        without a translate3d offset on the y axis. */
     const transform = tip.style.transform ?? "";
-    expect(transform).not.toMatch(/translateY\(4px\)|translate3d\([^,]+,\s*4px/);
+    expect(transform).not.toMatch(
+      /translateY\(4px\)|translate3d\([^,]+,\s*4px/
+    );
     vi.mocked(useReducedMotion).mockReturnValue(false);
   });
 
   it("keyboard flow: Tab focuses anchor, Enter opens, Escape closes, focus returns to anchor", async () => {
     render(
       <Tooltip content="Body copy">
-        <button>Anchor</button>
-      </Tooltip>,
+        <button type="button">Anchor</button>
+      </Tooltip>
     );
     const anchor = screen.getByRole("button", { name: "Anchor" });
     anchor.focus();
     expect(document.activeElement).toBe(anchor);
 
-    /* Enter on a focused <button> triggers a click in the browser; in
+    /* Enter on a focused <button type="button"> triggers a click in the browser; in
        jsdom we simulate the click directly (same path floating-ui's
        useClick listens on). */
     fireEvent.click(anchor);

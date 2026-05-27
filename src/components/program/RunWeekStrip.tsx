@@ -220,11 +220,11 @@ export default function RunWeekStrip({
                 {col.isToday ? (
                   <span
                     aria-hidden="true"
-                    className="w-1 h-1 rounded-full"
+                    className="size-1 rounded-full"
                     style={{ backgroundColor: THEME.running }}
                   />
                 ) : (
-                  <span aria-hidden="true" className="w-1 h-1" />
+                  <span aria-hidden="true" className="size-1" />
                 )}
                 <span
                   className={cn(
@@ -248,23 +248,23 @@ export default function RunWeekStrip({
                   <Check
                     aria-hidden="true"
                     className={cn(
-                      "w-3 h-3 text-green-600",
+                      "size-3 text-green-600",
                       completionKind === "manual" && "opacity-50"
                     )}
                   />
                 ) : isSkipped ? (
                   <ChevronsRight
                     aria-hidden="true"
-                    className="w-3 h-3 text-muted-foreground"
+                    className="size-3 text-muted-foreground"
                   />
                 ) : isNoShow ? (
                   <AlertTriangle
                     aria-hidden="true"
-                    className="w-3 h-3"
+                    className="size-3"
                     style={{ color: THEME.running }}
                   />
                 ) : (
-                  <span aria-hidden="true" className="w-3 h-3" />
+                  <span aria-hidden="true" className="size-3" />
                 )}
               </button>
               {/* Q5 P69/P70/P71 — extras stack. Outlined-not-filled
