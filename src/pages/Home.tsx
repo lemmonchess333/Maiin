@@ -56,11 +56,9 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
-import DayActionSheet from "@/components/program/DayActionSheet";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
-import InsightStrip from "@/components/home/InsightStrip";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 
@@ -74,6 +72,17 @@ import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
+
+/* Home2d-pin-1: DayActionSheet + InsightStrip lazy-load on Home.
+   Both surfaces are below-the-fold (sheet is closed on mount, strip
+   is conditional on insight data). Pre-lazy they shipped in Home's
+   initial chunk; now they hydrate on demand with a Suspense
+   fallback that matches the expected dimensions to prevent layout
+   shift. Mirrors the App.tsx route-level lazy() pattern. */
+const DayActionSheet = lazy(
+  () => import("@/components/program/DayActionSheet")
+);
+const InsightStrip = lazy(() => import("@/components/home/InsightStrip"));
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -922,11 +931,23 @@ export default function Home() {
         >
           <TrackSectionView section="insights">
             <SectionErrorBoundary sectionName="insight-strip">
-              <InsightStrip
-                title={perfWeek.insight.title}
-                bullet={perfWeek.insight.bullets[0] || ""}
-                loadBand={perfLoadBand}
-              />
+              {/* Home2d-pin-1: Suspense fallback dimensioned at ~80pt
+                  to match InsightStrip's rendered height — prevents
+                  layout shift on first hydration. */}
+              <Suspense
+                fallback={
+                  <div
+                    className="h-20 rounded-xl bg-muted/40 animate-pulse"
+                    aria-hidden="true"
+                  />
+                }
+              >
+                <InsightStrip
+                  title={perfWeek.insight.title}
+                  bullet={perfWeek.insight.bullets[0] || ""}
+                  loadBand={perfLoadBand}
+                />
+              </Suspense>
             </SectionErrorBoundary>
           </TrackSectionView>
         </motion.div>
@@ -1068,22 +1089,31 @@ export default function Home() {
       {/* PR-1: per-day action sheet, opened by the peek's Manage
           CTA. Centralised dispatch of override / complete / skip
           for runs + skip for lifts — the three actions that were
-          Week-tab-only pre-PR-1. */}
-      <DayActionSheet
-        open={manageDate !== null}
-        onClose={function () {
-          setManageDate(null);
-        }}
-        dateKey={manageDate}
-        profile={profile}
-        programState={programState}
-        claimMap={claimMap}
-        unclaimedByDate={unclaimedByDate}
-        overrideRunDay={overrideRunDay}
-        markManualComplete={markManualComplete}
-        skipRunDay={skipRunDay}
-        skipWorkoutDay={skipWorkoutDay}
-      />
+          Week-tab-only pre-PR-1.
+
+          Home2d-pin-1: wrapped in Suspense so the lazy()-imported
+          chunk hydrates without blocking Home's first paint.
+          fallback={null} because the drawer renders nothing while
+          closed (open=false) — there's no visual real-estate to
+          skeleton against, and the closed-state shape is identical
+          to a nothing-rendered placeholder. */}
+      <Suspense fallback={null}>
+        <DayActionSheet
+          open={manageDate !== null}
+          onClose={function () {
+            setManageDate(null);
+          }}
+          dateKey={manageDate}
+          profile={profile}
+          programState={programState}
+          claimMap={claimMap}
+          unclaimedByDate={unclaimedByDate}
+          overrideRunDay={overrideRunDay}
+          markManualComplete={markManualComplete}
+          skipRunDay={skipRunDay}
+          skipWorkoutDay={skipWorkoutDay}
+        />
+      </Suspense>
 
       {fellBehindPrompt && (
         <FellBehindSheet
