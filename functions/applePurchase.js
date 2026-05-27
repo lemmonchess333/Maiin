@@ -114,11 +114,46 @@ async function applySubscriptionToUser({
   const isActive = expiresAt > now();
 
   const userRef = firestore.collection("users").doc(uid);
+  // Denormalised lookup index. Each originalTransactionId binds to
+  // exactly one uid. Defends against an attacker calling
+  // restoreApplePurchases with a stolen `originalTransactionId` (or
+  // verifyApplePurchase with a shared signedTransactionInfo) to
+  // claim someone else's Pro entitlement — the transaction below
+  // reads this doc and rejects if it's already bound to a different
+  // uid. Until appAccountToken-based cryptographic binding ships
+  // (decision-log #3), this is the strongest defence we have.
+  const subscriptionLookupRef = firestore
+    .collection("appleSubscriptions")
+    .doc(originalTransactionId);
 
   return firestore
     .runTransaction(async (txn) => {
-      const userSnap = await txn.get(userRef);
+      const [userSnap, lookupSnap] = await Promise.all([
+        txn.get(userRef),
+        txn.get(subscriptionLookupRef),
+      ]);
       const userData = userSnap.exists ? userSnap.data() : {};
+
+      // Uniqueness guard. If the originalTransactionId is already
+      // bound to a different uid, refuse the write — same Apple
+      // transaction cannot grant N concurrent entitlements. The
+      // legitimate "same user on a new device restoring" path hits
+      // the matching-uid branch and proceeds; the "attacker
+      // replaying victim's id" path hits the mismatch branch and
+      // gets a clear error.
+      if (lookupSnap.exists) {
+        const lookupData = lookupSnap.data() || {};
+        if (lookupData.uid && lookupData.uid !== uid) {
+          logger.warn("applySubscriptionToUser.ownership_conflict", {
+            uid,
+            originalTransactionId,
+            boundTo: lookupData.uid,
+          });
+          throw new Error(
+            "Apple transaction is bound to a different account. Sign in with that account to restore Pro, or contact support."
+          );
+        }
+      }
 
       // Lifetime protection — subscription events can NEVER
       // downgrade a one-time purchase entitlement.
@@ -175,6 +210,24 @@ async function applySubscriptionToUser({
           appleOriginalTransactionId: originalTransactionId,
           appleProductId: productId,
           subscriptionExpiresAt: expiresAt.toISOString(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // Claim / refresh the lookup doc. Writing inside the same txn
+      // closes the TOCTOU window — a concurrent
+      // verifyApplePurchase / restoreApplePurchases for the same
+      // originalTransactionId under a DIFFERENT uid will see this
+      // claim and abort. Subsequent calls under the SAME uid (e.g.
+      // legitimate Apple renewal notifications) update the
+      // existing doc in place.
+      txn.set(
+        subscriptionLookupRef,
+        {
+          uid,
+          productId,
+          expiresAt: expiresAt.toISOString(),
           updatedAt: serverTimestamp(),
         },
         { merge: true }
