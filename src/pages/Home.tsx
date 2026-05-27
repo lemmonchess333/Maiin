@@ -318,8 +318,17 @@ export default function Home() {
   const [daysSinceLastMeal, setDaysSinceLastMeal] = useState(Infinity);
   useEffect(
     function () {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- time-dependent computation requires useEffect
+      // Time-dependent computation — `daysSinceLastMeal` is derived
+      // from `Date.now()` vs the most recent meal's date, which the
+      // pure render path can't read without the effect. Two
+      // setState calls (the empty-meals branch + the populated
+      // branch) both legitimately need to be inside the effect; both
+      // need the disable comment placed on the line immediately
+      // preceding the setState so the eslint rule
+      // `react-hooks/set-state-in-effect` doesn't trip on the
+      // post-merge lint job.
       if (meals.length === 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- time-dependent computation requires useEffect
         setDaysSinceLastMeal(Infinity);
         return;
       }
