@@ -632,42 +632,28 @@ export default function Home() {
               navigate("/upgrade");
             }
           }}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left transition-colors",
-            trialDaysLeft <= 2
-              ? "bg-orange-50 dark:bg-orange-950/30"
-              : "bg-primary/8"
-          )}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"
         >
           <Sparkles
-            className={cn(
-              "size-3.5 shrink-0",
-              trialDaysLeft <= 2 ? "text-orange-500" : "text-primary"
-            )}
+            aria-hidden="true"
+            className="size-4 text-primary shrink-0"
           />
-          <span
-            className={cn(
-              "text-xs font-medium flex-1",
-              trialDaysLeft <= 2
-                ? "text-orange-700 dark:text-orange-400"
-                : "text-foreground"
+          <span className="text-xs font-medium text-foreground flex-1 text-pretty">
+            {trialDaysLeft <= 1 ? (
+              "Trial ends tomorrow"
+            ) : trialDaysLeft === 2 ? (
+              <>
+                Last <span className="tabular-nums">2</span> days of trial
+              </>
+            ) : (
+              <>
+                Pro trial &middot;{" "}
+                <span className="tabular-nums">{trialDaysLeft}</span> days left
+              </>
             )}
-          >
-            {trialDaysLeft <= 1
-              ? "Trial ends tomorrow \u2014 subscribe to keep Pro"
-              : trialDaysLeft === 2
-                ? "Last 2 days of trial"
-                : `Pro trial \u00B7 ${trialDaysLeft} days left`}
           </span>
-          <span
-            className={cn(
-              "text-xs font-medium",
-              trialDaysLeft <= 2
-                ? "text-orange-600 dark:text-orange-400"
-                : "text-primary"
-            )}
-          >
-            Subscribe &rarr;
+          <span className="text-[11px] font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+            Subscribe
           </span>
         </button>
       )}
@@ -677,14 +663,17 @@ export default function Home() {
           onClick={function () {
             setShowProModal(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl w-full text-left bg-primary/8 transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"
         >
-          <Sparkles className="size-3.5 text-primary shrink-0" />
-          <span className="text-xs font-medium text-foreground flex-1">
+          <Sparkles
+            aria-hidden="true"
+            className="size-4 text-primary shrink-0"
+          />
+          <span className="text-xs font-medium text-foreground flex-1 text-pretty">
             Upgrade to Pro
           </span>
-          <span className="text-xs font-medium text-primary">
-            See plans &rarr;
+          <span className="text-[11px] font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+            See plans
           </span>
         </button>
       )}
