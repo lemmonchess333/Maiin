@@ -1,6 +1,7 @@
 import { Palette, Weight, Ruler, Moon, Sun } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
+import { haptic } from "@/lib/haptic";
 import type { UserProfile } from "@/lib/auth";
 
 interface UnitsAppearanceSectionProps {
@@ -30,6 +31,7 @@ export default function UnitsAppearanceSection({
         <button
           type="button"
           onClick={() => {
+            haptic("light");
             // The current value flips on the next render; we capture
             // the value BEFORE the flip so the telemetry reads as
             // "user picked this state" rather than "user was on this
@@ -41,7 +43,7 @@ export default function UnitsAppearanceSection({
             });
             toggleUnit("preferredWeightUnit", profile.preferredWeightUnit);
           }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
         >
           <div className="flex items-center gap-3">
             <Weight className="size-5" />
@@ -55,6 +57,7 @@ export default function UnitsAppearanceSection({
         <button
           type="button"
           onClick={() => {
+            haptic("light");
             const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
             trackSettingsEvent("settings_toggle_changed", {
               toggle: "distance_unit",
@@ -62,7 +65,7 @@ export default function UnitsAppearanceSection({
             });
             toggleUnit("preferredHeightUnit", profile.preferredHeightUnit);
           }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
         >
           <div className="flex items-center gap-3">
             <Ruler className="size-5" />
@@ -76,13 +79,14 @@ export default function UnitsAppearanceSection({
         <button
           type="button"
           onClick={() => {
+            haptic("light");
             trackSettingsEvent("settings_toggle_changed", {
               toggle: "theme",
               value: profile.darkMode ? "light" : "dark",
             });
             toggleDark();
           }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-muted hover:bg-muted/80 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
         >
           <div className="flex items-center gap-3">
             {profile.darkMode ? (

@@ -118,6 +118,7 @@ export default function FoodHeroCard({
   const lastLogMomentAt = useRef<number>(0);
 
   const toggleMode = () => {
+    haptic("light");
     const next: CalorieRingMode = mode === "left" ? "eaten" : "left";
     setMode(next);
     try {
@@ -509,6 +510,7 @@ export default function FoodHeroCard({
             label="PROTEIN"
             color={THEME.macros.protein}
             mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
@@ -525,6 +527,7 @@ export default function FoodHeroCard({
             label="CARBS"
             color={THEME.macros.carbs}
             mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
@@ -541,6 +544,7 @@ export default function FoodHeroCard({
             label="FAT"
             color={THEME.macros.fat}
             mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
