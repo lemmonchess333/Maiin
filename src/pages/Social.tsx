@@ -287,6 +287,7 @@ export default function Social() {
   // Crews
   const {
     crews,
+    error: crewsError,
     currentCrew,
     joinCrew,
     leaveCrew,
@@ -1561,21 +1562,47 @@ export default function Social() {
                  dead-end caption. Falls through to the always-shown
                  Popular crews section below, but adds an explicit
                  jump to Crews so users on this surface understand
-                 where the suggestion engine pulls from. */
+                 where the suggestion engine pulls from.
+
+                 Issue #846: when the crews load itself failed
+                 (PERMISSION_DENIED, network drop) the user sees the
+                 same empty state as "no crews to join" — which
+                 reads as "feature is empty by design". Distinguish
+                 the two so the unavailable case gets honest copy +
+                 a Retry affordance instead of nudging users toward
+                 a Browse path that will fail again. */
                     <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2">
-                      <p className="text-sm text-muted-foreground">
-                        {profile?.crewId && currentCrew
-                          ? "Suggestions show up as people in your crew get active."
-                          : "Join a crew or follow people to start seeing suggestions."}
-                      </p>
-                      {!profile?.crewId && (
-                        <button
-                          type="button"
-                          onClick={() => setTab("crews")}
-                          className="text-sm font-medium text-primary hover:text-primary/80"
-                        >
-                          Browse crews
-                        </button>
+                      {crewsError === "unavailable" ? (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            Crews are unavailable right now. Try again, or
+                            contact support if it keeps happening.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => refreshCrews()}
+                            className="text-sm font-medium text-primary hover:text-primary/80"
+                          >
+                            Try again
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm text-muted-foreground">
+                            {profile?.crewId && currentCrew
+                              ? "Suggestions show up as people in your crew get active."
+                              : "Join a crew or follow people to start seeing suggestions."}
+                          </p>
+                          {!profile?.crewId && (
+                            <button
+                              type="button"
+                              onClick={() => setTab("crews")}
+                              className="text-sm font-medium text-primary hover:text-primary/80"
+                            >
+                              Browse crews
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   ) : (
