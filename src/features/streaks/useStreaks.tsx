@@ -21,7 +21,6 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { toast } from "sonner";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
@@ -247,6 +246,10 @@ function useStreaksInternal() {
   // Refs — track state across renders without triggering re-runs
   const lastWrittenStreakRef = useRef<number | null>(null);
   const hasLoadedRef = useRef(false);
+  // Badge ids with an award write currently in flight — prevents the
+  // check effect from firing duplicate concurrent commits for the same
+  // badge before the first resolves.
+  const awardInFlightRef = useRef<Set<string>>(new Set());
 
   // ── Subscribe to all 4 streams ─────────────────────────────────────────
 
@@ -487,6 +490,10 @@ function useStreaksInternal() {
       const badge = streakData.badges.find((b) => b.id === badgeId);
       if (!badge || badge.earnedAt) return;
 
+      // Skip if a write for this badge is already in flight.
+      if (awardInFlightRef.current.has(badgeId)) return;
+      awardInFlightRef.current.add(badgeId);
+
       const now = new Date().toISOString();
       const updated: EarnedBadge = { ...badge, earnedAt: now };
       const updatedBadges = streakData.badges.map((b) =>
@@ -520,8 +527,13 @@ function useStreaksInternal() {
           setNewBadgeQueue((q) => [...q, updated]);
         }
       } catch (error) {
+        // Badge awards are automatic background reconciliation, not a
+        // user-initiated action — a transient write failure must not
+        // surface a toast (this produced stacked "Failed to save badge"
+        // errors). Log only; the next snapshot/state change retries.
         logger.error("[Streaks] Badge save failed:", error);
-        if (!silent) toast.error("Failed to save badge");
+      } finally {
+        awardInFlightRef.current.delete(badgeId);
       }
     },
     [user, streakData.badges]
