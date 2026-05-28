@@ -14,25 +14,33 @@ export default function SettingsNutrition() {
   const { profile, updateProfile } = useAuth();
   const [age, setAge] = useState(profile?.age ?? 25);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
-    (profile?.activityLevel as ActivityLevel) ?? "moderate",
+    (profile?.activityLevel as ActivityLevel) ?? "moderate"
   );
-  const [trainingPhase, setTrainingPhase] = useState<"cut" | "lean bulk" | "recomp">(
-    (profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp",
-  );
-  const [mealsTarget, setMealsTarget] = useState(
-    Math.min(profile?.weeklyMealsTarget ?? 10, 20),
+  const [trainingPhase, setTrainingPhase] = useState<
+    "cut" | "lean bulk" | "recomp"
+  >((profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp");
+  const [mealsTarget, setMealsTarget] = useState(() =>
+    Math.min(profile?.weeklyMealsTarget ?? 10, 20)
   );
 
   const tdee = useMemo(
-    () => calculateTDEE(
-      profile?.weightKg ?? 70,
-      profile?.heightCm ?? 170,
+    () =>
+      calculateTDEE(
+        profile?.weightKg ?? 70,
+        profile?.heightCm ?? 170,
+        age,
+        activityLevel,
+        trainingPhase,
+        profile?.sex ?? "male"
+      ),
+    [
+      profile?.weightKg,
+      profile?.heightCm,
       age,
       activityLevel,
       trainingPhase,
-      profile?.sex ?? "male",
-    ),
-    [profile?.weightKg, profile?.heightCm, age, activityLevel, trainingPhase, profile?.sex],
+      profile?.sex,
+    ]
   );
 
   // Reactive TDEE persistence — auto-save derived values when inputs
@@ -41,7 +49,10 @@ export default function SettingsNutrition() {
   const prevTdeeRef = useRef(tdee);
   const hasMounted = useRef(false);
   useEffect(() => {
-    if (!hasMounted.current) { hasMounted.current = true; return; }
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
     if (prevTdeeRef.current.targetCalories !== tdee.targetCalories) {
       updateProfile({
         tdeeBase: tdee.targetCalories,
@@ -55,7 +66,9 @@ export default function SettingsNutrition() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tdee]);
 
-  async function handlePhaseChange(phase: "cut" | "lean bulk" | "recomp"): Promise<void> {
+  async function handlePhaseChange(
+    phase: "cut" | "lean bulk" | "recomp"
+  ): Promise<void> {
     const prevPhase = trainingPhase;
     const result = await updateProfile({
       program: {
@@ -70,7 +83,10 @@ export default function SettingsNutrition() {
   if (!profile) return <SettingsSection title="Nutrition" />;
 
   return (
-    <SettingsSection title="Nutrition" subtitle="Calorie targets, phase, activity level">
+    <SettingsSection
+      title="Nutrition"
+      subtitle="Calorie targets, phase, activity level"
+    >
       <NutritionSection
         inline
         profile={profile}
