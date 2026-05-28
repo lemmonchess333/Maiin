@@ -13,7 +13,7 @@ import {
   type PendingNotification,
   type TestNotificationKind,
 } from "@/lib/notifications";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";

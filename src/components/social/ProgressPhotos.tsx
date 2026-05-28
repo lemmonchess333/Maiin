@@ -12,7 +12,7 @@ import { db, storage } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth";
 import { Camera, Lock, RotateCcw, X } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { THEME } from "../../lib/theme";
 import { logger } from "../../lib/logger";
 import { EmptyState } from "../EmptyState";
