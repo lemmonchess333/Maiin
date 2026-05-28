@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";

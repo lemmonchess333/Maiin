@@ -65,7 +65,7 @@ import {
   getScheduledRunStatus,
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 const PROGRAM_DOC = "current";
 
