@@ -613,7 +613,14 @@ export default function Home() {
             <Link
               to="/settings"
               aria-label="Settings"
-              className="inline-flex items-center justify-center size-11 rounded-xl text-muted-foreground/60 hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              style={{
+                // Match StreakFlame's pill surface so the two header
+                // chips read as siblings instead of "filled pill next
+                // to a faded outline icon."
+                boxShadow:
+                  "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+              }}
+              className="inline-flex items-center justify-center size-11 rounded-full bg-card text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <SettingsIcon aria-hidden="true" className="size-5" />
             </Link>
