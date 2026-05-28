@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "../lib/logger";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
@@ -172,7 +173,7 @@ export default function Routine() {
         const effectiveDurationMin =
           durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
 
-        await setDoc(workoutRef, {
+        await setDocGuarded(workoutRef, {
           date: today,
           exercises,
           totalCalories,

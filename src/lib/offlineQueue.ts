@@ -1,6 +1,7 @@
 import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/errorReporting";
+import { stripUndefined } from "@/lib/firestoreGuards";
 
 /**
  * Offline write queue — partitioned by uid so a write queued by user
@@ -147,15 +148,21 @@ export async function safeSave(
   collectionPath: string,
   data: Record<string, unknown>
 ): Promise<void> {
+  // Strip undefined up front so the SAME clean payload is used whether
+  // the write goes online now or is queued for later. Without this an
+  // optional-field payload threw "Unsupported field value: undefined"
+  // online, fell into the catch, queued, then threw again on every
+  // flush — stuck in the queue forever.
+  const clean = stripUndefined(data);
   if (navigator.onLine) {
     try {
-      await addDoc(collection(db, collectionPath), data);
+      await addDoc(collection(db, collectionPath), clean);
       return;
     } catch (e) {
       logger.error("[OfflineQueue] safeSave failed, queuing offline", e);
     }
   }
-  queueWrite(uid, collectionPath, data);
+  queueWrite(uid, collectionPath, clean);
 }
 
 export async function safeMerge(
@@ -165,15 +172,16 @@ export async function safeMerge(
   docId: string,
   data: Record<string, unknown>
 ): Promise<void> {
+  const clean = stripUndefined(data);
   if (navigator.onLine) {
     try {
-      await setDoc(doc(db, collectionPath, docId), data, { merge: true });
+      await setDoc(doc(db, collectionPath, docId), clean, { merge: true });
       return;
     } catch (e) {
       logger.error("[OfflineQueue] safeMerge failed, queuing offline", e);
     }
   }
-  queueWrite(uid, collectionPath, data, docId, true);
+  queueWrite(uid, collectionPath, clean, docId, true);
 }
 
 // Module-load `online` auto-flush removed — `AppRoutes` in App.tsx
