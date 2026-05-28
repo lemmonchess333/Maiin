@@ -234,14 +234,19 @@ export default function Home() {
     dailyProt,
     dailyCarbs,
     dailyFat,
-    todayWorkoutCals,
     todayRunCals,
     lastWeightInfo,
     setLastWeightInfo,
     postWorkoutNudge,
   } = useHomeData(user, profile, workouts, weightUnit);
 
-  // Daily burn for Today's Energy card
+  // Daily burn for Today's Energy card.
+  // Workout burn reads through `effectiveTargets.actualLiftBurn` (sums
+  // stored `totalCalories` for today's workouts via the same
+  // `isWorkoutOnDate` rule). Pre-cleanup `useHomeData` re-derived this
+  // number inline with a "should match Food's useEffectiveTargets"
+  // comment — drift hazard, deleted.
+  const todayWorkoutCals = effectiveTargets?.actualLiftBurn ?? 0;
 
   const dailyBurn = useMemo(
     function () {
