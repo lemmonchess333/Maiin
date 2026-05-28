@@ -916,7 +916,7 @@ export default function Run() {
             <div className="flex-1 flex flex-col bg-background text-foreground">
               <RunSetupModal
                 onStart={handleStart}
-                onCancel={() => navigate(-1)}
+                onCancel={() => navigate("/program")}
                 programContext={planDecision.strip}
                 savedPreferences={{
                   autoPause: true,
