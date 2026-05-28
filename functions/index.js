@@ -1242,9 +1242,6 @@ const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 /** Delegates to helpers.buildStripeReturnUrl — see helpers.js for docs. */
 const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 
-// FOLLOWUP(payment-security): tighten per-uid rate limiting on
-//   createCheckoutSession; the existing 5/10min check uses body.uid
-//   pre-reorder semantics and should re-key on authUser.uid.
 exports.createCheckoutSession = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onRequest((req, res) => {
@@ -1369,11 +1366,16 @@ exports.createCheckoutSession = functions
         }
         // R1A-Deletion: actor lock. createCheckoutSession writes
         // users/{uid}.stripeCustomerId — deleting accounts cannot start
-        // a new checkout that would recreate the user doc.
+        // a new checkout that would recreate the user doc. Key on
+        // authUser.uid, not the client-supplied body `uid`: the latter
+        // is optional (the ownership check above only fires when it's
+        // present), so passing it here let a deleting account bypass the
+        // lock entirely by omitting `uid` — isAccountDeleting(db,
+        // undefined) reads users/undefined, never exists, returns false.
         try {
           await accountDeletionLocks.assertCallableActorNotDeleting(
             admin.firestore(),
-            uid
+            authUser.uid
           );
         } catch (err) {
           if (err.details && err.details.errorCode) {
