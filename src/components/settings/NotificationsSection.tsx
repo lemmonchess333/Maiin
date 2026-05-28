@@ -427,29 +427,22 @@ export default function NotificationsSection({
           </div>
         )}
       </div>
-
-      {/* Shared footer */}
-      <p className="text-xs text-muted-foreground text-center">
-        Notifications work best when installed as an app
-      </p>
     </AccordionSection>
   );
 }
 
 /**
- * PR I (audit P1 #10): per-reminder diagnostics strip. Surfaces:
+ * Per-reminder diagnostics strip. Surfaces:
  *   - "Next: <relative time>" when an OS-scheduled notification
- *     matches the category (or "Web reminders fire only while the
- *     app is open" when on web).
+ *     matches the category (or a tab-open caveat when on web).
  *   - "Send test" button — fires a notification in +3s with stable
  *     ID per category so repeated taps replace rather than queue.
  *
  * Lives at the top of each enabled-reminder block so users can
  * verify their device-level setup without waiting for the real
- * reminder fire-time. Cheap to add visibly because the pre-PR-I
- * surface had no diagnostics at all.
+ * reminder fire-time.
  */
-function ReminderDiagnostics({
+export function ReminderDiagnostics({
   next,
   formatNextFire,
   onTest,
@@ -469,11 +462,9 @@ function ReminderDiagnostics({
           </>
         ) : (
           // Empty pending list on web is the default state — explain
-          // why so users don't think the reminder is broken.
-          <span>
-            Web reminders fire while the app is open. Install Tropos for durable
-            native delivery.
-          </span>
+          // the actual behaviour so users don't think the reminder
+          // is broken.
+          <span>Reminders fire while this tab is open.</span>
         )}
       </div>
       <button
