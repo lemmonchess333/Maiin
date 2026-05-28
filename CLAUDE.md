@@ -545,3 +545,62 @@ auto-created on first `/triage` use if absent on GitHub. See
 Single-context. `CONTEXT.md` at repo root (seed; fill with domain
 vocabulary as it crystallises); ADRs in `docs/adr/`. See
 `docs/agents/domain.md`.
+
+## Dynamic workflows & `ultracode` (when to escalate)
+
+Claude Code's **dynamic workflows** (research preview, Claude Code
+≥ 2.1.154, all paid plans) let Claude write a JavaScript script that
+orchestrates many subagents in the background while the session stays
+responsive. Intermediate results live in script variables, so only the
+final answer hits Claude's context — and the script can run independent
+agents that adversarially review each other before reporting. Three ways
+to trigger:
+
+- `/effort ultracode` — `xhigh` reasoning **plus** auto-workflow: Claude
+  plans a workflow for every substantive task (often several in a row:
+  understand → change → verify). Lasts the session; reset with
+  `/effort high`. Only on models that support `xhigh` (Opus 4.8 does).
+- The word **`workflow`** anywhere in a prompt — runs that one task as a
+  workflow without changing session effort (`alt+w` to un-trigger).
+- `/deep-research <question>` — the bundled cross-checked research
+  workflow. `/workflows` watches/manages runs; press `s` there to save a
+  run's script to `.claude/workflows/` (shared) or `~/.claude/workflows/`.
+
+Runtime limits: up to 16 concurrent agents, 1,000 per run, no mid-run user
+input (run each sign-off stage as its own workflow), subagents always run
+in `acceptEdits` and inherit your tool allowlist. Cost: many agents = many
+more tokens than a conversational pass — counts toward plan limits.
+
+**Route a Tropos task into a workflow (or turn `ultracode` on) when:**
+
+- The change touches the **correctness-critical engines** —
+  `performanceEngine`, `runScheduler` (race-prep / taper / recovery state
+  machine), `adaptiveTDEE` / `plateauDetection` / `phaseNutrition`. A
+  plan→implement→verify workflow beats a one-shot edit on these.
+- It's a **cross-cutting sweep**: a codebase-wide audit, a many-file
+  migration (the 38-file toast-import migration was this shape), a
+  security pass over the Firestore rules / callables, or a profiler-guided
+  perf audit.
+- It's a **hard plan worth drafting from several angles** before
+  committing — exactly the `/grill-me`-class decisions, drafted in
+  parallel and weighed.
+- It touches **`functions/`** — have the workflow plan against the deploy
+  gotchas documented above (dedup/bundle-hash, mandatory `maxInstances`,
+  Blaze, the account-deletion rails) **before** editing, and verify the
+  deployed source after.
+
+**Don't** escalate routine single-file edits, copy tweaks, or anything
+where the real blocker is a **product decision** (e.g. the Analytics-vs-
+History naming call) — more effort doesn't substitute for asking the user.
+Respect the **design-for-the-user-base** and **plan-file lock** rules
+inside a workflow too: a sweep that re-derives a decision an orphaned lock
+already made is wasted effort — search `git log --all` for the lock first.
+
+**Web / agent-harness caveat:** workflows resume only *within* the same
+session. This repo's web sessions run in an ephemeral container that's
+reclaimed on inactivity, and exiting Claude Code restarts an in-flight
+workflow fresh — so commit/push before a long run, and prefer staging a
+big job as several savable workflows over one monolith. In `claude -p` /
+Agent SDK there's no launch prompt; runs start immediately under your
+permission rules. To disable entirely: `/config` toggle,
+`"disableWorkflows": true`, or `CLAUDE_CODE_DISABLE_WORKFLOWS=1`.
