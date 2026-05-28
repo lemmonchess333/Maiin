@@ -37,7 +37,7 @@ import { useWaterLog } from "@/hooks/useWaterLog";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";

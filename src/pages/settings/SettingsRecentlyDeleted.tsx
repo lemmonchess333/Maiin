@@ -15,7 +15,7 @@
  */
 import { useState } from "react";
 import { Trash2, RotateCcw, Utensils } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
