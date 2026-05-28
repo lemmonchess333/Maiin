@@ -110,10 +110,17 @@
     <!-- Pre-React boot (dark-mode synchronous apply + GH Pages SPA redirect).
          External file because audit PR 4 dropped `'unsafe-inline'` from
          `script-src`. Loaded synchronously (no async/defer) to preserve
-         before-paint behaviour. The `./init.js` relative path resolves
-         to `/init.js` in dev + Capacitor and `/Maiin/init.js` in the
-         web prod build — index.html always sits at the base. -->
-    <script src="./init.js"></script>
+         before-paint behaviour.
+
+         Uses Vite's `%BASE_URL%` (→ `/Maiin/` for web prod, `/` for dev +
+         Capacitor) rather than a relative `./init.js`. A relative path
+         resolves against the *current* document URL, so a deep-link hard
+         load (e.g. /Maiin/user/123) — increasingly common now the service
+         worker serves index.html for deep navigations — requested
+         /Maiin/user/123/init.js, got the SPA HTML fallback, and threw
+         "Unexpected token '<'". The base-absolute path is route-depth
+         independent. -->
+    <script src="%BASE_URL%init.js"></script>
   </head>
   <body>
     <noscript
