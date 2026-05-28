@@ -39,7 +39,7 @@ const tabs: { to: string; icon: typeof Home; label: string }[] = [
   { to: "/program", icon: Dumbbell, label: "Programme" },
   { to: "/food", icon: UtensilsCrossed, label: "Food" },
   { to: "/social", icon: Users, label: "Social" },
-  { to: "/history", icon: BarChart3, label: "History" },
+  { to: "/history", icon: BarChart3, label: "Analytics" },
 ];
 
 export default function Layout() {
