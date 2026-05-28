@@ -16,7 +16,6 @@
  */
 
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -27,6 +26,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 
 export interface SavedRoutineExercise {
@@ -73,7 +73,7 @@ export async function saveRoutine(
   uid: string,
   input: SaveRoutineInput,
 ): Promise<string> {
-  const ref = await addDoc(collection(db, "users", uid, "savedRoutines"), {
+  const ref = await addDocGuarded(collection(db, "users", uid, "savedRoutines"), {
     name: input.name,
     sourceActivityId: input.sourceActivityId,
     sourceAuthorId: input.sourceAuthorId,

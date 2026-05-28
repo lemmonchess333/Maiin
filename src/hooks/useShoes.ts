@@ -3,12 +3,11 @@ import {
   collection,
   doc,
   onSnapshot,
-  addDoc,
-  updateDoc,
   Timestamp,
   getDocs,
   writeBatch,
 } from "firebase/firestore";
+import { addDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -72,7 +71,7 @@ export function useShoes() {
   const addShoe = async (name: string, brand: string, maxKm: number = 600) => {
     if (!user) return;
     const ref = collection(db, "users", user.uid, "shoes");
-    await addDoc(ref, {
+    await addDocGuarded(ref, {
       name,
       brand,
       totalKm: 0,
@@ -88,7 +87,7 @@ export function useShoes() {
   const retireShoe = async (shoeId: string) => {
     if (!user) return;
     const ref = doc(db, "users", user.uid, "shoes", shoeId);
-    await updateDoc(ref, { retired: true, isDefault: false });
+    await updateDocGuarded(ref, { retired: true, isDefault: false });
   };
 
   const setDefault = async (shoeId: string) => {
@@ -96,10 +95,10 @@ export function useShoes() {
     // Unset all others
     for (const s of shoes) {
       if (s.isDefault && s.id !== shoeId) {
-        await updateDoc(doc(db, "users", user.uid, "shoes", s.id), { isDefault: false });
+        await updateDocGuarded(doc(db, "users", user.uid, "shoes", s.id), { isDefault: false });
       }
     }
-    await updateDoc(doc(db, "users", user.uid, "shoes", shoeId), { isDefault: true });
+    await updateDocGuarded(doc(db, "users", user.uid, "shoes", shoeId), { isDefault: true });
   };
 
   const updateMileage = async (shoeId: string, addKm: number) => {
@@ -114,7 +113,7 @@ export function useShoes() {
     if (pct >= 0.85 && !shoe.alert85Shown) updates.alert85Shown = true;
     if (pct >= 1.0 && !shoe.alert100Shown) updates.alert100Shown = true;
 
-    await updateDoc(doc(db, "users", user.uid, "shoes", shoeId), updates);
+    await updateDocGuarded(doc(db, "users", user.uid, "shoes", shoeId), updates);
 
     // Return alert status
     if (pct >= 1.0 && !shoe.alert100Shown) return "replace";

@@ -7,6 +7,7 @@ import { haptic } from "@/lib/haptic";
 import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/lib/toast";
@@ -788,9 +789,9 @@ export default function WorkoutSession({
     // Persist PR map to Firestore for history beyond 50-session window
     if (user?.uid && Object.keys(prMap).length > 0) {
       try {
-        const { doc: fbDoc, setDoc } = await import("firebase/firestore");
+        const { doc: fbDoc } = await import("firebase/firestore");
         const { Timestamp } = await import("firebase/firestore");
-        await setDoc(
+        await setDocGuarded(
           fbDoc(db, "users", user.uid, "stats", "prMap"),
           {
             map: prMap,
