@@ -25,7 +25,7 @@ import { useAuth } from "@/lib/auth";
 import { isAdminUid } from "@/lib/adminAuth";
 import { functions } from "@/lib/firebase";
 import { httpsCallable } from "firebase/functions";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Loader2, ShieldAlert, EyeOff, Check, UserX } from "lucide-react";
 
 interface ReportTarget {
