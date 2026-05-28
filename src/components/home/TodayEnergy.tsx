@@ -47,6 +47,10 @@ export default function TodayEnergy({
   } | null;
 }) {
   const [expanded, setExpanded] = useState(false);
+  // cal.ai-style tap-to-flip: macro rings show consumed by default,
+  // tap toggles to "left" (target − consumed, clamped at 0). Lives
+  // at the parent so all three rings stay in sync.
+  const [macroMode, setMacroMode] = useState<"consumed" | "left">("consumed");
   const tCal = targets.finalTarget;
   const tProt = targets.protein;
   const tCarbs = targets.carbs;
@@ -267,8 +271,11 @@ export default function TodayEnergy({
         )}
       </AnimatePresence>
 
-      {/* Macro rings — always visible */}
-      <Link to="/food" className="block relative">
+      {/* Macro rings — tap to flip between consumed / left (cal.ai
+          pattern). Navigation to /food moved to the empty-state
+          overlay + the "View food log →" link inside the expandable
+          breakdown above; the rings row itself is now a toggle. */}
+      <div className="block relative">
         {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
           <p
             className="text-xs font-medium text-center px-4 pt-2"
@@ -279,10 +286,20 @@ export default function TodayEnergy({
               : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`}
           </p>
         )}
-        <motion.div
+        <motion.button
+          type="button"
           layout
+          onClick={() => {
+            haptic();
+            setMacroMode((m) => (m === "consumed" ? "left" : "consumed"));
+          }}
+          aria-label={
+            macroMode === "consumed"
+              ? "Macros showing consumed. Tap to switch to remaining."
+              : "Macros showing remaining. Tap to switch to consumed."
+          }
           className={cn(
-            "flex items-center justify-around px-4 py-3",
+            "w-full flex items-center justify-around px-4 py-3 motion-safe:active:scale-[0.99] transition-transform",
             calories === 0 && "opacity-50"
           )}
         >
@@ -292,6 +309,7 @@ export default function TodayEnergy({
             color={proteinColor}
             label="Protein"
             unit="g"
+            displayMode={macroMode}
           />
           <MacroRing
             value={carbs}
@@ -299,6 +317,7 @@ export default function TodayEnergy({
             color={carbsColor}
             label="Carbs"
             unit="g"
+            displayMode={macroMode}
           />
           <MacroRing
             value={fat}
@@ -306,15 +325,17 @@ export default function TodayEnergy({
             color={fatColor}
             label="Fat"
             unit="g"
+            displayMode={macroMode}
           />
-        </motion.div>
+        </motion.button>
         {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
           /* Home2c-locked empty-state copy. Single sentence per spec
              (was a two-line title/sub: "Log your first meal" + "Tap
              to start tracking"). aria-label exposes the same intent
              to screen readers without requiring them to traverse the
              absolutely-positioned overlay's children. */
-          <div
+          <Link
+            to="/food"
             className="absolute inset-0 flex flex-col items-center justify-center rounded-xl"
             style={{ backgroundColor: THEME.semantic.nutrition + "08" }}
             role="status"
@@ -335,20 +356,21 @@ export default function TodayEnergy({
             >
               Log a meal to see your daily energy
             </p>
-          </div>
+          </Link>
         )}
         {!mealsLoading &&
           calories === 0 &&
           totalLifetimeMeals > 0 &&
           daysSinceLastMeal >= 3 && (
-            <p
-              className="text-center text-xs font-medium pb-1"
+            <Link
+              to="/food"
+              className="block text-center text-xs font-medium pb-1"
               style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}
             >
               Tap to log today's meals
-            </p>
+            </Link>
           )}
-      </Link>
+      </div>
     </div>
   );
 }
