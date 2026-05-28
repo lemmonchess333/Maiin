@@ -3,7 +3,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { Users, Check, MapPin, Trash2, Plus, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
