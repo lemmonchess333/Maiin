@@ -47,7 +47,7 @@ import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   WifiOff,
   CheckCircle,
