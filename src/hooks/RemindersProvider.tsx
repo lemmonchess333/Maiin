@@ -1,4 +1,4 @@
-import { createContext, use, type ReactNode } from "react";
+import { createContext, use, useMemo, type ReactNode } from "react";
 import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
@@ -42,8 +42,12 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   const meal = useMealRemindersInternal();
   const workout = useWorkoutRemindersInternal();
   const streak = useStreakReminderInternal();
+  const value = useMemo(
+    () => ({ meal, workout, streak }),
+    [meal, workout, streak]
+  );
   return (
-    <RemindersContext.Provider value={{ meal, workout, streak }}>
+    <RemindersContext.Provider value={value}>
       {children}
     </RemindersContext.Provider>
   );

@@ -1,6 +1,7 @@
 import {
   createContext,
   useCallback,
+  useMemo,
   use,
   useEffect,
   useState,
@@ -718,24 +719,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        loading,
-        signIn,
-        signUp,
-        signInWithGoogle,
-        signInWithApple,
-        signOut: signOutUser,
-        updateProfile,
-        refreshProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // Stable identity for the Provider value — every consumer that
+  // calls useAuth() depends on this. An inline object literal would
+  // get a fresh reference on every AuthProvider render, forcing the
+  // whole app subtree to re-render even when nothing observable
+  // changed. The deps cover every field the value object exposes.
+  const value = useMemo(
+    () => ({
+      user,
+      profile,
+      loading,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signInWithApple,
+      signOut: signOutUser,
+      updateProfile,
+      refreshProfile,
+    }),
+    [
+      user,
+      profile,
+      loading,
+      signIn,
+      signUp,
+      signInWithGoogle,
+      signInWithApple,
+      signOutUser,
+      updateProfile,
+      refreshProfile,
+    ]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
