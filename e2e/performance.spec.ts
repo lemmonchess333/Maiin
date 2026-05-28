@@ -45,17 +45,29 @@ test.describe('Performance & resilience', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('fonts load successfully', async ({ page }) => {
-    const failedRequests: string[] = [];
-    page.on('requestfailed', (req) => {
-      if (req.url().includes('fonts.googleapis.com') || req.url().includes('fonts.gstatic.com')) {
-        failedRequests.push(req.url());
+  test('fonts are self-hosted and load successfully', async ({ page }) => {
+    // Fonts moved off the Google Fonts CDN to bundled @fontsource-variable
+    // packages. Assert the inverse of the old test: nothing should ever hit
+    // Google's font origins, and the self-hosted variable face should still
+    // be registered and usable.
+    const cdnRequests: string[] = [];
+    page.on('request', (req) => {
+      const url = req.url();
+      if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
+        cdnRequests.push(url);
       }
     });
 
     await page.goto('/');
-    await page.waitForTimeout(3000);
-    expect(failedRequests).toHaveLength(0);
+    await page.waitForLoadState('networkidle');
+
+    expect(cdnRequests).toEqual([]);
+
+    const displayFontReady = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return document.fonts.check('700 16px "Plus Jakarta Sans Variable"');
+    });
+    expect(displayFontReady).toBe(true);
   });
 
   test('Open Graph meta tags are present', async ({ page }) => {
