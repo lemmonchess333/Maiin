@@ -45,12 +45,6 @@ export default function OneTimeMaintenance() {
         return;
       }
 
-      // Mark in-flight to suppress any re-entry from a fast effect
-      // re-run before the async resolves. The localStorage flag is
-      // the durable record across sessions; this ref is only for the
-      // current mount.
-      firedRef.current = true;
-
       try {
         const fns = getFunctions();
         const fn = httpsCallable<unknown, { ok: boolean; scanned: number; updated: number; skipped: number }>(
@@ -77,8 +71,6 @@ export default function OneTimeMaintenance() {
       }
     };
 
-    void run();
-
     /* displayNameLower self-backfill.
        Adds the normalised lowercase mirror to the caller's public
        profile if missing. searchUsers queries displayNameLower as
@@ -87,7 +79,7 @@ export default function OneTimeMaintenance() {
        one read + at most one merge-write per user, gated by a
        localStorage flag. */
     const LOWER_FLAG = "tropos.displayNameLower.backfilled.v1";
-    void (async () => {
+    const runLowerBackfill = async () => {
       try {
         if (localStorage.getItem(LOWER_FLAG)) return;
       } catch {
@@ -114,10 +106,36 @@ export default function OneTimeMaintenance() {
       } catch (err) {
         logger.warn("[OneTimeMaintenance] displayNameLower backfill skipped", err);
       }
-    })();
+    };
+
+    // Debounce the migrations behind a short timer rather than firing on
+    // the first `user` emission. onAuthStateChanged can emit several user
+    // objects in the first seconds after sign-in (session restore, token
+    // refresh, profile hydration); each one re-runs this effect. Without
+    // the timer, the gap between the effect-top firedRef check and the
+    // first await inside run() leaves a window where two near-simultaneous
+    // emissions could both dispatch. Coalescing on a timer means only the
+    // settled auth state runs the backfill — every earlier emission's
+    // timer is cleared by cleanup before it fires. It also keeps this
+    // background migration off the critical cold-start path, where the
+    // home screen's own reads are contending for the network.
+    //
+    // firedRef is set inside the timer (not the effect body) so it marks
+    // "dispatched", not merely "scheduled": a cleared timer leaves the ref
+    // false so the next settled emission can still run. Once it fires, the
+    // effect-top guard suppresses all further runs for this mount, and the
+    // localStorage flags remain the durable cross-session record.
+    const DEBOUNCE_MS = 800;
+    const timer = setTimeout(() => {
+      if (cancelled || firedRef.current) return;
+      firedRef.current = true;
+      void run();
+      void runLowerBackfill();
+    }, DEBOUNCE_MS);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [user]);
 
