@@ -41,7 +41,8 @@ import { toast } from "@/lib/toast";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, serverTimestamp } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
@@ -398,7 +399,7 @@ export default function Home() {
     setWeightSaving(true);
     try {
       const today = format(new Date(), "yyyy-MM-dd");
-      await addDoc(collection(db, "users", user.uid, "bodyweightLogs"), {
+      await addDocGuarded(collection(db, "users", user.uid, "bodyweightLogs"), {
         date: today,
         weight: storeW,
         createdAt: serverTimestamp(),
