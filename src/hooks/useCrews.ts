@@ -76,10 +76,26 @@ const DEFAULT_CREWS: Omit<Crew, "id" | "memberCount" | "createdAt">[] = [
   },
 ];
 
+/**
+ * Crew-load failure shape (issue #846).
+ *
+ *   - "unavailable" → Firestore rejected the read or it timed out
+ *     (PERMISSION_DENIED on rules, network drop). The Social tab
+ *     surfaces a "Crews are unavailable" hint instead of the
+ *     normal "Join a crew" empty state so users don't think the
+ *     feature is empty by design.
+ *
+ * Other codes can be added here if the UI grows (e.g. "restricted"
+ * for the `globalRestrictedUids` path). Today only "unavailable"
+ * is distinguishable from a normal `[]` result.
+ */
+export type CrewsLoadError = "unavailable";
+
 export function useCrews() {
   const { user, profile, updateProfile } = useAuth();
   const [crews, setCrews] = useState<Crew[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<CrewsLoadError | null>(null);
   const currentCrewId = profile?.crewId;
   const mutatingRef = useRef(false);
 
@@ -107,8 +123,14 @@ export function useCrews() {
       }
 
       setCrews(list);
+      setError(null);
     } catch (e) {
+      // Issue #846: surface the failure so the Social tab can show
+      // "Crews are unavailable" instead of the normal "Join a crew"
+      // empty state (the latter implies "no crews exist", not "we
+      // couldn't load any").
       logger.error("Failed to fetch crews:", e);
+      setError("unavailable");
     }
     setLoading(false);
   }, []);
@@ -264,6 +286,7 @@ export function useCrews() {
     currentCrew,
     currentCrewId,
     loading,
+    error,
     joinCrew,
     leaveCrew,
     createCrew,
