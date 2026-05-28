@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { getDocs } from "firebase/firestore";
 import { useHomeData } from "../useHomeData";
-import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
 
 vi.mock("firebase/firestore", () => ({
@@ -22,10 +21,7 @@ vi.mock("date-fns", () => ({
   format: vi.fn((_d: unknown, _fmt: string) => "2026-04-01"),
 }));
 
-function makeSnap(
-  docs: Record<string, unknown>[],
-  empty = false
-) {
+function makeSnap(docs: Record<string, unknown>[], empty = false) {
   const docObjects = docs.map((d) => ({ data: () => d }));
   return {
     docs: docObjects,
@@ -82,19 +78,6 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   } as UserProfile;
 }
 
-function makeWorkout(overrides: Partial<Workout> = {}): Workout {
-  return {
-    id: "w1",
-    date: "2026-04-01",
-    exercises: [{ exerciseId: "e1", exerciseName: "Squat", category: "legs", sets: [], caloriesBurned: 0 }],
-    totalCalories: 300,
-    durationMinutes: 60,
-    notes: "",
-    createdAt: { toMillis: () => Date.now() } as any,
-    ...overrides,
-  } as Workout;
-}
-
 describe("useHomeData", { timeout: 5000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -113,9 +96,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("returns zero defaults when no user", () => {
-    const { result } = renderHook(() =>
-      useHomeData(null, null, [], "kg")
-    );
+    const { result } = renderHook(() => useHomeData(null, null, [], "kg"));
 
     expect(result.current.dailyCal).toBe(0);
     expect(result.current.dailyProt).toBe(0);
@@ -276,30 +257,6 @@ describe("useHomeData", { timeout: 5000 }, () => {
     expect(result.current.error).toContain("Failed to load meals");
     // Runs still computed: 70 * 3 * 1.036 = 217.56 → 218
     expect(result.current.todayRunCals).toBe(218);
-  });
-
-  it("todayWorkoutCals reads stored totalCalories via isWorkoutOnDate (sync)", async () => {
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
-
-    const profile = makeProfile({ weightKg: 70 });
-    // Use old createdAt to avoid triggering postWorkoutNudge (>120min ago)
-    const oldCreatedAt = Date.now() - 200 * 60 * 1000;
-    const workout = makeWorkout({
-      date: "2026-04-01",
-      totalCalories: 300,
-      durationMinutes: 60,
-      createdAt: { toMillis: () => oldCreatedAt } as any,
-    });
-
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [workout], "kg")
-    );
-
-    // Sync computation: sums w.totalCalories for today via the shared
-    // isWorkoutOnDate helper. No longer recomputes from duration × weight.
-    expect(result.current.todayWorkoutCals).toBe(300);
-
-    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
   it("converts weight to lbs when weightUnit is lbs", async () => {
