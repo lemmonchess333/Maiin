@@ -1,6 +1,6 @@
 import {
   createContext,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useState,
@@ -194,7 +194,7 @@ export function DailyLogsProvider({ children }: { children: ReactNode }) {
 }
 
 function useDailyLogsContext(): DailyLogsValue {
-  const ctx = useContext(DailyLogsContext);
+  const ctx = use(DailyLogsContext);
   if (!ctx) {
     throw new Error(
       "useDailyLogs/useWeeklyStats/useMonthlyStats/useWeeklyDayMap must be used inside <DailyLogsProvider>"
