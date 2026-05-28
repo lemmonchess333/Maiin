@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
 import { addDays, format } from "date-fns";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";

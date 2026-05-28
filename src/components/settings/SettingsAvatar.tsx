@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from "react";
 import { Camera, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import type { UserProfile } from "@/lib/auth";
 import { useAuth } from "@/lib/auth";
 import {
