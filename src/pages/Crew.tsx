@@ -28,7 +28,7 @@ import { EmptyState } from "../components/EmptyState";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { THEME } from "../lib/theme";
 import { CREW_ICON_MAP } from "../lib/crewIcons";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 const itemVariant = {
   hidden: { opacity: 0, y: 8 },

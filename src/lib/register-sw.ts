@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { logger } from "./logger";
 import { isNativePlatform } from "./platform";
 
