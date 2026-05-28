@@ -4,7 +4,8 @@
  * Stores recent errors in memory and logs critical errors to Firestore.
  */
 
-import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, serverTimestamp } from 'firebase/firestore';
+import { setDocGuarded } from '@/lib/firestoreWrite';
 import { db } from './firebase';
 
 export interface ErrorReport {
@@ -42,7 +43,7 @@ async function persistToFirestore(report: ErrorReport): Promise<void> {
   try {
     const errorsCol = collection(db, 'users', _currentUid, 'errors');
     const errDoc = doc(errorsCol);
-    await setDoc(errDoc, {
+    await setDocGuarded(errDoc, {
       ...report,
       createdAt: serverTimestamp(),
     });

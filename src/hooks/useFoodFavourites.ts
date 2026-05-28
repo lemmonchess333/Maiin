@@ -5,11 +5,11 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  setDoc,
   deleteDoc,
   Timestamp,
   increment,
 } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -366,7 +366,7 @@ export function useFoodFavourites() {
       // meal save flow in FoodAnalyzer) don't bubble a favourites error
       // into what the user sees as a meal-save failure.
       try {
-        await setDoc(docRef, payload, { merge: true });
+        await setDocGuarded(docRef, payload, { merge: true });
       } catch (err) {
         logger.error("[useFoodFavourites] addFavourite write failed", err);
         return { isNew: false, count: previousCount };
@@ -411,7 +411,7 @@ export function useFoodFavourites() {
     async (favourite: FoodFavourite): Promise<boolean> => {
       if (!user) return false;
       try {
-        await setDoc(
+        await setDocGuarded(
           doc(db, "users", user.uid, "foodFavourites", favourite.id),
           {
             name: favourite.name,
