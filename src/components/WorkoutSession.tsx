@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   buildPRMap,
   checkSetPR,

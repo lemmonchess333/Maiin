@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
 import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { searchShoes, type ShoeModel } from "@/lib/shoeDatabase";
 import { logger } from "@/lib/logger";
 import { Spinner } from "@/components/ui/Spinner";

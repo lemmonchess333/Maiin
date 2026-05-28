@@ -21,7 +21,7 @@
  * is mounted once at app root.
  */
 
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export type ShareType = "workout" | "run";
 
