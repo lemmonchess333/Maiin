@@ -48,7 +48,7 @@ export default function Settings() {
   const [name, setName] = useState(profile?.displayName || "");
   const [weightKg, setWeightKg] = useState(profile?.weightKg || 70);
   const [heightCm, setHeightCm] = useState(profile?.heightCm || 170);
-  const [mealsTarget, setMealsTarget] = useState(
+  const [mealsTarget, setMealsTarget] = useState(() =>
     Math.min(profile?.weeklyMealsTarget || 10, 20)
   );
   const [autoRestTimer, setAutoRestTimer] = useState(

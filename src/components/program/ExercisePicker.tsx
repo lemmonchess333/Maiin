@@ -1,4 +1,11 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useEffectEvent,
+  useCallback,
+} from "react";
 import { createPortal } from "react-dom";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
@@ -109,15 +116,18 @@ export default function ExercisePicker({
     }
   }, [newlySelectedCount, preExistingIds, onClose]);
 
-  // Close on Escape key
+  // Close on Escape key. handleClose wrapped in useEffectEvent so
+  // the listener stays subscribed across handleClose identity
+  // changes (which happen whenever the useCallback deps change).
+  const escapeHandleClose = useEffectEvent(handleClose);
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
+      if (e.key === "Escape") escapeHandleClose();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, handleClose]);
+  }, [open]);
 
   const confirmDiscard = () => {
     setShowDiscardConfirm(false);
