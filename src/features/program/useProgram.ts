@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
@@ -250,7 +251,13 @@ export function useProgram() {
         // — the React state below uses `migrated` directly, so
         // correctness doesn't depend on this guard firing.
         if (JSON.stringify(migrated) !== JSON.stringify(raw)) {
-          await setDoc(ref, migrated, { merge: true });
+          // Defence-in-depth (issue #845): strip undefined fields
+          // before the write. normalizeProgramState was already
+          // fixed at the source, but any future field that lands
+          // in `migrated` as `undefined` would silently re-introduce
+          // the "Failed to load programme" loop. stripUndefined is
+          // a recursive no-op for already-clean docs.
+          await setDoc(ref, stripUndefined(migrated), { merge: true });
         }
 
         // Hydrate run days if user has run mode but no runDays yet
@@ -288,9 +295,12 @@ export function useProgram() {
           }
 
           const withRuns = { ...migrated, runDays, runPlan };
+          // Issue #845 defence-in-depth — same reason as the
+          // persist-if-changed branch above. `withRuns` inherits any
+          // undefined field that survived `migrated`.
           await setDoc(
             ref,
-            { ...withRuns, updatedAt: Date.now() },
+            stripUndefined({ ...withRuns, updatedAt: Date.now() }),
             { merge: true }
           );
           setProgramState(withRuns);
