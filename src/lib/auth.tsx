@@ -17,7 +17,7 @@ import {
   signInWithPopup,
   type User,
 } from "firebase/auth";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,

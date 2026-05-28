@@ -27,8 +27,8 @@
       content="
       default-src 'self';
       script-src 'self' https://js.stripe.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://basemaps.cartocdn.com;
-      font-src 'self' https://fonts.gstatic.com;
+      style-src 'self' 'unsafe-inline' https://basemaps.cartocdn.com;
+      font-src 'self';
       img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com;
       connect-src 'self'
         https://*.googleapis.com
@@ -79,29 +79,18 @@
     <link rel="apple-touch-icon" href="/Maiin/icons/icon-192x192.png" />
 
     <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://firebaseio.com" crossorigin />
     <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
 
-    <!-- Plus Jakarta Sans + JetBrains Mono loaded as variable fonts (the
-         `:wght@400..800` axis syntax returns a single .woff2 per family that
-         covers the full weight range, rather than separate files per
-         discrete weight). One axis-ranged file is smaller than the sum of
-         four static weights and lets any CSS font-weight from 400–800
-         resolve to a real rendering rather than a fallback. Display font
-         weights used today: 400 (muted spans), 500 (body), 600 (labels/
-         buttons), 700 (emphasis), 800 (display). Mono weights: 500, 700,
-         800. No 900 (`font-black`) — the six sites that referenced it were
-         cleaned up to `font-extrabold`. -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400..800&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..800&display=swap"
-    />
+    <!-- Plus Jakarta Sans + JetBrains Mono are self-hosted (no Google Fonts
+         CDN). The @fontsource-variable/* packages are imported in
+         src/main.tsx and bundled by Vite as hashed, same-origin .woff2
+         assets; @font-face is emitted with the "… Variable" family names
+         referenced in src/index.css. Self-hosting removes the third-party
+         request that leaked the user's IP to Google on every load and lets
+         the service worker cache the fonts for offline. Variable wght axis
+         (400–800 used today), latin subset fetched on demand via
+         unicode-range. -->
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/Maiin/manifest.json" />
