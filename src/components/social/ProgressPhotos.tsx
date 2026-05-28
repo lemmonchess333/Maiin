@@ -1,13 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
-  addDoc,
   collection,
   getDocs,
   query,
   orderBy,
   Timestamp,
 } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db, storage } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth";
 import { Camera, Lock, RotateCcw, X } from "lucide-react";
@@ -272,7 +272,7 @@ export default function ProgressPhotos() {
         logger.log("[UPLOAD] 7. Writing Firestore document...");
         let docRef;
         try {
-          docRef = await addDoc(
+          docRef = await addDocGuarded(
             collection(db, "users", user.uid, "progressPhotos"),
             {
               storagePath: path,
