@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -100,7 +101,7 @@ export default function OneTimeMaintenance() {
         const existingLower = data.displayNameLower;
         const targetLower = dn ? dn.toLowerCase() : "";
         if (existingLower !== targetLower) {
-          await setDoc(ref, { displayNameLower: targetLower || null }, { merge: true });
+          await setDocGuarded(ref, { displayNameLower: targetLower || null }, { merge: true });
         }
         try { localStorage.setItem(LOWER_FLAG, "1"); } catch { /* ignore */ }
       } catch (err) {
