@@ -21,7 +21,7 @@
  */
 import { useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useAuth } from "@/lib/auth";
 import { purchase, type CheckoutEntryPoint } from "@/lib/purchaseProvider";
 import { isNativeIOS } from "@/lib/purchaseProvider";

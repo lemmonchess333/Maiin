@@ -4,7 +4,7 @@ import { Droplets, Plus, Minus } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export function WaterTracker() {
   const { glasses, target, logWater, setWaterAmount, progress } = useWaterLog();

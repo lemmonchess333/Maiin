@@ -17,7 +17,7 @@ import WorkoutSession from "../components/WorkoutSession";
 import { estimateLiftBurn } from "../lib/workoutBurn";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { postActivity } from "../lib/socialApi";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 /* Synthetic dayIndex used by saved-routine sessions.
    useWorkoutDraft keys drafts on dayIndex. Program days are 0-6, so
