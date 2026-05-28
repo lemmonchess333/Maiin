@@ -34,8 +34,11 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  /* "… Variable" is the @font-face family name fontsource declares for
+     the self-hosted variable build; the bare name is kept as a fallback
+     for any environment where the variable face fails to load. */
+  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
@@ -160,7 +163,7 @@ body {
      where it has room to breathe without competing with data. */
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: var(--ds-text-body);
   line-height: 1.6;
   font-kerning: normal;

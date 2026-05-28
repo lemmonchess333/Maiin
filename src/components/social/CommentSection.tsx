@@ -4,7 +4,7 @@ import { getComments, addComment } from "../../lib/socialApi";
 import { getTimeAgo } from "../../lib/timeAgo";
 import type { DocumentSnapshot } from "firebase/firestore";
 import BlockAwareAvatar from "./BlockAwareAvatar";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
 
 interface Comment {
