@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   collection,
-  addDoc,
   deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
+import { addDocGuarded } from '@/lib/firestoreWrite';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import type { PrivacyZone } from '@/lib/privacyZones';
@@ -37,7 +37,7 @@ export function usePrivacyZones() {
 
   const addZone = useCallback(async (zone: Omit<PrivacyZone, 'id'>) => {
     if (!user) return;
-    await addDoc(collection(db, 'users', user.uid, 'privacyZones'), {
+    await addDocGuarded(collection(db, 'users', user.uid, 'privacyZones'), {
       ...zone,
       createdAt: serverTimestamp(),
     });

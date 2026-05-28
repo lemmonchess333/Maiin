@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, serverTimestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
@@ -711,7 +712,7 @@ export default function Onboarding() {
       // will populate it lazily. Not in the same batch as the server-side
       // profile write because that path is admin-SDK.
       try {
-        await setDoc(
+        await setDocGuarded(
           doc(db, "users", user.uid, "public", "profile"),
           {
             uid: user.uid,

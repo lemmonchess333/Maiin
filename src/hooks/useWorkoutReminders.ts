@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { setDocGuarded } from '@/lib/firestoreWrite';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import {
@@ -109,7 +110,7 @@ export function useWorkoutRemindersInternal() {
     setReminders(updated);
     const ref = doc(db, 'users', user.uid, 'settings', 'workoutReminders');
     try {
-      await setDoc(ref, updated);
+      await setDocGuarded(ref, updated);
     } catch (err) {
       logger.error('[WorkoutReminders] save failed', err);
       captureError(err instanceof Error ? err : new Error(String(err)), 'network', {

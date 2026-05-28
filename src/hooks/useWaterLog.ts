@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { doc, onSnapshot, setDoc, Timestamp } from "firebase/firestore";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { localDateString } from "@/lib/dateHelpers";
@@ -59,7 +60,7 @@ export function useWaterLog() {
       saveTimeout.current = setTimeout(() => {
         const ref = doc(db, "users", user.uid, "waterLog", today);
         skipNextSnapshot.current = true;
-        setDoc(ref, {
+        setDocGuarded(ref, {
           glasses: newGlasses,
           targetGlasses: target,
           updatedAt: Timestamp.now(),
