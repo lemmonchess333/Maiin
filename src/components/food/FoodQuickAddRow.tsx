@@ -1,8 +1,8 @@
 import {
-  forwardRef,
   useRef,
   type PointerEvent as ReactPointerEvent,
   type MouseEvent as ReactMouseEvent,
+  type Ref,
 } from "react";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
@@ -41,6 +41,7 @@ interface FoodQuickAddRowProps {
    *  (FoodFavourite docs) doesn't leak into this presentational
    *  row. */
   onRemoveFavourite?: (favouriteId: string, name: string) => void;
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**
@@ -58,163 +59,163 @@ interface FoodQuickAddRowProps {
  * style so a held chip doesn't pop the Copy/Look Up menu over the
  * top of our handler.
  */
-const FoodQuickAddRow = forwardRef<HTMLDivElement, FoodQuickAddRowProps>(
-  function FoodQuickAddRow({ meals, adding, onAdd, onRemoveFavourite }, ref) {
-    /* Per-chip gesture state. Refs (not state) so a long-press
+function FoodQuickAddRow({
+  meals,
+  adding,
+  onAdd,
+  onRemoveFavourite,
+  ref,
+}: FoodQuickAddRowProps) {
+  /* Per-chip gesture state. Refs (not state) so a long-press
        trigger doesn't re-render the row and tear down the timers
        mid-press. */
-    const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-      null
-    );
-    /** True for GHOST_CLICK_SUPPRESS_MS after a long-press fired.
-     *  Set via setTimeout (no clock reads) so the trailing
-     *  iOS-synthesised click is swallowed without a "log AND
-     *  remove" double-fire. */
-    const suppressNextClickRef = useRef<boolean>(false);
-    const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-      null
-    );
-    const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** True for GHOST_CLICK_SUPPRESS_MS after a long-press fired.
+   *  Set via setTimeout (no clock reads) so the trailing
+   *  iOS-synthesised click is swallowed without a "log AND
+   *  remove" double-fire. */
+  const suppressNextClickRef = useRef<boolean>(false);
+  const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStartRef = useRef<{ x: number; y: number } | null>(null);
 
-    const clearLongPressTimer = () => {
-      if (longPressTimerRef.current !== null) {
-        clearTimeout(longPressTimerRef.current);
-        longPressTimerRef.current = null;
-      }
-    };
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current !== null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
-    const armGhostClickSuppress = () => {
-      suppressNextClickRef.current = true;
-      if (ghostClickTimerRef.current !== null) {
-        clearTimeout(ghostClickTimerRef.current);
-      }
-      ghostClickTimerRef.current = setTimeout(() => {
-        suppressNextClickRef.current = false;
-        ghostClickTimerRef.current = null;
-      }, GHOST_CLICK_SUPPRESS_MS);
-    };
+  const armGhostClickSuppress = () => {
+    suppressNextClickRef.current = true;
+    if (ghostClickTimerRef.current !== null) {
+      clearTimeout(ghostClickTimerRef.current);
+    }
+    ghostClickTimerRef.current = setTimeout(() => {
+      suppressNextClickRef.current = false;
+      ghostClickTimerRef.current = null;
+    }, GHOST_CLICK_SUPPRESS_MS);
+  };
 
-    const beginPress = (
-      e: ReactPointerEvent<HTMLButtonElement>,
-      meal: QuickAddItem
-    ) => {
-      // Only arm the timer for chips that CAN be removed. Avoids
-      // the gesture-conflict cost on non-favourite chips entirely.
-      if (!meal.favouriteId || !onRemoveFavourite) return;
-      pressStartRef.current = { x: e.clientX, y: e.clientY };
+  const beginPress = (
+    e: ReactPointerEvent<HTMLButtonElement>,
+    meal: QuickAddItem
+  ) => {
+    // Only arm the timer for chips that CAN be removed. Avoids
+    // the gesture-conflict cost on non-favourite chips entirely.
+    if (!meal.favouriteId || !onRemoveFavourite) return;
+    pressStartRef.current = { x: e.clientX, y: e.clientY };
+    clearLongPressTimer();
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTimerRef.current = null;
+      armGhostClickSuppress();
+      haptic("medium");
+      onRemoveFavourite(meal.favouriteId!, meal.name);
+    }, LONG_PRESS_MS);
+  };
+
+  const movePress = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const start = pressStartRef.current;
+    if (!start || longPressTimerRef.current === null) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (dx * dx + dy * dy > TOUCH_MOVE_CANCEL_PX * TOUCH_MOVE_CANCEL_PX) {
       clearLongPressTimer();
-      longPressTimerRef.current = setTimeout(() => {
-        longPressTimerRef.current = null;
-        armGhostClickSuppress();
-        haptic("medium");
-        onRemoveFavourite(meal.favouriteId!, meal.name);
-      }, LONG_PRESS_MS);
-    };
+    }
+  };
 
-    const movePress = (e: ReactPointerEvent<HTMLButtonElement>) => {
-      const start = pressStartRef.current;
-      if (!start || longPressTimerRef.current === null) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (dx * dx + dy * dy > TOUCH_MOVE_CANCEL_PX * TOUCH_MOVE_CANCEL_PX) {
-        clearLongPressTimer();
-      }
-    };
+  const endPress = () => {
+    clearLongPressTimer();
+    pressStartRef.current = null;
+  };
 
-    const endPress = () => {
-      clearLongPressTimer();
-      pressStartRef.current = null;
-    };
+  const handleClick = (meal: QuickAddItem) => {
+    // Ghost-click suppression: iOS Safari fires a synthesized
+    // `click` on touchend even when the long-press fired. Without
+    // this guard, releasing after a long-press would also log the
+    // meal in addition to opening the remove flow.
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    haptic();
+    onAdd(meal);
+  };
 
-    const handleClick = (meal: QuickAddItem) => {
-      // Ghost-click suppression: iOS Safari fires a synthesized
-      // `click` on touchend even when the long-press fired. Without
-      // this guard, releasing after a long-press would also log the
-      // meal in addition to opening the remove flow.
-      if (suppressNextClickRef.current) {
-        suppressNextClickRef.current = false;
-        return;
-      }
-      haptic();
-      onAdd(meal);
-    };
-
-    return (
-      <div>
-        <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-          <Star className="size-3.5 text-amber-500" aria-hidden="true" />
-          Quick Add
-        </p>
-        <div className="relative">
-          <div
-            ref={ref}
-            className="flex gap-2 pb-1 -mx-1 px-1 snap-x snap-mandatory"
-            style={{
-              overflowX: "auto",
-              scrollbarWidth: "none",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            {meals.map((meal, i) => (
-              /* Pill structure: outer pill caps width via `max-w-[240px]`,
+  return (
+    <div>
+      <p className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+        <Star className="size-3.5 text-amber-500" aria-hidden="true" />
+        Quick Add
+      </p>
+      <div className="relative">
+        <div
+          ref={ref}
+          className="flex gap-2 pb-1 -mx-1 px-1 snap-x snap-mandatory"
+          style={{
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {meals.map((meal, i) => (
+            /* Pill structure: outer pill caps width via `max-w-[240px]`,
                  inside an inline-flex with the food name (truncate +
                  min-w-0 so the ellipsis works inside flex) and the
                  calorie suffix (shrink-0 so it stays visible even when
                  the name truncates). CSS truncation replaces an
                  earlier JS char-count approach that was brittle across
                  viewport widths. */
-              <motion.button
-                key={`${meal.name}-${i}`}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.16, ease: TAP_EASE }}
-                onPointerDown={(e) => beginPress(e, meal)}
-                onPointerMove={movePress}
-                onPointerUp={endPress}
-                onPointerCancel={endPress}
-                onPointerLeave={endPress}
-                onContextMenu={(e: ReactMouseEvent<HTMLButtonElement>) => {
-                  // Desktop right-click + iOS long-press both fire
-                  // contextmenu; suppressing it lets our pointer-based
-                  // long-press own the gesture without the browser
-                  // also opening its native menu.
-                  if (meal.favouriteId) e.preventDefault();
-                }}
-                onClick={() => handleClick(meal)}
-                disabled={adding !== null}
-                style={{
-                  // iOS text-selection callout suppression — a held
-                  // chip would otherwise pop Copy / Look Up on top
-                  // of our remove flow.
-                  WebkitTouchCallout: "none",
-                  WebkitUserSelect: "none",
-                  userSelect: "none",
-                }}
-                className={cn(
-                  "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
-                  adding !== null && "opacity-60 cursor-not-allowed"
-                )}
-              >
-                <span className="inline-flex items-center gap-1 max-w-full min-w-0">
-                  <span className="truncate min-w-0 text-foreground">
-                    {meal.name}
-                  </span>
-                  <span className="shrink-0 text-muted-foreground">
-                    · {meal.cal} kcal
-                  </span>
+            <motion.button
+              key={`${meal.name}-${i}`}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.16, ease: TAP_EASE }}
+              onPointerDown={(e) => beginPress(e, meal)}
+              onPointerMove={movePress}
+              onPointerUp={endPress}
+              onPointerCancel={endPress}
+              onPointerLeave={endPress}
+              onContextMenu={(e: ReactMouseEvent<HTMLButtonElement>) => {
+                // Desktop right-click + iOS long-press both fire
+                // contextmenu; suppressing it lets our pointer-based
+                // long-press own the gesture without the browser
+                // also opening its native menu.
+                if (meal.favouriteId) e.preventDefault();
+              }}
+              onClick={() => handleClick(meal)}
+              disabled={adding !== null}
+              style={{
+                // iOS text-selection callout suppression — a held
+                // chip would otherwise pop Copy / Look Up on top
+                // of our remove flow.
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+              }}
+              className={cn(
+                "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
+                adding !== null && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <span className="inline-flex items-center gap-1 max-w-full min-w-0">
+                <span className="truncate min-w-0 text-foreground">
+                  {meal.name}
                 </span>
-              </motion.button>
-            ))}
-            <div className="shrink-0 w-4" aria-hidden="true" />
-          </div>
-          {/* Right-edge fade gradient was deliberately removed earlier
+                <span className="shrink-0 text-muted-foreground">
+                  · {meal.cal} kcal
+                </span>
+              </span>
+            </motion.button>
+          ))}
+          <div className="shrink-0 w-4" aria-hidden="true" />
+        </div>
+        {/* Right-edge fade gradient was deliberately removed earlier
               because in practice it sat on top of the rightmost chip's
               text and read as a layout bug ("text covered by a grey
               overlay") rather than a "more content scroll right" cue.
               The horizontal-scroll affordance is enough on its own. */}
-        </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+}
 
 export default FoodQuickAddRow;

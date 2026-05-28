@@ -103,7 +103,9 @@ export default function TrainingSection({
   const [liftDays, setLiftDays] = useState<number>(
     profile.weeklyWorkoutsTarget ?? 4
   );
-  const [runDays, setRunDays] = useState<number>(getWeeklyRunTarget(profile));
+  const [runDays, setRunDays] = useState<number>(() =>
+    getWeeklyRunTarget(profile)
+  );
   const [split, setSplit] = useState<PreferredSplit>(
     (profile.preferredSplit as PreferredSplit | undefined) ?? "auto"
   );
