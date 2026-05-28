@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import type { Ref } from "react";
 import { motion } from "framer-motion";
 import { Plus, Star } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -58,6 +58,7 @@ interface FoodSuggestionsDropdownProps {
   onSelectOff: (food: OFFResult) => void;
   onSelectPantry: (p: PantrySuggestion) => void;
   onLogManually: () => void;
+  ref?: Ref<HTMLDivElement>;
 }
 
 /**
@@ -78,23 +79,18 @@ interface FoodSuggestionsDropdownProps {
  * Extracted from src/pages/Food.tsx (PR follow-up). Keeps Food.tsx
  * shorter and the dropdown markup independently testable.
  */
-const FoodSuggestionsDropdown = forwardRef<
-  HTMLDivElement,
-  FoodSuggestionsDropdownProps
->(function FoodSuggestionsDropdown(
-  {
-    suggestions,
-    offResults,
-    pantryResults,
-    offEmpty,
-    offSearchQuery,
-    onSelectSuggestion,
-    onSelectOff,
-    onSelectPantry,
-    onLogManually,
-  },
-  ref
-) {
+function FoodSuggestionsDropdown({
+  suggestions,
+  offResults,
+  pantryResults,
+  offEmpty,
+  offSearchQuery,
+  onSelectSuggestion,
+  onSelectOff,
+  onSelectPantry,
+  onLogManually,
+  ref,
+}: FoodSuggestionsDropdownProps) {
   return (
     <div
       ref={ref}
@@ -221,6 +217,6 @@ const FoodSuggestionsDropdown = forwardRef<
         )}
     </div>
   );
-});
+}
 
 export default FoodSuggestionsDropdown;

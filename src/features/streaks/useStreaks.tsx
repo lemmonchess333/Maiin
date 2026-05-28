@@ -1,4 +1,13 @@
-import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext, type ReactNode } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  createContext,
+  use,
+  type ReactNode,
+} from "react";
 import {
   collection,
   doc,
@@ -84,15 +93,24 @@ interface MealRow {
 function toIsoString(value: unknown): string {
   if (typeof value === "string") return value;
   if (value instanceof Date) {
-    logger.warn("[Streaks] toIsoString: Date received (expected ISO string)", value);
+    logger.warn(
+      "[Streaks] toIsoString: Date received (expected ISO string)",
+      value
+    );
     return value.toISOString();
   }
   if (typeof value === "number") {
-    logger.warn("[Streaks] toIsoString: number received (expected ISO string)", value);
+    logger.warn(
+      "[Streaks] toIsoString: number received (expected ISO string)",
+      value
+    );
     return new Date(value).toISOString();
   }
   if (value && typeof (value as { toDate?: unknown }).toDate === "function") {
-    logger.warn("[Streaks] toIsoString: Timestamp received (expected ISO string)", value);
+    logger.warn(
+      "[Streaks] toIsoString: Timestamp received (expected ISO string)",
+      value
+    );
     return (value as { toDate: () => Date }).toDate().toISOString();
   }
   logger.warn("[Streaks] toIsoString: unexpected value", value);
@@ -107,7 +125,7 @@ function toIsoString(value: unknown): string {
 function computeActiveDateSet(
   workouts: WorkoutRow[],
   runs: RunRow[],
-  meals: MealRow[],
+  meals: MealRow[]
 ): Set<string> {
   const set = new Set<string>();
 
@@ -170,10 +188,7 @@ function computeCurrentStreak(activeDates: Set<string>): number {
  * Check if the "balanced" badge criteria are met: 5 unique lift days AND
  * 5 unique run days in the rolling 14-day window ending today.
  */
-function isBalancedEarned(
-  workouts: WorkoutRow[],
-  runs: RunRow[],
-): boolean {
+function isBalancedEarned(workouts: WorkoutRow[], runs: RunRow[]): boolean {
   const today = new Date();
   const windowStart = new Date(today);
   windowStart.setDate(windowStart.getDate() - 13); // 14 days inclusive
@@ -259,106 +274,156 @@ function useStreaksInternal() {
     // flip its *Loaded flag true so `allLoaded` still resolves and the UI
     // doesn't hang in a skeleton state. State for the failed source stays
     // at its previous value (empty by default, stale if we already had data).
-    const onSubscriptionError = (source: string, setLoadedFlag: (v: boolean) => void) => (err: unknown) => {
-      logger.error(`[useStreaks] ${source} subscription failed`, err);
-      setLoadedFlag(true);
-    };
+    const onSubscriptionError =
+      (source: string, setLoadedFlag: (v: boolean) => void) =>
+      (err: unknown) => {
+        logger.error(`[useStreaks] ${source} subscription failed`, err);
+        setLoadedFlag(true);
+      };
 
     const streaksRef = doc(db, "users", user.uid, "streaks", "data");
-    const unsubStreaks = onSnapshot(streaksRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data() as StreakData;
-        // Merge badge definitions with saved earned dates — this auto-backfills
-        // new badges as earnedAt: null for existing users. No migration needed.
-        const savedBadges = data.badges || [];
-        const merged = BADGE_DEFINITIONS.map((def) => {
-          const saved = savedBadges.find((b: EarnedBadge) => b.id === def.id);
-          return { ...def, earnedAt: saved?.earnedAt || null };
-        });
-        // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
-        // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
-        // into state — that previously caused `Math.max(n, undefined) === NaN`
-        // downstream at line 329 and surfaced as "NaN" on the Longest Streak
-        // stat card in BadgeGrid. The persist effect will naturally rewrite
-        // the doc with the full field set on the next streak mutation.
-        //
-        // Sanitize the two numeric streak fields on read: an earlier buggy
-        // persist (pre-spread-default) could have written `NaN` into
-        // streaks/data.longestStreak. `NaN` is a present value, so the
-        // spread-default above does NOT replace it. Coerce any non-finite
-        // value to 0 here so Math.max(currentStreak, 0) can't produce NaN.
-        const sanitizedCurrent = Number.isFinite(data.currentStreak) ? data.currentStreak : 0;
-        const sanitizedLongestRaw = Number.isFinite(data.longestStreak) ? data.longestStreak : 0;
-        const sanitizedTotal = Number.isFinite(data.totalActiveDays) ? data.totalActiveDays : 0;
-        // Badge-earned reconciliation: if a streak-threshold badge has an
-        // earnedAt timestamp, the user reached at least that threshold
-        // at some point — so longestStreak must be >= threshold. We saw
-        // rows where Week Warrior (threshold 7) was earned but
-        // longestStreak was 4, which meant the old NaN-write bug wiped
-        // the longestStreak without clearing earnedAt. Patch it up on
-        // read so the UI and the persist effect agree. Bronze/plate/run
-        // badges with no threshold are ignored.
-        const impliedFromBadges = merged.reduce((max, b) => {
-          if (!b.earnedAt) return max;
-          if (typeof b.threshold !== "number" || b.threshold <= 0) return max;
-          return b.threshold > max ? b.threshold : max;
-        }, 0);
-        const sanitizedLongest = Math.max(sanitizedLongestRaw, impliedFromBadges);
-        setStreakData({
-          ...DEFAULT_STREAKS,
-          ...data,
-          currentStreak: sanitizedCurrent,
-          longestStreak: sanitizedLongest,
-          totalActiveDays: sanitizedTotal,
-          badges: merged,
-        });
-      } else {
-        setStreakData(DEFAULT_STREAKS);
-      }
-      setStreaksDocLoaded(true);
-    }, onSubscriptionError("streaks", setStreaksDocLoaded));
+    const unsubStreaks = onSnapshot(
+      streaksRef,
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as StreakData;
+          // Merge badge definitions with saved earned dates — this auto-backfills
+          // new badges as earnedAt: null for existing users. No migration needed.
+          const savedBadges = data.badges || [];
+          const merged = BADGE_DEFINITIONS.map((def) => {
+            const saved = savedBadges.find((b: EarnedBadge) => b.id === def.id);
+            return { ...def, earnedAt: saved?.earnedAt || null };
+          });
+          // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
+          // (e.g. longestStreak / totalActiveDays) don't propagate `undefined`
+          // into state — that previously caused `Math.max(n, undefined) === NaN`
+          // downstream at line 329 and surfaced as "NaN" on the Longest Streak
+          // stat card in BadgeGrid. The persist effect will naturally rewrite
+          // the doc with the full field set on the next streak mutation.
+          //
+          // Sanitize the two numeric streak fields on read: an earlier buggy
+          // persist (pre-spread-default) could have written `NaN` into
+          // streaks/data.longestStreak. `NaN` is a present value, so the
+          // spread-default above does NOT replace it. Coerce any non-finite
+          // value to 0 here so Math.max(currentStreak, 0) can't produce NaN.
+          const sanitizedCurrent = Number.isFinite(data.currentStreak)
+            ? data.currentStreak
+            : 0;
+          const sanitizedLongestRaw = Number.isFinite(data.longestStreak)
+            ? data.longestStreak
+            : 0;
+          const sanitizedTotal = Number.isFinite(data.totalActiveDays)
+            ? data.totalActiveDays
+            : 0;
+          // Badge-earned reconciliation: if a streak-threshold badge has an
+          // earnedAt timestamp, the user reached at least that threshold
+          // at some point — so longestStreak must be >= threshold. We saw
+          // rows where Week Warrior (threshold 7) was earned but
+          // longestStreak was 4, which meant the old NaN-write bug wiped
+          // the longestStreak without clearing earnedAt. Patch it up on
+          // read so the UI and the persist effect agree. Bronze/plate/run
+          // badges with no threshold are ignored.
+          const impliedFromBadges = merged.reduce((max, b) => {
+            if (!b.earnedAt) return max;
+            if (typeof b.threshold !== "number" || b.threshold <= 0) return max;
+            return b.threshold > max ? b.threshold : max;
+          }, 0);
+          const sanitizedLongest = Math.max(
+            sanitizedLongestRaw,
+            impliedFromBadges
+          );
+          setStreakData({
+            ...DEFAULT_STREAKS,
+            ...data,
+            currentStreak: sanitizedCurrent,
+            longestStreak: sanitizedLongest,
+            totalActiveDays: sanitizedTotal,
+            badges: merged,
+          });
+        } else {
+          setStreakData(DEFAULT_STREAKS);
+        }
+        setStreaksDocLoaded(true);
+      },
+      onSubscriptionError("streaks", setStreaksDocLoaded)
+    );
 
     const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const workoutsQ = query(workoutsRef, orderBy("date", "desc"), limit(WORKOUT_LIMIT));
-    const unsubWorkouts = onSnapshot(workoutsQ, (snap) => {
-      const rows: WorkoutRow[] = snap.docs
-        .map((d) => d.data() as { date?: unknown })
-        .filter((d) => typeof d.date === "string")
-        .map((d) => ({ date: d.date as string }));
-      setWorkouts(rows);
-      setWorkoutsLoaded(true);
-    }, onSubscriptionError("workouts", setWorkoutsLoaded));
+    const workoutsQ = query(
+      workoutsRef,
+      orderBy("date", "desc"),
+      limit(WORKOUT_LIMIT)
+    );
+    const unsubWorkouts = onSnapshot(
+      workoutsQ,
+      (snap) => {
+        const rows: WorkoutRow[] = snap.docs
+          .map((d) => d.data() as { date?: unknown })
+          .filter((d) => typeof d.date === "string")
+          .map((d) => ({ date: d.date as string }));
+        setWorkouts(rows);
+        setWorkoutsLoaded(true);
+      },
+      onSubscriptionError("workouts", setWorkoutsLoaded)
+    );
 
     const runsRef = collection(db, "users", user.uid, "runs");
-    const runsQ = query(runsRef, orderBy("completedAt", "desc"), limit(RUN_LIMIT));
-    const unsubRuns = onSnapshot(runsQ, (snap) => {
-      /* Drop invalid + zero-distance records at the snapshot
+    const runsQ = query(
+      runsRef,
+      orderBy("completedAt", "desc"),
+      limit(RUN_LIMIT)
+    );
+    const unsubRuns = onSnapshot(
+      runsQ,
+      (snap) => {
+        /* Drop invalid + zero-distance records at the snapshot
          boundary so neither computeActiveDateSet nor
          computeStreakDays needs to know the predicate. A
          saved-anyway 0:02 record shouldn't credit a streak day. */
-      const rows: RunRow[] = snap.docs.flatMap((d) => {
-        const raw = d.data() as { completedAt?: unknown; isInvalid?: boolean; distance?: number };
-        if (!isVolumeEligible(raw)) return [];
-        const ts = raw.completedAt instanceof Timestamp ? raw.completedAt : null;
-        return [{ completedAt: ts, isInvalid: raw.isInvalid, distance: raw.distance }];
-      });
-      setRuns(rows);
-      setRunsLoaded(true);
-    }, onSubscriptionError("runs", setRunsLoaded));
+        const rows: RunRow[] = snap.docs.flatMap((d) => {
+          const raw = d.data() as {
+            completedAt?: unknown;
+            isInvalid?: boolean;
+            distance?: number;
+          };
+          if (!isVolumeEligible(raw)) return [];
+          const ts =
+            raw.completedAt instanceof Timestamp ? raw.completedAt : null;
+          return [
+            {
+              completedAt: ts,
+              isInvalid: raw.isInvalid,
+              distance: raw.distance,
+            },
+          ];
+        });
+        setRuns(rows);
+        setRunsLoaded(true);
+      },
+      onSubscriptionError("runs", setRunsLoaded)
+    );
 
     const mealsRef = collection(db, "users", user.uid, "meals");
-    const mealsQ = query(mealsRef, orderBy("createdAt", "desc"), limit(MEAL_LIMIT));
-    const unsubMeals = onSnapshot(mealsQ, (snap) => {
-      const rows: MealRow[] = snap.docs.map((d) => {
-        const raw = d.data() as { date?: unknown; items?: unknown };
-        return {
-          date: typeof raw.date === "string" ? raw.date : "",
-          items: Array.isArray(raw.items) ? raw.items : [],
-        };
-      });
-      setMeals(rows);
-      setMealsLoaded(true);
-    }, onSubscriptionError("meals", setMealsLoaded));
+    const mealsQ = query(
+      mealsRef,
+      orderBy("createdAt", "desc"),
+      limit(MEAL_LIMIT)
+    );
+    const unsubMeals = onSnapshot(
+      mealsQ,
+      (snap) => {
+        const rows: MealRow[] = snap.docs.map((d) => {
+          const raw = d.data() as { date?: unknown; items?: unknown };
+          return {
+            date: typeof raw.date === "string" ? raw.date : "",
+            items: Array.isArray(raw.items) ? raw.items : [],
+          };
+        });
+        setMeals(rows);
+        setMealsLoaded(true);
+      },
+      onSubscriptionError("meals", setMealsLoaded)
+    );
 
     return () => {
       unsubStreaks();
@@ -409,7 +474,7 @@ function useStreaksInternal() {
   // changes without triggering re-runs on every snapshot reflow.
   const badgesSignature = useMemo(
     () => streakData.badges.map((b) => `${b.id}:${b.earnedAt ?? ""}`).join("|"),
-    [streakData.badges],
+    [streakData.badges]
   );
 
   // ── Badge award helper ─────────────────────────────────────────────────
@@ -425,7 +490,7 @@ function useStreaksInternal() {
       const now = new Date().toISOString();
       const updated: EarnedBadge = { ...badge, earnedAt: now };
       const updatedBadges = streakData.badges.map((b) =>
-        b.id === badgeId ? updated : b,
+        b.id === badgeId ? updated : b
       );
 
       // Compute a compact, cross-user-readable badge summary for the public
@@ -459,7 +524,7 @@ function useStreaksInternal() {
         if (!silent) toast.error("Failed to save badge");
       }
     },
-    [user, streakData.badges],
+    [user, streakData.badges]
   );
 
   // ── Badge check logic — runs after every snapshot change once loaded ─
@@ -499,7 +564,15 @@ function useStreaksInternal() {
     // badgesSignature is included so we re-evaluate after an earned badge
     // lands in the snapshot — this lets multi-threshold crossings award in
     // sequence without infinite loops (already-earned badges short-circuit).
-  }, [allLoaded, currentStreak, workouts, runs, badgesSignature, streakData.badges, awardBadge]);
+  }, [
+    allLoaded,
+    currentStreak,
+    workouts,
+    runs,
+    badgesSignature,
+    streakData.badges,
+    awardBadge,
+  ]);
 
   // ── Persist streak changes (loop-guarded, atomic mirror) ──────────────
   //
@@ -525,7 +598,10 @@ function useStreaksInternal() {
     if (currentStreak === lastWrittenStreakRef.current) return;
     // Skip initial write if Firestore already has the right value (avoids
     // a pointless write on every fresh mount).
-    if (lastWrittenStreakRef.current === null && currentStreak === streakData.currentStreak) {
+    if (
+      lastWrittenStreakRef.current === null &&
+      currentStreak === streakData.currentStreak
+    ) {
       lastWrittenStreakRef.current = currentStreak;
       return;
     }
@@ -542,10 +618,12 @@ function useStreaksInternal() {
       {
         currentStreak,
         longestStreak: nextLongest,
-        lastActiveDate: activeDateSet.has(today) ? today : streakData.lastActiveDate,
+        lastActiveDate: activeDateSet.has(today)
+          ? today
+          : streakData.lastActiveDate,
         totalActiveDays,
       },
-      { merge: true },
+      { merge: true }
     );
     batch.set(
       userRef,
@@ -553,7 +631,7 @@ function useStreaksInternal() {
         currentStreak,
         longestStreak: nextLongest,
       },
-      { merge: true },
+      { merge: true }
     );
     // Mirror onto the cross-user-readable public profile doc.
     // Readable by any authenticated user per firestore.rules match /users/{uid}/public/{doc}.
@@ -564,10 +642,11 @@ function useStreaksInternal() {
         currentStreak,
         longestStreak: nextLongest,
       },
-      { merge: true },
+      { merge: true }
     );
 
-    batch.commit()
+    batch
+      .commit()
       .then(() => {
         lastWrittenStreakRef.current = currentStreak;
         // Cancel any pending streak-at-risk reminder. The user has just
@@ -586,7 +665,16 @@ function useStreaksInternal() {
       .catch((error) => {
         logger.error("[Streaks] Save failed:", error);
       });
-  }, [allLoaded, user, currentStreak, totalActiveDays, activeDateSet, streakData.currentStreak, streakData.longestStreak, streakData.lastActiveDate]);
+  }, [
+    allLoaded,
+    user,
+    currentStreak,
+    totalActiveDays,
+    activeDateSet,
+    streakData.currentStreak,
+    streakData.longestStreak,
+    streakData.lastActiveDate,
+  ]);
 
   // ── Public API ─────────────────────────────────────────────────────────
 
@@ -641,10 +729,10 @@ export function StreaksProvider({ children }: { children: ReactNode }) {
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function useStreaks(): StreaksValue {
-  const ctx = useContext(StreaksContext);
+  const ctx = use(StreaksContext);
   if (!ctx) {
     throw new Error(
-      "useStreaks must be used inside <StreaksProvider> (authenticated routes only)",
+      "useStreaks must be used inside <StreaksProvider> (authenticated routes only)"
     );
   }
   return ctx;
