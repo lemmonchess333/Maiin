@@ -4,7 +4,8 @@ import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc, setDoc, Timestamp, collection } from "firebase/firestore";
+import { doc, Timestamp, collection } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
@@ -402,7 +403,7 @@ export default function FoodAnalyzer({
         : buildFoodNameFromItems(persistedItems, meal.foodName);
 
       const mealRef = doc(collection(db, "users", user.uid, "meals"));
-      await setDoc(mealRef, {
+      await setDocGuarded(mealRef, {
         date,
         foodName: derivedFoodName,
         items: persistedItems,

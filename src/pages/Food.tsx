@@ -20,7 +20,8 @@ const ManualFoodLogger = lazy(() =>
 );
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { collection, Timestamp } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
@@ -466,7 +467,7 @@ export default function Food() {
         const items = yesterdaySegmented[mealKey] ?? [];
         if (items.length === 0) continue;
         for (const item of items) {
-          await addDoc(collection(db, "users", user.uid, "meals"), {
+          await addDocGuarded(collection(db, "users", user.uid, "meals"), {
             date: selectedDate,
             meal: mealKey,
             foodName: item.foodName,
@@ -712,7 +713,7 @@ export default function Food() {
     if (!user || !food) return;
     const s = servings;
     try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
         date: selectedDate,
         foodName: food.name,
         items: [
@@ -825,7 +826,7 @@ export default function Food() {
       const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
       const totalFat = items.reduce((s, i) => s + i.fat, 0);
       try {
-        await addDoc(collection(db, "users", user.uid, "meals"), {
+        await addDocGuarded(collection(db, "users", user.uid, "meals"), {
           date: selectedDate,
           foodName: items.map((i) => i.name).join(", "),
           items: items.map((i) => ({
@@ -992,7 +993,7 @@ export default function Food() {
         const source = groupMeals[groupMeals.length - 1];
         const adds = targetCount - currentCount;
         for (let i = 0; i < adds; i++) {
-          await addDoc(collection(db, "users", user.uid, "meals"), {
+          await addDocGuarded(collection(db, "users", user.uid, "meals"), {
             date: selectedDate,
             foodName: source.foodName,
             items: source.items ?? [],
@@ -1414,7 +1415,7 @@ export default function Food() {
     });
     setQuickAdding(meal.name);
     try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
         date: selectedDate,
         foodName: meal.name,
         items: [
@@ -1461,7 +1462,7 @@ export default function Food() {
     });
     setQuickAdding(fav.name);
     try {
-      await addDoc(collection(db, "users", user.uid, "meals"), {
+      await addDocGuarded(collection(db, "users", user.uid, "meals"), {
         date: selectedDate,
         foodName: fav.name,
         items: [

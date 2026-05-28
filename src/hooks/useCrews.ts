@@ -4,9 +4,9 @@ import {
   getDocs,
   query,
   orderBy,
-  addDoc,
   serverTimestamp,
 } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { parseCrew } from "@/lib/firestoreGuards";
@@ -110,7 +110,7 @@ export function useCrews() {
       const hasDefaults = list.some((c) => c.type === "default");
       if (!hasDefaults) {
         for (const crew of DEFAULT_CREWS) {
-          await addDoc(collection(db, "groups"), {
+          await addDocGuarded(collection(db, "groups"), {
             ...crew,
             memberCount: 0,
             createdAt: serverTimestamp(),
@@ -243,7 +243,7 @@ export function useCrews() {
         await setMembership({ crewId: currentCrewId, action: "leave" });
       }
 
-      const ref = await addDoc(collection(db, "groups"), {
+      const ref = await addDocGuarded(collection(db, "groups"), {
         name,
         description,
         icon,
