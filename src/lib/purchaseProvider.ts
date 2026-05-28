@@ -9,6 +9,7 @@
  * Stripe is only used for web and Android builds.
  */
 
+import { Capacitor } from "@capacitor/core";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import type { PlanId } from "@/lib/proPlans";
@@ -64,11 +65,14 @@ export interface PurchaseOptions {
   withTrial?: boolean;
 }
 
-// Detect if running inside a native iOS Capacitor shell
+// Detect if running inside a native iOS Capacitor shell.
+// Uses Capacitor.isNativePlatform() — the old `!!window.Capacitor`
+// check was truthy on web too, so mobile-web Safari on an iPhone (which
+// matches the UA test) was wrongly treated as native iOS and routed to
+// Apple IAP instead of Stripe.
 export function isNativeIOS(): boolean {
   return (
-    typeof window !== "undefined" &&
-    !!(window as unknown as Record<string, unknown>).Capacitor &&
+    Capacitor.isNativePlatform() &&
     /iPhone|iPad|iPod/i.test(navigator.userAgent)
   );
 }
