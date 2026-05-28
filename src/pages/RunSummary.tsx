@@ -179,7 +179,9 @@ function InvalidRunReview({
      distance so users can adjust rather than re-enter. Validates
      against the same 0.05km floor as TreadmillMode. */
   const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState<string>(distanceKm.toFixed(2));
+  const [editValue, setEditValue] = useState<string>(() =>
+    distanceKm.toFixed(2)
+  );
   const editValueNum = Number(editValue);
   const editValid =
     Number.isFinite(editValueNum) &&

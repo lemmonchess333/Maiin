@@ -32,8 +32,7 @@
  * still required separately so screen readers get a clear action
  * name independent of visible decoration.
  */
-import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cn } from "@/lib/utils";
 
 export type RunControlVariant = "neutral" | "primary" | "danger";
@@ -58,6 +57,7 @@ type RunControlButtonProps = Omit<
    *  variant already drives the colour; this gates the shadow on
    *  the call site. */
   glow?: boolean;
+  ref?: Ref<HTMLButtonElement>;
 };
 
 const BASE_BUTTON = [
@@ -128,53 +128,49 @@ const LABEL_CLASSES = [
   "select-none",
 ].join(" ");
 
-const RunControlButton = forwardRef<HTMLButtonElement, RunControlButtonProps>(
-  function RunControlButton(
-    {
-      variant = "neutral",
-      size = "lg",
-      glow = false,
-      label,
-      icon,
-      type,
-      className,
-      ...rest
-    },
-    ref
-  ) {
-    return (
-      <div className="flex flex-col items-center gap-2">
-        <button
-          ref={ref}
-          type={type ?? "button"}
-          className={cn(BASE_BUTTON, SIZE_CLASSES[size], className)}
-          style={variantStyle(variant, glow)}
-          {...rest}
-        >
-          {/* Glyph is supplied by the caller. The wrapper is
+function RunControlButton({
+  variant = "neutral",
+  size = "lg",
+  glow = false,
+  label,
+  icon,
+  type,
+  className,
+  ref,
+  ...rest
+}: RunControlButtonProps) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <button
+        ref={ref}
+        type={type ?? "button"}
+        className={cn(BASE_BUTTON, SIZE_CLASSES[size], className)}
+        style={variantStyle(variant, glow)}
+        {...rest}
+      >
+        {/* Glyph is supplied by the caller. The wrapper is
               aria-hidden so the button's aria-label (required) is
               the only thing screen readers see. */}
-          <span aria-hidden="true" className="inline-flex">
-            {icon}
-          </span>
-        </button>
-        {label ? (
-          <p
-            aria-hidden="true"
-            className={LABEL_CLASSES}
-            style={{
-              fontSize: 9,
-              color: "rgba(255, 255, 255, 0.28)",
-              letterSpacing: "0.08em",
-            }}
-          >
-            {label}
-          </p>
-        ) : null}
-      </div>
-    );
-  }
-);
+        <span aria-hidden="true" className="inline-flex">
+          {icon}
+        </span>
+      </button>
+      {label ? (
+        <p
+          aria-hidden="true"
+          className={LABEL_CLASSES}
+          style={{
+            fontSize: 9,
+            color: "rgba(255, 255, 255, 0.28)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          {label}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export { RunControlButton };
 export default RunControlButton;
