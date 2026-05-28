@@ -733,7 +733,7 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Target className="size-4 text-primary shrink-0" />
               <span>
-                Check <strong className="text-foreground">History</strong> to
+                Check <strong className="text-foreground">Analytics</strong> to
                 view your progress
               </span>
             </div>
