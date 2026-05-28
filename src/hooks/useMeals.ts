@@ -9,11 +9,11 @@ import {
   limit,
   startAfter,
   getDocs,
-  setDoc,
   serverTimestamp,
   runTransaction,
   QueryDocumentSnapshot,
 } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
@@ -242,7 +242,7 @@ export function useMeals() {
   const deleteMeal = useCallback(
     async (mealId: string) => {
       if (!user) return;
-      await setDoc(
+      await setDocGuarded(
         doc(db, "users", user.uid, "meals", mealId),
         { deletedAt: serverTimestamp() },
         { merge: true },
@@ -254,7 +254,7 @@ export function useMeals() {
   const restoreMeal = useCallback(
     async (mealId: string) => {
       if (!user) return;
-      await setDoc(
+      await setDocGuarded(
         doc(db, "users", user.uid, "meals", mealId),
         { deletedAt: null },
         { merge: true },
