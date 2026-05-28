@@ -50,7 +50,7 @@ import {
   Search,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState } from "../components/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";

@@ -24,7 +24,7 @@ import {
 } from "../../lib/socialApi";
 import { useAuth } from "../../lib/auth";
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Flag, Check } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";

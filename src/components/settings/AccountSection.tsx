@@ -2,7 +2,7 @@ import { useReducer, useState } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Download, LogOut, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import {
   exportWorkoutsCSV,
