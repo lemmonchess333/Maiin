@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   collection,
   query,
@@ -14,7 +14,6 @@ import { localDateString } from "@/lib/dateHelpers";
 import type { Workout } from "@/hooks/useWorkouts";
 import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
@@ -230,23 +229,6 @@ export function useHomeData(
     [user?.uid, weightUnit, profile?.weightKg]
   );
 
-  // Workout calories — read the canonical stored totalCalories via the shared
-  // isWorkoutOnDate helper so Home matches Food's useEffectiveTargets.
-  // Null-safe fallback to 0 when a legacy workout doc is missing the field.
-  const todayWorkoutCals = useMemo(
-    function () {
-      const now = new Date();
-      return workouts
-        .filter(function (w) {
-          return isWorkoutOnDate(w, now);
-        })
-        .reduce(function (sum, w) {
-          return sum + (w.totalCalories ?? 0);
-        }, 0);
-    },
-    [workouts]
-  );
-
   // Post-workout nudge — uses Date.now() so must be in useEffect, not useMemo
   const [postWorkoutNudge, setPostWorkoutNudge] =
     useState<PostWorkoutNudge | null>(null);
@@ -304,7 +286,6 @@ export function useHomeData(
     dailyProt: state.dailyProt,
     dailyCarbs: state.dailyCarbs,
     dailyFat: state.dailyFat,
-    todayWorkoutCals,
     todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,
     setLastWeightInfo,
