@@ -496,9 +496,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
   // Create the main user doc AND the cross-user-readable public profile doc
   // in a single batch so a half-landed create can't leak a user with no
@@ -527,7 +527,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = useCallback(async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const newProfile = createDefaultProfile(
       cred.user.uid,
@@ -536,9 +536,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     await writeNewProfileDocs(cred.user.uid, newProfile);
     setProfile(newProfile);
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
@@ -568,9 +568,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
       );
     }
-  };
+  }, []);
 
-  const signInWithApple = async () => {
+  const signInWithApple = useCallback(async () => {
     const provider = new OAuthProvider("apple.com");
     provider.addScope("email");
     provider.addScope("name");
@@ -600,15 +600,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
       );
     }
-  };
+  }, []);
 
-  const signOutUser = async () => {
+  const signOutUser = useCallback(async () => {
     await firebaseSignOut(auth);
     setProfile(null);
     // Remove dark mode preference so next user gets their own setting from Firestore
     document.documentElement.classList.remove("dark");
     localStorage.removeItem("tropos-dark-mode");
-  };
+  }, []);
 
   const PROTECTED_FIELDS = [
     "subscriptionTier",
@@ -628,81 +628,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     "athleteType",
   ] as const;
 
-  const updateProfile = async (
-    data: Partial<UserProfile>,
-    options?: { allowProtected?: boolean; throwOnError?: boolean }
-  ): Promise<UpdateProfileResult> => {
-    if (!user) return { ok: false, error: new Error("not-authenticated") };
-    let writeData = data;
-    if (!options?.allowProtected) {
-      writeData = Object.fromEntries(
-        Object.entries(data).filter(
-          ([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key)
-        )
-      ) as Partial<UserProfile>;
-    }
-
-    // If any publicly-mirrored field is in the patch, commit both writes in a
-    // single batch so the main user doc and the public projection never drift.
-    const publicPatch: Record<string, unknown> = {};
-    for (const key of PUBLIC_MIRRORED_FIELDS) {
-      if (key in writeData) {
-        const value = (writeData as Record<string, unknown>)[key];
-        publicPatch[key] = value ?? null;
+  const updateProfile = useCallback(
+    async (
+      data: Partial<UserProfile>,
+      options?: { allowProtected?: boolean; throwOnError?: boolean }
+    ): Promise<UpdateProfileResult> => {
+      if (!user) return { ok: false, error: new Error("not-authenticated") };
+      let writeData = data;
+      if (!options?.allowProtected) {
+        writeData = Object.fromEntries(
+          Object.entries(data).filter(
+            ([key]) => !(PROTECTED_FIELDS as readonly string[]).includes(key)
+          )
+        ) as Partial<UserProfile>;
       }
-    }
-    /* When displayName is in the patch, also write displayNameLower —
+
+      // If any publicly-mirrored field is in the patch, commit both writes in a
+      // single batch so the main user doc and the public projection never drift.
+      const publicPatch: Record<string, unknown> = {};
+      for (const key of PUBLIC_MIRRORED_FIELDS) {
+        if (key in writeData) {
+          const value = (writeData as Record<string, unknown>)[key];
+          publicPatch[key] = value ?? null;
+        }
+      }
+      /* When displayName is in the patch, also write displayNameLower —
        a normalised lowercase mirror used by searchUsers for case-
        insensitive prefix matching. Without this field, searches like
        "myl" for "Myles" miss because Firestore's range queries are
        case-sensitive. The public profile gets the field written
        alongside displayName so the two are committed atomically. */
-    if ("displayName" in writeData) {
-      const dn = (writeData as Record<string, unknown>)["displayName"];
-      publicPatch["displayNameLower"] =
-        typeof dn === "string" ? dn.toLowerCase() : null;
-    }
-
-    // PR G (audit P1 #7): returns `{ ok }` so callers can revert
-    // optimistic UI on failure. The toast is still surfaced by
-    // default (most callers want it) — opt-in `throwOnError` for
-    // call sites that want to handle the error themselves.
-    try {
-      if (Object.keys(publicPatch).length > 0) {
-        const batch = writeBatch(db);
-        batch.set(doc(db, "users", user.uid), writeData, { merge: true });
-        batch.set(
-          doc(db, "users", user.uid, "public", "profile"),
-          publicPatch,
-          { merge: true }
-        );
-        await batch.commit();
-      } else {
-        await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
+      if ("displayName" in writeData) {
+        const dn = (writeData as Record<string, unknown>)["displayName"];
+        publicPatch["displayNameLower"] =
+          typeof dn === "string" ? dn.toLowerCase() : null;
       }
 
-      setProfile((prev) => {
-        const updated = prev ? { ...prev, ...data } : null;
-        if (updated && "darkMode" in data) {
-          syncDarkMode(updated.darkMode);
+      // PR G (audit P1 #7): returns `{ ok }` so callers can revert
+      // optimistic UI on failure. The toast is still surfaced by
+      // default (most callers want it) — opt-in `throwOnError` for
+      // call sites that want to handle the error themselves.
+      try {
+        if (Object.keys(publicPatch).length > 0) {
+          const batch = writeBatch(db);
+          batch.set(doc(db, "users", user.uid), writeData, { merge: true });
+          batch.set(
+            doc(db, "users", user.uid, "public", "profile"),
+            publicPatch,
+            { merge: true }
+          );
+          await batch.commit();
+        } else {
+          await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
         }
-        return updated;
-      });
 
-      return { ok: true };
-    } catch (err) {
-      logger.error("[auth] updateProfile failed", err);
-      if (options?.throwOnError) {
-        throw err;
+        setProfile((prev) => {
+          const updated = prev ? { ...prev, ...data } : null;
+          if (updated && "darkMode" in data) {
+            syncDarkMode(updated.darkMode);
+          }
+          return updated;
+        });
+
+        return { ok: true };
+      } catch (err) {
+        logger.error("[auth] updateProfile failed", err);
+        if (options?.throwOnError) {
+          throw err;
+        }
+        // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
+        // a single visible message.
+        toast.error("Couldn't save your settings. Please try again.", {
+          id: "update-profile-error",
+        });
+        return { ok: false, error: err };
       }
-      // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
-      // a single visible message.
-      toast.error("Couldn't save your settings. Please try again.", {
-        id: "update-profile-error",
-      });
-      return { ok: false, error: err };
-    }
-  };
+    },
+    [user]
+  );
 
   const refreshProfile = useCallback(async () => {
     if (!auth.currentUser) return;
