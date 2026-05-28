@@ -18,7 +18,9 @@ import { isNativePlatform } from "./platform";
 type ImpactStyleValue = "LIGHT" | "MEDIUM" | "HEAVY";
 type CapacitorHaptics = {
   impact: (opts: { style: ImpactStyleValue }) => Promise<void>;
-  notification: (opts: { type: "SUCCESS" | "WARNING" | "ERROR" }) => Promise<void>;
+  notification: (opts: {
+    type: "SUCCESS" | "WARNING" | "ERROR";
+  }) => Promise<void>;
   vibrate: (opts?: { duration?: number }) => Promise<void>;
 };
 
@@ -28,14 +30,23 @@ type CapacitorHaptics = {
  * the bundle, and the plugin only resolves on the first haptic call
  * inside a native shell.
  */
-let nativeHapticsPromise: Promise<CapacitorHaptics | null> | null = null;
+// Wrap the plugin in a plain holder rather than resolving the Promise
+// with the bare plugin. Capacitor's plugin object is a Proxy that
+// intercepts *every* property access — including `.then` — so resolving
+// a Promise with it makes the JS Promise-resolution procedure treat it
+// as a thenable and invoke `Haptics.then(resolve, reject)`. On web that
+// throws "Haptics.then() is not implemented on web" as an *uncaught*
+// rejection (it fires during resolution, outside the call-site try/catch).
+// The holder hides the proxy from thenable-probing.
+type HapticsHolder = { plugin: CapacitorHaptics };
+let nativeHapticsPromise: Promise<HapticsHolder | null> | null = null;
 
-function loadNativeHaptics(): Promise<CapacitorHaptics | null> {
+function loadNativeHaptics(): Promise<HapticsHolder | null> {
   if (nativeHapticsPromise) return nativeHapticsPromise;
   nativeHapticsPromise = import("@capacitor/haptics")
     .then((mod) => {
       const m = mod as unknown as { Haptics: CapacitorHaptics };
-      return m?.Haptics ?? null;
+      return m?.Haptics ? { plugin: m.Haptics } : null;
     })
     .catch(() => null);
   return nativeHapticsPromise;
@@ -77,8 +88,9 @@ export function haptic(pattern: HapticPattern = 10) {
   // Native path. Fire-and-forget: haptic feedback is a side-effect,
   // not a UX-critical promise — if the plugin fails to resolve we
   // just drop the haptic rather than surfacing an error.
-  loadNativeHaptics().then((h) => {
-    if (!h) return;
+  loadNativeHaptics().then((holder) => {
+    if (!holder) return;
+    const h = holder.plugin;
     try {
       if (pattern === "light") h.impact({ style: "LIGHT" });
       else if (pattern === "medium") h.impact({ style: "MEDIUM" });
@@ -90,7 +102,9 @@ export function haptic(pattern: HapticPattern = 10) {
         // Capacitor Haptics doesn't support a pattern array; approximate
         // with a single vibrate of the total on-duration so we still
         // fire *something* on iOS rather than silently dropping it.
-        const total = pattern.filter((_, i) => i % 2 === 0).reduce((s, n) => s + n, 0);
+        const total = pattern
+          .filter((_, i) => i % 2 === 0)
+          .reduce((s, n) => s + n, 0);
         if (total > 0) h.vibrate({ duration: total });
       }
     } catch {
