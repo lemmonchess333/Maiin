@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { doc, Timestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -53,7 +54,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
     try {
       const logDate = date || localDateString();
       const id = `${logDate}_${Date.now()}`;
-      await setDoc(doc(db, "users", user.uid, "meals", id), {
+      await setDocGuarded(doc(db, "users", user.uid, "meals", id), {
         date: logDate,
         foodName: entry.name,
         items: [

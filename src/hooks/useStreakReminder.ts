@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -136,7 +137,7 @@ export function useStreakReminderInternal() {
       setPrefs(next);
       const ref = doc(db, "users", user.uid, "settings", "streakReminder");
       try {
-        await setDoc(ref, next);
+        await setDocGuarded(ref, next);
       } catch (err) {
         logger.error("[StreakReminder] save failed", err);
         captureError(

@@ -4,7 +4,6 @@ import {
   collection,
   collectionGroup,
   doc,
-  setDoc,
   deleteDoc,
   getDocs,
   getDoc,
@@ -13,11 +12,11 @@ import {
   limit,
   startAfter,
   where,
-  addDoc,
   Timestamp,
   serverTimestamp,
   type DocumentSnapshot,
 } from "firebase/firestore";
+import { setDocGuarded, addDocGuarded } from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
 
 // ============================================
@@ -36,10 +35,10 @@ export async function followUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
   const now = Timestamp.now();
-  await setDoc(doc(db, "following", currentUid, "users", targetUid), {
+  await setDocGuarded(doc(db, "following", currentUid, "users", targetUid), {
     followedAt: now,
   });
-  await setDoc(doc(db, "followers", targetUid, "users", currentUid), {
+  await setDocGuarded(doc(db, "followers", targetUid, "users", currentUid), {
     followedAt: now,
   });
 }
@@ -174,7 +173,7 @@ export async function postActivity(activity: {
   // Trade-off: fan-out is now async — a few seconds of latency
   // before the activity appears on followers' feeds. Acceptable
   // for the security + rate-limit win.
-  const activityRef = await addDoc(collection(db, "activities"), {
+  const activityRef = await addDocGuarded(collection(db, "activities"), {
     ...activity,
     kudosCount: 0,
     commentCount: 0,
@@ -803,7 +802,7 @@ export async function reportContent(
   const derivedReason: ReportReason =
     data.reason ??
     (data.category === "impersonation" ? "other" : data.category);
-  await addDoc(collection(db, "reports"), {
+  await addDocGuarded(collection(db, "reports"), {
     reporterId,
     targetType: data.targetType,
     targetId: data.targetId,
@@ -825,7 +824,7 @@ export async function reportContent(
 export async function blockUser(currentUid: string, targetUid: string) {
   const authedUid = getAuthUid();
   if (currentUid !== authedUid) throw new Error("Identity mismatch");
-  await setDoc(doc(db, "blocks", currentUid, "users", targetUid), {
+  await setDocGuarded(doc(db, "blocks", currentUid, "users", targetUid), {
     blockedAt: serverTimestamp(),
   });
   // Also unfollow in both directions
