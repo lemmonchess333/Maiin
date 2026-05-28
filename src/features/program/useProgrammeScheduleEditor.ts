@@ -64,22 +64,32 @@ import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
    of a flat "Something went wrong". */
 function friendlyRestructureError(error: unknown): string {
   const code = (error as { code?: string })?.code;
-  if (code === "permission-denied") return "You don't have permission to change this schedule.";
-  if (code === "unauthenticated") return "Please sign in again to save changes.";
-  if (code === "unavailable") return "You're offline — changes will save when you reconnect.";
-  if (code === "deadline-exceeded") return "Saving took too long. Please try again.";
+  if (code === "permission-denied")
+    return "You don't have permission to change this schedule.";
+  if (code === "unauthenticated")
+    return "Please sign in again to save changes.";
+  if (code === "unavailable")
+    return "You're offline — changes will save when you reconnect.";
+  if (code === "deadline-exceeded")
+    return "Saving took too long. Please try again.";
   return "Couldn't rebuild your programme. Please try again.";
 }
 
 export interface UseProgrammeScheduleEditorArgs {
   profile: UserProfile | null;
-  updateProfile: (data: Partial<UserProfile>, opts?: { allowProtected?: boolean }) => Promise<UpdateProfileResult>;
+  updateProfile: (
+    data: Partial<UserProfile>,
+    opts?: { allowProtected?: boolean }
+  ) => Promise<UpdateProfileResult>;
   /** Signature matches useProgram.refreshRunSchedule. Optional
    *  overrides let the editor's apply path pass the freshly-
    *  confirmed weekSchedule explicitly, avoiding a stale read of
    *  `profile.weekSchedule` from useAuth's closure that hasn't
    *  yet propagated from the immediately-preceding updateProfile. */
-  refreshRunSchedule: (overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }) => Promise<void>;
+  refreshRunSchedule: (overrides?: {
+    weekSchedule?: ScheduleDay[];
+    weeklyRunDaysTarget?: number;
+  }) => Promise<void>;
   /** Signature matches useProgram.regenerateProgram. The third arg
    *  carries weekSchedule + weeklyRunDaysTarget overrides so the
    *  rebuild uses the user's confirmed layout rather than the pre-
@@ -87,7 +97,7 @@ export interface UseProgrammeScheduleEditorArgs {
   regenerateProgram: (
     goalOverride?: string,
     weeklyTargetOverride?: number,
-    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
+    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
   ) => Promise<void>;
 }
 
@@ -114,19 +124,26 @@ export interface UseProgrammeScheduleEditorReturn {
 }
 
 export function useProgrammeScheduleEditor(
-  args: UseProgrammeScheduleEditorArgs,
+  args: UseProgrammeScheduleEditorArgs
 ): UseProgrammeScheduleEditorReturn {
-  const { profile, updateProfile, refreshRunSchedule, regenerateProgram } = args;
+  const { profile, updateProfile, refreshRunSchedule, regenerateProgram } =
+    args;
 
-  const [workoutsTarget, setWorkoutsTarget] = useState(profile?.weeklyWorkoutsTarget || 4);
+  const [workoutsTarget, setWorkoutsTarget] = useState(
+    profile?.weeklyWorkoutsTarget || 4
+  );
   // PR-2: zero-as-zero. Pre-PR-2 this was `getWeeklyRunTarget(profile) || 2`
   // which silently coerced a user's explicit 0 runs into 2. Same class of
   // bug PR-0c fixed for Home's runTarget. The slider's min stays at 1 in
   // the UI; users land on the editor with 0 visible if that's their
   // genuine setting, and the chips reflect it.
-  const [runsTarget, setRunsTarget] = useState(getWeeklyRunTarget(profile));
+  const [runsTarget, setRunsTarget] = useState(() =>
+    getWeeklyRunTarget(profile)
+  );
   const [customSchedule, setCustomSchedule] = useState<ScheduleDay[] | null>(
-    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null,
+    profile?.weekSchedule && profile.weekSchedule.length === 7
+      ? profile.weekSchedule
+      : null
   );
 
   // Restructure warning modal — fires when the cycle handler moves
@@ -140,10 +157,14 @@ export function useProgrammeScheduleEditor(
   // a useState initialiser (no setter ever called), keeping the
   // baseline frozen until the user navigates away. Same here.
   const [savedSchedule] = useState<ScheduleDay[] | null>(
-    profile?.weekSchedule && profile.weekSchedule.length === 7 ? profile.weekSchedule : null,
+    profile?.weekSchedule && profile.weekSchedule.length === 7
+      ? profile.weekSchedule
+      : null
   );
   const savedLiftDays = useMemo(() => {
-    if (savedSchedule) return savedSchedule.filter((s) => s.type === "lift" || s.type === "both").length;
+    if (savedSchedule)
+      return savedSchedule.filter((s) => s.type === "lift" || s.type === "both")
+        .length;
     return profile?.weeklyWorkoutsTarget || 4;
   }, [savedSchedule, profile?.weeklyWorkoutsTarget]);
 
@@ -167,16 +188,24 @@ export function useProgrammeScheduleEditor(
     if (!current) return;
     const cycle: DayType[] = ["rest", "lift", "run", "both"];
     const nextIdx = (cycle.indexOf(current.type) + 1) % cycle.length;
-    const updated = schedule.map((s) => (s.day === day ? { ...s, type: cycle[nextIdx] } : s));
+    const updated = schedule.map((s) =>
+      s.day === day ? { ...s, type: cycle[nextIdx] } : s
+    );
     setCustomSchedule(updated);
-    const newLiftDays = updated.filter((s) => s.type === "lift" || s.type === "both").length;
-    const newRunDays = updated.filter((s) => s.type === "run" || s.type === "both").length;
+    const newLiftDays = updated.filter(
+      (s) => s.type === "lift" || s.type === "both"
+    ).length;
+    const newRunDays = updated.filter(
+      (s) => s.type === "run" || s.type === "both"
+    ).length;
     setRunsTarget(newRunDays);
     setWorkoutsTarget(newLiftDays);
   }
 
   async function handleApplyScheduleChanges(): Promise<void> {
-    const currentLiftDays = schedule.filter((s) => s.type === "lift" || s.type === "both").length;
+    const currentLiftDays = schedule.filter(
+      (s) => s.type === "lift" || s.type === "both"
+    ).length;
     if (currentLiftDays !== savedLiftDays && currentLiftDays > 0) {
       setPendingLiftDays(currentLiftDays);
       setShowRestructureModal(true);

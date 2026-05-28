@@ -37,7 +37,7 @@
  * existing call sites vary (one button, two buttons, three
  * buttons with one demoted to a text link, etc.).
  */
-import { useEffect, useId } from "react";
+import { useEffect, useEffectEvent, useId } from "react";
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -102,15 +102,19 @@ export function Dialog({
 
   const ref = useFocusTrap<HTMLDivElement>(open);
 
-  // Escape handler.
+  // Escape handler. `onClose` wrapped in useEffectEvent so the
+  // effect doesn't resubscribe on every parent render that gives us
+  // a fresh callback identity (React 19 pattern — keeps the listener
+  // stable while still calling the latest onClose).
+  const escapeOnClose = useEffectEvent(onClose);
   useEffect(() => {
     if (!open || !closeOnEscape) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") escapeOnClose();
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open, closeOnEscape, onClose]);
+  }, [open, closeOnEscape]);
 
   // Body scroll lock. Preserve and restore the previous overflow
   // value so we don't fight with other components that also lock
