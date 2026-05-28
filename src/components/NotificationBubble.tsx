@@ -1,4 +1,11 @@
-import { useState, useEffect, useCallback, createContext, use } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  createContext,
+  use,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
 
@@ -96,8 +103,10 @@ export function NotificationBubbleProvider({
     : VARIANT_CONFIG.generic;
   const Icon = config.icon;
 
+  const value = useMemo(() => ({ showBubble }), [showBubble]);
+
   return (
-    <NotificationBubbleContext.Provider value={{ showBubble }}>
+    <NotificationBubbleContext.Provider value={value}>
       {children}
       <AnimatePresence>
         {bubble && (
