@@ -22,12 +22,12 @@ import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
   getDoc,
-  setDoc,
   serverTimestamp,
   writeBatch,
   Timestamp,
   type FieldValue,
 } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -679,7 +679,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           await batch.commit();
         } else {
-          await setDoc(doc(db, "users", user.uid), writeData, { merge: true });
+          await setDocGuarded(doc(db, "users", user.uid), writeData, { merge: true });
         }
 
         setProfile((prev) => {
