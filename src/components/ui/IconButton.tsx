@@ -25,8 +25,12 @@
  *   - md   44px — DEFAULT. Header chrome, close buttons.
  *   - lg   52px — hero close (e.g. ProModal hero close)
  */
-import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type {
+  ButtonHTMLAttributes,
+  CSSProperties,
+  ReactNode,
+  Ref,
+} from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
@@ -49,6 +53,7 @@ type IconButtonProps = Omit<
   variant?: ButtonVariant;
   size?: IconButtonSize;
   loading?: boolean;
+  ref?: Ref<HTMLButtonElement>;
 };
 
 const BASE_CLASSES = [
@@ -102,55 +107,51 @@ const ICON_SIZE_CLASS: Record<IconButtonSize, string> = {
   lg: "size-6",
 };
 
-const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  function IconButton(
-    {
-      variant = "ghost",
-      size = "md",
-      loading = false,
-      disabled,
-      icon,
-      className,
-      type,
-      style,
-      ...rest
-    },
-    ref
-  ) {
-    const isInteractive = !disabled && !loading;
-    const variantStyle = VARIANT_INLINE_STYLES[variant];
-    return (
-      <button
-        ref={ref}
-        type={type ?? "button"}
-        disabled={!isInteractive}
-        aria-busy={loading || undefined}
-        className={cn(
-          BASE_CLASSES,
-          VARIANT_CLASSES[variant],
-          SIZE_CLASSES[size],
-          className
-        )}
-        style={variantStyle ? { ...variantStyle, ...style } : style}
-        {...rest}
-      >
-        {loading ? (
-          <Loader2
-            aria-hidden="true"
-            className={cn("animate-spin", ICON_SIZE_CLASS[size])}
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className={cn("inline-flex", ICON_SIZE_CLASS[size])}
-          >
-            {icon}
-          </span>
-        )}
-      </button>
-    );
-  }
-);
+function IconButton({
+  variant = "ghost",
+  size = "md",
+  loading = false,
+  disabled,
+  icon,
+  className,
+  type,
+  style,
+  ref,
+  ...rest
+}: IconButtonProps) {
+  const isInteractive = !disabled && !loading;
+  const variantStyle = VARIANT_INLINE_STYLES[variant];
+  return (
+    <button
+      ref={ref}
+      type={type ?? "button"}
+      disabled={!isInteractive}
+      aria-busy={loading || undefined}
+      className={cn(
+        BASE_CLASSES,
+        VARIANT_CLASSES[variant],
+        SIZE_CLASSES[size],
+        className
+      )}
+      style={variantStyle ? { ...variantStyle, ...style } : style}
+      {...rest}
+    >
+      {loading ? (
+        <Loader2
+          aria-hidden="true"
+          className={cn("animate-spin", ICON_SIZE_CLASS[size])}
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={cn("inline-flex", ICON_SIZE_CLASS[size])}
+        >
+          {icon}
+        </span>
+      )}
+    </button>
+  );
+}
 
 export { IconButton };
 export default IconButton;

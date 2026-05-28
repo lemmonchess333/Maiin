@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useCallback,
@@ -538,14 +539,18 @@ export default function Run() {
   // that the OS may suspend at any moment has the freshest possible
   // snapshot persisted. Distinct from useRunVisibility's onHidden
   // (which manages GPS/wake-lock); this one is purely persistence.
+  // writeSnapshot wrapped in useEffectEvent so the listener stays
+  // subscribed for the whole active/paused window instead of
+  // re-binding on every writeSnapshot identity change.
+  const visibilityWriteSnapshot = useEffectEvent(writeSnapshot);
   useEffect(() => {
     if (phase !== "active" && phase !== "paused") return;
     const handler = () => {
-      if (document.visibilityState === "hidden") writeSnapshot();
+      if (document.visibilityState === "hidden") visibilityWriteSnapshot();
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
-  }, [phase, writeSnapshot]);
+  }, [phase]);
 
   // Chooser branches:
   //   - Resume: rehydrate timer + GPS, set start/suppress refs, jump
