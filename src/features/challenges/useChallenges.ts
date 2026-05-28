@@ -1,9 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  collection, query, onSnapshot, doc, setDoc, deleteDoc,
-  updateDoc, Timestamp, getDocs, orderBy, limit, getDoc,
-  serverTimestamp, increment, where,
+  collection,
+  query,
+  onSnapshot,
+  doc,
+  deleteDoc,
+  Timestamp,
+  getDocs,
+  orderBy,
+  limit,
+  getDoc,
+  serverTimestamp,
+  increment,
+  where,
 } from "firebase/firestore";
+import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/lib/toast";
@@ -220,7 +231,7 @@ async function seedChallenges() {
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       const { docId: _docId, ...data } = def;
-      await setDoc(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
+      await setDocGuarded(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
     }
   }
 }
@@ -326,11 +337,11 @@ export function useChallenges() {
       const profileSnap = await getDoc(doc(db, "users", user.uid));
       const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
       const photoURL = profileSnap.exists() ? (profileSnap.data().photoURL as string | null | undefined) ?? null : null;
-      await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+      await setDocGuarded(doc(db, "challenges", challengeId, "participants", user.uid), {
         currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
         ...(photoURL ? { photoURL } : {}),
       });
-      await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(1) });
+      await updateDocGuarded(doc(db, "challenges", challengeId), { participantCount: increment(1) });
       setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
     } catch (error) {
       logger.error('[Challenges] Join failed:', error);
@@ -342,7 +353,7 @@ export function useChallenges() {
     if (!user) return;
     try {
       await deleteDoc(doc(db, "challenges", challengeId, "participants", user.uid));
-      await updateDoc(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
+      await updateDocGuarded(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
       setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
     } catch (error) {
       logger.error('[Challenges] Leave failed:', error);
@@ -356,7 +367,7 @@ export function useChallenges() {
     if (!ch) return;
     const tier = computeTier(newValue, ch.tiers);
     try {
-      await setDoc(doc(db, "challenges", challengeId, "participants", user.uid), {
+      await setDocGuarded(doc(db, "challenges", challengeId, "participants", user.uid), {
         currentValue: newValue, tierAchieved: tier,
       }, { merge: true });
       setMyProgress(prev => ({

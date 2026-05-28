@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { stripUndefined } from "@/lib/firestoreGuards";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
@@ -255,9 +255,9 @@ export function useProgram() {
           // before the write. normalizeProgramState was already
           // fixed at the source, but any future field that lands
           // in `migrated` as `undefined` would silently re-introduce
-          // the "Failed to load programme" loop. stripUndefined is
-          // a recursive no-op for already-clean docs.
-          await setDoc(ref, stripUndefined(migrated), { merge: true });
+          // the "Failed to load programme" loop. setDocGuarded strips
+          // undefined recursively (a no-op for already-clean docs).
+          await setDocGuarded(ref, migrated, { merge: true });
         }
 
         // Hydrate run days if user has run mode but no runDays yet
@@ -297,10 +297,11 @@ export function useProgram() {
           const withRuns = { ...migrated, runDays, runPlan };
           // Issue #845 defence-in-depth — same reason as the
           // persist-if-changed branch above. `withRuns` inherits any
-          // undefined field that survived `migrated`.
-          await setDoc(
+          // undefined field that survived `migrated`; setDocGuarded
+          // strips them before the write.
+          await setDocGuarded(
             ref,
-            stripUndefined({ ...withRuns, updatedAt: Date.now() }),
+            { ...withRuns, updatedAt: Date.now() },
             { merge: true }
           );
           setProgramState(withRuns);
@@ -375,7 +376,7 @@ export function useProgram() {
           ...(runPlan !== undefined && { runPlan }),
         };
 
-        await setDoc(ref, initial);
+        await setDocGuarded(ref, initial);
         setProgramState(initial);
       }
 
@@ -406,7 +407,7 @@ export function useProgram() {
         )
       );
       try {
-        await setDoc(ref, clean);
+        await setDocGuarded(ref, clean);
         setProgramState(state);
       } catch (error) {
         logger.error("[Program] Save failed:", error);
@@ -647,7 +648,7 @@ export function useProgram() {
           completedSetCount,
         });
 
-        await setDoc(workoutRef, {
+        await setDocGuarded(workoutRef, {
           date: today,
           exercises,
           totalCalories,
