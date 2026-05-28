@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
