@@ -2,8 +2,9 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   createContext,
-  useContext,
+  use,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
@@ -33,7 +34,7 @@ const NotificationBubbleContext = createContext<NotificationBubbleContextValue>(
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useNotificationBubble() {
-  return useContext(NotificationBubbleContext);
+  return use(NotificationBubbleContext);
 }
 
 const VARIANT_CONFIG: Record<
@@ -102,8 +103,10 @@ export function NotificationBubbleProvider({
     : VARIANT_CONFIG.generic;
   const Icon = config.icon;
 
+  const value = useMemo(() => ({ showBubble }), [showBubble]);
+
   return (
-    <NotificationBubbleContext.Provider value={{ showBubble }}>
+    <NotificationBubbleContext.Provider value={value}>
       {children}
       <AnimatePresence>
         {bubble && (
