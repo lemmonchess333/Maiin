@@ -1,15 +1,14 @@
 import { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  addDoc,
   collection,
   getDocs,
   orderBy,
   query,
   Timestamp,
 } from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "../lib/firebase";
-import { stripUndefined } from "../lib/firestoreGuards";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
@@ -754,10 +753,10 @@ export default function RunSummary() {
     };
     try {
       // Firestore queues the write offline automatically via IndexedDB
-      // persistence. Strip undefined fields first — Firestore rejects
-      // any document with explicit undefined values, and runData
-      // routinely carries them (intervalData on non-interval runs,
-      // runConfig.target.value on `target.type === 'none'`, etc.).
+      // persistence. addDocGuarded strips undefined fields first —
+      // Firestore rejects any document with explicit undefined values,
+      // and runData routinely carries them (intervalData on non-interval
+      // runs, runConfig.target.value on `target.type === 'none'`, etc.).
       // Surfaced in QA as "addDoc() called with invalid data" failures
       // that landed users in the retry banner with no recovery path.
       // P3-1 follow-up: capture the doc id so the reconciliation
@@ -766,9 +765,9 @@ export default function RunSummary() {
       // back via History). Without the id, every remount fires the
       // prompt again — annoying nag for a user who already decided
       // "Leave open".
-      const savedDocRef = await addDoc(
+      const savedDocRef = await addDocGuarded(
         collection(db, "users", user.uid, "runs"),
-        stripUndefined(runData)
+        runData
       );
       setSavedRunId(savedDocRef.id);
 
