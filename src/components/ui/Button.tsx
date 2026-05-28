@@ -49,8 +49,12 @@
  * playful animation, and locked-state semantics. Tracked for a later
  * sprint.
  */
-import { forwardRef } from "react";
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type {
+  ButtonHTMLAttributes,
+  CSSProperties,
+  ReactNode,
+  Ref,
+} from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
@@ -73,6 +77,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
+  ref?: Ref<HTMLButtonElement>;
 }
 
 const BASE_CLASSES = [
@@ -137,23 +142,21 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
   lg: "min-h-[52px] px-5 text-base gap-2",
 };
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  {
-    variant = "primary",
-    size = "md",
-    loading = false,
-    fullWidth = false,
-    disabled,
-    leftIcon,
-    rightIcon,
-    children,
-    className,
-    type,
-    style,
-    ...rest
-  },
-  ref
-) {
+function Button({
+  variant = "primary",
+  size = "md",
+  loading = false,
+  fullWidth = false,
+  disabled,
+  leftIcon,
+  rightIcon,
+  children,
+  className,
+  type,
+  style,
+  ref,
+  ...rest
+}: ButtonProps) {
   const isInteractive = !disabled && !loading;
   const variantStyle = VARIANT_INLINE_STYLES[variant];
   return (
@@ -202,7 +205,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       )}
     </button>
   );
-});
+}
 
 export { Button };
 export default Button;
