@@ -54,7 +54,7 @@ import {
 import { cn } from "@/lib/utils";
 import OptionCard from "@/components/onboarding/OptionCard";
 import Stepper from "@/components/onboarding/Stepper";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { validateDisplayName } from "@/lib/displayName";
 
 /* ============================

@@ -8,7 +8,7 @@ import { getTimeAgo } from "../../lib/timeAgo";
 import { haptic } from "../../lib/haptic";
 import type { DocumentSnapshot } from "firebase/firestore";
 import BlockAwareAvatar from "./BlockAwareAvatar";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
