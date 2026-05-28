@@ -494,15 +494,22 @@ export function normalizeProgramState(
   state: ProgramState,
   backfill?: { primaryGoal?: PrimaryGoal }
 ): ProgramState {
+  // Backfill primaryGoal from UserProfile for pre-W1a docs. Keeps the
+  // program-page legibility line functional for legacy users without
+  // forcing a migration. If both `state.primaryGoal` and
+  // `backfill.primaryGoal` are missing, we DO NOT write the field —
+  // adding `primaryGoal: undefined` as an explicit property would
+  // crash the `setDoc` call site in useProgram.ts because Firestore
+  // rejects `undefined` field values. The UI falls back to a generic
+  // label when the field is absent (issue #845).
+  const resolvedPrimaryGoal = state.primaryGoal ?? backfill?.primaryGoal;
   return {
     ...state,
     settings: state.settings ?? { autoProgression: true, microloading: true },
     weekHistory: state.weekHistory ?? [],
-    // Backfill primaryGoal from UserProfile for pre-W1a docs. Keeps the
-    // program-page legibility line functional for legacy users without
-    // forcing a migration. If both are missing we leave it undefined and
-    // the UI falls back to a generic label.
-    primaryGoal: state.primaryGoal ?? backfill?.primaryGoal,
+    ...(resolvedPrimaryGoal !== undefined && {
+      primaryGoal: resolvedPrimaryGoal,
+    }),
     workouts: (state.workouts ?? []).map((day) => ({
       ...day,
       skipped: day.skipped ?? false,
