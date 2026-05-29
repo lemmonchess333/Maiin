@@ -43,7 +43,6 @@ import {
   Award,
   Sparkles,
   LayoutGrid,
-  Flame,
   Check,
   AlertTriangle,
 } from "lucide-react";
@@ -114,12 +113,18 @@ const EXPERIENCE_OPTIONS: { id: Experience; label: string; desc: string; icon: R
   { id: "advanced", label: "Advanced", desc: "2+ years of structured training", icon: <Sparkles size={20} style={{ color: THEME.warning }} /> },
 ];
 
+// Engine-valid splits only. The profile's PreferredSplit type also allows
+// "bro_split", but the programme engine's SplitType (what buildPlan consumes)
+// does not — so, like the old ConfigurePlanModal, this offers Auto + the three
+// supported splits. A legacy "bro_split" profile value is normalised to "auto"
+// below.
+const VALID_SPLIT_CHOICES = ["auto", "full_body", "upper_lower", "ppl"] as const;
+
 const SPLIT_OPTIONS: { id: SplitChoice; label: string; desc: string; icon: React.ReactNode }[] = [
+  { id: "auto", label: "No preference", desc: "We'll pick the best split for you", icon: <Sparkles size={20} style={{ color: THEME.brand }} /> },
   { id: "full_body", label: "Full Body", desc: "Hit everything each session", icon: <User size={20} style={{ color: THEME.success }} /> },
   { id: "upper_lower", label: "Upper / Lower", desc: "Alternate upper and lower days (4+ days)", icon: <LayoutGrid size={20} style={{ color: THEME.brand }} /> },
   { id: "ppl", label: "Push / Pull / Legs", desc: "Classic PPL rotation (5-6 days)", icon: <Dumbbell size={20} style={{ color: THEME.lifting }} /> },
-  { id: "bro_split", label: "Bro Split", desc: "One muscle group per day (5-6 days)", icon: <Flame size={20} style={{ color: THEME.running }} /> },
-  { id: "auto", label: "No preference", desc: "We'll pick the best split for you", icon: <Sparkles size={20} style={{ color: THEME.brand }} /> },
 ];
 
 const EQUIPMENT_OPTIONS: { id: Equipment; label: string; desc: string; icon: React.ReactNode }[] = [
@@ -158,7 +163,11 @@ export default function ProgrammeSettings({
       nutritionPhase: (profile.program?.goal as Goal) ?? "recomp",
       experience: (profile.experience as Experience) ?? "intermediate",
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
-      preferredSplit: (profile.preferredSplit as SplitChoice) ?? "auto",
+      preferredSplit: (
+        VALID_SPLIT_CHOICES as readonly string[]
+      ).includes(profile.preferredSplit ?? "")
+        ? (profile.preferredSplit as SplitChoice)
+        : "auto",
       equipment: (profile.equipment as Equipment) ?? "full_gym",
       injuries: profile.injuries ?? [],
       runMode: profile.runMode ?? "freeform",
@@ -194,7 +203,6 @@ export default function ProgrammeSettings({
   // Split-availability mirrors onboarding: PPL/bro need ≥5 days, U/L ≥4.
   function isSplitDisabled(split: SplitChoice): boolean {
     if (split === "ppl" && liftDays < 5) return true;
-    if (split === "bro_split" && liftDays < 5) return true;
     if (split === "upper_lower" && liftDays < 4) return true;
     return false;
   }

@@ -16,7 +16,7 @@ import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
-const configureSpy = vi.fn(async () => ({ data: {} }));
+const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
   httpsCallable: () => configureSpy,
 }));
