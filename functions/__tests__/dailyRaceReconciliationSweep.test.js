@@ -38,6 +38,7 @@ const {
   _hasStrictRaceMatch,
   _decideReconciliationActions,
   _needsRaceNoShowEvaluation,
+  _recoveryEndDateForRace,
   _utcDateString,
 } = require("../index");
 
@@ -396,6 +397,123 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
     );
     expect(result.payload).not.toBeNull();
     expect(result.recoveryCleared).toBe(true);
+  });
+
+  // ── Run9 3b — recovery-exit materialization ──────────────────────
+  it("materializes to freeform (clears raceGoal + co-writes runMode) when the current goal IS the completed race", () => {
+    const raceGoal = { distance: "10k", targetDate: nDaysAgo(25) };
+    // Anchored recoveryEndDate = raceDate + 2 weeks (10k) → identifies this as
+    // the race recovery was entered for. +7d grace already elapsed by now.
+    const recoveryEndDate = _recoveryEndDateForRace(raceGoal);
+    const result = _decideReconciliationActions(
+      profile({ raceGoal }),
+      programState({
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal,
+          phase: "recovery",
+          recoveryEndDate,
+          totalWeeks: 8,
+          currentWeek: 8,
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.recoveryCleared).toBe(true);
+    expect(result.payload.runPlan.phase).toBeNull();
+    expect(result.payload.runPlan.recoveryEndDate).toBeNull();
+    // raceGoal cleared on the plan (server deciders read runPlan.raceGoal)…
+    expect(result.payload.runPlan.raceGoal).toBeNull();
+    // …and the profile is materialized (invariant: clear co-writes runMode).
+    expect(result.profilePayload).toEqual({
+      runMode: "freeform",
+      raceGoal: null,
+    });
+    // Unrelated runPlan fields preserved.
+    expect(result.payload.runPlan.totalWeeks).toBe(8);
+  });
+
+  it("keeps race_prep + preserves raceGoal when a NEWER future race was set during recovery", () => {
+    // recoveryEndDate is anchored to an OLD race; the current goal is a newer
+    // future race (anchor mismatch) → not the completed race → keep race_prep.
+    const oldRace = { distance: "10k", targetDate: nDaysAgo(25) };
+    const recoveryEndDate = _recoveryEndDateForRace(oldRace);
+    const newRace = { distance: "half", targetDate: nDaysAgo(-40) }; // 40d future
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: newRace }),
+      programState({
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: newRace,
+          phase: "recovery",
+          recoveryEndDate,
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.recoveryCleared).toBe(true);
+    expect(result.payload.runPlan.phase).toBeNull();
+    // The newer race survives — never deleted by recovery exit.
+    expect(result.payload.runPlan.raceGoal).toEqual(newRace);
+    // Profile already race_prep → no materialization write needed.
+    expect(result.profilePayload).toBeNull();
+  });
+
+  it("recovery-exit materialization is idempotent (post-write state is a no-op)", () => {
+    const raceGoal = { distance: "marathon", targetDate: nDaysAgo(40) };
+    const recoveryEndDate = _recoveryEndDateForRace(raceGoal);
+    const first = _decideReconciliationActions(
+      profile({ raceGoal }),
+      programState({
+        runDays: [],
+        runPlan: { mode: "race_prep", raceGoal, phase: "recovery", recoveryEndDate },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(first.recoveryCleared).toBe(true);
+    // Feed the materialized state back: phase null + runMode freeform.
+    const second = _decideReconciliationActions(
+      profile({ runMode: "freeform", raceGoal: null }),
+      programState({
+        runDays: [],
+        runPlan: first.payload.runPlan, // phase: null, raceGoal: null
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(second.recoveryCleared).toBe(false);
+    expect(second.payload).toBeNull();
+    expect(second.profilePayload).toBeNull();
+  });
+});
+
+describe("_recoveryEndDateForRace", () => {
+  it("derives raceDate + recoveryWeeks·7 per distance", () => {
+    expect(
+      _recoveryEndDateForRace({ distance: "5k", targetDate: "2026-06-01" })
+    ).toBe("2026-06-08"); // +1 week
+    expect(
+      _recoveryEndDateForRace({ distance: "10k", targetDate: "2026-06-01" })
+    ).toBe("2026-06-15"); // +2 weeks
+    expect(
+      _recoveryEndDateForRace({ distance: "half", targetDate: "2026-06-01" })
+    ).toBe("2026-06-22"); // +3 weeks
+    expect(
+      _recoveryEndDateForRace({ distance: "marathon", targetDate: "2026-06-01" })
+    ).toBe("2026-06-29"); // +4 weeks
+  });
+
+  it("returns null for unknown distance or missing date", () => {
+    expect(
+      _recoveryEndDateForRace({ distance: "ultra", targetDate: "2026-06-01" })
+    ).toBeNull();
+    expect(_recoveryEndDateForRace(null)).toBeNull();
+    expect(_recoveryEndDateForRace({ distance: "10k" })).toBeNull();
   });
 });
 
