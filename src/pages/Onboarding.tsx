@@ -813,7 +813,7 @@ export default function Onboarding() {
                 className="h-full rounded-full"
                 animate={{ width: stepIdx <= step ? "100%" : "0%" }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                style={{ background: THEME.teal }}
+                style={{ background: THEME.brand }}
               />
             </div>
           );
@@ -960,7 +960,7 @@ export default function Onboarding() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Ruler size={16} style={{ color: THEME.teal }} />
+                    <Ruler size={16} style={{ color: THEME.brand }} />
                     <span className="text-xs font-medium">Height</span>
                   </div>
                   <div className="flex gap-1">
@@ -972,10 +972,10 @@ export default function Onboarding() {
                         className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
-                            heightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                            heightUnit === u ? THEME.brand : "hsl(var(--muted))",
                           color:
                             heightUnit === u
-                              ? "#000"
+                              ? "#fff"
                               : "hsl(var(--muted-foreground))",
                         }}
                       >
@@ -1005,7 +1005,7 @@ export default function Onboarding() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Dumbbell size={16} style={{ color: THEME.teal }} />
+                    <Dumbbell size={16} style={{ color: THEME.brand }} />
                     <span className="text-xs font-medium">Weight</span>
                   </div>
                   <div className="flex gap-1">
@@ -1017,10 +1017,10 @@ export default function Onboarding() {
                         className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
-                            weightUnit === u ? THEME.teal : "hsl(var(--muted))",
+                            weightUnit === u ? THEME.brand : "hsl(var(--muted))",
                           color:
                             weightUnit === u
-                              ? "#000"
+                              ? "#fff"
                               : "hsl(var(--muted-foreground))",
                         }}
                       >
@@ -1165,9 +1165,9 @@ export default function Onboarding() {
                   style={{
                     background:
                       daysPerWeek === d
-                        ? `${THEME.teal}20`
+                        ? `${THEME.brand}20`
                         : "hsl(var(--muted) / 0.5)",
-                    border: `1px solid ${daysPerWeek === d ? THEME.teal + "50" : "hsl(var(--muted))"}`,
+                    border: `1px solid ${daysPerWeek === d ? THEME.brand + "50" : "hsl(var(--muted))"}`,
                   }}
                 >
                   <span
@@ -1175,7 +1175,7 @@ export default function Onboarding() {
                     style={{
                       color:
                         daysPerWeek === d
-                          ? THEME.teal
+                          ? THEME.brand
                           : "hsl(var(--muted-foreground))",
                     }}
                   >
@@ -1266,7 +1266,7 @@ export default function Onboarding() {
                   id: "auto" as PreferredSplit,
                   label: "No preference",
                   desc: "We'll pick the best split for you",
-                  icon: <Sparkles size={22} style={{ color: THEME.teal }} />,
+                  icon: <Sparkles size={22} style={{ color: THEME.brand }} />,
                 },
               ].map((opt, i) => (
                 <OptionCard
@@ -1656,15 +1656,15 @@ export default function Onboarding() {
             <div
               className="rounded-2xl p-5 space-y-0"
               style={{
-                background: `${THEME.teal}08`,
-                border: `1px solid ${THEME.teal}25`,
+                background: `${THEME.brand}08`,
+                border: `1px solid ${THEME.brand}25`,
               }}
             >
               {[
                 {
                   label: "Your plan",
                   value: splitLabel(preferredSplit),
-                  color: THEME.teal,
+                  color: THEME.brand,
                 },
                 {
                   label: "Schedule",
@@ -1773,7 +1773,7 @@ export default function Onboarding() {
             "flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
             !canAdvance[step] && "opacity-40"
           )}
-          style={{ background: THEME.teal, color: "#000" }}
+          style={{ background: THEME.brand, color: "#fff" }}
         >
           {step === TOTAL_STEPS - 1 ? (
             saving ? (
