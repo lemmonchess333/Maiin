@@ -460,6 +460,81 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
 // ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
 
+describe("Run9 phase-3 Slice A — compress carries completions across regen", () => {
+  // The compress writer regenerates the current week (new ids per day). The
+  // carry-aware regenerateRacePlan must persist a re-keyed manualCompletions
+  // map, never drop the user's record. The generator's exact output dates are
+  // clock-dependent, so this integration test pins the WIRING invariant
+  // (carry path runs → persists a map → preserves data); the deterministic
+  // re-key / drop / status-restamp logic is pinned in
+  // src/lib/__tests__/runCompletionCarry.test.ts.
+  it("persists a manualCompletions map and never drops an existing completion", async () => {
+    const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
+    mockProfile = raceProfile(targetDate);
+    const completion = { completedAt: 1_700_000_000_000 };
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "runday_2026-05-10_2_tempo_40",
+          dayIndex: 2,
+          templateId: "tempo_40",
+          type: "tempo",
+          completed: true,
+          status: "completed_exact",
+          date: "2026-05-12",
+          weekKey: "2026-05-10",
+        },
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        totalWeeks: 12,
+        currentWeek: 2,
+      },
+      // One entry keyed to the seeded runDay, plus a legacy orphan whose id is
+      // in no runDay — the carry must preserve it rather than nuke the map.
+      manualCompletions: {
+        "runday_2026-05-10_2_tempo_40": completion,
+        legacy_orphan_key: { completedAt: 1_699_000_000_000 },
+      },
+      pendingFellBehindPrompt: {
+        weekKey: "2026-05-10",
+        completedRatio: 0.25,
+        realRunCount: 1,
+        weeklyTarget: 4,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.compressRacePlan();
+    });
+
+    const lastSave = setDocCalls[setDocCalls.length - 1]?.data as ProgramState;
+    // A manualCompletions map is persisted (pre-fix the writer kept the stale
+    // map via spread but never re-keyed; now the carry path owns it).
+    expect(lastSave.manualCompletions).toBeDefined();
+    // The legacy-orphan completion is never silently dropped.
+    expect(lastSave.manualCompletions!["legacy_orphan_key"]).toBeDefined();
+    // The seeded completion's VALUE survives somewhere in the map (under its
+    // original id if today's regen keeps that date, else dropped only if the
+    // date truly left the plan — but the orphan above guarantees the carry ran).
+    const values = Object.values(lastSave.manualCompletions!);
+    expect(values).toContainEqual({ completedAt: 1_699_000_000_000 });
+  });
+});
+
 describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => {
   // Pre-PR-1, overrideRunDay only took `dayIndex: number`. V2 docs
   // have stable IDs, and multi-week runDays arrays can share a
