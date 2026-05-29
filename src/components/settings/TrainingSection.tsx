@@ -229,6 +229,9 @@ export default function TrainingSection({
     setIntentMode(newMode);
     setModeChangePending(true);
     try {
+      // Only freeform reaches here (race_prep is form-mediated above; the
+      // structured pill was retired in Run9 3a). Defensive `if` keeps the
+      // function correct if ever called with a legacy mode.
       if (newMode === "freeform") {
         await updateProfile({ runMode: "freeform" }, { throwOnError: true });
         try {
@@ -247,43 +250,6 @@ export default function TrainingSection({
             );
           }
         }
-      } else {
-        // structured
-        const current = getWeeklyRunTarget(profile);
-        const target = current < 1 ? 3 : current;
-        await updateProfile(
-          {
-            runMode: "structured",
-            ...runTargetWriteFields(target),
-          },
-          { throwOnError: true }
-        );
-        try {
-          await refreshRunSchedule({
-            weekSchedule: profile.weekSchedule,
-            weeklyRunDaysTarget: target,
-          });
-        } catch (e) {
-          logger.warn(
-            "[TrainingSection] structured refresh failed once, retrying",
-            e
-          );
-          try {
-            await refreshRunSchedule({
-              weekSchedule: profile.weekSchedule,
-              weeklyRunDaysTarget: target,
-            });
-          } catch (e2) {
-            logger.error(
-              "[TrainingSection] structured refresh failed twice",
-              e2
-            );
-            setModeError(
-              "Mode changed, but the run schedule didn't refresh. Try again."
-            );
-          }
-        }
-        setRunDays(target);
       }
       setIntentMode(null);
     } catch (e) {
@@ -376,11 +342,14 @@ export default function TrainingSection({
           Run plan
         </p>
 
-        {/* Mode picker — three pills */}
+        {/* Mode picker. Run9 (3a) retired the user-selectable `structured`
+            mode — running is freeform by default; a race goal is the only
+            "plan". `structured` stays a valid stored value for legacy data +
+            migration, just not offered here. */}
         <div className="rounded-xl bg-card border border-border/40 p-3 space-y-2">
           <p className="text-sm font-medium text-foreground">Mode</p>
           <div role="radiogroup" aria-label="Run mode" className="flex gap-2">
-            {(["freeform", "structured", "race_prep"] as const).map((mode) => {
+            {(["freeform", "race_prep"] as const).map((mode) => {
               const isSelected = selectedMode === mode;
               return (
                 <button
