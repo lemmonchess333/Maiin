@@ -16,6 +16,8 @@
  *   - completed_*             → strikethrough label + Check icon
  *   - skipped                 → strikethrough label + ChevronsRight icon
  *   - race_no_show            → coral AlertTriangle icon (warning, not error)
+ *   - clashesWithLift         → purple Dumbbell icon (shares a day with a lift;
+ *                               sport-coded purple, calm — not a warning)
  *   - planned / default       → standard foreground colour
  *
  * Touch target: each column has min-h-[44px] so the whole cell is
@@ -29,7 +31,7 @@
  */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronsRight, AlertTriangle } from "lucide-react";
+import { Check, ChevronsRight, AlertTriangle, Dumbbell } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { DAY_LABELS, DAY_LABELS_SHORT } from "@/lib/scheduleUtils";
@@ -170,6 +172,12 @@ export default function RunWeekStrip({
             : null;
           const isSkipped = status === "skipped";
           const isNoShow = status === "race_no_show";
+          // Run9 phase-3 (Slice F): a hard run the scheduler had to place on a
+          // lift+run day (no run-only slot was free — the 6-day-lifter clash).
+          // Surfaced as a calm purple dumbbell (sport-coding: lifting = purple)
+          // + an a11y suffix. Orthogonal to completion status — a completed run
+          // can still have shared its day with a lift.
+          const clashesWithLift = !!col.runDay?.clashesWithLift;
 
           // Build the a11y label so SR users hear "Tuesday — Easy 30,
           // completed" rather than just the bare day letter. Q2 P24
@@ -186,7 +194,10 @@ export default function RunWeekStrip({
                   : isNoShow
                     ? ", race no-show"
                     : "";
-          const ariaLabel = `${DAY_LABELS[col.dayIndex]} ${col.templateName}${stateSuffix}${col.isToday ? " (today)" : ""}`;
+          const clashSuffix = clashesWithLift
+            ? ", shares a day with lifting"
+            : "";
+          const ariaLabel = `${DAY_LABELS[col.dayIndex]} ${col.templateName}${stateSuffix}${clashSuffix}${col.isToday ? " (today)" : ""}`;
 
           // Q5 P69 — extras for this date. Stacked below the day-tap
           // area so the existing planned-slot UI keeps its 44px touch
@@ -238,34 +249,40 @@ export default function RunWeekStrip({
                 >
                   {col.templateName}
                 </span>
-                {isCompleted ? (
-                  // Q2 P24 — real ✅ keeps the saturated green; manual ✅
-                  // dims to 50% so the user can tell "this slot is checked
-                  // because I logged the run" from "this slot is checked
-                  // because I marked it." Single-channel today
-                  // (opacity); icon shape stays consistent for visual
-                  // coherence across the strip.
-                  <Check
-                    aria-hidden="true"
-                    className={cn(
-                      "size-3 text-green-600",
-                      completionKind === "manual" && "opacity-50"
-                    )}
-                  />
-                ) : isSkipped ? (
-                  <ChevronsRight
-                    aria-hidden="true"
-                    className="size-3 text-muted-foreground"
-                  />
-                ) : isNoShow ? (
-                  <AlertTriangle
-                    aria-hidden="true"
-                    className="size-3"
-                    style={{ color: THEME.running }}
-                  />
-                ) : (
-                  <span aria-hidden="true" className="size-3" />
-                )}
+                {/* Status + clash icon row. The status icon is one-of
+                    (completed / skipped / no-show / none); the lifting-clash
+                    dumbbell renders alongside it independently (a completed run
+                    can still have shared its day with a lift). h-3 reserves the
+                    row height so columns stay vertically aligned. */}
+                <span
+                  aria-hidden="true"
+                  className="flex items-center justify-center gap-0.5 h-3"
+                >
+                  {isCompleted ? (
+                    // Q2 P24 — real ✅ keeps the saturated green; manual ✅
+                    // dims to 50% so the user can tell "this slot is checked
+                    // because I logged the run" from "this slot is checked
+                    // because I marked it." Single-channel today
+                    // (opacity); icon shape stays consistent for visual
+                    // coherence across the strip.
+                    <Check
+                      className={cn(
+                        "size-3 text-green-600",
+                        completionKind === "manual" && "opacity-50"
+                      )}
+                    />
+                  ) : isSkipped ? (
+                    <ChevronsRight className="size-3 text-muted-foreground" />
+                  ) : isNoShow ? (
+                    <AlertTriangle
+                      className="size-3"
+                      style={{ color: THEME.running }}
+                    />
+                  ) : null}
+                  {clashesWithLift && (
+                    <Dumbbell className="size-3" style={{ color: THEME.lifting }} />
+                  )}
+                </span>
               </button>
               {/* Q5 P69/P70/P71 — extras stack. Outlined-not-filled
                 border + smaller text + dimmed = "this isn't a
