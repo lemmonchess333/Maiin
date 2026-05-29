@@ -118,19 +118,14 @@ function ScheduleLayoutSheetBody({
 
   return (
     <div className="px-5 pb-6 pt-3 space-y-4">
-      <div className="w-9 h-1 rounded-full bg-border mx-auto" />
-      <div>
-        <p className="text-base font-semibold text-foreground">Weekly layout</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Tap any day to cycle Rest &rarr; Lift &rarr; Run &rarr; Both.
-          {hasUnsavedScheduleChanges && (
-            <span style={{ color: "#d97706", fontWeight: 500 }}>
-              {" "}
-              · unsaved changes
-            </span>
-          )}
+      {/* Header (title + "Tap any day to cycle…" instruction) is rendered
+          by the BottomSheet via its title/description props — don't repeat
+          it here. Only the unsaved-changes indicator lives in the body. */}
+      {hasUnsavedScheduleChanges && (
+        <p className="text-xs font-medium" style={{ color: "#d97706" }}>
+          · unsaved changes
         </p>
-      </div>
+      )}
 
       <div className="grid grid-cols-7 gap-1.5">
         {schedule
