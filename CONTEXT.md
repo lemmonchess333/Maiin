@@ -146,6 +146,44 @@ Coral does NOT appear as:
 
 Equivalent discipline applies for purple (lifting) — accent not fill.
 
+## Deliberate deviations from reference apps (Run9 redesign, 2026-05-29)
+
+The run-section redesign (`Run9` lock in `.claude/plans/programme-run-followups.md`)
+was adversarially stress-tested against the dominant running apps. Two
+decisions deliberately deviate from the consumer-app convention; the
+reasons are recorded here per the reference-app rule (a deviation needs an
+explicit, written justification).
+
+### Running is the flexible side; the lift programme is the structured anchor
+
+Garmin (Daily Suggested Workouts), Strava (Instant Workouts, 2026), and NRC
+all offer a **no-race adaptive "today's run" layer** — structure without a
+race. Tropos deliberately does **not**: a race goal is the only running
+"plan," and between/without races the run side is freeform logging (enriched
+with a weekly run target + progress, so the tab is not barren).
+
+Tropos-specific reason: Tropos is a **hybrid** app. The **lift programme is
+the structured anchor** that's always present and periodized; running is
+deliberately the flexible complement. A single-sport runner would need a
+no-race structured layer, but a Tropos user always has the lift programme
+providing structure, so duplicating that on the run side adds a concept
+without a Tropos payoff. (Do NOT re-derive this as a gap to "fix" — it's a
+chosen position. Revisit only if Tropos adds a run-only user segment.)
+Note: the original Run9 migration note wrongly cited "matches NRC/Strava" —
+Strava removed static plans in 2025-07; that rationale is retired.
+
+### Phase disclosure: lift shows a phase, run hides it
+
+The lift tab surfaces a phase badge (`WeekPhaseRow`: "Week N · BUILD"); the
+run tab hides base/build/peak and names **only the taper** in plain copy.
+This asymmetry is deliberate, not a bug: the **lift phase is a mesocycle the
+user explicitly configured and navigates**, whereas the **run phase is
+auto-derived from the race date** (an implementation detail). Consumer
+running apps hide periodization vocab; the one cue users need before a race
+(the taper) is named in plain language. Garmin (the periodization-literate
+outlier) does surface run phases, but that's the pro-leaning cohort, not
+Tropos's calm-adaptive positioning.
+
 ---
 
 
