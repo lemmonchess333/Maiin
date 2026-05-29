@@ -62,6 +62,7 @@ import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
+import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
@@ -225,6 +226,22 @@ export default function ProgrammeRunSection({
     !!recoveryEndDate &&
     todayKeyDerivation >= recoveryEndDate;
   const isNoShow = raceDayStatus === "race_no_show";
+  // Run9 (k)/(f): the ONE-AT-A-TIME actionable prompt slot. The resolver
+  // picks a single prompt by locked precedence (no-show > recovery-complete >
+  // fell-behind) so two of these can never stack. Persistent attributes
+  // (compressed / taper / week N-of-M) are deliberately NOT routed here — they
+  // stay as their own always-visible notes (and migrate to a RaceHeader in a
+  // later slice). fell-behind joins this slot once the in-tab Realign action
+  // lands (phase-3); until then its input is false so the resolver is
+  // forward-compatible without surfacing an actionless prompt.
+  const contextualPrompt =
+    currentMode === "race_prep" && raceGoal
+      ? resolveRunContextualPrompt({
+          isNoShow,
+          recoveryEnded,
+          pendingFellBehind: false,
+        })
+      : null;
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
     const end = parseLocalDate(recoveryEndDate);
@@ -419,8 +436,9 @@ export default function ProgrammeRunSection({
 
       {/* Warning: race-day no-show. Hosts critical actions (Log race
           now / Set next race / Switch to structured) so the banner
-          itself is the affordance — not dismissible. */}
-      {currentMode === "race_prep" && raceGoal && isNoShow && (
+          itself is the affordance — not dismissible. Run9: gated by the
+          single contextual-prompt slot (precedence over recovery-complete). */}
+      {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
           title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
@@ -493,8 +511,9 @@ export default function ProgrammeRunSection({
       )}
 
       {/* Info: recovery complete. Hosts critical "Set next race" /
-          "Switch to structured" prompts — non-dismissible. */}
-      {currentMode === "race_prep" && raceGoal && recoveryEnded && (
+          "Switch to structured" prompts — non-dismissible. Run9: gated by
+          the single contextual-prompt slot (yields to no-show). */}
+      {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
           title="Recovery complete"
