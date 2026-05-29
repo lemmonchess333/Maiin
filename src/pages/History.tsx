@@ -1403,7 +1403,7 @@ export default function History() {
                       const adh = nutrition.adherence;
                       const tone =
                         adh >= 80
-                          ? { color: "#22c55e", bg: "#22c55e1A" }
+                          ? { color: "#4DB872", bg: "#4DB8721A" }
                           : adh >= 50
                             ? {
                                 color: "var(--muted-foreground)",

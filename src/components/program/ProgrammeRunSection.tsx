@@ -790,7 +790,7 @@ export default function ProgrammeRunSection({
                 haptic();
                 navigate("/settings/training");
               }}
-              className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
+              className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
               aria-label="Edit race goal"
             >
               Edit
@@ -964,7 +964,7 @@ export default function ProgrammeRunSection({
             haptic();
             navigate("/settings/training");
           }}
-          className="inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95 px-1 -m-1 rounded-md"
+          className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
         >
           Manage Run Plan
           <ChevronRight className="size-3.5" />

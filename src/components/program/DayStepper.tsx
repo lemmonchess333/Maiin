@@ -13,8 +13,8 @@ interface DayStepperProps {
   onSelect: (index: number) => void;
 }
 
-const GREEN = "#4CAF50";
-const PURPLE = "#7C6BF0";
+const GREEN = "#4DB872";
+const PURPLE = "#7B72E9";
 // Skipped uses muted-foreground hue (resolved at rgba via THEME-friendly
 // fallback) so the circle reads as "intentionally not done" rather than
 // "completed" or "upcoming". Ban icon (slashed circle) reinforces this.

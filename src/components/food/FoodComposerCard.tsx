@@ -292,7 +292,7 @@ function FoodComposerCard({
             haptic();
             onManualOpen();
           }}
-          className="w-full mt-2 py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
+          className="w-full mt-2 min-h-[44px] py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
           aria-label="Log a meal manually"
         >
           Log manually
