@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: April 2026
+            Last updated: May 2026
           </p>
         </div>
 
@@ -59,7 +59,10 @@ export default function PrivacyPolicy() {
                   GPS and Location Data:
                 </strong>{" "}
                 Route coordinates during run tracking for mapping and pace
-                calculation
+                calculation. You can define <strong>privacy zones</strong>{" "}
+                around sensitive locations (for example, your home or
+                workplace); GPS points that fall inside a zone are removed from
+                a route before it is saved or shared.
               </li>
               <li>
                 <strong className="text-foreground">Nutrition Data:</strong>{" "}
@@ -68,6 +71,14 @@ export default function PrivacyPolicy() {
               <li>
                 <strong className="text-foreground">Body Measurements:</strong>{" "}
                 Weight logs over time for trend tracking
+              </li>
+              <li>
+                <strong className="text-foreground">
+                  Progress Photos (optional):
+                </strong>{" "}
+                If you choose to add progress photos, they are encrypted on your
+                device with AES-GCM before they are uploaded, so they are stored
+                only in encrypted form.
               </li>
             </ul>
           </section>
@@ -96,6 +107,11 @@ export default function PrivacyPolicy() {
               stored in encrypted databases. We use Firebase Authentication for
               secure user authentication.
             </p>
+            <p>
+              <strong className="text-foreground">Progress photos</strong> are
+              additionally encrypted on your device (AES-GCM) before upload, so
+              the image content is not readable in storage.
+            </p>
           </section>
 
           <section className="space-y-2">
@@ -104,8 +120,13 @@ export default function PrivacyPolicy() {
             </h2>
             <p>
               We do <strong>not</strong> sell or rent your personal data. Your
-              fitness data is only accessible to you, except when you choose to
-              share activities publicly or with followers via social features.
+              logged fitness data is private to your account by default. Sharing
+              to the social feed is always an explicit action — when you share,
+              you choose each post's audience:{" "}
+              <strong className="text-foreground">public</strong>,{" "}
+              <strong className="text-foreground">followers only</strong>, or{" "}
+              <strong className="text-foreground">private</strong>. Nothing is
+              published automatically.
             </p>
             <p>
               Some data is processed by the third-party services listed in
