@@ -19,6 +19,7 @@ import {
   runTargetWriteFields,
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
+import { setRaceGoalPatch } from "@/features/program/runModeResolution";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -233,7 +234,15 @@ export default function TrainingSection({
       // structured pill was retired in Run9 3a). Defensive `if` keeps the
       // function correct if ever called with a legacy mode.
       if (newMode === "freeform") {
-        await updateProfile({ runMode: "freeform" }, { throwOnError: true });
+        // Run9 3a-ii: switching to freeform is "I have no race" — CLEAR the
+        // race goal so the materialized runMode (derived from raceGoal
+        // presence) and the goal can't disagree. setRaceGoalPatch(null) emits
+        // { raceGoal: null, runMode: "freeform" } in one patch. The cast
+        // bridges the pure core's loose `distance: string` to UserProfile's
+        // narrow union — irrelevant here since the value is null.
+        await updateProfile(setRaceGoalPatch(null) as Partial<UserProfile>, {
+          throwOnError: true,
+        });
         try {
           await refreshRunSchedule({ weekSchedule: profile.weekSchedule });
         } catch (e) {

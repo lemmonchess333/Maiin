@@ -70,7 +70,7 @@ type MockProfile = {
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
-  };
+  } | null;
   primaryGoal?: string;
   program?: { goal?: string };
 };
@@ -1016,6 +1016,66 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     expect(result.current.programState?.runPlan?.recoveryEndDate).toBe(
       eightDaysAgo
     );
+  });
+
+  // Run9 3a-ii: skipping recovery for the JUST-COMPLETED race returns the
+  // user to freeform AND explicitly clears the race goal (raceGoal: null), so
+  // the materialized runMode and the goal can't disagree. Pre-3a-ii this left
+  // the goal stranded under freeform (the "deferred clear" from #883).
+  it("Run9 3a-ii — skipRecoveryEarly for the completed race clears raceGoal (null) + runMode freeform", async () => {
+    const future = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    // raceGoal on the profile === the race recovery is for (runPlan.raceGoal)
+    // → resolveRecoveryExit clears it.
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: future,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    mockUpdateProfile.mockClear();
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.skipRecoveryEarly();
+    });
+
+    // Materialization invariant: the SAME patch co-writes runMode + the null
+    // raceGoal clear.
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      raceGoal: null,
+      runMode: "freeform",
+    });
+    // The plan is dropped (runPlan omitted → stripped; runDays emptied).
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(lastWrite.runDays).toEqual([]);
+    expect(lastWrite.runPlan).toBeUndefined();
   });
 });
 
