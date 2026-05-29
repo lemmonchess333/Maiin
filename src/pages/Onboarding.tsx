@@ -969,7 +969,7 @@ export default function Onboarding() {
                         type="button"
                         key={u}
                         onClick={() => setHeightUnit(u)}
-                        className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
                             heightUnit === u ? THEME.teal : "hsl(var(--muted))",
@@ -1014,7 +1014,7 @@ export default function Onboarding() {
                         type="button"
                         key={u}
                         onClick={() => setWeightUnit(u)}
-                        className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
                             weightUnit === u ? THEME.teal : "hsl(var(--muted))",
