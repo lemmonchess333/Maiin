@@ -81,6 +81,24 @@ describe("getRunHeroState", () => {
     ).toBe("race-recovery");
   });
 
+  it("Run9 R3-cycle: recovery wins even when mode resolved to freeform", () => {
+    // Materialization clears raceGoal at recovery-END (→ runMode freeform), but
+    // the phase clear is a separate server write. Between them a user is
+    // phase=recovery AND mode=freeform — the recovery hero must still win, NOT
+    // the bare freeform Start CTA. This pins the recovery-check-before-freeform
+    // ordering.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "freeform",
+          raceGoal: null,
+          phase: "recovery",
+          recoveryEndDate: "2026-06-10",
+        })
+      )
+    ).toBe("race-recovery");
+  });
+
   it("returns 'race-today' when nextStartable is today's race template", () => {
     expect(
       getRunHeroState(
