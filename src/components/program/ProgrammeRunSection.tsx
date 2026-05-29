@@ -48,6 +48,7 @@ import {
   Play,
   ChevronRight,
   MoreVertical,
+  Trophy,
 } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { toast } from "sonner";
@@ -462,6 +463,7 @@ export default function ProgrammeRunSection({
         raceGoal &&
         raceElapsed &&
         heroState !== "race-recent" &&
+        heroState !== "race-today" &&
         !inRecovery &&
         !recoveryEnded &&
         !isNoShow &&
@@ -869,6 +871,76 @@ export default function ProgrammeRunSection({
         />
       )}
 
+      {/* ── Hero: race-today (T+0 — the race itself) ────────────────
+          Run8 PR1c L14 + Run9 follow-on: race day is the culmination of the
+          whole plan, not "just another Next run", so it gets its own
+          celebratory hero instead of falling through to the generic Next card
+          (which is suppressed for this state below). A Trophy eyebrow + "Start
+          race" CTA (logs against the race-day slot — onRunCreated writes the
+          recovery entry server-side, exactly as the no-show / race-recent
+          paths do) + an overflow that opens DayActionSheet's race-day variant
+          for the DNF / DNS edge cases. */}
+      {heroState === "race-today" && raceGoal && (
+        <div
+          className="w-full rounded-xl p-4 space-y-3"
+          style={{
+            background: `${THEME.running}14`,
+            border: `1px solid ${THEME.running}40`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="size-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${THEME.running}1A` }}
+            >
+              <Trophy className="size-5" style={{ color: THEME.running }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-xs font-semibold mb-0.5"
+                style={{ color: THEME.running }}
+              >
+                Race day
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {raceGoal.distance.toUpperCase()} · Today
+              </p>
+              <p className="text-micro text-muted-foreground">
+                This is the one you've been training for. Good luck out there.
+              </p>
+            </div>
+            {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                setManageDate(raceDayRunDay?.date ?? null);
+              }}
+              aria-label="More options for race day"
+              className="shrink-0 size-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
+            >
+              <MoreVertical className="size-5" aria-hidden="true" />
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              navigate(
+                raceDayRunDay?.id
+                  ? `/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`
+                  : "/run"
+              );
+            }}
+            className="w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5"
+            style={{ background: THEME.running }}
+          >
+            <Play className="size-3.5" fill="white" />
+            Start race
+          </button>
+        </div>
+      )}
+
       {/* ── Hero: race-recent ("did you race?") ─────────────────────
           Run9 (l): T+1..T+3 after the race date, before the server's
           dailyRaceReconciliationSweep flips the slot to race_no_show.
@@ -956,7 +1028,9 @@ export default function ProgrammeRunSection({
           (we render a "done this week" affirmation instead).
           Run9 (l): also suppressed in the race-recent window so the
           elapsed race slot can't render as a "Next · Pending" catch-up
-          nag — the did-you-race hero above owns that slot instead.
+          nag — the did-you-race hero above owns that slot instead. Also
+          suppressed on race-today (the dedicated race-day hero above owns
+          the slot) so the race isn't framed as a generic "Next" run.
           Run7 Q7: subtle coral 6% tint, icon container coral ~10%,
           Start button flat coral solid, description line-clamp-2.
 
@@ -968,6 +1042,7 @@ export default function ProgrammeRunSection({
           button can live as a child without nested-button HTML. */}
       {currentMode !== "freeform" &&
         heroState !== "race-recent" &&
+        heroState !== "race-today" &&
         nextStartable &&
         nextStartUrl && (
         <div
