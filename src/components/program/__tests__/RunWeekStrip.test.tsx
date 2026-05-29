@@ -648,3 +648,67 @@ describe("RunWeekStrip — Q5 P79 first-extra coachmark (chunk B3l)", () => {
     expect(container.textContent).toContain("3km");
   });
 });
+
+describe("RunWeekStrip — lifting clash (Run9 phase-3 Slice F)", () => {
+  it("adds the 'shares a day with lifting' suffix + a dumbbell icon when clashesWithLift", () => {
+    const { container } = renderStrip(
+      <RunWeekStrip
+        runDays={[
+          runDay({
+            dayIndex: 2,
+            clashesWithLift: true,
+            templateId: "long_10k",
+            type: "long",
+          }),
+        ]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.getByLabelText(/shares a day with lifting/i)
+    ).toBeInTheDocument();
+    expect(container.querySelector(".lucide-dumbbell")).toBeTruthy();
+  });
+
+  it("renders no dumbbell / suffix when the run does not clash", () => {
+    const { container } = renderStrip(
+      <RunWeekStrip
+        runDays={[runDay({ dayIndex: 2 })]}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(
+      screen.queryByLabelText(/shares a day with lifting/i)
+    ).not.toBeInTheDocument();
+    expect(container.querySelector(".lucide-dumbbell")).toBeNull();
+  });
+
+  it("shows the dumbbell alongside the completed check (orthogonal to status)", () => {
+    const id = "runday_2026-05-10_2_long_10k";
+    const { container } = renderStrip(
+      <RunWeekStrip
+        runDays={[
+          runDay({
+            id,
+            dayIndex: 2,
+            clashesWithLift: true,
+            templateId: "long_10k",
+            type: "long",
+          }),
+        ]}
+        claimMap={claimMapWith([[id, { legacyCompleted: true }]])}
+        unclaimedByDate={emptyUnclaimed}
+        onDayTap={() => {}}
+      />
+    );
+    expect(container.querySelector(".lucide-dumbbell")).toBeTruthy();
+    expect(container.querySelector(".lucide-check")).toBeTruthy();
+    expect(
+      screen.getByLabelText(/completed.*shares a day with lifting/i)
+    ).toBeInTheDocument();
+  });
+});
