@@ -1,5 +1,5 @@
 import { Timer } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Toggle } from "@/components/ui/Toggle";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
@@ -41,9 +41,10 @@ export default function WorkoutPrefsSection({
               Timer starts after completing a set
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={autoRestTimer}
+            label="Toggle auto-start rest timer"
+            onChange={async () => {
               haptic("light");
               const prev = autoRestTimer;
               const next = !autoRestTimer;
@@ -55,21 +56,7 @@ export default function WorkoutPrefsSection({
               const result = await updateProfile({ autoRestTimer: next });
               if (!result.ok) setAutoRestTimer(prev);
             }}
-            aria-label="Toggle auto-start rest timer"
-            role="switch"
-            aria-checked={autoRestTimer}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              autoRestTimer ? "bg-primary" : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                autoRestTimer ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
@@ -102,9 +89,10 @@ export default function WorkoutPrefsSection({
               Voice announcements during runs
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={audioCues}
+            label="Toggle audio cues"
+            onChange={async () => {
               haptic("light");
               const prev = audioCues;
               const next = !audioCues;
@@ -112,21 +100,7 @@ export default function WorkoutPrefsSection({
               const result = await updateProfile({ audioCues: next });
               if (!result.ok) setAudioCues(prev);
             }}
-            aria-label="Toggle audio cues"
-            role="switch"
-            aria-checked={audioCues}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              audioCues ? "bg-primary" : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                audioCues ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
       </div>
     </AccordionSection>

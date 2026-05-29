@@ -105,7 +105,7 @@ function ProgramSettingsPanel({
               <IconButton
                 onClick={onClose}
                 aria-label="Close settings"
-                size="sm"
+                size="md"
                 className="text-muted-foreground"
                 icon={<X />}
               />
@@ -131,7 +131,7 @@ function ProgramSettingsPanel({
                       setPending({ kind: "goal", goal: g });
                   }}
                   className={cn(
-                    "flex-1 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
+                    "flex-1 min-h-[44px] px-2 rounded-lg text-xs font-medium transition-colors pointer-events-auto",
                     currentGoal === g
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground hover:bg-muted/80"

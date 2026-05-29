@@ -151,7 +151,7 @@ export default function DayPeekCard({
             <IconButton
               onClick={onClose}
               aria-label="Close day details"
-              size="sm"
+              size="md"
               className="-m-1 text-muted-foreground"
               icon={<X />}
             />

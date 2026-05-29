@@ -489,7 +489,7 @@ export default function TrainingSection({
                           type="button"
                           onClick={() => setRaceDistance(d)}
                           className={cn(
-                            "flex-1 py-2 rounded-lg text-xs font-medium motion-safe:transition-all",
+                            "flex-1 min-h-[44px] rounded-lg text-xs font-medium motion-safe:transition-all",
                             isSel
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted text-muted-foreground"
@@ -633,7 +633,7 @@ export default function TrainingSection({
                   onClick={() => handleSplitChange(opt.id)}
                   disabled={pending !== null && pending !== "split"}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1",
+                    "px-3 min-h-[44px] rounded-lg text-xs font-medium inline-flex items-center gap-1",
                     "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
                     isSelected
                       ? "bg-primary-strong text-primary-foreground"
