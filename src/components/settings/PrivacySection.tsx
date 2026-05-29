@@ -3,6 +3,7 @@ import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { Users, Check, MapPin, Trash2, Plus, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Toggle } from "@/components/ui/Toggle";
 import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -253,9 +254,10 @@ export default function PrivacySection({
               Allow Gemini to analyse food photos and refine text entries
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={profile?.aiAnalysisEnabled !== false}
+            label="Toggle AI food analysis"
+            onChange={async () => {
               haptic("light");
               // The field is undefined-default-on: treat any non-false
               // current value as "currently enabled" and flip to false.
@@ -269,25 +271,7 @@ export default function PrivacySection({
               });
               await updateProfile({ aiAnalysisEnabled: next });
             }}
-            role="switch"
-            aria-checked={profile?.aiAnalysisEnabled !== false}
-            aria-label="Toggle AI food analysis"
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative shrink-0",
-              profile?.aiAnalysisEnabled !== false
-                ? "bg-primary"
-                : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                profile?.aiAnalysisEnabled !== false
-                  ? "translate-x-5"
-                  : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         {/* Privacy Zones */}
