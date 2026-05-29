@@ -278,6 +278,15 @@ export interface ScheduledRunDay {
    *  only when the user explicitly reschedules within a week. */
   movedFromDate?: string;
   movedToDate?: string;
+
+  /** Run9 phase-3 (Slice C): true when a HARD run (long / tempo / intervals /
+   *  race) had to be placed on a "both" day (lift + run on the same day)
+   *  because no run-only slot was available — the 6-day-lifter clash the
+   *  scheduler must FLAG rather than silently drop (R3-placement). The run is
+   *  still placed; the UI surfaces a "shares a day with lifting" note so the
+   *  user can move a lift if they want. Easy runs on both-days are NOT flagged
+   *  (low stress). Set by generateRacePlanV2. */
+  clashesWithLift?: boolean;
 }
 
 export interface RunPlan {
