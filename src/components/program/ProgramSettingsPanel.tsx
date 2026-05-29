@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
+import { Toggle } from "@/components/ui/Toggle";
 import type { Goal, SplitType } from "@/features/program/programTypes";
 import { splitLabel } from "@/features/program/programEngine";
 
@@ -175,27 +176,16 @@ function ProgramSettingsPanel({
                   cleanly
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() =>
+              <Toggle
+                checked={settings.autoProgression}
+                label="Auto progression"
+                className="ml-3 pointer-events-auto"
+                onChange={() =>
                   onUpdateSettings({
                     autoProgression: !settings.autoProgression,
                   })
                 }
-                className={cn(
-                  "w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3",
-                  settings.autoProgression ? "bg-primary" : "bg-muted"
-                )}
-                aria-pressed={settings.autoProgression}
-                aria-label="Auto progression"
-              >
-                <div
-                  className={cn(
-                    "size-4 rounded-full bg-white absolute top-1 transition-transform",
-                    settings.autoProgression ? "translate-x-5" : "translate-x-1"
-                  )}
-                />
-              </button>
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -206,25 +196,14 @@ function ProgramSettingsPanel({
                   keeps moving past stalls
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() =>
+              <Toggle
+                checked={settings.microloading}
+                label="Microloading"
+                className="ml-3 pointer-events-auto"
+                onChange={() =>
                   onUpdateSettings({ microloading: !settings.microloading })
                 }
-                className={cn(
-                  "w-10 h-6 rounded-full transition-colors relative pointer-events-auto shrink-0 ml-3",
-                  settings.microloading ? "bg-primary" : "bg-muted"
-                )}
-                aria-pressed={settings.microloading}
-                aria-label="Microloading"
-              >
-                <div
-                  className={cn(
-                    "size-4 rounded-full bg-white absolute top-1 transition-transform",
-                    settings.microloading ? "translate-x-5" : "translate-x-1"
-                  )}
-                />
-              </button>
+              />
             </div>
           </div>
 
