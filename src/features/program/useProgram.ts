@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, Timestamp, deleteField } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
@@ -15,7 +15,7 @@ import type {
   ScheduledRunStatus,
 } from "./programTypes";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
-import { resolveRecoveryExit } from "./runModeResolution";
+import { resolveRecoveryExit, setRaceGoalPatch } from "./runModeResolution";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -1425,14 +1425,14 @@ export function useProgram() {
     if (exit.runMode === "freeform") {
       // Single race done → freeform: drop the runPlan + runDays. saveProgram
       // does a full setDoc, so omitting `runPlan` (undefined → stripped)
-      // removes it from the doc. The explicit `raceGoal` clear that
-      // resolveRecoveryExit asks for is DEFERRED to the materialization
-      // migration (it needs the `raceGoal: null` profile-type change); until
-      // then current readers gate `raceGoal` on `runMode === "race_prep"`, so a
-      // left-over goal under freeform doesn't leak.
+      // removes it from the doc. Run9 3a-ii: the `raceGoal: null` clear that
+      // resolveRecoveryExit returns is now applied explicitly (the profile type
+      // was widened to allow it), so the materialized runMode and the goal can
+      // never disagree — no more left-over goal under freeform. The cast
+      // bridges the pure core's loose `distance: string` to the narrow union.
       logger.log("[skipRecoveryEarly] race done → freeform; clearing plan");
       await Promise.all([
-        updateProfile({ runMode: "freeform" }),
+        updateProfile(exit as Partial<UserProfile>),
         saveProgram({ ...programState, runDays: [], runPlan: undefined }),
       ]);
       return;
@@ -1518,8 +1518,12 @@ export function useProgram() {
       `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}, ` +
         `regenerated plan (totalWeeks=${runPlan.totalWeeks}, compressed=${runPlan.compressed})`
     );
+    // Run9 3a-ii: route the date change through setRaceGoalPatch so runMode is
+    // co-written (materialization invariant). The user is already race_prep, so
+    // this is a no-op for runMode in practice, but it keeps every raceGoal write
+    // on the single resolver path. Cast bridges the loose core distance type.
     await Promise.all([
-      updateProfile({ raceGoal: newRaceGoal }),
+      updateProfile(setRaceGoalPatch(newRaceGoal) as Partial<UserProfile>),
       saveProgram(next),
     ]);
   }, [programState, profile, saveProgram, updateProfile]);
