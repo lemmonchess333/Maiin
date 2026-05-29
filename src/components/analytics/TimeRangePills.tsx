@@ -16,7 +16,7 @@ export default function TimeRangePills({
           type="button"
           key={opt}
           onClick={() => onChange(opt)}
-          className={`flex-1 py-2.5 rounded-lg text-xs font-medium transition-all ${
+          className={`flex-1 min-h-[44px] py-2.5 rounded-lg text-xs font-medium transition-all ${
             selected === opt
               ? "bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
