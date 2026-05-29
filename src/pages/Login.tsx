@@ -237,22 +237,22 @@ export default function Login() {
               setError("");
             }}
             aria-pressed={isSignUp}
-            className="text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
 
         {/* Legal links */}
-        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground pt-1">
+        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
           <Link
             to="/privacy"
-            className="hover:text-foreground transition-colors"
+            className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
           >
             Privacy Policy
           </Link>
           <span aria-hidden="true">·</span>
-          <Link to="/terms" className="hover:text-foreground transition-colors">
+          <Link to="/terms" className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors">
             Terms of Service
           </Link>
         </div>

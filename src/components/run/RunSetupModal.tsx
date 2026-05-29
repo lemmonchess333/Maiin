@@ -454,7 +454,7 @@ export default function RunSetupModal({
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground active:scale-95"
+          className="inline-flex items-center gap-1.5 min-h-[44px] pr-3 -my-1.5 text-sm text-muted-foreground active:scale-[0.97] transition-transform"
         >
           <ArrowLeft className="size-4" />
           Back
@@ -803,7 +803,7 @@ export default function RunSetupModal({
                         },
                       })
                     }
-                    className="flex-1 py-2 rounded-xl text-xs font-medium transition-all"
+                    className="flex-1 min-h-[44px] inline-flex items-center justify-center rounded-xl text-xs font-medium transition-all active:scale-[0.97]"
                     style={
                       config.target.type === t
                         ? {
