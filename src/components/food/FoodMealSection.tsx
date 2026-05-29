@@ -181,14 +181,18 @@ export default function FoodMealSection({
           type="button"
           onClick={() => onTargetMeal(mealKey)}
           aria-label={`Add food to ${MEAL_LABELS[mealKey]}`}
-          className={cn(
-            "size-6 rounded-full flex items-center justify-center transition-all active:scale-90",
-            targetMeal === mealKey
-              ? "bg-primary text-white"
-              : "border border-black/[0.12] text-muted-foreground"
-          )}
+          className="size-11 -m-2.5 flex items-center justify-center transition-transform active:scale-90"
         >
-          <Plus className="size-3.5" />
+          <span
+            className={cn(
+              "size-6 rounded-full flex items-center justify-center",
+              targetMeal === mealKey
+                ? "bg-primary text-white"
+                : "border border-black/[0.12] text-muted-foreground"
+            )}
+          >
+            <Plus className="size-3.5" />
+          </span>
         </button>
       </div>
 
