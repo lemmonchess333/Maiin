@@ -169,7 +169,7 @@ export default function DayStepper({
               </motion.div>
             </button>
             <span
-              className="text-[10px] font-semibold text-center truncate max-w-full mt-1.5"
+              className="text-[10px] font-semibold text-center line-clamp-2 leading-tight max-w-full mt-1.5"
               style={{ color: labelColor }}
             >
               {day.label}
