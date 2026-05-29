@@ -69,7 +69,7 @@ function FoodDateBar({
         type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
-        className="text-center flex items-center gap-2"
+        className="text-center flex items-center justify-center gap-2 min-h-[44px] px-2 -my-1 active:scale-[0.97] transition-transform"
       >
         <CalendarDays
           aria-hidden="true"

@@ -121,16 +121,24 @@ export default function Tooltip({
         createPortal(
           <AnimatePresence>
             {open && (
+              /* Animate opacity ONLY — never a transform property. floating-
+                 ui positions the tooltip via `transform: translate(x,y)` in
+                 `floatingStyles`; if Framer Motion also animates a transform
+                 (e.g. a `y` slide) on this same element, motion's transform
+                 clobbers floating-ui's and the tooltip pins to (0,0)/clipped
+                 (regression: the Programme running-icon coachmark rendered
+                 top-left over the title). With no transform-animated value,
+                 motion leaves `style.transform` intact. */
               <motion.div
                 ref={refs.setFloating}
                 id={id}
                 role="tooltip"
                 style={floatingStyles}
                 className="z-40 max-w-[280px] rounded-lg border border-border bg-card px-3 py-2 shadow-lg"
-                initial={{ opacity: 0, y: reduced ? 0 : 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: reduced ? 0 : 4 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reduced ? 0 : 0.15, ease: "easeOut" }}
                 {...getFloatingProps()}
               >
                 <div className="text-xs leading-snug text-foreground">{content}</div>
