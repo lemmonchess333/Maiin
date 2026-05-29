@@ -14,6 +14,9 @@ import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
   enrichRunDayV2,
+  classifyRaceTiming,
+  getRaceFloorWeeks,
+  getRaceMinWeeks,
   type RacePlanV2Input,
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
@@ -279,6 +282,122 @@ describe("generateRacePlanV2", () => {
       weekSchedule: liftOnly,
     });
     expect(result.weeks).toEqual([]);
+  });
+
+  /* ─── Run9 phase-3 (Slice B): finish-safely / belowFloor ───── */
+
+  it("marks belowFloor + compressed for a marathon inside the taper-safe floor", () => {
+    // marathon floor = taperWeeks(3) + 1 = 4. 3 weeks out → below floor.
+    const fs = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "marathon", targetDate: "2026-05-31" }, // 3 weeks
+    });
+    expect(fs.totalWeeks).toBe(3);
+    expect(fs.belowFloor).toBe(true);
+    expect(fs.compressed).toBe(true); // belowFloor implies compressed
+  });
+
+  it("finish-safely plan is ALL easy + race — never tempo/intervals", () => {
+    const fs = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "marathon", targetDate: "2026-05-31" },
+    });
+    const types = fs.weeks.flat().map((rd) => rd.type);
+    expect(types).not.toContain("tempo");
+    expect(types).not.toContain("intervals");
+    // The race day is preserved in the final week.
+    expect(fs.weeks[fs.weeks.length - 1].some((rd) => rd.type === "race")).toBe(
+      true
+    );
+    // Non-race finish-safely days are easy (capped — never long_15k).
+    const templates = fs.weeks.flat().map((rd) => rd.templateId);
+    expect(templates).not.toContain("long_15k");
+  });
+
+  it("a half 2 weeks out is below-floor; 4 weeks out is compressible (not finish-safely)", () => {
+    // half floor = taperWeeks(2) + 1 = 3, minWeeks = 8.
+    const twoWk = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "half", targetDate: "2026-05-24" }, // 2 weeks
+    });
+    expect(twoWk.belowFloor).toBe(true);
+
+    const fourWk = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "half", targetDate: "2026-06-07" }, // 4 weeks
+    });
+    expect(fourWk.belowFloor).toBe(false); // >= floor 3
+    expect(fourWk.compressed).toBe(true); // < minWeeks 8
+  });
+
+  it("10k/5k are never belowFloor (floor 2 vs the hard 2-week totalWeeks floor)", () => {
+    // A 10k 2 days out clamps to totalWeeks=2; floor=2 → 2 < 2 is false.
+    const tightTenK = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" },
+    });
+    expect(tightTenK.belowFloor).toBe(false);
+    expect(tightTenK.compressed).toBe(true);
+  });
+});
+
+/* ─── Run9 phase-3 (Slice B): timing classifier + floor helpers ─── */
+
+describe("classifyRaceTiming + floor helpers", () => {
+  it("floor = taperWeeks + 1 per distance (locked 2026-05-29)", () => {
+    expect(getRaceFloorWeeks("5k")).toBe(2);
+    expect(getRaceFloorWeeks("10k")).toBe(2);
+    expect(getRaceFloorWeeks("half")).toBe(3);
+    expect(getRaceFloorWeeks("marathon")).toBe(4);
+  });
+
+  it("minWeeks = ideal build per distance", () => {
+    expect(getRaceMinWeeks("5k")).toBe(4);
+    expect(getRaceMinWeeks("10k")).toBe(6);
+    expect(getRaceMinWeeks("half")).toBe(8);
+    expect(getRaceMinWeeks("marathon")).toBe(12);
+  });
+
+  it("healthy at/above minWeeks", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 12 })).toBe(
+      "healthy"
+    );
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 20 })).toBe(
+      "healthy"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 6 })).toBe(
+      "healthy"
+    );
+  });
+
+  it("compressible in [floor, minWeeks)", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 11 })).toBe(
+      "compressible"
+    );
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 4 })).toBe(
+      "compressible"
+    ); // exactly the floor
+    expect(classifyRaceTiming({ distance: "half", weeksRemaining: 3 })).toBe(
+      "compressible"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 2 })).toBe(
+      "compressible"
+    );
+  });
+
+  it("below-floor under the floor", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 3 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "half", weeksRemaining: 2 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 1 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "5k", weeksRemaining: 1 })).toBe(
+      "below-floor"
+    );
   });
 });
 
