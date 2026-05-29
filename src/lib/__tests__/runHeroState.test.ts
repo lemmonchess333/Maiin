@@ -247,12 +247,11 @@ describe("getRunHeroState", () => {
 });
 
 describe("shouldShowHeroOverflow — L12", () => {
-  it("visible on planned-today, catch-up, race-today, race-prep-week, race-recent", () => {
+  it("visible on planned-today, catch-up, race-today, race-prep-week", () => {
     expect(shouldShowHeroOverflow("structured-today")).toBe(true);
     expect(shouldShowHeroOverflow("catch-up")).toBe(true);
     expect(shouldShowHeroOverflow("race-today")).toBe(true);
     expect(shouldShowHeroOverflow("race-prep-week")).toBe(true);
-    expect(shouldShowHeroOverflow("race-recent")).toBe(true);
   });
 
   it("hidden on every other state", () => {
@@ -263,5 +262,8 @@ describe("shouldShowHeroOverflow — L12", () => {
     expect(shouldShowHeroOverflow("race-recovery")).toBe(false);
     expect(shouldShowHeroOverflow("all-done")).toBe(false);
     expect(shouldShowHeroOverflow("rest")).toBe(false);
+    // Run9 (l): race-recent is now hidden too — the did-you-race hero body
+    // owns the operational slot, so there's no catch-up card to host the `...`.
+    expect(shouldShowHeroOverflow("race-recent")).toBe(false);
   });
 });
