@@ -124,6 +124,35 @@ describe("buildPlan · output shape", () => {
     expect(out.profileUpdates.weeklyRunDaysTarget).toBe(3);
     expect(out.profileUpdates.weeklyRunsTarget).toBe(3);
   });
+
+  // Pgm4: the unified Programme Settings editor makes equipment/injuries/
+  // split/experience editable, so buildPlan must persist them onto the
+  // profile (they were previously only writable via onboarding-retake).
+  it("profileUpdates persists the plan-shaping inputs (experience/equipment/injuries/preferredSplit)", () => {
+    const out = buildPlan(
+      makeInput({
+        experience: "advanced",
+        equipment: "home_gym",
+        injuries: ["knee", "shoulder"],
+        preferredSplit: "ppl",
+      })
+    );
+    expect(out.profileUpdates.experience).toBe("advanced");
+    expect(out.profileUpdates.equipment).toBe("home_gym");
+    expect(out.profileUpdates.injuries).toEqual(["knee", "shoulder"]);
+    expect(out.profileUpdates.preferredSplit).toBe("ppl");
+  });
+
+  // Pgm4 regression guard: nutrition phase must land on profile.program.goal
+  // (what macro/calorie consumers read) — not only programState.goal. Without
+  // this the unified editor's phase change wouldn't move calorie targets.
+  it("profileUpdates.program.goal mirrors the nutrition phase", () => {
+    expect(buildPlan(makeInput({ nutritionPhase: "cut" })).profileUpdates.program)
+      .toEqual({ goal: "cut" });
+    expect(
+      buildPlan(makeInput({ nutritionPhase: "lean bulk" })).profileUpdates.program
+    ).toEqual({ goal: "lean bulk" });
+  });
 });
 
 /* ─── Mode: freeform ─────────────────────────────────────────── */
