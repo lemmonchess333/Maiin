@@ -558,7 +558,7 @@ export default function TrainingSection({
               aria-label="Decrease run days"
               onClick={() => handleRunDaysChange(-1)}
               disabled={pending !== null || runDays <= 0}
-              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -570,7 +570,7 @@ export default function TrainingSection({
               aria-label="Increase run days"
               onClick={() => handleRunDaysChange(1)}
               disabled={pending !== null || runDays >= 7}
-              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>
@@ -595,7 +595,7 @@ export default function TrainingSection({
               aria-label="Decrease lift days"
               onClick={() => handleLiftDaysChange(-1)}
               disabled={pending !== null || liftDays <= 2}
-              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Minus className="size-4" />
             </button>
@@ -607,7 +607,7 @@ export default function TrainingSection({
               aria-label="Increase lift days"
               onClick={() => handleLiftDaysChange(1)}
               disabled={pending !== null || liftDays >= 7}
-              className="size-9 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
+              className="size-11 rounded-lg bg-muted text-foreground inline-flex items-center justify-center motion-safe:active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
             </button>
