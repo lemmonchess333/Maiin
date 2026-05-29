@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Toggle } from "@/components/ui/Toggle";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import AccordionSection from "@/components/AccordionSection";
@@ -180,9 +181,10 @@ export default function NotificationsSection({
               Get notified when it&apos;s time to eat
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={mealReminders.enabled}
+            label="Toggle meal reminders"
+            onChange={async () => {
               haptic("light");
               const next = !mealReminders.enabled;
               trackSettingsEvent("settings_toggle_changed", {
@@ -199,22 +201,7 @@ export default function NotificationsSection({
               }
               await updateMealReminders({ enabled: next });
             }}
-            role="switch"
-            aria-checked={mealReminders.enabled}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              mealReminders.enabled
-                ? "bg-primary"
-                : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                mealReminders.enabled ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         {mealReminders.enabled && (
@@ -292,9 +279,10 @@ export default function NotificationsSection({
               Get notified when it&apos;s time to train
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={workoutReminders.enabled}
+            label="Toggle workout reminders"
+            onChange={async () => {
               haptic("light");
               const next = !workoutReminders.enabled;
               trackSettingsEvent("settings_toggle_changed", {
@@ -311,22 +299,7 @@ export default function NotificationsSection({
               }
               await updateWorkoutReminders({ enabled: next });
             }}
-            role="switch"
-            aria-checked={workoutReminders.enabled}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              workoutReminders.enabled
-                ? "bg-primary"
-                : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                workoutReminders.enabled ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         {workoutReminders.enabled && (
@@ -367,9 +340,10 @@ export default function NotificationsSection({
               Remind me if I haven&apos;t logged today
             </p>
           </div>
-          <button
-            type="button"
-            onClick={async () => {
+          <Toggle
+            checked={streakReminder.enabled}
+            label="Toggle streak reminder"
+            onChange={async () => {
               haptic("light");
               const next = !streakReminder.enabled;
               trackSettingsEvent("settings_toggle_changed", {
@@ -389,22 +363,7 @@ export default function NotificationsSection({
               // Settings would still see the modal later.
               await updateStreakReminder({ enabled: next, primingShown: true });
             }}
-            role="switch"
-            aria-checked={streakReminder.enabled}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative shrink-0",
-              streakReminder.enabled
-                ? "bg-primary"
-                : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                streakReminder.enabled ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         {streakReminder.enabled && (
