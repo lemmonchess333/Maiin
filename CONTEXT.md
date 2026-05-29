@@ -159,8 +159,13 @@ explicit, written justification).
 Garmin (Daily Suggested Workouts), Strava (Instant Workouts, 2026), and NRC
 all offer a **no-race adaptive "today's run" layer** — structure without a
 race. Tropos deliberately does **not**: a race goal is the only running
-"plan," and between/without races the run side is freeform logging (enriched
-with a weekly run target + progress, so the tab is not barren).
+"plan," and between/without races the run side is freeform logging. The tab is
+kept from feeling barren with a DESCRIPTIVE cadence line ("you've run 3× in the
+last 4 weeks", "last run 2 days ago") — descriptive only, computed client-side,
+NEVER a weekly target or progress bar. A target would be structure, which the
+run side deliberately does not add (a round-2 stress test caught that an earlier
+"weekly target + progress" idea both rendered "0 of 0" — weeklyRunDaysTarget is
+hard-zeroed for freeform — and contradicted this very position).
 
 Tropos-specific reason: Tropos is a **hybrid** app. The **lift programme is
 the structured anchor** that's always present and periodized; running is
