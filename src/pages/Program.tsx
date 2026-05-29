@@ -1330,6 +1330,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             onClose={() => setShowSettings(false)}
             onRegenerate={handleRegenerate}
             onUpdateSettings={updateSettings}
+            onEditLayout={() => {
+              setShowSettings(false);
+              openEditLayout();
+            }}
           />
         )}
       </AnimatePresence>
@@ -1449,8 +1453,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <CalendarDays className="size-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">
-                    Edit weekly layout
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium text-foreground">
+                      Edit weekly layout
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      Set which days are Rest, Lift, Run or Both
+                    </span>
                   </span>
                 </button>
                 {/* P0-9: Configure programme wizard — runs planBuilder +
@@ -1470,8 +1479,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <Sparkles className="size-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">
-                    Configure programme
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium text-foreground">
+                      Configure programme
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      Re-run setup — goal, phase, equipment
+                    </span>
                   </span>
                   {phaseLocked && (
                     <Lock className="size-3.5 text-muted-foreground" />
@@ -1491,8 +1505,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   style={{ minHeight: 44 }}
                 >
                   <Settings2 className="size-4.5 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground flex-1">
-                    Programme settings
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium text-foreground">
+                      Programme settings
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      Nutrition phase, progression, microloading
+                    </span>
                   </span>
                   {phaseLocked && (
                     <Lock className="size-3.5 text-muted-foreground" />
