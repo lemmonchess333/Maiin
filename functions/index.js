@@ -114,6 +114,17 @@ const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
 const TRIGGER_CAP = { maxInstances: 50 };
 
+// Scheduled (pubsub cron) sweeps iterate EVERY active user/crew via
+// sweepActiveUsers / a crews loop. The Cloud Functions v1 default timeout is
+// 60s — at ~1000 users a full sweep blows past that and is HARD-KILLED
+// mid-run (the function's own try/catch never fires on a timeout kill), so a
+// prefix of users gets processed and the rest are silently left stale with a
+// green-looking schedule. 540s is the v1 maximum. maxInstances:1 is correct
+// for a cron singleton: no parallelism is needed and it prevents a slow run
+// from overlapping the next tick. Re-tune (or shard the sweep) if 540s is ever
+// approached at higher scale.
+const SCHEDULED_CAP = { maxInstances: 1, timeoutSeconds: 540 };
+
 // 2026-05-26 audit PR 4 (finding #10) — Vertex AI response redactor.
 // Logs structural metadata only; never the actual user-facing text /
 // inputs. See functions/lib/vertexLogRedaction.js for the contract.
@@ -2074,8 +2085,9 @@ async function sweepActiveUsers({ name, cutoffDays, perUser }) {
 
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
 
-exports.weeklyPerformanceRollup = functions.pubsub
-  .schedule("15 23 * * 0")
+exports.weeklyPerformanceRollup = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("15 23 * * 0")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -2111,8 +2123,9 @@ exports.weeklyPerformanceRollup = functions.pubsub
 
 // ── 3) Scheduled: daily refresh (02:10 UTC) ──
 
-exports.dailyPerformanceRefresh = functions.pubsub
-  .schedule("10 2 * * *")
+exports.dailyPerformanceRefresh = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("10 2 * * *")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -2373,8 +2386,9 @@ async function _runDailyRaceReconciliationForUser(uid) {
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
 
-exports.dailyRaceReconciliationSweep = functions.pubsub
-  .schedule("0 4 * * *")
+exports.dailyRaceReconciliationSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 4 * * *")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -3060,8 +3074,9 @@ function _scoreFor(metric, totals) {
   }
 }
 
-exports.crewWeeklyLeaderboardRollup = functions.pubsub
-  .schedule("30 2 * * *")
+exports.crewWeeklyLeaderboardRollup = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 2 * * *")
   .timeZone("UTC")
   .onRun(async () => {
     try {
@@ -4423,8 +4438,9 @@ async function _runWeeklyFellBehindCheckForUser(uid, range) {
 
 // ── Scheduled: weekly fell-behind check (Mondays 05:00 UTC) ──
 
-exports.weeklyFellBehindCheck = functions.pubsub
-  .schedule("0 5 * * 1")
+exports.weeklyFellBehindCheck = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 5 * * 1")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
