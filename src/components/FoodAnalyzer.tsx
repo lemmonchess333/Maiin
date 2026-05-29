@@ -693,7 +693,7 @@ export default function FoodAnalyzer({
                 setCameraOpen(true);
               }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#7C6BF0" }}
+              style={{ backgroundColor: "#7B72E9" }}
             >
               <RotateCcw className="size-4" /> Try again
             </button>
