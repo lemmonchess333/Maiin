@@ -107,6 +107,15 @@ export interface PlanBuilderOutput {
     runMode: RunMode;
     raceGoal?: PlanBuilderInput["raceGoal"];
     primaryGoal: PrimaryGoal;
+    // Pgm4: persist the plan-shaping inputs so the stored profile matches
+    // the generated plan. Pre-Pgm4 these were only writable via the
+    // onboarding-retake; the unified Programme Settings editor now edits
+    // them, so buildPlan must emit them (all four are already in the
+    // configurePlan CF sanitiser allow-list, profileSanitizer.js).
+    experience: PlanBuilderInput["experience"];
+    equipment: PlanBuilderInput["equipment"];
+    injuries: string[];
+    preferredSplit: PlanBuilderInput["preferredSplit"];
   };
 }
 
@@ -198,6 +207,10 @@ function buildProfileUpdates(
     weeklyRunsTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
     runMode: input.runMode,
     primaryGoal: input.primaryGoal,
+    experience: input.experience,
+    equipment: input.equipment,
+    injuries: input.injuries,
+    preferredSplit: input.preferredSplit,
   };
   if (input.runMode === "race_prep" && input.raceGoal) {
     updates.raceGoal = input.raceGoal;
