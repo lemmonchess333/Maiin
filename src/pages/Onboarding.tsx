@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -303,32 +303,14 @@ const STEP_META: { title: string; subtitle: string }[] = [
 ============================ */
 
 export default function Onboarding() {
-  const { user, profile, updateProfile } = useAuth();
-  const location = useLocation();
+  const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
-  // Retake mode skips the identity steps (name/gender/age/body metrics) and
-  // jumps straight to "What's your primary goal?" (STEP_META index 4). It's
-  // detected two ways and FROZEN at mount via a useState initializer:
-  //   1. explicit `{ retake: true }` nav state (set by the Settings entry), and
-  //   2. an already-onboarding-complete profile landing on /onboarding — the
-  //      only way a signed-in complete user reaches this screen is a retake,
-  //      so this also makes retake survive a hard refresh (which drops nav
-  //      state) without falling back to the full 13-step identity flow.
-  // Freezing at mount is load-bearing: it stops isRetake flipping after mount
-  // (e.g. when handleFinish sets onboardingComplete=true on a first-run finish,
-  // or any future nav-state race), which is exactly what produced the
-  // "STEP -3 OF 9" negative numbering — START_STEP jumping to 4 while `step`
-  // was already initialised to 0.
-  const [isRetake] = useState(
-    () =>
-      !!(location.state as { retake?: boolean } | null)?.retake ||
-      !!profile?.onboardingComplete
-  );
-
-  const START_STEP = isRetake ? 4 : 0;
-  const VISIBLE_STEPS = TOTAL_STEPS - START_STEP;
-
-  const [step, setStep] = useState(START_STEP);
+  // Pgm4: Onboarding is now PURELY first-run. The old "retake" mode (jump to
+  // step 4 to edit programme fields) was retired — editing a programme lives
+  // on the unified /settings/training screen, no app re-runs onboarding to
+  // change settings. So the flow always starts at step 0 and walks all
+  // TOTAL_STEPS.
+  const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
   // ── Step 0: Display name
@@ -378,57 +360,6 @@ export default function Onboarding() {
 
   // ── Step 9: Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
-
-  // ── Pre-populate from profile in retake mode
-  useEffect(() => {
-    if (isRetake && profile) {
-      if (profile.displayName) setDisplayName(profile.displayName);
-      if (profile.gender) setGender(profile.gender);
-      if (profile.ageRange) setAgeRange(profile.ageRange);
-      if (profile.heightCm) setHeightCm(profile.heightCm);
-      if (profile.weightKg) setWeightKg(profile.weightKg);
-      if (profile.preferredHeightUnit)
-        setHeightUnit(profile.preferredHeightUnit);
-      if (profile.preferredWeightUnit)
-        setWeightUnit(profile.preferredWeightUnit);
-      if (profile.primaryGoal) setPrimaryGoal(profile.primaryGoal);
-      if (profile.experience) setExperience(profile.experience);
-      if (profile.daysPerWeek) setDaysPerWeek(profile.daysPerWeek);
-      if (profile.equipment) setEquipment(profile.equipment);
-      if (profile.preferredSplit) setPreferredSplit(profile.preferredSplit);
-      if (profile.runFrequency) setRunFrequency(profile.runFrequency);
-      // P0-5: retake prefills run-plan state so users editing an
-      // existing plan don't have to re-pick mode + targets. Mode +
-      // weekly count + race goal are independent of the higher-level
-      // runFrequency control — a "regular runner" can still be in
-      // race_prep, etc.
-      if (profile.runMode) setRunMode(profile.runMode as RunMode);
-      if (
-        typeof profile.weeklyRunDaysTarget === "number" &&
-        profile.weeklyRunDaysTarget > 0
-      ) {
-        setWeeklyRunDays(profile.weeklyRunDaysTarget);
-      }
-      if (profile.raceGoal) {
-        setRaceDistance(profile.raceGoal.distance as RaceDistance);
-        setRaceTargetDate(profile.raceGoal.targetDate);
-      }
-      if (profile.injuries) {
-        const knownInjuries = [
-          "none",
-          "lower_back",
-          "shoulder",
-          "knee",
-          "wrist",
-          "elbow",
-        ];
-        // Pre-W1c "other" / free-text injury values are ignored on retake —
-        // the filter only acts on the three known categories, so surfacing
-        // stale free-text would only re-confuse the user.
-        setInjuries(profile.injuries.filter((i) => knownInjuries.includes(i)));
-      }
-    }
-  }, [isRetake, profile]);
 
   // ── Derived values
   const displayHeight =
@@ -826,16 +757,15 @@ export default function Onboarding() {
     <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe bg-background text-foreground">
       {/* ── Progress bar ── */}
       <div className="flex gap-1.5 pt-14 pb-6">
-        {Array.from({ length: VISIBLE_STEPS }).map((_, i) => {
-          const stepIdx = i + START_STEP;
+        {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
           return (
             <div
-              key={stepIdx}
+              key={i}
               className="h-1 flex-1 rounded-full overflow-hidden bg-muted"
             >
               <motion.div
                 className="h-full rounded-full"
-                animate={{ width: stepIdx <= step ? "100%" : "0%" }}
+                animate={{ width: i <= step ? "100%" : "0%" }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
                 style={{ background: THEME.brand }}
               />
@@ -855,8 +785,7 @@ export default function Onboarding() {
           className="flex-1 overflow-y-auto"
         >
           <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
-            Step {Math.min(Math.max(step - START_STEP + 1, 1), VISIBLE_STEPS)}{" "}
-            of {VISIBLE_STEPS}
+            Step {step + 1} of {TOTAL_STEPS}
           </p>
           <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
@@ -1753,7 +1682,7 @@ export default function Onboarding() {
 
       {/* ── Navigation ── */}
       <div className="flex items-center gap-3 pt-6">
-        {step > START_STEP ? (
+        {step > 0 ? (
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
@@ -1764,23 +1693,6 @@ export default function Onboarding() {
             }}
           >
             Back
-          </button>
-        ) : isRetake ? (
-          <button
-            type="button"
-            onClick={() => {
-              // Retake never flips onboardingComplete (it routes via the
-              // dedicated /onboarding route while the profile stays complete),
-              // so bailing out is just a navigation — no profile write needed.
-              navigate("/settings");
-            }}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
-            style={{
-              background: "hsl(var(--muted))",
-              color: "hsl(var(--muted-foreground))",
-            }}
-          >
-            Exit
           </button>
         ) : null}
         <button
