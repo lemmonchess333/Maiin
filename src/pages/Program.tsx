@@ -866,16 +866,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           style={{
                             backgroundColor:
                               status === "completed" || status === "skipped"
-                                ? "rgba(76,175,80,0.1)"
+                                ? "rgba(77,184,114,0.1)"
                                 : status === "today"
-                                  ? "rgba(124,107,240,0.1)"
+                                  ? "rgba(123,114,233,0.1)"
                                   : "hsl(var(--muted))",
                           }}
                         >
                           {status === "completed" ? (
                             <Check
                               className="size-[18px]"
-                              style={{ color: "#4CAF50" }}
+                              style={{ color: "#4DB872" }}
                               strokeWidth={2.5}
                             />
                           ) : (
@@ -883,7 +883,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               className={`size-[18px] ${status === "today" ? "" : "text-muted-foreground"}`}
                               style={
                                 status === "today"
-                                  ? { color: "#7C6BF0" }
+                                  ? { color: "#7B72E9" }
                                   : undefined
                               }
                             />
@@ -898,8 +898,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               <span
                                 className="text-[11px] font-semibold shrink-0"
                                 style={{
-                                  color: "#4CAF50",
-                                  backgroundColor: "rgba(76,175,80,0.1)",
+                                  color: "#4DB872",
+                                  backgroundColor: "rgba(77,184,114,0.1)",
                                   padding: "2px 8px",
                                   borderRadius: 6,
                                 }}
@@ -919,8 +919,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               <span
                                 className="text-[11px] font-semibold shrink-0"
                                 style={{
-                                  color: "#7C6BF0",
-                                  backgroundColor: "rgba(124,107,240,0.1)",
+                                  color: "#7B72E9",
+                                  backgroundColor: "rgba(123,114,233,0.1)",
                                   padding: "2px 8px",
                                   borderRadius: 6,
                                 }}
@@ -977,19 +977,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                         {ex.name}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        {ex.sets} sets × {ex.reps} reps
-                                        {!isBW && ex.weight > 0
-                                          ? ` · ${ex.weight}kg`
-                                          : ""}
+                                        <span className="font-mono tabular-nums">{ex.sets}</span> sets × <span className="font-mono tabular-nums">{ex.reps}</span> reps
+                                        {!isBW && ex.weight > 0 ? (
+                                          <>
+                                            {" · "}
+                                            <span className="font-mono tabular-nums">{ex.weight}</span>kg
+                                          </>
+                                        ) : null}
                                       </p>
                                       {lastPerf && (
                                         <p className="text-xs mt-0.5 text-muted-foreground">
                                           Last:{" "}
-                                          {lastPerf.weight > 0
-                                            ? `${lastPerf.weight} kg × ${lastPerf.reps}`
-                                            : isBW
-                                              ? `BW × ${lastPerf.reps}`
-                                              : `— × ${lastPerf.reps}`}
+                                          {lastPerf.weight > 0 ? (
+                                            <>
+                                              <span className="font-mono tabular-nums">{lastPerf.weight}</span> kg × <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+                                            </>
+                                          ) : isBW ? (
+                                            <>BW × <span className="font-mono tabular-nums">{lastPerf.reps}</span></>
+                                          ) : (
+                                            <>— × <span className="font-mono tabular-nums">{lastPerf.reps}</span></>
+                                          )}
                                         </p>
                                       )}
                                     </div>
@@ -1037,20 +1044,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                       {ex.name}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                      {ex.sets} sets × {ex.reps} reps
-                                      {!isBW && ex.weight > 0
-                                        ? ` · ${ex.weight}kg`
-                                        : ""}
+                                      <span className="font-mono tabular-nums">{ex.sets}</span> sets × <span className="font-mono tabular-nums">{ex.reps}</span> reps
+                                      {!isBW && ex.weight > 0 ? (
+                                        <>
+                                          {" · "}
+                                          <span className="font-mono tabular-nums">{ex.weight}</span>kg
+                                        </>
+                                      ) : null}
                                     </p>
                                     {lastPerf && (
-                                      <p
-                                        className="text-xs mt-0.5"
-                                        style={{ color: "#999" }}
-                                      >
+                                      <p className="text-xs mt-0.5 text-muted-foreground/80">
                                         Last:{" "}
-                                        {lastPerf.weight > 0
-                                          ? `${lastPerf.weight} kg × ${lastPerf.reps}`
-                                          : `${lastPerf.reps} reps`}
+                                        {lastPerf.weight > 0 ? (
+                                          <>
+                                            <span className="font-mono tabular-nums">{lastPerf.weight}</span> kg × <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span className="font-mono tabular-nums">{lastPerf.reps}</span> reps
+                                          </>
+                                        )}
                                       </p>
                                     )}
                                   </button>
@@ -1080,13 +1093,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         <div
                           className="rounded-xl p-3"
                           style={{
-                            backgroundColor: "rgba(76,175,80,0.05)",
-                            border: "1px solid rgba(76,175,80,0.15)",
+                            backgroundColor: "rgba(77,184,114,0.05)",
+                            border: "1px solid rgba(77,184,114,0.15)",
                           }}
                         >
                           <div className="flex justify-around items-center">
                             <div className="text-center">
-                              <p className="text-base font-bold text-foreground">
+                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 ~{estimatedMinutes} min
                               </p>
                               <p className="text-[11px] font-medium text-muted-foreground">
@@ -1098,7 +1111,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               style={{ width: 1, height: 24 }}
                             />
                             <div className="text-center">
-                              <p className="text-base font-bold text-foreground">
+                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 {formatVolume(totalVolume)}
                               </p>
                               <p className="text-[11px] font-medium text-muted-foreground">
@@ -1110,7 +1123,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               style={{ width: 1, height: 24 }}
                             />
                             <div className="text-center">
-                              <p className="text-base font-bold text-foreground">
+                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 {exerciseCount}
                               </p>
                               <p className="text-[11px] font-medium text-muted-foreground">
@@ -1141,14 +1154,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   >
                     <Play className="size-4" /> Begin Workout
                   </button>
-                  <div className="flex items-center justify-center mt-2">
+                  <div className="flex items-center justify-center mt-1">
                     <button
                       type="button"
                       onClick={() => {
                         setSkipTargetDay(idx);
                         setShowSkipConfirm(true);
                       }}
-                      className="text-[13px] font-medium text-muted-foreground"
+                      className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                     >
                       Skip Session
                     </button>
@@ -1158,18 +1171,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 <div
                   className="flex items-center justify-center gap-2 py-3.5 rounded-[14px]"
                   style={{
-                    backgroundColor: "rgba(76,175,80,0.06)",
-                    border: "1px solid rgba(76,175,80,0.12)",
+                    backgroundColor: "rgba(77,184,114,0.06)",
+                    border: "1px solid rgba(77,184,114,0.12)",
                   }}
                 >
                   <Check
                     className="size-4"
-                    style={{ color: "#4CAF50" }}
+                    style={{ color: "#4DB872" }}
                     strokeWidth={2.5}
                   />
                   <span
                     className="text-sm font-semibold"
-                    style={{ color: "#4CAF50" }}
+                    style={{ color: "#4DB872" }}
                   >
                     Completed · ~{estimatedMinutes} min ·{" "}
                     {formatVolume(totalVolume)}
