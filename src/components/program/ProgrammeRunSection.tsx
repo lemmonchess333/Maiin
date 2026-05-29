@@ -50,6 +50,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
+import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
@@ -189,6 +190,36 @@ export default function ProgrammeRunSection({
     !Number.isNaN(raceElapsedTarget.getTime()) &&
     raceElapsedTarget.getTime() < new Date().getTime()
   );
+
+  // Run9 (l): race-recent ("did you race?") dismissal. When the user taps
+  // "I didn't race", hide the prompt for the rest of the T+1..T+3 window
+  // (keyed by the race date so a new race resets it) and let the server's
+  // dailyRaceReconciliationSweep flip race_no_show at T+3 — the client NEVER
+  // writes that status (PR-L: race-day transitions are server-owned; the hook
+  // is a pure reader). Same once-only localStorage pattern as
+  // raceElapsedDismissed; safe because race-recent only fires 1–3 days after a
+  // past race, by which point a newly-set future race has remounted the page.
+  const raceRecentDismissKey = `tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
+  const [raceRecentDismissed, setRaceRecentDismissed] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.localStorage.getItem(raceRecentDismissKey) === "1";
+      } catch {
+        return false;
+      }
+    }
+  );
+  function dismissRaceRecent() {
+    setRaceRecentDismissed(true);
+    try {
+      window.localStorage.setItem(raceRecentDismissKey, "1");
+    } catch {
+      // localStorage unavailable / quota — swallow; the in-memory state still
+      // hides the prompt for this session.
+    }
+    toast("No worries — we'll wrap up your plan.");
+  }
 
   // PR-C: post-race card state derivation. Driven by:
   //   - the race-day runDay status (planned / completed_* / race_no_show)
@@ -398,6 +429,7 @@ export default function ProgrammeRunSection({
       {currentMode === "race_prep" &&
         raceGoal &&
         raceElapsed &&
+        heroState !== "race-recent" &&
         !inRecovery &&
         !recoveryEnded &&
         !isNoShow &&
@@ -407,8 +439,8 @@ export default function ProgrammeRunSection({
             title="Race day has passed"
             description={
               <>
-                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}.
-                Switch to structured or set a new race goal via the chip row.
+                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Set
+                a new race goal or switch modes in Manage Run Plan.
               </>
             }
             onDismiss={dismissRaceElapsedBanner}
@@ -465,7 +497,7 @@ export default function ProgrammeRunSection({
                   }}
                   className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
-                  Switch to structured
+                  Manage plan
                 </button>
               </div>
             </div>
@@ -769,10 +801,94 @@ export default function ProgrammeRunSection({
         />
       )}
 
+      {/* ── Hero: race-recent ("did you race?") ─────────────────────
+          Run9 (l): T+1..T+3 after the race date, before the server's
+          dailyRaceReconciliationSweep flips the slot to race_no_show.
+          A finisher who hasn't logged yet must NOT be nagged with a
+          "catch-up" Start card on the elapsed race slot — so this calm
+          prompt OCCUPIES the operational slot (the Next card below is
+          suppressed for this state) and offers the two honest answers:
+            • Log it → log the race against the race-day slot; onRunCreated
+              writes the recovery entry server-side and the recovery hero
+              takes over.
+            • I didn't race → dismiss for the rest of the window; the
+              server owns the race_no_show flip at T+3 (PR-L — the client
+              never writes that status). */}
+      {heroState === "race-recent" && raceGoal && !raceRecentDismissed && (
+        <div
+          className="w-full rounded-xl p-4 space-y-3"
+          style={{
+            background: `${THEME.running}0F`,
+            border: `1px solid ${THEME.running}30`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="size-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${THEME.running}1A` }}
+            >
+              <Footprints
+                className="size-5"
+                style={{ color: THEME.running }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-xs font-semibold mb-0.5"
+                style={{ color: THEME.running }}
+              >
+                Did you race?
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {raceGoal.distance.toUpperCase()}
+                {" · "}
+                {formatDistanceToNowStrict(parseLocalDate(raceGoal.targetDate), {
+                  addSuffix: true,
+                })}
+              </p>
+              <p className="text-micro text-muted-foreground">
+                Log it to start your recovery week, or let us know if you sat
+                this one out.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                navigate(
+                  raceDayRunDay?.id
+                    ? `/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`
+                    : "/run"
+                );
+              }}
+              className="flex-1 py-2 rounded-lg text-xs font-bold text-white"
+              style={{ background: THEME.running }}
+            >
+              Log it
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                dismissRaceRecent();
+              }}
+              className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+            >
+              I didn't race
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Next planned run (structured + race_prep with goal) ──
           Same URL pattern as RunCTACard / trainingResolver.startUrl.
           Skipped when every runDay in the week is already terminal
           (we render a "done this week" affirmation instead).
+          Run9 (l): also suppressed in the race-recent window so the
+          elapsed race slot can't render as a "Next · Pending" catch-up
+          nag — the did-you-race hero above owns that slot instead.
           Run7 Q7: subtle coral 6% tint, icon container coral ~10%,
           Start button flat coral solid, description line-clamp-2.
 
@@ -782,7 +898,10 @@ export default function ProgrammeRunSection({
           mark-complete / skip / template-swap. Restructured from
           single <button type="button"> to <div role="button"> so the overflow
           button can live as a child without nested-button HTML. */}
-      {currentMode !== "freeform" && nextStartable && nextStartUrl && (
+      {currentMode !== "freeform" &&
+        heroState !== "race-recent" &&
+        nextStartable &&
+        nextStartUrl && (
         <div
           role="button"
           tabIndex={0}
