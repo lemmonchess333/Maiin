@@ -106,6 +106,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     skipRunDay,
     refreshRunSchedule,
     skipRecoveryEarly,
+    realignRacePlan,
+    dismissFellBehindPrompt,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
@@ -780,6 +782,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
             skipRecoveryEarly={skipRecoveryEarly}
+            realignRacePlan={realignRacePlan}
+            dismissFellBehindPrompt={dismissFellBehindPrompt}
           />
         </div>
       )}
