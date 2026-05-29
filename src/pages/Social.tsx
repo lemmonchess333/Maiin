@@ -577,7 +577,7 @@ export default function Social() {
                 type="button"
                 key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                className={`flex-1 min-h-[44px] py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                   tab === t
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground"

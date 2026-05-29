@@ -148,7 +148,7 @@ function FilterPills({
               key={f}
               onClick={() => setFilter(f)}
               className={[
-                "shrink-0 text-xs px-4 py-2.5 rounded-full font-medium transition-all",
+                "shrink-0 inline-flex items-center justify-center min-h-[44px] text-xs px-4 rounded-full font-medium transition-all",
                 active ? "text-white" : "bg-muted text-muted-foreground",
               ].join(" ")}
               style={
