@@ -155,12 +155,12 @@ export function shouldShowHeroOverflow(state: RunHeroState): boolean {
     state === "structured-today" ||
     state === "catch-up" ||
     state === "race-today" ||
-    state === "race-prep-week" ||
-    // Run9 (l): keep the elapsed-race slot's overflow (mark-complete / DNF /
-    // skip via DayActionSheet) reachable during the did-you-race window — this
-    // is the same affordance "catch-up" exposed pre-race-recent, so splitting
-    // the state out is non-regressive until the full "did you race?" hero
-    // wiring lands.
-    state === "race-recent"
+    state === "race-prep-week"
+    // Run9 (l): race-recent no longer rides the catch-up overflow. The
+    // did-you-race hero body now owns the operational slot (the catch-up Start
+    // card is suppressed for this state), so there is no card to host the `...`
+    // — the prior "non-regressive until the hero wiring lands" allowance is
+    // now retired. The race-day slot's mark-complete / DNF / skip affordance
+    // stays reachable via the week strip's DayActionSheet tap-through.
   );
 }
