@@ -184,10 +184,14 @@ export interface UserProfileRunning {
   runMode?: "freeform" | "structured" | "race_prep";
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
+  // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
+  // recovery exit can CLEAR a prior race (a merge write of `undefined` is
+  // stripped and would leave the old goal stranded). Readers gate on
+  // truthiness, so `null` reads the same as absent.
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
-  };
+  } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**
    * Schema version for `weekSchedule` shape. v7 spec uses this for
