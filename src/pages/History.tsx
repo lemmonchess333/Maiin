@@ -24,7 +24,7 @@ import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec } from "@/lib/runLabels";
 import { requiresManualDistance } from "@/lib/runGuards";
-import { Footprints, Trophy, UtensilsCrossed } from "lucide-react";
+import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
 import { formatVolume, formatDistance } from "@/utils/formatters";
@@ -1037,6 +1037,14 @@ export default function History() {
   const renderLiftingEmptyNote = liftingHasLifetime && !liftingHasWindow;
   const renderNutritionEmptyNote = nutritionHasLifetime && !nutritionHasWindow;
 
+  /* True cold-start: the user has never logged a run, lift, or meal, so
+     every sport section is Tier-1 suppressed. Rather than show a wall of
+     zeroed rings (PeriodOverview) plus a redundant "PI appears later" strip,
+     render ONE calm card that sets the expectation. The moment anything is
+     logged, lifetime>0 flips this off and the normal analytics return. */
+  const isAnalyticsColdStart =
+    !showRunningSection && !showLiftingSection && !showNutritionSection;
+
   return (
     <motion.div
       {...pullBindProps}
@@ -1121,7 +1129,31 @@ export default function History() {
               who navigated by sport can still see each section's
               sport-coded header inline as they scroll. */}
 
+            {/* Cold-start: one calm expectation-setting card instead of a
+                wall of zeroed rings + redundant PI strip. */}
+            {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
+              <div
+                className="p-6 rounded-2xl bg-card text-center"
+                style={{ boxShadow: "var(--ds-shadow-card)" }}
+              >
+                <div
+                  className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                  style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
+                >
+                  <LineChart className="size-6" style={{ color: THEME.brand }} />
+                </div>
+                <p className="text-base font-bold text-foreground">
+                  No analytics yet
+                </p>
+                <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-[280px] mx-auto">
+                  Log a workout, run, or meal and your trends — volume, pace,
+                  calories and your Performance Index — will show up here.
+                </p>
+              </div>
+            )}
+
             {filter === "analytics" &&
+              !isAnalyticsColdStart &&
               (dataLoading ? (
                 <div className="p-4 rounded-2xl bg-card space-y-3">
                   <Skeleton className="h-3 w-20" />
@@ -1147,8 +1179,10 @@ export default function History() {
             {/* Hist5b pin 3 — Performance fold. Compact PI strip with
               inline-accordion expansion. Replaces the dedicated
               Performance tab; deep-links to /history#performance
-              scroll to this section's anchor. */}
-            {filter === "analytics" && (
+              scroll to this section's anchor. Suppressed in cold-start —
+              its own "PI appears later" empty state would duplicate the
+              cold-start card above. */}
+            {filter === "analytics" && !isAnalyticsColdStart && (
               <SectionErrorBoundary sectionName="performance-section">
                 <PerformanceSection />
               </SectionErrorBoundary>

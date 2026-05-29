@@ -26,7 +26,7 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   Flame,
-  Footprints,
+  UtensilsCrossed,
   X,
   Target,
   Minus,
@@ -714,21 +714,24 @@ export default function Home() {
             </button>
           </div>
           <div className="space-y-2">
+            {/* Hints map 1:1 to the real bottom-nav tabs (Programme / Food /
+                Analytics). There is no "Log" tab — workouts and runs both
+                start from Programme, meals are logged from Food. */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Dumbbell className="size-4 text-primary shrink-0" />
               <span>
                 Tap <strong className="text-foreground">Programme</strong> to
-                start a workout
+                start a workout or run
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Footprints
+              <UtensilsCrossed
                 className="size-4 shrink-0"
-                style={{ color: THEME.running }}
+                style={{ color: THEME.warning }}
               />
               <span>
-                Tap <strong className="text-foreground">Log</strong> to track
-                runs and meals
+                Tap <strong className="text-foreground">Food</strong> to log
+                meals
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
