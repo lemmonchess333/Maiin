@@ -64,6 +64,8 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
+import { realignResultMessage } from "@/lib/realignCopy";
+import type { RaceTiming } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
@@ -104,6 +106,13 @@ interface ProgrammeRunSectionProps {
    *  writes. The post-race card's "Skip recovery early" link calls
    *  this when the user wants to bail out of the soft window. */
   skipRecoveryEarly: () => Promise<void>;
+  /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today (keep the
+   *  race date). Returns the timing so the in-tab Realign banner can toast the
+   *  finish-safely / compressed / healthy copy. */
+  realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
+  /** Clears `pendingFellBehindPrompt` without a plan change — used by the
+   *  in-tab "My race moved →" path before routing to the date editor. */
+  dismissFellBehindPrompt: () => Promise<void>;
 }
 
 export default function ProgrammeRunSection({
@@ -115,6 +124,8 @@ export default function ProgrammeRunSection({
   skipRunDay,
   skipWorkoutDay,
   skipRecoveryEarly,
+  realignRacePlan,
+  dismissFellBehindPrompt,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   // PR-1: which row is opening DayActionSheet.
@@ -257,15 +268,16 @@ export default function ProgrammeRunSection({
   // fell-behind) so two of these can never stack. Persistent attributes
   // (compressed / taper / week N-of-M) are deliberately NOT routed here — they
   // stay as their own always-visible notes (and migrate to a RaceHeader in a
-  // later slice). fell-behind joins this slot once the in-tab Realign action
-  // lands (phase-3); until then its input is false so the resolver is
-  // forward-compatible without surfacing an actionless prompt.
+  // later slice). Run9 phase-3 (Slice DE): fell-behind now feeds the real
+  // server flag — the in-tab Realign action lands below so the prompt is
+  // actionable.
+  const pendingFellBehind = !!programState?.pendingFellBehindPrompt;
   const contextualPrompt =
     currentMode === "race_prep" && raceGoal
       ? resolveRunContextualPrompt({
           isNoShow,
           recoveryEnded,
-          pendingFellBehind: false,
+          pendingFellBehind,
         })
       : null;
   const recoveryDaysLeft = useMemo(() => {
@@ -402,6 +414,26 @@ export default function ProgrammeRunSection({
       await skipRecoveryEarly();
     } catch (e) {
       logger.error("[handleSkipRecoveryEarly] failed", e);
+    }
+  }
+
+  // Run9 phase-3 (Slice DE): in-tab Realign. Re-anchors the race plan to today
+  // (keeping the race date) and toasts the timing result — compressed, or the
+  // honest finish-safely line below the taper floor.
+  async function handleRealign(): Promise<void> {
+    try {
+      const { timing, totalWeeks } = await realignRacePlan();
+      if (raceGoal) {
+        toast.success(
+          realignResultMessage({
+            timing,
+            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            totalWeeks,
+          })
+        );
+      }
+    } catch (e) {
+      logger.error("[handleRealign] failed", e);
     }
   }
 
@@ -554,6 +586,42 @@ export default function ProgrammeRunSection({
                 className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 Switch to structured
+              </button>
+            </div>
+          }
+        />
+      )}
+
+      {/* Info: fell-behind (Run9 phase-3 Slice DE). Server flag set after a
+          week under 50% of target. One calm prompt + one-tap Realign (keep the
+          race date, re-plan from today) + a "my race moved" route to the date
+          editor. Gated by the single contextual-prompt slot (yields to no-show
+          + recovery-complete). */}
+      {contextualPrompt === "fell-behind" && raceGoal && (
+        <Banner
+          variant="info"
+          title="Last week didn't go to plan"
+          description="Realign keeps your race date and re-plans the remaining weeks from today."
+          action={
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleRealign}
+                className="w-full py-2 rounded-lg text-xs font-bold text-white"
+                style={{ background: THEME.running }}
+              >
+                Realign my plan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  void dismissFellBehindPrompt();
+                  navigate("/settings/training");
+                }}
+                className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+              >
+                My race moved →
               </button>
             </div>
           }
