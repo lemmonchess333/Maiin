@@ -6,10 +6,8 @@ import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
-import ConfigurePlanModal from "@/components/program/ConfigurePlanModal";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
-import ProgramSettingsPanel from "@/components/program/ProgramSettingsPanel";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import DayStepper from "@/components/program/DayStepper";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
@@ -19,12 +17,10 @@ import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import { THEME } from "@/lib/theme";
 import {
-  Lock,
   Check,
   Dumbbell,
   RefreshCw,
   Settings2,
-  Sparkles,
   CalendarDays,
   MoreHorizontal,
   Plus,
@@ -43,7 +39,6 @@ import { normalizeExercise } from "@/features/program/programTypes";
 import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 import {
   DndContext,
   closestCenter,
@@ -100,7 +95,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     skipWorkoutDay,
     advanceToNextWeek,
     logExercise,
-    updateSettings,
     regenerateProgram,
     saveProgram,
     viewWeek,
@@ -121,21 +115,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // the current.
   const { currentWeek: perfWeek } = usePerformanceWeeks(2);
   const runsTarget = getWeeklyRunTarget(profile);
-  const [configurePlanOpen, setConfigurePlanOpen] = useState(false);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
   // closed the body unmounts and the inner useProgrammeScheduleEditor
   // hook tears down, so the next open re-reads `profile` fresh.
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
   const openEditLayout = useCallback(() => {
     setEditLayoutOpen(true);
-  }, []);
-  // PR-0d: which step the wizard lands on. The overflow menu opens
-  // at step 0 (full wizard); the run-mode chips + race-goal CTA in
-  // ProgrammeRunSection open at the Running step.
-  const [configurePlanInitialStep, setConfigurePlanInitialStep] = useState(0);
-  const openConfigurePlan = useCallback((step: number = 0) => {
-    setConfigurePlanInitialStep(step);
-    setConfigurePlanOpen(true);
   }, []);
   // PR-3: 2-tab segmented control — Lift | Run. Today / Week shells
   // were retired once Home owned today-glance (via the shared
@@ -189,27 +174,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const isAnimating = useRef(false);
 
   // UI state
-  const [regenerating, setRegenerating] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showProSheet, setShowProSheet] = useState(false);
   const [showOverflow, setShowOverflow] = useState(false);
-  const settingsPanelRef = useFocusTrap<HTMLDivElement>(showSettings);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
   const [skipTargetDay, setSkipTargetDay] = useState<number | null>(null);
-
-  // PR-2: Reset-programme confirmation (overflow item) — separate
-  // from ScheduleLayoutSheet's restructure modal because that one
-  // fires only when the user changes lift-day count; this one
-  // rebuilds with the same params and is destructive in a different
-  // way (clears weekHistory, resets weekNumber to 1). User should
-  // know before tapping. Pre-PR-2 this was labelled "Refresh
-  // Programme" — renamed to "Reset programme" so the destructive
-  // intent matches the function it calls.
-  const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
   // Swipe navigation
   const touchStartRef = useRef({ x: 0, y: 0 });
@@ -478,10 +449,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const allComplete =
     displayWorkouts.length > 0 &&
     displayWorkouts.every((d) => d.completed || d.skipped);
-  const settings = programState.settings ?? {
-    autoProgression: true,
-    microloading: true,
-  };
   const history = programState.weekHistory ?? [];
 
   // Clamp selectedDayIndex
@@ -582,16 +549,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
     return `Built for ${goalText} · ${splitLabel(programState.splitType)} · ${daysLabel}`;
   })();
-
-  const handleRegenerate = async (
-    goalOverride?: string,
-    weeklyTargetOverride?: number
-  ) => {
-    setRegenerating(true);
-    await regenerateProgram(goalOverride, weeklyTargetOverride);
-    setRegenerating(false);
-    setShowSettings(false);
-  };
 
   const handleAdvanceWeek = async () => {
     setAdvancing(true);
@@ -1319,25 +1276,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         }}
       />
 
-      {/* Settings Panel */}
-      <AnimatePresence>
-        {showSettings && (
-          <ProgramSettingsPanel
-            ref={settingsPanelRef}
-            currentGoal={programState.goal}
-            currentSplit={programState.splitType}
-            settings={settings}
-            onClose={() => setShowSettings(false)}
-            onRegenerate={handleRegenerate}
-            onUpdateSettings={updateSettings}
-            onEditLayout={() => {
-              setShowSettings(false);
-              openEditLayout();
-            }}
-          />
-        )}
-      </AnimatePresence>
-
       {/* In-Session Workout Screen */}
       {sessionDayIndex !== null && programState.workouts[sessionDayIndex] && (
         <WorkoutSession
@@ -1397,23 +1335,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         regenerateProgram={regenerateProgram}
       />
 
-      {/* P0-9: Configure Plan wizard. Renders nothing when closed —
-          the modal itself returns null on `!open`. */}
-      {profile && (
-        <ConfigurePlanModal
-          open={configurePlanOpen}
-          onClose={() => setConfigurePlanOpen(false)}
-          profile={profile}
-          programState={programState}
-          initialStep={configurePlanInitialStep}
-          onSaved={() => {
-            // No explicit refresh — useProgram subscribes to the
-            // programState doc and re-renders on next snapshot. The
-            // toast inside the modal confirms the write landed.
-          }}
-        />
-      )}
-
       {/* Overflow Menu Sheet */}
       <AnimatePresence>
         {showOverflow && (
@@ -1436,13 +1357,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
-                {/* PR-2: Edit weekly layout — basic-tier capability.
-                    Opens ScheduleLayoutSheet (the editor that pre-PR-2
-                    lived in Settings → Training). Intentionally NOT
-                    phase-locked: day-to-day layout is foundational,
-                    not a premium feature. The other three items below
-                    keep their Pro gate (plan-shape change, phase
-                    settings, full reset). */}
+                {/* Edit weekly layout — opens ScheduleLayoutSheet (the
+                    day-by-day Rest/Lift/Run/Both grid). Foundational, free. */}
                 <button
                   type="button"
                   onClick={() => {
@@ -1462,44 +1378,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     </span>
                   </span>
                 </button>
-                {/* P0-9: Configure programme wizard — runs planBuilder +
-                    configurePlan CF on Confirm. Deliberate plan-shape
-                    change (not a day toggle), so Pro-locked. */}
+                {/* Pgm4: single free "Edit programme" entry. The three
+                    previous items (Configure wizard / Programme settings /
+                    Reset) and their Pro gate were consolidated into the
+                    unified ProgrammeSettings editor at /settings/training —
+                    goal, nutrition phase, lifting, running, equipment,
+                    injuries, toggles and reset all live there now. */}
                 <button
                   type="button"
                   onClick={() => {
                     setShowOverflow(false);
-                    if (phaseLocked) {
-                      setShowProSheet(true);
-                    } else {
-                      openConfigurePlan();
-                    }
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
-                  style={{ minHeight: 44 }}
-                >
-                  <Sparkles className="size-4.5 text-muted-foreground" />
-                  <span className="flex-1">
-                    <span className="block text-sm font-medium text-foreground">
-                      Configure programme
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      Re-run setup — goal, phase, equipment
-                    </span>
-                  </span>
-                  {phaseLocked && (
-                    <Lock className="size-3.5 text-muted-foreground" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowOverflow(false);
-                    if (phaseLocked) {
-                      setShowProSheet(true);
-                    } else {
-                      setShowSettings(true);
-                    }
+                    navigate("/settings/training");
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
@@ -1507,47 +1396,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <Settings2 className="size-4.5 text-muted-foreground" />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
-                      Programme settings
+                      Edit programme
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      Nutrition phase, progression, microloading
+                      Goal, nutrition, lifting, running, equipment, injuries
                     </span>
                   </span>
-                  {phaseLocked && (
-                    <Lock className="size-3.5 text-muted-foreground" />
-                  )}
-                </button>
-                {/* PR-2: "Reset programme" replaces "Refresh Programme".
-                    `regenerateProgram` resets weekNumber to 1 and clears
-                    weekHistory — that's a hard reset, not a refresh.
-                    Calling it Refresh invited accidental taps; the new
-                    label discloses the destructive nature. */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowOverflow(false);
-                    if (phaseLocked) {
-                      setShowProSheet(true);
-                    } else {
-                      setShowRefreshConfirm(true);
-                    }
-                  }}
-                  disabled={regenerating}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
-                  style={{ minHeight: 44 }}
-                >
-                  <RefreshCw
-                    className={cn(
-                      "size-4.5 text-muted-foreground",
-                      regenerating && "animate-spin"
-                    )}
-                  />
-                  <span className="text-sm font-medium text-foreground flex-1">
-                    Reset programme
-                  </span>
-                  {phaseLocked && (
-                    <Lock className="size-3.5 text-muted-foreground" />
-                  )}
                 </button>
               </div>
             </motion.div>
@@ -1555,119 +1409,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         )}
       </AnimatePresence>
 
-      {/* PR-2: Reset programme confirmation — destructive.
-          `regenerateProgram` rebuilds the workouts array, resets
-          weekNumber to 1, and clears weekHistory (the user's
-          "Browse Past Weeks" data). Logged workouts in History are
-          NOT affected. The copy and confirm-button label spell this
-          out so users can't tap "Refresh" expecting a benign sync
-          and lose their week summaries. */}
-      <AnimatePresence>
-        {showRefreshConfirm && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowRefreshConfirm(false)}
-              className="fixed inset-0 bg-black/60 z-[60]"
-            />
-            <motion.div
-              role="alertdialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.15 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
-            >
-              <h3 className="text-sm font-semibold text-foreground">
-                Reset your programme?
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                This rebuilds your lift split for the current nutrition phase
-                and training days, restarts you at Week&nbsp;1, and clears the
-                week-by-week summary history. Logged workouts and runs in
-                History are not affected.
-              </p>
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowRefreshConfirm(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setShowRefreshConfirm(false);
-                    await handleRegenerate();
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
-                >
-                  Reset programme
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Pro Upsell Sheet */}
-      <AnimatePresence>
-        {showProSheet && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={() => setShowProSheet(false)}
-            />
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl safe-area-pb bg-card border-t border-border/50"
-            >
-              <div className="max-w-md mx-auto p-5 space-y-4">
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <div className="flex items-center gap-3">
-                  <div
-                    className="size-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${THEME.lifting}15` }}
-                  >
-                    <Lock className="size-5" style={{ color: THEME.lifting }} />
-                  </div>
-                  <div>
-                    <p className="text-base font-semibold text-foreground">
-                      Upgrade to Pro
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Unlock advanced periodisation and AI adjustments
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProSheet(false);
-                    navigate("/upgrade");
-                  }}
-                  className="w-full py-3 rounded-xl text-white text-sm font-semibold"
-                  style={{ background: THEME.gradient.brand }}
-                >
-                  Learn More
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
