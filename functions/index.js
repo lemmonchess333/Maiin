@@ -21,6 +21,7 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
+const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
@@ -2268,6 +2269,9 @@ function _decideReconciliationActions(
   nowMs
 ) {
   const updatePayload = {};
+  // Run9 3b — a second payload for the user PROFILE doc (runMode + raceGoal),
+  // written alongside the programState payload when recovery-exit materializes.
+  let profilePayload = null;
   let noShowWritten = false;
   let recoveryCleared = false;
 
@@ -2307,19 +2311,69 @@ function _decideReconciliationActions(
       // `null` overwrites the stored value; downstream readers all
       // check `phase === 'recovery'` and `typeof recoveryEndDate
       // === 'string'`, both of which falsify against null.
-      updatePayload.runPlan = {
+      const clearedRunPlan = {
         ...runPlan,
         phase: null,
         recoveryEndDate: null,
       };
+
+      // Run9 3b — recovery EXIT materialization. Mirror the client's
+      // resolveRecoveryExit (the single, unit-tested source of the rule) so
+      // non-React clients (Apple Watch, future native) converge to the same
+      // state. The completed race is identifiable from the recovery anchor:
+      // recovery-entry derived `recoveryEndDate = raceDate +
+      // recoveryWeeks(distance)·7`, so a current raceGoal that reproduces the
+      // stored recoveryEndDate IS the race recovery was entered for
+      // (raceGoalIsCompletedRace). A current raceGoal that doesn't reproduce
+      // it is a newer race set during recovery → kept (stay race_prep).
+      const currentRaceGoal = runPlan.raceGoal || null;
+      const anchorMatches =
+        !!currentRaceGoal &&
+        _recoveryEndDateForRace(currentRaceGoal) === runPlan.recoveryEndDate;
+      const completedRaceGoal = anchorMatches ? currentRaceGoal : null;
+      const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
+
+      if (exit.runMode === "freeform") {
+        // Completed race, no successor → freeform. Clear raceGoal on BOTH the
+        // runPlan (server deciders read programState.runPlan.raceGoal) and the
+        // profile (materialization invariant: a raceGoal clear co-writes
+        // runMode). Mirrors skipRecoveryEarly's freeform branch — minus the
+        // runPlan/runDays teardown, which is a client UI concern (the freeform
+        // hero ignores stale runDays; the no-show / recovery-entry deciders
+        // gate on raceGoal/runMode, both now falsified) and isn't safely
+        // expressible via a recursive merge write.
+        clearedRunPlan.raceGoal = null;
+        profilePayload = { runMode: "freeform", raceGoal: null };
+      } else if (profile && profile.runMode !== exit.runMode) {
+        // Newer race set during recovery → stay race_prep. Defensive co-write
+        // so a drifted profile.runMode converges to the materialized value.
+        profilePayload = { runMode: exit.runMode };
+      }
+
+      updatePayload.runPlan = clearedRunPlan;
       recoveryCleared = true;
     }
   }
 
   if (!noShowWritten && !recoveryCleared) {
-    return { payload: null, noShowWritten, recoveryCleared };
+    return { payload: null, profilePayload: null, noShowWritten, recoveryCleared };
   }
-  return { payload: updatePayload, noShowWritten, recoveryCleared };
+  return { payload: updatePayload, profilePayload, noShowWritten, recoveryCleared };
+}
+
+/** Run9 3b — reconstruct the recovery-end date a given race goal would
+ *  produce under the recovery-entry formula (`raceDate +
+ *  recoveryWeeks(distance)·7`). Returns null for an unknown distance. Used to
+ *  decide whether the current raceGoal is the race recovery was entered for
+ *  (anchor match) without storing the completed-race goal separately. */
+function _recoveryEndDateForRace(raceGoal) {
+  if (!raceGoal || typeof raceGoal.targetDate !== "string") return null;
+  const weeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[raceGoal.distance];
+  if (typeof weeks !== "number") return null;
+  const ms =
+    _parseUtcDate(raceGoal.targetDate).getTime() +
+    weeks * 7 * 24 * 60 * 60 * 1000;
+  return _utcDateString(new Date(ms));
 }
 
 /** Per-user worker. Thin I/O wrapper around `_decideReconciliationActions`.
@@ -2355,7 +2409,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
     }
   }
 
-  const { payload, noShowWritten, recoveryCleared } =
+  const { payload, profilePayload, noShowWritten, recoveryCleared } =
     _decideReconciliationActions(
       profile,
       programState,
@@ -2363,7 +2417,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       nowMs
     );
 
-  if (!payload) {
+  if (!payload && !profilePayload) {
     return { noShowWritten, recoveryCleared };
   }
 
@@ -2380,7 +2434,14 @@ async function _runDailyRaceReconciliationForUser(uid) {
   ) {
     return { noShowWritten: false, recoveryCleared: false };
   }
-  await programRef.set(payload, { merge: true });
+  // Run9 3b — programState (runDays / runPlan) and the profile (materialized
+  // runMode + raceGoal) are separate docs. Write both when present. They're
+  // independent merges; a partial failure self-heals on the next daily sweep
+  // (the decision is idempotent against the post-write state).
+  const writes = [];
+  if (payload) writes.push(programRef.set(payload, { merge: true }));
+  if (profilePayload) writes.push(userRef.set(profilePayload, { merge: true }));
+  await Promise.all(writes);
   return { noShowWritten, recoveryCleared };
 }
 
@@ -2427,6 +2488,7 @@ exports._hasStrictRaceMatch = _hasStrictRaceMatch;
 exports._utcDateString = _utcDateString;
 exports._decideReconciliationActions = _decideReconciliationActions;
 exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
+exports._recoveryEndDateForRace = _recoveryEndDateForRace;
 
 // ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
