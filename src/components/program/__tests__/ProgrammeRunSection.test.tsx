@@ -25,7 +25,7 @@
  *   - The "Race prep not set up yet" stub remains the hero for
  *     race_prep + no goal.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
@@ -116,6 +116,13 @@ vi.mock("@/hooks/useRunningStats", () => ({
     weeklyData: mockWeeklyData,
     loading: mockRunsLoading,
   }),
+}));
+
+// Run9 (l): the race-recent hero's "I didn't race" tap fires a sonner toast.
+// Mock it so the dismissal test runs without a mounted <Toaster>.
+const toastMock = vi.fn();
+vi.mock("sonner", () => ({
+  toast: (...args: unknown[]) => toastMock(...args),
 }));
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -718,6 +725,118 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     );
     expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
     expect(screen.queryByText(/Recovery complete/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () => {
+  // Pin "now" so a race date 2 days ago resolves to the race-recent window
+  // (T+1..T+3). Local midday avoids any timezone date-boundary flips.
+  beforeEach(() => {
+    navigateMock.mockClear();
+    toastMock.mockClear();
+    mockClaimMap = new Map();
+    try {
+      window.localStorage.clear();
+    } catch {
+      /* jsdom localStorage always present; guard for safety */
+    }
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 29, 12, 0, 0)); // 2026-05-29 local midday
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // race 2 days ago, race-day slot still "planned" (not yet logged, server
+  // hasn't flipped no-show). raceGoal is read from programState.runPlan.
+  function raceRecentState() {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_race",
+          date: "2026-05-27",
+          templateId: "race",
+          type: "race",
+          status: "planned",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-27" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    return { profile, programState };
+  }
+
+  it("renders the did-you-race hero and SUPPRESSES the catch-up Start card", () => {
+    const { profile, programState } = raceRecentState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Did you race\?/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Log it$/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /I didn't race/i })
+    ).toBeInTheDocument();
+    // The elapsed race slot must NOT surface as a "Next · Pending" nag, and
+    // the legacy "Race day has passed" banner is suppressed for this state.
+    expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+  });
+
+  it("Log it navigates to /run with the race-day scheduledRunId", () => {
+    const { profile, programState } = raceRecentState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Log it$/i }));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/run?scheduledRunId=runday_race"
+    );
+  });
+
+  it("I didn't race dismisses the prompt + persists via localStorage (no status write)", () => {
+    const { profile, programState } = raceRecentState();
+    const props = commonProps();
+    const { unmount } = renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /I didn't race/i }));
+    // Hidden after dismiss; a calm toast confirms; NO skip/complete writer fired
+    // (PR-L — the client never writes race_no_show; the server owns the flip).
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
+    expect(toastMock).toHaveBeenCalledTimes(1);
+    expect(props.skipRunDay).not.toHaveBeenCalled();
+    expect(props.markManualComplete).not.toHaveBeenCalled();
+    // Remount → still hidden (localStorage persisted, keyed by race date).
+    unmount();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
   });
 });
 
