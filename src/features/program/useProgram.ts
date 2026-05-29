@@ -15,6 +15,7 @@ import type {
   ScheduledRunStatus,
 } from "./programTypes";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
+import { resolveRecoveryExit } from "./runModeResolution";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -28,7 +29,7 @@ import {
 } from "./programEngine";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
-import { getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -1408,30 +1409,50 @@ export function useProgram() {
     if (!programState || !profile) return;
     if (programState.runPlan?.phase !== "recovery") return;
 
-    const weekSchedule = profile.weekSchedule ?? [];
-    const runTarget = getWeeklyRunTarget(profile) || 3;
-    const weekStart = localWeekKey();
-
-    // User skipping early = "I'm done with the race-prep arc,
-    // give me structured training now." Flip profile.runMode and
-    // regenerate runDays with the structured generator.
-    const runDays = scheduleStructuredWeekV2({
-      weekSchedule,
-      weekNumber: programState.weekNumber,
-      weekStart,
+    // Run9 ENG(j) + R3-cycle/backtoback: exiting recovery returns the user to
+    // FREEFORM (the race is done — it's recorded in completedRaces), UNLESS a
+    // newer race was set during the recovery window, which must be preserved.
+    // `resolveRecoveryExit` is the single source of that rule (unit-tested in
+    // runModeResolution.test.ts); the patch it returns always co-writes the
+    // materialized `runMode` so the invariant can't be violated here.
+    const completedRaceGoal =
+      programState.runPlan?.raceGoal ?? profile.raceGoal ?? null;
+    const exit = resolveRecoveryExit({
+      currentRaceGoal: profile.raceGoal ?? null,
+      completedRaceGoal,
     });
-    const runPlan = { mode: "structured" as const };
 
+    if (exit.runMode === "freeform") {
+      // Single race done → freeform: drop the runPlan + runDays. saveProgram
+      // does a full setDoc, so omitting `runPlan` (undefined → stripped)
+      // removes it from the doc. The explicit `raceGoal` clear that
+      // resolveRecoveryExit asks for is DEFERRED to the materialization
+      // migration (it needs the `raceGoal: null` profile-type change); until
+      // then current readers gate `raceGoal` on `runMode === "race_prep"`, so a
+      // left-over goal under freeform doesn't leak.
+      logger.log("[skipRecoveryEarly] race done → freeform; clearing plan");
+      await Promise.all([
+        updateProfile({ runMode: "freeform" }),
+        saveProgram({ ...programState, runDays: [], runPlan: undefined }),
+      ]);
+      return;
+    }
+
+    // Back-to-back: a newer future race was set during recovery → stay
+    // race_prep, just clear the recovery phase. The race-plan load/regenerate
+    // path rebuilds runDays for the new race; we don't regenerate here.
     logger.log(
-      `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`
+      "[skipRecoveryEarly] newer race set during recovery → exit recovery, keep race_prep"
     );
-
+    const nextRunPlan = { ...programState.runPlan } as Record<string, unknown>;
+    delete nextRunPlan.phase;
+    delete nextRunPlan.recoveryEndDate;
     await Promise.all([
-      updateProfile({
-        runMode: "structured",
-        ...runTargetWriteFields(runTarget),
+      updateProfile({ runMode: "race_prep" }),
+      saveProgram({
+        ...programState,
+        runPlan: nextRunPlan as unknown as RunPlan,
       }),
-      saveProgram({ ...programState, runDays, runPlan }),
     ]);
   }, [programState, profile, saveProgram, updateProfile]);
 
