@@ -1597,7 +1597,7 @@ export default function Social() {
                             <button
                               type="button"
                               onClick={() => setTab("crews")}
-                              className="text-sm font-medium text-primary hover:text-primary/80"
+                              className="inline-flex items-center min-h-[44px] -my-2 text-sm font-medium text-primary hover:text-primary/80"
                             >
                               Browse crews
                             </button>
@@ -1753,7 +1753,7 @@ export default function Social() {
                               ? "Inviting is unavailable — your account is restricted"
                               : undefined
                           }
-                          className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ background: THEME.brandStrong }}
                         >
                           Share invite link
@@ -1769,7 +1769,7 @@ export default function Social() {
                             ? "Inviting is unavailable — your account is restricted"
                             : undefined
                         }
-                        className="w-full py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{ background: THEME.brandStrong }}
                       >
                         Share invite link
