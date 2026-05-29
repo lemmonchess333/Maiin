@@ -23,14 +23,13 @@ export default function OptionCard({
   disabled,
   index = 0,
 }: OptionCardProps) {
-  // Sprint 2: surface + border + text colours now use design-system
-  // tokens (bg-muted, bg-card, border-border, text-muted-foreground)
-  // so the card renders correctly in both light and dark mode. The
-  // teal accent on the selected state comes from THEME.teal (a
-  // genuine brand colour, kept) but the underlying surface is now
-  // semantic. Pre-Sprint-2 the hardcoded rgba(255,255,255,0.05)
-  // assumed dark background, which is why onboarding looked black in
-  // light mode.
+  // Surface + border + text colours use design-system tokens (bg-card,
+  // border-border, text-muted-foreground) so the card renders correctly in
+  // both light and dark mode. The selected accent uses THEME.brand (purple)
+  // to match the rest of onboarding and the Continue CTA — previously this
+  // was THEME.teal, which read as an inconsistent blue tint against the
+  // purple flow. Pre-Sprint-2 the hardcoded rgba(255,255,255,0.05) assumed a
+  // dark background, which is why onboarding once looked black in light mode.
   return (
     <motion.button
       onClick={onSelect}
@@ -50,15 +49,15 @@ export default function OptionCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       )}
       style={{
-        // Selected state: teal-tinted card + teal border. Token-
+        // Selected state: purple-tinted card + purple border. Token-
         // backed `bg-card` is the unselected baseline; the inline
         // override only applies when selected, so light mode shows
-        // white card with teal tint and dark mode shows #1A surface
+        // white card with purple tint and dark mode shows #1A surface
         // with the same tint.
         ...(selected
           ? {
-              background: `${THEME.teal}18`,
-              borderColor: `${THEME.teal}50`,
+              background: `${THEME.brand}18`,
+              borderColor: `${THEME.brand}50`,
             }
           : {}),
       }}
@@ -76,7 +75,7 @@ export default function OptionCard({
         >
           <Check
             className="size-4 flex-shrink-0"
-            style={{ color: THEME.teal }}
+            style={{ color: THEME.brand }}
           />
         </motion.span>
       )}

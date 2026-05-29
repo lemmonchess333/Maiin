@@ -700,10 +700,13 @@ export default function TrainingSection({
 
       <motion.button
         whileTap={{ scale: 0.98 }}
-        onClick={async () => {
-          haptic("error");
-          await updateProfile({ onboardingComplete: false });
-          navigate("/onboarding", { state: { retake: true } });
+        onClick={() => {
+          haptic();
+          // Pgm4: programme editing is now the unified ProgrammeSettings
+          // screen at /settings/training — the onboarding-retake was retired
+          // (no app re-runs onboarding to edit settings). This legacy row
+          // just deep-links there.
+          navigate("/settings/training");
         }}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"
       >
