@@ -49,7 +49,7 @@ import {
   ChevronRight,
   MoreVertical,
 } from "lucide-react";
-import { formatDistanceToNowStrict, format } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
@@ -63,15 +63,12 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
-import {
-  getRacePhaseLabel,
-  isCurrentWeekInTaper,
-} from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
+import RaceHeader from "./RaceHeader";
 import { Banner } from "@/components/ui/Banner";
 import {
   localDateString,
@@ -84,8 +81,6 @@ import type {
   ProgramState,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
-
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 interface ProgrammeRunSectionProps {
   profile: UserProfile;
@@ -421,18 +416,9 @@ export default function ProgrammeRunSection({
           />
         )}
 
-      {/* Warning: plan compressed (state-derived — visibility tracks
-          runPlan.compressed; user can't dismiss). */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        !raceElapsed &&
-        raceCompressed && (
-          <Banner
-            variant="warning"
-            title="Plan is compressed"
-            description="Your target date is sooner than the ideal build for this distance, so we've trimmed interval work and shortened the long-run progression to keep the plan safe."
-          />
-        )}
+      {/* Run9 (k): the compressed-plan note moved OFF the banner stack into
+          the persistent RaceHeader below (a calm note, not an amber banner),
+          so it never competes with the actionable contextual-prompt slot. */}
 
       {/* Warning: race-day no-show. Hosts critical actions (Log race
           now / Set next race / Switch to structured) so the banner
@@ -765,125 +751,22 @@ export default function ProgrammeRunSection({
           · Edit ›" — single text run, muted-gray Edit link with
           chevron (Q2 navigation discipline: no coral on Edit). Week
           progress row stays as separate content underneath. */}
-      {/* PR-K Q9d — TAPER WEEK section label. Surfaces the taper
-          context on the race_prep operational hero when the current
-          plan week falls in the taper phase. 10px uppercase tracking
-          matches Run7's section-label convention; pairs with a "race
-          in N days" countdown so the user reads the label as a
-          calendar anchor, not a generic phase tag. The Week N/M row
-          inside the operational card below still shows "Taper" as the
-          phase label — this header acts as the prominent surface
-          callout, the row stays as the at-a-glance week marker. */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        !raceElapsed &&
-        isCurrentWeekInTaper(
-          programState?.runPlan?.currentWeek,
-          programState?.runPlan?.totalWeeks,
-          raceGoal.distance as RaceDistance
-        ) &&
-        (() => {
-          const daysToRace = (() => {
-            try {
-              const target = parseLocalDate(raceGoal.targetDate);
-              const today = parseLocalDate(todayKeyDerivation);
-              return Math.max(
-                0,
-                Math.round(
-                  (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
-                )
-              );
-            } catch {
-              return null;
-            }
-          })();
-          return (
-            <p
-              className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: THEME.running }}
-              aria-label={
-                daysToRace != null
-                  ? `Taper week, race in ${daysToRace} day${daysToRace === 1 ? "" : "s"}`
-                  : "Taper week"
-              }
-            >
-              Taper week
-              {daysToRace != null && (
-                <>
-                  {" · "}
-                  race in {daysToRace} day{daysToRace === 1 ? "" : "s"}
-                </>
-              )}
-            </p>
-          );
-        })()}
-
+      {/* Run9b/(k) — the persistent RACE HEADER: race-goal one-liner, week
+          N-of-M + phase + progress, the taper line, and the compressed note,
+          consolidated into one always-visible component (replacing the
+          scattered taper label + progress card + the old compressed banner). */}
       {currentMode === "race_prep" && raceGoal && !raceElapsed && (
-        <div className="p-3 rounded-xl bg-card space-y-2">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-foreground">
-              <span className="text-muted-foreground">Race goal: </span>
-              <span className="font-medium">
-                {raceGoal.distance.toUpperCase()}
-                {" · "}
-                {(() => {
-                  try {
-                    return format(
-                      parseLocalDate(raceGoal.targetDate),
-                      "d MMM yyyy"
-                    );
-                  } catch {
-                    return raceGoal.targetDate;
-                  }
-                })()}
-              </span>
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                haptic();
-                navigate("/settings/training");
-              }}
-              className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
-              aria-label="Edit race goal"
-            >
-              Edit
-              <ChevronRight className="size-3.5" />
-            </button>
-          </div>
-          {programState?.runPlan?.totalWeeks &&
-            programState.runPlan.currentWeek != null && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                    Week
-                  </span>
-                  <span className="text-sm font-medium text-foreground">
-                    {programState.runPlan.currentWeek + 1} /{" "}
-                    {programState.runPlan.totalWeeks}
-                    {" · "}
-                    {getRacePhaseLabel(
-                      programState.runPlan.currentWeek,
-                      programState.runPlan.totalWeeks,
-                      programState.runPlan.raceGoal!.distance as RaceDistance
-                    )}
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{
-                      width:
-                        ((programState.runPlan.currentWeek + 1) /
-                          programState.runPlan.totalWeeks) *
-                          100 +
-                        "%",
-                    }}
-                  />
-                </div>
-              </>
-            )}
-        </div>
+        <RaceHeader
+          raceGoal={raceGoal}
+          currentWeek={programState?.runPlan?.currentWeek}
+          totalWeeks={programState?.runPlan?.totalWeeks}
+          compressed={raceCompressed}
+          todayKey={todayKeyDerivation}
+          onEdit={() => {
+            haptic();
+            navigate("/settings/training");
+          }}
+        />
       )}
 
       {/* ── Next planned run (structured + race_prep with goal) ──
