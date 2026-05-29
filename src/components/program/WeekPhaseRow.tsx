@@ -46,8 +46,8 @@ export default function WeekPhaseRow({
         <span
           className="text-[10px] font-bold uppercase"
           style={{
-            color: "#7C6BF0",
-            backgroundColor: "rgba(124,107,240,0.1)",
+            color: "#7B72E9",
+            backgroundColor: "rgba(123,114,233,0.1)",
             padding: "3px 8px",
             borderRadius: 6,
             letterSpacing: "0.04em",
