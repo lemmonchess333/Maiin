@@ -58,6 +58,7 @@ import {
   getScheduledRunStatus,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
+import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
 import {
@@ -236,12 +237,20 @@ export default function ProgrammeRunSection({
   // RunCTACard and trainingResolver.startUrl emit.
   const nextStartable: ScheduledRunDay | null = useMemo(() => {
     if (currentMode === "freeform") return null;
+    // Run9 (ENG e / item 4): startability has TWO completion truths — the
+    // stored `status` AND the claim-map (a saved run that matched this slot by
+    // date+bucket without ever flipping `status` off "planned"). A slot is
+    // genuinely startable only when its status says so AND no claim/manual
+    // completion covers it; otherwise "Next planned run" would promote an
+    // already-run slot and "all runs done" would never fire after a claimed log.
     return (
-      runDays.find((rd) =>
-        isScheduledRunStartable(getScheduledRunStatus(rd))
+      runDays.find(
+        (rd) =>
+          isScheduledRunStartable(getScheduledRunStatus(rd)) &&
+          !(rd.id && isRunDayComplete(rd.id, claimMap))
       ) ?? null
     );
-  }, [currentMode, runDays]);
+  }, [currentMode, runDays, claimMap]);
 
   const nextStartableTemplate = useMemo(() => {
     if (!nextStartable) return null;
