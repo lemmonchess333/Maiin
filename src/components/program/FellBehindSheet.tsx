@@ -5,15 +5,17 @@
  * server-side `weeklyFellBehindCheck` Cloud Function (Mondays 05:00
  * UTC, after a week where the user ran <50% of their weekly target).
  *
- * Three choices per the Q24 lock — matches NRC's adaptive-plan
- * pattern:
+ * Run9 phase-3 (Slice DE) reframe — the three plan actions collapse to one
+ * primary + one route (matching Runna's one-tap realign tray):
  *
- *   1. Shift plan back 1 week — race date +7d, regen plan
- *   2. Compress remaining weeks — keep date, accept compressed prep
- *   3. Skip and continue — dismiss without plan change
+ *   1. Realign my plan — keep the race date, re-plan remaining weeks from
+ *      today (compresses, or drops to finish-safely below the taper floor)
+ *   2. My race moved → — route to /settings/training to edit the race date
+ *   3. Not now — dismiss without plan change
  *
- * All three clear `pendingFellBehindPrompt` so the sheet won't
- * re-surface until next Monday's check writes a fresh flag.
+ * Realign + Not-now clear `pendingFellBehindPrompt` so the sheet won't
+ * re-surface until next Monday's check writes a fresh flag. "My race moved"
+ * also clears it (the user is going to fix the date directly).
  *
  * Mounted from Home so the prompt lands on the user's first app
  * open after Monday's sweep.
@@ -43,10 +45,14 @@ interface FellBehindSheetProps {
   };
   /** Writers from useProgram. */
   dismissFellBehindPrompt: () => Promise<void>;
-  shiftRacePlanBackOneWeek: () => Promise<void>;
-  compressRacePlan: () => Promise<void>;
+  /** Re-anchor the plan to today (keep the race date). Already wrapped by the
+   *  caller to clear the flag, persist, and toast the timing result. */
+  realignRacePlan: () => Promise<void>;
+  /** Route to /settings/training to edit the race date. Should also clear the
+   *  flag (the user is fixing the date directly). */
+  onRaceMoved: () => void;
   /** True when the user is in race_prep mode AND has a raceGoal.
-   *  When false, the shift / compress buttons are hidden — only the
+   *  When false, the realign / race-moved actions are hidden — only the
    *  dismiss path applies (e.g. structured-mode users). */
   raceModeActive: boolean;
 }
@@ -56,8 +62,8 @@ export default function FellBehindSheet({
   onClose,
   prompt,
   dismissFellBehindPrompt,
-  shiftRacePlanBackOneWeek,
-  compressRacePlan,
+  realignRacePlan,
+  onRaceMoved,
   raceModeActive,
 }: FellBehindSheetProps) {
   const percent = Math.round(prompt.completedRatio * 100);
@@ -66,24 +72,23 @@ export default function FellBehindSheet({
     ...(raceModeActive
       ? [
           {
-            id: "shift",
-            label: "Shift plan back 1 week",
-            pendingLabel: "Shifting…",
+            id: "realign",
+            label: "Realign my plan",
+            pendingLabel: "Realigning…",
             variant: "primary" as const,
-            onSelect: shiftRacePlanBackOneWeek,
+            onSelect: realignRacePlan,
           },
           {
-            id: "compress",
-            label: "Compress remaining weeks",
-            pendingLabel: "Compressing…",
+            id: "race-moved",
+            label: "My race moved →",
             variant: "secondary" as const,
-            onSelect: compressRacePlan,
+            onSelect: async () => onRaceMoved(),
           },
         ]
       : []),
     {
       id: "skip",
-      label: "Skip and continue",
+      label: "Not now",
       pendingLabel: "Dismissing…",
       variant: "ghost" as const,
       onSelect: dismissFellBehindPrompt,
