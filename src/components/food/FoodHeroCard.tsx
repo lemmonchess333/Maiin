@@ -370,7 +370,7 @@ export default function FoodHeroCard({
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.3 }}
                   className="text-micro uppercase tracking-wider font-semibold"
-                  style={{ color: "#4CAF50" }}
+                  style={{ color: "#4DB872" }}
                 >
                   {celebrationCaptionText}
                 </motion.p>
@@ -403,7 +403,7 @@ export default function FoodHeroCard({
             to="/settings"
             aria-label="Adjust nutrition targets"
             onClick={() => haptic("light")}
-            className="shrink-0 -mt-1 -mr-1 p-1.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+            className="shrink-0 -mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
           >
             <SettingsIcon className="size-4" aria-hidden="true" />
           </Link>
@@ -437,7 +437,7 @@ export default function FoodHeroCard({
                     dismissFuelExplainer();
                   }}
                   aria-label="Dismiss explainer"
-                  className="p-0.5 -m-0.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
+                  className="size-11 -m-2.5 flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -486,7 +486,7 @@ export default function FoodHeroCard({
                 onTapDrillDown();
               }}
               aria-label="View nutrition breakdown"
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
+              className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
             >
               <span>Details</span>
               <ChevronRight aria-hidden="true" className="size-3" />
