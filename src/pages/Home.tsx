@@ -708,7 +708,7 @@ export default function Home() {
               type="button"
               onClick={dismissCoachMarks}
               aria-label="Dismiss welcome message"
-              className="p-1 rounded-lg hover:bg-muted"
+              className="size-11 -m-2 flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.97] transition-transform"
             >
               <X className="size-3.5 text-muted-foreground" />
             </button>
