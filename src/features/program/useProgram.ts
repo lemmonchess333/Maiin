@@ -30,6 +30,7 @@ import {
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -123,6 +124,7 @@ function regenerateRacePlan({
   currentDate,
   weekStart,
   carry,
+  prior,
 }: {
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -137,7 +139,23 @@ function regenerateRacePlan({
     totalWeeks?: number;
     completedRaces?: string[];
   };
-}): { runDays: ScheduledRunDay[]; runPlan: RunPlan } {
+  /** Run9 phase-3 Slice A — when a regen rewrites the CURRENT week with
+   *  existing completions (compress / shift / schedule edit), pass the
+   *  pre-regen runDays + manualCompletions so terminal status is re-stamped
+   *  and manualCompletions are re-keyed onto the same-date new days. Omitted
+   *  on fresh-creation sites (load with no prior runDays) where there is
+   *  nothing to carry. */
+  prior?: {
+    runDays: ScheduledRunDay[];
+    manualCompletions?: Record<string, ManualCompletion>;
+  };
+}): {
+  runDays: ScheduledRunDay[];
+  runPlan: RunPlan;
+  /** Re-keyed map — present only when `prior` was supplied; callers that pass
+   *  `prior` must persist this in place of the stale programState map. */
+  manualCompletions?: Record<string, ManualCompletion>;
+} {
   const v2 = generateRacePlanV2({
     raceGoal,
     weekSchedule,
@@ -145,7 +163,17 @@ function regenerateRacePlan({
     currentDate,
     weekStart,
   });
-  const runDays = v2.weeks[0] ?? [];
+  let runDays = v2.weeks[0] ?? [];
+  let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
+  if (prior) {
+    const carried = carryCompletionsAcrossRegen(
+      prior.runDays,
+      runDays,
+      prior.manualCompletions
+    );
+    runDays = carried.runDays;
+    carriedManualCompletions = carried.manualCompletions;
+  }
   const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
   if (carry?.completedRaces) {
     runPlan.completedRaces = carry.completedRaces;
@@ -161,7 +189,7 @@ function regenerateRacePlan({
   ) {
     runPlan.currentWeek = runPlan.totalWeeks;
   }
-  return { runDays, runPlan };
+  return { runDays, runPlan, manualCompletions: carriedManualCompletions };
 }
 
 interface RefreshRunScheduleOverrides {
@@ -1501,7 +1529,7 @@ export function useProgram() {
     // before, and multi-race plans must keep their per-race
     // idempotency history (would re-trigger recovery on re-sync
     // otherwise).
-    const { runDays, runPlan } = regenerateRacePlan({
+    const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       raceGoal: newRaceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -1511,8 +1539,15 @@ export function useProgram() {
         currentWeek: prevRunPlan?.currentWeek,
         completedRaces: prevRunPlan?.completedRaces,
       },
+      // Run9 phase-3 Slice A — carry terminal status + re-key manualCompletions
+      // so the current week's completions survive the regen (the shift rewrites
+      // every day's id via the new week boundaries).
+      prior: {
+        runDays: programState.runDays ?? [],
+        manualCompletions: programState.manualCompletions,
+      },
     });
-    const next = { ...programState, runDays, runPlan };
+    const next = { ...programState, runDays, runPlan, manualCompletions };
     delete next.pendingFellBehindPrompt;
     logger.log(
       `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}, ` +
@@ -1543,7 +1578,7 @@ export function useProgram() {
     // Preserve currentWeek + completedRaces (see shift writer above
     // for the same rationale).
     const prevRunPlan = programState.runPlan;
-    const { runDays, runPlan } = regenerateRacePlan({
+    const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -1553,8 +1588,15 @@ export function useProgram() {
         currentWeek: prevRunPlan?.currentWeek,
         completedRaces: prevRunPlan?.completedRaces,
       },
+      // Run9 phase-3 Slice A — carry terminal status + re-key manualCompletions
+      // so the current week's completions survive the compress (which drops
+      // build/quality days to easy, minting new ids for the same dates).
+      prior: {
+        runDays: programState.runDays ?? [],
+        manualCompletions: programState.manualCompletions,
+      },
     });
-    const next = { ...programState, runDays, runPlan };
+    const next = { ...programState, runDays, runPlan, manualCompletions };
     delete next.pendingFellBehindPrompt;
     logger.log(
       `[fellBehind] compressing remaining plan, compressed=${runPlan.compressed}`
