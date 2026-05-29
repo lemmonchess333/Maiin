@@ -541,7 +541,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     }
   });
 
-  it("compressed-plan banner uses warning severity (amber) and is not dismissible", () => {
+  it("Run9 (k): compressed shows as a calm RaceHeader note, NOT an amber alert banner", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "race_prep" });
     const programState = makeProgramState([], {
@@ -560,8 +560,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
         programState={programState}
       />
     );
-    const banner = screen.getByRole("alert");
-    expect(banner.textContent).toContain("Plan is compressed");
+    // The compressed note lives in the persistent header now — a plain note,
+    // not an alert/Banner, and not dismissible.
+    expect(screen.getByText(/Compressed plan/i)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /dismiss/i })
     ).not.toBeInTheDocument();
