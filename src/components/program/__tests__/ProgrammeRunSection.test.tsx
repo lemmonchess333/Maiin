@@ -26,7 +26,7 @@
  *     race_prep + no goal.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
 import type { UserProfile } from "@/lib/auth";
@@ -191,6 +191,11 @@ function commonProps() {
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
     skipRecoveryEarly: vi.fn(async () => {}),
+    realignRacePlan: vi.fn(async () => ({
+      timing: "compressible" as const,
+      totalWeeks: 4,
+    })),
+    dismissFellBehindPrompt: vi.fn(async () => {}),
   };
 }
 
@@ -853,3 +858,40 @@ function beforeEachReset() {
 
 // beforeEach is imported at the top of the file (used by both
 // the PR-B chip suite and the freeform-hero reset helper).
+
+describe("ProgrammeRunSection — Run9 phase-3 fell-behind realign slot", () => {
+  function fellBehindState() {
+    return makeProgramState([makeRunDay()], {
+      pendingFellBehindPrompt: {
+        weekKey: "2026-05-10",
+        completedRatio: 0.25,
+        realRunCount: 1,
+        weeklyTarget: 4,
+      },
+    });
+  }
+
+  it("renders the Realign banner when pendingFellBehindPrompt is set", () => {
+    renderSection(commonProps(), fellBehindState());
+    expect(
+      screen.getByRole("button", { name: /Realign my plan/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /My race moved/i })
+    ).toBeInTheDocument();
+  });
+
+  it("clicking Realign calls realignRacePlan", async () => {
+    const props = commonProps();
+    renderSection(props, fellBehindState());
+    fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
+    await waitFor(() => expect(props.realignRacePlan).toHaveBeenCalled());
+  });
+
+  it("does NOT render the Realign banner without the flag", () => {
+    renderSection(commonProps(), makeProgramState([makeRunDay()]));
+    expect(
+      screen.queryByRole("button", { name: /Realign my plan/i })
+    ).not.toBeInTheDocument();
+  });
+});
