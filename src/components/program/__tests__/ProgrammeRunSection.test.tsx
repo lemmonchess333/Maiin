@@ -626,6 +626,97 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       screen.getByRole("button", { name: /^Configure plan$/i })
     ).toBeInTheDocument();
   });
+
+  it("no-show prompt renders when the race-day runDay is race_no_show", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          date: "2027-04-18",
+          templateId: "race",
+          type: "race",
+          status: "race_no_show",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+  });
+
+  it("recovery-complete prompt renders when the recovery window has elapsed", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+        phase: "recovery",
+        recoveryEndDate: "2020-01-01", // long past → recoveryEnded
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Recovery complete/i)).toBeInTheDocument();
+  });
+
+  it("Run9 (f): contextual slot shows ONLY no-show when no-show + recovery-complete both qualify", () => {
+    // Both conditions true at once — the single slot must surface no-show
+    // (higher precedence) and suppress recovery-complete. Pre-collapse both
+    // banners rendered independently and stacked.
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          date: "2027-04-18",
+          templateId: "race",
+          type: "race",
+          status: "race_no_show",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          phase: "recovery",
+          recoveryEndDate: "2020-01-01",
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Recovery complete/i)).not.toBeInTheDocument();
+  });
 });
 
 // Reset the useRunningStats mock between tests so the freeform-hero
