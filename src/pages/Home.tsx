@@ -778,40 +778,47 @@ export default function Home() {
         }}
         className="space-y-3"
       >
-        <WeekStrip
-          dayMap={weeklyDayMap}
-          profile={profile}
-          programState={programState}
-          claimMap={claimMap}
-          selectedDate={peekDate}
-          onDayTap={handleDayTap}
-        />
-        {/* One-shot discoverability hint. Latches off on first day-tap
-            so users who already know don't keep seeing it. */}
-        {showDayTapHint && !peekDate && (
-          <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
-            Tap a day to see details
-          </p>
-        )}
-        <AnimatePresence>
-          {peekDate && (
-            <DayPeekCard
-              dateKey={peekDate}
-              profile={profile}
-              programState={programState}
-              claimMap={claimMap}
-              extras={unclaimedByDate.get(peekDate) ?? []}
-              workouts={peekW}
-              dailyTotals={peekT}
-              onClose={function () {
-                setPeekDate(null);
-              }}
-              onManage={function (dk) {
-                setManageDate(dk);
-              }}
-            />
+        {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
+            Isolated in a SectionErrorBoundary like the hero/energy/insight
+            siblings below — a data-shape bug here degrades to a single
+            "couldn't load" card (and still logs via captureError) instead
+            of taking the whole Home page into RouteErrorBoundary. */}
+        <SectionErrorBoundary sectionName="week-strip">
+          <WeekStrip
+            dayMap={weeklyDayMap}
+            profile={profile}
+            programState={programState}
+            claimMap={claimMap}
+            selectedDate={peekDate}
+            onDayTap={handleDayTap}
+          />
+          {/* One-shot discoverability hint. Latches off on first day-tap
+              so users who already know don't keep seeing it. */}
+          {showDayTapHint && !peekDate && (
+            <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
+              Tap a day to see details
+            </p>
           )}
-        </AnimatePresence>
+          <AnimatePresence>
+            {peekDate && (
+              <DayPeekCard
+                dateKey={peekDate}
+                profile={profile}
+                programState={programState}
+                claimMap={claimMap}
+                extras={unclaimedByDate.get(peekDate) ?? []}
+                workouts={peekW}
+                dailyTotals={peekT}
+                onClose={function () {
+                  setPeekDate(null);
+                }}
+                onManage={function (dk) {
+                  setManageDate(dk);
+                }}
+              />
+            )}
+          </AnimatePresence>
+        </SectionErrorBoundary>
       </motion.div>
 
       {/* PI1 + PI4: consolidated Performance hero. Replaces the
@@ -895,34 +902,36 @@ export default function Home() {
           <div className="h-20 rounded-2xl bg-muted animate-pulse" />
         ) : (
           <TrackSectionView section="stacked_cta">
-            <StackedCTACards
-              nextWorkout={nextWorkout}
-              todayType={todayType}
-              navigate={function (p: string) {
-                closePeek();
-                navigate(p);
-              }}
-              waterGlasses={waterGlasses}
-              waterTarget={waterTarget}
-              onAddWater={function () {
-                closePeek();
-                logWater(1);
-              }}
-              onRemoveWater={function () {
-                setWaterAmount(waterGlasses - 1);
-              }}
-              lastWeight={lastWeightInfo?.weight || null}
-              weightUnit={weightUnit}
-              onLogWeight={function () {
-                closePeek();
-                setWeightInput(lastWeightInfo?.weight || "");
-                setShowWeightSheet(true);
-              }}
-              lastWeightDate={weightRelativeTime}
-              todayRun={todayRun}
-              userSegment={userSegment}
-              muscleGroups={muscleGroups}
-            />
+            <SectionErrorBoundary sectionName="quick-actions">
+              <StackedCTACards
+                nextWorkout={nextWorkout}
+                todayType={todayType}
+                navigate={function (p: string) {
+                  closePeek();
+                  navigate(p);
+                }}
+                waterGlasses={waterGlasses}
+                waterTarget={waterTarget}
+                onAddWater={function () {
+                  closePeek();
+                  logWater(1);
+                }}
+                onRemoveWater={function () {
+                  setWaterAmount(waterGlasses - 1);
+                }}
+                lastWeight={lastWeightInfo?.weight || null}
+                weightUnit={weightUnit}
+                onLogWeight={function () {
+                  closePeek();
+                  setWeightInput(lastWeightInfo?.weight || "");
+                  setShowWeightSheet(true);
+                }}
+                lastWeightDate={weightRelativeTime}
+                todayRun={todayRun}
+                userSegment={userSegment}
+                muscleGroups={muscleGroups}
+              />
+            </SectionErrorBoundary>
           </TrackSectionView>
         )}
       </motion.div>
