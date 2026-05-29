@@ -79,14 +79,19 @@ export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
     hasRunDays,
   } = input;
 
-  if (mode === "freeform") return "freeform";
-
-  // Recovery takes precedence over everything else in race_prep —
-  // even if a stale nextStartable exists, the user is post-race
-  // and shouldn't be nudged to start a planned run.
+  // Recovery takes precedence over EVERYTHING — even the freeform
+  // short-circuit below. Run9 R3-cycle: the materialization rule clears
+  // raceGoal at recovery-END (→ runMode freeform), but the phase clear is a
+  // separate server write; between them (or on a legacy/partial doc) a user
+  // can be `phase === "recovery"` while `mode === "freeform"`. The recovery
+  // hero must still win there, so this check MUST sit before the freeform
+  // return — otherwise a post-race user briefly sees a bare freeform Start CTA
+  // instead of their recovery hero.
   if (phase === "recovery" && !!recoveryEndDate && todayKey < recoveryEndDate) {
     return "race-recovery";
   }
+
+  if (mode === "freeform") return "freeform";
 
   if (mode === "race_prep" && !raceGoal) return "unset";
 
