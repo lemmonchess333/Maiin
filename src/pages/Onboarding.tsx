@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -303,18 +303,14 @@ const STEP_META: { title: string; subtitle: string }[] = [
 ============================ */
 
 export default function Onboarding() {
-  const { user, profile, updateProfile } = useAuth();
-  const location = useLocation();
+  const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
-  const isRetake = !!(location.state as { retake?: boolean } | null)?.retake;
-
-  // In retake mode, skip the identity steps (name, gender, age, body metrics)
-  // that can't meaningfully change. The user jumps straight to the program-
-  // relevant steps starting at "What's your primary goal?" (STEP_META index 4).
-  const START_STEP = isRetake ? 4 : 0;
-  const VISIBLE_STEPS = TOTAL_STEPS - START_STEP;
-
-  const [step, setStep] = useState(START_STEP);
+  // Pgm4: Onboarding is now PURELY first-run. The old "retake" mode (jump to
+  // step 4 to edit programme fields) was retired — editing a programme lives
+  // on the unified /settings/training screen, no app re-runs onboarding to
+  // change settings. So the flow always starts at step 0 and walks all
+  // TOTAL_STEPS.
+  const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
   // ── Step 0: Display name
@@ -364,57 +360,6 @@ export default function Onboarding() {
 
   // ── Step 9: Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
-
-  // ── Pre-populate from profile in retake mode
-  useEffect(() => {
-    if (isRetake && profile) {
-      if (profile.displayName) setDisplayName(profile.displayName);
-      if (profile.gender) setGender(profile.gender);
-      if (profile.ageRange) setAgeRange(profile.ageRange);
-      if (profile.heightCm) setHeightCm(profile.heightCm);
-      if (profile.weightKg) setWeightKg(profile.weightKg);
-      if (profile.preferredHeightUnit)
-        setHeightUnit(profile.preferredHeightUnit);
-      if (profile.preferredWeightUnit)
-        setWeightUnit(profile.preferredWeightUnit);
-      if (profile.primaryGoal) setPrimaryGoal(profile.primaryGoal);
-      if (profile.experience) setExperience(profile.experience);
-      if (profile.daysPerWeek) setDaysPerWeek(profile.daysPerWeek);
-      if (profile.equipment) setEquipment(profile.equipment);
-      if (profile.preferredSplit) setPreferredSplit(profile.preferredSplit);
-      if (profile.runFrequency) setRunFrequency(profile.runFrequency);
-      // P0-5: retake prefills run-plan state so users editing an
-      // existing plan don't have to re-pick mode + targets. Mode +
-      // weekly count + race goal are independent of the higher-level
-      // runFrequency control — a "regular runner" can still be in
-      // race_prep, etc.
-      if (profile.runMode) setRunMode(profile.runMode as RunMode);
-      if (
-        typeof profile.weeklyRunDaysTarget === "number" &&
-        profile.weeklyRunDaysTarget > 0
-      ) {
-        setWeeklyRunDays(profile.weeklyRunDaysTarget);
-      }
-      if (profile.raceGoal) {
-        setRaceDistance(profile.raceGoal.distance as RaceDistance);
-        setRaceTargetDate(profile.raceGoal.targetDate);
-      }
-      if (profile.injuries) {
-        const knownInjuries = [
-          "none",
-          "lower_back",
-          "shoulder",
-          "knee",
-          "wrist",
-          "elbow",
-        ];
-        // Pre-W1c "other" / free-text injury values are ignored on retake —
-        // the filter only acts on the three known categories, so surfacing
-        // stale free-text would only re-confuse the user.
-        setInjuries(profile.injuries.filter((i) => knownInjuries.includes(i)));
-      }
-    }
-  }, [isRetake, profile]);
 
   // ── Derived values
   const displayHeight =
@@ -733,6 +678,12 @@ export default function Onboarding() {
           publicErr
         );
       }
+
+      // Save succeeded — leave the onboarding surface explicitly. Flipping
+      // onboardingComplete=true makes App.tsx switch to the authenticated
+      // route set; navigating to "/" lands the user on Home. `replace` so
+      // Back doesn't return into the finished onboarding flow.
+      navigate("/", { replace: true });
     } catch (err) {
       // Sprint 2: the raw fallback toast used to leak Firebase
       // error codes to the user (e.g. "Save failed: functions/
@@ -802,16 +753,15 @@ export default function Onboarding() {
     <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe bg-background text-foreground">
       {/* ── Progress bar ── */}
       <div className="flex gap-1.5 pt-14 pb-6">
-        {Array.from({ length: VISIBLE_STEPS }).map((_, i) => {
-          const stepIdx = i + START_STEP;
+        {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
           return (
             <div
-              key={stepIdx}
+              key={i}
               className="h-1 flex-1 rounded-full overflow-hidden bg-muted"
             >
               <motion.div
                 className="h-full rounded-full"
-                animate={{ width: stepIdx <= step ? "100%" : "0%" }}
+                animate={{ width: i <= step ? "100%" : "0%" }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
                 style={{ background: THEME.brand }}
               />
@@ -831,7 +781,7 @@ export default function Onboarding() {
           className="flex-1 overflow-y-auto"
         >
           <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
-            Step {step - START_STEP + 1} of {VISIBLE_STEPS}
+            Step {step + 1} of {TOTAL_STEPS}
           </p>
           <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
@@ -1728,7 +1678,7 @@ export default function Onboarding() {
 
       {/* ── Navigation ── */}
       <div className="flex items-center gap-3 pt-6">
-        {step > START_STEP ? (
+        {step > 0 ? (
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
@@ -1739,24 +1689,6 @@ export default function Onboarding() {
             }}
           >
             Back
-          </button>
-        ) : isRetake ? (
-          <button
-            type="button"
-            onClick={async () => {
-              // Entry handler flipped this to false before sending the user
-              // into retake; restore it so bailing out doesn't leave the app
-              // treating them as mid-onboarding on next load.
-              await updateProfile({ onboardingComplete: true });
-              navigate("/settings");
-            }}
-            className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
-            style={{
-              background: "hsl(var(--muted))",
-              color: "hsl(var(--muted-foreground))",
-            }}
-          >
-            Exit
           </button>
         ) : null}
         <button
