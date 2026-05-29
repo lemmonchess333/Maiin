@@ -257,7 +257,6 @@ function useStreaksInternal() {
     if (!user) {
       // Reset state on sign-out. This branch is cleanup-only — there's no
       // external system to sync to when the user is gone.
-      /* eslint-disable react-hooks/set-state-in-effect */
       setStreakData(DEFAULT_STREAKS);
       setWorkouts([]);
       setRuns([]);
@@ -267,7 +266,6 @@ function useStreaksInternal() {
       setRunsLoaded(false);
       setMealsLoaded(false);
       setNewBadgeQueue([]);
-      /* eslint-enable react-hooks/set-state-in-effect */
       lastWrittenStreakRef.current = null;
       hasLoadedRef.current = false;
       return;
