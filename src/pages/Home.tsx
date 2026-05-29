@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
+import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
@@ -103,8 +104,7 @@ export default function Home() {
     skipRunDay,
     skipWorkoutDay,
     dismissFellBehindPrompt,
-    shiftRacePlanBackOneWeek,
-    compressRacePlan,
+    realignRacePlan,
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
@@ -1141,8 +1141,28 @@ export default function Home() {
           onClose={() => setFellBehindDismissedFor(fellBehindPrompt.weekKey)}
           prompt={fellBehindPrompt}
           dismissFellBehindPrompt={dismissFellBehindPrompt}
-          shiftRacePlanBackOneWeek={shiftRacePlanBackOneWeek}
-          compressRacePlan={compressRacePlan}
+          realignRacePlan={async () => {
+            const { timing, totalWeeks } = await realignRacePlan();
+            if (profile?.raceGoal) {
+              toast.success(
+                realignResultMessage({
+                  timing,
+                  distance: profile.raceGoal.distance as
+                    | "5k"
+                    | "10k"
+                    | "half"
+                    | "marathon",
+                  totalWeeks,
+                })
+              );
+            }
+          }}
+          onRaceMoved={() => {
+            // "My race moved" — clear the flag and route to the single date
+            // editor (Run9e); retired the +7d auto-shift guess.
+            void dismissFellBehindPrompt();
+            navigate("/settings/training");
+          }}
           raceModeActive={
             profile?.runMode === "race_prep" && !!profile.raceGoal
           }
