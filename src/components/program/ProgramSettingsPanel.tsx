@@ -98,7 +98,7 @@ function ProgramSettingsPanel({
               <button
                 type="button"
                 onClick={onClose}
-                className="text-sm font-medium text-primary"
+                className="inline-flex items-center min-h-[44px] px-2 -my-2 text-sm font-medium text-primary active:scale-[0.97] transition-transform"
               >
                 Done
               </button>
