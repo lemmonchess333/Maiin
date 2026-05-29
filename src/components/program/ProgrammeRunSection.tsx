@@ -61,6 +61,7 @@ import {
 import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
+import { getFreeformCadence } from "@/lib/freeformCadence";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
@@ -322,6 +323,18 @@ export default function ProgrammeRunSection({
   const lastRun = runs[0] ?? null;
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
+
+  // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
+  // target or progress bar (that's the structure the model deliberately
+  // drops). getFreeformCadence owns the copy rules: cold-start (no count),
+  // lapsed (re-invite, never "0×"), or an N× cadence over the rolling window.
+  // The window is bounded by useRunningStats(30) above, so "lapsed" only
+  // surfaces for runs 4–~4.3 weeks old; older history reads as cold-start,
+  // which shares the same invitational copy.
+  const freeformCadence = useMemo(
+    () => getFreeformCadence(runs.map((r) => r.completedAt), new Date()),
+    [runs]
+  );
 
   const modeLabel =
     currentMode === "race_prep"
@@ -662,12 +675,24 @@ export default function ProgrammeRunSection({
                 style={{ width: "55%" }}
               />
             </div>
-          ) : runs.length === 0 ? (
+          ) : freeformCadence.kind === "cold-start" ? (
             <p className="text-xs text-muted-foreground">
               Track your first run to see weekly distance and pace trends here.
             </p>
+          ) : freeformCadence.kind === "lapsed" ? (
+            <p className="text-xs text-muted-foreground">
+              Your last run was {freeformCadence.lastRunDaysAgo} day
+              {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago — pick it
+              back up whenever you're ready.
+            </p>
           ) : (
-            <div className="space-y-1 text-xs font-mono tabular-nums">
+            <div className="space-y-1 text-xs">
+              {/* R2-1 descriptive cadence headline (not a target). */}
+              <p className="text-foreground font-semibold">
+                You've run {freeformCadence.count}× in the last{" "}
+                {freeformCadence.weeks} weeks
+              </p>
+              <div className="space-y-1 font-mono tabular-nums">
               {lastRun && (
                 <p className="text-muted-foreground">
                   <span className="text-foreground">Last run</span>
@@ -702,6 +727,7 @@ export default function ProgrammeRunSection({
                   )}
                 </p>
               )}
+              </div>
             </div>
           )}
         </div>
