@@ -1,15 +1,15 @@
 /**
- * PR-L L4 client UI — FellBehindSheet contract tests.
+ * FellBehindSheet contract tests.
  *
- * Pin the three-button behavior per Q24:
- *   1. Shift plan back 1 week → race date +7d, regen plan
- *   2. Compress remaining weeks → keep date, accept compressed prep
- *   3. Skip and continue → dismiss
+ * Run9 phase-3 (Slice DE) reframe — the three plan actions collapsed to one
+ * primary + one route:
+ *   1. Realign my plan → re-anchor to today (keep race date)
+ *   2. My race moved → → route to the date editor
+ *   3. Not now → dismiss
  *
- * Plus the race-mode gating: shift / compress only render when the
- * user is in race_prep mode with a raceGoal. Structured-mode users
- * only see the skip button (their plan has no "shift the race"
- * concept).
+ * Plus the race-mode gating: realign / race-moved only render when the user is
+ * in race_prep mode with a raceGoal. Structured-mode users only see "Not now"
+ * (their plan has no "race" concept).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -26,8 +26,8 @@ function basePrompt() {
 
 function setup({ raceModeActive = true }: { raceModeActive?: boolean } = {}) {
   const dismissFellBehindPrompt = vi.fn(async () => {});
-  const shiftRacePlanBackOneWeek = vi.fn(async () => {});
-  const compressRacePlan = vi.fn(async () => {});
+  const realignRacePlan = vi.fn(async () => {});
+  const onRaceMoved = vi.fn();
   const onClose = vi.fn();
   render(
     <FellBehindSheet
@@ -35,15 +35,15 @@ function setup({ raceModeActive = true }: { raceModeActive?: boolean } = {}) {
       onClose={onClose}
       prompt={basePrompt()}
       dismissFellBehindPrompt={dismissFellBehindPrompt}
-      shiftRacePlanBackOneWeek={shiftRacePlanBackOneWeek}
-      compressRacePlan={compressRacePlan}
+      realignRacePlan={realignRacePlan}
+      onRaceMoved={onRaceMoved}
       raceModeActive={raceModeActive}
     />
   );
   return {
     dismissFellBehindPrompt,
-    shiftRacePlanBackOneWeek,
-    compressRacePlan,
+    realignRacePlan,
+    onRaceMoved,
     onClose,
   };
 }
@@ -62,58 +62,54 @@ describe("FellBehindSheet", () => {
     expect(screen.getByText(/\(25%\)/)).toBeInTheDocument();
   });
 
-  it("renders all three buttons when race mode is active", () => {
+  it("renders all three actions when race mode is active", () => {
     setup({ raceModeActive: true });
     expect(
-      screen.getByRole("button", { name: /Shift plan back 1 week/i })
+      screen.getByRole("button", { name: /Realign my plan/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Compress remaining weeks/i })
+      screen.getByRole("button", { name: /My race moved/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Skip and continue/i })
+      screen.getByRole("button", { name: /Not now/i })
     ).toBeInTheDocument();
   });
 
-  it("hides shift + compress when race mode is NOT active (structured / freeform)", () => {
+  it("hides realign + race-moved when race mode is NOT active (structured / freeform)", () => {
     setup({ raceModeActive: false });
     expect(
-      screen.queryByRole("button", { name: /Shift plan back/i })
+      screen.queryByRole("button", { name: /Realign my plan/i })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Compress remaining/i })
+      screen.queryByRole("button", { name: /My race moved/i })
     ).not.toBeInTheDocument();
-    // Skip stays — it's the universal dismissal path.
+    // "Not now" stays — it's the universal dismissal path.
     expect(
-      screen.getByRole("button", { name: /Skip and continue/i })
+      screen.getByRole("button", { name: /Not now/i })
     ).toBeInTheDocument();
   });
 
-  it("tapping Shift calls shiftRacePlanBackOneWeek then closes", async () => {
-    const { shiftRacePlanBackOneWeek, onClose } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Shift plan back 1 week/i })
-    );
+  it("tapping Realign calls realignRacePlan then closes", async () => {
+    const { realignRacePlan, onClose } = setup();
+    fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
     await waitFor(() => {
-      expect(shiftRacePlanBackOneWeek).toHaveBeenCalled();
+      expect(realignRacePlan).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
   });
 
-  it("tapping Compress calls compressRacePlan then closes", async () => {
-    const { compressRacePlan, onClose } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /Compress remaining weeks/i })
-    );
+  it("tapping My race moved calls onRaceMoved then closes", async () => {
+    const { onRaceMoved, onClose } = setup();
+    fireEvent.click(screen.getByRole("button", { name: /My race moved/i }));
     await waitFor(() => {
-      expect(compressRacePlan).toHaveBeenCalled();
+      expect(onRaceMoved).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
   });
 
-  it("tapping Skip calls dismissFellBehindPrompt then closes", async () => {
+  it("tapping Not now calls dismissFellBehindPrompt then closes", async () => {
     const { dismissFellBehindPrompt, onClose } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /Skip and continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Not now/i }));
     await waitFor(() => {
       expect(dismissFellBehindPrompt).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
@@ -125,8 +121,8 @@ describe("FellBehindSheet", () => {
     const dismissFellBehindPrompt = vi.fn(
       () => new Promise<void>((resolve) => setTimeout(resolve, 50))
     );
-    const shiftRacePlanBackOneWeek = vi.fn(async () => {});
-    const compressRacePlan = vi.fn(async () => {});
+    const realignRacePlan = vi.fn(async () => {});
+    const onRaceMoved = vi.fn();
     const onClose = vi.fn();
     render(
       <FellBehindSheet
@@ -134,19 +130,19 @@ describe("FellBehindSheet", () => {
         onClose={onClose}
         prompt={basePrompt()}
         dismissFellBehindPrompt={dismissFellBehindPrompt}
-        shiftRacePlanBackOneWeek={shiftRacePlanBackOneWeek}
-        compressRacePlan={compressRacePlan}
+        realignRacePlan={realignRacePlan}
+        onRaceMoved={onRaceMoved}
         raceModeActive={true}
       />
     );
-    const skipBtn = screen.getByRole("button", { name: /Skip and continue/i });
+    const skipBtn = screen.getByRole("button", { name: /Not now/i });
     fireEvent.click(skipBtn);
     // The skip button now shows the "Dismissing…" state.
     await waitFor(() => {
       expect(screen.getByText(/Dismissing/i)).toBeInTheDocument();
     });
-    // Other buttons are disabled — a second click on Shift shouldn't fire.
-    fireEvent.click(screen.getByRole("button", { name: /Shift plan back/i }));
-    expect(shiftRacePlanBackOneWeek).not.toHaveBeenCalled();
+    // Other buttons are disabled — a second click on Realign shouldn't fire.
+    fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
+    expect(realignRacePlan).not.toHaveBeenCalled();
   });
 });
