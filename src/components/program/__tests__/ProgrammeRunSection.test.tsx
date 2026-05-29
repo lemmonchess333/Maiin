@@ -843,6 +843,65 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
     );
     expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
   });
+
+  // ── race-today (T+0) hero body ──────────────────────────────────
+  // System time is 2026-05-29 (this describe's beforeEach). Race ON today.
+  function raceTodayState() {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_race_today",
+          date: "2026-05-29",
+          templateId: "race",
+          type: "race",
+          status: "planned",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "half", targetDate: "2026-05-29" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    return { profile, programState };
+  }
+
+  it("renders the celebratory race-day hero and SUPPRESSES the generic Next card", () => {
+    const { profile, programState } = raceTodayState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Race day/i)).toBeInTheDocument();
+    expect(screen.getByText(/HALF · Today/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start race/i })
+    ).toBeInTheDocument();
+    // The race is NOT framed as a generic "Next ·" run.
+    expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+  });
+
+  it("Start race navigates to /run with the race-day scheduledRunId", () => {
+    const { profile, programState } = raceTodayState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Start race/i }));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/run?scheduledRunId=runday_race_today"
+    );
+  });
 });
 
 // Reset the useRunningStats mock between tests so the freeform-hero
