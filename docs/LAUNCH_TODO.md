@@ -361,33 +361,35 @@ Until both are set, `/admin/moderation` 403s for everyone and the
 triggers run regardless — they're independent of the allowlist
 and start filtering UGC the moment functions deploy.
 
-### 20. README replacement
+### 20. README replacement — ✅ done
 
-Currently still the Vite template. Should cover:
+Already replaced (the stale "still the Vite template" note predated the
+rewrite). `README.md` now covers app overview, quick start, the full
+environment-variable surface (web + Cloud Functions secrets), Firebase
+setup, App Check, the local emulator, Capacitor iOS/Android build steps,
+a release checklist, an incident runbook, and project conventions.
 
-- App overview
-- Setup steps
-- Environment variables (long list now — `VITE_FIREBASE_*`,
-  VITE_RECAPTCHA_V3_SITE_KEY, VITE_APP_CHECK_DEBUG_TOKEN,
-  VITE_FIREBASE_STORAGE_BUCKET)
-- Firebase setup
-- Capacitor iOS build steps (`npm run build:ios`)
-- TestFlight release steps
-- Subscription setup (Apple Server API key)
-- App Store review notes
-- Known limitations
+### 21. Legal pages review — ✅ addressed (lawyer review still recommended)
 
-### 21. Legal pages review
+`src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx` now
+cover every item below. Each claim was verified against the actual code
+before being written into the legal text:
 
-`src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx`
-should explicitly cover:
+- ✅ AI food analysis is an estimate, not medical advice — Privacy §8,
+  Terms §7
+- ✅ GPS routes, privacy zones, public-feed defaults — Privacy §1
+  (privacy zones via `applyPrivacyZones`, verified) + §4 (explicit
+  sharing, per-post visibility, nothing auto-published — verified
+  against `ShareComposerSheet`)
+- ✅ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
+  (verified against `ProgressPhotos.tsx` `crypto.subtle` AES-GCM-256)
+- ✅ Subscription auto-renew / cancellation — Terms §4
+- ✅ Social content moderation + reporting — Terms §5 (acceptable use),
+  §6 (UGC removal), §9 (termination)
+- ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §9
 
-- AI food analysis is an estimate, not medical advice
-- GPS routes, privacy zones, public feed defaults
-- Progress photo encryption (client-side AES-GCM)
-- Subscription auto-renew / cancellation
-- Social content moderation + reporting
-- Data export / deletion rights
+Note: this is plain-language coverage of the real data practices, not a
+substitute for a lawyer's review before public launch.
 
 ### 22. App icon redesign
 
