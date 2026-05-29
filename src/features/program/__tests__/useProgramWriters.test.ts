@@ -460,14 +460,14 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
 // ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
 
-describe("Run9 phase-3 Slice A — compress carries completions across regen", () => {
-  // The compress writer regenerates the current week (new ids per day). The
-  // carry-aware regenerateRacePlan must persist a re-keyed manualCompletions
-  // map, never drop the user's record. The generator's exact output dates are
-  // clock-dependent, so this integration test pins the WIRING invariant
-  // (carry path runs → persists a map → preserves data); the deterministic
-  // re-key / drop / status-restamp logic is pinned in
-  // src/lib/__tests__/runCompletionCarry.test.ts.
+describe("Run9 phase-3 — realign carries completions across regen", () => {
+  // The realign writer (Slice DE; formerly compress) regenerates the current
+  // week (new ids per day). The carry-aware regenerateRacePlan must persist a
+  // re-keyed manualCompletions map, never drop the user's record. The
+  // generator's exact output dates are clock-dependent, so this integration
+  // test pins the WIRING invariant (carry path runs → persists a map →
+  // preserves data); the deterministic re-key / drop / status-restamp logic is
+  // pinned in src/lib/__tests__/runCompletionCarry.test.ts.
   it("persists a manualCompletions map and never drops an existing completion", async () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
     mockProfile = raceProfile(targetDate);
@@ -518,7 +518,7 @@ describe("Run9 phase-3 Slice A — compress carries completions across regen", (
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.compressRacePlan();
+      await result.current.realignRacePlan();
     });
 
     const lastSave = setDocCalls[setDocCalls.length - 1]?.data as ProgramState;
