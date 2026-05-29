@@ -1154,14 +1154,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   >
                     <Play className="size-4" /> Begin Workout
                   </button>
-                  <div className="flex items-center justify-center mt-2">
+                  <div className="flex items-center justify-center mt-1">
                     <button
                       type="button"
                       onClick={() => {
                         setSkipTargetDay(idx);
                         setShowSkipConfirm(true);
                       }}
-                      className="text-[13px] font-medium text-muted-foreground"
+                      className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                     >
                       Skip Session
                     </button>
