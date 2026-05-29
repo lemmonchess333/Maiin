@@ -85,7 +85,7 @@ const PROGRAM_DOC = "current";
  * to compressed and the UI banner needs to reflect that.
  */
 function makeRunPlanRecord(
-  v2: { totalWeeks: number; compressed: boolean },
+  v2: { totalWeeks: number; compressed: boolean; belowFloor: boolean },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -98,6 +98,9 @@ function makeRunPlanRecord(
     totalWeeks: carry.totalWeeks ?? v2.totalWeeks,
     currentWeek: carry.currentWeek ?? 0,
     compressed: v2.compressed,
+    // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
+    // finish-safely risk instead of presenting a tight plan as a normal one.
+    belowFloor: v2.belowFloor,
   };
 }
 

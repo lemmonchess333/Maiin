@@ -186,6 +186,9 @@ function buildRunPlan(
         // P2-1: thread the compressed flag through so the Programme
         // run section can surface a "your plan is compressed" banner.
         compressed: racePlan.compressed,
+        // Run9 phase-3 (Slice B): an initial plan set inside the taper-safe
+        // floor is finish-safely — carry the marker so the UI names the risk.
+        belowFloor: racePlan.belowFloor,
       },
     };
   }
