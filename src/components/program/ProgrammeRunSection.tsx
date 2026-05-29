@@ -10,8 +10,8 @@
  * `updateProfile` AND `refreshRunSchedule` atomically (PR-0d's
  * direct-write bug is not reintroduced). The chip row sits
  * directly under the section header and above per-mode hero
- * content. The footer "Change plan ›" link still opens the full
- * 6-step ConfigurePlanModal as a re-run escape hatch.
+ * content. The footer "Change plan ›" link deep-links to the unified
+ * Programme Settings editor at /settings/training (Pgm4).
  *
  * Mode-change semantics by target:
  *
@@ -36,8 +36,8 @@
  *     skip-lift / template swap.
  *   - Race-elapsed + compressed-plan banners + race progress
  *     card + this-week's-runs per-day list — unchanged.
- *   - Footer "Change plan ›" still opens ConfigurePlanModal at
- *     the Running step (escape hatch, not the only path).
+ *   - Footer "Change plan ›" deep-links to /settings/training
+ *     (the unified Programme Settings editor).
  */
 
 import { useState, useMemo } from "react";
