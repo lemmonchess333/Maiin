@@ -764,7 +764,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
   }
 
-  return { totalWeeks, compressed, belowFloor, weeks };
+  // Run9 phase-3 (Slice C) — clash flag. pickLongRunSlot prefers run-only
+  // slots and only falls back to a "both" day when none exist, so a HARD run
+  // landing on a both-day is the forced lift+run clash (the 6-day-lifter case
+  // R3-placement flagged). Flag it so the UI can surface "shares a day with
+  // lifting" — the run is still placed, never dropped. Easy runs on both-days
+  // stay unflagged (low stress).
+  const bothDays = new Set(
+    input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
+  );
+  const HARD_TYPES = new Set(["long", "tempo", "intervals", "race"]);
+  const flaggedWeeks = weeks.map((week) =>
+    week.map((rd) =>
+      HARD_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
+        ? { ...rd, clashesWithLift: true }
+        : rd
+    )
+  );
+
+  return { totalWeeks, compressed, belowFloor, weeks: flaggedWeeks };
 }
 
 /** Race template IDs by distance. Centralised to avoid scattering
