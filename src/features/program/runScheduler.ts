@@ -173,6 +173,48 @@ function getPhaseForWeek(
   return "build";
 }
 
+/** Run9 phase-3 (Slice B) — the taper-safe FLOOR, in weeks, per distance.
+ *
+ *  Floor = taperWeeks + 1 (locked 2026-05-29). Below this there isn't even
+ *  room for the distance's taper plus the race week, so compressing toward
+ *  the date is no longer the safe default — the plan flips to "finish-safely".
+ *  5k=2, 10k=2, half=3, marathon=4. */
+export function getRaceFloorWeeks(
+  distance: "5k" | "10k" | "half" | "marathon"
+): number {
+  return TAPER_WEEKS_BY_DISTANCE[distance] + 1;
+}
+
+/** Ideal-build length per distance (5k=4, 10k=6, half=8, marathon=12). */
+export function getRaceMinWeeks(
+  distance: "5k" | "10k" | "half" | "marathon"
+): number {
+  return RACE_CONFIGS[distance].minWeeks;
+}
+
+export type RaceTiming = "healthy" | "compressible" | "below-floor";
+
+/** Three-state timing classification for the Realign decision (Run9 phase-3):
+ *
+ *   weeksRemaining >= minWeeks          → "healthy"      (full ideal build)
+ *   floor <= weeksRemaining < minWeeks  → "compressible" (compress-to-keep-date
+ *                                          is the safe default — `compressed`)
+ *   weeksRemaining < floor              → "below-floor"  (finish-safely is the
+ *                                          honest default; compress no longer
+ *                                          offered as safe)
+ *
+ * Pure; the Realign UI branches on this to pick the primary action + copy. */
+export function classifyRaceTiming(input: {
+  distance: "5k" | "10k" | "half" | "marathon";
+  weeksRemaining: number;
+}): RaceTiming {
+  const minWeeks = RACE_CONFIGS[input.distance].minWeeks;
+  const floor = getRaceFloorWeeks(input.distance);
+  if (input.weeksRemaining >= minWeeks) return "healthy";
+  if (input.weeksRemaining >= floor) return "compressible";
+  return "below-floor";
+}
+
 export function generateRacePlan(
   distance: "5k" | "10k" | "half" | "marathon",
   targetDate: string,
@@ -542,6 +584,11 @@ export interface RacePlanV2Output {
    *  "compressed" so user knows the plan was shortened from the
    *  ideal. */
   compressed: boolean;
+  /** Run9 phase-3 (Slice B): true when totalWeeks fell below the taper-safe
+   *  floor (= taperWeeks + 1). The week content is then the "finish-safely"
+   *  shape — all easy, no quality, the long run capped at baseLongKm.
+   *  `belowFloor` implies `compressed`. */
+  belowFloor: boolean;
   /** Week-by-week scheduled runs. weeks[0] is the current week. */
   weeks: ScheduledRunDay[][];
 }
@@ -556,6 +603,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const naturalWeeks = Math.max(1, Math.ceil(diffMs / (7 * 86400000)));
   const totalWeeks = Math.max(naturalWeeks, 2); // hard floor: 2 weeks
   const compressed = totalWeeks < config.minWeeks;
+  // Run9 phase-3 (Slice B): below the taper-safe floor (= taperWeeks + 1),
+  // compressing is no longer safe — the week content flips to "finish-safely"
+  // (all easy, no quality, the long run capped at baseLongKm so there are no
+  // week-over-week jumps). belowFloor implies compressed by construction
+  // (floor <= minWeeks for every distance).
+  const belowFloor = totalWeeks < getRaceFloorWeeks(input.raceGoal.distance);
 
   const runEligibleSlots = input.weekSchedule
     .filter((d) => d.type === "run" || d.type === "both")
@@ -563,7 +616,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   if (runEligibleSlots.length === 0) {
     // Shouldn't happen — race_prep requires at least 2 runs per week
     // and the UI enforces it. Defensive fallback: empty plan.
-    return { totalWeeks, compressed, weeks: [] };
+    return { totalWeeks, compressed, belowFloor, weeks: [] };
   }
 
   const weekStartDate = parseLocalDate(input.weekStart);
@@ -577,6 +630,39 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
+
+    // Run9 phase-3 (Slice B) — finish-safely shape. Below the taper-safe
+    // floor we DON'T silently compress quality into a doomed plan; we keep the
+    // race date and emit an honest risk-managed week: the race day stays the
+    // race; every other week is one capped long run (baseLongKm — no jumps
+    // toward peak) + all easy, never tempo/intervals. The UI names the risk
+    // via runPlan.belowFloor.
+    if (belowFloor) {
+      if (phase === "race") {
+        week.push(buildRunDayV2({
+          dayIndex: longSlot,
+          templateId: pickRaceTemplateId(input.raceGoal.distance),
+          type: "race",
+          weekStart,
+        }));
+      } else {
+        week.push(buildRunDayV2({
+          dayIndex: longSlot,
+          // Cap at baseLongKm (not peak) so the long run never jumps.
+          templateId: pickLongTemplateId(config.baseLongKm, phase),
+          type: phase === "taper" ? "easy" : "long",
+          weekStart,
+        }));
+      }
+      remaining.forEach((d) => week.push(buildRunDayV2({
+        dayIndex: d,
+        templateId: "easy_30",
+        type: "easy",
+        weekStart,
+      })));
+      weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+      continue;
+    }
 
     // Long run / race day
     if (phase === "race") {
@@ -678,7 +764,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
   }
 
-  return { totalWeeks, compressed, weeks };
+  return { totalWeeks, compressed, belowFloor, weeks };
 }
 
 /** Race template IDs by distance. Centralised to avoid scattering
