@@ -93,7 +93,7 @@ export default function ContextualTipBanner({
               <Link
                 to={ctaHref}
                 onClick={() => haptic("light")}
-                className="inline-flex items-center gap-0.5 mt-2 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                className="inline-flex items-center gap-0.5 mt-1 -mb-1 min-h-[44px] text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
               >
                 {ctaLabel}
                 <ChevronRight aria-hidden="true" className="size-3" />
@@ -103,7 +103,7 @@ export default function ContextualTipBanner({
               type="button"
               onClick={handleDismiss}
               aria-label={`Dismiss tip: ${title}`}
-              className="size-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
+              className="size-11 -m-2 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all shrink-0"
             >
               <X aria-hidden="true" className="size-4" />
             </button>

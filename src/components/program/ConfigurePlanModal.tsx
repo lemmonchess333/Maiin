@@ -315,7 +315,7 @@ export default function ConfigurePlanModal({
               onClose();
             }}
             disabled={saving}
-            className="p-2 -ml-2 rounded-lg active:scale-95 transition-transform"
+            className="inline-flex items-center justify-center size-11 -ml-2.5 -my-1.5 rounded-lg active:scale-[0.97] transition-transform"
             aria-label="Close"
           >
             <X className="size-5 text-muted-foreground" />
