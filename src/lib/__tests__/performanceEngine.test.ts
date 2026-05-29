@@ -552,3 +552,98 @@ describe("computeAdherenceScore — goal-aware calorie tolerance", () => {
     expect(cutScore).toBeLessThan(100);
   });
 });
+
+// ── Multi-week integration ────────────────────
+// The unit blocks above pin each component score in isolation. These drive
+// the whole pipeline (baseline → component scores → PI → load band → deload
+// gate) across several weeks, which is where the integration-only logic lives
+// — most importantly the baseline-sufficiency gate inside
+// computePerformanceIndex (deload is suppressed until weeksUsed >= 3) and the
+// sustained-overreach deload trigger.
+
+describe("computePerformanceIndex — multi-week integration", () => {
+  const profile = {
+    weeklyWorkoutsTarget: 4,
+    targetCalories: 2500,
+    targetProtein: 160,
+    goal: "recomp",
+  };
+
+  // n weeks at the makeAgg defaults (tonnage 10000, runKm 25, …) form the
+  // baseline the current week is scored against.
+  const baselineWeeks = (n: number) =>
+    Array.from({ length: n }, (_, i) =>
+      makeAgg({ weekKey: weekKeyMinusN("2025-02-02", i + 1) })
+    );
+
+  // ~1.6x the baseline on both load axes with healthy recovery/adherence —
+  // lands deep in overreach.
+  const strongWeek = makeAgg({
+    weekKey: "2025-02-02",
+    liftTonnage: 16000,
+    runKm: 40,
+    runQualityCount: 2,
+    liftSessions: 4,
+    runSessions: 3,
+    mealDaysLogged: 6,
+  });
+
+  it("a high-load week reads as high PI in the overreach band", () => {
+    const doc = computePerformanceIndex(strongWeek, baselineWeeks(4), profile);
+    expect(doc.performanceIndex).toBeGreaterThanOrEqual(85);
+    expect(doc.loadBand).toBe("overreach");
+    expect(doc.liftProgression).toBeGreaterThan(1);
+  });
+
+  it("recommends a deload after two consecutive overreach weeks (baseline sufficient)", () => {
+    const doc = computePerformanceIndex(
+      strongWeek,
+      baselineWeeks(4),
+      profile,
+      /* previousWeekPI */ 90
+    );
+    expect(doc.performanceIndex).toBeGreaterThanOrEqual(85);
+    expect(doc.deloadRecommended).toBe(true);
+    expect(doc.insight.title).toBe("Momentum: High");
+  });
+
+  it("suppresses the deload recommendation when the baseline is < 3 weeks", () => {
+    // Identical overreach + previousWeekPI, but only 2 prior weeks — the
+    // score is statistically unreliable, so the gate forces deload off.
+    const doc = computePerformanceIndex(strongWeek, baselineWeeks(2), profile, 90);
+    expect(doc.baseline.weeksUsed).toBeLessThan(3);
+    expect(doc.deloadRecommended).toBe(false);
+  });
+
+  it("a recovery/deload week reads as low momentum without itself triggering a deload", () => {
+    const recoveryWeek = makeAgg({
+      weekKey: "2025-02-02",
+      liftTonnage: 3000,
+      liftHardSets: 6,
+      liftSessions: 1,
+      runKm: 5,
+      runLongKm: 3,
+      runQualityCount: 0,
+      runSessions: 1,
+    });
+    const strong = computePerformanceIndex(strongWeek, baselineWeeks(4), profile, 90);
+    const doc = computePerformanceIndex(
+      recoveryWeek,
+      baselineWeeks(4),
+      profile,
+      strong.performanceIndex
+    );
+    expect(doc.performanceIndex).toBeLessThan(strong.performanceIndex);
+    expect(["deload", "low", "moderate"]).toContain(doc.loadBand);
+    expect(doc.deloadRecommended).toBe(false);
+  });
+
+  it("threads the computed baseline + raw aggregates through to the doc", () => {
+    const doc = computePerformanceIndex(strongWeek, baselineWeeks(4), profile);
+    expect(doc.baseline.weeksUsed).toBe(4);
+    expect(doc.aggregates).toEqual(strongWeek);
+    expect(doc.weekKey).toBe(strongWeek.weekKey);
+    // 4 signals (lift + run + meals + baseline≥3) → high confidence.
+    expect(doc.confidence).toBe("high");
+  });
+});
