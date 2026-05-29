@@ -526,7 +526,7 @@ export default function Social() {
               <button
                 type="button"
                 onClick={() => setTab("crews")}
-                className="flex items-center gap-3 flex-1 text-left"
+                className="flex items-center gap-3 flex-1 text-left min-h-[44px]"
               >
                 <Users className="size-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -541,7 +541,7 @@ export default function Social() {
               <button
                 type="button"
                 onClick={dismissCrewBanner}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                className="size-11 -m-2 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
                 aria-label="Dismiss"
               >
                 <X size={14} />
