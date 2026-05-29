@@ -164,7 +164,8 @@ export default function RunDetail() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 size-9 rounded-full flex items-center justify-center backdrop-blur-md z-10"
+            aria-label="Back"
+            className="absolute top-4 left-4 size-11 rounded-full flex items-center justify-center backdrop-blur-md z-10"
             style={{
               background: "rgba(0,0,0,0.45)",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -188,7 +189,7 @@ export default function RunDetail() {
             type="button"
             onClick={startReplay}
             disabled={replaying}
-            className="absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
+            className="absolute bottom-3 right-3 inline-flex items-center px-3 min-h-[44px] rounded-lg text-xs font-medium backdrop-blur-md z-10 disabled:opacity-50"
             style={{
               background: "rgba(0,0,0,0.55)",
               color: "white",
@@ -205,7 +206,8 @@ export default function RunDetail() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="size-9 rounded-full flex items-center justify-center bg-muted"
+            aria-label="Back"
+            className="size-11 rounded-full flex items-center justify-center bg-muted"
           >
             <svg
               width="18"
@@ -301,7 +303,7 @@ export default function RunDetail() {
               type="button"
               onClick={handleShare}
               disabled={sharing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium active:scale-[0.97] transition-transform"
+              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform"
               style={{ background: `${THEME.running}15`, color: THEME.running }}
             >
               {sharing ? "Generating…" : "↗ Share"}
