@@ -116,6 +116,15 @@ export interface PlanBuilderOutput {
     equipment: PlanBuilderInput["equipment"];
     injuries: string[];
     preferredSplit: PlanBuilderInput["preferredSplit"];
+    // Pgm4: nutrition phase lives on profile.program.goal — that's what
+    // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
+    // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
+    // the unified editor actually moves the user's targets. The CF write is
+    // merge:true on a nested map, so this updates goal while preserving the
+    // existing startWeight / currentPhase. (The deleted ProgramSettingsPanel
+    // synced this via regenerateProgram → updateProfile; the new path must
+    // carry it explicitly.)
+    program: { goal: Goal };
   };
 }
 
@@ -211,6 +220,7 @@ function buildProfileUpdates(
     equipment: input.equipment,
     injuries: input.injuries,
     preferredSplit: input.preferredSplit,
+    program: { goal: input.nutritionPhase },
   };
   if (input.runMode === "race_prep" && input.raceGoal) {
     updates.raceGoal = input.raceGoal;

@@ -142,6 +142,17 @@ describe("buildPlan · output shape", () => {
     expect(out.profileUpdates.injuries).toEqual(["knee", "shoulder"]);
     expect(out.profileUpdates.preferredSplit).toBe("ppl");
   });
+
+  // Pgm4 regression guard: nutrition phase must land on profile.program.goal
+  // (what macro/calorie consumers read) — not only programState.goal. Without
+  // this the unified editor's phase change wouldn't move calorie targets.
+  it("profileUpdates.program.goal mirrors the nutrition phase", () => {
+    expect(buildPlan(makeInput({ nutritionPhase: "cut" })).profileUpdates.program)
+      .toEqual({ goal: "cut" });
+    expect(
+      buildPlan(makeInput({ nutritionPhase: "lean bulk" })).profileUpdates.program
+    ).toEqual({ goal: "lean bulk" });
+  });
 });
 
 /* ─── Mode: freeform ─────────────────────────────────────────── */

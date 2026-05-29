@@ -679,14 +679,10 @@ export default function Onboarding() {
         );
       }
 
-      // Save succeeded — leave the onboarding surface explicitly. Previously
-      // this relied on a side effect: flipping onboardingComplete=true made
-      // App.tsx switch route sets, and with no /onboarding route in the
-      // authenticated set the URL fell through to the catch-all redirect to
-      // "/". Now that a real /onboarding route exists (so retake survives
-      // refresh), that implicit redirect is gone — without this navigate the
-      // user would be stranded re-viewing the last step after a successful
-      // retake. `replace` so Back doesn't return into the finished flow.
+      // Save succeeded — leave the onboarding surface explicitly. Flipping
+      // onboardingComplete=true makes App.tsx switch to the authenticated
+      // route set; navigating to "/" lands the user on Home. `replace` so
+      // Back doesn't return into the finished onboarding flow.
       navigate("/", { replace: true });
     } catch (err) {
       // Sprint 2: the raw fallback toast used to leak Firebase

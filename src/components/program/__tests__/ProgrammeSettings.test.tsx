@@ -102,6 +102,19 @@ describe("ProgrammeSettings — rebuild path", () => {
     expect(payload.profileUpdates.equipment).toBe("home_gym");
     expect(payload.profileUpdates.injuries).toEqual(["knee"]);
   });
+
+  it("changing nutrition phase persists to profile.program.goal (calorie targets follow)", async () => {
+    setup(); // baseline program.goal = "recomp"
+    fireEvent.click(screen.getByText("Cutting"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: { program?: { goal: string } };
+    };
+    expect(payload.profileUpdates.program).toEqual({ goal: "cut" });
+  });
 });
 
 describe("ProgrammeSettings — toggles live-save without rebuild", () => {
