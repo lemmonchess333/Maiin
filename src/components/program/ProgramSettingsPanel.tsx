@@ -16,6 +16,10 @@ interface ProgramSettingsPanelProps {
   onUpdateSettings: (
     patch: Partial<{ autoProgression: boolean; microloading: boolean }>
   ) => void;
+  /** Opens the weekly-layout editor (closing this panel first). Lets the
+   *  split row act in place instead of telling the user to go hunt the
+   *  overflow menu. */
+  onEditLayout?: () => void;
   ref?: Ref<HTMLDivElement>;
 }
 
@@ -34,6 +38,7 @@ function ProgramSettingsPanel({
   onClose,
   onRegenerate,
   onUpdateSettings,
+  onEditLayout,
   ref,
 }: ProgramSettingsPanelProps) {
   const [pending, setPending] = useState<PendingAction | null>(null);
@@ -160,9 +165,17 @@ function ProgramSettingsPanel({
                 {splitLabel(currentSplit as SplitType)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Auto-derived from your training days. To change, open the
-                overflow menu &rarr; Edit weekly layout.
+                Auto-derived from your training days.
               </p>
+              {onEditLayout && (
+                <button
+                  type="button"
+                  onClick={onEditLayout}
+                  className="mt-2 -mb-0.5 min-h-[44px] -ml-1 px-1 inline-flex items-center gap-1 text-xs font-semibold text-primary active:scale-[0.97] transition-transform"
+                >
+                  Edit weekly layout &rarr;
+                </button>
+              )}
             </div>
           </div>
 
