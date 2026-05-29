@@ -17,6 +17,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Toggle } from "@/components/ui/Toggle";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -1285,30 +1286,13 @@ export default function RunSetupModal({
                     className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card"
                   >
                     <span className="text-sm">{setting.label}</span>
-                    <button
-                      type="button"
-                      onClick={() =>
+                    <Toggle
+                      checked={config[setting.key]}
+                      label={setting.label}
+                      onChange={() =>
                         updateConfig({ [setting.key]: !config[setting.key] })
                       }
-                      role="switch"
-                      aria-checked={config[setting.key]}
-                      aria-label={setting.label}
-                      className="w-11 h-6 rounded-full transition-colors relative"
-                      style={{
-                        background: config[setting.key]
-                          ? "#7B72E9"
-                          : "rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      <div
-                        className="absolute top-0.5 size-5 bg-white rounded-full shadow transition-transform"
-                        style={{
-                          transform: config[setting.key]
-                            ? "translateX(20px)"
-                            : "translateX(2px)",
-                        }}
-                      />
-                    </button>
+                    />
                   </div>
                 ))}
               {config.audioCues && (
@@ -1329,30 +1313,13 @@ export default function RunSetupModal({
                     config.target.type === "pace" && (
                       <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/50 bg-card">
                         <span className="text-sm">Pace alerts</span>
-                        <button
-                          type="button"
-                          onClick={() =>
+                        <Toggle
+                          checked={config.paceAlerts}
+                          label="Pace alerts"
+                          onChange={() =>
                             updateConfig({ paceAlerts: !config.paceAlerts })
                           }
-                          role="switch"
-                          aria-checked={config.paceAlerts}
-                          aria-label="Pace alerts"
-                          className="w-11 h-6 rounded-full transition-colors relative"
-                          style={{
-                            background: config.paceAlerts
-                              ? "#7B72E9"
-                              : "rgba(0,0,0,0.1)",
-                          }}
-                        >
-                          <div
-                            className="absolute top-0.5 size-5 bg-white rounded-full shadow transition-transform"
-                            style={{
-                              transform: config.paceAlerts
-                                ? "translateX(20px)"
-                                : "translateX(2px)",
-                            }}
-                          />
-                        </button>
+                        />
                       </div>
                     )}
                   <div className="p-3.5 rounded-xl border border-border/50 bg-card">

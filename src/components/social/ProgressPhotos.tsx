@@ -8,6 +8,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { addDocGuarded } from "@/lib/firestoreWrite";
+import { Toggle } from "@/components/ui/Toggle";
 import { db, storage } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth";
 import { Camera, Lock, RotateCcw, X } from "lucide-react";
@@ -394,18 +395,11 @@ export default function ProgressPhotos() {
         <span className="text-xs text-muted-foreground">
           Keep photos private
         </span>
-        <button
-          type="button"
-          onClick={() => setIsPrivate((v) => !v)}
-          aria-label={isPrivate ? "Make photos public" : "Make photos private"}
-          role="switch"
-          aria-checked={isPrivate}
-          className={`w-9 h-5 rounded-full transition-colors relative ${isPrivate ? "bg-primary" : "bg-muted border border-border"}`}
-        >
-          <div
-            className={`size-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm ${isPrivate ? "translate-x-[18px]" : "translate-x-[3px]"}`}
-          />
-        </button>
+        <Toggle
+          checked={isPrivate}
+          label={isPrivate ? "Make photos public" : "Make photos private"}
+          onChange={() => setIsPrivate((v) => !v)}
+        />
       </div>
 
       {loading && (
