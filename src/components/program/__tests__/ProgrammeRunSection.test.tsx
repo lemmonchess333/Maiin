@@ -71,9 +71,19 @@ vi.mock("@/lib/auth", () => ({
 // component without a Firestore environment, so we mock useClaimMap
 // to return an empty claim map. The hook surface is already covered
 // by src/hooks/__tests__/useClaimMap.test.ts.
+// Mutable so a test can seed a claim against a planned runDay (Run9 ENG e:
+// startability must consult the claim-map, not just stored status).
+let mockClaimMap = new Map<
+  string,
+  {
+    claimedSavedRunId?: string;
+    manualCompleted: boolean;
+    legacyCompleted: boolean;
+  }
+>();
 vi.mock("@/hooks/useClaimMap", () => ({
   useClaimMap: () => ({
-    claimMap: new Map(),
+    claimMap: mockClaimMap,
     unclaimedByDate: new Map(),
     today: "2026-05-12",
     loading: false,
@@ -438,6 +448,37 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
   });
 
+  it("Run9 ENG e: a claim-completed runDay still on 'planned' status is NOT promoted as Next", () => {
+    // The slot's stored status is "planned" (the claim-map reframe never flips
+    // it), but a saved run claimed it. Pre-fix this promoted an already-run slot
+    // as "Next ·" and "all runs done" never fired. The claim-aware nextStartable
+    // must treat it as complete.
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const claimedDay = makeRunDay({ status: "planned", dayIndex: 3 });
+    mockClaimMap = new Map([
+      [
+        claimedDay.id!,
+        {
+          claimedSavedRunId: "saved-run-1",
+          manualCompleted: false,
+          legacyCompleted: false,
+        },
+      ],
+    ]);
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([claimedDay], {
+          runPlan: { mode: "structured" },
+        })}
+      />
+    );
+    expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/All runs done this week/i)).toBeInTheDocument();
+  });
+
   it("renders 'Configure your runs' CTA for non-freeform users with runsTarget=0 and no race goal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
@@ -558,6 +599,7 @@ function beforeEachReset() {
     mockRecentRuns = [];
     mockWeeklyData = [];
     mockRunsLoading = false;
+    mockClaimMap = new Map();
   });
 }
 
