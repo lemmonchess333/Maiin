@@ -142,9 +142,11 @@ const INJURY_OPTIONS: { id: string; label: string; desc: string; icon: React.Rea
   { id: "wrist", label: "Wrist", desc: "We'll pick neutral-grip and machine variants", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
 ];
 
+// Run9 (3a): `structured` retired as a user-selectable mode — running is
+// freeform by default; a race goal is the only "plan". The type keeps it for
+// legacy data + migration.
 const RUN_MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
   { id: "freeform", label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
-  { id: "structured", label: "Structured", desc: "Auto-assign run types to your run days" },
   { id: "race_prep", label: "Race prep", desc: "Periodised plan for a specific race" },
 ];
 
