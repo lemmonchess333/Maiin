@@ -401,6 +401,66 @@ describe("classifyRaceTiming + floor helpers", () => {
   });
 });
 
+/* ─── Run9 phase-3 (Slice C): hard-run × lift clash flag ───────── */
+
+describe("generateRacePlanV2 · clashesWithLift flag", () => {
+  // 6-day-lifter shape: both run-eligible days are "both" (lift + run), no
+  // run-only slot exists, so the hard run is FORCED onto a both-day.
+  const allBoth: ScheduleDay[] = [
+    { day: 0, type: "both" },
+    { day: 1, type: "lift" },
+    { day: 2, type: "lift" },
+    { day: 3, type: "both" },
+    { day: 4, type: "lift" },
+    { day: 5, type: "lift" },
+    { day: 6, type: "rest" },
+  ];
+  const baseInputC = {
+    weeklyRunDays: 2,
+    currentDate: "2026-05-10",
+    weekStart: "2026-05-10",
+  };
+
+  it("flags the hard run when it's forced onto a both-day, but never the easy run", () => {
+    // Healthy marathon → week 0 is base/build, so the long run is type 'long'.
+    const plan = generateRacePlanV2({
+      ...baseInputC,
+      weekSchedule: allBoth,
+      raceGoal: { distance: "marathon", targetDate: "2026-09-20" }, // ~19 weeks
+    });
+    const week0 = plan.weeks[0];
+    const hard = week0.find((rd) => rd.type === "long");
+    const easy = week0.find((rd) => rd.type === "easy");
+    expect(hard).toBeTruthy();
+    expect(hard!.clashesWithLift).toBe(true); // forced onto a both-day
+    expect(easy).toBeTruthy();
+    expect(easy!.clashesWithLift).toBeUndefined(); // easy on a both-day is fine
+    // The run is PLACED, never dropped (R3-placement) — 2 run-eligible days.
+    expect(week0).toHaveLength(2);
+  });
+
+  it("does NOT flag a hard run that lands on a run-only day", () => {
+    const withRunOnly: ScheduleDay[] = [
+      { day: 0, type: "run" }, // run-only — long run prefers this
+      { day: 1, type: "lift" },
+      { day: 2, type: "lift" },
+      { day: 3, type: "both" },
+      { day: 4, type: "lift" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+    ];
+    const plan = generateRacePlanV2({
+      ...baseInputC,
+      weekSchedule: withRunOnly,
+      raceGoal: { distance: "marathon", targetDate: "2026-09-20" },
+    });
+    const hard = plan.weeks[0].find((rd) => rd.type === "long");
+    expect(hard).toBeTruthy();
+    expect(hard!.dayIndex).toBe(0); // landed on the run-only day
+    expect(hard!.clashesWithLift).toBeUndefined();
+  });
+});
+
 /* ─── enrichRunDayV2 (back-compat helper) ────────────────────── */
 
 describe("enrichRunDayV2", () => {
