@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, Timestamp, deleteField } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -220,6 +220,23 @@ export function useProgram() {
         }
       }
 
+      // Run9 (3a): `structured` run mode is retired. A legacy structured user
+      // is migrated to freeform INLINE here — not via a separate effect — so
+      // the migration can't race the runDays generation below (the load effect
+      // is the one place that generates run days). `effectiveRunMode` makes the
+      // rest of this load behave as freeform immediately; the persisted
+      // runMode write is fire-and-forget (idempotent: once freeform, the next
+      // load skips this). The orphaned structured runDays/runPlan are wiped in
+      // the existing-doc branch below.
+      const effectiveRunMode =
+        profile.runMode === "structured" ? "freeform" : profile.runMode;
+      if (profile.runMode === "structured") {
+        logger.log("[Run9] migrating legacy structured user → freeform");
+        updateProfile({ runMode: "freeform" }).catch((e) =>
+          logger.warn("[Run9] structured→freeform migration write failed", e)
+        );
+      }
+
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
       const snap = await getDoc(ref);
 
@@ -260,11 +277,29 @@ export function useProgram() {
           await setDocGuarded(ref, migrated, { merge: true });
         }
 
-        // Hydrate run days if user has run mode but no runDays yet
         if (
+          profile.runMode === "structured" &&
+          ((migrated.runDays && migrated.runDays.length > 0) ||
+            migrated.runPlan)
+        ) {
+          // Run9 (3a): retire `structured`. Wipe the orphaned auto-assigned
+          // runDays + runPlan (the user is now freeform; runMode is being
+          // migrated above). deleteField removes the stale runPlan under a
+          // merge write; runDays:[] overwrites the structured days.
+          const localCleared = { ...migrated, runDays: [] } as ProgramState;
+          delete (localCleared as { runPlan?: unknown }).runPlan;
+          await setDocGuarded(
+            ref,
+            { runDays: [], runPlan: deleteField(), updatedAt: Date.now() },
+            { merge: true }
+          );
+          setProgramState(localCleared);
+        } else if (
+          // Hydrate run days only for an active race plan with no days yet.
+          // (Run9: `structured` no longer generates a week — only race_prep.)
           !migrated.runDays &&
-          profile.runMode &&
-          profile.runMode !== "freeform"
+          effectiveRunMode === "race_prep" &&
+          profile.raceGoal
         ) {
           // PR-0b-ii: V2 writers. Reads weekSchedule directly so
           // hybrid Both-day slots get a scheduled run (V1 lost them
@@ -274,25 +309,13 @@ export function useProgram() {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
-          let runDays: ScheduledRunDay[] = [];
-          let runPlan = migrated.runPlan;
-
-          if (profile.runMode === "race_prep" && profile.raceGoal) {
-            ({ runDays, runPlan } = regenerateRacePlan({
-              raceGoal: profile.raceGoal,
-              weekSchedule,
-              weeklyRunDays: runTarget,
-              currentDate: localDateString(),
-              weekStart,
-            }));
-          } else {
-            runDays = scheduleStructuredWeekV2({
-              weekSchedule,
-              weekNumber: migrated.weekNumber,
-              weekStart,
-            });
-            runPlan = { mode: "structured" };
-          }
+          const { runDays, runPlan } = regenerateRacePlan({
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          });
 
           const withRuns = { ...migrated, runDays, runPlan };
           // Issue #845 defence-in-depth — same reason as the
@@ -325,29 +348,22 @@ export function useProgram() {
           profile.primaryGoal
         );
 
-        // Generate run schedule if applicable. PR-0b-ii: V2 writers.
+        // Generate run schedule only for an active race plan. PR-0b-ii: V2
+        // writers. Run9 (3a): `structured` is retired — freeform (incl. a
+        // migrated structured user) gets no auto-assigned runDays.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (profile.runMode && profile.runMode !== "freeform") {
+        if (effectiveRunMode === "race_prep" && profile.raceGoal) {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
-          if (profile.runMode === "race_prep" && profile.raceGoal) {
-            ({ runDays, runPlan } = regenerateRacePlan({
-              raceGoal: profile.raceGoal,
-              weekSchedule,
-              weeklyRunDays: runTarget,
-              currentDate: localDateString(),
-              weekStart,
-            }));
-          } else {
-            runDays = scheduleStructuredWeekV2({
-              weekSchedule,
-              weekNumber: 1,
-              weekStart,
-            });
-            runPlan = { mode: "structured" };
-          }
+          ({ runDays, runPlan } = regenerateRacePlan({
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          }));
         }
 
         const initial: ProgramState = {
