@@ -250,7 +250,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               style={
                 !saved
                   ? {
-                      backgroundColor: "#7C6BF0",
+                      backgroundColor: "#7B72E9",
                       boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
                     }
                   : undefined
