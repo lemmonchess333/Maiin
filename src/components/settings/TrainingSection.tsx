@@ -700,9 +700,14 @@ export default function TrainingSection({
 
       <motion.button
         whileTap={{ scale: 0.98 }}
-        onClick={async () => {
+        onClick={() => {
           haptic("error");
-          await updateProfile({ onboardingComplete: false });
+          // Navigate straight into the dedicated /onboarding route in retake
+          // mode. We deliberately do NOT flip onboardingComplete to false:
+          // doing so used to remount Onboarding at the old URL (no retake
+          // state yet) so `step` initialised to 0 while START_STEP later
+          // jumped to 4 — the "STEP -3 OF 9" bug. The profile stays complete;
+          // retake is detected from the nav state (and a complete profile).
           navigate("/onboarding", { state: { retake: true } });
         }}
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 transition-colors"

@@ -556,6 +556,23 @@ function AppRoutes() {
                   }
                 />
               </Route>
+              {/* Retake / edit-programme flow. Rendered outside <Layout> so
+                  it's full-screen with no nav chrome, matching the first-run
+                  onboarding experience. Only reachable by an already-complete
+                  user (Settings → Edit programme nav here with
+                  `{ retake: true }`); first-run still renders via the
+                  onboardingComplete=false branch above. Having a real route
+                  here means retake no longer has to flip onboardingComplete
+                  to false to force the catch-all — which is what created the
+                  remount race behind the "STEP -3 OF 9" numbering bug. */}
+              <Route
+                path="/onboarding"
+                element={
+                  <RouteErrorBoundary>
+                    <Onboarding />
+                  </RouteErrorBoundary>
+                }
+              />
               <Route
                 path="/run"
                 element={

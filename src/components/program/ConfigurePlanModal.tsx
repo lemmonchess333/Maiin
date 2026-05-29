@@ -737,8 +737,8 @@ export default function ConfigurePlanModal({
                 <div
                   className="rounded-2xl p-5 space-y-0"
                   style={{
-                    background: `${THEME.teal}08`,
-                    border: `1px solid ${THEME.teal}25`,
+                    background: `${THEME.brand}08`,
+                    border: `1px solid ${THEME.brand}25`,
                   }}
                 >
                   {[
@@ -836,7 +836,7 @@ export default function ConfigurePlanModal({
               "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all active:scale-95",
               (!canAdvance[step] || saving) && "opacity-40"
             )}
-            style={{ background: THEME.teal, color: "#000" }}
+            style={{ background: THEME.brand, color: "#fff" }}
           >
             {step === TOTAL_STEPS - 1 ? (
               saving ? (

@@ -306,11 +306,25 @@ export default function Onboarding() {
   const { user, profile, updateProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const isRetake = !!(location.state as { retake?: boolean } | null)?.retake;
+  // Retake mode skips the identity steps (name/gender/age/body metrics) and
+  // jumps straight to "What's your primary goal?" (STEP_META index 4). It's
+  // detected two ways and FROZEN at mount via a useState initializer:
+  //   1. explicit `{ retake: true }` nav state (set by the Settings entry), and
+  //   2. an already-onboarding-complete profile landing on /onboarding — the
+  //      only way a signed-in complete user reaches this screen is a retake,
+  //      so this also makes retake survive a hard refresh (which drops nav
+  //      state) without falling back to the full 13-step identity flow.
+  // Freezing at mount is load-bearing: it stops isRetake flipping after mount
+  // (e.g. when handleFinish sets onboardingComplete=true on a first-run finish,
+  // or any future nav-state race), which is exactly what produced the
+  // "STEP -3 OF 9" negative numbering — START_STEP jumping to 4 while `step`
+  // was already initialised to 0.
+  const [isRetake] = useState(
+    () =>
+      !!(location.state as { retake?: boolean } | null)?.retake ||
+      !!profile?.onboardingComplete
+  );
 
-  // In retake mode, skip the identity steps (name, gender, age, body metrics)
-  // that can't meaningfully change. The user jumps straight to the program-
-  // relevant steps starting at "What's your primary goal?" (STEP_META index 4).
   const START_STEP = isRetake ? 4 : 0;
   const VISIBLE_STEPS = TOTAL_STEPS - START_STEP;
 
@@ -733,6 +747,16 @@ export default function Onboarding() {
           publicErr
         );
       }
+
+      // Save succeeded — leave the onboarding surface explicitly. Previously
+      // this relied on a side effect: flipping onboardingComplete=true made
+      // App.tsx switch route sets, and with no /onboarding route in the
+      // authenticated set the URL fell through to the catch-all redirect to
+      // "/". Now that a real /onboarding route exists (so retake survives
+      // refresh), that implicit redirect is gone — without this navigate the
+      // user would be stranded re-viewing the last step after a successful
+      // retake. `replace` so Back doesn't return into the finished flow.
+      navigate("/", { replace: true });
     } catch (err) {
       // Sprint 2: the raw fallback toast used to leak Firebase
       // error codes to the user (e.g. "Save failed: functions/
@@ -831,7 +855,8 @@ export default function Onboarding() {
           className="flex-1 overflow-y-auto"
         >
           <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
-            Step {step - START_STEP + 1} of {VISIBLE_STEPS}
+            Step {Math.min(Math.max(step - START_STEP + 1, 1), VISIBLE_STEPS)}{" "}
+            of {VISIBLE_STEPS}
           </p>
           <h1 className="text-2xl font-bold mb-1">{STEP_META[step].title}</h1>
           <p className="text-sm mb-8 text-muted-foreground">
@@ -1743,11 +1768,10 @@ export default function Onboarding() {
         ) : isRetake ? (
           <button
             type="button"
-            onClick={async () => {
-              // Entry handler flipped this to false before sending the user
-              // into retake; restore it so bailing out doesn't leave the app
-              // treating them as mid-onboarding on next load.
-              await updateProfile({ onboardingComplete: true });
+            onClick={() => {
+              // Retake never flips onboardingComplete (it routes via the
+              // dedicated /onboarding route while the profile stays complete),
+              // so bailing out is just a navigation — no profile write needed.
               navigate("/settings");
             }}
             className="px-5 py-3.5 rounded-2xl text-sm font-medium active:scale-[0.97]"
