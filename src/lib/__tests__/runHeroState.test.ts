@@ -111,6 +111,60 @@ describe("getRunHeroState", () => {
     ).toBe("race-today");
   });
 
+  it("Run9 (l): returns 'race-recent' for a race 1–3 days ago (did-you-race window)", () => {
+    // TODAY = 2026-05-27. Race two days ago (2026-05-25) → within T+1..T+3.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-25" },
+          // a stale past race slot would otherwise read as catch-up
+          nextStartable: runDay({ date: "2026-05-25", templateId: "race" }),
+          hasRunDays: true,
+        })
+      )
+    ).toBe("race-recent");
+  });
+
+  it("Run9 (l): race-recent does NOT fire on race day itself (T+0)", () => {
+    // Race today → race-today wins, not race-recent.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: TODAY },
+          nextStartable: runDay({ date: TODAY, templateId: "race" }),
+        })
+      )
+    ).toBe("race-today");
+  });
+
+  it("Run9 (l): a race >3 days ago falls through to catch-up, not race-recent", () => {
+    // Race 5 days ago (2026-05-22) → past the did-you-race window.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-22" },
+          nextStartable: runDay({ date: "2026-05-22", templateId: "race" }),
+        })
+      )
+    ).toBe("catch-up");
+  });
+
+  it("Run9 (l): recovery still wins over race-recent (race was logged)", () => {
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-25" },
+          phase: "recovery",
+          recoveryEndDate: "2026-06-10",
+        })
+      )
+    ).toBe("race-recovery");
+  });
+
   it("returns 'race-prep-week' when race_prep + today is non-race", () => {
     expect(
       getRunHeroState(
@@ -193,11 +247,12 @@ describe("getRunHeroState", () => {
 });
 
 describe("shouldShowHeroOverflow — L12", () => {
-  it("visible on planned-today, catch-up, race-today, race-prep-week", () => {
+  it("visible on planned-today, catch-up, race-today, race-prep-week, race-recent", () => {
     expect(shouldShowHeroOverflow("structured-today")).toBe(true);
     expect(shouldShowHeroOverflow("catch-up")).toBe(true);
     expect(shouldShowHeroOverflow("race-today")).toBe(true);
     expect(shouldShowHeroOverflow("race-prep-week")).toBe(true);
+    expect(shouldShowHeroOverflow("race-recent")).toBe(true);
   });
 
   it("hidden on every other state", () => {
