@@ -730,7 +730,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 aria-selected={activeTab === t.id}
                 onClick={() => setActiveTab(t.id)}
                 className={cn(
-                  "py-2 rounded-lg text-xs font-semibold transition-all",
+                  "min-h-[44px] py-2 rounded-lg text-xs font-semibold transition-all",
                   activeTab === t.id
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
