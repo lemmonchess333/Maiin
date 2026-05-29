@@ -392,6 +392,42 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     expect(screen.getByText(/This week/i)).toBeInTheDocument();
     // "Track your first run" empty state should not render.
     expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
+    // Run9 R2-1: a descriptive cadence headline leads (1 run in the window).
+    expect(
+      screen.getByText(/You've run 1× in the last 4 weeks/i)
+    ).toBeInTheDocument();
+  });
+
+  it("Run9 R2-1: lapsed freeform user (no run in the window) sees a re-invite, never '0×'", () => {
+    mockRecentRuns = [
+      {
+        id: "r-old",
+        distance: 5000,
+        duration: 1700,
+        avgPace: 330,
+        elevationGain: 0,
+        calories: 300,
+        activityType: "run",
+        // 30 days ago — inside the hook's 30d window but OUTSIDE the 4-week
+        // (28d) cadence window → "lapsed".
+        completedAt: new Date(Date.now() - 30 * 24 * 3600 * 1000),
+      },
+    ];
+    mockWeeklyData = [];
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(screen.getByText(/pick it back up/i)).toBeInTheDocument();
+    // Never a judgmental "0×" count, and not the cold-start copy.
+    expect(screen.queryByText(/0×/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
   });
 
   it("section is visible for freeform users even with runsTarget === 0 (no early return)", () => {
