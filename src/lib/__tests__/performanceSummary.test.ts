@@ -8,6 +8,24 @@
 import { describe, it, expect } from "vitest";
 import { getPlainLanguageSummary } from "../performanceSummary";
 
+describe("getPlainLanguageSummary — establishing baseline (cold-start)", () => {
+  it("overrides headline + body when establishing, ignoring pi/band", () => {
+    const s = getPlainLanguageSummary(45, "moderate", 12, true);
+    expect(s.headline).toBe("Establishing your baseline");
+    expect(s.body).toContain("Keep logging");
+    // The confident "Moderate effort" verdict must NOT leak through.
+    expect(s.headline).not.toContain("Moderate");
+    // No delta trend sentence in the establishing copy.
+    expect(s.body).not.toContain("pts");
+  });
+
+  it("defaults to the normal (non-establishing) copy when the flag is omitted", () => {
+    expect(getPlainLanguageSummary(85, "high", null).headline).toBe(
+      "Strong week — your training is on track",
+    );
+  });
+});
+
 describe("getPlainLanguageSummary — headline tiers (PI)", () => {
   it("PI 80+ → Strong week", () => {
     expect(getPlainLanguageSummary(85, "moderate", null).headline).toBe(

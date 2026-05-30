@@ -26,6 +26,8 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   Flame,
+  Moon,
+  RotateCcw,
   UtensilsCrossed,
   X,
   Target,
@@ -108,7 +110,13 @@ export default function Home() {
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
-  const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
+  const {
+    currentStreak: streak,
+    forgivenYesterday,
+    backfillRescueStreak,
+    newBadge,
+    dismissNewBadge,
+  } = useStreaks();
   const {
     glasses: waterGlasses,
     target: waterTarget,
@@ -772,6 +780,70 @@ export default function Home() {
             </div>
           </motion.div>
         )}
+
+      {/* Grace reassurance (Streak1 visibility) — calm, after-the-fact: shown
+          only when today is logged AND yesterday was an off-day that grace
+          bridged. Purple (brand/calm), never orange (orange = the at-risk
+          warning above). The two are mutually exclusive by construction. */}
+      {forgivenYesterday && (
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border"
+          style={{
+            background: `${THEME.brand}14`,
+            borderColor: `${THEME.brand}33`,
+          }}
+        >
+          <Moon className="size-5 shrink-0" style={{ color: THEME.brand }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
+              Yesterday's rest day is covered
+            </p>
+            <p className="text-xs text-muted-foreground">
+              You're still on a {streak}-day streak.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Backfill rescue (Streak1 Tier B discoverability) — the streak broke,
+          but logging yesterday retroactively would revive it. One-tap deep
+          link into Food on yesterday's date. Shown only when a backfill
+          actually restores a streak worth saving (>= 3); mutually exclusive
+          with the two nudges above (those require a live streak). */}
+      {backfillRescueStreak > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => {
+            haptic();
+            navigate(
+              `/food?date=${format(new Date(Date.now() - 86400000), "yyyy-MM-dd")}`
+            );
+          }}
+          variants={{
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border w-full text-left active:scale-[0.98] transition-transform"
+          style={{
+            background: `${THEME.brand}14`,
+            borderColor: `${THEME.brand}33`,
+          }}
+        >
+          <RotateCcw className="size-5 shrink-0" style={{ color: THEME.brand }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
+              Bring back your {backfillRescueStreak}-day streak
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Missed yesterday? Log it to keep your streak going.
+            </p>
+          </div>
+        </motion.button>
+      )}
 
       <motion.div
         ref={weekStripRef}
