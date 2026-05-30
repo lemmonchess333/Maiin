@@ -178,15 +178,16 @@ export default function HybridWeekRail({
                   "flex flex-col items-center gap-1",
                   "motion-safe:transition-transform motion-safe:active:scale-[0.97]",
                   "hover:bg-muted/40",
-                  item.isToday ? "border-foreground/30" : "border-border"
+                  !item.isToday && "border-border"
                 )}
+                style={item.isToday ? { borderColor: THEME.brand } : undefined}
               >
                 <span
                   className={cn(
                     "text-[10px] font-bold uppercase leading-none",
                     item.isToday ? "" : "text-muted-foreground"
                   )}
-                  style={item.isToday ? { color: THEME.running } : undefined}
+                  style={item.isToday ? { color: THEME.brand } : undefined}
                 >
                   {item.dayLabel}
                 </span>
