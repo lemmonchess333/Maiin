@@ -12,18 +12,29 @@ Update when a /grill-me session crystallises new vocabulary, when we adopt or re
 
 - **runDay** — a prescribed running slot for a specific date. Carries `id` (stable across regenerates within a week), `date` (YYYY-MM-DD, local timezone), `weekKey` (Sunday of the week, local), `templateId` (e.g. `easy_30`, `tempo_20`, `long_10k`, `10k_race`), `status`. Persisted in `programState.runDays[]`.
 - **programState** — Firestore doc at `users/{uid}/programState/current`. Holds the user's running + lifting prescriptions: `runDays`, `runPlan`, `workouts`, `weekHistory`, `weekNumber`, `splitType`.
-- **runMode** — `freeform | structured | race_prep`. User profile field; drives schedule generation. Freeform = no scheduled runDays; structured = weekly rotation; race_prep = goal-anchored periodisation toward a target date.
+- **runMode** — `freeform | race_prep` (the `structured` value was retired in Run9a; legacy structured profiles migrate to freeform on load). User profile field; drives schedule generation. The user-facing model is two-state: **freeform substrate + optional race-goal overlay**. Freeform = no scheduled runDays; race_prep = goal-anchored periodisation toward a target date.
 - **runPlan** — sub-object on programState. Holds mode-specific config: `mode`, `raceGoal` (race_prep only), `currentWeek`, `totalWeeks`, `compressed` flag (when race date forces a sub-minimum plan), `phase` (currently only `"recovery"`), `recoveryEndDate`.
 - **recovery phase** — post-race state where all run slots emit `easy_30` templates. Triggered by completing the race-day runDay. Distance-scaled: 5K=1w, 10K=2w, half=3w, marathon=4w. Cleared by the recovery-exit effect 7d after `recoveryEndDate`, or by `skipRecoveryEarly` writer.
 - **race_no_show** — runDay status assigned when race date passes by >3 days without a logged run. Recoverable — legal transition to `completed_exact` via the late-reconciliation flow.
-- **expired** *(proposed, not shipped — Q6)* — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
-- **softlink** *(proposed, not shipped — Q7 revision)* — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
+- **expired** _(proposed, not shipped — Q6)_ — runDay status assigned when PR-G's auto-rollover archives a planned slot the user didn't act on. Distinct from `skipped` (deliberate user action). Doesn't break streaks; analytics may choose to count or ignore.
+- **softlink** _(proposed, not shipped — Q7 revision)_ — derive runDay completion at render time from the existence of a saved run with matching date + template, rather than persisting `linkedRunId`. Matches reference-app convention; eliminates user-facing link/unlink UI.
 - **Ad-hoc run launcher** — the run-type picker accessed via the **footprint icon** on the Programme page (top-right). Lets the user start a run on demand without committing to a programmed plan. Run types: Free Run, Easy Run, Tempo Run, Intervals, Long Run, Race (outdoor GPS); Treadmill, Guided Run (other). **Freeform mode shares this same launcher surface** — Freeform mode's "Go" CTA opens the same Choose-run-type picker. Distinct from Structured / Race Prep modes which surface their pre-scheduled runs day-by-day in ProgrammeRunSection. The ad-hoc launcher is the single canonical entry point for unplanned runs, regardless of which mode the user is in.
 
 ### Lifting (for cross-reference)
 
 - **workouts** — array of prescribed lift sessions on programState. Each has `dayIndex`, `dayName`, `exercises[]`, `completed`, `skipped`.
 - **weekHistory** — array of archived past weeks, currently storing `{ workouts, weekNumber }`. Proposed extension (Q6): also store `runDays`.
+
+### Training-week scheduling ontology & surfaces
+
+Tropos deliberately uses **two different scheduling ontologies**, one per discipline. They are not a bug or unharmonised tech debt — each is correct for its sport. See `docs/adr/0002-dual-scheduling-ontology.md`.
+
+- **date-pinned** (runs) — a running slot belongs to a specific **calendar date** (`runDay.date`). Missing it leaves it missed; it does not slide forward. Right for running, where the stimulus is about the day (long run Sunday, intervals Tuesday, race countdown).
+- **split-ordered** (lifts) — a lift session belongs to a **position in the rotation** (`workouts[]` order), not a weekday. "Next up" is the next not-completed/not-skipped session, done **whenever** you next train; volume accumulates and a session is not lost if a day slips. Right for lifting, where total weekly volume matters more than which weekday.
+- **planned week vs progress** — the calendar shows the _planned_ week; "next up" reflects _progress_. They can legitimately differ (you worked ahead, or lifted off-schedule) — this is plan-vs-progress, **not** a conflict. Lift completion state (`workout.completed`) is shared, so a done session reads done on every surface.
+- **week rail** (`HybridWeekRail`) — single-week, calendar overview with a coral RUN lane + a purple LIFT lane per day. Renders the _planned_ week; the shared "this week" glance across Programme tabs. Shows run identity precisely (date-pinned) and lift day-types as the planned shape — it does **not** own lift session-identity selection (that's the cursor's job).
+- **week strip** (`WeekStrip`, Home) — multi-week, horizontally-scrolling **date navigator** with density dots (purple = lift, coral = run). A navigation + glance surface, not a plan editor.
+- **next-up cursor** (`DayStepper`, Lift tab) — the numbered (Day 1..N) rotation cursor; the lift _execution_ surface. Selects the split-ordered "next" session to start.
 
 ### Nutrition (daily targets)
 
@@ -56,7 +67,7 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Tropos position:** persisted `linkedRunId` is an internal-only concept that should NOT be exposed in the UX. Compute completion at read time by joining runDays to saved runs by date + template (soft-link). No save-time prompts. No History "Link?" chips. No unlink UI. PR-D's `linkedRunId` write stays as a useful internal hint but is not load-bearing; recovery-phase entry triggers on "saved run exists on race date," not on the link itself.
 
-**Why deviate** — we don't. This is the case where we *match* the reference apps after initially overcomplicating in PR-D/Q1/Q2.
+**Why deviate** — we don't. This is the case where we _match_ the reference apps after initially overcomplicating in PR-D/Q1/Q2.
 
 ### Post-race recovery prescription
 
@@ -81,7 +92,7 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Pattern:** confirmation step before destructive mode changes.
 
-**Tropos position:** `ConfigurePlanModal` pattern matches. Tropos extension (Q5): when changing modes *mid-recovery*, the modal shows a banner ("Changing your plan will end recovery early") — a category of warning the reference apps don't have because they don't have a recovery phase to break.
+**Tropos position:** `ConfigurePlanModal` pattern matches. Tropos extension (Q5): when changing modes _mid-recovery_, the modal shows a banner ("Changing your plan will end recovery early") — a category of warning the reference apps don't have because they don't have a recovery phase to break.
 
 ### Logging a casual run when on a training plan
 
@@ -190,8 +201,6 @@ outlier) does surface run phases, but that's the pro-leaning cohort, not
 Tropos's calm-adaptive positioning.
 
 ---
-
-
 
 - After a /grill-me or /grill-with-docs session that touched feature design
 - When a competitor changes a relevant pattern (and the change is material)
