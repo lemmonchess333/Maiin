@@ -27,6 +27,7 @@ import {
   Settings as SettingsIcon,
   Flame,
   Moon,
+  RotateCcw,
   Footprints,
   X,
   Target,
@@ -112,6 +113,7 @@ export default function Home() {
   const {
     currentStreak: streak,
     forgivenYesterday,
+    backfillRescueStreak,
     newBadge,
     dismissNewBadge,
   } = useStreaks();
@@ -802,6 +804,42 @@ export default function Home() {
             </p>
           </div>
         </motion.div>
+      )}
+
+      {/* Backfill rescue (Streak1 Tier B discoverability) — the streak broke,
+          but logging yesterday retroactively would revive it. One-tap deep
+          link into Food on yesterday's date. Shown only when a backfill
+          actually restores a streak worth saving (>= 3); mutually exclusive
+          with the two nudges above (those require a live streak). */}
+      {backfillRescueStreak > 0 && (
+        <motion.button
+          type="button"
+          onClick={() => {
+            haptic();
+            navigate(
+              `/food?date=${format(new Date(Date.now() - 86400000), "yyyy-MM-dd")}`
+            );
+          }}
+          variants={{
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border w-full text-left active:scale-[0.98] transition-transform"
+          style={{
+            background: "rgba(123,114,233,0.08)",
+            borderColor: "rgba(123,114,233,0.2)",
+          }}
+        >
+          <RotateCcw className="size-5 shrink-0" style={{ color: "#7B72E9" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "#7B72E9" }}>
+              Bring back your {backfillRescueStreak}-day streak
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Missed yesterday? Log it to keep your streak going.
+            </p>
+          </div>
+        </motion.button>
       )}
 
       <motion.div

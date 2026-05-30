@@ -562,6 +562,24 @@ function useStreaksInternal() {
     return bridgedDates.includes(yesterday);
   }, [allLoaded, hasLoggedToday, bridgedDates]);
 
+  // Tier B backfill discoverability (Streak1): the streak is derived from each
+  // entry's own date, so logging yesterday retroactively re-anchors and (via
+  // grace) can revive a freshly-broken streak. Users don't know that. We
+  // surface the prompt only when it actually helps: the streak is broken
+  // (currentStreak === 0), yesterday isn't already active, and SIMULATING a
+  // backfill of yesterday through the same engine yields a streak worth
+  // saving (>= 3). The simulation captures every rescuable shape — including
+  // a one-day-older gap that grace then bridges — without re-deriving the rule.
+  const backfillRescueStreak = useMemo(() => {
+    if (!allLoaded || currentStreak > 0) return 0;
+    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    if (activeDateSet.has(yesterday)) return 0;
+    const augmented = new Set(activeDateSet);
+    augmented.add(yesterday);
+    const restored = computeCurrentStreak(augmented);
+    return restored >= 3 ? restored : 0;
+  }, [allLoaded, currentStreak, activeDateSet]);
+
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
   // no-op alias — but explicit is clearer for consumers like BadgeGrid).
@@ -797,6 +815,7 @@ function useStreaksInternal() {
     totalActiveDays,
     hasLoggedToday,
     forgivenYesterday,
+    backfillRescueStreak,
     loading: !allLoaded,
     earnedBadges,
     lockedBadges,

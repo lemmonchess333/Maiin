@@ -102,3 +102,35 @@ describe("computeStreakSpan — bridged-date reporting", () => {
     expect(result.bridgedDates).toEqual([dayKey(3), dayKey(10)]);
   });
 });
+
+describe("backfill rescue mechanism (Tier B) — simulation property", () => {
+  // The hook surfaces the backfill nudge by adding yesterday to the set and
+  // re-running the engine. These assert the underlying property the nudge
+  // relies on: backfilling yesterday revives an otherwise-broken streak.
+  const withYesterday = (...offsets: number[]) => {
+    const set = activeSet(...offsets);
+    set.add(dayKey(1));
+    return computeCurrentStreak(set, NOW);
+  };
+
+  it("is broken when the last active day is 2 days ago", () => {
+    // today + yesterday both missed → anchor fails → 0
+    expect(streak(2, 3, 4, 5)).toBe(0);
+  });
+
+  it("revives the streak when yesterday is backfilled", () => {
+    // last active offset 2; logging yesterday re-anchors → 5-day span
+    expect(withYesterday(2, 3, 4, 5)).toBe(5);
+  });
+
+  it("revives across a grace-bridgeable older gap (last active 3 days ago)", () => {
+    // backfilling yesterday makes day-2 an isolated gap grace then bridges
+    expect(withYesterday(3, 4, 5)).toBe(5);
+  });
+
+  it("does not revive when the gap is too large to bridge", () => {
+    // last active offset 4: yesterday + day-2 + day-3 missed → grace can't
+    // span two consecutive misses, so backfill yields a trivial streak
+    expect(withYesterday(4, 5, 6)).toBeLessThan(3);
+  });
+});
