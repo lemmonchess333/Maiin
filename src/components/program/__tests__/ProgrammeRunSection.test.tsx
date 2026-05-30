@@ -220,11 +220,11 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   // swap <select> was a duplicate of DayActionSheet's same picker
   // and is gone. Edit path is now tap-through → DayActionSheet.
 
-  it("renders the compact week strip (no inline template <select>)", () => {
+  it("renders the hybrid week rail (no inline template <select>)", () => {
     const programState = makeProgramState([makeRunDay({ status: "planned" })]);
     const { container } = renderSection(commonProps(), programState);
     expect(container.querySelectorAll("select").length).toBe(0);
-    expect(screen.getByLabelText(/this week's runs/i)).toBeInTheDocument();
+    expect(screen.getByText("This week")).toBeInTheDocument();
   });
 
   it("strikes through terminal runs (skipped) in the strip — no passive copy", () => {
@@ -255,7 +255,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
         programState={makeProgramState([], { runPlan: undefined })}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /Manage Run Plan/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
     expect(navigateMock).toHaveBeenCalledTimes(1);
     expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
@@ -272,14 +272,14 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
         })}
       />
     );
-    fireEvent.click(screen.getByRole("button", { name: /Manage Run Plan/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
     expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
 
   it("clicking 'Manage Run Plan' deeplinks to /settings/training (race_prep with goal)", () => {
     const props = commonProps();
     renderSection(props, makeProgramState([makeRunDay()]));
-    fireEvent.click(screen.getByRole("button", { name: /Manage Run Plan/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
     expect(navigateMock).toHaveBeenCalledWith("/settings/training");
   });
 
@@ -291,7 +291,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     renderSection(commonProps(), makeProgramState([makeRunDay()]));
     expect(screen.queryByText(/Running mode:/i)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Manage Run Plan/i })
+      screen.getByRole("button", { name: /Edit run plan/i })
     ).toBeInTheDocument();
   });
 
@@ -299,7 +299,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
   // goal is already saved. Pre-Q5 the row was "Race" + "10K — 2026-04-18"
   // + coral Edit button (two-piece header). New shape: a single text
   // run "Race goal: 10K · 16 Jul 2026" plus a muted-gray Edit chevron.
-  it("renders race-goal summary as 'Race goal: <distance> · <human date>' one-liner with muted Edit ›", () => {
+  it("renders the RaceCockpitCard with readable distance heading + human date + days-out", () => {
     const programState = makeProgramState([makeRunDay()], {
       runPlan: {
         mode: "race_prep",
@@ -309,11 +309,13 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
       },
     });
     renderSection(commonProps(), programState);
-    // Summary line — order-of-text + human-readable month.
-    expect(screen.getByText(/Race goal:/i)).toBeInTheDocument();
-    expect(screen.getByText(/10K · 16 Jul 2027/)).toBeInTheDocument();
-    // Edit button is muted-gray text-link (Q2 navigation discipline),
-    // not coral.
+    // Cockpit identity: distance as a readable heading (not "MARATHON"
+    // machine text), human-readable target date, and the countdown.
+    expect(screen.getByRole("heading", { name: "10K" })).toBeInTheDocument();
+    expect(screen.getByText(/16 Jul 2027/)).toBeInTheDocument();
+    expect(screen.getByText(/days out/i)).toBeInTheDocument();
+    // Edit affordance is the muted-gray text-link (navigation discipline),
+    // not a coral fill.
     const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
     expect(editBtn.className).toContain("text-muted-foreground");
     expect(editBtn.style.color).toBe("");
@@ -463,20 +465,23 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
 describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
   beforeEachReset();
 
-  it("promotes a 'Next' Start card for structured users with planned runs", () => {
+  it("promotes a SessionCommandCard (Start run) for a race-prep user with a planned run", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    // Race-prep with a goal is the only non-freeform state (Run9a). The
+    // next startable run surfaces as a SessionCommandCard with a Start run
+    // primary action — no "Next · Pending" status-row copy.
     renderWith(
       <ProgrammeRunSection
         {...props}
-        profile={profile}
-        programState={makeProgramState(
-          [makeRunDay({ status: "planned", dayIndex: 3 })],
-          { runPlan: { mode: "structured" } }
-        )}
+        programState={makeProgramState([
+          makeRunDay({ status: "planned", dayIndex: 3 }),
+        ])}
       />
     );
-    expect(screen.getByText(/^Next ·/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start run/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
   });
 
   it("renders 'All runs done this week' badge when every runDay is terminal", () => {
