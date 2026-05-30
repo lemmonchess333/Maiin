@@ -198,9 +198,15 @@ describe("getAdjustedTargets", () => {
     expect(result.calories).toBe(2700);
     // protein = round(2.0 * 80) = 160
     expect(result.protein).toBe(160);
-    // carbs = 300 + (200 / 4 = 50) = 350 — the extra calories are
-    // funnelled entirely into carbs so macros reconcile to total.
-    expect(result.carbs).toBe(350);
+    // carbs are the balancing macro so protein*4 + carbs*4 + fat*9
+    // reconciles to the calorie target. Here the 160g bodyweight-derived
+    // protein differs from the 180g stored target, so carbs absorb both the
+    // +200 surplus and that protein gap.
+    expect(result.carbs).toBe(358);
+    expect(result.protein * 4 + result.carbs * 4 + result.fat * 9).toBeCloseTo(
+      result.calories,
+      -1,
+    );
     // fat unchanged
     expect(result.fat).toBe(70);
     expect(result.annotation).toContain("Lift day");
@@ -211,7 +217,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "run");
     expect(result.calories).toBe(2700); // 2500 + 200
     expect(result.protein).toBe(160); // round(2.0 * 80)
-    expect(result.carbs).toBe(350); // 300 + (200 / 4 = 50)
+    expect(result.carbs).toBe(358); // balancing macro (reconciles to calories)
     expect(result.fat).toBe(70);
   });
 
@@ -219,14 +225,14 @@ describe("getAdjustedTargets", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "both");
     expect(result.calories).toBe(2850); // 2500 + 350
-    expect(result.carbs).toBe(388); // 300 + round(350 / 4 = 88)
+    expect(result.carbs).toBe(395); // balancing macro
   });
 
   it("returns correct values for a rest day", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "rest");
     expect(result.calories).toBe(2500); // no adjustment
-    expect(result.carbs).toBe(300);
+    expect(result.carbs).toBe(308); // balancing macro (160g protein vs 180g target)
     expect(result.fat).toBe(70);
     expect(result.annotation).toContain("Rest day");
   });
@@ -275,7 +281,7 @@ describe("getAdjustedTargets", () => {
     const result = getAdjustedTargets(profile, "lift");
     // defaults: cal=2200, carbs=250, fat=60
     expect(result.calories).toBe(2400); // 2200 + 200
-    expect(result.carbs).toBe(300); // 250 + (200 / 4 = 50)
+    expect(result.carbs).toBe(325); // balancing macro (defaults: 2200 cal, p140, f60)
     expect(result.fat).toBe(60);
     // protein = round(2.0 * 70) = 140 (default weight 70)
     expect(result.protein).toBe(140);
@@ -318,6 +324,46 @@ describe("getAdjustedTargets", () => {
     // cut overrides: +250 cal (cut takes precedence over strength for both)
     expect(result.calories).toBe(2750); // 2500 + 250
     expect(result.protein).toBe(Math.round(2.2 * 85)); // 187 — cut goal uses cut protein multiplier
-    expect(result.carbs).toBe(363); // 300 + round(250 / 4 = 63)
+    expect(result.carbs).toBe(343); // balancing macro
+  });
+
+  // Streak-of-bugs guard: the documented contract is that the rendered macros
+  // always reconcile to the rendered calorie target. Pre-fix, protein was
+  // recomputed from bodyweight while carbs only tracked the calorie surplus,
+  // so any mismatch between the stored protein target and bodyweight*multiplier
+  // silently broke the total. Assert the invariant across day types and a
+  // deliberately INCONSISTENT base profile (stored protein far from bodyweight).
+  describe("macro/calorie reconciliation invariant", () => {
+    const reconciles = (t: {
+      calories: number;
+      protein: number;
+      carbs: number;
+      fat: number;
+    }) => Math.abs(t.protein * 4 + t.carbs * 4 + t.fat * 9 - t.calories) <= 2;
+
+    for (const dayType of ["lift", "run", "both", "rest"] as const) {
+      it(`reconciles on a ${dayType} day even with a mismatched base protein target`, () => {
+        const profile = makeProfile({
+          weightKg: 80,
+          targetCalories: 2500,
+          targetProtein: 999, // absurd stored value — bodyweight protein wins
+          targetCarbs: 50,
+          targetFat: 70,
+        });
+        expect(reconciles(getAdjustedTargets(profile, dayType))).toBe(true);
+      });
+    }
+
+    it("clamps carbs at 0 (never negative) when protein+fat already exceed the budget", () => {
+      const profile = makeProfile({
+        weightKg: 130,
+        targetCalories: 1200,
+        targetFat: 60,
+        program: { goal: "cut", startWeight: 130, currentPhase: "cut" },
+      });
+      const result = getAdjustedTargets(profile, "lift");
+      expect(result.carbs).toBe(0);
+      expect(result.carbs).toBeGreaterThanOrEqual(0);
+    });
   });
 });
