@@ -88,11 +88,22 @@ export function getAdjustedTargets(
   const goal = profile.program?.goal;
   const adj = getDayAdjustment(dayType, phase, goal);
 
-  return {
-    calories: base.calories + adj.calorieAdjustment,
-    protein: Math.round(adj.proteinMultiplier * (profile.weightKg || 70)),
-    carbs: base.carbs + adj.carbAdjustment,
-    fat: base.fat,
-    annotation: adj.reason,
-  };
+  const calories = base.calories + adj.calorieAdjustment;
+  const protein = Math.round(adj.proteinMultiplier * (profile.weightKg || 70));
+  const fat = base.fat;
+  // Carbs are the balancing macro. They absorb BOTH the training-day calorie
+  // surplus AND any gap between the bodyweight-derived protein above and the
+  // stored base protein target, so the rendered macros always reconcile with
+  // the rendered calorie goal (protein*4 + carbs*4 + fat*9 === calories, modulo
+  // ≤2 cal of per-gram rounding). Pre-fix, carbs only tracked the calorie
+  // surplus (`base.carbs + adj.carbAdjustment`) while protein was recomputed
+  // from bodyweight independently — so whenever the stored base protein target
+  // differed from `proteinMultiplier * weightKg` (stale onboarding value,
+  // weight change, or a different phase multiplier upstream), the macros shown
+  // on Home/Food silently summed to a different number than the calorie goal.
+  // Clamped at 0 for aggressive cuts where protein + fat alone already meet the
+  // budget.
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
+
+  return { calories, protein, carbs, fat, annotation: adj.reason };
 }
