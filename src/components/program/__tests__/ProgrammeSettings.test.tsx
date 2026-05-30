@@ -20,7 +20,12 @@ const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
   httpsCallable: () => configureSpy,
 }));
-vi.mock("@/lib/firebase", () => ({ functions: {}, db: {}, auth: {}, storage: {} }));
+vi.mock("@/lib/firebase", () => ({
+  functions: {},
+  db: {},
+  auth: {},
+  storage: {},
+}));
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
@@ -69,10 +74,11 @@ beforeEach(() => {
 });
 
 describe("ProgrammeSettings — save gating", () => {
-  it("save is disabled until a field changes, then enabled", () => {
+  it("save is hidden until a field changes, then enabled", () => {
     setup();
-    const save = screen.getByRole("button", { name: /no changes/i });
-    expect(save).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /save changes/i })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Get stronger"));
     const saveNow = screen.getByRole("button", { name: /save changes/i });
