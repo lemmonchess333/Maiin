@@ -176,6 +176,20 @@ function computeActiveDateSet(
 const GRACE_MIN_SPACING_DAYS = 7;
 
 /**
+ * The YYYY-MM-DD key for the calendar day before `now`, computed by a calendar
+ * step (NOT `now - 86400000`). Millisecond subtraction is DST-unsafe: on a
+ * fall-back day (25h) it can land back on today's own date, and on a
+ * spring-forward day (23h) it can skip a calendar day — either of which
+ * silently corrupts the streak anchor. `setDate(-1)` is wall-clock and matches
+ * the DST-proof step the backward walk already uses.
+ */
+function yesterdayKey(now: Date): string {
+  const y = new Date(now);
+  y.setDate(y.getDate() - 1);
+  return format(y, "yyyy-MM-dd");
+}
+
+/**
  * Today/yesterday rule — the streak does NOT drop to zero at midnight.
  * - If today is active: streak ends on today (live).
  * - Else if yesterday is active: streak ends on yesterday (at risk).
@@ -217,7 +231,7 @@ export function computeStreakSpan(
   if (activeDates.size === 0) return { streak: 0, bridgedDates: [] };
 
   const today = format(now, "yyyy-MM-dd");
-  const yesterday = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
+  const yesterday = yesterdayKey(now);
 
   let endDate: Date;
   if (activeDates.has(today)) {
@@ -558,7 +572,7 @@ function useStreaksInternal() {
   // which only shows when nothing is logged today. Never pre-emptive.
   const forgivenYesterday = useMemo(() => {
     if (!allLoaded || !hasLoggedToday) return false;
-    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    const yesterday = yesterdayKey(new Date());
     return bridgedDates.includes(yesterday);
   }, [allLoaded, hasLoggedToday, bridgedDates]);
 
@@ -572,7 +586,7 @@ function useStreaksInternal() {
   // a one-day-older gap that grace then bridges — without re-deriving the rule.
   const backfillRescueStreak = useMemo(() => {
     if (!allLoaded || currentStreak > 0) return 0;
-    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    const yesterday = yesterdayKey(new Date());
     if (activeDateSet.has(yesterday)) return 0;
     const augmented = new Set(activeDateSet);
     augmented.add(yesterday);
