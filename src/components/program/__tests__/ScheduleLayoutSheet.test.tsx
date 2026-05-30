@@ -4,7 +4,7 @@
  * Pinned here:
  *   - Renders nothing when open=false (the body — and the
  *     useProgrammeScheduleEditor hook inside it — never mounts).
- *   - Renders the 7-day chip row + "Apply changes" button when open.
+ *   - Renders the 7-day chip row and summary when open.
  *   - Re-opening with a changed `profile` reflects the latest
  *     run-day count (the unmount-on-close hydration contract).
  *
@@ -34,7 +34,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 
 function makeCallbacks() {
   return {
-    updateProfile: vi.fn(async () => ({ ok: true } as UpdateProfileResult)),
+    updateProfile: vi.fn(async () => ({ ok: true }) as UpdateProfileResult),
     refreshRunSchedule: vi.fn(async () => {}),
     regenerateProgram: vi.fn(async () => {}),
   };
@@ -48,7 +48,7 @@ describe("ScheduleLayoutSheet — closed", () => {
         onClose={() => {}}
         profile={makeProfile()}
         {...makeCallbacks()}
-      />,
+      />
     );
     expect(screen.queryAllByText(/Weekly layout/i).length).toBe(0);
     expect(screen.queryByText(/Apply changes/i)).not.toBeInTheDocument();
@@ -63,13 +63,14 @@ describe("ScheduleLayoutSheet — open render", () => {
         onClose={() => {}}
         profile={makeProfile()}
         {...makeCallbacks()}
-      />,
+      />
     );
     // "Weekly layout" appears in two places — the BottomSheet's
     // sr-only Drawer.Title and the visible body heading. Use
     // getAllByText to tolerate both.
     expect(screen.getAllByText(/Weekly layout/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Apply changes/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/weekly layout summary/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Apply changes/i)).not.toBeInTheDocument();
     // 7 day chips render — one per dayOfWeek. Each has a single-letter
     // label and a day-type label (Rest / Lift / Run / Both). Easiest
     // structural check: the unique single-letter day labels.
@@ -80,7 +81,7 @@ describe("ScheduleLayoutSheet — open render", () => {
     });
   });
 
-  it("Apply changes is disabled when there are no unsaved edits", () => {
+  it("Apply changes is hidden when there are no unsaved edits", () => {
     render(
       <ScheduleLayoutSheet
         open={true}
@@ -97,10 +98,14 @@ describe("ScheduleLayoutSheet — open render", () => {
           ],
         })}
         {...makeCallbacks()}
-      />,
+      />
     );
-    const apply = screen.getByRole("button", { name: /Apply changes/i });
-    expect(apply).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /Apply changes/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Close$/i })
+    ).toBeInTheDocument();
   });
 });
 
@@ -141,10 +146,10 @@ describe("ScheduleLayoutSheet — PR-2 hydration on re-open", () => {
         onClose={() => {}}
         profile={profileA}
         {...callbacks}
-      />,
+      />
     );
-    expect(screen.getAllByText(/^Run$/i).length).toBe(1);
-    expect(screen.queryAllByText(/^Both$/i).length).toBe(0);
+    expect(screen.getAllByRole("button", { name: /Tue: Run/i }).length).toBe(1);
+    expect(screen.queryAllByRole("button", { name: /Both/i }).length).toBe(0);
 
     // Close → body unmounts.
     rerender(
@@ -153,7 +158,7 @@ describe("ScheduleLayoutSheet — PR-2 hydration on re-open", () => {
         onClose={() => {}}
         profile={profileA}
         {...callbacks}
-      />,
+      />
     );
     expect(screen.queryAllByText(/Weekly layout/i).length).toBe(0);
 
@@ -166,9 +171,9 @@ describe("ScheduleLayoutSheet — PR-2 hydration on re-open", () => {
         onClose={() => {}}
         profile={profileB}
         {...callbacks}
-      />,
+      />
     );
-    expect(screen.getAllByText(/^Both$/i).length).toBe(3);
-    expect(screen.queryAllByText(/^Run$/i).length).toBe(0);
+    expect(screen.getAllByRole("button", { name: /Both/i }).length).toBe(3);
+    expect(screen.queryAllByRole("button", { name: /: Run/i }).length).toBe(0);
   });
 });
