@@ -151,19 +151,49 @@ function computeActiveDateSet(
   return set;
 }
 
+// ── Grace forgiveness (Streak1 — see .claude/plans/programme-run-followups.md)
+//
+// A single off-day inside an otherwise-consistent run does NOT break the
+// streak. This is the calm forgiveness model the field has converged on
+// (Apple watchOS-11 ring pause, MyFitnessPal backfill, habit-tracker
+// "never miss twice") — deliberately NOT a Duolingo-style earned-token
+// economy.
+//
+// Rule: walking back from the end anchor, a non-active day may be BRIDGED
+// (counted toward the streak span) only if no grace was spent within the
+// prior GRACE_MIN_SPACING_DAYS of the walk. That single spacing constraint
+// enforces BOTH invariants at once:
+//   • "never miss twice" — two consecutive misses are 1 day apart < spacing,
+//     so the second is denied and the walk stops; and
+//   • "≤1 forgiven day per rolling 7" — a second grace is only allowed once
+//     7 calendar days separate it from the last one.
+// Spacing is counted in calendar-day steps (not milliseconds) so DST
+// transitions can't shift the boundary.
+//
+// A bridged day is held as PENDING until an older active day confirms it —
+// so grace can't extend the streak into pre-history (a trailing/leading gap
+// with no active day behind it is discarded, not counted).
+const GRACE_MIN_SPACING_DAYS = 7;
+
 /**
  * Today/yesterday rule — the streak does NOT drop to zero at midnight.
  * - If today is active: streak ends on today (live).
  * - Else if yesterday is active: streak ends on yesterday (at risk).
  * - Else: streak = 0 (broken).
- * Walks backwards from the ending date, incrementing while consecutive days
- * are in the set.
+ * Walks backwards from the ending date, incrementing while days are in the
+ * set, bridging isolated non-active days per the grace rule above.
+ *
+ * `now` is injectable for deterministic tests; production callers omit it.
  */
-function computeCurrentStreak(activeDates: Set<string>): number {
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeCurrentStreak(
+  activeDates: Set<string>,
+  now: Date = new Date()
+): number {
   if (activeDates.size === 0) return 0;
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+  const today = format(now, "yyyy-MM-dd");
+  const yesterday = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
 
   let endDate: Date;
   if (activeDates.has(today)) {
@@ -175,11 +205,27 @@ function computeCurrentStreak(activeDates: Set<string>): number {
   }
 
   let streak = 0;
+  // Grace days tentatively bridged, awaiting a confirming older active day.
+  let pendingGrace = 0;
+  // Calendar days walked since the last grace was spent (Infinity = none yet).
+  let stepsSinceGrace = Infinity;
+
   const cursor = new Date(endDate);
-  while (activeDates.has(format(cursor, "yyyy-MM-dd"))) {
-    streak++;
+  while (true) {
+    if (activeDates.has(format(cursor, "yyyy-MM-dd"))) {
+      // An active day confirms any pending grace bridge before it.
+      streak += pendingGrace + 1;
+      pendingGrace = 0;
+    } else {
+      // Non-active day — bridge it only if far enough from the last grace.
+      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS) break;
+      pendingGrace++;
+      stepsSinceGrace = 0;
+    }
     cursor.setDate(cursor.getDate() - 1);
+    stepsSinceGrace++;
   }
+  // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
   return streak;
 }
 
