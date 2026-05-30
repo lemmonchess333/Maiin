@@ -315,6 +315,21 @@ export default function ProgrammeRunSection({
     return RUN_TEMPLATES.find((t) => t.id === tmplId) ?? null;
   }, [nextStartable]);
 
+  const nextStartableMeta = useMemo(() => {
+    if (!nextStartableTemplate) return [];
+    const meta: string[] = [];
+    if (nextStartableTemplate.config.targetDistance) {
+      meta.push(`${nextStartableTemplate.config.targetDistance}km`);
+    } else {
+      meta.push(`${nextStartableTemplate.estimatedDuration} min`);
+    }
+    meta.push(
+      nextStartableTemplate.type.charAt(0).toUpperCase() +
+        nextStartableTemplate.type.slice(1)
+    );
+    return meta;
+  }, [nextStartableTemplate]);
+
   const nextStartUrl = useMemo(() => {
     if (!nextStartable) return null;
     const params: string[] = [];
@@ -388,7 +403,11 @@ export default function ProgrammeRunSection({
   // surfaces for runs 4–~4.3 weeks old; older history reads as cold-start,
   // which shares the same invitational copy.
   const freeformCadence = useMemo(
-    () => getFreeformCadence(runs.map((r) => r.completedAt), new Date()),
+    () =>
+      getFreeformCadence(
+        runs.map((r) => r.completedAt),
+        new Date()
+      ),
     [runs]
   );
 
@@ -800,40 +819,40 @@ export default function ProgrammeRunSection({
                 {freeformCadence.weeks} weeks
               </p>
               <div className="space-y-1 font-mono tabular-nums">
-              {lastRun && (
-                <p className="text-muted-foreground">
-                  <span className="text-foreground">Last run</span>
-                  {" · "}
-                  {distanceLabel(lastRun.distance)}
-                  {" · "}
-                  {durationLabel(lastRun.duration)}
-                  {lastRun.avgPace > 0 && (
-                    <>
-                      {" · "}
-                      {paceLabel(lastRun.avgPace)}
-                    </>
-                  )}
-                  {" · "}
-                  {formatDistanceToNowStrict(lastRun.completedAt, {
-                    addSuffix: true,
-                  })}
-                </p>
-              )}
-              {thisWeek && (
-                <p className="text-muted-foreground">
-                  <span className="text-foreground">This week</span>
-                  {" · "}
-                  {thisWeek.totalDistance.toFixed(1)} km
-                  {" · "}
-                  {thisWeek.runCount} run{thisWeek.runCount === 1 ? "" : "s"}
-                  {thisWeek.avgPace > 0 && (
-                    <>
-                      {" · "}
-                      {paceLabel(thisWeek.avgPace)} avg
-                    </>
-                  )}
-                </p>
-              )}
+                {lastRun && (
+                  <p className="text-muted-foreground">
+                    <span className="text-foreground">Last run</span>
+                    {" · "}
+                    {distanceLabel(lastRun.distance)}
+                    {" · "}
+                    {durationLabel(lastRun.duration)}
+                    {lastRun.avgPace > 0 && (
+                      <>
+                        {" · "}
+                        {paceLabel(lastRun.avgPace)}
+                      </>
+                    )}
+                    {" · "}
+                    {formatDistanceToNowStrict(lastRun.completedAt, {
+                      addSuffix: true,
+                    })}
+                  </p>
+                )}
+                {thisWeek && (
+                  <p className="text-muted-foreground">
+                    <span className="text-foreground">This week</span>
+                    {" · "}
+                    {thisWeek.totalDistance.toFixed(1)} km
+                    {" · "}
+                    {thisWeek.runCount} run{thisWeek.runCount === 1 ? "" : "s"}
+                    {thisWeek.avgPace > 0 && (
+                      <>
+                        {" · "}
+                        {paceLabel(thisWeek.avgPace)} avg
+                      </>
+                    )}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -967,10 +986,7 @@ export default function ProgrammeRunSection({
               className="size-10 rounded-lg flex items-center justify-center shrink-0"
               style={{ backgroundColor: `${THEME.running}1A` }}
             >
-              <Footprints
-                className="size-5"
-                style={{ color: THEME.running }}
-              />
+              <Footprints className="size-5" style={{ color: THEME.running }} />
             </div>
             <div className="flex-1 min-w-0">
               <p
@@ -982,9 +998,12 @@ export default function ProgrammeRunSection({
               <p className="text-sm font-bold text-foreground">
                 {raceGoal.distance.toUpperCase()}
                 {" · "}
-                {formatDistanceToNowStrict(parseLocalDate(raceGoal.targetDate), {
-                  addSuffix: true,
-                })}
+                {formatDistanceToNowStrict(
+                  parseLocalDate(raceGoal.targetDate),
+                  {
+                    addSuffix: true,
+                  }
+                )}
               </p>
               <p className="text-micro text-muted-foreground">
                 Log it to start your recovery week, or let us know if you sat
@@ -1045,82 +1064,100 @@ export default function ProgrammeRunSection({
         heroState !== "race-today" &&
         nextStartable &&
         nextStartUrl && (
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={`Start ${nextStartableTemplate?.name ?? "run"}`}
-          onClick={() => {
-            haptic();
-            navigate(nextStartUrl);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`Start ${nextStartableTemplate?.name ?? "run"}`}
+            onClick={() => {
               haptic();
               navigate(nextStartUrl);
-            }
-          }}
-          className="w-full rounded-xl p-3 text-left flex items-center gap-3 cursor-pointer motion-safe:active:scale-[0.99] motion-safe:transition-transform"
-          style={{
-            background: `${THEME.running}0F`,
-            border: `1px solid ${THEME.running}30`,
-          }}
-        >
-          <div
-            className="size-9 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${THEME.running}1A` }}
-          >
-            <Footprints className="size-4" style={{ color: THEME.running }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-xs font-semibold mb-0.5"
-              style={{ color: THEME.running }}
-            >
-              Next · {nextStartableLabel}
-            </p>
-            <p className="text-sm font-bold text-foreground truncate">
-              {nextStartableTemplate?.name ?? "Run"}
-            </p>
-            {nextStartableTemplate?.description && (
-              <p className="text-micro text-muted-foreground line-clamp-2">
-                {nextStartableTemplate.description}
-              </p>
-            )}
-          </div>
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0"
-            style={{
-              background: THEME.running,
-              color: "white",
             }}
-            aria-hidden="true"
-          >
-            <Play className="size-3" fill="white" />
-            Start
-          </div>
-          {/* Run8 PR1c — overflow visible only on the four hero
-              states locked by L12 (planned-today / catch-up /
-              race-today / race-prep-week). Pre-PR1c the button
-              rendered on every nextStartable card including
-              tomorrow / future; that visibility is now driven by
-              the single hero discriminator. */}
-          {showHeroOverflow && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
                 haptic();
-                setManageDate(nextStartable.date ?? null);
-              }}
-              aria-label="More options for this run"
-              className="shrink-0 size-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
+                navigate(nextStartUrl);
+              }
+            }}
+            className="group w-full rounded-2xl p-4 text-left cursor-pointer motion-safe:active:scale-[0.99] motion-safe:transition-transform shadow-sm"
+            style={{
+              background: `linear-gradient(135deg, ${THEME.running}14, ${THEME.running}08)`,
+              border: `1px solid ${THEME.running}35`,
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="size-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
+                style={{ backgroundColor: `${THEME.running}1F` }}
+              >
+                <Footprints
+                  className="size-5"
+                  style={{ color: THEME.running }}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p
+                      className="text-xs font-bold uppercase tracking-wider mb-1"
+                      style={{ color: THEME.running }}
+                    >
+                      Next · {nextStartableLabel}
+                    </p>
+                    <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                      {nextStartableTemplate?.name ?? "Run"}
+                    </p>
+                  </div>
+                  {showHeroOverflow && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        haptic();
+                        setManageDate(nextStartable.date ?? null);
+                      }}
+                      aria-label="More options for this run"
+                      className="shrink-0 size-9 -mt-1 -mr-1 rounded-xl inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/70 motion-safe:active:scale-95"
+                    >
+                      <MoreVertical className="size-5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+
+                {nextStartableTemplate?.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    {nextStartableTemplate.description}
+                  </p>
+                )}
+
+                {nextStartableMeta.length > 0 && (
+                  <div
+                    className="flex flex-wrap gap-1.5 mt-3"
+                    aria-hidden="true"
+                  >
+                    {nextStartableMeta.map((item) => (
+                      <span
+                        key={item}
+                        className="rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div
+              className="mt-4 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold text-white shadow-sm motion-safe:group-active:scale-[0.99] motion-safe:transition-transform"
+              style={{ background: THEME.running }}
+              aria-hidden="true"
             >
-              <MoreVertical className="size-5" aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      )}
+              <Play className="size-4" fill="white" />
+              Start run
+            </div>
+          </div>
+        )}
 
       {currentMode !== "freeform" && allRunsDone && (
         <div
