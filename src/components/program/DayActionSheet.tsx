@@ -140,6 +140,13 @@ export default function DayActionSheet({
       ? `${selectedRunTemplate.config.targetDistance}km`
       : `${selectedRunTemplate.estimatedDuration} min`
     : null;
+  // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
+  // Race templates have ids like `5k_race` / `marathon_race` (never the
+  // literal "race"), so the old string-equality check was always false —
+  // the DNF/DNS variant never rendered and manual-complete was never
+  // suppressed on real race days. Resolving the template and reading its
+  // `type` is the correct, id-agnostic gate (Q1 P4 / Q2 P21).
+  const isRaceTemplate = selectedRunTemplate?.type === "race";
 
   return (
     <BottomSheet
@@ -290,6 +297,11 @@ export default function DayActionSheet({
                     </option>
                   ))}
                 </select>
+                {run.isStartable && (
+                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                    Changes this day only.
+                  </span>
+                )}
               </label>
 
               {/* Action block (Mark complete + Skip + same-date hint).
@@ -311,9 +323,9 @@ export default function DayActionSheet({
                 (run.isStartable ||
                   (run.status === "skipped" &&
                     hasSameDateExtra &&
-                    run.runDay?.templateId !== "race")) && (
+                    !isRaceTemplate)) && (
                   <div className="space-y-2">
-                    {hasSameDateExtra && run.runDay?.templateId !== "race" && (
+                    {hasSameDateExtra && !isRaceTemplate && (
                       <p
                         role="status"
                         className="text-xs text-muted-foreground bg-muted/40 rounded-md px-2 py-1.5"
@@ -333,7 +345,7 @@ export default function DayActionSheet({
                         (or wait for Strava sync) to complete the
                         slot. Skip stays available — see Q1 P7 (skip
                         is reversible). */}
-                    {run.runDay?.templateId !== "race" && (
+                    {!isRaceTemplate && (
                       <button
                         type="button"
                         onClick={async () => {
@@ -348,7 +360,7 @@ export default function DayActionSheet({
                           className="size-4"
                           style={{ color: THEME.success }}
                         />
-                        Mark complete (manual)
+                        Mark as done
                       </button>
                     )}
                     {/* Skip — only on planned slots. A skipped slot
@@ -367,7 +379,7 @@ export default function DayActionSheet({
                       race-day completion is strictly real-saved-
                       run-only (Q1 P4 / Q2 P21); logging the run via
                       Start Run is the only valid completion path. */}
-                    {run.isStartable && run.runDay?.templateId === "race" && (
+                    {run.isStartable && isRaceTemplate && (
                       <>
                         <button
                           type="button"
@@ -395,7 +407,7 @@ export default function DayActionSheet({
                         </button>
                       </>
                     )}
-                    {run.isStartable && run.runDay?.templateId !== "race" && (
+                    {run.isStartable && !isRaceTemplate && (
                       <button
                         type="button"
                         onClick={async () => {
@@ -419,30 +431,42 @@ export default function DayActionSheet({
         {hasLift && lift.workout && lift.index !== null && (
           <section
             aria-label="Lift actions"
-            className="rounded-xl p-3 space-y-3"
+            className="rounded-2xl p-4 space-y-4 shadow-sm"
             style={{
-              background: `${THEME.lifting}10`,
+              background: `linear-gradient(135deg, ${THEME.lifting}12, ${THEME.lifting}06)`,
               border: `1px solid ${THEME.lifting}30`,
             }}
           >
-            <div className="flex items-center gap-2">
-              <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
-              <p className="text-sm font-semibold text-foreground">
-                {lift.workout.dayName || "Lift"}
-              </p>
-              {lift.status === "completed" && (
-                <span
-                  className="ml-auto text-xs font-medium"
-                  style={{ color: THEME.success }}
-                >
-                  Completed
-                </span>
-              )}
-              {lift.status === "skipped" && (
-                <span className="text-xs font-medium text-muted-foreground">
-                  Skipped
-                </span>
-              )}
+            <div className="flex items-start gap-3">
+              <div
+                className="size-11 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: `${THEME.lifting}1A` }}
+              >
+                <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Lift
+                </p>
+                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                  {lift.workout.dayName || "Lift"}
+                </p>
+              </div>
+              <div className="shrink-0 pt-1">
+                {lift.status === "completed" && (
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: THEME.success }}
+                  >
+                    Completed
+                  </span>
+                )}
+                {lift.status === "skipped" && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Skipped
+                  </span>
+                )}
+              </div>
             </div>
 
             {lift.isStartable && (
@@ -453,7 +477,7 @@ export default function DayActionSheet({
                   onClose();
                 }}
                 className={cn(
-                  "w-full py-2.5 rounded-xl text-sm font-semibold",
+                  "w-full py-3 rounded-xl text-sm font-bold",
                   "bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
                 )}
               >
