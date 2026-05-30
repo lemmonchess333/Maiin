@@ -1,4 +1,18 @@
 /**
+ * Programme Run tab — hybrid training cockpit.
+ *
+ * Cockpit refactor: the race-goal overlay renders the training-plan
+ * primitives (RaceCockpitCard → SessionCommandCard → HybridWeekRail);
+ * freeform keeps its "Start a run" hero, with HybridWeekRail also showing
+ * its lift week + logged-run extras. Locked model (Run9a): freeform
+ * substrate + optional race-goal overlay — no structured mode, no mode
+ * chips. Active plan editing deep-links to /settings/training ("Edit run
+ * plan" footer). The banner stack + race-today / race-recent / recovery /
+ * fell-behind hero states below are unchanged. See CLAUDE.md → "Training
+ * plan primitives" and src/lib/runProgrammeViewModel.ts.
+ *
+ * Historical context (pre-cockpit) follows.
+ *
  * PR-4 + PR-B: Programme Run tab — operational hero + inline mode
  * picker, configuration wizard as escape hatch.
  *
@@ -71,8 +85,13 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
-import RunWeekStrip from "./RunWeekStrip";
-import RaceHeader from "./RaceHeader";
+import HybridWeekRail from "./HybridWeekRail";
+import RaceCockpitCard from "./RaceCockpitCard";
+import SessionCommandCard from "./SessionCommandCard";
+import {
+  buildHybridWeekItems,
+  buildRaceCockpitViewModel,
+} from "@/lib/runProgrammeViewModel";
 import { Banner } from "@/components/ui/Banner";
 import {
   localDateString,
@@ -363,6 +382,55 @@ export default function ProgrammeRunSection({
   });
   const showHeroOverflow = shouldShowHeroOverflow(heroState);
 
+  // ── Cockpit view models (pure derivations in runProgrammeViewModel) ──
+  // Race cockpit identity card data (null when no race goal — the card
+  // simply doesn't render). currentWeekKey/todayKey are passed in so the
+  // helper stays deterministic and unit-testable.
+  const currentWeekKeyDerivation = localWeekKey(new Date());
+  const raceCockpitVM = useMemo(
+    () =>
+      buildRaceCockpitViewModel({
+        raceGoal,
+        currentWeek: programState?.runPlan?.currentWeek,
+        totalWeeks: programState?.runPlan?.totalWeeks,
+        compressed: raceCompressed,
+        todayKey: todayKeyDerivation,
+      }),
+    [
+      raceGoal,
+      programState?.runPlan?.currentWeek,
+      programState?.runPlan?.totalWeeks,
+      raceCompressed,
+      todayKeyDerivation,
+    ]
+  );
+
+  // Hybrid week rail items (run lane + lift lane per day). Anchored on the
+  // week the runDays were generated for, falling back to today's week for
+  // a lift-only (freeform) week. Shown whenever the week has ANY content —
+  // including freeform lifters, whose lift week + logged-run extras render
+  // even though they have no scheduled runs (Run9a: no invented runs).
+  const weekItems = useMemo(
+    () =>
+      buildHybridWeekItems({
+        profile,
+        programState,
+        claimMap,
+        currentWeekKey: currentWeekKeyDerivation,
+        todayKey: todayKeyDerivation,
+        anchorWeekKey:
+          programState?.runDays?.[0]?.weekKey ?? currentWeekKeyDerivation,
+      }),
+    [
+      profile,
+      programState,
+      claimMap,
+      currentWeekKeyDerivation,
+      todayKeyDerivation,
+    ]
+  );
+  const weekHasContent = weekItems.some((d) => d.run || d.lift);
+
   // PR-F: temporal-anchored label for the "Next planned run" card.
   // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
   // forces the user to compute proximity ("is today Tuesday? then
@@ -381,6 +449,18 @@ export default function ProgrammeRunSection({
     if (nextStartable.date < todayKey) return "Pending";
     return DAY_LABELS[nextStartable.dayIndex];
   }, [nextStartable]);
+
+  // SessionCommandCard eyebrow — temporal status, never "Next · Pending".
+  // "Today" → "Due today"; "Tomorrow"/"Pending" pass through; any
+  // future-day label collapses to the calm "Up next".
+  const nextSessionEyebrow =
+    nextStartableLabel === "Today"
+      ? "Due today"
+      : nextStartableLabel === "Tomorrow"
+        ? "Tomorrow"
+        : nextStartableLabel === "Pending"
+          ? "Pending"
+          : "Up next";
 
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.
@@ -876,19 +956,25 @@ export default function ProgrammeRunSection({
           N-of-M + phase + progress, the taper line, and the compressed note,
           consolidated into one always-visible component (replacing the
           scattered taper label + progress card + the old compressed banner). */}
-      {currentMode === "race_prep" && raceGoal && !raceElapsed && (
-        <RaceHeader
-          raceGoal={raceGoal}
-          currentWeek={programState?.runPlan?.currentWeek}
-          totalWeeks={programState?.runPlan?.totalWeeks}
-          compressed={raceCompressed}
-          todayKey={todayKeyDerivation}
-          onEdit={() => {
-            haptic();
-            navigate("/settings/training");
-          }}
-        />
-      )}
+      {currentMode === "race_prep" &&
+        raceGoal &&
+        !raceElapsed &&
+        raceCockpitVM && (
+          <RaceCockpitCard
+            distanceLabel={raceCockpitVM.distanceLabel}
+            targetDate={raceCockpitVM.targetDate}
+            daysToRace={raceCockpitVM.daysToRace}
+            currentWeek={raceCockpitVM.currentWeek}
+            totalWeeks={raceCockpitVM.totalWeeks}
+            phaseLabel={raceCockpitVM.phaseLabel}
+            inTaper={raceCockpitVM.inTaper}
+            compressed={raceCockpitVM.compressed}
+            onEdit={() => {
+              haptic();
+              navigate("/settings/training");
+            }}
+          />
+        )}
 
       {/* ── Hero: race-today (T+0 — the race itself) ────────────────
           Run8 PR1c L14 + Run9 follow-on: race day is the culmination of the
@@ -1041,122 +1127,39 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── Next planned run (structured + race_prep with goal) ──
-          Same URL pattern as RunCTACard / trainingResolver.startUrl.
-          Skipped when every runDay in the week is already terminal
-          (we render a "done this week" affirmation instead).
-          Run9 (l): also suppressed in the race-recent window so the
-          elapsed race slot can't render as a "Next · Pending" catch-up
-          nag — the did-you-race hero above owns that slot instead. Also
-          suppressed on race-today (the dedicated race-day hero above owns
-          the slot) so the race isn't framed as a generic "Next" run.
-          Run7 Q7: subtle coral 6% tint, icon container coral ~10%,
-          Start button flat coral solid, description line-clamp-2.
-
-          Run8 PR1b — adds a `...` overflow button in the top-right.
-          Tapping the card body navigates to /run (Start). Tapping
-          `...` opens DayActionSheet for that runDay's date for
-          mark-complete / skip / template-swap. Restructured from
-          single <button type="button"> to <div role="button"> so the overflow
-          button can live as a child without nested-button HTML. */}
+      {/* ── Up next: SessionCommandCard (race_prep with a startable run) ──
+          The cockpit's command surface. Same /run?template=…&scheduledRunId=…
+          URL as RunCTACard / trainingResolver.startUrl. Suppressed when every
+          runDay is terminal (the "done this week" affirmation renders below),
+          in the race-recent window (the did-you-race hero owns that slot), and
+          on race-today (the dedicated race-day hero owns it). The card's
+          primary button starts the run; the overflow opens DayActionSheet for
+          mark-as-done / skip / per-day template swap. */}
       {currentMode !== "freeform" &&
         heroState !== "race-recent" &&
         heroState !== "race-today" &&
         nextStartable &&
         nextStartUrl && (
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={`Start ${nextStartableTemplate?.name ?? "run"}`}
-            onClick={() => {
+          <SessionCommandCard
+            sport="run"
+            eyebrow={nextSessionEyebrow}
+            title={nextStartableTemplate?.name ?? "Run"}
+            description={nextStartableTemplate?.description}
+            meta={nextStartableMeta}
+            primaryActionLabel="Start run"
+            onPrimaryAction={() => {
               haptic();
               navigate(nextStartUrl);
             }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                haptic();
-                navigate(nextStartUrl);
-              }
-            }}
-            className="group w-full rounded-2xl p-4 text-left cursor-pointer motion-safe:active:scale-[0.99] motion-safe:transition-transform shadow-sm"
-            style={{
-              background: `linear-gradient(135deg, ${THEME.running}14, ${THEME.running}08)`,
-              border: `1px solid ${THEME.running}35`,
-            }}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className="size-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
-                style={{ backgroundColor: `${THEME.running}1F` }}
-              >
-                <Footprints
-                  className="size-5"
-                  style={{ color: THEME.running }}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p
-                      className="text-xs font-bold uppercase tracking-wider mb-1"
-                      style={{ color: THEME.running }}
-                    >
-                      Next · {nextStartableLabel}
-                    </p>
-                    <p className="text-lg font-extrabold leading-tight text-foreground truncate">
-                      {nextStartableTemplate?.name ?? "Run"}
-                    </p>
-                  </div>
-                  {showHeroOverflow && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        haptic();
-                        setManageDate(nextStartable.date ?? null);
-                      }}
-                      aria-label="More options for this run"
-                      className="shrink-0 size-9 -mt-1 -mr-1 rounded-xl inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/70 motion-safe:active:scale-95"
-                    >
-                      <MoreVertical className="size-5" aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-
-                {nextStartableTemplate?.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                    {nextStartableTemplate.description}
-                  </p>
-                )}
-
-                {nextStartableMeta.length > 0 && (
-                  <div
-                    className="flex flex-wrap gap-1.5 mt-3"
-                    aria-hidden="true"
-                  >
-                    {nextStartableMeta.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div
-              className="mt-4 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-extrabold text-white shadow-sm motion-safe:group-active:scale-[0.99] motion-safe:transition-transform"
-              style={{ background: THEME.running }}
-              aria-hidden="true"
-            >
-              <Play className="size-4" fill="white" />
-              Start run
-            </div>
-          </div>
+            onManage={
+              showHeroOverflow
+                ? () => {
+                    haptic();
+                    setManageDate(nextStartable.date ?? null);
+                  }
+                : undefined
+            }
+          />
         )}
 
       {currentMode !== "freeform" && allRunsDone && (
@@ -1173,15 +1176,15 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* Run7 Q3 + Q8: compact 7-column week strip replaces the legacy
-          7-row dropdown stack (~340pt saved). Tap any column → opens
-          DayActionSheet for that date (canonical edit path per Pgm3).
-          The inline template-swap dropdown was a duplicate of
-          DayActionSheet's same picker. */}
-      {currentMode !== "freeform" && runDays.length > 0 && (
-        <RunWeekStrip
-          runDays={runDays}
-          claimMap={claimMap}
+      {/* HybridWeekRail — the hybrid week-at-a-glance. Each day tile shows a
+          coral RUN lane + a purple LIFT lane, so the relationship between the
+          two disciplines is visible (a "both" day shows both lanes natively).
+          Shown whenever the week has any content — including freeform lifters,
+          whose lift week + logged-run extras render even with no scheduled
+          runs (Run9a: we never invent runs). Tap a day → DayActionSheet. */}
+      {weekHasContent && (
+        <HybridWeekRail
+          items={weekItems}
           unclaimedByDate={unclaimedByDate}
           onDayTap={(dateKey) => setManageDate(dateKey)}
         />
@@ -1202,7 +1205,7 @@ export default function ProgrammeRunSection({
           }}
           className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
         >
-          Manage Run Plan
+          Edit run plan
           <ChevronRight className="size-3.5" />
         </button>
       </div>
