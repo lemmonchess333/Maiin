@@ -130,6 +130,16 @@ export default function DayActionSheet({
   const { lift, run } = resolved;
   const hasLift = lift.workout !== null && lift.index !== null;
   const hasRun = run.runDay !== null;
+  const selectedRunTemplate = run.runDay
+    ? RUN_TEMPLATES.find(
+        (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
+      )
+    : null;
+  const selectedRunMeta = selectedRunTemplate
+    ? selectedRunTemplate.config.targetDistance
+      ? `${selectedRunTemplate.config.targetDistance}km`
+      : `${selectedRunTemplate.estimatedDuration} min`
+    : null;
 
   return (
     <BottomSheet
@@ -173,49 +183,76 @@ export default function DayActionSheet({
         {hasRun && run.runDay && (
           <section
             aria-label="Run actions"
-            className="rounded-xl p-3 space-y-3"
+            className="rounded-2xl p-4 space-y-4 shadow-sm"
             style={{
-              background: `${THEME.running}10`,
+              background: `linear-gradient(135deg, ${THEME.running}12, ${THEME.running}06)`,
               border: `1px solid ${THEME.running}30`,
             }}
           >
-            <div className="flex items-center gap-2">
-              <Footprints className="size-4" style={{ color: THEME.running }} />
-              <p className="text-sm font-semibold text-foreground">Run</p>
-              {run.isCompleted &&
-                (() => {
-                  // Q2 P24 — distinguish manual ✅ vs real ✅ in the
-                  // sheet's status badge. Real / legacy → solid
-                  // "Completed". Manual → dimmed "Marked complete"
-                  // so the user can tell which source flipped the
-                  // slot when they reopen the sheet.
-                  const runDayId = run.runDay?.id;
-                  const completionKind = runDayId
-                    ? getCompletionKind(runDayId, claimMap)
-                    : null;
-                  const isManual = completionKind === "manual";
-                  return (
-                    <span
-                      className={cn(
-                        "ml-auto text-xs font-medium",
-                        isManual && "opacity-70"
-                      )}
-                      style={{ color: THEME.success }}
-                    >
-                      {isManual ? "Marked complete" : "Completed"}
-                    </span>
-                  );
-                })()}
-              {run.status === "skipped" && (
-                <span className="ml-auto text-xs font-medium text-muted-foreground">
-                  Skipped
-                </span>
-              )}
-              {run.status === "race_no_show" && (
-                <span className="ml-auto text-xs font-medium text-muted-foreground">
-                  Race day passed
-                </span>
-              )}
+            <div className="flex items-start gap-3">
+              <div
+                className="size-11 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: `${THEME.running}1A` }}
+              >
+                <Footprints
+                  className="size-5"
+                  style={{ color: THEME.running }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Run
+                </p>
+                <p className="text-lg font-extrabold leading-tight text-foreground truncate">
+                  {selectedRunTemplate?.name ?? "Run"}
+                </p>
+                {selectedRunTemplate?.description && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    {selectedRunTemplate.description}
+                  </p>
+                )}
+                {selectedRunMeta && (
+                  <span className="mt-2 inline-flex rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                    {selectedRunMeta}
+                  </span>
+                )}
+              </div>
+              <div className="shrink-0 pt-1">
+                {run.isCompleted &&
+                  (() => {
+                    // Q2 P24 — distinguish manual ✅ vs real ✅ in the
+                    // sheet's status badge. Real / legacy → solid
+                    // "Completed". Manual → dimmed "Marked complete"
+                    // so the user can tell which source flipped the
+                    // slot when they reopen the sheet.
+                    const runDayId = run.runDay?.id;
+                    const completionKind = runDayId
+                      ? getCompletionKind(runDayId, claimMap)
+                      : null;
+                    const isManual = completionKind === "manual";
+                    return (
+                      <span
+                        className={cn(
+                          "text-xs font-medium",
+                          isManual && "opacity-70"
+                        )}
+                        style={{ color: THEME.success }}
+                      >
+                        {isManual ? "Marked complete" : "Completed"}
+                      </span>
+                    );
+                  })()}
+                {run.status === "skipped" && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Skipped
+                  </span>
+                )}
+                {run.status === "race_no_show" && (
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Race day passed
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* PR-D: reconciliation branch removed alongside the
@@ -245,7 +282,7 @@ export default function DayActionSheet({
                       ? "Run template"
                       : `${run.status} — template locked`
                   }
-                  className="w-full mt-1 bg-muted rounded-lg px-3 py-2 text-sm border border-border/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-1 bg-background/80 rounded-xl px-3 py-3 text-base border border-border/60 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {RUN_TEMPLATES.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -305,7 +342,7 @@ export default function DayActionSheet({
                           }
                           onClose();
                         }}
-                        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-card border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5"
+                        className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <Check
                           className="size-4"
@@ -340,7 +377,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
                         >
                           DNF — Started but didn&apos;t finish
                         </button>
@@ -352,7 +389,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
                         >
                           DNS — Didn&apos;t start
                         </button>
@@ -367,7 +404,7 @@ export default function DayActionSheet({
                           );
                           onClose();
                         }}
-                        className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                        className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
                       >
                         Skip this run
                       </button>
@@ -402,7 +439,7 @@ export default function DayActionSheet({
                 </span>
               )}
               {lift.status === "skipped" && (
-                <span className="ml-auto text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Skipped
                 </span>
               )}
