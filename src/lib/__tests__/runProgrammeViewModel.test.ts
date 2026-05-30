@@ -41,7 +41,7 @@ describe("compactRunLabel", () => {
     expect(compactRunLabel(tmpl("easy_30"))).toBe("30m");
     expect(compactRunLabel(tmpl("tempo_20"))).toBe("Tempo");
     expect(compactRunLabel(tmpl("5x1k"))).toBe("5×1K");
-    expect(compactRunLabel(tmpl("8x400"))).toBe("8×400m");
+    expect(compactRunLabel(tmpl("8x400"))).toBe("8×400");
     expect(compactRunLabel(tmpl("long_15k"))).toBe("15K");
     expect(compactRunLabel(tmpl("long_10k"))).toBe("10K");
     expect(compactRunLabel(tmpl("marathon_race"))).toBe("Race");
