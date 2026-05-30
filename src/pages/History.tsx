@@ -1563,7 +1563,7 @@ export default function History() {
                       <TrendWeight />
                     </SectionErrorBoundary>
                     <SectionErrorBoundary sectionName="calorie-balance">
-                      <CalorieBalanceChart />
+                      <CalorieBalanceChart meals={meals} workouts={workouts} />
                     </SectionErrorBoundary>
                   </>
                 )}
