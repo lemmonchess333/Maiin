@@ -61,6 +61,11 @@ import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import HybridWeekRail from "@/components/program/HybridWeekRail";
+import DayActionSheet from "@/components/program/DayActionSheet";
+import { buildHybridWeekItems } from "@/lib/runProgrammeViewModel";
+import { useClaimMap } from "@/hooks/useClaimMap";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 
 /**
  * IMPORTANT:
@@ -134,6 +139,29 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [activeTab, setActiveTab] = useState<ProgramTab>("lift");
 
   const { workouts: recentWorkouts } = useWorkouts();
+
+  // RunWk1: data for the shared "this week" hybrid rail on the Lift tab.
+  // Same pure view model + claim-map wiring the Run cockpit uses (ADR-0002:
+  // the rail shows the PLANNED week and shares completion; it does NOT drive
+  // the rotation cursor). `manageDate` opens the per-day DayActionSheet from
+  // a rail tap.
+  const { claimMap, unclaimedByDate } = useClaimMap();
+  const [manageDate, setManageDate] = useState<string | null>(null);
+  const liftRailTodayKey = localDateString(new Date());
+  const liftRailWeekKey = localWeekKey(new Date());
+  const liftWeekItems = useMemo(
+    () =>
+      buildHybridWeekItems({
+        profile,
+        programState,
+        claimMap,
+        currentWeekKey: liftRailWeekKey,
+        todayKey: liftRailTodayKey,
+        anchorWeekKey: programState?.runDays?.[0]?.weekKey ?? liftRailWeekKey,
+      }),
+    [profile, programState, claimMap, liftRailWeekKey, liftRailTodayKey]
+  );
+  const liftWeekHasContent = liftWeekItems.some((d) => d.run || d.lift);
 
   // Per-exercise best working set from last session containing that exercise
   const lastPerformanceMap = useMemo(() => {
@@ -732,6 +760,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </div>
             </TrackProgrammeSectionView>
 
+            {/* RunWk1: shared "this week" hybrid rail — the same glance the
+                Run cockpit uses, above the rotation cursor. Shown when the
+                current week has any content (lift or run); hidden on a past
+                week. Tap a day → DayActionSheet. Per ADR-0002 it shows the
+                planned week and does NOT drive the cursor below. */}
+            {!isViewingHistory && liftWeekHasContent && (
+              <HybridWeekRail
+                items={liftWeekItems}
+                unclaimedByDate={unclaimedByDate}
+                onDayTap={(dateKey) => setManageDate(dateKey)}
+              />
+            )}
+
             {/* Day Stepper */}
             <TrackProgrammeSectionView section="day_stepper">
               <div>
@@ -938,11 +979,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                         {ex.name}
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        <span className="font-mono tabular-nums">{ex.sets}</span> sets × <span className="font-mono tabular-nums">{ex.reps}</span> reps
+                                        <span className="font-mono tabular-nums">
+                                          {ex.sets}
+                                        </span>{" "}
+                                        sets ×{" "}
+                                        <span className="font-mono tabular-nums">
+                                          {ex.reps}
+                                        </span>{" "}
+                                        reps
                                         {!isBW && ex.weight > 0 ? (
                                           <>
                                             {" · "}
-                                            <span className="font-mono tabular-nums">{ex.weight}</span>kg
+                                            <span className="font-mono tabular-nums">
+                                              {ex.weight}
+                                            </span>
+                                            kg
                                           </>
                                         ) : null}
                                       </p>
@@ -951,12 +1002,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                           Last:{" "}
                                           {lastPerf.weight > 0 ? (
                                             <>
-                                              <span className="font-mono tabular-nums">{lastPerf.weight}</span> kg × <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.weight}
+                                              </span>{" "}
+                                              kg ×{" "}
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
                                             </>
                                           ) : isBW ? (
-                                            <>BW × <span className="font-mono tabular-nums">{lastPerf.reps}</span></>
+                                            <>
+                                              BW ×{" "}
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
+                                            </>
                                           ) : (
-                                            <>— × <span className="font-mono tabular-nums">{lastPerf.reps}</span></>
+                                            <>
+                                              — ×{" "}
+                                              <span className="font-mono tabular-nums">
+                                                {lastPerf.reps}
+                                              </span>
+                                            </>
                                           )}
                                         </p>
                                       )}
@@ -1005,11 +1072,21 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                       {ex.name}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                      <span className="font-mono tabular-nums">{ex.sets}</span> sets × <span className="font-mono tabular-nums">{ex.reps}</span> reps
+                                      <span className="font-mono tabular-nums">
+                                        {ex.sets}
+                                      </span>{" "}
+                                      sets ×{" "}
+                                      <span className="font-mono tabular-nums">
+                                        {ex.reps}
+                                      </span>{" "}
+                                      reps
                                       {!isBW && ex.weight > 0 ? (
                                         <>
                                           {" · "}
-                                          <span className="font-mono tabular-nums">{ex.weight}</span>kg
+                                          <span className="font-mono tabular-nums">
+                                            {ex.weight}
+                                          </span>
+                                          kg
                                         </>
                                       ) : null}
                                     </p>
@@ -1018,11 +1095,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                         Last:{" "}
                                         {lastPerf.weight > 0 ? (
                                           <>
-                                            <span className="font-mono tabular-nums">{lastPerf.weight}</span> kg × <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+                                            <span className="font-mono tabular-nums">
+                                              {lastPerf.weight}
+                                            </span>{" "}
+                                            kg ×{" "}
+                                            <span className="font-mono tabular-nums">
+                                              {lastPerf.reps}
+                                            </span>
                                           </>
                                         ) : (
                                           <>
-                                            <span className="font-mono tabular-nums">{lastPerf.reps}</span> reps
+                                            <span className="font-mono tabular-nums">
+                                              {lastPerf.reps}
+                                            </span>{" "}
+                                            reps
                                           </>
                                         )}
                                       </p>
@@ -1173,6 +1259,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
       {activeTab === "lift" && <SavedRoutinesSection />}
+
+      {/* Per-day sheet for HybridWeekRail taps on the Lift tab. The Run tab
+          mounts its own inside ProgrammeRunSection. */}
+      <DayActionSheet
+        open={manageDate !== null}
+        onClose={() => setManageDate(null)}
+        dateKey={manageDate}
+        profile={profile}
+        programState={programState}
+        claimMap={claimMap}
+        unclaimedByDate={unclaimedByDate}
+        overrideRunDay={overrideRunDay}
+        markManualComplete={markManualComplete}
+        skipRunDay={skipRunDay}
+        skipWorkoutDay={skipWorkoutDay}
+      />
 
       {/* ── Context Menu ── */}
       <AnimatePresence>
@@ -1412,7 +1514,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </>
         )}
       </AnimatePresence>
-
     </div>
   );
 }
