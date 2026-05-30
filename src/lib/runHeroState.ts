@@ -27,6 +27,7 @@
  */
 
 import type { ScheduledRunDay } from "@/features/program/programTypes";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 export type RunHeroState =
   /** runMode === "freeform" — Start CTA + recent-run context. */
@@ -125,7 +126,15 @@ export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
 
   if (nextStartable) {
     const date = nextStartable.date ?? null;
-    const isRace = nextStartable.templateId === "race";
+    // Race-day detection by template TYPE, not by `templateId === "race"`.
+    // Real race ids are `5k_race` … `marathon_race` (never the literal
+    // "race"), so the old string check was always false and "race-today"
+    // never fired. Resolve the effective template and read its `type` —
+    // the same id-agnostic gate used in DayActionSheet / runProgrammeViewModel.
+    const heroTemplateId =
+      nextStartable.userOverride || nextStartable.templateId;
+    const isRace =
+      RUN_TEMPLATES.find((t) => t.id === heroTemplateId)?.type === "race";
     const isToday = date === todayKey;
     const isTomorrow = date === tomorrowKey;
     const isPast = !!date && date < todayKey;
