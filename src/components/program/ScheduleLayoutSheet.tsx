@@ -101,6 +101,14 @@ function ScheduleLayoutSheetBody({
   } = editor;
 
   const restructureRef = useFocusTrap<HTMLDivElement>(showRestructureModal);
+  const sortedSchedule = schedule.slice().sort((a, b) => a.day - b.day);
+  const liftSessions = sortedSchedule.filter(
+    (s) => s.type === "lift" || s.type === "both"
+  ).length;
+  const runSessions = sortedSchedule.filter(
+    (s) => s.type === "run" || s.type === "both"
+  ).length;
+  const doubleDays = sortedSchedule.filter((s) => s.type === "both").length;
 
   async function handleApply(): Promise<void> {
     await handleApplyScheduleChanges();
@@ -117,109 +125,140 @@ function ScheduleLayoutSheetBody({
   }
 
   return (
-    <div className="px-5 pb-6 pt-3 space-y-4">
-      {/* Header (title + "Tap any day to cycle…" instruction) is rendered
-          by the BottomSheet via its title/description props — don't repeat
-          it here. Only the unsaved-changes indicator lives in the body. */}
+    <div className="px-5 pb-6 pt-4 space-y-5">
+      <div
+        className="grid grid-cols-3 gap-2"
+        aria-label="Weekly layout summary"
+      >
+        {[
+          { label: "Lift", value: liftSessions, color: THEME.lifting },
+          { label: "Run", value: runSessions, color: THEME.running },
+          { label: "Double", value: doubleDays, color: THEME.brand },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center"
+          >
+            <p
+              className="text-lg font-extrabold leading-none tabular-nums"
+              style={{ color: item.color }}
+            >
+              {item.value}
+            </p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {item.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
       {hasUnsavedScheduleChanges && (
-        <p className="text-xs font-medium" style={{ color: "#d97706" }}>
-          · unsaved changes
+        <p
+          className="rounded-xl px-3 py-2 text-xs font-medium"
+          style={{
+            backgroundColor: `${THEME.amber}12`,
+            color: THEME.amber,
+          }}
+        >
+          Unsaved layout changes
         </p>
       )}
 
       <div className="grid grid-cols-7 gap-1.5">
-        {schedule
-          .slice()
-          .sort((a, b) => a.day - b.day)
-          .map((s) => {
-            const color =
-              s.type === "lift"
-                ? THEME.lifting
-                : s.type === "run"
-                  ? THEME.running
-                  : s.type === "both"
-                    ? THEME.lifting
-                    : undefined;
-            const label =
-              s.type === "lift"
-                ? "Lift"
-                : s.type === "run"
-                  ? "Run"
-                  : s.type === "both"
-                    ? "Both"
-                    : "Rest";
-            return (
-              <button
-                type="button"
-                key={s.day}
-                onClick={() => handleDayToggle(s.day)}
-                className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 rounded-xl border transition-all text-center",
-                  s.type !== "rest"
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border/50 bg-muted/30"
-                )}
-              >
-                <span className="text-xs text-muted-foreground">
-                  {DAY_LABELS[s.day].charAt(0)}
-                </span>
-                {s.type === "both" ? (
-                  <div className="size-3 rounded-full overflow-hidden flex">
-                    <div
-                      className="w-1/2 h-full"
-                      style={{ backgroundColor: THEME.lifting }}
-                    />
-                    <div
-                      className="w-1/2 h-full"
-                      style={{ backgroundColor: THEME.running }}
-                    />
-                  </div>
-                ) : color ? (
+        {sortedSchedule.map((s) => {
+          const color =
+            s.type === "lift"
+              ? THEME.lifting
+              : s.type === "run"
+                ? THEME.running
+                : s.type === "both"
+                  ? THEME.brand
+                  : undefined;
+          const label =
+            s.type === "lift"
+              ? "Lift"
+              : s.type === "run"
+                ? "Run"
+                : s.type === "both"
+                  ? "Both"
+                  : "Rest";
+          return (
+            <button
+              type="button"
+              key={s.day}
+              onClick={() => handleDayToggle(s.day)}
+              aria-label={`${DAY_LABELS[s.day]}: ${label}. Tap to change.`}
+              className={cn(
+                "min-h-[86px] flex flex-col items-center justify-between rounded-2xl border px-1.5 py-2.5 text-center shadow-sm transition-all active:scale-[0.98]",
+                s.type !== "rest"
+                  ? "bg-card"
+                  : "border-border/60 bg-muted/30 text-muted-foreground"
+              )}
+              style={
+                s.type !== "rest" && color
+                  ? {
+                      borderColor: `${color}45`,
+                      background: `${color}10`,
+                    }
+                  : undefined
+              }
+            >
+              <span className="text-xs font-semibold text-muted-foreground">
+                {DAY_LABELS[s.day].charAt(0)}
+              </span>
+              {s.type === "both" ? (
+                <div className="size-4 rounded-full overflow-hidden flex shadow-sm">
                   <div
-                    className="size-3 rounded-full"
-                    style={{ backgroundColor: color }}
+                    className="w-1/2 h-full"
+                    style={{ backgroundColor: THEME.lifting }}
                   />
-                ) : (
-                  <div className="size-3 rounded-full bg-muted" />
-                )}
-                <span
-                  className="text-xs font-medium"
-                  style={{
-                    color:
-                      s.type === "both"
-                        ? THEME.lifting
-                        : color || "hsl(var(--muted-foreground))",
-                  }}
-                >
-                  {label}
-                </span>
-              </button>
-            );
-          })}
+                  <div
+                    className="w-1/2 h-full"
+                    style={{ backgroundColor: THEME.running }}
+                  />
+                </div>
+              ) : color ? (
+                <div
+                  className="size-4 rounded-full shadow-sm"
+                  style={{ backgroundColor: color }}
+                />
+              ) : (
+                <div className="size-4 rounded-full bg-muted-foreground/20" />
+              )}
+              <span
+                className="text-[11px] font-bold leading-none"
+                style={{ color: color || "hsl(var(--muted-foreground))" }}
+              >
+                {label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex gap-2">
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-3 rounded-xl text-sm font-medium text-muted-foreground bg-muted active:scale-[0.97] transition-transform"
-        >
-          Close
-        </button>
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.97 }}
-          onClick={handleApply}
-          disabled={!hasUnsavedScheduleChanges}
           className={cn(
-            "flex-1 py-3 rounded-xl text-sm font-semibold transition-all",
+            "py-3 rounded-xl text-sm font-medium active:scale-[0.97] transition-transform",
             hasUnsavedScheduleChanges
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+              ? "flex-1 text-muted-foreground bg-muted"
+              : "w-full text-foreground bg-card border border-border/60"
           )}
         >
-          Apply changes
-        </motion.button>
+          {hasUnsavedScheduleChanges ? "Cancel" : "Close"}
+        </button>
+        {hasUnsavedScheduleChanges && (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            onClick={handleApply}
+            className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary text-primary-foreground transition-all"
+          >
+            Apply changes
+          </motion.button>
+        )}
       </div>
 
       {/* Restructure-confirm modal — fires when the day-toggle changed

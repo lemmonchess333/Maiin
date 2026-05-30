@@ -51,7 +51,6 @@ import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import OptionCard from "@/components/onboarding/OptionCard";
 import { Toggle } from "@/components/ui/Toggle";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
@@ -78,7 +77,10 @@ interface ProgrammeSettingsProps {
   /** Live-saves the engine toggles (auto-progression / microloading). */
   updateSettings: (patch: Partial<ProgramSettings>) => Promise<void> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
-  regenerateProgram: (goal?: string, weeklyTarget?: number) => Promise<void> | void;
+  regenerateProgram: (
+    goal?: string,
+    weeklyTarget?: number
+  ) => Promise<void> | void;
   /** Opens the day-by-day weekly-layout editor (ScheduleLayoutSheet). */
   onOpenWeeklyLayout: () => void;
   /** Optional hook so the host can refresh after a save. */
@@ -93,24 +95,137 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+interface SettingsOptionCardProps {
+  selected: boolean;
+  onSelect: () => void;
+  icon: React.ReactNode;
+  label: string;
+  desc?: string;
+  disabled?: boolean;
+  index?: number;
+  accent?: string;
+}
+
+function SettingsOptionCard({
+  selected,
+  onSelect,
+  icon,
+  label,
+  desc,
+  disabled,
+  index = 0,
+  accent = THEME.brand,
+}: SettingsOptionCardProps) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onSelect}
+      disabled={disabled}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, delay: index * 0.025 }}
+      className={cn(
+        "w-full min-h-[68px] flex items-center gap-3 rounded-2xl border px-3.5 py-3 text-left",
+        "bg-card text-foreground shadow-sm transition-all active:scale-[0.98]",
+        selected ? "border-transparent" : "border-border/70",
+        disabled && "opacity-35 pointer-events-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      )}
+      style={
+        selected
+          ? {
+              background: `${accent}14`,
+              borderColor: `${accent}45`,
+            }
+          : undefined
+      }
+    >
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-bold leading-tight">
+          {label}
+        </span>
+        {desc ? (
+          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+            {desc}
+          </span>
+        ) : null}
+      </span>
+      {selected && !disabled ? (
+        <Check className="size-4 shrink-0" style={{ color: accent }} />
+      ) : null}
+    </motion.button>
+  );
+}
+
 const FOCUS_OPTIONS: { id: PrimaryGoal; label: string; desc: string }[] = [
-  { id: "hypertrophy", label: "Build muscle", desc: "Higher reps, more volume" },
-  { id: "strength", label: "Get stronger", desc: "Lower reps, heavier compounds" },
-  { id: "fat_loss", label: "Lose fat", desc: "Higher density, more conditioning" },
+  {
+    id: "hypertrophy",
+    label: "Build muscle",
+    desc: "Higher reps, more volume",
+  },
+  {
+    id: "strength",
+    label: "Get stronger",
+    desc: "Lower reps, heavier compounds",
+  },
+  {
+    id: "fat_loss",
+    label: "Lose fat",
+    desc: "Higher density, more conditioning",
+  },
   { id: "general", label: "Stay fit", desc: "Balanced general training" },
-  { id: "running", label: "Running support", desc: "Lifting that complements your runs" },
+  {
+    id: "running",
+    label: "Running support",
+    desc: "Lifting that complements your runs",
+  },
 ];
 
 const NUTRITION_OPTIONS: { id: Goal; label: string; desc: string }[] = [
-  { id: "cut", label: "Cutting", desc: "Calorie deficit — lose fat, keep muscle" },
-  { id: "lean bulk", label: "Lean bulk", desc: "Small surplus — build muscle slowly" },
-  { id: "recomp", label: "Recomp", desc: "Maintenance — recompose at current weight" },
+  {
+    id: "cut",
+    label: "Cutting",
+    desc: "Calorie deficit — lose fat, keep muscle",
+  },
+  {
+    id: "lean bulk",
+    label: "Lean bulk",
+    desc: "Small surplus — build muscle slowly",
+  },
+  {
+    id: "recomp",
+    label: "Recomp",
+    desc: "Maintenance — recompose at current weight",
+  },
 ];
 
-const EXPERIENCE_OPTIONS: { id: Experience; label: string; desc: string; icon: React.ReactNode }[] = [
-  { id: "beginner", label: "Beginner", desc: "0 – 6 months of consistent training", icon: <Target size={20} style={{ color: THEME.success }} /> },
-  { id: "intermediate", label: "Intermediate", desc: "6 months – 2 years of training", icon: <Award size={20} style={{ color: THEME.brand }} /> },
-  { id: "advanced", label: "Advanced", desc: "2+ years of structured training", icon: <Sparkles size={20} style={{ color: THEME.warning }} /> },
+const EXPERIENCE_OPTIONS: {
+  id: Experience;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "beginner",
+    label: "Beginner",
+    desc: "0 – 6 months of consistent training",
+    icon: <Target size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "intermediate",
+    label: "Intermediate",
+    desc: "6 months – 2 years of training",
+    icon: <Award size={20} style={{ color: THEME.brand }} />,
+  },
+  {
+    id: "advanced",
+    label: "Advanced",
+    desc: "2+ years of structured training",
+    icon: <Sparkles size={20} style={{ color: THEME.warning }} />,
+  },
 ];
 
 // Engine-valid splits only. The profile's PreferredSplit type also allows
@@ -118,36 +233,129 @@ const EXPERIENCE_OPTIONS: { id: Experience; label: string; desc: string; icon: R
 // does not — so, like the old ConfigurePlanModal, this offers Auto + the three
 // supported splits. A legacy "bro_split" profile value is normalised to "auto"
 // below.
-const VALID_SPLIT_CHOICES = ["auto", "full_body", "upper_lower", "ppl"] as const;
+const VALID_SPLIT_CHOICES = [
+  "auto",
+  "full_body",
+  "upper_lower",
+  "ppl",
+] as const;
 
-const SPLIT_OPTIONS: { id: SplitChoice; label: string; desc: string; icon: React.ReactNode }[] = [
-  { id: "auto", label: "No preference", desc: "We'll pick the best split for you", icon: <Sparkles size={20} style={{ color: THEME.brand }} /> },
-  { id: "full_body", label: "Full Body", desc: "Hit everything each session", icon: <User size={20} style={{ color: THEME.success }} /> },
-  { id: "upper_lower", label: "Upper / Lower", desc: "Alternate upper and lower days (4+ days)", icon: <LayoutGrid size={20} style={{ color: THEME.brand }} /> },
-  { id: "ppl", label: "Push / Pull / Legs", desc: "Classic PPL rotation (5-6 days)", icon: <Dumbbell size={20} style={{ color: THEME.lifting }} /> },
+const SPLIT_OPTIONS: {
+  id: SplitChoice;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "auto",
+    label: "No preference",
+    desc: "We'll pick the best split for you",
+    icon: <Sparkles size={20} style={{ color: THEME.brand }} />,
+  },
+  {
+    id: "full_body",
+    label: "Full Body",
+    desc: "Hit everything each session",
+    icon: <User size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "upper_lower",
+    label: "Upper / Lower",
+    desc: "Alternate upper and lower days (4+ days)",
+    icon: <LayoutGrid size={20} style={{ color: THEME.brand }} />,
+  },
+  {
+    id: "ppl",
+    label: "Push / Pull / Legs",
+    desc: "Classic PPL rotation (5-6 days)",
+    icon: <Dumbbell size={20} style={{ color: THEME.lifting }} />,
+  },
 ];
 
-const EQUIPMENT_OPTIONS: { id: Equipment; label: string; desc: string; icon: React.ReactNode }[] = [
-  { id: "full_gym", label: "Full gym", desc: "Barbells, dumbbells, cables, machines", icon: <Warehouse size={20} style={{ color: THEME.lifting }} /> },
-  { id: "home_gym", label: "Home gym", desc: "Dumbbells, bench, pull-up bar", icon: <Dumbbell size={20} style={{ color: THEME.brand }} /> },
-  { id: "minimal", label: "Minimal / bodyweight", desc: "Bands, bodyweight, maybe dumbbells", icon: <User size={20} style={{ color: THEME.success }} /> },
+const EQUIPMENT_OPTIONS: {
+  id: Equipment;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "full_gym",
+    label: "Full gym",
+    desc: "Barbells, dumbbells, cables, machines",
+    icon: <Warehouse size={20} style={{ color: THEME.lifting }} />,
+  },
+  {
+    id: "home_gym",
+    label: "Home gym",
+    desc: "Dumbbells, bench, pull-up bar",
+    icon: <Dumbbell size={20} style={{ color: THEME.brand }} />,
+  },
+  {
+    id: "minimal",
+    label: "Minimal / bodyweight",
+    desc: "Bands, bodyweight, maybe dumbbells",
+    icon: <User size={20} style={{ color: THEME.success }} />,
+  },
 ];
 
-const INJURY_OPTIONS: { id: string; label: string; desc: string; icon: React.ReactNode }[] = [
-  { id: "none", label: "No injuries", desc: "All clear — no limitations", icon: <Check size={20} style={{ color: THEME.success }} /> },
-  { id: "lower_back", label: "Lower back", desc: "We'll avoid heavy axial loading", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
-  { id: "shoulder", label: "Shoulder", desc: "We'll modify pressing movements", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
-  { id: "knee", label: "Knee", desc: "We'll adjust squat and lunge variations", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
-  { id: "elbow", label: "Elbow", desc: "We'll swap heavy curls/dips for cable work", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
-  { id: "wrist", label: "Wrist", desc: "We'll pick neutral-grip and machine variants", icon: <AlertTriangle size={20} style={{ color: THEME.warning }} /> },
+const INJURY_OPTIONS: {
+  id: string;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "none",
+    label: "No injuries",
+    desc: "All clear — no limitations",
+    icon: <Check size={20} style={{ color: THEME.success }} />,
+  },
+  {
+    id: "lower_back",
+    label: "Lower back",
+    desc: "We'll avoid heavy axial loading",
+    icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
+  },
+  {
+    id: "shoulder",
+    label: "Shoulder",
+    desc: "We'll modify pressing movements",
+    icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
+  },
+  {
+    id: "knee",
+    label: "Knee",
+    desc: "We'll adjust squat and lunge variations",
+    icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
+  },
+  {
+    id: "elbow",
+    label: "Elbow",
+    desc: "We'll swap heavy curls/dips for cable work",
+    icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
+  },
+  {
+    id: "wrist",
+    label: "Wrist",
+    desc: "We'll pick neutral-grip and machine variants",
+    icon: <AlertTriangle size={20} style={{ color: THEME.warning }} />,
+  },
 ];
 
 // Run9 (3a): `structured` retired as a user-selectable mode — running is
 // freeform by default; a race goal is the only "plan". The type keeps it for
 // legacy data + migration.
 const RUN_MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
-  { id: "freeform", label: "Freeform", desc: "Run whenever you want, no auto-scheduling" },
-  { id: "race_prep", label: "Race prep", desc: "Periodised plan for a specific race" },
+  {
+    id: "freeform",
+    label: "Freeform",
+    desc: "Run whenever you want, no auto-scheduling",
+  },
+  {
+    id: "race_prep",
+    label: "Race prep",
+    desc: "Periodised plan for a specific race",
+  },
 ];
 
 export default function ProgrammeSettings({
@@ -165,9 +373,9 @@ export default function ProgrammeSettings({
       nutritionPhase: (profile.program?.goal as Goal) ?? "recomp",
       experience: (profile.experience as Experience) ?? "intermediate",
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
-      preferredSplit: (
-        VALID_SPLIT_CHOICES as readonly string[]
-      ).includes(profile.preferredSplit ?? "")
+      preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
+        profile.preferredSplit ?? ""
+      )
         ? (profile.preferredSplit as SplitChoice)
         : "auto",
       equipment: (profile.equipment as Equipment) ?? "full_gym",
@@ -181,17 +389,29 @@ export default function ProgrammeSettings({
   );
 
   // ── Draft state ───────────────────────────────────────────────────
-  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(saved.primaryGoal);
-  const [nutritionPhase, setNutritionPhase] = useState<Goal>(saved.nutritionPhase);
+  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
+    saved.primaryGoal
+  );
+  const [nutritionPhase, setNutritionPhase] = useState<Goal>(
+    saved.nutritionPhase
+  );
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
-  const [preferredSplit, setPreferredSplit] = useState<SplitChoice>(saved.preferredSplit);
+  const [preferredSplit, setPreferredSplit] = useState<SplitChoice>(
+    saved.preferredSplit
+  );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   const [runMode, setRunMode] = useState<RunMode>(saved.runMode);
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(saved.weeklyRunDays);
-  const [raceDistance, setRaceDistance] = useState<RaceDistance>(saved.raceDistance);
-  const [raceTargetDate, setRaceTargetDate] = useState<string>(saved.raceTargetDate);
+  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
+    saved.weeklyRunDays
+  );
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
+    saved.raceDistance
+  );
+  const [raceTargetDate, setRaceTargetDate] = useState<string>(
+    saved.raceTargetDate
+  );
 
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
@@ -257,7 +477,8 @@ export default function ProgrammeSettings({
         nutritionPhase,
         experience,
         liftDays,
-        preferredSplit: preferredSplit === "auto" ? "full_body" : preferredSplit,
+        preferredSplit:
+          preferredSplit === "auto" ? "full_body" : preferredSplit,
         runMode,
         weeklyRunDays: effectiveRunDays,
         ...(runMode === "race_prep" && raceTargetDate
@@ -304,18 +525,19 @@ export default function ProgrammeSettings({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 pb-6">
       {/* ── Goal & Nutrition ── */}
       <div>
         <SectionLabel>Training focus</SectionLabel>
         <div className="space-y-2">
           {FOCUS_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={primaryGoal === opt.id}
               onSelect={() => setPrimaryGoal(opt.id)}
               index={i}
-              icon={<Target size={20} style={{ color: THEME.brand }} />}
+              icon={<Target size={18} style={{ color: THEME.brand }} />}
+              accent={THEME.brand}
               label={opt.label}
               desc={opt.desc}
             />
@@ -327,12 +549,13 @@ export default function ProgrammeSettings({
         <SectionLabel>Nutrition phase</SectionLabel>
         <div className="space-y-2">
           {NUTRITION_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={nutritionPhase === opt.id}
               onSelect={() => setNutritionPhase(opt.id)}
               index={i}
-              icon={<Apple size={20} style={{ color: THEME.warning }} />}
+              icon={<Apple size={18} style={{ color: THEME.warning }} />}
+              accent={THEME.warning}
               label={opt.label}
               desc={opt.desc}
             />
@@ -344,7 +567,7 @@ export default function ProgrammeSettings({
         <SectionLabel>Experience</SectionLabel>
         <div className="space-y-2">
           {EXPERIENCE_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={experience === opt.id}
               onSelect={() => setExperience(opt.id)}
@@ -383,7 +606,7 @@ export default function ProgrammeSettings({
         <SectionLabel>Preferred split</SectionLabel>
         <div className="space-y-2">
           {SPLIT_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={preferredSplit === opt.id}
               onSelect={() => setPreferredSplit(opt.id)}
@@ -406,12 +629,13 @@ export default function ProgrammeSettings({
         <SectionLabel>Running</SectionLabel>
         <div className="space-y-2">
           {RUN_MODE_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={runMode === opt.id}
               onSelect={() => setRunMode(opt.id)}
               index={i}
-              icon={<Footprints size={20} style={{ color: THEME.running }} />}
+              icon={<Footprints size={18} style={{ color: THEME.running }} />}
+              accent={THEME.running}
               label={opt.label}
               desc={opt.desc}
             />
@@ -433,12 +657,13 @@ export default function ProgrammeSettings({
               max={7}
               value={weeklyRunDays}
               onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-              className="w-full mt-1 accent-primary"
+              className="w-full mt-1"
+              style={{ accentColor: THEME.running }}
             />
             {liftDays + weeklyRunDays > 7 && (
               <p className="text-xs mt-1 text-muted-foreground">
-                {liftDays} lift + {weeklyRunDays} run = {liftDays + weeklyRunDays}.
-                You'll see double days.
+                {liftDays} lift + {weeklyRunDays} run ={" "}
+                {liftDays + weeklyRunDays}. You'll see double days.
               </p>
             )}
           </div>
@@ -451,21 +676,32 @@ export default function ProgrammeSettings({
                 Distance
               </p>
               <div className="flex gap-1.5">
-                {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map((d) => (
-                  <button
-                    type="button"
-                    key={d}
-                    onClick={() => setRaceDistance(d)}
-                    className={cn(
-                      "flex-1 min-h-[44px] rounded-lg text-xs font-medium transition-all",
-                      raceDistance === d
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {d === "half" ? "Half" : d === "marathon" ? "Full" : d.toUpperCase()}
-                  </button>
-                ))}
+                {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map(
+                  (d) => (
+                    <button
+                      type="button"
+                      key={d}
+                      onClick={() => setRaceDistance(d)}
+                      className={cn(
+                        "flex-1 min-h-[44px] rounded-lg text-xs font-medium transition-all",
+                        raceDistance === d
+                          ? "text-white"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                      style={
+                        raceDistance === d
+                          ? { background: THEME.running }
+                          : undefined
+                      }
+                    >
+                      {d === "half"
+                        ? "Half"
+                        : d === "marathon"
+                          ? "Full"
+                          : d.toUpperCase()}
+                    </button>
+                  )
+                )}
               </div>
             </div>
             <div>
@@ -498,7 +734,7 @@ export default function ProgrammeSettings({
         <SectionLabel>Equipment access</SectionLabel>
         <div className="space-y-2">
           {EQUIPMENT_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={equipment === opt.id}
               onSelect={() => setEquipment(opt.id)}
@@ -515,7 +751,7 @@ export default function ProgrammeSettings({
         <SectionLabel>Injuries</SectionLabel>
         <div className="space-y-2">
           {INJURY_OPTIONS.map((opt, i) => (
-            <OptionCard
+            <SettingsOptionCard
               key={opt.id}
               selected={injuries.includes(opt.id)}
               onSelect={() => toggleInjury(opt.id)}
@@ -591,21 +827,30 @@ export default function ProgrammeSettings({
       </button>
 
       {/* ── Sticky save bar ── */}
-      <div className="sticky bottom-0 -mx-4 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background/90 backdrop-blur border-t border-border">
-        <button
-          type="button"
-          onClick={() => setConfirmRebuild(true)}
-          disabled={!dirty || raceDateInvalid || saving}
-          className={cn(
-            "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-            !dirty || raceDateInvalid || saving
-              ? "bg-muted text-muted-foreground opacity-60"
-              : "bg-primary text-primary-foreground"
-          )}
+      {(dirty || raceDateInvalid || saving) && (
+        <div
+          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
+          style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
-          {saving ? "Saving…" : dirty ? "Save changes" : "No changes"}
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setConfirmRebuild(true)}
+            disabled={!dirty || raceDateInvalid || saving}
+            className={cn(
+              "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
+              !dirty || raceDateInvalid || saving
+                ? "bg-muted text-muted-foreground opacity-60"
+                : "bg-primary text-primary-foreground"
+            )}
+          >
+            {saving
+              ? "Saving…"
+              : raceDateInvalid
+                ? "Fix race date"
+                : "Save changes"}
+          </button>
+        </div>
+      )}
 
       {/* ── Confirmation modals ── */}
       <AnimatePresence>
@@ -635,7 +880,10 @@ export default function ProgrammeSettings({
                   className="size-9 rounded-xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: "rgba(245,158,11,0.12)" }}
                 >
-                  <AlertTriangle className="size-4" style={{ color: "#f59e0b" }} />
+                  <AlertTriangle
+                    className="size-4"
+                    style={{ color: "#f59e0b" }}
+                  />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">
