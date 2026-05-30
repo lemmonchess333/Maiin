@@ -37,8 +37,12 @@
   /* "… Variable" is the @font-face family name fontsource declares for
      the self-hosted variable build; the bare name is kept as a fallback
      for any environment where the variable face fails to load. */
-  --font-display: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
+  --font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
+    monospace;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
@@ -132,8 +136,8 @@
    pages don't hand-roll `pb-20` / `pt-6` values. Values assume the
    iPhone safe-area envs are set; desktop falls back to 0. */
 :root {
-  --tab-bar-height: 64px;          /* icon + label + py-3 vertical rhythm */
-  --page-x: 1rem;                  /* horizontal gutter (matches px-4) */
+  --tab-bar-height: 64px; /* icon + label + py-3 vertical rhythm */
+  --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   /* Enough room below scroll content that the bottom tab bar never
@@ -142,10 +146,25 @@
   --page-bottom-pad: calc(var(--tab-bar-height) + var(--safe-bottom) + 1rem);
 }
 
+/* Mobile Safari exposes a transparent status-bar area when the app is opened
+   from the browser as well as standalone. Some iOS contexts report a zero
+   safe-area inset even though the status bar overlays the viewport, which lets
+   scrolled content sit under the clock/battery. Keep the fallback scoped to
+   coarse-pointer WebKit phones so desktop and Android layouts do not gain a
+   phantom top gutter. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 640px) and (pointer: coarse) {
+    :root {
+      --safe-top: max(env(safe-area-inset-top, 0px), 44px);
+    }
+  }
+}
+
 /* Defensive no-horizontal-scroll rail. A single negative-margin chip
    scroller used to leak and trigger page-level horizontal scroll on
    iPhone SE widths. Clamp it here instead of patching each site. */
-html, body {
+html,
+body {
   overflow-x: hidden;
 }
 
@@ -163,7 +182,9 @@ body {
      where it has room to breathe without competing with data. */
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family:
+    "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    sans-serif;
   font-size: var(--ds-text-body);
   line-height: 1.6;
   font-kerning: normal;
@@ -177,7 +198,10 @@ body {
 }
 
 /* ─── HEADING DEFAULTS ────────────────────────────────────── */
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-kerning: normal;
@@ -188,7 +212,6 @@ h1, h2, h3, h4 {
 h1 {
   letter-spacing: -0.02em;
 }
-
 
 /* Safe area padding for bottom nav (iPhone notch) */
 .safe-area-pb {
@@ -203,7 +226,8 @@ h1 {
 }
 
 /* Prevent text selection on interactive elements */
-button, a {
+button,
+a {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
@@ -219,11 +243,13 @@ button, a {
 }
 
 /* ─── SMOOTH TRANSITIONS FOR INTERACTIVE ELEMENTS ─────────── */
-button, [role="button"] {
-  transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-              color 150ms cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+button,
+[role="button"] {
+  transition:
+    transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ─── INPUT & FORM FIELD POLISH ──────────────────────────────
@@ -235,14 +261,19 @@ button, [role="button"] {
    components.css) is tag-qualified to win on specificity even
    under equal source-order conditions; this exclusion is the
    belt-and-braces. */
-input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not(
+    [type="radio"]
+  ):not([type="hidden"]),
 textarea:not(.ds-input),
 select:not(.ds-input) {
   border-radius: var(--radius);
-  transition: border-color var(--ds-transition-fast),
-              box-shadow var(--ds-transition-fast);
+  transition:
+    border-color var(--ds-transition-fast),
+    box-shadow var(--ds-transition-fast);
 }
-input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):focus,
+input:not(.ds-input):not([type="range"]):not([type="checkbox"]):not(
+    [type="radio"]
+  ):not([type="hidden"]):focus,
 textarea:not(.ds-input):focus,
 select:not(.ds-input):focus {
   border-color: hsl(var(--primary));
