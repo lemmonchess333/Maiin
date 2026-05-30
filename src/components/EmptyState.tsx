@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { THEME } from "@/lib/theme";
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -19,7 +20,7 @@ export function EmptyState({
   title,
   description,
   action,
-  accentColor = "#7B72E9",
+  accentColor = THEME.brand,
 }: EmptyStateProps) {
   // Sprint 1: CTA migrated to the <Button> primitive. accentColor
   // continues to drive the icon container colour (per-surface
