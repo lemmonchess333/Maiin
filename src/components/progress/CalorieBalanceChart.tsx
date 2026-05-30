@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useMeals } from "@/hooks/useMeals";
-import { useWorkouts } from "@/hooks/useWorkouts";
+import type { Meal } from "@/hooks/useMeals";
+import type { Workout } from "@/hooks/useWorkouts";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -23,9 +23,18 @@ import {
   getPhaseAlignment,
 } from "@/utils/calorieBalance";
 
-export default function CalorieBalanceChart() {
-  const { meals } = useMeals();
-  const { workouts } = useWorkouts();
+interface CalorieBalanceChartProps {
+  // Passed down from History, which already holds these live listeners — the
+  // chart used to open its OWN useMeals/useWorkouts onSnapshots, duplicating
+  // the 400-doc meals + workouts listeners on the same collections.
+  meals: Meal[];
+  workouts: Workout[];
+}
+
+export default function CalorieBalanceChart({
+  meals,
+  workouts,
+}: CalorieBalanceChartProps) {
   const { runs } = useRunningStats(14);
   const { profile } = useAuth();
 
