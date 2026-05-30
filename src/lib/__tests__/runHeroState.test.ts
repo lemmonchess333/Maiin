@@ -105,7 +105,7 @@ describe("getRunHeroState", () => {
         input({
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: TODAY },
-          nextStartable: runDay({ templateId: "race", date: TODAY }),
+          nextStartable: runDay({ templateId: "marathon_race", date: TODAY }),
         })
       )
     ).toBe("race-today");
@@ -119,7 +119,10 @@ describe("getRunHeroState", () => {
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: "2026-05-25" },
           // a stale past race slot would otherwise read as catch-up
-          nextStartable: runDay({ date: "2026-05-25", templateId: "race" }),
+          nextStartable: runDay({
+            date: "2026-05-25",
+            templateId: "marathon_race",
+          }),
           hasRunDays: true,
         })
       )
@@ -133,7 +136,7 @@ describe("getRunHeroState", () => {
         input({
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: TODAY },
-          nextStartable: runDay({ date: TODAY, templateId: "race" }),
+          nextStartable: runDay({ date: TODAY, templateId: "marathon_race" }),
         })
       )
     ).toBe("race-today");
@@ -146,7 +149,10 @@ describe("getRunHeroState", () => {
         input({
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: "2026-05-22" },
-          nextStartable: runDay({ date: "2026-05-22", templateId: "race" }),
+          nextStartable: runDay({
+            date: "2026-05-22",
+            templateId: "marathon_race",
+          }),
         })
       )
     ).toBe("catch-up");
