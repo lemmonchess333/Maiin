@@ -151,19 +151,87 @@ function computeActiveDateSet(
   return set;
 }
 
+// ── Grace forgiveness (Streak1 — see .claude/plans/programme-run-followups.md)
+//
+// A single off-day inside an otherwise-consistent run does NOT break the
+// streak. This is the calm forgiveness model the field has converged on
+// (Apple watchOS-11 ring pause, MyFitnessPal backfill, habit-tracker
+// "never miss twice") — deliberately NOT a Duolingo-style earned-token
+// economy.
+//
+// Rule: walking back from the end anchor, a non-active day may be BRIDGED
+// (counted toward the streak span) only if no grace was spent within the
+// prior GRACE_MIN_SPACING_DAYS of the walk. That single spacing constraint
+// enforces BOTH invariants at once:
+//   • "never miss twice" — two consecutive misses are 1 day apart < spacing,
+//     so the second is denied and the walk stops; and
+//   • "≤1 forgiven day per rolling 7" — a second grace is only allowed once
+//     7 calendar days separate it from the last one.
+// Spacing is counted in calendar-day steps (not milliseconds) so DST
+// transitions can't shift the boundary.
+//
+// A bridged day is held as PENDING until an older active day confirms it —
+// so grace can't extend the streak into pre-history (a trailing/leading gap
+// with no active day behind it is discarded, not counted).
+const GRACE_MIN_SPACING_DAYS = 7;
+
+/**
+ * The YYYY-MM-DD key for the calendar day before `now`, computed by a calendar
+ * step (NOT `now - 86400000`). Millisecond subtraction is DST-unsafe: on a
+ * fall-back day (25h) it can land back on today's own date, and on a
+ * spring-forward day (23h) it can skip a calendar day — either of which
+ * silently corrupts the streak anchor. `setDate(-1)` is wall-clock and matches
+ * the DST-proof step the backward walk already uses.
+ */
+function yesterdayKey(now: Date): string {
+  const y = new Date(now);
+  y.setDate(y.getDate() - 1);
+  return format(y, "yyyy-MM-dd");
+}
+
 /**
  * Today/yesterday rule — the streak does NOT drop to zero at midnight.
  * - If today is active: streak ends on today (live).
  * - Else if yesterday is active: streak ends on yesterday (at risk).
  * - Else: streak = 0 (broken).
- * Walks backwards from the ending date, incrementing while consecutive days
- * are in the set.
+ * Walks backwards from the ending date, incrementing while days are in the
+ * set, bridging isolated non-active days per the grace rule above.
+ *
+ * `now` is injectable for deterministic tests; production callers omit it.
  */
-function computeCurrentStreak(activeDates: Set<string>): number {
-  if (activeDates.size === 0) return 0;
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeCurrentStreak(
+  activeDates: Set<string>,
+  now: Date = new Date()
+): number {
+  return computeStreakSpan(activeDates, now).streak;
+}
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+export interface StreakSpan {
+  /** Streak length including any bridged grace days. */
+  streak: number;
+  /**
+   * The non-active dates (YYYY-MM-DD) that grace bridged inside the current
+   * span, newest-first. Empty when the streak is unbroken or zero. Used by
+   * the UI to surface gentle after-the-fact reassurance ("yesterday's rest
+   * day is covered") — never a pre-emptive warning.
+   */
+  bridgedDates: string[];
+}
+
+/**
+ * Walk the streak once and return both the length and the grace days it
+ * bridged. `computeCurrentStreak` is the thin number-only wrapper over this.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeStreakSpan(
+  activeDates: Set<string>,
+  now: Date = new Date()
+): StreakSpan {
+  if (activeDates.size === 0) return { streak: 0, bridgedDates: [] };
+
+  const today = format(now, "yyyy-MM-dd");
+  const yesterday = yesterdayKey(now);
 
   let endDate: Date;
   if (activeDates.has(today)) {
@@ -171,16 +239,40 @@ function computeCurrentStreak(activeDates: Set<string>): number {
   } else if (activeDates.has(yesterday)) {
     endDate = new Date(yesterday + "T12:00:00");
   } else {
-    return 0;
+    return { streak: 0, bridgedDates: [] };
   }
 
   let streak = 0;
+  // Grace days tentatively bridged, awaiting a confirming older active day.
+  let pendingGrace = 0;
+  // Calendar days walked since the last grace was spent (Infinity = none yet).
+  let stepsSinceGrace = Infinity;
+  // Confirmed + pending bridged dates (newest-first by walk order).
+  const bridged: string[] = [];
+  let pendingBridged: string[] = [];
+
   const cursor = new Date(endDate);
-  while (activeDates.has(format(cursor, "yyyy-MM-dd"))) {
-    streak++;
+  while (true) {
+    if (activeDates.has(format(cursor, "yyyy-MM-dd"))) {
+      // An active day confirms any pending grace bridge before it.
+      streak += pendingGrace + 1;
+      pendingGrace = 0;
+      if (pendingBridged.length > 0) {
+        bridged.push(...pendingBridged);
+        pendingBridged = [];
+      }
+    } else {
+      // Non-active day — bridge it only if far enough from the last grace.
+      if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS) break;
+      pendingGrace++;
+      pendingBridged.push(format(cursor, "yyyy-MM-dd"));
+      stepsSinceGrace = 0;
+    }
     cursor.setDate(cursor.getDate() - 1);
+    stepsSinceGrace++;
   }
-  return streak;
+  // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
+  return { streak, bridgedDates: bridged };
 }
 
 /**
@@ -439,21 +531,26 @@ function useStreaksInternal() {
 
   // ── Derived state ──────────────────────────────────────────────────────
 
-  const { activeDateSet, currentStreak, totalActiveDays } = useMemo(() => {
-    if (!allLoaded) {
+  const { activeDateSet, currentStreak, totalActiveDays, bridgedDates } =
+    useMemo(() => {
+      if (!allLoaded) {
+        return {
+          activeDateSet: new Set<string>(),
+          currentStreak: 0,
+          totalActiveDays: 0,
+          bridgedDates: [] as string[],
+        };
+      }
+      const set = computeActiveDateSet(workouts, runs, meals);
+      const span = computeStreakSpan(set);
       return {
-        activeDateSet: new Set<string>(),
-        currentStreak: 0,
-        totalActiveDays: 0,
+        activeDateSet: set,
+        currentStreak: span.streak,
+        // Grace days never inflate the honest "days you showed up" count.
+        totalActiveDays: set.size,
+        bridgedDates: span.bridgedDates,
       };
-    }
-    const set = computeActiveDateSet(workouts, runs, meals);
-    return {
-      activeDateSet: set,
-      currentStreak: computeCurrentStreak(set),
-      totalActiveDays: set.size,
-    };
-  }, [allLoaded, workouts, runs, meals]);
+    }, [allLoaded, workouts, runs, meals]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
@@ -465,6 +562,35 @@ function useStreaksInternal() {
     if (!allLoaded) return false;
     return activeDateSet.has(format(new Date(), "yyyy-MM-dd"));
   }, [allLoaded, activeDateSet]);
+
+  // Gentle after-the-fact reassurance trigger (Streak1 visibility): true only
+  // when the user is active TODAY *and* yesterday was a missed day that grace
+  // bridged. One-day relevance window — the moment is "you took yesterday off
+  // but you're still covered". Mutually exclusive with the at-risk nudge,
+  // which only shows when nothing is logged today. Never pre-emptive.
+  const forgivenYesterday = useMemo(() => {
+    if (!allLoaded || !hasLoggedToday) return false;
+    const yesterday = yesterdayKey(new Date());
+    return bridgedDates.includes(yesterday);
+  }, [allLoaded, hasLoggedToday, bridgedDates]);
+
+  // Tier B backfill discoverability (Streak1): the streak is derived from each
+  // entry's own date, so logging yesterday retroactively re-anchors and (via
+  // grace) can revive a freshly-broken streak. Users don't know that. We
+  // surface the prompt only when it actually helps: the streak is broken
+  // (currentStreak === 0), yesterday isn't already active, and SIMULATING a
+  // backfill of yesterday through the same engine yields a streak worth
+  // saving (>= 3). The simulation captures every rescuable shape — including
+  // a one-day-older gap that grace then bridges — without re-deriving the rule.
+  const backfillRescueStreak = useMemo(() => {
+    if (!allLoaded || currentStreak > 0) return 0;
+    const yesterday = yesterdayKey(new Date());
+    if (activeDateSet.has(yesterday)) return 0;
+    const augmented = new Set(activeDateSet);
+    augmented.add(yesterday);
+    const restored = computeCurrentStreak(augmented);
+    return restored >= 3 ? restored : 0;
+  }, [allLoaded, currentStreak, activeDateSet]);
 
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
@@ -700,6 +826,8 @@ function useStreaksInternal() {
     longestStreak,
     totalActiveDays,
     hasLoggedToday,
+    forgivenYesterday,
+    backfillRescueStreak,
     loading: !allLoaded,
     earnedBadges,
     lockedBadges,
