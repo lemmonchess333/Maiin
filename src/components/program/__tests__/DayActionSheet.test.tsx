@@ -237,7 +237,7 @@ describe("DayActionSheet — planned run", () => {
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(false);
-    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as done/i)).toBeInTheDocument();
     expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
   });
 
@@ -255,7 +255,7 @@ describe("DayActionSheet — planned run", () => {
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/Mark complete \(manual\)/i));
+    fireEvent.click(screen.getByText(/Mark as done/i));
     expect(callbacks.markManualComplete).toHaveBeenCalledWith(runDay.id);
   });
 
@@ -353,9 +353,7 @@ describe("DayActionSheet — terminal run states locked", () => {
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(true);
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
@@ -395,9 +393,7 @@ describe("DayActionSheet — terminal run states locked", () => {
     // Sanity — the bare "Completed" label is the real-source copy
     // and should NOT appear for a manual completion.
     expect(screen.queryByText(/^Completed$/)).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
   });
 
@@ -425,9 +421,7 @@ describe("DayActionSheet — terminal run states locked", () => {
       />
     );
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 
   it("skipped: select disabled, no Skip / Complete buttons, 'Skipped' badge", () => {
@@ -446,9 +440,7 @@ describe("DayActionSheet — terminal run states locked", () => {
     );
     const select = screen.getByRole("combobox") as HTMLSelectElement;
     expect(select.disabled).toBe(true);
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     // The "Skipped" badge is the run-section status indicator.
     expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
@@ -510,7 +502,7 @@ describe("DayActionSheet — Q5 P74 same-date paradox hint (chunk B3f)", () => {
       screen.getByText(/An extra run is logged for this date/i)
     ).toBeInTheDocument();
     // Mark complete button is still there alongside the hint.
-    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as done/i)).toBeInTheDocument();
   });
 
   it("does NOT render the hint when no extras exist for this date", () => {
@@ -538,7 +530,7 @@ describe("DayActionSheet — Q5 P74 same-date paradox hint (chunk B3f)", () => {
     // planned and the saved run sits as an extra. The hint must
     // suppress so we don't offer a "mark complete" path that would
     // bypass the race-day strict rule.
-    const { profile, programState, callbacks } = setupPlanned("race");
+    const { profile, programState, callbacks } = setupPlanned("marathon_race");
     const extras = new Map<string, SavedRunDoc[]>([
       [todayKey(), [savedRun({ id: "race-dnf", distance: 18000 })]],
     ]);
@@ -597,9 +589,7 @@ describe("DayActionSheet — Q5 P74 same-date paradox hint (chunk B3f)", () => {
     expect(
       screen.queryByText(/An extra run is logged for this date/i)
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 });
 
@@ -656,7 +646,7 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
     expect(
       screen.getByText(/Mark this skipped slot as done/i)
     ).toBeInTheDocument();
-    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as done/i)).toBeInTheDocument();
     // Skip button is gone — slot is already skipped.
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
   });
@@ -678,7 +668,7 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
         {...callbacks}
       />
     );
-    fireEvent.click(screen.getByText(/Mark complete \(manual\)/i));
+    fireEvent.click(screen.getByText(/Mark as done/i));
     // markManualComplete is the same writer used for planned slots;
     // it transitions `skipped → planned` first then writes the
     // manualCompletions map (Q2 P20 / useProgram L887-895).
@@ -705,9 +695,7 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
     expect(
       screen.queryByText(/An extra run is logged for this date/i)
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 
   it("race-day skipped slot with extra still suppresses the P86 path (Q1 P4 / Q2 P21)", () => {
@@ -716,7 +704,7 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
     // as an extra), the user cannot manually mark the race-day slot
     // as done. Gate is in the visibility condition itself — both
     // hint and Mark complete suppress.
-    const { profile, programState, callbacks } = setupSkipped("race");
+    const { profile, programState, callbacks } = setupSkipped("marathon_race");
     const extras = new Map<string, SavedRunDoc[]>([
       [todayKey(), [savedRun({ id: "race-dnf", distance: 18000 })]],
     ]);
@@ -735,9 +723,7 @@ describe("DayActionSheet — Q5 P86 skipped+extra reconciliation (chunk B3h)", (
     expect(
       screen.queryByText(/An extra run is logged for this date/i)
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 });
 
@@ -755,7 +741,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
       date: todayKey(),
       weekKey: todayWeekKey(),
       status: "planned",
-      templateId: "race",
+      templateId: "marathon_race",
     });
     return {
       profile,
@@ -789,9 +775,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
     // Race-day skip — the generic "Skip this run" no longer renders;
     // the two race-aware variants do.
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
@@ -861,15 +845,13 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...callbacks}
       />
     );
-    expect(
-      screen.queryByText(/Mark complete \(manual\)/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
     expect(
       screen.queryByText(/An extra run is logged for this date/i)
     ).not.toBeInTheDocument();
   });
 
-  it("non-race templates keep Mark complete visible (sanity — gate is specific to templateId === 'race')", () => {
+  it("non-race templates keep Mark complete visible (sanity — gate is specific to template type === 'race')", () => {
     // The B3j gate must not over-fire. A planned easy_30 / tempo /
     // long slot continues to show Mark complete as before.
     const profile = makeProfile(
@@ -898,7 +880,7 @@ describe("DayActionSheet — Q2 P21 race-day Mark complete suppression (chunk B3
         {...commonCallbacks()}
       />
     );
-    expect(screen.getByText(/Mark complete \(manual\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as done/i)).toBeInTheDocument();
   });
 });
 
