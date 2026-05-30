@@ -190,7 +190,31 @@ export function computeCurrentStreak(
   activeDates: Set<string>,
   now: Date = new Date()
 ): number {
-  if (activeDates.size === 0) return 0;
+  return computeStreakSpan(activeDates, now).streak;
+}
+
+export interface StreakSpan {
+  /** Streak length including any bridged grace days. */
+  streak: number;
+  /**
+   * The non-active dates (YYYY-MM-DD) that grace bridged inside the current
+   * span, newest-first. Empty when the streak is unbroken or zero. Used by
+   * the UI to surface gentle after-the-fact reassurance ("yesterday's rest
+   * day is covered") — never a pre-emptive warning.
+   */
+  bridgedDates: string[];
+}
+
+/**
+ * Walk the streak once and return both the length and the grace days it
+ * bridged. `computeCurrentStreak` is the thin number-only wrapper over this.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function computeStreakSpan(
+  activeDates: Set<string>,
+  now: Date = new Date()
+): StreakSpan {
+  if (activeDates.size === 0) return { streak: 0, bridgedDates: [] };
 
   const today = format(now, "yyyy-MM-dd");
   const yesterday = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
@@ -201,7 +225,7 @@ export function computeCurrentStreak(
   } else if (activeDates.has(yesterday)) {
     endDate = new Date(yesterday + "T12:00:00");
   } else {
-    return 0;
+    return { streak: 0, bridgedDates: [] };
   }
 
   let streak = 0;
@@ -209,6 +233,9 @@ export function computeCurrentStreak(
   let pendingGrace = 0;
   // Calendar days walked since the last grace was spent (Infinity = none yet).
   let stepsSinceGrace = Infinity;
+  // Confirmed + pending bridged dates (newest-first by walk order).
+  const bridged: string[] = [];
+  let pendingBridged: string[] = [];
 
   const cursor = new Date(endDate);
   while (true) {
@@ -216,17 +243,22 @@ export function computeCurrentStreak(
       // An active day confirms any pending grace bridge before it.
       streak += pendingGrace + 1;
       pendingGrace = 0;
+      if (pendingBridged.length > 0) {
+        bridged.push(...pendingBridged);
+        pendingBridged = [];
+      }
     } else {
       // Non-active day — bridge it only if far enough from the last grace.
       if (stepsSinceGrace < GRACE_MIN_SPACING_DAYS) break;
       pendingGrace++;
+      pendingBridged.push(format(cursor, "yyyy-MM-dd"));
       stepsSinceGrace = 0;
     }
     cursor.setDate(cursor.getDate() - 1);
     stepsSinceGrace++;
   }
   // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
-  return streak;
+  return { streak, bridgedDates: bridged };
 }
 
 /**
@@ -487,21 +519,26 @@ function useStreaksInternal() {
 
   // ── Derived state ──────────────────────────────────────────────────────
 
-  const { activeDateSet, currentStreak, totalActiveDays } = useMemo(() => {
-    if (!allLoaded) {
+  const { activeDateSet, currentStreak, totalActiveDays, bridgedDates } =
+    useMemo(() => {
+      if (!allLoaded) {
+        return {
+          activeDateSet: new Set<string>(),
+          currentStreak: 0,
+          totalActiveDays: 0,
+          bridgedDates: [] as string[],
+        };
+      }
+      const set = computeActiveDateSet(workouts, runs, meals);
+      const span = computeStreakSpan(set);
       return {
-        activeDateSet: new Set<string>(),
-        currentStreak: 0,
-        totalActiveDays: 0,
+        activeDateSet: set,
+        currentStreak: span.streak,
+        // Grace days never inflate the honest "days you showed up" count.
+        totalActiveDays: set.size,
+        bridgedDates: span.bridgedDates,
       };
-    }
-    const set = computeActiveDateSet(workouts, runs, meals);
-    return {
-      activeDateSet: set,
-      currentStreak: computeCurrentStreak(set),
-      totalActiveDays: set.size,
-    };
-  }, [allLoaded, workouts, runs, meals]);
+    }, [allLoaded, workouts, runs, meals]);
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
@@ -513,6 +550,17 @@ function useStreaksInternal() {
     if (!allLoaded) return false;
     return activeDateSet.has(format(new Date(), "yyyy-MM-dd"));
   }, [allLoaded, activeDateSet]);
+
+  // Gentle after-the-fact reassurance trigger (Streak1 visibility): true only
+  // when the user is active TODAY *and* yesterday was a missed day that grace
+  // bridged. One-day relevance window — the moment is "you took yesterday off
+  // but you're still covered". Mutually exclusive with the at-risk nudge,
+  // which only shows when nothing is logged today. Never pre-emptive.
+  const forgivenYesterday = useMemo(() => {
+    if (!allLoaded || !hasLoggedToday) return false;
+    const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+    return bridgedDates.includes(yesterday);
+  }, [allLoaded, hasLoggedToday, bridgedDates]);
 
   // Merge streakData.badges with BADGE_DEFINITIONS order (streakData.badges
   // is already in definition order from the merge above, so this is a
@@ -748,6 +796,7 @@ function useStreaksInternal() {
     longestStreak,
     totalActiveDays,
     hasLoggedToday,
+    forgivenYesterday,
     loading: !allLoaded,
     earnedBadges,
     lockedBadges,

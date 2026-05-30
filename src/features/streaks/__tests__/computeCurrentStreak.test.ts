@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { format } from "date-fns";
-import { computeCurrentStreak } from "../useStreaks";
+import { computeCurrentStreak, computeStreakSpan } from "../useStreaks";
 
 // Pinned "now" — mid-May is well clear of any DST transition in either
 // hemisphere, so calendar-day offsets are stable in the test timezone.
@@ -73,5 +73,32 @@ describe("computeCurrentStreak — grace forgiveness", () => {
   it("grace applies regardless of whether the anchor is today or yesterday", () => {
     // today missing (anchor = yesterday), then an isolated gap at day-2.
     expect(streak(1, 3)).toBe(3);
+  });
+});
+
+describe("computeStreakSpan — bridged-date reporting", () => {
+  const span = (...offsets: number[]) =>
+    computeStreakSpan(activeSet(...offsets), NOW);
+
+  it("reports no bridged dates for an unbroken streak", () => {
+    expect(span(0, 1, 2, 3).bridgedDates).toEqual([]);
+  });
+
+  it("reports the single bridged date (yesterday) when one was forgiven", () => {
+    const result = span(0, 2);
+    expect(result.streak).toBe(3);
+    expect(result.bridgedDates).toEqual([dayKey(1)]);
+  });
+
+  it("does not report an unconfirmed trailing gap as bridged", () => {
+    // miss at offset 1 with no confirming older active day → not bridged
+    expect(span(0).bridgedDates).toEqual([]);
+    expect(span(0, 1, 2).bridgedDates).toEqual([]);
+  });
+
+  it("reports two bridged dates when both gaps are far enough apart", () => {
+    const result = span(0, 1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14);
+    expect(result.streak).toBe(15);
+    expect(result.bridgedDates).toEqual([dayKey(3), dayKey(10)]);
   });
 });

@@ -26,6 +26,7 @@ import {
   Sparkles,
   Settings as SettingsIcon,
   Flame,
+  Moon,
   Footprints,
   X,
   Target,
@@ -108,7 +109,12 @@ export default function Home() {
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
-  const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
+  const {
+    currentStreak: streak,
+    forgivenYesterday,
+    newBadge,
+    dismissNewBadge,
+  } = useStreaks();
   const {
     glasses: waterGlasses,
     target: waterTarget,
@@ -769,6 +775,34 @@ export default function Home() {
             </div>
           </motion.div>
         )}
+
+      {/* Grace reassurance (Streak1 visibility) — calm, after-the-fact: shown
+          only when today is logged AND yesterday was an off-day that grace
+          bridged. Purple (brand/calm), never orange (orange = the at-risk
+          warning above). The two are mutually exclusive by construction. */}
+      {forgivenYesterday && (
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="flex items-center gap-3 p-3 rounded-xl border"
+          style={{
+            background: "rgba(123,114,233,0.08)",
+            borderColor: "rgba(123,114,233,0.2)",
+          }}
+        >
+          <Moon className="size-5 shrink-0" style={{ color: "#7B72E9" }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "#7B72E9" }}>
+              Yesterday's rest day is covered
+            </p>
+            <p className="text-xs text-muted-foreground">
+              You're still on a {streak}-day streak.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         ref={weekStripRef}
