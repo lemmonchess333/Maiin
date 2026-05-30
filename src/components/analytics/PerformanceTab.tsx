@@ -224,10 +224,22 @@ export default function PerformanceTab() {
 
   const pi = Math.round(currentWeek.performanceIndex);
   const loadBand = currentWeek.labels?.loadBand;
-  const { headline, body } = getPlainLanguageSummary(pi, loadBand, delta);
+  // Cold-start gate: with fewer than 4 weekly docs the load band and the
+  // "vs baseline" framing aren't meaningful yet (the baseline is derived
+  // from prior weeks). Mirror the Home hero's lifetimeWeeks<4 "establishing
+  // baseline" treatment so the two surfaces don't disagree — suppress the
+  // confident verdict, band, and delta until the baseline is established.
+  const establishing = weeks.length < 4;
+  const { headline, body } = getPlainLanguageSummary(
+    pi,
+    loadBand,
+    establishing ? null : delta,
+    establishing,
+  );
 
-  const summaryColor =
-    pi >= 80
+  const summaryColor = establishing
+    ? THEME.brand
+    : pi >= 80
       ? THEME.success
       : pi >= 60
         ? THEME.teal
@@ -273,7 +285,7 @@ export default function PerformanceTab() {
           <h3 className="text-base font-bold" style={{ color: summaryColor }}>
             {headline}
           </h3>
-          {delta !== null && (
+          {delta !== null && !establishing && (
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2"
               style={{
@@ -473,7 +485,11 @@ export default function PerformanceTab() {
               <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   label="Load Band"
-                  value={currentWeek.labels?.loadBand || "—"}
+                  value={
+                    establishing
+                      ? "Establishing"
+                      : currentWeek.labels?.loadBand || "—"
+                  }
                   unit=""
                   accentColor={THEME.brand}
                 />
