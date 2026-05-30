@@ -28,7 +28,6 @@ import {
   Flame,
   Moon,
   RotateCcw,
-  Footprints,
   UtensilsCrossed,
   X,
   Target,
