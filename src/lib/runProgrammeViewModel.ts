@@ -106,8 +106,9 @@ export function compactRunLabel(
       return "Tempo";
     case "intervals":
       // "5×1K Intervals" → "5×1K"; "8×400m Speed" → "8×400". Take the
-      // leading "N×D" token off the name (everything up to the first space).
-      return template.name.split(" ")[0] ?? "Intervals";
+      // leading "N×D" token off the name (up to the first space) and drop a
+      // trailing metre unit so it fits the rail tile alongside "5×1K".
+      return (template.name.split(" ")[0] ?? "Intervals").replace(/m$/, "");
     case "long": {
       const km = template.config.targetDistance;
       return km ? `${km}K` : "Long";

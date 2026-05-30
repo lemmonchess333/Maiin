@@ -858,7 +858,7 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
         makeRunDay({
           id: "runday_race_today",
           date: "2026-05-29",
-          templateId: "race",
+          templateId: "half_race",
           type: "race",
           status: "planned",
         }),
