@@ -363,6 +363,53 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Action pills (Quick Log, Start Run, Log Food):** rounded-xl, sport-coloured tinted bg (6% opacity), icon + 11px semibold label, flex row with equal widths, minimum 44px touch target
 - **Section labels:** 10px uppercase with wider letter-spacing, muted colour
 
+### Training plan primitives
+
+The Programme Run section is a **hybrid training cockpit**, not a settings
+list. It is built from named, reusable training-plan primitives. These are
+NOT considered decorative one-off patterns — they are components, reused
+consistently, and part of the design system.
+
+Primitives (all in `src/components/program/`, fed by the pure view model in
+`src/lib/runProgrammeViewModel.ts`):
+
+- **`RaceCockpitCard`** — race-prep identity card: readable distance heading
+  (Marathon / Half Marathon / 10K / 5K), target date, days-out countdown,
+  week N of M, current phase, and a phase rail. The rail reflects the REAL
+  engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
+  invented "Peak" segment, so the active highlight always maps to a phase
+  the scheduler can emit. Renders ONLY in the race-goal overlay.
+- **`SessionCommandCard`** — the "what's next" command surface. Title + meta
+  pills + a single primary Start action (its own control, NOT the whole
+  card) + an overflow that opens the day sheet. Temporal eyebrow ("Up next"
+  / "Due today" / "Tomorrow" / "Pending") — never "Next · Pending".
+- **`HybridWeekRail`** — week-at-a-glance with a coral RUN lane + a purple
+  LIFT lane per day tile. A combined day shows both lanes natively. Compact
+  lane labels (30m / 15K / 5×1K / Push); full names live in the day sheet.
+  Preserves the Q5 extras pills + coachmark. Shown whenever the week has any
+  content — including freeform lifters (lift week + logged-run extras).
+- **`DayActionSheet`** — per-day command sheet (run + lift blocks of equal
+  visual weight). Race-day detection is by template **type** (`type ===
+"race"`), never `templateId === "race"` (race ids are `5k_race` …
+  `marathon_race`). Template swap is scoped per-day ("Changes this day
+  only.").
+
+Locked model (Run9a): the Run surface is **two states only** — freeform
+substrate + optional race-goal overlay (`resolveRunPlanSurface`). There is
+NO user-facing freeform/structured/race_prep toggle and no mode chips. Do
+not reintroduce structured mode or structured-mode transitions.
+
+Constraints these primitives must keep:
+
+- Closed palette: **coral = running, purple = lifting**; existing semantic
+  tokens for success/warning/destructive. No new colours unless added as
+  tokens. No decorative gradients.
+- 44px+ touch targets (use the `Button` / `IconButton` primitives).
+- Light + dark mode; reduced-motion respected (`motion-safe:` prefixes).
+- Active plan editing deep-links to `/settings/training` (Run8 PR1a — not
+  reversed); the entry copy reads as "Edit run plan", not a generic
+  settings jump.
+
 ### Spacing
 
 - **Page horizontal padding:** px-4 (16px)
@@ -604,7 +651,7 @@ Respect the **design-for-the-user-base** and **plan-file lock** rules
 inside a workflow too: a sweep that re-derives a decision an orphaned lock
 already made is wasted effort — search `git log --all` for the lock first.
 
-**Web / agent-harness caveat:** workflows resume only *within* the same
+**Web / agent-harness caveat:** workflows resume only _within_ the same
 session. This repo's web sessions run in an ephemeral container that's
 reclaimed on inactivity, and exiting Claude Code restarts an in-flight
 workflow fresh — so commit/push before a long run, and prefer staging a
