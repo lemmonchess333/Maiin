@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
+import { THEME } from "@/lib/theme";
 
 interface DayStepperProps {
   days: Array<{
@@ -13,12 +14,15 @@ interface DayStepperProps {
   onSelect: (index: number) => void;
 }
 
-const GREEN = "#4DB872";
-const PURPLE = "#7B72E9";
-// Skipped uses muted-foreground hue (resolved at rgba via THEME-friendly
-// fallback) so the circle reads as "intentionally not done" rather than
-// "completed" or "upcoming". Ban icon (slashed circle) reinforces this.
-const SKIPPED = "#8E8E93";
+// RunWk1 slice 2: resolve the stepper's state colours from THEME so the
+// "today purple" / "done green" cues stay in lockstep with WeekStrip + the
+// HybridWeekRail (one source of truth — no drift if the brand hue changes).
+const GREEN = THEME.success;
+const PURPLE = THEME.brand;
+// Skipped uses muted-foreground hue so the circle reads as "intentionally
+// not done" rather than "completed" or "upcoming". Ban icon (slashed
+// circle) reinforces this.
+const SKIPPED = THEME.text.muted;
 
 export default function DayStepper({
   days,
