@@ -169,9 +169,10 @@ export default function ExercisePicker({
               <button
                 type="button"
                 onClick={handleClose}
-                className="size-8 flex items-center justify-center rounded-full bg-muted"
+                aria-label="Close exercise picker"
+                className="size-11 flex items-center justify-center rounded-full bg-muted"
               >
-                <X className="size-4 text-muted-foreground" />
+                <X className="size-5 text-muted-foreground" />
               </button>
               <p
                 className="text-foreground"
