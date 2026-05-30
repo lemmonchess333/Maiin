@@ -305,8 +305,8 @@ interface RunSetupModalProps {
 }
 
 /**
- * Read-only programme context strip. Same purple tint as the
- * selected-run card icon (rgba(123,114,233,0.10)) so the strip feels
+ * Read-only programme context strip. Same coral tint as the
+ * selected-run card icon (rgba(212,99,122,0.10)) so the strip feels
  * like it lives in the same family. No interactive controls — the
  * user reads, the chooser below is where they act.
  */
@@ -340,7 +340,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
       role="status"
       aria-live="polite"
       className="rounded-xl px-3.5 py-2.5"
-      style={{ background: "rgba(123,114,233,0.10)" }}
+      style={{ background: "rgba(212,99,122,0.10)" }}
     >
       <p className="text-sm font-semibold text-foreground">{line1}</p>
       {line2 && <p className="text-xs text-muted-foreground mt-0.5">{line2}</p>}
@@ -808,9 +808,9 @@ export default function RunSetupModal({
                     style={
                       config.target.type === t
                         ? {
-                            background: "rgba(123,114,233,0.12)",
-                            color: "#7B72E9",
-                            border: "1px solid rgba(123,114,233,0.3)",
+                            background: "rgba(212,99,122,0.12)",
+                            color: "#D4637A",
+                            border: "1px solid rgba(212,99,122,0.30)",
                           }
                         : {
                             background: "rgba(0,0,0,0.04)",
@@ -871,9 +871,9 @@ export default function RunSetupModal({
                               style={
                                 active
                                   ? {
-                                      background: "rgba(123,114,233,0.12)",
-                                      color: "#7B72E9",
-                                      border: "1px solid rgba(123,114,233,0.3)",
+                                      background: "rgba(212,99,122,0.12)",
+                                      color: "#D4637A",
+                                      border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
                                       background: "rgba(0,0,0,0.04)",
@@ -898,9 +898,9 @@ export default function RunSetupModal({
                           style={
                             isCustom
                               ? {
-                                  background: "rgba(123,114,233,0.12)",
-                                  color: "#7B72E9",
-                                  border: "1px solid rgba(123,114,233,0.3)",
+                                  background: "rgba(212,99,122,0.12)",
+                                  color: "#D4637A",
+                                  border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
                                   background: "rgba(0,0,0,0.04)",
@@ -986,9 +986,9 @@ export default function RunSetupModal({
                               style={
                                 active
                                   ? {
-                                      background: "rgba(123,114,233,0.12)",
-                                      color: "#7B72E9",
-                                      border: "1px solid rgba(123,114,233,0.3)",
+                                      background: "rgba(212,99,122,0.12)",
+                                      color: "#D4637A",
+                                      border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
                                       background: "rgba(0,0,0,0.04)",
@@ -1013,9 +1013,9 @@ export default function RunSetupModal({
                           style={
                             isCustom
                               ? {
-                                  background: "rgba(123,114,233,0.12)",
-                                  color: "#7B72E9",
-                                  border: "1px solid rgba(123,114,233,0.3)",
+                                  background: "rgba(212,99,122,0.12)",
+                                  color: "#D4637A",
+                                  border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
                                   background: "rgba(0,0,0,0.04)",
@@ -1096,9 +1096,9 @@ export default function RunSetupModal({
                               style={
                                 active
                                   ? {
-                                      background: "rgba(123,114,233,0.12)",
-                                      color: "#7B72E9",
-                                      border: "1px solid rgba(123,114,233,0.3)",
+                                      background: "rgba(212,99,122,0.12)",
+                                      color: "#D4637A",
+                                      border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
                                       background: "rgba(0,0,0,0.04)",
@@ -1123,9 +1123,9 @@ export default function RunSetupModal({
                           style={
                             isCustom
                               ? {
-                                  background: "rgba(123,114,233,0.12)",
-                                  color: "#7B72E9",
-                                  border: "1px solid rgba(123,114,233,0.3)",
+                                  background: "rgba(212,99,122,0.12)",
+                                  color: "#D4637A",
+                                  border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
                                   background: "rgba(0,0,0,0.04)",
