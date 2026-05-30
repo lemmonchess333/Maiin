@@ -23,7 +23,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronsRight, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { DAY_LABELS } from "@/lib/scheduleUtils";
@@ -33,6 +33,7 @@ import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import type {
   HybridWeekRailItem,
   HybridRunStatus,
+  HybridLiftStatus,
 } from "@/lib/runProgrammeViewModel";
 
 /** Q5 P71 cap — 2 extras visible per cell; overflow taps through. */
@@ -46,22 +47,56 @@ interface HybridWeekRailProps {
   onDayTap: (dateKey: string) => void;
 }
 
-function RunStatusIcon({ status }: { status: HybridRunStatus }) {
-  if (status === "done") return <Check className="size-2.5" />;
-  if (status === "manual") return <Check className="size-2.5 opacity-50" />;
-  if (status === "skipped") return <ChevronsRight className="size-2.5" />;
-  if (status === "race_no_show") return <AlertTriangle className="size-2.5" />;
-  return null;
-}
-
-function LiftStatusIcon({
+/**
+ * One discipline lane in a day tile (coral run or purple lift).
+ *
+ * Legibility rules (from production review):
+ *   - 9px label + tight padding + NO inline status icon, so compact labels
+ *     ("Tempo" / "Upper" / "8×400m") get the full ~40px column and don't clip.
+ *   - DONE is a SOLID sport-colour pill with a white label — unmissable, not
+ *     a faint strikethrough that vanishes. Status is read from the fill, not
+ *     an icon that would steal label width. Manual completion ("marked", not
+ *     logged) is the same solid pill at 70% opacity — distinct at a glance
+ *     (Q2 P24) without consuming space.
+ *   - SKIPPED is the de-emphasised state: neutral muted pill + strikethrough.
+ *   - race_no_show keeps the coral alert glyph (rare, and a strong signal).
+ */
+function Lane({
+  colour,
+  label,
   status,
 }: {
-  status: "planned" | "done" | "skipped";
+  colour: string;
+  label: string;
+  status: HybridRunStatus | HybridLiftStatus;
 }) {
-  if (status === "done") return <Check className="size-2.5" />;
-  if (status === "skipped") return <ChevronsRight className="size-2.5" />;
-  return null;
+  const isSkipped = status === "skipped";
+  const isDone = status === "done" || status === "manual";
+  const isNoShow = status === "race_no_show";
+  return (
+    <span
+      className={cn(
+        "min-h-[20px] rounded-md px-0.5 text-[9px] font-semibold leading-none",
+        "flex items-center justify-center gap-0.5",
+        isSkipped && "bg-muted text-muted-foreground line-through",
+        isDone && "text-white",
+        // Manual completion ("marked", not logged) — a faded solid keeps it
+        // distinct from a real ✅ at a glance (Q2 P24), without an icon that
+        // would clip the label.
+        status === "manual" && "opacity-70"
+      )}
+      style={
+        isSkipped
+          ? undefined
+          : isDone
+            ? { backgroundColor: colour }
+            : { backgroundColor: `${colour}1A`, color: colour }
+      }
+    >
+      {isNoShow && <AlertTriangle className="size-2 shrink-0" />}
+      <span className="truncate">{label}</span>
+    </span>
+  );
 }
 
 /** a11y status word appended to a run lane's accessible name. */
@@ -112,7 +147,7 @@ export default function HybridWeekRail({
       <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
         This week
       </h3>
-      <ol className="grid grid-cols-7 gap-1.5 list-none items-start">
+      <ol className="grid grid-cols-7 gap-1 list-none items-start">
         {items.map((item) => {
           const ariaParts = [DAY_LABELS[item.dayIndex]];
           if (item.run) {
@@ -132,10 +167,6 @@ export default function HybridWeekRail({
           const visibleExtras = extras.slice(0, EXTRAS_VISIBLE_CAP);
           const overflowCount = Math.max(0, extras.length - EXTRAS_VISIBLE_CAP);
 
-          const runDone =
-            item.run?.status === "done" || item.run?.status === "manual";
-          const liftDone = item.lift?.status === "done";
-
           return (
             <li key={item.dateKey} className="flex flex-col gap-1">
               <button
@@ -143,7 +174,7 @@ export default function HybridWeekRail({
                 onClick={() => onDayTap(item.dateKey)}
                 aria-label={ariaParts.join(", ")}
                 className={cn(
-                  "min-h-[82px] w-full rounded-xl border px-1 py-1.5",
+                  "min-h-[82px] w-full rounded-xl border px-0.5 py-1.5",
                   "flex flex-col items-center gap-1",
                   "motion-safe:transition-transform motion-safe:active:scale-[0.97]",
                   "hover:bg-muted/40",
@@ -162,40 +193,18 @@ export default function HybridWeekRail({
 
                 <div className="flex-1 w-full flex flex-col justify-end gap-1">
                   {item.run && (
-                    <span
-                      className={cn(
-                        "min-h-[20px] rounded-md px-1 text-[10px] font-semibold",
-                        "flex items-center justify-center gap-0.5 truncate",
-                        runDone || item.run.status === "skipped"
-                          ? "line-through"
-                          : ""
-                      )}
-                      style={{
-                        backgroundColor: `${THEME.running}1A`,
-                        color: THEME.running,
-                      }}
-                    >
-                      <RunStatusIcon status={item.run.status} />
-                      <span className="truncate">{item.run.shortLabel}</span>
-                    </span>
+                    <Lane
+                      colour={THEME.running}
+                      label={item.run.shortLabel}
+                      status={item.run.status}
+                    />
                   )}
                   {item.lift && (
-                    <span
-                      className={cn(
-                        "min-h-[20px] rounded-md px-1 text-[10px] font-semibold",
-                        "flex items-center justify-center gap-0.5 truncate",
-                        liftDone || item.lift.status === "skipped"
-                          ? "line-through"
-                          : ""
-                      )}
-                      style={{
-                        backgroundColor: `${THEME.lifting}1A`,
-                        color: THEME.lifting,
-                      }}
-                    >
-                      <LiftStatusIcon status={item.lift.status} />
-                      <span className="truncate">{item.lift.shortLabel}</span>
-                    </span>
+                    <Lane
+                      colour={THEME.lifting}
+                      label={item.lift.shortLabel}
+                      status={item.lift.status}
+                    />
                   )}
                   {!item.run && !item.lift && (
                     <span className="min-h-[20px] flex items-center justify-center text-[10px] text-muted-foreground">
