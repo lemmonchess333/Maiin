@@ -25,7 +25,23 @@ export function getPlainLanguageSummary(
   pi: number,
   loadBand: string | undefined,
   delta: number | null,
+  /**
+   * Cold-start gate. When the user has too few weeks of history, the PI's
+   * load band and "vs baseline" framing are not yet meaningful (the baseline
+   * is derived from prior weeks). Like Whoop / Garmin / Strava's
+   * baseline-establishing period, surface an honest "we're still learning"
+   * verdict instead of a confident one. Matches the Home hero's existing
+   * ", establishing baseline" treatment so the two surfaces don't disagree.
+   */
+  establishing = false,
 ): PerformanceSummary {
+  if (establishing) {
+    return {
+      headline: "Establishing your baseline",
+      body: "Your first few weeks set the reference we measure against. Keep logging workouts and runs — your weekly read sharpens after about 4 weeks.",
+    };
+  }
+
   const headline =
     pi >= 80
       ? "Strong week — your training is on track"
