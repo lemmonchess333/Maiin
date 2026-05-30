@@ -790,13 +790,13 @@ export default function Home() {
           }}
           className="flex items-center gap-3 p-3 rounded-xl border"
           style={{
-            background: "rgba(123,114,233,0.08)",
-            borderColor: "rgba(123,114,233,0.2)",
+            background: `${THEME.brand}14`,
+            borderColor: `${THEME.brand}33`,
           }}
         >
-          <Moon className="size-5 shrink-0" style={{ color: "#7B72E9" }} />
+          <Moon className="size-5 shrink-0" style={{ color: THEME.brand }} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: "#7B72E9" }}>
+            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
               Yesterday's rest day is covered
             </p>
             <p className="text-xs text-muted-foreground">
@@ -826,13 +826,13 @@ export default function Home() {
           }}
           className="flex items-center gap-3 p-3 rounded-xl border w-full text-left active:scale-[0.98] transition-transform"
           style={{
-            background: "rgba(123,114,233,0.08)",
-            borderColor: "rgba(123,114,233,0.2)",
+            background: `${THEME.brand}14`,
+            borderColor: `${THEME.brand}33`,
           }}
         >
-          <RotateCcw className="size-5 shrink-0" style={{ color: "#7B72E9" }} />
+          <RotateCcw className="size-5 shrink-0" style={{ color: THEME.brand }} />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: "#7B72E9" }}>
+            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
               Bring back your {backfillRescueStreak}-day streak
             </p>
             <p className="text-xs text-muted-foreground">
