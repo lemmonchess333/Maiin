@@ -81,6 +81,24 @@ describe("getRunHeroState", () => {
     ).toBe("race-recovery");
   });
 
+  it("Run9 R3-cycle: recovery wins even when mode resolved to freeform", () => {
+    // Materialization clears raceGoal at recovery-END (→ runMode freeform), but
+    // the phase clear is a separate server write. Between them a user is
+    // phase=recovery AND mode=freeform — the recovery hero must still win, NOT
+    // the bare freeform Start CTA. This pins the recovery-check-before-freeform
+    // ordering.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "freeform",
+          raceGoal: null,
+          phase: "recovery",
+          recoveryEndDate: "2026-06-10",
+        })
+      )
+    ).toBe("race-recovery");
+  });
+
   it("returns 'race-today' when nextStartable is today's race template", () => {
     expect(
       getRunHeroState(
@@ -91,6 +109,60 @@ describe("getRunHeroState", () => {
         })
       )
     ).toBe("race-today");
+  });
+
+  it("Run9 (l): returns 'race-recent' for a race 1–3 days ago (did-you-race window)", () => {
+    // TODAY = 2026-05-27. Race two days ago (2026-05-25) → within T+1..T+3.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-25" },
+          // a stale past race slot would otherwise read as catch-up
+          nextStartable: runDay({ date: "2026-05-25", templateId: "race" }),
+          hasRunDays: true,
+        })
+      )
+    ).toBe("race-recent");
+  });
+
+  it("Run9 (l): race-recent does NOT fire on race day itself (T+0)", () => {
+    // Race today → race-today wins, not race-recent.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: TODAY },
+          nextStartable: runDay({ date: TODAY, templateId: "race" }),
+        })
+      )
+    ).toBe("race-today");
+  });
+
+  it("Run9 (l): a race >3 days ago falls through to catch-up, not race-recent", () => {
+    // Race 5 days ago (2026-05-22) → past the did-you-race window.
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-22" },
+          nextStartable: runDay({ date: "2026-05-22", templateId: "race" }),
+        })
+      )
+    ).toBe("catch-up");
+  });
+
+  it("Run9 (l): recovery still wins over race-recent (race was logged)", () => {
+    expect(
+      getRunHeroState(
+        input({
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-25" },
+          phase: "recovery",
+          recoveryEndDate: "2026-06-10",
+        })
+      )
+    ).toBe("race-recovery");
   });
 
   it("returns 'race-prep-week' when race_prep + today is non-race", () => {
@@ -190,5 +262,8 @@ describe("shouldShowHeroOverflow — L12", () => {
     expect(shouldShowHeroOverflow("race-recovery")).toBe(false);
     expect(shouldShowHeroOverflow("all-done")).toBe(false);
     expect(shouldShowHeroOverflow("rest")).toBe(false);
+    // Run9 (l): race-recent is now hidden too — the did-you-race hero body
+    // owns the operational slot, so there's no catch-up card to host the `...`.
+    expect(shouldShowHeroOverflow("race-recent")).toBe(false);
   });
 });

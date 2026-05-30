@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, Timestamp, deleteField } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import type {
@@ -15,6 +15,7 @@ import type {
   ScheduledRunStatus,
 } from "./programTypes";
 import { normalizeProgramState, transitionStatus } from "./programTypes";
+import { resolveRecoveryExit } from "./runModeResolution";
 import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
@@ -28,7 +29,8 @@ import {
 } from "./programEngine";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
-import { getWeeklyRunTarget, runTargetWriteFields } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { carryCompletionsAcrossRegen } from "@/lib/runCompletionCarry";
 
 /** Per-set record from an active WorkoutSession run. */
 export interface CompletedSetLog {
@@ -52,6 +54,7 @@ import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
+  type RaceTiming,
 } from "./runScheduler";
 import {
   localWeekKey,
@@ -83,7 +86,7 @@ const PROGRAM_DOC = "current";
  * to compressed and the UI banner needs to reflect that.
  */
 function makeRunPlanRecord(
-  v2: { totalWeeks: number; compressed: boolean },
+  v2: { totalWeeks: number; compressed: boolean; belowFloor: boolean },
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -96,6 +99,9 @@ function makeRunPlanRecord(
     totalWeeks: carry.totalWeeks ?? v2.totalWeeks,
     currentWeek: carry.currentWeek ?? 0,
     compressed: v2.compressed,
+    // Run9 phase-3 (Slice B): surface below-floor so the Realign UI names the
+    // finish-safely risk instead of presenting a tight plan as a normal one.
+    belowFloor: v2.belowFloor,
   };
 }
 
@@ -122,6 +128,7 @@ function regenerateRacePlan({
   currentDate,
   weekStart,
   carry,
+  prior,
 }: {
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -136,7 +143,23 @@ function regenerateRacePlan({
     totalWeeks?: number;
     completedRaces?: string[];
   };
-}): { runDays: ScheduledRunDay[]; runPlan: RunPlan } {
+  /** Run9 phase-3 Slice A — when a regen rewrites the CURRENT week with
+   *  existing completions (compress / shift / schedule edit), pass the
+   *  pre-regen runDays + manualCompletions so terminal status is re-stamped
+   *  and manualCompletions are re-keyed onto the same-date new days. Omitted
+   *  on fresh-creation sites (load with no prior runDays) where there is
+   *  nothing to carry. */
+  prior?: {
+    runDays: ScheduledRunDay[];
+    manualCompletions?: Record<string, ManualCompletion>;
+  };
+}): {
+  runDays: ScheduledRunDay[];
+  runPlan: RunPlan;
+  /** Re-keyed map — present only when `prior` was supplied; callers that pass
+   *  `prior` must persist this in place of the stale programState map. */
+  manualCompletions?: Record<string, ManualCompletion>;
+} {
   const v2 = generateRacePlanV2({
     raceGoal,
     weekSchedule,
@@ -144,7 +167,17 @@ function regenerateRacePlan({
     currentDate,
     weekStart,
   });
-  const runDays = v2.weeks[0] ?? [];
+  let runDays = v2.weeks[0] ?? [];
+  let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
+  if (prior) {
+    const carried = carryCompletionsAcrossRegen(
+      prior.runDays,
+      runDays,
+      prior.manualCompletions
+    );
+    runDays = carried.runDays;
+    carriedManualCompletions = carried.manualCompletions;
+  }
   const runPlan = makeRunPlanRecord(v2, raceGoal, carry);
   if (carry?.completedRaces) {
     runPlan.completedRaces = carry.completedRaces;
@@ -160,7 +193,7 @@ function regenerateRacePlan({
   ) {
     runPlan.currentWeek = runPlan.totalWeeks;
   }
-  return { runDays, runPlan };
+  return { runDays, runPlan, manualCompletions: carriedManualCompletions };
 }
 
 interface RefreshRunScheduleOverrides {
@@ -220,6 +253,23 @@ export function useProgram() {
         }
       }
 
+      // Run9 (3a): `structured` run mode is retired. A legacy structured user
+      // is migrated to freeform INLINE here — not via a separate effect — so
+      // the migration can't race the runDays generation below (the load effect
+      // is the one place that generates run days). `effectiveRunMode` makes the
+      // rest of this load behave as freeform immediately; the persisted
+      // runMode write is fire-and-forget (idempotent: once freeform, the next
+      // load skips this). The orphaned structured runDays/runPlan are wiped in
+      // the existing-doc branch below.
+      const effectiveRunMode =
+        profile.runMode === "structured" ? "freeform" : profile.runMode;
+      if (profile.runMode === "structured") {
+        logger.log("[Run9] migrating legacy structured user → freeform");
+        updateProfile({ runMode: "freeform" }).catch((e) =>
+          logger.warn("[Run9] structured→freeform migration write failed", e)
+        );
+      }
+
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
       const snap = await getDoc(ref);
 
@@ -260,11 +310,29 @@ export function useProgram() {
           await setDocGuarded(ref, migrated, { merge: true });
         }
 
-        // Hydrate run days if user has run mode but no runDays yet
         if (
+          profile.runMode === "structured" &&
+          ((migrated.runDays && migrated.runDays.length > 0) ||
+            migrated.runPlan)
+        ) {
+          // Run9 (3a): retire `structured`. Wipe the orphaned auto-assigned
+          // runDays + runPlan (the user is now freeform; runMode is being
+          // migrated above). deleteField removes the stale runPlan under a
+          // merge write; runDays:[] overwrites the structured days.
+          const localCleared = { ...migrated, runDays: [] } as ProgramState;
+          delete (localCleared as { runPlan?: unknown }).runPlan;
+          await setDocGuarded(
+            ref,
+            { runDays: [], runPlan: deleteField(), updatedAt: Date.now() },
+            { merge: true }
+          );
+          setProgramState(localCleared);
+        } else if (
+          // Hydrate run days only for an active race plan with no days yet.
+          // (Run9: `structured` no longer generates a week — only race_prep.)
           !migrated.runDays &&
-          profile.runMode &&
-          profile.runMode !== "freeform"
+          effectiveRunMode === "race_prep" &&
+          profile.raceGoal
         ) {
           // PR-0b-ii: V2 writers. Reads weekSchedule directly so
           // hybrid Both-day slots get a scheduled run (V1 lost them
@@ -274,25 +342,13 @@ export function useProgram() {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
-          let runDays: ScheduledRunDay[] = [];
-          let runPlan = migrated.runPlan;
-
-          if (profile.runMode === "race_prep" && profile.raceGoal) {
-            ({ runDays, runPlan } = regenerateRacePlan({
-              raceGoal: profile.raceGoal,
-              weekSchedule,
-              weeklyRunDays: runTarget,
-              currentDate: localDateString(),
-              weekStart,
-            }));
-          } else {
-            runDays = scheduleStructuredWeekV2({
-              weekSchedule,
-              weekNumber: migrated.weekNumber,
-              weekStart,
-            });
-            runPlan = { mode: "structured" };
-          }
+          const { runDays, runPlan } = regenerateRacePlan({
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          });
 
           const withRuns = { ...migrated, runDays, runPlan };
           // Issue #845 defence-in-depth — same reason as the
@@ -325,29 +381,22 @@ export function useProgram() {
           profile.primaryGoal
         );
 
-        // Generate run schedule if applicable. PR-0b-ii: V2 writers.
+        // Generate run schedule only for an active race plan. PR-0b-ii: V2
+        // writers. Run9 (3a): `structured` is retired — freeform (incl. a
+        // migrated structured user) gets no auto-assigned runDays.
         let runDays: ScheduledRunDay[] | undefined;
         let runPlan: ProgramState["runPlan"];
-        if (profile.runMode && profile.runMode !== "freeform") {
+        if (effectiveRunMode === "race_prep" && profile.raceGoal) {
           const weekSchedule = profile.weekSchedule ?? [];
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
-          if (profile.runMode === "race_prep" && profile.raceGoal) {
-            ({ runDays, runPlan } = regenerateRacePlan({
-              raceGoal: profile.raceGoal,
-              weekSchedule,
-              weeklyRunDays: runTarget,
-              currentDate: localDateString(),
-              weekStart,
-            }));
-          } else {
-            runDays = scheduleStructuredWeekV2({
-              weekSchedule,
-              weekNumber: 1,
-              weekStart,
-            });
-            runPlan = { mode: "structured" };
-          }
+          ({ runDays, runPlan } = regenerateRacePlan({
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: localDateString(),
+            weekStart,
+          }));
         }
 
         const initial: ProgramState = {
@@ -1392,46 +1441,61 @@ export function useProgram() {
     if (!programState || !profile) return;
     if (programState.runPlan?.phase !== "recovery") return;
 
-    const weekSchedule = profile.weekSchedule ?? [];
-    const runTarget = getWeeklyRunTarget(profile) || 3;
-    const weekStart = localWeekKey();
-
-    // User skipping early = "I'm done with the race-prep arc,
-    // give me structured training now." Flip profile.runMode and
-    // regenerate runDays with the structured generator.
-    const runDays = scheduleStructuredWeekV2({
-      weekSchedule,
-      weekNumber: programState.weekNumber,
-      weekStart,
+    // Run9 ENG(j) + R3-cycle/backtoback: exiting recovery returns the user to
+    // FREEFORM (the race is done — it's recorded in completedRaces), UNLESS a
+    // newer race was set during the recovery window, which must be preserved.
+    // `resolveRecoveryExit` is the single source of that rule (unit-tested in
+    // runModeResolution.test.ts); the patch it returns always co-writes the
+    // materialized `runMode` so the invariant can't be violated here.
+    const completedRaceGoal =
+      programState.runPlan?.raceGoal ?? profile.raceGoal ?? null;
+    const exit = resolveRecoveryExit({
+      currentRaceGoal: profile.raceGoal ?? null,
+      completedRaceGoal,
     });
-    const runPlan = { mode: "structured" as const };
 
+    if (exit.runMode === "freeform") {
+      // Single race done → freeform: drop the runPlan + runDays. saveProgram
+      // does a full setDoc, so omitting `runPlan` (undefined → stripped)
+      // removes it from the doc. Run9 3a-ii: the `raceGoal: null` clear that
+      // resolveRecoveryExit returns is now applied explicitly (the profile type
+      // was widened to allow it), so the materialized runMode and the goal can
+      // never disagree — no more left-over goal under freeform. The cast
+      // bridges the pure core's loose `distance: string` to the narrow union.
+      logger.log("[skipRecoveryEarly] race done → freeform; clearing plan");
+      await Promise.all([
+        updateProfile(exit as Partial<UserProfile>),
+        saveProgram({ ...programState, runDays: [], runPlan: undefined }),
+      ]);
+      return;
+    }
+
+    // Back-to-back: a newer future race was set during recovery → stay
+    // race_prep, just clear the recovery phase. The race-plan load/regenerate
+    // path rebuilds runDays for the new race; we don't regenerate here.
     logger.log(
-      `[skipRecoveryEarly] clearing phase, flipping runMode → structured, regenerating ${runDays.length} runDays`
+      "[skipRecoveryEarly] newer race set during recovery → exit recovery, keep race_prep"
     );
-
+    const nextRunPlan = { ...programState.runPlan } as Record<string, unknown>;
+    delete nextRunPlan.phase;
+    delete nextRunPlan.recoveryEndDate;
     await Promise.all([
-      updateProfile({
-        runMode: "structured",
-        ...runTargetWriteFields(runTarget),
+      updateProfile({ runMode: "race_prep" }),
+      saveProgram({
+        ...programState,
+        runPlan: nextRunPlan as unknown as RunPlan,
       }),
-      saveProgram({ ...programState, runDays, runPlan }),
     ]);
   }, [programState, profile, saveProgram, updateProfile]);
 
-  // ── PR-L L4: fell-behind prompt writers ──────────────────────
+  // ── Run9 phase-3 (Slice DE): one-tap Realign ─────────────────
   //
-  // `weeklyFellBehindCheck` (Cloud Function, Mondays 05:00 UTC)
-  // sets `programState.pendingFellBehindPrompt` when a user ran
-  // <50% of their weekly target the prior week. Per Q24 the user
-  // has three choices when the prompt surfaces:
-  //
-  //   1. Skip-and-continue → just clear the flag
-  //   2. Shift plan back 1 week → race date +7d + regenerate plan
-  //   3. Compress remaining weeks → re-regen plan (date unchanged);
-  //      generator computes the `compressed` flag on its own
-  //
-  // All three clear the flag so the sheet doesn't re-prompt.
+  // The pre-Run9 fell-behind sheet offered three actions (shift +7d /
+  // compress / skip). The redesign collapses the two plan-changing actions
+  // into ONE primary "Realign" (keep the race date, re-plan the remaining
+  // weeks from today) plus a "my race moved →" route to /settings/training
+  // (a UI navigate, not a writer — the +7d auto-shift guess is retired). The
+  // skip path stays as `dismissFellBehindPrompt` above.
 
   /** Q24 (i) — dismiss the prompt without changing the plan. */
   const dismissFellBehindPrompt = useCallback(async () => {
@@ -1443,66 +1507,24 @@ export function useProgram() {
     await saveProgram(next);
   }, [programState, saveProgram]);
 
-  /** Q24 (ii) — shift the race date forward by 7 days and regen.
-   *  Regenerates the plan inline so the user sees runDays + runPlan
-   *  aligned to the new race date immediately; otherwise the load
-   *  effect's `!migrated.runDays` gate would short-circuit and leave
-   *  stale runDays / a stale `runPlan.raceGoal.targetDate` until
-   *  the user manually opened the plan editor (which is the only
-   *  surface that calls `refreshRunSchedule`). */
-  const shiftRacePlanBackOneWeek = useCallback(async () => {
-    if (!programState || !profile) return;
-    if (!programState.pendingFellBehindPrompt) return;
-    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
-    const oldDate = parseLocalDate(profile.raceGoal.targetDate);
-    const newDate = addLocalDays(oldDate, 7);
-    const newTargetDate = localDateString(newDate);
-    const newRaceGoal = { ...profile.raceGoal, targetDate: newTargetDate };
+  /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today, keeping the
+   *  race date. Regenerates from today so the weeks-to-race delta (shrinking
+   *  as time passes) drives the generator: a tight gap yields `compressed`,
+   *  below the taper-safe floor it yields the finish-safely shape (belowFloor).
+   *  Carries terminal status + re-keys manualCompletions (Slice A) so the
+   *  current week's completions survive the regen. Clears the server-written
+   *  fell-behind flag if present — but works WITHOUT it too, since the in-tab
+   *  Realign banner can be triggered any time the user feels behind. Returns
+   *  the timing + totalWeeks so the caller can toast the right copy. */
+  const realignRacePlan = useCallback(async (): Promise<{
+    timing: RaceTiming;
+    totalWeeks: number;
+  }> => {
+    if (!programState || !profile) return { timing: "healthy", totalWeeks: 0 };
+    if (profile.runMode !== "race_prep" || !profile.raceGoal)
+      return { timing: "healthy", totalWeeks: 0 };
     const prevRunPlan = programState.runPlan;
-    // Carry currentWeek + completedRaces — the shift adds a week at
-    // the end but the user is still in whichever week they were
-    // before, and multi-race plans must keep their per-race
-    // idempotency history (would re-trigger recovery on re-sync
-    // otherwise).
-    const { runDays, runPlan } = regenerateRacePlan({
-      raceGoal: newRaceGoal,
-      weekSchedule: profile.weekSchedule ?? [],
-      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-      currentDate: localDateString(),
-      weekStart: localWeekKey(),
-      carry: {
-        currentWeek: prevRunPlan?.currentWeek,
-        completedRaces: prevRunPlan?.completedRaces,
-      },
-    });
-    const next = { ...programState, runDays, runPlan };
-    delete next.pendingFellBehindPrompt;
-    logger.log(
-      `[fellBehind] shifting race date ${profile.raceGoal.targetDate} → ${newTargetDate}, ` +
-        `regenerated plan (totalWeeks=${runPlan.totalWeeks}, compressed=${runPlan.compressed})`
-    );
-    await Promise.all([
-      updateProfile({ raceGoal: newRaceGoal }),
-      saveProgram(next),
-    ]);
-  }, [programState, profile, saveProgram, updateProfile]);
-
-  /** Q24 (iii) — compress remaining weeks. Date unchanged; the
-   *  generator recomputes the `compressed` flag based on the new
-   *  weeks-to-race delta (which got shorter as time passed). The
-   *  user accepts a tighter prep instead of pushing the race. */
-  const compressRacePlan = useCallback(async () => {
-    if (!programState || !profile) return;
-    if (!programState.pendingFellBehindPrompt) return;
-    if (profile.runMode !== "race_prep" || !profile.raceGoal) return;
-    // Regenerate the race plan against the unchanged race date.
-    // generateRacePlanV2 reads the weeks-to-race delta from
-    // raceGoal.targetDate vs now; if it's below the ideal-build
-    // threshold, `compressed: true` lands on the new runPlan.
-    // Preserve currentWeek + completedRaces (see shift writer above
-    // for the same rationale).
-    const prevRunPlan = programState.runPlan;
-    const { runDays, runPlan } = regenerateRacePlan({
+    const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -1512,13 +1534,24 @@ export function useProgram() {
         currentWeek: prevRunPlan?.currentWeek,
         completedRaces: prevRunPlan?.completedRaces,
       },
+      prior: {
+        runDays: programState.runDays ?? [],
+        manualCompletions: programState.manualCompletions,
+      },
     });
-    const next = { ...programState, runDays, runPlan };
+    const next = { ...programState, runDays, runPlan, manualCompletions };
     delete next.pendingFellBehindPrompt;
+    const timing: RaceTiming = runPlan.belowFloor
+      ? "below-floor"
+      : runPlan.compressed
+        ? "compressible"
+        : "healthy";
     logger.log(
-      `[fellBehind] compressing remaining plan, compressed=${runPlan.compressed}`
+      `[realign] re-anchored race plan from today — timing=${timing}, ` +
+        `totalWeeks=${runPlan.totalWeeks}, belowFloor=${!!runPlan.belowFloor}`
     );
     await saveProgram(next);
+    return { timing, totalWeeks: runPlan.totalWeeks ?? 0 };
   }, [programState, profile, saveProgram]);
 
   // Week navigation
@@ -1560,8 +1593,7 @@ export function useProgram() {
     refreshRunSchedule,
     skipRecoveryEarly,
     dismissFellBehindPrompt,
-    shiftRacePlanBackOneWeek,
-    compressRacePlan,
+    realignRacePlan,
     viewWeek,
     viewingHistoryIndex,
     viewedWorkouts,

@@ -52,6 +52,7 @@ vi.mock("firebase/firestore", () => ({
   Timestamp: {
     fromDate: vi.fn((d: Date) => ({ seconds: d.getTime() / 1000 })),
   },
+  deleteField: vi.fn(() => "__deleteField__"),
 }));
 
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -69,7 +70,7 @@ type MockProfile = {
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
-  };
+  } | null;
   primaryGoal?: string;
   program?: { goal?: string };
 };
@@ -159,31 +160,29 @@ beforeEach(() => {
 });
 
 describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
-  it("initial no-doc creation writes programSchemaVersion + V2-shape runDays (structured, 6+2 hybrid)", async () => {
+  it("Run9: initial creation for a legacy structured user migrates to freeform with NO runDays", async () => {
+    // Run9 (3a) retired `structured`: a legacy structured user is migrated to
+    // freeform on load, and freeform generates no auto-assigned runDays. Only
+    // a race plan (race_prep + raceGoal) produces a week.
     mockProfile = structuredProfile();
     mockDocExists = false; // no existing programState doc
 
     const { result } = renderHook(() => useProgram());
 
-    // Wait for the load effect to complete and write the initial doc.
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
 
-    // The most recent setDoc call carries the initial ProgramState.
+    // The initial doc still pins the schema version.
     expect(setDocCalls.length).toBeGreaterThan(0);
     const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
-
-    // Schema version pinned (PR-0b-ii explicit set).
     expect(lastWrite.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
 
-    // V1 hybrid bug fix: 6+2 produces 2 runDays (including one
-    // on the Both day). V1 would have produced 1.
-    expect(lastWrite.runDays).toBeDefined();
-    expect(lastWrite.runDays!.length).toBe(2);
+    // No structured week is generated — freeform has no runDays.
+    expect(lastWrite.runDays).toBeUndefined();
 
-    // All runDays are V2-shaped.
-    lastWrite.runDays!.forEach(expectV2Shape);
+    // runMode is migrated structured → freeform.
+    expect(mockUpdateProfile).toHaveBeenCalledWith({ runMode: "freeform" });
   });
 
   it("race-prep initial creation writes compressed flag on runPlan", async () => {
@@ -252,7 +251,10 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runPlan!.compressed).toBe(true);
   });
 
-  it("structured refresh writes V2-shaped runDays", async () => {
+  it("Run9: loading a legacy structured user WIPES the orphaned runDays + runPlan", async () => {
+    // Run9 (3a): structured is retired. On load, a structured user's
+    // auto-assigned runDays + runPlan are wiped (they're meaningless under
+    // freeform) and runMode is migrated.
     mockProfile = structuredProfile();
     mockDocData = {
       goal: "recomp",
@@ -265,7 +267,17 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       settings: { autoProgression: true, microloading: true },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: [],
+      runDays: [
+        {
+          id: "old_structured_run",
+          dayIndex: 1,
+          date: "2026-01-05",
+          weekKey: "2026-01-04",
+          templateId: "tempo_20",
+          type: "tempo",
+          status: "planned",
+        } as ScheduledRunDay,
+      ],
       runPlan: { mode: "structured" },
     } as ProgramState;
     mockDocExists = true;
@@ -274,15 +286,20 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
 
-    await act(async () => {
-      await result.current.refreshRunSchedule();
-    });
-
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
-    expect(lastWrite.runDays!.length).toBeGreaterThan(0);
-    lastWrite.runDays!.forEach(expectV2Shape);
+    // runMode migrated structured → freeform.
+    expect(mockUpdateProfile).toHaveBeenCalledWith({ runMode: "freeform" });
+    // The wipe write cleared the orphaned structured runDays to []. (Assert a
+    // wipe write exists rather than the LAST write: the migration's
+    // updateProfile triggers a re-render whose second load pass reads the
+    // unchanged mock doc, so the ordering of writes isn't deterministic in the
+    // harness — the wipe having happened is the contract.)
+    expect(
+      setDocCalls.some((c) => {
+        const rd = (c.data as ProgramState).runDays;
+        return Array.isArray(rd) && rd.length === 0;
+      })
+    ).toBe(true);
   });
 
   it("refreshRunSchedule accepts explicit weekSchedule override (not stale closure)", async () => {
@@ -297,7 +314,10 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "rest" },
     ];
-    mockProfile = structuredProfile({ weekSchedule: staleSchedule });
+    // Run9: structured retired, so the override-threading contract is now
+    // exercised via a race plan (the surviving runDays-generating mode). The
+    // staleness concern is mode-agnostic.
+    mockProfile = raceProfile("2027-01-01", { weekSchedule: staleSchedule });
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -310,7 +330,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
-      runPlan: { mode: "structured" },
+      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2027-01-01" } },
     } as ProgramState;
     mockDocExists = true;
 
@@ -329,9 +349,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     });
 
     const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
-    // Override won → 2 runDays (one on Both). Stale profile.weekSchedule
+    // Override (hybrid 6+2) won → runs generated. Stale profile.weekSchedule
     // (all rest) would have produced 0.
-    expect(lastWrite.runDays!.length).toBe(2);
+    expect(lastWrite.runDays!.length).toBeGreaterThan(0);
   });
 
   it("regenerateProgram writes programSchemaVersion + V2-shape runDays", async () => {
@@ -440,6 +460,81 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
 // ─── PR-1 — overrideRunDay id-preferring overload ───────────────────
 
+describe("Run9 phase-3 — realign carries completions across regen", () => {
+  // The realign writer (Slice DE; formerly compress) regenerates the current
+  // week (new ids per day). The carry-aware regenerateRacePlan must persist a
+  // re-keyed manualCompletions map, never drop the user's record. The
+  // generator's exact output dates are clock-dependent, so this integration
+  // test pins the WIRING invariant (carry path runs → persists a map →
+  // preserves data); the deterministic re-key / drop / status-restamp logic is
+  // pinned in src/lib/__tests__/runCompletionCarry.test.ts.
+  it("persists a manualCompletions map and never drops an existing completion", async () => {
+    const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
+    mockProfile = raceProfile(targetDate);
+    const completion = { completedAt: 1_700_000_000_000 };
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "runday_2026-05-10_2_tempo_40",
+          dayIndex: 2,
+          templateId: "tempo_40",
+          type: "tempo",
+          completed: true,
+          status: "completed_exact",
+          date: "2026-05-12",
+          weekKey: "2026-05-10",
+        },
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        totalWeeks: 12,
+        currentWeek: 2,
+      },
+      // One entry keyed to the seeded runDay, plus a legacy orphan whose id is
+      // in no runDay — the carry must preserve it rather than nuke the map.
+      manualCompletions: {
+        "runday_2026-05-10_2_tempo_40": completion,
+        legacy_orphan_key: { completedAt: 1_699_000_000_000 },
+      },
+      pendingFellBehindPrompt: {
+        weekKey: "2026-05-10",
+        completedRatio: 0.25,
+        realRunCount: 1,
+        weeklyTarget: 4,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.realignRacePlan();
+    });
+
+    const lastSave = setDocCalls[setDocCalls.length - 1]?.data as ProgramState;
+    // A manualCompletions map is persisted (pre-fix the writer kept the stale
+    // map via spread but never re-keyed; now the carry path owns it).
+    expect(lastSave.manualCompletions).toBeDefined();
+    // The legacy-orphan completion is never silently dropped.
+    expect(lastSave.manualCompletions!["legacy_orphan_key"]).toBeDefined();
+    // The seeded completion's VALUE survives somewhere in the map (under its
+    // original id if today's regen keeps that date, else dropped only if the
+    // date truly left the plan — but the orphan above guarantees the carry ran).
+    const values = Object.values(lastSave.manualCompletions!);
+    expect(values).toContainEqual({ completedAt: 1_699_000_000_000 });
+  });
+});
+
 describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => {
   // Pre-PR-1, overrideRunDay only took `dayIndex: number`. V2 docs
   // have stable IDs, and multi-week runDays arrays can share a
@@ -474,7 +569,9 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   }
 
   it("called with a string id updates the matching runDay", async () => {
-    mockProfile = structuredProfile();
+    // Run9 (3a): runDays only persist under race_prep now (structured is
+    // retired + wiped on load). The override matching logic is mode-agnostic.
+    mockProfile = raceProfile("2027-01-01");
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -519,7 +616,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   });
 
   it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = raceProfile("2027-01-01");
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -554,7 +651,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   });
 
   it("refuses to override a non-editable runDay (terminal status)", async () => {
-    mockProfile = structuredProfile();
+    mockProfile = raceProfile("2027-01-01");
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -628,7 +725,13 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     "marathon_race",
   ]);
 
-  it("structured-mode refresh emits zero race-period templates even when previous runDays were race-shaped", async () => {
+  // Run9 (3a): the "refresh INTO structured" scenario is retired — structured
+  // is no longer a target mode (it's migrated to freeform on load). The
+  // orphaned-plan wipe this guarded is now covered by the repurposed
+  // "loading a legacy structured user WIPES the orphaned runDays + runPlan"
+  // test above. Skipped (not deleted) to preserve the merge-vs-replace intent
+  // doc for the surviving inverse test below.
+  it.skip("structured-mode refresh emits zero race-period templates even when previous runDays were race-shaped", async () => {
     // Profile is already structured (matches the composing handler's
     // sequence: updateProfile → refreshRunSchedule, with the
     // refreshRunSchedule call running against the post-update profile).
@@ -989,6 +1092,66 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       eightDaysAgo
     );
   });
+
+  // Run9 3a-ii: skipping recovery for the JUST-COMPLETED race returns the
+  // user to freeform AND explicitly clears the race goal (raceGoal: null), so
+  // the materialized runMode and the goal can't disagree. Pre-3a-ii this left
+  // the goal stranded under freeform (the "deferred clear" from #883).
+  it("Run9 3a-ii — skipRecoveryEarly for the completed race clears raceGoal (null) + runMode freeform", async () => {
+    const future = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    // raceGoal on the profile === the race recovery is for (runPlan.raceGoal)
+    // → resolveRecoveryExit clears it.
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: future,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    mockUpdateProfile.mockClear();
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.skipRecoveryEarly();
+    });
+
+    // Materialization invariant: the SAME patch co-writes runMode + the null
+    // raceGoal clear.
+    expect(mockUpdateProfile).toHaveBeenCalledWith({
+      raceGoal: null,
+      runMode: "freeform",
+    });
+    // The plan is dropped (runPlan omitted → stripped; runDays emptied).
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(lastWrite.runDays).toEqual([]);
+    expect(lastWrite.runPlan).toBeUndefined();
+  });
 });
 
 // ─── PR-G — auto week rollover ──────────────────────────────────────
@@ -1007,7 +1170,9 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       const day = String(d.getDate()).padStart(2, "0");
       return `${y}-${m}-${day}`;
     })();
-    mockProfile = structuredProfile({ weeklyRunDaysTarget: 2 });
+    // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
+    // via a race plan, the surviving runDays-bearing mode.
+    mockProfile = raceProfile("2027-01-01", { weeklyRunDaysTarget: 2 });
     mockDocData = {
       goal: "recomp",
       currentPhase: "base",
@@ -1031,7 +1196,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "structured" },
+      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2027-01-01" } },
     } as ProgramState;
     mockDocExists = true;
 

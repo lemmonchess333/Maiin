@@ -48,8 +48,10 @@ import {
   Play,
   ChevronRight,
   MoreVertical,
+  Trophy,
 } from "lucide-react";
-import { formatDistanceToNowStrict, format } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
+import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
@@ -58,17 +60,19 @@ import {
   getScheduledRunStatus,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
+import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
-import {
-  getRacePhaseLabel,
-  isCurrentWeekInTaper,
-} from "@/features/program/runScheduler";
+import { getFreeformCadence } from "@/lib/freeformCadence";
+import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
+import { realignResultMessage } from "@/lib/realignCopy";
+import type { RaceTiming } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
 import RunWeekStrip from "./RunWeekStrip";
+import RaceHeader from "./RaceHeader";
 import { Banner } from "@/components/ui/Banner";
 import {
   localDateString,
@@ -81,8 +85,6 @@ import type {
   ProgramState,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
-
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 interface ProgrammeRunSectionProps {
   profile: UserProfile;
@@ -105,6 +107,13 @@ interface ProgrammeRunSectionProps {
    *  writes. The post-race card's "Skip recovery early" link calls
    *  this when the user wants to bail out of the soft window. */
   skipRecoveryEarly: () => Promise<void>;
+  /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today (keep the
+   *  race date). Returns the timing so the in-tab Realign banner can toast the
+   *  finish-safely / compressed / healthy copy. */
+  realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
+  /** Clears `pendingFellBehindPrompt` without a plan change — used by the
+   *  in-tab "My race moved →" path before routing to the date editor. */
+  dismissFellBehindPrompt: () => Promise<void>;
 }
 
 export default function ProgrammeRunSection({
@@ -116,6 +125,8 @@ export default function ProgrammeRunSection({
   skipRunDay,
   skipWorkoutDay,
   skipRecoveryEarly,
+  realignRacePlan,
+  dismissFellBehindPrompt,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
   // PR-1: which row is opening DayActionSheet.
@@ -192,6 +203,36 @@ export default function ProgrammeRunSection({
     raceElapsedTarget.getTime() < new Date().getTime()
   );
 
+  // Run9 (l): race-recent ("did you race?") dismissal. When the user taps
+  // "I didn't race", hide the prompt for the rest of the T+1..T+3 window
+  // (keyed by the race date so a new race resets it) and let the server's
+  // dailyRaceReconciliationSweep flip race_no_show at T+3 — the client NEVER
+  // writes that status (PR-L: race-day transitions are server-owned; the hook
+  // is a pure reader). Same once-only localStorage pattern as
+  // raceElapsedDismissed; safe because race-recent only fires 1–3 days after a
+  // past race, by which point a newly-set future race has remounted the page.
+  const raceRecentDismissKey = `tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
+  const [raceRecentDismissed, setRaceRecentDismissed] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.localStorage.getItem(raceRecentDismissKey) === "1";
+      } catch {
+        return false;
+      }
+    }
+  );
+  function dismissRaceRecent() {
+    setRaceRecentDismissed(true);
+    try {
+      window.localStorage.setItem(raceRecentDismissKey, "1");
+    } catch {
+      // localStorage unavailable / quota — swallow; the in-memory state still
+      // hides the prompt for this session.
+    }
+    toast("No worries — we'll wrap up your plan.");
+  }
+
   // PR-C: post-race card state derivation. Driven by:
   //   - the race-day runDay status (planned / completed_* / race_no_show)
   //   - runPlan.phase ("recovery" or undefined)
@@ -223,6 +264,23 @@ export default function ProgrammeRunSection({
     !!recoveryEndDate &&
     todayKeyDerivation >= recoveryEndDate;
   const isNoShow = raceDayStatus === "race_no_show";
+  // Run9 (k)/(f): the ONE-AT-A-TIME actionable prompt slot. The resolver
+  // picks a single prompt by locked precedence (no-show > recovery-complete >
+  // fell-behind) so two of these can never stack. Persistent attributes
+  // (compressed / taper / week N-of-M) are deliberately NOT routed here — they
+  // stay as their own always-visible notes (and migrate to a RaceHeader in a
+  // later slice). Run9 phase-3 (Slice DE): fell-behind now feeds the real
+  // server flag — the in-tab Realign action lands below so the prompt is
+  // actionable.
+  const pendingFellBehind = !!programState?.pendingFellBehindPrompt;
+  const contextualPrompt =
+    currentMode === "race_prep" && raceGoal
+      ? resolveRunContextualPrompt({
+          isNoShow,
+          recoveryEnded,
+          pendingFellBehind,
+        })
+      : null;
   const recoveryDaysLeft = useMemo(() => {
     if (!inRecovery || !recoveryEndDate) return 0;
     const end = parseLocalDate(recoveryEndDate);
@@ -236,12 +294,20 @@ export default function ProgrammeRunSection({
   // RunCTACard and trainingResolver.startUrl emit.
   const nextStartable: ScheduledRunDay | null = useMemo(() => {
     if (currentMode === "freeform") return null;
+    // Run9 (ENG e / item 4): startability has TWO completion truths — the
+    // stored `status` AND the claim-map (a saved run that matched this slot by
+    // date+bucket without ever flipping `status` off "planned"). A slot is
+    // genuinely startable only when its status says so AND no claim/manual
+    // completion covers it; otherwise "Next planned run" would promote an
+    // already-run slot and "all runs done" would never fire after a claimed log.
     return (
-      runDays.find((rd) =>
-        isScheduledRunStartable(getScheduledRunStatus(rd))
+      runDays.find(
+        (rd) =>
+          isScheduledRunStartable(getScheduledRunStatus(rd)) &&
+          !(rd.id && isRunDayComplete(rd.id, claimMap))
       ) ?? null
     );
-  }, [currentMode, runDays]);
+  }, [currentMode, runDays, claimMap]);
 
   const nextStartableTemplate = useMemo(() => {
     if (!nextStartable) return null;
@@ -314,6 +380,18 @@ export default function ProgrammeRunSection({
   const thisWeekKey = localWeekKey(new Date());
   const thisWeek = weeklyData.find((w) => w.week === thisWeekKey) ?? null;
 
+  // Run9 R2-1: freeform's hero leads with a DESCRIPTIVE cadence line — not a
+  // target or progress bar (that's the structure the model deliberately
+  // drops). getFreeformCadence owns the copy rules: cold-start (no count),
+  // lapsed (re-invite, never "0×"), or an N× cadence over the rolling window.
+  // The window is bounded by useRunningStats(30) above, so "lapsed" only
+  // surfaces for runs 4–~4.3 weeks old; older history reads as cold-start,
+  // which shares the same invitational copy.
+  const freeformCadence = useMemo(
+    () => getFreeformCadence(runs.map((r) => r.completedAt), new Date()),
+    [runs]
+  );
+
   const modeLabel =
     currentMode === "race_prep"
       ? "Race prep"
@@ -337,6 +415,26 @@ export default function ProgrammeRunSection({
       await skipRecoveryEarly();
     } catch (e) {
       logger.error("[handleSkipRecoveryEarly] failed", e);
+    }
+  }
+
+  // Run9 phase-3 (Slice DE): in-tab Realign. Re-anchors the race plan to today
+  // (keeping the race date) and toasts the timing result — compressed, or the
+  // honest finish-safely line below the taper floor.
+  async function handleRealign(): Promise<void> {
+    try {
+      const { timing, totalWeeks } = await realignRacePlan();
+      if (raceGoal) {
+        toast.success(
+          realignResultMessage({
+            timing,
+            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            totalWeeks,
+          })
+        );
+      }
+    } catch (e) {
+      logger.error("[handleRealign] failed", e);
     }
   }
 
@@ -364,6 +462,8 @@ export default function ProgrammeRunSection({
       {currentMode === "race_prep" &&
         raceGoal &&
         raceElapsed &&
+        heroState !== "race-recent" &&
+        heroState !== "race-today" &&
         !inRecovery &&
         !recoveryEnded &&
         !isNoShow &&
@@ -373,8 +473,8 @@ export default function ProgrammeRunSection({
             title="Race day has passed"
             description={
               <>
-                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}.
-                Switch to structured or set a new race goal via the chip row.
+                {raceGoal.distance.toUpperCase()} on {raceGoal.targetDate}. Set
+                a new race goal or switch modes in Manage Run Plan.
               </>
             }
             onDismiss={dismissRaceElapsedBanner}
@@ -382,23 +482,15 @@ export default function ProgrammeRunSection({
           />
         )}
 
-      {/* Warning: plan compressed (state-derived — visibility tracks
-          runPlan.compressed; user can't dismiss). */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        !raceElapsed &&
-        raceCompressed && (
-          <Banner
-            variant="warning"
-            title="Plan is compressed"
-            description="Your target date is sooner than the ideal build for this distance, so we've trimmed interval work and shortened the long-run progression to keep the plan safe."
-          />
-        )}
+      {/* Run9 (k): the compressed-plan note moved OFF the banner stack into
+          the persistent RaceHeader below (a calm note, not an amber banner),
+          so it never competes with the actionable contextual-prompt slot. */}
 
       {/* Warning: race-day no-show. Hosts critical actions (Log race
           now / Set next race / Switch to structured) so the banner
-          itself is the affordance — not dismissible. */}
-      {currentMode === "race_prep" && raceGoal && isNoShow && (
+          itself is the affordance — not dismissible. Run9: gated by the
+          single contextual-prompt slot (precedence over recovery-complete). */}
+      {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
           title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
@@ -439,7 +531,7 @@ export default function ProgrammeRunSection({
                   }}
                   className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
-                  Switch to structured
+                  Manage plan
                 </button>
               </div>
             </div>
@@ -471,8 +563,9 @@ export default function ProgrammeRunSection({
       )}
 
       {/* Info: recovery complete. Hosts critical "Set next race" /
-          "Switch to structured" prompts — non-dismissible. */}
-      {currentMode === "race_prep" && raceGoal && recoveryEnded && (
+          "Switch to structured" prompts — non-dismissible. Run9: gated by
+          the single contextual-prompt slot (yields to no-show). */}
+      {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
           title="Recovery complete"
@@ -495,6 +588,42 @@ export default function ProgrammeRunSection({
                 className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 Switch to structured
+              </button>
+            </div>
+          }
+        />
+      )}
+
+      {/* Info: fell-behind (Run9 phase-3 Slice DE). Server flag set after a
+          week under 50% of target. One calm prompt + one-tap Realign (keep the
+          race date, re-plan from today) + a "my race moved" route to the date
+          editor. Gated by the single contextual-prompt slot (yields to no-show
+          + recovery-complete). */}
+      {contextualPrompt === "fell-behind" && raceGoal && (
+        <Banner
+          variant="info"
+          title="Last week didn't go to plan"
+          description="Realign keeps your race date and re-plans the remaining weeks from today."
+          action={
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleRealign}
+                className="w-full py-2 rounded-lg text-xs font-bold text-white"
+                style={{ background: THEME.running }}
+              >
+                Realign my plan
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  void dismissFellBehindPrompt();
+                  navigate("/settings/training");
+                }}
+                className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+              >
+                My race moved →
               </button>
             </div>
           }
@@ -653,12 +782,24 @@ export default function ProgrammeRunSection({
                 style={{ width: "55%" }}
               />
             </div>
-          ) : runs.length === 0 ? (
+          ) : freeformCadence.kind === "cold-start" ? (
             <p className="text-xs text-muted-foreground">
               Track your first run to see weekly distance and pace trends here.
             </p>
+          ) : freeformCadence.kind === "lapsed" ? (
+            <p className="text-xs text-muted-foreground">
+              Your last run was {freeformCadence.lastRunDaysAgo} day
+              {freeformCadence.lastRunDaysAgo === 1 ? "" : "s"} ago — pick it
+              back up whenever you're ready.
+            </p>
           ) : (
-            <div className="space-y-1 text-xs font-mono tabular-nums">
+            <div className="space-y-1 text-xs">
+              {/* R2-1 descriptive cadence headline (not a target). */}
+              <p className="text-foreground font-semibold">
+                You've run {freeformCadence.count}× in the last{" "}
+                {freeformCadence.weeks} weeks
+              </p>
+              <div className="space-y-1 font-mono tabular-nums">
               {lastRun && (
                 <p className="text-muted-foreground">
                   <span className="text-foreground">Last run</span>
@@ -693,6 +834,7 @@ export default function ProgrammeRunSection({
                   )}
                 </p>
               )}
+              </div>
             </div>
           )}
         </div>
@@ -711,124 +853,172 @@ export default function ProgrammeRunSection({
           · Edit ›" — single text run, muted-gray Edit link with
           chevron (Q2 navigation discipline: no coral on Edit). Week
           progress row stays as separate content underneath. */}
-      {/* PR-K Q9d — TAPER WEEK section label. Surfaces the taper
-          context on the race_prep operational hero when the current
-          plan week falls in the taper phase. 10px uppercase tracking
-          matches Run7's section-label convention; pairs with a "race
-          in N days" countdown so the user reads the label as a
-          calendar anchor, not a generic phase tag. The Week N/M row
-          inside the operational card below still shows "Taper" as the
-          phase label — this header acts as the prominent surface
-          callout, the row stays as the at-a-glance week marker. */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        !raceElapsed &&
-        isCurrentWeekInTaper(
-          programState?.runPlan?.currentWeek,
-          programState?.runPlan?.totalWeeks,
-          raceGoal.distance as RaceDistance
-        ) &&
-        (() => {
-          const daysToRace = (() => {
-            try {
-              const target = parseLocalDate(raceGoal.targetDate);
-              const today = parseLocalDate(todayKeyDerivation);
-              return Math.max(
-                0,
-                Math.round(
-                  (target.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)
-                )
-              );
-            } catch {
-              return null;
-            }
-          })();
-          return (
-            <p
-              className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: THEME.running }}
-              aria-label={
-                daysToRace != null
-                  ? `Taper week, race in ${daysToRace} day${daysToRace === 1 ? "" : "s"}`
-                  : "Taper week"
-              }
-            >
-              Taper week
-              {daysToRace != null && (
-                <>
-                  {" · "}
-                  race in {daysToRace} day{daysToRace === 1 ? "" : "s"}
-                </>
-              )}
-            </p>
-          );
-        })()}
-
+      {/* Run9b/(k) — the persistent RACE HEADER: race-goal one-liner, week
+          N-of-M + phase + progress, the taper line, and the compressed note,
+          consolidated into one always-visible component (replacing the
+          scattered taper label + progress card + the old compressed banner). */}
       {currentMode === "race_prep" && raceGoal && !raceElapsed && (
-        <div className="p-3 rounded-xl bg-card space-y-2">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-foreground">
-              <span className="text-muted-foreground">Race goal: </span>
-              <span className="font-medium">
-                {raceGoal.distance.toUpperCase()}
-                {" · "}
-                {(() => {
-                  try {
-                    return format(
-                      parseLocalDate(raceGoal.targetDate),
-                      "d MMM yyyy"
-                    );
-                  } catch {
-                    return raceGoal.targetDate;
-                  }
-                })()}
-              </span>
-            </p>
+        <RaceHeader
+          raceGoal={raceGoal}
+          currentWeek={programState?.runPlan?.currentWeek}
+          totalWeeks={programState?.runPlan?.totalWeeks}
+          compressed={raceCompressed}
+          todayKey={todayKeyDerivation}
+          onEdit={() => {
+            haptic();
+            navigate("/settings/training");
+          }}
+        />
+      )}
+
+      {/* ── Hero: race-today (T+0 — the race itself) ────────────────
+          Run8 PR1c L14 + Run9 follow-on: race day is the culmination of the
+          whole plan, not "just another Next run", so it gets its own
+          celebratory hero instead of falling through to the generic Next card
+          (which is suppressed for this state below). A Trophy eyebrow + "Start
+          race" CTA (logs against the race-day slot — onRunCreated writes the
+          recovery entry server-side, exactly as the no-show / race-recent
+          paths do) + an overflow that opens DayActionSheet's race-day variant
+          for the DNF / DNS edge cases. */}
+      {heroState === "race-today" && raceGoal && (
+        <div
+          className="w-full rounded-xl p-4 space-y-3"
+          style={{
+            background: `${THEME.running}14`,
+            border: `1px solid ${THEME.running}40`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="size-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${THEME.running}1A` }}
+            >
+              <Trophy className="size-5" style={{ color: THEME.running }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-xs font-semibold mb-0.5"
+                style={{ color: THEME.running }}
+              >
+                Race day
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {raceGoal.distance.toUpperCase()} · Today
+              </p>
+              <p className="text-micro text-muted-foreground">
+                This is the one you've been training for. Good luck out there.
+              </p>
+            </div>
+            {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
             <button
               type="button"
               onClick={() => {
                 haptic();
-                navigate("/settings/training");
+                setManageDate(raceDayRunDay?.date ?? null);
               }}
-              className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
-              aria-label="Edit race goal"
+              aria-label="More options for race day"
+              className="shrink-0 size-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
             >
-              Edit
-              <ChevronRight className="size-3.5" />
+              <MoreVertical className="size-5" aria-hidden="true" />
             </button>
           </div>
-          {programState?.runPlan?.totalWeeks &&
-            programState.runPlan.currentWeek != null && (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                    Week
-                  </span>
-                  <span className="text-sm font-medium text-foreground">
-                    {programState.runPlan.currentWeek + 1} /{" "}
-                    {programState.runPlan.totalWeeks}
-                    {" · "}
-                    {getRacePhaseLabel(
-                      programState.runPlan.currentWeek,
-                      programState.runPlan.totalWeeks,
-                      programState.runPlan.raceGoal!.distance as RaceDistance
-                    )}
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{
-                      width:
-                        ((programState.runPlan.currentWeek + 1) /
-                          programState.runPlan.totalWeeks) *
-                          100 +
-                        "%",
-                    }}
-                  />
-                </div>
-              </>
-            )}
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              navigate(
+                raceDayRunDay?.id
+                  ? `/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`
+                  : "/run"
+              );
+            }}
+            className="w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5"
+            style={{ background: THEME.running }}
+          >
+            <Play className="size-3.5" fill="white" />
+            Start race
+          </button>
+        </div>
+      )}
+
+      {/* ── Hero: race-recent ("did you race?") ─────────────────────
+          Run9 (l): T+1..T+3 after the race date, before the server's
+          dailyRaceReconciliationSweep flips the slot to race_no_show.
+          A finisher who hasn't logged yet must NOT be nagged with a
+          "catch-up" Start card on the elapsed race slot — so this calm
+          prompt OCCUPIES the operational slot (the Next card below is
+          suppressed for this state) and offers the two honest answers:
+            • Log it → log the race against the race-day slot; onRunCreated
+              writes the recovery entry server-side and the recovery hero
+              takes over.
+            • I didn't race → dismiss for the rest of the window; the
+              server owns the race_no_show flip at T+3 (PR-L — the client
+              never writes that status). */}
+      {heroState === "race-recent" && raceGoal && !raceRecentDismissed && (
+        <div
+          className="w-full rounded-xl p-4 space-y-3"
+          style={{
+            background: `${THEME.running}0F`,
+            border: `1px solid ${THEME.running}30`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="size-10 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${THEME.running}1A` }}
+            >
+              <Footprints
+                className="size-5"
+                style={{ color: THEME.running }}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-xs font-semibold mb-0.5"
+                style={{ color: THEME.running }}
+              >
+                Did you race?
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {raceGoal.distance.toUpperCase()}
+                {" · "}
+                {formatDistanceToNowStrict(parseLocalDate(raceGoal.targetDate), {
+                  addSuffix: true,
+                })}
+              </p>
+              <p className="text-micro text-muted-foreground">
+                Log it to start your recovery week, or let us know if you sat
+                this one out.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                navigate(
+                  raceDayRunDay?.id
+                    ? `/run?scheduledRunId=${encodeURIComponent(raceDayRunDay.id)}`
+                    : "/run"
+                );
+              }}
+              className="flex-1 py-2 rounded-lg text-xs font-bold text-white"
+              style={{ background: THEME.running }}
+            >
+              Log it
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                dismissRaceRecent();
+              }}
+              className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+            >
+              I didn't race
+            </button>
+          </div>
         </div>
       )}
 
@@ -836,6 +1026,11 @@ export default function ProgrammeRunSection({
           Same URL pattern as RunCTACard / trainingResolver.startUrl.
           Skipped when every runDay in the week is already terminal
           (we render a "done this week" affirmation instead).
+          Run9 (l): also suppressed in the race-recent window so the
+          elapsed race slot can't render as a "Next · Pending" catch-up
+          nag — the did-you-race hero above owns that slot instead. Also
+          suppressed on race-today (the dedicated race-day hero above owns
+          the slot) so the race isn't framed as a generic "Next" run.
           Run7 Q7: subtle coral 6% tint, icon container coral ~10%,
           Start button flat coral solid, description line-clamp-2.
 
@@ -845,7 +1040,11 @@ export default function ProgrammeRunSection({
           mark-complete / skip / template-swap. Restructured from
           single <button type="button"> to <div role="button"> so the overflow
           button can live as a child without nested-button HTML. */}
-      {currentMode !== "freeform" && nextStartable && nextStartUrl && (
+      {currentMode !== "freeform" &&
+        heroState !== "race-recent" &&
+        heroState !== "race-today" &&
+        nextStartable &&
+        nextStartUrl && (
         <div
           role="button"
           tabIndex={0}

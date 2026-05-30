@@ -184,10 +184,14 @@ export interface UserProfileRunning {
   runMode?: "freeform" | "structured" | "race_prep";
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
+  // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
+  // recovery exit can CLEAR a prior race (a merge write of `undefined` is
+  // stripped and would leave the old goal stranded). Readers gate on
+  // truthiness, so `null` reads the same as absent.
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
-  };
+  } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**
    * Schema version for `weekSchedule` shape. v7 spec uses this for
@@ -438,6 +442,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Static field lists used by updateProfile. Module-scoped (not in-component)
+// so they have a stable identity and don't need to appear in the
+// updateProfile useCallback's dependency array.
+const PROTECTED_FIELDS = [
+  "subscriptionTier",
+  "subscriptionSource",
+  "stripeCustomerId",
+  "stripeSubscriptionId",
+  "appleOriginalTransactionId",
+  "hasUsedTrial",
+  "trialExpiresAt",
+] as const;
+
+// Subset of UserProfile fields that also need to be mirrored onto the
+// cross-user-readable public/profile doc when they change.
+const PUBLIC_MIRRORED_FIELDS = ["displayName", "photoURL", "athleteType"] as const;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -609,24 +630,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.remove("dark");
     localStorage.removeItem("tropos-dark-mode");
   }, []);
-
-  const PROTECTED_FIELDS = [
-    "subscriptionTier",
-    "subscriptionSource",
-    "stripeCustomerId",
-    "stripeSubscriptionId",
-    "appleOriginalTransactionId",
-    "hasUsedTrial",
-    "trialExpiresAt",
-  ] as const;
-
-  // Subset of UserProfile fields that also need to be mirrored onto the
-  // cross-user-readable public/profile doc when they change.
-  const PUBLIC_MIRRORED_FIELDS = [
-    "displayName",
-    "photoURL",
-    "athleteType",
-  ] as const;
 
   const updateProfile = useCallback(
     async (

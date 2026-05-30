@@ -14,6 +14,9 @@ import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
   enrichRunDayV2,
+  classifyRaceTiming,
+  getRaceFloorWeeks,
+  getRaceMinWeeks,
   type RacePlanV2Input,
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
@@ -279,6 +282,182 @@ describe("generateRacePlanV2", () => {
       weekSchedule: liftOnly,
     });
     expect(result.weeks).toEqual([]);
+  });
+
+  /* ─── Run9 phase-3 (Slice B): finish-safely / belowFloor ───── */
+
+  it("marks belowFloor + compressed for a marathon inside the taper-safe floor", () => {
+    // marathon floor = taperWeeks(3) + 1 = 4. 3 weeks out → below floor.
+    const fs = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "marathon", targetDate: "2026-05-31" }, // 3 weeks
+    });
+    expect(fs.totalWeeks).toBe(3);
+    expect(fs.belowFloor).toBe(true);
+    expect(fs.compressed).toBe(true); // belowFloor implies compressed
+  });
+
+  it("finish-safely plan is ALL easy + race — never tempo/intervals", () => {
+    const fs = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "marathon", targetDate: "2026-05-31" },
+    });
+    const types = fs.weeks.flat().map((rd) => rd.type);
+    expect(types).not.toContain("tempo");
+    expect(types).not.toContain("intervals");
+    // The race day is preserved in the final week.
+    expect(fs.weeks[fs.weeks.length - 1].some((rd) => rd.type === "race")).toBe(
+      true
+    );
+    // Non-race finish-safely days are easy (capped — never long_15k).
+    const templates = fs.weeks.flat().map((rd) => rd.templateId);
+    expect(templates).not.toContain("long_15k");
+  });
+
+  it("a half 2 weeks out is below-floor; 4 weeks out is compressible (not finish-safely)", () => {
+    // half floor = taperWeeks(2) + 1 = 3, minWeeks = 8.
+    const twoWk = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "half", targetDate: "2026-05-24" }, // 2 weeks
+    });
+    expect(twoWk.belowFloor).toBe(true);
+
+    const fourWk = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "half", targetDate: "2026-06-07" }, // 4 weeks
+    });
+    expect(fourWk.belowFloor).toBe(false); // >= floor 3
+    expect(fourWk.compressed).toBe(true); // < minWeeks 8
+  });
+
+  it("10k/5k are never belowFloor (floor 2 vs the hard 2-week totalWeeks floor)", () => {
+    // A 10k 2 days out clamps to totalWeeks=2; floor=2 → 2 < 2 is false.
+    const tightTenK = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" },
+    });
+    expect(tightTenK.belowFloor).toBe(false);
+    expect(tightTenK.compressed).toBe(true);
+  });
+});
+
+/* ─── Run9 phase-3 (Slice B): timing classifier + floor helpers ─── */
+
+describe("classifyRaceTiming + floor helpers", () => {
+  it("floor = taperWeeks + 1 per distance (locked 2026-05-29)", () => {
+    expect(getRaceFloorWeeks("5k")).toBe(2);
+    expect(getRaceFloorWeeks("10k")).toBe(2);
+    expect(getRaceFloorWeeks("half")).toBe(3);
+    expect(getRaceFloorWeeks("marathon")).toBe(4);
+  });
+
+  it("minWeeks = ideal build per distance", () => {
+    expect(getRaceMinWeeks("5k")).toBe(4);
+    expect(getRaceMinWeeks("10k")).toBe(6);
+    expect(getRaceMinWeeks("half")).toBe(8);
+    expect(getRaceMinWeeks("marathon")).toBe(12);
+  });
+
+  it("healthy at/above minWeeks", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 12 })).toBe(
+      "healthy"
+    );
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 20 })).toBe(
+      "healthy"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 6 })).toBe(
+      "healthy"
+    );
+  });
+
+  it("compressible in [floor, minWeeks)", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 11 })).toBe(
+      "compressible"
+    );
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 4 })).toBe(
+      "compressible"
+    ); // exactly the floor
+    expect(classifyRaceTiming({ distance: "half", weeksRemaining: 3 })).toBe(
+      "compressible"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 2 })).toBe(
+      "compressible"
+    );
+  });
+
+  it("below-floor under the floor", () => {
+    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 3 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "half", weeksRemaining: 2 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 1 })).toBe(
+      "below-floor"
+    );
+    expect(classifyRaceTiming({ distance: "5k", weeksRemaining: 1 })).toBe(
+      "below-floor"
+    );
+  });
+});
+
+/* ─── Run9 phase-3 (Slice C): hard-run × lift clash flag ───────── */
+
+describe("generateRacePlanV2 · clashesWithLift flag", () => {
+  // 6-day-lifter shape: both run-eligible days are "both" (lift + run), no
+  // run-only slot exists, so the hard run is FORCED onto a both-day.
+  const allBoth: ScheduleDay[] = [
+    { day: 0, type: "both" },
+    { day: 1, type: "lift" },
+    { day: 2, type: "lift" },
+    { day: 3, type: "both" },
+    { day: 4, type: "lift" },
+    { day: 5, type: "lift" },
+    { day: 6, type: "rest" },
+  ];
+  const baseInputC = {
+    weeklyRunDays: 2,
+    currentDate: "2026-05-10",
+    weekStart: "2026-05-10",
+  };
+
+  it("flags the hard run when it's forced onto a both-day, but never the easy run", () => {
+    // Healthy marathon → week 0 is base/build, so the long run is type 'long'.
+    const plan = generateRacePlanV2({
+      ...baseInputC,
+      weekSchedule: allBoth,
+      raceGoal: { distance: "marathon", targetDate: "2026-09-20" }, // ~19 weeks
+    });
+    const week0 = plan.weeks[0];
+    const hard = week0.find((rd) => rd.type === "long");
+    const easy = week0.find((rd) => rd.type === "easy");
+    expect(hard).toBeTruthy();
+    expect(hard!.clashesWithLift).toBe(true); // forced onto a both-day
+    expect(easy).toBeTruthy();
+    expect(easy!.clashesWithLift).toBeUndefined(); // easy on a both-day is fine
+    // The run is PLACED, never dropped (R3-placement) — 2 run-eligible days.
+    expect(week0).toHaveLength(2);
+  });
+
+  it("does NOT flag a hard run that lands on a run-only day", () => {
+    const withRunOnly: ScheduleDay[] = [
+      { day: 0, type: "run" }, // run-only — long run prefers this
+      { day: 1, type: "lift" },
+      { day: 2, type: "lift" },
+      { day: 3, type: "both" },
+      { day: 4, type: "lift" },
+      { day: 5, type: "lift" },
+      { day: 6, type: "rest" },
+    ];
+    const plan = generateRacePlanV2({
+      ...baseInputC,
+      weekSchedule: withRunOnly,
+      raceGoal: { distance: "marathon", targetDate: "2026-09-20" },
+    });
+    const hard = plan.weeks[0].find((rd) => rd.type === "long");
+    expect(hard).toBeTruthy();
+    expect(hard!.dayIndex).toBe(0); // landed on the run-only day
+    expect(hard!.clashesWithLift).toBeUndefined();
   });
 });
 

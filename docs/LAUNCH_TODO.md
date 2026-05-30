@@ -110,6 +110,51 @@ scraped clients / curl / bots.
    Functions). Do this gradually so existing clients don't get
    locked out mid-deploy.
 
+### 5a. Account-deletion kill-switch — pre-create the boolean
+
+The deletion executor (`functions/accountDeletion.js`) reads
+`system/config.deletionExecutorEnabled` on every invocation. It is
+**fail-open by design**: a missing field, missing doc, or read failure
+all default to ENABLED (so an infra blip can't lock users out of
+deleting their account — a compliance requirement). The field only
+*halts* deletions when it is present **and the boolean `false`**.
+
+The operator gotcha: the Firebase Console "Add field" UI defaults new
+values to **string** type. A string `"false"` is NOT the boolean
+`false` — the executor logs `deleteAccount.kill_switch_malformed` and
+**fails open** (deletions keep running). So in an incident you cannot
+reliably pause deletions unless the field already exists as a boolean.
+
+Pre-create it once, before launch, as a **boolean**:
+
+1. Firebase Console → Firestore → `system` collection → `config` doc
+   (create both if absent).
+2. Add field `deletionExecutorEnabled`, type **boolean**, value
+   `true`.
+3. To pause deletions during an incident, flip that same field to
+   boolean `false` (do NOT type a string). Confirm in Cloud Logging
+   that new deletion calls throw `executor-disabled` and that no
+   `kill_switch_malformed` lines appear.
+
+Without this pre-creation the rail still defends correctly (it fails
+open), but you have no tested pause lever on the day you need one.
+
+### 5b. Scheduled-function timeouts — verify the perf rollup at scale
+
+The cron sweeps (`weeklyPerformanceRollup`, `dailyPerformanceRefresh`,
+`dailyRaceReconciliationSweep`, `weeklyFellBehindCheck`,
+`crewWeeklyLeaderboardRollup`) iterate every active user/crew. They
+previously had **no `timeoutSeconds`**, so they inherited the 60s v1
+default and would be hard-killed mid-sweep at scale (a prefix of users
+processed, the rest silently left stale — no error, green schedule).
+They now carry `SCHEDULED_CAP = { maxInstances: 1, timeoutSeconds: 540 }`.
+
+Post-deploy at real scale, spot-check Cloud Logging that each sweep's
+`processing N users` and `done` lines bracket a wall-clock well under
+540s. If any sweep approaches the cap, shard it (process a slice per
+tick keyed off `lastActiveAt`) rather than raising memory — 540s is the
+v1 ceiling.
+
 ### 6. Native App Check provider (for TestFlight / App Store builds)
 
 The native branch of `src/lib/appCheck.ts` is a stub today — iOS
@@ -316,33 +361,35 @@ Until both are set, `/admin/moderation` 403s for everyone and the
 triggers run regardless — they're independent of the allowlist
 and start filtering UGC the moment functions deploy.
 
-### 20. README replacement
+### 20. README replacement — ✅ done
 
-Currently still the Vite template. Should cover:
+Already replaced (the stale "still the Vite template" note predated the
+rewrite). `README.md` now covers app overview, quick start, the full
+environment-variable surface (web + Cloud Functions secrets), Firebase
+setup, App Check, the local emulator, Capacitor iOS/Android build steps,
+a release checklist, an incident runbook, and project conventions.
 
-- App overview
-- Setup steps
-- Environment variables (long list now — `VITE_FIREBASE_*`,
-  VITE_RECAPTCHA_V3_SITE_KEY, VITE_APP_CHECK_DEBUG_TOKEN,
-  VITE_FIREBASE_STORAGE_BUCKET)
-- Firebase setup
-- Capacitor iOS build steps (`npm run build:ios`)
-- TestFlight release steps
-- Subscription setup (Apple Server API key)
-- App Store review notes
-- Known limitations
+### 21. Legal pages review — ✅ addressed (lawyer review still recommended)
 
-### 21. Legal pages review
+`src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx` now
+cover every item below. Each claim was verified against the actual code
+before being written into the legal text:
 
-`src/pages/PrivacyPolicy.tsx` and `src/pages/TermsOfService.tsx`
-should explicitly cover:
+- ✅ AI food analysis is an estimate, not medical advice — Privacy §8,
+  Terms §7
+- ✅ GPS routes, privacy zones, public-feed defaults — Privacy §1
+  (privacy zones via `applyPrivacyZones`, verified) + §4 (explicit
+  sharing, per-post visibility, nothing auto-published — verified
+  against `ShareComposerSheet`)
+- ✅ Progress photo encryption (client-side AES-GCM) — Privacy §1 + §3
+  (verified against `ProgressPhotos.tsx` `crypto.subtle` AES-GCM-256)
+- ✅ Subscription auto-renew / cancellation — Terms §4
+- ✅ Social content moderation + reporting — Terms §5 (acceptable use),
+  §6 (UGC removal), §9 (termination)
+- ✅ Data export / deletion rights — Privacy §5, §6 (GDPR), Terms §9
 
-- AI food analysis is an estimate, not medical advice
-- GPS routes, privacy zones, public feed defaults
-- Progress photo encryption (client-side AES-GCM)
-- Subscription auto-renew / cancellation
-- Social content moderation + reporting
-- Data export / deletion rights
+Note: this is plain-language coverage of the real data practices, not a
+substitute for a lawyer's review before public launch.
 
 ### 22. App icon redesign
 

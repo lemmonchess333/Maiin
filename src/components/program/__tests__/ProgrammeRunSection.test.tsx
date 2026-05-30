@@ -25,8 +25,8 @@
  *   - The "Race prep not set up yet" stub remains the hero for
  *     race_prep + no goal.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
 import type { UserProfile } from "@/lib/auth";
@@ -71,9 +71,19 @@ vi.mock("@/lib/auth", () => ({
 // component without a Firestore environment, so we mock useClaimMap
 // to return an empty claim map. The hook surface is already covered
 // by src/hooks/__tests__/useClaimMap.test.ts.
+// Mutable so a test can seed a claim against a planned runDay (Run9 ENG e:
+// startability must consult the claim-map, not just stored status).
+let mockClaimMap = new Map<
+  string,
+  {
+    claimedSavedRunId?: string;
+    manualCompleted: boolean;
+    legacyCompleted: boolean;
+  }
+>();
 vi.mock("@/hooks/useClaimMap", () => ({
   useClaimMap: () => ({
-    claimMap: new Map(),
+    claimMap: mockClaimMap,
     unclaimedByDate: new Map(),
     today: "2026-05-12",
     loading: false,
@@ -106,6 +116,13 @@ vi.mock("@/hooks/useRunningStats", () => ({
     weeklyData: mockWeeklyData,
     loading: mockRunsLoading,
   }),
+}));
+
+// Run9 (l): the race-recent hero's "I didn't race" tap fires a sonner toast.
+// Mock it so the dismissal test runs without a mounted <Toaster>.
+const toastMock = vi.fn();
+vi.mock("sonner", () => ({
+  toast: (...args: unknown[]) => toastMock(...args),
 }));
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -174,6 +191,11 @@ function commonProps() {
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
     skipRecoveryEarly: vi.fn(async () => {}),
+    realignRacePlan: vi.fn(async () => ({
+      timing: "compressible" as const,
+      totalWeeks: 4,
+    })),
+    dismissFellBehindPrompt: vi.fn(async () => {}),
   };
 }
 
@@ -382,6 +404,42 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     expect(screen.getByText(/This week/i)).toBeInTheDocument();
     // "Track your first run" empty state should not render.
     expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
+    // Run9 R2-1: a descriptive cadence headline leads (1 run in the window).
+    expect(
+      screen.getByText(/You've run 1× in the last 4 weeks/i)
+    ).toBeInTheDocument();
+  });
+
+  it("Run9 R2-1: lapsed freeform user (no run in the window) sees a re-invite, never '0×'", () => {
+    mockRecentRuns = [
+      {
+        id: "r-old",
+        distance: 5000,
+        duration: 1700,
+        avgPace: 330,
+        elevationGain: 0,
+        calories: 300,
+        activityType: "run",
+        // 30 days ago — inside the hook's 30d window but OUTSIDE the 4-week
+        // (28d) cadence window → "lapsed".
+        completedAt: new Date(Date.now() - 30 * 24 * 3600 * 1000),
+      },
+    ];
+    mockWeeklyData = [];
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(screen.getByText(/pick it back up/i)).toBeInTheDocument();
+    // Never a judgmental "0×" count, and not the cold-start copy.
+    expect(screen.queryByText(/0×/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Track your first run/i)).not.toBeInTheDocument();
   });
 
   it("section is visible for freeform users even with runsTarget === 0 (no early return)", () => {
@@ -438,6 +496,37 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
   });
 
+  it("Run9 ENG e: a claim-completed runDay still on 'planned' status is NOT promoted as Next", () => {
+    // The slot's stored status is "planned" (the claim-map reframe never flips
+    // it), but a saved run claimed it. Pre-fix this promoted an already-run slot
+    // as "Next ·" and "all runs done" never fired. The claim-aware nextStartable
+    // must treat it as complete.
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
+    const claimedDay = makeRunDay({ status: "planned", dayIndex: 3 });
+    mockClaimMap = new Map([
+      [
+        claimedDay.id!,
+        {
+          claimedSavedRunId: "saved-run-1",
+          manualCompleted: false,
+          legacyCompleted: false,
+        },
+      ],
+    ]);
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([claimedDay], {
+          runPlan: { mode: "structured" },
+        })}
+      />
+    );
+    expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/All runs done this week/i)).toBeInTheDocument();
+  });
+
   it("renders 'Configure your runs' CTA for non-freeform users with runsTarget=0 and no race goal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
@@ -464,7 +553,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     }
   });
 
-  it("compressed-plan banner uses warning severity (amber) and is not dismissible", () => {
+  it("Run9 (k): compressed shows as a calm RaceHeader note, NOT an amber alert banner", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "race_prep" });
     const programState = makeProgramState([], {
@@ -483,8 +572,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
         programState={programState}
       />
     );
-    const banner = screen.getByRole("alert");
-    expect(banner.textContent).toContain("Plan is compressed");
+    // The compressed note lives in the persistent header now — a plain note,
+    // not an alert/Banner, and not dismissible.
+    expect(screen.getByText(/Compressed plan/i)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /dismiss/i })
     ).not.toBeInTheDocument();
@@ -549,6 +640,268 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       screen.getByRole("button", { name: /^Configure plan$/i })
     ).toBeInTheDocument();
   });
+
+  it("no-show prompt renders when the race-day runDay is race_no_show", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          date: "2027-04-18",
+          templateId: "race",
+          type: "race",
+          status: "race_no_show",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+  });
+
+  it("recovery-complete prompt renders when the recovery window has elapsed", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState([], {
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+        phase: "recovery",
+        recoveryEndDate: "2020-01-01", // long past → recoveryEnded
+        totalWeeks: 12,
+        currentWeek: 12,
+      },
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Recovery complete/i)).toBeInTheDocument();
+  });
+
+  it("Run9 (f): contextual slot shows ONLY no-show when no-show + recovery-complete both qualify", () => {
+    // Both conditions true at once — the single slot must surface no-show
+    // (higher precedence) and suppress recovery-complete. Pre-collapse both
+    // banners rendered independently and stacked.
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          date: "2027-04-18",
+          templateId: "race",
+          type: "race",
+          status: "race_no_show",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          phase: "recovery",
+          recoveryEndDate: "2020-01-01",
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/We marked this as no-show/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Recovery complete/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () => {
+  // Pin "now" so a race date 2 days ago resolves to the race-recent window
+  // (T+1..T+3). Local midday avoids any timezone date-boundary flips.
+  beforeEach(() => {
+    navigateMock.mockClear();
+    toastMock.mockClear();
+    mockClaimMap = new Map();
+    try {
+      window.localStorage.clear();
+    } catch {
+      /* jsdom localStorage always present; guard for safety */
+    }
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 4, 29, 12, 0, 0)); // 2026-05-29 local midday
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // race 2 days ago, race-day slot still "planned" (not yet logged, server
+  // hasn't flipped no-show). raceGoal is read from programState.runPlan.
+  function raceRecentState() {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_race",
+          date: "2026-05-27",
+          templateId: "race",
+          type: "race",
+          status: "planned",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2026-05-27" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    return { profile, programState };
+  }
+
+  it("renders the did-you-race hero and SUPPRESSES the catch-up Start card", () => {
+    const { profile, programState } = raceRecentState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Did you race\?/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Log it$/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /I didn't race/i })
+    ).toBeInTheDocument();
+    // The elapsed race slot must NOT surface as a "Next · Pending" nag, and
+    // the legacy "Race day has passed" banner is suppressed for this state.
+    expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Race day has passed/i)).not.toBeInTheDocument();
+  });
+
+  it("Log it navigates to /run with the race-day scheduledRunId", () => {
+    const { profile, programState } = raceRecentState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^Log it$/i }));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/run?scheduledRunId=runday_race"
+    );
+  });
+
+  it("I didn't race dismisses the prompt + persists via localStorage (no status write)", () => {
+    const { profile, programState } = raceRecentState();
+    const props = commonProps();
+    const { unmount } = renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /I didn't race/i }));
+    // Hidden after dismiss; a calm toast confirms; NO skip/complete writer fired
+    // (PR-L — the client never writes race_no_show; the server owns the flip).
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
+    expect(toastMock).toHaveBeenCalledTimes(1);
+    expect(props.skipRunDay).not.toHaveBeenCalled();
+    expect(props.markManualComplete).not.toHaveBeenCalled();
+    // Remount → still hidden (localStorage persisted, keyed by race date).
+    unmount();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.queryByText(/Did you race\?/i)).not.toBeInTheDocument();
+  });
+
+  // ── race-today (T+0) hero body ──────────────────────────────────
+  // System time is 2026-05-29 (this describe's beforeEach). Race ON today.
+  function raceTodayState() {
+    const profile = makeProfile({ runMode: "race_prep" });
+    const programState = makeProgramState(
+      [
+        makeRunDay({
+          id: "runday_race_today",
+          date: "2026-05-29",
+          templateId: "race",
+          type: "race",
+          status: "planned",
+        }),
+      ],
+      {
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "half", targetDate: "2026-05-29" },
+          totalWeeks: 12,
+          currentWeek: 12,
+        },
+      }
+    );
+    return { profile, programState };
+  }
+
+  it("renders the celebratory race-day hero and SUPPRESSES the generic Next card", () => {
+    const { profile, programState } = raceTodayState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    expect(screen.getByText(/Race day/i)).toBeInTheDocument();
+    expect(screen.getByText(/HALF · Today/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Start race/i })
+    ).toBeInTheDocument();
+    // The race is NOT framed as a generic "Next ·" run.
+    expect(screen.queryByText(/^Next ·/)).not.toBeInTheDocument();
+  });
+
+  it("Start race navigates to /run with the race-day scheduledRunId", () => {
+    const { profile, programState } = raceTodayState();
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={profile}
+        programState={programState}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Start race/i }));
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/run?scheduledRunId=runday_race_today"
+    );
+  });
 });
 
 // Reset the useRunningStats mock between tests so the freeform-hero
@@ -558,8 +911,46 @@ function beforeEachReset() {
     mockRecentRuns = [];
     mockWeeklyData = [];
     mockRunsLoading = false;
+    mockClaimMap = new Map();
   });
 }
 
 // beforeEach is imported at the top of the file (used by both
 // the PR-B chip suite and the freeform-hero reset helper).
+
+describe("ProgrammeRunSection — Run9 phase-3 fell-behind realign slot", () => {
+  function fellBehindState() {
+    return makeProgramState([makeRunDay()], {
+      pendingFellBehindPrompt: {
+        weekKey: "2026-05-10",
+        completedRatio: 0.25,
+        realRunCount: 1,
+        weeklyTarget: 4,
+      },
+    });
+  }
+
+  it("renders the Realign banner when pendingFellBehindPrompt is set", () => {
+    renderSection(commonProps(), fellBehindState());
+    expect(
+      screen.getByRole("button", { name: /Realign my plan/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /My race moved/i })
+    ).toBeInTheDocument();
+  });
+
+  it("clicking Realign calls realignRacePlan", async () => {
+    const props = commonProps();
+    renderSection(props, fellBehindState());
+    fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
+    await waitFor(() => expect(props.realignRacePlan).toHaveBeenCalled());
+  });
+
+  it("does NOT render the Realign banner without the flag", () => {
+    renderSection(commonProps(), makeProgramState([makeRunDay()]));
+    expect(
+      screen.queryByRole("button", { name: /Realign my plan/i })
+    ).not.toBeInTheDocument();
+  });
+});

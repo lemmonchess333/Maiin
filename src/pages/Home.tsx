@@ -29,6 +29,7 @@ import {
   Moon,
   RotateCcw,
   Footprints,
+  UtensilsCrossed,
   X,
   Target,
   Minus,
@@ -40,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { toast } from "@/lib/toast";
+import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
@@ -105,8 +107,7 @@ export default function Home() {
     skipRunDay,
     skipWorkoutDay,
     dismissFellBehindPrompt,
-    shiftRacePlanBackOneWeek,
-    compressRacePlan,
+    realignRacePlan,
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
@@ -722,21 +723,24 @@ export default function Home() {
             </button>
           </div>
           <div className="space-y-2">
+            {/* Hints map 1:1 to the real bottom-nav tabs (Programme / Food /
+                Analytics). There is no "Log" tab — workouts and runs both
+                start from Programme, meals are logged from Food. */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Dumbbell className="size-4 text-primary shrink-0" />
               <span>
                 Tap <strong className="text-foreground">Programme</strong> to
-                start a workout
+                start a workout or run
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Footprints
+              <UtensilsCrossed
                 className="size-4 shrink-0"
-                style={{ color: THEME.running }}
+                style={{ color: THEME.warning }}
               />
               <span>
-                Tap <strong className="text-foreground">Log</strong> to track
-                runs and meals
+                Tap <strong className="text-foreground">Food</strong> to log
+                meals
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1210,8 +1214,28 @@ export default function Home() {
           onClose={() => setFellBehindDismissedFor(fellBehindPrompt.weekKey)}
           prompt={fellBehindPrompt}
           dismissFellBehindPrompt={dismissFellBehindPrompt}
-          shiftRacePlanBackOneWeek={shiftRacePlanBackOneWeek}
-          compressRacePlan={compressRacePlan}
+          realignRacePlan={async () => {
+            const { timing, totalWeeks } = await realignRacePlan();
+            if (profile?.raceGoal) {
+              toast.success(
+                realignResultMessage({
+                  timing,
+                  distance: profile.raceGoal.distance as
+                    | "5k"
+                    | "10k"
+                    | "half"
+                    | "marathon",
+                  totalWeeks,
+                })
+              );
+            }
+          }}
+          onRaceMoved={() => {
+            // "My race moved" — clear the flag and route to the single date
+            // editor (Run9e); retired the +7d auto-shift guess.
+            void dismissFellBehindPrompt();
+            navigate("/settings/training");
+          }}
           raceModeActive={
             profile?.runMode === "race_prep" && !!profile.raceGoal
           }

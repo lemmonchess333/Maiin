@@ -43,6 +43,10 @@ export type RunHeroState =
   | "catch-up"
   /** raceGoal.targetDate === today (race day proper). */
   | "race-today"
+  /** Run9 (l): race date was 1–3 days ago and the outcome isn't resolved yet
+   *  (not in recovery, no-show not yet flipped) — a "did you race?" prompt,
+   *  NOT a catch-up nag on the elapsed race slot. */
+  | "race-recent"
   /** race_prep with nextStartable that isn't today's race. */
   | "race-prep-week"
   /** runPlan.phase === "recovery" and recoveryEndDate is in the future. */
@@ -67,6 +71,19 @@ export interface RunHeroStateInput {
   hasRunDays: boolean;
 }
 
+/** Whole-day delta toKey − fromKey for two "YYYY-MM-DD" keys (UTC-parsed so
+ *  the result is timezone-neutral); null if either key is malformed. */
+function daysBetween(fromKey: string, toKey: string): number | null {
+  const parse = (k: string): number | null => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k);
+    return m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+  };
+  const f = parse(fromKey);
+  const t = parse(toKey);
+  if (f == null || t == null) return null;
+  return Math.round((t - f) / 86_400_000);
+}
+
 export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
   const {
     mode,
@@ -79,16 +96,32 @@ export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
     hasRunDays,
   } = input;
 
-  if (mode === "freeform") return "freeform";
-
-  // Recovery takes precedence over everything else in race_prep —
-  // even if a stale nextStartable exists, the user is post-race
-  // and shouldn't be nudged to start a planned run.
+  // Recovery takes precedence over EVERYTHING — even the freeform
+  // short-circuit below. Run9 R3-cycle: the materialization rule clears
+  // raceGoal at recovery-END (→ runMode freeform), but the phase clear is a
+  // separate server write; between them (or on a legacy/partial doc) a user
+  // can be `phase === "recovery"` while `mode === "freeform"`. The recovery
+  // hero must still win there, so this check MUST sit before the freeform
+  // return — otherwise a post-race user briefly sees a bare freeform Start CTA
+  // instead of their recovery hero.
   if (phase === "recovery" && !!recoveryEndDate && todayKey < recoveryEndDate) {
     return "race-recovery";
   }
 
+  if (mode === "freeform") return "freeform";
+
   if (mode === "race_prep" && !raceGoal) return "unset";
+
+  // Run9 (l): the T+1..T+3 post-race "did you race?" window. Once the race
+  // date passes, before the server's 3-day no-show flip, a finisher (or
+  // someone who simply hasn't logged yet) must NOT be nagged with a "catch-up"
+  // on the elapsed race slot. Recovery (= the race WAS logged) already won
+  // above, so reaching here with a 1–3-day-old race date is the unresolved
+  // limbo → surface the gentle prompt instead of the planned-run machinery.
+  if (mode === "race_prep" && raceGoal) {
+    const since = daysBetween(raceGoal.targetDate, todayKey);
+    if (since != null && since >= 1 && since <= 3) return "race-recent";
+  }
 
   if (nextStartable) {
     const date = nextStartable.date ?? null;
@@ -123,5 +156,11 @@ export function shouldShowHeroOverflow(state: RunHeroState): boolean {
     state === "catch-up" ||
     state === "race-today" ||
     state === "race-prep-week"
+    // Run9 (l): race-recent no longer rides the catch-up overflow. The
+    // did-you-race hero body now owns the operational slot (the catch-up Start
+    // card is suppressed for this state), so there is no card to host the `...`
+    // — the prior "non-regressive until the hero wiring lands" allowance is
+    // now retired. The race-day slot's mark-complete / DNF / skip affordance
+    // stays reachable via the week strip's DayActionSheet tap-through.
   );
 }

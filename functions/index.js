@@ -21,6 +21,7 @@ if (!admin.apps.length) {
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
+const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
@@ -113,6 +114,17 @@ if (process.env.FUNCTIONS_EMULATOR !== "true") {
 const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
 const TRIGGER_CAP = { maxInstances: 50 };
+
+// Scheduled (pubsub cron) sweeps iterate EVERY active user/crew via
+// sweepActiveUsers / a crews loop. The Cloud Functions v1 default timeout is
+// 60s — at ~1000 users a full sweep blows past that and is HARD-KILLED
+// mid-run (the function's own try/catch never fires on a timeout kill), so a
+// prefix of users gets processed and the rest are silently left stale with a
+// green-looking schedule. 540s is the v1 maximum. maxInstances:1 is correct
+// for a cron singleton: no parallelism is needed and it prevents a slow run
+// from overlapping the next tick. Re-tune (or shard the sweep) if 540s is ever
+// approached at higher scale.
+const SCHEDULED_CAP = { maxInstances: 1, timeoutSeconds: 540 };
 
 // 2026-05-26 audit PR 4 (finding #10) — Vertex AI response redactor.
 // Logs structural metadata only; never the actual user-facing text /
@@ -2074,8 +2086,9 @@ async function sweepActiveUsers({ name, cutoffDays, perUser }) {
 
 // ── 2) Scheduled: weekly rollup (Sundays 23:15 UTC) ──
 
-exports.weeklyPerformanceRollup = functions.pubsub
-  .schedule("15 23 * * 0")
+exports.weeklyPerformanceRollup = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("15 23 * * 0")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -2111,8 +2124,9 @@ exports.weeklyPerformanceRollup = functions.pubsub
 
 // ── 3) Scheduled: daily refresh (02:10 UTC) ──
 
-exports.dailyPerformanceRefresh = functions.pubsub
-  .schedule("10 2 * * *")
+exports.dailyPerformanceRefresh = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("10 2 * * *")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -2255,6 +2269,9 @@ function _decideReconciliationActions(
   nowMs
 ) {
   const updatePayload = {};
+  // Run9 3b — a second payload for the user PROFILE doc (runMode + raceGoal),
+  // written alongside the programState payload when recovery-exit materializes.
+  let profilePayload = null;
   let noShowWritten = false;
   let recoveryCleared = false;
 
@@ -2294,19 +2311,69 @@ function _decideReconciliationActions(
       // `null` overwrites the stored value; downstream readers all
       // check `phase === 'recovery'` and `typeof recoveryEndDate
       // === 'string'`, both of which falsify against null.
-      updatePayload.runPlan = {
+      const clearedRunPlan = {
         ...runPlan,
         phase: null,
         recoveryEndDate: null,
       };
+
+      // Run9 3b — recovery EXIT materialization. Mirror the client's
+      // resolveRecoveryExit (the single, unit-tested source of the rule) so
+      // non-React clients (Apple Watch, future native) converge to the same
+      // state. The completed race is identifiable from the recovery anchor:
+      // recovery-entry derived `recoveryEndDate = raceDate +
+      // recoveryWeeks(distance)·7`, so a current raceGoal that reproduces the
+      // stored recoveryEndDate IS the race recovery was entered for
+      // (raceGoalIsCompletedRace). A current raceGoal that doesn't reproduce
+      // it is a newer race set during recovery → kept (stay race_prep).
+      const currentRaceGoal = runPlan.raceGoal || null;
+      const anchorMatches =
+        !!currentRaceGoal &&
+        _recoveryEndDateForRace(currentRaceGoal) === runPlan.recoveryEndDate;
+      const completedRaceGoal = anchorMatches ? currentRaceGoal : null;
+      const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
+
+      if (exit.runMode === "freeform") {
+        // Completed race, no successor → freeform. Clear raceGoal on BOTH the
+        // runPlan (server deciders read programState.runPlan.raceGoal) and the
+        // profile (materialization invariant: a raceGoal clear co-writes
+        // runMode). Mirrors skipRecoveryEarly's freeform branch — minus the
+        // runPlan/runDays teardown, which is a client UI concern (the freeform
+        // hero ignores stale runDays; the no-show / recovery-entry deciders
+        // gate on raceGoal/runMode, both now falsified) and isn't safely
+        // expressible via a recursive merge write.
+        clearedRunPlan.raceGoal = null;
+        profilePayload = { runMode: "freeform", raceGoal: null };
+      } else if (profile && profile.runMode !== exit.runMode) {
+        // Newer race set during recovery → stay race_prep. Defensive co-write
+        // so a drifted profile.runMode converges to the materialized value.
+        profilePayload = { runMode: exit.runMode };
+      }
+
+      updatePayload.runPlan = clearedRunPlan;
       recoveryCleared = true;
     }
   }
 
   if (!noShowWritten && !recoveryCleared) {
-    return { payload: null, noShowWritten, recoveryCleared };
+    return { payload: null, profilePayload: null, noShowWritten, recoveryCleared };
   }
-  return { payload: updatePayload, noShowWritten, recoveryCleared };
+  return { payload: updatePayload, profilePayload, noShowWritten, recoveryCleared };
+}
+
+/** Run9 3b — reconstruct the recovery-end date a given race goal would
+ *  produce under the recovery-entry formula (`raceDate +
+ *  recoveryWeeks(distance)·7`). Returns null for an unknown distance. Used to
+ *  decide whether the current raceGoal is the race recovery was entered for
+ *  (anchor match) without storing the completed-race goal separately. */
+function _recoveryEndDateForRace(raceGoal) {
+  if (!raceGoal || typeof raceGoal.targetDate !== "string") return null;
+  const weeks = RECOVERY_WEEKS_BY_DISTANCE_FNS[raceGoal.distance];
+  if (typeof weeks !== "number") return null;
+  const ms =
+    _parseUtcDate(raceGoal.targetDate).getTime() +
+    weeks * 7 * 24 * 60 * 60 * 1000;
+  return _utcDateString(new Date(ms));
 }
 
 /** Per-user worker. Thin I/O wrapper around `_decideReconciliationActions`.
@@ -2342,7 +2409,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
     }
   }
 
-  const { payload, noShowWritten, recoveryCleared } =
+  const { payload, profilePayload, noShowWritten, recoveryCleared } =
     _decideReconciliationActions(
       profile,
       programState,
@@ -2350,7 +2417,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       nowMs
     );
 
-  if (!payload) {
+  if (!payload && !profilePayload) {
     return { noShowWritten, recoveryCleared };
   }
 
@@ -2367,14 +2434,22 @@ async function _runDailyRaceReconciliationForUser(uid) {
   ) {
     return { noShowWritten: false, recoveryCleared: false };
   }
-  await programRef.set(payload, { merge: true });
+  // Run9 3b — programState (runDays / runPlan) and the profile (materialized
+  // runMode + raceGoal) are separate docs. Write both when present. They're
+  // independent merges; a partial failure self-heals on the next daily sweep
+  // (the decision is idempotent against the post-write state).
+  const writes = [];
+  if (payload) writes.push(programRef.set(payload, { merge: true }));
+  if (profilePayload) writes.push(userRef.set(profilePayload, { merge: true }));
+  await Promise.all(writes);
   return { noShowWritten, recoveryCleared };
 }
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
 
-exports.dailyRaceReconciliationSweep = functions.pubsub
-  .schedule("0 4 * * *")
+exports.dailyRaceReconciliationSweep = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 4 * * *")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {
@@ -2413,6 +2488,7 @@ exports._hasStrictRaceMatch = _hasStrictRaceMatch;
 exports._utcDateString = _utcDateString;
 exports._decideReconciliationActions = _decideReconciliationActions;
 exports._needsRaceNoShowEvaluation = _needsRaceNoShowEvaluation;
+exports._recoveryEndDateForRace = _recoveryEndDateForRace;
 
 // ══════════════════════════════════════════════
 // PR-L L2 — recovery-entry on onRunCreated
@@ -3060,8 +3136,9 @@ function _scoreFor(metric, totals) {
   }
 }
 
-exports.crewWeeklyLeaderboardRollup = functions.pubsub
-  .schedule("30 2 * * *")
+exports.crewWeeklyLeaderboardRollup = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("30 2 * * *")
   .timeZone("UTC")
   .onRun(async () => {
     try {
@@ -4423,8 +4500,9 @@ async function _runWeeklyFellBehindCheckForUser(uid, range) {
 
 // ── Scheduled: weekly fell-behind check (Mondays 05:00 UTC) ──
 
-exports.weeklyFellBehindCheck = functions.pubsub
-  .schedule("0 5 * * 1")
+exports.weeklyFellBehindCheck = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 5 * * 1")
   .timeZone("Etc/UTC")
   .onRun(async () => {
     try {

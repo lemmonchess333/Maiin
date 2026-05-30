@@ -278,6 +278,15 @@ export interface ScheduledRunDay {
    *  only when the user explicitly reschedules within a week. */
   movedFromDate?: string;
   movedToDate?: string;
+
+  /** Run9 phase-3 (Slice C): true when a HARD run (long / tempo / intervals /
+   *  race) had to be placed on a "both" day (lift + run on the same day)
+   *  because no run-only slot was available — the 6-day-lifter clash the
+   *  scheduler must FLAG rather than silently drop (R3-placement). The run is
+   *  still placed; the UI surfaces a "shares a day with lifting" note so the
+   *  user can move a lift if they want. Easy runs on both-days are NOT flagged
+   *  (low stress). Set by generateRacePlanV2. */
+  clashesWithLift?: boolean;
 }
 
 export interface RunPlan {
@@ -292,6 +301,15 @@ export interface RunPlan {
    *  trimmed long-run progression. Source: generateRacePlanV2's
    *  `compressed` output. */
   compressed?: boolean;
+  /** Run9 phase-3 (Slice B): true when weeks-remaining fell BELOW the
+   *  taper-safe floor (= taperWeeks + 1 per distance: 5k=2, 10k=2, half=3,
+   *  marathon=4). At/above the floor a tight plan still `compressed`s to keep
+   *  the date; below it, compressing is no longer safe, so the generator
+   *  emits a "finish-safely" plan — all easy, no quality, the long run capped
+   *  at baseLongKm (no week-over-week jumps) — and the UI NAMES the risk
+   *  instead of silently shortening. `belowFloor` implies `compressed`.
+   *  Source: generateRacePlanV2's `belowFloor` output. */
+  belowFloor?: boolean;
   /** PR-D / PR-E: post-race recovery phase. Entered automatically
    *  when the race-day runDay transitions to completed_* (per
    *  `completeRunDay`). All template generation during this phase
