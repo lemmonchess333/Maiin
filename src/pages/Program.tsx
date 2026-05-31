@@ -9,10 +9,9 @@ import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { cn } from "@/lib/utils";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
-import DayStepper from "@/components/program/DayStepper";
+import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
+import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
-import RunningNavIcon from "@/components/program/RunningNavIcon";
-import Coachmark from "@/components/ui/Coachmark";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import { THEME } from "@/lib/theme";
@@ -61,11 +60,7 @@ import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import HybridWeekRail from "@/components/program/HybridWeekRail";
-import DayActionSheet from "@/components/program/DayActionSheet";
-import { buildHybridWeekItems } from "@/lib/runProgrammeViewModel";
-import { useClaimMap } from "@/hooks/useClaimMap";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { raceDistanceLabel } from "@/lib/runProgrammeViewModel";
 
 /**
  * IMPORTANT:
@@ -139,29 +134,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [activeTab, setActiveTab] = useState<ProgramTab>("lift");
 
   const { workouts: recentWorkouts } = useWorkouts();
-
-  // RunWk1: data for the shared "this week" hybrid rail on the Lift tab.
-  // Same pure view model + claim-map wiring the Run cockpit uses (ADR-0002:
-  // the rail shows the PLANNED week and shares completion; it does NOT drive
-  // the rotation cursor). `manageDate` opens the per-day DayActionSheet from
-  // a rail tap.
-  const { claimMap, unclaimedByDate } = useClaimMap();
-  const [manageDate, setManageDate] = useState<string | null>(null);
-  const liftRailTodayKey = localDateString(new Date());
-  const liftRailWeekKey = localWeekKey(new Date());
-  const liftWeekItems = useMemo(
-    () =>
-      buildHybridWeekItems({
-        profile,
-        programState,
-        claimMap,
-        currentWeekKey: liftRailWeekKey,
-        todayKey: liftRailTodayKey,
-        anchorWeekKey: programState?.runDays?.[0]?.weekKey ?? liftRailWeekKey,
-      }),
-    [profile, programState, claimMap, liftRailWeekKey, liftRailTodayKey]
-  );
-  const liftWeekHasContent = liftWeekItems.some((d) => d.run || d.lift);
 
   // Per-exercise best working set from last session containing that exercise
   const lastPerformanceMap = useMemo(() => {
@@ -501,21 +473,20 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         ? "today"
         : "upcoming";
 
-  // Stepper data — keep skipped distinct from completed. Collapsing
-  // them was misleading: a green check on a skipped day suggested
-  // "you trained" when the user explicitly skipped. DayStepper has a
-  // dedicated grey-with-Ban-icon visual for skipped.
-  const stepperDays = displayWorkouts.map((w, i) => ({
-    dayNumber: i + 1,
-    label: w.dayName,
-    status: (w.completed
-      ? "completed"
-      : w.skipped
-        ? "skipped"
-        : !isViewingHistory && i === todayIndex
-          ? "today"
-          : "upcoming") as "completed" | "today" | "upcoming" | "skipped",
-  }));
+  // Lift selector cells — SPLIT-ORDERED (ADR-0002): the circle shows the
+  // session number (Day 1..N), not a calendar date, and the rotation cursor
+  // (todayIndex = next-incomplete) is the lift execution surface. Skipped
+  // stays distinct from completed (a green check on a skipped day would read
+  // as "you trained"); ProgrammeWeekSelector renders the Ban glyph for it.
+  const liftSelectorCells: ProgrammeWeekSelectorCell[] = displayWorkouts.map(
+    (w, i) => ({
+      key: String(i),
+      center: String(i + 1),
+      bottomLabel: w.dayName,
+      status: w.completed ? "completed" : w.skipped ? "skipped" : "upcoming",
+      isToday: !isViewingHistory && i === todayIndex,
+    })
+  );
 
   // Session metadata
   const exerciseCount = selectedWorkout?.exercises.length ?? 0;
@@ -580,6 +551,30 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return `Built for ${goalText} · ${splitLabel(programState.splitType)} · ${daysLabel}`;
   })();
 
+  // Run-tab header line — so the subtitle stops being lift-led when the
+  // user is on the Run tab. Race prep leads with distance + week-of-M;
+  // structured shows weekly run frequency; freeform is the calm default.
+  // (Run9 locked model: only freeform + race-goal overlay exist.)
+  const programRunHeaderLine = (() => {
+    const runMode = profile?.runMode ?? "freeform";
+    const raceGoal = programState?.runPlan?.raceGoal;
+    if (runMode === "race_prep") {
+      if (!raceGoal) return "Race prep · Set your race goal";
+      const dist = raceDistanceLabel(raceGoal.distance);
+      const cw = programState?.runPlan?.currentWeek;
+      const tw = programState?.runPlan?.totalWeeks;
+      if (cw != null && tw) {
+        return `Race prep · ${dist} · Week ${cw + 1}/${tw}`;
+      }
+      return `Race prep · ${dist}`;
+    }
+    if (runMode === "structured") {
+      const t = runsTarget;
+      return `Structured · ${t} ${t === 1 ? "run" : "runs"}/week`;
+    }
+    return "Free running · Start whenever";
+  })();
+
   const handleAdvanceWeek = async () => {
     setAdvancing(true);
     await advanceToNextWeek();
@@ -636,25 +631,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               <h1 className="text-xl font-extrabold text-foreground">
                 Programme
               </h1>
+              {/* Subtitle is tab-aware so the Run tab no longer reads as a
+                  secondary add-on under a lifting-only header. */}
               <p className="text-xs text-muted-foreground">
-                {programHeaderLine}
+                {activeTab === "run" ? programRunHeaderLine : programHeaderLine}
               </p>
             </div>
-            {/* Right utility cluster — running entry leads, then reorder
-              + overflow. Running icon is colour-distinct (coral) but
-              smaller than its greyscale neighbours; the tint carries
-              the affordance so size doesn't have to. First-use
-              Coachmark explains the otherwise-unlabelled icon —
-              storage key versioned so a later redesign can re-trigger
-              by bumping the suffix. */}
+            {/* Right utility cluster — reorder (Lift only) + overflow. The
+              unlabelled Footprints "start a run" icon was removed: ambiguous
+              beside the utility controls, and the Run tab now owns clearly
+              labelled Start-run CTAs. */}
             <div className="flex items-center gap-1">
-              <Coachmark
-                storageKey="program-running-nav-v1"
-                content="Track a run from here"
-                placement="bottom"
-              >
-                <RunningNavIcon />
-              </Coachmark>
               {/* PR-2: reorder toggle only renders where it works —
                 Lift tab AND the user actually has lift workouts in
                 their programState. Pre-PR-2 the button lived
@@ -729,9 +716,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           </div>
         </div>
 
-        {/* ── LIFT tab — existing WeekPhaseRow + DayStepper + Session
-              content. Wrapped in a conditional so the lift surface
-              only renders when the user explicitly switches to it. */}
+        {/* ── LIFT tab — WeekPhaseRow + ProgrammeWeekSelector (split-ordered
+              rotation cursor) + Session content. Wrapped in a conditional so
+              the lift surface only renders when the user switches to it. */}
         {activeTab === "lift" && (
           <>
             {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
@@ -760,29 +747,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               </div>
             </TrackProgrammeSectionView>
 
-            {/* RunWk1: shared "this week" hybrid rail — the same glance the
-                Run cockpit uses, above the rotation cursor. Shown when the
-                current week has any content (lift or run); hidden on a past
-                week. Tap a day → DayActionSheet. Per ADR-0002 it shows the
-                planned week and does NOT drive the cursor below. */}
-            {!isViewingHistory && liftWeekHasContent && (
-              <HybridWeekRail
-                items={liftWeekItems}
-                unclaimedByDate={unclaimedByDate}
-                onDayTap={(dateKey) => setManageDate(dateKey)}
-              />
-            )}
-
-            {/* Day Stepper */}
+            {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
+                The duplicate "this week" HybridWeekRail that used to sit
+                above this was removed — one selector per tab, in the same
+                vertical position as the Run tab's selector, and it drives
+                the session content below. */}
             <TrackProgrammeSectionView section="day_stepper">
               <div>
-                <DayStepper
-                  days={stepperDays}
-                  selectedIndex={idx}
-                  todayIndex={
-                    !isViewingHistory && todayIndex >= 0 ? todayIndex : null
-                  }
-                  onSelect={handleSelect}
+                <ProgrammeWeekSelector
+                  sport="lift"
+                  ariaLabel="Lift sessions"
+                  cells={liftSelectorCells}
+                  selectedKey={String(idx)}
+                  onSelect={(key) => handleSelect(Number(key))}
                 />
               </div>
             </TrackProgrammeSectionView>
@@ -1259,22 +1236,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
       {activeTab === "lift" && <SavedRoutinesSection />}
-
-      {/* Per-day sheet for HybridWeekRail taps on the Lift tab. The Run tab
-          mounts its own inside ProgrammeRunSection. */}
-      <DayActionSheet
-        open={manageDate !== null}
-        onClose={() => setManageDate(null)}
-        dateKey={manageDate}
-        profile={profile}
-        programState={programState}
-        claimMap={claimMap}
-        unclaimedByDate={unclaimedByDate}
-        overrideRunDay={overrideRunDay}
-        markManualComplete={markManualComplete}
-        skipRunDay={skipRunDay}
-        skipWorkoutDay={skipWorkoutDay}
-      />
 
       {/* ── Context Menu ── */}
       <AnimatePresence>

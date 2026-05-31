@@ -1,15 +1,21 @@
 /**
  * Programme Run tab — hybrid training cockpit.
  *
- * Cockpit refactor: the race-goal overlay renders the training-plan
- * primitives (RaceCockpitCard → SessionCommandCard → HybridWeekRail);
- * freeform keeps its "Start a run" hero, with HybridWeekRail also showing
- * its lift week + logged-run extras. Locked model (Run9a): freeform
- * substrate + optional race-goal overlay — no structured mode, no mode
- * chips. Active plan editing deep-links to /settings/training ("Edit run
- * plan" footer). The banner stack + race-today / race-recent / recovery /
- * fell-behind hero states below are unchanged. See CLAUDE.md → "Training
- * plan primitives" and src/lib/runProgrammeViewModel.ts.
+ * Navigation cleanup (2026-05-31): the Run tab is now driven by a single
+ * date-pinned ProgrammeWeekSelector (shared with the Lift tab) that controls
+ * a selected-day command card — Start run / Start race for a planned day
+ * (+ secondary Start free run), or a calm date-led "No run scheduled" + Start
+ * free run. This replaced the global "next planned run" SessionCommandCard
+ * (which ignored the selected day) and the in-tab HybridWeekRail. The
+ * RaceCockpitCard (race progress) renders BELOW the command card. Freeform
+ * keeps its "Start a run" hero with no selector ("start whenever" — no
+ * scheduled runs). Locked model (Run9a): freeform substrate + optional
+ * race-goal overlay — no structured mode, no mode chips. The banner stack +
+ * race-today / race-recent / recovery / fell-behind hero states stay as
+ * top overlays, unchanged. Active plan editing deep-links to
+ * /settings/training ("Edit run plan" footer). See ADR-0002 (dual scheduling
+ * ontology), CLAUDE.md → "Training plan primitives", and
+ * src/lib/runProgrammeViewModel.ts.
  *
  * Historical context (pre-cockpit) follows.
  *
@@ -64,19 +70,18 @@ import {
   MoreVertical,
   Trophy,
 } from "lucide-react";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatDistanceToNowStrict, format } from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
-import { DAY_LABELS, getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { getRunHeroState, shouldShowHeroOverflow } from "@/lib/runHeroState";
+import { getRunHeroState } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
 import { realignResultMessage } from "@/lib/realignCopy";
@@ -85,13 +90,18 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import DayActionSheet from "./DayActionSheet";
-import HybridWeekRail from "./HybridWeekRail";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
+import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
+import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
 import {
-  buildHybridWeekItems,
   buildRaceCockpitViewModel,
+  compactRunLabel,
 } from "@/lib/runProgrammeViewModel";
+import {
+  resolveTrainingWindow,
+  resolveTrainingDayForDate,
+} from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
 import {
   localDateString,
@@ -150,6 +160,13 @@ export default function ProgrammeRunSection({
   const navigate = useNavigate();
   // PR-1: which row is opening DayActionSheet.
   const [manageDate, setManageDate] = useState<string | null>(null);
+  // The run-week selector's selected calendar day (date-pinned — ADR-0002).
+  // Defaults to today; today is always index 0 of the rolling 7-day window
+  // below, so the default selection is always visible. Drives the selected-
+  // day command card so the selector actually controls the content beneath it.
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() =>
+    localDateString(new Date())
+  );
   // PR-4: recent-run context for the freeform hero. 30-day window
   // is bounded by the hook's `where('completedAt', '>=', ...)`
   // clause; returns a `loading` flag the hero shell consumes for
@@ -328,37 +345,11 @@ export default function ProgrammeRunSection({
     );
   }, [currentMode, runDays, claimMap]);
 
-  const nextStartableTemplate = useMemo(() => {
-    if (!nextStartable) return null;
-    const tmplId = nextStartable.userOverride || nextStartable.templateId;
-    return RUN_TEMPLATES.find((t) => t.id === tmplId) ?? null;
-  }, [nextStartable]);
-
-  const nextStartableMeta = useMemo(() => {
-    if (!nextStartableTemplate) return [];
-    const meta: string[] = [];
-    if (nextStartableTemplate.config.targetDistance) {
-      meta.push(`${nextStartableTemplate.config.targetDistance}km`);
-    } else {
-      meta.push(`${nextStartableTemplate.estimatedDuration} min`);
-    }
-    meta.push(
-      nextStartableTemplate.type.charAt(0).toUpperCase() +
-        nextStartableTemplate.type.slice(1)
-    );
-    return meta;
-  }, [nextStartableTemplate]);
-
-  const nextStartUrl = useMemo(() => {
-    if (!nextStartable) return null;
-    const params: string[] = [];
-    if (nextStartableTemplate)
-      params.push("template=" + nextStartableTemplate.id);
-    if (nextStartable.id)
-      params.push("scheduledRunId=" + encodeURIComponent(nextStartable.id));
-    return "/run" + (params.length ? "?" + params.join("&") : "");
-  }, [nextStartable, nextStartableTemplate]);
-
+  // `nextStartable` is still derived above — it feeds the hero state machine
+  // and the "all runs done" affirmation. The old "next planned run" command
+  // card (which promoted nextStartable regardless of the selected day) was
+  // replaced by the date-driven selected-day card; per the locked UX the card
+  // must reflect the SELECTED date, never a global next-run.
   const allRunsDone =
     currentMode !== "freeform" && runDays.length > 0 && !nextStartable;
 
@@ -380,7 +371,6 @@ export default function ProgrammeRunSection({
     tomorrowKey: tomorrowKeyDerivation,
     hasRunDays: runDays.length > 0,
   });
-  const showHeroOverflow = shouldShowHeroOverflow(heroState);
 
   // ── Cockpit view models (pure derivations in runProgrammeViewModel) ──
   // Race cockpit identity card data (null when no race goal — the card
@@ -405,62 +395,101 @@ export default function ProgrammeRunSection({
     ]
   );
 
-  // Hybrid week rail items (run lane + lift lane per day). Anchored on the
-  // week the runDays were generated for, falling back to today's week for
-  // a lift-only (freeform) week. Shown whenever the week has ANY content —
-  // including freeform lifters, whose lift week + logged-run extras render
-  // even though they have no scheduled runs (Run9a: no invented runs).
-  const weekItems = useMemo(
+  // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
+  // A rolling 7-day window anchored on today, resolved through the same
+  // shared resolver Home/WeekStrip/DayActionSheet use. Run-scope only — no
+  // lift lanes (the Lift tab owns lifting). The selector drives
+  // `selectedDateKey`; the selected-day command card below reads from it.
+  const runWindow = useMemo(
     () =>
-      buildHybridWeekItems({
+      resolveTrainingWindow({
+        startDate: new Date(),
+        days: 7,
         profile,
         programState,
         claimMap,
-        currentWeekKey: currentWeekKeyDerivation,
-        todayKey: todayKeyDerivation,
-        anchorWeekKey:
-          programState?.runDays?.[0]?.weekKey ?? currentWeekKeyDerivation,
       }),
-    [
-      profile,
-      programState,
-      claimMap,
-      currentWeekKeyDerivation,
-      todayKeyDerivation,
-    ]
+    [profile, programState, claimMap]
   );
-  const weekHasContent = weekItems.some((d) => d.run || d.lift);
+  const runSelectorCells: ProgrammeWeekSelectorCell[] = useMemo(
+    () =>
+      runWindow.map((d) => {
+        const run = d.run;
+        const hasRun = !!run.runDay;
+        const status: ProgrammeWeekSelectorCell["status"] = !hasRun
+          ? "rest"
+          : run.isCompleted
+            ? "completed"
+            : run.status === "skipped"
+              ? "skipped"
+              : "upcoming";
+        const date = parseLocalDate(d.dateKey);
+        return {
+          key: d.dateKey,
+          topLabel: format(date, "EEE").charAt(0),
+          center: String(date.getDate()),
+          bottomLabel: hasRun ? compactRunLabel(run.template) : "",
+          status,
+          isToday: d.dateKey === todayKeyDerivation,
+        };
+      }),
+    [runWindow, todayKeyDerivation]
+  );
 
-  // PR-F: temporal-anchored label for the "Next planned run" card.
-  // Pre-PR-F this was just `Next · {DAY_LABELS[dayIndex]}`, which
-  // forces the user to compute proximity ("is today Tuesday? then
-  // Wed = tomorrow"). Today / Tomorrow / Pending makes the common
-  // cases explicit; Pending flags past-planned runDays still
-  // sitting startable in the current week (e.g. yesterday's
-  // unstarted easy run) so the user doesn't think it's "next".
-  const nextStartableLabel = useMemo<string>(() => {
-    if (!nextStartable) return "";
-    if (!nextStartable.date) return DAY_LABELS[nextStartable.dayIndex];
-    const today = new Date();
-    const todayKey = localDateString(today);
-    const tomorrowKey = localDateString(addLocalDays(today, 1));
-    if (nextStartable.date === todayKey) return "Today";
-    if (nextStartable.date === tomorrowKey) return "Tomorrow";
-    if (nextStartable.date < todayKey) return "Pending";
-    return DAY_LABELS[nextStartable.dayIndex];
-  }, [nextStartable]);
+  // Resolve the SELECTED day for the command card. Single source of truth —
+  // its `startUrl` already carries ?template=&scheduledRunId= when startable.
+  const selectedDay = useMemo(
+    () =>
+      resolveTrainingDayForDate({
+        dateKey: selectedDateKey,
+        profile,
+        programState,
+        currentWeekKey: currentWeekKeyDerivation,
+        claimMap,
+      }),
+    [selectedDateKey, profile, programState, currentWeekKeyDerivation, claimMap]
+  );
+  const selectedRun = selectedDay.run;
+  const selectedTemplate = selectedRun.template;
+  const selectedIsRace = selectedTemplate?.type === "race";
+  const selectedDateLabel = format(
+    parseLocalDate(selectedDateKey),
+    "EEE d MMM"
+  );
+  // Meta line for the selected run (distance/duration + type).
+  const selectedRunMeta: string[] = (() => {
+    if (!selectedTemplate) return [];
+    const meta: string[] = [];
+    if (selectedTemplate.config.targetDistance) {
+      meta.push(`${selectedTemplate.config.targetDistance}km`);
+    } else if (selectedTemplate.estimatedDuration) {
+      meta.push(`${selectedTemplate.estimatedDuration} min`);
+    }
+    meta.push(
+      selectedTemplate.type.charAt(0).toUpperCase() +
+        selectedTemplate.type.slice(1)
+    );
+    return meta;
+  })();
+  // Free-run fallback URL (Run.tsx parses ?type=freerun on mount).
+  const FREE_RUN_URL = "/run?type=freerun";
+  // Suppress the selected-day card when a race state-overlay hero already
+  // owns today's slot AND today is what's selected — avoids a double CTA.
+  const heroOwnsSelectedToday =
+    selectedDateKey === todayKeyDerivation &&
+    (heroState === "race-today" || heroState === "race-recent");
 
-  // SessionCommandCard eyebrow — temporal status, never "Next · Pending".
-  // "Today" → "Due today"; "Tomorrow"/"Pending" pass through; any
-  // future-day label collapses to the calm "Up next".
-  const nextSessionEyebrow =
-    nextStartableLabel === "Today"
-      ? "Due today"
-      : nextStartableLabel === "Tomorrow"
-        ? "Tomorrow"
-        : nextStartableLabel === "Pending"
-          ? "Pending"
-          : "Up next";
+  // Selected-day card eyebrow — temporal status relative to the SELECTED
+  // date (Today / Tomorrow / Pending for a past-but-startable slot / weekday).
+  // The card always leads with the calendar date too (selectedDateLabel), so
+  // the user never loses their place after tapping around the selector.
+  const selectedEyebrow = (() => {
+    const tomorrowKey = localDateString(addLocalDays(new Date(), 1));
+    if (selectedDateKey === todayKeyDerivation) return "Due today";
+    if (selectedDateKey === tomorrowKey) return "Tomorrow";
+    if (selectedDateKey < todayKeyDerivation) return "Pending";
+    return "Up next";
+  })();
 
   // Freeform hero data — last run from the recent-30-day window
   // + this week's bucket.
@@ -944,37 +973,9 @@ export default function ProgrammeRunSection({
           subtitle above ("Race Prep · Set your race goal") deeplinks
           users there when their race_prep mode is missing a goal. */}
 
-      {/* ── Hero: race_prep progress card (promoted) ──────────────
-          Run7 Q5: the race-goal form collapses to a one-line summary
-          when a goal is already saved. Pre-Q5 the form was either
-          fully open or replaced by a two-row "Race" label card with
-          a coral Edit button. New shape: "Race goal: 10K · 16 Jul 2026
-          · Edit ›" — single text run, muted-gray Edit link with
-          chevron (Q2 navigation discipline: no coral on Edit). Week
-          progress row stays as separate content underneath. */}
-      {/* Run9b/(k) — the persistent RACE HEADER: race-goal one-liner, week
-          N-of-M + phase + progress, the taper line, and the compressed note,
-          consolidated into one always-visible component (replacing the
-          scattered taper label + progress card + the old compressed banner). */}
-      {currentMode === "race_prep" &&
-        raceGoal &&
-        !raceElapsed &&
-        raceCockpitVM && (
-          <RaceCockpitCard
-            distanceLabel={raceCockpitVM.distanceLabel}
-            targetDate={raceCockpitVM.targetDate}
-            daysToRace={raceCockpitVM.daysToRace}
-            currentWeek={raceCockpitVM.currentWeek}
-            totalWeeks={raceCockpitVM.totalWeeks}
-            phaseLabel={raceCockpitVM.phaseLabel}
-            inTaper={raceCockpitVM.inTaper}
-            compressed={raceCockpitVM.compressed}
-            onEdit={() => {
-              haptic();
-              navigate("/settings/training");
-            }}
-          />
-        )}
+      {/* RaceCockpitCard (race progress identity) moved BELOW the selector +
+          selected-day command card — see the "race progress" block further
+          down. The actionable race-day / race-recent heroes stay on top. */}
 
       {/* ── Hero: race-today (T+0 — the race itself) ────────────────
           Run8 PR1c L14 + Run9 follow-on: race day is the culmination of the
@@ -1127,67 +1128,140 @@ export default function ProgrammeRunSection({
         </div>
       )}
 
-      {/* ── Up next: SessionCommandCard (race_prep with a startable run) ──
-          The cockpit's command surface. Same /run?template=…&scheduledRunId=…
-          URL as RunCTACard / trainingResolver.startUrl. Suppressed when every
-          runDay is terminal (the "done this week" affirmation renders below),
-          in the race-recent window (the did-you-race hero owns that slot), and
-          on race-today (the dedicated race-day hero owns it). The card's
-          primary button starts the run; the overflow opens DayActionSheet for
-          mark-as-done / skip / per-day template swap. */}
-      {currentMode !== "freeform" &&
-        heroState !== "race-recent" &&
-        heroState !== "race-today" &&
-        nextStartable &&
-        nextStartUrl && (
-          <SessionCommandCard
+      {/* ── Run-week selector + selected-day command card ───────────────
+          The single Run day-navigator (date-pinned, ADR-0002), sharing the
+          Lift tab's visual language and vertical position. It DRIVES the
+          card below: tap a day → that day's command card. Non-freeform only —
+          freeform has no scheduled runs ("start whenever"); its hero above
+          owns the Start CTA. */}
+      {currentMode !== "freeform" && (
+        <div className="space-y-3">
+          <ProgrammeWeekSelector
             sport="run"
-            eyebrow={nextSessionEyebrow}
-            title={nextStartableTemplate?.name ?? "Run"}
-            description={nextStartableTemplate?.description}
-            meta={nextStartableMeta}
-            primaryActionLabel="Start run"
-            onPrimaryAction={() => {
-              haptic();
-              navigate(nextStartUrl);
-            }}
-            onManage={
-              showHeroOverflow
-                ? () => {
-                    haptic();
-                    setManageDate(nextStartable.date ?? null);
-                  }
-                : undefined
-            }
+            ariaLabel="Run week"
+            cells={runSelectorCells}
+            selectedKey={selectedDateKey}
+            onSelect={setSelectedDateKey}
           />
-        )}
 
-      {currentMode !== "freeform" && allRunsDone && (
-        <div
-          className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
-          style={{
-            background: `${THEME.success}10`,
-            border: `1px solid ${THEME.success}30`,
-            color: THEME.success,
-          }}
-        >
-          <Check className="size-3.5" />
-          <span className="font-medium">All runs done this week</span>
+          {/* The selected-day command card. Suppressed only when a race
+              state-overlay hero (race-today / race-recent) already owns
+              today's slot AND today is selected — the selector still lets
+              the user browse other days. */}
+          {!heroOwnsSelectedToday &&
+            (selectedRun.isStartable ? (
+              <div className="space-y-2">
+                <SessionCommandCard
+                  sport="run"
+                  eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
+                  title={selectedTemplate?.name ?? "Run"}
+                  description={selectedTemplate?.description}
+                  meta={selectedRunMeta}
+                  primaryActionLabel={
+                    selectedIsRace ? "Start race" : "Start run"
+                  }
+                  onPrimaryAction={() => {
+                    haptic();
+                    // startUrl carries ?template=&scheduledRunId= so the run
+                    // fulfils this exact planned slot (claim-map binding).
+                    navigate(selectedRun.startUrl ?? FREE_RUN_URL);
+                  }}
+                  onManage={() => {
+                    haptic();
+                    setManageDate(selectedDateKey);
+                  }}
+                />
+                {/* Secondary: an ad-hoc run that does NOT fulfil the plan slot. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic();
+                    navigate(FREE_RUN_URL);
+                  }}
+                  className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.99]"
+                >
+                  Start free run instead
+                </button>
+              </div>
+            ) : (
+              // No startable run on the selected day: completed, skipped, or
+              // nothing scheduled. Calm, date-led, always offers a free run.
+              <div
+                className="rounded-2xl border p-4 shadow-card"
+                style={{
+                  backgroundColor: `${THEME.running}0A`,
+                  borderColor: `${THEME.running}24`,
+                }}
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {selectedDateLabel}
+                </p>
+                <p className="text-sm font-bold text-foreground mt-0.5">
+                  {selectedRun.isCompleted
+                    ? `${selectedTemplate?.name ?? "Run"} — done`
+                    : selectedRun.status === "skipped"
+                      ? `${selectedTemplate?.name ?? "Run"} — skipped`
+                      : "No run scheduled"}
+                </p>
+                <p className="text-micro text-muted-foreground mt-0.5">
+                  {selectedRun.isCompleted
+                    ? "Nice work. Add another if you fancy it."
+                    : selectedRun.status === "skipped"
+                      ? "Marked as skipped — you can still head out."
+                      : "Rest day. Head out whenever you like."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic();
+                    navigate(FREE_RUN_URL);
+                  }}
+                  className="mt-3 w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5"
+                  style={{ background: THEME.running }}
+                >
+                  <Play className="size-3.5" fill="white" />
+                  Start free run
+                </button>
+              </div>
+            ))}
+
+          {/* Race progress identity card — moved BELOW the selected-day card
+              (cockpit reorder). Race-prep only; the actionable race-day /
+              race-recent heroes stay on top. */}
+          {currentMode === "race_prep" &&
+            raceGoal &&
+            !raceElapsed &&
+            raceCockpitVM && (
+              <RaceCockpitCard
+                distanceLabel={raceCockpitVM.distanceLabel}
+                targetDate={raceCockpitVM.targetDate}
+                daysToRace={raceCockpitVM.daysToRace}
+                currentWeek={raceCockpitVM.currentWeek}
+                totalWeeks={raceCockpitVM.totalWeeks}
+                phaseLabel={raceCockpitVM.phaseLabel}
+                inTaper={raceCockpitVM.inTaper}
+                compressed={raceCockpitVM.compressed}
+                onEdit={() => {
+                  haptic();
+                  navigate("/settings/training");
+                }}
+              />
+            )}
+
+          {allRunsDone && (
+            <div
+              className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
+              style={{
+                background: `${THEME.success}10`,
+                border: `1px solid ${THEME.success}30`,
+                color: THEME.success,
+              }}
+            >
+              <Check className="size-3.5" />
+              <span className="font-medium">All runs done this week</span>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* HybridWeekRail — the hybrid week-at-a-glance. Each day tile shows a
-          coral RUN lane + a purple LIFT lane, so the relationship between the
-          two disciplines is visible (a "both" day shows both lanes natively).
-          Shown whenever the week has any content — including freeform lifters,
-          whose lift week + logged-run extras render even with no scheduled
-          runs (Run9a: we never invent runs). Tap a day → DayActionSheet. */}
-      {weekHasContent && (
-        <HybridWeekRail
-          items={weekItems}
-          unclaimedByDate={unclaimedByDate}
-          onDayTap={(dateKey) => setManageDate(dateKey)}
-        />
       )}
 
       {/* Run8 PR1a — footer link renamed "Change plan" → "Manage Run

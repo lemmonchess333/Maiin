@@ -53,3 +53,24 @@ with "what's next" — and share `workout.completed` so completion never disagre
 - Unifying the Programme/Home week surfaces is therefore a **visual + interaction
   coherence** effort (shared cell anatomy, colours, today indicator, language),
   NOT a scheduling-model migration.
+
+## Update 2026-05-31 — Programme navigation cleanup
+
+The dual ontology is **unchanged** (this was re-confirmed, owner-chosen, when a
+follow-up spec proposed flattening lifts to a calendar selector — declined, for
+the volume-drop reason above). What changed is component naming/placement only:
+
+- The lift **next-up cursor** is now `ProgrammeWeekSelector` with `sport="lift"`
+  (it replaced `DayStepper`, which was deleted). It is still **split-ordered** —
+  the circle shows the session number (Day 1..N), driven by the same
+  `workouts.findIndex(d => !d.completed && !d.skipped)` rotation. The cursor
+  remains the lift execution surface.
+- `ProgrammeWeekSelector` with `sport="run"` is the **date-pinned** run selector
+  and, per the cleanup, it now **drives** the selected-day run command card
+  (selected-date controller, not a glance).
+- The combined `HybridWeekRail` is **no longer shown inside the Programme Lift or
+  Run tabs** — each tab now shows a single scope-filtered selector in the same
+  position (lift-only on Lift, run-only on Run), removing the duplicate
+  navigation. The rail component + `buildHybridWeekItems` remain for potential
+  reuse (e.g. Home), and the "do not assert weekday-pinned lift identity"
+  constraint still applies wherever a combined calendar surface is used.
