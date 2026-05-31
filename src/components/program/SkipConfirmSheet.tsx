@@ -42,7 +42,8 @@ export default function SkipConfirmSheet({
             Skip {sessionName}?
           </p>
           <p className="text-sm text-muted-foreground">
-            It won&apos;t count toward this week. The session resets next week — past weeks stay viewable from the week navigator.
+            It won&apos;t count toward this week. The session resets next week —
+            past weeks stay viewable from the week navigator.
           </p>
         </div>
 
@@ -50,7 +51,7 @@ export default function SkipConfirmSheet({
           <button
             type="button"
             onClick={onConfirm}
-            className="w-full py-3 rounded-xl text-sm font-semibold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+            className="w-full py-3 rounded-xl text-sm font-semibold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
           >
             Skip
           </button>
