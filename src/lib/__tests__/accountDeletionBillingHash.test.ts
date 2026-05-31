@@ -12,8 +12,8 @@
  * Tests use the pure `computeBillingHash(provider, identifier, secret)`
  * function so the secret can be pinned without booting firebase-functions
  * config. The production helpers `billingIdentityHash` and
- * `billingIdentityLookupHashes` read the secret from Functions config
- * and are exercised by the appleIAP.js integration path.
+ * `billingIdentityLookupHashes` read the secret from process.env
+ * (defineSecret binding) and are exercised by the appleIAP.js path.
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
@@ -21,13 +21,12 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const billing = require("../../../functions/lib/billingIdentityHash.js");
 
-const {
-  computeBillingHash,
-  makeSecretMissingError,
-} = billing;
+const { computeBillingHash, makeSecretMissingError } = billing;
 
-const TEST_SECRET = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-const ALT_SECRET = "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
+const TEST_SECRET =
+  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+const ALT_SECRET =
+  "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
 
 describe("computeBillingHash — HMAC contract", () => {
   it("produces a 64-char hex digest", () => {
@@ -62,19 +61,41 @@ describe("computeBillingHash — HMAC contract", () => {
 
 describe("computeBillingHash — input validation", () => {
   it("throws when provider is missing", () => {
-    expect(() => computeBillingHash("", "1234567890123", TEST_SECRET)).toThrow(/provider/);
-    expect(() => computeBillingHash(null as unknown as string, "1234567890123", TEST_SECRET)).toThrow(/provider/);
-    expect(() => computeBillingHash(undefined as unknown as string, "1234567890123", TEST_SECRET)).toThrow(/provider/);
+    expect(() => computeBillingHash("", "1234567890123", TEST_SECRET)).toThrow(
+      /provider/
+    );
+    expect(() =>
+      computeBillingHash(
+        null as unknown as string,
+        "1234567890123",
+        TEST_SECRET
+      )
+    ).toThrow(/provider/);
+    expect(() =>
+      computeBillingHash(
+        undefined as unknown as string,
+        "1234567890123",
+        TEST_SECRET
+      )
+    ).toThrow(/provider/);
   });
 
   it("throws when identifier is missing", () => {
-    expect(() => computeBillingHash("apple", "", TEST_SECRET)).toThrow(/identifier/);
-    expect(() => computeBillingHash("apple", null as unknown as string, TEST_SECRET)).toThrow(/identifier/);
+    expect(() => computeBillingHash("apple", "", TEST_SECRET)).toThrow(
+      /identifier/
+    );
+    expect(() =>
+      computeBillingHash("apple", null as unknown as string, TEST_SECRET)
+    ).toThrow(/identifier/);
   });
 
   it("throws billing-hmac-secret-missing when secret is missing", () => {
-    expect(() => computeBillingHash("apple", "1234567890123", "")).toThrow(/billing.hmac_secret not provisioned/);
-    expect(() => computeBillingHash("apple", "1234567890123", null as unknown as string)).toThrow(/billing.hmac_secret not provisioned/);
+    expect(() => computeBillingHash("apple", "1234567890123", "")).toThrow(
+      /BILLING_HMAC_SECRET not provisioned/
+    );
+    expect(() =>
+      computeBillingHash("apple", "1234567890123", null as unknown as string)
+    ).toThrow(/BILLING_HMAC_SECRET not provisioned/);
   });
 
   it("missing-secret error carries the stable errorCode", () => {
@@ -85,7 +106,9 @@ describe("computeBillingHash — input validation", () => {
       caught = e;
     }
     expect(caught).toBeDefined();
-    expect((caught as { errorCode?: string }).errorCode).toBe("billing-hmac-secret-missing");
+    expect((caught as { errorCode?: string }).errorCode).toBe(
+      "billing-hmac-secret-missing"
+    );
     expect((caught as { code?: string }).code).toBe("failed-precondition");
   });
 });
@@ -107,7 +130,11 @@ describe("HMAC defeats offline brute-force on 13-digit numeric Apple IDs", () =>
     // Attacker has the tombstone hash:
     const realHash = computeBillingHash("apple", "1234567890123", TEST_SECRET);
     // Attacker guesses the correct plaintext but the wrong secret:
-    const attackerHash = computeBillingHash("apple", "1234567890123", ALT_SECRET);
+    const attackerHash = computeBillingHash(
+      "apple",
+      "1234567890123",
+      ALT_SECRET
+    );
     expect(attackerHash).not.toBe(realHash);
   });
 
@@ -115,7 +142,10 @@ describe("HMAC defeats offline brute-force on 13-digit numeric Apple IDs", () =>
     // Attacker tries 100 candidate plaintexts with the wrong secret.
     // None match the real hash.
     const realHash = computeBillingHash("apple", "1234567890123", TEST_SECRET);
-    const candidates = Array.from({ length: 100 }, (_, i) => `12345678901${String(i).padStart(2, "0")}`);
+    const candidates = Array.from(
+      { length: 100 },
+      (_, i) => `12345678901${String(i).padStart(2, "0")}`
+    );
     const reversed = candidates.find((candidate) => {
       return computeBillingHash("apple", candidate, ALT_SECRET) === realHash;
     });
@@ -124,13 +154,22 @@ describe("HMAC defeats offline brute-force on 13-digit numeric Apple IDs", () =>
 });
 
 describe("billingIdentityLookupHashes — rotation-aware", () => {
-  // The production helper reads firebase-functions config at runtime.
-  // We can't easily inject the config in vitest, so the rotation
+  // The production helper reads the secret from process.env at runtime
+  // (defineSecret binding). We can't easily inject env in vitest here,
+  // so the rotation
   // behaviour is exercised at the pure-computation level: lookup
   // produces hashes under both active and previous secrets.
   it("the design supports multi-secret lookup (computed via the underlying pure helper)", () => {
-    const activeHash = computeBillingHash("apple", "1234567890123", TEST_SECRET);
-    const previousHash = computeBillingHash("apple", "1234567890123", ALT_SECRET);
+    const activeHash = computeBillingHash(
+      "apple",
+      "1234567890123",
+      TEST_SECRET
+    );
+    const previousHash = computeBillingHash(
+      "apple",
+      "1234567890123",
+      ALT_SECRET
+    );
     // Rotation invariant: the two hashes differ, so a tombstone written
     // under one secret can ONLY be found by checking BOTH hashes during
     // the rotation window. billingIdentityLookupHashes encodes exactly
@@ -144,8 +183,12 @@ describe("makeSecretMissingError — stable error contract", () => {
     const err = makeSecretMissingError();
     expect(err).toBeInstanceOf(Error);
     expect((err as { code?: string }).code).toBe("failed-precondition");
-    expect((err as { errorCode?: string }).errorCode).toBe("billing-hmac-secret-missing");
-    expect(err.message).toMatch(/billing.hmac_secret not provisioned/);
-    expect(err.message).toMatch(/firebase functions:config:set billing\.hmac_secret/);
+    expect((err as { errorCode?: string }).errorCode).toBe(
+      "billing-hmac-secret-missing"
+    );
+    expect(err.message).toMatch(/BILLING_HMAC_SECRET not provisioned/);
+    expect(err.message).toMatch(
+      /firebase functions:secrets:set BILLING_HMAC_SECRET/
+    );
   });
 });

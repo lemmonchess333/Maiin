@@ -1,4 +1,8 @@
-const functions = require("firebase-functions");
+// firebase-functions v6+ repointed the bare import at the 2nd-gen API.
+// Every trigger here (runWith().https.onCall/onRequest, HttpsError,
+// logger) is 1st-gen, which now lives under /v1.
+const functions = require("firebase-functions/v1");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const jwt = require("jsonwebtoken");
 const { X509Certificate } = require("crypto");
@@ -7,6 +11,21 @@ const {
   Environment,
 } = require("@apple/app-store-server-library");
 const applePurchase = require("./applePurchase");
+
+// Secret Manager bindings — replaces the removed functions.config()
+// runtime config (shut down 2025-12-31; throws under firebase-functions
+// v7). Declaring a secret here and listing it in a function's
+// runWith({ secrets: [...] }) makes Firebase mount the Secret Manager
+// value into process.env at runtime. Provision with:
+//   firebase functions:secrets:set <NAME>
+const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+const APPLE_KEY_ID = defineSecret("APPLE_KEY_ID");
+const APPLE_ISSUER_ID = defineSecret("APPLE_ISSUER_ID");
+const APPLE_PRIVATE_KEY = defineSecret("APPLE_PRIVATE_KEY");
+const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
+const BILLING_PREVIOUS_HMAC_SECRET = defineSecret(
+  "BILLING_PREVIOUS_HMAC_SECRET"
+);
 
 // R1A-Deletion Chunk 2 — lock helpers for IAP / Apple webhook paths.
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
@@ -150,12 +169,15 @@ async function verifyNotification(signedPayload) {
 }
 
 function getAppleConfig() {
-  const cfg = (functions.config && functions.config().apple) || {};
+  // Sourced from Secret Manager via the APPLE_* defineSecret bindings on
+  // restoreApplePurchases (the only caller of signAppStoreJWT). Pre-v7
+  // this also fell back to functions.config().apple; that runtime-config
+  // API was removed in firebase-functions v7.
   return {
-    keyId: process.env.APPLE_KEY_ID || cfg.key_id,
-    issuerId: process.env.APPLE_ISSUER_ID || cfg.issuer_id,
+    keyId: process.env.APPLE_KEY_ID,
+    issuerId: process.env.APPLE_ISSUER_ID,
     bundleId: BUNDLE_ID,
-    privateKey: process.env.APPLE_PRIVATE_KEY || cfg.private_key,
+    privateKey: process.env.APPLE_PRIVATE_KEY,
   };
 }
 
@@ -216,9 +238,10 @@ async function applySubscriptionToUser(uid, signedTransactionInfo) {
     // doesn't crash the module on import — only fails when actually
     // needed, and the caller's try/catch absorbs it (no IAP breakage).
     cancelDisplacedStripeSub: async ({ uid: cancelUid, logger }) => {
-      const stripeKey =
-        process.env.STRIPE_SECRET_KEY ||
-        (functions.config().stripe && functions.config().stripe.secret_key);
+      // From Secret Manager via the STRIPE_SECRET_KEY defineSecret
+      // binding on the apple callables. (functions.config() fallback
+      // removed — it throws under firebase-functions v7.)
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
       if (!stripeKey) {
         throw new Error(
           "cancelDisplacedStripeSub: STRIPE_SECRET_KEY not configured"
@@ -238,7 +261,9 @@ async function applySubscriptionToUser(uid, signedTransactionInfo) {
 
 // Called by the iOS client immediately after a StoreKit purchase completes.
 exports.verifyApplePurchase = functions
-  .runWith(APPLE_IAP_CAP)
+  // STRIPE_SECRET_KEY: applySubscriptionToUser may cancel a displaced
+  // Stripe sub on cross-platform conflict.
+  .runWith({ ...APPLE_IAP_CAP, secrets: [STRIPE_SECRET_KEY] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -271,7 +296,9 @@ exports.verifyApplePurchase = functions
 
 // App Store Server Notifications V2 webhook — configure the URL in App Store Connect.
 exports.appleIAPWebhook = functions
-  .runWith(APPLE_IAP_CAP)
+  // STRIPE_SECRET_KEY: same displaced-sub cancel path via
+  // applySubscriptionToUser.
+  .runWith({ ...APPLE_IAP_CAP, secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest(async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).json({ error: "Method not allowed" });
@@ -448,7 +475,20 @@ exports.appleIAPWebhook = functions
 
 // Called by the iOS client on Restore Purchases.
 exports.restoreApplePurchases = functions
-  .runWith(APPLE_IAP_CAP)
+  // Needs the full secret set: STRIPE_SECRET_KEY (displaced-sub cancel),
+  // APPLE_* (signAppStoreJWT → fetchSubscriptionStatus), and the billing
+  // HMAC secrets (billingIdentityLookupHashes tombstone lookup).
+  .runWith({
+    ...APPLE_IAP_CAP,
+    secrets: [
+      STRIPE_SECRET_KEY,
+      APPLE_KEY_ID,
+      APPLE_ISSUER_ID,
+      APPLE_PRIVATE_KEY,
+      BILLING_HMAC_SECRET,
+      BILLING_PREVIOUS_HMAC_SECRET,
+    ],
+  })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(

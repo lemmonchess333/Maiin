@@ -48,7 +48,9 @@ const status = require("./accountDeletionStatus");
  */
 function wrapAsHttpsError(err) {
   if (!err || !err.errorCode) return err;
-  const functions = require("firebase-functions");
+  // firebase-functions v6+ repointed the bare import at the 2nd-gen API;
+  // the 1st-gen HttpsError shape (stable client error codes) lives under /v1.
+  const functions = require("firebase-functions/v1");
   return new functions.https.HttpsError(
     err.code || "failed-precondition",
     err.message,
