@@ -52,6 +52,7 @@ import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Toggle } from "@/components/ui/Toggle";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -583,23 +584,12 @@ export default function ProgrammeSettings({
       {/* ── Lifting ── */}
       <div>
         <SectionLabel>Lift days per week</SectionLabel>
-        <div className="flex gap-2">
-          {[2, 3, 4, 5, 6].map((d) => (
-            <button
-              type="button"
-              key={d}
-              onClick={() => setLiftDays(d)}
-              className={cn(
-                "flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all active:scale-95",
-                liftDays === d
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Lift days per week"
+          options={[2, 3, 4, 5, 6].map((d) => ({ value: d, label: String(d) }))}
+          value={liftDays}
+          onChange={setLiftDays}
+        />
       </div>
 
       <div>
@@ -675,34 +665,23 @@ export default function ProgrammeSettings({
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
                 Distance
               </p>
-              <div className="flex gap-1.5">
-                {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map(
-                  (d) => (
-                    <button
-                      type="button"
-                      key={d}
-                      onClick={() => setRaceDistance(d)}
-                      className={cn(
-                        "flex-1 min-h-[44px] rounded-lg text-xs font-medium transition-all",
-                        raceDistance === d
-                          ? "text-white"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                      style={
-                        raceDistance === d
-                          ? { background: THEME.running }
-                          : undefined
-                      }
-                    >
-                      {d === "half"
-                        ? "Half"
-                        : d === "marathon"
-                          ? "Full"
-                          : d.toUpperCase()}
-                    </button>
-                  )
-                )}
-              </div>
+              <SegmentedControl
+                ariaLabel="Race distance"
+                tone="running"
+                options={(
+                  ["5k", "10k", "half", "marathon"] as RaceDistance[]
+                ).map((d) => ({
+                  value: d,
+                  label:
+                    d === "half"
+                      ? "Half"
+                      : d === "marathon"
+                        ? "Full"
+                        : d.toUpperCase(),
+                }))}
+                value={raceDistance}
+                onChange={setRaceDistance}
+              />
             </div>
             <div>
               <label
