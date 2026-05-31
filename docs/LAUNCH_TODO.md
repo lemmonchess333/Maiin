@@ -48,21 +48,40 @@ Then hard-refresh the app and retest Social → Progress → + Add Photo.
 If a new error (e.g. `storage/unauthorized`) surfaces, send it back —
 different fix (likely Storage rules, not CORS).
 
-### 2. Apple Server API secrets in Firebase Functions config
+### 2. Firebase Functions secrets — Secret Manager (Apple + Stripe + billing)
 
-The hardened IAP verification (`functions/appleIAP.js`) needs the
-Apple Server API credentials at runtime. Apply once:
+> **Changed by the firebase-functions v7 migration (PR #913).**
+> `functions.config()` was removed (the Cloud Runtime Config API shut
+> down 2025-12-31), so the old `firebase functions:config:set apple.*`
+> / `stripe.*` commands no longer work — they throw. All runtime
+> secrets now come from **Secret Manager** via `defineSecret`, bound to
+> each function with `runWith({ secrets: [...] })` and read as
+> `process.env.<NAME>`. Provision each one ONCE (interactive prompt for
+> the value):
 
 ```bash
-firebase functions:config:set \
-  apple.key_id="YOUR_KEY_ID" \
-  apple.issuer_id="YOUR_ISSUER_ID" \
-  apple.private_key="$(cat AuthKey_*.p8 | sed ':a;N;$!ba;s/\n/\\n/g')"
+# Apple Server API (functions/appleIAP.js → restoreApplePurchases)
+#   Source: App Store Connect → Users and Access → Keys → In-App Purchase.
+#   Download the .p8 once (can't re-download); keep the Key ID + Issuer ID.
+firebase functions:secrets:set APPLE_KEY_ID
+firebase functions:secrets:set APPLE_ISSUER_ID
+firebase functions:secrets:set APPLE_PRIVATE_KEY   # paste full .p8 contents
+
+# Stripe (createCheckoutSession, stripeWebhook, deleteMyAccount, + the 3 Apple callables)
+firebase functions:secrets:set STRIPE_SECRET_KEY
+firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+
+# Billing-identity HMAC (account-deletion tombstones → restoreApplePurchases)
+firebase functions:secrets:set BILLING_HMAC_SECRET   # 32-byte hex
+# BILLING_PREVIOUS_HMAC_SECRET — only during a key-rotation window
 ```
 
-Source: App Store Connect → Users and Access → Keys → In-App Purchase.
-Download the `.p8` file once (can't re-download). Save the Key ID and
-Issuer ID from that page.
+`ADMIN_UIDS` (moderation allowlist) is **not** a secret — set it as a
+plain env var (`functions/.env` or `--set-env-vars ADMIN_UIDS=uid1,uid2`).
+
+**Safety gate:** a `firebase deploy` that references a bound secret which
+hasn't been provisioned **fails** before shipping — so provision all of
+the above before the first post-migration functions deploy.
 
 ### 3. Deploy Cloud Functions + Firestore rules
 
@@ -77,6 +96,14 @@ The rules deploy activates the tightened activities/feeds/
 notifications/groups rules — most importantly it fixes the crews
 feature that's been silently default-denied in production (rules
 file used `/crews/`, code uses `/groups/`).
+
+**After deploy — deployed-source spot-check (firebase-functions v7
+migration).** CI-green does not prove the upload landed (the
+dedup/bundle-hash gotcha in CLAUDE.md). View the deployed source in the
+Console (`console.cloud.google.com/functions/details/us-central1/<name>/source`)
+and confirm it contains the `firebase-functions/v1` import and the
+`defineSecret(...)` lines. If absent, re-run `deploy-functions.yml` via
+`workflow_dispatch`.
 
 ### 4. App Store Connect — IAP products + webhook URL
 
@@ -117,7 +144,7 @@ The deletion executor (`functions/accountDeletion.js`) reads
 **fail-open by design**: a missing field, missing doc, or read failure
 all default to ENABLED (so an infra blip can't lock users out of
 deleting their account — a compliance requirement). The field only
-*halts* deletions when it is present **and the boolean `false`**.
+_halts_ deletions when it is present **and the boolean `false`**.
 
 The operator gotcha: the Firebase Console "Add field" UI defaults new
 values to **string** type. A string `"false"` is NOT the boolean
