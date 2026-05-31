@@ -821,7 +821,7 @@ export default function ProgrammeSettings({
       <button
         type="button"
         onClick={() => setConfirmReset(true)}
-        className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
+        className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
       >
         Reset Programme
       </button>
@@ -878,11 +878,11 @@ export default function ProgrammeSettings({
               <div className="flex items-start gap-3">
                 <div
                   className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: "rgba(245,158,11,0.12)" }}
+                  style={{ backgroundColor: `${THEME.amber}1F` }}
                 >
                   <AlertTriangle
                     className="size-4"
-                    style={{ color: "#f59e0b" }}
+                    style={{ color: THEME.amber }}
                   />
                 </div>
                 <div className="min-w-0">
