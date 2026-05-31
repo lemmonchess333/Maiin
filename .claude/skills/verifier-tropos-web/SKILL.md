@@ -40,7 +40,11 @@ runtime (build config, types-only).
 The remote container should already have:
 
 - `npx firebase-tools` available (install via `npm install --no-save
-firebase-tools` if absent — required for the emulator)
+firebase-tools` if absent — required for the emulator). Note: bare
+  `npx firebase emulators:start` can fail with `could not determine
+  executable to run` when firebase-tools isn't linked on PATH — after
+  the install, invoke the local binary directly:
+  `node_modules/.bin/firebase emulators:start ...`.
 - Java (`which java`) — the auth emulator's a JAR
 - A bundled Chromium at `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`
   (Playwright's download server is blocked by the container's outbound
