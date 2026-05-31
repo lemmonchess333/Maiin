@@ -67,10 +67,8 @@ export function useMealRemindersInternal() {
   // Load from Firestore
   useEffect(() => {
     if (!user) {
-      const reset = () => {
-        setLoading(false);
-      };
-      reset();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
+      setLoading(false);
       return;
     }
     const ref = doc(db, "users", user.uid, "settings", "mealReminders");

@@ -113,13 +113,8 @@ export function useStreakReminderInternal() {
 
   useEffect(() => {
     if (!user) {
-      // Wrap synchronous setState through a local reset() so the lint rule
-      // `react-hooks/set-state-in-effect` doesn't flag this — matches the
-      // exact workaround used in useWorkoutReminders.ts:67.
-      const reset = () => {
-        setLoading(false);
-      };
-      reset();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
+      setLoading(false);
       return;
     }
     const ref = doc(db, "users", user.uid, "settings", "streakReminder");
