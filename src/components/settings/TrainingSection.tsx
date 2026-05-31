@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Minus,
   Plus,
-  Check,
   Flag,
   Calendar,
 } from "lucide-react";
@@ -23,6 +22,7 @@ import { setRaceGoalPatch } from "@/features/program/runModeResolution";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
 /**
  * Set1.1 + A1c + Run8: TrainingSection hosts post-onboarding plan
@@ -357,38 +357,17 @@ export default function TrainingSection({
             migration, just not offered here. */}
         <div className="rounded-xl bg-card border border-border/40 p-3 space-y-2">
           <p className="text-sm font-medium text-foreground">Mode</p>
-          <div role="radiogroup" aria-label="Run mode" className="flex gap-2">
-            {(["freeform", "race_prep"] as const).map((mode) => {
-              const isSelected = selectedMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() => handleModeChange(mode)}
-                  disabled={modeChangePending}
-                  className={cn(
-                    "flex-1 min-h-[44px] px-3 rounded-lg text-xs font-medium",
-                    "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
-                    isSelected
-                      ? "text-white"
-                      : "bg-muted text-muted-foreground",
-                    modeChangePending &&
-                      !isSelected &&
-                      "opacity-40 cursor-not-allowed"
-                  )}
-                  style={
-                    isSelected ? { backgroundColor: THEME.running } : undefined
-                  }
-                >
-                  {mode === "race_prep"
-                    ? "Race Prep"
-                    : mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl<RunMode>
+            ariaLabel="Run mode"
+            tone="running"
+            options={[
+              { value: "freeform", label: "Freeform" },
+              { value: "race_prep", label: "Race Prep" },
+            ]}
+            value={selectedMode}
+            onChange={handleModeChange}
+            disabled={modeChangePending}
+          />
           <p className="text-xs text-muted-foreground">
             {MODE_DESCRIPTIONS[selectedMode]}
           </p>
@@ -595,40 +574,17 @@ export default function TrainingSection({
         {/* Lift split picker */}
         <div className="rounded-xl bg-card border border-border/40 px-3 py-2.5 space-y-2">
           <p className="text-sm font-medium text-foreground">Lift split</p>
-          <div
-            role="radiogroup"
-            aria-label="Lift split"
-            className="flex flex-wrap gap-1.5"
-          >
-            {SPLIT_OPTIONS.map((opt) => {
-              const isSelected = split === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() => handleSplitChange(opt.id)}
-                  disabled={pending !== null && pending !== "split"}
-                  className={cn(
-                    "px-3 min-h-[44px] rounded-lg text-xs font-medium inline-flex items-center gap-1",
-                    "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
-                    isSelected
-                      ? "bg-primary-strong text-primary-foreground"
-                      : "bg-muted text-muted-foreground",
-                    pending !== null &&
-                      pending !== "split" &&
-                      "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {isSelected ? (
-                    <Check className="size-3" aria-hidden="true" />
-                  ) : null}
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl<PreferredSplit>
+            ariaLabel="Lift split"
+            layout="wrap"
+            options={SPLIT_OPTIONS.map((opt) => ({
+              value: opt.id,
+              label: opt.label,
+            }))}
+            value={split}
+            onChange={handleSplitChange}
+            disabled={pending !== null && pending !== "split"}
+          />
         </div>
       </div>
 
