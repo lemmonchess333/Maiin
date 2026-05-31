@@ -19,9 +19,10 @@
  * tombstone collection there's no offline shortcut.
  *
  * Operational contract:
- *   - `billing.hmac_secret` MUST be provisioned via Firebase Functions
- *     config before any code path that reads or writes billing
- *     tombstones runs in production.
+ *   - `BILLING_HMAC_SECRET` MUST be provisioned as a Secret Manager
+ *     secret (firebase-functions/params `defineSecret`) and bound to
+ *     any callable that reads or writes billing tombstones before that
+ *     code path runs in production.
  *   - Missing secret = deploy-time misconfiguration. The helper throws
  *     a specific error with the provisioning command in the message.
  *   - The restore-purchase site catches the throw, logs structured
@@ -36,7 +37,7 @@
  *     exposes a lookup that tries the active secret first and falls
  *     back to a previous secret if the active lookup misses.
  *   - Single-secret deployment (no rotation yet) skips the
- *     `previous_hmac_secret` config entry entirely.
+ *     `BILLING_PREVIOUS_HMAC_SECRET` secret entirely.
  *
  * Tests: src/lib/__tests__/accountDeletionBillingHash.test.ts
  */
@@ -45,36 +46,29 @@
 const crypto = require("crypto");
 
 /**
- * Read the active billing HMAC secret from Firebase Functions config.
+ * Read the active billing HMAC secret from the runtime environment.
  * Returns null when the secret is unavailable — caller decides what to
  * do (typically: throw, or skip the lookup with a structured warning).
  *
- * Wrapped in try/catch so this module is importable from unit-test
- * contexts that don't have firebase-functions installed.
+ * Source is process.env.BILLING_HMAC_SECRET, populated by the
+ * firebase-functions/params `defineSecret("BILLING_HMAC_SECRET")`
+ * binding on the callables that perform billing-tombstone lookups
+ * (restoreApplePurchases). Pre-v7 this read functions.config().billing;
+ * that runtime-config API was removed in firebase-functions v7. Reading
+ * process.env keeps this module importable from unit tests without
+ * booting firebase-functions.
  */
 function getBillingHmacSecret() {
-  try {
-    // Lazy require so unit tests can mock or skip this branch.
-    const functions = require("firebase-functions");
-    const cfg = functions.config && functions.config();
-    return (cfg && cfg.billing && cfg.billing.hmac_secret) || null;
-  } catch (_err) {
-    return null;
-  }
+  return process.env.BILLING_HMAC_SECRET || null;
 }
 
 /**
  * Read the previous billing HMAC secret used for rotation-window
- * lookups. Returns null when no rotation is in progress.
+ * lookups. Returns null when no rotation is in progress. Sourced from
+ * process.env.BILLING_PREVIOUS_HMAC_SECRET (defineSecret binding).
  */
 function getPreviousBillingHmacSecret() {
-  try {
-    const functions = require("firebase-functions");
-    const cfg = functions.config && functions.config();
-    return (cfg && cfg.billing && cfg.billing.previous_hmac_secret) || null;
-  } catch (_err) {
-    return null;
-  }
+  return process.env.BILLING_PREVIOUS_HMAC_SECRET || null;
 }
 
 /**
@@ -98,11 +92,11 @@ function computeBillingHash(provider, identifier, secret) {
 }
 
 /**
- * Production helper: read secret from Functions config and compute the
+ * Production helper: read secret from the runtime env and compute the
  * tombstone key for a billing identity. Throws a specific error if the
  * secret isn't provisioned — operator must run:
  *
- *   firebase functions:config:set billing.hmac_secret="<32-byte-hex>"
+ *   firebase functions:secrets:set BILLING_HMAC_SECRET
  */
 function billingIdentityHash(provider, identifier) {
   const secret = getBillingHmacSecret();
@@ -132,7 +126,7 @@ function billingIdentityLookupHashes(provider, identifier) {
 
 function makeSecretMissingError() {
   const err = new Error(
-    "billing.hmac_secret not provisioned. Run: firebase functions:config:set billing.hmac_secret=\"<32-byte-hex>\"",
+    "BILLING_HMAC_SECRET not provisioned. Run: firebase functions:secrets:set BILLING_HMAC_SECRET (32-byte-hex value)",
   );
   err.code = "failed-precondition";
   err.errorCode = "billing-hmac-secret-missing";
