@@ -878,11 +878,11 @@ export default function ProgrammeSettings({
               <div className="flex items-start gap-3">
                 <div
                   className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: "rgba(245,158,11,0.12)" }}
+                  style={{ backgroundColor: `${THEME.amber}1F` }}
                 >
                   <AlertTriangle
                     className="size-4"
-                    style={{ color: "#f59e0b" }}
+                    style={{ color: THEME.amber }}
                   />
                 </div>
                 <div>
