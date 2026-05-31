@@ -98,10 +98,7 @@ import {
   buildRaceCockpitViewModel,
   compactRunLabel,
 } from "@/lib/runProgrammeViewModel";
-import {
-  resolveTrainingWindow,
-  resolveTrainingDayForDate,
-} from "@/lib/trainingResolver";
+import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
 import {
   localDateString,
@@ -374,9 +371,8 @@ export default function ProgrammeRunSection({
 
   // ── Cockpit view models (pure derivations in runProgrammeViewModel) ──
   // Race cockpit identity card data (null when no race goal — the card
-  // simply doesn't render). currentWeekKey/todayKey are passed in so the
-  // helper stays deterministic and unit-testable.
-  const currentWeekKeyDerivation = localWeekKey(new Date());
+  // simply doesn't render). todayKey is passed in so the helper stays
+  // deterministic and unit-testable.
   const raceCockpitVM = useMemo(
     () =>
       buildRaceCockpitViewModel({
@@ -436,19 +432,13 @@ export default function ProgrammeRunSection({
     [runWindow, todayKeyDerivation]
   );
 
-  // Resolve the SELECTED day for the command card. Single source of truth —
-  // its `startUrl` already carries ?template=&scheduledRunId= when startable.
-  const selectedDay = useMemo(
-    () =>
-      resolveTrainingDayForDate({
-        dateKey: selectedDateKey,
-        profile,
-        programState,
-        currentWeekKey: currentWeekKeyDerivation,
-        claimMap,
-      }),
-    [selectedDateKey, profile, programState, currentWeekKeyDerivation, claimMap]
-  );
+  // The SELECTED day for the command card — taken straight from the already-
+  // resolved 7-day window (the selector only ever selects a day in it; the
+  // default is today = window[0]). Avoids a second resolver pass over the same
+  // window. `startUrl` already carries ?template=&scheduledRunId= when
+  // startable. Falls back to today if a stale key isn't in the window.
+  const selectedDay =
+    runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[0];
   const selectedRun = selectedDay.run;
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
