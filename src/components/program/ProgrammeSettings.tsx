@@ -821,7 +821,7 @@ export default function ProgrammeSettings({
       <button
         type="button"
         onClick={() => setConfirmReset(true)}
-        className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-500 text-sm font-medium hover:bg-red-500/20 transition-colors"
+        className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
       >
         Reset Programme
       </button>
