@@ -5,15 +5,23 @@
  * surface needs a working moderation queue without sinking a
  * sprint into a custom-claims rollout. This is the trade-off:
  * an env-var allowlist of admin uids checked on every privileged
- * callable. Simple, auditable in the Firebase Functions config,
- * upgradable to custom claims later without breaking callers.
+ * callable. Simple, auditable, upgradable to custom claims later
+ * without breaking callers.
  *
- *   firebase functions:config:set admin.uids="uid1,uid2,uid3"
- *   firebase deploy --only functions
+ * Provisioned via the ADMIN_UIDS environment variable (comma-
+ * separated). Non-secret, so a plain env var (`.env`/`--set-env-vars`)
+ * is sufficient — no Secret Manager binding required:
+ *
+ *   # functions/.env (or deploy-time --set-env-vars)
+ *   ADMIN_UIDS=uid1,uid2,uid3
  *
  * Or for local dev / emulator runs:
  *
  *   ADMIN_UIDS=uid1,uid2 firebase emulators:start
+ *
+ * (Pre-v7 this also read functions.config().admin.uids; that runtime
+ * config API was shut down 2025-12-31 and throws under
+ * firebase-functions v7, so the env var is now the sole source.)
  *
  * The check is the canonical trust boundary — the client-side
  * mirror in src/lib/adminAuth.ts gates UI visibility only;
@@ -21,19 +29,16 @@
  * still fails the server check.
  */
 
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 
 /**
- * Parse the admin-uid allowlist from process.env.ADMIN_UIDS or
- * functions.config().admin.uids. Comma-separated, whitespace
- * tolerant. Returns a Set for O(1) lookup. Empty when neither
- * is set — the gate fails closed (every callable rejects).
+ * Parse the admin-uid allowlist from process.env.ADMIN_UIDS.
+ * Comma-separated, whitespace tolerant. Returns a Set for O(1)
+ * lookup. Empty when unset — the gate fails closed (every
+ * callable rejects).
  */
 function getAdminUidAllowlist() {
-  const raw =
-    process.env.ADMIN_UIDS ||
-    (functions.config && functions.config().admin && functions.config().admin.uids) ||
-    "";
+  const raw = process.env.ADMIN_UIDS || "";
   const list = String(raw)
     .split(",")
     .map((s) => s.trim())
@@ -68,7 +73,7 @@ function assertAdminCallable(uid) {
   if (!isAdminUid(uid)) {
     throw new functions.https.HttpsError(
       "permission-denied",
-      "This action requires moderator privileges.",
+      "This action requires moderator privileges."
     );
   }
 }
