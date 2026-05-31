@@ -21,6 +21,11 @@ interface FoodEntry {
   fat: number;
 }
 
+/* Coerce empty string → 0 (water, black coffee, 0-cal entries are
+   legitimate). Number("") returns NaN; we want 0. Shared by both the
+   save and the override-save paths. */
+const numOrZero = (s: string) => (s.trim() === "" ? 0 : Number(s));
+
 interface Props {
   date?: string;
   /* Meal slot ("breakfast" / "lunch" / "snacks" / "dinner") if the
@@ -117,9 +122,6 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const handleSave = async () => {
     if (!user || !name.trim()) return;
 
-    /* Coerce empty string → 0 (water, black coffee, 0-cal entries
-       are legitimate). Number("") returns NaN; we want 0. */
-    const numOrZero = (s: string) => (s.trim() === "" ? 0 : Number(s));
     const entry: FoodEntry = {
       name: name.trim(),
       calories: numOrZero(calories),
@@ -146,7 +148,6 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
   const handleConfirmOverride = async () => {
     setWarnTitle(null);
-    const numOrZero = (s: string) => (s.trim() === "" ? 0 : Number(s));
     const entry: FoodEntry = {
       name: name.trim(),
       calories: numOrZero(calories),
