@@ -73,10 +73,22 @@ export default function FoodMealSection({
   onDelete,
   onEdit,
 }: FoodMealSectionProps) {
-  const mealCals = meals.reduce((s, m) => s + safeNum(m.totalCalories), 0);
-  const totalPro = meals.reduce((s, m) => s + safeNum(m.totalProtein), 0);
-  const totalCarb = meals.reduce((s, m) => s + safeNum(m.totalCarbs), 0);
-  const totalFat = meals.reduce((s, m) => s + safeNum(m.totalFat), 0);
+  // Single pass over the meal docs accumulates all four macro totals at once
+  // (was four independent .reduce() passes over the same array).
+  const totals = meals.reduce(
+    (acc, m) => {
+      acc.cals += safeNum(m.totalCalories);
+      acc.pro += safeNum(m.totalProtein);
+      acc.carb += safeNum(m.totalCarbs);
+      acc.fat += safeNum(m.totalFat);
+      return acc;
+    },
+    { cals: 0, pro: 0, carb: 0, fat: 0 }
+  );
+  const mealCals = totals.cals;
+  const totalPro = totals.pro;
+  const totalCarb = totals.carb;
+  const totalFat = totals.fat;
 
   // Group populated items by lowercased food name so multiple logs
   // of the same food collapse to a single diary row with a count.
