@@ -300,7 +300,7 @@ export default function ShoesManager() {
               <button
                 type="button"
                 onClick={() => retireShoe(shoe.id)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
                 title="Retire shoe"
               >
                 <Archive className="size-4" />

@@ -389,7 +389,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
                         >
                           DNF — Started but didn&apos;t finish
                         </button>
@@ -401,7 +401,7 @@ export default function DayActionSheet({
                             );
                             onClose();
                           }}
-                          className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
                         >
                           DNS — Didn&apos;t start
                         </button>
@@ -416,7 +416,7 @@ export default function DayActionSheet({
                           );
                           onClose();
                         }}
-                        className="w-full py-3 rounded-xl text-sm font-bold bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                        className="w-full py-3 rounded-xl text-sm font-bold bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
                       >
                         Skip this run
                       </button>
@@ -478,7 +478,7 @@ export default function DayActionSheet({
                 }}
                 className={cn(
                   "w-full py-3 rounded-xl text-sm font-bold",
-                  "bg-red-500/10 text-red-500 active:scale-[0.97] transition-transform"
+                  "bg-destructive/10 text-destructive active:scale-[0.97] transition-transform"
                 )}
               >
                 Skip this lift

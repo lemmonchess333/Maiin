@@ -137,7 +137,7 @@ export default function PrivacySection({
                 <button
                   type="button"
                   onClick={() => setShowLeaveCrewConfirm(true)}
-                  className="w-full text-center text-xs text-muted-foreground hover:text-red-400 py-1"
+                  className="w-full text-center text-xs text-muted-foreground hover:text-destructive py-1"
                 >
                   Leave crew
                 </button>
