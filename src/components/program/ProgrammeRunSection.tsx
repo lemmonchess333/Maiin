@@ -1,15 +1,21 @@
 /**
  * Programme Run tab — hybrid training cockpit.
  *
- * Cockpit refactor: the race-goal overlay renders the training-plan
- * primitives (RaceCockpitCard → SessionCommandCard → HybridWeekRail);
- * freeform keeps its "Start a run" hero, with HybridWeekRail also showing
- * its lift week + logged-run extras. Locked model (Run9a): freeform
- * substrate + optional race-goal overlay — no structured mode, no mode
- * chips. Active plan editing deep-links to /settings/training ("Edit run
- * plan" footer). The banner stack + race-today / race-recent / recovery /
- * fell-behind hero states below are unchanged. See CLAUDE.md → "Training
- * plan primitives" and src/lib/runProgrammeViewModel.ts.
+ * Navigation cleanup (2026-05-31): the Run tab is now driven by a single
+ * date-pinned ProgrammeWeekSelector (shared with the Lift tab) that controls
+ * a selected-day command card — Start run / Start race for a planned day
+ * (+ secondary Start free run), or a calm date-led "No run scheduled" + Start
+ * free run. This replaced the global "next planned run" SessionCommandCard
+ * (which ignored the selected day) and the in-tab HybridWeekRail. The
+ * RaceCockpitCard (race progress) renders BELOW the command card. Freeform
+ * keeps its "Start a run" hero with no selector ("start whenever" — no
+ * scheduled runs). Locked model (Run9a): freeform substrate + optional
+ * race-goal overlay — no structured mode, no mode chips. The banner stack +
+ * race-today / race-recent / recovery / fell-behind hero states stay as
+ * top overlays, unchanged. Active plan editing deep-links to
+ * /settings/training ("Edit run plan" footer). See ADR-0002 (dual scheduling
+ * ontology), CLAUDE.md → "Training plan primitives", and
+ * src/lib/runProgrammeViewModel.ts.
  *
  * Historical context (pre-cockpit) follows.
  *
