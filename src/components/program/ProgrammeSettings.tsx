@@ -52,8 +52,10 @@ import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Toggle } from "@/components/ui/Toggle";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { computeProgrammeChanges } from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import type {
@@ -429,23 +431,22 @@ export default function ProgrammeSettings({
     return false;
   }
 
-  const injuriesEqual = (a: string[], b: string[]) =>
-    a.length === b.length && [...a].sort().join() === [...b].sort().join();
-
-  // Dirty = any plan-shaping draft field diverges from the persisted value.
-  const dirty =
-    primaryGoal !== saved.primaryGoal ||
-    nutritionPhase !== saved.nutritionPhase ||
-    experience !== saved.experience ||
-    liftDays !== saved.liftDays ||
-    preferredSplit !== saved.preferredSplit ||
-    equipment !== saved.equipment ||
-    !injuriesEqual(injuries, saved.injuries) ||
-    runMode !== saved.runMode ||
-    (runMode !== "freeform" && weeklyRunDays !== saved.weeklyRunDays) ||
-    (runMode === "race_prep" &&
-      (raceDistance !== saved.raceDistance ||
-        raceTargetDate !== saved.raceTargetDate));
+  // The per-field diff is the single source of truth: the recap shown in the
+  // confirm modal and the dirty state both derive from it, so they can't drift.
+  const changes = computeProgrammeChanges(saved, {
+    primaryGoal,
+    nutritionPhase,
+    experience,
+    liftDays,
+    preferredSplit,
+    equipment,
+    injuries,
+    runMode,
+    weeklyRunDays,
+    raceDistance,
+    raceTargetDate,
+  });
+  const dirty = changes.length > 0;
 
   // A race-prep plan needs a target date that isn't in the past.
   const raceDateInvalid =
@@ -583,23 +584,12 @@ export default function ProgrammeSettings({
       {/* ── Lifting ── */}
       <div>
         <SectionLabel>Lift days per week</SectionLabel>
-        <div className="flex gap-2">
-          {[2, 3, 4, 5, 6].map((d) => (
-            <button
-              type="button"
-              key={d}
-              onClick={() => setLiftDays(d)}
-              className={cn(
-                "flex-1 min-h-[44px] rounded-xl text-sm font-bold transition-all active:scale-95",
-                liftDays === d
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          ariaLabel="Lift days per week"
+          options={[2, 3, 4, 5, 6].map((d) => ({ value: d, label: String(d) }))}
+          value={liftDays}
+          onChange={setLiftDays}
+        />
       </div>
 
       <div>
@@ -675,34 +665,23 @@ export default function ProgrammeSettings({
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
                 Distance
               </p>
-              <div className="flex gap-1.5">
-                {(["5k", "10k", "half", "marathon"] as RaceDistance[]).map(
-                  (d) => (
-                    <button
-                      type="button"
-                      key={d}
-                      onClick={() => setRaceDistance(d)}
-                      className={cn(
-                        "flex-1 min-h-[44px] rounded-lg text-xs font-medium transition-all",
-                        raceDistance === d
-                          ? "text-white"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                      style={
-                        raceDistance === d
-                          ? { background: THEME.running }
-                          : undefined
-                      }
-                    >
-                      {d === "half"
-                        ? "Half"
-                        : d === "marathon"
-                          ? "Full"
-                          : d.toUpperCase()}
-                    </button>
-                  )
-                )}
-              </div>
+              <SegmentedControl
+                ariaLabel="Race distance"
+                tone="running"
+                options={(
+                  ["5k", "10k", "half", "marathon"] as RaceDistance[]
+                ).map((d) => ({
+                  value: d,
+                  label:
+                    d === "half"
+                      ? "Half"
+                      : d === "marathon"
+                        ? "Full"
+                        : d.toUpperCase(),
+                }))}
+                value={raceDistance}
+                onChange={setRaceDistance}
+              />
             </div>
             <div>
               <label
@@ -885,17 +864,45 @@ export default function ProgrammeSettings({
                     style={{ color: THEME.amber }}
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-foreground">
                     {confirmReset ? "Reset programme?" : "Save changes?"}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {confirmReset
-                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Logged workouts in History stay intact."
-                      : "We'll regenerate your workouts and run plan with these settings. You keep your current week and history — logged workouts stay intact."}
+                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Your logged workouts and runs stay in History."
+                      : "We'll regenerate your upcoming workouts and run plan with these settings. Your current week and past summaries are kept, and your logged workouts and runs stay in History."}
                   </p>
                 </div>
               </div>
+
+              {/* What's changing — recap of the touched fields (rebuild only). */}
+              {!confirmReset && changes.length > 0 && (
+                <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                    Changes
+                  </p>
+                  <ul className="space-y-1 max-h-44 overflow-y-auto">
+                    {changes.map((c) => (
+                      <li
+                        key={c.label}
+                        className="flex items-baseline justify-between gap-2 text-xs"
+                      >
+                        <span className="text-muted-foreground shrink-0">
+                          {c.label}
+                        </span>
+                        <span className="min-w-0 text-right font-medium text-foreground">
+                          <span className="text-muted-foreground">
+                            {c.from}
+                          </span>
+                          <span className="mx-1 text-muted-foreground">→</span>
+                          {c.to}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
