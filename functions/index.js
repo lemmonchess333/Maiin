@@ -1,4 +1,10 @@
-const functions = require("firebase-functions");
+// firebase-functions v6+ repointed the bare `require("firebase-functions")`
+// at the 2nd-gen API. Every export in this file is 1st-gen
+// (runWith().https.onCall/onRequest, .pubsub.schedule,
+// .firestore.document().onCreate, https.HttpsError, logger), which now
+// lives under /v1. Importing /v1 keeps the entire trigger surface intact.
+const functions = require("firebase-functions/v1");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
@@ -115,6 +121,21 @@ const DEFAULT_HTTP_CAP = { maxInstances: 100 };
 const ADMIN_HTTP_CAP = { maxInstances: 10 };
 const TRIGGER_CAP = { maxInstances: 50 };
 
+// ══════════════════════════════════════════════
+// SECRETS — Secret Manager bindings (replaces functions.config)
+// ══════════════════════════════════════════════
+//
+// firebase-functions v7 removed functions.config() (the Cloud Runtime
+// Configuration API was shut down 2025-12-31). The canonical
+// replacement is firebase-functions/params `defineSecret`: declare the
+// secret here, list it in a function's runWith({ secrets: [...] }), and
+// Firebase mounts the Secret Manager value into process.env at runtime.
+// Read sites stay as `process.env.STRIPE_SECRET_KEY`. Provision with:
+//   firebase functions:secrets:set STRIPE_SECRET_KEY
+//   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+
 // Scheduled (pubsub cron) sweeps iterate EVERY active user/crew via
 // sweepActiveUsers / a crews loop. The Cloud Functions v1 default timeout is
 // 60s — at ~1000 users a full sweep blows past that and is HARD-KILLED
@@ -156,7 +177,8 @@ const { redactVertexResponse } = require("./lib/vertexLogRedaction");
 // the Auth user as the final step. Partial failure leaves the user
 // logged in and retryable rather than stranded.
 exports.deleteMyAccount = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  // STRIPE_SECRET_KEY: cancels the user's active Stripe sub before purge.
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
@@ -217,9 +239,10 @@ exports.deleteMyAccount = functions
           stripeSubscriptionId,
           logger: log,
         }) => {
-          const stripeKey =
-            process.env.STRIPE_SECRET_KEY ||
-            (functions.config().stripe && functions.config().stripe.secret_key);
+          // From Secret Manager via the STRIPE_SECRET_KEY defineSecret
+          // binding on this function. (functions.config() fallback
+          // removed — it throws under firebase-functions v7.)
+          const stripeKey = process.env.STRIPE_SECRET_KEY;
           if (!stripeKey) {
             // Missing key is operator misconfiguration, not user
             // error — let the executor log + proceed; an operator
@@ -1255,7 +1278,8 @@ const _isAllowedStripeReturnUrl = helpers.isAllowedStripeReturnUrl;
 const _buildStripeReturnUrl = helpers.buildStripeReturnUrl;
 
 exports.createCheckoutSession = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  // STRIPE_SECRET_KEY: creates the Stripe Checkout session.
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })
   .https.onRequest((req, res) => {
     corsForPayments(req, res, async () => {
       try {
@@ -1413,10 +1437,10 @@ exports.createCheckoutSession = functions
           return;
         }
 
-        // Stripe secret key from Firebase config or environment
-        const stripeKey =
-          process.env.STRIPE_SECRET_KEY ||
-          (functions.config().stripe && functions.config().stripe.secret_key);
+        // Stripe secret key from Secret Manager (STRIPE_SECRET_KEY
+        // defineSecret binding on this function). functions.config()
+        // fallback removed — it throws under firebase-functions v7.
+        const stripeKey = process.env.STRIPE_SECRET_KEY;
 
         if (!stripeKey) {
           functions.logger.error("createCheckoutSession.stripe_key_missing");
@@ -1533,19 +1557,24 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // ══════════════════════════════════════════════
 
 exports.stripeWebhook = functions
-  .runWith(DEFAULT_HTTP_CAP)
+  // Both secrets from Secret Manager via defineSecret bindings:
+  // STRIPE_SECRET_KEY (Stripe client) + STRIPE_WEBHOOK_SECRET
+  // (signature verification).
+  .runWith({
+    ...DEFAULT_HTTP_CAP,
+    secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET],
+  })
   .https.onRequest(async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).json({ error: "Method not allowed" });
       return;
     }
 
-    const stripeKey =
-      process.env.STRIPE_SECRET_KEY ||
-      (functions.config().stripe && functions.config().stripe.secret_key);
-    const webhookSecret =
-      process.env.STRIPE_WEBHOOK_SECRET ||
-      (functions.config().stripe && functions.config().stripe.webhook_secret);
+    // functions.config() fallbacks removed — throws under
+    // firebase-functions v7. Values arrive via process.env from the
+    // bound Secret Manager secrets above.
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!stripeKey || !webhookSecret) {
       console.error("stripeWebhook: Stripe keys not configured");
@@ -2356,9 +2385,19 @@ function _decideReconciliationActions(
   }
 
   if (!noShowWritten && !recoveryCleared) {
-    return { payload: null, profilePayload: null, noShowWritten, recoveryCleared };
+    return {
+      payload: null,
+      profilePayload: null,
+      noShowWritten,
+      recoveryCleared,
+    };
   }
-  return { payload: updatePayload, profilePayload, noShowWritten, recoveryCleared };
+  return {
+    payload: updatePayload,
+    profilePayload,
+    noShowWritten,
+    recoveryCleared,
+  };
 }
 
 /** Run9 3b — reconstruct the recovery-end date a given race goal would
