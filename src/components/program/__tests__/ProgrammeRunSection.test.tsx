@@ -29,11 +29,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
+import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type {
   ProgramState,
   ScheduledRunDay,
 } from "@/features/program/programTypes";
+
+// The Run-week selector is date-pinned and its selected-day command card
+// defaults to TODAY, so a planned run only surfaces in the default card when
+// its date IS today. These tests target today so the card resolves them
+// regardless of the real clock.
+const TODAY_KEY = localDateString(new Date());
+const TODAY_DOW = new Date().getDay();
 
 // A1c cleanup — the "Change plan" link now deeplinks to
 // /settings/training instead of opening the legacy ConfigurePlanModal.
@@ -220,20 +228,26 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   // swap <select> was a duplicate of DayActionSheet's same picker
   // and is gone. Edit path is now tap-through → DayActionSheet.
 
-  it("renders the hybrid week rail (no inline template <select>)", () => {
+  it("renders the run-week selector (no inline template <select>)", () => {
     const programState = makeProgramState([makeRunDay({ status: "planned" })]);
     const { container } = renderSection(commonProps(), programState);
     expect(container.querySelectorAll("select").length).toBe(0);
-    expect(screen.getByText("This week")).toBeInTheDocument();
+    // The single date-pinned Run selector (replaces the old "This week" rail).
+    expect(
+      screen.getByRole("tablist", { name: /Run week/i })
+    ).toBeInTheDocument();
   });
 
-  it("strikes through terminal runs (skipped) in the strip — no passive copy", () => {
-    const programState = makeProgramState([makeRunDay({ status: "skipped" })]);
+  it("marks a skipped run in the selector — no passive copy", () => {
+    // Date it today so it lands in the selector's rolling 7-day window.
+    const programState = makeProgramState([
+      makeRunDay({ status: "skipped", date: TODAY_KEY, dayIndex: TODAY_DOW }),
+    ]);
     renderSection(commonProps(), programState);
-    // Find the column button for that day and confirm its label is strikethrough.
-    const col = screen.getByRole("button", { name: /Tue.*skipped/i });
-    const label = col.querySelector(".line-through");
-    expect(label).not.toBeNull();
+    // The selector cell (role="tab") announces the skipped state via aria-label.
+    expect(
+      screen.getAllByRole("tab", { name: /skipped/i }).length
+    ).toBeGreaterThan(0);
     expect(
       screen.queryByText(/Race completed separately/i)
     ).not.toBeInTheDocument();
@@ -465,16 +479,20 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
 describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
   beforeEachReset();
 
-  it("promotes a SessionCommandCard (Start run) for a race-prep user with a planned run", () => {
+  it("drives the selected-day command card (Start run) for a race-prep user with a planned run today", () => {
     const props = commonProps();
-    // Race-prep with a goal is the only non-freeform state (Run9a). The
-    // next startable run surfaces as a SessionCommandCard with a Start run
-    // primary action — no "Next · Pending" status-row copy.
+    // Race-prep with a goal is the only non-freeform state (Run9a). A run
+    // planned for the selected day (default: today) surfaces as the
+    // SessionCommandCard with a Start run primary action — no "Next ·" copy.
     renderWith(
       <ProgrammeRunSection
         {...props}
         programState={makeProgramState([
-          makeRunDay({ status: "planned", dayIndex: 3 }),
+          makeRunDay({
+            status: "planned",
+            date: TODAY_KEY,
+            dayIndex: TODAY_DOW,
+          }),
         ])}
       />
     );
