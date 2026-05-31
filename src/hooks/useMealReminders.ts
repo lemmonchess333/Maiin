@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { setDocGuarded } from '@/lib/firestoreWrite';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/auth';
+import { useState, useEffect, useCallback } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
 import {
   scheduleNotification,
   cancelNotification,
   requestNotificationPermission,
-} from '@/lib/notifications';
-import { logger } from '@/lib/logger';
-import { captureError } from '@/lib/errorReporting';
+} from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/errorReporting";
 
 export interface MealReminders {
   enabled: boolean;
@@ -20,9 +20,9 @@ export interface MealReminders {
 
 const DEFAULT_REMINDERS: MealReminders = {
   enabled: false,
-  breakfast: { enabled: true, time: '08:00' },
-  lunch: { enabled: true, time: '12:30' },
-  dinner: { enabled: true, time: '18:30' },
+  breakfast: { enabled: true, time: "08:00" },
+  lunch: { enabled: true, time: "12:30" },
+  dinner: { enabled: true, time: "18:30" },
 };
 
 // Stable notification IDs across all Tropos scheduled notifications.
@@ -66,37 +66,55 @@ export function useMealRemindersInternal() {
 
   // Load from Firestore
   useEffect(() => {
-    if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
-    const ref = doc(db, 'users', user.uid, 'settings', 'mealReminders');
-    getDoc(ref).then((snap) => {
-      if (snap.exists()) {
-        setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as MealReminders });
-      }
-      setLoading(false);
-    }).catch((err) => {
-      logger.error('[MealReminders] load failed', err);
-      setLoading(false);
-    });
+    if (!user) {
+      const reset = () => {
+        setLoading(false);
+      };
+      reset();
+      return;
+    }
+    const ref = doc(db, "users", user.uid, "settings", "mealReminders");
+    getDoc(ref)
+      .then((snap) => {
+        if (snap.exists()) {
+          setReminders({
+            ...DEFAULT_REMINDERS,
+            ...(snap.data() as MealReminders),
+          });
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        logger.error("[MealReminders] load failed", err);
+        setLoading(false);
+      });
   }, [user]);
 
   // Save to Firestore. Errors are reported via captureError (Firestore
   // writes are CRITICAL_KEYWORDS-tagged so they persist to users/{uid}/errors)
   // but not re-thrown — the UI already did an optimistic setReminders, a
   // background write failure shouldn't crash the toggle flow.
-  const updateReminders = useCallback(async (updates: Partial<MealReminders>) => {
-    if (!user) return;
-    const updated = { ...reminders, ...updates };
-    setReminders(updated);
-    const ref = doc(db, 'users', user.uid, 'settings', 'mealReminders');
-    try {
-      await setDocGuarded(ref, updated);
-    } catch (err) {
-      logger.error('[MealReminders] save failed', err);
-      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
-        surface: 'mealReminders.save',
-      });
-    }
-  }, [user, reminders]);
+  const updateReminders = useCallback(
+    async (updates: Partial<MealReminders>) => {
+      if (!user) return;
+      const updated = { ...reminders, ...updates };
+      setReminders(updated);
+      const ref = doc(db, "users", user.uid, "settings", "mealReminders");
+      try {
+        await setDocGuarded(ref, updated);
+      } catch (err) {
+        logger.error("[MealReminders] save failed", err);
+        captureError(
+          err instanceof Error ? err : new Error(String(err)),
+          "network",
+          {
+            surface: "mealReminders.save",
+          }
+        );
+      }
+    },
+    [user, reminders]
+  );
 
   // Schedule / reschedule the next occurrence of each enabled meal reminder
   useEffect(() => {
@@ -114,9 +132,13 @@ export function useMealRemindersInternal() {
         config: { enabled: boolean; time: string };
         title: string;
       }> = [
-        { key: 'breakfast', config: reminders.breakfast, title: 'Time for breakfast' },
-        { key: 'lunch', config: reminders.lunch, title: 'Time for lunch' },
-        { key: 'dinner', config: reminders.dinner, title: 'Time for dinner' },
+        {
+          key: "breakfast",
+          config: reminders.breakfast,
+          title: "Time for breakfast",
+        },
+        { key: "lunch", config: reminders.lunch, title: "Time for lunch" },
+        { key: "dinner", config: reminders.dinner, title: "Time for dinner" },
       ];
 
       for (const { key, config, title } of mealConfigs) {
@@ -126,7 +148,7 @@ export function useMealRemindersInternal() {
         await scheduleNotification({
           id: MEAL_NOTIFICATION_IDS[key],
           title,
-          body: 'Quick log keeps your day accurate.',
+          body: "Quick log keeps your day accurate.",
           scheduleAt: nextAt,
           // Daily-repeating so the reminder doesn't silently stop
           // after the first fire. The OS re-arms it for the same
@@ -145,10 +167,11 @@ export function useMealRemindersInternal() {
     };
   }, [reminders]);
 
-  // Request notification permission
-  const requestPermission = useCallback(async () => {
-    return requestNotificationPermission();
-  }, []);
-
-  return { reminders, loading, updateReminders, requestPermission };
+  // Permission request is a stable module-level function — no wrapper needed.
+  return {
+    reminders,
+    loading,
+    updateReminders,
+    requestPermission: requestNotificationPermission,
+  };
 }

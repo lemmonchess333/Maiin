@@ -101,7 +101,11 @@ export function shouldScheduleStreakReminder(state: {
  */
 export function useStreakReminderInternal() {
   const { user } = useAuth();
-  const { currentStreak, hasLoggedToday, loading: streaksLoading } = useStreaks();
+  const {
+    currentStreak,
+    hasLoggedToday,
+    loading: streaksLoading,
+  } = useStreaks();
   const [prefs, setPrefs] = useState<StreakReminderPrefs>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +116,9 @@ export function useStreakReminderInternal() {
       // Wrap synchronous setState through a local reset() so the lint rule
       // `react-hooks/set-state-in-effect` doesn't flag this — matches the
       // exact workaround used in useWorkoutReminders.ts:67.
-      const reset = () => { setLoading(false); };
+      const reset = () => {
+        setLoading(false);
+      };
       reset();
       return;
     }
@@ -120,7 +126,10 @@ export function useStreakReminderInternal() {
     getDoc(ref)
       .then((snap) => {
         if (snap.exists()) {
-          setPrefs({ ...DEFAULT_PREFS, ...(snap.data() as Partial<StreakReminderPrefs>) });
+          setPrefs({
+            ...DEFAULT_PREFS,
+            ...(snap.data() as Partial<StreakReminderPrefs>),
+          });
         }
         setLoading(false);
       })
@@ -143,11 +152,11 @@ export function useStreakReminderInternal() {
         captureError(
           err instanceof Error ? err : new Error(String(err)),
           "network",
-          { surface: "streakReminder.save" },
+          { surface: "streakReminder.save" }
         );
       }
     },
-    [user, prefs],
+    [user, prefs]
   );
 
   // ── Reschedule on any relevant state change ───────────────────────────
@@ -227,15 +236,12 @@ export function useStreakReminderInternal() {
     hasLoggedToday,
   ]);
 
-  const requestPermission = useCallback(async () => {
-    return requestNotificationPermission();
-  }, []);
-
   return {
     prefs,
     loading,
     updatePrefs,
-    requestPermission,
+    // Stable module-level function — no useCallback wrapper needed.
+    requestPermission: requestNotificationPermission,
     // Exposed so the priming modal trigger can read the same values without
     // re-subscribing to Firestore.
     currentStreak,

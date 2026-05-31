@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { setDocGuarded } from '@/lib/firestoreWrite';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/auth';
+import { useState, useEffect, useCallback } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
 import {
   scheduleNotification,
   cancelNotification,
   requestNotificationPermission,
-} from '@/lib/notifications';
-import { logger } from '@/lib/logger';
-import { captureError } from '@/lib/errorReporting';
+} from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/errorReporting";
 
 export interface WorkoutReminders {
   enabled: boolean;
@@ -18,7 +18,7 @@ export interface WorkoutReminders {
 
 const DEFAULT_REMINDERS: WorkoutReminders = {
   enabled: false,
-  time: '07:00',
+  time: "07:00",
 };
 
 /**
@@ -30,7 +30,9 @@ const DEFAULT_REMINDERS: WorkoutReminders = {
  * fanout lets each day re-arm weekly via `repeatEvery: 'week'` so
  * the user keeps getting reminders on the days they care about.
  */
-const WORKOUT_NOTIFICATION_IDS = [2001, 2002, 2003, 2004, 2005, 2006, 2007] as const;
+const WORKOUT_NOTIFICATION_IDS = [
+  2001, 2002, 2003, 2004, 2005, 2006, 2007,
+] as const;
 
 /**
  * Next future Date landing on `weekday` (0=Sunday … 6=Saturday) at the
@@ -41,7 +43,7 @@ const WORKOUT_NOTIFICATION_IDS = [2001, 2002, 2003, 2004, 2005, 2006, 2007] as c
  */
 function computeNextWeekdayOccurrence(
   timeHHMM: string,
-  weekday: number,
+  weekday: number
 ): Date | null {
   const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
   if (!match) return null;
@@ -68,12 +70,12 @@ function computeNextWeekdayOccurrence(
  */
 function isWorkoutDay(
   dayOfWeek: number,
-  schedule: ReadonlyArray<{ day: number; type: string }> | undefined,
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined
 ): boolean {
   if (!schedule || schedule.length !== 7) return true;
   const todaySchedule = schedule.find((s) => s.day === dayOfWeek);
   if (!todaySchedule) return false;
-  return todaySchedule.type !== 'rest';
+  return todaySchedule.type !== "rest";
 }
 
 /**
@@ -83,41 +85,58 @@ function isWorkoutDay(
  */
 export function useWorkoutRemindersInternal() {
   const { user, profile } = useAuth();
-  const [reminders, setReminders] = useState<WorkoutReminders>(DEFAULT_REMINDERS);
+  const [reminders, setReminders] =
+    useState<WorkoutReminders>(DEFAULT_REMINDERS);
   const [loading, setLoading] = useState(true);
 
   // Load from Firestore
   useEffect(() => {
-    if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
-    const ref = doc(db, 'users', user.uid, 'settings', 'workoutReminders');
-    getDoc(ref).then((snap) => {
-      if (snap.exists()) {
-        setReminders({ ...DEFAULT_REMINDERS, ...snap.data() as WorkoutReminders });
-      }
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: clear loading when signed out
       setLoading(false);
-    }).catch((err) => {
-      logger.error('[WorkoutReminders] load failed', err);
-      setLoading(false);
-    });
+      return;
+    }
+    const ref = doc(db, "users", user.uid, "settings", "workoutReminders");
+    getDoc(ref)
+      .then((snap) => {
+        if (snap.exists()) {
+          setReminders({
+            ...DEFAULT_REMINDERS,
+            ...(snap.data() as WorkoutReminders),
+          });
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        logger.error("[WorkoutReminders] load failed", err);
+        setLoading(false);
+      });
   }, [user]);
 
   // Save to Firestore — see useMealReminders.ts for the error-handling
   // rationale (critical-keyword tagging persists to users/{uid}/errors,
   // failures don't re-throw into the UI).
-  const updateReminders = useCallback(async (updates: Partial<WorkoutReminders>) => {
-    if (!user) return;
-    const updated = { ...reminders, ...updates };
-    setReminders(updated);
-    const ref = doc(db, 'users', user.uid, 'settings', 'workoutReminders');
-    try {
-      await setDocGuarded(ref, updated);
-    } catch (err) {
-      logger.error('[WorkoutReminders] save failed', err);
-      captureError(err instanceof Error ? err : new Error(String(err)), 'network', {
-        surface: 'workoutReminders.save',
-      });
-    }
-  }, [user, reminders]);
+  const updateReminders = useCallback(
+    async (updates: Partial<WorkoutReminders>) => {
+      if (!user) return;
+      const updated = { ...reminders, ...updates };
+      setReminders(updated);
+      const ref = doc(db, "users", user.uid, "settings", "workoutReminders");
+      try {
+        await setDocGuarded(ref, updated);
+      } catch (err) {
+        logger.error("[WorkoutReminders] save failed", err);
+        captureError(
+          err instanceof Error ? err : new Error(String(err)),
+          "network",
+          {
+            surface: "workoutReminders.save",
+          }
+        );
+      }
+    },
+    [user, reminders]
+  );
 
   // Schedule / reschedule reminders. One weekly-repeating notification
   // per non-rest weekday so the user gets honest reminders that respect
@@ -149,14 +168,14 @@ export function useWorkoutRemindersInternal() {
         if (!at) continue;
         await scheduleNotification({
           id: WORKOUT_NOTIFICATION_IDS[day],
-          title: 'Time to train',
-          body: 'Your session is ready when you are.',
+          title: "Time to train",
+          body: "Your session is ready when you are.",
           scheduleAt: at,
           // Weekly repeat anchored on this weekday — the OS re-arms
           // it for the same weekday + time every week, so the user
           // doesn't have to open the app to keep them queued.
           repeats: true,
-          repeatEvery: 'week',
+          repeatEvery: "week",
         });
       }
     };
@@ -168,10 +187,11 @@ export function useWorkoutRemindersInternal() {
     };
   }, [reminders, profile]);
 
-  // Request notification permission
-  const requestPermission = useCallback(async () => {
-    return requestNotificationPermission();
-  }, []);
-
-  return { reminders, loading, updateReminders, requestPermission };
+  // Permission request is a stable module-level function — no wrapper needed.
+  return {
+    reminders,
+    loading,
+    updateReminders,
+    requestPermission: requestNotificationPermission,
+  };
 }
