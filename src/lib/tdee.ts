@@ -3,9 +3,19 @@
  * Provides macro recommendations based on fitness goal.
  */
 
-import { GOAL_PROTEIN, GOAL_CALORIE_OFFSET, DEFAULT_PROTEIN_MULTIPLIER, FAT_CALORIE_FRACTION } from "./macroConstants";
+import {
+  GOAL_PROTEIN,
+  GOAL_CALORIE_OFFSET,
+  DEFAULT_PROTEIN_MULTIPLIER,
+  FAT_CALORIE_FRACTION,
+} from "./macroConstants";
 
-export type ActivityLevel = "sedentary" | "light" | "moderate" | "active" | "very_active";
+export type ActivityLevel =
+  | "sedentary"
+  | "light"
+  | "moderate"
+  | "active"
+  | "very_active";
 export type FitnessGoal = "cut" | "recomp" | "lean bulk";
 
 const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
@@ -46,13 +56,24 @@ export function calculateTDEE(
   activityLevel: ActivityLevel,
   goal: FitnessGoal,
   sex: "male" | "female" = "male",
+  /**
+   * Tier 2 — explicit per-day calorie offset from a user-chosen goal-weight
+   * rate. When provided, it overrides the per-goal default band
+   * (`GOAL_CALORIE_OFFSET[goal]`). Omitted → legacy behaviour, so all
+   * existing call sites are unchanged.
+   */
+  explicitOffset?: number
 ): TDEEResult {
   const sexOffset = sex === "female" ? -161 : 5;
   const bmr = Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + sexOffset);
   const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
 
-  // Goal-based adjustments from centralized constants
-  const deficit = GOAL_CALORIE_OFFSET[goal] ?? 0;
+  // Goal-based adjustment: explicit rate-derived offset wins, else the
+  // centralized per-goal default band.
+  const deficit =
+    explicitOffset !== undefined
+      ? explicitOffset
+      : (GOAL_CALORIE_OFFSET[goal] ?? 0);
   const proteinMultiplier = GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
 
   const targetCalories = tdee + deficit;

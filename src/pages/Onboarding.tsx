@@ -10,6 +10,7 @@ import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
 import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
+import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
@@ -97,11 +98,9 @@ const AGE_MIDPOINTS: Record<AgeRange, number> = {
   "55+": 60,
 };
 
-function goalToFitnessGoal(g: PrimaryGoal): FitnessGoal {
-  if (g === "fat_loss") return "cut";
-  if (g === "hypertrophy") return "lean bulk";
-  return "recomp";
-}
+// Note: the old goalToFitnessGoal(primaryGoal) mapping was removed in Tier 2
+// — the nutrition phase now derives from the goal-weight plan (target weight
+// owns direction), so primaryGoal no longer determines the nutrition phase.
 
 function templateSplitToSplitType(s: ProgramTemplate["split"]): SplitType {
   switch (s) {
@@ -336,6 +335,12 @@ export default function Onboarding() {
   const [weightKg, setWeightKg] = useState(75);
   const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
   const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+  // Tier 2 — goal weight + rate, collected on the body-metrics step (right
+  // after current weight). Defaults to current weight (= maintain/recomp) so
+  // a user who skips it gets today's behaviour. Rate magnitude is unsigned;
+  // direction is derived from target vs current.
+  const [goalWeightKg, setGoalWeightKg] = useState(75);
+  const [weeklyRateKg, setWeeklyRateKg] = useState(0.5);
 
   // ── Step 3: Primary goal
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>("hypertrophy");
@@ -373,6 +378,11 @@ export default function Onboarding() {
       ? `${Math.round(weightKg * 2.205)} lbs`
       : `${weightKg} kg`;
 
+  const displayGoalWeight =
+    weightUnit === "lbs"
+      ? `${Math.round(goalWeightKg * 2.205)} lbs`
+      : `${goalWeightKg} kg`;
+
   const heightStepSize = heightUnit === "ft" ? 2.54 : 1; // ~1 inch or 1 cm
   const weightStepSize = weightUnit === "lbs" ? 0.45 : 1; // ~1 lb or 1 kg
 
@@ -383,7 +393,23 @@ export default function Onboarding() {
     return "light";
   }, [daysPerWeek]);
 
-  // TDEE computation
+  // Tier 2 — target weight + rate owns the nutrition direction (locked
+  // decision): below current → cut, above → lean bulk, ~equal → recomp;
+  // rate sets the calorie-offset magnitude. `primaryGoal` still drives the
+  // lifting programme. Defaults (goalWeight == current) resolve to recomp /
+  // 0 offset, so a user who never touches it gets maintenance.
+  const goalPlan = useMemo(
+    () =>
+      resolveGoalWeightPlan({
+        currentKg: weightKg,
+        targetKg: goalWeightKg,
+        rateKgPerWeek: weeklyRateKg,
+      }),
+    [weightKg, goalWeightKg, weeklyRateKg]
+  );
+
+  // TDEE computation — nutrition phase + offset come from the goal-weight
+  // plan, not goalToFitnessGoal(primaryGoal).
   const tdee = useMemo(
     () =>
       calculateTDEE(
@@ -391,10 +417,11 @@ export default function Onboarding() {
         heightCm,
         AGE_MIDPOINTS[ageRange],
         activityLevel,
-        goalToFitnessGoal(primaryGoal),
-        gender === "female" ? "female" : "male"
+        goalPlan.fitnessGoal,
+        gender === "female" ? "female" : "male",
+        goalPlan.dailyOffset
       ),
-    [weightKg, heightCm, ageRange, activityLevel, primaryGoal, gender]
+    [weightKg, heightCm, ageRange, activityLevel, goalPlan, gender]
   );
 
   // P0-5: derived run-day count for previews + planBuilder input.
@@ -484,6 +511,9 @@ export default function Onboarding() {
         ageRange,
         heightCm,
         weightKg,
+        // Tier 2 — goal-weight onboarding (drives nutrition direction).
+        goalWeightKg,
+        weeklyRateKg,
         preferredHeightUnit: heightUnit,
         preferredWeightUnit: weightUnit,
         primaryGoal,
@@ -515,7 +545,9 @@ export default function Onboarding() {
           fat: tdee.fat,
         },
         program: {
-          goal: goalToFitnessGoal(primaryGoal),
+          // Nutrition phase comes from the goal-weight plan (target weight
+          // owns direction), not goalToFitnessGoal(primaryGoal).
+          goal: goalPlan.fitnessGoal,
           startWeight: weightKg,
           currentPhase: "base",
         },
@@ -537,7 +569,9 @@ export default function Onboarding() {
         runFrequency,
         injuries: injuriesForSave,
       };
-      const fitnessGoal = goalToFitnessGoal(primaryGoal);
+      // Nutrition phase = goal-weight plan (target weight owns direction);
+      // primaryGoal still drives the lift programme via profileForMatch.
+      const fitnessGoal = goalPlan.fitnessGoal;
 
       // P0-5: planBuilder is the single source of truth for plan
       // shape (lift workouts + weekSchedule + runDays + runPlan).
@@ -999,6 +1033,91 @@ export default function Onboarding() {
                     )
                   }
                 />
+              </div>
+
+              {/* Goal weight (Tier 2) */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={16} style={{ color: THEME.brand }} />
+                  <span className="text-xs font-medium">Goal weight</span>
+                </div>
+                <Stepper
+                  label="Goal weight"
+                  value={goalWeightKg}
+                  displayValue={displayGoalWeight}
+                  onDecrement={() =>
+                    setGoalWeightKg((v) =>
+                      Math.max(30, parseFloat((v - weightStepSize).toFixed(1)))
+                    )
+                  }
+                  onIncrement={() =>
+                    setGoalWeightKg((v) =>
+                      Math.min(250, parseFloat((v + weightStepSize).toFixed(1)))
+                    )
+                  }
+                />
+              </div>
+
+              {/* Rate — only when the target differs from current weight.
+                  Maintain needs no rate. */}
+              {goalPlan.direction !== "maintain" && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium">
+                      {goalPlan.direction === "lose" ? "Lose" : "Gain"} per week
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    {[0.25, 0.5, 0.75].map((r) => {
+                      const selected = weeklyRateKg === r;
+                      const lbs = Math.round(r * 2.205 * 10) / 10;
+                      return (
+                        <button
+                          type="button"
+                          key={r}
+                          onClick={() => setWeeklyRateKg(r)}
+                          className="flex-1 min-h-[48px] rounded-xl text-xs font-semibold transition-all active:scale-[0.98]"
+                          style={{
+                            background: selected
+                              ? `${THEME.brand}14`
+                              : "hsl(var(--card))",
+                            border: selected
+                              ? `1px solid ${THEME.brand}45`
+                              : "1px solid hsl(var(--border) / 0.7)",
+                            color: selected
+                              ? THEME.brand
+                              : "hsl(var(--foreground))",
+                          }}
+                        >
+                          {weightUnit === "lbs" ? `${lbs} lbs` : `${r} kg`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Live nutrition preview — surfaces the derived phase the
+                  moment the user sets a target, not just at the end. */}
+              <div
+                className="rounded-xl px-3.5 py-3 text-xs"
+                style={{
+                  background: `${THEME.warning}10`,
+                  border: `1px solid ${THEME.warning}25`,
+                }}
+              >
+                <span
+                  className="font-semibold"
+                  style={{ color: THEME.warning }}
+                >
+                  Nutrition:{" "}
+                </span>
+                <span className="text-muted-foreground">
+                  {nutritionPhaseLabel(
+                    goalPlan.fitnessGoal,
+                    goalPlan.dailyOffset
+                  )}
+                </span>
               </div>
             </div>
           )}
@@ -1648,9 +1767,10 @@ export default function Onboarding() {
                   // Surfaces the derived nutrition phase + its calorie
                   // consequence — the decision goalToFitnessGoal makes that
                   // was previously invisible (only the numbers showed below).
+                  // Tier 2 — phase comes from the goal-weight plan.
                   label: "Nutrition",
                   value: nutritionPhaseLabel(
-                    goalToFitnessGoal(primaryGoal),
+                    goalPlan.fitnessGoal,
                     tdee.deficit
                   ),
                   color: THEME.warning,
