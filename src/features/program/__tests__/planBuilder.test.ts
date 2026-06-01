@@ -531,4 +531,34 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
       first.programState.workouts
     );
   });
+
+  it("a content edit honours injuries in place (wires injury re-swap into regeneration)", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    // Force a known knee-contraindicated exercise into a slot, then add a knee
+    // injury via a content edit (same lift-days → preserve path).
+    const customized = JSON.parse(
+      JSON.stringify(first.programState)
+    ) as typeof first.programState;
+    customized.workouts[0].exercises[0] = {
+      ...customized.workouts[0].exercises[0],
+      exerciseId: "squat",
+      name: "Barbell Squat",
+      movementCategory: "knee_dominant",
+    };
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        injuries: ["knee"],
+        existingState: customized,
+        preserveHistory: true,
+      })
+    );
+    // The contraindicated squat was swapped; structure (day/exercise count) held.
+    expect(edited.programState.workouts[0].exercises[0].exerciseId).not.toBe(
+      "squat"
+    );
+    expect(edited.programState.workouts[0].exercises).toHaveLength(
+      customized.workouts[0].exercises.length
+    );
+  });
 });
