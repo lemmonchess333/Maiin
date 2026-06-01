@@ -292,6 +292,17 @@ export function detectBestEfforts(
   return results;
 }
 
+/** Escape XML metacharacters so a user-supplied run name can't produce
+ *  invalid GPX (e.g. a name containing `&`, `<`, `"`). */
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export function toGPX(points: GPSPoint[], name: string): string {
   const trkpts = points
     .map((p) => {
@@ -303,7 +314,7 @@ export function toGPX(points: GPSPoint[], name: string): string {
     .join("\n");
   return `<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="Tropos">
-  <trk><name>${name}</name><trkseg>
+  <trk><name>${escapeXml(name)}</name><trkseg>
 ${trkpts}
   </trkseg></trk>
 </gpx>`;
