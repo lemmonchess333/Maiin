@@ -1,5 +1,7 @@
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramTemplate, TemplateExercise } from "./templates";
+import { PROGRAM_TEMPLATES } from "./templates";
+import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
 
@@ -28,7 +30,7 @@ export interface MatchTemplateResult {
 // diverged from reality and left downstream consumers (MET calculator,
 // demo links, 1RM estimator) unable to look the exercise up.
 const EXERCISE_ID_BY_NAME = new Map<string, string>(
-  EXERCISES.map((ex) => [ex.name.toLowerCase(), ex.id]),
+  EXERCISES.map((ex) => [ex.name.toLowerCase(), ex.id])
 );
 
 function resolveExerciseId(name: string): string | null {
@@ -37,12 +39,15 @@ function resolveExerciseId(name: string): string | null {
 
 export function matchTemplate(
   profile: UserProfile,
-  templates: ProgramTemplate[],
+  templates: ProgramTemplate[]
 ): MatchTemplateResult {
   const days = profile.daysPerWeek || 4;
   const equip = profile.equipment || "full_gym";
   const split = profile.preferredSplit || "auto";
-  const goal = profile.primaryGoal === "running" ? "general" : (profile.primaryGoal || "general");
+  const goal =
+    profile.primaryGoal === "running"
+      ? "general"
+      : profile.primaryGoal || "general";
   const exp = profile.experience || "intermediate";
   const runFreq = profile.runFrequency || "none";
 
@@ -50,8 +55,10 @@ export function matchTemplate(
     let score = 0;
 
     // Hard filters
-    if (t.daysPerWeek !== days) return { template: t, score: -1, goalMatched: false };
-    if (t.equipment !== equip) return { template: t, score: -1, goalMatched: false };
+    if (t.daysPerWeek !== days)
+      return { template: t, score: -1, goalMatched: false };
+    if (t.equipment !== equip)
+      return { template: t, score: -1, goalMatched: false };
 
     // Split preference
     if (split !== "auto" && t.split === split) score += 10;
@@ -78,8 +85,12 @@ export function matchTemplate(
   });
 
   const valid = scored
-    .filter(function (s) { return s.score >= 0; })
-    .sort(function (a, b) { return b.score - a.score; });
+    .filter(function (s) {
+      return s.score >= 0;
+    })
+    .sort(function (a, b) {
+      return b.score - a.score;
+    });
 
   if (valid.length > 0) {
     const best = valid[0];
@@ -89,7 +100,9 @@ export function matchTemplate(
   // Fallback: first full_body template or first template — caller still
   // sees `isGoalMatch: false` so it can branch on the miss.
   const fallback =
-    templates.find(function (t) { return t.split === "full_body"; }) || templates[0];
+    templates.find(function (t) {
+      return t.split === "full_body";
+    }) || templates[0];
   return { template: fallback, isGoalMatch: false };
 }
 
@@ -101,7 +114,9 @@ export function matchTemplate(
  * contraindicated for them — the Barbell Squat → Leg Press trap for
  * `knee` users.
  */
-function buildContraIndex(templates: readonly ProgramTemplate[]): Map<string, Set<string>> {
+export function buildContraIndex(
+  templates: readonly ProgramTemplate[]
+): Map<string, Set<string>> {
   const index = new Map<string, Set<string>>();
   for (const t of templates) {
     for (const week of t.weeks) {
@@ -128,7 +143,7 @@ function buildContraIndex(templates: readonly ProgramTemplate[]): Map<string, Se
 function altClearsInjuries(
   altName: string,
   injuries: readonly string[],
-  contraIndex: Map<string, Set<string>>,
+  contraIndex: Map<string, Set<string>>
 ): boolean {
   const altId = resolveExerciseId(altName);
   if (!altId) return false;
@@ -167,7 +182,7 @@ function swapContraExercise(
    * for a knee user) resolve to different substitutes rather than
    * stacking onto the same pick.
    */
-  usedIds: ReadonlySet<string>,
+  usedIds: ReadonlySet<string>
 ): TemplateExercise {
   const contras = ex.contraindicated;
   if (!contras || contras.length === 0) return ex;
@@ -229,7 +244,7 @@ export function applyInjuryFilters(
    * template being filtered, which covers the common case where a
    * user's alt is declared within the same template.
    */
-  allTemplates?: readonly ProgramTemplate[],
+  allTemplates?: readonly ProgramTemplate[]
 ): ProgramTemplate {
   if (!injuries.length || injuries.includes("none")) return template;
 
@@ -268,4 +283,77 @@ export function applyInjuryFilters(
   }
 
   return filtered;
+}
+
+/**
+ * Pgm5 follow-up — injury-aware in-place re-swap for an EXISTING programme.
+ *
+ * The `WorkoutDay`/`ProgramExercise` sibling of `applyInjuryFilters` (which
+ * runs on `ProgramTemplate`s at onboarding). Structure-preserving
+ * regeneration (planBuilder) calls this so that when a user changes their
+ * injuries in Programme Settings, ONLY the now-contraindicated exercises in
+ * their current workouts are swapped — carrying sets / reps / weight / history
+ * — without touching the day structure or any safe exercise.
+ *
+ * Over-swap guard: an exercise is swapped only when the contra index (built
+ * from the template library, keyed by exerciseId) flags it for one of the
+ * user's CURRENT injuries. A safe exercise that merely *has* a substitution
+ * entry (e.g. a squat for a shoulder-only user) is left untouched. No safe
+ * substitute → keep the exercise with a warning note (mirrors tier 4 above).
+ *
+ * Idempotent (re-running with the same injuries is a no-op); healthy users /
+ * "none" → unchanged clone. Removing an injury does NOT restore a previously
+ * swapped exercise (no pre-swap id is stored) — safe + acceptable; un-swap is
+ * a future enhancement.
+ */
+export function applyInjuryFiltersToWorkouts(
+  workouts: readonly WorkoutDay[],
+  injuries: readonly string[]
+): WorkoutDay[] {
+  const cloneDay = (d: WorkoutDay): WorkoutDay => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  });
+  if (!injuries.length || injuries.includes("none")) {
+    return workouts.map(cloneDay);
+  }
+
+  const contraIndex = buildContraIndex(PROGRAM_TEMPLATES);
+
+  return workouts.map((day) => {
+    // Seed the day's used-ids with every exercise that is NOT being swapped,
+    // so a swap can't land on one already present on the day.
+    const usedIds = new Set<string>();
+    for (const ex of day.exercises) {
+      const contras = contraIndex.get(ex.exerciseId);
+      const swapping = !!contras && injuries.some((i) => contras.has(i));
+      if (!swapping) usedIds.add(ex.exerciseId);
+    }
+
+    const exercises: ProgramExercise[] = day.exercises.map((ex) => {
+      const contras = contraIndex.get(ex.exerciseId);
+      const relevant = contras ? injuries.filter((i) => contras.has(i)) : [];
+      if (relevant.length === 0) return { ...ex };
+
+      const safe = findSafeSubstitute(ex.exerciseId, relevant, usedIds);
+      if (safe) {
+        usedIds.add(safe.id);
+        return {
+          ...ex, // carry sets / reps / weight / progression / history
+          exerciseId: safe.id,
+          name: safe.name,
+          notes: `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`,
+        };
+      }
+      // No safe substitute — keep the exercise but flag it (tier 4).
+      return {
+        ...ex,
+        notes:
+          `No safe substitute for ${ex.name} given your ${relevant.join(" + ")} ` +
+          `limitation — consider replacing it manually or reducing load.`,
+      };
+    });
+
+    return { ...day, exercises };
+  });
 }

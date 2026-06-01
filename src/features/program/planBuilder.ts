@@ -53,6 +53,7 @@ import {
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
+import { applyInjuryFiltersToWorkouts } from "./matchTemplate";
 import { generateRacePlanV2, scheduleStructuredWeekV2 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -161,11 +162,12 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
  * different skeleton is then unavoidable). Explicit Reset stays destructive via
  * a separate path (useProgram.regenerateProgram → generateProgram directly).
  *
- * v1 scope: content edits preserve verbatim. Goal-driven rep/volume rescheme,
- * injury-aware re-swap and equipment re-pick are documented follow-ups — each
- * needs a per-exercise role/anchor the stored ProgramExercise lacks today, and
- * post-onboarding injuries/equipment are already ignored by the regeneration
- * engine, so preserving is strictly better, not a regression.
+ * Content edits preserve structure + customizations AND now re-apply the
+ * user's CURRENT injuries in place (applyInjuryFiltersToWorkouts swaps only
+ * contraindicated exercises, carrying weight/history). Remaining follow-ups:
+ * goal-driven rep/volume rescheme (needs a per-exercise role anchor the stored
+ * ProgramExercise lacks) and equipment re-pick (the regeneration engine has no
+ * equipment filter yet).
  */
 function buildLiftProgram(input: PlanBuilderInput): {
   splitType: SplitType;
@@ -177,25 +179,28 @@ function buildLiftProgram(input: PlanBuilderInput): {
     existing.length > 0 &&
     existing.length === expectedDayCount(input.liftDays);
 
-  if (sameDayCount && input.existingState) {
-    // Content edit → preserve the user's plan exactly. Deep-clone so the pure
-    // builder never aliases the caller's state.
-    return {
-      splitType: input.existingState.splitType,
-      workouts: existing.map((day) => ({
-        ...day,
-        exercises: day.exercises.map((ex) => ({ ...ex })),
-      })),
-    };
-  }
+  const base =
+    sameDayCount && input.existingState
+      ? // Content edit → preserve the user's structure + customizations.
+        { splitType: input.existingState.splitType, workouts: existing }
+      : // No existing plan, or lift-days changed → rebuild from template.
+        generateProgram(
+          input.nutritionPhase,
+          input.liftDays,
+          existing,
+          input.primaryGoal
+        );
 
-  // No existing plan, or the lift-day count changed → rebuild from template.
-  return generateProgram(
-    input.nutritionPhase,
-    input.liftDays,
-    existing,
-    input.primaryGoal
-  );
+  // Pgm5 injury follow-up: honour the user's CURRENT injuries on the
+  // regeneration path. generateProgram ignores injuries and the preserve
+  // branch keeps whatever was there, so this is the single place a settings
+  // injury change actually adapts the lift workouts. It also deep-clones (so
+  // the pure builder never aliases the caller's existingState) and is a no-op
+  // for healthy users.
+  return {
+    splitType: base.splitType,
+    workouts: applyInjuryFiltersToWorkouts(base.workouts, input.injuries),
+  };
 }
 
 /** Builds runDays + runPlan for the requested mode. Pure (relies on
