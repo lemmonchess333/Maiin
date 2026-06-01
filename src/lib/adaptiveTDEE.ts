@@ -32,7 +32,15 @@ interface CalorieLog {
   calories: number;
 }
 
-function getTargetWeeklyChange(goal: string): number {
+function getTargetWeeklyChange(
+  goal: string,
+  explicitRateKgPerWeek?: number
+): number {
+  // Tier 2 — when the user set a goal-weight rate at onboarding, honour it
+  // so the adaptive loop tracks the SAME target the onboarding offset was
+  // built from (otherwise week-1 and the adaptive weeks would disagree).
+  // Falls back to the per-goal default band when no explicit rate is given.
+  if (explicitRateKgPerWeek !== undefined) return explicitRateKgPerWeek;
   return WEEKLY_WEIGHT_TARGET[goal] ?? 0;
 }
 
@@ -54,11 +62,20 @@ export function calculateAdaptiveTDEE(
   weightLogs: WeightLog[],
   calorieLogs: CalorieLog[],
   goal: string,
-  currentTargets: { calories: number; protein: number; carbs: number; fat: number },
+  currentTargets: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  },
   weightKg: number,
   phase?: string,
+  /** Tier 2 — user's chosen signed weekly rate (kg/wk). Overrides the
+   *  per-goal default band so the adaptive loop and the onboarding offset
+   *  share one target. Undefined → legacy per-goal behaviour. */
+  explicitRateKgPerWeek?: number
 ): TDEECalculation {
-  const targetWeightChange = getTargetWeeklyChange(goal);
+  const targetWeightChange = getTargetWeeklyChange(goal, explicitRateKgPerWeek);
 
   // Need at least 2 weeks of data with overlapping date ranges
   if (weightLogs.length < 4 || calorieLogs.length < 7) {
@@ -75,9 +92,12 @@ export function calculateAdaptiveTDEE(
   }
 
   // Verify weight and calorie logs overlap in time (at least 7 days)
-  const weightDates = weightLogs.map(w => new Date(w.date).getTime());
-  const calDates = calorieLogs.map(c => new Date(c.date).getTime());
-  const overlapStart = Math.max(Math.min(...weightDates), Math.min(...calDates));
+  const weightDates = weightLogs.map((w) => new Date(w.date).getTime());
+  const calDates = calorieLogs.map((c) => new Date(c.date).getTime());
+  const overlapStart = Math.max(
+    Math.min(...weightDates),
+    Math.min(...calDates)
+  );
   const overlapEnd = Math.min(Math.max(...weightDates), Math.max(...calDates));
   const overlapDays = (overlapEnd - overlapStart) / 86400000;
   if (overlapDays < 7) {
@@ -98,7 +118,8 @@ export function calculateAdaptiveTDEE(
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 14);
   const avgDailyCalories =
-    recentCalories.reduce((s, m) => s + m.calories, 0) / Math.max(recentCalories.length, 1);
+    recentCalories.reduce((s, m) => s + m.calories, 0) /
+    Math.max(recentCalories.length, 1);
 
   // Weight trend (daily slope) — sort chronologically first, then take most recent 14
   const recentWeights = [...weightLogs]
