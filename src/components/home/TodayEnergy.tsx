@@ -23,7 +23,6 @@ export default function TodayEnergy({
   daysSinceLastMeal = Infinity,
   mealsLoading = false,
   postWorkoutNudge,
-  adaptiveTDEE,
   nutritionInsight,
 }: {
   calories: number;
@@ -39,7 +38,6 @@ export default function TodayEnergy({
     type: "lift" | "run" | "both";
     proteinRemaining: number;
   } | null;
-  adaptiveTDEE?: { estimated: number; confidence: string } | null;
   nutritionInsight?: {
     type: "positive" | "warning" | "tip";
     title: string;
@@ -199,40 +197,6 @@ export default function TodayEnergy({
                   {burn.dailyBudget.toLocaleString()}
                 </span>
               </div>
-              {adaptiveTDEE && adaptiveTDEE.estimated > 0 && (
-                <>
-                  <div className="h-px bg-border/50" />
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      Adaptive TDEE
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold font-mono tabular-nums text-foreground">
-                        {adaptiveTDEE.estimated.toLocaleString()}
-                      </span>
-                      <span
-                        className="text-micro px-1.5 py-0.5 rounded-full font-medium"
-                        style={{
-                          backgroundColor:
-                            (adaptiveTDEE.confidence === "high"
-                              ? THEME.semantic.positive
-                              : adaptiveTDEE.confidence === "medium"
-                                ? THEME.warning
-                                : THEME.semantic.vitals) + "20",
-                          color:
-                            adaptiveTDEE.confidence === "high"
-                              ? THEME.semantic.positive
-                              : adaptiveTDEE.confidence === "medium"
-                                ? THEME.warning
-                                : THEME.semantic.vitals,
-                        }}
-                      >
-                        {adaptiveTDEE.confidence}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
               {nutritionInsight && (
                 <>
                   <div className="h-px bg-border/50" />

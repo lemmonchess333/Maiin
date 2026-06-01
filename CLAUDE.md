@@ -95,9 +95,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | File                      | Purpose                                                        |
 | ------------------------- | -------------------------------------------------------------- |
 | `performanceEngine.ts`    | Weekly performance index (0-100), load bands, deload detection |
-| `adaptiveTDEE.ts`         | Adaptive TDEE calculation from weight trends                   |
 | `tdee.ts`                 | Base TDEE calculation                                          |
-| `plateauDetection.ts`     | Detect stalling/regressing and adjust macros                   |
 | `phaseNutrition.ts`       | Day-type specific macro adjustments (lift/run/rest)            |
 | `calculateDailyMacros.ts` | Daily macro target computation                                 |
 | `healthScore.ts`          | Composite health score with graduated workout scoring          |
@@ -111,7 +109,6 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `scheduleUtils.ts`        | Weekly schedule generation (lift/run/rest)                     |
 | `exercises.ts`            | Exercise database                                              |
 | `workoutTemplates.ts`     | Workout template library                                       |
-| `rolloverCalories.ts`     | Pro feature: unused calorie rollover                           |
 | `nlFoodParser.ts`         | Natural language food parsing                                  |
 | `voiceFoodParser.ts`      | Voice-based food parsing                                       |
 | `gemini.ts`               | AI food analysis via Gemini API                                |
