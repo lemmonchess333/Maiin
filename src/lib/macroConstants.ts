@@ -47,12 +47,35 @@ export const WEEKLY_WEIGHT_TARGET: Record<string, number> = {
 };
 
 /**
+ * Energy density of body-mass change: ~7700 kcal per kg (the standard
+ * ~3500 kcal/lb figure). Used to convert a desired weekly rate of weight
+ * change into a daily calorie offset, and vice versa.
+ */
+export const KCAL_PER_KG = 7700;
+
+/**
+ * Daily calorie offset for a desired weekly rate of weight change (kg/week).
+ * Positive rate → surplus (gain), negative → deficit (loss), 0 → maintenance.
+ *
+ *   offset/day = rate(kg/wk) × 7700 / 7
+ *
+ * Reproduces the legacy hardcoded offsets exactly:
+ *   -0.5 kg/wk → -550 ≈ the old cut -500 band
+ *   +0.3 kg/wk → +330 ≈ the old lean bulk +300 band
+ * Rounded to the nearest 10 so targets read cleanly.
+ */
+export function offsetFromWeeklyRate(rateKgPerWeek: number): number {
+  const raw = (rateKgPerWeek * KCAL_PER_KG) / 7;
+  return Math.round(raw / 10) * 10;
+}
+
+/**
  * Resolve the correct protein multiplier given phase and goal.
  * Phase takes priority, then goal, then default.
  */
 export function resolveProteinMultiplier(
   phase?: string,
-  goal?: string | Goal,
+  goal?: string | Goal
 ): number {
   if (phase && PHASE_PROTEIN[phase] !== undefined) {
     return PHASE_PROTEIN[phase];
