@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { GPSPoint } from "../../lib/gps";
@@ -34,6 +34,10 @@ export default function RunMap({
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  // True when the basemap tiles can't load (offline / no signal). The route
+  // line still draws on the dark canvas; we surface a plain note rather than
+  // leaving a silent blank map.
+  const [tilesUnavailable, setTilesUnavailable] = useState(false);
   const markerRef = useRef<maplibregl.Marker | null>(null);
   const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const endMarkerRef = useRef<maplibregl.Marker | null>(null);
@@ -101,6 +105,13 @@ export default function RunMap({
       }
     };
     map.on("load", onLoad);
+
+    // Offline / tile-fetch failures: flag so we can show a plain note. Cleared
+    // the moment any source actually loads (so a transient blip self-heals).
+    map.on("error", () => setTilesUnavailable(true));
+    map.on("sourcedata", (e) => {
+      if (e.isSourceLoaded) setTilesUnavailable(false);
+    });
 
     mapRef.current = map;
 
@@ -262,7 +273,19 @@ export default function RunMap({
     };
   }, [points, currentPoint, paceColored, avgPaceSecPerKm, replayIndex]);
 
-  return <div ref={containerRef} className={`w-full ${height} ${className}`} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`relative w-full ${height} ${className}`}
+    >
+      {tilesUnavailable && (
+        <div className="absolute inset-x-2 top-2 z-10 rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+          Map can&apos;t load — you&apos;re offline. Your route is still being
+          recorded.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function haversineQuick(
