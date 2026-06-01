@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'functions/**'
+      - "functions/**"
   # Manual re-deploy escape hatch. If a deploy ever appears to have
   # gone green but didn't actually upload (the silent-stranded-deploy
   # bug from #655's root cause), `workflow_dispatch` lets an operator
@@ -26,6 +26,18 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # firebase-tools auto-enables the deploy-infra APIs (cloudfunctions,
+      # cloudbuild, artifactregistry, firebaseextensions) but NOT Secret
+      # Manager. The deploy resolves every bound secret (defineSecret:
+      # APPLE_KEY_ID, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+      # BILLING_HMAC_SECRET, …) against Secret Manager during prep, so a
+      # project where that API is disabled 403s on EVERY functions deploy
+      # ("Secret Manager API has not been used … or it is disabled"). Enable
+      # it explicitly here — idempotent, and uses the same SA that already
+      # enables the other required APIs above.
+      - name: Ensure Secret Manager API is enabled
+        run: gcloud services enable secretmanager.googleapis.com --project adaptive-fitness-af8bb
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
@@ -55,4 +67,4 @@ jobs:
           head -2 functions/index.js
 
       - name: Deploy functions
-        run:  firebase deploy --only functions --project adaptive-fitness-af8bb --force
+        run: firebase deploy --only functions --project adaptive-fitness-af8bb --force
