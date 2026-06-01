@@ -42,7 +42,6 @@ import {
   User,
   Award,
   Sparkles,
-  LayoutGrid,
   Check,
   AlertTriangle,
   BicepsFlexed,
@@ -256,49 +255,17 @@ const EXPERIENCE_OPTIONS: {
   },
 ];
 
-// Engine-valid splits only. The profile's PreferredSplit type also allows
-// "bro_split", but the programme engine's SplitType (what buildPlan consumes)
-// does not — so, like the old ConfigurePlanModal, this offers Auto + the three
-// supported splits. A legacy "bro_split" profile value is normalised to "auto"
-// below.
+// Pgm5 (Q1): the split is a DERIVED DISPLAY, not a user chooser — the engine
+// owns structure (chooseSplit from weekly lift days). VALID_SPLIT_CHOICES is
+// retained only to normalise a legacy stored profile.preferredSplit (which may
+// be "bro_split", a value the engine's SplitType can't build) before it's
+// threaded — inertly — back through buildPlan.
 const VALID_SPLIT_CHOICES = [
   "auto",
   "full_body",
   "upper_lower",
   "ppl",
 ] as const;
-
-const SPLIT_OPTIONS: {
-  id: SplitChoice;
-  label: string;
-  desc: string;
-  icon: React.ReactNode;
-}[] = [
-  {
-    id: "auto",
-    label: "Auto (recommended)",
-    desc: "We'll match the best split to your weekly days",
-    icon: <Sparkles size={20} style={{ color: THEME.brand }} />,
-  },
-  {
-    id: "full_body",
-    label: "Full Body",
-    desc: "Hit everything each session",
-    icon: <User size={20} style={{ color: THEME.success }} />,
-  },
-  {
-    id: "upper_lower",
-    label: "Upper / Lower",
-    desc: "Alternate upper and lower days (4+ days)",
-    icon: <LayoutGrid size={20} style={{ color: THEME.brand }} />,
-  },
-  {
-    id: "ppl",
-    label: "Push / Pull / Legs",
-    desc: "Classic PPL rotation (5-6 days)",
-    icon: <Dumbbell size={20} style={{ color: THEME.lifting }} />,
-  },
-];
 
 const EQUIPMENT_OPTIONS: {
   id: Equipment;
@@ -425,9 +392,6 @@ export default function ProgrammeSettings({
   );
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
-  const [preferredSplit, setPreferredSplit] = useState<SplitChoice>(
-    saved.preferredSplit
-  );
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
   const [runMode, setRunMode] = useState<RunMode>(saved.runMode);
@@ -450,13 +414,6 @@ export default function ProgrammeSettings({
     microloading: true,
   };
 
-  // Split-availability mirrors onboarding: PPL/bro need ≥5 days, U/L ≥4.
-  function isSplitDisabled(split: SplitChoice): boolean {
-    if (split === "ppl" && liftDays < 5) return true;
-    if (split === "upper_lower" && liftDays < 4) return true;
-    return false;
-  }
-
   // The per-field diff is the single source of truth: the recap shown in the
   // confirm modal and the dirty state both derive from it, so they can't drift.
   const changes = computeProgrammeChanges(saved, {
@@ -464,7 +421,7 @@ export default function ProgrammeSettings({
     nutritionPhase,
     experience,
     liftDays,
-    preferredSplit,
+    preferredSplit: saved.preferredSplit,
     equipment,
     injuries,
     runMode,
@@ -506,6 +463,12 @@ export default function ProgrammeSettings({
   // split it WILL generate for the current draft so the picker reads honestly
   // rather than implying control the generation doesn't grant.
   const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+  // Pgm5 (Q1): the split is shown, not chosen. Prefer the actual current
+  // structure (programState.splitType); fall back to what the engine would
+  // derive for the saved lift-days.
+  const currentSplitLabel = splitLabel(
+    programState?.splitType ?? chooseSplit(saved.liftDays)
+  );
 
   // P2: weekly-layout preview counts, derived from the draft lift/run days
   // (consistent with the double-day warning) — no stored weekSchedule needed.
@@ -537,8 +500,10 @@ export default function ProgrammeSettings({
         nutritionPhase,
         experience,
         liftDays,
+        // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
+        // value (inert in generation, keeps profileUpdates consistent).
         preferredSplit:
-          preferredSplit === "auto" ? "full_body" : preferredSplit,
+          saved.preferredSplit === "auto" ? "full_body" : saved.preferredSplit,
         runMode,
         weeklyRunDays: effectiveRunDays,
         ...(runMode === "race_prep" && raceTargetDate
@@ -667,37 +632,32 @@ export default function ProgrammeSettings({
           />
         </div>
 
+        {/* Pgm5 (Q1): split is a derived DISPLAY — the coach sets it from your
+            weekly training days; the user expresses preference via lift-days +
+            the exercise editor, not a split toggle. */}
         <div>
-          <SectionLabel>Split preference</SectionLabel>
-          <div className="space-y-2">
-            {SPLIT_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={preferredSplit === opt.id}
-                onSelect={() => setPreferredSplit(opt.id)}
-                index={i}
-                icon={opt.icon}
-                label={opt.label}
-                desc={
-                  isSplitDisabled(opt.id)
-                    ? `${opt.desc} — needs ${opt.id === "upper_lower" ? "4+" : "5-6"} days/week`
-                    : opt.desc
-                }
-                disabled={isSplitDisabled(opt.id)}
-              />
-            ))}
+          <SectionLabel>Split</SectionLabel>
+          <div className="rounded-xl bg-muted px-3 py-2.5">
+            <p className="text-sm font-medium text-foreground">
+              {currentSplitLabel}
+            </p>
+            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+              Your coach sets the split from your weekly training days.
+              {liftDays !== saved.liftDays && (
+                <>
+                  {" "}
+                  At <span className="font-mono tabular-nums">
+                    {liftDays}
+                  </span>{" "}
+                  {liftDays === 1 ? "day" : "days"} it becomes{" "}
+                  <span className="font-medium text-foreground">
+                    {generatedSplitLabel}
+                  </span>
+                  .
+                </>
+              )}
+            </p>
           </div>
-          {/* P3: the engine matches the split to your weekly lift days; show
-            the split it will actually generate so the preference is honest. */}
-          <p className="mt-2 text-xs leading-snug text-muted-foreground">
-            We build the best split for your weekly days. With{" "}
-            <span className="font-mono tabular-nums">{liftDays}</span>{" "}
-            {liftDays === 1 ? "lift day" : "lift days"}, that's currently{" "}
-            <span className="font-medium text-foreground">
-              {generatedSplitLabel}
-            </span>
-            .
-          </p>
         </div>
 
         {/* ── Running (still part of the weekly plan) ── */}

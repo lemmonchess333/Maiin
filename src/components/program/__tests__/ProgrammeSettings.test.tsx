@@ -160,3 +160,29 @@ describe("ProgrammeSettings — injuries mutual exclusion", () => {
     });
   });
 });
+
+describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
+  it("renders the current split as read-only text, not a selectable card", () => {
+    // liftDays 4, programState has no splitType → chooseSplit(4) = upper_lower
+    setup();
+    expect(screen.getByText("Upper / Lower")).toBeInTheDocument();
+    // No clickable split option remains — the picker is gone.
+    expect(
+      screen.queryByRole("button", {
+        name: /full body|push \/ pull \/ legs|upper \/ lower/i,
+      })
+    ).not.toBeInTheDocument();
+  });
+
+  it("threads the persisted preferredSplit through save (inert, not chosen)", async () => {
+    setup(); // saved preferredSplit = "ppl"
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.preferredSplit).toBe("ppl");
+  });
+});
