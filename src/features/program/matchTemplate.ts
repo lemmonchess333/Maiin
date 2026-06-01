@@ -2,8 +2,9 @@ import type { UserProfile } from "@/lib/auth";
 import type { ProgramTemplate, TemplateExercise } from "./templates";
 import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
-import { EXERCISES } from "@/lib/exercises";
+import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
+import { exerciseBank } from "./variationBank";
 
 /**
  * Result of a `matchTemplate` call.
@@ -354,6 +355,99 @@ export function applyInjuryFiltersToWorkouts(
       };
     });
 
+    return { ...day, exercises };
+  });
+}
+
+/**
+ * Which `Exercise.equipment` values each equipment tier can train with.
+ * Derived from the EQUIPMENT_OPTIONS copy in ProgrammeSettings:
+ *   full_gym  "Barbells, dumbbells, cables, machines"  → everything (no filter)
+ *   home_gym  "Dumbbells, bench, pull-up bar"          → DB + bodyweight (+ KB)
+ *   minimal   "Bands, bodyweight, maybe dumbbells"     → DB + bodyweight
+ * home/minimal both EXCLUDE Barbell / Machine / Cable — the meaningful "no
+ * barbell or machines" distinction the coarse equipment vocab supports. Bands
+ * have no DB-vocab equivalent and are treated as bodyweight-adjacent.
+ * REVERSIBLE product-data decision — adjust these sets if the tiers change.
+ */
+const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
+  home_gym: new Set(["Dumbbells", "Bodyweight", "Kettlebell"]),
+  minimal: new Set(["Dumbbells", "Bodyweight"]),
+};
+
+/**
+ * Pgm5 follow-up — equipment-aware in-place re-pick for an existing programme.
+ *
+ * When a user changes their equipment (e.g. full_gym → minimal while
+ * travelling), structure-preserving regeneration calls this to swap any
+ * exercise whose equipment the user no longer has for a same-movement-category
+ * alternative that fits — carrying sets / reps / weight / history. full_gym (or
+ * any unrecognised tier) is a no-op (everything available). An exercise whose
+ * id we can't resolve in EXERCISES is left untouched. No fitting alternative →
+ * kept with a warning note.
+ *
+ * Composes after `applyInjuryFiltersToWorkouts`: the candidate picker also
+ * excludes injury-contraindicated ids, so an equipment swap never reintroduces
+ * an injury risk. Idempotent (already-available exercises don't match).
+ */
+export function applyEquipmentFilterToWorkouts(
+  workouts: readonly WorkoutDay[],
+  equipment: string,
+  injuries: readonly string[] = []
+): WorkoutDay[] {
+  const cloneDay = (d: WorkoutDay): WorkoutDay => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  });
+
+  const allowed = EQUIPMENT_AVAILABILITY[equipment];
+  if (!allowed) return workouts.map(cloneDay); // full_gym / unknown → no filter
+
+  const relevantInjuries = injuries.filter((i) => i !== "none");
+  const contraIndex = relevantInjuries.length
+    ? buildContraIndex(PROGRAM_TEMPLATES)
+    : null;
+  const isInjuryContra = (id: string): boolean => {
+    const c = contraIndex?.get(id);
+    return !!c && relevantInjuries.some((i) => c.has(i));
+  };
+  // Unknown id (custom exercise) → can't assess equipment, leave it be.
+  const isAvailable = (id: string): boolean => {
+    const eq = getExerciseById(id)?.equipment;
+    return eq === undefined || allowed.has(eq);
+  };
+
+  return workouts.map((day) => {
+    const usedIds = new Set(day.exercises.map((e) => e.exerciseId));
+    const exercises: ProgramExercise[] = day.exercises.map((ex) => {
+      if (isAvailable(ex.exerciseId)) return { ...ex };
+
+      const options = exerciseBank[ex.movementCategory] ?? [];
+      const pick = options.find(
+        (o) =>
+          o.id !== ex.exerciseId &&
+          !usedIds.has(o.id) &&
+          isAvailable(o.id) &&
+          !isInjuryContra(o.id)
+      );
+      if (pick) {
+        usedIds.delete(ex.exerciseId);
+        usedIds.add(pick.id);
+        return {
+          ...ex, // carry sets / reps / weight / progression / history
+          exerciseId: pick.id,
+          name: pick.name,
+          notes: `Swapped from ${ex.name} — not available with your equipment.`,
+        };
+      }
+      // No fitting alternative — keep but flag.
+      return {
+        ...ex,
+        notes:
+          `${ex.name} needs equipment you don't have — replace it manually ` +
+          `or use a bodyweight variation.`,
+      };
+    });
     return { ...day, exercises };
   });
 }
