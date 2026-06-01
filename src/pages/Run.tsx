@@ -70,6 +70,7 @@ import {
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
 import { formatRaceDistance } from "../lib/runLabels";
+import { toast } from "../lib/toast";
 
 /* haptic moved to the shared `../lib/haptic` implementation in
    W1f, which routes through the Capacitor Haptics plugin on the
@@ -757,6 +758,19 @@ export default function Run() {
     const finalDistance = distanceOverride ?? gps.distance;
     const points = gps.getPoints();
 
+    // An outdoor run that never got a usable GPS lock records ≤1 point (the
+    // provisional start) and no route/distance. Say so plainly at finish
+    // rather than silently saving a blank 0 km run.
+    if (
+      distanceOverride === undefined &&
+      isOutdoorGpsRun(runConfig?.activityType) &&
+      points.length < 2
+    ) {
+      toast(
+        "GPS never locked on — your time is saved, but there's no route or distance for this one."
+      );
+    }
+
     // PR H (audit P1 #9): compute route-quality metrics at finish.
     // Only meaningful for outdoor GPS runs — treadmill / manual
     // have no points and would always score "poor" by the
@@ -1053,11 +1067,17 @@ export default function Run() {
                   ? "Move to an open area away from buildings"
                   : "Getting accurate signal..."}
               </p>
-              {gps.error && (
-                <p className="text-xs text-red-400 mt-2 text-center">
-                  {gps.error}
+              {gps.permissionState === "denied" ? (
+                <p className="text-xs text-red-400 mt-2 text-center max-w-[280px]">
+                  Location is turned off for Tropos. Turn it on in your phone's
+                  Settings, then come back and start again.
                 </p>
-              )}
+              ) : gps.error ? (
+                <p className="text-xs text-red-400 mt-2 text-center max-w-[280px]">
+                  Can't get a GPS signal right now. Move outside, or track
+                  without GPS below.
+                </p>
+              ) : null}
 
               <div className="mt-8 flex flex-col items-center gap-3 w-full">
                 {acquiringSeconds >= 15 && (
