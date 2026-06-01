@@ -357,7 +357,9 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                 <Minus className="size-4" />
               </button>
               <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{servings}</p>
+                <p className="text-2xl font-bold text-foreground font-mono tabular-nums">
+                  {servings}
+                </p>
                 <p className="text-xs text-muted-foreground">servings</p>
               </div>
               <button
