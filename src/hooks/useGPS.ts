@@ -269,6 +269,11 @@ export function useGPS(elapsedSeconds = 0) {
         setState((s) => ({
           ...s,
           error: err.message,
+          // err.code 1 = PERMISSION_DENIED. Set permissionState from it too —
+          // iOS Safari often doesn't support navigator.permissions for
+          // geolocation, so this is the reliable signal that the user blocked
+          // location (lets the UI show a clear "turn it on" message).
+          permissionState: err.code === 1 ? "denied" : s.permissionState,
           signalQuality: "searching",
         })),
       options
