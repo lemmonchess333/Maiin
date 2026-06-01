@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { KalmanFilter, isValidReading, haversine } from "../lib/gps";
+import { getLocationSource, type LocationWatch } from "../lib/locationSource";
 import type { GPSPoint } from "../lib/gps";
 
 export type GPSSignalQuality =
@@ -49,7 +50,7 @@ export function useGPS(elapsedSeconds = 0) {
     lastFixAt: null,
   });
 
-  const watchIdRef = useRef<number | null>(null);
+  const watchRef = useRef<LocationWatch | null>(null);
   const kalmanRef = useRef(new KalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
@@ -107,7 +108,8 @@ export function useGPS(elapsedSeconds = 0) {
   // starts warming up the GPS chipset before watchPosition begins.
   const preWarm = useCallback(() => {
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
+    getLocationSource().getCurrent(
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 },
       (pos) => {
         // Just update accuracy display — don't add to track yet
         setState((s) => ({
@@ -116,8 +118,7 @@ export function useGPS(elapsedSeconds = 0) {
           signalQuality: getSignalQuality(pos.coords.accuracy),
         }));
       },
-      () => {}, // silence errors — this is best-effort
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 2000 }
+      () => {} // silence errors — this is best-effort
     );
   }, []);
 
@@ -149,7 +150,8 @@ export function useGPS(elapsedSeconds = 0) {
       timeout: elapsedRef.current > 1800 ? 15000 : 12000,
     };
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
+    watchRef.current = getLocationSource().watch(
+      options,
       (pos) => {
         const { latitude, longitude, accuracy, altitude, speed } = pos.coords;
         const lastPoint =
@@ -275,27 +277,26 @@ export function useGPS(elapsedSeconds = 0) {
           // location (lets the UI show a clear "turn it on" message).
           permissionState: err.code === 1 ? "denied" : s.permissionState,
           signalQuality: "searching",
-        })),
-      options
+        }))
     );
 
     setState((s) => ({ ...s, isTracking: true }));
   }, []);
 
   const stop = useCallback(() => {
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
+    if (watchRef.current) {
+      watchRef.current.clear();
+      watchRef.current = null;
     }
     setState((s) => ({ ...s, isTracking: false }));
   }, []);
 
-  // Clean up watchPosition on unmount to prevent memory/battery leak
+  // Clean up the active watch on unmount to prevent memory/battery leak
   useEffect(() => {
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
+      if (watchRef.current) {
+        watchRef.current.clear();
+        watchRef.current = null;
       }
     };
   }, []);

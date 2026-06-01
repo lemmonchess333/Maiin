@@ -30,7 +30,14 @@ Keep all the existing point logic — `isValidReading`, the Kalman filter, the
 first-fix grace + re-anchor (added in #938), distance/pace/splits. **Only the
 _source_ of raw fixes changes**, per platform.
 
-### Step 1 — abstract the geolocation source in `useGPS` (no web behaviour change)
+### Step 1 — abstract the geolocation source in `useGPS` (no web behaviour change) ✅ DONE
+
+Shipped: `src/lib/locationSource.ts` (`LocationSource` interface + `webLocationSource`
+pass-through + `getLocationSource()` with the native branch point stubbed to web).
+`useGPS` now watches/pre-warms/clears through the source instead of calling
+`navigator.geolocation` directly. Web behaviour is unchanged (1:1 pass-through,
+unit-tested); Step 2 is now a one-line flip in `getLocationSource()` plus the
+native source module.
 
 Today `start()` calls `navigator.geolocation.watchPosition` directly. Introduce
 a small internal "location source":
