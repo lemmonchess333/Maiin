@@ -917,18 +917,27 @@ export default function ProgrammeRunSection({
                 You've run {freeformCadence.count}× in the last{" "}
                 {freeformCadence.weeks} weeks
               </p>
-              <div className="space-y-1 font-mono tabular-nums">
+              {/* Stat lines: prose labels (Last run / This week / run / avg)
+                  use the body font; only the numeric segments are mono +
+                  tabular-nums, per the typography rule. */}
+              <div className="space-y-1">
                 {lastRun && (
                   <p className="text-muted-foreground">
                     <span className="text-foreground">Last run</span>
                     {" · "}
-                    {distanceLabel(lastRun.distance)}
+                    <span className="font-mono tabular-nums">
+                      {distanceLabel(lastRun.distance)}
+                    </span>
                     {" · "}
-                    {durationLabel(lastRun.duration)}
+                    <span className="font-mono tabular-nums">
+                      {durationLabel(lastRun.duration)}
+                    </span>
                     {lastRun.avgPace > 0 && (
                       <>
                         {" · "}
-                        {paceLabel(lastRun.avgPace)}
+                        <span className="font-mono tabular-nums">
+                          {paceLabel(lastRun.avgPace)}
+                        </span>
                       </>
                     )}
                     {" · "}
@@ -941,13 +950,22 @@ export default function ProgrammeRunSection({
                   <p className="text-muted-foreground">
                     <span className="text-foreground">This week</span>
                     {" · "}
-                    {thisWeek.totalDistance.toFixed(1)} km
+                    <span className="font-mono tabular-nums">
+                      {thisWeek.totalDistance.toFixed(1)}
+                    </span>{" "}
+                    km
                     {" · "}
-                    {thisWeek.runCount} run{thisWeek.runCount === 1 ? "" : "s"}
+                    <span className="font-mono tabular-nums">
+                      {thisWeek.runCount}
+                    </span>{" "}
+                    run{thisWeek.runCount === 1 ? "" : "s"}
                     {thisWeek.avgPace > 0 && (
                       <>
                         {" · "}
-                        {paceLabel(thisWeek.avgPace)} avg
+                        <span className="font-mono tabular-nums">
+                          {paceLabel(thisWeek.avgPace)}
+                        </span>{" "}
+                        avg
                       </>
                     )}
                   </p>
