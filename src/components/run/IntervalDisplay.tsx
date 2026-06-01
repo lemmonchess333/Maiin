@@ -34,12 +34,15 @@ export default function IntervalDisplay({ state }: { state: IntervalState }) {
         <p className="text-xs font-bold tracking-wider">{label}</p>
       </div>
       {state.phase === "work" && state.isDistanceBased ? (
-        <p className="text-2xl font-mono tabular-nums font-bold mt-1">
-          {Math.max(
-            0,
-            Math.round(state.phaseTarget - state.phaseDistanceCovered)
-          )}
-          m left
+        <p className="text-2xl font-bold mt-1">
+          <span className="font-mono tabular-nums">
+            {Math.max(
+              0,
+              Math.round(state.phaseTarget - state.phaseDistanceCovered)
+            )}
+            m
+          </span>{" "}
+          left
         </p>
       ) : (
         <p className="text-2xl font-mono tabular-nums font-bold mt-1">
