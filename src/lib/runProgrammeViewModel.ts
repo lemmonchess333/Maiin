@@ -146,7 +146,9 @@ export interface RaceCockpitViewModel {
   /** Stored 0-based week index. */
   currentWeek: number | null;
   totalWeeks: number | null;
-  /** "Base" | "Build" | "Peak" | "Taper" | "Race" (null when no progress). */
+  /** "Base" | "Build" | "Taper" | "Race" (null when no progress). The engine
+   *  (getPhaseForWeek) never emits a "Peak" phase — the rail is Base→Build→
+   *  Taper→Race. */
   phaseLabel: string | null;
   inTaper: boolean;
   compressed: boolean;
