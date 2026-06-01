@@ -9,10 +9,19 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { buildPlan, validatePlanOutput, type PlanBuilderInput } from "../planBuilder";
-import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "../programTypes";
+import {
+  buildPlan,
+  validatePlanOutput,
+  type PlanBuilderInput,
+} from "../planBuilder";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  CURRENT_WEEKSCHEDULE_VERSION,
+} from "../programTypes";
 
-function makeInput(overrides: Partial<PlanBuilderInput> = {}): PlanBuilderInput {
+function makeInput(
+  overrides: Partial<PlanBuilderInput> = {}
+): PlanBuilderInput {
   return {
     primaryGoal: "hypertrophy",
     nutritionPhase: "recomp",
@@ -23,7 +32,7 @@ function makeInput(overrides: Partial<PlanBuilderInput> = {}): PlanBuilderInput 
     weeklyRunDays: 0,
     equipment: "full_gym",
     injuries: [],
-    currentDate: "2026-05-14",  // Thursday (deterministic)
+    currentDate: "2026-05-14", // Thursday (deterministic)
     ...overrides,
   };
 }
@@ -46,7 +55,9 @@ describe("buildPlan · purity", () => {
     expect(a.profileUpdates).toEqual(b.profileUpdates);
     expect(a.programState.runDays).toEqual(b.programState.runDays);
     expect(a.programState.runPlan).toEqual(b.programState.runPlan);
-    expect(a.programState.programSchemaVersion).toBe(b.programState.programSchemaVersion);
+    expect(a.programState.programSchemaVersion).toBe(
+      b.programState.programSchemaVersion
+    );
     expect(a.programState.updatedAt).toBe(b.programState.updatedAt);
   });
 
@@ -59,7 +70,9 @@ describe("buildPlan · purity", () => {
     });
     const a = buildPlan(input);
     const b = buildPlan(input);
-    expect(a.programState.runPlan?.totalWeeks).toBe(b.programState.runPlan?.totalWeeks);
+    expect(a.programState.runPlan?.totalWeeks).toBe(
+      b.programState.runPlan?.totalWeeks
+    );
     // 13 weeks from 2026-05-14 to 2026-08-14 (clamped to min 6 for 10K — actual ≥ 13)
     expect(a.programState.runPlan?.totalWeeks).toBeGreaterThanOrEqual(13);
   });
@@ -84,7 +97,9 @@ describe("buildPlan · purity", () => {
     const input = makeInput({ liftDays: 4 });
     const runs = Array.from({ length: 10 }, () => buildPlan(input));
     const allAccessoryIds = runs.flatMap((r) =>
-      r.programState.workouts.flatMap((w) => w.exercises.map((e) => e.exerciseId)),
+      r.programState.workouts.flatMap((w) =>
+        w.exercises.map((e) => e.exerciseId)
+      )
     );
     const unique = new Set(allAccessoryIds);
     // Across 10 generations we expect MORE than a single unique
@@ -111,16 +126,22 @@ describe("buildPlan · output shape", () => {
 
   it("sets programSchemaVersion to current", () => {
     const out = buildPlan(makeInput());
-    expect(out.programState.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
+    expect(out.programState.programSchemaVersion).toBe(
+      CURRENT_PROGRAM_SCHEMA_VERSION
+    );
   });
 
   it("profileUpdates includes weekScheduleVersion", () => {
     const out = buildPlan(makeInput());
-    expect(out.profileUpdates.weekScheduleVersion).toBe(CURRENT_WEEKSCHEDULE_VERSION);
+    expect(out.profileUpdates.weekScheduleVersion).toBe(
+      CURRENT_WEEKSCHEDULE_VERSION
+    );
   });
 
   it("profileUpdates writes BOTH weeklyRunDaysTarget and weeklyRunsTarget (legacy field sync)", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     expect(out.profileUpdates.weeklyRunDaysTarget).toBe(3);
     expect(out.profileUpdates.weeklyRunsTarget).toBe(3);
   });
@@ -147,10 +168,12 @@ describe("buildPlan · output shape", () => {
   // (what macro/calorie consumers read) — not only programState.goal. Without
   // this the unified editor's phase change wouldn't move calorie targets.
   it("profileUpdates.program.goal mirrors the nutrition phase", () => {
-    expect(buildPlan(makeInput({ nutritionPhase: "cut" })).profileUpdates.program)
-      .toEqual({ goal: "cut" });
     expect(
-      buildPlan(makeInput({ nutritionPhase: "lean bulk" })).profileUpdates.program
+      buildPlan(makeInput({ nutritionPhase: "cut" })).profileUpdates.program
+    ).toEqual({ goal: "cut" });
+    expect(
+      buildPlan(makeInput({ nutritionPhase: "lean bulk" })).profileUpdates
+        .program
     ).toEqual({ goal: "lean bulk" });
   });
 });
@@ -166,7 +189,9 @@ describe("buildPlan · freeform mode", () => {
 
   it("weekSchedule has 0 run days", () => {
     const out = buildPlan(makeInput({ runMode: "freeform" }));
-    const runDays = out.weekSchedule.filter((d) => d.type === "run" || d.type === "both");
+    const runDays = out.weekSchedule.filter(
+      (d) => d.type === "run" || d.type === "both"
+    );
     expect(runDays).toHaveLength(0);
   });
 
@@ -181,14 +206,18 @@ describe("buildPlan · freeform mode", () => {
 
 describe("buildPlan · structured mode", () => {
   it("produces runDays without raceGoal", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     expect(out.programState.runDays?.length).toBeGreaterThan(0);
     expect(out.programState.runPlan?.mode).toBe("structured");
     expect(out.programState.runPlan?.raceGoal).toBeUndefined();
   });
 
   it("every runDay has id / date / weekKey / status", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.id).toBeTruthy();
       expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
@@ -198,34 +227,42 @@ describe("buildPlan · structured mode", () => {
   });
 
   it("initial runDays status is 'planned'", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.status).toBe("planned");
     });
   });
 
   it("weekSchedule has correct run-day count", () => {
-    const out = buildPlan(makeInput({
-      runMode: "structured",
-      liftDays: 3,
-      weeklyRunDays: 2,
-    }));
-    const runOrBoth = out.weekSchedule.filter((d) => d.type === "run" || d.type === "both");
+    const out = buildPlan(
+      makeInput({
+        runMode: "structured",
+        liftDays: 3,
+        weeklyRunDays: 2,
+      })
+    );
+    const runOrBoth = out.weekSchedule.filter(
+      (d) => d.type === "run" || d.type === "both"
+    );
     expect(runOrBoth).toHaveLength(2);
   });
 
   it("handles hybrid (overflow to Both days)", () => {
-    const out = buildPlan(makeInput({
-      runMode: "structured",
-      liftDays: 6,
-      weeklyRunDays: 2,
-    }));
+    const out = buildPlan(
+      makeInput({
+        runMode: "structured",
+        liftDays: 6,
+        weeklyRunDays: 2,
+      })
+    );
     const counts = out.weekSchedule.reduce(
       (acc, d) => ({ ...acc, [d.type]: (acc[d.type] ?? 0) + 1 }),
-      {} as Record<string, number>,
+      {} as Record<string, number>
     );
     expect((counts.lift ?? 0) + (counts.both ?? 0)).toBe(6); // lift exposure
-    expect((counts.run ?? 0) + (counts.both ?? 0)).toBe(2);  // run exposure
+    expect((counts.run ?? 0) + (counts.both ?? 0)).toBe(2); // run exposure
     expect(counts.both).toBeGreaterThanOrEqual(1);
   });
 });
@@ -234,11 +271,13 @@ describe("buildPlan · structured mode", () => {
 
 describe("buildPlan · race_prep mode", () => {
   it("produces runPlan with mode='race_prep' + totalWeeks > 0", () => {
-    const out = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal: { distance: "10k", targetDate: "2026-08-14" },
-    }));
+    const out = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: "2026-08-14" },
+      })
+    );
     expect(out.programState.runPlan?.mode).toBe("race_prep");
     expect(out.programState.runPlan?.totalWeeks).toBeGreaterThan(0);
     expect(out.programState.runPlan?.currentWeek).toBe(0);
@@ -246,21 +285,25 @@ describe("buildPlan · race_prep mode", () => {
 
   it("propagates raceGoal into runPlan and profileUpdates", () => {
     const raceGoal = { distance: "10k" as const, targetDate: "2026-08-14" };
-    const out = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal,
-    }));
+    const out = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal,
+      })
+    );
     expect(out.programState.runPlan?.raceGoal).toEqual(raceGoal);
     expect(out.profileUpdates.raceGoal).toEqual(raceGoal);
   });
 
   it("every runDay has full v2 shape (id / date / weekKey / status)", () => {
-    const out = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal: { distance: "10k", targetDate: "2026-08-14" },
-    }));
+    const out = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: "2026-08-14" },
+      })
+    );
     expect(out.programState.runDays?.length).toBeGreaterThan(0);
     (out.programState.runDays ?? []).forEach((rd) => {
       expect(rd.id).toBeTruthy();
@@ -271,18 +314,23 @@ describe("buildPlan · race_prep mode", () => {
   });
 
   it("totalWeeks scales with race-date distance (proxy: longer date → more weeks)", () => {
-    const short = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal: { distance: "10k", targetDate: "2026-07-01" },  // ~7 weeks from May 14
-    }));
-    const long = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal: { distance: "10k", targetDate: "2026-12-01" },  // ~29 weeks
-    }));
-    expect((long.programState.runPlan?.totalWeeks ?? 0))
-      .toBeGreaterThan(short.programState.runPlan?.totalWeeks ?? 0);
+    const short = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: "2026-07-01" }, // ~7 weeks from May 14
+      })
+    );
+    const long = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: "2026-12-01" }, // ~29 weeks
+      })
+    );
+    expect(long.programState.runPlan?.totalWeeks ?? 0).toBeGreaterThan(
+      short.programState.runPlan?.totalWeeks ?? 0
+    );
   });
 });
 
@@ -310,7 +358,9 @@ describe("buildPlan · lift programme", () => {
 
 describe("validatePlanOutput", () => {
   it("accepts a freshly built plan", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     expect(() => validatePlanOutput(out)).not.toThrow();
   });
 
@@ -321,25 +371,31 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when runDay missing id", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     const bad = {
       ...out,
       programState: {
         ...out.programState,
-        runDays: out.programState.runDays?.map((rd, i) => i === 0 ? { ...rd, id: undefined } : rd),
+        runDays: out.programState.runDays?.map((rd, i) =>
+          i === 0 ? { ...rd, id: undefined } : rd
+        ),
       },
     };
     expect(() => validatePlanOutput(bad)).toThrow(/id missing/);
   });
 
   it("throws when runDay date is UTC ISO format", () => {
-    const out = buildPlan(makeInput({ runMode: "structured", weeklyRunDays: 3 }));
+    const out = buildPlan(
+      makeInput({ runMode: "structured", weeklyRunDays: 3 })
+    );
     const bad = {
       ...out,
       programState: {
         ...out.programState,
         runDays: out.programState.runDays?.map((rd, i) =>
-          i === 0 ? { ...rd, date: "2026-05-14T00:00:00Z" } : rd,
+          i === 0 ? { ...rd, date: "2026-05-14T00:00:00Z" } : rd
         ),
       },
     };
@@ -347,16 +403,20 @@ describe("validatePlanOutput", () => {
   });
 
   it("throws when race_prep mode missing raceGoal in profileUpdates", () => {
-    const out = buildPlan(makeInput({
-      runMode: "race_prep",
-      weeklyRunDays: 3,
-      raceGoal: { distance: "10k", targetDate: "2026-08-14" },
-    }));
+    const out = buildPlan(
+      makeInput({
+        runMode: "race_prep",
+        weeklyRunDays: 3,
+        raceGoal: { distance: "10k", targetDate: "2026-08-14" },
+      })
+    );
     const bad = {
       ...out,
       profileUpdates: { ...out.profileUpdates, raceGoal: undefined },
     };
-    expect(() => validatePlanOutput(bad)).toThrow(/race_prep mode requires raceGoal/);
+    expect(() => validatePlanOutput(bad)).toThrow(
+      /race_prep mode requires raceGoal/
+    );
   });
 
   it("throws when programSchemaVersion is wrong", () => {
@@ -377,7 +437,10 @@ describe("validatePlanOutput", () => {
       ...out,
       weekSchedule: [
         ...out.weekSchedule.slice(0, 6),
-        { day: 6, type: "junk" } as unknown as (typeof out.weekSchedule)[number],
+        {
+          day: 6,
+          type: "junk",
+        } as unknown as (typeof out.weekSchedule)[number],
       ],
     };
     expect(() => validatePlanOutput(bad)).toThrow(/invalid/);
@@ -403,5 +466,69 @@ describe("buildPlan · preserveHistory", () => {
 
     const out = buildPlan(makeInput({ existingState, preserveHistory: false }));
     expect(out.programState.weekNumber).toBe(1);
+  });
+});
+
+/* ─── Pgm5 Q2 · structure-preserving regeneration ──────────────── */
+
+describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
+  it("a content edit (same lift-days) preserves the existing workouts verbatim", () => {
+    const first = buildPlan(
+      makeInput({ liftDays: 4, primaryGoal: "hypertrophy" })
+    );
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        primaryGoal: "strength", // content edit, same day count
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(edited.programState.workouts).toEqual(first.programState.workouts);
+    expect(edited.programState.splitType).toBe(first.programState.splitType);
+  });
+
+  it("preserves user structural edits (added + reordered exercises) on a content edit", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    // Simulate Program-page customizations: add an exercise to day 0, reverse day 1.
+    const customized = JSON.parse(
+      JSON.stringify(first.programState)
+    ) as typeof first.programState;
+    customized.workouts[0].exercises.push({
+      ...customized.workouts[0].exercises[0],
+      name: "User Added Curl",
+      exerciseId: "user-added-curl",
+    });
+    customized.workouts[1].exercises.reverse();
+
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        nutritionPhase: "cut", // content edit
+        existingState: customized,
+        preserveHistory: true,
+      })
+    );
+    expect(edited.programState.workouts).toEqual(customized.workouts);
+    expect(
+      edited.programState.workouts[0].exercises.some(
+        (e) => e.exerciseId === "user-added-curl"
+      )
+    ).toBe(true);
+  });
+
+  it("a lift-days change rebuilds the structure (does not preserve)", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    const bumped = buildPlan(
+      makeInput({
+        liftDays: 5,
+        existingState: first.programState,
+        preserveHistory: true,
+      })
+    );
+    expect(bumped.programState.workouts).toHaveLength(5);
+    expect(bumped.programState.workouts).not.toEqual(
+      first.programState.workouts
+    );
   });
 });
