@@ -105,6 +105,21 @@ and confirm it contains the `firebase-functions/v1` import and the
 `defineSecret(...)` lines. If absent, re-run `deploy-functions.yml` via
 `workflow_dispatch`.
 
+**ACTION — clear the stranded deploy backlog (Secret Manager).** Every
+`functions/` deploy has been failing because the **Secret Manager API was
+disabled** on `adaptive-fitness-af8bb` (the deploy resolves the bound secrets
+— `APPLE_KEY_ID`, `STRIPE_*`, `BILLING_HMAC_SECRET` — against it and 403s:
+_"API has not been used in project … or it is disabled"_). So recent
+`functions/` changes — the **server perf-engine cold-start reconciliation**
+and the **transactional + idempotent challenge sync** — never actually
+shipped. `deploy-functions.yml` now enables Secret Manager and waits for it
+to propagate before deploying. **Re-run `deploy-functions.yml` via
+`workflow_dispatch`, confirm green, then spot-check the deployed source:**
+`safeRatio` returns `1.0` (not `1.2`), the deload threshold is `>= 85`, and
+the challenge sync writes an `applied/{sourceId}` marker. If the enable step
+errors on permissions instead, enable it once by hand:
+`gcloud services enable secretmanager.googleapis.com --project adaptive-fitness-af8bb`.
+
 ### 4. App Store Connect — IAP products + webhook URL
 
 - Register IAP products matching the IDs in
@@ -247,11 +262,23 @@ The single biggest iOS-credibility upgrade. Priority order:
 Needs `@capacitor-community/health` or similar plugin + iOS
 entitlement config.
 
-### 11. Background run tracking
+### 11. Background run tracking — Step 2 (native; needs Mac/Xcode)
 
-Current geolocation is browser-level — stops when the phone locks.
-Need native background location permission + Capacitor Geolocation
-plugin with `watchPosition` configured for background mode.
+Full plan: **`docs/run-background-gps.md`**.
+
+**Step 1 is done (web-safe).** `useGPS` now reads fixes through a
+`LocationSource` seam (`src/lib/locationSource.ts`) instead of
+`navigator.geolocation` directly, and the run-start fixes shipped (starts on
+a weak/indoor fix instead of spinning "Acquiring GPS" forever; countdown no
+longer stalls; plain permission / offline / no-lock copy).
+
+**Step 2 (this item) is the native part.** Geolocation is still browser-level
+— it stops when the phone locks / backgrounds (every real run). Add
+`@capacitor-community/background-geolocation` (foreground service), write a
+`nativeLocationSource`, flip the one branch in `getLocationSource()`, add iOS
+`Info.plist` location strings + `UIBackgroundModes: location` and the Android
+`ACCESS_BACKGROUND_LOCATION` permission + foreground-service notification,
+then device-test: screen-lock mid-run, app backgrounded, airplane-mode → back.
 
 Follow-ups:
 
