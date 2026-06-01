@@ -103,7 +103,11 @@ function clamp(v) {
 }
 
 function safeRatio(current, baseline) {
-  if (baseline <= 0) return current > 0 ? 1.2 : 0;
+  // Zero baseline (cold-start: no 28-day history) → NEUTRAL 1.0, matching the
+  // client engine (src/lib/performanceEngine.ts). Returning 1.2 here inflated
+  // every cold-start ratio to "20% above baseline", pushing a brand-new user's
+  // first-week PI into the overreach band off a baseline they don't have.
+  if (baseline <= 0) return current > 0 ? 1.0 : 0;
   return current / baseline;
 }
 
@@ -460,7 +464,10 @@ function shouldRecommendDeload(
   previousComputePI
 ) {
   if (currentPI >= 80 && recoveryScore < 45) return true;
-  if (currentPI >= 75 && previousComputePI != null && previousComputePI >= 75)
+  // Sustained overreach: two consecutive full-window-separated computes in the
+  // overreach band. Threshold is 85 to match the client engine (raised from 75;
+  // see src/lib/performanceEngine.ts) — 75-84 for two weeks is high-but-fine.
+  if (currentPI >= 85 && previousComputePI != null && previousComputePI >= 85)
     return true;
   if (currentPI >= 70 && adherenceScore < 50) return true;
   return false;
@@ -712,12 +719,18 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       /* no previous doc, that's fine */
     }
 
-    const deloadRecommended = shouldRecommendDeload(
-      pi,
-      recoveryScore,
-      adherenceScore,
-      previousComputePI
-    );
+    // Gate on baseline sufficiency, matching the client engine: a deload
+    // recommendation off an unreliable (<3-week) baseline is noise, and
+    // combined with cold-start ratios it would nag brand-new users to deload.
+    const deloadRecommended =
+      bl.weeksUsed >= 3
+        ? shouldRecommendDeload(
+            pi,
+            recoveryScore,
+            adherenceScore,
+            previousComputePI
+          )
+        : false;
 
     const partial = {
       performanceIndex: pi,

@@ -192,9 +192,11 @@ export default function DayPeekCard({
                     {tonnage > 0 && (
                       <span className="text-muted-foreground">
                         {" · "}
-                        {tonnage >= 1000
-                          ? (tonnage / 1000).toFixed(1) + "k kg"
-                          : Math.round(tonnage) + " kg"}
+                        <span className="font-mono tabular-nums">
+                          {tonnage >= 1000
+                            ? (tonnage / 1000).toFixed(1) + "k kg"
+                            : Math.round(tonnage) + " kg"}
+                        </span>
                       </span>
                     )}
                   </span>

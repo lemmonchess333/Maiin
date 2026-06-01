@@ -132,7 +132,6 @@ export interface UserProfilePreferences {
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   audioCues?: boolean;
-  enableRolloverCalories?: boolean;
   /** F1 privacy toggle: user opt-out for Gemini-backed food analysis
    *  (image AI + NL text refinement). Undefined / missing = enabled
    *  (default behaviour). Set to false via Settings → Privacy to

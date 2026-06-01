@@ -2701,7 +2701,22 @@ exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
 // CHALLENGE AUTO-PROGRESS HELPER
 // ══════════════════════════════════════════════
 
-async function syncChallengeProgress(uid, metric, incrementBy) {
+/**
+ * Apply an additive (SUM) challenge increment for `uid`.
+ *
+ * `sourceId` is the id of the activity driving the increment (the
+ * workout/run doc id). It makes the apply IDEMPOTENT: onCreate triggers are
+ * at-least-once, so a redelivery re-runs this whole body. Without a guard a
+ * retry would increment currentValue a second time and permanently inflate
+ * workout_count / total_volume / total_km. We record a per-participant marker
+ * doc (`participants/{uid}/applied/{sourceId}`) inside the same transaction as
+ * the increment; a re-apply for the same source is a no-op.
+ *
+ * The marker is a subcollection doc (not a map field on the participant) so it
+ * stays bounded even for a long-running / perpetual challenge — no 1MB
+ * doc-growth footgun.
+ */
+async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
   try {
     const challengesSnap = await db.collection("challenges").get();
     const now = new Date();
@@ -2722,23 +2737,50 @@ async function syncChallengeProgress(uid, metric, incrementBy) {
         .doc(doc.id)
         .collection("participants")
         .doc(uid);
+      // Fast-path skip for non-participants (avoids opening a transaction
+      // for every challenge the user isn't in).
       const participantSnap = await participantRef.get();
       if (!participantSnap.exists) continue;
 
-      const current = participantSnap.data().currentValue || 0;
-      const newValue = current + incrementBy;
+      // Marker doc keyed by the driving activity id. When absent we can't
+      // guard idempotently — fall back to a deterministic key so a missing
+      // sourceId never silently disables the transaction.
+      const markerRef = participantRef
+        .collection("applied")
+        .doc(sourceId || `${metric}_legacy_nosrc`);
 
-      // Compute tier
+      // Read-modify-write inside a transaction: (a) two near-simultaneous
+      // triggers otherwise read the same currentValue and the second write
+      // clobbers the first (lost update); (b) a redelivered onCreate would
+      // double-count. The marker read guards (b); the transaction guards (a).
       const tiers = challenge.tiers || {};
-      let tierAchieved = null;
-      if (newValue >= (tiers.gold || Infinity)) tierAchieved = "gold";
-      else if (newValue >= (tiers.silver || Infinity)) tierAchieved = "silver";
-      else if (newValue >= (tiers.bronze || Infinity)) tierAchieved = "bronze";
-
-      await participantRef.set(
-        { currentValue: newValue, tierAchieved },
-        { merge: true }
-      );
+      await db.runTransaction(async (tx) => {
+        // All reads before any writes (Firestore transaction rule).
+        const [snap, marker] = await Promise.all([
+          tx.get(participantRef),
+          tx.get(markerRef),
+        ]);
+        if (!snap.exists) return;
+        if (marker.exists) return; // already applied this activity — idempotent no-op
+        const current = snap.data().currentValue || 0;
+        const newValue = current + incrementBy;
+        let tierAchieved = null;
+        if (newValue >= (tiers.gold || Infinity)) tierAchieved = "gold";
+        else if (newValue >= (tiers.silver || Infinity))
+          tierAchieved = "silver";
+        else if (newValue >= (tiers.bronze || Infinity))
+          tierAchieved = "bronze";
+        tx.set(
+          participantRef,
+          { currentValue: newValue, tierAchieved },
+          { merge: true }
+        );
+        tx.set(markerRef, {
+          metric,
+          incrementBy,
+          appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
     }
   } catch (err) {
     console.error(
@@ -2824,7 +2866,7 @@ exports.onWorkoutCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("users/{uid}/workouts/{workoutId}")
   .onCreate(async (snap, context) => {
-    const { uid } = context.params;
+    const { uid, workoutId } = context.params;
     // R1A-Deletion: system-writer guard + compensating delete.
     // Triggers fire AFTER the source write commits — they cannot
     // pre-block the original write. Pattern per Blocker 6 trigger
@@ -2861,12 +2903,17 @@ exports.onWorkoutCreated = functions
           { merge: true }
         );
 
-      // Auto-progress workout_count challenges
-      await syncChallengeProgress(uid, "workout_count", 1);
+      // Auto-progress workout_count challenges (idempotent on workoutId)
+      await syncChallengeProgress(uid, "workout_count", 1, workoutId);
 
       // Auto-progress total_volume challenges (if volume data available)
       if (data.totalVolume) {
-        await syncChallengeProgress(uid, "total_volume", data.totalVolume);
+        await syncChallengeProgress(
+          uid,
+          "total_volume",
+          data.totalVolume,
+          workoutId
+        );
       }
 
       if (data.date) {
@@ -2914,7 +2961,7 @@ exports.onRunCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("users/{uid}/runs/{runId}")
   .onCreate(async (snap, context) => {
-    const { uid } = context.params;
+    const { uid, runId } = context.params;
     // R1A-Deletion: system-writer guard + compensating delete. Same
     // Blocker 6 trigger pattern as onWorkoutCreated — delete the
     // source run doc and skip downstream writes if the user is
@@ -2977,7 +3024,8 @@ exports.onRunCreated = functions
           await syncChallengeProgress(
             uid,
             "total_km",
-            Math.round(distanceKm * 100) / 100
+            Math.round(distanceKm * 100) / 100,
+            runId
           );
         }
 
