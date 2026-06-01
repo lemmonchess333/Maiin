@@ -25,13 +25,38 @@ import { format } from "date-fns";
 */
 
 const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
-  strength:    { mainReps: 5,  accessoryReps: 8,  volumeMultiplier: 0.9,  mainProgression: "linear" },
-  hypertrophy: { mainReps: 8,  accessoryReps: 12, volumeMultiplier: 1.0,  mainProgression: "double" },
-  fat_loss:    { mainReps: 12, accessoryReps: 15, volumeMultiplier: 1.0,  mainProgression: "linear" },
-  general:     { mainReps: 8,  accessoryReps: 12, volumeMultiplier: 1.0,  mainProgression: "double" },
+  strength: {
+    mainReps: 5,
+    accessoryReps: 8,
+    volumeMultiplier: 0.9,
+    mainProgression: "linear",
+  },
+  hypertrophy: {
+    mainReps: 8,
+    accessoryReps: 12,
+    volumeMultiplier: 1.0,
+    mainProgression: "double",
+  },
+  fat_loss: {
+    mainReps: 12,
+    accessoryReps: 15,
+    volumeMultiplier: 1.0,
+    mainProgression: "linear",
+  },
+  general: {
+    mainReps: 8,
+    accessoryReps: 12,
+    volumeMultiplier: 1.0,
+    mainProgression: "double",
+  },
   // running-goal users still lift to support their running — matches the
   // fullBodyBeginner prescription: moderate reps, lower volume.
-  running:     { mainReps: 8,  accessoryReps: 12, volumeMultiplier: 0.85, mainProgression: "linear" },
+  running: {
+    mainReps: 8,
+    accessoryReps: 12,
+    volumeMultiplier: 0.85,
+    mainProgression: "linear",
+  },
 };
 
 export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
@@ -52,7 +77,12 @@ export function calculateE1RM(weight: number, reps: number): number {
 
 export function generateWeekPrescription(week: number): WeeklyPrescription {
   if (week % 4 === 0) {
-    return { week, intensityMultiplier: 0.85, volumeModifier: 0.7, deload: true };
+    return {
+      week,
+      intensityMultiplier: 0.85,
+      volumeModifier: 0.7,
+      deload: true,
+    };
   }
   return {
     week,
@@ -68,16 +98,21 @@ export function generateWeekPrescription(week: number): WeeklyPrescription {
 
 function goalVolumeMultiplier(goal: Goal): number {
   switch (goal) {
-    case "cut": return 0.9;
-    case "lean bulk": return 1.12;
-    case "recomp": return 1.0;
+    case "cut":
+      return 0.9;
+    case "lean bulk":
+      return 1.12;
+    case "recomp":
+      return 1.0;
   }
 }
 
 function goalWeightBonus(goal: Goal): number {
   switch (goal) {
-    case "lean bulk": return 1.25;
-    default: return 0;
+    case "lean bulk":
+      return 1.25;
+    default:
+      return 0;
   }
 }
 
@@ -106,23 +141,35 @@ export function chooseSplit(weeklyTarget: number): SplitType {
 
 export function splitLabel(split: SplitType): string {
   switch (split) {
-    case "full_body": return "Full Body";
-    case "upper_lower": return "Upper / Lower";
-    case "ppl": return "Push / Pull / Legs";
-    case "ppl_ul": return "Push / Pull / Legs + Upper / Lower";
-    case "ppl_x2": return "Push / Pull / Legs ×2";
-    case "ppl_x2_fb": return "Push / Pull / Legs ×2 + Full Body";
+    case "full_body":
+      return "Full Body";
+    case "upper_lower":
+      return "Upper / Lower";
+    case "ppl":
+      return "Push / Pull / Legs";
+    case "ppl_ul":
+      return "Push / Pull / Legs + Upper / Lower";
+    case "ppl_x2":
+      return "Push / Pull / Legs ×2";
+    case "ppl_x2_fb":
+      return "Push / Pull / Legs ×2 + Full Body";
   }
 }
 
 export function primaryGoalLabel(g?: PrimaryGoal): string {
   switch (g) {
-    case "strength": return "Strength";
-    case "hypertrophy": return "Hypertrophy";
-    case "fat_loss": return "Fat Loss";
-    case "general": return "General Fitness";
-    case "running": return "Running Support";
-    default: return "General Fitness";
+    case "strength":
+      return "Strength";
+    case "hypertrophy":
+      return "Hypertrophy";
+    case "fat_loss":
+      return "Fat Loss";
+    case "general":
+      return "General Fitness";
+    case "running":
+      return "Running Support";
+    default:
+      return "General Fitness";
   }
 }
 
@@ -136,9 +183,13 @@ function makeExercise(
   reps: number,
   weight: number,
   progression: "double" | "linear",
-  existing?: ProgramExercise,
+  existing?: ProgramExercise
 ): ProgramExercise {
-  const ex = pickExercise(category, existing?.plateauCount ?? 0, existing?.exerciseId);
+  const ex = pickExercise(
+    category,
+    existing?.plateauCount ?? 0,
+    existing?.exerciseId
+  );
   const w = existing?.weight ?? weight;
   return {
     name: ex.name,
@@ -163,7 +214,7 @@ function makeAccessory(
   sets: number,
   reps: number,
   weight: number,
-  excludeId?: string,
+  excludeId?: string
 ): ProgramExercise {
   const ex = pickAccessory(category, excludeId);
   return {
@@ -194,7 +245,10 @@ function makeAccessory(
  * lifters drop 15%) with nutrition-phase modulation (cut -10%, lean bulk
  * +12%). Both are legitimate independent axes; they compound.
  */
-function combinedVolumeMultiplier(profile: GoalProfile, nutritionGoal: Goal): number {
+function combinedVolumeMultiplier(
+  profile: GoalProfile,
+  nutritionGoal: Goal
+): number {
   return profile.volumeMultiplier * goalVolumeMultiplier(nutritionGoal);
 }
 
@@ -202,7 +256,7 @@ function buildFullBody(
   profile: GoalProfile,
   nutritionGoal: Goal,
   count: number,
-  existing?: WorkoutDay[],
+  existing?: WorkoutDay[]
 ): WorkoutDay[] {
   const vm = combinedVolumeMultiplier(profile, nutritionGoal);
   const round = (n: number) => Math.max(1, Math.round(n));
@@ -216,10 +270,38 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise("horizontal_push", round(3 * vm), main, 60, profile.mainProgression, findExisting(0, 0)),
-      makeExercise("knee_dominant", round(3 * vm), main, 80, profile.mainProgression, findExisting(0, 1)),
-      makeExercise("vertical_pull", round(3 * vm), acc, 0, profile.mainProgression, findExisting(0, 2)),
-      makeExercise("hip_dominant", round(3 * vm), acc, 60, "linear", findExisting(0, 3)),
+      makeExercise(
+        "horizontal_push",
+        round(3 * vm),
+        main,
+        60,
+        profile.mainProgression,
+        findExisting(0, 0)
+      ),
+      makeExercise(
+        "knee_dominant",
+        round(3 * vm),
+        main,
+        80,
+        profile.mainProgression,
+        findExisting(0, 1)
+      ),
+      makeExercise(
+        "vertical_pull",
+        round(3 * vm),
+        acc,
+        0,
+        profile.mainProgression,
+        findExisting(0, 2)
+      ),
+      makeExercise(
+        "hip_dominant",
+        round(3 * vm),
+        acc,
+        60,
+        "linear",
+        findExisting(0, 3)
+      ),
       makeExercise("core", round(2 * vm), 12, 15, "linear", findExisting(0, 4)),
     ],
   };
@@ -231,11 +313,46 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise("vertical_push", round(3 * vm), main, 40, profile.mainProgression, findExisting(1, 0)),
-      makeExercise("hip_dominant", round(3 * vm), main, 80, profile.mainProgression, findExisting(1, 1)),
-      makeExercise("horizontal_pull", round(3 * vm), acc, 50, profile.mainProgression, findExisting(1, 2)),
-      makeExercise("knee_dominant", round(3 * vm), acc, 60, "linear", findExisting(1, 3)),
-      makeExercise("arms_biceps", round(2 * vm), 12, 10, "linear", findExisting(1, 4)),
+      makeExercise(
+        "vertical_push",
+        round(3 * vm),
+        main,
+        40,
+        profile.mainProgression,
+        findExisting(1, 0)
+      ),
+      makeExercise(
+        "hip_dominant",
+        round(3 * vm),
+        main,
+        80,
+        profile.mainProgression,
+        findExisting(1, 1)
+      ),
+      makeExercise(
+        "horizontal_pull",
+        round(3 * vm),
+        acc,
+        50,
+        profile.mainProgression,
+        findExisting(1, 2)
+      ),
+      makeExercise(
+        "knee_dominant",
+        round(3 * vm),
+        acc,
+        60,
+        "linear",
+        findExisting(1, 3)
+      ),
+      makeExercise(
+        "arms_biceps",
+        round(2 * vm),
+        12,
+        10,
+        "linear",
+        findExisting(1, 4)
+      ),
     ],
   };
 
@@ -247,10 +364,38 @@ function buildFullBody(
     dayType: "full_body",
     completed: false,
     exercises: [
-      makeExercise("hip_dominant", round(3 * vm), main, 80, profile.mainProgression, findExisting(2, 0)),
-      makeExercise("horizontal_push", round(3 * vm), acc, 60, profile.mainProgression, findExisting(2, 1)),
-      makeExercise("vertical_pull", round(3 * vm), acc, 0, profile.mainProgression, findExisting(2, 2)),
-      makeExercise("knee_dominant", round(3 * vm), acc, 60, "linear", findExisting(2, 3)),
+      makeExercise(
+        "hip_dominant",
+        round(3 * vm),
+        main,
+        80,
+        profile.mainProgression,
+        findExisting(2, 0)
+      ),
+      makeExercise(
+        "horizontal_push",
+        round(3 * vm),
+        acc,
+        60,
+        profile.mainProgression,
+        findExisting(2, 1)
+      ),
+      makeExercise(
+        "vertical_pull",
+        round(3 * vm),
+        acc,
+        0,
+        profile.mainProgression,
+        findExisting(2, 2)
+      ),
+      makeExercise(
+        "knee_dominant",
+        round(3 * vm),
+        acc,
+        60,
+        "linear",
+        findExisting(2, 3)
+      ),
       makeExercise("core", round(2 * vm), 12, 15, "linear", findExisting(2, 4)),
     ],
   };
@@ -261,7 +406,7 @@ function buildFullBody(
 function buildUpperLower(
   profile: GoalProfile,
   nutritionGoal: Goal,
-  existing?: WorkoutDay[],
+  existing?: WorkoutDay[]
 ): WorkoutDay[] {
   const vm = combinedVolumeMultiplier(profile, nutritionGoal);
   const round = (n: number) => Math.max(1, Math.round(n));
@@ -276,11 +421,46 @@ function buildUpperLower(
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise("horizontal_push", round(4 * vm), main, 60, profile.mainProgression, findExisting(0, 0)),
-        makeExercise("horizontal_pull", round(4 * vm), main, 60, profile.mainProgression, findExisting(0, 1)),
-        makeExercise("vertical_push", round(3 * vm), acc, 30, "linear", findExisting(0, 2)),
-        makeExercise("arms_biceps", round(3 * vm), 12, 12, "linear", findExisting(0, 3)),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(0, 4)),
+        makeExercise(
+          "horizontal_push",
+          round(4 * vm),
+          main,
+          60,
+          profile.mainProgression,
+          findExisting(0, 0)
+        ),
+        makeExercise(
+          "horizontal_pull",
+          round(4 * vm),
+          main,
+          60,
+          profile.mainProgression,
+          findExisting(0, 1)
+        ),
+        makeExercise(
+          "vertical_push",
+          round(3 * vm),
+          acc,
+          30,
+          "linear",
+          findExisting(0, 2)
+        ),
+        makeExercise(
+          "arms_biceps",
+          round(3 * vm),
+          12,
+          12,
+          "linear",
+          findExisting(0, 3)
+        ),
+        makeExercise(
+          "arms_triceps",
+          round(3 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(0, 4)
+        ),
       ],
     },
     {
@@ -288,10 +468,31 @@ function buildUpperLower(
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise("knee_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(1, 0)),
-        makeExercise("hip_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(1, 1)),
+        makeExercise(
+          "knee_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(1, 0)
+        ),
+        makeExercise(
+          "hip_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(1, 1)
+        ),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(1, 3)),
+        makeExercise(
+          "core",
+          round(3 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(1, 3)
+        ),
       ],
     },
     {
@@ -299,11 +500,39 @@ function buildUpperLower(
       dayType: "upper",
       completed: false,
       exercises: [
-        makeExercise("vertical_push", round(4 * vm), main, 40, profile.mainProgression, findExisting(2, 0)),
-        makeExercise("vertical_pull", round(4 * vm), main, 0, profile.mainProgression, findExisting(2, 1)),
+        makeExercise(
+          "vertical_push",
+          round(4 * vm),
+          main,
+          40,
+          profile.mainProgression,
+          findExisting(2, 0)
+        ),
+        makeExercise(
+          "vertical_pull",
+          round(4 * vm),
+          main,
+          0,
+          profile.mainProgression,
+          findExisting(2, 1)
+        ),
         makeAccessory("horizontal_push", round(3 * vm), acc, 30, "bench-press"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 10, "linear", findExisting(2, 3)),
-        makeExercise("arms_triceps", round(3 * vm), 12, 12, "linear", findExisting(2, 4)),
+        makeExercise(
+          "arms_biceps",
+          round(3 * vm),
+          12,
+          10,
+          "linear",
+          findExisting(2, 3)
+        ),
+        makeExercise(
+          "arms_triceps",
+          round(3 * vm),
+          12,
+          12,
+          "linear",
+          findExisting(2, 4)
+        ),
       ],
     },
     {
@@ -311,10 +540,24 @@ function buildUpperLower(
       dayType: "lower",
       completed: false,
       exercises: [
-        makeExercise("hip_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(3, 0)),
+        makeExercise(
+          "hip_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(3, 0)
+        ),
         makeAccessory("knee_dominant", round(3 * vm), acc, 50, "squat"),
         makeAccessory("hip_dominant", round(3 * vm), 12, 40, "deadlift"),
-        makeExercise("core", round(3 * vm), 12, 15, "linear", findExisting(3, 3)),
+        makeExercise(
+          "core",
+          round(3 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(3, 3)
+        ),
       ],
     },
   ];
@@ -323,7 +566,7 @@ function buildUpperLower(
 function buildPPL(
   profile: GoalProfile,
   nutritionGoal: Goal,
-  existing?: WorkoutDay[],
+  existing?: WorkoutDay[]
 ): WorkoutDay[] {
   const vm = combinedVolumeMultiplier(profile, nutritionGoal);
   const round = (n: number) => Math.max(1, Math.round(n));
@@ -338,11 +581,38 @@ function buildPPL(
       dayType: "push",
       completed: false,
       exercises: [
-        makeExercise("horizontal_push", round(4 * vm), main, 60, profile.mainProgression, findExisting(0, 0)),
-        makeExercise("vertical_push", round(3 * vm), acc, 30, "linear", findExisting(0, 1)),
+        makeExercise(
+          "horizontal_push",
+          round(4 * vm),
+          main,
+          60,
+          profile.mainProgression,
+          findExisting(0, 0)
+        ),
+        makeExercise(
+          "vertical_push",
+          round(3 * vm),
+          acc,
+          30,
+          "linear",
+          findExisting(0, 1)
+        ),
         makeAccessory("horizontal_push", round(3 * vm), 12, 30, "bench-press"),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(0, 3)),
-        makeAccessory("arms_triceps", round(3 * vm), 15, 10, "rope-tricep-pushdown"),
+        makeExercise(
+          "arms_triceps",
+          round(3 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(0, 3)
+        ),
+        makeAccessory(
+          "arms_triceps",
+          round(3 * vm),
+          15,
+          10,
+          "rope-tricep-pushdown"
+        ),
       ],
     },
     {
@@ -350,10 +620,31 @@ function buildPPL(
       dayType: "pull",
       completed: false,
       exercises: [
-        makeExercise("vertical_pull", round(4 * vm), main, 0, profile.mainProgression, findExisting(1, 0)),
-        makeExercise("horizontal_pull", round(3 * vm), acc, 50, "linear", findExisting(1, 1)),
+        makeExercise(
+          "vertical_pull",
+          round(4 * vm),
+          main,
+          0,
+          profile.mainProgression,
+          findExisting(1, 0)
+        ),
+        makeExercise(
+          "horizontal_pull",
+          round(3 * vm),
+          acc,
+          50,
+          "linear",
+          findExisting(1, 1)
+        ),
         makeAccessory("vertical_pull", round(3 * vm), 12, 40, "pull-ups"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 12, "linear", findExisting(1, 3)),
+        makeExercise(
+          "arms_biceps",
+          round(3 * vm),
+          12,
+          12,
+          "linear",
+          findExisting(1, 3)
+        ),
         makeAccessory("arms_biceps", round(3 * vm), 15, 8, "barbell-curl"),
       ],
     },
@@ -362,10 +653,31 @@ function buildPPL(
       dayType: "legs",
       completed: false,
       exercises: [
-        makeExercise("knee_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(2, 0)),
-        makeExercise("hip_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(2, 1)),
+        makeExercise(
+          "knee_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(2, 0)
+        ),
+        makeExercise(
+          "hip_dominant",
+          round(4 * vm),
+          main,
+          80,
+          profile.mainProgression,
+          findExisting(2, 1)
+        ),
         makeAccessory("knee_dominant", round(3 * vm), 12, 40, "squat"),
-        makeExercise("core", round(3 * vm), 15, 15, "linear", findExisting(2, 4)),
+        makeExercise(
+          "core",
+          round(3 * vm),
+          15,
+          15,
+          "linear",
+          findExisting(2, 4)
+        ),
       ],
     },
     {
@@ -373,10 +685,24 @@ function buildPPL(
       dayType: "push",
       completed: false,
       exercises: [
-        makeExercise("vertical_push", round(4 * vm), main, 40, profile.mainProgression, findExisting(3, 0)),
+        makeExercise(
+          "vertical_push",
+          round(4 * vm),
+          main,
+          40,
+          profile.mainProgression,
+          findExisting(3, 0)
+        ),
         makeAccessory("horizontal_push", round(3 * vm), acc, 40, "bench-press"),
         makeAccessory("vertical_push", round(3 * vm), 12, 20, "overhead-press"),
-        makeExercise("arms_triceps", round(3 * vm), 12, 15, "linear", findExisting(3, 3)),
+        makeExercise(
+          "arms_triceps",
+          round(3 * vm),
+          12,
+          15,
+          "linear",
+          findExisting(3, 3)
+        ),
       ],
     },
     {
@@ -384,10 +710,24 @@ function buildPPL(
       dayType: "pull",
       completed: false,
       exercises: [
-        makeExercise("horizontal_pull", round(4 * vm), main, 60, profile.mainProgression, findExisting(4, 0)),
+        makeExercise(
+          "horizontal_pull",
+          round(4 * vm),
+          main,
+          60,
+          profile.mainProgression,
+          findExisting(4, 0)
+        ),
         makeAccessory("vertical_pull", round(3 * vm), acc, 40, "pull-ups"),
         makeAccessory("horizontal_pull", round(3 * vm), 12, 30, "barbell-row"),
-        makeExercise("arms_biceps", round(3 * vm), 12, 10, "linear", findExisting(4, 3)),
+        makeExercise(
+          "arms_biceps",
+          round(3 * vm),
+          12,
+          10,
+          "linear",
+          findExisting(4, 3)
+        ),
       ],
     },
   ];
@@ -399,7 +739,7 @@ function buildPPL(
 function buildLegsB(
   profile: GoalProfile,
   nutritionGoal: Goal,
-  existing?: WorkoutDay[],
+  existing?: WorkoutDay[]
 ): WorkoutDay {
   const vm = combinedVolumeMultiplier(profile, nutritionGoal);
   const round = (n: number) => Math.max(1, Math.round(n));
@@ -414,8 +754,22 @@ function buildLegsB(
     completed: false,
     exercises: [
       // Flipped: hip-dominant leads
-      makeExercise("hip_dominant", round(4 * vm), main, 80, profile.mainProgression, findExisting(0)),
-      makeExercise("knee_dominant", round(4 * vm), acc, 60, profile.mainProgression, findExisting(1)),
+      makeExercise(
+        "hip_dominant",
+        round(4 * vm),
+        main,
+        80,
+        profile.mainProgression,
+        findExisting(0)
+      ),
+      makeExercise(
+        "knee_dominant",
+        round(4 * vm),
+        acc,
+        60,
+        profile.mainProgression,
+        findExisting(1)
+      ),
       // Accessories in reversed order with different rep ranges
       makeAccessory("hip_dominant", round(3 * vm), 10, 40, "deadlift"),
       makeAccessory("knee_dominant", round(3 * vm), 10, 40, "squat"),
@@ -428,11 +782,27 @@ function buildLegsB(
    GENERATE FULL PROGRAM
 ================================ */
 
+/**
+ * Number of lift WorkoutDays `generateProgram` emits for a weekly lift-day
+ * target. Mirrors `chooseSplit` + the per-case slicing in generateProgram
+ * (full_body caps at 3, UL slices to 2 at ≤2 days, ppl_ul = 5, ppl_x2 = 6) —
+ * the net length equals the target, capped at 6 (chooseSplit clamps 7→6), and
+ * 0 for a non-positive target. Pgm5 (Q2): planBuilder uses this to distinguish
+ * a CONTENT edit (same day count → preserve the user's workouts) from a
+ * lift-days change (→ rebuild). Pinned to `generateProgram(...).workouts.length`
+ * by a parity test, so a future template change that breaks the equality is
+ * caught rather than silently misrouting edits.
+ */
+export function expectedDayCount(weeklyTarget: number): number {
+  if (weeklyTarget <= 0) return 0;
+  return Math.min(weeklyTarget, 6);
+}
+
 export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
-  primaryGoal?: PrimaryGoal,
+  primaryGoal?: PrimaryGoal
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -454,7 +824,12 @@ export function generateProgram(
       // `chooseSplit` now returns "full_body" for 3-day targets too
       // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
       const fbDays = Math.min(weeklyTarget, 3);
-      workouts = buildFullBody(profile, nutritionGoal, fbDays, existingWorkouts);
+      workouts = buildFullBody(
+        profile,
+        nutritionGoal,
+        fbDays,
+        existingWorkouts
+      );
       break;
     }
     case "ppl":
@@ -469,7 +844,10 @@ export function generateProgram(
     case "ppl_ul":
       workouts = [
         ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
-        ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(0, 2),
+        ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(
+          0,
+          2
+        ),
       ];
       break;
     case "ppl_x2": {
@@ -490,7 +868,7 @@ export function generateProgram(
           ...fb[0],
           dayName: "Full Body (Recovery)",
           completed: false,
-          exercises: fb[0].exercises.map(ex => ({ ...ex })),
+          exercises: fb[0].exercises.map((ex) => ({ ...ex })),
         },
       ];
       break;
@@ -511,10 +889,15 @@ export function applyProgression(
   actualReps: number,
   actualWeight: number,
   goal: Goal,
-  microloading: boolean,
+  microloading: boolean
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
-  const record = { date: today, weight: actualWeight, repsCompleted: actualReps, repsTarget: exercise.reps };
+  const record = {
+    date: today,
+    weight: actualWeight,
+    repsCompleted: actualReps,
+    repsTarget: exercise.reps,
+  };
   const history = [...(exercise.performanceHistory || []), record].slice(-10);
 
   const updated: ProgramExercise = {
@@ -529,7 +912,8 @@ export function applyProgression(
     },
   };
 
-  const completed = actualReps >= exercise.reps && actualWeight >= exercise.weight;
+  const completed =
+    actualReps >= exercise.reps && actualWeight >= exercise.weight;
 
   // Use the static EXERCISES.equipment field to identify true
   // bodyweight movements (Pull-Ups, Dips, etc.). The previous
@@ -578,7 +962,7 @@ export function applyProgression(
           // Bodyweight deload: reduce rep target (minimum 4)
           updated.reps = Math.max(4, exercise.reps - 1);
         } else {
-          updated.weight = Math.round((exercise.weight * 0.95) * 2) / 2;
+          updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
         }
         updated.consecutiveFailures = 0;
         updated.plateauCount = (exercise.plateauCount || 0) + 1;
@@ -625,7 +1009,9 @@ export function applyProgression(
 
 export type ProgressionDirection = "up" | "down" | "stable";
 
-export function getProgressionDirection(ex: ProgramExercise): ProgressionDirection {
+export function getProgressionDirection(
+  ex: ProgramExercise
+): ProgressionDirection {
   if (!ex.lastAttemptedWeight || ex.lastAttemptedWeight === 0) return "stable";
   if (ex.weight > ex.lastAttemptedWeight) return "up";
   if (ex.weight < ex.lastAttemptedWeight) return "down";
@@ -636,7 +1022,12 @@ export function getProgressionLabel(ex: ProgramExercise): string {
   const dir = getProgressionDirection(ex);
   const w = ex.weight > 0 ? `${ex.weight}kg` : "BW";
 
-  if (dir === "up" && ex.lastAttemptedWeight && ex.weight > ex.lastAttemptedWeight) return `${w} ↑`;
+  if (
+    dir === "up" &&
+    ex.lastAttemptedWeight &&
+    ex.weight > ex.lastAttemptedWeight
+  )
+    return `${w} ↑`;
   if (dir === "down") return `${w} ↓`;
   return w;
 }
@@ -647,7 +1038,7 @@ export function getProgressionLabel(ex: ProgramExercise): string {
 
 export function applyFatigue(
   workouts: WorkoutDay[],
-  fatigueScore: number,
+  fatigueScore: number
 ): WorkoutDay[] {
   if (fatigueScore <= 20) return workouts;
   return workouts.map((day) => ({
@@ -691,7 +1082,11 @@ export function advanceWeek(state: ProgramState): ProgramState {
   // would still see Day 3 as skipped on the fresh week — even though
   // the week and prescription are new. Previously only `completed`
   // was reset, leaving `skipped` to leak across weeks.
-  let workouts: WorkoutDay[] = state.workouts.map((day) => ({ ...day, completed: false, skipped: false }));
+  let workouts: WorkoutDay[] = state.workouts.map((day) => ({
+    ...day,
+    completed: false,
+    skipped: false,
+  }));
 
   if (prescription.deload) {
     workouts = applyDeload(workouts);
