@@ -128,7 +128,7 @@ function RunCard({
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="text-xs font-semibold text-foreground">
+          <span className="text-xs font-semibold text-foreground font-mono tabular-nums">
             {(run.distance / 1000).toFixed(2)} km
           </span>
           <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">

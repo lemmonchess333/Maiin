@@ -608,7 +608,11 @@ export default function ProgrammeSettings({
         <SectionLabel>Lift days per week</SectionLabel>
         <SegmentedControl
           ariaLabel="Lift days per week"
-          options={[2, 3, 4, 5, 6].map((d) => ({ value: d, label: String(d) }))}
+          options={[2, 3, 4, 5, 6].map((d) => ({
+            value: d,
+            // Numeric picker labels follow the design rule: mono + tabular.
+            label: <span className="font-mono tabular-nums">{d}</span>,
+          }))}
           value={liftDays}
           onChange={setLiftDays}
         />
@@ -660,7 +664,8 @@ export default function ProgrammeSettings({
               htmlFor="ps-run-days"
               className="text-xs uppercase tracking-wider text-muted-foreground"
             >
-              Run days per week ({weeklyRunDays})
+              Run days per week (
+              <span className="font-mono tabular-nums">{weeklyRunDays}</span>)
             </label>
             <input
               id="ps-run-days"
@@ -674,8 +679,14 @@ export default function ProgrammeSettings({
             />
             {liftDays + weeklyRunDays > 7 && (
               <p className="text-xs mt-1 text-muted-foreground">
-                {liftDays} lift + {weeklyRunDays} run ={" "}
-                {liftDays + weeklyRunDays}. You'll see double days.
+                <span className="font-mono tabular-nums">{liftDays}</span> lift
+                +{" "}
+                <span className="font-mono tabular-nums">{weeklyRunDays}</span>{" "}
+                run ={" "}
+                <span className="font-mono tabular-nums">
+                  {liftDays + weeklyRunDays}
+                </span>
+                . You'll see double days.
               </p>
             )}
           </div>
