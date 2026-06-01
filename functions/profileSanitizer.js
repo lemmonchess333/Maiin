@@ -105,7 +105,8 @@ function cleanPhotoURL(value) {
   } catch (_) {
     return undefined;
   }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined;
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+    return undefined;
   return parsed.toString();
 }
 
@@ -116,7 +117,8 @@ function cleanPhotoURL(value) {
  * with only valid keys present.
  */
 function cleanObject(value, fields) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return undefined;
   const out = {};
   for (const [key, validator] of Object.entries(fields)) {
     const cleaned = validator(value[key]);
@@ -170,10 +172,16 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   preferredHeightUnit: (v) => cleanEnum(v, ["cm", "ft"]),
   preferredWeightUnit: (v) => cleanEnum(v, ["kg", "lbs"]),
 
+  // Goal-weight onboarding (Tier 2). Without these in the allowlist the
+  // completeOnboarding callable silently strips them on write.
+  goalWeightKg: (v) => cleanNumber(v, { min: 30, max: 300 }),
+  weeklyRateKg: (v) => cleanNumber(v, { min: 0, max: 2 }),
+
   // Preferences
   darkMode: cleanBoolean,
   autoRestTimer: cleanBoolean,
-  defaultRestSeconds: (v) => cleanNumber(v, { min: 0, max: 600, integer: true }),
+  defaultRestSeconds: (v) =>
+    cleanNumber(v, { min: 0, max: 600, integer: true }),
   audioCues: cleanBoolean,
   enableRolloverCalories: cleanBoolean,
 
@@ -186,10 +194,12 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   },
 
   // Training targets
-  weeklyWorkoutsTarget: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
+  weeklyWorkoutsTarget: (v) =>
+    cleanNumber(v, { min: 0, max: 14, integer: true }),
   weeklyMealsTarget: (v) => cleanNumber(v, { min: 0, max: 100, integer: true }),
   weeklyRunsTarget: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
-  weeklyRunDaysTarget: (v) => cleanNumber(v, { min: 0, max: 14, integer: true }),
+  weeklyRunDaysTarget: (v) =>
+    cleanNumber(v, { min: 0, max: 14, integer: true }),
 
   // Program / goal
   primaryGoal: (v) => cleanString(v, 30),
@@ -208,7 +218,8 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
 
   injuries: cleanInjuries,
   weekSchedule: cleanWeekSchedule,
-  weekScheduleVersion: (v) => cleanNumber(v, { min: 1, max: 1000, integer: true }),
+  weekScheduleVersion: (v) =>
+    cleanNumber(v, { min: 1, max: 1000, integer: true }),
 
   // TDEE / nutrition targets — numeric ranges sized for human plausibility
   tdeeBase: (v) => cleanNumber(v, { min: 0, max: 10000 }),
@@ -240,7 +251,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     }),
 });
 
-const PROFILE_ALLOWED_FIELDS = Object.freeze(Object.keys(PROFILE_FIELD_VALIDATORS));
+const PROFILE_ALLOWED_FIELDS = Object.freeze(
+  Object.keys(PROFILE_FIELD_VALIDATORS)
+);
 
 /**
  * Returns a new object containing only allow-listed profile fields
