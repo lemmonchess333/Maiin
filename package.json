@@ -46,7 +46,7 @@
     "clsx": "^2.1.1",
     "cordova-plugin-purchase": "^13.16.0",
     "date-fns": "^4.1.0",
-    "firebase": "^12.13.0",
+    "firebase": "^12.14.0",
     "framer-motion": "^12.34.2",
     "html-to-image": "^1.11.13",
     "leo-profanity": "^1.9.0",
