@@ -213,6 +213,12 @@ export interface UserProfileOnboarding {
   runFrequency?: "regular" | "occasional" | "none";
   injuries?: string[];
   gender?: "male" | "female" | "unspecified";
+  /** Tier 2 — goal-weight onboarding. Target body weight (kg) and the
+   *  desired (unsigned) weekly rate of change (kg/week). Target vs current
+   *  weight owns the nutrition direction; rate sets the calorie offset
+   *  magnitude. Absent for pre-Tier-2 profiles → legacy per-goal offset. */
+  goalWeightKg?: number;
+  weeklyRateKg?: number;
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */
