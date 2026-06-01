@@ -45,6 +45,9 @@ import {
   LayoutGrid,
   Check,
   AlertTriangle,
+  BicepsFlexed,
+  Flame,
+  Heart,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { httpsCallable } from "firebase/functions";
@@ -162,27 +165,46 @@ function SettingsOptionCard({
   );
 }
 
-const FOCUS_OPTIONS: { id: PrimaryGoal; label: string; desc: string }[] = [
+// Each focus card gets a distinct GLYPH for scannability, but all keep the
+// purple lifting accent — every option here is a lifting goal (primaryGoal
+// drives the lift split's rep ranges; "Running support" is lifting that
+// complements runs, NOT run scheduling). So per sport-coding, purple is
+// correct; only the icon varies. Do not recolour these to coral.
+const FOCUS_OPTIONS: {
+  id: PrimaryGoal;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+}[] = [
   {
     id: "hypertrophy",
     label: "Build muscle",
     desc: "Higher reps, more volume",
+    icon: <BicepsFlexed size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "strength",
     label: "Get stronger",
     desc: "Lower reps, heavier compounds",
+    icon: <Dumbbell size={18} style={{ color: THEME.brand }} />,
   },
   {
     id: "fat_loss",
     label: "Lose fat",
     desc: "Higher density, more conditioning",
+    icon: <Flame size={18} style={{ color: THEME.brand }} />,
   },
-  { id: "general", label: "Stay fit", desc: "Balanced general training" },
+  {
+    id: "general",
+    label: "Stay fit",
+    desc: "Balanced general training",
+    icon: <Heart size={18} style={{ color: THEME.brand }} />,
+  },
   {
     id: "running",
     label: "Running support",
     desc: "Lifting that complements your runs",
+    icon: <Footprints size={18} style={{ color: THEME.brand }} />,
   },
 ];
 
@@ -537,7 +559,7 @@ export default function ProgrammeSettings({
               selected={primaryGoal === opt.id}
               onSelect={() => setPrimaryGoal(opt.id)}
               index={i}
-              icon={<Target size={18} style={{ color: THEME.brand }} />}
+              icon={opt.icon}
               accent={THEME.brand}
               label={opt.label}
               desc={opt.desc}
