@@ -9,6 +9,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
 import type { FitnessGoal, ActivityLevel } from "@/lib/tdee";
+import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
@@ -294,7 +295,7 @@ const STEP_META: { title: string; subtitle: string }[] = [
   },
   {
     title: "Your plan is ready",
-    subtitle: "Review your selections and let's go",
+    subtitle: "Based on your answers, here's where we'll start you",
   },
 ];
 
@@ -922,7 +923,9 @@ export default function Onboarding() {
                         className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
-                            heightUnit === u ? THEME.brand : "hsl(var(--muted))",
+                            heightUnit === u
+                              ? THEME.brand
+                              : "hsl(var(--muted))",
                           color:
                             heightUnit === u
                               ? "#fff"
@@ -967,7 +970,9 @@ export default function Onboarding() {
                         className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
                         style={{
                           background:
-                            weightUnit === u ? THEME.brand : "hsl(var(--muted))",
+                            weightUnit === u
+                              ? THEME.brand
+                              : "hsl(var(--muted))",
                           color:
                             weightUnit === u
                               ? "#fff"
@@ -1007,13 +1012,13 @@ export default function Onboarding() {
                 {
                   id: "hypertrophy" as PrimaryGoal,
                   label: "Build muscle",
-                  desc: "Maximize muscle growth with hypertrophy training",
+                  desc: "Hypertrophy training with a small calorie surplus",
                   icon: <Dumbbell size={22} style={{ color: THEME.lifting }} />,
                 },
                 {
                   id: "strength" as PrimaryGoal,
                   label: "Get stronger",
-                  desc: "Focus on compound lifts and progressive overload",
+                  desc: "Heavy compound lifts with maintenance calories",
                   icon: <Zap size={22} style={{ color: THEME.warning }} />,
                 },
                 {
@@ -1025,13 +1030,13 @@ export default function Onboarding() {
                 {
                   id: "general" as PrimaryGoal,
                   label: "General fitness",
-                  desc: "Balanced strength, cardio, and mobility",
+                  desc: "Balanced training with maintenance calories",
                   icon: <Heart size={22} style={{ color: THEME.success }} />,
                 },
                 {
                   id: "running" as PrimaryGoal,
                   label: "Improve running",
-                  desc: "Run-focused with complementary strength work",
+                  desc: "Run-focused training with maintenance calories",
                   icon: (
                     <Footprints size={22} style={{ color: THEME.running }} />
                   ),
@@ -1640,11 +1645,22 @@ export default function Onboarding() {
                   color: THEME.warning,
                 },
                 {
+                  // Surfaces the derived nutrition phase + its calorie
+                  // consequence — the decision goalToFitnessGoal makes that
+                  // was previously invisible (only the numbers showed below).
+                  label: "Nutrition",
+                  value: nutritionPhaseLabel(
+                    goalToFitnessGoal(primaryGoal),
+                    tdee.deficit
+                  ),
+                  color: THEME.warning,
+                },
+                {
                   label: "Daily targets",
                   value: `${tdee.targetCalories} cal · ${tdee.protein}g P · ${tdee.carbs}g C · ${tdee.fat}g F`,
                   color: THEME.success,
                 },
-              ].map((row, i) => (
+              ].map((row, i, rows) => (
                 <motion.div
                   key={row.label}
                   initial={{ opacity: 0, y: 12 }}
@@ -1653,7 +1669,9 @@ export default function Onboarding() {
                   className="flex items-start gap-3 py-3"
                   style={{
                     borderBottom:
-                      i < 5 ? "1px solid hsl(var(--border))" : "none",
+                      i < rows.length - 1
+                        ? "1px solid hsl(var(--border))"
+                        : "none",
                   }}
                 >
                   <div
