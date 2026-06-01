@@ -159,11 +159,15 @@ export default function NutritionSection({
             {/* TDEE Results */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-muted rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-foreground">{tdee.bmr}</p>
+                <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+                  {tdee.bmr}
+                </p>
                 <p className="text-xs text-muted-foreground">BMR</p>
               </div>
               <div className="bg-muted rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-foreground">{tdee.tdee}</p>
+                <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+                  {tdee.tdee}
+                </p>
                 <p className="text-xs text-muted-foreground">TDEE</p>
               </div>
             </div>

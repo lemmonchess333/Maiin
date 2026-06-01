@@ -57,7 +57,7 @@ export function TrendWeight() {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Weight Trend
         </p>
-        <p className="text-lg font-bold text-foreground">
+        <p className="text-lg font-bold text-foreground font-mono tabular-nums">
           {convert(entry.weight)} {unit}
         </p>
         <p className="text-xs text-muted-foreground">
@@ -91,17 +91,22 @@ export function TrendWeight() {
         : profile.program.startWeight
     : undefined;
 
-  const trendDisplay = Number.isFinite(currentTrend) ? convert(currentTrend) : null;
-  const goalDisplay = goalWeight && Number.isFinite(goalWeight) ? convert(goalWeight) : null;
-  const goalDiff = goalWeight && Number.isFinite(currentTrend) && Number.isFinite(goalWeight)
-    ? convert(Math.abs(currentTrend - goalWeight))
+  const trendDisplay = Number.isFinite(currentTrend)
+    ? convert(currentTrend)
     : null;
+  const goalDisplay =
+    goalWeight && Number.isFinite(goalWeight) ? convert(goalWeight) : null;
+  const goalDiff =
+    goalWeight && Number.isFinite(currentTrend) && Number.isFinite(goalWeight)
+      ? convert(Math.abs(currentTrend - goalWeight))
+      : null;
 
   // Span the dataset covers. Used both by the projection gate
   // below AND by the Hist5d T3 thin-data check (≥1M window AND
   // ≥5 points OR the projection lies — see hasEnoughForProjection).
   const firstDate = data.length > 0 ? new Date(data[0].date) : null;
-  const lastDate = data.length > 0 ? new Date(data[data.length - 1].date) : null;
+  const lastDate =
+    data.length > 0 ? new Date(data[data.length - 1].date) : null;
   const daysSpan =
     firstDate && lastDate
       ? (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -140,7 +145,7 @@ export function TrendWeight() {
     const remaining = goalWeight - currentTrend; // +ve if goal is higher, -ve if lower
     // Directions mismatch → not on track for goal, suppress.
     if (slope === 0) return null;
-    if ((remaining > 0) !== (slope > 0)) return null;
+    if (remaining > 0 !== slope > 0) return null;
     const daysToGoal = remaining / slope;
     if (!Number.isFinite(daysToGoal) || daysToGoal <= 0) return null;
     if (daysToGoal > 730) return null;
@@ -149,7 +154,8 @@ export function TrendWeight() {
     const dateLabel = eta.toLocaleDateString("en-GB", {
       day: "numeric",
       month: "short",
-      year: eta.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+      year:
+        eta.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
     });
     return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
   })();
@@ -164,7 +170,7 @@ export function TrendWeight() {
           {trendDisplay != null ? (
             <>
               Trending at{" "}
-              <span className="text-primary font-bold">
+              <span className="text-primary font-bold font-mono tabular-nums">
                 {trendDisplay} {unit}
               </span>
               {goalDiff != null && (
@@ -182,7 +188,10 @@ export function TrendWeight() {
 
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+          <ComposedChart
+            data={data}
+            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          >
             <XAxis
               dataKey="date"
               allowDuplicatedCategory={false}
@@ -206,7 +215,11 @@ export function TrendWeight() {
                 angle: -90,
                 position: "insideLeft",
                 offset: 0,
-                style: { fontSize: 10, fill: "hsl(var(--muted-foreground))", textAnchor: "middle" },
+                style: {
+                  fontSize: 10,
+                  fill: "hsl(var(--muted-foreground))",
+                  textAnchor: "middle",
+                },
               }}
             />
             {/* Custom tooltip content — Recharts' Scatter inside ComposedChart
@@ -249,7 +262,13 @@ export function TrendWeight() {
                       padding: "10px 14px",
                     }}
                   >
-                    <div style={{ fontWeight: 600, marginBottom: 4, color: "hsl(var(--foreground))" }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        marginBottom: 4,
+                        color: "hsl(var(--foreground))",
+                      }}
+                    >
                       {label}
                     </div>
                     {relevant.map((entry, i) => (
@@ -311,8 +330,11 @@ export function TrendWeight() {
       {projectedGoal && (
         <p className="text-xs text-muted-foreground text-center pt-1">
           At this rate, goal by{" "}
-          <span className="text-foreground font-medium">{projectedGoal.date}</span>
-          {" · "}~{projectedGoal.weeks} {projectedGoal.weeks === 1 ? "week" : "weeks"}
+          <span className="text-foreground font-medium">
+            {projectedGoal.date}
+          </span>
+          {" · "}~{projectedGoal.weeks}{" "}
+          {projectedGoal.weeks === 1 ? "week" : "weeks"}
         </p>
       )}
       {/* Hist5d pin 3 — surface the thin-data reason when the user
@@ -321,13 +343,18 @@ export function TrendWeight() {
           on-track users (projection rendered above). Only fires when
           the user has a goal AND we're holding back because the data
           isn't yet trustworthy. */}
-      {!projectedGoal && goalWeight && Number.isFinite(goalWeight) && !hasEnoughForProjection && (
-        <p className="text-xs text-muted-foreground text-center pt-1">
-          Building trend · log {T3_PROJECTION_MIN_POINTS - data.length > 0
-            ? `${T3_PROJECTION_MIN_POINTS - data.length} more`
-            : "more"} for projection
-        </p>
-      )}
+      {!projectedGoal &&
+        goalWeight &&
+        Number.isFinite(goalWeight) &&
+        !hasEnoughForProjection && (
+          <p className="text-xs text-muted-foreground text-center pt-1">
+            Building trend · log{" "}
+            {T3_PROJECTION_MIN_POINTS - data.length > 0
+              ? `${T3_PROJECTION_MIN_POINTS - data.length} more`
+              : "more"}{" "}
+            for projection
+          </p>
+        )}
     </div>
   );
 }
