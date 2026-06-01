@@ -5,10 +5,17 @@ import {
   advanceWeek,
   generateProgram,
   generateWeekPrescription,
+  expectedDayCount,
 } from "../programEngine";
-import type { ProgramExercise, ProgramState, WorkoutDay } from "../programTypes";
+import type {
+  ProgramExercise,
+  ProgramState,
+  WorkoutDay,
+} from "../programTypes";
 
-function makeTestExercise(overrides: Partial<ProgramExercise> = {}): ProgramExercise {
+function makeTestExercise(
+  overrides: Partial<ProgramExercise> = {}
+): ProgramExercise {
   return {
     name: "Bench Press",
     exerciseId: "bench-press",
@@ -28,7 +35,9 @@ function makeTestExercise(overrides: Partial<ProgramExercise> = {}): ProgramExer
   };
 }
 
-function makeBodyweightExercise(overrides: Partial<ProgramExercise> = {}): ProgramExercise {
+function makeBodyweightExercise(
+  overrides: Partial<ProgramExercise> = {}
+): ProgramExercise {
   return makeTestExercise({
     name: "Pull-ups",
     exerciseId: "pull-ups",
@@ -131,12 +140,14 @@ describe("applyProgression — bodyweight exercises", () => {
 
 describe("applyDeload", () => {
   it("rounds weight to 2.5kg increments", () => {
-    const workouts: WorkoutDay[] = [{
-      dayName: "Push",
-      dayType: "push",
-      completed: false,
-      exercises: [makeTestExercise({ weight: 100, sets: 4 })],
-    }];
+    const workouts: WorkoutDay[] = [
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [makeTestExercise({ weight: 100, sets: 4 })],
+      },
+    ];
     const result = applyDeload(workouts);
     // 100 * 0.85 = 85 → round(85/2.5)*2.5 = 85 (exact)
     expect(result[0].exercises[0].weight).toBe(85);
@@ -144,24 +155,28 @@ describe("applyDeload", () => {
   });
 
   it("rounds non-exact values to nearest 2.5kg", () => {
-    const workouts: WorkoutDay[] = [{
-      dayName: "Push",
-      dayType: "push",
-      completed: false,
-      exercises: [makeTestExercise({ weight: 60, sets: 3 })],
-    }];
+    const workouts: WorkoutDay[] = [
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [makeTestExercise({ weight: 60, sets: 3 })],
+      },
+    ];
     const result = applyDeload(workouts);
     // 60 * 0.85 = 51 → round(51/2.5)*2.5 = round(20.4)*2.5 = 20*2.5 = 50
     expect(result[0].exercises[0].weight).toBe(50);
   });
 
   it("does not change bodyweight exercise weight", () => {
-    const workouts: WorkoutDay[] = [{
-      dayName: "Pull",
-      dayType: "pull",
-      completed: false,
-      exercises: [makeBodyweightExercise({ sets: 4 })],
-    }];
+    const workouts: WorkoutDay[] = [
+      {
+        dayName: "Pull",
+        dayType: "pull",
+        completed: false,
+        exercises: [makeBodyweightExercise({ sets: 4 })],
+      },
+    ];
     const result = applyDeload(workouts);
     expect(result[0].exercises[0].weight).toBe(0);
     expect(result[0].exercises[0].sets).toBe(3); // still reduces sets
@@ -178,12 +193,14 @@ describe("advanceWeek", () => {
     splitType: "upper_lower",
     fatigueScore: 50,
     updatedAt: Date.now(),
-    workouts: [{
-      dayName: "Upper A",
-      dayType: "upper",
-      completed: true,
-      exercises: [makeTestExercise({ sets: 4, weight: 80 })],
-    }],
+    workouts: [
+      {
+        dayName: "Upper A",
+        dayType: "upper",
+        completed: true,
+        exercises: [makeTestExercise({ sets: 4, weight: 80 })],
+      },
+    ],
   };
 
   it("does not apply fatigue on deload weeks (H5)", () => {
@@ -230,8 +247,8 @@ describe("generateProgram — PPL×2", () => {
   it("Legs B has independent exercise objects from Legs A (H2)", () => {
     // Day names were renamed in W1a from "Legs"/"Legs B" to emphasis labels.
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === "Legs — Squat Focus");
-    const legsB = workouts.find(d => d.dayName === "Legs — Deadlift Focus");
+    const legsA = workouts.find((d) => d.dayName === "Legs — Squat Focus");
+    const legsB = workouts.find((d) => d.dayName === "Legs — Deadlift Focus");
     expect(legsA).toBeDefined();
     expect(legsB).toBeDefined();
     // Exercises should be separate objects
@@ -260,7 +277,7 @@ describe("generateWeekPrescription", () => {
     const w3 = generateWeekPrescription(3);
     expect(w1.deload).toBe(false);
     expect(w1.intensityMultiplier).toBe(1.025);
-    expect(w2.intensityMultiplier).toBe(1.050);
+    expect(w2.intensityMultiplier).toBe(1.05);
     expect(w3.intensityMultiplier).toBe(1.075);
   });
 });
@@ -318,8 +335,8 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
 
   it("Legs B leads with hip-dominant, Legs A leads with knee-dominant", () => {
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === LEGS_A);
-    const legsB = workouts.find(d => d.dayName === LEGS_B);
+    const legsA = workouts.find((d) => d.dayName === LEGS_A);
+    const legsB = workouts.find((d) => d.dayName === LEGS_B);
     expect(legsA).toBeDefined();
     expect(legsB).toBeDefined();
     // Legs A first exercise is knee_dominant (squat)
@@ -330,10 +347,10 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
 
   it("Legs B has different exercise order from Legs A", () => {
     const { workouts } = generateProgram("recomp", 6);
-    const legsA = workouts.find(d => d.dayName === LEGS_A)!;
-    const legsB = workouts.find(d => d.dayName === LEGS_B)!;
-    const categoriesA = legsA.exercises.map(e => e.movementCategory);
-    const categoriesB = legsB.exercises.map(e => e.movementCategory);
+    const legsA = workouts.find((d) => d.dayName === LEGS_A)!;
+    const legsB = workouts.find((d) => d.dayName === LEGS_B)!;
+    const categoriesA = legsA.exercises.map((e) => e.movementCategory);
+    const categoriesB = legsB.exercises.map((e) => e.movementCategory);
     // First two exercises should be in opposite order
     expect(categoriesA[0]).toBe("knee_dominant");
     expect(categoriesA[1]).toBe("hip_dominant");
@@ -348,8 +365,32 @@ describe("generateProgram — Legs B differentiation (M8)", () => {
     // Legs B is still emitted as the 6th workout.
     const { workouts } = generateProgram("recomp", 7);
     expect(workouts).toHaveLength(6);
-    const legsB = workouts.find(d => d.dayName === LEGS_B);
+    const legsB = workouts.find((d) => d.dayName === LEGS_B);
     expect(legsB).toBeDefined();
     expect(legsB!.exercises[0].movementCategory).toBe("hip_dominant");
+  });
+});
+
+// Pgm5 (Q2): planBuilder routes a content edit to "preserve" vs a lift-days
+// change to "rebuild" by comparing existing workout count to expectedDayCount.
+// If this drifts from generateProgram's real output length, edits get
+// misrouted (lossy rebuild, or a stale preserve) — so pin the equality.
+describe("expectedDayCount · parity with generateProgram", () => {
+  for (let n = 1; n <= 7; n++) {
+    it(`equals generated workout count for ${n} lift days`, () => {
+      const { workouts } = generateProgram(
+        "recomp",
+        n,
+        undefined,
+        "hypertrophy"
+      );
+      expect(workouts).toHaveLength(expectedDayCount(n));
+    });
+  }
+
+  it("is 0 for a non-positive target (matches empty workouts)", () => {
+    expect(expectedDayCount(0)).toBe(0);
+    const { workouts } = generateProgram("recomp", 0, undefined, "hypertrophy");
+    expect(workouts).toHaveLength(0);
   });
 });
