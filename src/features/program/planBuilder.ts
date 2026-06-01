@@ -53,7 +53,10 @@ import {
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
-import { applyInjuryFiltersToWorkouts } from "./matchTemplate";
+import {
+  applyInjuryFiltersToWorkouts,
+  applyEquipmentFilterToWorkouts,
+} from "./matchTemplate";
 import { generateRacePlanV2, scheduleStructuredWeekV2 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -191,15 +194,23 @@ function buildLiftProgram(input: PlanBuilderInput): {
           input.primaryGoal
         );
 
-  // Pgm5 injury follow-up: honour the user's CURRENT injuries on the
-  // regeneration path. generateProgram ignores injuries and the preserve
-  // branch keeps whatever was there, so this is the single place a settings
-  // injury change actually adapts the lift workouts. It also deep-clones (so
-  // the pure builder never aliases the caller's existingState) and is a no-op
-  // for healthy users.
+  // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
+  // regeneration path (generateProgram ignores both; the preserve branch keeps
+  // whatever was there). Injuries first (safety), then equipment — the
+  // equipment picker is injury-aware, so a swap never reintroduces a risk.
+  // Both deep-clone (the pure builder never aliases existingState) and are
+  // no-ops for healthy / full-gym users.
+  const injurySafe = applyInjuryFiltersToWorkouts(
+    base.workouts,
+    input.injuries
+  );
   return {
     splitType: base.splitType,
-    workouts: applyInjuryFiltersToWorkouts(base.workouts, input.injuries),
+    workouts: applyEquipmentFilterToWorkouts(
+      injurySafe,
+      input.equipment,
+      input.injuries
+    ),
   };
 }
 
