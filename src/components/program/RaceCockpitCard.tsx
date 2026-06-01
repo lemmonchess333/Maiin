@@ -19,11 +19,8 @@
 import { ChevronRight, Flag } from "lucide-react";
 import { format } from "date-fns";
 import { THEME } from "@/lib/theme";
-import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
-
-/** The engine's real phases (getPhaseForWeek). Ordered for the rail. */
-const PHASE_RAIL = ["Base", "Build", "Taper", "Race"] as const;
+import PhaseRail from "./PhaseRail";
 
 interface RaceCockpitCardProps {
   /** Readable distance — "Marathon", "Half Marathon", "10K", "5K". */
@@ -130,25 +127,7 @@ export default function RaceCockpitCard({
               style={{ width: `${progress}%`, backgroundColor: THEME.running }}
             />
           </div>
-          <div
-            className="grid grid-cols-4 gap-1 text-[10px] text-muted-foreground"
-            aria-hidden="true"
-          >
-            {PHASE_RAIL.map((label) => (
-              <span
-                key={label}
-                className={cn(
-                  "text-center",
-                  label === phaseLabel && "font-bold text-foreground"
-                )}
-                style={
-                  label === phaseLabel ? { color: THEME.running } : undefined
-                }
-              >
-                {label}
-              </span>
-            ))}
-          </div>
+          <PhaseRail activePhase={phaseLabel} />
         </div>
       )}
 
