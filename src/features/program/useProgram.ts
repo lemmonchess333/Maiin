@@ -54,6 +54,7 @@ import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
+  clampPlanWeek,
   type RaceTiming,
 } from "./runScheduler";
 import {
@@ -186,12 +187,16 @@ function regenerateRacePlan({
   // than the carried currentWeek (user on week 5 of 8, plan compresses
   // to 3 → "Week 5 of 3" surfaces in the race-strip and downstream
   // phase math). Clamp here once so every caller is covered.
+  // currentWeek is 0-based (fresh plans start at 0; the cockpit renders
+  // currentWeek + 1), so the last valid index is totalWeeks - 1.
   if (
     typeof runPlan.currentWeek === "number" &&
-    typeof runPlan.totalWeeks === "number" &&
-    runPlan.currentWeek > runPlan.totalWeeks
+    typeof runPlan.totalWeeks === "number"
   ) {
-    runPlan.currentWeek = runPlan.totalWeeks;
+    runPlan.currentWeek = clampPlanWeek(
+      runPlan.currentWeek,
+      runPlan.totalWeeks
+    );
   }
   return { runDays, runPlan, manualCompletions: carriedManualCompletions };
 }

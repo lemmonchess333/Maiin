@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { useAuth } from '../lib/auth';
-import { isVolumeEligible } from '../lib/runStatsEligibility';
+import { useEffect, useState } from "react";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useAuth } from "../lib/auth";
+import { isVolumeEligible } from "../lib/runStatsEligibility";
+import { localWeekKey } from "../lib/dateHelpers";
 
 export interface RunningWeekData {
   week: string;
@@ -13,9 +21,9 @@ export interface RunningWeekData {
 
 export interface RunSummaryItem {
   id: string;
-  distance: number;       // metres
-  duration: number;       // seconds
-  avgPace: number;        // sec/km
+  distance: number; // metres
+  duration: number; // seconds
+  avgPace: number; // sec/km
   elevationGain: number;
   calories: number;
   activityType: string;
@@ -43,13 +51,18 @@ export interface RunSummaryItem {
  * pace this week.
  */
 export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
-  const weeks: Record<string, { distance: number; count: number; paceSum: number; paceCount: number }> = {};
+  const weeks: Record<
+    string,
+    { distance: number; count: number; paceSum: number; paceCount: number }
+  > = {};
   for (const run of runs) {
     if (!isVolumeEligible(run)) continue;
-    const weekStart = new Date(run.completedAt);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    const key = weekStart.toISOString().split('T')[0];
-    if (!weeks[key]) weeks[key] = { distance: 0, count: 0, paceSum: 0, paceCount: 0 };
+    // Sunday-start week key in pure LOCAL date math. Previously this mixed
+    // local getDay()/setDate() with a UTC toISOString() key, so runs logged
+    // near midnight in non-UTC zones bucketed into the wrong week.
+    const key = localWeekKey(new Date(run.completedAt));
+    if (!weeks[key])
+      weeks[key] = { distance: 0, count: 0, paceSum: 0, paceCount: 0 };
     weeks[key].distance += run.distance / 1000;
     weeks[key].count += 1;
     if (run.distance > 0 && run.avgPace > 0) {
@@ -78,23 +91,29 @@ export function useRunningStats(days: number = 30) {
   const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
-    if (!user) { const reset = () => { setLoading(false); }; reset(); return; }
+    if (!user) {
+      const reset = () => {
+        setLoading(false);
+      };
+      reset();
+      return;
+    }
 
     const loadStats = async () => {
       const since = new Date();
       since.setDate(since.getDate() - days);
 
-      const runsRef = collection(db, 'users', user.uid, 'runs');
+      const runsRef = collection(db, "users", user.uid, "runs");
       const q = query(
         runsRef,
-        where('completedAt', '>=', Timestamp.fromDate(since)),
-        orderBy('completedAt', 'desc')
+        where("completedAt", ">=", Timestamp.fromDate(since)),
+        orderBy("completedAt", "desc")
       );
       const snap = await getDocs(q);
 
       const runList: RunSummaryItem[] = [];
 
-      snap.docs.forEach(d => {
+      snap.docs.forEach((d) => {
         const data = d.data();
         /* No source filter. `runs` is the transparent record-of-truth
            list — Recent Runs renders all of them with Invalid /
@@ -108,7 +127,7 @@ export function useRunningStats(days: number = 30) {
           date = data.completedAt.toDate();
         } else if (data.completedAt instanceof Date) {
           date = data.completedAt;
-        } else if (typeof data.completedAt === 'number') {
+        } else if (typeof data.completedAt === "number") {
           date = new Date(data.completedAt);
         } else if (data.completedAt?.toDate) {
           date = data.completedAt.toDate();
@@ -122,15 +141,22 @@ export function useRunningStats(days: number = 30) {
           avgPace: data.avgPace || 0,
           elevationGain: data.elevationGain || 0,
           calories: data.calories || 0,
-          activityType: data.activityType || 'freerun',
+          activityType: data.activityType || "freerun",
           completedAt: date,
           isInvalid: data.isInvalid === true,
           savedAnyway: data.savedAnyway === true,
-          routePreview: data.points?.length > 1
-            ? data.points
-                .filter((_: { lat: number; lon: number }, i: number) => i % Math.ceil(data.points.length / 20) === 0)
-                .map((p: { lat: number; lon: number }) => ({ lat: p.lat, lon: p.lon }))
-            : undefined,
+          routePreview:
+            data.points?.length > 1
+              ? data.points
+                  .filter(
+                    (_: { lat: number; lon: number }, i: number) =>
+                      i % Math.ceil(data.points.length / 20) === 0
+                  )
+                  .map((p: { lat: number; lon: number }) => ({
+                    lat: p.lat,
+                    lon: p.lon,
+                  }))
+              : undefined,
         });
       });
 

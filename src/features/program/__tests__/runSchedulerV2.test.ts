@@ -17,12 +17,13 @@ import {
   classifyRaceTiming,
   getRaceFloorWeeks,
   getRaceMinWeeks,
+  clampPlanWeek,
   type RacePlanV2Input,
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import type { ScheduledRunDay } from "../programTypes";
 
-const sundayStart = "2026-05-10";  // Sunday
+const sundayStart = "2026-05-10"; // Sunday
 const baseInput = {
   weekNumber: 1,
   weekStart: sundayStart,
@@ -33,19 +34,28 @@ const baseInput = {
 describe("scheduleStructuredWeekV2", () => {
   it("returns empty array when no run-eligible days in schedule", () => {
     const allLift: ScheduleDay[] = generateSchedule(4, 0);
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: allLift });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: allLift,
+    });
     expect(result).toEqual([]);
   });
 
   it("schedules runs on every run-eligible day in weekSchedule", () => {
     const schedule = generateSchedule(2, 3); // 3 run days
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     expect(result).toHaveLength(3);
   });
 
   it("emits v2-shaped runDays with id / date / weekKey / status", () => {
     const schedule = generateSchedule(3, 2);
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     result.forEach((rd) => {
       expect(rd.id).toBeTruthy();
       expect(rd.id).toMatch(/^runday_/);
@@ -66,7 +76,10 @@ describe("scheduleStructuredWeekV2", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "rest" },
     ];
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     expect(result).toHaveLength(1);
     expect(result[0].date).toBe("2026-05-13");
   });
@@ -76,31 +89,50 @@ describe("scheduleStructuredWeekV2", () => {
     // Verify the run-eligible-from-weekSchedule path schedules a run
     // on the Both day, which V1 explicitly excluded.
     const schedule = generateSchedule(6, 2);
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     expect(result).toHaveLength(2);
     // At least one of the runs should land on a Both day
-    const onBothDays = result.filter((rd) => schedule[rd.dayIndex].type === "both");
+    const onBothDays = result.filter(
+      (rd) => schedule[rd.dayIndex].type === "both"
+    );
     expect(onBothDays.length).toBeGreaterThanOrEqual(1);
   });
 
   it("alternates tempo (even weeks) and intervals (odd weeks)", () => {
     const schedule = generateSchedule(2, 3);
-    const evenWeek = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule, weekNumber: 2 });
-    const oddWeek = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule, weekNumber: 3 });
+    const evenWeek = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+      weekNumber: 2,
+    });
+    const oddWeek = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+      weekNumber: 3,
+    });
     expect(evenWeek.find((rd) => rd.type === "tempo")).toBeTruthy();
     expect(oddWeek.find((rd) => rd.type === "intervals")).toBeTruthy();
   });
 
   it("places exactly one long run per week", () => {
     const schedule = generateSchedule(2, 3);
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     const longs = result.filter((rd) => rd.type === "long");
     expect(longs).toHaveLength(1);
   });
 
   it("is sorted by dayIndex ascending", () => {
     const schedule = generateSchedule(2, 3);
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     for (let i = 1; i < result.length; i++) {
       expect(result[i].dayIndex).toBeGreaterThan(result[i - 1].dayIndex);
     }
@@ -116,13 +148,16 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
     const schedule: ScheduleDay[] = [
       { day: 0, type: "rest" },
       { day: 1, type: "lift" },
-      { day: 2, type: "run" },     // run-only
+      { day: 2, type: "run" }, // run-only
       { day: 3, type: "lift" },
-      { day: 4, type: "run" },     // run-only
+      { day: 4, type: "run" }, // run-only
       { day: 5, type: "rest" },
-      { day: 6, type: "run" },     // run-only — weekend, gets long
+      { day: 6, type: "run" }, // run-only — weekend, gets long
     ];
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     const longRun = result.find((rd) => rd.type === "long");
     expect(longRun).toBeTruthy();
     expect(schedule[longRun!.dayIndex].type).toBe("run");
@@ -140,7 +175,10 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
       { day: 5, type: "both" },
       { day: 6, type: "rest" },
     ];
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: allBothNoRunOnly });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: allBothNoRunOnly,
+    });
     const longRun = result.find((rd) => rd.type === "long");
     expect(longRun).toBeTruthy();
     // No run-only slots, so the long run must land on a Both slot
@@ -149,15 +187,18 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
 
   it("prefers weekend run-only slot over weekday run-only", () => {
     const schedule: ScheduleDay[] = [
-      { day: 0, type: "run" },     // Sun (weekend, run-only) → preferred
+      { day: 0, type: "run" }, // Sun (weekend, run-only) → preferred
       { day: 1, type: "lift" },
-      { day: 2, type: "run" },     // Tue (weekday)
+      { day: 2, type: "run" }, // Tue (weekday)
       { day: 3, type: "lift" },
-      { day: 4, type: "run" },     // Thu (weekday)
+      { day: 4, type: "run" }, // Thu (weekday)
       { day: 5, type: "lift" },
       { day: 6, type: "rest" },
     ];
-    const result = scheduleStructuredWeekV2({ ...baseInput, weekSchedule: schedule });
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
     const longRun = result.find((rd) => rd.type === "long");
     expect(longRun?.dayIndex).toBe(0); // Sunday wins
   });
@@ -168,7 +209,7 @@ describe("scheduleStructuredWeekV2 · long-run placement", () => {
 describe("generateRacePlanV2", () => {
   const standardInput: RacePlanV2Input = {
     weekSchedule: generateSchedule(3, 3),
-    raceGoal: { distance: "10k", targetDate: "2026-08-10" },  // ~13 weeks from May 10
+    raceGoal: { distance: "10k", targetDate: "2026-08-10" }, // ~13 weeks from May 10
     weeklyRunDays: 3,
     currentDate: "2026-05-10",
     weekStart: "2026-05-10",
@@ -216,7 +257,7 @@ describe("generateRacePlanV2", () => {
   it("sets compressed=false when totalWeeks >= minWeeks", () => {
     const long = generateRacePlanV2({
       ...standardInput,
-      raceGoal: { distance: "10k", targetDate: "2026-12-10" },  // 31 weeks
+      raceGoal: { distance: "10k", targetDate: "2026-12-10" }, // 31 weeks
     });
     expect(long.compressed).toBe(false);
   });
@@ -225,7 +266,7 @@ describe("generateRacePlanV2", () => {
     // 10K minWeeks = 6. Pick 3 weeks out → compressed = true.
     const compressed = generateRacePlanV2({
       ...standardInput,
-      raceGoal: { distance: "10k", targetDate: "2026-05-31" },  // 3 weeks
+      raceGoal: { distance: "10k", targetDate: "2026-05-31" }, // 3 weeks
     });
     expect(compressed.compressed).toBe(true);
     expect(compressed.totalWeeks).toBe(3);
@@ -234,7 +275,7 @@ describe("generateRacePlanV2", () => {
   it("hard floor of 2 weeks for compressed plans", () => {
     const tooShort = generateRacePlanV2({
       ...standardInput,
-      raceGoal: { distance: "10k", targetDate: "2026-05-12" },  // 2 days
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" }, // 2 days
     });
     expect(tooShort.totalWeeks).toBeGreaterThanOrEqual(2);
   });
@@ -248,7 +289,7 @@ describe("generateRacePlanV2", () => {
     });
     // At least one run in week 0 should be on a Both day
     const week0OnBoth = result.weeks[0]?.filter(
-      (rd) => hybridSchedule[rd.dayIndex].type === "both",
+      (rd) => hybridSchedule[rd.dayIndex].type === "both"
     );
     expect((week0OnBoth ?? []).length).toBeGreaterThanOrEqual(1);
   });
@@ -359,24 +400,24 @@ describe("classifyRaceTiming + floor helpers", () => {
   });
 
   it("healthy at/above minWeeks", () => {
-    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 12 })).toBe(
-      "healthy"
-    );
-    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 20 })).toBe(
-      "healthy"
-    );
+    expect(
+      classifyRaceTiming({ distance: "marathon", weeksRemaining: 12 })
+    ).toBe("healthy");
+    expect(
+      classifyRaceTiming({ distance: "marathon", weeksRemaining: 20 })
+    ).toBe("healthy");
     expect(classifyRaceTiming({ distance: "10k", weeksRemaining: 6 })).toBe(
       "healthy"
     );
   });
 
   it("compressible in [floor, minWeeks)", () => {
-    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 11 })).toBe(
-      "compressible"
-    );
-    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 4 })).toBe(
-      "compressible"
-    ); // exactly the floor
+    expect(
+      classifyRaceTiming({ distance: "marathon", weeksRemaining: 11 })
+    ).toBe("compressible");
+    expect(
+      classifyRaceTiming({ distance: "marathon", weeksRemaining: 4 })
+    ).toBe("compressible"); // exactly the floor
     expect(classifyRaceTiming({ distance: "half", weeksRemaining: 3 })).toBe(
       "compressible"
     );
@@ -386,9 +427,9 @@ describe("classifyRaceTiming + floor helpers", () => {
   });
 
   it("below-floor under the floor", () => {
-    expect(classifyRaceTiming({ distance: "marathon", weeksRemaining: 3 })).toBe(
-      "below-floor"
-    );
+    expect(
+      classifyRaceTiming({ distance: "marathon", weeksRemaining: 3 })
+    ).toBe("below-floor");
     expect(classifyRaceTiming({ distance: "half", weeksRemaining: 2 })).toBe(
       "below-floor"
     );
@@ -521,6 +562,28 @@ describe("enrichRunDayV2", () => {
   });
 });
 
+describe("clampPlanWeek — 0-based currentWeek into regenerated bounds", () => {
+  it("clamps a carried week past a compressed plan to the last valid index", () => {
+    // user on week index 4 ("Week 5"), plan compresses to 3 weeks (indices 0-2)
+    expect(clampPlanWeek(4, 3)).toBe(2); // renders "Week 3 of 3", NOT "Week 4 of 3"
+  });
+
+  it("leaves an in-range week untouched", () => {
+    expect(clampPlanWeek(1, 8)).toBe(1);
+    expect(clampPlanWeek(0, 8)).toBe(0);
+  });
+
+  it("keeps the last valid index (totalWeeks - 1) as-is", () => {
+    expect(clampPlanWeek(7, 8)).toBe(7);
+  });
+
+  it("floors negatives and degenerate plans to 0", () => {
+    expect(clampPlanWeek(-1, 8)).toBe(0);
+    expect(clampPlanWeek(3, 0)).toBe(0);
+    expect(clampPlanWeek(3, Number.NaN)).toBe(0);
+  });
+});
+
 /* ─── PR-0a — race template selection by distance ─────────────── */
 //
 // Pre-PR-0a `pickRaceTemplateId` returned "5k_race" for every
@@ -542,10 +605,30 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 
 describe("PR-0a — race template selection by distance", () => {
   const cases = [
-    { distance: "5k", expectedTemplate: "5k_race", expectedKm: 5, expectedMeters: 5000 },
-    { distance: "10k", expectedTemplate: "10k_race", expectedKm: 10, expectedMeters: 10000 },
-    { distance: "half", expectedTemplate: "half_race", expectedKm: 21.1, expectedMeters: 21100 },
-    { distance: "marathon", expectedTemplate: "marathon_race", expectedKm: 42.2, expectedMeters: 42200 },
+    {
+      distance: "5k",
+      expectedTemplate: "5k_race",
+      expectedKm: 5,
+      expectedMeters: 5000,
+    },
+    {
+      distance: "10k",
+      expectedTemplate: "10k_race",
+      expectedKm: 10,
+      expectedMeters: 10000,
+    },
+    {
+      distance: "half",
+      expectedTemplate: "half_race",
+      expectedKm: 21.1,
+      expectedMeters: 21100,
+    },
+    {
+      distance: "marathon",
+      expectedTemplate: "marathon_race",
+      expectedKm: 42.2,
+      expectedMeters: 42200,
+    },
   ] as const;
 
   for (const c of cases) {

@@ -28,7 +28,9 @@ const require = createRequire(import.meta.url);
 // for isolated local runs without the emulator.
 const admin = require("firebase-admin");
 if (!admin.apps.length) {
-  admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test" });
+  admin.initializeApp({
+    projectId: process.env.GCLOUD_PROJECT || "tropos-unit-test",
+  });
 }
 
 const {
@@ -48,6 +50,8 @@ const {
   computeRunLoadScore,
   computeLoadBand,
   computeSignals,
+  safeRatio,
+  shouldRecommendDeload,
   WINDOW_DAYS,
   BASELINE_DAYS,
 } = _internal;
@@ -161,7 +165,13 @@ describe("aggregateWindow", () => {
       {
         date: "2026-05-15",
         exercises: [
-          { category: "lift", sets: [{ weightKg: 100, reps: 5 }, { weightKg: 100, reps: 5 }] },
+          {
+            category: "lift",
+            sets: [
+              { weightKg: 100, reps: 5 },
+              { weightKg: 100, reps: 5 },
+            ],
+          },
         ],
       },
     ];
@@ -189,8 +199,14 @@ describe("aggregateWindow", () => {
 
   it("aggregates run distance + tracks longest run", () => {
     const runs = [
-      { completedAt: { toDate: () => new Date("2026-05-14T08:00:00Z") }, distance: 5000 },
-      { completedAt: { toDate: () => new Date("2026-05-16T18:00:00Z") }, distance: 12000 },
+      {
+        completedAt: { toDate: () => new Date("2026-05-14T08:00:00Z") },
+        distance: 5000,
+      },
+      {
+        completedAt: { toDate: () => new Date("2026-05-16T18:00:00Z") },
+        distance: 12000,
+      },
     ];
     const agg = aggregateWindow(start, end, [], runs, [], []);
     expect(agg.runSessions).toBe(2);
@@ -221,14 +237,19 @@ describe("computeBaselineFromAgg", () => {
     };
     const bl = computeBaselineFromAgg(baselineAgg);
     expect(bl.liftTonnage).toBe(1000); // 4000 * (7/28)
-    expect(bl.liftHardSets).toBe(10);  // 40 * (7/28)
-    expect(bl.runKm).toBe(5);          // 20 * (7/28)
-    expect(bl.runLongKm).toBe(12);     // unchanged (max not averaged)
-    expect(bl.weeksUsed).toBe(4);      // 28 / 7
+    expect(bl.liftHardSets).toBe(10); // 40 * (7/28)
+    expect(bl.runKm).toBe(5); // 20 * (7/28)
+    expect(bl.runLongKm).toBe(12); // unchanged (max not averaged)
+    expect(bl.weeksUsed).toBe(4); // 28 / 7
   });
 
   it("handles missing dayCount with BASELINE_DAYS default", () => {
-    const baselineAgg = { liftTonnage: 4000, liftHardSets: 40, runKm: 20, runLongKm: 12 };
+    const baselineAgg = {
+      liftTonnage: 4000,
+      liftHardSets: 40,
+      runKm: 20,
+      runLongKm: 12,
+    };
     const bl = computeBaselineFromAgg(baselineAgg);
     expect(bl.liftTonnage).toBe(1000); // still 4000 * (7/28)
   });
@@ -271,10 +292,23 @@ describe("computeRunLoadScore", () => {
   });
 
   it("adds 10pt quality bonus when interval/tempo run present", () => {
-    const aggWithQuality = { runSessions: 3, runKm: 20, runLongKm: 12, runQualityCount: 1 };
-    const aggWithoutQuality = { runSessions: 3, runKm: 20, runLongKm: 12, runQualityCount: 0 };
+    const aggWithQuality = {
+      runSessions: 3,
+      runKm: 20,
+      runLongKm: 12,
+      runQualityCount: 1,
+    };
+    const aggWithoutQuality = {
+      runSessions: 3,
+      runKm: 20,
+      runLongKm: 12,
+      runQualityCount: 0,
+    };
     const bl = { runKm: 20, runLongKm: 12 };
-    expect(computeRunLoadScore(aggWithQuality, bl) - computeRunLoadScore(aggWithoutQuality, bl)).toBe(10);
+    expect(
+      computeRunLoadScore(aggWithQuality, bl) -
+        computeRunLoadScore(aggWithoutQuality, bl)
+    ).toBe(10);
   });
 });
 
@@ -298,39 +332,73 @@ describe("computeSignals", () => {
   };
 
   it("bothLoadsStrong fires when both scores >= 70", () => {
-    expect(computeSignals({ ...baseInput, liftLoadScore: 75, runLoadScore: 75 }).bothLoadsStrong).toBe(true);
-    expect(computeSignals({ ...baseInput, liftLoadScore: 75, runLoadScore: 65 }).bothLoadsStrong).toBe(false);
+    expect(
+      computeSignals({ ...baseInput, liftLoadScore: 75, runLoadScore: 75 })
+        .bothLoadsStrong
+    ).toBe(true);
+    expect(
+      computeSignals({ ...baseInput, liftLoadScore: 75, runLoadScore: 65 })
+        .bothLoadsStrong
+    ).toBe(false);
   });
 
   it("liftAheadOfBaseline only fires above 5% threshold", () => {
-    expect(computeSignals({ ...baseInput, liftProgression: 1.04 }).liftAheadOfBaseline).toBe(0);
-    expect(computeSignals({ ...baseInput, liftProgression: 1.18 }).liftAheadOfBaseline).toBeCloseTo(0.18);
+    expect(
+      computeSignals({ ...baseInput, liftProgression: 1.04 })
+        .liftAheadOfBaseline
+    ).toBe(0);
+    expect(
+      computeSignals({ ...baseInput, liftProgression: 1.18 })
+        .liftAheadOfBaseline
+    ).toBeCloseTo(0.18);
   });
 
   it("runAheadOfBaseline only fires above 5% threshold", () => {
-    expect(computeSignals({ ...baseInput, runVolume: 1.04 }).runAheadOfBaseline).toBe(0);
-    expect(computeSignals({ ...baseInput, runVolume: 1.25 }).runAheadOfBaseline).toBeCloseTo(0.25);
+    expect(
+      computeSignals({ ...baseInput, runVolume: 1.04 }).runAheadOfBaseline
+    ).toBe(0);
+    expect(
+      computeSignals({ ...baseInput, runVolume: 1.25 }).runAheadOfBaseline
+    ).toBeCloseTo(0.25);
   });
 
   it("recoveryWeak fires when recoveryScore < 50", () => {
-    expect(computeSignals({ ...baseInput, recoveryScore: 49 }).recoveryWeak).toBe(true);
-    expect(computeSignals({ ...baseInput, recoveryScore: 50 }).recoveryWeak).toBe(false);
+    expect(
+      computeSignals({ ...baseInput, recoveryScore: 49 }).recoveryWeak
+    ).toBe(true);
+    expect(
+      computeSignals({ ...baseInput, recoveryScore: 50 }).recoveryWeak
+    ).toBe(false);
   });
 
   it("adherenceWeak fires when adherenceScore < 50", () => {
-    expect(computeSignals({ ...baseInput, adherenceScore: 30 }).adherenceWeak).toBe(true);
-    expect(computeSignals({ ...baseInput, adherenceScore: 70 }).adherenceWeak).toBe(false);
+    expect(
+      computeSignals({ ...baseInput, adherenceScore: 30 }).adherenceWeak
+    ).toBe(true);
+    expect(
+      computeSignals({ ...baseInput, adherenceScore: 70 }).adherenceWeak
+    ).toBe(false);
   });
 
   it("deloadFlag mirrors deloadRecommended", () => {
-    expect(computeSignals({ ...baseInput, deloadRecommended: true }).deloadFlag).toBe(true);
-    expect(computeSignals({ ...baseInput, deloadRecommended: false }).deloadFlag).toBe(false);
+    expect(
+      computeSignals({ ...baseInput, deloadRecommended: true }).deloadFlag
+    ).toBe(true);
+    expect(
+      computeSignals({ ...baseInput, deloadRecommended: false }).deloadFlag
+    ).toBe(false);
   });
 
   it("lifetimeWeeks reflects baseline day coverage", () => {
-    expect(computeSignals({ ...baseInput, baselineDayCount: 28 }).lifetimeWeeks).toBe(4);
-    expect(computeSignals({ ...baseInput, baselineDayCount: 14 }).lifetimeWeeks).toBe(2);
-    expect(computeSignals({ ...baseInput, baselineDayCount: 0 }).lifetimeWeeks).toBe(0);
+    expect(
+      computeSignals({ ...baseInput, baselineDayCount: 28 }).lifetimeWeeks
+    ).toBe(4);
+    expect(
+      computeSignals({ ...baseInput, baselineDayCount: 14 }).lifetimeWeeks
+    ).toBe(2);
+    expect(
+      computeSignals({ ...baseInput, baselineDayCount: 0 }).lifetimeWeeks
+    ).toBe(0);
   });
 
   it("daysSinceLastTraining uses most recent of workout/run", () => {
@@ -343,7 +411,12 @@ describe("computeSignals", () => {
   it("daysSinceLastTraining handles missing training data (defaults to 0)", () => {
     const sig = computeSignals({
       ...baseInput,
-      lifetimeData: { lifetimeWorkoutCount: 0, lifetimeRunCount: 0, lastWorkoutDateStr: null, lastRunCompletedAt: null },
+      lifetimeData: {
+        lifetimeWorkoutCount: 0,
+        lifetimeRunCount: 0,
+        lastWorkoutDateStr: null,
+        lastRunCompletedAt: null,
+      },
     });
     expect(sig.daysSinceLastTraining).toBe(0);
   });
@@ -355,5 +428,41 @@ describe("computeSignals", () => {
     // 1.1236 → 0.1236 → rounded to 3dp = 0.124
     const sig2 = computeSignals({ ...baseInput, liftProgression: 1.1236 });
     expect(sig2.liftAheadOfBaseline).toBe(0.124);
+  });
+});
+
+describe("safeRatio — cold-start neutrality (reconciled with client engine)", () => {
+  it("returns NEUTRAL 1.0 (not 1.2) for a zero baseline with current activity", () => {
+    // Was 1.2 server-side — inflated every cold-start ratio to "20% above
+    // baseline". Must match the client engine's 1.0.
+    expect(safeRatio(500, 0)).toBe(1.0);
+  });
+  it("returns 0 when there's no current activity and no baseline", () => {
+    expect(safeRatio(0, 0)).toBe(0);
+  });
+  it("returns the true ratio once a baseline exists", () => {
+    expect(safeRatio(120, 100)).toBeCloseTo(1.2);
+    expect(safeRatio(80, 100)).toBeCloseTo(0.8);
+  });
+});
+
+describe("shouldRecommendDeload — sustained-overreach threshold reconciled to 85", () => {
+  it("does NOT recommend deload for two consecutive weeks in the 75-84 band", () => {
+    // Old server threshold (75) fired here; client (and now server) is 85.
+    expect(shouldRecommendDeload(80, 70, 70, 80)).toBe(false);
+    expect(shouldRecommendDeload(84, 70, 70, 84)).toBe(false);
+  });
+  it("recommends deload for two consecutive weeks at/above 85", () => {
+    expect(shouldRecommendDeload(85, 70, 70, 85)).toBe(true);
+    expect(shouldRecommendDeload(90, 70, 70, 88)).toBe(true);
+  });
+  it("still fires on high PI + low recovery regardless of the previous week", () => {
+    expect(shouldRecommendDeload(80, 40, 70, null)).toBe(true);
+  });
+  it("still fires on high PI + low adherence", () => {
+    expect(shouldRecommendDeload(70, 70, 40, null)).toBe(true);
+  });
+  it("does not fire from a single high week alone (no previous, decent recovery/adherence)", () => {
+    expect(shouldRecommendDeload(88, 70, 70, null)).toBe(false);
   });
 });
