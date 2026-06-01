@@ -37,11 +37,22 @@
  * `buildPlan` coordinates these. Each is independently testable.
  */
 
-import type { Goal, PrimaryGoal, ProgramState, ScheduledRunDay, RunPlan } from "./programTypes";
-import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "./programTypes";
+import type {
+  Goal,
+  PrimaryGoal,
+  ProgramState,
+  ScheduledRunDay,
+  RunPlan,
+  SplitType,
+  WorkoutDay,
+} from "./programTypes";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  CURRENT_WEEKSCHEDULE_VERSION,
+} from "./programTypes";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
-import { generateProgram } from "./programEngine";
+import { generateProgram, expectedDayCount } from "./programEngine";
 import { generateRacePlanV2, scheduleStructuredWeekV2 } from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
@@ -70,7 +81,10 @@ export interface PlanBuilderInput {
   weeklyRunDays: number;
 
   /** Required when runMode === "race_prep". */
-  raceGoal?: { distance: "5k" | "10k" | "half" | "marathon"; targetDate: string };
+  raceGoal?: {
+    distance: "5k" | "10k" | "half" | "marathon";
+    targetDate: string;
+  };
 
   equipment: "full_gym" | "home_gym" | "minimal";
 
@@ -103,7 +117,7 @@ export interface PlanBuilderOutput {
     weekScheduleVersion: number;
     weeklyWorkoutsTarget: number;
     weeklyRunDaysTarget: number;
-    weeklyRunsTarget: number;        // legacy field — keep in sync
+    weeklyRunsTarget: number; // legacy field — keep in sync
     runMode: RunMode;
     raceGoal?: PlanBuilderInput["raceGoal"];
     primaryGoal: PrimaryGoal;
@@ -136,13 +150,51 @@ function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
   return generateSchedule(input.liftDays, runDays);
 }
 
-/** Generates the lift programme. Wraps the existing engine. */
-function buildLiftProgram(input: PlanBuilderInput) {
+/**
+ * Lift programme. Pgm5 (Q2 — structure-preserving regeneration): a CONTENT
+ * edit (goal / nutrition / experience / equipment / injuries with the same
+ * lift-day count) PRESERVES the user's current workouts verbatim — day
+ * structure, the exercise list (including swaps / adds / reorders), sets,
+ * reps, weights and history all survive. This honours Pgm5 ("the engine never
+ * silently discards a user decision"). The engine only rebuilds from template
+ * when there is no existing programme, or the lift-day count changed (a
+ * different skeleton is then unavoidable). Explicit Reset stays destructive via
+ * a separate path (useProgram.regenerateProgram → generateProgram directly).
+ *
+ * v1 scope: content edits preserve verbatim. Goal-driven rep/volume rescheme,
+ * injury-aware re-swap and equipment re-pick are documented follow-ups — each
+ * needs a per-exercise role/anchor the stored ProgramExercise lacks today, and
+ * post-onboarding injuries/equipment are already ignored by the regeneration
+ * engine, so preserving is strictly better, not a regression.
+ */
+function buildLiftProgram(input: PlanBuilderInput): {
+  splitType: SplitType;
+  workouts: WorkoutDay[];
+} {
+  const existing = input.existingState?.workouts;
+  const sameDayCount =
+    !!existing &&
+    existing.length > 0 &&
+    existing.length === expectedDayCount(input.liftDays);
+
+  if (sameDayCount && input.existingState) {
+    // Content edit → preserve the user's plan exactly. Deep-clone so the pure
+    // builder never aliases the caller's state.
+    return {
+      splitType: input.existingState.splitType,
+      workouts: existing.map((day) => ({
+        ...day,
+        exercises: day.exercises.map((ex) => ({ ...ex })),
+      })),
+    };
+  }
+
+  // No existing plan, or the lift-day count changed → rebuild from template.
   return generateProgram(
     input.nutritionPhase,
     input.liftDays,
-    input.existingState?.workouts,
-    input.primaryGoal,
+    existing,
+    input.primaryGoal
   );
 }
 
@@ -153,7 +205,7 @@ function buildLiftProgram(input: PlanBuilderInput) {
  *  runDays. No post-processing bridge needed here anymore. */
 function buildRunPlan(
   input: PlanBuilderInput,
-  weekSchedule: ScheduleDay[],
+  weekSchedule: ScheduleDay[]
 ): { runDays: ScheduledRunDay[]; runPlan: RunPlan | undefined } {
   // The week containing `currentDate` is the plan's week 0. Use
   // localWeekKey to find the Sunday-start anchor.
@@ -209,7 +261,7 @@ function buildRunPlan(
  *  onboarding + Configure Plan write to `users/{uid}`. */
 function buildProfileUpdates(
   input: PlanBuilderInput,
-  weekSchedule: ScheduleDay[],
+  weekSchedule: ScheduleDay[]
 ): PlanBuilderOutput["profileUpdates"] {
   const updates: PlanBuilderOutput["profileUpdates"] = {
     weekSchedule,
@@ -239,15 +291,21 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
   const { programState, weekSchedule, profileUpdates } = output;
 
   if (!Array.isArray(weekSchedule) || weekSchedule.length !== 7) {
-    throw new Error(`planBuilder: weekSchedule must have exactly 7 entries (got ${weekSchedule?.length})`);
+    throw new Error(
+      `planBuilder: weekSchedule must have exactly 7 entries (got ${weekSchedule?.length})`
+    );
   }
   const validTypes = new Set(["rest", "lift", "run", "both"]);
   weekSchedule.forEach((d, i) => {
     if (!validTypes.has(d.type)) {
-      throw new Error(`planBuilder: weekSchedule[${i}].type = "${d.type}" is invalid`);
+      throw new Error(
+        `planBuilder: weekSchedule[${i}].type = "${d.type}" is invalid`
+      );
     }
     if (d.day !== i) {
-      throw new Error(`planBuilder: weekSchedule[${i}].day mismatch (expected ${i}, got ${d.day})`);
+      throw new Error(
+        `planBuilder: weekSchedule[${i}].day mismatch (expected ${i}, got ${d.day})`
+      );
     }
   });
 
@@ -263,29 +321,39 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
   (programState.runDays ?? []).forEach((rd, i) => {
     if (!rd.id) throw new Error(`planBuilder: runDays[${i}].id missing`);
     if (!rd.date || !/^\d{4}-\d{2}-\d{2}$/.test(rd.date)) {
-      throw new Error(`planBuilder: runDays[${i}].date invalid (got "${rd.date}")`);
+      throw new Error(
+        `planBuilder: runDays[${i}].date invalid (got "${rd.date}")`
+      );
     }
-    if (!rd.weekKey) throw new Error(`planBuilder: runDays[${i}].weekKey missing`);
-    if (!rd.templateId) throw new Error(`planBuilder: runDays[${i}].templateId missing`);
+    if (!rd.weekKey)
+      throw new Error(`planBuilder: runDays[${i}].weekKey missing`);
+    if (!rd.templateId)
+      throw new Error(`planBuilder: runDays[${i}].templateId missing`);
     if (!rd.status || !validStatuses.has(rd.status)) {
-      throw new Error(`planBuilder: runDays[${i}].status invalid (got "${rd.status}")`);
+      throw new Error(
+        `planBuilder: runDays[${i}].status invalid (got "${rd.status}")`
+      );
     }
     if (rd.userOverride !== undefined && typeof rd.userOverride !== "string") {
       throw new Error(`planBuilder: runDays[${i}].userOverride must be string`);
     }
     // No UTC ISO leak
     if (rd.date.includes("T") || rd.weekKey.includes("T")) {
-      throw new Error(`planBuilder: runDays[${i}] date/weekKey appears to be UTC ISO`);
+      throw new Error(
+        `planBuilder: runDays[${i}] date/weekKey appears to be UTC ISO`
+      );
     }
   });
 
   if (profileUpdates.runMode === "race_prep" && !profileUpdates.raceGoal) {
-    throw new Error("planBuilder: race_prep mode requires raceGoal in profileUpdates");
+    throw new Error(
+      "planBuilder: race_prep mode requires raceGoal in profileUpdates"
+    );
   }
 
   if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION) {
     throw new Error(
-      `planBuilder: programState.programSchemaVersion must be ${CURRENT_PROGRAM_SCHEMA_VERSION} (got ${programState.programSchemaVersion})`,
+      `planBuilder: programState.programSchemaVersion must be ${CURRENT_PROGRAM_SCHEMA_VERSION} (got ${programState.programSchemaVersion})`
     );
   }
 }
@@ -300,22 +368,29 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
 
   const programState: ProgramState = {
     goal: input.nutritionPhase,
-    currentPhase: input.preserveHistory && input.existingState
-      ? input.existingState.currentPhase
-      : "Hypertrophy",
-    weekNumber: input.preserveHistory && input.existingState
-      ? input.existingState.weekNumber
-      : 1,
+    currentPhase:
+      input.preserveHistory && input.existingState
+        ? input.existingState.currentPhase
+        : "Hypertrophy",
+    weekNumber:
+      input.preserveHistory && input.existingState
+        ? input.existingState.weekNumber
+        : 1,
     splitType,
     workouts,
-    fatigueScore: input.preserveHistory && input.existingState
-      ? input.existingState.fatigueScore
-      : 0,
+    fatigueScore:
+      input.preserveHistory && input.existingState
+        ? input.existingState.fatigueScore
+        : 0,
     updatedAt: parseLocalDate(input.currentDate).getTime(),
-    settings: input.existingState?.settings ?? { autoProgression: true, microloading: true },
-    weekHistory: input.preserveHistory && input.existingState
-      ? (input.existingState.weekHistory ?? [])
-      : [],
+    settings: input.existingState?.settings ?? {
+      autoProgression: true,
+      microloading: true,
+    },
+    weekHistory:
+      input.preserveHistory && input.existingState
+        ? (input.existingState.weekHistory ?? [])
+        : [],
     runDays,
     runPlan,
     primaryGoal: input.primaryGoal,
