@@ -132,7 +132,6 @@ export interface UserProfilePreferences {
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   audioCues?: boolean;
-  enableRolloverCalories?: boolean;
   /** F1 privacy toggle: user opt-out for Gemini-backed food analysis
    *  (image AI + NL text refinement). Undefined / missing = enabled
    *  (default behaviour). Set to false via Settings → Privacy to
@@ -457,7 +456,11 @@ const PROTECTED_FIELDS = [
 
 // Subset of UserProfile fields that also need to be mirrored onto the
 // cross-user-readable public/profile doc when they change.
-const PUBLIC_MIRRORED_FIELDS = ["displayName", "photoURL", "athleteType"] as const;
+const PUBLIC_MIRRORED_FIELDS = [
+  "displayName",
+  "photoURL",
+  "athleteType",
+] as const;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -682,7 +685,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
           await batch.commit();
         } else {
-          await setDocGuarded(doc(db, "users", user.uid), writeData, { merge: true });
+          await setDocGuarded(doc(db, "users", user.uid), writeData, {
+            merge: true,
+          });
         }
 
         setProfile((prev) => {

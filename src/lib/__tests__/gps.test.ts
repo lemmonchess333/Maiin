@@ -10,6 +10,7 @@ import {
   totalDistance,
   estimateRunCalories,
   KalmanFilter,
+  toGPX,
   type GPSPoint,
 } from "../gps";
 
@@ -73,51 +74,163 @@ describe("haversine", () => {
 
 describe("isValidReading", () => {
   it("accepts first point with accuracy <= 150", () => {
-    const coords = { latitude: 51.5, longitude: -0.1, accuracy: 100, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const coords = {
+      latitude: 51.5,
+      longitude: -0.1,
+      accuracy: 100,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, null)).toBe(true);
   });
 
   it("rejects first point with accuracy > 150", () => {
-    const coords = { latitude: 51.5, longitude: -0.1, accuracy: 200, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const coords = {
+      latitude: 51.5,
+      longitude: -0.1,
+      accuracy: 200,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, null)).toBe(false);
   });
 
   it("rejects subsequent point with accuracy > 35 (after 15s)", () => {
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() - 20000 });
-    const coords = { latitude: 51.501, longitude: -0.1, accuracy: 40, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() - 20000,
+    });
+    const coords = {
+      latitude: 51.501,
+      longitude: -0.1,
+      accuracy: 40,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint, 20)).toBe(false);
   });
 
   it("allows accuracy up to 50 in first 15 seconds", () => {
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() - 10000 });
-    const coords = { latitude: 51.501, longitude: -0.1, accuracy: 45, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() - 10000,
+    });
+    const coords = {
+      latitude: 51.501,
+      longitude: -0.1,
+      accuracy: 45,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint, 10)).toBe(true);
   });
 
   it("rejects readings with implied speed > 12 m/s", () => {
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() - 1000 });
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() - 1000,
+    });
     // 0.01 degrees lat ≈ 1111m in 1 second → speed ≈ 1111 m/s
-    const coords = { latitude: 51.51, longitude: -0.1, accuracy: 5, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const coords = {
+      latitude: 51.51,
+      longitude: -0.1,
+      accuracy: 5,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint)).toBe(false);
   });
 
   it("rejects readings with distance < 1m", () => {
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() - 5000 });
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() - 5000,
+    });
     // Essentially same point
-    const coords = { latitude: 51.5, longitude: -0.1, accuracy: 5, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const coords = {
+      latitude: 51.5,
+      longitude: -0.1,
+      accuracy: 5,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint)).toBe(false);
   });
 
   it("rejects if timeDiff <= 0", () => {
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() + 5000 });
-    const coords = { latitude: 51.501, longitude: -0.1, accuracy: 5, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() + 5000,
+    });
+    const coords = {
+      latitude: 51.501,
+      longitude: -0.1,
+      accuracy: 5,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint)).toBe(false);
   });
 
   it("accepts a valid subsequent reading", () => {
     // ~111m over 30 seconds = ~3.7 m/s (walking/jogging)
-    const lastPoint = makePoint({ lat: 51.5, lon: -0.1, timestamp: Date.now() - 30000 });
-    const coords = { latitude: 51.501, longitude: -0.1, accuracy: 10, altitude: 10, altitudeAccuracy: 5, heading: 0, speed: 3, toJSON() { return this; } };
+    const lastPoint = makePoint({
+      lat: 51.5,
+      lon: -0.1,
+      timestamp: Date.now() - 30000,
+    });
+    const coords = {
+      latitude: 51.501,
+      longitude: -0.1,
+      accuracy: 10,
+      altitude: 10,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 3,
+      toJSON() {
+        return this;
+      },
+    };
     expect(isValidReading(coords, lastPoint, 30)).toBe(true);
   });
 });
@@ -191,12 +304,14 @@ describe("calculateSplits", () => {
     const baseTime = Date.now();
     const points: GPSPoint[] = [];
     for (let i = 0; i <= 10; i++) {
-      points.push(makePoint({
-        lat: 51.5 + i * 0.001,
-        lon: -0.1,
-        altitude: 10,
-        timestamp: baseTime + i * 30000, // 30s between each point
-      }));
+      points.push(
+        makePoint({
+          lat: 51.5 + i * 0.001,
+          lon: -0.1,
+          altitude: 10,
+          timestamp: baseTime + i * 30000, // 30s between each point
+        })
+      );
     }
     const splits = calculateSplits(points);
     if (splits.length > 0) {
@@ -224,10 +339,10 @@ describe("totalElevationGain", () => {
   it("sums only positive elevation changes > 2m", () => {
     const points: GPSPoint[] = [
       makePoint({ altitude: 10 }),
-      makePoint({ altitude: 15 }),  // +5 (counted)
-      makePoint({ altitude: 12 }),  // -3 (ignored)
-      makePoint({ altitude: 20 }),  // +8 (counted)
-      makePoint({ altitude: 19 }),  // -1 (ignored, also <= 2)
+      makePoint({ altitude: 15 }), // +5 (counted)
+      makePoint({ altitude: 12 }), // -3 (ignored)
+      makePoint({ altitude: 20 }), // +8 (counted)
+      makePoint({ altitude: 19 }), // -1 (ignored, also <= 2)
     ];
     // gain = 5 + 8 = 13
     expect(totalElevationGain(points)).toBe(13);
@@ -237,7 +352,7 @@ describe("totalElevationGain", () => {
     const points: GPSPoint[] = [
       makePoint({ altitude: 10 }),
       makePoint({ altitude: 11.5 }), // +1.5 ≤ 2, ignored
-      makePoint({ altitude: 12 }),    // +0.5 ≤ 2, ignored
+      makePoint({ altitude: 12 }), // +0.5 ≤ 2, ignored
     ];
     expect(totalElevationGain(points)).toBe(0);
   });
@@ -275,7 +390,7 @@ describe("totalDistance", () => {
   it("sums distances between consecutive points", () => {
     // Three points in a line: each ~111m apart (0.001 deg lat)
     const points: GPSPoint[] = [
-      makePoint({ lat: 51.500, lon: -0.1 }),
+      makePoint({ lat: 51.5, lon: -0.1 }),
       makePoint({ lat: 51.501, lon: -0.1 }),
       makePoint({ lat: 51.502, lon: -0.1 }),
     ];
@@ -287,9 +402,9 @@ describe("totalDistance", () => {
 
   it("accumulates distance even if path doubles back", () => {
     const points: GPSPoint[] = [
-      makePoint({ lat: 51.500, lon: -0.1 }),
+      makePoint({ lat: 51.5, lon: -0.1 }),
       makePoint({ lat: 51.501, lon: -0.1 }),
-      makePoint({ lat: 51.500, lon: -0.1 }),
+      makePoint({ lat: 51.5, lon: -0.1 }),
     ];
     const dist = totalDistance(points);
     // Should be ~222m (111m out + 111m back)
@@ -440,5 +555,29 @@ describe("rollingPace", () => {
     const a = pointAt(0, 0);
     const b = pointAt(0.001, 100); // 100s later, well outside a 30s window
     expect(rollingPace([a, b], 30)).toBe("--:--");
+  });
+});
+
+describe("toGPX", () => {
+  const pts: GPSPoint[] = [
+    makePoint({ lat: 51.5, lon: -0.1, timestamp: 0, altitude: 10 }),
+    makePoint({ lat: 51.51, lon: -0.11, timestamp: 1000, altitude: 12 }),
+  ];
+
+  it("escapes XML metacharacters in the run name (no invalid GPX)", () => {
+    const gpx = toGPX(pts, `Tom & Jerry's <fast> run`);
+    expect(gpx).toContain(
+      "<name>Tom &amp; Jerry&apos;s &lt;fast&gt; run</name>"
+    );
+    // raw, unescaped specials must not leak into the markup
+    expect(gpx).not.toContain("& Jerry");
+    expect(gpx).not.toContain("<fast>");
+  });
+
+  it("emits lat/lon in order with metre elevation and ISO time", () => {
+    const gpx = toGPX(pts, "Morning run");
+    expect(gpx).toContain('<trkpt lat="51.5" lon="-0.1">');
+    expect(gpx).toContain("<ele>10.0</ele>");
+    expect(gpx).toContain("<time>1970-01-01T00:00:00.000Z</time>");
   });
 });
