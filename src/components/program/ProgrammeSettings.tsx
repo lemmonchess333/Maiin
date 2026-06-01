@@ -430,6 +430,10 @@ export default function ProgrammeSettings({
     raceTargetDate,
   });
   const dirty = changes.length > 0;
+  // Pgm5 (Q3): content edits now PRESERVE the user's workouts — only a
+  // lift-days change re-derives the skeleton. The confirm copy must name the
+  // customization reset for a day-count change, and reassure otherwise.
+  const liftDaysChanged = liftDays !== saved.liftDays;
 
   // A race-prep plan needs a target date that isn't in the past.
   const raceDateInvalid =
@@ -984,7 +988,9 @@ export default function ProgrammeSettings({
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {confirmReset
                       ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Your logged workouts and runs stay in History."
-                      : "We'll regenerate your upcoming workouts and run plan with these settings. Your current week and past summaries are kept, and your logged workouts and runs stay in History."}
+                      : liftDaysChanged
+                        ? "Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. Your current week, history, and logged sessions are kept."
+                        : "We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. Your week, history, and logged sessions stay."}
                   </p>
                 </div>
               </div>

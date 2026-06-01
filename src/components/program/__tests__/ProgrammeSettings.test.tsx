@@ -186,3 +186,27 @@ describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
     expect(payload.profileUpdates.preferredSplit).toBe("ppl");
   });
 });
+
+describe("ProgrammeSettings — save disclosure reflects structure-preservation (Pgm5 Q3)", () => {
+  it("a lift-days change names the customization reset", () => {
+    setup(); // saved liftDays 4
+    fireEvent.click(screen.getByRole("radio", { name: "5" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      screen.getByText(/rebuilds your weekly structure/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/added, removed, or reordered will be reset/i)
+    ).toBeInTheDocument();
+  });
+
+  it("a content-only change reassures that workouts are kept", () => {
+    setup();
+    fireEvent.click(screen.getByText("Get stronger")); // goal change, same lift days
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(screen.getByText(/keep your current workouts/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/rebuilds your weekly structure/i)
+    ).not.toBeInTheDocument();
+  });
+});
