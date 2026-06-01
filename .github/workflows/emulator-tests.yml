@@ -171,7 +171,7 @@ jobs:
       # Upload Playwright artefacts on failure so investigating a CI
       # break doesn't require re-running locally.
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: playwright-report/
