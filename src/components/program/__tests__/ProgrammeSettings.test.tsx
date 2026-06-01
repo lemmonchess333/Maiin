@@ -160,3 +160,53 @@ describe("ProgrammeSettings — injuries mutual exclusion", () => {
     });
   });
 });
+
+describe("ProgrammeSettings — split is a derived display (Pgm5 Q1)", () => {
+  it("renders the current split as read-only text, not a selectable card", () => {
+    // liftDays 4, programState has no splitType → chooseSplit(4) = upper_lower
+    setup();
+    expect(screen.getByText("Upper / Lower")).toBeInTheDocument();
+    // No clickable split option remains — the picker is gone.
+    expect(
+      screen.queryByRole("button", {
+        name: /full body|push \/ pull \/ legs|upper \/ lower/i,
+      })
+    ).not.toBeInTheDocument();
+  });
+
+  it("threads the persisted preferredSplit through save (inert, not chosen)", async () => {
+    setup(); // saved preferredSplit = "ppl"
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = configureSpy.mock.calls[0][0] as {
+      profileUpdates: Record<string, unknown>;
+    };
+    expect(payload.profileUpdates.preferredSplit).toBe("ppl");
+  });
+});
+
+describe("ProgrammeSettings — save disclosure reflects structure-preservation (Pgm5 Q3)", () => {
+  it("a lift-days change names the customization reset", () => {
+    setup(); // saved liftDays 4
+    fireEvent.click(screen.getByRole("radio", { name: "5" }));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(
+      screen.getByText(/rebuilds your weekly structure/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/added, removed, or reordered will be reset/i)
+    ).toBeInTheDocument();
+  });
+
+  it("a content-only change reassures that workouts are kept", () => {
+    setup();
+    fireEvent.click(screen.getByText("Get stronger")); // goal change, same lift days
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    expect(screen.getByText(/keep your current workouts/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/rebuilds your weekly structure/i)
+    ).not.toBeInTheDocument();
+  });
+});
