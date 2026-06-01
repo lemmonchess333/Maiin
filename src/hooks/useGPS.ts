@@ -58,6 +58,18 @@ export function useGPS(elapsedSeconds = 0) {
   // scoring. Pre-PR-H `isValidReading` silently dropped poor fixes
   // and we had no aggregate signal to surface on the run summary.
   const rejectedFixCountRef = useRef(0);
+  // First-fix acquisition. `acquireStartRef` marks when we began waiting for
+  // the very first fix; `provisionalStartRef` is true while the run started on
+  // a COARSE fix (>150 m) that hasn't been re-anchored by a good fix yet.
+  // Indoors / in cities iOS's first fixes are 200 m–1 km until GPS warms up;
+  // the old code required ≤150 m to even start, so it silently rejected every
+  // fix and spun "Acquiring GPS" forever. We now start on whatever arrives
+  // after a short grace, then re-anchor the start to the first good fix so the
+  // recorded track + distance stay clean.
+  const acquireStartRef = useRef<number | null>(null);
+  const provisionalStartRef = useRef(false);
+  /** ms to wait for a ≤150 m first fix before starting on a coarse one. */
+  const FIRST_FIX_RELAX_MS = 6000;
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
   }, [elapsedSeconds]);
@@ -123,6 +135,8 @@ export function useGPS(elapsedSeconds = 0) {
       // for the same reason lastFixAt resets — avoid bleed from a
       // previous run.
       rejectedFixCountRef.current = 0;
+      acquireStartRef.current = Date.now();
+      provisionalStartRef.current = false;
       /* Reset lastFixAt on a fresh tracking session so a 'GPS lost'
          flag from a previous run doesn't bleed into this one. The
          first valid fix in this session will populate it. */
@@ -153,27 +167,85 @@ export function useGPS(elapsedSeconds = 0) {
           signalQuality: quality,
         }));
 
+        const GOOD_FIX_M = 150;
+        const makePoint = (useKalman: boolean): GPSPoint => {
+          const c = useKalman
+            ? kalmanRef.current.process(latitude, longitude, accuracy)
+            : { lat: latitude, lon: longitude };
+          return {
+            lat: c.lat,
+            lon: c.lon,
+            altitude,
+            accuracy,
+            speed,
+            timestamp: Date.now(),
+            rawLat: latitude,
+            rawLon: longitude,
+          };
+        };
+
+        // ── First fix: START the run as soon as we have one we'll accept.
+        // Outdoors a ≤150 m fix arrives within seconds; indoors / in cities
+        // iOS's first fixes are coarser, so after a short grace we start on
+        // whatever's available (marked provisional) rather than spinning
+        // "Acquiring GPS" forever.
+        if (pointsRef.current.length === 0) {
+          const acquireMs = acquireStartRef.current
+            ? Date.now() - acquireStartRef.current
+            : Infinity;
+          if (accuracy > GOOD_FIX_M && acquireMs < FIRST_FIX_RELAX_MS) {
+            rejectedFixCountRef.current += 1;
+            return; // hold out a little longer for a clean first fix
+          }
+          provisionalStartRef.current = accuracy > GOOD_FIX_M;
+          const point = makePoint(true);
+          pointsRef.current.push(point);
+          setState((s) => ({
+            ...s,
+            points: [...pointsRef.current],
+            currentPoint: point,
+            distance: distanceRef.current,
+            isTracking: true,
+            error: null,
+            lastFixAt: point.timestamp,
+          }));
+          return;
+        }
+
+        // ── Started on a COARSE fix and not yet re-anchored.
+        if (provisionalStartRef.current) {
+          if (accuracy <= GOOD_FIX_M) {
+            // First good fix — re-anchor the start here so the coarse lead-in
+            // doesn't inject phantom distance. Drop the provisional point and
+            // restart the track + distance from this fix.
+            kalmanRef.current.reset();
+            const point = makePoint(true);
+            pointsRef.current = [point];
+            distanceRef.current = 0;
+            provisionalStartRef.current = false;
+            setState((s) => ({
+              ...s,
+              points: [point],
+              currentPoint: point,
+              distance: 0,
+              isTracking: true,
+              error: null,
+              lastFixAt: point.timestamp,
+            }));
+            return;
+          }
+          // Still coarse — let the map follow the position, but don't record
+          // it (avoids phantom distance from jumping between coarse fixes).
+          setState((s) => ({ ...s, currentPoint: makePoint(false) }));
+          return;
+        }
+
+        // ── Normal tracking (good lock).
         if (!isValidReading(pos.coords, lastPoint, elapsedMs / 1000)) {
           rejectedFixCountRef.current += 1;
           return;
         }
-
-        const smoothed = kalmanRef.current.process(
-          latitude,
-          longitude,
-          accuracy
-        );
-        const point: GPSPoint = {
-          lat: smoothed.lat,
-          lon: smoothed.lon,
-          altitude,
-          accuracy,
-          speed,
-          timestamp: Date.now(),
-          rawLat: latitude,
-          rawLon: longitude,
-        };
-
+        const point = makePoint(true);
         if (lastPoint) {
           distanceRef.current += haversine(
             lastPoint.lat,
@@ -182,7 +254,6 @@ export function useGPS(elapsedSeconds = 0) {
             point.lon
           );
         }
-
         pointsRef.current.push(point);
         setState((s) => ({
           ...s,
@@ -191,8 +262,6 @@ export function useGPS(elapsedSeconds = 0) {
           distance: distanceRef.current,
           isTracking: true,
           error: null,
-          gpsAccuracy: accuracy,
-          signalQuality: quality,
           lastFixAt: point.timestamp,
         }));
       },

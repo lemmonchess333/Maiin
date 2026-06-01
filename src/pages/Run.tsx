@@ -635,21 +635,28 @@ export default function Run() {
     }
   }, [phase, gps.points.length]);
 
+  // Side-effects at "GO!" — wrapped in an effect event so the countdown
+  // effect below can depend ONLY on [phase, countdown]. Previously `timer`
+  // and `audioCues` were deps; both return fresh object references each
+  // render, so every re-render (and GPS fixes stream in during the countdown)
+  // cleared + restarted the 1s setTimeout — the countdown could stall and
+  // never reach the active phase.
+  const onCountdownGo = useEffectEvent(() => {
+    dispatch({ type: "COUNTDOWN_DONE" });
+    timer.start();
+    audioCues.speak("Go!");
+    haptic("heavy");
+  });
+
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
-      const go = () => {
-        dispatch({ type: "COUNTDOWN_DONE" });
-        timer.start();
-        audioCues.speak("Go!");
-        haptic("heavy");
-      };
-      go();
+      onCountdownGo();
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [phase, countdown, timer, audioCues]);
+  }, [phase, countdown]);
 
   useEffect(() => {
     if (phase !== "active") return;
