@@ -64,6 +64,8 @@ import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
 import CurrentProgrammeSummary from "./CurrentProgrammeSummary";
 import PendingChangesSummary from "./PendingChangesSummary";
+import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
+import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import type {
   PrimaryGoal,
   Goal,
@@ -442,6 +444,23 @@ export default function ProgrammeSettings({
 
   const effectiveRunDays = runMode === "freeform" ? 0 : weeklyRunDays;
 
+  // Race Goal Planner preview. Derives weeks-out / timing status / weekly
+  // structure / recovery from the SAME engine the save commits — see
+  // raceGoalPlanner.ts. `currentDate` matches the save path (buildPlan uses
+  // localDateString(new Date())) so the preview can't drift from the saved plan.
+  const today = localDateString(new Date());
+  const plannerState = useMemo(
+    () =>
+      getRaceGoalPlannerState({
+        distance: raceDistance,
+        targetDate: raceTargetDate,
+        currentDate: today,
+        liftDays,
+        weeklyRunDays,
+      }),
+    [raceDistance, raceTargetDate, today, liftDays, weeklyRunDays]
+  );
+
   // ── Derived display values (P1/P2/P3 — presentational only) ───────
   // "Current setup" reflects the SAVED snapshot (not the draft), so it reads
   // as "what your programme is currently built around" and never duplicates a
@@ -720,51 +739,14 @@ export default function ProgrammeSettings({
           )}
 
           {runMode === "race_prep" && (
-            <div className="mt-3 space-y-3 p-3 rounded-xl bg-card border border-border/50">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Distance
-                </p>
-                <SegmentedControl
-                  ariaLabel="Race distance"
-                  tone="running"
-                  options={(
-                    ["5k", "10k", "half", "marathon"] as RaceDistance[]
-                  ).map((d) => ({
-                    value: d,
-                    label:
-                      d === "half"
-                        ? "Half"
-                        : d === "marathon"
-                          ? "Full"
-                          : d.toUpperCase(),
-                  }))}
-                  value={raceDistance}
-                  onChange={setRaceDistance}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="ps-race-date"
-                  className="text-xs uppercase tracking-wider text-muted-foreground"
-                >
-                  Target date
-                </label>
-                <input
-                  id="ps-race-date"
-                  type="date"
-                  value={raceTargetDate}
-                  onChange={(e) => setRaceTargetDate(e.target.value)}
-                  min={localDateString(new Date())}
-                  className="w-full mt-1 px-3 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm [color-scheme:light_dark]"
-                />
-                {raceDateInvalid && (
-                  <p className="text-xs mt-1 text-destructive" role="alert">
-                    Pick a race date in the future.
-                  </p>
-                )}
-              </div>
-            </div>
+            <RaceGoalPlanner
+              distance={raceDistance}
+              targetDate={raceTargetDate}
+              minDate={today}
+              state={plannerState}
+              onDistanceChange={setRaceDistance}
+              onTargetDateChange={setRaceTargetDate}
+            />
           )}
         </div>
 
@@ -943,7 +925,9 @@ export default function ProgrammeSettings({
               ? "Saving…"
               : raceDateInvalid
                 ? "Fix race date"
-                : "Save changes"}
+                : runMode === "race_prep" && plannerState.ctaLabel
+                  ? plannerState.ctaLabel
+                  : "Save changes"}
           </button>
         </div>
       )}
@@ -992,6 +976,22 @@ export default function ProgrammeSettings({
                         ? "Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. Your current week, history, and logged sessions are kept."
                         : "We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. Your week, history, and logged sessions stay."}
                   </p>
+                  {!confirmReset &&
+                    runMode === "race_prep" &&
+                    plannerState.status === "compressed" && (
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        This will be a compressed plan — fewer hard sessions to
+                        fit the shorter runway.
+                      </p>
+                    )}
+                  {!confirmReset &&
+                    runMode === "race_prep" &&
+                    plannerState.status === "below-floor" && (
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                        This is a finish-safely plan, not a full build — mostly
+                        easy running.
+                      </p>
+                    )}
                 </div>
               </div>
 
