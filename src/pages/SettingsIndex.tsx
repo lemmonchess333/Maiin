@@ -63,7 +63,7 @@ const SECTIONS: SectionRow[] = [
   {
     slug: "training",
     label: "Training",
-    description: "Programme, run mode, retake setup",
+    description: "Programme, goals, weekly layout",
     icon: Target,
     migrated: true,
   },

@@ -58,9 +58,13 @@ import { Toggle } from "@/components/ui/Toggle";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
+import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { computeProgrammeChanges } from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
+import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
+import CurrentProgrammeSummary from "./CurrentProgrammeSummary";
+import PendingChangesSummary from "./PendingChangesSummary";
 import type {
   PrimaryGoal,
   Goal,
@@ -272,8 +276,8 @@ const SPLIT_OPTIONS: {
 }[] = [
   {
     id: "auto",
-    label: "No preference",
-    desc: "We'll pick the best split for you",
+    label: "Auto (recommended)",
+    desc: "We'll match the best split to your weekly days",
     icon: <Sparkles size={20} style={{ color: THEME.brand }} />,
   },
   {
@@ -477,6 +481,39 @@ export default function ProgrammeSettings({
 
   const effectiveRunDays = runMode === "freeform" ? 0 : weeklyRunDays;
 
+  // ── Derived display values (P1/P2/P3 — presentational only) ───────
+  // "Current setup" reflects the SAVED snapshot (not the draft), so it reads
+  // as "what your programme is currently built around" and never duplicates a
+  // draft option label into the DOM.
+  const labelFor = (
+    opts: readonly { id: string; label: string }[],
+    id: string
+  ): string => opts.find((o) => o.id === id)?.label ?? id;
+
+  const savedRealInjuries = saved.injuries.filter((i) => i !== "none");
+  const currentSetupLines = [
+    `${labelFor(FOCUS_OPTIONS, saved.primaryGoal)} · ${labelFor(NUTRITION_OPTIONS, saved.nutritionPhase)}`,
+    `${saved.liftDays} lift ${saved.liftDays === 1 ? "day" : "days"} · ${saved.runMode === "race_prep" ? "Race prep" : "Freeform running"}`,
+    `${labelFor(EQUIPMENT_OPTIONS, saved.equipment)} · ${
+      savedRealInjuries.length === 0
+        ? "No injuries"
+        : `${savedRealInjuries.length} ${savedRealInjuries.length === 1 ? "injury" : "injuries"}`
+    }`,
+  ];
+
+  // P3: the engine derives the split from weekly lift days (chooseSplit); it
+  // does NOT honour an explicit preference in this rebuild path. Surface the
+  // split it WILL generate for the current draft so the picker reads honestly
+  // rather than implying control the generation doesn't grant.
+  const generatedSplitLabel = splitLabel(chooseSplit(liftDays));
+
+  // P2: weekly-layout preview counts, derived from the draft lift/run days
+  // (consistent with the double-day warning) — no stored weekSchedule needed.
+  const weekLiftDays = liftDays;
+  const weekRunDays = effectiveRunDays;
+  const weekDoubleDays = Math.max(0, weekLiftDays + weekRunDays - 7);
+  const weekRestDays = Math.max(0, 7 - weekLiftDays - weekRunDays);
+
   function toggleInjury(id: string) {
     if (id === "none") {
       setInjuries((prev) => (prev.includes("none") ? [] : ["none"]));
@@ -548,295 +585,372 @@ export default function ProgrammeSettings({
   }
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* ── Goal & Nutrition ── */}
-      <div>
-        <SectionLabel>Training focus</SectionLabel>
-        <div className="space-y-2">
-          {FOCUS_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={primaryGoal === opt.id}
-              onSelect={() => setPrimaryGoal(opt.id)}
-              index={i}
-              icon={opt.icon}
-              accent={THEME.brand}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="space-y-6 pb-6">
+      {/* ── Current setup anchor (read-only summary of the saved plan) ── */}
+      <CurrentProgrammeSummary lines={currentSetupLines} />
 
-      <div>
-        <SectionLabel>Nutrition phase</SectionLabel>
-        <div className="space-y-2">
-          {NUTRITION_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={nutritionPhase === opt.id}
-              onSelect={() => setNutritionPhase(opt.id)}
-              index={i}
-              icon={<Apple size={18} style={{ color: THEME.warning }} />}
-              accent={THEME.warning}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <SectionLabel>Experience</SectionLabel>
-        <div className="space-y-2">
-          {EXPERIENCE_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={experience === opt.id}
-              onSelect={() => setExperience(opt.id)}
-              index={i}
-              icon={opt.icon}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Lifting ── */}
-      <div>
-        <SectionLabel>Lift days per week</SectionLabel>
-        <SegmentedControl
-          ariaLabel="Lift days per week"
-          options={[2, 3, 4, 5, 6].map((d) => ({
-            value: d,
-            // Numeric picker labels follow the design rule: mono + tabular.
-            label: <span className="font-mono tabular-nums">{d}</span>,
-          }))}
-          value={liftDays}
-          onChange={setLiftDays}
-        />
-      </div>
-
-      <div>
-        <SectionLabel>Preferred split</SectionLabel>
-        <div className="space-y-2">
-          {SPLIT_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={preferredSplit === opt.id}
-              onSelect={() => setPreferredSplit(opt.id)}
-              index={i}
-              icon={opt.icon}
-              label={opt.label}
-              desc={
-                isSplitDisabled(opt.id)
-                  ? `${opt.desc} — needs ${opt.id === "upper_lower" ? "4+" : "5-6"} days/week`
-                  : opt.desc
-              }
-              disabled={isSplitDisabled(opt.id)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* ── Running ── */}
-      <div>
-        <SectionLabel>Running</SectionLabel>
-        <div className="space-y-2">
-          {RUN_MODE_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={runMode === opt.id}
-              onSelect={() => setRunMode(opt.id)}
-              index={i}
-              icon={<Footprints size={18} style={{ color: THEME.running }} />}
-              accent={THEME.running}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
-        </div>
-
-        {runMode !== "freeform" && (
-          <div className="mt-3">
-            <label
-              htmlFor="ps-run-days"
-              className="text-xs uppercase tracking-wider text-muted-foreground"
-            >
-              Run days per week (
-              <span className="font-mono tabular-nums">{weeklyRunDays}</span>)
-            </label>
-            <input
-              id="ps-run-days"
-              type="range"
-              min={1}
-              max={7}
-              value={weeklyRunDays}
-              onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-              className="w-full mt-1"
-              style={{ accentColor: THEME.running }}
-            />
-            {liftDays + weeklyRunDays > 7 && (
-              <p className="text-xs mt-1 text-muted-foreground">
-                <span className="font-mono tabular-nums">{liftDays}</span> lift
-                +{" "}
-                <span className="font-mono tabular-nums">{weeklyRunDays}</span>{" "}
-                run ={" "}
-                <span className="font-mono tabular-nums">
-                  {liftDays + weeklyRunDays}
-                </span>
-                . You'll see double days.
-              </p>
-            )}
-          </div>
-        )}
-
-        {runMode === "race_prep" && (
-          <div className="mt-3 space-y-3 p-3 rounded-xl bg-card border border-border/50">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-                Distance
-              </p>
-              <SegmentedControl
-                ariaLabel="Race distance"
-                tone="running"
-                options={(
-                  ["5k", "10k", "half", "marathon"] as RaceDistance[]
-                ).map((d) => ({
-                  value: d,
-                  label:
-                    d === "half"
-                      ? "Half"
-                      : d === "marathon"
-                        ? "Full"
-                        : d.toUpperCase(),
-                }))}
-                value={raceDistance}
-                onChange={setRaceDistance}
+      {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
+      <ProgrammeSettingsGroup
+        title="Goal"
+        subtitle="Shape the programme around your current objective."
+      >
+        <div>
+          <SectionLabel>Training focus</SectionLabel>
+          <div className="space-y-2">
+            {FOCUS_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={primaryGoal === opt.id}
+                onSelect={() => setPrimaryGoal(opt.id)}
+                index={i}
+                icon={opt.icon}
+                accent={THEME.brand}
+                label={opt.label}
+                desc={opt.desc}
               />
-            </div>
-            <div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>Nutrition phase</SectionLabel>
+          <div className="space-y-2">
+            {NUTRITION_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={nutritionPhase === opt.id}
+                onSelect={() => setNutritionPhase(opt.id)}
+                index={i}
+                icon={<Apple size={18} style={{ color: THEME.warning }} />}
+                accent={THEME.warning}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <SectionLabel>Experience</SectionLabel>
+          <div className="space-y-2">
+            {EXPERIENCE_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={experience === opt.id}
+                onSelect={() => setExperience(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* ── Group 2: Weekly plan — "How does training fit into my week?" ── */}
+      <ProgrammeSettingsGroup
+        title="Weekly plan"
+        subtitle="Set the training rhythm we'll build around."
+      >
+        <div>
+          <SectionLabel>Lift days per week</SectionLabel>
+          <SegmentedControl
+            ariaLabel="Lift days per week"
+            options={[2, 3, 4, 5, 6].map((d) => ({
+              value: d,
+              // Numeric picker labels follow the design rule: mono + tabular.
+              label: <span className="font-mono tabular-nums">{d}</span>,
+            }))}
+            value={liftDays}
+            onChange={setLiftDays}
+          />
+        </div>
+
+        <div>
+          <SectionLabel>Split preference</SectionLabel>
+          <div className="space-y-2">
+            {SPLIT_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={preferredSplit === opt.id}
+                onSelect={() => setPreferredSplit(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={
+                  isSplitDisabled(opt.id)
+                    ? `${opt.desc} — needs ${opt.id === "upper_lower" ? "4+" : "5-6"} days/week`
+                    : opt.desc
+                }
+                disabled={isSplitDisabled(opt.id)}
+              />
+            ))}
+          </div>
+          {/* P3: the engine matches the split to your weekly lift days; show
+            the split it will actually generate so the preference is honest. */}
+          <p className="mt-2 text-xs leading-snug text-muted-foreground">
+            We build the best split for your weekly days. With{" "}
+            <span className="font-mono tabular-nums">{liftDays}</span>{" "}
+            {liftDays === 1 ? "lift day" : "lift days"}, that's currently{" "}
+            <span className="font-medium text-foreground">
+              {generatedSplitLabel}
+            </span>
+            .
+          </p>
+        </div>
+
+        {/* ── Running (still part of the weekly plan) ── */}
+        <div>
+          <SectionLabel>Running</SectionLabel>
+          <div className="space-y-2">
+            {RUN_MODE_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={runMode === opt.id}
+                onSelect={() => setRunMode(opt.id)}
+                index={i}
+                icon={<Footprints size={18} style={{ color: THEME.running }} />}
+                accent={THEME.running}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+
+          {runMode !== "freeform" && (
+            <div className="mt-3">
               <label
-                htmlFor="ps-race-date"
+                htmlFor="ps-run-days"
                 className="text-xs uppercase tracking-wider text-muted-foreground"
               >
-                Target date
+                Run days per week (
+                <span className="font-mono tabular-nums">{weeklyRunDays}</span>)
               </label>
               <input
-                id="ps-race-date"
-                type="date"
-                value={raceTargetDate}
-                onChange={(e) => setRaceTargetDate(e.target.value)}
-                min={localDateString(new Date())}
-                className="w-full mt-1 px-3 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm [color-scheme:light_dark]"
+                id="ps-run-days"
+                type="range"
+                min={1}
+                max={7}
+                value={weeklyRunDays}
+                onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                className="w-full mt-1"
+                style={{ accentColor: THEME.running }}
               />
-              {raceDateInvalid && (
-                <p className="text-xs mt-1 text-destructive" role="alert">
-                  Pick a race date in the future.
+              {liftDays + weeklyRunDays > 7 && (
+                <p className="text-xs mt-1 text-muted-foreground">
+                  <span className="font-mono tabular-nums">{liftDays}</span>{" "}
+                  lift +{" "}
+                  <span className="font-mono tabular-nums">
+                    {weeklyRunDays}
+                  </span>{" "}
+                  run ={" "}
+                  <span className="font-mono tabular-nums">
+                    {liftDays + weeklyRunDays}
+                  </span>
+                  . This creates double days — we'll combine lift and run on
+                  some days.
                 </p>
               )}
             </div>
+          )}
+
+          {runMode === "race_prep" && (
+            <div className="mt-3 space-y-3 p-3 rounded-xl bg-card border border-border/50">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
+                  Distance
+                </p>
+                <SegmentedControl
+                  ariaLabel="Race distance"
+                  tone="running"
+                  options={(
+                    ["5k", "10k", "half", "marathon"] as RaceDistance[]
+                  ).map((d) => ({
+                    value: d,
+                    label:
+                      d === "half"
+                        ? "Half"
+                        : d === "marathon"
+                          ? "Full"
+                          : d.toUpperCase(),
+                  }))}
+                  value={raceDistance}
+                  onChange={setRaceDistance}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="ps-race-date"
+                  className="text-xs uppercase tracking-wider text-muted-foreground"
+                >
+                  Target date
+                </label>
+                <input
+                  id="ps-race-date"
+                  type="date"
+                  value={raceTargetDate}
+                  onChange={(e) => setRaceTargetDate(e.target.value)}
+                  min={localDateString(new Date())}
+                  className="w-full mt-1 px-3 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm [color-scheme:light_dark]"
+                />
+                {raceDateInvalid && (
+                  <p className="text-xs mt-1 text-destructive" role="alert">
+                    Pick a race date in the future.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* P2: weekly-layout preview — counts derived from the draft lift/run
+          days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
+        <div className="rounded-xl bg-muted px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Weekly layout
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                <span className="font-mono tabular-nums">{weekLiftDays}</span>{" "}
+                lift
+                {weekRunDays > 0 && (
+                  <>
+                    {" · "}
+                    <span className="font-mono tabular-nums">
+                      {weekRunDays}
+                    </span>{" "}
+                    run
+                  </>
+                )}
+                {weekDoubleDays > 0 && (
+                  <>
+                    {" · "}
+                    <span className="font-mono tabular-nums">
+                      {weekDoubleDays}
+                    </span>{" "}
+                    double
+                  </>
+                )}
+                {weekRestDays > 0 && (
+                  <>
+                    {" · "}
+                    <span className="font-mono tabular-nums">
+                      {weekRestDays}
+                    </span>{" "}
+                    rest
+                  </>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenWeeklyLayout}
+              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-primary transition-transform active:scale-[0.97]"
+            >
+              Edit days &rarr;
+            </button>
           </div>
-        )}
-      </div>
-
-      {/* ── Equipment & Injuries ── */}
-      <div>
-        <SectionLabel>Equipment access</SectionLabel>
-        <div className="space-y-2">
-          {EQUIPMENT_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={equipment === opt.id}
-              onSelect={() => setEquipment(opt.id)}
-              index={i}
-              icon={opt.icon}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
         </div>
-      </div>
+      </ProgrammeSettingsGroup>
 
-      <div>
-        <SectionLabel>Injuries</SectionLabel>
-        <div className="space-y-2">
-          {INJURY_OPTIONS.map((opt, i) => (
-            <SettingsOptionCard
-              key={opt.id}
-              selected={injuries.includes(opt.id)}
-              onSelect={() => toggleInjury(opt.id)}
-              index={i}
-              icon={opt.icon}
-              label={opt.label}
-              desc={opt.desc}
-            />
-          ))}
+      {/* ── Group 3: Constraints — "What must the plan adapt around?" ── */}
+      <ProgrammeSettingsGroup
+        title="Constraints"
+        subtitle="We'll choose exercises around what you have and what you need to avoid."
+      >
+        <div>
+          <SectionLabel>Equipment access</SectionLabel>
+          <div className="space-y-2">
+            {EQUIPMENT_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={equipment === opt.id}
+                onSelect={() => setEquipment(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* ── Weekly layout link (ScheduleLayoutSheet owns the day grid) ── */}
-      <div className="px-3 py-2.5 rounded-xl bg-muted">
-        <p className="text-sm font-medium text-foreground">Weekly layout</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Arrange which days are lift, run, or rest.
-        </p>
+        <div>
+          <SectionLabel>Injuries</SectionLabel>
+          <div className="space-y-2">
+            {INJURY_OPTIONS.map((opt, i) => (
+              <SettingsOptionCard
+                key={opt.id}
+                selected={injuries.includes(opt.id)}
+                onSelect={() => toggleInjury(opt.id)}
+                index={i}
+                icon={opt.icon}
+                label={opt.label}
+                desc={opt.desc}
+              />
+            ))}
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* ── Group 4: Advanced (engine toggles — live-save, no rebuild) ── */}
+      <ProgrammeSettingsGroup
+        title="Advanced"
+        subtitle="Fine-tune progression behaviour. Saved instantly — no rebuild."
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground">Auto Progression</p>
+              <p className="text-xs text-muted-foreground">
+                Bumps next session's weight when you complete every set cleanly
+              </p>
+            </div>
+            <Toggle
+              checked={settings.autoProgression}
+              label="Auto progression"
+              className="ml-3"
+              onChange={() =>
+                updateSettings({ autoProgression: !settings.autoProgression })
+              }
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground">Microloading</p>
+              <p className="text-xs text-muted-foreground">
+                Use ½ kg jumps on smaller lifts so progression keeps moving past
+                stalls
+              </p>
+            </div>
+            <Toggle
+              checked={settings.microloading}
+              label="Microloading"
+              className="ml-3"
+              onChange={() =>
+                updateSettings({ microloading: !settings.microloading })
+              }
+            />
+          </div>
+        </div>
+      </ProgrammeSettingsGroup>
+
+      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ── */}
+      <ProgrammeSettingsGroup
+        title="Danger zone"
+        tone="danger"
+        subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
+      >
         <button
           type="button"
-          onClick={onOpenWeeklyLayout}
-          className="mt-2 -mb-0.5 min-h-[44px] -ml-1 px-1 inline-flex items-center gap-1 text-xs font-semibold text-primary active:scale-[0.97] transition-transform"
+          onClick={() => setConfirmReset(true)}
+          className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
         >
-          Edit weekly layout &rarr;
+          Reset Programme
         </button>
-      </div>
-
-      {/* ── Advanced toggles (live-save, no rebuild) ── */}
-      <div className="space-y-3">
-        <SectionLabel>Advanced</SectionLabel>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground">Auto Progression</p>
-            <p className="text-xs text-muted-foreground">
-              Bumps next session's weight when you complete every set cleanly
-            </p>
-          </div>
-          <Toggle
-            checked={settings.autoProgression}
-            label="Auto progression"
-            className="ml-3"
-            onChange={() =>
-              updateSettings({ autoProgression: !settings.autoProgression })
-            }
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-foreground">Microloading</p>
-            <p className="text-xs text-muted-foreground">
-              Use ½ kg jumps on smaller lifts so progression keeps moving past
-              stalls
-            </p>
-          </div>
-          <Toggle
-            checked={settings.microloading}
-            label="Microloading"
-            className="ml-3"
-            onChange={() =>
-              updateSettings({ microloading: !settings.microloading })
-            }
-          />
-        </div>
-      </div>
-
-      {/* ── Reset (destructive) ── */}
-      <button
-        type="button"
-        onClick={() => setConfirmReset(true)}
-        className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
-      >
-        Reset Programme
-      </button>
+      </ProgrammeSettingsGroup>
 
       {/* ── Sticky save bar ── */}
       {(dirty || raceDateInvalid || saving) && (
@@ -844,6 +958,12 @@ export default function ProgrammeSettings({
           className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
+          {!raceDateInvalid && (
+            <PendingChangesSummary
+              count={changes.length}
+              className="mb-2 text-center"
+            />
+          )}
           <button
             type="button"
             onClick={() => setConfirmRebuild(true)}
