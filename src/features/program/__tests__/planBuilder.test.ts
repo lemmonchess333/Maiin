@@ -561,4 +561,33 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
       customized.workouts[0].exercises.length
     );
   });
+
+  it("a content edit honours equipment in place (swaps unavailable exercises)", () => {
+    const first = buildPlan(makeInput({ liftDays: 4 }));
+    // Force a Barbell exercise into a slot, then downgrade equipment to home_gym.
+    const customized = JSON.parse(
+      JSON.stringify(first.programState)
+    ) as typeof first.programState;
+    customized.workouts[0].exercises[0] = {
+      ...customized.workouts[0].exercises[0],
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      movementCategory: "horizontal_push",
+    };
+    const edited = buildPlan(
+      makeInput({
+        liftDays: 4,
+        equipment: "home_gym",
+        existingState: customized,
+        preserveHistory: true,
+      })
+    );
+    // The Barbell bench was swapped to an available alternative; structure held.
+    expect(edited.programState.workouts[0].exercises[0].exerciseId).not.toBe(
+      "bench-press"
+    );
+    expect(edited.programState.workouts[0].exercises).toHaveLength(
+      customized.workouts[0].exercises.length
+    );
+  });
 });
