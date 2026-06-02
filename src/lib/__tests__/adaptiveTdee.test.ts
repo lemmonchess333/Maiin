@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { estimateAdaptiveTDEE, type AdaptiveTdeeInput } from "../adaptiveTdee";
+import {
+  estimateAdaptiveTDEE,
+  computeWarmupProgress,
+  ADAPTIVE_TDEE_DEFAULTS,
+  type AdaptiveTdeeInput,
+} from "../adaptiveTdee";
 
 /** N consecutive "YYYY-MM-DD" keys from a start date (UTC, deterministic). */
 function days(startKey: string, n: number): string[] {
@@ -141,5 +146,82 @@ describe("estimateAdaptiveTDEE", () => {
     expect(r.ready).toBe(true);
     expect(r.slopeKgPerDay!).toBeLessThan(0);
     expect(r.learnedTDEE!).toBeGreaterThan(2200);
+  });
+});
+
+describe("estimateAdaptiveTDEE — spanDays", () => {
+  it("reports spanDays even below the gate (for the warmup bar)", () => {
+    const ds = days(START, 21);
+    // Only 5 weigh-ins spanning 4 days — below every gate, but span must report.
+    const r = estimateAdaptiveTDEE(
+      input({
+        weighIns: ds.slice(0, 5).map((d) => ({ dateKey: d, weightKg: 80 })),
+      })
+    );
+    expect(r.ready).toBe(false);
+    expect(r.spanDays).toBe(4);
+  });
+
+  it("spanDays is 0 with fewer than two weigh-ins", () => {
+    const ds = days(START, 21);
+    const r = estimateAdaptiveTDEE(
+      input({ weighIns: [{ dateKey: ds[0], weightKg: 80 }] })
+    );
+    expect(r.spanDays).toBe(0);
+  });
+
+  it("spanDays spans first→last on a full window", () => {
+    const r = estimateAdaptiveTDEE(input({}));
+    expect(r.spanDays).toBe(20); // 21 consecutive days → 20-day span
+    expect(r.ready).toBe(true);
+  });
+});
+
+describe("computeWarmupProgress", () => {
+  const { minTrustedDays, minWeighIns, minSpanDays } = ADAPTIVE_TDEE_DEFAULTS;
+
+  it("is 0 with no data", () => {
+    const p = computeWarmupProgress({
+      ready: false,
+      trustedDays: 0,
+      weighInCount: 0,
+      spanDays: 0,
+    });
+    expect(p.fraction).toBe(0);
+    expect(p.ready).toBe(false);
+  });
+
+  it("tracks the binding (slowest) gate condition", () => {
+    // trusted maxed, weigh-ins maxed, but span only half → fraction ~0.5
+    const p = computeWarmupProgress({
+      ready: false,
+      trustedDays: minTrustedDays,
+      weighInCount: minWeighIns,
+      spanDays: minSpanDays / 2,
+    });
+    expect(p.fraction).toBeCloseTo(0.5, 5);
+  });
+
+  it("clamps below 1.0 until ready, even when all raw ratios are met", () => {
+    // All conditions numerically met but ready=false (e.g. window churn):
+    // must NOT show a full bar — that would promise an unlock not honored.
+    const p = computeWarmupProgress({
+      ready: false,
+      trustedDays: minTrustedDays + 5,
+      weighInCount: minWeighIns + 5,
+      spanDays: minSpanDays + 5,
+    });
+    expect(p.fraction).toBe(0.99);
+  });
+
+  it("is exactly 1.0 only when ready", () => {
+    const p = computeWarmupProgress({
+      ready: true,
+      trustedDays: minTrustedDays,
+      weighInCount: minWeighIns,
+      spanDays: minSpanDays,
+    });
+    expect(p.fraction).toBe(1);
+    expect(p.ready).toBe(true);
   });
 });
