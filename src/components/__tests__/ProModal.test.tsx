@@ -93,10 +93,12 @@ describe("ProModal — visible copy (no white-on-white regression)", () => {
 
   it("renders the feature list labels as visible text", () => {
     renderModal({ onClose: () => {} });
-    expect(screen.getByText("Performance Engine")).toBeTruthy();
+    // #977: bullets reconciled to the two real, runtime-gated Pro features.
     expect(screen.getByText("Unlimited AI food photo logging")).toBeTruthy();
-    expect(screen.getByText("Adaptive macros")).toBeTruthy();
-    expect(screen.getByText("Advanced insights")).toBeTruthy();
+    expect(screen.getByText("Adaptive calorie target")).toBeTruthy();
+    // Stripped vapor/free features must no longer be advertised.
+    expect(screen.queryByText("Adaptive macros")).toBeNull();
+    expect(screen.queryByText("Advanced insights")).toBeNull();
   });
 });
 
