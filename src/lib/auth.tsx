@@ -173,6 +173,16 @@ export interface UserProfileNutrition {
    * uses the planned day type only. See useEffectiveTargets.
    */
   adjustCaloriesForTraining?: boolean;
+  /**
+   * Nutr2 (#982) — persisted state for the adaptive-TDEE weekly rate cap.
+   * `lastApplied` is the calorie value last shown to the user; `lastAppliedAt`
+   * is when it was applied. Drives the ±150/rolling-7-day smoothing so the
+   * learned target never jumps. Client-managed (written via updateProfile).
+   */
+  adaptiveCapState?: {
+    lastApplied: number;
+    lastAppliedAt: string;
+  } | null;
 }
 
 /** Social and privacy settings */
@@ -396,6 +406,8 @@ function hydrateProfile(
     // don't have the field set yet.
     adjustCaloriesForTraining:
       (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
+    adaptiveCapState:
+      (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
     program: {
       goal:
         ((data.program as Record<string, unknown>)
