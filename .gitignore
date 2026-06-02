@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# Local env files — never commit secrets. `.env.example` is the tracked
+# template; everything else (.env, .env.local, .env.production, …) is ignored.
+.env
+.env.*
+!.env.example
 *.local
 
 # Editor directories and files
