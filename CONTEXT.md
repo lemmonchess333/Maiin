@@ -40,13 +40,22 @@ Tropos deliberately uses **two different scheduling ontologies**, one per discip
 
 Calorie + macro target for a given date. The single source of truth is `useEffectiveTargets(date)`; every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet) reads from there.
 
-- **baseTarget** — the user's stored daily calorie target (from `profile.targetCalories`). The TDEE + phase + goal output of onboarding / Settings, before any per-day adjustment.
-- **dayType** — `"lift" | "run" | "both" | "rest"`. Derived from the user's weekly schedule (`profile.weekSchedule`, or `generateSchedule(...)` if absent) on the date's day-of-week. The "planned" day type, before observing actual activity.
-- **strategicBonus** — the program's prescribed calorie adjustment for the day type. Phase-aware (`strength` lift day = +400 hypertrophy over-feed; `cut` lift day = +150; rest day = 0). Returned by `phaseNutrition.getDayAdjustment`.
-- **actualBurn** — sum of `totalCalories` from completed workouts + `calories` from completed runs on the date. Runs are filtered through `isVolumeEligible` before summing (drops "too-fast" mis-saves that would otherwise lower the target). Lift and run burn are also exposed separately as `actualLiftBurn` / `actualRunBurn` for source-detection toasts.
-- **effectiveDayType** — the day type after observing actual activity. May differ from the planned `dayType` (e.g. user did a lift on what was scheduled as a rest day). Derived in `effectiveTargets.deriveEffectiveDayType`.
-- **effectiveBonus** — `max(strategicBonus, actualBurn)`. The `max` rule (not add, not replace) preserves strategic over-feeds when actual burn is smaller, rewards over-performance when actual burn exceeds strategy, and never under-fuels. The user's `profile.adjustCaloriesForTraining = false` toggle short-circuits this to `strategicBonus` only (no Firestore subscriptions opened).
-- **finalTarget** — `baseTarget + effectiveBonus`. The number the user sees as "today's calorie target."
+**The model is EXPENDITURE-INCLUSIVE (Nutr1, 2026-06-02).** The stored TDEE already accounts for the user's activity, so completed exercise is **never added back** (no eat-back) and training days carry **no net calorie surplus**. The calorie target is flat; day-type fuelling lives entirely in the macro split.
+
+- **baseTarget** — the user's stored daily calorie target (from `profile.targetCalories`). The TDEE + phase + goal output of onboarding / Settings.
+- **dayType** — `"lift" | "run" | "both" | "rest"`. Derived from the user's weekly schedule (`profile.weekSchedule`, or `generateSchedule(...)` if absent) on the date's day-of-week. The "planned" day type — it drives the macro split. (Nutr1 removed the actual-activity-aware `effectiveDayType`; macros are plan-based, not reactive to each logged workout.)
+- **finalTarget** — `=== baseTarget`. Flat. There is no calorie bonus and no eat-back. This is the number the user sees as "today's calorie target."
+- **net-neutral carb periodization** — day-type fuelling is a macro shift at CONSTANT calories: on training days `phaseNutrition.getDayAdjustment().fuelShiftCalories` worth of fat is moved into carbs (glycogen for the work), clamped at an essential-fat floor (`ESSENTIAL_FAT_FLOOR_PER_KG = 0.6` g/kg, and never cut below an already-low stored fat). Because carbs are the balancing macro at flat calories, a 200-cal lift day yields the SAME carb grams the old net-additive model did — only the calorie total and fat now stay flat. Rest days = baseline split.
+- **actualBurn / actualLiftBurn / actualRunBurn** — sum of `totalCalories` from completed workouts + `calories` from completed runs on the date (runs filtered through `isVolumeEligible`). **DISPLAY ONLY** — the Today's Energy "burned today" tiles and the Food drill-down show them for context ("already in your target"); they do NOT move the target.
+- **retired:** `strategicBonus`, `effectiveBonus`, the `max(strategicBonus, actualBurn)` rule, `effectiveDayType`, the `src/lib/effectiveTargets.ts` helper, the FoodHeroCard training-burn toast + fuel explainer, and the `adjustCaloriesForTraining` Settings toggle (field left vestigial in `UserProfile`, no migration). Prerequisite for the adaptive TDEE engine (#982), which drives `finalTarget` from MEASURED maintenance — any eat-back would double-count there.
+
+#### Reference-app audit — eat-back & day-type calorie cycling (Nutr1)
+
+Two axes, from the food-logging reference set:
+
+- **Eat-back (add completed-exercise calories to the goal?):** MacroFactor (Tropos's adaptive twin) and Cronometer's goal-setting default do **NOT** eat back — expenditure is measured, activity is already in it. MyFitnessPal / Lose It! **do** ("you've earned X exercise calories") and are the cautionary double-count example. → The modern/sophisticated end has converged on _not_ eating back; Tropos follows it.
+- **Daily target — flat vs cycled by training day:** MacroFactor, MyFitnessPal, Cronometer, Lose It! all keep a **flat daily calorie target** (none auto-cycle calories by day; weekly adjustment absorbs activity). The only apps that vary by day — RP (Renaissance Periodization), Carbon by Layne Norton — do it via **carb periodization within a budget**, which is exactly Tropos's net-neutral fat→carb shift. → Flat calories + carb periodization = MacroFactor's flat base + RP/Carbon's carb-cycling lever.
+- **Rejected for Tropos:** a net-additive planned training-day calorie bump (no mainstream food app does this) and net-neutral _calorie_ cycling as a default (a coaching-app power feature that couples to the weekly schedule).
 
 ---
 
