@@ -18,6 +18,12 @@ import { toast } from "@/lib/toast";
 import type { MealReminders } from "@/hooks/useMealReminders";
 import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
+import { useAuth } from "@/lib/auth";
+import { usePushSettings } from "@/hooks/usePushSettings";
+import {
+  registerDeviceToken,
+  unregisterDeviceToken,
+} from "@/lib/pushNotifications";
 
 interface NotificationsSectionProps {
   mealReminders: MealReminders;
@@ -38,6 +44,12 @@ export default function NotificationsSection({
   updateStreakReminder,
   inline = false,
 }: NotificationsSectionProps) {
+  // Push (server-side FCM) consent — #969. Separate from the on-device
+  // reminders above: this is the global kill-switch + per-type consent the
+  // server senders read, plus token register/revoke on the global toggle.
+  const { user } = useAuth();
+  const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
+
   // Permission state for the inline denied-banner. Re-poll on every toggle
   // action below so if the user opts in, hits the OS prompt, and denies,
   // the banner appears without them needing to close/reopen Settings.
@@ -385,6 +397,75 @@ export default function NotificationsSection({
             />
           </div>
         )}
+
+        {/* Push notifications (#969) — the server-side delivery channel. The
+            global toggle requests OS permission + registers/revokes this
+            device's FCM token; per-type toggles gate which senders may target
+            the user (each sender checks the flag via mayTargetUser). */}
+        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+          <div className="pr-3">
+            <p className="text-sm text-foreground">Push notifications</p>
+            <p className="text-xs text-muted-foreground">
+              Get nudges and recaps even when the app is closed
+            </p>
+          </div>
+          <Toggle
+            checked={pushConsent.enabled}
+            label="Toggle push notifications"
+            onChange={async () => {
+              haptic("light");
+              const next = !pushConsent.enabled;
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "push_notifications",
+                value: next,
+              });
+              if (next) {
+                const granted = await requestNotificationPermission();
+                refreshPermission();
+                if (!granted) {
+                  toast.error(
+                    "Allow notifications in your browser settings to turn this on."
+                  );
+                  return;
+                }
+                await updatePushConsent({ enabled: true });
+                if (user) await registerDeviceToken(user.uid);
+              } else {
+                await updatePushConsent({ enabled: false });
+                if (user) await unregisterDeviceToken(user.uid);
+              }
+            }}
+          />
+        </div>
+
+        {pushConsent.enabled &&
+          (
+            [
+              ["streak", "Streak nudges"],
+              ["recap", "Weekly recap"],
+              ["badge", "Badge unlocked"],
+            ] as const
+          ).map(([type, label]) => (
+            <div
+              key={type}
+              className="flex items-center justify-between p-4 rounded-lg bg-muted"
+            >
+              <span className="text-sm text-foreground">{label}</span>
+              <Toggle
+                checked={pushConsent[type]}
+                label={`Toggle ${label} push`}
+                onChange={() => {
+                  haptic("light");
+                  const next = !pushConsent[type];
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: `push_${type}`,
+                    value: next,
+                  });
+                  void updatePushConsent({ [type]: next });
+                }}
+              />
+            </div>
+          ))}
       </div>
     </AccordionSection>
   );
