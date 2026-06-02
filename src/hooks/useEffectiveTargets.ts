@@ -11,9 +11,8 @@ import {
 import { localDateString } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
-import { getAdjustedTargets, getDayAdjustment } from "@/lib/phaseNutrition";
+import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
-import { computeEffectiveBonus } from "@/lib/effectiveTargets";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import {
@@ -33,14 +32,18 @@ export type { DailyTargetsCaption };
  *
  * Single source of truth for "what is today's calorie + macro target."
  * Every surface (Home, Food, FoodHeroCard, TodayEnergy, HeroDrillDownSheet)
- * reads from here. See CONTEXT.md → Nutrition for term definitions
- * (baseTarget / strategicBonus / actualBurn / effectiveBonus / etc.).
+ * reads from here. See CONTEXT.md → Nutrition for term definitions.
  *
- * effectiveBonus = max(strategicBonus, actualBurn) — preserves strategic
- * over-feeds when actual burn is smaller, rewards over-performance, never
- * under-fuels. The user's `profile.adjustCaloriesForTraining = false`
- * toggle short-circuits this to `strategicBonus` only and skips the
- * Firestore subscriptions entirely.
+ * Nutr1 (expenditure-inclusive): the daily CALORIE target is FLAT —
+ * `finalTarget === baseTarget`. The stored TDEE already accounts for the
+ * user's activity, so completed exercise is NEVER added back (no eat-back).
+ * Day-type fuelling lives entirely in the macro split (net-neutral fat→carb
+ * periodization in phaseNutrition), driven by the PLANNED day type.
+ *
+ * `actualBurn` / `actualLiftBurn` / `actualRunBurn` are still computed from
+ * completed activity, but PURELY for informational display (the Today's
+ * Energy "burned X" tiles and the Food drill-down). They do not move the
+ * target.
  */
 export interface EffectiveTargets {
   /** Stored profile target (TDEE + phase modifier, or custom override). */
@@ -49,27 +52,21 @@ export interface EffectiveTargets {
   dayType: DayType;
   /** True iff the planned dayType is `run` or `both`. */
   isRunDay: boolean;
-  /** Strategic bonus for the EFFECTIVE day type (not the planned one). */
-  strategicBonus: number;
-  /** Total burned calories from completed activity on the date. */
+  /** Total burned calories from completed activity — DISPLAY ONLY. */
   actualBurn: number;
-  /** Lift burn alone — exposed for downstream toast source detection. */
+  /** Lift burn alone — DISPLAY ONLY (informational tiles). */
   actualLiftBurn: number;
-  /** Run burn alone — exposed for downstream toast source detection. */
+  /** Run burn alone — DISPLAY ONLY (informational tiles). */
   actualRunBurn: number;
   /** True if any workout or run is completed for the date. */
   hasCompletedActivity: boolean;
-  /** Day type after applying actual activity (may differ from planned). */
-  effectiveDayType: DayType;
-  /** max(strategicBonus, actualBurn). */
-  effectiveBonus: number;
-  /** finalTarget = baseTarget + effectiveBonus. */
+  /** finalTarget === baseTarget (flat — no eat-back, no calorie bonus). */
   finalTarget: number;
-  /** Macro targets adjusted for the EFFECTIVE day type. */
+  /** Macro targets for the planned day type (net-neutral carb periodization). */
   protein: number;
   carbs: number;
   fat: number;
-  /** Human-readable annotation (e.g. "Run day — +200 cal for fuel"). */
+  /** Human-readable annotation (e.g. "Run day — extra carbs for fuel"). */
   annotation: string;
   /** Structured caption for the Food hero card. Null on rest days. */
   caption: DailyTargetsCaption | null;
@@ -77,8 +74,7 @@ export interface EffectiveTargets {
 
 // ── Subscription window ──────────────────────────────────────────────────
 // 30-day rolling window, limit 60 docs. Handles even high-volume users.
-// Viewing a date older than 30 days falls back to actualBurn=0 — the
-// strategic bonus still applies.
+// Viewing a date older than 30 days falls back to actualBurn=0 (display only).
 const WINDOW_DAYS = 30;
 const DOC_LIMIT = 60;
 
@@ -96,7 +92,6 @@ interface PlannedTargets {
   baseTarget: number;
   dayType: DayType;
   isRunDay: boolean;
-  strategicBonus: number;
   protein: number;
   carbs: number;
   fat: number;
@@ -115,13 +110,8 @@ function getDayTypeForDate(date: Date, schedule: ScheduleDay[]): DayType {
 }
 
 /**
- * Compose the planned (pre-activity) daily target for `date`.
- *
- * Private to this module — exposed only through `useEffectiveTargets`,
- * which layers the actual-burn max() rule on top. Kept as a free function
- * (rather than a separate hook or pure module) because it has exactly one
- * caller (the useMemo below) and extracting it further would create a
- * shallow seam without earning leverage.
+ * Compose the (flat-calorie) daily target for `date` from the planned day
+ * type. Private to this module.
  *
  * Null-profile fallback returns the canonical "logged out / pre-onboarding"
  * defaults so consumers can render something coherent without branching.
@@ -147,7 +137,6 @@ function computePlannedTargets(
       baseTarget,
       dayType,
       isRunDay,
-      strategicBonus: 0,
       protein: 160,
       carbs: 250,
       fat: 60,
@@ -158,38 +147,36 @@ function computePlannedTargets(
   }
 
   const adjusted = getAdjustedTargets(profile, dayType);
-  const phase = profile.program?.currentPhase || "base";
-  const goal = profile.program?.goal;
-  const adj = getDayAdjustment(dayType, phase, goal);
 
   return {
     baseTarget,
     dayType,
     isRunDay,
-    strategicBonus: adj.calorieAdjustment,
     protein: adjusted.protein,
     carbs: adjusted.carbs,
     fat: adjusted.fat,
     annotation: adjusted.annotation,
-    caption: buildCaption(dayType, adj.calorieAdjustment),
-    finalTarget: adjusted.calories,
+    // Nutr1: no calorie bonus to surface — the caption is just the day label.
+    caption: buildCaption(dayType, 0),
+    // Flat calories. adjusted.calories === baseTarget by construction; we use
+    // baseTarget directly so the no-eat-back invariant is explicit.
+    finalTarget: baseTarget,
   };
 }
 
 export function useEffectiveTargets(date?: Date): EffectiveTargets {
   const { user, profile } = useAuth();
 
-  // Undefined treated as true for existing users without the field.
-  const enabled = profile?.adjustCaloriesForTraining !== false;
-
   const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
   const [runsLoaded, setRunsLoaded] = useState(false);
 
-  // ── Subscribe to windowed workouts + runs (only when enabled) ──────────
+  // ── Subscribe to windowed workouts + runs (for informational burn) ──────
+  // Nutr1: burn no longer drives the target, but the Today's Energy tiles and
+  // Food drill-down still display it, so the windowed subscriptions remain.
   useEffect(() => {
-    if (!user || !enabled) {
+    if (!user) {
       /* eslint-disable react-hooks/set-state-in-effect */
       setWorkouts([]);
       setRuns([]);
@@ -232,11 +219,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       limit(DOC_LIMIT)
     );
     const unsubRuns = onSnapshot(runsQ, (snap) => {
-      // P0.5: drop non-countable runs at the snapshot stage so the
-      // downstream `actualRunBurn` reduce can stay simple. A
-      // saved-anyway "too-fast" 20km / 0:08 run with high calories
-      // would otherwise lower the effective calorie target — telling
-      // the user to eat less than they should based on a misclick.
+      // Drop non-countable runs (saved-anyway "too-fast" misclicks) so a bad
+      // GPS reading can't inflate the informational burn tiles.
       const rows: RunRow[] = snap.docs
         .map((d) => {
           const raw = d.data() as {
@@ -264,97 +248,48 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       unsubWorkouts();
       unsubRuns();
     };
-  }, [user, enabled]);
+  }, [user]);
 
   // ── Derive effective targets ──────────────────────────────────────────
   return useMemo<EffectiveTargets>(() => {
     const targetDate = date || new Date();
     const planned = computePlannedTargets(profile, targetDate);
 
-    // Passthrough when disabled or while still loading — return planned
-    // values in the EffectiveTargets shape so consumers don't need branching.
-    if (!enabled || !profile || !workoutsLoaded || !runsLoaded) {
-      return {
-        baseTarget: planned.baseTarget,
-        dayType: planned.dayType,
-        isRunDay: planned.isRunDay,
-        strategicBonus: planned.strategicBonus,
-        actualBurn: 0,
-        actualLiftBurn: 0,
-        actualRunBurn: 0,
-        hasCompletedActivity: false,
-        effectiveDayType: planned.dayType,
-        effectiveBonus: planned.strategicBonus,
-        finalTarget: planned.finalTarget,
-        protein: planned.protein,
-        carbs: planned.carbs,
-        fat: planned.fat,
-        annotation: planned.annotation,
-        caption: planned.caption,
-      };
+    // Burn is DISPLAY ONLY (Nutr1) — it never feeds finalTarget. Compute it
+    // once the windowed subscriptions have loaded; show zeros until then.
+    let actualLiftBurn = 0;
+    let actualRunBurn = 0;
+    if (profile && workoutsLoaded && runsLoaded) {
+      const targetKey = localDateString(targetDate);
+      actualLiftBurn = workouts
+        .filter((w) => isWorkoutOnDate(w, targetDate))
+        .reduce((sum, w) => sum + w.totalCalories, 0);
+      actualRunBurn = runs.reduce((sum, r) => {
+        if (!r.completedAt) return sum;
+        try {
+          const runKey = localDateString(r.completedAt.toDate());
+          return runKey === targetKey ? sum + r.calories : sum;
+        } catch {
+          return sum;
+        }
+      }, 0);
     }
-
-    const targetKey = localDateString(targetDate);
-
-    // Sum actual burn for this specific date. Date matching lives in the
-    // shared isWorkoutOnDate helper so Home's workout-burn read (useHomeData)
-    // uses the same rule.
-    const actualLiftBurn = workouts
-      .filter((w) => isWorkoutOnDate(w, targetDate))
-      .reduce((sum, w) => sum + w.totalCalories, 0);
-
-    const actualRunBurn = runs.reduce((sum, r) => {
-      if (!r.completedAt) return sum;
-      try {
-        const runKey = localDateString(r.completedAt.toDate());
-        return runKey === targetKey ? sum + r.calories : sum;
-      } catch {
-        return sum;
-      }
-    }, 0);
-
-    // Delegate the "max of strategy and reality" rule to the pure helper
-    // (see src/lib/effectiveTargets.ts — covered by 9-scenario unit tests).
-    const phase = profile.program?.currentPhase || "base";
-    const goal = profile.program?.goal;
-    const {
-      effectiveDayType,
-      actualBurn,
-      strategicBonus,
-      effectiveBonus,
-      hasCompletedActivity,
-    } = computeEffectiveBonus({
-      actualLiftBurn,
-      actualRunBurn,
-      plannedDayType: planned.dayType,
-      phase,
-      goal,
-    });
-
-    // Recompute macros for the effective day type. Note: protein is stable
-    // across day types (depends on phase/goal, not dayType), so only carbs
-    // actually change in practice.
-    const adjusted = getAdjustedTargets(profile, effectiveDayType);
-
-    const finalTarget = planned.baseTarget + effectiveBonus;
+    const actualBurn = actualLiftBurn + actualRunBurn;
 
     return {
       baseTarget: planned.baseTarget,
-      dayType: planned.dayType, // planned dayType preserved for consumers
-      isRunDay: effectiveDayType === "run" || effectiveDayType === "both",
-      strategicBonus,
+      dayType: planned.dayType,
+      isRunDay: planned.isRunDay,
       actualBurn,
       actualLiftBurn,
       actualRunBurn,
-      hasCompletedActivity,
-      effectiveDayType,
-      effectiveBonus,
-      finalTarget,
-      protein: adjusted.protein,
-      carbs: adjusted.carbs,
-      fat: adjusted.fat,
-      annotation: adjusted.annotation,
-      caption: buildCaption(effectiveDayType, effectiveBonus),
+      hasCompletedActivity: actualBurn > 0,
+      finalTarget: planned.finalTarget, // === baseTarget
+      protein: planned.protein,
+      carbs: planned.carbs,
+      fat: planned.fat,
+      annotation: planned.annotation,
+      caption: planned.caption,
     };
-  }, [enabled, profile, workoutsLoaded, runsLoaded, workouts, runs, date]);
+  }, [profile, workoutsLoaded, runsLoaded, workouts, runs, date]);
 }
