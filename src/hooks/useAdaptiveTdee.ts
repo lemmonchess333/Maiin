@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -10,26 +10,38 @@ import {
   computeWarmupProgress,
   ADAPTIVE_TDEE_DEFAULTS,
 } from "@/lib/adaptiveTdee";
+import {
+  applyWeeklyCap,
+  resolveTargetSource,
+  type TargetSource,
+} from "@/lib/adaptiveTarget";
 
 /**
- * Nutr2 / #981 — assembles the trailing-window data for the adaptive-TDEE
- * estimator and exposes the warmup state for the "Personalizing your
- * metabolism" bar (the #981 deliverable).
+ * Nutr2 / #981 + #982 — the client-side adaptive-TDEE brain.
+ *
+ * Assembles the trailing-window data, runs the pure estimator, and resolves
+ * which calorie number the user sees:
+ *   - WARMUP (#981): the "Personalizing your metabolism" bar state while the
+ *     gate is still filling.
+ *   - TARGET (#982): the resolved { source, value } — the formula until the
+ *     gate clears, then the learned TDEE smoothed by the ±150/7-day cap (seeded
+ *     from the formula so it never jumps). Cap state is persisted on the
+ *     profile so the smoothing is stable across sessions/devices.
  *
  * Active ONLY for Pro/trial users without a manual calorie override (Q4 lock
- * A) — everyone else gets `active: false` and ZERO extra Firestore reads.
- *
- * Scope note: this is the WARMUP half of the locked #981+#982 unit. The
- * learned-value takeover (cap + persistence + flipping the live target in
- * useEffectiveTargets) is the #982 half and is deliberately not wired here —
- * the target stays on the formula throughout warmup, which is correct
- * pre-gate (no learned number is ever shown below the gate).
+ * A) — everyone else gets `active: false`, `source: "formula"`, and ZERO extra
+ * Firestore reads. `useEffectiveTargets` consumes this and is the single
+ * source of truth that surfaces it everywhere.
  */
-export interface AdaptiveWarmupView {
+export interface AdaptiveTdeeView {
   /** True when adaptive is active (Pro/trial, no manual override). */
   active: boolean;
   /** Estimator gate — true once enough data has accumulated. */
   ready: boolean;
+  /** Which number wins: "formula" (default) or "learned". */
+  source: TargetSource;
+  /** The resolved calorie target to use. */
+  value: number;
   /** Render the warmup bar (active, loaded, gate not yet cleared). */
   showWarmup: boolean;
   /** 0..1 bar fill — high-water latched within the session so it never shrinks. */
@@ -40,20 +52,15 @@ export interface AdaptiveWarmupView {
 
 const WINDOW_DAYS = ADAPTIVE_TDEE_DEFAULTS.windowDays;
 
-const INACTIVE: AdaptiveWarmupView = {
-  active: false,
-  ready: false,
-  showWarmup: false,
-  warmupFraction: 0,
-  stalled: false,
-};
-
-export function useAdaptiveTdee(): AdaptiveWarmupView {
-  const { user, profile } = useAuth();
+export function useAdaptiveTdee(): AdaptiveTdeeView {
+  const { user, profile, updateProfile } = useAuth();
   const { isPro } = useSubscription(); // isPro is true during trial too
 
+  // Formula target = the stored base (already customCalorieTarget || formula).
+  const formulaTarget = profile?.targetCalories ?? 2200;
   const isManualOverride = !!profile?.customCalorieTarget;
   const active = !!user && isPro && !isManualOverride;
+  const capPrev = profile?.adaptiveCapState ?? null;
 
   const [intakeByDay, setIntakeByDay] = useState<
     { dateKey: string; kcal: number }[]
@@ -65,13 +72,14 @@ export function useAdaptiveTdee(): AdaptiveWarmupView {
   // High-water latch so the bar never visibly shrinks when the rolling window
   // churns (a missed day shouldn't read as the bar going backwards).
   const [latched, setLatched] = useState(0);
+  const persistKeyRef = useRef("");
 
   // Assemble trailing-window intake (summed per date) + raw weigh-ins. Only
   // runs for active users — free/override users do no reads.
   useEffect(() => {
     let cancelled = false;
-    // Inactive users return INACTIVE below before any of this state is read,
-    // so there's nothing to reset here — just skip the reads.
+    // Inactive users fall through to the formula below before any of this
+    // state is read, so there's nothing to reset here — just skip the reads.
     if (!active || !user) return;
 
     (async () => {
@@ -121,6 +129,28 @@ export function useAdaptiveTdee(): AdaptiveWarmupView {
     [intakeByDay, weighIns]
   );
 
+  // Apply the weekly rate cap once the gate is ready (seeded from formula on
+  // first engage → no jump). Memoized so `now` doesn't churn every render.
+  const cap = useMemo(() => {
+    if (!active || !result.ready || result.learnedTDEE == null) return null;
+    return applyWeeklyCap({
+      rawLearned: result.learnedTDEE,
+      formulaTarget,
+      prev: capPrev,
+      now: new Date(),
+    });
+  }, [active, result, formulaTarget, capPrev]);
+
+  // Persist the new cap state once (guarded so the resulting profile reload
+  // doesn't re-trigger the write).
+  useEffect(() => {
+    if (!cap || !cap.changed) return;
+    const key = `${cap.capState.lastApplied}@${cap.capState.lastAppliedAt}`;
+    if (persistKeyRef.current === key) return;
+    persistKeyRef.current = key;
+    void updateProfile({ adaptiveCapState: cap.capState });
+  }, [cap, updateProfile]);
+
   const liveFraction = active ? computeWarmupProgress(result).fraction : 0;
 
   // Raise the high-water latch (legitimate derived-state-from-prop case).
@@ -129,7 +159,25 @@ export function useAdaptiveTdee(): AdaptiveWarmupView {
     if (liveFraction > latched) setLatched(liveFraction);
   }, [liveFraction, latched]);
 
-  if (!active) return INACTIVE;
+  const resolved = resolveTargetSource({
+    isPro,
+    ready: result.ready,
+    formulaTarget,
+    learnedApplied: cap?.applied ?? null,
+    isManualOverride,
+  });
+
+  if (!active) {
+    return {
+      active: false,
+      ready: false,
+      source: "formula",
+      value: formulaTarget,
+      showWarmup: false,
+      warmupFraction: 0,
+      stalled: false,
+    };
+  }
 
   const warmupFraction = Math.max(latched, liveFraction);
   const stalled = loaded && !result.ready && liveFraction + 0.001 < latched;
@@ -137,7 +185,9 @@ export function useAdaptiveTdee(): AdaptiveWarmupView {
   return {
     active: true,
     ready: result.ready,
-    showWarmup: loaded && !result.ready,
+    source: resolved.source,
+    value: resolved.value,
+    showWarmup: loaded && resolved.showWarmup,
     warmupFraction,
     stalled,
   };
