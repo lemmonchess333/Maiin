@@ -4,9 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Beef,
   Wheat,
-  Info,
   Settings as SettingsIcon,
-  X,
   ChevronRight,
 } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
@@ -14,7 +12,6 @@ import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
-import { useCoachMarks } from "@/hooks/useCoachMarks";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
@@ -40,11 +37,6 @@ interface FoodHeroCardProps {
   onTapDrillDown?: () => void;
 }
 
-interface TrainingBurnToast {
-  delta: number;
-  source: string;
-}
-
 const MODE_STORAGE_KEY = "tropos.food.calorieRingMode";
 const CELEBRATED_STORAGE_KEY = "tropos.food.celebratedDate";
 
@@ -63,7 +55,6 @@ function readInitialMode(): CalorieRingMode {
 }
 
 export default function FoodHeroCard({
-  selectedDate,
   isToday,
   dailyTargets,
   dailyTotals,
@@ -89,33 +80,9 @@ export default function FoodHeroCard({
   const [celebrating, setCelebrating] = useState(false);
   const [showCelebrationCaption, setShowCelebrationCaption] = useState(false);
 
-  // First-time explainer for the "+250 FUEL" adjustment in the caption.
-  // Keyed so it's independent of the Home welcome card. Shows once per
-  // user, dismissible via X or a tap-outside. Never auto-fires on rest
-  // days because there's no adjustment to explain.
-  const { showCoachMarks: showFuelExplainer, dismiss: dismissFuelExplainer } =
-    useCoachMarks("food-fuel-caption");
-
   // Previous macro totals for transition detection
   const prevTotalsRef = useRef(dailyTotals);
   const firstMountRef = useRef(true);
-
-  // ── Training-burn toast ────────────────────────────────────────────────
-  // Triggers on finalTarget change, NOT on actualBurn change. This handles
-  // the "strategic covers actual" case: if a strength-phase user lifts
-  // within their strategic surplus, actualBurn increases but finalTarget
-  // does not move → no toast → ring stays put.
-  const [trainingBurnToast, setTrainingBurnToast] =
-    useState<TrainingBurnToast | null>(null);
-  const prevTargetRef = useRef<number | undefined>(undefined);
-  const prevLiftBurnRef = useRef<number>(0);
-  const prevRunBurnRef = useRef<number>(0);
-  // lastLogMomentAt: Option A (local ref in FoodHeroCard). The food-log
-  // handler doesn't live here, but the log moment manifests via dailyTotals
-  // changing — we stamp the ref whenever dailyTotals change, which is the
-  // same signal that triggers the 600ms animation. The toast detection
-  // effect reads this ref to defer itself when a log is in flight.
-  const lastLogMomentAt = useRef<number>(0);
 
   const toggleMode = () => {
     haptic("light");
@@ -147,10 +114,6 @@ export default function FoodHeroCard({
       prev.fat !== dailyTotals.fat;
 
     if (!changed) return;
-
-    // Stamp the log moment so the training-burn toast detector can defer
-    // itself when a food log animation is in flight.
-    lastLogMomentAt.current = Date.now();
 
     const targets = {
       protein: dailyTargets.protein,
@@ -226,102 +189,12 @@ export default function FoodHeroCard({
     isToday,
   ]);
 
-  // ── Toast: reset on date change ──────────────────────────────────────
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    prevTargetRef.current = undefined;
-    prevLiftBurnRef.current = 0;
-    prevRunBurnRef.current = 0;
-    setTrainingBurnToast(null);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [selectedDate]);
-
-  // ── Toast: detection ─────────────────────────────────────────────────
-  const finalTarget = dailyTargets.finalTarget;
-  const actualLiftBurn = dailyTargets.actualLiftBurn;
-  const actualRunBurn = dailyTargets.actualRunBurn;
-  useEffect(() => {
-    if (prevTargetRef.current === undefined) {
-      // Baseline on first render for this date — no toast
-      prevTargetRef.current = finalTarget;
-      prevLiftBurnRef.current = actualLiftBurn;
-      prevRunBurnRef.current = actualRunBurn;
-      return;
-    }
-
-    if (finalTarget <= prevTargetRef.current) {
-      // Downward or unchanged — never fires a toast (handles deletes).
-      // Still update refs so a subsequent upward move has a correct baseline.
-      prevTargetRef.current = finalTarget;
-      prevLiftBurnRef.current = actualLiftBurn;
-      prevRunBurnRef.current = actualRunBurn;
-      return;
-    }
-
-    const delta = finalTarget - prevTargetRef.current;
-    const liftIncreased = actualLiftBurn > prevLiftBurnRef.current;
-    const runIncreased = actualRunBurn > prevRunBurnRef.current;
-    const source =
-      liftIncreased && runIncreased
-        ? "lift + run"
-        : liftIncreased
-          ? "lift"
-          : runIncreased
-            ? "run"
-            : "training";
-
-    // Race resolution — defer by any remaining log-moment time
-    const elapsed = Date.now() - lastLogMomentAt.current;
-    const defer = elapsed < LOG_MOMENT_MS ? LOG_MOMENT_MS - elapsed : 0;
-
-    const show = () => {
-      setTrainingBurnToast({ delta, source });
-      haptic("light");
-    };
-
-    // Update refs BEFORE scheduling — so overlapping upward moves detect
-    // against the latest baseline.
-    prevTargetRef.current = finalTarget;
-    prevLiftBurnRef.current = actualLiftBurn;
-    prevRunBurnRef.current = actualRunBurn;
-
-    if (defer > 0) {
-      const t = setTimeout(show, defer);
-      return () => clearTimeout(t);
-    }
-    show();
-  }, [finalTarget, actualLiftBurn, actualRunBurn]);
-
-  // ── Toast: auto-dismiss after 3s ─────────────────────────────────────
-  useEffect(() => {
-    if (!trainingBurnToast) return;
-    const t = setTimeout(() => setTrainingBurnToast(null), 3000);
-    return () => clearTimeout(t);
-  }, [trainingBurnToast]);
-
   // Build the top-left caption. Suppressed on rest days.
+  // Nutr1 (expenditure-inclusive): the caption is just the day-type label —
+  // there's no calorie bonus to surface, so the old "+X cal" adjustment, its
+  // first-time fuel explainer, and the training-burn toast were all removed.
   const caption = dailyTargets.caption;
 
-  // Fuel explainer visibility: only when there's an actual adjustment to
-  // explain AND the user hasn't dismissed it yet AND we're not mid-celebration
-  // (don't stomp on "DAY N ✓"). Boolean so the auto-dismiss effect below
-  // only triggers on the visibility transition, not on every caption update.
-  const shouldShowFuelExplainer =
-    showFuelExplainer &&
-    !!caption &&
-    !!caption.adjustment &&
-    !showCelebrationCaption;
-
-  /* Day-type explainer is sticky-until-dismissed (F3). Pre-F3 the
-     explainer auto-dismissed after 10s, which felt aggressive —
-     users could miss it without realising it had been there. The
-     existing `useCoachMarks("food-fuel-caption")` localStorage
-     flag (key `tropos-coach-marks-dismissed:food-fuel-caption`)
-     already tracks per-user dismissal; reusing it preserves
-     dismissal state for users who already tapped the X. The
-     spec suggested a new key (`tropos.foodCaptionDismissed`) but
-     using a fresh key would resurrect the explainer for every
-     existing dismissed user — explicitly approved deviation. */
   const celebrationCaptionText = `GOAL HIT ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
@@ -384,17 +257,6 @@ export default function FoodHeroCard({
                   className="text-xs font-medium text-muted-foreground/80"
                 >
                   {caption.trainingType}
-                  {caption.adjustment && (
-                    <>
-                      {" · "}
-                      <span
-                        className="font-semibold"
-                        style={{ color: THEME.lifting }}
-                      >
-                        {caption.adjustment}
-                      </span>
-                    </>
-                  )}
                 </motion.p>
               ) : null}
             </AnimatePresence>
@@ -409,43 +271,6 @@ export default function FoodHeroCard({
           </Link>
         </div>
 
-        {/* First-time explainer for the caption's calorie adjustment. */}
-        <AnimatePresence initial={false}>
-          {shouldShowFuelExplainer && (
-            <motion.div
-              key="fuel-explainer"
-              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-              animate={{ opacity: 1, height: "auto", marginBottom: 12 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="overflow-hidden"
-            >
-              <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-muted/50">
-                <Info
-                  className="size-3.5 mt-0.5 shrink-0"
-                  style={{ color: THEME.lifting }}
-                  aria-hidden="true"
-                />
-                <p className="flex-1 text-xs leading-snug text-muted-foreground">
-                  Your calorie target is higher today to fuel your planned
-                  workout.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    haptic("light");
-                    dismissFuelExplainer();
-                  }}
-                  aria-label="Dismiss explainer"
-                  className="size-11 -m-2.5 flex items-center justify-center text-muted-foreground/60 hover:text-muted-foreground transition-colors shrink-0"
-                >
-                  <X className="size-3.5" />
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Calorie ring */}
         <CalorieRing
           consumed={dailyTotals.calories}
@@ -455,7 +280,6 @@ export default function FoodHeroCard({
           trajectoryLabel={trajectoryLabel}
           glowing={celebrating}
           ringDurationMs={LOG_MOMENT_MS}
-          trainingBurnToast={trainingBurnToast}
         />
 
         {/* Today-at-a-glance line. One sentence, protein-priority,
