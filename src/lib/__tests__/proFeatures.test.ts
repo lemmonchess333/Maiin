@@ -17,18 +17,14 @@ import {
 } from "../proFeatures";
 
 describe("PRO_FEATURES — registry shape", () => {
-  it("contains the 4 keys the app references (Sub2 narrowed scope)", () => {
-    const required: ProFeatureKey[] = [
-      "ai_food_logging",
-      "ai_coaching",
-      "adaptive_macros",
-      "adaptive_tdee",
-    ];
+  it("contains only the 2 real, runtime-gated keys (#977 reconcile)", () => {
+    const required: ProFeatureKey[] = ["ai_food_logging", "adaptive_tdee"];
     for (const key of required) {
       expect(PRO_FEATURES[key]).toBeDefined();
     }
-    // Sub2: performance_engine and advanced_insights are no longer
-    // in the Pro registry — PI + insights are free for everyone now.
+    // #977: ai_coaching (not built) + adaptive_macros (runs free) removed;
+    // Sub2 had already dropped performance_engine + advanced_insights. The
+    // registry now advertises only the two enforced gates.
     expect(Object.keys(PRO_FEATURES)).toHaveLength(required.length);
   });
 
