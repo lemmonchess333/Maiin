@@ -43,7 +43,7 @@ import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import { track } from "@/lib/paywallAnalytics";
-import { X, Sparkles, Zap, BarChart2, Utensils, Brain } from "lucide-react";
+import { X, Sparkles, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -53,48 +53,14 @@ import { Spinner } from "@/components/ui/Spinner";
  * so the lookup is type-safe — any drift between proFeatures.ts
  * and this map gets caught by the compiler.
  *
- * Not every feature key has a custom preview (the registry has 6
- * entries; this map covers the 3 we have visual previews for). The
- * other keys fall back to the registry's title + tagline without a
- * preview card.
+ * Not every feature key has a custom preview. After #977 the registry
+ * is two keys (`ai_food_logging` + `adaptive_tdee`); this map covers the
+ * AI-food preview. Keys without a preview fall back to the registry's
+ * title + tagline.
  */
-/* Sub2: `performance_engine` preview removed alongside the registry
- * key — Performance Index is now free for everyone. */
 const FEATURE_PREVIEWS: Partial<
   Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
 > = {
-  ai_coaching: {
-    icon: <Brain className="size-6" style={{ color: THEME.teal }} />,
-    preview: (
-      <div className="relative rounded-xl overflow-hidden">
-        <div
-          className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-border space-y-2"
-          style={{ background: `${THEME.teal}12` }}
-        >
-          {[
-            "Your lift volume is trending up — consider a deload next week",
-            "Running cadence improved 4% vs last month",
-          ].map((t, i) => (
-            <div
-              key={i}
-              className="p-2 rounded-lg text-xs text-foreground"
-              style={{ background: `${THEME.teal}18` }}
-            >
-              {t}
-            </div>
-          ))}
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
-          <div className="flex flex-col items-center gap-1">
-            <Brain className="size-7" style={{ color: THEME.teal }} />
-            <p className="text-xs font-semibold text-foreground">
-              Unlock insights
-            </p>
-          </div>
-        </div>
-      </div>
-    ),
-  },
   ai_food_logging: {
     icon: <Utensils className="size-6" style={{ color: THEME.warning }} />,
     preview: (
@@ -141,7 +107,7 @@ const FEATURE_PREVIEWS: Partial<
 const DEFAULT_HERO = {
   icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
   title: "Upgrade to Pro",
-  tagline: "Unlock smarter logging, deeper insights and adaptive coaching.",
+  tagline: "AI food logging, plus a calorie target that adapts to you.",
 };
 
 const PRO_FEATURE_BULLETS: {
@@ -151,28 +117,16 @@ const PRO_FEATURE_BULLETS: {
   color: string;
 }[] = [
   {
-    icon: <BarChart2 className="size-4" />,
-    label: "Performance Engine",
-    sub: "Recovery, consistency and training-load signals.",
-    color: THEME.brand,
-  },
-  {
     icon: <Utensils className="size-4" />,
     label: "Unlimited AI food photo logging",
     sub: "Log meals from a photo. No manual searching.",
     color: THEME.warning,
   },
   {
-    icon: <Brain className="size-4" />,
-    label: "Adaptive macros",
-    sub: "Targets that adjust to your weight and activity.",
-    color: THEME.teal,
-  },
-  {
-    icon: <Zap className="size-4" />,
-    label: "Advanced insights",
-    sub: "Trends across food, lifting and running.",
-    color: THEME.running,
+    icon: <Sparkles className="size-4" />,
+    label: "Adaptive calorie target",
+    sub: "Your target learns from your real intake and weight trend.",
+    color: THEME.brand,
   },
 ];
 
