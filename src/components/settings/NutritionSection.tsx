@@ -377,47 +377,25 @@ export default function NutritionSection({
         />
       </div>
 
-      {/* Adjust calories for training */}
+      {/* Nutr1 (expenditure-inclusive): the "Adjust calories for training"
+          toggle was retired. Your target already accounts for activity, so
+          completed workouts are never added back (no eat-back) — there's
+          nothing to toggle. This read-only note explains the model in place
+          of the old switch. */}
       <div className="bg-card rounded-2xl p-4">
-        <button
-          onClick={() => {
-            haptic("light");
-            const next = profile.adjustCaloriesForTraining === false;
-            updateProfile({ adjustCaloriesForTraining: next });
-          }}
-          className="w-full flex items-center justify-between gap-3"
-          type="button"
-        >
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Flame className="size-5 text-primary shrink-0" />
-            <div className="text-left min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                Adjust calories for training
-              </p>
-              <p className="text-xs text-muted-foreground">
-                When you complete a workout or run, your daily calorie target
-                updates to reflect the energy burned.
-              </p>
-            </div>
+        <div className="flex items-center gap-3 min-w-0">
+          <Flame className="size-5 text-primary shrink-0" />
+          <div className="text-left min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              Activity is already in your target
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Your daily calorie target already accounts for your training, so
+              there's no need to eat back exercise calories. Big training days
+              shift more carbs for fuel.
+            </p>
           </div>
-          <div
-            className={cn(
-              "w-12 h-7 rounded-full transition-colors relative shrink-0",
-              profile.adjustCaloriesForTraining !== false
-                ? "bg-primary"
-                : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                "size-5 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                profile.adjustCaloriesForTraining !== false
-                  ? "translate-x-6"
-                  : "translate-x-1"
-              )}
-            />
-          </div>
-        </button>
+        </div>
       </div>
     </AccordionSection>
   );
