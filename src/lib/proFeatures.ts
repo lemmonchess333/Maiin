@@ -26,13 +26,15 @@
  * now free for everyone (P2 made PI a Home-card hero; gating it
  * was hiding Tropos's whole adaptive positioning from free users).
  * Pro now gates only AI-augmented + adaptive-optimisation features.
+ *
+ * #977 — paywall-honesty reconcile: only advertise what's runtime-
+ * gated. `ai_coaching` (not built) and `adaptive_macros` (runs free
+ * for everyone — no gate) removed. The registry is now the two real,
+ * enforced gates: `ai_food_logging` (AI scan quota) and `adaptive_tdee`
+ * (the adaptive engine, gated for Pro/trial as of 3b / #981-#983).
  */
 
-export type ProFeatureKey =
-  | "ai_food_logging"
-  | "ai_coaching"
-  | "adaptive_macros"
-  | "adaptive_tdee";
+export type ProFeatureKey = "ai_food_logging" | "adaptive_tdee";
 
 export interface ProFeatureConfig {
   key: ProFeatureKey;
@@ -53,20 +55,6 @@ export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
     title: "Unlock AI food logging",
     tagline: "Log meals from a photo. No manual searching.",
     sourceLabel: "ai_food_logging",
-  },
-  ai_coaching: {
-    key: "ai_coaching",
-    label: "AI Coaching Insights",
-    title: "Unlock AI Coaching",
-    tagline: "Personalised recommendations based on your training data.",
-    sourceLabel: "ai_coaching",
-  },
-  adaptive_macros: {
-    key: "adaptive_macros",
-    label: "Adaptive macros",
-    title: "Unlock Adaptive Macros",
-    tagline: "Adjust macro targets around your bodyweight and activity.",
-    sourceLabel: "adaptive_macros",
   },
   adaptive_tdee: {
     key: "adaptive_tdee",
