@@ -753,6 +753,22 @@ export default function Home() {
         </motion.div>
       )}
 
+      {/* Nutr1 one-time explainer (expenditure-inclusive model). Dismiss-once
+          via ContextualTipBanner's versioned localStorage key (the locked
+          spec named a profile flag; reusing the established dismiss-once
+          banner is lower-risk and per-device re-show is acceptable for a
+          one-time migration aid). Surfaces the deficit×big-session tension
+          the #976 lock required ("a deliberate deficit on your biggest
+          days"). Shown once to any onboarded user. */}
+      <ContextualTipBanner
+        tipKey="nutrition-expenditure-inclusive-v1"
+        title="Your activity is already in your target"
+        description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
+        visible={!!profile}
+        ctaLabel="How targets work"
+        ctaHref="/settings"
+      />
+
       {/* Streak at-risk nudge — show when streak > 2 and nothing logged today */}
       {streak >= 3 &&
         !weeklyDayMap.get(format(new Date(), "yyyy-MM-dd"))?.workouts &&
@@ -833,7 +849,10 @@ export default function Home() {
             borderColor: `${THEME.brand}33`,
           }}
         >
-          <RotateCcw className="size-5 shrink-0" style={{ color: THEME.brand }} />
+          <RotateCcw
+            className="size-5 shrink-0"
+            style={{ color: THEME.brand }}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
               Bring back your {backfillRescueStreak}-day streak
