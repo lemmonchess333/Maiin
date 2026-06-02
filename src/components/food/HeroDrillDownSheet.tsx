@@ -74,9 +74,9 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
  * Food6 a2: tap-on-hero drill-down sheet. Surfaces the same
  * calorie + macro data the hero shows, but expanded — explicit
  * targets, remaining grams, percentage-to-goal, and (when
- * activity is recorded) the burn breakdown driving the calorie
- * target adjustment. Kept intentionally read-only — editing
- * targets still routes through Settings.
+ * activity is recorded) an informational summary of calories burned.
+ * Kept intentionally read-only — editing targets still routes
+ * through Settings.
  */
 export default function HeroDrillDownSheet({
   open,
@@ -170,23 +170,21 @@ export default function HeroDrillDownSheet({
           />
         </section>
 
-        {/* Burn breakdown — only when activity has been recorded.
-            Explains why the calorie target is higher than the
-            user's resting target on training days. Mirrors the
-            caption logic on the hero card but expanded into a
-            table the user can scan. */}
+        {/* Activity today — only when activity has been recorded.
+            Nutr1 (expenditure-inclusive): this is INFORMATIONAL. The
+            calorie target already accounts for activity, so burned
+            calories are shown for context, NOT added back to the target. */}
         {showBurnBreakdown && (
           <section className="space-y-2">
             <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
-              Activity adjustment
+              Activity today
             </p>
             <div className="space-y-1.5 text-sm">
               {dailyTargets.actualLiftBurn > 0 && (
                 <div className="flex justify-between">
                   <span className="text-foreground">Lifting</span>
                   <span className="font-mono tabular-nums text-muted-foreground">
-                    +{formatCalories(dailyTargets.actualLiftBurn)}{" "}
-                    {CALORIE_UNIT}
+                    {formatCalories(dailyTargets.actualLiftBurn)} {CALORIE_UNIT}
                   </span>
                 </div>
               )}
@@ -194,18 +192,19 @@ export default function HeroDrillDownSheet({
                 <div className="flex justify-between">
                   <span className="text-foreground">Running</span>
                   <span className="font-mono tabular-nums text-muted-foreground">
-                    +{formatCalories(dailyTargets.actualRunBurn)} {CALORIE_UNIT}
+                    {formatCalories(dailyTargets.actualRunBurn)} {CALORIE_UNIT}
                   </span>
                 </div>
               )}
               <div className="flex justify-between pt-1.5 border-t border-border/40">
-                <span className="font-semibold text-foreground">
-                  Total burn applied
-                </span>
+                <span className="font-semibold text-foreground">Burned</span>
                 <span className="font-mono tabular-nums font-semibold text-foreground">
-                  +{formatCalories(dailyTargets.effectiveBonus)} {CALORIE_UNIT}
+                  {formatCalories(dailyTargets.actualBurn)} {CALORIE_UNIT}
                 </span>
               </div>
+              <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+                Already counted in your target — no need to eat it back.
+              </p>
             </div>
           </section>
         )}

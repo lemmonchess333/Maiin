@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getDayAdjustment, getAdjustedTargets } from "../phaseNutrition";
+import {
+  getDayAdjustment,
+  getAdjustedTargets,
+  ESSENTIAL_FAT_FLOOR_PER_KG,
+} from "../phaseNutrition";
 import type { UserProfile } from "../auth";
 
 // Helper to create a minimal UserProfile for testing
@@ -36,29 +40,26 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   };
 }
 
+// Nutr1 (expenditure-inclusive): day-type fuelling is a NET-NEUTRAL fat→carb
+// shift, NOT a calorie surplus. getDayAdjustment exposes the shift magnitude
+// (fuelShiftCalories); getAdjustedTargets applies it at constant calories,
+// clamped at the essential-fat floor.
 describe("getDayAdjustment", () => {
-  // carbAdjustment is derived from calorieAdjustment / 4 so the
-  // rendered macros reconcile with the displayed calorie total
-  // (pre-fix carbAdjustment was hardcoded independently of
-  // calorieAdjustment — the extra cal had no macro home).
-
   // ---- Lift day ----
   describe("lift day", () => {
-    it("returns +200 cal / +50g carbs for non-strength, non-cut lift day", () => {
+    it("returns a 200-cal fat→carb shift for non-strength, non-cut lift day", () => {
       const adj = getDayAdjustment("lift", "hypertrophy");
-      expect(adj.calorieAdjustment).toBe(200);
-      expect(adj.carbAdjustment).toBe(50); // 200 / 4
+      expect(adj.fuelShiftCalories).toBe(200);
     });
 
-    it("returns +400 cal / +100g carbs for strength phase lift day", () => {
+    it("returns a 400-cal shift for strength phase lift day", () => {
       const adj = getDayAdjustment("lift", "strength");
-      expect(adj.calorieAdjustment).toBe(400);
-      expect(adj.carbAdjustment).toBe(100); // 400 / 4
+      expect(adj.fuelShiftCalories).toBe(400);
     });
 
-    it("returns +150 cal for cut goal lift day", () => {
+    it("returns a 150-cal shift for cut goal lift day", () => {
       const adj = getDayAdjustment("lift", "hypertrophy", "cut");
-      expect(adj.calorieAdjustment).toBe(150);
+      expect(adj.fuelShiftCalories).toBe(150);
     });
 
     it("returns strength protein multiplier of 2.2", () => {
@@ -81,29 +82,25 @@ describe("getDayAdjustment", () => {
       expect(adj.proteinMultiplier).toBe(2.0);
     });
 
-    it("includes a reason string", () => {
+    it("reason names the day type and the carb-fuelling intent (no +cal claim)", () => {
       const adj = getDayAdjustment("lift", "base");
       expect(adj.reason).toContain("Lift day");
-      expect(adj.reason).toContain("200");
-    });
-
-    it("reason reflects cut calorie adjustment", () => {
-      const adj = getDayAdjustment("lift", "base", "cut");
-      expect(adj.reason).toContain("150");
+      expect(adj.reason).toContain("carbs");
+      // Expenditure-inclusive: the reason must NOT advertise a calorie bump.
+      expect(adj.reason).not.toMatch(/\+\s*\d/);
     });
   });
 
   // ---- Run day ----
   describe("run day", () => {
-    it("returns +200 cal / +50g carbs for non-cut run day", () => {
+    it("returns a 200-cal shift for non-cut run day", () => {
       const adj = getDayAdjustment("run", "base");
-      expect(adj.calorieAdjustment).toBe(200);
-      expect(adj.carbAdjustment).toBe(50); // 200 / 4
+      expect(adj.fuelShiftCalories).toBe(200);
     });
 
-    it("returns +100 cal for cut goal run day", () => {
+    it("returns a 100-cal shift for cut goal run day", () => {
       const adj = getDayAdjustment("run", "base", "cut");
-      expect(adj.calorieAdjustment).toBe(100);
+      expect(adj.fuelShiftCalories).toBe(100);
     });
 
     it("returns race_prep protein multiplier of 1.6", () => {
@@ -119,20 +116,19 @@ describe("getDayAdjustment", () => {
 
   // ---- Both day ----
   describe("both day", () => {
-    it("returns +350 cal / +88g carbs for non-strength, non-cut both day", () => {
+    it("returns a 350-cal shift for non-strength, non-cut both day", () => {
       const adj = getDayAdjustment("both", "hypertrophy");
-      expect(adj.calorieAdjustment).toBe(350);
-      expect(adj.carbAdjustment).toBe(88); // Math.round(350 / 4)
+      expect(adj.fuelShiftCalories).toBe(350);
     });
 
-    it("returns +500 cal for strength phase both day", () => {
+    it("returns a 500-cal shift for strength phase both day", () => {
       const adj = getDayAdjustment("both", "strength");
-      expect(adj.calorieAdjustment).toBe(500);
+      expect(adj.fuelShiftCalories).toBe(500);
     });
 
-    it("returns +250 cal for cut goal both day", () => {
+    it("returns a 250-cal shift for cut goal both day", () => {
       const adj = getDayAdjustment("both", "base", "cut");
-      expect(adj.calorieAdjustment).toBe(250);
+      expect(adj.fuelShiftCalories).toBe(250);
     });
 
     it("includes reason string for both day", () => {
@@ -143,10 +139,9 @@ describe("getDayAdjustment", () => {
 
   // ---- Rest day ----
   describe("rest day", () => {
-    it("returns 0 cal and 0 carb adjustment", () => {
+    it("returns a 0-cal shift (no fuelling on rest days)", () => {
       const adj = getDayAdjustment("rest", "base");
-      expect(adj.calorieAdjustment).toBe(0);
-      expect(adj.carbAdjustment).toBe(0);
+      expect(adj.fuelShiftCalories).toBe(0);
     });
 
     it("returns base protein multiplier of 2.0", () => {
@@ -164,9 +159,9 @@ describe("getDayAdjustment", () => {
       expect(adj.reason).toContain("Rest day");
     });
 
-    it("ignores goal on rest day — always 0 cal adjustment", () => {
+    it("ignores goal on rest day — always 0 shift", () => {
       const adj = getDayAdjustment("rest", "base", "cut");
-      expect(adj.calorieAdjustment).toBe(0);
+      expect(adj.fuelShiftCalories).toBe(0);
     });
   });
 
@@ -191,83 +186,72 @@ describe("getDayAdjustment", () => {
 });
 
 describe("getAdjustedTargets", () => {
-  it("returns correct values for a lift day with base phase", () => {
+  it("holds calories flat and shifts fat→carbs on a lift day (base phase)", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "lift");
-    // base calories 2500 + 200 (lift, non-strength, non-cut) = 2700
-    expect(result.calories).toBe(2700);
+    // Calories are FLAT — no training-day surplus (was 2700 pre-Nutr1).
+    expect(result.calories).toBe(2500);
     // protein = round(2.0 * 80) = 160
     expect(result.protein).toBe(160);
-    // carbs are the balancing macro so protein*4 + carbs*4 + fat*9
-    // reconciles to the calorie target. Here the 160g bodyweight-derived
-    // protein differs from the 180g stored target, so carbs absorb both the
-    // +200 surplus and that protein gap.
-    expect(result.carbs).toBe(358);
+    // 200-cal shift = round(200/9)=22g fat moved into carbs; floor = round(0.6*80)=48,
+    // available 70-48=22 ≥ 22, so the full shift lands. fat 70-22=48.
+    expect(result.fat).toBe(48);
+    // carbs are the balancing macro at flat calories — round((2500-640-432)/4)
+    expect(result.carbs).toBe(357);
     expect(result.protein * 4 + result.carbs * 4 + result.fat * 9).toBeCloseTo(
       result.calories,
-      -1,
+      -1
     );
-    // fat unchanged
-    expect(result.fat).toBe(70);
     expect(result.annotation).toContain("Lift day");
   });
 
-  it("returns correct values for a run day", () => {
+  it("matches lift on a run day (same 200-cal shift)", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "run");
-    expect(result.calories).toBe(2700); // 2500 + 200
-    expect(result.protein).toBe(160); // round(2.0 * 80)
-    expect(result.carbs).toBe(358); // balancing macro (reconciles to calories)
-    expect(result.fat).toBe(70);
+    expect(result.calories).toBe(2500);
+    expect(result.protein).toBe(160);
+    expect(result.fat).toBe(48);
+    expect(result.carbs).toBe(357);
   });
 
-  it("returns correct values for a both day", () => {
+  it("clamps the fat cut at the essential floor on a big (both) day", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "both");
-    expect(result.calories).toBe(2850); // 2500 + 350
-    expect(result.carbs).toBe(395); // balancing macro
+    // 350-cal shift wants round(350/9)=39g fat, but only 70-48=22g is above
+    // the floor — so the cut clamps at 22g. Calories still flat.
+    expect(result.calories).toBe(2500);
+    expect(result.fat).toBe(48);
+    expect(result.carbs).toBe(357);
   });
 
-  it("returns correct values for a rest day", () => {
+  it("leaves rest days at the baseline split", () => {
     const profile = makeProfile();
     const result = getAdjustedTargets(profile, "rest");
-    expect(result.calories).toBe(2500); // no adjustment
-    expect(result.carbs).toBe(308); // balancing macro (160g protein vs 180g target)
+    expect(result.calories).toBe(2500); // no shift
     expect(result.fat).toBe(70);
+    expect(result.carbs).toBe(308);
     expect(result.annotation).toContain("Rest day");
   });
 
-  it("uses strength phase adjustments", () => {
+  it("uses strength phase protein + shift", () => {
     const profile = makeProfile({
       program: { goal: "recomp", startWeight: 80, currentPhase: "strength" },
     });
     const result = getAdjustedTargets(profile, "lift");
-    expect(result.calories).toBe(2900); // 2500 + 400
+    expect(result.calories).toBe(2500); // flat
     expect(result.protein).toBe(176); // round(2.2 * 80)
+    expect(result.fat).toBe(48); // 400-cal shift clamps to floor
   });
 
-  it("uses cut goal adjustments", () => {
+  it("uses cut goal protein + shift on a lift day", () => {
     const profile = makeProfile({
       program: { goal: "cut", startWeight: 80, currentPhase: "base" },
     });
     const result = getAdjustedTargets(profile, "lift");
-    expect(result.calories).toBe(2650); // 2500 + 150
-  });
-
-  it("uses cut goal for run day", () => {
-    const profile = makeProfile({
-      program: { goal: "cut", startWeight: 80, currentPhase: "base" },
-    });
-    const result = getAdjustedTargets(profile, "run");
-    expect(result.calories).toBe(2600); // 2500 + 100
-  });
-
-  it("uses cut goal for both day", () => {
-    const profile = makeProfile({
-      program: { goal: "cut", startWeight: 80, currentPhase: "base" },
-    });
-    const result = getAdjustedTargets(profile, "both");
-    expect(result.calories).toBe(2750); // 2500 + 250
+    expect(result.calories).toBe(2500); // flat
+    expect(result.protein).toBe(176); // cut → 2.2 * 80
+    // 150-cal shift = round(150/9)=17g, below the 22g headroom → lands fully.
+    expect(result.fat).toBe(53);
   });
 
   it("uses default values when profile targets are undefined", () => {
@@ -279,19 +263,19 @@ describe("getAdjustedTargets", () => {
       weightKg: undefined as unknown as number,
     });
     const result = getAdjustedTargets(profile, "lift");
-    // defaults: cal=2200, carbs=250, fat=60
-    expect(result.calories).toBe(2400); // 2200 + 200
-    expect(result.carbs).toBe(325); // balancing macro (defaults: 2200 cal, p140, f60)
-    expect(result.fat).toBe(60);
-    // protein = round(2.0 * 70) = 140 (default weight 70)
+    // defaults: cal=2200, fat=60, weight=70 → floor=round(0.6*70)=42
+    expect(result.calories).toBe(2200); // flat
+    // protein = round(2.0 * 70) = 140
     expect(result.protein).toBe(140);
+    // 200-cal shift = 22g, but headroom 60-42=18g → clamps at 18. fat=42.
+    expect(result.fat).toBe(42);
+    expect(result.carbs).toBe(316);
   });
 
   it("uses default phase when program is undefined", () => {
     const profile = makeProfile({ program: undefined });
     const result = getAdjustedTargets(profile, "lift");
-    // phase defaults to "base", goal defaults to undefined (non-cut)
-    expect(result.calories).toBe(2700); // 2500 + 200
+    expect(result.calories).toBe(2500); // flat
     expect(result.protein).toBe(160); // round(2.0 * 80)
   });
 
@@ -301,8 +285,7 @@ describe("getAdjustedTargets", () => {
       program: { goal: "recomp", startWeight: 100, currentPhase: "strength" },
     });
     const result = getAdjustedTargets(profile, "lift");
-    // 2.2 * 100 = 220
-    expect(result.protein).toBe(220);
+    expect(result.protein).toBe(220); // 2.2 * 100
   });
 
   it("uses deload phase protein multiplier", () => {
@@ -311,8 +294,7 @@ describe("getAdjustedTargets", () => {
       program: { goal: "recomp", startWeight: 90, currentPhase: "deload" },
     });
     const result = getAdjustedTargets(profile, "rest");
-    // 1.8 * 90 = 162
-    expect(result.protein).toBe(162);
+    expect(result.protein).toBe(162); // 1.8 * 90
   });
 
   it("strength phase both day with cut goal", () => {
@@ -321,18 +303,55 @@ describe("getAdjustedTargets", () => {
       program: { goal: "cut", startWeight: 85, currentPhase: "strength" },
     });
     const result = getAdjustedTargets(profile, "both");
-    // cut overrides: +250 cal (cut takes precedence over strength for both)
-    expect(result.calories).toBe(2750); // 2500 + 250
-    expect(result.protein).toBe(Math.round(2.2 * 85)); // 187 — cut goal uses cut protein multiplier
-    expect(result.carbs).toBe(343); // balancing macro
+    expect(result.calories).toBe(2500); // flat
+    expect(result.protein).toBe(Math.round(2.2 * 85)); // 187 — cut multiplier
   });
 
-  // Streak-of-bugs guard: the documented contract is that the rendered macros
-  // always reconcile to the rendered calorie target. Pre-fix, protein was
-  // recomputed from bodyweight while carbs only tracked the calorie surplus,
-  // so any mismatch between the stored protein target and bodyweight*multiplier
-  // silently broke the total. Assert the invariant across day types and a
-  // deliberately INCONSISTENT base profile (stored protein far from bodyweight).
+  // ── Nutr1 invariants ────────────────────────────────────────────────────
+  describe("Nutr1 expenditure-inclusive invariants", () => {
+    const dayTypes = ["lift", "run", "both", "rest"] as const;
+
+    it("calories are FLAT (=== base.targetCalories) on every day type", () => {
+      const profile = makeProfile();
+      for (const dt of dayTypes) {
+        expect(getAdjustedTargets(profile, dt).calories).toBe(2500);
+      }
+    });
+
+    it("training-day carbs ≥ rest-day carbs (fuelling preserved)", () => {
+      const profile = makeProfile();
+      const rest = getAdjustedTargets(profile, "rest").carbs;
+      for (const dt of ["lift", "run", "both"] as const) {
+        expect(getAdjustedTargets(profile, dt).carbs).toBeGreaterThanOrEqual(
+          rest
+        );
+      }
+    });
+
+    it("fat never drops below the essential floor on any day type", () => {
+      const profile = makeProfile();
+      const floor = Math.round(
+        ESSENTIAL_FAT_FLOOR_PER_KG * (profile.weightKg as number)
+      );
+      for (const dt of dayTypes) {
+        expect(getAdjustedTargets(profile, dt).fat).toBeGreaterThanOrEqual(
+          floor
+        );
+      }
+    });
+
+    it("does NOT cut fat below an already-low stored fat (no negative shift)", () => {
+      // base.fat 30 is already below the 48g floor → fat must stay 30, no shift.
+      const profile = makeProfile({ targetFat: 30 });
+      for (const dt of dayTypes) {
+        expect(getAdjustedTargets(profile, dt).fat).toBe(30);
+      }
+    });
+  });
+
+  // Streak-of-bugs guard: rendered macros always reconcile to the (flat)
+  // calorie target across day types and a deliberately INCONSISTENT base
+  // profile (stored protein far from bodyweight).
   describe("macro/calorie reconciliation invariant", () => {
     const reconciles = (t: {
       calories: number;

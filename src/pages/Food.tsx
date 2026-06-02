@@ -270,8 +270,9 @@ export default function Food() {
     () => new Date(selectedDate + "T12:00:00"),
     [selectedDate]
   );
-  // Training-aware: returns planned values when adjustCaloriesForTraining is
-  // off; otherwise effectiveBonus = max(strategicBonus, actualBurn).
+  // Nutr1 (expenditure-inclusive): finalTarget === baseTarget (flat, no
+  // eat-back). Day-type fuelling is a net-neutral macro shift; burn is
+  // display-only.
   const dailyTargets = useEffectiveTargets(selectedDateObj);
   const scanUsage = useScanUsage();
   const handleUpgrade = () => {
