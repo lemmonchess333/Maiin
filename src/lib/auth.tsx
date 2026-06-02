@@ -22,11 +22,13 @@ import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
   getDoc,
+  updateDoc,
   serverTimestamp,
   writeBatch,
   Timestamp,
   type FieldValue,
 } from "firebase/firestore";
+import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
@@ -139,6 +141,10 @@ export interface UserProfilePreferences {
    *  manual parse / barcode paths are unaffected — only AI calls
    *  are gated. */
   aiAnalysisEnabled?: boolean;
+  /** Device IANA timezone (e.g. "Europe/London"), captured on boot (#962).
+   *  Read server-side for scan-quota day-keying + streak-nudge local-hour
+   *  scheduling. null/absent → time-sensitive server pushes are skipped. */
+  timezone?: string | null;
 }
 
 /** Nutrition targets */
@@ -332,6 +338,7 @@ function createDefaultProfile(
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
     darkMode: false,
+    timezone: null,
     onboardingComplete: false,
     // Sub1a P1 — new users start in true free tier. The 7-day free
     // trial is now opt-in (tapped from ProModal / Upgrade) and goes
@@ -377,6 +384,7 @@ function hydrateProfile(
     preferredHeightUnit:
       (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
     darkMode: (data.darkMode as boolean) ?? false,
+    timezone: (data.timezone as string | null) ?? null,
     onboardingComplete: (data.onboardingComplete as boolean) ?? false,
     trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
     subscriptionTier:
@@ -504,6 +512,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
             setProfile(safeProfile);
             syncDarkMode(safeProfile.darkMode);
+            // #962 — capture the device timezone so the server has a non-null
+            // tz to schedule time-sensitive pushes against (and to fix
+            // scan-quota day-keying). Fire-and-forget; idempotent.
+            const deviceTz = getDeviceTimezone();
+            if (shouldUpdateTimezone(safeProfile.timezone, deviceTz)) {
+              updateDoc(doc(db, "users", firebaseUser.uid), {
+                timezone: deviceTz,
+              }).catch((err) =>
+                logger.warn("[AuthProvider] timezone capture failed", err)
+              );
+            }
           } else {
             setProfile(null);
           }
