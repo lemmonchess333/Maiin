@@ -30,6 +30,7 @@ import {
 } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { unregisterDeviceToken } from "@/lib/pushNotifications";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -664,6 +665,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOutUser = useCallback(async () => {
+    // Push privacy invariant (#961 Q4 / PR #820 lineage): revoke this device's
+    // FCM token BEFORE signing out, while we still have the uid + auth — so the
+    // next account on this device never inherits the previous user's pushes.
+    const uid = auth.currentUser?.uid;
+    if (uid) await unregisterDeviceToken(uid).catch(() => {});
     await firebaseSignOut(auth);
     setProfile(null);
     // Remove dark mode preference so next user gets their own setting from Firestore
