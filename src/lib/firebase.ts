@@ -12,7 +12,7 @@ import { getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
 import { initAppCheck } from "@/lib/appCheck";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "",
@@ -21,8 +21,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
 };
 
-
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 // App Check runs BEFORE Firestore / Storage / Functions handles are
 // created — the first call into those services triggers the App
@@ -51,7 +50,9 @@ export const db = db_;
 
 export const storage = getStorage(app);
 if (!firebaseConfig.storageBucket) {
-  logger.warn('[Firebase] VITE_FIREBASE_STORAGE_BUCKET is not set — file uploads will fail.');
+  logger.warn(
+    "[Firebase] VITE_FIREBASE_STORAGE_BUCKET is not set — file uploads will fail."
+  );
 }
 export const functions = getFunctions(app);
 
