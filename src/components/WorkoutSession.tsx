@@ -21,6 +21,7 @@ import {
 } from "@/lib/prTracking";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
+import { platesPerSide } from "@/lib/plateCalculator";
 import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
@@ -404,6 +405,17 @@ export default function WorkoutSession({
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentExercise = day.exercises[currentExIndex];
+
+  // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
+  // barbell-only (dumbbell/machine lifts don't load plates). Standard plates;
+  // micro-plate awareness via the microloading setting is a follow-up.
+  const plateLoad = useMemo(() => {
+    if (!currentExercise || currentExercise.weight <= 0) return null;
+    if (getExerciseById(currentExercise.exerciseId)?.equipment !== "Barbell")
+      return null;
+    return platesPerSide(currentExercise.weight);
+  }, [currentExercise]);
+
   const currentSets = setLogs[currentExIndex] ?? [];
   const completedSetsInExercise = currentSets.filter((s) => s.completed).length;
   const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
@@ -1336,6 +1348,14 @@ export default function WorkoutSession({
                   "Bodyweight"
                 ? " @ Bodyweight"
                 : ""}
+          </p>
+        )}
+
+        {/* #985 — plate breakdown per side (barbell only). */}
+        {plateLoad && plateLoad.perSide.length > 0 && (
+          <p className="mt-0.5 text-center text-[11px] font-mono tabular-nums text-muted-foreground">
+            Per side: {plateLoad.perSide.join(" + ")}
+            {!plateLoad.exact && ` · ${plateLoad.leftover}kg short`}
           </p>
         )}
       </div>
