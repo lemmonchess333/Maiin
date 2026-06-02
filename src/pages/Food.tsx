@@ -27,6 +27,7 @@ import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { RotateCcw } from "lucide-react";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
+const ProModal = lazy(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { validateFoodEntry } from "@/lib/foodValidation";
@@ -275,8 +276,13 @@ export default function Food() {
   // display-only.
   const dailyTargets = useEffectiveTargets(selectedDateObj);
   const scanUsage = useScanUsage();
+  // #978 — at the AI-scan gate, open the inline ProModal (contextual, at the
+  // moment of intent) instead of a hard /upgrade redirect. Only free users
+  // reach this (trial/Pro have unlimited scans → the gate never fires). The
+  // full /upgrade comparison page stays reachable from elsewhere.
+  const [showProModal, setShowProModal] = useState(false);
   const handleUpgrade = () => {
-    window.location.href = `${import.meta.env.BASE_URL}upgrade`;
+    setShowProModal(true);
   };
   const scanOverrides = useScanButtonOverrides(
     scanUsage.remaining,
@@ -1875,6 +1881,17 @@ export default function Food() {
           setNlParsing(false);
         }}
       />
+      {/* #978 — contextual inline paywall at the AI-scan gate. Opened by
+          handleUpgrade (free users only); ProModal owns its own web Stripe
+          checkout path. featureKey drives the AI-food hero + analytics. */}
+      {showProModal && (
+        <Suspense fallback={null}>
+          <ProModal
+            featureKey="ai_food_logging"
+            onClose={() => setShowProModal(false)}
+          />
+        </Suspense>
+      )}
     </motion.div>
   );
 }
