@@ -62,6 +62,8 @@ export interface AdaptiveTdeeResult {
   trustedDays: number;
   /** Number of weigh-ins considered. */
   weighInCount: number;
+  /** Elapsed span in days, first→last weigh-in (0 if <2). Always present — drives the warmup bar pre-gate. */
+  spanDays: number;
   /** Smoothed-trend slope in kg/day; null when not ready. */
   slopeKgPerDay: number | null;
 }
@@ -113,25 +115,30 @@ export function estimateAdaptiveTDEE(
   const trustedDays = trusted.length;
   const weighInCount = input.weighIns.length;
 
+  // Span is computed ALWAYS (even below the gate) so the warmup bar can show
+  // span progress pre-gate. 0 when fewer than 2 weigh-ins (no span to measure).
+  const sortedWeighIns = [...input.weighIns].sort(
+    (a, b) => dayEpoch(a.dateKey) - dayEpoch(b.dateKey)
+  );
+  const spanDays =
+    weighInCount >= 2
+      ? (dayEpoch(sortedWeighIns[weighInCount - 1].dateKey) -
+          dayEpoch(sortedWeighIns[0].dateKey)) /
+        86_400_000
+      : 0;
+
   const notReady: AdaptiveTdeeResult = {
     ready: false,
     learnedTDEE: null,
     trustedDays,
     weighInCount,
+    spanDays,
     slopeKgPerDay: null,
   };
 
   if (trustedDays < minTrustedDays || weighInCount < minWeighIns)
     return notReady;
 
-  // Sort weigh-ins chronologically and require enough elapsed span.
-  const sortedWeighIns = [...input.weighIns].sort(
-    (a, b) => dayEpoch(a.dateKey) - dayEpoch(b.dateKey)
-  );
-  const spanDays =
-    (dayEpoch(sortedWeighIns[weighInCount - 1].dateKey) -
-      dayEpoch(sortedWeighIns[0].dateKey)) /
-    86_400_000;
   if (spanDays < minSpanDays) return notReady;
 
   // Least-squares slope of the raw weigh-ins (the regression is the de-noiser;
@@ -146,5 +153,55 @@ export function estimateAdaptiveTDEE(
   // Losing weight (negative slope) → TDEE > intake; returns maintenance even mid-deficit.
   const learnedTDEE = Math.round(avgIntake - slopeKgPerDay * kcalPerKg);
 
-  return { ready: true, learnedTDEE, trustedDays, weighInCount, slopeKgPerDay };
+  return {
+    ready: true,
+    learnedTDEE,
+    trustedDays,
+    weighInCount,
+    spanDays,
+    slopeKgPerDay,
+  };
+}
+
+/**
+ * Warmup progress (0..1) for the "personalizing your metabolism" bar (Nutr2).
+ *
+ * Derived from the gate's OWN conditions, so it reaches 1.0 if-and-only-if the
+ * gate is `ready` — it can never promise an unlock the multi-condition gate
+ * won't honor. Below the gate it's clamped to ≤0.99. The high-water latch and
+ * the "fallen behind the window" stall detection are stateful and live in the
+ * `useAdaptiveTdee` hook; this pure fn returns the instantaneous fraction.
+ */
+export interface WarmupProgress {
+  /** 0..1 gate-completeness. Exactly 1 iff `ready`; otherwise ≤0.99. */
+  fraction: number;
+  /** Mirrors the estimator's gate. */
+  ready: boolean;
+}
+
+export function computeWarmupProgress(
+  result: Pick<
+    AdaptiveTdeeResult,
+    "ready" | "trustedDays" | "weighInCount" | "spanDays"
+  >,
+  opts?: {
+    minTrustedDays?: number;
+    minWeighIns?: number;
+    minSpanDays?: number;
+  }
+): WarmupProgress {
+  const minTrustedDays =
+    opts?.minTrustedDays ?? ADAPTIVE_TDEE_DEFAULTS.minTrustedDays;
+  const minWeighIns = opts?.minWeighIns ?? ADAPTIVE_TDEE_DEFAULTS.minWeighIns;
+  const minSpanDays = opts?.minSpanDays ?? ADAPTIVE_TDEE_DEFAULTS.minSpanDays;
+
+  const raw = Math.min(
+    result.trustedDays / minTrustedDays,
+    result.weighInCount / minWeighIns,
+    result.spanDays / minSpanDays
+  );
+  const clamped = Math.max(0, Math.min(raw, 1));
+  // Honest-by-construction: only hit 1.0 when the gate has actually cleared.
+  const fraction = result.ready ? 1 : Math.min(clamped, 0.99);
+  return { fraction, ready: result.ready };
 }
