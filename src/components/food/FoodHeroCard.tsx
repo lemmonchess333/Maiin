@@ -16,6 +16,8 @@ import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
+import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
+import { useAdaptiveTdee } from "@/hooks/useAdaptiveTdee";
 
 interface DailyTotals {
   calories: number;
@@ -72,6 +74,10 @@ export default function FoodHeroCard({
      the hook. */
   const { profile } = useAuth();
   const targetsAreDefault = !profile?.targetCalories;
+
+  // Nutr2 / #981 — adaptive-TDEE warmup ("Personalizing your metabolism").
+  // Ambient/inline; active only for Pro/trial without a manual override.
+  const warmup = useAdaptiveTdee();
 
   // Synchronous init prevents first-paint flash of wrong mode
   const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
@@ -281,6 +287,15 @@ export default function FoodHeroCard({
           glowing={celebrating}
           ringDurationMs={LOG_MOMENT_MS}
         />
+
+        {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
+            ring. Hidden once the gate clears (learned takeover is #982). */}
+        {isToday && warmup.showWarmup && (
+          <AdaptiveWarmupBar
+            fraction={warmup.warmupFraction}
+            stalled={warmup.stalled}
+          />
+        )}
 
         {/* Today-at-a-glance line. One sentence, protein-priority,
             neutral over-target language. Sits inside the calorie
