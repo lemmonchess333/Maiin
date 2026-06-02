@@ -49,6 +49,9 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # FCM Web push public VAPID key (#963). Public by design (ships in the
+          # client bundle); kept as a secret only to match the other VITE_ vars.
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
       # Defence in depth: refuse to deploy a build that contains the
       # E2E marker. The marker is emitted as a top-of-bundle banner
       # only by `npm run build:e2e` (vite.config.ts function-form,
