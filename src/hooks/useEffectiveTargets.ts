@@ -20,6 +20,8 @@ import {
   getWeeklyRunTarget,
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
+import { useAdaptiveTdee } from "@/hooks/useAdaptiveTdee";
+import type { TargetSource } from "@/lib/adaptiveTarget";
 import type { UserProfile } from "@/lib/auth";
 import type { DayType } from "@/lib/types";
 
@@ -60,8 +62,20 @@ export interface EffectiveTargets {
   actualRunBurn: number;
   /** True if any workout or run is completed for the date. */
   hasCompletedActivity: boolean;
-  /** finalTarget === baseTarget (flat — no eat-back, no calorie bonus). */
+  /**
+   * The calorie target to use. Nutr1: === baseTarget (formula). Nutr2 (#982):
+   * for Pro/trial users past the data gate this becomes the learned TDEE,
+   * smoothed by the ±150/7-day cap. Free / warming-up users keep baseTarget.
+   */
   finalTarget: number;
+  /** Which number `finalTarget` came from: "formula" (default) or "learned". */
+  adaptiveSource: TargetSource;
+  /** Nutr2 #981 — render the "personalizing" warmup bar (Pro/trial, pre-gate). */
+  showWarmup: boolean;
+  /** 0..1 warmup bar fill (latched). */
+  warmupFraction: number;
+  /** Warmup has slipped behind the rolling window → show the keep-logging nudge. */
+  adaptiveStalled: boolean;
   /** Macro targets for the planned day type (net-neutral carb periodization). */
   protein: number;
   carbs: number;
@@ -166,6 +180,18 @@ function computePlannedTargets(
 
 export function useEffectiveTargets(date?: Date): EffectiveTargets {
   const { user, profile } = useAuth();
+
+  // Nutr2 (#981 + #982) — adaptive-TDEE resolution. Inactive (formula, no
+  // reads) for free / manual-override users; for Pro/trial it resolves the
+  // learned target + the warmup state. This hook is the single place the
+  // adaptive layer is consumed, so every surface stays consistent.
+  const {
+    source: adaptiveSource,
+    value: adaptiveValue,
+    showWarmup,
+    warmupFraction,
+    stalled: adaptiveStalled,
+  } = useAdaptiveTdee();
 
   const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
   const [runs, setRuns] = useState<RunRow[]>([]);
@@ -276,6 +302,31 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     }
     const actualBurn = actualLiftBurn + actualRunBurn;
 
+    // Nutr2 (#982): when the learned target takes over, the calorie total
+    // changes — recompute the macro split off the learned value so the
+    // rendered macros still reconcile (protein*4 + carbs*4 + fat*9 === target).
+    // Protein stays bodyweight-derived; carbs rebalance at the new total.
+    let { finalTarget, protein, carbs, fat } = {
+      finalTarget: planned.finalTarget,
+      protein: planned.protein,
+      carbs: planned.carbs,
+      fat: planned.fat,
+    };
+    if (
+      profile &&
+      adaptiveSource === "learned" &&
+      adaptiveValue !== finalTarget
+    ) {
+      finalTarget = adaptiveValue;
+      const m = getAdjustedTargets(
+        { ...profile, targetCalories: adaptiveValue },
+        planned.dayType
+      );
+      protein = m.protein;
+      carbs = m.carbs;
+      fat = m.fat;
+    }
+
     return {
       baseTarget: planned.baseTarget,
       dayType: planned.dayType,
@@ -284,12 +335,28 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       actualLiftBurn,
       actualRunBurn,
       hasCompletedActivity: actualBurn > 0,
-      finalTarget: planned.finalTarget, // === baseTarget
-      protein: planned.protein,
-      carbs: planned.carbs,
-      fat: planned.fat,
+      finalTarget,
+      adaptiveSource,
+      showWarmup,
+      warmupFraction,
+      adaptiveStalled,
+      protein,
+      carbs,
+      fat,
       annotation: planned.annotation,
       caption: planned.caption,
     };
-  }, [profile, workoutsLoaded, runsLoaded, workouts, runs, date]);
+  }, [
+    profile,
+    workoutsLoaded,
+    runsLoaded,
+    workouts,
+    runs,
+    date,
+    adaptiveSource,
+    adaptiveValue,
+    showWarmup,
+    warmupFraction,
+    adaptiveStalled,
+  ]);
 }
