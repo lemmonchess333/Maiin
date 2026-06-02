@@ -42,9 +42,9 @@ interface Props {
      scanner + opens the manual logger drawer. Optional — when not
      provided the toast renders without an action button. */
   onRequestManualLog?: () => void;
-  /* Effective daily calorie target — already includes day-type
-     fuel adjustments (effectiveBonus = max(strategicBonus,
-     actualBurn)). Drives the aggregate-vs-target sanity check
+  /* Daily calorie target (Nutr1: flat === baseTarget; no eat-back,
+     no calorie bonus — day-type fuelling is a net-neutral macro
+     shift). Drives the aggregate-vs-target sanity check
      in saveMeal so a 5,700 cal AI scan on a 2,200 cal target
      opens a "review items" prompt before persisting. Optional —
      when omitted the aggregate check is skipped (parent still
