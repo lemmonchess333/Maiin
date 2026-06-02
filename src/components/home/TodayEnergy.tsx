@@ -161,42 +161,53 @@ export default function TodayEnergy({
             className="overflow-hidden"
           >
             <div className="p-4 space-y-2.5">
-              <BreakdownRow
-                label={"Base TDEE (" + burn.phaseLabel + ")"}
-                value={burn.phaseAdjustedTdee}
-              />
-              {burn.workoutCalories > 0 && (
-                <BreakdownRow
-                  label="+ Workout"
-                  value={burn.workoutCalories}
-                  color={THEME.semantic.positive}
-                />
-              )}
-              {burn.runCalories > 0 && (
-                <BreakdownRow
-                  label="+ Run"
-                  value={burn.runCalories}
-                  color={THEME.semantic.vitals}
-                />
-              )}
-              <BreakdownRow
-                label="+ Steps"
-                value={burn.stepCalories}
-                placeholder="Connect Health App"
-                color={THEME.textMuted}
-              />
-              <div className="h-px bg-border/50" />
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">
-                  Today's budget
+                  Daily target ({burn.phaseLabel})
                 </span>
                 <span
                   className="text-xs font-bold font-mono tabular-nums"
                   style={{ color: THEME.semantic.nutrition }}
                 >
-                  {burn.dailyBudget.toLocaleString()}
+                  {burn.phaseAdjustedTdee.toLocaleString()}
                 </span>
               </div>
+              {/* Nutr1: activity is INFORMATIONAL — it's already counted in
+                  the target above, never added back (no eat-back budget). */}
+              {(burn.workoutCalories > 0 ||
+                burn.runCalories > 0 ||
+                burn.stepCalories > 0) && (
+                <>
+                  <div className="h-px bg-border/50" />
+                  <p
+                    className="text-[10px] uppercase tracking-wider font-semibold"
+                    style={{ color: THEME.text.muted }}
+                  >
+                    Burned today · already in your target
+                  </p>
+                  {burn.workoutCalories > 0 && (
+                    <BreakdownRow
+                      label="Workout"
+                      value={burn.workoutCalories}
+                      color={THEME.semantic.positive}
+                    />
+                  )}
+                  {burn.runCalories > 0 && (
+                    <BreakdownRow
+                      label="Run"
+                      value={burn.runCalories}
+                      color={THEME.semantic.vitals}
+                    />
+                  )}
+                  {burn.stepCalories > 0 && (
+                    <BreakdownRow
+                      label="Steps"
+                      value={burn.stepCalories}
+                      color={THEME.textMuted}
+                    />
+                  )}
+                </>
+              )}
               {nutritionInsight && (
                 <>
                   <div className="h-px bg-border/50" />

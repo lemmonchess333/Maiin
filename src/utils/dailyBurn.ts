@@ -1,21 +1,26 @@
 import type { FitnessGoal } from "@/lib/tdee";
 
 /**
- * Daily calorie burn summary for the Home "Today's Energy" card.
+ * Daily calorie summary for the Home "Today's Energy" card.
  *
- * The base (phaseAdjustedTdee) is the user's stored targetCalories from the
+ * The target (phaseAdjustedTdee) is the user's stored targetCalories from the
  * profile — written by onboarding / Settings via calculateTDEE, which already
- * bakes in the user's activityLevel multiplier AND the phase deficit. This
- * function therefore does NOT recompute NEAT or re-apply the goal offset; it
- * just sums the phase-adjusted base with on-top burn sources.
+ * bakes in the user's activityLevel multiplier AND the phase deficit.
+ *
+ * Nutr1 (expenditure-inclusive): completed activity is NEVER added back to the
+ * target — the stored TDEE already accounts for it. `workoutCalories` /
+ * `runCalories` / `stepCalories` are carried here purely for INFORMATIONAL
+ * display ("burned X — already in your target"); there is no eat-back budget.
  */
 export interface DailyBurn {
   /** Profile's stored target — already includes activity-level TDEE + phase deficit. */
   phaseAdjustedTdee: number;
+  /** Informational only — calories burned, NOT added to the target. */
   workoutCalories: number;
+  /** Informational only — calories burned, NOT added to the target. */
   runCalories: number;
+  /** Informational only — calories burned, NOT added to the target. */
   stepCalories: number;
-  dailyBudget: number;
   phase: FitnessGoal;
   phaseLabel: string;
 }
@@ -25,19 +30,18 @@ export function calcDailyBurn(
   phase: FitnessGoal,
   workoutCals: number,
   runCals: number,
-  stepCals: number,
+  stepCals: number
 ): DailyBurn {
   const phaseAdjustedTdee = targetCalories;
-  const dailyBudget = phaseAdjustedTdee + workoutCals + runCals + stepCals;
 
-  const phaseLabel = phase === "cut" ? "cut" : phase === "lean bulk" ? "bulk" : "recomp";
+  const phaseLabel =
+    phase === "cut" ? "cut" : phase === "lean bulk" ? "bulk" : "recomp";
 
   return {
     phaseAdjustedTdee,
     workoutCalories: workoutCals,
     runCalories: runCals,
     stepCalories: stepCals,
-    dailyBudget,
     phase,
     phaseLabel,
   };
