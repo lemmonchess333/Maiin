@@ -284,6 +284,12 @@ function AppRoutes() {
     // Initial flush on sign-in (covers the resumed-session case
     // where writes were queued in a prior tab / session).
     tryFlush();
+    // Render foreground FCM pushes — when the app is open, the message goes
+    // to onMessage (not the SW), so without this a push that arrives while
+    // the tab is focused is silently dropped. Idempotent + guarded.
+    import("@/lib/pushNotifications").then(({ listenForForegroundPush }) => {
+      listenForForegroundPush().catch(() => {});
+    });
     // Re-flush whenever the browser regains connectivity. Listener
     // captures `uid` in closure so it can never flush under a
     // different user — the cleanup removes it on auth change.
