@@ -29,7 +29,7 @@ import { THEME } from "@/lib/theme";
 import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
 import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeScheduleEditor";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
@@ -100,7 +100,8 @@ function ScheduleLayoutSheetBody({
     cancelRestructure,
   } = editor;
 
-  const restructureRef = useFocusTrap<HTMLDivElement>(showRestructureModal);
+  // Restructure confirm uses the Dialog primitive (focus trap, Escape,
+  // scroll-lock); overlay/panel z lifted above the BottomSheet via props.
   const sortedSchedule = schedule.slice().sort((a, b) => a.day - b.day);
   const liftSessions = sortedSchedule.filter(
     (s) => s.type === "lift" || s.type === "both"
@@ -265,70 +266,53 @@ function ScheduleLayoutSheetBody({
           the weekly lift count. The hook owns the gating; we render
           its surface here so the modal lives inside the same sheet
           stack (no z-index drift with the BottomSheet overlay). */}
-      {showRestructureModal && pendingLiftDays !== null && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-[60]"
-            role="button"
-            tabIndex={0}
-            aria-label="Close dialog"
+      <Dialog
+        open={showRestructureModal && pendingLiftDays !== null}
+        onClose={cancelRestructure}
+        title="Restructure programme?"
+        description="Changing your training days will restructure your programme. Your workout history won't be affected, but your programme will be rebuilt. This cannot be undone."
+        role="alertdialog"
+        overlayClassName="z-[60]"
+        className="z-[70]"
+      >
+        {pendingLiftDays !== null && (
+          <p className="text-sm font-medium text-foreground">
+            Your new programme will use a{" "}
+            <span className="text-primary">
+              {splitLabel(chooseSplit(pendingLiftDays))}
+            </span>{" "}
+            split.
+          </p>
+        )}
+        <div className="flex gap-2 mt-4">
+          <button
+            type="button"
             onClick={cancelRestructure}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") cancelRestructure();
-            }}
-          />
-          <div
-            ref={restructureRef}
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[70] bg-card rounded-2xl p-4 space-y-4 max-w-sm mx-auto shadow-xl"
+            className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
           >
-            <h3 className="text-base font-semibold text-foreground">
-              Restructure programme?
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Changing your training days will restructure your programme. Your
-              workout history won&apos;t be affected, but your programme will be
-              rebuilt. This cannot be undone.
-            </p>
-            <p className="text-sm font-medium text-foreground">
-              Your new programme will use a{" "}
-              <span className="text-primary">
-                {splitLabel(chooseSplit(pendingLiftDays))}
-              </span>{" "}
-              split.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={cancelRestructure}
-                className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmAndClose}
-                disabled={restructuring}
-                className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
-              >
-                {restructuring ? (
-                  <>
-                    <Spinner
-                      size="sm"
-                      variant="inverse"
-                      label="Rebuilding programme"
-                    />
-                    Rebuilding...
-                  </>
-                ) : (
-                  "Confirm"
-                )}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleConfirmAndClose}
+            disabled={restructuring}
+            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
+          >
+            {restructuring ? (
+              <>
+                <Spinner
+                  size="sm"
+                  variant="inverse"
+                  label="Rebuilding programme"
+                />
+                Rebuilding...
+              </>
+            ) : (
+              "Confirm"
+            )}
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 }
