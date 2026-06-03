@@ -1,0 +1,54 @@
+name: CI
+
+# Runs lint + the unit Vitest suite + the production build on every PR
+# into main, so a failing check BLOCKS the merge.
+#
+# Why this exists (the gap it closes): deploy.yml runs these exact steps
+# but only on `push: main` — i.e. AFTER a PR merges. emulator-tests.yml
+# runs on PRs but only the emulator / rules / e2e suites, NOT the plain
+# `npm run test` unit suite. So nothing ran the unit suite as a PR gate:
+# a PR with a failing unit test could auto-merge and only surface red
+# post-merge on main (exactly what happened with the devices-rule PR
+# #1010 — its account-deletion drift snapshot test failed only after the
+# merge). This workflow makes the unit suite a PR-time check.
+#
+# To actually GATE merges, the `unit` job must be marked a required
+# status check in the repo's branch-protection / ruleset for main —
+# that's a one-time GitHub Settings action (Settings → Rules/Branches →
+# require status checks → add "CI / unit"). Until then this runs and
+# reports red but does not block auto-merge.
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test -- --run
+      # Build (tsc -b + vite) so type / bundling errors are caught at PR
+      # time too, matching deploy.yml. Same-repo PRs have access to the
+      # VITE_ secrets; the app reads them at runtime, so the bundle is
+      # well-formed even if a value is absent.
+      - run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
