@@ -72,6 +72,11 @@ interface DialogProps {
   /** Optional className applied to the content panel (e.g. for
    *  bespoke max-height / dark-surface overrides). */
   className?: string;
+  /** Optional className applied to the backdrop overlay — typically a
+   *  z-index override (e.g. `z-[60]`) so the dialog can nest ABOVE a
+   *  sheet/drawer that already occupies the default z-50 layer. Pair
+   *  with a matching z override on `className` for the panel. */
+  overlayClassName?: string;
   children: ReactNode;
 }
 
@@ -93,6 +98,7 @@ export function Dialog({
   closeButton = false,
   role = "dialog",
   className,
+  overlayClassName,
   children,
 }: DialogProps) {
   const generatedTitleId = useId();
@@ -134,7 +140,7 @@ export function Dialog({
       {open ? (
         <>
           <motion.div
-            className="fixed inset-0 bg-black/50 z-50"
+            className={cn("fixed inset-0 bg-black/50 z-50", overlayClassName)}
             role="presentation"
             onClick={closeOnBackdrop ? onClose : undefined}
             initial={{ opacity: 0 }}
