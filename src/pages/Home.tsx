@@ -66,6 +66,7 @@ import { StreakFlame } from "@/components/StreakFlame";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
+import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 
@@ -159,28 +160,8 @@ export default function Home() {
   const [weightInput, setWeightInput] = useState("");
   const [weightSaving, setWeightSaving] = useState(false);
   const [weightSaved, setWeightSaved] = useState(false);
-  const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
-
-  // One-time trial expiry modal
-  useEffect(
-    function () {
-      if (!profile) return;
-      if (
-        !isInTrial &&
-        profile.trialExpiresAt &&
-        !profile.trialExpiryPromptShown
-      ) {
-        const expiresAt = new Date(profile.trialExpiresAt);
-        if (expiresAt.getTime() < Date.now()) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time check on mount
-          setShowTrialExpiredModal(true);
-        }
-      }
-    },
-    [profile, isInTrial]
-  );
 
   // PR-0c: single resolver call. Replaces three inline derivations
   // that disagreed with each other and with the (now-retired) Programme Today tab:
@@ -520,6 +501,40 @@ export default function Home() {
   const fellBehindPrompt = programState?.pendingFellBehindPrompt;
   const fellBehindOpen =
     !!fellBehindPrompt && fellBehindDismissedFor !== fellBehindPrompt.weekKey;
+
+  // #995 tier-4 coordinator registrations. Each surface keeps its own
+  // eligibility + persistence; the coordinator shows at most one per app-open
+  // (Trial > FellBehind > Badge > Priming). Badge is suppressed in a
+  // fell-behind visit and dropped — not deferred — if it loses.
+  //
+  // Trial-expiry eligibility is a pure derivation off the stable `today` memo
+  // (no Date.now() in render → satisfies react-hooks/purity); it replaces the
+  // old set-state-in-effect one-time check.
+  const trialExpiredEligible = !!(
+    profile &&
+    !isInTrial &&
+    profile.trialExpiresAt &&
+    !profile.trialExpiryPromptShown &&
+    new Date(profile.trialExpiresAt).getTime() < today.getTime()
+  );
+  const trialSurface = useSurface({
+    id: "trial-expired",
+    priority: 40,
+    eligible: trialExpiredEligible,
+  });
+  const fellBehindSurface = useSurface({
+    id: "fell-behind",
+    priority: 30,
+    eligible: fellBehindOpen,
+  });
+  const badgeSurface = useSurface({
+    id: "badge",
+    priority: 20,
+    eligible: !!newBadge,
+    suppressedBy: ["fell-behind"],
+    dropWhenMissed: true,
+    onDrop: dismissNewBadge,
+  });
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
@@ -1286,8 +1301,11 @@ export default function Home() {
 
       {fellBehindPrompt && (
         <FellBehindSheet
-          open={fellBehindOpen}
-          onClose={() => setFellBehindDismissedFor(fellBehindPrompt.weekKey)}
+          open={fellBehindSurface.active}
+          onClose={() => {
+            setFellBehindDismissedFor(fellBehindPrompt.weekKey);
+            fellBehindSurface.dismiss();
+          }}
           prompt={fellBehindPrompt}
           dismissFellBehindPrompt={dismissFellBehindPrompt}
           realignRacePlan={async () => {
@@ -1318,11 +1336,17 @@ export default function Home() {
         />
       )}
 
-      <BadgeEarnedModal badge={newBadge} onDismiss={dismissNewBadge} />
+      <BadgeEarnedModal
+        badge={badgeSurface.active ? newBadge : null}
+        onDismiss={() => {
+          dismissNewBadge();
+          badgeSurface.dismiss();
+        }}
+      />
 
       {/* Trial expired — one-time prompt */}
       <AnimatePresence>
-        {showTrialExpiredModal && (
+        {trialSurface.active && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -1330,7 +1354,7 @@ export default function Home() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/50 z-40"
               onClick={function () {
-                setShowTrialExpiredModal(false);
+                trialSurface.dismiss();
                 updateProfile({ trialExpiryPromptShown: true });
               }}
             />
@@ -1356,7 +1380,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={function () {
-                    setShowTrialExpiredModal(false);
+                    trialSurface.dismiss();
                     updateProfile({ trialExpiryPromptShown: true });
                   }}
                   className="flex-1 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
@@ -1366,7 +1390,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={function () {
-                    setShowTrialExpiredModal(false);
+                    trialSurface.dismiss();
                     updateProfile({ trialExpiryPromptShown: true });
                     navigate("/upgrade");
                   }}
