@@ -2348,6 +2348,45 @@ exports.hourlyStreakNudge = functions
 // sweep's _runDailyRaceReconciliationForUser convention).
 exports._maybeSendStreakNudge = maybeSendStreakNudge;
 
+// Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
+// FCM message to the caller's own registered tokens so a user can confirm
+// end-to-end delivery from Settings. Prunes dead tokens like the senders do.
+exports.sendTestPush = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+    const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+    if (tokens.length === 0) {
+      return { ok: false, reason: "no-registered-device", sent: 0 };
+    }
+    const batch = await admin.messaging().sendEachForMulticast({
+      tokens,
+      notification: {
+        title: "Tropos 🔔",
+        body: "Push notifications are working — you're all set.",
+      },
+      data: { type: "test", route: "/" },
+    });
+    const dead = tokensToPrune(batch, tokens);
+    await Promise.all(
+      dead.map((t) =>
+        db
+          .doc(`users/${uid}/devices/${t}`)
+          .delete()
+          .catch(() => {})
+      )
+    );
+    return {
+      ok: batch.successCount > 0,
+      sent: batch.successCount,
+      pruned: dead.length,
+    };
+  });
+
 // ══════════════════════════════════════════════
 // PR-L L1 + L3 — daily race-reconciliation sweep
 // ══════════════════════════════════════════════
