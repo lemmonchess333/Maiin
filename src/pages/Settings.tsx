@@ -175,6 +175,14 @@ export default function Settings() {
     }
   };
 
+  // #984 "Hide the number" anti-anxiety mode. Mirrors toggleDark's
+  // profile-update path (no raw setDoc — goes through updateProfile,
+  // which routes the guarded write). No optimistic DOM swap needed:
+  // the consuming surfaces re-render off profile.hideWeightNumber.
+  const toggleHideWeightNumber = async () => {
+    await updateProfile({ hideWeightNumber: !profile?.hideWeightNumber });
+  };
+
   if (!profile) return null;
 
   const itemVariant = {
@@ -294,6 +302,7 @@ export default function Settings() {
           profile={profile}
           toggleUnit={toggleUnit}
           toggleDark={toggleDark}
+          toggleHideWeightNumber={toggleHideWeightNumber}
         />
       </TrackSettingsSectionView>
 

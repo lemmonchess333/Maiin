@@ -1,18 +1,37 @@
 import { THEME } from "@/lib/theme";
-import { Scale, Footprints, ArrowRight, ChevronRight } from "lucide-react";
+import {
+  Scale,
+  Footprints,
+  ArrowRight,
+  ChevronRight,
+  ArrowDown,
+  ArrowUp,
+  Minus,
+} from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+
+export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
 export default function WeightStepsTiles({
   lastWeight,
   weightUnit,
   onLogWeight,
   lastWeightDate,
+  hideNumber = false,
+  weightTrend = null,
 }: {
   lastWeight: string | null;
   weightUnit: string;
   onLogWeight: () => void;
   lastWeightDate: string;
+  /* #984 "Hide the number" anti-anxiety mode. When true AND a weight
+     exists, the raw figure is replaced with a calm direction
+     indicator (arrow + short phrase) + the date. */
+  hideNumber?: boolean;
+  /* Trend direction derived from logged weight history. null = we
+     have a weight but not enough history to call a direction. */
+  weightTrend?: WeightTrendDirection;
 }) {
   /* Home2c a11y pin: each tile button gets an aria-label that
      surfaces its state compactly for screen readers. Without these,
@@ -20,9 +39,33 @@ export default function WeightStepsTiles({
      micro label \u2192 value or em-dash \u2192 date) which is verbose and
      loses the empty-state intent. */
   const weightUnitDisplay = weightUnit === "lbs" ? "lb" : weightUnit;
-  const weightAriaLabel = lastWeight
-    ? `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`
-    : "Weight not yet logged. Log your weight to start tracking trends.";
+
+  // #984 \u2014 when hiding the number, the phrase + arrow convey the same
+  // intent without ever reading the figure aloud.
+  const hidden = hideNumber && !!lastWeight;
+  const trendPhrase = !hidden
+    ? null
+    : weightTrend === "down"
+      ? "Trending down"
+      : weightTrend === "up"
+        ? "Trending up"
+        : weightTrend === "flat"
+          ? "Steady"
+          : "Tracking";
+  const TrendIcon =
+    weightTrend === "down"
+      ? ArrowDown
+      : weightTrend === "up"
+        ? ArrowUp
+        : weightTrend === "flat"
+          ? ArrowRight
+          : Minus;
+
+  const weightAriaLabel = !lastWeight
+    ? "Weight not yet logged. Log your weight to start tracking trends."
+    : hidden
+      ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
+      : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
   return (
     <div className="grid grid-cols-2 gap-2">
       <button
@@ -53,16 +96,29 @@ export default function WeightStepsTiles({
             Weight
           </p>
         </div>
-        <div className="flex items-baseline gap-1">
-          <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
-            {lastWeight ? lastWeight : "\u2014"}
-          </p>
-          {lastWeight && (
-            <span className="text-xs" style={{ color: THEME.text.muted }}>
-              {weightUnitDisplay}
-            </span>
-          )}
-        </div>
+        {hidden ? (
+          <div className="flex items-center gap-1.5">
+            <TrendIcon
+              className="size-4 flex-shrink-0"
+              style={{ color: THEME.semantic.activity }}
+              aria-hidden="true"
+            />
+            <p className="text-base font-bold leading-none text-foreground">
+              {trendPhrase}
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+              {lastWeight ? lastWeight : "\u2014"}
+            </p>
+            {lastWeight && (
+              <span className="text-xs" style={{ color: THEME.text.muted }}>
+                {weightUnitDisplay}
+              </span>
+            )}
+          </div>
+        )}
         <p className="text-micro mt-1" style={{ color: THEME.text.muted }}>
           {lastWeightDate}
         </p>
