@@ -41,41 +41,6 @@ export interface Crew {
   leaderboardUpdatedAt?: unknown;
 }
 
-const DEFAULT_CREWS: Omit<Crew, "id" | "memberCount" | "createdAt">[] = [
-  {
-    name: "Hybrid Athletes",
-    description: "Lift and run — best of both worlds",
-    icon: "dumbbell",
-    leaderboardMetric: "hybrid_score",
-    type: "default",
-    createdBy: "system",
-  },
-  {
-    name: "Runners",
-    description: "Road, trail, track — all distances welcome",
-    icon: "footprints",
-    leaderboardMetric: "total_km",
-    type: "default",
-    createdBy: "system",
-  },
-  {
-    name: "Lifters",
-    description: "Strength, power, and muscle",
-    icon: "dumbbell",
-    leaderboardMetric: "total_volume",
-    type: "default",
-    createdBy: "system",
-  },
-  {
-    name: "General Fitness",
-    description: "Stay active, stay healthy",
-    icon: "star",
-    leaderboardMetric: "workout_count",
-    type: "default",
-    createdBy: "system",
-  },
-];
-
 /**
  * Crew-load failure shape (issue #846).
  *
@@ -101,26 +66,15 @@ export function useCrews() {
 
   const fetchCrews = useCallback(async () => {
     try {
+      // Read-only. Default ("system") crews are provisioned server-side by
+      // scripts/seed-default-crews.ts — the client never seeds them. The old
+      // client seed wrote createdBy:"system" docs the /groups create rule
+      // (createdBy == auth.uid) always denied, flooding the console on every
+      // first /social load and leaving the list empty (issue #846).
       const snap = await getDocs(
         query(collection(db, "groups"), orderBy("memberCount", "desc"))
       );
-      let list = snap.docs.map((d) => parseCrew(d.id, d.data()) as Crew);
-
-      // Seed defaults if no default crews exist
-      const hasDefaults = list.some((c) => c.type === "default");
-      if (!hasDefaults) {
-        for (const crew of DEFAULT_CREWS) {
-          await addDocGuarded(collection(db, "groups"), {
-            ...crew,
-            memberCount: 0,
-            createdAt: serverTimestamp(),
-          });
-        }
-        const snap2 = await getDocs(
-          query(collection(db, "groups"), orderBy("memberCount", "desc"))
-        );
-        list = snap2.docs.map((d) => parseCrew(d.id, d.data()) as Crew);
-      }
+      const list = snap.docs.map((d) => parseCrew(d.id, d.data()) as Crew);
 
       setCrews(list);
       setError(null);

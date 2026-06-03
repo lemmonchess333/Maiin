@@ -80,6 +80,20 @@ Expected output: `[seed-e2e-user] Created user: <uid>` then
 `Profile written for <uid>`. If it says "user already exists" that's
 fine — the script is idempotent.
 
+Then seed the default crews so `/social` → Crews renders real data
+instead of an empty list (issue #846 — the client no longer seeds
+these; the Admin SDK does):
+
+```bash
+GCLOUD_PROJECT=demo-tropos \
+  FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+  npm run seed:default-crews
+```
+
+Expected output: four `Created: <name>` lines. Idempotent — a re-run
+prints `Skip (exists)` for each. (No `--prod` flag needed: the
+emulator host is set, so the production guard is satisfied.)
+
 ### 3. Build the preview bundle
 
 The `VITE_USE_EMULATORS=true` flag triggers `connectAuthEmulator()` +
