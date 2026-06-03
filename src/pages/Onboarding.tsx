@@ -1483,6 +1483,7 @@ export default function Onboarding() {
                       </label>
                       <input
                         type="range"
+                        aria-label="Run days per week"
                         min="1"
                         max={7}
                         value={weeklyRunDays}
@@ -1569,6 +1570,7 @@ export default function Onboarding() {
                         </p>
                         <input
                           type="date"
+                          aria-label="Race target date"
                           value={raceTargetDate}
                           onChange={(e) => setRaceTargetDate(e.target.value)}
                           className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"
