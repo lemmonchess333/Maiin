@@ -20,6 +20,8 @@ import type { WorkoutReminders } from "@/hooks/useWorkoutReminders";
 import type { StreakReminderPrefs } from "@/hooks/useStreakReminder";
 import { useAuth } from "@/lib/auth";
 import { usePushSettings } from "@/hooks/usePushSettings";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase";
 import {
   registerDeviceToken,
   unregisterDeviceToken,
@@ -49,6 +51,27 @@ export default function NotificationsSection({
   // server senders read, plus token register/revoke on the global toggle.
   const { user } = useAuth();
   const { consent: pushConsent, update: updatePushConsent } = usePushSettings();
+
+  // #965 — fire a server→device test push to this user's registered tokens.
+  const handleTestPush = async () => {
+    haptic("light");
+    try {
+      const fn = httpsCallable<unknown, { ok: boolean; reason?: string }>(
+        functions,
+        "sendTestPush"
+      );
+      const { data } = await fn();
+      if (data.ok) {
+        toast.success("Test push sent — should arrive in a few seconds.");
+      } else if (data.reason === "no-registered-device") {
+        toast.error("No device registered yet — toggle push off and on again.");
+      } else {
+        toast.error("Couldn't send the test push.");
+      }
+    } catch {
+      toast.error("Couldn't send the test push.");
+    }
+  };
 
   // Permission state for the inline denied-banner. Re-poll on every toggle
   // action below so if the user opts in, hits the OS prompt, and denies,
@@ -466,6 +489,19 @@ export default function NotificationsSection({
               />
             </div>
           ))}
+
+        {/* #965 — on-demand test push so the user can confirm end-to-end
+            server→device delivery (works with the app closed in PWA mode). */}
+        {pushConsent.enabled && (
+          <button
+            type="button"
+            onClick={handleTestPush}
+            className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
+          >
+            <span className="text-sm text-foreground">Send a test push</span>
+            <span className="text-sm font-medium text-primary">Send test</span>
+          </button>
+        )}
       </div>
     </AccordionSection>
   );
