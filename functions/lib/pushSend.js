@@ -38,37 +38,41 @@ function tokensToPrune(batch, tokens) {
 }
 
 /**
- * The streak-nudge FCM message. Generic copy + data only (Q7: payloads transit
- * FCM and show on lock screens — no PII / health data / streak counts). The
+ * The streak-nudge FCM message. DATA-ONLY (no top-level `notification`): the
+ * SW's onBackgroundMessage only fires reliably on iOS PWAs for data messages,
+ * so title/body travel in `data` and the SW renders them. Generic copy (Q7:
+ * payloads transit FCM and show on lock screens — no PII / health / counts).
  * `data.route` deep-links when the notification is tapped (see the SW).
  *
- * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ * @returns {{ data: { type: string, route: string, title: string, body: string } }}
  */
 function buildStreakNudgeMessage() {
   return {
-    notification: {
+    data: {
+      type: "streak",
+      route: "/",
       title: "Keep your streak alive 🔥",
       body: "Log today to keep your streak going.",
     },
-    data: { type: "streak", route: "/" },
   };
 }
 
 /**
- * The badge-earned FCM message. Generic copy + data only (Q7). Badge NAMES
- * are deliberately omitted — names like "Month Master" / "Week Warrior" encode
- * a streak threshold, which would leak a streak count onto the lock screen.
- * The `data.route` deep-links to Home where the badge surface lives.
+ * The badge-earned FCM message. DATA-ONLY (see buildStreakNudgeMessage). Badge
+ * NAMES are deliberately omitted — names like "Month Master" / "Week Warrior"
+ * encode a streak threshold, which would leak a streak count onto the lock
+ * screen. `data.route` deep-links to Home where the badge surface lives.
  *
- * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ * @returns {{ data: { type: string, route: string, title: string, body: string } }}
  */
 function buildBadgeNudgeMessage() {
   return {
-    notification: {
+    data: {
+      type: "badge",
+      route: "/",
       title: "New badge unlocked 🏅",
       body: "Open Tropos to see what you earned.",
     },
-    data: { type: "badge", route: "/" },
   };
 }
 
