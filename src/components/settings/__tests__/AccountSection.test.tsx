@@ -17,7 +17,13 @@
  * presence-based check satisfies App Store review today.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 
 vi.mock("@/lib/socialApi", () => ({
   deleteAccount: vi.fn(),
@@ -95,7 +101,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("progresses to the DELETE-typing confirmation when the user taps 'Delete anyway'", () => {
+  it("progresses to the DELETE-typing confirmation when the user taps 'Delete anyway'", async () => {
     useAuthMock.mockReturnValue({
       user: makeUser(),
       profile: { appleOriginalTransactionId: "1000000000000001" },
@@ -118,10 +124,13 @@ describe("AccountSection — P0b Apple subscription warning", () => {
 
     // Apple warning gone, typed-DELETE modal now visible. User
     // proceeded despite the active iOS subscription (still has to
-    // type DELETE to confirm).
-    expect(
-      screen.queryByText(/Cancel your App Store subscription first/i)
-    ).not.toBeInTheDocument();
+    // type DELETE to confirm). The warning is now a Dialog primitive,
+    // so it fades out via AnimatePresence — await its removal.
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Cancel your App Store subscription first/i)
+      ).not.toBeInTheDocument()
+    );
     expect(screen.getByPlaceholderText("Type DELETE")).toBeInTheDocument();
   });
 
