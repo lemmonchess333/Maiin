@@ -245,6 +245,7 @@ export default function Home() {
     dailyFat,
     todayRunCals,
     lastWeightInfo,
+    weightTrend,
     setLastWeightInfo,
     postWorkoutNudge,
   } = useHomeData(user, profile, workouts, weightUnit);
@@ -1021,6 +1022,8 @@ export default function Home() {
                   setShowWeightSheet(true);
                 }}
                 lastWeightDate={weightRelativeTime}
+                hideWeightNumber={profile?.hideWeightNumber}
+                weightTrend={weightTrend}
                 todayRun={todayRun}
                 userSegment={userSegment}
                 muscleGroups={muscleGroups}
