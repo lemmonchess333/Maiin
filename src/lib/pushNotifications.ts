@@ -20,12 +20,16 @@ import {
   getToken,
   deleteToken,
   isSupported,
+  onMessage,
 } from "firebase/messaging";
 import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { app, db, firebaseConfig } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY ?? "";
+
+/** Notification icon (under the /Maiin/ base path), shared with the SW. */
+const NOTIFICATION_ICON = `${import.meta.env.BASE_URL}icons/icon-192x192.png`;
 
 /** The FCM SW, with the public Firebase config passed as query params (the SW
  *  can't read import.meta.env). BASE_URL keeps it under the /Maiin/ scope. */
@@ -136,5 +140,41 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
     await deleteToken(messaging).catch(() => {});
   } catch (err) {
     logger.error("[push] unregisterDeviceToken failed", err);
+  }
+}
+
+/**
+ * Render foreground pushes. When the app is in the FOREGROUND, FCM delivers the
+ * message to the page's `onMessage` (NOT the SW's onBackgroundMessage) — so
+ * without this handler a push that arrives while the app is open is silently
+ * dropped (no banner, not even in Notification Centre). This shows it via the
+ * active SW registration so it surfaces like any other notification.
+ *
+ * Idempotent + guarded: safe to call once on app boot. Returns an unsubscribe
+ * (or a no-op when push is unsupported).
+ */
+let foregroundUnsub: (() => void) | null = null;
+export async function listenForForegroundPush(): Promise<() => void> {
+  if (foregroundUnsub) return foregroundUnsub;
+  if (!(await isPushSupported())) return () => {};
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    foregroundUnsub = onMessage(getMessaging(app), (payload) => {
+      const d = (payload && payload.data) || {};
+      const title = d.title || payload?.notification?.title || "Tropos";
+      const body = d.body || payload?.notification?.body || "";
+      reg
+        .showNotification(title, {
+          body,
+          icon: NOTIFICATION_ICON,
+          badge: NOTIFICATION_ICON,
+          data: d,
+        })
+        .catch((err) => logger.warn("[push] foreground showNotification", err));
+    });
+    return foregroundUnsub;
+  } catch (err) {
+    logger.error("[push] listenForForegroundPush failed", err);
+    return () => {};
   }
 }
