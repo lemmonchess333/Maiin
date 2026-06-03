@@ -30,14 +30,20 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 const ICON = "/Maiin/icons/icon-192x192.png";
 
+// We send DATA-ONLY messages (no top-level `notification` field) so this
+// handler is reliably invoked on iOS PWAs — FCM's auto-display of
+// `notification` messages doesn't fire onBackgroundMessage there, so nothing
+// would show. Title/body therefore arrive in `data`. Falls back to the
+// `notification` field for any legacy/auto-display payloads.
 messaging.onBackgroundMessage((payload) => {
+  const d = payload.data || {};
   const n = payload.notification || {};
-  const title = n.title || "Tropos";
+  const title = d.title || n.title || "Tropos";
   self.registration.showNotification(title, {
-    body: n.body || "",
+    body: d.body || n.body || "",
     icon: ICON,
     badge: ICON,
-    data: payload.data || {},
+    data: d,
   });
 });
 
