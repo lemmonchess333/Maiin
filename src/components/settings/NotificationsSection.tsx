@@ -452,7 +452,19 @@ export default function NotificationsSection({
                   return;
                 }
                 await updatePushConsent({ enabled: true });
-                if (user) await registerDeviceToken(user.uid);
+                if (user) {
+                  const result = await registerDeviceToken(user.uid);
+                  if (result.ok) {
+                    toast.success("Push on — this device is registered.");
+                  } else {
+                    // Surface the exact failure (iOS web push fails quietly).
+                    toast.error(
+                      `Couldn't register for push (${result.reason}${
+                        result.detail ? `: ${result.detail}` : ""
+                      }).`
+                    );
+                  }
+                }
               } else {
                 await updatePushConsent({ enabled: false });
                 if (user) await unregisterDeviceToken(user.uid);
