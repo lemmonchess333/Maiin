@@ -39,7 +39,10 @@ beforeEach(() => {
   isSupportedSpy.mockResolvedValue(true);
   getTokenSpy.mockResolvedValue("tok123");
   vi.stubGlobal("navigator", {
-    serviceWorker: { register: vi.fn(async () => ({ scope: "/Maiin/" })) },
+    serviceWorker: {
+      register: vi.fn(async () => ({ scope: "/Maiin/" })),
+      ready: Promise.resolve({ scope: "/Maiin/" }),
+    },
   });
   vi.stubGlobal("Notification", { permission: "granted" });
   vi.stubEnv("VITE_FIREBASE_VAPID_KEY", "vapid123");
@@ -48,9 +51,9 @@ beforeEach(() => {
 describe("registerDeviceToken", () => {
   it("writes the token to users/{uid}/devices/{token} with platform web", async () => {
     const { registerDeviceToken } = await import("../pushNotifications");
-    const tok = await registerDeviceToken("u1");
+    const result = await registerDeviceToken("u1");
 
-    expect(tok).toBe("tok123");
+    expect(result).toEqual({ ok: true, token: "tok123" });
     expect(docSpy).toHaveBeenCalledWith(
       { __db: true },
       "users",
@@ -65,24 +68,44 @@ describe("registerDeviceToken", () => {
     });
   });
 
-  it("no-ops (no write) when the VAPID key is absent", async () => {
+  it("reports 'unsupported' (no write) when the VAPID key is absent", async () => {
     vi.stubEnv("VITE_FIREBASE_VAPID_KEY", "");
     vi.resetModules();
     const { registerDeviceToken } = await import("../pushNotifications");
-    expect(await registerDeviceToken("u1")).toBeNull();
+    expect(await registerDeviceToken("u1")).toMatchObject({
+      ok: false,
+      reason: "unsupported",
+    });
     expect(setDocSpy).not.toHaveBeenCalled();
   });
 
-  it("no-ops when notification permission isn't granted", async () => {
+  it("reports 'no-permission' when permission isn't granted", async () => {
     vi.stubGlobal("Notification", { permission: "default" });
     const { registerDeviceToken } = await import("../pushNotifications");
-    expect(await registerDeviceToken("u1")).toBeNull();
+    expect(await registerDeviceToken("u1")).toEqual({
+      ok: false,
+      reason: "no-permission",
+    });
     expect(setDocSpy).not.toHaveBeenCalled();
   });
 
-  it("no-ops without a uid", async () => {
+  it("reports 'token-failed' when getToken throws (surfaces the detail)", async () => {
+    getTokenSpy.mockRejectedValue(new Error("SW not active"));
     const { registerDeviceToken } = await import("../pushNotifications");
-    expect(await registerDeviceToken("")).toBeNull();
+    expect(await registerDeviceToken("u1")).toMatchObject({
+      ok: false,
+      reason: "token-failed",
+      detail: "SW not active",
+    });
+    expect(setDocSpy).not.toHaveBeenCalled();
+  });
+
+  it("reports 'no-uid' without a uid", async () => {
+    const { registerDeviceToken } = await import("../pushNotifications");
+    expect(await registerDeviceToken("")).toEqual({
+      ok: false,
+      reason: "no-uid",
+    });
     expect(setDocSpy).not.toHaveBeenCalled();
   });
 });
