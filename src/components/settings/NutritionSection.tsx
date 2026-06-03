@@ -369,6 +369,7 @@ export default function NutritionSection({
         </label>
         <input
           type="range"
+          aria-label="Weekly meal logging target"
           min="0"
           max="20"
           value={mealsTarget}

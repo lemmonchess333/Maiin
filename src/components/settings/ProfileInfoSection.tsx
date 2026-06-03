@@ -58,6 +58,7 @@ export default function ProfileInfoSection({
     >
       <input
         type="text"
+        aria-label="Display name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onBlur={async () => {
