@@ -56,6 +56,12 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   { pathPattern: "match /users/{uid}/bodyweightLogs/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/programState/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/streaks/{doc}", sides: ["owner"] },
+  {
+    pathPattern: "match /users/{uid}/devices/{token}",
+    sides: ["owner"],
+    notes:
+      "FCM device tokens (push #961) — owner writes via registerDeviceToken, deletes on sign-out; senders read via Admin SDK",
+  },
   { pathPattern: "match /users/{uid}/shoes/{shoeId}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/logs/{date}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/stats/{doc}", sides: ["owner"] },
@@ -217,11 +223,12 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (26 paths post-2026-05-26 audit PR 2)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (27 paths — push #961 added users/{uid}/devices)", () => {
     // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
     // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
     // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
-    // /groups/{crewId}/members/{userId} moved to server-only.
-    expect(PROTECTED_PATHS.length).toBe(26);
+    // /groups/{crewId}/members/{userId} moved to server-only (→26);
+    // push #961 added /users/{uid}/devices/{token} (→27).
+    expect(PROTECTED_PATHS.length).toBe(27);
   });
 });
