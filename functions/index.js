@@ -1,3 +1,11 @@
+// Deploy note (2026-06-03): all SEVEN bound Secret Manager secrets
+// (APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY, BILLING_HMAC_SECRET,
+// BILLING_PREVIOUS_HMAC_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
+// are provisioned AND the runtime SA (appspot.gserviceaccount.com) was granted
+// Secret Accessor on each (the deploy SA can't setIamPolicy, so the binding was
+// added manually). This change re-triggers deploy-functions so the push senders
+// + sendTestPush finally ship.
+//
 // firebase-functions v6+ repointed the bare `require("firebase-functions")`
 // at the 2nd-gen API. Every export in this file is 1st-gen
 // (runWith().https.onCall/onRequest, .pubsub.schedule,
@@ -2597,33 +2605,89 @@ exports.sendTestPush = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
-    const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-    const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
-    if (tokens.length === 0) {
-      return { ok: false, reason: "no-registered-device", sent: 0 };
+    try {
+      const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+      const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+      if (tokens.length === 0) {
+        return { ok: false, reason: "no-registered-device", sent: 0 };
+      }
+      let batch;
+      try {
+        // Data-only (no top-level `notification`) so the SW's
+        // onBackgroundMessage reliably fires on iOS PWAs and renders it.
+        // Title/body travel in `data`.
+        batch = await admin.messaging().sendEachForMulticast({
+          tokens,
+          data: {
+            type: "test",
+            route: "/",
+            title: "Tropos 🔔",
+            body: "Push notifications are working — you're all set.",
+          },
+        });
+      } catch (err) {
+        console.error("sendTestPush: FCM send threw", {
+          uid,
+          code: err.code,
+          message: err.message,
+        });
+        return {
+          ok: false,
+          reason: "send-threw",
+          detail: err.code || err.message || "unknown",
+          sent: 0,
+        };
+      }
+      const dead = tokensToPrune(batch, tokens);
+      await Promise.all(
+        dead.map((t) =>
+          db
+            .doc(`users/${uid}/devices/${t}`)
+            .delete()
+            .catch(() => {})
+        )
+      );
+      if (batch.successCount === 0) {
+        // Every token rejected — surface the first failure's FCM code so the
+        // client (and we) can see WHY nothing arrived (e.g.
+        // messaging/third-party-auth-error = VAPID/key mismatch on web push).
+        const firstFail = (batch.responses || []).find((r) => r && !r.success);
+        const code =
+          (firstFail && firstFail.error && firstFail.error.code) || "unknown";
+        console.error("sendTestPush: 0 delivered", {
+          uid,
+          code,
+          pruned: dead.length,
+        });
+        return {
+          ok: false,
+          reason: "send-failed",
+          detail: code,
+          sent: 0,
+          pruned: dead.length,
+        };
+      }
+      return {
+        ok: true,
+        sent: batch.successCount,
+        pruned: dead.length,
+      };
+    } catch (err) {
+      // Any unguarded throw (devices read, admin.messaging init, etc.) — surface
+      // the real message instead of an opaque functions/internal to the client.
+      console.error("sendTestPush: handler threw", {
+        uid,
+        code: err.code,
+        message: err.message,
+        stack: err.stack,
+      });
+      return {
+        ok: false,
+        reason: "handler-threw",
+        detail: err.code || err.message || "unknown",
+        sent: 0,
+      };
     }
-    const batch = await admin.messaging().sendEachForMulticast({
-      tokens,
-      notification: {
-        title: "Tropos 🔔",
-        body: "Push notifications are working — you're all set.",
-      },
-      data: { type: "test", route: "/" },
-    });
-    const dead = tokensToPrune(batch, tokens);
-    await Promise.all(
-      dead.map((t) =>
-        db
-          .doc(`users/${uid}/devices/${t}`)
-          .delete()
-          .catch(() => {})
-      )
-    );
-    return {
-      ok: batch.successCount > 0,
-      sent: batch.successCount,
-      pruned: dead.length,
-    };
   });
 
 // ══════════════════════════════════════════════

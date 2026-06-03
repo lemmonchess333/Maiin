@@ -67,25 +67,30 @@ import {
 } from "../lib/pushSend";
 
 describe("buildStreakNudgeMessage", () => {
-  it("uses generic copy + deep-link data, with no PII / numbers (Q7)", () => {
+  it("is DATA-ONLY (no top-level notification — iOS PWA reliability) with generic copy (Q7)", () => {
     const m = buildStreakNudgeMessage();
-    expect(m.notification.title).toBeTruthy();
-    expect(m.notification.body).toBeTruthy();
-    expect(m.data).toEqual({ type: "streak", route: "/" });
-    // No streak count / number leaked into the body.
-    expect(m.notification.body).not.toMatch(/\d/);
+    // Data-only: title/body live in data so the SW renders them on iOS.
+    expect(m.notification).toBeUndefined();
+    expect(m.data.type).toBe("streak");
+    expect(m.data.route).toBe("/");
+    expect(m.data.title).toBeTruthy();
+    expect(m.data.body).toBeTruthy();
+    // No streak count / number leaked.
+    expect(m.data.body).not.toMatch(/\d/);
   });
 });
 
 describe("buildBadgeNudgeMessage", () => {
-  it("uses generic copy + deep-link data (Q7 — badge NAMES leak streak counts, so omit them)", () => {
+  it("is DATA-ONLY with generic copy (Q7 — badge NAMES leak streak counts, so omit them)", () => {
     const m = buildBadgeNudgeMessage();
-    expect(m.notification.title).toBeTruthy();
-    expect(m.notification.body).toBeTruthy();
-    expect(m.data).toEqual({ type: "badge", route: "/" });
+    expect(m.notification).toBeUndefined();
+    expect(m.data.type).toBe("badge");
+    expect(m.data.route).toBe("/");
+    expect(m.data.title).toBeTruthy();
+    expect(m.data.body).toBeTruthy();
     // No number / streak-implying digit, and no specific badge name.
-    expect(m.notification.body).not.toMatch(/\d/);
-    expect(m.notification.title).not.toMatch(/\d/);
+    expect(m.data.body).not.toMatch(/\d/);
+    expect(m.data.title).not.toMatch(/\d/);
   });
 });
 
