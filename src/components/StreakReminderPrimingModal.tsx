@@ -137,7 +137,7 @@ function PrimingDialog({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[60] flex items-center justify-center px-6"
+      className="fixed inset-0 z-50 flex items-center justify-center px-6"
       style={{ background: "rgba(0,0,0,0.55)" }}
       // Tap-outside / backdrop click → treated as "No thanks" per the spec:
       // user saw the prompt and chose to ignore it.
