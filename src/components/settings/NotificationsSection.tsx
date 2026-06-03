@@ -297,6 +297,7 @@ export default function NotificationsSection({
                 </div>
                 <input
                   type="time"
+                  aria-label={`${meal} reminder time`}
                   value={mealReminders[meal].time}
                   onChange={(e) =>
                     updateMealReminders({
@@ -359,6 +360,7 @@ export default function NotificationsSection({
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
+              aria-label="Workout reminder time"
               value={workoutReminders.time}
               onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
               className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
@@ -423,6 +425,7 @@ export default function NotificationsSection({
             <span className="text-sm text-foreground">Reminder time</span>
             <input
               type="time"
+              aria-label="Streak reminder time"
               value={streakReminder.time}
               onChange={(e) => updateStreakReminder({ time: e.target.value })}
               className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
