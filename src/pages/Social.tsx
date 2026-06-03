@@ -1311,6 +1311,7 @@ export default function Social() {
                     </h3>
                     <input
                       type="text"
+                      aria-label="Crew name"
                       placeholder="Crew name"
                       value={newGroupName}
                       onChange={(e) => setNewGroupName(e.target.value)}
@@ -1318,6 +1319,7 @@ export default function Social() {
                     />
                     <input
                       type="text"
+                      aria-label="Crew description"
                       placeholder="Description"
                       value={newGroupDesc}
                       onChange={(e) => setNewGroupDesc(e.target.value)}

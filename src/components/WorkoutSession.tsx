@@ -1208,6 +1208,7 @@ export default function WorkoutSession({
                           ) : (
                             <button
                               type="button"
+                              aria-label="Mark set complete"
                               onClick={() => completeInlineSet(setIdx)}
                               className="size-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
                             />

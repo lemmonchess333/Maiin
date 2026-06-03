@@ -160,6 +160,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
       <input
         ref={fileRef}
         type="file"
+        aria-label="Upload profile photo"
         accept="image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={handleFile}
