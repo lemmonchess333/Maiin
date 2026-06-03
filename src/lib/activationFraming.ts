@@ -1,0 +1,75 @@
+/**
+ * Home cold-start activation framing (#972).
+ *
+ * Pure + deterministic (now is injected, never read inside) so the
+ * day-type × per-domain-emptiness × account-age matrix is unit-testable in
+ * one place — both the Home wiring and the test read this, never a parallel
+ * inline formula.
+ *
+ * The rule: for a NEW user, the Home cold-start should drive a first action
+ * matching what today actually is, reusing the existing day-type cards:
+ *   - lift / both day → frame the existing LiftCTACard as "your first workout"
+ *   - run / both day  → frame the existing RunCTACard as "your first run"
+ *   - rest day        → surface a "log your first meal" card
+ *
+ * Each domain activates INDEPENDENTLY off its own lifetime count (a committed
+ * lifter who has never logged food still gets the rest-day meal nudge). The
+ * 14-day window off `createdAt` is the guard against permanently telling a
+ * settled single-domain user they haven't done X — and it's what naturally
+ * excludes returning-but-reset users (who are almost always well past 14 days).
+ */
+export const ACTIVATION_WINDOW_DAYS = 14;
+const DAY_MS = 86_400_000;
+
+export type TodayType = "lift" | "run" | "both" | "rest";
+
+export interface ActivationFramingInput {
+  /** profile.createdAt in epoch ms, or null when not yet a Timestamp. */
+  createdAtMs: number | null;
+  /** Injected for determinism. */
+  nowMs: number;
+  todayType: TodayType;
+  /** Lifetime logged-workout count. */
+  workoutCount: number;
+  /** Lifetime logged-run count. */
+  runCount: number;
+  /** Lifetime logged-meal count. */
+  mealCount: number;
+}
+
+export interface ActivationFraming {
+  withinWindow: boolean;
+  /** Frame the lift card as "your first workout". */
+  firstWorkout: boolean;
+  /** Frame the run card as "your first run". */
+  firstRun: boolean;
+  /** Show the rest-day "log your first meal" card. */
+  firstMeal: boolean;
+}
+
+/** True when `nowMs` is within ACTIVATION_WINDOW_DAYS of `createdAtMs`. */
+export function isWithinActivationWindow(
+  createdAtMs: number | null,
+  nowMs: number
+): boolean {
+  if (createdAtMs == null) return false;
+  const age = nowMs - createdAtMs;
+  // age >= 0 guards clock skew / a future createdAt.
+  return age >= 0 && age <= ACTIVATION_WINDOW_DAYS * DAY_MS;
+}
+
+export function getActivationFraming(
+  input: ActivationFramingInput
+): ActivationFraming {
+  const { createdAtMs, nowMs, todayType, workoutCount, runCount, mealCount } =
+    input;
+  const withinWindow = isWithinActivationWindow(createdAtMs, nowMs);
+  const isLiftish = todayType === "lift" || todayType === "both";
+  const isRunish = todayType === "run" || todayType === "both";
+  return {
+    withinWindow,
+    firstWorkout: withinWindow && isLiftish && workoutCount === 0,
+    firstRun: withinWindow && isRunish && runCount === 0,
+    firstMeal: withinWindow && todayType === "rest" && mealCount === 0,
+  };
+}
