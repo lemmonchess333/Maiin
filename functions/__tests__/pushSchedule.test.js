@@ -7,6 +7,7 @@ import {
   localHourInTz,
   withinQuietHours,
   isLocalSendHour,
+  localWeekdayInTz,
 } from "../lib/pushSchedule";
 
 // June 2026: London = BST (UTC+1), Los Angeles = PDT (UTC-7), Tokyo = JST (UTC+9).
@@ -69,5 +70,37 @@ describe("isLocalSendHour", () => {
 
   it("does not fire when the timezone is unknown", () => {
     expect(isLocalSendHour(at("2026-06-01T18:00:00Z"), null, 19)).toBe(false);
+  });
+});
+
+describe("localWeekdayInTz", () => {
+  // 2026-06-01 is a Monday (0=Sun..6=Sat).
+  it("returns the local weekday per zone (Monday=1)", () => {
+    const t = at("2026-06-01T12:00:00Z"); // Mon noon UTC
+    expect(localWeekdayInTz(t, "Europe/London")).toBe(1);
+    expect(localWeekdayInTz(t, "America/Los_Angeles")).toBe(1);
+    expect(localWeekdayInTz(t, "Asia/Tokyo")).toBe(1);
+  });
+
+  it("rolls BACK across midnight for far-west zones (east-of-UTC stays Monday)", () => {
+    // Mon 01:00 UTC: LA (−7) is still Sun 18:00; Tokyo (+9) is Mon 10:00.
+    const t = at("2026-06-01T01:00:00Z");
+    expect(localWeekdayInTz(t, "America/Los_Angeles")).toBe(0); // Sunday
+    expect(localWeekdayInTz(t, "Asia/Tokyo")).toBe(1); // Monday
+  });
+
+  it("rolls FORWARD across midnight for far-east zones (Sunday-late-UTC is Monday in Tokyo)", () => {
+    // Sun 23:30 UTC: Tokyo (+9) is already Mon 08:30; LA is still Sun.
+    const t = at("2026-05-31T23:30:00Z");
+    expect(localWeekdayInTz(t, "Asia/Tokyo")).toBe(1); // Monday
+    expect(localWeekdayInTz(t, "America/Los_Angeles")).toBe(0); // Sunday
+  });
+
+  it("returns null for absent or invalid timezone", () => {
+    const t = at("2026-06-01T12:00:00Z");
+    expect(localWeekdayInTz(t, null)).toBeNull();
+    expect(localWeekdayInTz(t, undefined)).toBeNull();
+    expect(localWeekdayInTz(t, "")).toBeNull();
+    expect(localWeekdayInTz(t, "Not/AZone")).toBeNull();
   });
 });

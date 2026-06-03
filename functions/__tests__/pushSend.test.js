@@ -88,3 +88,32 @@ describe("buildBadgeNudgeMessage", () => {
     expect(m.notification.title).not.toMatch(/\d/);
   });
 });
+
+import {
+  buildWeeklyRecapMessage,
+  buildFellBehindRecapMessage,
+} from "../lib/pushSend";
+
+describe("buildWeeklyRecapMessage", () => {
+  it("uses generic copy + home route, no week stats / digits (Q7)", () => {
+    const m = buildWeeklyRecapMessage();
+    expect(m.notification.title).toBeTruthy();
+    expect(m.notification.body).toBeTruthy();
+    expect(m.data).toEqual({ type: "recap", route: "/" });
+    // The "how the week went" detail lives in-app, never on the lock screen.
+    expect(m.notification.title).not.toMatch(/\d/);
+    expect(m.notification.body).not.toMatch(/\d/);
+  });
+});
+
+describe("buildFellBehindRecapMessage", () => {
+  it("deep-links the Programme page, generic copy with no 'X of N' counts (Q7)", () => {
+    const m = buildFellBehindRecapMessage();
+    expect(m.notification.title).toBeTruthy();
+    expect(m.notification.body).toBeTruthy();
+    expect(m.data).toEqual({ type: "fellbehind", route: "/program" });
+    // No "1 of 3"-style counts on the lock screen — that's in the sheet.
+    expect(m.notification.title).not.toMatch(/\d/);
+    expect(m.notification.body).not.toMatch(/\d/);
+  });
+});

@@ -72,9 +72,46 @@ function buildBadgeNudgeMessage() {
   };
 }
 
+/**
+ * The weekly-recap FCM message (on-track variant). Monday-morning positive
+ * summary. Generic copy + data only (Q7 — no week stats / counts on the lock
+ * screen; the detail lives in-app behind the `route`). Routes home.
+ *
+ * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ */
+function buildWeeklyRecapMessage() {
+  return {
+    notification: {
+      title: "Your week in review 📊",
+      body: "Open Tropos to see how last week went.",
+    },
+    data: { type: "recap", route: "/" },
+  };
+}
+
+/**
+ * The weekly-recap FCM message (fell-behind variant). Sent on Monday morning
+ * when the user ran under half their weekly target last week. Generic copy +
+ * data only (Q7 — the "X of N" detail is shown in-app, never on the lock
+ * screen). Deep-links the Programme page where the FellBehindSheet surfaces.
+ *
+ * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ */
+function buildFellBehindRecapMessage() {
+  return {
+    notification: {
+      title: "Let's realign this week 🎯",
+      body: "Last week didn't go to plan — tap to adjust your runs.",
+    },
+    data: { type: "fellbehind", route: "/program" },
+  };
+}
+
 module.exports = {
   tokensToPrune,
   PRUNE_ERROR_CODES,
   buildStreakNudgeMessage,
   buildBadgeNudgeMessage,
+  buildWeeklyRecapMessage,
+  buildFellBehindRecapMessage,
 };
