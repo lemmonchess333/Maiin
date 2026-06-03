@@ -16,6 +16,13 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { calcWeightTrend } from "@/utils/weightTrend";
+
+/** #984 direction signal for the home weight tile. Mapped from
+ *  calcWeightTrend's "stable" → "flat". null = a weight exists but
+ *  there isn't a usable history to call a direction (e.g. profile-
+ *  only fallback weight, or a single log). */
+export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
 interface WeightInfo {
   weight: string;
@@ -40,6 +47,11 @@ interface HomeDataState {
   dailyFat: number;
   todayRunCals: number;
   lastWeightInfo: WeightInfo | null;
+  /* #984 — direction derived from the logged weight history (7-day
+     avg vs latest), used by the home tile when "Hide the number" is
+     on. null when we can't call a direction (profile-fallback / one
+     log). */
+  weightTrend: WeightTrendDirection;
   loading: boolean;
   error: string | null;
 }
@@ -57,6 +69,7 @@ export function useHomeData(
     dailyFat: 0,
     todayRunCals: 0,
     lastWeightInfo: null,
+    weightTrend: null,
     loading: true,
     error: null,
   });
@@ -117,6 +130,7 @@ export function useHomeData(
           let fat = 0;
           let rCals = 0;
           let weightInfo: WeightInfo | null = null;
+          let weightTrend: WeightTrendDirection = null;
 
           // Meals — routed through the shared sumMealTotals util so this
           // path can't drift from useMeals.getDailyTotals on Food. Both call
@@ -191,6 +205,19 @@ export function useHomeData(
                   date: format(new Date(latest.date + "T12:00:00"), "MMM d"),
                   rawDate: latest.date,
                 };
+                // #984 — derive direction from the logged history via
+                // the shared calcWeightTrend util (7-day avg vs latest;
+                // unit-agnostic, so we feed the raw kg values). Needs
+                // 2+ logs to be meaningful — a single log can't have a
+                // direction, so we leave it null.
+                if (sorted.length >= 2) {
+                  const t = calcWeightTrend(sorted);
+                  weightTrend = t
+                    ? t.direction === "stable"
+                      ? "flat"
+                      : t.direction
+                    : null;
+                }
               }
             }
           } else {
@@ -216,6 +243,7 @@ export function useHomeData(
             dailyFat: fat,
             todayRunCals: rCals,
             lastWeightInfo: weightInfo,
+            weightTrend,
             loading: false,
             error: errors.length > 0 ? errors.join("; ") : null,
           });
@@ -288,6 +316,7 @@ export function useHomeData(
     dailyFat: state.dailyFat,
     todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,
+    weightTrend: state.weightTrend,
     setLastWeightInfo,
     postWorkoutNudge,
     loading: state.loading,
