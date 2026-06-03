@@ -174,6 +174,17 @@ export default function WorkoutSession({
   });
   const tabsRef = useRef<HTMLDivElement>(null);
   const sessionStartRef = useRef(0);
+
+  // a11y: the set-type popover dismisses on backdrop click (mouse) — give
+  // keyboard users Escape to close it so it isn't a keyboard trap (#842).
+  useEffect(() => {
+    if (typePopover === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTypePopover(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [typePopover]);
   useEffect(() => {
     // Backdate session start on resume so sessionDurationMinutes reflects
     // actual training time, not wall-clock from when the user returned.
