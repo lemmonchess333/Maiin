@@ -39,7 +39,7 @@ const repoRoot = resolve(here, "../../..");
 const rulesText = readFileSync(resolve(repoRoot, "firestore.rules"), "utf8");
 
 /**
- * The 27 client-writable paths protected by the deletion freeze.
+ * The client-writable paths protected by the deletion freeze.
  * Maintained alongside accountDeletionRulesCoverage.test.ts
  * PROTECTED_PATHS — drift between the two is detected by the
  * cross-check at the bottom of this file.
@@ -57,6 +57,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/bodyweightLogs/{doc}",
   "match /users/{uid}/programState/{doc}",
   "match /users/{uid}/streaks/{doc}",
+  "match /users/{uid}/devices/{token}",
   "match /users/{uid}/shoes/{shoeId}",
   "match /users/{uid}/logs/{date}",
   "match /users/{uid}/stats/{doc}",
@@ -259,12 +260,14 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 26 (post-2026-05-26 audit PR 2)", () => {
+  it("authoritative count is 27 (push #961 added users/{uid}/devices)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
-    // 2026-05-26 audit PR 2 moves /groups/{crewId}/members/{userId}
-    // to server-only (write `if false`), so the protected-path
-    // count drops by one. Counting methodology unchanged: one
+    // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
+    // to server-only (write `if false`), dropping the count to 26.
+    // push #961 added the owner-only /users/{uid}/devices/{token}
+    // FCM-token subcollection (freeze via isOwnerAndNotDeleting),
+    // bringing it back to 27. Counting methodology unchanged: one
     // `match /PATH {` block with at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(26);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(27);
   });
 });
