@@ -22,7 +22,6 @@ import { friendlyAuthError } from "@/lib/authErrors";
 import { modalReducer, initialModalState } from "./accountDeletionReducer";
 import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dialog } from "@/components/ui/Dialog";
 import { useAuth } from "@/lib/auth";
@@ -104,7 +103,6 @@ export default function AccountSection({
     modalReducer,
     initialModalState
   );
-  const deleteModalRef = useFocusTrap<HTMLDivElement>(showDeleteModal);
 
   const closeAndReset = () => {
     setShowDeleteModal(false);
@@ -385,26 +383,14 @@ export default function AccountSection({
       </Dialog>
 
       {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
-      {showDeleteModal && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-[1000]"
-            role="button"
-            tabIndex={0}
-            aria-label="Close dialog"
-            onClick={inReauthFlight ? undefined : closeAndReset}
-            onKeyDown={(e) => {
-              if (inReauthFlight) return;
-              if (e.key === "Enter" || e.key === " ") closeAndReset();
-            }}
-          />
-          <div
-            ref={deleteModalRef}
-            role="dialog"
-            aria-modal="true"
-            aria-live="polite"
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
-          >
+      <Dialog
+        open={showDeleteModal}
+        onClose={closeAndReset}
+        closeOnBackdrop={!inReauthFlight}
+        closeOnEscape={!inReauthFlight}
+        role="alertdialog"
+      >
+        <div aria-live="polite" className="space-y-4">
             {/* ── Phase: confirm / deleting ────────────────────────*/}
             {(modalState.phase === "confirm" ||
               modalState.phase === "deleting") && (
@@ -559,9 +545,8 @@ export default function AccountSection({
                 </div>
               </>
             )}
-          </div>
-        </>
-      )}
+        </div>
+      </Dialog>
     </>
   );
 }
