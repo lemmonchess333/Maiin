@@ -8,24 +8,30 @@
  * picks, then renders at most ONE — the rest defer (decisions) or drop
  * (celebrations).
  *
- * NOT YET MOUNTED. PR1 ships this inert (no <SurfaceCoordinatorProvider> in
- * App.tsx, no surface calls useSurface), so runtime behaviour is unchanged.
- * PR2 mounts it and migrates the four tier-4 surfaces one commit at a time.
+ * Context is split in two on purpose:
+ *   - SurfaceMethodsContext — register / unregister / dismiss. STABLE identity
+ *     (memoised once) so a consumer's register effect doesn't re-run every
+ *     render. (An earlier single-context version recreated the value object
+ *     each render → consumers re-registered every render → bump → infinite
+ *     loop. The split is the fix.)
+ *   - SurfaceActiveContext — the single active id. Reactive: changes when the
+ *     coordinator picks, so consumers re-render to show/hide.
  *
- * Design notes baked in here for the migration:
- *  - SETTLE window mirrors the onAuthStateChanged multi-fire rule in
- *    CLAUDE.md — never pick on the first eligibility signal; let the frame
- *    settle so a higher-priority late-registrant isn't beaten by a faster one.
+ * Design notes:
+ *  - SETTLE window mirrors the onAuthStateChanged multi-fire rule in CLAUDE.md
+ *    — never pick on the first eligibility signal; let the frame settle so a
+ *    higher-priority late-registrant isn't beaten by a faster one.
  *  - App-open boundary = mount + visibilitychange→visible after being hidden.
- *  - Re-entrancy: a higher-priority surface arriving WHILE one is open does
- *    not preempt — we never yank a sheet out from under a tap (resolve() is a
- *    no-op while active !== null).
+ *  - Re-entrancy: a higher-priority surface arriving WHILE one is open does not
+ *    preempt — resolve() is a no-op while active !== null (never yank a sheet
+ *    out from under a tap).
  */
 import {
   createContext,
   useContext,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -47,47 +53,31 @@ export interface SurfaceConfig extends SurfaceRegistration {
   onDrop?: () => void;
 }
 
-interface CoordinatorContextValue {
+interface CoordinatorMethods {
   register: (config: SurfaceConfig) => void;
   unregister: (id: string) => void;
-  isActive: (id: string) => boolean;
   dismiss: (id: string) => void;
 }
 
-const SurfaceCoordinatorContext =
-  createContext<CoordinatorContextValue | null>(null);
+const SurfaceMethodsContext = createContext<CoordinatorMethods | null>(null);
+const SurfaceActiveContext = createContext<string | null>(null);
 
 export function SurfaceCoordinatorProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  // Registrations live in a ref (mutating them shouldn't thrash render); a
-  // version counter triggers re-evaluation when the set or eligibility shifts.
+  // Registrations live in a ref — mutating them must NOT trigger a render
+  // (that's what caused the loop). The render that reveals a surface comes
+  // only from setState inside runResolve.
   const regs = useRef<Map<string, SurfaceConfig>>(new Map());
   const dropped = useRef<Set<string>>(new Set());
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [, setVersion] = useState(0);
   const [state, setState] = useState<CoordinatorState>(initialState);
-
-  const bump = useCallback(() => setVersion((v) => v + 1), []);
 
   const runResolve = useCallback(() => {
     const list = [...regs.current.values()];
-    setState((prev) => {
-      const next = resolve(list, prev);
-      // Drop eligible celebrations that won't show this open (lost or
-      // suppressed), once budget is committed.
-      if (next.budgetSpent) {
-        for (const id of celebrationsToDrop(list, next)) {
-          if (!dropped.current.has(id)) {
-            dropped.current.add(id);
-            regs.current.get(id)?.onDrop?.();
-          }
-        }
-      }
-      return next;
-    });
+    setState((prev) => resolve(list, prev));
   }, []);
 
   const scheduleSettle = useCallback(() => {
@@ -99,27 +89,38 @@ export function SurfaceCoordinatorProvider({
     (config: SurfaceConfig) => {
       regs.current.set(config.id, config);
       scheduleSettle();
-      bump();
     },
-    [scheduleSettle, bump]
+    [scheduleSettle]
   );
 
-  const unregister = useCallback(
-    (id: string) => {
-      regs.current.delete(id);
-      bump();
-    },
-    [bump]
+  const unregister = useCallback((id: string) => {
+    regs.current.delete(id);
+  }, []);
+
+  const dismiss = useCallback((id: string) => {
+    setState((prev) => (prev.active === id ? dismissActive(prev) : prev));
+  }, []);
+
+  // Stable methods identity — consumers' register effects depend on this.
+  const methods = useMemo<CoordinatorMethods>(
+    () => ({ register, unregister, dismiss }),
+    [register, unregister, dismiss]
   );
 
-  const isActive = useCallback((id: string) => state.active === id, [state]);
-
-  const dismiss = useCallback(
-    (id: string) => {
-      setState((prev) => (prev.active === id ? dismissActive(prev) : prev));
-    },
-    []
-  );
+  // Drop eligible celebrations that won't show this open (lost or suppressed)
+  // once the budget is committed. Post-commit effect — NOT inside the resolve()
+  // updater — so firing onDrop (e.g. dismissNewBadge, which itself setState's)
+  // never happens during this provider's render.
+  useEffect(() => {
+    if (!state.budgetSpent) return;
+    const list = [...regs.current.values()];
+    for (const id of celebrationsToDrop(list, state)) {
+      if (!dropped.current.has(id)) {
+        dropped.current.add(id);
+        regs.current.get(id)?.onDrop?.();
+      }
+    }
+  }, [state]);
 
   // App-open boundary: reset the per-open budget when the app returns to the
   // foreground after being hidden, then re-evaluate.
@@ -138,17 +139,12 @@ export function SurfaceCoordinatorProvider({
     };
   }, [scheduleSettle]);
 
-  const value: CoordinatorContextValue = {
-    register,
-    unregister,
-    isActive,
-    dismiss,
-  };
-
   return (
-    <SurfaceCoordinatorContext.Provider value={value}>
-      {children}
-    </SurfaceCoordinatorContext.Provider>
+    <SurfaceMethodsContext.Provider value={methods}>
+      <SurfaceActiveContext.Provider value={state.active}>
+        {children}
+      </SurfaceActiveContext.Provider>
+    </SurfaceMethodsContext.Provider>
   );
 }
 
@@ -166,28 +162,27 @@ export function useSurface(config: SurfaceConfig): {
   active: boolean;
   dismiss: () => void;
 } {
-  const ctx = useContext(SurfaceCoordinatorContext);
+  const methods = useContext(SurfaceMethodsContext);
+  const activeId = useContext(SurfaceActiveContext);
   const { id, priority, eligible, suppressedBy, dropWhenMissed, onDrop } =
     config;
 
-  useEffect(() => {
-    if (!ctx) return;
-    ctx.register({
-      id,
-      priority,
-      eligible,
-      suppressedBy,
-      dropWhenMissed,
-      onDrop,
-    });
-    return () => ctx.unregister(id);
-    // onDrop/suppressedBy are stable-by-intent; re-register on the values that
-    // change the decision.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ctx, id, priority, eligible]);
+  // Keep the latest config (onDrop/suppressedBy may close over fresh values)
+  // in a ref so re-registering on the decision-relevant deps still hands the
+  // coordinator current side-effects.
+  const latest = useRef(config);
+  latest.current = config;
 
-  if (!ctx) {
+  useEffect(() => {
+    if (!methods) return;
+    methods.register(latest.current);
+    return () => methods.unregister(id);
+    // Re-register on the values that change the decision; `methods` is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [methods, id, priority, eligible, suppressedBy, dropWhenMissed, onDrop]);
+
+  if (!methods) {
     return { active: eligible, dismiss: () => {} };
   }
-  return { active: ctx.isActive(id), dismiss: () => ctx.dismiss(id) };
+  return { active: activeId === id, dismiss: () => methods.dismiss(id) };
 }
