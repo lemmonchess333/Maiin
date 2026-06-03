@@ -36,6 +36,7 @@ import {
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
+import { resolveOnboardingRunMode } from "@/lib/onboardingRunMode";
 import {
   ChevronRight,
   Check,
@@ -471,9 +472,12 @@ export default function Onboarding() {
     !isSplitDisabled(preferredSplit), // 8: preferred split
     // P0-5: doubles blocker dropped. `daysPerWeek + weeklyRunDays > 7`
     // is no longer a constraint — generateSchedule emits Both days
-    // when the total exceeds 7 (see P0-B). The only remaining
-    // run-step gate is the race-prep date selector.
-    runFrequency === "none" || runMode !== "race_prep" || raceTargetDate !== "", // 9: run frequency + mode
+    // when the total exceeds 7 (see P0-B).
+    // #975: the race-prep date is now OPTIONAL — selecting race_prep no
+    // longer blocks advancing without a date. A no-date race_prep lands
+    // on the freeform substrate (Run9a); the date can be set later via the
+    // Race Goal Planner. So step 9 is always advanceable.
+    true, // 9: run frequency + mode
     injuries.length > 0, // 10: injuries (must select at least one, including "none")
     true, // 11: weekly preview (always advanceable)
     true, // 12: confirmation
@@ -494,6 +498,15 @@ export default function Onboarding() {
       // fixed manually via Settings → Profile. All users onboarded after
       // this change are guaranteed to have a non-empty displayName.
       const trimmedDisplayName = displayNameValidation.trimmed;
+
+      // #975: resolve the run mode once. race_prep without a target date
+      // collapses to the freeform substrate (Run9a); both the profile write
+      // and the planBuilder input below read this single value.
+      const effectiveRunMode = resolveOnboardingRunMode({
+        runFrequency,
+        runMode,
+        hasRaceDate: !!raceTargetDate,
+      });
 
       const profileData: Record<string, unknown> = {
         displayName: trimmedDisplayName,
@@ -522,8 +535,11 @@ export default function Onboarding() {
         equipment,
         preferredSplit,
         runFrequency,
-        runMode: runFrequency === "none" ? "freeform" : runMode,
-        ...(runMode === "race_prep" && runFrequency !== "none" && raceTargetDate
+        // #975: race_prep without a date → freeform substrate (Run9a),
+        // never a dangling race_prep with no raceGoal. Single source of
+        // truth for the branch is resolveOnboardingRunMode.
+        runMode: effectiveRunMode,
+        ...(effectiveRunMode === "race_prep" && raceTargetDate
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
         injuries: injuriesForSave,
@@ -607,9 +623,9 @@ export default function Onboarding() {
         experience,
         liftDays: daysPerWeek,
         preferredSplit: preferredSplit as SplitType,
-        runMode: runFrequency === "none" ? ("freeform" as const) : runMode,
+        runMode: effectiveRunMode,
         weeklyRunDays: effectiveRunDays,
-        ...(runMode === "race_prep" && runFrequency !== "none" && raceTargetDate
+        ...(effectiveRunMode === "race_prep" && raceTargetDate
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
         equipment,
@@ -1549,7 +1565,7 @@ export default function Onboarding() {
                           className="text-xs uppercase tracking-wider mb-1.5"
                           style={{ color: "hsl(var(--muted-foreground))" }}
                         >
-                          Target date
+                          Target date (optional)
                         </p>
                         <input
                           type="date"
@@ -1557,6 +1573,13 @@ export default function Onboarding() {
                           onChange={(e) => setRaceTargetDate(e.target.value)}
                           className="w-full px-3 py-2.5 rounded-xl text-sm outline-none bg-muted text-foreground border border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent [color-scheme:light_dark]"
                         />
+                        {/* #975: date is optional — no date completes on the
+                            freeform substrate and the Race Goal Planner on the
+                            Programme page is the richer place to set one. */}
+                        <p className="text-xs mt-1.5 text-muted-foreground">
+                          No date yet? You can set a race goal later from the
+                          Programme page.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -1872,10 +1895,8 @@ export default function Onboarding() {
             "You must be 16 or older to use Tropos"}
           {step === 3 && "Enter your height and weight to continue"}
           {step === 8 && "This split requires more training days"}
-          {step === 9 &&
-            runMode === "race_prep" &&
-            !raceTargetDate &&
-            "Select a target race date"}
+          {/* #975: step 9 (run mode) no longer gates on a race date — it's
+              always advanceable, so no hint here. */}
           {step === 10 &&
             injuries.length === 0 &&
             'Select at least one option (or "None")'}
