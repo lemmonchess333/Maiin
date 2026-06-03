@@ -156,6 +156,15 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    /* FCM device tokens (push arc #961) — the client writes
+       users/{uid}/devices/{token} via registerDeviceToken and deletes it
+       on sign-out (delete-on-signout privacy invariant). The server
+       senders read these via the Admin SDK, which bypasses these rules.
+       Owner-only; write-frozen during account deletion like its siblings. */
+    match /users/{uid}/devices/{token} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes
        to users/{uid}/performance/{weekKey}). Path was previously named
