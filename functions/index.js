@@ -2459,14 +2459,29 @@ exports.sendTestPush = functions
     if (tokens.length === 0) {
       return { ok: false, reason: "no-registered-device", sent: 0 };
     }
-    const batch = await admin.messaging().sendEachForMulticast({
-      tokens,
-      notification: {
-        title: "Tropos 🔔",
-        body: "Push notifications are working — you're all set.",
-      },
-      data: { type: "test", route: "/" },
-    });
+    let batch;
+    try {
+      batch = await admin.messaging().sendEachForMulticast({
+        tokens,
+        notification: {
+          title: "Tropos 🔔",
+          body: "Push notifications are working — you're all set.",
+        },
+        data: { type: "test", route: "/" },
+      });
+    } catch (err) {
+      console.error("sendTestPush: FCM send threw", {
+        uid,
+        code: err.code,
+        message: err.message,
+      });
+      return {
+        ok: false,
+        reason: "send-threw",
+        detail: err.code || err.message || "unknown",
+        sent: 0,
+      };
+    }
     const dead = tokensToPrune(batch, tokens);
     await Promise.all(
       dead.map((t) =>
@@ -2476,8 +2491,28 @@ exports.sendTestPush = functions
           .catch(() => {})
       )
     );
+    if (batch.successCount === 0) {
+      // Every token rejected — surface the first failure's FCM code so the
+      // client (and we) can see WHY nothing arrived (e.g.
+      // messaging/third-party-auth-error = VAPID/key mismatch on web push).
+      const firstFail = (batch.responses || []).find((r) => r && !r.success);
+      const code =
+        (firstFail && firstFail.error && firstFail.error.code) || "unknown";
+      console.error("sendTestPush: 0 delivered", {
+        uid,
+        code,
+        pruned: dead.length,
+      });
+      return {
+        ok: false,
+        reason: "send-failed",
+        detail: code,
+        sent: 0,
+        pruned: dead.length,
+      };
+    }
     return {
-      ok: batch.successCount > 0,
+      ok: true,
       sent: batch.successCount,
       pruned: dead.length,
     };
