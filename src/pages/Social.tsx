@@ -48,8 +48,12 @@ import {
   Sunrise,
   X,
   Search,
+  Bell,
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
+import IconButton from "@/components/ui/IconButton";
+import { useNotifications } from "@/hooks/useNotifications";
+import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState } from "../components/EmptyState";
@@ -183,6 +187,10 @@ export default function Social() {
   const isNewUser = followingCount === 0 && !profileCrewId;
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
+  // In-app social notification tray (kudos / comment / follow). Closes the
+  // engagement loop — the server already writes these; this surfaces them.
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifications = useNotifications();
 
   // Crew banner dismiss state. localStorage access wrapped in
   // try/catch — Safari private mode + strict-cookie iframes throw
@@ -506,8 +514,38 @@ export default function Social() {
       <motion.header variants={itemVariant} className="pt-1">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-extrabold text-foreground">Social</h1>
+          <div className="relative">
+            <IconButton
+              aria-label={
+                notifications.unreadCount > 0
+                  ? `Notifications, ${notifications.unreadCount} unread`
+                  : "Notifications"
+              }
+              icon={<Bell className="size-5" />}
+              variant="ghost"
+              onClick={() => {
+                setShowNotifications(true);
+                notifications.markAllSeen();
+              }}
+            />
+            {notifications.unreadCount > 0 && (
+              <span
+                className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none"
+                style={{ backgroundColor: THEME.semantic.vitals }}
+              >
+                {notifications.unreadCount > 9 ? "9+" : notifications.unreadCount}
+              </span>
+            )}
+          </div>
         </div>
       </motion.header>
+
+      <NotificationsSheet
+        open={showNotifications}
+        onOpenChange={setShowNotifications}
+        items={notifications.items}
+        loading={notifications.loading}
+      />
 
       {/* Crew banner if no crew — dismissible */}
       <AnimatePresence>
