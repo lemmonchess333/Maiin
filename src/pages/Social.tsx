@@ -58,7 +58,7 @@ import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState } from "../components/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";
-import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import Coachmark from "@/components/ui/Coachmark";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
@@ -347,8 +347,8 @@ export default function Social() {
      setSearchResults([]) which surfaced the same "No users found"
      copy as a real empty result, which lied to the user. */
   const [searchError, setSearchError] = useState<string | null>(null);
-  const leaveCrewRef = useFocusTrap<HTMLDivElement>(!!leavingCrewId);
-  const createCrewRef = useFocusTrap<HTMLDivElement>(showCreateGroup);
+  // Crew leave/create confirmation + form now use the BottomSheet primitive,
+  // which provides the focus trap (plus Escape, scroll-lock, drag-dismiss).
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
   /* Sequencing guard: a slow request followed by a faster one could
      otherwise have its stale results overwrite the fresh ones. Each
@@ -1229,23 +1229,14 @@ export default function Social() {
               </div>
 
               {/* Leave Crew Confirmation Modal */}
-              {leavingCrewId && (
-                <>
-                  <div
-                    className="fixed inset-0 bg-black/50 z-40"
-                    role="presentation"
-                    onClick={() => setLeavingCrewId(null)}
-                  />
-                  <div
-                    ref={leaveCrewRef}
-                    role="dialog"
-                    aria-modal="true"
-                    className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4"
-                    style={{
-                      background: "var(--glass-bg)",
-                      border: "1px solid var(--glass-border)",
-                    }}
-                  >
+              <BottomSheet
+                open={!!leavingCrewId}
+                onOpenChange={(o) => !o && setLeavingCrewId(null)}
+                title="Leave crew?"
+                hideHeader
+                className="bg-[var(--glass-bg)] border border-[var(--glass-border)]"
+              >
+                <div className="p-5 space-y-4">
                     <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                     <p className="text-base font-semibold text-foreground">
                       Leave crew?
@@ -1283,28 +1274,18 @@ export default function Social() {
                         {leavingInFlight ? "Leaving…" : "Leave"}
                       </button>
                     </div>
-                  </div>
-                </>
-              )}
+                </div>
+              </BottomSheet>
 
               {/* Create Crew Modal */}
-              {showCreateGroup && (
-                <>
-                  <div
-                    className="fixed inset-0 bg-black/50 z-40"
-                    role="presentation"
-                    onClick={() => setShowCreateGroup(false)}
-                  />
-                  <div
-                    ref={createCrewRef}
-                    role="dialog"
-                    aria-modal="true"
-                    className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl p-5 space-y-4"
-                    style={{
-                      background: "var(--glass-bg)",
-                      border: "1px solid var(--glass-border)",
-                    }}
-                  >
+              <BottomSheet
+                open={showCreateGroup}
+                onOpenChange={(o) => !o && setShowCreateGroup(false)}
+                title="Create a Crew"
+                hideHeader
+                className="bg-[var(--glass-bg)] border border-[var(--glass-border)]"
+              >
+                <div className="p-5 space-y-4">
                     <div className="w-10 h-1 rounded-full bg-border mx-auto" />
                     <h3 className="text-base font-semibold text-foreground">
                       Create a Crew
@@ -1383,9 +1364,8 @@ export default function Social() {
                     >
                       {creatingCrew ? "Creating..." : "Create Crew"}
                     </button>
-                  </div>
-                </>
-              )}
+                </div>
+              </BottomSheet>
             </section>
           )}
 
