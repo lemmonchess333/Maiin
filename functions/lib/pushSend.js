@@ -54,4 +54,27 @@ function buildStreakNudgeMessage() {
   };
 }
 
-module.exports = { tokensToPrune, PRUNE_ERROR_CODES, buildStreakNudgeMessage };
+/**
+ * The badge-earned FCM message. Generic copy + data only (Q7). Badge NAMES
+ * are deliberately omitted — names like "Month Master" / "Week Warrior" encode
+ * a streak threshold, which would leak a streak count onto the lock screen.
+ * The `data.route` deep-links to Home where the badge surface lives.
+ *
+ * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ */
+function buildBadgeNudgeMessage() {
+  return {
+    notification: {
+      title: "New badge unlocked 🏅",
+      body: "Open Tropos to see what you earned.",
+    },
+    data: { type: "badge", route: "/" },
+  };
+}
+
+module.exports = {
+  tokensToPrune,
+  PRUNE_ERROR_CODES,
+  buildStreakNudgeMessage,
+  buildBadgeNudgeMessage,
+};
