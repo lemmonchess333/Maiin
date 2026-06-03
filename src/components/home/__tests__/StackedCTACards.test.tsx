@@ -150,4 +150,35 @@ describe("StackedCTACards", function() {
       expect(screen.getByText("75.0")).toBeInTheDocument();
     });
   });
+
+  describe("#972 cold-start framing", function() {
+    it("frames the lift card as 'Your first workout' when firstWorkout is set", function() {
+      renderCards({ userSegment: "new", todayType: "lift", firstWorkout: true });
+      expect(screen.getByText("Your first workout")).toBeInTheDocument();
+      expect(screen.queryByText("Today · Lift day")).not.toBeInTheDocument();
+    });
+
+    it("frames the run card as 'Your first run' when firstRun is set", function() {
+      renderCards({ userSegment: "new", todayType: "run", firstRun: true });
+      expect(screen.getByText("Your first run")).toBeInTheDocument();
+    });
+
+    it("default (no flags) keeps the standard 'Today · Lift day' eyebrow", function() {
+      renderCards({ userSegment: "active", todayType: "lift" });
+      expect(screen.getByText("Today · Lift day")).toBeInTheDocument();
+      expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
+    });
+
+    it("shows the FirstMealCard instead of RestDayCard on a rest day when firstMeal is set", function() {
+      renderCards({ userSegment: "new", todayType: "rest", firstMeal: true });
+      expect(screen.getByText("Log your first meal")).toBeInTheDocument();
+      expect(screen.queryByText("Recover & refuel")).not.toBeInTheDocument();
+    });
+
+    it("shows the normal RestDayCard on a rest day when firstMeal is not set", function() {
+      renderCards({ userSegment: "active", todayType: "rest", firstMeal: false });
+      expect(screen.getByText("Recover & refuel")).toBeInTheDocument();
+      expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
+    });
+  });
 });
