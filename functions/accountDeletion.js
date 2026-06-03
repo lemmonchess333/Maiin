@@ -31,6 +31,12 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   "progressPhotos",
   "favorites",
   "preferences",
+  // FCM device tokens (push #961). The executor enumerates rather than
+  // recursing, and deleting users/{uid} does NOT cascade to its
+  // subcollections — without this, device-token docs orphan under a
+  // deleted user. Sign-out deletes the current device's token, but the
+  // freeze blocks that during deletion and other devices aren't covered.
+  "devices",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
