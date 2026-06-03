@@ -290,11 +290,14 @@ export default function ExercisePicker({
 
                 return (
                   <div key={exercise.id}>
-                    {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-                    <div
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      aria-label={exercise.name}
                       onClick={() => toggleSelection(exercise.id)}
                       className={cn(
-                        "flex items-center pr-4 transition-colors duration-100 active:bg-muted cursor-pointer",
+                        "w-full text-left flex items-center pr-4 transition-colors duration-100 active:bg-muted cursor-pointer",
                         isSelected && "bg-green-500/10"
                       )}
                       style={{
@@ -340,7 +343,7 @@ export default function ExercisePicker({
                           )}
                         </motion.div>
                       </div>
-                    </div>
+                    </button>
                     {/* Indented divider */}
                     {idx < filteredExercises.length - 1 && (
                       <div
