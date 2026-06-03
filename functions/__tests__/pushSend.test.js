@@ -100,25 +100,30 @@ import {
 } from "../lib/pushSend";
 
 describe("buildWeeklyRecapMessage", () => {
-  it("uses generic copy + home route, no week stats / digits (Q7)", () => {
+  it("is DATA-ONLY with generic copy + home route, no week stats / digits (Q7)", () => {
     const m = buildWeeklyRecapMessage();
-    expect(m.notification.title).toBeTruthy();
-    expect(m.notification.body).toBeTruthy();
-    expect(m.data).toEqual({ type: "recap", route: "/" });
+    // Data-only (iOS PWA reliability): no top-level notification field.
+    expect(m.notification).toBeUndefined();
+    expect(m.data.type).toBe("recap");
+    expect(m.data.route).toBe("/");
+    expect(m.data.title).toBeTruthy();
+    expect(m.data.body).toBeTruthy();
     // The "how the week went" detail lives in-app, never on the lock screen.
-    expect(m.notification.title).not.toMatch(/\d/);
-    expect(m.notification.body).not.toMatch(/\d/);
+    expect(m.data.title).not.toMatch(/\d/);
+    expect(m.data.body).not.toMatch(/\d/);
   });
 });
 
 describe("buildFellBehindRecapMessage", () => {
-  it("deep-links the Programme page, generic copy with no 'X of N' counts (Q7)", () => {
+  it("is DATA-ONLY, deep-links the Programme page, no 'X of N' counts (Q7)", () => {
     const m = buildFellBehindRecapMessage();
-    expect(m.notification.title).toBeTruthy();
-    expect(m.notification.body).toBeTruthy();
-    expect(m.data).toEqual({ type: "fellbehind", route: "/program" });
+    expect(m.notification).toBeUndefined();
+    expect(m.data.type).toBe("fellbehind");
+    expect(m.data.route).toBe("/program");
+    expect(m.data.title).toBeTruthy();
+    expect(m.data.body).toBeTruthy();
     // No "1 of 3"-style counts on the lock screen — that's in the sheet.
-    expect(m.notification.title).not.toMatch(/\d/);
-    expect(m.notification.body).not.toMatch(/\d/);
+    expect(m.data.title).not.toMatch(/\d/);
+    expect(m.data.body).not.toMatch(/\d/);
   });
 });
