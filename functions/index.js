@@ -51,12 +51,15 @@ const {
   isLocalSendHour,
   withinQuietHours,
   localHourInTz,
+  localWeekdayInTz,
 } = require("./lib/pushSchedule");
 const { activeDateKeysFromLogs } = require("./lib/activeDates");
 const {
   tokensToPrune,
   buildStreakNudgeMessage,
   buildBadgeNudgeMessage,
+  buildWeeklyRecapMessage,
+  buildFellBehindRecapMessage,
 } = require("./lib/pushSend");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
@@ -2391,6 +2394,135 @@ async function maybeSendBadgeNudge(uid, now) {
   return batch.successCount > 0;
 }
 
+// Push #961 / weekly recap #967 — Monday ~8am LOCAL recap push. Celebratory
+// when the user kept up; fell-behind-aware (deep-links the Programme page where
+// the FellBehindSheet surfaces) when they ran <50% of their weekly target last
+// week. Fell-behind status is computed FRESH here from the prior week, NOT read
+// from the persisted `pendingFellBehindPrompt`: this fires at the user's local
+// Monday 8am, which for east-of-UTC users is BEFORE `weeklyFellBehindCheck`'s
+// 05:00 UTC pass — so the persisted flag would be stale for them. It shares the
+// `_fellBehindRatio` computation with that check (single source of truth), and
+// when behind it ensures the flag is written (idempotent merge, same shape) so
+// the deep-link target reliably exists when the user taps. Counts under the ≤1
+// server-push/day cap with priority recap > streak: a sent recap writes the
+// same `lastStreakNudgeDateKey` marker #966 reads, suppressing that evening's
+// streak nudge. ≤1 recap/day via `lastRecapDateKey`. Runs inside the existing
+// hourly sweep (no second active-user pass).
+//
+// #576 reconciliation: #576's "Friday weekly check-in" is the Watch/APNs sender
+// off the same fell-behind signal; this is the FCM web/phone transport. They
+// intentionally differ by transport + cadence and SHARE the `_fellBehindRatio`
+// computation rather than each re-deriving "who's behind".
+const RECAP_LOCAL_HOUR = 8;
+const RECAP_LOCAL_WEEKDAY = 1; // Monday (0=Sun..6=Sat)
+
+async function maybeSendWeeklyRecap(uid, now) {
+  // Cheap gate first: one profile read for tz, then the local Monday-8am check
+  // (skips the heavier reads on the other 167 hours of the week).
+  const profileSnap = await db.doc(`users/${uid}`).get();
+  const timezone = (profileSnap.data() || {}).timezone || null;
+  if (!timezone) return false; // skip-on-null-tz (no overnight pings)
+  if (localWeekdayInTz(now, timezone) !== RECAP_LOCAL_WEEKDAY) return false;
+  if (!isLocalSendHour(now, timezone, RECAP_LOCAL_HOUR)) return false;
+
+  const todayKey = localDateKeyInTz(now, timezone);
+
+  const [consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+
+  // Consent: recap push must be opted in (absent per-type flag → on).
+  if (!mayTargetUserConsent(consentSnap.data() || null, "recap")) return false;
+
+  const state = stateSnap.data() || {};
+  if (state.lastRecapDateKey === todayKey) return false; // ≤1 recap/day
+
+  // Fell-behind status computed fresh from the prior week (shared helper, so it
+  // can't drift from weeklyFellBehindCheck). null → no prescriptive target
+  // (freeform / recovery / target<1) → celebratory recap.
+  const ctx = await readUserProgramContext(uid);
+  const range = _priorWeekUtcRange(now.getTime());
+  let priorWeekRuns = [];
+  if (ctx) {
+    try {
+      const runsSnap = await ctx.userRef
+        .collection("runs")
+        .where("date", ">=", range.weekStart)
+        .where("date", "<=", range.weekEnd)
+        .get();
+      priorWeekRuns = runsSnap.docs.map((d) => d.data() || {});
+    } catch (e) {
+      console.warn(
+        `maybeSendWeeklyRecap: runs query failed for ${uid}: ${e.message}`
+      );
+    }
+  }
+  const status = ctx
+    ? _fellBehindRatio(ctx.profile, ctx.programState, priorWeekRuns)
+    : null;
+  const behind = !!(status && status.fellBehind);
+
+  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  if (tokens.length === 0) return false;
+
+  const message = behind
+    ? buildFellBehindRecapMessage()
+    : buildWeeklyRecapMessage();
+  const batch = await admin
+    .messaging()
+    .sendEachForMulticast({ tokens, ...message });
+
+  // Prune dead tokens (Q4 prune-on-send-error).
+  const dead = tokensToPrune(batch, tokens);
+  await Promise.all(
+    dead.map((t) =>
+      db
+        .doc(`users/${uid}/devices/${t}`)
+        .delete()
+        .catch(() => {})
+    )
+  );
+
+  // Behind → ensure the deep-link target exists. Write the fell-behind flag
+  // (same shape weeklyFellBehindCheck writes) if it isn't already present for
+  // this week, so a user who taps before the 05:00 UTC sweep still lands on the
+  // FellBehindSheet. Idempotent + deletion-lock guarded.
+  const existingFlag =
+    (ctx && ctx.programState && ctx.programState.pendingFellBehindPrompt) ||
+    null;
+  if (
+    behind &&
+    ctx &&
+    !(existingFlag && existingFlag.weekKey === range.weekKey) &&
+    (await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "weeklyRecap"))
+  ) {
+    await ctx.programRef.set(
+      {
+        pendingFellBehindPrompt: {
+          weekKey: range.weekKey,
+          completedRatio: status.completedRatio,
+          realRunCount: status.realRunCount,
+          weeklyTarget: status.weeklyTarget,
+        },
+      },
+      { merge: true }
+    );
+  }
+
+  // ≤1/day markers: record the recap AND suppress the evening streak nudge
+  // (recap > streak) by writing the same marker #966 reads.
+  await db
+    .doc(`users/${uid}/settings/pushState`)
+    .set(
+      { lastRecapDateKey: todayKey, lastStreakNudgeDateKey: todayKey },
+      { merge: true }
+    );
+
+  return batch.successCount > 0;
+}
+
 exports.hourlyStreakNudge = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 * * * *")
@@ -2401,6 +2533,7 @@ exports.hourlyStreakNudge = functions
       const now = new Date();
       let sent = 0;
       let badgeSent = 0;
+      let recapSent = 0;
       await sweepActiveUsers({
         name: "hourlyStreakNudge",
         cutoffDays: 14,
@@ -2414,9 +2547,18 @@ exports.hourlyStreakNudge = functions
           ) {
             return;
           }
-          // Two independent send-decisions per user in one sweep (avoids a
+          // Three independent send-decisions per user in one sweep (avoids a
           // second full active-user pass — cost). A throw in one must not
-          // skip the other.
+          // skip the others. Recap is evaluated first so its per-day marker
+          // (recap > streak) suppresses the evening streak nudge.
+          try {
+            if (await maybeSendWeeklyRecap(uid, now)) recapSent++;
+          } catch (e) {
+            console.error("hourlyStreakNudge: recap send failed", {
+              uid,
+              message: e.message,
+            });
+          }
           try {
             if (await maybeSendStreakNudge(uid, now)) sent++;
           } catch (e) {
@@ -2436,7 +2578,7 @@ exports.hourlyStreakNudge = functions
         },
       });
       console.log(
-        `hourlyStreakNudge: done — sent=${sent} badgeSent=${badgeSent}`
+        `hourlyStreakNudge: done — sent=${sent} badgeSent=${badgeSent} recapSent=${recapSent}`
       );
     } catch (err) {
       console.error("hourlyStreakNudge: fatal error:", {
@@ -2451,6 +2593,7 @@ exports.hourlyStreakNudge = functions
 // sweep's _runDailyRaceReconciliationForUser convention).
 exports._maybeSendStreakNudge = maybeSendStreakNudge;
 exports._maybeSendBadgeNudge = maybeSendBadgeNudge;
+exports._maybeSendWeeklyRecap = maybeSendWeeklyRecap;
 
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
 // FCM message to the caller's own registered tokens so a user can confirm
@@ -4794,23 +4937,17 @@ function _priorWeekUtcRange(nowMs) {
 // preserve the existing `_isVolumeEligibleRun` test-surface export.
 const _isVolumeEligibleRun = isVolumeEligibleRun;
 
-/** Pure decision function for the fell-behind flag. Returns
- *  `{ payload, action }` where `action` is one of:
- *    - "set": new fell-behind state → write flag
- *    - "clear": previously fell-behind but this week clears it →
- *      delete the flag (write `null`)
- *    - "noop": nothing to do this week
- *  Easy to test exhaustively without Firestore. */
-function _decideFellBehindFlag(
-  profile,
-  programState,
-  priorWeekRuns,
-  priorWeekKey
-) {
+/** Pure: the prior-week run-completion status against the user's
+ *  weekly target, or `null` when the user has no prescriptive target
+ *  (freeform / active recovery / target < 1). Single source of truth
+ *  for "who's behind", shared by both `_decideFellBehindFlag` (the
+ *  Monday 05:00 UTC sweep) and `maybeSendWeeklyRecap` (the local
+ *  Monday-8am recap push) so the two can't drift. */
+function _fellBehindRatio(profile, programState, priorWeekRuns) {
   // Gate 1 — freeform users have no prescriptive target; skip.
   const runMode = profile && profile.runMode;
   if (!runMode || runMode === "freeform") {
-    return { action: "noop" };
+    return null;
   }
 
   // Gate 2 — users in active recovery phase aren't falling behind
@@ -4819,7 +4956,7 @@ function _decideFellBehindFlag(
   // missing those isn't fell-behind territory.
   const runPlan = (programState && programState.runPlan) || null;
   if (runPlan && runPlan.phase === "recovery") {
-    return { action: "noop" };
+    return null;
   }
 
   // Gate 3 — read the user's weekly run target. Use `??` (not `||`)
@@ -4833,7 +4970,7 @@ function _decideFellBehindFlag(
     (profile && profile.weeklyRunsTarget) ??
     0;
   if (weeklyTarget < 1) {
-    return { action: "noop" };
+    return null;
   }
 
   // Count volume-eligible runs in the prior week.
@@ -4841,7 +4978,33 @@ function _decideFellBehindFlag(
     _isVolumeEligibleRun
   ).length;
   const completedRatio = realRunCount / weeklyTarget;
-  const fellBehind = completedRatio < FELL_BEHIND_THRESHOLD;
+  return {
+    realRunCount,
+    weeklyTarget,
+    completedRatio,
+    fellBehind: completedRatio < FELL_BEHIND_THRESHOLD,
+  };
+}
+
+/** Pure decision function for the fell-behind flag. Returns
+ *  `{ payload, action }` where `action` is one of:
+ *    - "set": new fell-behind state → write flag
+ *    - "clear": previously fell-behind but this week clears it →
+ *      delete the flag (write `null`)
+ *    - "noop": nothing to do this week
+ *  Easy to test exhaustively without Firestore. */
+function _decideFellBehindFlag(
+  profile,
+  programState,
+  priorWeekRuns,
+  priorWeekKey
+) {
+  const status = _fellBehindRatio(profile, programState, priorWeekRuns);
+  // No prescriptive target (freeform / recovery / target<1) → nothing to do.
+  if (!status) {
+    return { action: "noop" };
+  }
+  const { completedRatio, realRunCount, weeklyTarget, fellBehind } = status;
 
   const existingFlag =
     (programState && programState.pendingFellBehindPrompt) || null;
@@ -4985,5 +5148,6 @@ exports.weeklyFellBehindCheck = functions
 
 exports._priorWeekUtcRange = _priorWeekUtcRange;
 exports._isVolumeEligibleRun = _isVolumeEligibleRun;
+exports._fellBehindRatio = _fellBehindRatio;
 exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
