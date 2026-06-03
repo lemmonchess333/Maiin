@@ -127,6 +127,19 @@ function BadgeEarnedContent({
           </p>
           <p className="text-xl font-bold text-white">{badge.name}</p>
           <p className="text-sm text-white/60 mt-1">{badge.description}</p>
+          {/* Forward streak hook (#974): the First Step moment celebrates,
+              but the D1→D2 lever is telling the user WHY to return. Only on
+              the first-activity badge; calm-brand, encouraging (not guilt) —
+              aligns with the streak-forgiveness model. Reuses this modal, so
+              no second celebration surface mounts. */}
+          {badge.id === "first_step" && (
+            <p
+              className="text-sm font-semibold mt-3"
+              style={{ color: TIER_COLORS[badge.tier] }}
+            >
+              Come back tomorrow to build your streak.
+            </p>
+          )}
         </div>
 
         <button
