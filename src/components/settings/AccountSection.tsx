@@ -444,6 +444,7 @@ export default function AccountSection({
                 </p>
                 <input
                   type="text"
+                  aria-label="Type DELETE to confirm account deletion"
                   value={deleteConfirmText}
                   onChange={(e) => setDeleteConfirmText(e.target.value)}
                   placeholder="Type DELETE"
@@ -515,6 +516,7 @@ export default function AccountSection({
                   <input
                     type="password"
                     autoComplete="current-password"
+                    aria-label="Current password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
