@@ -25,6 +25,7 @@ if (!admin.apps.length) {
 const {
   _priorWeekUtcRange,
   _isVolumeEligibleRun,
+  _fellBehindRatio,
   _decideFellBehindFlag,
 } = require("../index");
 
@@ -119,6 +120,64 @@ describe("_isVolumeEligibleRun", () => {
   it("returns false for a null / undefined input (defensive)", () => {
     expect(_isVolumeEligibleRun(null)).toBe(false);
     expect(_isVolumeEligibleRun(undefined)).toBe(false);
+  });
+});
+
+// ── _fellBehindRatio (shared single source of truth) ────────────
+
+describe("_fellBehindRatio", () => {
+  it("returns null when the user has no prescriptive target", () => {
+    expect(
+      _fellBehindRatio(profile({ runMode: "freeform" }), programState(), [])
+    ).toBeNull();
+    expect(
+      _fellBehindRatio(profile({ runMode: undefined }), programState(), [])
+    ).toBeNull();
+    expect(
+      _fellBehindRatio(
+        profile(),
+        programState({ runPlan: { mode: "race_prep", phase: "recovery" } }),
+        []
+      )
+    ).toBeNull();
+    expect(
+      _fellBehindRatio(
+        profile({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 0 }),
+        programState(),
+        []
+      )
+    ).toBeNull();
+  });
+
+  it("computes ratio + fellBehind against the weekly target", () => {
+    const s = _fellBehindRatio(
+      profile({ weeklyRunDaysTarget: 4 }),
+      programState(),
+      [realRun()] // 1 of 4
+    );
+    expect(s).toEqual({
+      realRunCount: 1,
+      weeklyTarget: 4,
+      completedRatio: 0.25,
+      fellBehind: true,
+    });
+  });
+
+  it("is not behind at exactly 50% (strict <) and counts real runs only", () => {
+    const onBoundary = _fellBehindRatio(
+      profile({ weeklyRunDaysTarget: 4 }),
+      programState(),
+      [realRun(), realRun()] // 2 of 4 = 50%
+    );
+    expect(onBoundary.fellBehind).toBe(false);
+
+    const realOnly = _fellBehindRatio(
+      profile({ weeklyRunDaysTarget: 4 }),
+      programState(),
+      [realRun(), realRun({ isInvalid: true }), realRun({ savedAnyway: true })]
+    );
+    expect(realOnly.realRunCount).toBe(1);
+    expect(realOnly.fellBehind).toBe(true);
   });
 });
 
