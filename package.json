@@ -18,6 +18,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
+    "seed:default-crews": "tsx scripts/seed-default-crews.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky"
   },
