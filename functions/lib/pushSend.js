@@ -76,9 +76,51 @@ function buildBadgeNudgeMessage() {
   };
 }
 
+/**
+ * The weekly-recap FCM message (on-track variant). DATA-ONLY (see
+ * buildStreakNudgeMessage — a top-level `notification` field suppresses
+ * onBackgroundMessage on iOS PWAs, so title/body travel in `data`). Monday-
+ * morning positive summary; generic copy (Q7 — no week stats / counts on the
+ * lock screen; the detail lives in-app behind `route`). Routes home.
+ *
+ * @returns {{ data: { type: string, route: string, title: string, body: string } }}
+ */
+function buildWeeklyRecapMessage() {
+  return {
+    data: {
+      type: "recap",
+      route: "/",
+      title: "Your week in review 📊",
+      body: "Open Tropos to see how last week went.",
+    },
+  };
+}
+
+/**
+ * The weekly-recap FCM message (fell-behind variant). DATA-ONLY (see
+ * buildStreakNudgeMessage). Sent on Monday morning when the user ran under half
+ * their weekly target last week. Generic copy (Q7 — the "X of N" detail is
+ * shown in-app, never on the lock screen). Deep-links the Programme page where
+ * the FellBehindSheet surfaces.
+ *
+ * @returns {{ data: { type: string, route: string, title: string, body: string } }}
+ */
+function buildFellBehindRecapMessage() {
+  return {
+    data: {
+      type: "fellbehind",
+      route: "/program",
+      title: "Let's realign this week 🎯",
+      body: "Last week didn't go to plan — tap to adjust your runs.",
+    },
+  };
+}
+
 module.exports = {
   tokensToPrune,
   PRUNE_ERROR_CODES,
   buildStreakNudgeMessage,
   buildBadgeNudgeMessage,
+  buildWeeklyRecapMessage,
+  buildFellBehindRecapMessage,
 };
