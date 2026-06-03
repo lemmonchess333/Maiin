@@ -45,6 +45,7 @@ export type SettingsToggle =
   | "weight_unit"
   | "distance_unit"
   | "theme"
+  | "hide_weight_number"
   | "meal_reminders"
   | "workout_reminders"
   | "streak_reminder"
