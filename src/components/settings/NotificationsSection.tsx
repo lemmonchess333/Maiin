@@ -266,6 +266,9 @@ export default function NotificationsSection({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={mealReminders[meal].enabled}
+                    aria-label={`${meal} reminder`}
                     onClick={() => {
                       haptic("light");
                       updateMealReminders({
