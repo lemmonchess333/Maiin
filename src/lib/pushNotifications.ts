@@ -47,35 +47,73 @@ export async function isPushSupported(): Promise<boolean> {
 }
 
 /**
- * Register this device for push and persist the token. Returns the token, or
- * null if anything blocks it (unsupported / no key / no permission / error).
- * Caller is responsible for having obtained permission first (priming UX).
+ * Outcome of a registration attempt. `reason` lets the caller show the user
+ * (and us) exactly where it broke instead of a silent null — important because
+ * iOS web push fails in several quiet ways.
  */
-export async function registerDeviceToken(uid: string): Promise<string | null> {
-  if (!uid) return null;
-  if (!(await isPushSupported())) return null;
+export type PushRegisterResult =
+  | { ok: true; token: string }
+  | {
+      ok: false;
+      reason: "no-uid" | "unsupported" | "no-permission" | "token-failed";
+      detail?: string;
+    };
+
+/**
+ * Register this device for push and persist the token. Caller must have
+ * obtained permission first (priming UX / the Settings toggle).
+ */
+export async function registerDeviceToken(
+  uid: string
+): Promise<PushRegisterResult> {
+  if (!uid) return { ok: false, reason: "no-uid" };
+  if (!VAPID_KEY) {
+    return { ok: false, reason: "unsupported", detail: "no VAPID key" };
+  }
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+    return { ok: false, reason: "unsupported", detail: "no serviceWorker" };
+  }
+  let supported = false;
+  try {
+    supported = await isSupported();
+  } catch {
+    supported = false;
+  }
+  if (!supported) {
+    return {
+      ok: false,
+      reason: "unsupported",
+      detail: "FCM isSupported() false",
+    };
+  }
   if (
     typeof Notification === "undefined" ||
     Notification.permission !== "granted"
   ) {
-    return null;
+    return { ok: false, reason: "no-permission" };
   }
   try {
-    const swReg = await navigator.serviceWorker.register(SW_URL);
+    await navigator.serviceWorker.register(SW_URL);
+    // iOS gotcha: getToken must run AFTER the SW is ACTIVE, not merely
+    // registered — otherwise it fails/returns empty. `ready` resolves once the
+    // active worker is controlling the page.
+    const swReg = await navigator.serviceWorker.ready;
     const token = await getToken(getMessaging(app), {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: swReg,
     });
-    if (!token) return null;
+    if (!token)
+      return { ok: false, reason: "token-failed", detail: "empty token" };
     await setDoc(
       doc(db, "users", uid, "devices", token),
       { token, platform: "web", updatedAt: serverTimestamp() },
       { merge: true }
     );
-    return token;
+    return { ok: true, token };
   } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     logger.error("[push] registerDeviceToken failed", err);
-    return null;
+    return { ok: false, reason: "token-failed", detail };
   }
 }
 
