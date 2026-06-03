@@ -38,3 +38,6 @@ council-verdict-*.md
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Claude Code agent worktrees (Agent tool isolation — never committed)
+.claude/worktrees/
