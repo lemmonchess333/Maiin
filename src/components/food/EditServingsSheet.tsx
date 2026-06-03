@@ -1,6 +1,7 @@
 import { memo, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
 interface ServingSource {
@@ -206,18 +207,15 @@ function EditServingsSheet({
   };
 
   return (
-    <>
-      <div
-        className="fixed inset-0 bg-black/40 z-40"
-        role="presentation"
-        onClick={saving ? undefined : onCancel}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Edit servings for ${foodName}`}
-        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card p-5 space-y-5 shadow-2xl"
-      >
+    <BottomSheet
+      open
+      onOpenChange={(o) => {
+        if (!o && !saving) onCancel();
+      }}
+      title={`Edit servings for ${foodName}`}
+      hideHeader
+    >
+      <div className="p-5 space-y-5">
         <div className="w-10 h-1 rounded-full bg-border mx-auto" />
         <div className="text-center space-y-1">
           {/* F5a rename input. Styled to look like the static heading
@@ -454,7 +452,7 @@ function EditServingsSheet({
           </button>
         </div>
       </div>
-    </>
+    </BottomSheet>
   );
 }
 
