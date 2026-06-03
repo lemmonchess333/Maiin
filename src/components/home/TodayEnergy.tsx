@@ -346,6 +346,23 @@ export default function TodayEnergy({
             </Link>
           )}
       </div>
+
+      {/* Always-on "Log" affordance (#973). The most-repeated daily action
+          (food logging) gets a permanent, signposted entry point on the very
+          surface that displays its result — for ALL segments, not just the
+          cold-start empty state (the overlay above is new-user-only). Its own
+          control (a Link, not nested in the header/ring buttons), nutrition-
+          orange, full 44px target, haptic on tap. */}
+      <Link
+        to="/food"
+        onClick={() => haptic()}
+        className="flex items-center justify-center gap-1.5 w-full min-h-[44px] border-t border-border/30 text-sm font-semibold motion-safe:active:scale-[0.99] transition-transform"
+        style={{ color: THEME.semantic.nutrition }}
+        aria-label="Log food"
+      >
+        <UtensilsCrossed className="size-4" />
+        Log food
+      </Link>
     </div>
   );
 }
