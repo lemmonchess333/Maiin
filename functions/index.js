@@ -2462,68 +2462,85 @@ exports.sendTestPush = functions
       throw new functions.https.HttpsError("unauthenticated", "Auth required.");
     }
     const uid = context.auth.uid;
-    const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-    const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
-    if (tokens.length === 0) {
-      return { ok: false, reason: "no-registered-device", sent: 0 };
-    }
-    let batch;
     try {
-      batch = await admin.messaging().sendEachForMulticast({
-        tokens,
-        notification: {
-          title: "Tropos 🔔",
-          body: "Push notifications are working — you're all set.",
-        },
-        data: { type: "test", route: "/" },
-      });
+      const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+      const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+      if (tokens.length === 0) {
+        return { ok: false, reason: "no-registered-device", sent: 0 };
+      }
+      let batch;
+      try {
+        batch = await admin.messaging().sendEachForMulticast({
+          tokens,
+          notification: {
+            title: "Tropos 🔔",
+            body: "Push notifications are working — you're all set.",
+          },
+          data: { type: "test", route: "/" },
+        });
+      } catch (err) {
+        console.error("sendTestPush: FCM send threw", {
+          uid,
+          code: err.code,
+          message: err.message,
+        });
+        return {
+          ok: false,
+          reason: "send-threw",
+          detail: err.code || err.message || "unknown",
+          sent: 0,
+        };
+      }
+      const dead = tokensToPrune(batch, tokens);
+      await Promise.all(
+        dead.map((t) =>
+          db
+            .doc(`users/${uid}/devices/${t}`)
+            .delete()
+            .catch(() => {})
+        )
+      );
+      if (batch.successCount === 0) {
+        // Every token rejected — surface the first failure's FCM code so the
+        // client (and we) can see WHY nothing arrived (e.g.
+        // messaging/third-party-auth-error = VAPID/key mismatch on web push).
+        const firstFail = (batch.responses || []).find((r) => r && !r.success);
+        const code =
+          (firstFail && firstFail.error && firstFail.error.code) || "unknown";
+        console.error("sendTestPush: 0 delivered", {
+          uid,
+          code,
+          pruned: dead.length,
+        });
+        return {
+          ok: false,
+          reason: "send-failed",
+          detail: code,
+          sent: 0,
+          pruned: dead.length,
+        };
+      }
+      return {
+        ok: true,
+        sent: batch.successCount,
+        pruned: dead.length,
+      };
     } catch (err) {
-      console.error("sendTestPush: FCM send threw", {
+      // Any unguarded throw (devices read, admin.messaging init, etc.) — surface
+      // the real message instead of an opaque functions/internal to the client.
+      console.error("sendTestPush: handler threw", {
         uid,
         code: err.code,
         message: err.message,
+        stack: err.stack,
       });
       return {
         ok: false,
-        reason: "send-threw",
+        reason: "handler-threw",
         detail: err.code || err.message || "unknown",
         sent: 0,
       };
     }
-    const dead = tokensToPrune(batch, tokens);
-    await Promise.all(
-      dead.map((t) =>
-        db
-          .doc(`users/${uid}/devices/${t}`)
-          .delete()
-          .catch(() => {})
-      )
-    );
-    if (batch.successCount === 0) {
-      // Every token rejected — surface the first failure's FCM code so the
-      // client (and we) can see WHY nothing arrived (e.g.
-      // messaging/third-party-auth-error = VAPID/key mismatch on web push).
-      const firstFail = (batch.responses || []).find((r) => r && !r.success);
-      const code =
-        (firstFail && firstFail.error && firstFail.error.code) || "unknown";
-      console.error("sendTestPush: 0 delivered", {
-        uid,
-        code,
-        pruned: dead.length,
-      });
-      return {
-        ok: false,
-        reason: "send-failed",
-        detail: code,
-        sent: 0,
-        pruned: dead.length,
-      };
-    }
-    return {
-      ok: true,
-      sent: batch.successCount,
-      pruned: dead.length,
-    };
   });
 
 // ══════════════════════════════════════════════
