@@ -2470,13 +2470,17 @@ exports.sendTestPush = functions
       }
       let batch;
       try {
+        // Data-only (no top-level `notification`) so the SW's
+        // onBackgroundMessage reliably fires on iOS PWAs and renders it.
+        // Title/body travel in `data`.
         batch = await admin.messaging().sendEachForMulticast({
           tokens,
-          notification: {
+          data: {
+            type: "test",
+            route: "/",
             title: "Tropos 🔔",
             body: "Push notifications are working — you're all set.",
           },
-          data: { type: "test", route: "/" },
         });
       } catch (err) {
         console.error("sendTestPush: FCM send threw", {
