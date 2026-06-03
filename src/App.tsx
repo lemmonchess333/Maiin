@@ -17,6 +17,7 @@ import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingMo
 import { StreaksProvider } from "@/features/streaks/useStreaks";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
+import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import { captureError } from "@/lib/errorReporting";
 /* Chunk-error-recovering lazy wrapper. Extracted to src/lib/lazyRetry
@@ -346,6 +347,10 @@ function AppRoutes() {
             / useWeeklyDayMap all read from it, collapsing four listeners
             into one. */}
           <DailyLogsProvider>
+            {/* #995: app-global tier-4 coordinator. Wraps BOTH the global
+                priming modal and the routes (Home's trial/fell-behind/badge),
+                so at most one blocking surface shows per app-open. */}
+            <SurfaceCoordinatorProvider>
             <RoutePrefetcher />
             {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
@@ -603,6 +608,7 @@ function AppRoutes() {
               <Route path="/log" element={<Navigate to="/food" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </SurfaceCoordinatorProvider>
           </DailyLogsProvider>
         </RemindersProvider>
       </StreaksProvider>
