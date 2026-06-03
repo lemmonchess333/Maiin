@@ -168,6 +168,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           >
             <video
               ref={videoRef}
+              aria-label="Barcode scanner camera preview"
               className="size-full object-cover"
               playsInline
               muted
@@ -191,6 +192,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             <div className="flex gap-2">
               <input
                 type="text"
+                aria-label="Barcode number"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 placeholder="Enter barcode manually"
