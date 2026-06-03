@@ -1331,6 +1331,7 @@ export default function RunSetupModal({
                     </div>
                     <input
                       type="range"
+                      aria-label="Voice speed"
                       min="0.6"
                       max="1.4"
                       step="0.1"

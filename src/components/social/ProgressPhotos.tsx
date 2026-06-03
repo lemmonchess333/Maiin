@@ -384,6 +384,7 @@ export default function ProgressPhotos() {
         <input
           ref={fileInputRef}
           type="file"
+          aria-label="Upload progress photo"
           accept="image/*"
           capture="environment"
           onChange={handleUpload}
