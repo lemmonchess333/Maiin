@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
+import { useEducationCard } from "@/components/EducationLaneProvider";
 
 /** localStorage key prefix for per-tip dismissal flags. */
 const DISMISSED_STORAGE_PREFIX = "tropos-home-tip-dismissed";
@@ -28,6 +29,9 @@ interface ContextualTipBannerProps {
    *  override. */
   ctaLabel?: string;
   ctaHref?: string;
+  /** Priority within the #995 education lane (≤1 inline card at a time).
+   *  Higher wins. Omit (0) for banners not competing for the lane. */
+  lanePriority?: number;
 }
 
 /**
@@ -48,13 +52,24 @@ export default function ContextualTipBanner({
   visible,
   ctaLabel = "Open Settings",
   ctaHref = "/settings",
+  lanePriority = 0,
 }: ContextualTipBannerProps) {
   const { dismissed, dismiss } = useDismissOnce(
     `${DISMISSED_STORAGE_PREFIX}:${tipKey}`
   );
   const prefersReducedMotion = useReducedMotion();
 
-  const shouldRender = visible && !dismissed;
+  // Compete in the education lane: this banner only renders when it is the
+  // single winning card. When dismissed, `eligible` flips false and the next
+  // card takes the slot. Fails open outside the provider (visible === eligible).
+  const eligible = visible && !dismissed;
+  const { visible: isLaneWinner } = useEducationCard({
+    id: `tip:${tipKey}`,
+    priority: lanePriority,
+    eligible,
+  });
+
+  const shouldRender = eligible && isLaneWinner;
 
   const handleDismiss = () => {
     haptic("light");
