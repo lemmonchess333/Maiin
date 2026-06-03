@@ -61,7 +61,10 @@ describe("tokensToPrune", () => {
   });
 });
 
-import { buildStreakNudgeMessage } from "../lib/pushSend";
+import {
+  buildStreakNudgeMessage,
+  buildBadgeNudgeMessage,
+} from "../lib/pushSend";
 
 describe("buildStreakNudgeMessage", () => {
   it("uses generic copy + deep-link data, with no PII / numbers (Q7)", () => {
@@ -71,5 +74,17 @@ describe("buildStreakNudgeMessage", () => {
     expect(m.data).toEqual({ type: "streak", route: "/" });
     // No streak count / number leaked into the body.
     expect(m.notification.body).not.toMatch(/\d/);
+  });
+});
+
+describe("buildBadgeNudgeMessage", () => {
+  it("uses generic copy + deep-link data (Q7 — badge NAMES leak streak counts, so omit them)", () => {
+    const m = buildBadgeNudgeMessage();
+    expect(m.notification.title).toBeTruthy();
+    expect(m.notification.body).toBeTruthy();
+    expect(m.data).toEqual({ type: "badge", route: "/" });
+    // No number / streak-implying digit, and no specific badge name.
+    expect(m.notification.body).not.toMatch(/\d/);
+    expect(m.notification.title).not.toMatch(/\d/);
   });
 });
