@@ -34,6 +34,14 @@ const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const socialFanout = require("./lib/socialFanout");
+// Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
+const {
+  shouldSendStreakNudge,
+  localDateKeyInTz,
+} = require("./lib/streakNudge");
+const { isLocalSendHour } = require("./lib/pushSchedule");
+const { activeDateKeysFromLogs } = require("./lib/activeDates");
+const { tokensToPrune, buildStreakNudgeMessage } = require("./lib/pushSend");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -2185,6 +2193,160 @@ exports.dailyPerformanceRefresh = functions
     }
     return null;
   });
+
+// ══════════════════════════════════════════════
+// Push #961 — hourly streak-at-risk nudge sender (web)
+// ══════════════════════════════════════════════
+//
+// Composes the pure decision helpers — shouldSendStreakNudge (#964),
+// isLocalSendHour (#1001), the inlined consent check (mirrors
+// src/lib/pushConsent — functions/ can't import the TS client module), and the
+// server-side active-date derivation (#activeDates / Option A) — with the FCM
+// I/O. Fires hourly; each eligible user is sent at most once/day at ~19:00
+// LOCAL, outside quiet hours, gated on streak consent. SCHEDULED_CAP
+// (maxInstances:1); admin.messaging() uses the default service-account creds
+// (no bound secret). Only targets users with a registered device token.
+
+const STREAK_NUDGE_LOCAL_HOUR = 19;
+
+// Mirrors src/lib/pushConsent.mayTargetUser: a type sends only when the global
+// switch AND its per-type flag are on (absent per-type flag → on).
+function mayTargetUserConsent(consent, type) {
+  if (!consent || !consent.enabled) return false;
+  return consent[type] !== false;
+}
+
+async function maybeSendStreakNudge(uid, now) {
+  const [profileSnap, streakSnap, consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}`).get(),
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+
+  const timezone = (profileSnap.data() || {}).timezone || null;
+  if (!timezone) return false; // skip-on-null-tz (no overnight pings)
+
+  // Hour-bucket: only at ~19:00 local, never inside quiet hours.
+  if (!isLocalSendHour(now, timezone, STREAK_NUDGE_LOCAL_HOUR)) return false;
+
+  // Consent: streak push must be opted in.
+  if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
+
+  const currentStreak = (streakSnap.data() || {}).currentStreak || 0;
+  const lastNudgeDateKey =
+    (stateSnap.data() || {}).lastStreakNudgeDateKey || null;
+
+  // Active-date set (Option A): re-derive from the last few days of logs, since
+  // the client-computed set is never persisted.
+  const windowMs = now.getTime() - 3 * 86400000;
+  const windowKey =
+    localDateKeyInTz(new Date(windowMs), timezone) || "0000-00-00";
+  const windowTs = admin.firestore.Timestamp.fromMillis(windowMs);
+  const [workoutsSnap, runsSnap, mealsSnap] = await Promise.all([
+    db.collection(`users/${uid}/workouts`).where("date", ">=", windowKey).get(),
+    db
+      .collection(`users/${uid}/runs`)
+      .where("completedAt", ">=", windowTs)
+      .get(),
+    db.collection(`users/${uid}/meals`).where("date", ">=", windowKey).get(),
+  ]);
+  const activeDateKeys = activeDateKeysFromLogs(
+    {
+      workouts: workoutsSnap.docs.map((d) => ({ date: d.data().date })),
+      runs: runsSnap.docs.map((d) => {
+        const c = d.data().completedAt;
+        return { completedAtMs: c && c.toMillis ? c.toMillis() : NaN };
+      }),
+      meals: mealsSnap.docs.map((d) => ({
+        date: d.data().date,
+        items: d.data().items,
+      })),
+    },
+    timezone
+  );
+
+  // Eligibility (consent already checked → remindersOptedIn: true).
+  const eligible = shouldSendStreakNudge(
+    {
+      currentStreak,
+      remindersOptedIn: true,
+      timezone,
+      activeDateKeys,
+      lastNudgeDateKey,
+    },
+    now
+  );
+  if (!eligible) return false;
+
+  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  if (tokens.length === 0) return false;
+
+  const batch = await admin
+    .messaging()
+    .sendEachForMulticast({ tokens, ...buildStreakNudgeMessage() });
+
+  // Prune dead tokens (Q4 prune-on-send-error).
+  const dead = tokensToPrune(batch, tokens);
+  await Promise.all(
+    dead.map((t) =>
+      db
+        .doc(`users/${uid}/devices/${t}`)
+        .delete()
+        .catch(() => {})
+    )
+  );
+
+  // ≤1/day idempotency marker (local day).
+  await db
+    .doc(`users/${uid}/settings/pushState`)
+    .set(
+      { lastStreakNudgeDateKey: localDateKeyInTz(now, timezone) },
+      { merge: true }
+    );
+
+  return batch.successCount > 0;
+}
+
+exports.hourlyStreakNudge = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 * * * *")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("hourlyStreakNudge: starting");
+      const now = new Date();
+      let sent = 0;
+      await sweepActiveUsers({
+        name: "hourlyStreakNudge",
+        cutoffDays: 14,
+        perUser: async (uid) => {
+          if (
+            !(await accountDeletionLocks.shouldSystemWriteProceed(
+              db,
+              uid,
+              "hourlyStreakNudge"
+            ))
+          ) {
+            return;
+          }
+          if (await maybeSendStreakNudge(uid, now)) sent++;
+        },
+      });
+      console.log(`hourlyStreakNudge: done — sent=${sent}`);
+    } catch (err) {
+      console.error("hourlyStreakNudge: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+// Exported for per-user decision+send testing (mirrors the reconciliation
+// sweep's _runDailyRaceReconciliationForUser convention).
+exports._maybeSendStreakNudge = maybeSendStreakNudge;
 
 // ══════════════════════════════════════════════
 // PR-L L1 + L3 — daily race-reconciliation sweep

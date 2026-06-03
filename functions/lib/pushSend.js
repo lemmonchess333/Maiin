@@ -37,4 +37,21 @@ function tokensToPrune(batch, tokens) {
   return dead;
 }
 
-module.exports = { tokensToPrune, PRUNE_ERROR_CODES };
+/**
+ * The streak-nudge FCM message. Generic copy + data only (Q7: payloads transit
+ * FCM and show on lock screens — no PII / health data / streak counts). The
+ * `data.route` deep-links when the notification is tapped (see the SW).
+ *
+ * @returns {{ notification: { title: string, body: string }, data: { type: string, route: string } }}
+ */
+function buildStreakNudgeMessage() {
+  return {
+    notification: {
+      title: "Keep your streak alive 🔥",
+      body: "Log today to keep your streak going.",
+    },
+    data: { type: "streak", route: "/" },
+  };
+}
+
+module.exports = { tokensToPrune, PRUNE_ERROR_CODES, buildStreakNudgeMessage };
