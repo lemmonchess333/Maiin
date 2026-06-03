@@ -39,9 +39,18 @@ const {
   shouldSendStreakNudge,
   localDateKeyInTz,
 } = require("./lib/streakNudge");
-const { isLocalSendHour } = require("./lib/pushSchedule");
+const {
+  isLocalSendHour,
+  withinQuietHours,
+  localHourInTz,
+} = require("./lib/pushSchedule");
 const { activeDateKeysFromLogs } = require("./lib/activeDates");
-const { tokensToPrune, buildStreakNudgeMessage } = require("./lib/pushSend");
+const {
+  tokensToPrune,
+  buildStreakNudgeMessage,
+  buildBadgeNudgeMessage,
+} = require("./lib/pushSend");
+const { pushableBadgeIds } = require("./lib/badgeNudge");
 
 const appleIAP = require("./appleIAP");
 exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
@@ -2309,6 +2318,71 @@ async function maybeSendStreakNudge(uid, now) {
   return batch.successCount > 0;
 }
 
+// Push #961 / badge sender #968 — badge-earned nudge. Earned badges live in
+// users/{uid}/streaks/data.badges[] ({ id, earnedAt }). This fires at the next
+// non-quiet local hour after a badge is earned (not pinned to one hour, so it
+// feels timely), at most once/day, gated on "badge" consent. The 2-day
+// recency window + pushedBadgeIds marker prevent back-spam of historical
+// badges and re-sends. Generic payload (Q7 — badge names leak streak counts).
+async function maybeSendBadgeNudge(uid, now) {
+  const [profileSnap, streakSnap, consentSnap, stateSnap] = await Promise.all([
+    db.doc(`users/${uid}`).get(),
+    db.doc(`users/${uid}/streaks/data`).get(),
+    db.doc(`users/${uid}/settings/push`).get(),
+    db.doc(`users/${uid}/settings/pushState`).get(),
+  ]);
+
+  const timezone = (profileSnap.data() || {}).timezone || null;
+  if (!timezone) return false; // skip-on-null-tz (no overnight pings)
+
+  // Any non-quiet local hour (timely), never inside quiet hours.
+  if (withinQuietHours(localHourInTz(now, timezone))) return false;
+
+  // Consent: badge push must be opted in.
+  if (!mayTargetUserConsent(consentSnap.data() || null, "badge")) return false;
+
+  const state = stateSnap.data() || {};
+  // ≤1/day idempotency (local day).
+  const todayKey = localDateKeyInTz(now, timezone);
+  if (state.lastBadgePushDateKey === todayKey) return false;
+
+  const badges = (streakSnap.data() || {}).badges || [];
+  const pushedBadgeIds = state.pushedBadgeIds || [];
+  const fresh = pushableBadgeIds(badges, pushedBadgeIds, now);
+  if (fresh.length === 0) return false;
+
+  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
+  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  if (tokens.length === 0) return false;
+
+  const batch = await admin
+    .messaging()
+    .sendEachForMulticast({ tokens, ...buildBadgeNudgeMessage() });
+
+  // Prune dead tokens (Q4 prune-on-send-error).
+  const dead = tokensToPrune(batch, tokens);
+  await Promise.all(
+    dead.map((t) =>
+      db
+        .doc(`users/${uid}/devices/${t}`)
+        .delete()
+        .catch(() => {})
+    )
+  );
+
+  // Mark these badge ids pushed + today's ≤1/day marker. Union with the
+  // existing set so an earlier day's pushes aren't forgotten.
+  const pushedUnion = Array.from(new Set([...pushedBadgeIds, ...fresh]));
+  await db
+    .doc(`users/${uid}/settings/pushState`)
+    .set(
+      { pushedBadgeIds: pushedUnion, lastBadgePushDateKey: todayKey },
+      { merge: true }
+    );
+
+  return batch.successCount > 0;
+}
+
 exports.hourlyStreakNudge = functions
   .runWith(SCHEDULED_CAP)
   .pubsub.schedule("0 * * * *")
@@ -2318,6 +2392,7 @@ exports.hourlyStreakNudge = functions
       console.log("hourlyStreakNudge: starting");
       const now = new Date();
       let sent = 0;
+      let badgeSent = 0;
       await sweepActiveUsers({
         name: "hourlyStreakNudge",
         cutoffDays: 14,
@@ -2331,10 +2406,30 @@ exports.hourlyStreakNudge = functions
           ) {
             return;
           }
-          if (await maybeSendStreakNudge(uid, now)) sent++;
+          // Two independent send-decisions per user in one sweep (avoids a
+          // second full active-user pass — cost). A throw in one must not
+          // skip the other.
+          try {
+            if (await maybeSendStreakNudge(uid, now)) sent++;
+          } catch (e) {
+            console.error("hourlyStreakNudge: streak send failed", {
+              uid,
+              message: e.message,
+            });
+          }
+          try {
+            if (await maybeSendBadgeNudge(uid, now)) badgeSent++;
+          } catch (e) {
+            console.error("hourlyStreakNudge: badge send failed", {
+              uid,
+              message: e.message,
+            });
+          }
         },
       });
-      console.log(`hourlyStreakNudge: done — sent=${sent}`);
+      console.log(
+        `hourlyStreakNudge: done — sent=${sent} badgeSent=${badgeSent}`
+      );
     } catch (err) {
       console.error("hourlyStreakNudge: fatal error:", {
         message: err.message,
@@ -2347,6 +2442,7 @@ exports.hourlyStreakNudge = functions
 // Exported for per-user decision+send testing (mirrors the reconciliation
 // sweep's _runDailyRaceReconciliationForUser convention).
 exports._maybeSendStreakNudge = maybeSendStreakNudge;
+exports._maybeSendBadgeNudge = maybeSendBadgeNudge;
 
 // Push #961 / #965 — on-demand test push (the device tracer). Sends a generic
 // FCM message to the caller's own registered tokens so a user can confirm
