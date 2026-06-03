@@ -11,6 +11,11 @@ import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
+import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
+import {
+  getActivationFraming,
+  isWithinActivationWindow,
+} from "@/lib/activationFraming";
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
@@ -373,6 +378,53 @@ export default function Home() {
       return "casual" as const;
     },
     [totalLifetimeMeals, streak, daysSinceLastMeal]
+  );
+
+  // #972 cold-start activation framing. profile.createdAt is a Firestore
+  // Timestamp once persisted (a serverTimestamp() sentinel has no toMillis,
+  // so createdAtMs is null until the first server round-trip → no framing
+  // for that brief window, which is correct).
+  const createdAtMs = useMemo(
+    function () {
+      const c = profile?.createdAt as { toMillis?: () => number } | undefined;
+      return c && typeof c.toMillis === "function" ? c.toMillis() : null;
+    },
+    [profile?.createdAt]
+  );
+  // Captured once on mount (the activation window is day-scale; per-render
+  // freshness isn't needed, and this keeps the render path pure — Date.now()
+  // is flagged as impure-during-render).
+  const nowMs = useMemo(function () {
+    return new Date().getTime();
+  }, []);
+  // Only pay for the full lifetime-runs read while the user is inside the
+  // activation window — an established runner never reads their whole runs
+  // collection just to drive cold-start copy.
+  const inActivationWindow = isWithinActivationWindow(createdAtMs, nowMs);
+  const { runCount: lifetimeRunCount, loading: runStatsLoading } =
+    useLifetimeRunStats({ enabled: inActivationWindow });
+  const activationFraming = useMemo(
+    function () {
+      return getActivationFraming({
+        createdAtMs,
+        nowMs,
+        todayType,
+        workoutCount: workouts.length,
+        // While the runs read is in flight, treat as "has runs" so the run
+        // card never flashes "Your first run" before the count resolves.
+        runCount: runStatsLoading ? 1 : lifetimeRunCount,
+        mealCount: totalLifetimeMeals,
+      });
+    },
+    [
+      createdAtMs,
+      nowMs,
+      todayType,
+      workouts.length,
+      runStatsLoading,
+      lifetimeRunCount,
+      totalLifetimeMeals,
+    ]
   );
 
   // Relative time string for weight tile
@@ -1027,6 +1079,9 @@ export default function Home() {
                 todayRun={todayRun}
                 userSegment={userSegment}
                 muscleGroups={muscleGroups}
+                firstWorkout={activationFraming.firstWorkout}
+                firstRun={activationFraming.firstRun}
+                firstMeal={activationFraming.firstMeal}
               />
             </SectionErrorBoundary>
           </TrackSectionView>
