@@ -56,20 +56,29 @@ export default function NotificationsSection({
   const handleTestPush = async () => {
     haptic("light");
     try {
-      const fn = httpsCallable<unknown, { ok: boolean; reason?: string }>(
-        functions,
-        "sendTestPush"
-      );
+      const fn = httpsCallable<
+        unknown,
+        { ok: boolean; reason?: string; detail?: string; sent?: number }
+      >(functions, "sendTestPush");
       const { data } = await fn();
       if (data.ok) {
         toast.success("Test push sent — should arrive in a few seconds.");
       } else if (data.reason === "no-registered-device") {
         toast.error("No device registered yet — toggle push off and on again.");
       } else {
-        toast.error("Couldn't send the test push.");
+        // Surface the FCM reason/detail so a non-delivering send is diagnosable
+        // (e.g. send-failed: messaging/third-party-auth-error).
+        const why = data.detail
+          ? `${data.reason ?? "failed"}: ${data.detail}`
+          : (data.reason ?? "unknown");
+        toast.error(`Couldn't send the test push (${why}).`);
       }
-    } catch {
-      toast.error("Couldn't send the test push.");
+    } catch (err) {
+      const code =
+        (err as { code?: string; message?: string })?.code ??
+        (err as { message?: string })?.message ??
+        "error";
+      toast.error(`Test push failed (${code}).`);
     }
   };
 
