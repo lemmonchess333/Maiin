@@ -67,6 +67,7 @@ import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
+import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 
@@ -535,6 +536,15 @@ export default function Home() {
     dropWhenMissed: true,
     onDrop: dismissNewBadge,
   });
+
+  // #995 tier-3 education lane (≤1 inline card at a time). The first-run
+  // welcome coachmark wins over the two explainer banners (priorities set at
+  // their call sites: body-metrics 20 > expenditure 10).
+  const welcomeCard = useEducationCard({
+    id: "welcome-coachmark",
+    priority: 30,
+    eligible: showCoachMarks,
+  });
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
   // affordance has been used, no need to keep advertising). Persisted to
@@ -767,8 +777,9 @@ export default function Home() {
         </button>
       )}
 
-      {/* First-time coach marks */}
-      {showCoachMarks && (
+      {/* First-time coach marks — routed through the education lane so it
+          doesn't stack with the explainer banners (#995). */}
+      {welcomeCard.visible && (
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 8 },
@@ -830,6 +841,7 @@ export default function Home() {
           days"). Shown once to any onboarded user. */}
       <ContextualTipBanner
         tipKey="nutrition-expenditure-inclusive-v1"
+        lanePriority={10}
         title="Your activity is already in your target"
         description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
         visible={!!profile}
@@ -1017,6 +1029,7 @@ export default function Home() {
           the gap. */}
       <ContextualTipBanner
         tipKey="body-metrics-v1"
+        lanePriority={20}
         title="Personalise your calorie targets"
         description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
         visible={!profile?.age || !profile?.sex}
