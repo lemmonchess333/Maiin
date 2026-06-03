@@ -69,6 +69,7 @@ import {
   ChevronRight,
   MoreVertical,
   Trophy,
+  X,
 } from "lucide-react";
 import { formatDistanceToNowStrict, format } from "date-fns";
 import { toast } from "sonner";
@@ -264,6 +265,37 @@ export default function ProgrammeRunSection({
       // hides the prompt for this session.
     }
     toast("No worries — we'll wrap up your plan.");
+  }
+
+  // #975: one-time "Set a race goal" nudge for freeform runners — the skip
+  // path from onboarding (race_prep with no date now lands on the freeform
+  // substrate, Run9a) and anyone else on freeform who hasn't set a goal.
+  // Routes to the Race Goal Planner on /settings/training (where runway
+  // feedback lives — the bare onboarding date field gave none). Dismissible
+  // via the same localStorage pattern as raceRecent; and it disappears
+  // naturally once a goal IS set, because the mode flips to race_prep and
+  // this whole freeform block stops rendering ("dismisses after use").
+  const SET_RACE_GOAL_DISMISS_KEY = "tropos.dismiss.setRaceGoal";
+  const [setRaceGoalDismissed, setSetRaceGoalDismissed] = useState<boolean>(
+    () => {
+      if (typeof window === "undefined") return false;
+      try {
+        return (
+          window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1"
+        );
+      } catch {
+        return false;
+      }
+    }
+  );
+  function dismissSetRaceGoal() {
+    setSetRaceGoalDismissed(true);
+    try {
+      window.localStorage.setItem(SET_RACE_GOAL_DISMISS_KEY, "1");
+    } catch {
+      // localStorage unavailable / quota — swallow; in-memory state still
+      // hides it for this session.
+    }
   }
 
   // PR-C: post-race card state derivation. Driven by:
@@ -971,6 +1003,62 @@ export default function ProgrammeRunSection({
                   </p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
+              Planner (/settings/training). Dismissible; once a goal is set the
+              mode flips to race_prep and this freeform block stops rendering. */}
+          {!setRaceGoalDismissed && (
+            <div
+              className="w-full rounded-xl p-4 flex items-center gap-3"
+              style={{
+                background: `${THEME.running}0A`,
+                border: `1px solid ${THEME.running}26`,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  navigate("/settings/training");
+                }}
+                className="flex-1 flex items-center gap-3 text-left min-w-0"
+                style={{ minHeight: 44 }}
+              >
+                <div
+                  className="size-10 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: `${THEME.running}1A` }}
+                >
+                  <Trophy className="size-5" style={{ color: THEME.running }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-xs font-semibold mb-0.5"
+                    style={{ color: THEME.running }}
+                  >
+                    Set a race goal
+                  </p>
+                  <p className="text-sm font-bold text-foreground">
+                    Training for a race?
+                  </p>
+                  <p className="text-micro text-muted-foreground">
+                    Pick a distance and date — we'll build the plan.
+                  </p>
+                </div>
+                <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  dismissSetRaceGoal();
+                }}
+                aria-label="Dismiss set a race goal"
+                className="size-11 -my-2 -mr-2 flex items-center justify-center shrink-0 text-muted-foreground"
+              >
+                <X className="size-4" />
+              </button>
             </div>
           )}
         </div>
