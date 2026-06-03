@@ -8,6 +8,7 @@ export default function LiftCTACard({
   nextWorkout,
   navigate,
   muscleGroups,
+  isFirst = false,
 }: {
   nextWorkout: {
     dayName: string;
@@ -16,6 +17,8 @@ export default function LiftCTACard({
   };
   navigate: (p: string) => void;
   muscleGroups?: string;
+  /** #972 cold-start framing: frame this as the user's first workout. */
+  isFirst?: boolean;
 }) {
   return (
     <motion.button
@@ -40,7 +43,7 @@ export default function LiftCTACard({
             className="text-xs font-semibold mb-0.5"
             style={{ color: THEME.lifting }}
           >
-            Today · Lift day
+            {isFirst ? "Your first workout" : "Today · Lift day"}
           </p>
           <p className="text-sm font-bold text-foreground truncate">
             {nextWorkout.dayName}

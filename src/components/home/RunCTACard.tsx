@@ -34,9 +34,12 @@ const RUN_ICON_MAP: Record<
 export default function RunCTACard({
   todayRun,
   navigate,
+  isFirst = false,
 }: {
   todayRun: ScheduledRunDay | null;
   navigate: (p: string) => void;
+  /** #972 cold-start framing: frame this as the user's first run. */
+  isFirst?: boolean;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -86,7 +89,7 @@ export default function RunCTACard({
             className="text-xs font-semibold mb-0.5"
             style={{ color: THEME.running }}
           >
-            Today · Run day
+            {isFirst ? "Your first run" : "Today · Run day"}
           </p>
           <div className="flex items-baseline gap-2">
             <p className="text-sm font-bold text-foreground truncate">
