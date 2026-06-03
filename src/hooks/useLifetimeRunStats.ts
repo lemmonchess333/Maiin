@@ -16,8 +16,15 @@ export interface LifetimeRunStats {
  * useRunningStats because that hook applies a `where('completedAt', '>=')`
  * filter — fine for analytics windows, but it would silently exclude
  * pre-window runs from a "lifetime" total.
+ *
+ * `enabled` (default true) gates the read: callers that only need the count
+ * inside a narrow condition (e.g. the Home cold-start activation window)
+ * pass `enabled: false` once that condition lapses, so an established user
+ * with hundreds of runs never pays for a full-collection read on a surface
+ * that no longer consumes it.
  */
-export function useLifetimeRunStats() {
+export function useLifetimeRunStats(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const { user } = useAuth();
   const [stats, setStats] = useState<LifetimeRunStats>({
     runCount: 0,
@@ -26,7 +33,7 @@ export function useLifetimeRunStats() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !enabled) {
       setLoading(false);
       return;
     }
@@ -53,7 +60,7 @@ export function useLifetimeRunStats() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, enabled]);
 
   return { ...stats, loading };
 }

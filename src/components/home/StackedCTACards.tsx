@@ -3,6 +3,7 @@ import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
+import FirstMealCard from "@/components/home/FirstMealCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles, {
   type WeightTrendDirection,
@@ -14,7 +15,7 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, tra
 
 export type UserSegment = "new" | "active" | "returning" | "casual";
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, hideWeightNumber, weightTrend, todayRun, userSegment, muscleGroups }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, hideWeightNumber, weightTrend, todayRun, userSegment, muscleGroups, firstWorkout = false, firstRun = false, firstMeal = false }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -31,6 +32,10 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   todayRun: ScheduledRunDay | null;
   userSegment: UserSegment;
   muscleGroups?: string;
+  // #972 cold-start framing flags (day-type-aware, per-domain, 14-day window).
+  firstWorkout?: boolean;
+  firstRun?: boolean;
+  firstMeal?: boolean;
 }) {
   const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
@@ -42,17 +47,20 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
 
   const liftCard = showLift && nextWorkout ? (
     <motion.div key="lift" variants={fadeUp}>
-      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} />
+      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} isFirst={firstWorkout} />
     </motion.div>
   ) : null;
   const runCard = showRun ? (
     <motion.div key="run" variants={fadeUp}>
-      <RunCTACard todayRun={todayRun} navigate={navigate} />
+      <RunCTACard todayRun={todayRun} navigate={navigate} isFirst={firstRun} />
     </motion.div>
   ) : null;
+  // #972: on a rest day a new user has no workout to frame, so drive the
+  // first meal instead (per-domain: gated on meals === 0 within the window).
+  // The first-meal card replaces the passive RestDayCard for that cohort.
   const restCard = showRest ? (
     <motion.div key="rest" variants={fadeUp}>
-      <RestDayCard />
+      {firstMeal ? <FirstMealCard navigate={navigate} /> : <RestDayCard />}
     </motion.div>
   ) : null;
   const waterCard = (
