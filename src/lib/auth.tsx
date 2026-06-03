@@ -46,6 +46,13 @@ export interface UserProfileCore {
   email: string;
   photoURL: string | null;
   onboardingComplete: boolean;
+  /**
+   * Account-creation timestamp, set server-side by writeNewProfileDocs at
+   * signup (never user-editable, so it's not a profileSanitizer field). A
+   * serverTimestamp() sentinel until the first server round-trip resolves it
+   * to a Timestamp. Read for the #972 cold-start activation window.
+   */
+  createdAt?: Timestamp | FieldValue;
 }
 
 /** Physical attributes and fitness metrics */
