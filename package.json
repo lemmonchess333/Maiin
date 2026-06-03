@@ -19,7 +19,8 @@
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",
@@ -84,6 +85,7 @@
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.5",
     "prettier": "^3.8.3",
+    "react-doctor": "^0.2.16",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.21.0",
     "typescript": "~5.9.3",
