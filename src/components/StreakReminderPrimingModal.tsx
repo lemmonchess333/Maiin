@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useStreakReminder } from "@/hooks/RemindersProvider";
+import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 
@@ -28,7 +29,12 @@ import { logger } from "@/lib/logger";
 export function StreakReminderPrimingModal() {
   const { prefs, loading, updatePrefs, requestPermission, currentStreak } =
     useStreakReminder();
+  // `open` is now the ELIGIBILITY signal (this modal wants to show); the
+  // coordinator decides whether it actually shows this app-open (#995). Lowest
+  // tier-4 priority — a permission prime always yields to trial / fell-behind /
+  // badge, and defers to a later foreground if it loses.
   const [open, setOpen] = useState(false);
+  const surface = useSurface({ id: "priming", priority: 10, eligible: open });
 
   // Latest eligibility check, held in a ref so the mount-once listener
   // always reads fresh values without needing re-registration. Updated
@@ -71,7 +77,8 @@ export function StreakReminderPrimingModal() {
 
   const close = useCallback(() => {
     setOpen(false);
-  }, []);
+    surface.dismiss();
+  }, [surface]);
 
   const handleYes = useCallback(async () => {
     haptic("medium");
@@ -103,7 +110,7 @@ export function StreakReminderPrimingModal() {
 
   return (
     <AnimatePresence>
-      {open && (
+      {surface.active && (
         <PrimingDialog
           currentStreak={currentStreak}
           onYes={handleYes}
