@@ -73,10 +73,46 @@ function isLocalSendHour(nowUtc, timezone, targetHour) {
   return h === targetHour;
 }
 
+// Map of Intl short weekday names → 0=Sun..6=Sat (JS getDay() convention).
+const WEEKDAY_INDEX = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+/**
+ * The user's local weekday (0=Sun..6=Sat) for a UTC instant in an IANA
+ * timezone. Returns null when the timezone is absent or invalid (→ caller
+ * skips). Used by the weekly recap (#967) to fire only on the user's LOCAL
+ * Monday — distinct from `isLocalSendHour`, which only buckets the hour.
+ *
+ * @param {Date} nowUtc
+ * @param {string | null | undefined} timezone
+ * @returns {number | null}
+ */
+function localWeekdayInTz(nowUtc, timezone) {
+  if (!timezone) return null;
+  try {
+    const wd = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "short",
+    }).format(nowUtc);
+    const idx = WEEKDAY_INDEX[wd];
+    return idx == null ? null : idx;
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   QUIET_HOURS_START,
   QUIET_HOURS_END,
   localHourInTz,
   withinQuietHours,
   isLocalSendHour,
+  localWeekdayInTz,
 };
