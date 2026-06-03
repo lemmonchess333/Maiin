@@ -399,6 +399,7 @@ export default function FoodCameraModal({
         <input
           ref={fileInputRef}
           type="file"
+          aria-label="Upload food photo"
           accept="image/*"
           onChange={onFileChange}
           className="hidden"
@@ -430,6 +431,7 @@ export default function FoodCameraModal({
       {/* camera */}
       <video
         ref={videoRef}
+        aria-label="Camera preview"
         className="absolute inset-0 size-full object-cover"
         muted
         playsInline
@@ -621,6 +623,7 @@ export default function FoodCameraModal({
       <input
         ref={fileInputRef}
         type="file"
+        aria-label="Upload food photo"
         accept="image/*"
         className="hidden"
         onChange={onFileChange}

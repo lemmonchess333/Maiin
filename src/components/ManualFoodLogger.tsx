@@ -213,6 +213,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
                 </label>
                 <input
                   type="number"
+                  aria-label={`${field.label} (${field.unit})`}
                   step="1"
                   min="0"
                   value={field.value}
