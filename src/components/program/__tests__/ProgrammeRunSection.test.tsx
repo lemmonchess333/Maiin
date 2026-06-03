@@ -977,3 +977,83 @@ describe("ProgrammeRunSection — Run9 phase-3 fell-behind realign slot", () => 
     ).not.toBeInTheDocument();
   });
 });
+
+// #975: the one-time "Set a race goal" entry for freeform runners (the
+// onboarding skip path lands here on the freeform substrate). Routes to the
+// Race Goal Planner on /settings/training; dismissible via localStorage.
+describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
+  beforeEach(() => {
+    mockRecentRuns = [];
+    mockWeeklyData = [];
+    mockRunsLoading = false;
+    mockClaimMap = new Map();
+    if (typeof window !== "undefined") window.localStorage.clear();
+  });
+
+  function freeformProps() {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
+    return { props, profile };
+  }
+
+  it("renders the entry for a freeform user and deep-links to /settings/training", () => {
+    const { props, profile } = freeformProps();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    fireEvent.click(screen.getByText(/Set a race goal/i));
+    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
+  });
+
+  it("is dismissible and stays hidden after remount (localStorage persisted)", () => {
+    const { props, profile } = freeformProps();
+    const { unmount } = renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(screen.getByText(/Set a race goal/i)).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Dismiss set a race goal/i })
+    );
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+    unmount();
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        runsTarget={0}
+        programState={makeProgramState([], { runPlan: undefined })}
+      />
+    );
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+  });
+
+  it("does NOT render for a race_prep user (freeform block hidden)", () => {
+    const props = commonProps();
+    const profile = makeProfile({ runMode: "race_prep" });
+    renderWith(
+      <ProgrammeRunSection
+        {...props}
+        profile={profile}
+        programState={makeProgramState([makeRunDay()], {
+          runPlan: {
+            mode: "race_prep",
+            raceGoal: { distance: "10k", targetDate: "2099-01-01" },
+            totalWeeks: 12,
+            currentWeek: 0,
+          },
+        })}
+      />
+    );
+    expect(screen.queryByText(/Set a race goal/i)).not.toBeInTheDocument();
+  });
+});
