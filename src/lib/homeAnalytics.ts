@@ -24,6 +24,7 @@ export type HomeCard =
   | "weight"
   | "today_workout"
   | "today_run"
+  | "first_meal"
   | "trial_status"
   | "trajectory";
 
