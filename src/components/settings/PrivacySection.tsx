@@ -179,6 +179,9 @@ export default function PrivacySection({
           </div>
           <button
             type="button"
+            role="switch"
+            aria-checked={autoPostRuns}
+            aria-label="Auto-post runs"
             onClick={async () => {
               haptic("light");
               const prev = autoPostRuns;
@@ -214,6 +217,9 @@ export default function PrivacySection({
           </div>
           <button
             type="button"
+            role="switch"
+            aria-checked={autoPostWorkouts}
+            aria-label="Auto-post workouts"
             onClick={async () => {
               haptic("light");
               const prev = autoPostWorkouts;
@@ -312,6 +318,7 @@ export default function PrivacySection({
           <div className="flex gap-2">
             <input
               type="text"
+              aria-label="Privacy zone name"
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
