@@ -100,6 +100,18 @@ export default function FoodCameraModal({
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  // a11y: this is a full-screen overlay (not the Dialog/BottomSheet primitive —
+  // it's a full-bleed camera surface), and it already focus-traps via
+  // focusTrapRef. Add Escape-to-close so keyboard users aren't trapped (#842).
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCloseRef.current();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   // Reset UI state whenever the modal opens.
   useEffect(() => {
     if (!open) return;
