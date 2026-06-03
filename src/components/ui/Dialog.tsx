@@ -77,6 +77,14 @@ interface DialogProps {
    *  sheet/drawer that already occupies the default z-50 layer. Pair
    *  with a matching z override on `className` for the panel. */
   overlayClassName?: string;
+  /** Surface tone. "dark" forces a dark panel + light title/description text
+   *  regardless of app theme — for always-dark surfaces like the run flow.
+   *  Default "light" (bg-card, themed text). */
+  tone?: "light" | "dark";
+  /** Panel position. "bottom" anchors the panel near the bottom on mobile
+   *  (thumb-reachable) and centres it on desktop; "center" is always centred.
+   *  Default "center". */
+  position?: "center" | "bottom";
   children: ReactNode;
 }
 
@@ -84,6 +92,17 @@ const SIZE_CLASSES: Record<DialogSize, string> = {
   sm: "w-[min(320px,calc(100vw-48px))]",
   md: "w-[min(440px,calc(100vw-32px))]",
   lg: "w-[min(560px,calc(100vw-32px))]",
+};
+
+const POSITION_CLASSES: Record<"center" | "bottom", string> = {
+  center: "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+  bottom:
+    "left-1/2 -translate-x-1/2 bottom-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
+};
+
+const TONE_PANEL: Record<"light" | "dark", string> = {
+  light: "bg-card",
+  dark: "bg-[#1A1A1F]",
 };
 
 export function Dialog({
@@ -99,6 +118,8 @@ export function Dialog({
   role = "dialog",
   className,
   overlayClassName,
+  tone = "light",
+  position = "center",
   children,
 }: DialogProps) {
   const generatedTitleId = useId();
@@ -155,8 +176,10 @@ export function Dialog({
             aria-labelledby={titleId}
             aria-describedby={descId}
             className={cn(
-              "fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50",
-              "rounded-2xl bg-card p-5 shadow-xl",
+              "fixed z-50",
+              POSITION_CLASSES[position],
+              "rounded-2xl p-5 shadow-xl",
+              TONE_PANEL[tone],
               SIZE_CLASSES[size],
               className
             )}
@@ -178,13 +201,22 @@ export function Dialog({
             {title ? (
               <p
                 id={titleId}
-                className="text-base font-semibold text-foreground pr-6"
+                className={cn(
+                  "text-base font-semibold pr-6",
+                  tone === "dark" ? "text-white" : "text-foreground"
+                )}
               >
                 {title}
               </p>
             ) : null}
             {description ? (
-              <p id={descId} className="text-sm text-muted-foreground mt-2">
+              <p
+                id={descId}
+                className={cn(
+                  "text-sm mt-2",
+                  tone === "dark" ? "text-white/60" : "text-muted-foreground"
+                )}
+              >
                 {description}
               </p>
             ) : null}
