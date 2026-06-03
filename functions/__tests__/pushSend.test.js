@@ -60,3 +60,16 @@ describe("tokensToPrune", () => {
     expect(tokensToPrune({ responses: [] }, tokens)).toEqual([]);
   });
 });
+
+import { buildStreakNudgeMessage } from "../lib/pushSend";
+
+describe("buildStreakNudgeMessage", () => {
+  it("uses generic copy + deep-link data, with no PII / numbers (Q7)", () => {
+    const m = buildStreakNudgeMessage();
+    expect(m.notification.title).toBeTruthy();
+    expect(m.notification.body).toBeTruthy();
+    expect(m.data).toEqual({ type: "streak", route: "/" });
+    // No streak count / number leaked into the body.
+    expect(m.notification.body).not.toMatch(/\d/);
+  });
+});
