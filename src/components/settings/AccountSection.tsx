@@ -24,6 +24,7 @@ import AccordionSection from "@/components/AccordionSection";
 import type { User } from "firebase/auth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { Spinner } from "@/components/ui/Spinner";
+import { Dialog } from "@/components/ui/Dialog";
 import { useAuth } from "@/lib/auth";
 
 /** Apple manage-subscriptions deep-link. Works on iOS (opens
@@ -346,63 +347,42 @@ export default function AccountSection({
           Required by Apple's "Offering account deletion" guidance
           since standard IAP subs can't be cancelled via the
           App Store Server API. */}
-      {showAppleWarning && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-[1000]"
-            role="button"
-            tabIndex={0}
-            aria-label="Close dialog"
-            onClick={() => setShowAppleWarning(false)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ")
-                setShowAppleWarning(false);
+      <Dialog
+        open={showAppleWarning}
+        onClose={() => setShowAppleWarning(false)}
+        title="Cancel your App Store subscription first"
+        description="Tropos can't cancel your iOS subscription for you — Apple bills your account directly. Open subscription settings to cancel before deleting your account, or delete anyway and continue to be charged until you cancel."
+        role="alertdialog"
+      >
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => {
+              window.open(APPLE_MANAGE_SUBSCRIPTIONS_URL, "_blank");
             }}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-live="polite"
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[1001] bg-card rounded-2xl p-5 space-y-4 max-w-sm mx-auto shadow-xl"
+            className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            <h3 className="text-base font-semibold text-foreground">
-              Cancel your App Store subscription first
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Tropos can't cancel your iOS subscription for you — Apple bills
-              your account directly. Open subscription settings to cancel before
-              deleting your account, or delete anyway and continue to be charged
-              until you cancel.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                window.open(APPLE_MANAGE_SUBSCRIPTIONS_URL, "_blank");
-              }}
-              className="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-            >
-              Open subscription settings
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowAppleWarning(false);
-                setShowDeleteModal(true);
-              }}
-              className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
-            >
-              Delete anyway
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAppleWarning(false)}
-              className="w-full px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </>
-      )}
+            Open subscription settings
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAppleWarning(false);
+              setShowDeleteModal(true);
+            }}
+            className="w-full px-4 py-2.5 rounded-xl border border-destructive/30 text-destructive text-sm hover:bg-destructive/10 transition-colors"
+          >
+            Delete anyway
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAppleWarning(false)}
+            className="w-full px-4 py-2 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </Dialog>
 
       {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
       {showDeleteModal && (
