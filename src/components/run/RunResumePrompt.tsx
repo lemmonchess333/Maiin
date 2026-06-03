@@ -11,10 +11,16 @@
  *
  * Pure presentational — caller owns the storage clear + state
  * transitions so the chooser stays trivially testable.
+ *
+ * Renders via the Dialog primitive's dark + bottom variant (run flow is
+ * always dark; bottom-on-mobile keeps the actions thumb-reachable). It's a
+ * forced choice — no backdrop/Escape dismiss — so the user must pick Resume /
+ * Start new / Discard. z lifted to z-[60] to dominate the run-flow overlays.
  */
 
-import { THEME } from '../../lib/theme';
-import { Play, Plus, Trash2 } from 'lucide-react';
+import { THEME } from "../../lib/theme";
+import { Play, Plus, Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
 
 interface Props {
   /** Stored run's accumulated seconds at write-time. */
@@ -34,18 +40,21 @@ function formatElapsed(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  if (h > 0)
+    return `${h}:${m.toString().padStart(2, "0")}:${s
+      .toString()
+      .padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function formatStartedAgo(startedAt: number): string {
   const ms = Date.now() - startedAt;
   const mins = Math.floor(ms / 60000);
-  if (mins < 1) return 'Started just now';
-  if (mins < 60) return `Started ${mins} minute${mins === 1 ? '' : 's'} ago`;
+  if (mins < 1) return "Started just now";
+  if (mins < 60) return `Started ${mins} minute${mins === 1 ? "" : "s"} ago`;
   const hours = Math.floor(mins / 60);
   const remMins = mins % 60;
-  if (remMins === 0) return `Started ${hours} hour${hours === 1 ? '' : 's'} ago`;
+  if (remMins === 0) return `Started ${hours} hour${hours === 1 ? "" : "s"} ago`;
   return `Started ${hours}h ${remMins}m ago`;
 }
 
@@ -59,52 +68,50 @@ export default function RunResumePrompt({
 }: Props) {
   const km = (distanceMeters / 1000).toFixed(2);
   return (
-    <div
-      /* z-[60]: explicitly above Run.tsx's active-run wrapper (z-50)
-         and the RunBottomSheet (z-40 sheet, z-30 backdrop). The
-         chooser is the entry-point for a recovery flow and must
-         dominate any leftover overlays from a partially-torn-down
-         previous run. */
-      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pb-6 sm:pb-0"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="run-resume-title"
+    <Dialog
+      open
+      onClose={() => {}}
+      title="Resume previous run?"
+      description={formatStartedAgo(startedAt)}
+      role="alertdialog"
+      tone="dark"
+      position="bottom"
+      size="md"
+      closeOnBackdrop={false}
+      closeOnEscape={false}
+      overlayClassName="z-[60]"
+      className="z-[60]"
     >
-      <div
-        className="w-full max-w-md rounded-2xl p-5 space-y-4"
-        style={{ background: THEME.bg }}
-      >
-        <div className="space-y-1.5">
-          <h2
-            id="run-resume-title"
-            className="text-lg font-semibold"
-            style={{ color: '#FFFFFF' }}
-          >
-            Resume previous run?
-          </h2>
-          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            {formatStartedAgo(startedAt)}
-          </p>
-        </div>
-
+      <div className="space-y-4">
         <div
           className="rounded-xl px-4 py-3 flex items-center justify-between"
-          style={{ background: 'rgba(255,255,255,0.06)' }}
+          style={{ background: "rgba(255,255,255,0.06)" }}
         >
           <div>
-            <p className="text-micro uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p
+              className="text-micro uppercase tracking-wider"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
               Time
             </p>
-            <p className="font-mono tabular-nums text-xl font-bold" style={{ color: '#FFFFFF' }}>
+            <p
+              className="font-mono tabular-nums text-xl font-bold"
+              style={{ color: "#FFFFFF" }}
+            >
               {formatElapsed(accumulatedSeconds)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-micro uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <p
+              className="text-micro uppercase tracking-wider"
+              style={{ color: "rgba(255,255,255,0.5)" }}
+            >
               Distance
             </p>
-            <p className="font-mono tabular-nums text-xl font-bold" style={{ color: '#FFFFFF' }}>
+            <p
+              className="font-mono tabular-nums text-xl font-bold"
+              style={{ color: "#FFFFFF" }}
+            >
               {km} km
             </p>
           </div>
@@ -115,7 +122,7 @@ export default function RunResumePrompt({
             type="button"
             onClick={onResume}
             className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ background: THEME.running, color: '#FFFFFF' }}
+            style={{ background: THEME.running, color: "#FFFFFF" }}
           >
             <Play size={16} aria-hidden="true" />
             Resume run
@@ -124,7 +131,7 @@ export default function RunResumePrompt({
             type="button"
             onClick={onStartNew}
             className="w-full py-3 rounded-2xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ background: 'rgba(255,255,255,0.08)', color: '#FFFFFF' }}
+            style={{ background: "rgba(255,255,255,0.08)", color: "#FFFFFF" }}
           >
             <Plus size={16} aria-hidden="true" />
             Start new run
@@ -133,13 +140,13 @@ export default function RunResumePrompt({
             type="button"
             onClick={onDiscard}
             className="w-full py-2.5 text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ color: 'rgba(255,120,120,0.9)' }}
+            style={{ color: "rgba(255,120,120,0.9)" }}
           >
             <Trash2 size={14} aria-hidden="true" />
             Discard
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
