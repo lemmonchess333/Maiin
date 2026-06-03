@@ -1,3 +1,9 @@
+// Deploy note (2026-06-03): the six bound Secret Manager secrets
+// (APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY, BILLING_HMAC_SECRET,
+// STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET) were provisioned; this change
+// re-triggers deploy-functions so the push senders + sendTestPush finally
+// ship (every prior deploy failed the unprovisioned-secret gate).
+//
 // firebase-functions v6+ repointed the bare `require("firebase-functions")`
 // at the 2nd-gen API. Every export in this file is 1st-gen
 // (runWith().https.onCall/onRequest, .pubsub.schedule,
