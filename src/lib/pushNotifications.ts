@@ -1,6 +1,13 @@
 /**
  * FCM Web push — client token lifecycle (push arc #961, slice 3 / #965).
  *
+ * Rebuild marker (2026-06-03): VITE_FIREBASE_VAPID_KEY is read at BUILD time,
+ * so re-provisioning the secret needs a fresh Pages build to take effect —
+ * this comment forces one. The public VAPID key must match the project's Web
+ * Push certificate or Apple silently drops every push (FCM still reports
+ * success). After deploy, devices must re-register to get a token subscribed
+ * with the current key.
+ *
  * Registers/revokes the device's FCM token against `users/{uid}/devices/{token}`
  * — the schema the server senders read. Privacy invariants (Q4, PR #820
  * lineage): **delete-on-signout** so account B on a shared device never gets
