@@ -4,7 +4,9 @@ import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
 import WaterCard from "@/components/home/WaterCard";
-import WeightStepsTiles from "@/components/home/WeightStepsTiles";
+import WeightStepsTiles, {
+  type WeightTrendDirection,
+} from "@/components/home/WeightStepsTiles";
 import WelcomeBackCard from "@/components/home/WelcomeBackCard";
 
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
@@ -12,7 +14,7 @@ const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, tra
 
 export type UserSegment = "new" | "active" | "returning" | "casual";
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, todayRun, userSegment, muscleGroups }: {
+export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, hideWeightNumber, weightTrend, todayRun, userSegment, muscleGroups }: {
   nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
@@ -24,6 +26,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   weightUnit: string;
   onLogWeight: () => void;
   lastWeightDate: string;
+  hideWeightNumber?: boolean;
+  weightTrend?: WeightTrendDirection;
   todayRun: ScheduledRunDay | null;
   userSegment: UserSegment;
   muscleGroups?: string;
@@ -58,7 +62,7 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   );
   const weightTiles = (
     <motion.div key="weight" variants={fadeUp}>
-      <WeightStepsTiles lastWeight={lastWeight} weightUnit={weightUnit} onLogWeight={onLogWeight} lastWeightDate={lastWeightDate} />
+      <WeightStepsTiles lastWeight={lastWeight} weightUnit={weightUnit} onLogWeight={onLogWeight} lastWeightDate={lastWeightDate} hideNumber={hideWeightNumber} weightTrend={weightTrend} />
     </motion.div>
   );
 

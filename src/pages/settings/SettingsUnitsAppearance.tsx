@@ -35,11 +35,17 @@ export default function SettingsUnitsAppearance() {
     }
   }
 
+  // #984 "Hide the number" anti-anxiety mode. Mirrors toggleDark's
+  // profile-update path (no raw setDoc).
+  async function toggleHideWeightNumber(): Promise<void> {
+    await updateProfile({ hideWeightNumber: !profile?.hideWeightNumber });
+  }
+
   if (!profile) return <SettingsSection title="Units & Appearance" />;
 
   return (
     <SettingsSection title="Units & Appearance" subtitle="Weight, height, dark mode">
-      <UnitsAppearanceSection inline profile={profile} toggleUnit={toggleUnit} toggleDark={toggleDark} />
+      <UnitsAppearanceSection inline profile={profile} toggleUnit={toggleUnit} toggleDark={toggleDark} toggleHideWeightNumber={toggleHideWeightNumber} />
     </SettingsSection>
   );
 }

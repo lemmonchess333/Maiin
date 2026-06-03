@@ -132,6 +132,12 @@ export interface UserProfilePreferences {
   preferredWeightUnit: "kg" | "lbs";
   preferredHeightUnit: "cm" | "ft";
   darkMode: boolean;
+  /** #984 "Hide the number" anti-anxiety mode. When true, the raw
+   *  body-weight figure is suppressed app-wide (home WeightStepsTiles
+   *  tile + Progress TrendWeight chart) and replaced with
+   *  direction/trend + goal-progress framing. Undefined / missing =
+   *  OFF (default behaviour — the number shows). */
+  hideWeightNumber?: boolean;
   autoRestTimer?: boolean;
   defaultRestSeconds?: number;
   audioCues?: boolean;
@@ -349,6 +355,7 @@ function createDefaultProfile(
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
     darkMode: false,
+    hideWeightNumber: false,
     timezone: null,
     onboardingComplete: false,
     // Sub1a P1 — new users start in true free tier. The 7-day free
@@ -395,6 +402,7 @@ function hydrateProfile(
     preferredHeightUnit:
       (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
     darkMode: (data.darkMode as boolean) ?? false,
+    hideWeightNumber: (data.hideWeightNumber as boolean) ?? false,
     timezone: (data.timezone as string | null) ?? null,
     onboardingComplete: (data.onboardingComplete as boolean) ?? false,
     trialExpiresAt: (data.trialExpiresAt as string | null) ?? null,
