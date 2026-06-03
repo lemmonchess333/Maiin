@@ -179,6 +179,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
 
   // Preferences
   darkMode: cleanBoolean,
+  // #984 "Hide the number" anti-anxiety mode — without this the
+  // completeOnboarding callable would silently strip the field.
+  hideWeightNumber: cleanBoolean,
   autoRestTimer: cleanBoolean,
   defaultRestSeconds: (v) =>
     cleanNumber(v, { min: 0, max: 600, integer: true }),

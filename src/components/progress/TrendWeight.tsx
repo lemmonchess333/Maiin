@@ -43,6 +43,12 @@ export function TrendWeight() {
   }, [entries]);
 
   const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
+  // #984 "Hide the number" anti-anxiety mode. When on, every raw
+  // weight FIGURE is suppressed (header readouts, Y-axis ticks,
+  // tooltip values) and replaced with qualitative direction/progress
+  // copy — but the trend line, EMA, goal ReferenceLine and projection
+  // still RENDER (the shape conveys direction without a number).
+  const hideNumber = !!profile?.hideWeightNumber;
   const convert = (v: number) => {
     if (!Number.isFinite(v)) return 0;
     return Math.round(v * (unit === "lbs" ? 2.205 : 1) * 10) / 10;
@@ -57,9 +63,13 @@ export function TrendWeight() {
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Weight Trend
         </p>
-        <p className="text-lg font-bold text-foreground font-mono tabular-nums">
-          {convert(entry.weight)} {unit}
-        </p>
+        {hideNumber ? (
+          <p className="text-lg font-bold text-foreground">First weigh-in</p>
+        ) : (
+          <p className="text-lg font-bold text-foreground font-mono tabular-nums">
+            {convert(entry.weight)} {unit}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           on {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
         </p>
@@ -160,6 +170,24 @@ export function TrendWeight() {
     return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
   })();
 
+  // #984 — qualitative header copy for the hidden-number path. Reads
+  // the trend slope (start vs current smoothed value) and, when a
+  // goal exists, whether that movement is toward or away from it.
+  // Never reads a figure aloud.
+  const hiddenHeadline = (() => {
+    if (!hideNumber) return null;
+    const slope = data[data.length - 1].trend - data[0].trend;
+    const isFlat = Math.abs(slope) < 0.2;
+    if (goalWeight && Number.isFinite(goalWeight)) {
+      const remaining = goalWeight - currentTrend;
+      if (isFlat) return "Holding steady";
+      const towardGoal = remaining > 0 === slope > 0;
+      return towardGoal ? "Trending toward your goal" : "Trending away from goal";
+    }
+    if (isFlat) return "Holding steady";
+    return slope < 0 ? "Trending down" : "Trending up";
+  })();
+
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
@@ -167,7 +195,9 @@ export function TrendWeight() {
           Weight Trend
         </p>
         <p className="text-xs text-foreground font-medium">
-          {trendDisplay != null ? (
+          {hideNumber ? (
+            <span className="text-primary font-bold">{hiddenHeadline}</span>
+          ) : trendDisplay != null ? (
             <>
               Trending at{" "}
               <span className="text-primary font-bold font-mono tabular-nums">
@@ -203,24 +233,36 @@ export function TrendWeight() {
               axisLine={false}
               tickLine={false}
             />
+            {/* #984 — when hiding the number, suppress the Y-axis tick
+                figures and the unit label (the line shape still
+                conveys direction). Narrow the axis gutter so the chart
+                doesn't leave an empty 45px column. */}
             <YAxis
               domain={["auto", "auto"]}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              tick={
+                hideNumber
+                  ? false
+                  : { fontSize: 10, fill: "hsl(var(--muted-foreground))" }
+              }
               axisLine={false}
               tickLine={false}
-              width={45}
-              tickFormatter={(v) => `${convert(v)}`}
-              label={{
-                value: unit,
-                angle: -90,
-                position: "insideLeft",
-                offset: 0,
-                style: {
-                  fontSize: 10,
-                  fill: "hsl(var(--muted-foreground))",
-                  textAnchor: "middle",
-                },
-              }}
+              width={hideNumber ? 8 : 45}
+              tickFormatter={hideNumber ? () => "" : (v) => `${convert(v)}`}
+              label={
+                hideNumber
+                  ? undefined
+                  : {
+                      value: unit,
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 0,
+                      style: {
+                        fontSize: 10,
+                        fill: "hsl(var(--muted-foreground))",
+                        textAnchor: "middle",
+                      },
+                    }
+              }
             />
             {/* Custom tooltip content — Recharts' Scatter inside ComposedChart
                 emits extra payload entries (including the date string as a value,
@@ -265,26 +307,29 @@ export function TrendWeight() {
                     <div
                       style={{
                         fontWeight: 600,
-                        marginBottom: 4,
+                        marginBottom: hideNumber ? 0 : 4,
                         color: "hsl(var(--foreground))",
                       }}
                     >
                       {label}
                     </div>
-                    {relevant.map((entry, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          color:
-                            entry.dataKey === "trend"
-                              ? THEME.brand
-                              : "hsl(var(--muted-foreground))",
-                        }}
-                      >
-                        {entry.dataKey === "trend" ? "Trend" : "Actual"}:{" "}
-                        {convert(Number(entry.value))} {unit}
-                      </div>
-                    ))}
+                    {/* #984 — hidden mode shows the date only, never
+                        the weight figures. */}
+                    {!hideNumber &&
+                      relevant.map((entry, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            color:
+                              entry.dataKey === "trend"
+                                ? THEME.brand
+                                : "hsl(var(--muted-foreground))",
+                          }}
+                        >
+                          {entry.dataKey === "trend" ? "Trend" : "Actual"}:{" "}
+                          {convert(Number(entry.value))} {unit}
+                        </div>
+                      ))}
                   </div>
                 );
               }}
@@ -296,7 +341,9 @@ export function TrendWeight() {
                 stroke={THEME.success}
                 strokeDasharray="4 4"
                 label={{
-                  value: `Goal: ${goalDisplay}`,
+                  // #984 — keep the goal LINE (motivational shape) but
+                  // drop the figure from its label when hidden.
+                  value: hideNumber ? "Goal" : `Goal: ${goalDisplay}`,
                   position: "right",
                   fontSize: 10,
                   fill: THEME.success,
