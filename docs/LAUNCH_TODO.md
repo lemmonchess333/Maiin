@@ -212,6 +212,34 @@ console (App Check → iOS → App Attest), and replace the stub in
 `appCheck.ts` `native` branch with a CustomProvider calling the
 plugin's `getToken()`.
 
+### 6a. iOS native analytics — add GoogleService-Info.plist
+
+Firebase Analytics is wired and unit-tested on BOTH platforms behind the
+`analyticsProvider.ts` seam, and **web delivery is confirmed live** (events
+visible in Firebase → Realtime — `home_card_tapped`, `page_view`, etc.).
+The native iOS path uses the `@capacitor-firebase/analytics` plugin (already
+installed) → native Firebase SDK, which reads its config from
+`GoogleService-Info.plist`. There is **no** measurement-ID env var on native
+(the `VITE_FIREBASE_MEASUREMENT_ID` secret is web-only — the plist drives
+native).
+
+The only remaining step — whenever you do the iOS session (needs Mac/Xcode):
+
+1. Download `GoogleService-Info.plist` from Firebase Console → Project
+   settings → Your apps → **iOS app** (Analytics is already enabled on the
+   project; same place you grabbed the web `measurementId`).
+2. Add it to the Xcode project (`ios/App/App/`), then:
+
+   ```bash
+   npm run build:ios   # runs cap sync ios
+   ```
+
+That lights up the native path the same way as web — **no code needed, it's
+already wired and tested.** Spot-check on a device / TestFlight build via
+Firebase → Realtime (or DebugView). If it stays empty, check
+`/diagnostics → Analytics` on-device: `error` means the plist is missing or
+not synced.
+
 ### 7. Deploy the haptics fix + test on a real iPhone
 
 Every `haptic()` call on iOS was silently doing nothing (dead API)
@@ -584,6 +612,9 @@ Pick these up when you have Mac access:
   `npm install @capacitor-firebase/app-check && npx cap sync ios` →
   Firebase console iOS App Attest provider → ping me to swap the
   7-line stub in `src/lib/appCheck.ts`
+- Add `GoogleService-Info.plist` to the Xcode project (`ios/App/App/`) +
+  `npm run build:ios` to light up **iOS analytics** (item 6a) — web is
+  already live; the native path is wired + tested, it just needs the plist
 - End-to-end IAP sandbox test: sandbox Apple ID on iPhone →
   subscribe → verify Firestore flips `subscriptionTier` → wait for
   sandbox renewal → confirm webhook fires → cancel → confirm
