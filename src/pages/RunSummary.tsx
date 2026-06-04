@@ -12,6 +12,8 @@ import { db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { usePostCompletionKudos } from "../hooks/usePostCompletionKudos";
+import PostCompletionKudos from "../components/social/PostCompletionKudos";
 import { logger } from "../lib/logger";
 import {
   calculatePace,
@@ -427,6 +429,14 @@ export default function RunSummary() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
+  // Phase 2 — post-completion kudos. Only after the run is actually saved
+  // (the achievement is banked), and only if someone the user follows also
+  // trained today. Once/day, dismissible.
+  const kudos = usePostCompletionKudos({
+    uid: user?.uid,
+    fromName: profile?.displayName,
+    enabled: saved,
+  });
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -1050,6 +1060,21 @@ export default function RunSummary() {
                     : "Saved locally — will sync when online"}
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Post-completion kudos (Phase 2) — after the run is banked, if
+              someone the user follows also trained today. Renders nothing
+              otherwise; once/day; dismissible. */}
+          {saved && kudos.candidate && (
+            <div className="mx-4 mb-4">
+              <PostCompletionKudos
+                candidate={kudos.candidate}
+                sending={kudos.sending}
+                sent={kudos.sent}
+                onSend={kudos.sendKudos}
+                onDismiss={kudos.dismiss}
+              />
             </div>
           )}
 
