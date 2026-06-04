@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { RotateCcw } from "lucide-react";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface RestTimerRingProps {
   restSeconds: number;

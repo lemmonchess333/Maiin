@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ComponentType, type SVGProps } from "react";
 import {
-  m as motion,
+  motion,
   useMotionValue,
   animate,
   useReducedMotion as useFramerReducedMotion,

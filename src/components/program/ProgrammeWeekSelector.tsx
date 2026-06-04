@@ -1,4 +1,4 @@
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, Ban } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";

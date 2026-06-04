@@ -39,7 +39,7 @@
  */
 import { useEffect, useEffectEvent, useId } from "react";
 import type { ReactNode } from "react";
-import { AnimatePresence, m as motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { cn } from "@/lib/utils";

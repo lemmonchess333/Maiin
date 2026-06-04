@@ -86,14 +86,7 @@ export default defineConfig(({ mode }) => ({
           charts: ["recharts"],
           vendor: ["react", "react-dom", "react-router-dom"],
           maplibre: ["maplibre-gl"],
-          // NOTE: framer-motion is deliberately NOT a manual chunk. App-wide
-          // we use the lightweight `m` (aliased as `motion`) under a root
-          // <LazyMotion features={() => import("./lib/motionFeatures")}> — so
-          // the heavy DOM feature set (domMax) must be free to split into its
-          // own ASYNC chunk fetched after first paint. Forcing all of
-          // framer-motion into one manual chunk (the old `motion:
-          // ["framer-motion"]`) pulled domMax back into the eager path and
-          // defeated the lazy load.
+          motion: ["framer-motion"],
           "date-fns": ["date-fns"],
           barcode: ["@zxing/browser"],
           "body-highlighter": ["react-body-highlighter"],

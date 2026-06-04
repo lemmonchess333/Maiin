@@ -4,24 +4,23 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 vi.mock("framer-motion", () => ({
-  get m() {
-    return (this as { motion: unknown }).motion;
-  },
   motion: new Proxy(
     {},
     {
-      get: (_t: any, prop: string) => (props: any) => {
-        const {
-          initial: _i,
-          animate: _a,
-          exit: _e,
-          transition: _tn,
-          ...rest
-        } = props;
-        const Tag = prop === "create" ? "div" : prop;
-        return <Tag {...rest} />;
-      },
-    }
+      get:
+        (_t: any, prop: string) =>
+        (props: any) => {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _tn,
+            ...rest
+          } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        },
+    },
   ),
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -48,7 +47,7 @@ function renderBanner(props: {
         description={props.description ?? "Add your age and sex."}
         visible={props.visible ?? true}
       />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -63,16 +62,18 @@ describe("ContextualTipBanner", () => {
   it("renders when visible and not dismissed", () => {
     renderBanner({});
     expect(
-      screen.getByText(/Personalise your calorie targets/i)
+      screen.getByText(/Personalise your calorie targets/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/Dismiss tip: Personalise/i)
+      screen.getByLabelText(/Dismiss tip: Personalise/i),
     ).toBeInTheDocument();
   });
 
   it("does NOT render when visible is false", () => {
     renderBanner({ visible: false });
-    expect(screen.queryByText(/Personalise your calorie targets/i)).toBeNull();
+    expect(
+      screen.queryByText(/Personalise your calorie targets/i),
+    ).toBeNull();
   });
 
   it("persists dismissal in localStorage + stays hidden on re-mount", () => {
@@ -81,7 +82,9 @@ describe("ContextualTipBanner", () => {
     unmount();
 
     renderBanner({ tipKey: "test-tip" });
-    expect(screen.queryByText(/Personalise your calorie targets/i)).toBeNull();
+    expect(
+      screen.queryByText(/Personalise your calorie targets/i),
+    ).toBeNull();
   });
 
   it("dismissal is scoped per tipKey — new key reopens", () => {
@@ -91,14 +94,14 @@ describe("ContextualTipBanner", () => {
 
     renderBanner({ tipKey: "tip-b" });
     expect(
-      screen.getByText(/Personalise your calorie targets/i)
+      screen.getByText(/Personalise your calorie targets/i),
     ).toBeInTheDocument();
   });
 
   it("renders the default 'Open Settings' CTA link", () => {
     renderBanner({});
     expect(
-      screen.getByRole("link", { name: /Open Settings/i })
+      screen.getByRole("link", { name: /Open Settings/i }),
     ).toHaveAttribute("href", "/settings");
   });
 });

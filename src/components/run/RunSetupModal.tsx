@@ -15,7 +15,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
