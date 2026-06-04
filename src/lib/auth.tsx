@@ -42,6 +42,7 @@ import { unregisterDeviceToken } from "@/lib/pushNotifications";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
+import type { PreferredSplit } from "@/features/program/programTypes";
 
 /* ================================
    USER PROFILE TYPE — decomposed into sub-interfaces
@@ -247,7 +248,7 @@ export interface UserProfileOnboarding {
   experience?: "beginner" | "intermediate" | "advanced";
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
-  preferredSplit?: "full_body" | "upper_lower" | "ppl" | "bro_split" | "auto";
+  preferredSplit?: PreferredSplit;
   runFrequency?: "regular" | "occasional" | "none";
   injuries?: string[];
   gender?: "male" | "female" | "unspecified";
