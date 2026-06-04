@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useChallenges, getTimeRemaining, TIER_COLORS } from "./useChallenges";
+import { useNavigate } from "react-router-dom";
+import { useChallenges, getTimeRemaining } from "./useChallenges";
+import { getWeeklyAccountability } from "./weeklyAccountability";
 import { ChallengeCard } from "./ChallengeCard";
-import { Trophy } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
 import { THEME, RANK_COLORS } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
+import { haptic } from "@/lib/haptic";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
@@ -18,6 +21,7 @@ export function ChallengeList({
   onFindFriends?: () => void;
 }) {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const {
     challenges,
     myChallenges,
@@ -156,17 +160,84 @@ export function ChallengeList({
   const maxValue = weeklyRankings.length > 0 ? weeklyRankings[0].value : 1;
   const timeLeft = weeklyCh ? getTimeRemaining(weeklyCh.endDate) : "";
 
+  /* Accountability-first framing (Phase 1). The weekly card leads with the
+     next useful action, not a ranking — beginners, returning users, and
+     anyone with a sparse social graph get a personal consistency loop instead
+     of a comparison surface. The leaderboard stays below as secondary detail.
+     Population is the follow graph (buildLeaderboard reads following/{uid}),
+     so copy says "people you follow", never "crew". Cold-start (no follows /
+     nobody trained) falls back to a PERSONAL goal, not fake social proof. */
+  const myWeeklyCount =
+    weeklyRankings.find((e) => e.uid === user?.uid)?.value ?? 0;
+  const othersTrained = weeklyRankings.filter(
+    (e) => e.uid !== user?.uid
+  ).length;
+  const target = weeklyCh?.tiers.bronze ?? 2;
+  const {
+    title: accTitle,
+    sub: accSub,
+    ctaLabel,
+    ctaTo,
+    goalMet,
+  } = getWeeklyAccountability({ myWeeklyCount, othersTrained, target });
+
   return (
     <div className="space-y-4">
-      {/* Weekly Workout Challenge */}
+      {/* Weekly accountability card — action first, ranking second */}
       <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <Trophy size={18} style={{ color: TIER_COLORS.gold }} />
-          <h3 className="text-sm font-bold flex-1">Weekly Workout Challenge</h3>
+        <div className="flex items-start gap-3 mb-3">
+          <div
+            className="size-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{
+              background: goalMet
+                ? `${THEME.semantic.positive}14`
+                : `${THEME.brand}14`,
+            }}
+          >
+            <Trophy
+              size={18}
+              style={{
+                color: goalMet ? THEME.semantic.positive : THEME.brand,
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold leading-snug text-foreground">
+              {accTitle}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+              {accSub}
+            </p>
+          </div>
           {timeLeft && (
-            <span className="text-xs text-muted-foreground">{timeLeft}</span>
+            <span className="text-[11px] text-muted-foreground shrink-0 mt-0.5">
+              {timeLeft}
+            </span>
           )}
         </div>
+
+        {/* Primary action — its own control, 44px target, sport-coded. */}
+        <button
+          type="button"
+          onClick={() => {
+            haptic("light");
+            navigate(ctaTo);
+          }}
+          className="w-full min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-white motion-safe:active:scale-[0.99] transition-transform"
+          style={{
+            background: goalMet ? THEME.semantic.positive : THEME.brand,
+          }}
+        >
+          {ctaLabel}
+          <ChevronRight size={16} />
+        </button>
+
+        {/* Secondary: this-week standings among people you follow. */}
+        {(rankingsLoading || weeklyRankings.length > 0) && (
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
+            This week
+          </p>
+        )}
 
         <div className="space-y-1.5">
           {rankingsLoading && (
@@ -177,17 +248,6 @@ export function ChallengeList({
                   className="h-8 rounded-lg bg-muted animate-pulse"
                 />
               ))}
-            </div>
-          )}
-
-          {!rankingsLoading && weeklyRankings.length === 0 && (
-            <div className="text-center py-6 space-y-1.5">
-              <p className="text-xs font-medium text-foreground">
-                No workouts logged this week yet
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Be the first to get on the board!
-              </p>
             </div>
           )}
 
