@@ -562,6 +562,19 @@ exports.completeOnboarding = functions
       // any later reads of `rawProfileData` see the original shape.
       const profileData = profileSanitizer.sanitizeProfileData(rawProfileData);
 
+      // Loud-drop: a field the client sent that is neither allow-listed nor
+      // server-managed was SILENTLY dropped — almost always a new profile
+      // field someone forgot to add to profileSanitizer's allow-list. Surface
+      // it in logs instead of losing the write quietly (ADR-0005).
+      const droppedOnboardingFields =
+        profileSanitizer.findUnexpectedProfileFields(rawProfileData);
+      if (droppedOnboardingFields.length > 0) {
+        console.warn("completeOnboarding.unexpected_dropped_fields", {
+          uid,
+          fields: droppedOnboardingFields,
+        });
+      }
+
       // Required-field gate runs AFTER sanitise — a value that failed
       // its validator is now `undefined` here, which surfaces as
       // "Missing required field" rather than a more specific error.
@@ -761,6 +774,16 @@ exports.configurePlan = functions
       // patch that lands on Firestore via merge: true.
       const profileUpdates =
         profileSanitizer.sanitizeProfileData(rawProfileUpdates);
+
+      // Loud-drop: same forgotten-field guard as onboarding (ADR-0005).
+      const droppedPlanFields =
+        profileSanitizer.findUnexpectedProfileFields(rawProfileUpdates);
+      if (droppedPlanFields.length > 0) {
+        console.warn("configurePlan.unexpected_dropped_fields", {
+          uid,
+          fields: droppedPlanFields,
+        });
+      }
 
       // Configure Plan is always a v7 path — no legacy bypass. The
       // client must send a valid plan; nothing else makes sense for
@@ -2496,7 +2519,11 @@ async function maybeSendWeeklyRecap(uid, now) {
     behind &&
     ctx &&
     !(existingFlag && existingFlag.weekKey === range.weekKey) &&
-    (await accountDeletionLocks.shouldSystemWriteProceed(db, uid, "weeklyRecap"))
+    (await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      uid,
+      "weeklyRecap"
+    ))
   ) {
     await ctx.programRef.set(
       {
