@@ -4,6 +4,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 
 vi.mock("framer-motion", () => ({
+  get m() {
+    return (this as { motion: unknown }).motion;
+  },
   motion: new Proxy(
     {},
     {
@@ -20,7 +23,7 @@ vi.mock("framer-motion", () => ({
         const Tag = prop === "create" ? "div" : prop;
         return <Tag {...rest} />;
       },
-    },
+    }
   ),
 }));
 
@@ -58,7 +61,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={onAdd}
         onRemoveFavourite={onRemove}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.pointerDown(chip, { clientX: 100, clientY: 100 });
@@ -75,7 +78,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={vi.fn()}
         onRemoveFavourite={onRemove}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.pointerDown(chip, { clientX: 100, clientY: 100 });
@@ -91,7 +94,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={vi.fn()}
         onRemoveFavourite={onRemove}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.pointerDown(chip, { clientX: 100, clientY: 100 });
@@ -108,7 +111,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={vi.fn()}
         onRemoveFavourite={onRemove}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.pointerDown(chip, { clientX: 100, clientY: 100 });
@@ -127,7 +130,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={onAdd}
         onRemoveFavourite={onRemove}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.pointerDown(chip, { clientX: 100, clientY: 100 });
@@ -147,7 +150,7 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={onAdd}
         onRemoveFavourite={vi.fn()}
-      />,
+      />
     );
     const chip = screen.getByRole("button", { name: /oats/i });
     fireEvent.click(chip);
@@ -164,16 +167,22 @@ describe("FoodQuickAddRow — long-press → remove", () => {
         adding={null}
         onAdd={vi.fn()}
         onRemoveFavourite={vi.fn()}
-      />,
+      />
     );
     const oats = screen.getByRole("button", { name: /oats/i });
     const toast = screen.getByRole("button", { name: /toast/i });
 
-    const oatsEvent = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    const oatsEvent = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    });
     oats.dispatchEvent(oatsEvent);
     expect(oatsEvent.defaultPrevented).toBe(true);
 
-    const toastEvent = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    const toastEvent = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    });
     toast.dispatchEvent(toastEvent);
     expect(toastEvent.defaultPrevented).toBe(false);
   });

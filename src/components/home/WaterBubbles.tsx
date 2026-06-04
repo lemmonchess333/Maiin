@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const BUBBLE_COUNT = 3;
 
 interface Bubble {
   id: number;
-  x: number;      // percent from left
-  size: number;    // px
+  x: number; // percent from left
+  size: number; // px
   duration: number; // seconds
-  delay: number;   // seconds
+  delay: number; // seconds
 }
 
 function makeBubbles(seed: number): Bubble[] {
@@ -19,7 +19,7 @@ function makeBubbles(seed: number): Bubble[] {
       id: seed * 10 + i,
       x: 20 + ((i * 37 + seed * 13) % 60),
       size: 3 + (i % 2),
-      duration: 3 + (i * 0.8),
+      duration: 3 + i * 0.8,
       delay: i * 1.2,
     });
   }
@@ -39,39 +39,49 @@ export default function WaterBubbles() {
   // backgrounded. The bubble layer is purely decorative, so driving a 4s
   // Framer-Motion re-render of the Home tree while nobody can see it is
   // wasted work for every steady-state (3+ glasses) user.
-  useEffect(function () {
-    if (reducedMotion) return;
-    const el = containerRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+  useEffect(
+    function () {
+      if (reducedMotion) return;
+      const el = containerRef.current;
+      if (!el || typeof IntersectionObserver === "undefined") return;
 
-    let onScreen = true;
-    const sync = function () {
-      setActive(onScreen && document.visibilityState === "visible");
-    };
-    const io = new IntersectionObserver(function (entries) {
-      onScreen = entries[0]?.isIntersecting ?? true;
+      let onScreen = true;
+      const sync = function () {
+        setActive(onScreen && document.visibilityState === "visible");
+      };
+      const io = new IntersectionObserver(function (entries) {
+        onScreen = entries[0]?.isIntersecting ?? true;
+        sync();
+      });
+      io.observe(el);
+      document.addEventListener("visibilitychange", sync);
       sync();
-    });
-    io.observe(el);
-    document.addEventListener("visibilitychange", sync);
-    sync();
-    return function () {
-      io.disconnect();
-      document.removeEventListener("visibilitychange", sync);
-    };
-  }, [reducedMotion]);
+      return function () {
+        io.disconnect();
+        document.removeEventListener("visibilitychange", sync);
+      };
+    },
+    [reducedMotion]
+  );
 
-  useEffect(function () {
-    // Sprint 6: skip the 4-second cycle interval entirely when the
-    // user opts out of motion. Bubble animation is decorative —
-    // omitting it is a strict improvement for vestibular safety,
-    // not a degraded experience. Also paused when off-screen/hidden.
-    if (reducedMotion || !active) return;
-    const interval = setInterval(function () {
-      setCycle(function (c) { return c + 1; });
-    }, 4000);
-    return function () { clearInterval(interval); };
-  }, [reducedMotion, active]);
+  useEffect(
+    function () {
+      // Sprint 6: skip the 4-second cycle interval entirely when the
+      // user opts out of motion. Bubble animation is decorative —
+      // omitting it is a strict improvement for vestibular safety,
+      // not a degraded experience. Also paused when off-screen/hidden.
+      if (reducedMotion || !active) return;
+      const interval = setInterval(function () {
+        setCycle(function (c) {
+          return c + 1;
+        });
+      }, 4000);
+      return function () {
+        clearInterval(interval);
+      };
+    },
+    [reducedMotion, active]
+  );
 
   // Sprint 6: render nothing when reduced motion is set. The Water
   // hero card's bubble layer is decorative — the card still works
@@ -81,7 +91,11 @@ export default function WaterBubbles() {
   const bubbles = makeBubbles(cycle);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+    <div
+      ref={containerRef}
+      className="absolute inset-0 pointer-events-none overflow-hidden"
+      aria-hidden="true"
+    >
       <AnimatePresence mode="popLayout">
         {bubbles.map(function (b) {
           return (

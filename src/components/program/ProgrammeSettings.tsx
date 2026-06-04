@@ -32,7 +32,7 @@
  * ScheduleLayoutSheet — this screen links to it.
  */
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import {
   Target,
   Dumbbell,

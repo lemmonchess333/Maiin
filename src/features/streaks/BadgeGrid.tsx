@@ -1,12 +1,18 @@
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
-import { BADGE_ICONS, CATEGORY_LABELS, TIER_COLORS, type BadgeDef } from "./badges";
+import {
+  BADGE_ICONS,
+  CATEGORY_LABELS,
+  TIER_COLORS,
+  type BadgeDef,
+} from "./badges";
 import { BadgeHex } from "./BadgeHex";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BadgeGrid() {
-  const { currentStreak, longestStreak, allBadges, earnedBadges } = useStreaks();
+  const { currentStreak, longestStreak, allBadges, earnedBadges } =
+    useStreaks();
 
   const categories = Object.keys(CATEGORY_LABELS) as BadgeDef["category"][];
 
@@ -18,15 +24,21 @@ export function BadgeGrid() {
           consistent across every History stat card. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-orange-500">{currentStreak}</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-orange-500">
+            {currentStreak}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">{Number.isFinite(longestStreak) ? longestStreak : 0}</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-primary">
+            {Number.isFinite(longestStreak) ? longestStreak : 0}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">Longest Streak</p>
         </div>
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">{earnedBadges.length}</p>
+          <p className="text-3xl font-extrabold font-mono tabular-nums text-foreground">
+            {earnedBadges.length}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">Badges Earned</p>
         </div>
       </div>
@@ -80,13 +92,18 @@ export function BadgeGrid() {
                     }}
                   >
                     <div className="flex items-center justify-center py-1 mb-2">
-                      <BadgeHex Icon={Icon} tier={badge.tier} earned={earned} size={64} />
+                      <BadgeHex
+                        Icon={Icon}
+                        tier={badge.tier}
+                        earned={earned}
+                        size={64}
+                      />
                     </div>
 
                     <p
                       className={cn(
                         "text-xs font-semibold leading-tight",
-                        earned ? "text-foreground" : "text-muted-foreground/70",
+                        earned ? "text-foreground" : "text-muted-foreground/70"
                       )}
                     >
                       {badge.name}
