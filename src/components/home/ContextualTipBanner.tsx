@@ -1,4 +1,4 @@
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { haptic } from "@/lib/haptic";

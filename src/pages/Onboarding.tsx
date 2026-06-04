@@ -13,7 +13,7 @@ import { nutritionPhaseLabel } from "@/lib/nutritionPhaseLabel";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import type {
   ProgramTemplate,

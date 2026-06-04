@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";

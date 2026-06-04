@@ -3,9 +3,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 
 vi.mock("framer-motion", () => ({
-  get m() {
-    return (this as { motion: unknown }).motion;
-  },
   motion: new Proxy(
     {},
     {
@@ -20,7 +17,7 @@ vi.mock("framer-motion", () => ({
         const Tag = prop === "create" ? "div" : prop;
         return <Tag {...rest} />;
       },
-    }
+    },
   ),
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -72,9 +69,7 @@ describe("SustainedOfflineBanner", () => {
   it("honours a custom threshold", () => {
     mockIsOnline = false;
     render(
-      <SustainedOfflineBanner thresholdMs={100}>
-        Custom copy
-      </SustainedOfflineBanner>
+      <SustainedOfflineBanner thresholdMs={100}>Custom copy</SustainedOfflineBanner>,
     );
     act(() => {
       vi.advanceTimersByTime(100);

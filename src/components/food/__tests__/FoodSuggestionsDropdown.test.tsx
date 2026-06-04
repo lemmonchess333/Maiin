@@ -4,9 +4,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import type { PantrySuggestion } from "../FoodSuggestionsDropdown";
 
 vi.mock("framer-motion", () => ({
-  get m() {
-    return (this as { motion: unknown }).motion;
-  },
   motion: new Proxy(
     {},
     {
@@ -15,7 +12,7 @@ vi.mock("framer-motion", () => ({
         const Tag = prop === "create" ? "div" : prop;
         return <Tag {...rest} />;
       },
-    }
+    },
   ),
 }));
 
@@ -48,7 +45,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
         onSelectOff={vi.fn()}
         onSelectPantry={vi.fn()}
         onLogManually={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText(/your pantry/i)).toBeInTheDocument();
     expect(screen.getByText("Greek yoghurt")).toBeInTheDocument();
@@ -75,7 +72,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
         onSelectOff={vi.fn()}
         onSelectPantry={vi.fn()}
         onLogManually={vi.fn()}
-      />
+      />,
     );
     expect(screen.queryByText(/your pantry/i)).toBeNull();
   });
@@ -94,7 +91,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
         onSelectOff={vi.fn()}
         onSelectPantry={onSelectPantry}
         onLogManually={vi.fn()}
-      />
+      />,
     );
     fireEvent.click(screen.getByText("Oats"));
     expect(onSelectPantry).toHaveBeenCalledWith(oats);
@@ -121,7 +118,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
         onSelectOff={vi.fn()}
         onSelectPantry={vi.fn()}
         onLogManually={vi.fn()}
-      />
+      />,
     );
     const oatsButton = screen.getByText("Oats");
     const bananaButton = screen.getByText(/Banana/);
@@ -129,7 +126,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
     // section's button in document order.
     expect(
       oatsButton.compareDocumentPosition(bananaButton) &
-        Node.DOCUMENT_POSITION_FOLLOWING
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -149,7 +146,7 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
         onSelectOff={vi.fn()}
         onSelectPantry={vi.fn()}
         onLogManually={vi.fn()}
-      />
+      />,
     );
     const buttons = screen.getAllByRole("button");
     const labels = buttons.map((b) => b.textContent ?? "");

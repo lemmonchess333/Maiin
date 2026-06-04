@@ -1,5 +1,5 @@
 import { useReducer, useState } from "react";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Download, LogOut, Trash2 } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -391,158 +391,160 @@ export default function AccountSection({
         role="alertdialog"
       >
         <div aria-live="polite" className="space-y-4">
-          {/* ── Phase: confirm / deleting ────────────────────────*/}
-          {(modalState.phase === "confirm" ||
-            modalState.phase === "deleting") && (
-            <>
-              <h3 className="text-base font-semibold text-destructive">
-                Delete Account
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                This will permanently delete your account and all associated
-                data including workouts, meals, runs, and social activity. This
-                action cannot be undone.
-              </p>
-              <p className="text-sm text-foreground font-medium">
-                Type <span className="text-destructive font-bold">DELETE</span>{" "}
-                to confirm:
-              </p>
-              <input
-                type="text"
-                aria-label="Type DELETE to confirm account deletion"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type DELETE"
-                disabled={modalState.phase === "deleting"}
-                className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground disabled:opacity-50"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={closeAndReset}
-                  disabled={modalState.phase === "deleting"}
-                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitDelete}
-                  disabled={
-                    deleteConfirmText !== "DELETE" ||
-                    modalState.phase === "deleting"
-                  }
-                  className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {modalState.phase === "deleting" ? (
-                    <>
-                      <Spinner
-                        size="sm"
-                        variant="inverse"
-                        label="Deleting account"
-                      />
-                      Deleting…
-                    </>
-                  ) : (
-                    "Delete Account"
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ── Phase: needs-reauth / reauthenticating ───────────*/}
-          {(modalState.phase === "needs-reauth" ||
-            modalState.phase === "reauthenticating") && (
-            <>
-              <h3 className="text-base font-semibold text-foreground">
-                Confirm it's you
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                For security, re-confirm your identity{" "}
-                {displayedEmail ? (
-                  <>
-                    for{" "}
-                    <span className="font-medium text-foreground">
-                      {displayedEmail}
-                    </span>
-                  </>
-                ) : (
-                  "for this account"
-                )}{" "}
-                before deleting. You won't be charged for anything new.
-              </p>
-
-              {reauthError && (
-                <p className="text-sm text-destructive">{reauthError}</p>
-              )}
-
-              {showPasswordInput && (
+            {/* ── Phase: confirm / deleting ────────────────────────*/}
+            {(modalState.phase === "confirm" ||
+              modalState.phase === "deleting") && (
+              <>
+                <h3 className="text-base font-semibold text-destructive">
+                  Delete Account
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  This will permanently delete your account and all associated
+                  data including workouts, meals, runs, and social activity.
+                  This action cannot be undone.
+                </p>
+                <p className="text-sm text-foreground font-medium">
+                  Type{" "}
+                  <span className="text-destructive font-bold">DELETE</span> to
+                  confirm:
+                </p>
                 <input
-                  type="password"
-                  autoComplete="current-password"
-                  aria-label="Current password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  disabled={inReauthFlight}
+                  type="text"
+                  aria-label="Type DELETE to confirm account deletion"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type DELETE"
+                  disabled={modalState.phase === "deleting"}
                   className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground disabled:opacity-50"
                 />
-              )}
-
-              <div className="space-y-2">
-                {providers.map((p) => (
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    key={p}
-                    onClick={() => handleReauth(p)}
-                    disabled={
-                      inReauthFlight ||
-                      (p === "password" && password.length === 0)
-                    }
-                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    onClick={closeAndReset}
+                    disabled={modalState.phase === "deleting"}
+                    className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
                   >
-                    {inReauthFlight && modalState.provider === p ? (
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitDelete}
+                    disabled={
+                      deleteConfirmText !== "DELETE" ||
+                      modalState.phase === "deleting"
+                    }
+                    className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {modalState.phase === "deleting" ? (
                       <>
                         <Spinner
                           size="sm"
                           variant="inverse"
-                          label="Confirming"
+                          label="Deleting account"
                         />
-                        Confirming…
+                        Deleting…
                       </>
                     ) : (
-                      providerLabel(p)
+                      "Delete Account"
                     )}
                   </button>
-                ))}
-              </div>
+                </div>
+              </>
+            )}
 
-              <button
-                type="button"
-                onClick={closeAndReset}
-                disabled={inReauthFlight}
-                className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </>
-          )}
+            {/* ── Phase: needs-reauth / reauthenticating ───────────*/}
+            {(modalState.phase === "needs-reauth" ||
+              modalState.phase === "reauthenticating") && (
+              <>
+                <h3 className="text-base font-semibold text-foreground">
+                  Confirm it's you
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  For security, re-confirm your identity{" "}
+                  {displayedEmail ? (
+                    <>
+                      for{" "}
+                      <span className="font-medium text-foreground">
+                        {displayedEmail}
+                      </span>
+                    </>
+                  ) : (
+                    "for this account"
+                  )}{" "}
+                  before deleting. You won't be charged for anything new.
+                </p>
 
-          {/* ── Phase: retrying (post-reauth, deletion in flight) */}
-          {modalState.phase === "retrying" && (
-            <>
-              <h3 className="text-base font-semibold text-destructive">
-                Deleting account…
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Confirmed. Removing your data — this should take a few seconds.
-              </p>
-              <div className="flex justify-center py-3">
-                <Spinner size="md" label="Deleting account" />
-              </div>
-            </>
-          )}
+                {reauthError && (
+                  <p className="text-sm text-destructive">{reauthError}</p>
+                )}
+
+                {showPasswordInput && (
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    aria-label="Current password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    disabled={inReauthFlight}
+                    className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground disabled:opacity-50"
+                  />
+                )}
+
+                <div className="space-y-2">
+                  {providers.map((p) => (
+                    <button
+                      type="button"
+                      key={p}
+                      onClick={() => handleReauth(p)}
+                      disabled={
+                        inReauthFlight ||
+                        (p === "password" && password.length === 0)
+                      }
+                      className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {inReauthFlight && modalState.provider === p ? (
+                        <>
+                          <Spinner
+                            size="sm"
+                            variant="inverse"
+                            label="Confirming"
+                          />
+                          Confirming…
+                        </>
+                      ) : (
+                        providerLabel(p)
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeAndReset}
+                  disabled={inReauthFlight}
+                  className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+
+            {/* ── Phase: retrying (post-reauth, deletion in flight) */}
+            {modalState.phase === "retrying" && (
+              <>
+                <h3 className="text-base font-semibold text-destructive">
+                  Deleting account…
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Confirmed. Removing your data — this should take a few
+                  seconds.
+                </p>
+                <div className="flex justify-center py-3">
+                  <Spinner size="md" label="Deleting account" />
+                </div>
+              </>
+            )}
         </div>
       </Dialog>
     </>
