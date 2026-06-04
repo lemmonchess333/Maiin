@@ -6,7 +6,7 @@ import {
   createContext,
   use,
 } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
 
 type BubbleVariant = "pr" | "complete" | "generic";

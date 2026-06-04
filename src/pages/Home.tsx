@@ -25,7 +25,7 @@ import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dumbbell,
   Sparkles,

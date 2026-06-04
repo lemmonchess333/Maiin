@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/lib/toast";
 import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
