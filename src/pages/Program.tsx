@@ -355,16 +355,23 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     useSensor(KeyboardSensor)
   );
 
+  // #1038: stable dnd-kit id + React key for an exercise row. Prefers the
+  // persisted per-instance id (so drag/swipe-delete reconcile by exercise,
+  // not by position); falls back to the legacy positional id when a freshly
+  // built exercise hasn't been normalized yet.
+  const rowId = (ex: { instanceId?: string }, dayIdx: number, i: number) =>
+    ex.instanceId ?? `ex-${dayIdx}-${i}`;
+
   const handleDragEnd = async (dayIndex: number, event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !programState) return;
 
     const exercises = programState.workouts[dayIndex].exercises;
     const oldIdx = exercises.findIndex(
-      (_, i) => `ex-${dayIndex}-${i}` === active.id
+      (ex, i) => rowId(ex, dayIndex, i) === active.id
     );
     const newIdx = exercises.findIndex(
-      (_, i) => `ex-${dayIndex}-${i}` === over.id
+      (ex, i) => rowId(ex, dayIndex, i) === over.id
     );
     if (oldIdx < 0 || newIdx < 0) return;
 
@@ -373,8 +380,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       i === dayIndex ? { ...d, exercises: reordered } : d
     );
 
-    // Green flash
-    setJustDroppedId(`ex-${dayIndex}-${newIdx}`);
+    // Green flash — track the dropped exercise by its stable id so the flash
+    // lands on the right row after the re-render reorders the list.
+    setJustDroppedId(rowId(reordered[newIdx], dayIndex, newIdx));
     setTimeout(() => setJustDroppedId(null), 300);
 
     // Persist via useProgram's saveProgram
@@ -926,8 +934,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           onDragEnd={(event) => handleDragEnd(idx, event)}
                         >
                           <SortableContext
-                            items={selectedWorkout.exercises.map(
-                              (_, i) => `ex-${idx}-${i}`
+                            items={selectedWorkout.exercises.map((ex, i) =>
+                              rowId(ex, idx, i)
                             )}
                             strategy={verticalListSortingStrategy}
                           >
@@ -941,10 +949,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                 );
                                 return (
                                   <SortableExerciseRow
-                                    key={`ex-${idx}-${i}`}
-                                    id={`ex-${idx}-${i}`}
+                                    key={rowId(ex, idx, i)}
+                                    id={rowId(ex, idx, i)}
                                     justDropped={
-                                      justDroppedId === `ex-${idx}-${i}`
+                                      justDroppedId === rowId(ex, idx, i)
                                     }
                                     showHandle={true}
                                   >
@@ -1022,11 +1030,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                             );
                             return (
                               <div
-                                key={`ex-${idx}-${i}`}
+                                key={rowId(ex, idx, i)}
                                 data-swipe-card="true"
                               >
                                 <SortableExerciseRow
-                                  id={`ex-${idx}-${i}`}
+                                  id={rowId(ex, idx, i)}
                                   showHandle={false}
                                   onDelete={() => removeExFromDay(idx, i)}
                                 >
