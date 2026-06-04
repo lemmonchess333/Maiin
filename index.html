@@ -21,15 +21,22 @@
          (see public/init.js, loaded synchronously below). Inline
          <style> is still permitted because Tailwind / Vite inject
          critical CSS inline at build time; tightening that is a
-         larger refactor with its own trade-offs. -->
+         larger refactor with its own trade-offs.
+
+         Firebase Analytics (web) needs Google's gtag domains: it loads
+         gtag.js from www.googletagmanager.com (script-src) and beacons
+         hits to *.google-analytics.com / *.analytics.google.com
+         (connect-src + img-src). Without these the browser silently
+         blocks all analytics delivery. Native iOS analytics doesn't
+         touch the web CSP (it goes through the native SDK). -->
     <meta
       http-equiv="Content-Security-Policy"
       content="
       default-src 'self';
-      script-src 'self' https://js.stripe.com;
+      script-src 'self' https://js.stripe.com https://www.googletagmanager.com;
       style-src 'self' 'unsafe-inline' https://basemaps.cartocdn.com;
       font-src 'self';
-      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com;
+      img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com https://www.google-analytics.com https://www.googletagmanager.com;
       connect-src 'self'
         https://*.googleapis.com
         https://*.firebaseio.com
@@ -43,6 +50,10 @@
         https://raw.githubusercontent.com
         https://js.stripe.com
         https://api.stripe.com
+        https://www.google-analytics.com
+        https://*.google-analytics.com
+        https://*.analytics.google.com
+        https://www.googletagmanager.com
         wss://*.firebaseio.com;
       frame-src https://js.stripe.com https://*.firebaseapp.com;
       worker-src 'self' blob:;
