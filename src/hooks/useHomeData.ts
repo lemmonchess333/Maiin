@@ -296,7 +296,12 @@ export function useHomeData(
         hasLift && hasRun ? "both" : hasRun ? "run" : "lift";
 
       const targetProtein = profile?.targetProtein || 160;
-      const proteinRemaining = Math.max(0, targetProtein - state.dailyProt);
+      // Round — dailyProt is a float sum of per-meal protein, so the raw
+      // subtraction surfaces FP noise (e.g. 6.300000000000011g) straight
+      // into the "Post-lift — Ng protein for recovery" nudge copy.
+      const proteinRemaining = Math.round(
+        Math.max(0, targetProtein - state.dailyProt)
+      );
 
       setPostWorkoutNudge({ type, proteinRemaining });
     },
