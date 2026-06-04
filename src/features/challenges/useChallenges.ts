@@ -10,11 +10,9 @@ import {
   orderBy,
   limit,
   getDoc,
-  serverTimestamp,
-  increment,
   where,
 } from "firebase/firestore";
-import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/lib/toast";
@@ -74,98 +72,6 @@ export interface ChallengeParticipant {
   uid?: string;
 }
 
-function getWeekStart(): Date {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const start = new Date(d.getFullYear(), d.getMonth(), diff);
-  start.setHours(0, 0, 0, 0);
-  return start;
-}
-
-function getWeekEnd(): Date {
-  const start = getWeekStart();
-  return new Date(start.getTime() + 7 * 86400000);
-}
-
-function getMonthStart(): Date {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function getMonthEnd(): Date {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth() + 1, 1);
-}
-
-function getSeason() {
-  const month = new Date().getMonth();
-  if (month >= 2 && month <= 4)
-    return {
-      name: "Spring Reset",
-      description: "Longest consistency streak — days with any logged activity",
-      metric: "streak_days",
-      icon: "sprout",
-      tiers: { bronze: 5, silver: 14, gold: 30 },
-    };
-  if (month >= 5 && month <= 7)
-    return {
-      name: "Summer Shred",
-      description: "Combined workout count + km run",
-      metric: "combined_score",
-      icon: "sun",
-      tiers: { bronze: 20, silver: 50, gold: 100 },
-    };
-  if (month >= 8 && month <= 10)
-    return {
-      name: "Autumn Push",
-      description: "Hybrid score: km x 100 + volume kg x 0.1",
-      metric: "hybrid_score",
-      icon: "leaf",
-      tiers: { bronze: 500, silver: 2000, gold: 5000 },
-    };
-  return {
-    name: "Winter Bulk",
-    description: "Highest total volume lifted (kg)",
-    metric: "total_volume",
-    icon: "snowflake",
-    tiers: { bronze: 5000, silver: 25000, gold: 50000 },
-  };
-}
-
-function getSeasonStart(): Date {
-  const month = new Date().getMonth();
-  const year = new Date().getFullYear();
-  if (month >= 2 && month <= 4) return new Date(year, 2, 1);
-  if (month >= 5 && month <= 7) return new Date(year, 5, 1);
-  if (month >= 8 && month <= 10) return new Date(year, 8, 1);
-  return month >= 11 ? new Date(year, 11, 1) : new Date(year - 1, 11, 1);
-}
-
-function getSeasonEnd(): Date {
-  const month = new Date().getMonth();
-  const year = new Date().getFullYear();
-  if (month >= 2 && month <= 4) return new Date(year, 5, 1);
-  if (month >= 5 && month <= 7) return new Date(year, 8, 1);
-  if (month >= 8 && month <= 10) return new Date(year, 11, 1);
-  return month >= 11 ? new Date(year + 1, 2, 1) : new Date(year, 2, 1);
-}
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 export function getTimeRemaining(endDate: Timestamp | Date): string {
   const end = endDate instanceof Date ? endDate : endDate.toDate();
   const ms = end.getTime() - Date.now();
@@ -174,99 +80,6 @@ export function getTimeRemaining(endDate: Timestamp | Date): string {
   if (days > 1) return `${days} days left`;
   const hours = Math.floor(ms / 3600000);
   return `${hours}h left`;
-}
-
-async function seedChallenges() {
-  const weekStart = getWeekStart();
-  const weekEnd = getWeekEnd();
-  const monthStart = getMonthStart();
-  const monthEnd = getMonthEnd();
-  const seasonStart = getSeasonStart();
-  const seasonEnd = getSeasonEnd();
-  const season = getSeason();
-  const monthName = MONTH_NAMES[new Date().getMonth()];
-
-  const defs = [
-    {
-      docId: `weekly-${weekStart.toISOString().split("T")[0]}`,
-      name: "Weekly Warrior",
-      description: "Log workouts this week (Mon-Sun)",
-      type: "weekly",
-      metric: "workout_count",
-      icon: "trophy",
-      tiers: { bronze: 2, silver: 4, gold: 6 },
-      startDate: Timestamp.fromDate(weekStart),
-      endDate: Timestamp.fromDate(weekEnd),
-    },
-    {
-      docId: `monthly-${monthStart.toISOString().split("T")[0]}`,
-      name: `${monthName} Mileage`,
-      description: "Total km run this month",
-      type: "monthly",
-      metric: "total_km",
-      icon: "footprints",
-      tiers: { bronze: 10, silver: 25, gold: 50 },
-      startDate: Timestamp.fromDate(monthStart),
-      endDate: Timestamp.fromDate(monthEnd),
-    },
-    {
-      docId: `seasonal-${seasonStart.toISOString().split("T")[0]}`,
-      name: season.name,
-      description: season.description,
-      type: "seasonal",
-      metric: season.metric,
-      icon: season.icon,
-      tiers: season.tiers,
-      startDate: Timestamp.fromDate(seasonStart),
-      endDate: Timestamp.fromDate(seasonEnd),
-    },
-    /* PR 5: fastest 5K this month. Pace-based challenge; lower
-       currentValue is better. Tiers are pace targets in seconds —
-       gold = sub-25min, silver = sub-30min, bronze = sub-35min for
-       a 5K. Sync logic in functions/index.js MIN-updates currentValue
-       instead of incrementing it for fastest_effort metric. */
-    {
-      docId: `fastest-5k-${monthStart.toISOString().split("T")[0]}`,
-      name: "Fastest 5K",
-      description: "Quickest 5km this month — set your benchmark",
-      type: "monthly",
-      metric: "fastest_effort",
-      icon: "footprints",
-      targetDistance: 5000,
-      tiers: { bronze: 35 * 60, silver: 30 * 60, gold: 25 * 60 },
-      startDate: Timestamp.fromDate(monthStart),
-      endDate: Timestamp.fromDate(monthEnd),
-    },
-    /* PR 5: group goal — collective km this month from everyone who
-       opts in. Uses the same total_km sync path as the individual
-       Mileage challenge so we don't duplicate sync logic; the UI
-       differentiates by checking collectiveTarget. */
-    {
-      docId: `group-goal-${monthStart.toISOString().split("T")[0]}`,
-      name: "Together: 1,000km",
-      description: "Combined distance from everyone running this month",
-      type: "monthly",
-      metric: "total_km",
-      icon: "footprints",
-      collectiveTarget: 1000,
-      tiers: { bronze: 1000, silver: 1000, gold: 1000 },
-      startDate: Timestamp.fromDate(monthStart),
-      endDate: Timestamp.fromDate(monthEnd),
-    },
-  ];
-
-  for (const def of defs) {
-    const ref = doc(db, "challenges", def.docId);
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      const { docId: _docId, ...data } = def;
-      await setDocGuarded(ref, {
-        ...data,
-        participantCount: 0,
-        createdAt: serverTimestamp(),
-      });
-    }
-  }
 }
 
 export function useChallenges() {
@@ -281,22 +94,19 @@ export function useChallenges() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    /* Gated on `user` so we only seed and subscribe AFTER Firebase
-       auth has resolved. Previously this effect ran on first mount
-       with an empty deps array, which fired before AuthProvider had
-       a uid — Firestore rejected the writes/reads as anonymous and
-       the silent .catch swallowed the errors. Net effect: the
-       challenges collection was never created on the project (the
-       Weekly Workout Challenge UI rendered anyway because it's
-       computed locally from the user's workouts data, not from the
-       challenges collection — masked the bug for months).
+    /* Read-only subscription, gated on `user` so it runs after Firebase
+       auth resolves. Challenge definitions are SERVER-OWNED: the
+       rolloverChallenges scheduled Cloud Function materialises the current
+       weekly/monthly/seasonal/fastest-5k/group-goal docs (Admin SDK), and
+       Firestore rules deny client creates on /challenges. The client used to
+       seed these here via seedChallenges() — removed: a browser shouldn't
+       create global product metadata (the same lesson the repo applied to
+       default crews).
 
-       The dep on `user` is the uid object reference; AuthProvider
-       holds it stable for the session so this doesn't re-run
-       gratuitously. */
+       The dep on `user` is the uid object reference; AuthProvider holds it
+       stable for the session so this doesn't re-run gratuitously. */
     if (!user) return;
 
-    seedChallenges().catch((e) => logger.error(e));
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
       collection(db, "challenges"),
@@ -400,9 +210,12 @@ export function useChallenges() {
             ...(photoURL ? { photoURL } : {}),
           }
         );
-        await updateDocGuarded(doc(db, "challenges", challengeId), {
-          participantCount: increment(1),
-        });
+        // participantCount is maintained server-side by the
+        // onChallengeParticipantCreated/Deleted triggers — the parent
+        // challenge doc is server-owned (rules deny client writes). The old
+        // client-side increment() here was already rejected by those rules,
+        // throwing AFTER the participant write landed and surfacing a false
+        // "Failed to join challenge" toast.
         setMyProgress((prev) => ({
           ...prev,
           [challengeId]: {
@@ -426,9 +239,8 @@ export function useChallenges() {
         await deleteDoc(
           doc(db, "challenges", challengeId, "participants", user.uid)
         );
-        await updateDocGuarded(doc(db, "challenges", challengeId), {
-          participantCount: increment(-1),
-        });
+        // participantCount recomputed server-side by the participant-delete
+        // trigger (see joinChallenge note).
         setMyProgress((prev) => {
           const n = { ...prev };
           delete n[challengeId];
