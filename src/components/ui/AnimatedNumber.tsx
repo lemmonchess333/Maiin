@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { useEffect, useSyncExternalStore } from "react";
+import { useMotionValue, useTransform, animate } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface Props {
@@ -27,6 +27,19 @@ export function AnimatedNumber({
     format ? format(v) : Math.round(v).toLocaleString()
   );
 
+  // Render the live formatted value as plain text by SUBSCRIBING to the
+  // derived MotionValue, rather than passing it as a <motion.span> child.
+  // The child-MotionValue render path needs the full motion feature set; under
+  // LazyMotion (perf: features stream in after first paint) the lightweight
+  // `m` can't drive it, so the number would flash "0" until features loaded.
+  // `useMotionValue` / `useTransform` / `animate` are plain hooks — no
+  // LazyMotion dependency. useSyncExternalStore reads the live value on every
+  // render (no setState-in-effect, no flash).
+  const text = useSyncExternalStore(
+    (onChange) => display.on("change", onChange),
+    () => display.get()
+  );
+
   useEffect(() => {
     if (reduce) {
       count.set(value);
@@ -36,5 +49,5 @@ export function AnimatedNumber({
     return () => controls.stop();
   }, [value, reduce, count, duration, ease]);
 
-  return <motion.span className={className}>{display}</motion.span>;
+  return <span className={className}>{text}</span>;
 }

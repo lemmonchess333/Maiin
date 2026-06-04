@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
 import { BADGE_ICONS, TIER_COLORS } from "./badges";

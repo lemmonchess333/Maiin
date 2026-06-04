@@ -14,7 +14,7 @@
  * flip its row href from `/settings/legacy` to `/settings/<slug>`.
  */
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import {
   ChevronRight,
   User,

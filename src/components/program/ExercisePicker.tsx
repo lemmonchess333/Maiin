@@ -11,7 +11,7 @@ import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { Search, X, Plus, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;

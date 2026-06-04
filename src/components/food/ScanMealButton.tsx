@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Camera } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { THEME } from "@/lib/theme";
