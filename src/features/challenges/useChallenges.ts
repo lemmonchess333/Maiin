@@ -20,8 +20,16 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
+import {
+  resolveTier,
+  isTierAchieved,
+  type ChallengeTier,
+} from "./challengeTiers";
 
-export type ChallengeTier = "bronze" | "silver" | "gold";
+// Re-exported so existing importers (ChallengeCard, tests) keep one import site.
+// The tier logic lives in ./challengeTiers (mirrored server-side).
+export { resolveTier, isTierAchieved };
+export type { ChallengeTier };
 
 export const TIER_COLORS: Record<ChallengeTier, string> = {
   bronze: THEME.tier.bronze,
@@ -157,33 +165,6 @@ const MONTH_NAMES = [
   "November",
   "December",
 ];
-
-export function computeTier(
-  value: number,
-  tiers: { bronze: number; silver: number; gold: number }
-): ChallengeTier | null {
-  if (value >= tiers.gold) return "gold";
-  if (value >= tiers.silver) return "silver";
-  if (value >= tiers.bronze) return "bronze";
-  return null;
-}
-
-/* Tier-achievement helper. Encapsulates the lower-is-better semantic
- * for `fastest_effort` (a time-based metric where smaller is faster
- * and a value of 0 means "no qualifying effort yet") and the standard
- * higher-is-better semantic for cumulative metrics. ChallengeCard
- * used to inline this comparison three times — once per tier marker —
- * with the same `metric === "fastest_effort"` branch each time. */
-export function isTierAchieved(
-  value: number,
-  tierThreshold: number,
-  metric: string
-): boolean {
-  if (metric === "fastest_effort") {
-    return value > 0 && value <= tierThreshold;
-  }
-  return value >= tierThreshold;
-}
 
 export function getTimeRemaining(endDate: Timestamp | Date): string {
   const end = endDate instanceof Date ? endDate : endDate.toDate();
@@ -466,7 +447,7 @@ export function useChallenges() {
       if (!user) return;
       const ch = challenges.find((c) => c.id === challengeId);
       if (!ch) return;
-      const tier = computeTier(newValue, ch.tiers);
+      const tier = resolveTier(newValue, ch.tiers, ch.metric);
       try {
         await setDocGuarded(
           doc(db, "challenges", challengeId, "participants", user.uid),
