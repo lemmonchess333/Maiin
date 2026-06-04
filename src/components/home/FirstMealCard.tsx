@@ -1,5 +1,5 @@
 import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { UtensilsCrossed, Plus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";

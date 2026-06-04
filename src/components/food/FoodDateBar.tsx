@@ -1,5 +1,5 @@
 import { memo, useRef } from "react";
-import { motion, type Variants } from "framer-motion";
+import { m as motion, type Variants } from "framer-motion";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { haptic } from "@/lib/haptic";
