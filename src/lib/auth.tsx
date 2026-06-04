@@ -18,6 +18,7 @@ import {
   type User,
 } from "firebase/auth";
 import { toast } from "@/lib/toast";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
@@ -613,6 +614,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     await writeNewProfileDocs(cred.user.uid, newProfile);
     setProfile(newProfile);
+    trackLifecycle("signup_completed", { method: "email" });
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
@@ -634,6 +636,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
+      trackLifecycle("signup_completed", { method: "google" });
     } else {
       const data = profileDoc.data();
       setProfile(
@@ -666,6 +669,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
+      trackLifecycle("signup_completed", { method: "apple" });
     } else {
       const data = profileDoc.data();
       setProfile(

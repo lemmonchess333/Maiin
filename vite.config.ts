@@ -49,7 +49,7 @@ function e2eMarkerPlugin(): Plugin {
 export default defineConfig(({ mode }) => ({
   base: isCapacitor ? "/" : "/Maiin/",
   define: {
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.1.0'),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || "1.1.0"),
   },
   plugins: [
     react(),
@@ -76,6 +76,7 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           "firebase-auth": ["firebase/app", "firebase/auth"],
           "firebase-db": ["firebase/firestore", "firebase/storage"],
+          "firebase-analytics": ["firebase/analytics"],
           charts: ["recharts"],
           vendor: ["react", "react-dom", "react-router-dom"],
           maplibre: ["maplibre-gl"],

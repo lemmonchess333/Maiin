@@ -1,12 +1,11 @@
 /**
- * Tests for the seven per-surface analytics wrapper modules.
+ * Tests for the per-surface analytics wrapper modules.
  *
  * Each module exports a `track(event, metadata)` function that
  * delegates to `analyticsClient.emit(surface, event, metadata)`.
- * The surfaces are how downstream dashboards key events when a real
- * provider gets wired up (Segment / Mixpanel / Firebase Analytics);
- * mis-keying a surface would scatter events across the wrong
- * dashboards silently.
+ * The surfaces are how downstream dashboards key events in the wired
+ * provider (Firebase Analytics); mis-keying a surface would scatter
+ * events across the wrong dashboards silently.
  *
  * This test mocks `analyticsClient.emit` once and asserts that:
  *   1. Each wrapper passes the documented surface key.
@@ -23,6 +22,7 @@ import { track as trackPaywall } from "../paywallAnalytics";
 import { track as trackProgramme } from "../programmeAnalytics";
 import { track as trackSettings } from "../settingsAnalytics";
 import { track as trackSocial } from "../socialAnalytics";
+import { track as trackLifecycle } from "../lifecycleAnalytics";
 import * as analyticsClient from "../analyticsClient";
 
 const emitSpy = vi.spyOn(analyticsClient, "emit").mockImplementation(() => {});
@@ -45,7 +45,7 @@ describe("analytics wrappers — surface keys", () => {
     expect(emitSpy).toHaveBeenCalledWith(
       "history",
       "history_range_changed",
-      {},
+      {}
     );
   });
 
@@ -59,7 +59,7 @@ describe("analytics wrappers — surface keys", () => {
     expect(emitSpy).toHaveBeenCalledWith(
       "programme",
       "programme_section_viewed",
-      {},
+      {}
     );
   });
 
@@ -68,13 +68,20 @@ describe("analytics wrappers — surface keys", () => {
     expect(emitSpy).toHaveBeenCalledWith(
       "settings",
       "settings_section_viewed",
-      {},
+      {}
     );
   });
 
   it("socialAnalytics uses surface='social'", () => {
     trackSocial("social_tab_selected");
     expect(emitSpy).toHaveBeenCalledWith("social", "social_tab_selected", {});
+  });
+
+  it("lifecycleAnalytics uses surface='lifecycle'", () => {
+    trackLifecycle("signup_completed", { method: "email" });
+    expect(emitSpy).toHaveBeenCalledWith("lifecycle", "signup_completed", {
+      method: "email",
+    });
   });
 });
 
@@ -102,7 +109,7 @@ describe("analytics wrappers — metadata pass-through", () => {
     expect(emitSpy).toHaveBeenCalledWith(
       "programme",
       "programme_section_viewed",
-      { section: "week_phase_row" },
+      { section: "week_phase_row" }
     );
   });
 });
