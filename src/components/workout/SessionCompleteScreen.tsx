@@ -7,6 +7,8 @@ import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
 import ShareCard from "@/components/social/ShareCard";
 import { generateAndShare } from "@/lib/shareCardGenerator";
 import { getVolumeComparison } from "@/lib/funComparisons";
+import { usePostCompletionKudos } from "@/hooks/usePostCompletionKudos";
+import PostCompletionKudos from "@/components/social/PostCompletionKudos";
 import type { ProgramExercise } from "@/features/program/programTypes";
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
@@ -43,6 +45,10 @@ export default function SessionCompleteScreen({
   onClose,
 }: SessionCompleteScreenProps) {
   const { profile } = useAuth();
+  const kudos = usePostCompletionKudos({
+    uid: profile?.uid,
+    fromName: profile?.displayName,
+  });
   const [showShareCard, setShowShareCard] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
@@ -294,6 +300,17 @@ export default function SessionCompleteScreen({
             ))}
           </div>
         </motion.div>
+
+        {/* Post-completion kudos (Phase 2) — social AFTER achievement, never
+            before action. Renders nothing unless someone the user follows
+            also trained today; once/day; fully dismissible. */}
+        <PostCompletionKudos
+          candidate={kudos.candidate}
+          sending={kudos.sending}
+          sent={kudos.sent}
+          onSend={kudos.sendKudos}
+          onDismiss={kudos.dismiss}
+        />
 
         {/* Action Buttons */}
         <motion.div
