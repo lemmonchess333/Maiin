@@ -59,6 +59,7 @@ import { cn } from "@/lib/utils";
 import OptionCard from "@/components/onboarding/OptionCard";
 import Stepper from "@/components/onboarding/Stepper";
 import { toast } from "@/lib/toast";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
 
 /* ============================
@@ -729,6 +730,14 @@ export default function Onboarding() {
           publicErr
         );
       }
+
+      // Save succeeded — close the top of the activation funnel before
+      // leaving. Non-PII dimensions only (goal enum, days/week, run mode).
+      trackLifecycle("onboarding_completed", {
+        primaryGoal,
+        daysPerWeek,
+        runMode: effectiveRunMode,
+      });
 
       // Save succeeded — leave the onboarding surface explicitly. Flipping
       // onboardingComplete=true makes App.tsx switch to the authenticated

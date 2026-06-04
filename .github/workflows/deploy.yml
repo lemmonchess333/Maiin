@@ -49,6 +49,10 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # Firebase Analytics measurement ID (G-XXXXXXXXXX). Web-only: the
+          # web Analytics SDK reads this; native iOS uses GoogleService-Info.plist.
+          # Unset → analytics layer stays a no-op (analyticsProvider.ts gating).
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
           # FCM Web push public VAPID key (#963). Public by design (ships in the
           # client bundle); kept as a secret only to match the other VITE_ vars.
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
