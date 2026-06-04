@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { THEME } from "@/lib/theme";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { macroRingState } from "@/utils/formatters";
 

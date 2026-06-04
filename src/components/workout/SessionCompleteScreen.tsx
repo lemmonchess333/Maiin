@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { THEME } from "@/lib/theme";
 import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
 import ShareCard from "@/components/social/ShareCard";

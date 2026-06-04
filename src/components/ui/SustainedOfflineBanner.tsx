@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { WifiOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
