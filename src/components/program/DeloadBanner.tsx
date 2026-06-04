@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Flame, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";

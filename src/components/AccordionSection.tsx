@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useId } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 
 interface AccordionSectionProps {

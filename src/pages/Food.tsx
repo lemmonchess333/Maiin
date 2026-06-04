@@ -4,7 +4,7 @@ import { useDailyLogs } from "@/hooks/useFirestore";
 import { useAuth } from "@/lib/auth";
 import { addDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { joinHumanList } from "@/lib/listFormat";

@@ -11,7 +11,7 @@ import {
   query,
 } from "firebase/firestore";
 import Avatar from "../components/Avatar";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { logger } from "../lib/logger";
