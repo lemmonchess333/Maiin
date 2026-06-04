@@ -212,6 +212,34 @@ console (App Check → iOS → App Attest), and replace the stub in
 `appCheck.ts` `native` branch with a CustomProvider calling the
 plugin's `getToken()`.
 
+### 6a. iOS native analytics — add GoogleService-Info.plist
+
+Firebase Analytics is wired and unit-tested on BOTH platforms behind the
+`analyticsProvider.ts` seam, and **web delivery is confirmed live** (events
+visible in Firebase → Realtime — `home_card_tapped`, `page_view`, etc.).
+The native iOS path uses the `@capacitor-firebase/analytics` plugin (already
+installed) → native Firebase SDK, which reads its config from
+`GoogleService-Info.plist`. There is **no** measurement-ID env var on native
+(the `VITE_FIREBASE_MEASUREMENT_ID` secret is web-only — the plist drives
+native).
+
+The only remaining step — whenever you do the iOS session (needs Mac/Xcode):
+
+1. Download `GoogleService-Info.plist` from Firebase Console → Project
+   settings → Your apps → **iOS app** (Analytics is already enabled on the
+   project; same place you grabbed the web `measurementId`).
+2. Add it to the Xcode project (`ios/App/App/`), then:
+
+   ```bash
+   npm run build:ios   # runs cap sync ios
+   ```
+
+That lights up the native path the same way as web — **no code needed, it's
+already wired and tested.** Spot-check on a device / TestFlight build via
+Firebase → Realtime (or DebugView). If it stays empty, check
+`/diagnostics → Analytics` on-device: `error` means the plist is missing or
+not synced.
+
 ### 7. Deploy the haptics fix + test on a real iPhone
 
 Every `haptic()` call on iOS was silently doing nothing (dead API)
@@ -308,11 +336,43 @@ Currently `navigator.share` where supported, clipboard fallback.
 Works but the native share sheet via `@capacitor/share` on iOS is
 visually richer (and matches App Store expectation).
 
-### 15. Sign in with Apple — native flow
+### 15. Sign in with Apple + Google — native flow
 
-Web popup-based Apple sign-in works but is fragile on iOS
-standalone PWA/Capacitor. Swap to `@capacitor-community/apple-sign-in`
-or similar for native surfaces.
+**iOS parity gap (audit 2026-06-04).** Both OAuth sign-ins in
+`src/lib/auth.tsx` use `signInWithPopup` with no native branch. OAuth
+popups don't work inside the Capacitor WKWebView — the redirect returns to
+`capacitor://localhost`, which isn't a Firebase authorized domain — so on a
+native build **Google sign-in fails outright and Apple sign-in is fragile**.
+Email/password sign-in is unaffected (works natively).
+
+Fix is the same both-ways seam as the rest of the app: keep the web popup,
+add a native branch behind `isNativePlatform()` that uses a native sign-in
+plugin → `signInWithCredential`:
+
+- Apple: `@capacitor-community/apple-sign-in`
+- Google: `@capacitor-firebase/authentication` (or
+  `@codetrix-studio/capacitor-google-auth`)
+
+Without this, native users can only sign in with email/password.
+
+### 15a. Native remote push (APNs) — server-initiated push parity
+
+**iOS parity gap (audit 2026-06-04).** `src/lib/pushNotifications.ts` is
+pure web FCM (`firebase/messaging` + a service worker). The Capacitor
+WKWebView has no usable service worker, so `isPushSupported()` returns false
+and **server-sent push silently no-ops on iOS** (device tokens are even
+hardcoded `platform: "web"`).
+
+Scope note: the **reminder** notifications (meal / streak / workout) use
+`@capacitor/local-notifications` and **do** work natively — only
+_server-initiated_ remote push is missing on device. Not a submission
+blocker; it's an engagement-parity gap.
+
+Fix: `@capacitor/push-notifications` (APNs) or
+`@capacitor-firebase/messaging`, register the native token with
+`platform: "ios"`, and teach the server senders to dispatch via APNs/FCM
+for native tokens. Needs the iOS Push Notifications capability +
+`GoogleService-Info.plist` (the same plist as analytics) in Xcode.
 
 ### 16. Apple Watch companion (far future)
 
@@ -584,6 +644,9 @@ Pick these up when you have Mac access:
   `npm install @capacitor-firebase/app-check && npx cap sync ios` →
   Firebase console iOS App Attest provider → ping me to swap the
   7-line stub in `src/lib/appCheck.ts`
+- Add `GoogleService-Info.plist` to the Xcode project (`ios/App/App/`) +
+  `npm run build:ios` to light up **iOS analytics** (item 6a) — web is
+  already live; the native path is wired + tested, it just needs the plist
 - End-to-end IAP sandbox test: sandbox Apple ID on iPhone →
   subscribe → verify Firestore flips `subscriptionTier` → wait for
   sandbox renewal → confirm webhook fires → cancel → confirm
