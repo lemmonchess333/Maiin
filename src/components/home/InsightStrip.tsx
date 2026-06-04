@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Flame, Zap, Dumbbell, Leaf, ChevronRight } from "lucide-react";
 import { THEME } from "@/lib/theme";
 

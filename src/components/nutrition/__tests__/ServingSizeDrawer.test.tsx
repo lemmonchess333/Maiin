@@ -3,24 +3,23 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 vi.mock("framer-motion", () => ({
-  get m() {
-    return (this as { motion: unknown }).motion;
-  },
   motion: new Proxy(
     {},
     {
-      get: (_t: any, prop: string) => (props: any) => {
-        const {
-          initial: _i,
-          animate: _a,
-          exit: _e,
-          transition: _tn,
-          ...rest
-        } = props;
-        const Tag = prop === "create" ? "div" : prop;
-        return <Tag {...rest} />;
-      },
-    }
+      get:
+        (_t: any, prop: string) =>
+        (props: any) => {
+          const {
+            initial: _i,
+            animate: _a,
+            exit: _e,
+            transition: _tn,
+            ...rest
+          } = props;
+          const Tag = prop === "create" ? "div" : prop;
+          return <Tag {...rest} />;
+        },
+    },
   ),
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -73,7 +72,7 @@ describe("ServingSizeDrawer — F2 unitConfidence banner", () => {
         open
         onClose={vi.fn()}
         onConfirm={vi.fn()}
-      />
+      />,
     );
     expect(screen.queryByText(/Per-100g data only/i)).toBeNull();
   });
@@ -85,7 +84,7 @@ describe("ServingSizeDrawer — F2 unitConfidence banner", () => {
         open
         onClose={vi.fn()}
         onConfirm={vi.fn()}
-      />
+      />,
     );
     expect(screen.queryByText(/Per-100g data only/i)).toBeNull();
   });
@@ -97,11 +96,11 @@ describe("ServingSizeDrawer — F2 unitConfidence banner", () => {
         open
         onClose={vi.fn()}
         onConfirm={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText(/Per-100g data only/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Confirm your actual serving size before saving/i)
+      screen.getByText(/Confirm your actual serving size before saving/i),
     ).toBeInTheDocument();
   });
 
@@ -112,7 +111,7 @@ describe("ServingSizeDrawer — F2 unitConfidence banner", () => {
         open
         onClose={vi.fn()}
         onConfirm={vi.fn()}
-      />
+      />,
     );
     expect(container.firstChild).toBeNull();
   });

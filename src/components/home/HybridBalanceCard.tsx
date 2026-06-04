@@ -1,4 +1,4 @@
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronRight, Dumbbell, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";

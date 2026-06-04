@@ -37,7 +37,7 @@ import {
   Dumbbell,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { THEME } from "../lib/theme";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
