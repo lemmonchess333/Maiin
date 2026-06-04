@@ -41,8 +41,8 @@ import { haptic } from "@/lib/haptic";
 import {
   DndContext,
   closestCenter,
+  MouseSensor,
   TouchSensor,
-  PointerSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
@@ -347,11 +347,23 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Save feedback states
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
 
+  // Sensors: MouseSensor + TouchSensor (never PointerSensor + TouchSensor —
+  // dnd-kit warns those conflict on touch, where pointer + touch events both
+  // fire). The drag is handle-based (SortableExerciseRow spreads listeners onto
+  // an explicit grip with `touch-action: none`), so the handle itself
+  // disambiguates drag-from-scroll — no press-and-hold delay is needed.
+  //
+  // Two bugs this replaces: (1) the handle's `onPointerDown={haptic}` was spread
+  // AFTER {...listeners}, clobbering PointerSensor's `onPointerDown` activator,
+  // so PointerSensor never fired (mouse drag dead on desktop). MouseSensor's
+  // activator is `onMouseDown`, which the haptic handler no longer shadows.
+  // (2) TouchSensor's `{ delay: 150, tolerance: 5 }` aborts activation if the
+  // finger moves >5px during the 150ms hold — a natural reorder gesture (grab
+  // the grip and slide) exceeds 5px before 150ms, so the row never lifted.
+  // Distance-based activation lifts the row once the finger moves, no abort.
   const sensors = useSensors(
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
-    }),
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
