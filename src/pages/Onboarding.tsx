@@ -27,6 +27,7 @@ import type {
   ProgramState,
   WorkoutDay,
   ProgramExercise,
+  PreferredSplit,
   SplitType,
 } from "@/features/program/programTypes";
 import { buildPlan } from "@/features/program/planBuilder";
@@ -77,12 +78,6 @@ type PrimaryGoal =
 type Experience = "beginner" | "intermediate" | "advanced";
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
 type Equipment = "full_gym" | "home_gym" | "minimal";
-type PreferredSplit =
-  | "full_body"
-  | "upper_lower"
-  | "ppl"
-  | "bro_split"
-  | "auto";
 type RunFrequency = "regular" | "occasional" | "none";
 type RunMode = "freeform" | "structured" | "race_prep";
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
@@ -575,12 +570,7 @@ export default function Onboarding() {
         daysPerWeek,
         equipment,
         gender,
-        preferredSplit: preferredSplit as
-          | "full_body"
-          | "upper_lower"
-          | "ppl"
-          | "bro_split"
-          | "auto",
+        preferredSplit,
         primaryGoal,
         experience,
         runFrequency,
@@ -623,7 +613,7 @@ export default function Onboarding() {
         nutritionPhase: fitnessGoal,
         experience,
         liftDays: daysPerWeek,
-        preferredSplit: preferredSplit as SplitType,
+        preferredSplit,
         runMode: effectiveRunMode,
         weeklyRunDays: effectiveRunDays,
         ...(effectiveRunMode === "race_prep" && raceTargetDate
