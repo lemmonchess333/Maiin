@@ -15,10 +15,17 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
+  signInWithCredential,
   type User,
+  type UserCredential,
 } from "firebase/auth";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import { isNativePlatform } from "@/lib/platform";
+import {
+  getGoogleCredentialNative,
+  getAppleCredentialNative,
+} from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
@@ -617,17 +624,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     trackLifecycle("signup_completed", { method: "email" });
   }, []);
 
-  const signInWithGoogle = useCallback(async () => {
-    const provider = new GoogleAuthProvider();
-    const cred = await signInWithPopup(auth, provider);
+  /* Shared post-credential handling for the OAuth flows (Google, Apple).
+     Identical for new + existing accounts across providers — the only
+     per-platform difference is HOW the UserCredential is obtained (web
+     popup vs native plugin), which the callers below handle. New accounts
+     seed photoURL from the identity (Google CDN URLs / null for Apple — the
+     Firestore rule gates which hosts it accepts); the user can override
+     later via the Settings upload flow. */
+  const finishOAuthSignIn = async (
+    cred: UserCredential,
+    method: "google" | "apple"
+  ) => {
     const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
     if (!profileDoc.exists()) {
-      /* Seed photoURL from the Google identity. The Firestore rule
-         only accepts URLs from `lh3.googleusercontent.com` (Google's
-         CDN) or `firebasestorage.googleapis.com` (own uploads), so
-         any other value would be rejected at the rule layer. The
-         user can override later via the Settings upload flow. */
       const newProfile = createDefaultProfile(
         cred.user.uid,
         cred.user.displayName || "",
@@ -636,7 +646,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       await writeNewProfileDocs(cred.user.uid, newProfile);
       setProfile(newProfile);
-      trackLifecycle("signup_completed", { method: "google" });
+      trackLifecycle("signup_completed", { method });
     } else {
       const data = profileDoc.data();
       setProfile(
@@ -648,39 +658,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         )
       );
     }
+  };
+
+  const signInWithGoogle = useCallback(async () => {
+    /* Web uses the popup. Native (Capacitor) can't — the popup redirect
+       returns to capacitor://localhost, not a Firebase authorized domain —
+       so it drives the native Google sheet and completes with the returned
+       credential. See nativeAuth.ts. */
+    const cred = isNativePlatform()
+      ? await signInWithCredential(auth, await getGoogleCredentialNative())
+      : await signInWithPopup(auth, new GoogleAuthProvider());
+    await finishOAuthSignIn(cred, "google");
   }, []);
 
   const signInWithApple = useCallback(async () => {
-    const provider = new OAuthProvider("apple.com");
-    provider.addScope("email");
-    provider.addScope("name");
-    const cred = await signInWithPopup(auth, provider);
-    const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
-
-    if (!profileDoc.exists()) {
-      /* Apple Sign In is privacy-conservative — `cred.user.photoURL`
-         is usually null. Pass it through anyway so the rare case
-         where Apple does provide a value gets seeded. */
-      const newProfile = createDefaultProfile(
-        cred.user.uid,
-        cred.user.displayName || "",
-        cred.user.email || "",
-        cred.user.photoURL || null
-      );
-      await writeNewProfileDocs(cred.user.uid, newProfile);
-      setProfile(newProfile);
-      trackLifecycle("signup_completed", { method: "apple" });
+    let cred: UserCredential;
+    if (isNativePlatform()) {
+      cred = await signInWithCredential(auth, await getAppleCredentialNative());
     } else {
-      const data = profileDoc.data();
-      setProfile(
-        hydrateProfile(
-          cred.user.uid,
-          data,
-          cred.user.displayName ?? "",
-          cred.user.email ?? ""
-        )
-      );
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+      cred = await signInWithPopup(auth, provider);
     }
+    await finishOAuthSignIn(cred, "apple");
   }, []);
 
   const signOutUser = useCallback(async () => {

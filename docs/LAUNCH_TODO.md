@@ -338,22 +338,36 @@ visually richer (and matches App Store expectation).
 
 ### 15. Sign in with Apple + Google — native flow
 
-**iOS parity gap (audit 2026-06-04).** Both OAuth sign-ins in
-`src/lib/auth.tsx` use `signInWithPopup` with no native branch. OAuth
-popups don't work inside the Capacitor WKWebView — the redirect returns to
-`capacitor://localhost`, which isn't a Firebase authorized domain — so on a
-native build **Google sign-in fails outright and Apple sign-in is fragile**.
-Email/password sign-in is unaffected (works natively).
+**Code seam landed (2026-06-04); native config + device verification
+remain.** `src/lib/auth.tsx` now branches on `isNativePlatform()`: web keeps
+`signInWithPopup` (unchanged), native obtains a credential via
+`@capacitor-firebase/authentication` (`src/lib/nativeAuth.ts`) and completes
+with `signInWithCredential` on the JS SDK. `capacitor.config.ts` sets
+`FirebaseAuthentication: { skipNativeAuth: true, providers: ["google.com",
+"apple.com"] }`. Unit-tested (`nativeAuth.test.ts`); the web path is
+untouched. **Why this was needed:** OAuth popups can't work inside the
+WKWebView — the redirect returns to `capacitor://localhost`, not a Firebase
+authorized domain — so pre-seam Google sign-in failed outright on device and
+Apple was fragile. Email/password was always fine.
 
-Fix is the same both-ways seam as the rest of the app: keep the web popup,
-add a native branch behind `isNativePlatform()` that uses a native sign-in
-plugin → `signInWithCredential`:
+⚠️ **UNVERIFIED ON DEVICE** — the credential/nonce wiring is from the plugin
+docs, not a real build. Remaining native steps (Mac/Xcode), then test on a
+device:
 
-- Apple: `@capacitor-community/apple-sign-in`
-- Google: `@capacitor-firebase/authentication` (or
-  `@codetrix-studio/capacitor-google-auth`)
+1. `npx cap sync ios` (installs the plugin's native pods).
+2. **Google:** add `GoogleService-Info.plist` (same as analytics) to the
+   Xcode target. In `ios/App/App/Info.plist`, add a URL scheme equal to the
+   **`REVERSED_CLIENT_ID`** from that plist (CFBundleURLTypes). In the
+   Firebase console, enable the **Google** sign-in provider.
+3. **Apple:** add the **"Sign in with Apple"** capability to the Xcode
+   target; enable the **Apple** sign-in provider in the Firebase console
+   (Services ID + key).
+4. Device-test both buttons → confirm a session lands and
+   `signup_completed` fires for a new account.
 
-Without this, native users can only sign in with email/password.
+If a native sign-in throws, the button surfaces the error like any other
+auth failure (the web path is unaffected). Android mirrors this with
+`google-services.json` + the SHA-1/256 fingerprints.
 
 ### 15a. Native remote push (APNs) — server-initiated push parity
 
