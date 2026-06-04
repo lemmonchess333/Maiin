@@ -76,7 +76,13 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           "firebase-auth": ["firebase/app", "firebase/auth"],
           "firebase-db": ["firebase/firestore", "firebase/storage"],
-          "firebase-analytics": ["firebase/analytics"],
+          // firebase/analytics (web SDK) and @capacitor-firebase/analytics
+          // (native plugin) are deliberately NOT forced into manual chunks:
+          // both are loaded via dynamic import from analyticsProvider, and a
+          // forced chunk would union the API surface used by each consumer,
+          // making the web path ship the larger surface the native plugin's
+          // web-fallback references. Letting Rollup auto-split keeps the web
+          // analytics chunk tree-shaken to just what the web path uses.
           charts: ["recharts"],
           vendor: ["react", "react-dom", "react-router-dom"],
           maplibre: ["maplibre-gl"],
