@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -80,7 +80,13 @@ function paletteForStreak(streak: number): FlamePalette {
  * emoji rendering. Each path has its own vertical linearGradient so the
  * base-to-tip hue shift reads at the 18px render size.
  */
-function FlameSvg({ palette, size = 18 }: { palette: FlamePalette; size?: number }) {
+function FlameSvg({
+  palette,
+  size = 18,
+}: {
+  palette: FlamePalette;
+  size?: number;
+}) {
   // useId so multiple streak chips on the same page don't collide on
   // gradient <defs> ids (would cause the last-rendered chip's palette to
   // win for everyone).
@@ -95,11 +101,23 @@ function FlameSvg({ palette, size = 18 }: { palette: FlamePalette; size?: number
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id={`flame-body-${id}`} x1="50%" y1="100%" x2="50%" y2="0%">
+        <linearGradient
+          id={`flame-body-${id}`}
+          x1="50%"
+          y1="100%"
+          x2="50%"
+          y2="0%"
+        >
           <stop offset="0%" stopColor={palette.bodyBase} />
           <stop offset="100%" stopColor={palette.bodyTip} />
         </linearGradient>
-        <linearGradient id={`flame-core-${id}`} x1="50%" y1="100%" x2="50%" y2="0%">
+        <linearGradient
+          id={`flame-core-${id}`}
+          x1="50%"
+          y1="100%"
+          x2="50%"
+          y2="0%"
+        >
           <stop offset="0%" stopColor={palette.coreBase} />
           <stop offset="100%" stopColor={palette.coreTip} />
         </linearGradient>
@@ -184,7 +202,7 @@ export function StreakFlame({
       </motion.span>
       <span
         className={cn(
-          "text-sm font-bold tabular-nums leading-none text-foreground",
+          "text-sm font-bold tabular-nums leading-none text-foreground"
         )}
       >
         {display ?? streak}
