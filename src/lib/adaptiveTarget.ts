@@ -1,10 +1,15 @@
 /**
  * Adaptive-TDEE target resolution + weekly rate cap (Nutr2 / #981 + #982).
  *
- * These pure functions sit between the estimator (`adaptiveTdee.ts`) and the
- * single source of truth for today's target (`useEffectiveTargets`). They
- * decide WHICH number the user sees (formula vs learned) and bound how fast
- * the learned number is allowed to move.
+ * This module is the adaptive-target ENGINE: it sits between the estimator
+ * (`adaptiveTdee.ts`) and the single source of truth for today's target
+ * (`useEffectiveTargets`). `resolveAdaptiveTarget` is the deep entry point — it
+ * owns the whole estimate → cap → precedence → view-assembly pipeline as ONE
+ * pure function, so the decision matrix has a single test surface and the hook
+ * (`useAdaptiveTdee`) is left as plumbing (Firestore I/O + the session latch +
+ * cap persistence). The smaller `resolveTargetSource` / `applyWeeklyCap` /
+ * `isAdaptiveActive` are the pure steps it composes (kept exported so each step
+ * stays independently table-testable).
  *
  * Locked invariants (Nutr2):
  * - Precedence: manual override > learned (Pro/trial + ready) > formula.
@@ -12,6 +17,8 @@
  * - The learned number moves at most ±150 kcal per rolling 7 days, seeded from
  *   the formula target so the formula→learned handoff never jumps.
  */
+
+import { estimateAdaptiveTDEE, computeWarmupProgress } from "./adaptiveTdee";
 
 /** Default maximum the applied target may move per rolling 7-day window. */
 export const MAX_WEEKLY_STEP_KCAL = 150;
@@ -144,5 +151,159 @@ export function applyWeeklyCap(
     applied,
     capState: { lastApplied: applied, lastAppliedAt: input.now.toISOString() },
     changed: applied !== prev.lastApplied,
+  };
+}
+
+// ── Orchestrator: the adaptive-target engine entry point ─────────────────
+
+/**
+ * Adaptive is active ONLY for a signed-in Pro/trial user without a manual
+ * calorie override (Q4 lock A). This is the SINGLE definition of the
+ * eligibility gate — both the resolver and the hook's data-load gate call it,
+ * so the precedence ladder can't drift between "do we read data" and "what do
+ * we show".
+ */
+export function isAdaptiveActive(p: {
+  hasUser: boolean;
+  isPro: boolean;
+  isManualOverride: boolean;
+}): boolean {
+  return p.hasUser && p.isPro && !p.isManualOverride;
+}
+
+/** The fully-resolved adaptive view consumed by `useEffectiveTargets`. */
+export interface AdaptiveTdeeView {
+  /** True when adaptive is active (Pro/trial, signed in, no manual override). */
+  active: boolean;
+  /** Estimator gate — true once enough data has accumulated. */
+  ready: boolean;
+  /** Which number wins: "formula" (default) or "learned". */
+  source: TargetSource;
+  /** The resolved calorie target to use. */
+  value: number;
+  /** Render the warmup bar (active, loaded, gate not yet cleared). */
+  showWarmup: boolean;
+  /** 0..1 bar fill — high-water latched within the session so it never shrinks. */
+  warmupFraction: number;
+  /** True when live progress has slipped behind the rolling window. */
+  stalled: boolean;
+}
+
+export interface ResolveAdaptiveTargetInput {
+  /** `!!user`. */
+  hasUser: boolean;
+  /** Pro OR active trial. */
+  isPro: boolean;
+  /** `!!profile.customCalorieTarget`. */
+  isManualOverride: boolean;
+  /** baseTarget — customCalorieTarget if set, else the formula TDEE. */
+  formulaTarget: number;
+  /** Trailing-window intake, summed per date (loaded by the hook). */
+  intakeByDay: { dateKey: string; kcal: number }[];
+  /** Raw dated weigh-ins within the window (loaded by the hook). */
+  weighIns: { dateKey: string; weightKg: number }[];
+  /** True once the hook's trailing-window read has resolved. */
+  loaded: boolean;
+  /** Persisted cap state, or null on first-ever engage. */
+  capPrev: CapState | null;
+  /** Current time — held stable across latch churn by the caller. */
+  now: Date;
+  /**
+   * Session high-water latch value. The latch STATE lives in the hook (so it
+   * survives re-renders); its value is threaded in here so the whole view is a
+   * pure function. `warmupFraction = max(latched, liveFraction)`.
+   */
+  latched: number;
+}
+
+export interface ResolveAdaptiveTargetResult {
+  view: AdaptiveTdeeView;
+  /** Cap state to persist when `capChanged`; null when no cap was applied. */
+  capState: CapState | null;
+  /** True when the cap moved this resolve and `capState` should be persisted. */
+  capChanged: boolean;
+}
+
+function inactiveView(formulaTarget: number): AdaptiveTdeeView {
+  return {
+    active: false,
+    ready: false,
+    source: "formula",
+    value: formulaTarget,
+    showWarmup: false,
+    warmupFraction: 0,
+    stalled: false,
+  };
+}
+
+/**
+ * The deep entry point. Pure: estimate → weekly cap → source precedence →
+ * view assembly (incl. the latch-derived warmup fraction + stall). Returns the
+ * complete view the user sees, plus the cap state the hook should persist when
+ * `capChanged`. Inactive users short-circuit to the plain formula with zero
+ * estimator work.
+ */
+export function resolveAdaptiveTarget(
+  input: ResolveAdaptiveTargetInput
+): ResolveAdaptiveTargetResult {
+  const {
+    hasUser,
+    isPro,
+    isManualOverride,
+    formulaTarget,
+    intakeByDay,
+    weighIns,
+    loaded,
+    capPrev,
+    now,
+    latched,
+  } = input;
+
+  if (!isAdaptiveActive({ hasUser, isPro, isManualOverride })) {
+    return {
+      view: inactiveView(formulaTarget),
+      capState: null,
+      capChanged: false,
+    };
+  }
+
+  const result = estimateAdaptiveTDEE({ intakeByDay, weighIns });
+
+  // Apply the weekly rate cap once the gate is ready (seeded from formula on
+  // first engage → no jump).
+  const cap =
+    result.ready && result.learnedTDEE != null
+      ? applyWeeklyCap({
+          rawLearned: result.learnedTDEE,
+          formulaTarget,
+          prev: capPrev,
+          now,
+        })
+      : null;
+
+  const resolved = resolveTargetSource({
+    isPro,
+    ready: result.ready,
+    formulaTarget,
+    learnedApplied: cap?.applied ?? null,
+    isManualOverride,
+  });
+
+  const liveFraction = computeWarmupProgress(result).fraction;
+  const warmupFraction = Math.max(latched, liveFraction);
+  const stalled = loaded && !result.ready && liveFraction + 0.001 < latched;
+
+  return {
+    view: {
+      active: true,
+      ready: result.ready,
+      source: resolved.source,
+      value: resolved.value,
+      showWarmup: loaded && resolved.showWarmup,
+      warmupFraction,
+      stalled,
+    },
+    capState: cap?.capState ?? null,
+    capChanged: cap?.changed ?? false,
   };
 }
