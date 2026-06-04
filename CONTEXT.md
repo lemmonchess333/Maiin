@@ -57,6 +57,15 @@ Two axes, from the food-logging reference set:
 - **Daily target — flat vs cycled by training day:** MacroFactor, MyFitnessPal, Cronometer, Lose It! all keep a **flat daily calorie target** (none auto-cycle calories by day; weekly adjustment absorbs activity). The only apps that vary by day — RP (Renaissance Periodization), Carbon by Layne Norton — do it via **carb periodization within a budget**, which is exactly Tropos's net-neutral fat→carb shift. → Flat calories + carb periodization = MacroFactor's flat base + RP/Carbon's carb-cycling lever.
 - **Rejected for Tropos:** a net-additive planned training-day calorie bump (no mainstream food app does this) and net-neutral _calorie_ cycling as a default (a coaching-app power feature that couples to the weekly schedule).
 
+### Performance Index (PI)
+
+A weekly 0–100 score of how the user's training week went, with a `loadBand` (low / deload / optimal / overreach) and a `deloadRecommended` flag. The single conceptual engine has **two physical copies**: client `src/lib/performanceEngine.ts` (drives Home/analytics previews) and server `functions/performanceEngine.js` (the authoritative copy — `weeklyPerformanceRollup` / `computePerformanceWeek` persist the PI users actually see).
+
+- **Components:** `loadScore` (weighted `liftLoadScore` + `runLoadScore` vs a baseline), `recoveryScore` (bodyweight-stability + meal-logging + session-count proxies), `adherenceScore` (calorie + protein + workout-count vs target). Composed via `PI_WEIGHTS`.
+- **goal-aware scoring:** the PI is a function of `profile.goal` (`cut` / `lean bulk` / `recomp` / unspecified) in **four** places — recovery bodyweight-delta thresholds, adherence calorie tolerance (`cut` ±10% vs ±15%), the lift/run weighting inside `loadScore` (`lean bulk` 0.65/0.35, `cut` 0.6/0.4, else 0.5/0.5), and the default `weeklyWorkoutsTarget` (`cut` 3 / `lean bulk` 5 / else 4). A cut and a lean-bulk week with identical raw activity get **different** PIs by design.
+- **`scorePerformance` (the seam):** the pure, admin-free post-baseline scoring — `scorePerformance(currentAgg, bl, profile, prevPI) → PerformanceDoc`. Both copies derive their **baseline differently by design** (client from `priorWeeks[]`, server by aggregating a baseline window), then call the SAME scoring composition. The seam is the post-baseline scoring, NOT the windowing.
+- **Mirror invariant (locked 2026-06-04, `/improve-codebase-architecture` Cand-1):** the two copies of `scorePerformance` must produce identical output for identical `(currentAgg, bl, profile, prevPI)`. Pinned by a **cross-copy parity test** (client Vitest suite imports both the `.ts` and the admin-free `.js`) across all goal values — drift fails CI. This is the same mirror+parity discipline as `runModeResolution.ts ↔ .js` and `runStatsEligibility ↔ runEligibility.js`. History: the server copy silently lagged the client's goal-awareness (all four branches goal-blind server-side), recomputing every cut/bulk user's stored PI wrong — the `62a9cfa`-class drift the CLAUDE.md recurring-mistake rule names. Do not let the copies diverge without updating the parity test.
+
 ---
 
 ## Reference-app patterns

@@ -12,17 +12,14 @@ Spec locked in plan rows PI1 + PI5. See programme-run-followups.md.
 
 const admin = require("firebase-admin");
 
+// Post-baseline scoring lives in the admin-free shared module so the client
+// parity test can require it without an admin init. This file owns only the
+// server-specific concerns: windowing, aggregation, confidence, signals, I/O.
+const perfScoring = require("./lib/perfScoring");
+
 const db = admin.firestore();
 
 // ── Constants ────────────────────────────────
-
-const PI_WEIGHTS = {
-  load: 0.65,
-  recovery: 0.25,
-  adherence: 0.1,
-  liftInLoad: 0.5,
-  runInLoad: 0.5,
-};
 
 /** Current rolling window length in days. */
 const WINDOW_DAYS = 7;
@@ -96,19 +93,6 @@ function isInRollingWindow(dateStr, computeKey) {
   if (!dateStr) return false;
   const windowStartStr = dateKeyMinusN(computeKey, WINDOW_DAYS - 1);
   return dateStr >= windowStartStr && dateStr <= computeKey;
-}
-
-function clamp(v) {
-  return Math.max(0, Math.min(100, Math.round(v)));
-}
-
-function safeRatio(current, baseline) {
-  // Zero baseline (cold-start: no 28-day history) → NEUTRAL 1.0, matching the
-  // client engine (src/lib/performanceEngine.ts). Returning 1.2 here inflated
-  // every cold-start ratio to "20% above baseline", pushing a brand-new user's
-  // first-week PI into the overreach band off a baseline they don't have.
-  if (baseline <= 0) return current > 0 ? 1.0 : 0;
-  return current / baseline;
 }
 
 // ── Firestore data fetching ──────────────────
@@ -372,70 +356,12 @@ function computeBaselineFromAgg(baselineAgg) {
   };
 }
 
-function computeLiftLoadScore(agg, bl) {
-  if (agg.liftSessions === 0) return 0;
-  const tonnageRatio = safeRatio(agg.liftTonnage, bl.liftTonnage);
-  const hardSetRatio = safeRatio(agg.liftHardSets, bl.liftHardSets);
-  const raw = tonnageRatio * 0.7 + hardSetRatio * 0.3;
-  return clamp(raw * 67);
-}
-
-function computeRunLoadScore(agg, bl) {
-  if (agg.runSessions === 0) return 0;
-  const kmRatio = safeRatio(agg.runKm, bl.runKm);
-  const longRatio = safeRatio(agg.runLongKm, bl.runLongKm);
-  const qualityBonus = agg.runQualityCount > 0 ? 10 : 0;
-  const raw = kmRatio * 0.6 + longRatio * 0.4;
-  return clamp(raw * 67 + qualityBonus);
-}
-
-function computeRecoveryScore(agg) {
-  let score = 60;
-  if (agg.bwCurrent7dAvg != null && agg.bwPrevious7dAvg != null) {
-    const delta = Math.abs(agg.bwCurrent7dAvg - agg.bwPrevious7dAvg);
-    if (delta <= 0.5) score += 20;
-    else if (delta <= 1.0) score += 10;
-    else if (delta > 2.0) score -= 15;
-  }
-  if (agg.mealDaysLogged >= 5) score += 15;
-  else if (agg.mealDaysLogged >= 3) score += 8;
-  const totalSessions = agg.liftSessions + agg.runSessions;
-  if (totalSessions > 8) score -= 10;
-  else if (totalSessions >= 4 && totalSessions <= 6) score += 5;
-  return clamp(score);
-}
-
-function computeAdherenceScore(
-  agg,
-  targetWorkouts,
-  targetCalories,
-  targetProtein
-) {
-  let score = 0;
-  let factors = 0;
-  if (targetWorkouts > 0) {
-    const totalSessions = agg.liftSessions + agg.runSessions;
-    const ratio = Math.min(totalSessions / targetWorkouts, 1.2);
-    score += ratio * 100;
-    factors++;
-  }
-  if (targetCalories && agg.mealDaysLogged >= 3 && agg.avgDailyCalories > 0) {
-    const calRatio = agg.avgDailyCalories / targetCalories;
-    const calScore =
-      calRatio >= 0.85 && calRatio <= 1.15
-        ? 100
-        : Math.max(0, 100 - Math.abs(1 - calRatio) * 200);
-    score += calScore;
-    factors++;
-  }
-  if (targetProtein && agg.mealDaysLogged >= 3 && agg.avgDailyProtein > 0) {
-    const protRatio = agg.avgDailyProtein / targetProtein;
-    const protScore = protRatio >= 0.9 ? 100 : protRatio * 111;
-    score += protScore;
-    factors++;
-  }
-  return factors > 0 ? clamp(score / factors) : 50;
-}
+// Sub-scores (computeLiftLoadScore, computeRunLoadScore, computeRecoveryScore,
+// computeAdherenceScore), computeLoadBand, shouldRecommendDeload, the goal-aware
+// load weighting + workouts-target default, generateInsight, and
+// generatePlanAdjustments all live in ./lib/perfScoring (shared with the client,
+// pinned by performanceEngineParity.cross.test.ts). Only the model-specific
+// computeConfidence stays here: the rolling-window model has no recency check.
 
 function computeConfidence(agg, bl) {
   let signals = 0;
@@ -447,30 +373,6 @@ function computeConfidence(agg, bl) {
   if (signals >= 4) return "high";
   if (signals >= 2) return "medium";
   return "low";
-}
-
-function computeLoadBand(pi) {
-  if (pi >= 85) return "overreach";
-  if (pi >= 70) return "high";
-  if (pi >= 45) return "moderate";
-  if (pi >= 25) return "low";
-  return "deload";
-}
-
-function shouldRecommendDeload(
-  currentPI,
-  recoveryScore,
-  adherenceScore,
-  previousComputePI
-) {
-  if (currentPI >= 80 && recoveryScore < 45) return true;
-  // Sustained overreach: two consecutive full-window-separated computes in the
-  // overreach band. Threshold is 85 to match the client engine (raised from 75;
-  // see src/lib/performanceEngine.ts) — 75-84 for two weeks is high-but-fine.
-  if (currentPI >= 85 && previousComputePI != null && previousComputePI >= 85)
-    return true;
-  if (currentPI >= 70 && adherenceScore < 50) return true;
-  return false;
 }
 
 // ── Signals (PI1a addition) ───────────────────
@@ -534,90 +436,6 @@ function computeSignals({
   };
 }
 
-// ── Insights (unchanged from weekly engine) ──
-
-function generateInsight(doc) {
-  const {
-    performanceIndex: pi,
-    liftLoadScore: lls,
-    runLoadScore: rls,
-    recoveryScore: rs,
-    adherenceScore: as_,
-    deloadRecommended,
-    liftProgression: lp,
-    runVolume: rv,
-  } = doc;
-  let title;
-  if (pi >= 75) title = "Momentum: High";
-  else if (pi >= 45) title = "Momentum: Stable";
-  else title = "Momentum: Low";
-  const bullets = [];
-  if (deloadRecommended)
-    bullets.push(
-      "Consider a deload week — sustained high load with limited recovery signals."
-    );
-  if (lls >= 70 && rls >= 70)
-    bullets.push(
-      "Both lifting and running loads are strong this week — solid hybrid output."
-    );
-  else if (lls >= 70 && rls < 40)
-    bullets.push(
-      "Lifting is on point but running volume is low. Add an easy run if schedule allows."
-    );
-  else if (rls >= 70 && lls < 40)
-    bullets.push(
-      "Running volume is great but lifting load dropped. Prioritise your next session."
-    );
-  if (rs < 50 && bullets.length < 3)
-    bullets.push(
-      "Recovery signals are low — check sleep, hydration, and nutrition consistency."
-    );
-  if (as_ < 50 && bullets.length < 3)
-    bullets.push(
-      "Adherence dipped — focus on showing up consistently over hitting PRs."
-    );
-  if (lp > 1.15 && bullets.length < 3)
-    bullets.push(
-      `Lifting tonnage is ${Math.round((lp - 1) * 100)}% above baseline — great progression.`
-    );
-  if (rv > 1.2 && bullets.length < 3)
-    bullets.push(
-      `Running volume ${Math.round((rv - 1) * 100)}% above baseline — watch for overuse.`
-    );
-  if (bullets.length === 0) {
-    if (pi >= 45) bullets.push("Consistent week. Keep the rhythm going.");
-    else
-      bullets.push(
-        "Light week — a good time to focus on mobility and recovery."
-      );
-  }
-  return { title, bullets: bullets.slice(0, 3) };
-}
-
-function generatePlanAdjustments(doc) {
-  const lift = [];
-  const run = [];
-  if (doc.deloadRecommended) {
-    lift.push("Reduce working sets by 30–40% or drop accessory work.");
-    run.push(
-      "Cap runs at easy pace. Replace one session with active recovery."
-    );
-    return { lift, run };
-  }
-  if (doc.loadBand === "overreach") {
-    lift.push("Maintain intensity but consider reducing total volume 10–15%.");
-    run.push("Keep long run but drop one mid-week session if fatigued.");
-  } else if (doc.loadBand === "low" || doc.loadBand === "deload") {
-    if (doc.liftLoadScore < 30)
-      lift.push(
-        "Focus on progressive overload — small weight jumps or extra set."
-      );
-    if (doc.runLoadScore < 30)
-      run.push("Add one easy 20-min run to rebuild aerobic base.");
-  }
-  return { lift, run };
-}
-
 // ── Main compute + write ─────────────────────
 
 /**
@@ -676,35 +494,10 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
     // Normalise baseline to a 7-day-equivalent for ratio comparisons
     const bl = computeBaselineFromAgg(baselineAgg);
 
-    // Score
-    const liftLoadScore = computeLiftLoadScore(currentAgg, bl);
-    const runLoadScore = computeRunLoadScore(currentAgg, bl);
-    const recoveryScore = computeRecoveryScore(currentAgg);
-    const adherenceScore = computeAdherenceScore(
-      currentAgg,
-      profile.weeklyWorkoutsTarget || 4,
-      profile.targetCalories || null,
-      profile.targetProtein || null
-    );
-
-    const loadScore =
-      PI_WEIGHTS.liftInLoad * liftLoadScore +
-      PI_WEIGHTS.runInLoad * runLoadScore;
-    const pi = clamp(
-      PI_WEIGHTS.load * loadScore +
-        PI_WEIGHTS.recovery * recoveryScore +
-        PI_WEIGHTS.adherence * adherenceScore
-    );
-
-    const liftProgression = safeRatio(currentAgg.liftTonnage, bl.liftTonnage);
-    const runVolume = safeRatio(currentAgg.runKm, bl.runKm);
-    const confidence = computeConfidence(currentAgg, bl);
-    const loadBand = computeLoadBand(pi);
-
-    // Previous compute's PI — sliding window: 7 days back is the
-    // "full window separation" comparison; using 1 day back would
-    // compare against a window that shares 6/7 days with the current
-    // one, weakening the signal.
+    // Previous compute's PI — an input to deload detection, so fetch it
+    // BEFORE scoring. Sliding window: 7 days back is the "full window
+    // separation" comparison; using 1 day back would compare against a window
+    // that shares 6/7 days with the current one, weakening the signal.
     let previousComputePI = null;
     try {
       const prevKey = dateKeyMinusN(computeKey, WINDOW_DAYS);
@@ -719,20 +512,23 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       /* no previous doc, that's fine */
     }
 
-    // Gate on baseline sufficiency, matching the client engine: a deload
-    // recommendation off an unreliable (<3-week) baseline is noise, and
-    // combined with cold-start ratios it would nag brand-new users to deload.
-    const deloadRecommended =
-      bl.weeksUsed >= 3
-        ? shouldRecommendDeload(
-            pi,
-            recoveryScore,
-            adherenceScore,
-            previousComputePI
-          )
-        : false;
+    // Score — delegate to the shared, goal-aware post-baseline scorer (the
+    // parity seam, pinned to the client copy). profile.goal drives the four
+    // goal-aware branches; the <3-week baseline-sufficiency deload gate lives
+    // inside scorePerformance too.
+    const scored = perfScoring.scorePerformance(
+      currentAgg,
+      bl,
+      {
+        goal: profile.goal,
+        weeklyWorkoutsTarget: profile.weeklyWorkoutsTarget,
+        targetCalories: profile.targetCalories,
+        targetProtein: profile.targetProtein,
+      },
+      previousComputePI
+    );
 
-    const partial = {
+    const {
       performanceIndex: pi,
       liftLoadScore,
       runLoadScore,
@@ -742,9 +538,12 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       runVolume,
       loadBand,
       deloadRecommended,
-    };
-    const insight = generateInsight(partial);
-    const planAdjustments = generatePlanAdjustments(partial);
+      insight,
+      planAdjustments,
+    } = scored;
+
+    // confidence is model-specific (rolling window, no recency check) — local.
+    const confidence = computeConfidence(currentAgg, bl);
 
     // PI1a signals — fed into client getLine() via the perf doc
     const signals = computeSignals({
@@ -881,24 +680,29 @@ module.exports = {
   getWeekKey, // legacy alias
   isInRollingWindow,
   COOLDOWN_MS,
-  // Pure helpers exposed for unit testing
+  // Pure helpers exposed for unit testing. The scoring helpers are re-exported
+  // from ./lib/perfScoring (the shared, goal-aware copy) so existing tests that
+  // destructure them from _internal keep working against the canonical source.
   _internal: {
+    // server-specific
     dateKeyMinusN,
     currentWindow,
     baselineWindow,
     aggregateWindow,
     computeBaselineFromAgg,
-    computeLiftLoadScore,
-    computeRunLoadScore,
-    computeRecoveryScore,
-    computeAdherenceScore,
     computeConfidence,
-    computeLoadBand,
-    shouldRecommendDeload,
     computeSignals,
-    clamp,
-    safeRatio,
     WINDOW_DAYS,
     BASELINE_DAYS,
+    // shared scoring (perfScoring)
+    computeLiftLoadScore: perfScoring.computeLiftLoadScore,
+    computeRunLoadScore: perfScoring.computeRunLoadScore,
+    computeRecoveryScore: perfScoring.computeRecoveryScore,
+    computeAdherenceScore: perfScoring.computeAdherenceScore,
+    computeLoadBand: perfScoring.computeLoadBand,
+    shouldRecommendDeload: perfScoring.shouldRecommendDeload,
+    scorePerformance: perfScoring.scorePerformance,
+    clamp: perfScoring.clamp,
+    safeRatio: perfScoring.safeRatio,
   },
 };
