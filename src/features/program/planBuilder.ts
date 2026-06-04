@@ -39,6 +39,7 @@
 
 import type {
   Goal,
+  PreferredSplit,
   PrimaryGoal,
   ProgramState,
   ScheduledRunDay,
@@ -77,7 +78,12 @@ export interface PlanBuilderInput {
   /** Number of lift days the user wants per week. */
   liftDays: number;
 
-  preferredSplit: import("./programTypes").SplitType;
+  /** User-facing split *preference* (incl. `bro_split` / `auto`) — persisted
+   *  to `profile.preferredSplit` and scored by `matchTemplate`, but INERT in
+   *  plan shape (`chooseSplit` derives structure from lift days). Typed
+   *  `PreferredSplit`, not the engine `SplitType` — the old `as SplitType`
+   *  cast claimed a value the engine enum can't represent. */
+  preferredSplit: PreferredSplit;
 
   runMode: RunMode;
 
