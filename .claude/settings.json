@@ -9,6 +9,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "input=$(cat); printf '%s' \"$input\" | grep -q '\"stop_hook_active\"[[:space:]]*:[[:space:]]*true' && exit 0; branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || exit 0; case \"$branch\" in main|master|HEAD) exit 0;; esac; if git rev-parse --abbrev-ref --symbolic-full-name @{upstream} >/dev/null 2>&1; then ahead=$(git rev-list --count @{upstream}..HEAD 2>/dev/null); elif git rev-parse --verify -q origin/main >/dev/null 2>&1; then ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null); else ahead=$(git rev-list --count HEAD 2>/dev/null); fi; [ \"${ahead:-0}\" -gt 0 ] 2>/dev/null || exit 0; head=$(git rev-parse HEAD 2>/dev/null); sentinel=\"$(git rev-parse --git-dir 2>/dev/null)/.claude-closeout-reminded\"; if [ -f \"$sentinel\" ] && [ \"$(cat \"$sentinel\" 2>/dev/null)\" = \"$head\" ]; then exit 0; fi; printf '%s' \"$head\" > \"$sentinel\" 2>/dev/null; reason=\"You have $ahead unpushed commit(s) on branch '$branch'. The user has standing approval to ship without asking — run the close-out before stopping: push -u origin $branch, open a PR, watch CI (subscribe), squash-merge once green, then unsubscribe. If the work genuinely isn't ready (WIP) or you're pausing to ask the user a question, stopping is fine; this nudge won't fire again for this commit.\"; if command -v jq >/dev/null 2>&1; then jq -nc --arg r \"$reason\" '{decision:\"block\",reason:$r}'; else printf '{\"decision\":\"block\",\"reason\":\"%s\"}\\n' \"$reason\"; fi",
+            "timeout": 15,
+            "statusMessage": "Checking for unpushed work before stopping"
+          }
+        ]
+      }
     ]
   }
 }
