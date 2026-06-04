@@ -9,6 +9,7 @@ import type {
   WorkoutDay,
   WeeklyPrescription,
 } from "./programTypes";
+import { generateInstanceId } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
@@ -194,6 +195,7 @@ function makeExercise(
   return {
     name: ex.name,
     exerciseId: ex.id,
+    instanceId: existing?.instanceId ?? generateInstanceId(), // #1038
     movementCategory: category,
     sets,
     reps,
@@ -220,6 +222,7 @@ function makeAccessory(
   return {
     name: ex.name,
     exerciseId: ex.id,
+    instanceId: generateInstanceId(), // #1038
     movementCategory: category,
     sets,
     reps,
