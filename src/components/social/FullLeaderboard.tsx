@@ -9,6 +9,7 @@ import {
   type ChallengeType,
 } from "../../lib/leaderboard";
 import { Skeleton } from "../LoadingSkeleton";
+import { RANK_COLORS } from "../../lib/theme";
 import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
 
@@ -22,8 +23,6 @@ const TABS: { key: ChallengeType; label: string; unit: string }[] = [
   { key: "weekly_distance", label: "Running Distance", unit: "km" },
   { key: "weekly_workouts", label: "Workouts", unit: "sessions" },
 ];
-
-const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const { user, profile } = useAuth();
