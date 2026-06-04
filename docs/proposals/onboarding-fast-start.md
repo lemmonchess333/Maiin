@@ -136,15 +136,22 @@ post-launch judgement, not an experiment.
 - Removing body metrics from onboarding (rejected — breaks the calorie target).
 - Implementing `early_bird` or other unbuilt features.
 
-## Open decisions for the owner
+## Resolved decisions (2026-06-04)
 
-1. **Body-metrics step granularity** — keep all five inputs on one screen, or
-   drop `activityLevel` to a default (`"moderate"`) too? (Activity multiplier
-   meaningfully moves TDEE; recommend keeping it.)
-2. **Split type-seam fix** — resolve `"auto"` at the boundary (before
-   `buildPlan`/persistence) vs widen the builder API to accept `"auto"` and
-   resolve internally via `chooseSplit`. No new split mapping is needed — the
-   engine's existing `chooseSplit(liftDays)` is the single source of truth.
+1. **Body-metrics step granularity — KEEP all five inputs** (sex, age-band,
+   height, weight, activity level) on the one "about you" screen. The activity
+   multiplier moves TDEE materially; defaulting it would degrade the Day-1
+   calorie target the step exists to protect.
+2. **Split type-seam — WIDEN the builder to accept `"auto"` (make it
+   first-class).** Change `PlanBuilderInput.preferredSplit` from `SplitType` to
+   `SplitType | "auto"`, drop the onboarding cast. `"auto"` is already a
+   legitimate, tolerated runtime value ("no preference → engine decides"):
+   `matchTemplate` treats it as no-preference, `generateProgram` ignores it and
+   derives the real split via `chooseSplit(liftDays)`, and `TrainingSection`
+   defaults to it. So this is a **zero-runtime-change** type-honesty fix.
+   Rejected the boundary-resolve alternative: persisting a concrete split for a
+   user who expressed no preference would make `matchTemplate` wrongly _prefer_
+   that split — `"auto"` is the more correct persisted value.
 
 ---
 
