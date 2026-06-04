@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import { m as motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Trash2, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";

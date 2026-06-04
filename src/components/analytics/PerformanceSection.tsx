@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
