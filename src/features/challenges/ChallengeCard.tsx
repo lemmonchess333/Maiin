@@ -20,7 +20,7 @@ import type {
 } from "./useChallenges";
 import {
   TIER_COLORS,
-  computeTier,
+  resolveTier,
   getTimeRemaining,
   isTierAchieved,
 } from "./useChallenges";
@@ -230,7 +230,11 @@ export function ChallengeCard({
         {leaderboard.length > 0 && joined && currentValue > 0 && (
           <div className="space-y-1">
             {leaderboard.slice(0, 3).map((p, i) => {
-              const tier = computeTier(p.currentValue, challenge.tiers);
+              const tier = resolveTier(
+                p.currentValue,
+                challenge.tiers,
+                challenge.metric
+              );
               return (
                 <div
                   key={p.uid || i}
@@ -468,7 +472,11 @@ export function ChallengeCard({
           >
             <div className="p-4 space-y-1.5 max-h-60 overflow-y-auto">
               {leaderboard.map((p, i) => {
-                const tier = computeTier(p.currentValue, challenge.tiers);
+                const tier = resolveTier(
+                  p.currentValue,
+                  challenge.tiers,
+                  challenge.metric
+                );
                 return (
                   <div
                     key={p.uid || i}
