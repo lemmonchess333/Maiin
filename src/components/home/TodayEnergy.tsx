@@ -60,6 +60,15 @@ export default function TodayEnergy({
   const carbsColor = THEME.macros.carbs;
   const fatColor = THEME.macros.fat;
 
+  // Cold-start: a brand-new user with no meals ever. The macro rings carry
+  // no information at 0g (their targets already live in the calorie header),
+  // so we render a clean inline CTA in their place rather than overlaying
+  // near-transparent CTA text on top of faded rings — that overlay collided
+  // with the ring labels and read as a rendering bug. Returning users with a
+  // logged history still see the rings (faded) + a "log today" nudge below.
+  const isColdStart =
+    !mealsLoading && calories === 0 && totalLifetimeMeals === 0;
+
   return (
     <div className="rounded-2xl bg-card overflow-hidden">
       {/* Calorie header -- tappable to expand */}
@@ -261,58 +270,18 @@ export default function TodayEnergy({
               : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`}
           </p>
         )}
-        <motion.button
-          type="button"
-          layout
-          onClick={() => {
-            haptic();
-            setMacroMode((m) => (m === "consumed" ? "left" : "consumed"));
-          }}
-          aria-label={
-            macroMode === "consumed"
-              ? "Macros showing consumed. Tap to switch to remaining."
-              : "Macros showing remaining. Tap to switch to consumed."
-          }
-          className={cn(
-            "w-full flex items-center justify-around px-4 py-3 motion-safe:active:scale-[0.99] transition-transform",
-            calories === 0 && "opacity-50"
-          )}
-        >
-          <MacroRing
-            value={protein}
-            target={tProt}
-            color={proteinColor}
-            label="Protein"
-            unit="g"
-            displayMode={macroMode}
-          />
-          <MacroRing
-            value={carbs}
-            target={tCarbs}
-            color={carbsColor}
-            label="Carbs"
-            unit="g"
-            displayMode={macroMode}
-          />
-          <MacroRing
-            value={fat}
-            target={tFat}
-            color={fatColor}
-            label="Fat"
-            unit="g"
-            displayMode={macroMode}
-          />
-        </motion.button>
-        {!mealsLoading && calories === 0 && totalLifetimeMeals === 0 && (
+        {isColdStart ? (
           /* Home2c-locked empty-state copy. Single sentence per spec
              (was a two-line title/sub: "Log your first meal" + "Tap
-             to start tracking"). aria-label exposes the same intent
-             to screen readers without requiring them to traverse the
-             absolutely-positioned overlay's children. */
+             to start tracking"). Rendered INLINE in place of the macro
+             rings — not as an absolute overlay — so the CTA can't collide
+             with the faded ring labels underneath (the previous overlay
+             read as a rendering bug). aria-label keeps the same intent
+             for screen readers. */
           <Link
             to="/food"
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-xl"
-            style={{ backgroundColor: THEME.semantic.nutrition + "08" }}
+            className="flex flex-col items-center justify-center rounded-xl px-6 py-5"
+            style={{ backgroundColor: THEME.semantic.nutrition + "0A" }}
             role="status"
             aria-label="No meals logged today. Log a meal to see your daily energy."
           >
@@ -326,12 +295,55 @@ export default function TodayEnergy({
               />
             </div>
             <p
-              className="text-sm font-semibold text-center px-6"
+              className="text-sm font-semibold text-center"
               style={{ color: THEME.semantic.nutrition }}
             >
               Log a meal to see your daily energy
             </p>
           </Link>
+        ) : (
+          <motion.button
+            type="button"
+            layout
+            onClick={() => {
+              haptic();
+              setMacroMode((m) => (m === "consumed" ? "left" : "consumed"));
+            }}
+            aria-label={
+              macroMode === "consumed"
+                ? "Macros showing consumed. Tap to switch to remaining."
+                : "Macros showing remaining. Tap to switch to consumed."
+            }
+            className={cn(
+              "w-full flex items-center justify-around px-4 py-3 motion-safe:active:scale-[0.99] transition-transform",
+              calories === 0 && "opacity-50"
+            )}
+          >
+            <MacroRing
+              value={protein}
+              target={tProt}
+              color={proteinColor}
+              label="Protein"
+              unit="g"
+              displayMode={macroMode}
+            />
+            <MacroRing
+              value={carbs}
+              target={tCarbs}
+              color={carbsColor}
+              label="Carbs"
+              unit="g"
+              displayMode={macroMode}
+            />
+            <MacroRing
+              value={fat}
+              target={tFat}
+              color={fatColor}
+              label="Fat"
+              unit="g"
+              displayMode={macroMode}
+            />
+          </motion.button>
         )}
         {!mealsLoading &&
           calories === 0 &&
