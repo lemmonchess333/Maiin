@@ -81,7 +81,15 @@ profiling surface.
 
 **New work:**
 
-1. **Split: no new logic — make the type seam honest.** The engine ALREADY
+> **⚠️ SUPERSEDED IN PART (2026-06-04, PR #1078).** The split type-seam below
+> (New-work #1 + Resolved-decision #2) was implemented ahead of this PRD by the
+> `PreferredSplit` consolidation. **Do NOT re-touch the type seam.** The
+> remaining new work for the fast-start build is the step-machine rewrite
+> (#2), defaults wiring (#3), and progressive nudges (#4) — plus simply
+> _removing the split step_ from the flow. See the revision note at the foot.
+
+1. **Split: no new logic — make the type seam honest.** ✅ **DONE — superseded
+   by PR #1078; do NOT re-touch this seam.** The engine ALREADY
    auto-derives the split: `generateProgram(nutritionPhase, liftDays, existing,
 primaryGoal)` ignores `preferredSplit` and calls `chooseSplit(weeklyTarget)`
    (= lift-days) internally (`programEngine.ts`). Onboarding already defaults
@@ -143,7 +151,12 @@ post-launch judgement, not an experiment.
    multiplier moves TDEE materially; defaulting it would degrade the Day-1
    calorie target the step exists to protect.
 2. **Split type-seam — WIDEN the builder to accept `"auto"` (make it
-   first-class).** Change `PlanBuilderInput.preferredSplit` from `SplitType` to
+   first-class).** ✅ **IMPLEMENTED in PR #1078 — but as the canonical
+   `PreferredSplit` union (`full_body | upper_lower | ppl | bro_split | auto`),
+   which is broader than the `SplitType | "auto"` proposed here, and which also
+   consolidated the four hand-copied unions and dropped both onboarding casts.
+   Treat this decision as DONE; the original description is retained below for
+   history.** Change `PlanBuilderInput.preferredSplit` from `SplitType` to
    `SplitType | "auto"`, drop the onboarding cast. `"auto"` is already a
    legitimate, tolerated runtime value ("no preference → engine decides"):
    `matchTemplate` treats it as no-preference, `generateProgram` ignores it and
@@ -160,3 +173,13 @@ flagged that `chooseSplit(liftDays)` already exists and `generateProgram`
 ignores `preferredSplit`. The original draft's proposed `selectSplit` would
 have duplicated it — dropped in favour of reusing `chooseSplit` and fixing the
 `PreferredSplit`/`SplitType` seam._
+
+_Revision (2026-06-04b): the split type-seam (New-work #1 + Resolved-decision
+#2) was implemented ahead of this PRD by **PR #1078** (PreferredSplit
+consolidation): `PlanBuilderInput.preferredSplit` is now typed as the canonical
+`PreferredSplit` union, both onboarding casts are gone, and the four duplicated
+unions are deduped — broader and cleaner than this PRD's proposed `SplitType |
+"auto"` widening. **Net effect: the split work is DONE.** The fast-start build
+must only *remove the split STEP* from the onboarding flow (a step-machine
+change), NOT touch the type seam. Remaining new work: step-machine rewrite,
+defaults wiring, progressive-profiling nudges._
