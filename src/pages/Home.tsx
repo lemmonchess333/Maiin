@@ -861,13 +861,13 @@ export default function Home() {
             }}
             className="flex items-center gap-3 p-3 rounded-xl border"
             style={{
-              background: "rgba(249,115,22,0.08)",
-              borderColor: "rgba(249,115,22,0.2)",
+              background: "hsl(var(--warning) / 0.08)",
+              borderColor: "hsl(var(--warning) / 0.2)",
             }}
           >
-            <Flame className="size-5 text-orange-500 shrink-0" />
+            <Flame className="size-5 text-warning shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-orange-500">
+              <p className="text-sm font-semibold text-warning">
                 {streak}-day streak at risk
               </p>
               <p className="text-xs text-muted-foreground">
