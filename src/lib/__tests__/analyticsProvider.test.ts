@@ -39,6 +39,7 @@ describe("analyticsProvider", () => {
     const mod = await import("../analyticsProvider");
     expect(() => mod.logAnalyticsEvent("x", {})).not.toThrow();
     expect(mod.isAnalyticsActive()).toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("uninitialised");
     expect(logEvent).not.toHaveBeenCalled();
   });
 
@@ -49,6 +50,7 @@ describe("analyticsProvider", () => {
     mod.initAnalytics(FAKE_APP);
     await new Promise((r) => setTimeout(r));
     expect(mod.isAnalyticsActive()).toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("native");
     expect(getAnalytics).not.toHaveBeenCalled();
   });
 
@@ -58,6 +60,7 @@ describe("analyticsProvider", () => {
     mod.initAnalytics(FAKE_APP);
     await new Promise((r) => setTimeout(r));
     expect(mod.isAnalyticsActive()).toBe(false);
+    expect(mod.getAnalyticsStatus()).toBe("unconfigured");
   });
 
   it("stays a no-op when isSupported() is false", async () => {
@@ -65,7 +68,9 @@ describe("analyticsProvider", () => {
     isSupported.mockResolvedValue(false);
     const mod = await import("../analyticsProvider");
     mod.initAnalytics(FAKE_APP);
-    await vi.waitFor(() => expect(isSupported).toHaveBeenCalled());
+    await vi.waitFor(() =>
+      expect(mod.getAnalyticsStatus()).toBe("unsupported")
+    );
     expect(mod.isAnalyticsActive()).toBe(false);
     expect(getAnalytics).not.toHaveBeenCalled();
   });
@@ -75,6 +80,7 @@ describe("analyticsProvider", () => {
     const mod = await import("../analyticsProvider");
     mod.initAnalytics(FAKE_APP);
     await vi.waitFor(() => expect(mod.isAnalyticsActive()).toBe(true));
+    expect(mod.getAnalyticsStatus()).toBe("active");
 
     mod.logAnalyticsEvent("signup_completed", {
       method: "email",

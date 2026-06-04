@@ -35,6 +35,20 @@ import type { Analytics } from "firebase/analytics";
 import { isNativePlatform } from "./platform";
 import { logger } from "./logger";
 
+/**
+ * Why analytics is (or isn't) delivering. Surfaced on the operator
+ * Diagnostics page so a "0% verified requests" investigation has a
+ * first answer without opening dev tools.
+ */
+export type AnalyticsStatus =
+  | "uninitialised" // initAnalytics not called yet
+  | "pending" // init started, awaiting isSupported() / getAnalytics()
+  | "active" // handle installed, delivering
+  | "native" // native shell — web SDK not used
+  | "unconfigured" // no VITE_FIREBASE_MEASUREMENT_ID
+  | "unsupported" // isSupported() returned false
+  | "error"; // init threw
+
 let analyticsHandle: Analytics | null = null;
 let logEventFn:
   | ((
@@ -44,6 +58,7 @@ let logEventFn:
     ) => void)
   | null = null;
 let initStarted = false;
+let status: AnalyticsStatus = "uninitialised";
 
 /**
  * Begin analytics initialisation for the given Firebase app. Idempotent —
@@ -55,6 +70,7 @@ export function initAnalytics(app: FirebaseApp): void {
   initStarted = true;
 
   if (isNativePlatform()) {
+    status = "native";
     logger.log(
       "[Analytics] Native shell — firebase/analytics web SDK not used; install @capacitor-firebase/analytics to enable native delivery."
     );
@@ -63,6 +79,7 @@ export function initAnalytics(app: FirebaseApp): void {
 
   const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
   if (!measurementId) {
+    status = "unconfigured";
     if (!import.meta.env.DEV) {
       logger.warn(
         "[Analytics] VITE_FIREBASE_MEASUREMENT_ID not set — events are not delivered. Configure to enable analytics."
@@ -71,11 +88,13 @@ export function initAnalytics(app: FirebaseApp): void {
     return;
   }
 
+  status = "pending";
   void (async () => {
     try {
       const { getAnalytics, isSupported, logEvent } =
         await import("firebase/analytics");
       if (!(await isSupported())) {
+        status = "unsupported";
         logger.log(
           "[Analytics] isSupported() false — no delivery in this environment."
         );
@@ -83,8 +102,10 @@ export function initAnalytics(app: FirebaseApp): void {
       }
       analyticsHandle = getAnalytics(app);
       logEventFn = logEvent;
+      status = "active";
       logger.log("[Analytics] Firebase Analytics initialised.");
     } catch (err) {
+      status = "error";
       logger.warn("[Analytics] init failed:", err);
     }
   })();
@@ -111,4 +132,9 @@ export function logAnalyticsEvent(
 /** True when a provider handle is currently installed. For diagnostics. */
 export function isAnalyticsActive(): boolean {
   return analyticsHandle !== null;
+}
+
+/** Current provider status — the "why" behind active/inactive. For diagnostics. */
+export function getAnalyticsStatus(): AnalyticsStatus {
+  return status;
 }
