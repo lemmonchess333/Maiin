@@ -209,7 +209,11 @@ export function ChallengeList({
                     style={{
                       color:
                         entry.rank <= 3
-                          ? ["#FFD700", "#C0C0C0", "#CD7F32"][entry.rank - 1]
+                          ? [
+                              TIER_COLORS.gold,
+                              TIER_COLORS.silver,
+                              TIER_COLORS.bronze,
+                            ][entry.rank - 1]
                           : undefined,
                     }}
                   >
