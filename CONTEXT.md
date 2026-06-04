@@ -218,6 +218,46 @@ running apps hide periodization vocab; the one cue users need before a race
 outlier) does surface run phases, but that's the pro-leaning cohort, not
 Tropos's calm-adaptive positioning.
 
+## Web surface & monetisation principles (post-launch)
+
+Distilled from a Strava mobile-web walkthrough (verifier-tropos-web grilling
+thread, 2026-05-28; originally captured in issue #852). The frame: **web is a
+first-class, permanent surface — not "the thing that exists until iOS ships."**
+The dominant app keeps marketing, subscription billing, and selected functional
+features on web indefinitely, alongside native. Check the relevant principle
+before writing code in these areas; an implementation that violates one is a
+signal to push back / grill first.
+
+- **P1 — No "Install on iOS/Android" copy in logged-in settings UIs.** A
+  logged-in user is already a user; an install CTA inside `/settings/*` reads
+  as the browser admitting it's broken. Reserve install CTAs for store pages,
+  marketing CTAs, and contextual transitions where native is concretely better
+  (e.g. screen-locked run recording). _Concrete edit landed: #851 — the
+  `ReminderDiagnostics` strip + footer no longer push "install the app" (now
+  "Reminders fire while this tab is open"); pinned by `ReminderDiagnostics.test`._
+- **P2 — Web subscription billing stays first-class.** Strava sells on web via
+  Stripe to dodge Apple's 30%. Tropos already mirrors this (`useStripeCheckout`
+  + the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
+  path, not the only path. `useSubscription().isPro` already handles both — keep
+  that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
+  no "install to subscribe" funnel break for desktop upgraders).
+- **P3 — App-store CTAs at contextual conversion moments, not ambient.** Store
+  pushes belong on landing pages, end-of-marketing-scroll, and deliberate
+  transitions ("Continue in the app" after joining a challenge) — NOT in the
+  settings sidebar, an every-page inline strip, or a banner above the feed.
+- **P4 — Marketing depth is a real eventual need.** Strava's Train/Explore
+  tabs are deep feature-explainer pages (NEW pill + pitch + screenshot + press
+  quotes) for SEO + conversion. Tropos has the equivalents (Performance Index,
+  paceTrends, scheduled runs, intervals); post-launch, Onboarding alone won't
+  explain them. Backlog: `/about/performance|runs|lifts` — its own
+  `claude/marketing-pages` arc when the time comes, not urgent.
+
+Usage: notifications/install CTAs → P1+P3; subscription/Stripe/IAP → P2;
+marketing `/about/*` → P4; any "should this live on web post-launch?" → P2+P3.
+Out of scope of the principle (own follow-ups): universal-links infra
+(`apple-app-site-association`), marketing-page design, TestFlight/App Store
+metadata.
+
 ---
 
 - After a /grill-me or /grill-with-docs session that touched feature design
