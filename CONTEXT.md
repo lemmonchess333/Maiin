@@ -49,6 +49,16 @@ Calorie + macro target for a given date. The single source of truth is `useEffec
 - **actualBurn / actualLiftBurn / actualRunBurn** — sum of `totalCalories` from completed workouts + `calories` from completed runs on the date (runs filtered through `isVolumeEligible`). **DISPLAY ONLY** — the Today's Energy "burned today" tiles and the Food drill-down show them for context ("already in your target"); they do NOT move the target.
 - **retired:** `strategicBonus`, `effectiveBonus`, the `max(strategicBonus, actualBurn)` rule, `effectiveDayType`, the `src/lib/effectiveTargets.ts` helper, the FoodHeroCard training-burn toast + fuel explainer, and the `adjustCaloriesForTraining` Settings toggle (field left vestigial in `UserProfile`, no migration). Prerequisite for the adaptive TDEE engine (#982), which drives `finalTarget` from MEASURED maintenance — any eat-back would double-count there.
 
+#### Adaptive TDEE engine (Nutr2 / #981 #982)
+
+Learns the user's true maintenance expenditure from the two signals they
+already log (calorie intake + body-weight trend) and drives `baseTarget` from
+MEASURED maintenance rather than the onboarding formula. Three layers:
+
+- **estimator** (`adaptiveTdee.ts`, `estimateAdaptiveTDEE`) — energy-balance regression: `learnedTDEE = avgIntake − (Δweight/day × 7700)`, where Δweight is the least-squares SLOPE (not endpoints) of the weigh-ins. Gated `ready: false` until enough trusted intake-days + weigh-ins + elapsed span accumulate; below the gate the user sees the **warmup** ("Personalizing your metabolism").
+- **adaptive-target engine** (`adaptiveTarget.ts`) — the deep entry point `resolveAdaptiveTarget(...)` owns the whole `estimate → weekly cap → source precedence → view assembly` pipeline as ONE pure function. The **weekly cap** (`applyWeeklyCap`, ±150 kcal / 7 days, seeded from the formula so the formula→learned handoff never jumps) and the **precedence ladder** (`resolveTargetSource`: manual override > learned (Pro/trial + ready) > formula; free users never see learned or the warmup) are its composed steps. `isAdaptiveActive` is the single eligibility gate (signed-in Pro/trial, no manual override) shared with the hook's data-load gate.
+- **plumbing** (`useAdaptiveTdee.ts`) — thin hook: loads the trailing-window data, holds the session warmup **latch** (high-water so the bar never visibly shrinks), persists `profile.adaptiveCapState`, and calls the engine. No decision logic. The decision matrix is table-tested directly against `resolveAdaptiveTarget` (Nutr2 consolidation, 2026-06-04).
+
 #### Reference-app audit — eat-back & day-type calorie cycling (Nutr1)
 
 Two axes, from the food-logging reference set:
@@ -237,10 +247,10 @@ signal to push back / grill first.
   "Reminders fire while this tab is open"); pinned by `ReminderDiagnostics.test`._
 - **P2 — Web subscription billing stays first-class.** Strava sells on web via
   Stripe to dodge Apple's 30%. Tropos already mirrors this (`useStripeCheckout`
-  + the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
-  path, not the only path. `useSubscription().isPro` already handles both — keep
-  that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
-  no "install to subscribe" funnel break for desktop upgraders).
+  - the Stripe webhook); Apple IAP (`applePurchase.js`) is the **native-only**
+    path, not the only path. `useSubscription().isPro` already handles both — keep
+    that surface intact. Don't consolidate behind IAP after iOS ships (revenue +
+    no "install to subscribe" funnel break for desktop upgraders).
 - **P3 — App-store CTAs at contextual conversion moments, not ambient.** Store
   pushes belong on landing pages, end-of-marketing-scroll, and deliberate
   transitions ("Continue in the app" after joining a challenge) — NOT in the
