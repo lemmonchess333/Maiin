@@ -4,26 +4,18 @@ import { render, screen, act } from "@testing-library/react";
 
 vi.mock("framer-motion", function () {
   return {
-    get m() {
-      return (this as { motion: unknown }).motion;
-    },
     motion: new Proxy(
       {},
       {
         get: function (_target: any, prop: string) {
           return function (props: any) {
-            const {
-              initial: _i,
-              animate: _a,
-              exit: _e,
-              transition: _t,
-              ...rest
-            } = props;
+            const { initial: _i, animate: _a, exit: _e, transition: _t, ...rest } =
+              props;
             const Tag = prop === "create" ? "div" : prop;
             return <Tag {...rest} />;
           };
         },
-      }
+      },
     ),
     AnimatePresence: function ({ children }: any) {
       return <>{children}</>;
@@ -32,11 +24,7 @@ vi.mock("framer-motion", function () {
 });
 
 vi.mock("@/hooks/useReducedMotion", function () {
-  return {
-    useReducedMotion: function () {
-      return false;
-    },
-  };
+  return { useReducedMotion: function () { return false; } };
 });
 
 let mockIsOnline = true;

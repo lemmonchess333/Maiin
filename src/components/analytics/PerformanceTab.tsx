@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
 import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
 import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
-import { AnimatePresence, m as motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
 
 /* Body copy reused at both render sites (gauge headline + summary card)
@@ -234,7 +234,7 @@ export default function PerformanceTab() {
     pi,
     loadBand,
     establishing ? null : delta,
-    establishing
+    establishing,
   );
 
   const summaryColor = establishing
