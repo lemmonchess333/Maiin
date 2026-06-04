@@ -11,6 +11,7 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
 import { initAppCheck } from "@/lib/appCheck";
+import { initAnalytics } from "@/lib/analyticsProvider";
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
@@ -19,6 +20,7 @@ export const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "",
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "",
   appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ?? "",
 };
 
 export const app = initializeApp(firebaseConfig);
@@ -28,6 +30,11 @@ export const app = initializeApp(firebaseConfig);
 // Check token request, so we need the provider installed by then.
 // See src/lib/appCheck.ts for the web / native split.
 initAppCheck(app);
+
+// Analytics provider — the delivery backend behind analyticsClient.emit().
+// Web-only, lazily loaded, and a no-op unless VITE_FIREBASE_MEASUREMENT_ID
+// is set. See src/lib/analyticsProvider.ts for gating + the native split.
+initAnalytics(app);
 
 export const auth = getAuth(app);
 

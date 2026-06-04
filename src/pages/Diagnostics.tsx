@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAppCheckToken, isAppCheckActive } from "@/lib/appCheck";
 import {
+  getAnalyticsStatus,
+  type AnalyticsStatus,
+} from "@/lib/analyticsProvider";
+import {
   getNotificationPermissionState,
   getPendingNotifications,
   type NotificationPermissionState,
@@ -18,8 +22,9 @@ declare const __APP_VERSION__: string;
  * Operator diagnostics — hidden route at /diagnostics. Not linked
  * from any nav surface. Surfaces app version, build mode, service-
  * worker registration state, App Check status (+ truncated token
- * snippet), notification permission, count of pending OS-scheduled
- * notifications, offline write queue depth, and the signed-in UID.
+ * snippet), analytics provider status, notification permission, count
+ * of pending OS-scheduled notifications, offline write queue depth, and
+ * the signed-in UID.
  *
  * Purpose: when a user reports a stuck push notification, missing
  * SW update, or App Check enforcement failure in the field, the
@@ -156,6 +161,9 @@ export default function Diagnostics() {
   const [pending, setPending] = useState<PendingNotification[] | null>(null);
   const [queueLength] = useState<number>(() => getQueueLength());
   const [crashes, setCrashes] = useState<CrashRow[] | null>(null);
+  const [analyticsStatus, setAnalyticsStatus] = useState<AnalyticsStatus>(() =>
+    getAnalyticsStatus()
+  );
 
   useEffect(() => {
     readSwState().then(setSwState);
@@ -172,6 +180,23 @@ export default function Diagnostics() {
       });
     }
   }, [user]);
+
+  // Analytics init resolves asynchronously (dynamic import + isSupported());
+  // poll briefly so the readout settles from "pending" to its final state
+  // without the operator needing to refresh.
+  useEffect(() => {
+    if (getAnalyticsStatus() !== "pending") return;
+    let tries = 0;
+    const id = setInterval(() => {
+      const next = getAnalyticsStatus();
+      tries += 1;
+      if (next !== "pending" || tries >= 10) {
+        setAnalyticsStatus(next);
+        clearInterval(id);
+      }
+    }, 300);
+    return () => clearInterval(id);
+  }, []);
 
   const buildMode = import.meta.env.MODE;
   const swSummary = swState
@@ -229,6 +254,13 @@ export default function Diagnostics() {
             App Check
           </p>
           <Row label="Token" value={appCheckSummary} />
+        </section>
+
+        <section className="bg-card rounded-2xl p-4 space-y-1">
+          <p className="text-[11px] uppercase tracking-widest text-muted-foreground/70 mb-1">
+            Analytics
+          </p>
+          <Row label="Provider" value={analyticsStatus} />
         </section>
 
         <section className="bg-card rounded-2xl p-4 space-y-1">
