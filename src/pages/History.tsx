@@ -8,7 +8,7 @@ import {
   Suspense,
 } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useRunningStats } from "@/hooks/useRunningStats";
@@ -1140,7 +1140,10 @@ export default function History() {
                   className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
                   style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
                 >
-                  <LineChart className="size-6" style={{ color: THEME.brand }} />
+                  <LineChart
+                    className="size-6"
+                    style={{ color: THEME.brand }}
+                  />
                 </div>
                 <p className="text-base font-bold text-foreground">
                   No analytics yet

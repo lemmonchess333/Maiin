@@ -4,7 +4,7 @@ import { useSubscription } from "@/lib/subscription";
 import { calculateTDEE } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Crown, ChevronRight, Target } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
