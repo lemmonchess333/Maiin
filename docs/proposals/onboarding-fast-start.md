@@ -44,22 +44,22 @@ low-Day-1-value fields instead. Net: **13 → ~8 steps**, preview at step ~7.
 
 ## Field disposition
 
-| Field                                       | Disposition                                               | Why                                                           |
-| ------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------- |
-| Primary goal                                | **Keep** (Step 1)                                         | drives `primaryGoal` + `nutritionPhase` + plan                |
-| Days/week                                   | **Keep**                                                  | `liftDays` / `daysPerWeek`                                    |
-| Equipment                                   | **Keep**                                                  | safety/feasibility — `buildPlan` uses it materially           |
-| Run intent                                  | **Keep**                                                  | `runMode` / `weeklyRunDays` (freeform default)                |
-| Injuries                                    | **Keep**                                                  | safety — drives `buildPlan` substitutions                     |
-| Sex + age-band + height + weight + activity | **Keep (merged into ONE "about you" step)**               | the TDEE inputs; without them there's no calorie/macro target |
-| Experience                                  | **Default** `"intermediate"`                              | `buildPlan` accepts it; refine after first workout            |
-| Preferred split                             | **Default** `"auto"` → resolved to a concrete `SplitType` | see _New work_                                                |
-| Nutrition phase                             | **Derived** from primary goal                             | already mapped in onboarding                                  |
-| Weekly run days                             | **Derived** from run intent                               | freeform → 3/1; race-prep → plan                              |
-| Name                                        | **Defer**                                                 | cosmetic; ask anytime                                         |
-| Goal weight + weekly rate                   | **Defer** → progressive                                   | precision calorie offset; default to maintain/recomp baseline |
-| Detailed nutrition setup                    | **Defer** → after first food log                          |                                                               |
-| Race target date                            | **Defer** unless user picks race-prep                     | Run9a freeform-default + opt-in overlay                       |
+| Field                                       | Disposition                                                                | Why                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Primary goal                                | **Keep** (Step 1)                                                          | drives `primaryGoal` + `nutritionPhase` + plan                                          |
+| Days/week                                   | **Keep**                                                                   | `liftDays` / `daysPerWeek`                                                              |
+| Equipment                                   | **Keep**                                                                   | safety/feasibility — `buildPlan` uses it materially                                     |
+| Run intent                                  | **Keep**                                                                   | `runMode` / `weeklyRunDays` (freeform default)                                          |
+| Injuries                                    | **Keep**                                                                   | safety — drives `buildPlan` substitutions                                               |
+| Sex + age-band + height + weight + activity | **Keep (merged into ONE "about you" step)**                                | the TDEE inputs; without them there's no calorie/macro target                           |
+| Experience                                  | **Default** `"intermediate"`                                               | `buildPlan` accepts it; refine after first workout                                      |
+| Preferred split                             | **Drop the step** — already defaults to `"auto"`; engine derives the split | `generateProgram` ignores `preferredSplit` and calls `chooseSplit(liftDays)` internally |
+| Nutrition phase                             | **Derived** from primary goal                                              | already mapped in onboarding                                                            |
+| Weekly run days                             | **Derived** from run intent                                                | freeform → 3/1; race-prep → plan                                                        |
+| Name                                        | **Defer**                                                                  | cosmetic; ask anytime                                                                   |
+| Goal weight + weekly rate                   | **Defer** → progressive                                                    | precision calorie offset; default to maintain/recomp baseline                           |
+| Detailed nutrition setup                    | **Defer** → after first food log                                           |                                                                                         |
+| Race target date                            | **Defer** unless user picks race-prep                                      | Run9a freeform-default + opt-in overlay                                                 |
 
 ## Proposed flow (~8 steps)
 
@@ -81,19 +81,26 @@ profiling surface.
 
 **New work:**
 
-1. **Split auto-selector.** `PlanBuilderInput.preferredSplit` is a closed
-   `SplitType` enum (`full_body | upper_lower | ppl | ppl_ul | ppl_x2 |
-ppl_x2_fb`) — `"auto"` is not valid. Add a pure
-   `selectSplit(liftDays, primaryGoal) → SplitType` resolved _before_
-   `buildPlan` (e.g. 2-3 days → full_body/upper_lower, 4 → upper_lower/ppl_ul,
-   5+ → ppl/ppl_x2). Table-test it.
+1. **Split: no new logic — make the type seam honest.** The engine ALREADY
+   auto-derives the split: `generateProgram(nutritionPhase, liftDays, existing,
+primaryGoal)` ignores `preferredSplit` and calls `chooseSplit(weeklyTarget)`
+   (= lift-days) internally (`programEngine.ts`). Onboarding already defaults
+   `preferredSplit` to `"auto"`. So **do NOT add a new selector** — that would
+   duplicate `chooseSplit` (the drift class). The only real issue is a TYPE
+   SEAM: the UI type `PreferredSplit` includes `"auto"` but
+   `PlanBuilderInput.preferredSplit: SplitType` does not, so `"auto"` is cast
+   past TypeScript and can persist to `profile.preferredSplit`. Fix the boundary
+   once: resolve `"auto" → chooseSplit(liftDays)` before it reaches
+   `buildPlan`/persistence, OR widen the builder to accept `"auto"` and resolve
+   it internally via `chooseSplit`. (Today `matchTemplate` already treats
+   `"auto"` as "no preference", so program shape is unaffected either way —
+   this is correctness/coherence of the persisted value, not plan quality.)
 2. **Onboarding step machine** rewrite to the ~8-step flow, merging
-   gender+age+body-metrics into one screen and removing the deferred steps.
-   Keep the step-count progress UI honest.
+   gender+age+body-metrics into one screen and removing the deferred steps
+   (the split step among them). Keep the step-count progress UI honest.
 3. **Defaults wiring** — `experience: "intermediate"`, derived `nutritionPhase`
-   / `weeklyRunDays`, split via the selector. Ensure `completeOnboarding`'s
-   required-field gate + `profileSanitizer` allow-list still receive the body
-   metrics they assert on.
+   / `weeklyRunDays`. Ensure `completeOnboarding`'s required-field gate +
+   `profileSanitizer` allow-list still receive the body metrics they assert on.
 4. **Progressive-profiling nudges** (Home, via existing banner):
    - after first workout → "Add training experience to tune volume."
    - after first food log → "Add goal weight for a precise calorie target."
@@ -101,9 +108,9 @@ ppl_x2_fb`) — `"auto"` is not valid. Add a pure
 
 ## Risks & mitigations
 
-- **Default plan quality.** Defaulted experience/split must produce a sane plan.
-  _Mitigation:_ table-test `selectSplit`; the preview lets the user see + edit
-  before commit.
+- **Default plan quality.** Defaulted experience must produce a sane plan (the
+  split is already engine-derived via `chooseSplit`, so it's unaffected).
+  _Mitigation:_ the preview lets the user see + edit before commit.
 - **Deferred goal-weight ⇒ generic calorie offset.** Without goal weight, the
   TDEE offset defaults to maintain/recomp. _Mitigation:_ the kept body-metrics
   step still yields a real maintenance TDEE; the offset is a refinement, and the
@@ -134,5 +141,15 @@ post-launch judgement, not an experiment.
 1. **Body-metrics step granularity** — keep all five inputs on one screen, or
    drop `activityLevel` to a default (`"moderate"`) too? (Activity multiplier
    meaningfully moves TDEE; recommend keeping it.)
-2. **Split-selector mapping** — sign off on the `liftDays × primaryGoal → SplitType`
-   table before implementation.
+2. **Split type-seam fix** — resolve `"auto"` at the boundary (before
+   `buildPlan`/persistence) vs widen the builder API to accept `"auto"` and
+   resolve internally via `chooseSplit`. No new split mapping is needed — the
+   engine's existing `chooseSplit(liftDays)` is the single source of truth.
+
+---
+
+_Revision (2026-06-04): the split section was corrected after a cross-review
+flagged that `chooseSplit(liftDays)` already exists and `generateProgram`
+ignores `preferredSplit`. The original draft's proposed `selectSplit` would
+have duplicated it — dropped in favour of reusing `chooseSplit` and fixing the
+`PreferredSplit`/`SplitType` seam._
