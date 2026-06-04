@@ -1,6 +1,7 @@
 import { useId } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BadgeTier } from "./badges";
+import { THEME } from "@/lib/theme";
 
 /**
  * Hex-shaped achievement badge. SVG-based so the metallic gradient + shine
@@ -31,25 +32,25 @@ interface Palette {
 const TIER_PALETTES: Record<BadgeTier, Palette> = {
   bronze: {
     edge: "#7a3d0e",
-    base: "#cd7f32",
+    base: THEME.tier.bronze,
     highlight: "#f4b07a",
     icon: "#ffffff",
   },
   silver: {
     edge: "#6e6e6e",
-    base: "#c0c0c0",
+    base: THEME.tier.silver,
     highlight: "#ffffff",
     icon: "#3a3a3a",
   },
   gold: {
     edge: "#a8740a",
-    base: "#ffd700",
+    base: THEME.tier.gold,
     highlight: "#fff6c7",
     icon: "#4a2c00",
   },
   platinum: {
     edge: "#8a8a8a",
-    base: "#e5e4e2",
+    base: THEME.tier.platinum,
     highlight: "#ffffff",
     icon: "#3a3a3a",
   },

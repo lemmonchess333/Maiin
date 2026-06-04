@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useChallenges, getTimeRemaining, TIER_COLORS } from "./useChallenges";
 import { ChallengeCard } from "./ChallengeCard";
 import { Trophy } from "lucide-react";
-import { THEME } from "@/lib/theme";
+import { THEME, RANK_COLORS } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import Avatar from "@/components/Avatar";
@@ -209,11 +209,7 @@ export function ChallengeList({
                     style={{
                       color:
                         entry.rank <= 3
-                          ? [
-                              TIER_COLORS.gold,
-                              TIER_COLORS.silver,
-                              TIER_COLORS.bronze,
-                            ][entry.rank - 1]
+                          ? RANK_COLORS[entry.rank - 1]
                           : undefined,
                     }}
                   >
