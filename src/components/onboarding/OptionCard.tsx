@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 
 interface OptionCardProps {
   selected: boolean;

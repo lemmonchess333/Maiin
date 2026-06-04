@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { Calculator, ChevronDown, ChevronUp, Flame, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";

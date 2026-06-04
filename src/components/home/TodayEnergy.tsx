@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";

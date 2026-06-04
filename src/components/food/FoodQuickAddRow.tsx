@@ -4,7 +4,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type Ref,
 } from "react";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";

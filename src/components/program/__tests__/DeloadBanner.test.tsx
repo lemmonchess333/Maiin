@@ -5,23 +5,24 @@ import { render, screen, fireEvent } from "@testing-library/react";
 // framer-motion → render the actual element synchronously so tests
 // can observe the banner DOM without waiting on AnimatePresence.
 vi.mock("framer-motion", () => ({
+  get m() {
+    return (this as { motion: unknown }).motion;
+  },
   motion: new Proxy(
     {},
     {
-      get:
-        (_t: any, prop: string) =>
-        (props: any) => {
-          const {
-            initial: _i,
-            animate: _a,
-            exit: _e,
-            transition: _t2,
-            ...rest
-          } = props;
-          const Tag = prop === "create" ? "div" : prop;
-          return <Tag {...rest} />;
-        },
-    },
+      get: (_t: any, prop: string) => (props: any) => {
+        const {
+          initial: _i,
+          animate: _a,
+          exit: _e,
+          transition: _t2,
+          ...rest
+        } = props;
+        const Tag = prop === "create" ? "div" : prop;
+        return <Tag {...rest} />;
+      },
+    }
   ),
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -64,7 +65,7 @@ describe("DeloadBanner", () => {
   it("fires programme_deload_banner_viewed exactly once on first visible render", () => {
     render(<DeloadBanner visible weekKey="w14" />);
     const viewed = mocks.logger.log.mock.calls.filter((c) =>
-      String(c[0]).includes("programme_deload_banner_viewed"),
+      String(c[0]).includes("programme_deload_banner_viewed")
     );
     expect(viewed).toHaveLength(1);
   });
@@ -75,7 +76,7 @@ describe("DeloadBanner", () => {
     const dismissed = mocks.logger.log.mock.calls.filter(
       (c) =>
         String(c[0]).includes("programme_deload_banner_action") &&
-        (c[1] as Record<string, unknown>)?.action === "dismissed",
+        (c[1] as Record<string, unknown>)?.action === "dismissed"
     );
     expect(dismissed).toHaveLength(1);
   });
