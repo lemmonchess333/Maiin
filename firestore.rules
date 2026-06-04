@@ -552,16 +552,16 @@ service cloud.firestore {
 
     match /challenges/{challengeId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
-        && (
-          challengeId.matches('weekly-.*')
-          || challengeId.matches('monthly-.*')
-          || challengeId.matches('seasonal-.*')
-          || challengeId.matches('fastest-5k-.*')
-          || challengeId.matches('group-goal-.*')
-        )
-        && isValidChallengeBody();
-      allow update, delete: if false;
+      // Global challenge definitions are SERVER-OWNED. They are materialised by
+      // the rolloverChallenges scheduled function (Admin SDK, bypasses rules);
+      // the client only reads them and writes its own participant doc below.
+      // Previously create was open to any authenticated client for the five
+      // time-windowed prefixes subject to isValidChallengeBody() — that let any
+      // browser create global product metadata, and the rule was effectively
+      // doing a server's job. With seeding moved server-side, all client
+      // mutation of the challenge doc itself is denied. (isValidChallengeBody()
+      // below is retained but now unreferenced — harmless.)
+      allow create, update, delete: if false;
 
       match /participants/{uid} {
         allow read: if request.auth != null;
