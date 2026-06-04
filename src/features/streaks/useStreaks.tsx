@@ -22,6 +22,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
+import { badgesToAward } from "./badgeEarning";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
@@ -273,37 +274,6 @@ export function computeStreakSpan(
   }
   // Any unconfirmed pending grace (trailing gap into pre-history) is dropped.
   return { streak, bridgedDates: bridged };
-}
-
-/**
- * Check if the "balanced" badge criteria are met: 5 unique lift days AND
- * 5 unique run days in the rolling 14-day window ending today.
- */
-function isBalancedEarned(workouts: WorkoutRow[], runs: RunRow[]): boolean {
-  const today = new Date();
-  const windowStart = new Date(today);
-  windowStart.setDate(windowStart.getDate() - 13); // 14 days inclusive
-  const startKey = format(windowStart, "yyyy-MM-dd");
-  const endKey = format(today, "yyyy-MM-dd");
-  const inWindow = (d: string) => d >= startKey && d <= endKey;
-
-  const liftDays = new Set<string>();
-  for (const w of workouts) {
-    if (typeof w.date === "string" && inWindow(w.date)) liftDays.add(w.date);
-  }
-
-  const runDays = new Set<string>();
-  for (const r of runs) {
-    if (!r.completedAt) continue;
-    try {
-      const d = format(r.completedAt.toDate(), "yyyy-MM-dd");
-      if (inWindow(d)) runDays.add(d);
-    } catch {
-      // skip
-    }
-  }
-
-  return liftDays.size >= 5 && runDays.size >= 5;
 }
 
 // ── Internal hook (single instance — lives inside <StreaksProvider>) ────
@@ -670,28 +640,17 @@ function useStreaksInternal() {
 
     const silent = !hasLoadedRef.current;
 
-    // Streak-based badges (consistency category with threshold set)
-    const checkStreakBadges = async () => {
-      for (const b of streakData.badges) {
-        if (typeof b.threshold !== "number" || b.threshold <= 0) continue;
-        if (b.earnedAt) continue;
-        if (currentStreak >= b.threshold) {
-          await awardBadge(b.id, silent);
-        }
-      }
-    };
-
-    // Rolling-window balanced badge
-    const checkBalancedBadge = async () => {
-      const balanced = streakData.badges.find((b) => b.id === "balanced");
-      if (!balanced || balanced.earnedAt) return;
-      if (isBalancedEarned(workouts, runs)) {
-        await awardBadge("balanced", silent);
-      }
-    };
-
-    void checkStreakBadges();
-    void checkBalancedBadge();
+    // The pure earning decision (streak thresholds + rolling-window balanced)
+    // lives in ./badgeEarning; the hook just awards what it returns.
+    const toAward = badgesToAward(streakData.badges, {
+      currentStreak,
+      workouts,
+      runs,
+      today: new Date(),
+    });
+    void (async () => {
+      for (const id of toAward) await awardBadge(id, silent);
+    })();
 
     // Flip to loud mode after the first pass completes.
     if (!hasLoadedRef.current) {
