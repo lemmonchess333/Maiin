@@ -77,6 +77,18 @@ export interface PerformanceRecord {
 export interface ProgramExercise {
   name: string;
   exerciseId: string;
+  /**
+   * Stable per-instance id (#1038). `exerciseId` is NOT unique — the same
+   * exercise can appear twice in a day — so it can't key a reorderable list.
+   * This is the dnd-kit sortable id + React key for the Programme exercise
+   * rows, so drag/swipe-delete reconcile by EXERCISE instead of by position
+   * (positional keys leaked a row's swipe/drag state onto whichever exercise
+   * slid into that slot). Assigned lazily by `normalizeExercise` on first
+   * load (idempotent — kept once present) so legacy plans backfill without a
+   * migration. Optional for back-compat; render falls back to a positional id
+   * when absent.
+   */
+  instanceId?: string;
   movementCategory: MovementCategory;
   sets: number;
   reps: number;
@@ -485,12 +497,29 @@ export interface WeeklyPrescription {
    BACKWARD-COMPAT NORMALIZER
 ================================ */
 
+/**
+ * Stable per-instance id for a ProgramExercise (#1038). Prefers
+ * crypto.randomUUID; falls back to a timestamp+random token in environments
+ * without it (older WebViews / jsdom without the global).
+ */
+export function generateInstanceId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `ex_${Date.now().toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+}
+
 export function normalizeExercise(
   ex: Partial<ProgramExercise> & { name: string; exerciseId: string }
 ): ProgramExercise {
   return {
     name: ex.name,
     exerciseId: ex.exerciseId,
+    // #1038: assign once, keep thereafter — idempotent so the persist-if-
+    // changed guard on read only writes the first time a legacy plan loads.
+    instanceId: ex.instanceId ?? generateInstanceId(),
     movementCategory:
       ex.movementCategory ?? inferMovementCategory(ex.name, ex.exerciseId),
     sets: ex.sets ?? 3,
