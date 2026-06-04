@@ -19,13 +19,14 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
+import { THEME } from "@/lib/theme";
 
 export type ChallengeTier = "bronze" | "silver" | "gold";
 
 export const TIER_COLORS: Record<ChallengeTier, string> = {
-  bronze: "#cd7f32",
-  silver: "#c0c0c0",
-  gold: "#ffd700",
+  bronze: THEME.tier.bronze,
+  silver: THEME.tier.silver,
+  gold: THEME.tier.gold,
 };
 
 export interface Challenge {
@@ -91,10 +92,37 @@ function getMonthEnd(): Date {
 
 function getSeason() {
   const month = new Date().getMonth();
-  if (month >= 2 && month <= 4) return { name: "Spring Reset", description: "Longest consistency streak — days with any logged activity", metric: "streak_days", icon: "sprout", tiers: { bronze: 5, silver: 14, gold: 30 } };
-  if (month >= 5 && month <= 7) return { name: "Summer Shred", description: "Combined workout count + km run", metric: "combined_score", icon: "sun", tiers: { bronze: 20, silver: 50, gold: 100 } };
-  if (month >= 8 && month <= 10) return { name: "Autumn Push", description: "Hybrid score: km x 100 + volume kg x 0.1", metric: "hybrid_score", icon: "leaf", tiers: { bronze: 500, silver: 2000, gold: 5000 } };
-  return { name: "Winter Bulk", description: "Highest total volume lifted (kg)", metric: "total_volume", icon: "snowflake", tiers: { bronze: 5000, silver: 25000, gold: 50000 } };
+  if (month >= 2 && month <= 4)
+    return {
+      name: "Spring Reset",
+      description: "Longest consistency streak — days with any logged activity",
+      metric: "streak_days",
+      icon: "sprout",
+      tiers: { bronze: 5, silver: 14, gold: 30 },
+    };
+  if (month >= 5 && month <= 7)
+    return {
+      name: "Summer Shred",
+      description: "Combined workout count + km run",
+      metric: "combined_score",
+      icon: "sun",
+      tiers: { bronze: 20, silver: 50, gold: 100 },
+    };
+  if (month >= 8 && month <= 10)
+    return {
+      name: "Autumn Push",
+      description: "Hybrid score: km x 100 + volume kg x 0.1",
+      metric: "hybrid_score",
+      icon: "leaf",
+      tiers: { bronze: 500, silver: 2000, gold: 5000 },
+    };
+  return {
+    name: "Winter Bulk",
+    description: "Highest total volume lifted (kg)",
+    metric: "total_volume",
+    icon: "snowflake",
+    tiers: { bronze: 5000, silver: 25000, gold: 50000 },
+  };
 }
 
 function getSeasonStart(): Date {
@@ -115,9 +143,25 @@ function getSeasonEnd(): Date {
   return month >= 11 ? new Date(year + 1, 2, 1) : new Date(year, 2, 1);
 }
 
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
-export function computeTier(value: number, tiers: { bronze: number; silver: number; gold: number }): ChallengeTier | null {
+export function computeTier(
+  value: number,
+  tiers: { bronze: number; silver: number; gold: number }
+): ChallengeTier | null {
   if (value >= tiers.gold) return "gold";
   if (value >= tiers.silver) return "silver";
   if (value >= tiers.bronze) return "bronze";
@@ -130,7 +174,11 @@ export function computeTier(value: number, tiers: { bronze: number; silver: numb
  * higher-is-better semantic for cumulative metrics. ChallengeCard
  * used to inline this comparison three times — once per tier marker —
  * with the same `metric === "fastest_effort"` branch each time. */
-export function isTierAchieved(value: number, tierThreshold: number, metric: string): boolean {
+export function isTierAchieved(
+  value: number,
+  tierThreshold: number,
+  metric: string
+): boolean {
   if (metric === "fastest_effort") {
     return value > 0 && value <= tierThreshold;
   }
@@ -231,7 +279,11 @@ async function seedChallenges() {
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       const { docId: _docId, ...data } = def;
-      await setDocGuarded(ref, { ...data, participantCount: 0, createdAt: serverTimestamp() });
+      await setDocGuarded(ref, {
+        ...data,
+        participantCount: 0,
+        createdAt: serverTimestamp(),
+      });
     }
   }
 }
@@ -239,8 +291,12 @@ async function seedChallenges() {
 export function useChallenges() {
   const { user } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [myProgress, setMyProgress] = useState<Record<string, ChallengeParticipant>>({});
-  const [leaderboards, setLeaderboards] = useState<Record<string, ChallengeParticipant[]>>({});
+  const [myProgress, setMyProgress] = useState<
+    Record<string, ChallengeParticipant>
+  >({});
+  const [leaderboards, setLeaderboards] = useState<
+    Record<string, ChallengeParticipant[]>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -259,7 +315,7 @@ export function useChallenges() {
        gratuitously. */
     if (!user) return;
 
-    seedChallenges().catch(e => logger.error(e));
+    seedChallenges().catch((e) => logger.error(e));
     const timeout = setTimeout(() => setLoading(false), 3000);
     const unsub = onSnapshot(
       collection(db, "challenges"),
@@ -267,17 +323,24 @@ export function useChallenges() {
         clearTimeout(timeout);
         const now = new Date();
         const active = snap.docs
-          .map(d => ({ id: d.id, ...d.data() } as Challenge))
-          .filter(c => {
+          .map((d) => ({ id: d.id, ...d.data() }) as Challenge)
+          .filter((c) => {
             const end = c.endDate?.toDate?.();
             return end ? end > now : true;
           });
         setChallenges(active);
         setLoading(false);
       },
-      () => { clearTimeout(timeout); setChallenges([]); setLoading(false); }
+      () => {
+        clearTimeout(timeout);
+        setChallenges([]);
+        setLoading(false);
+      }
     );
-    return () => { clearTimeout(timeout); unsub(); };
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -285,7 +348,9 @@ export function useChallenges() {
     const load = async () => {
       const prog: Record<string, ChallengeParticipant> = {};
       for (const ch of challenges) {
-        const snap = await getDoc(doc(db, "challenges", ch.id, "participants", user.uid));
+        const snap = await getDoc(
+          doc(db, "challenges", ch.id, "participants", user.uid)
+        );
         if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
       }
       setMyProgress(prog);
@@ -314,74 +379,132 @@ export function useChallenges() {
             collection(db, "challenges", ch.id, "participants"),
             where("currentValue", ">", 0),
             orderBy("currentValue", "asc"),
-            limit(20),
+            limit(20)
           );
         } else {
           qRef = query(
             collection(db, "challenges", ch.id, "participants"),
             orderBy("currentValue", "desc"),
-            limit(20),
+            limit(20)
           );
         }
         const snap = await getDocs(qRef);
-        boards[ch.id] = snap.docs.map(d => ({ uid: d.id, ...d.data() } as ChallengeParticipant));
+        boards[ch.id] = snap.docs.map(
+          (d) => ({ uid: d.id, ...d.data() }) as ChallengeParticipant
+        );
       }
       setLeaderboards(boards);
     };
     load();
   }, [challenges, myProgress]);
 
-  const joinChallenge = useCallback(async (challengeId: string) => {
-    if (!user) return;
-    try {
-      const profileSnap = await getDoc(doc(db, "users", user.uid));
-      const name = profileSnap.exists() ? profileSnap.data().displayName || 'Athlete' : 'Athlete';
-      const photoURL = profileSnap.exists() ? (profileSnap.data().photoURL as string | null | undefined) ?? null : null;
-      await setDocGuarded(doc(db, "challenges", challengeId, "participants", user.uid), {
-        currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now(), displayName: name,
-        ...(photoURL ? { photoURL } : {}),
-      });
-      await updateDocGuarded(doc(db, "challenges", challengeId), { participantCount: increment(1) });
-      setMyProgress(prev => ({ ...prev, [challengeId]: { currentValue: 0, tierAchieved: null, joinedAt: Timestamp.now() } }));
-    } catch (error) {
-      logger.error('[Challenges] Join failed:', error);
-      toast.error('Failed to join challenge');
-    }
-  }, [user]);
+  const joinChallenge = useCallback(
+    async (challengeId: string) => {
+      if (!user) return;
+      try {
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+        const name = profileSnap.exists()
+          ? profileSnap.data().displayName || "Athlete"
+          : "Athlete";
+        const photoURL = profileSnap.exists()
+          ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
+          : null;
+        await setDocGuarded(
+          doc(db, "challenges", challengeId, "participants", user.uid),
+          {
+            currentValue: 0,
+            tierAchieved: null,
+            joinedAt: Timestamp.now(),
+            displayName: name,
+            ...(photoURL ? { photoURL } : {}),
+          }
+        );
+        await updateDocGuarded(doc(db, "challenges", challengeId), {
+          participantCount: increment(1),
+        });
+        setMyProgress((prev) => ({
+          ...prev,
+          [challengeId]: {
+            currentValue: 0,
+            tierAchieved: null,
+            joinedAt: Timestamp.now(),
+          },
+        }));
+      } catch (error) {
+        logger.error("[Challenges] Join failed:", error);
+        toast.error("Failed to join challenge");
+      }
+    },
+    [user]
+  );
 
-  const leaveChallenge = useCallback(async (challengeId: string) => {
-    if (!user) return;
-    try {
-      await deleteDoc(doc(db, "challenges", challengeId, "participants", user.uid));
-      await updateDocGuarded(doc(db, "challenges", challengeId), { participantCount: increment(-1) });
-      setMyProgress(prev => { const n = { ...prev }; delete n[challengeId]; return n; });
-    } catch (error) {
-      logger.error('[Challenges] Leave failed:', error);
-      toast.error('Failed to leave challenge');
-    }
-  }, [user]);
+  const leaveChallenge = useCallback(
+    async (challengeId: string) => {
+      if (!user) return;
+      try {
+        await deleteDoc(
+          doc(db, "challenges", challengeId, "participants", user.uid)
+        );
+        await updateDocGuarded(doc(db, "challenges", challengeId), {
+          participantCount: increment(-1),
+        });
+        setMyProgress((prev) => {
+          const n = { ...prev };
+          delete n[challengeId];
+          return n;
+        });
+      } catch (error) {
+        logger.error("[Challenges] Leave failed:", error);
+        toast.error("Failed to leave challenge");
+      }
+    },
+    [user]
+  );
 
-  const updateProgress = useCallback(async (challengeId: string, newValue: number) => {
-    if (!user) return;
-    const ch = challenges.find(c => c.id === challengeId);
-    if (!ch) return;
-    const tier = computeTier(newValue, ch.tiers);
-    try {
-      await setDocGuarded(doc(db, "challenges", challengeId, "participants", user.uid), {
-        currentValue: newValue, tierAchieved: tier,
-      }, { merge: true });
-      setMyProgress(prev => ({
-        ...prev,
-        [challengeId]: { ...prev[challengeId], currentValue: newValue, tierAchieved: tier, joinedAt: prev[challengeId]?.joinedAt || Timestamp.now() },
-      }));
-    } catch (error) {
-      logger.error('[Challenges] Progress update failed:', error);
-      toast.error('Failed to update challenge progress');
-    }
-  }, [user, challenges]);
+  const updateProgress = useCallback(
+    async (challengeId: string, newValue: number) => {
+      if (!user) return;
+      const ch = challenges.find((c) => c.id === challengeId);
+      if (!ch) return;
+      const tier = computeTier(newValue, ch.tiers);
+      try {
+        await setDocGuarded(
+          doc(db, "challenges", challengeId, "participants", user.uid),
+          {
+            currentValue: newValue,
+            tierAchieved: tier,
+          },
+          { merge: true }
+        );
+        setMyProgress((prev) => ({
+          ...prev,
+          [challengeId]: {
+            ...prev[challengeId],
+            currentValue: newValue,
+            tierAchieved: tier,
+            joinedAt: prev[challengeId]?.joinedAt || Timestamp.now(),
+          },
+        }));
+      } catch (error) {
+        logger.error("[Challenges] Progress update failed:", error);
+        toast.error("Failed to update challenge progress");
+      }
+    },
+    [user, challenges]
+  );
 
-  const myChallenges = challenges.filter(c => !!myProgress[c.id]);
-  const availableChallenges = challenges.filter(c => !myProgress[c.id]);
+  const myChallenges = challenges.filter((c) => !!myProgress[c.id]);
+  const availableChallenges = challenges.filter((c) => !myProgress[c.id]);
 
-  return { challenges, myChallenges, availableChallenges, myProgress, leaderboards, loading, joinChallenge, leaveChallenge, updateProgress };
+  return {
+    challenges,
+    myChallenges,
+    availableChallenges,
+    myProgress,
+    leaderboards,
+    loading,
+    joinChallenge,
+    leaveChallenge,
+    updateProgress,
+  };
 }

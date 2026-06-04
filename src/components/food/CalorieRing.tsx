@@ -5,6 +5,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
+import { THEME } from "@/lib/theme";
 
 export type CalorieRingMode = "left" | "eaten";
 
@@ -86,7 +87,7 @@ export default function CalorieRing({
   // Colour stays purple in both modes — the toggle changes the displayed
   // value, not the ring's visual identity. The centre label text is the
   // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
-  const numberColor = hasTarget ? COLOR_RING : "#D1D5DB";
+  const numberColor = hasTarget ? COLOR_RING : THEME.neutral[300];
   const trackColor = COLOR_TRACK;
 
   // Ring fill direction:
