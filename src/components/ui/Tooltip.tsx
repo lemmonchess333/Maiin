@@ -22,7 +22,7 @@ import {
   useFloating,
   useInteractions,
 } from "@floating-ui/react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 /**
@@ -98,7 +98,10 @@ export default function Tooltip({
     outsidePress: closeOnOutsideTap,
     escapeKey: true,
   });
-  const { getReferenceProps, getFloatingProps } = useInteractions([click, dismiss]);
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    click,
+    dismiss,
+  ]);
 
   const child = Children.only(children);
   const anchor = isValidElement(child)
@@ -141,7 +144,9 @@ export default function Tooltip({
                 transition={{ duration: reduced ? 0 : 0.15, ease: "easeOut" }}
                 {...getFloatingProps()}
               >
-                <div className="text-xs leading-snug text-foreground">{content}</div>
+                <div className="text-xs leading-snug text-foreground">
+                  {content}
+                </div>
                 <FloatingArrow
                   ref={arrowRef}
                   context={context}
@@ -152,7 +157,7 @@ export default function Tooltip({
               </motion.div>
             )}
           </AnimatePresence>,
-          portalTarget,
+          portalTarget
         )}
     </>
   );
