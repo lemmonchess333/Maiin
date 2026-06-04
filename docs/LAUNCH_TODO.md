@@ -336,11 +336,43 @@ Currently `navigator.share` where supported, clipboard fallback.
 Works but the native share sheet via `@capacitor/share` on iOS is
 visually richer (and matches App Store expectation).
 
-### 15. Sign in with Apple — native flow
+### 15. Sign in with Apple + Google — native flow
 
-Web popup-based Apple sign-in works but is fragile on iOS
-standalone PWA/Capacitor. Swap to `@capacitor-community/apple-sign-in`
-or similar for native surfaces.
+**iOS parity gap (audit 2026-06-04).** Both OAuth sign-ins in
+`src/lib/auth.tsx` use `signInWithPopup` with no native branch. OAuth
+popups don't work inside the Capacitor WKWebView — the redirect returns to
+`capacitor://localhost`, which isn't a Firebase authorized domain — so on a
+native build **Google sign-in fails outright and Apple sign-in is fragile**.
+Email/password sign-in is unaffected (works natively).
+
+Fix is the same both-ways seam as the rest of the app: keep the web popup,
+add a native branch behind `isNativePlatform()` that uses a native sign-in
+plugin → `signInWithCredential`:
+
+- Apple: `@capacitor-community/apple-sign-in`
+- Google: `@capacitor-firebase/authentication` (or
+  `@codetrix-studio/capacitor-google-auth`)
+
+Without this, native users can only sign in with email/password.
+
+### 15a. Native remote push (APNs) — server-initiated push parity
+
+**iOS parity gap (audit 2026-06-04).** `src/lib/pushNotifications.ts` is
+pure web FCM (`firebase/messaging` + a service worker). The Capacitor
+WKWebView has no usable service worker, so `isPushSupported()` returns false
+and **server-sent push silently no-ops on iOS** (device tokens are even
+hardcoded `platform: "web"`).
+
+Scope note: the **reminder** notifications (meal / streak / workout) use
+`@capacitor/local-notifications` and **do** work natively — only
+_server-initiated_ remote push is missing on device. Not a submission
+blocker; it's an engagement-parity gap.
+
+Fix: `@capacitor/push-notifications` (APNs) or
+`@capacitor-firebase/messaging`, register the native token with
+`platform: "ios"`, and teach the server senders to dispatch via APNs/FCM
+for native tokens. Needs the iOS Push Notifications capability +
+`GoogleService-Info.plist` (the same plist as analytics) in Xcode.
 
 ### 16. Apple Watch companion (far future)
 
