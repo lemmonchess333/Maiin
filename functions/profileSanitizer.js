@@ -258,6 +258,32 @@ const PROFILE_ALLOWED_FIELDS = Object.freeze(
   Object.keys(PROFILE_FIELD_VALIDATORS)
 );
 
+const ALLOWED_FIELD_SET = new Set(PROFILE_ALLOWED_FIELDS);
+const SERVER_MANAGED_FIELD_SET = new Set(SERVER_MANAGED_PROFILE_FIELDS);
+
+/**
+ * Keys present in `input` that are neither allow-listed nor server-managed
+ * (deny-listed). These are the "forgotten field" case: a field the caller
+ * sent that `sanitizeProfileData` will drop SILENTLY because nobody added it
+ * to the allow-list.
+ *
+ * Pure — returns the names so the caller (the onboarding / configure-plan
+ * handler) can LOG them. That turns the documented recurring mistake ("a new
+ * persisted profile field added client-side but not here is silently dropped
+ * by the Cloud-Function write") from a silent data-loss bug into a loud line
+ * in the Cloud Function logs the first real call that sends one. Server-managed
+ * fields are EXPECTED drops and are excluded.
+ *
+ * See docs/adr/0005 for why a structural schema-consolidation was rejected in
+ * favour of this observability seam.
+ */
+function findUnexpectedProfileFields(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return [];
+  return Object.keys(input).filter(
+    (k) => !ALLOWED_FIELD_SET.has(k) && !SERVER_MANAGED_FIELD_SET.has(k)
+  );
+}
+
 /**
  * Returns a new object containing only allow-listed profile fields
  * from the input, each one type / range / format validated. Fields
@@ -288,5 +314,6 @@ module.exports = {
   SERVER_MANAGED_PROFILE_FIELDS,
   PROFILE_ALLOWED_FIELDS,
   sanitizeProfileData,
+  findUnexpectedProfileFields,
   cleanPhotoURL,
 };
