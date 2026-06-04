@@ -1,4 +1,5 @@
 import { Lock } from "lucide-react";
+import { THEME } from "@/lib/theme";
 
 /**
  * Returns style overrides and onClick handler for the scan button based on quota.
@@ -24,7 +25,7 @@ export function useScanButtonOverrides(
 
   // Out of scans — disabled state
   return {
-    style: { background: "#D1D5DB" },
+    style: { background: THEME.neutral[300] },
     onClick: onUpgrade,
     icon: (
       <Lock className="size-3.5 absolute -bottom-0.5 -right-0.5 text-muted-foreground" />

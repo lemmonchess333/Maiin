@@ -104,7 +104,7 @@ function dotColorFor(group: FoodRowGroup): string {
   const proCal = group.totalPro * 4;
   const carbCal = group.totalCarb * 4;
   const fatCal = group.totalFat * 9;
-  if (proCal === 0 && carbCal === 0 && fatCal === 0) return "#D1D5DB";
+  if (proCal === 0 && carbCal === 0 && fatCal === 0) return THEME.neutral[300];
   if (proCal >= carbCal && proCal >= fatCal) return THEME.macros.protein;
   if (carbCal >= proCal && carbCal >= fatCal) return THEME.macros.carbs;
   return THEME.macros.fat;
