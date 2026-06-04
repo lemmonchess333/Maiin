@@ -20,6 +20,7 @@ import {
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
 import { setRaceGoalPatch } from "@/features/program/runModeResolution";
+import type { PreferredSplit } from "@/features/program/programTypes";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -50,12 +51,6 @@ import { cn } from "@/lib/utils";
  *   - Race distance: "5K" / "10K" / "Half" / "Full"
  */
 
-type PreferredSplit =
-  | "full_body"
-  | "upper_lower"
-  | "ppl"
-  | "bro_split"
-  | "auto";
 type RunMode = "freeform" | "structured" | "race_prep";
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
