@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { THEME } from "@/lib/theme";
 import { X } from "lucide-react";
 import { localDateString } from "@/lib/dateHelpers";
