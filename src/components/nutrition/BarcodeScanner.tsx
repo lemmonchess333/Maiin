@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { BrowserMultiFormatReader } from "@zxing/browser";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { Spinner } from "@/components/ui/Spinner";

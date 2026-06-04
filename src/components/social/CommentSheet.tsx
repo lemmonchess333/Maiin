@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { getComments, addComment, deleteComment } from "../../lib/socialApi";

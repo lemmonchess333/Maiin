@@ -1,5 +1,5 @@
 import { THEME } from "@/lib/theme";
-import { m as motion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Footprints,
   Play,

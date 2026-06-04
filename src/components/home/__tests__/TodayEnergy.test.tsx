@@ -6,9 +6,6 @@ import { MemoryRouter } from "react-router-dom";
 // framer-motion → plain elements (strip animation props)
 vi.mock("framer-motion", function () {
   return {
-    get m() {
-      return (this as { motion: unknown }).motion;
-    },
     motion: new Proxy(
       {},
       {

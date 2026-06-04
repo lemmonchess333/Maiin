@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeftRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";

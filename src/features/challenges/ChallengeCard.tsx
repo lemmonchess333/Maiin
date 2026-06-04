@@ -1,5 +1,5 @@
 import { useState, type ComponentType } from "react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Clock,
