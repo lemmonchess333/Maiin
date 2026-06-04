@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { THEME } from "../../lib/theme";
+import { THEME, RANK_COLORS } from "../../lib/theme";
 import {
   buildLeaderboard,
   type LeaderboardEntry,
@@ -12,8 +12,6 @@ import {
 import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
 import { Spinner } from "@/components/ui/Spinner";
-
-const RANK_COLORS = ["#FFD700", "#C0C0C0", "#CD7F32"];
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
