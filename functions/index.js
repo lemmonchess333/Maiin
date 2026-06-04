@@ -89,6 +89,9 @@ const auditLog = require("./auditLog");
 // {merge: true} write. See functions/profileSanitizer.js for the
 // allow-list and per-field validators.
 const profileSanitizer = require("./profileSanitizer");
+// Challenge tier resolution — shared with the client
+// (src/features/challenges/challengeTiers.ts), pinned by challengeTiers.cross.test.ts.
+const challengeTiers = require("./lib/challengeTiers");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -3295,12 +3298,11 @@ async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
         if (marker.exists) return; // already applied this activity — idempotent no-op
         const current = snap.data().currentValue || 0;
         const newValue = current + incrementBy;
-        let tierAchieved = null;
-        if (newValue >= (tiers.gold || Infinity)) tierAchieved = "gold";
-        else if (newValue >= (tiers.silver || Infinity))
-          tierAchieved = "silver";
-        else if (newValue >= (tiers.bronze || Infinity))
-          tierAchieved = "bronze";
+        const tierAchieved = challengeTiers.resolveTier(
+          newValue,
+          tiers,
+          metric
+        );
         tx.set(
           participantRef,
           { currentValue: newValue, tierAchieved },
@@ -3373,13 +3375,14 @@ async function syncFastestEffortProgress(
           ? Math.round(runDurationSeconds)
           : Math.min(existingBest, Math.round(runDurationSeconds));
 
-      // For fastest_effort, tiers are time thresholds: lower is better.
-      // Gold tier = quickest threshold; user qualifies if newBest <= tier.
+      // For fastest_effort, tiers are time thresholds: lower is better, and a
+      // newBest of 0 means "no qualifying effort yet" (resolveTier guards >0).
       const tiers = challenge.tiers || {};
-      let tierAchieved = null;
-      if (tiers.gold && newBest <= tiers.gold) tierAchieved = "gold";
-      else if (tiers.silver && newBest <= tiers.silver) tierAchieved = "silver";
-      else if (tiers.bronze && newBest <= tiers.bronze) tierAchieved = "bronze";
+      const tierAchieved = challengeTiers.resolveTier(
+        newBest,
+        tiers,
+        "fastest_effort"
+      );
 
       await participantRef.set(
         { currentValue: newBest, tierAchieved },
