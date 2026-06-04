@@ -92,6 +92,10 @@ const profileSanitizer = require("./profileSanitizer");
 // Challenge tier resolution — shared with the client
 // (src/features/challenges/challengeTiers.ts), pinned by challengeTiers.cross.test.ts.
 const challengeTiers = require("./lib/challengeTiers");
+// Global challenge definitions — SERVER-OWNED. The pure rolling-period
+// definition layer consumed by the rolloverChallenges scheduled function;
+// the client no longer seeds /challenges (create is denied by rules).
+const challengeDefs = require("./lib/challengeDefs");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -2240,6 +2244,61 @@ exports.dailyPerformanceRefresh = functions
     return null;
   });
 
+// ── 4) Scheduled: challenge rollover (00:05 UTC daily) ──
+//
+// Server-owned replacement for the retired client-side seedChallenges().
+// Global challenge definitions are app metadata, not user content; the client
+// create path on /challenges is now denied by rules. Because the challenge IDs
+// are time-windowed (weekly-/monthly-/seasonal-/fastest-5k-/group-goal-), a
+// one-time seed script would expire within a period — so this runs DAILY and
+// idempotently materialises the CURRENT period's docs (create-if-missing,
+// never overwrite, so participantCount and any drift are preserved). Pinned to
+// UTC so the period boundary doesn't shift under DST (see CLAUDE.md). Running
+// daily (not only at boundaries) self-heals a missed run and backfills on first
+// deploy; the ≤5-min gap at a week boundary before the cron fires is acceptable
+// pre-launch. SCHEDULED_CAP (maxInstances:1).
+exports.rolloverChallenges = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("5 0 * * *")
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      console.log("rolloverChallenges: starting");
+      const defs = challengeDefs.buildCurrentChallenges(new Date());
+      let created = 0;
+      for (const def of defs) {
+        try {
+          const ref = db.collection("challenges").doc(def.id);
+          const snap = await ref.get();
+          if (snap.exists) continue;
+          const { id: _id, startDate, endDate, ...rest } = def;
+          await ref.set({
+            ...rest,
+            startDate: admin.firestore.Timestamp.fromDate(startDate),
+            endDate: admin.firestore.Timestamp.fromDate(endDate),
+            participantCount: 0,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          created++;
+        } catch (err) {
+          console.error(
+            `rolloverChallenges: failed for ${def.id}:`,
+            err.message
+          );
+        }
+      }
+      console.log(
+        `rolloverChallenges: done — ensured ${defs.length}, created ${created}`
+      );
+    } catch (err) {
+      console.error("rolloverChallenges: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
 // ══════════════════════════════════════════════
 // Push #961 — hourly streak-at-risk nudge sender (web)
 // ══════════════════════════════════════════════
@@ -3393,6 +3452,66 @@ async function syncFastestEffortProgress(
     console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
   }
 }
+
+/**
+ * Recompute a challenge's `participantCount` from the live participants
+ * subcollection and write it to the parent doc.
+ *
+ * Server-owned because the parent `/challenges/{id}` doc is now server-owned
+ * (rules deny client create/update/delete). The client's old approach —
+ * `updateDoc(challenge, { participantCount: increment(±1) })` inside join/leave
+ * — was already DENIED by the `allow update: if false` rule, so joining wrote
+ * the participant doc, then threw on the count update, surfacing a spurious
+ * "Failed to join challenge" toast even though the join had landed.
+ *
+ * Recompute-and-set (rather than increment) is deliberately idempotent: a
+ * re-delivered onCreate/onDelete (triggers are at-least-once — CLAUDE.md) sets
+ * the same observed count instead of double-counting. A `.count()` aggregation
+ * keeps it O(1) reads regardless of participant volume. Concurrent membership
+ * changes converge (the last trigger to run observes the final set).
+ */
+async function recomputeParticipantCount(challengeId) {
+  try {
+    const partsRef = db
+      .collection("challenges")
+      .doc(challengeId)
+      .collection("participants");
+    const agg = await partsRef.count().get();
+    const count = agg.data().count;
+    await db
+      .collection("challenges")
+      .doc(challengeId)
+      .update({ participantCount: count });
+  } catch (err) {
+    // A missing parent (challenge expired / never created) is benign — there's
+    // nothing to keep a count on. Log anything else.
+    if (err && err.code === 5 /* NOT_FOUND */) return;
+    console.error(
+      `recomputeParticipantCount: error for ${challengeId}:`,
+      err.message
+    );
+  }
+}
+
+// ── Triggers: keep challenge.participantCount accurate (server-owned) ──
+// onCreate + onDelete only (NOT onWrite) so per-workout progress updates to the
+// participant doc don't trigger needless recomputes. TRIGGER_CAP.
+
+exports.onChallengeParticipantCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("challenges/{challengeId}/participants/{uid}")
+  .onCreate(async (_snap, context) => {
+    await recomputeParticipantCount(context.params.challengeId);
+    return null;
+  });
+
+exports.onChallengeParticipantDeleted = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("challenges/{challengeId}/participants/{uid}")
+  .onDelete(async (_snap, context) => {
+    await recomputeParticipantCount(context.params.challengeId);
+    return null;
+  });
 
 // ── 4) Trigger: instant recompute on new workout ──
 
