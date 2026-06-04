@@ -480,57 +480,30 @@ suite("firestore.rules — /challenges", () => {
     await assertFails(getDoc(doc(db, "challenges", "weekly-2026-01-01")));
   });
 
-  it("authed user creates a weekly-prefix challenge — succeeds", async () => {
+  // Challenge docs are SERVER-OWNED — materialised by the rolloverChallenges
+  // scheduled function via the Admin SDK (which bypasses rules). No client may
+  // create, update, or delete a /challenges doc, regardless of id prefix or
+  // body shape. (Pre-2026-06 the create rule accepted any authenticated write
+  // to the five time-windowed prefixes subject to isValidChallengeBody() —
+  // that let any browser create global product metadata, the same anti-pattern
+  // the repo had already fixed for default crews. isValidChallengeBody() is
+  // retained in firestore.rules but is now unreachable.)
+
+  it("authed user creates a valid-prefix challenge — fails (server-owned)", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData)
     );
   });
 
-  it("authed user creates a monthly-prefix challenge — succeeds", async () => {
+  it("authed user creates a group-goal challenge — fails (server-owned)", async () => {
     const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
-      setDoc(doc(db, "challenges", "monthly-2026-01-01"), validChallengeData)
-    );
-  });
-
-  it("authed user creates a seasonal-prefix challenge — succeeds", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
-      setDoc(doc(db, "challenges", "seasonal-2026-01-01"), validChallengeData)
-    );
-  });
-
-  it("authed user creates a fastest-5k-prefix challenge — succeeds", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
-      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), validChallengeData)
-    );
-  });
-
-  it("authed user creates a group-goal-prefix challenge — succeeds", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(db, "challenges", "group-goal-2026-01-01"), validChallengeData)
     );
   });
 
-  it("authed user creates a junk-id challenge — fails (docId pattern guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "asdfasdf"), validChallengeData)
-    );
-  });
-
-  it("authed user creates a fake-prefix challenge — fails (docId pattern guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    // No leading hyphen → doesn't match `weekly-.*`
-    await assertFails(
-      setDoc(doc(db, "challenges", "weeklyfake"), validChallengeData)
-    );
-  });
-
-  it("authed user updates an existing challenge — fails (admin only)", async () => {
+  it("authed user updates an existing challenge — fails (server-owned)", async () => {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(
         doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
@@ -547,7 +520,18 @@ suite("firestore.rules — /challenges", () => {
     );
   });
 
-  it("unauthed user creates a valid-prefix challenge — fails", async () => {
+  it("authed user deletes a challenge — fails (server-owned)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(deleteDoc(doc(db, "challenges", "weekly-2026-01-01")));
+  });
+
+  it("unauthed user creates a challenge — fails", async () => {
     const db = env.unauthenticatedContext().firestore();
     await assertFails(
       setDoc(doc(db, "challenges", "weekly-2026-01-01"), validChallengeData)
@@ -608,124 +592,6 @@ suite("firestore.rules — /challenges", () => {
       getDoc(
         doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID)
       )
-    );
-  });
-
-  // ── 2026-05-26 audit PR 4 (finding #4) — body schema validation ──
-  // Pre-PR-4 the create rule only checked the ID prefix. A hostile
-  // user could ship `weekly-attack` with `name: "Tropos: pay $500"`
-  // and the rule would accept it. Body validation rejects malformed
-  // payloads at the rule layer.
-
-  it("create with unknown extra field — fails (allowlist guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        attackerInjected: "<a href='evil'>click</a>",
-      })
-    );
-  });
-
-  it("create with bogus type — fails (enum guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        type: "scam",
-      })
-    );
-  });
-
-  it("create with bogus metric — fails (enum guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        metric: "dollar_amount",
-      })
-    );
-  });
-
-  it("create with oversized name — fails (length cap)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        name: "A".repeat(101),
-      })
-    );
-  });
-
-  it("create with empty name — fails (length floor)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        name: "",
-      })
-    );
-  });
-
-  it("create with oversized description — fails (length cap)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        description: "X".repeat(501),
-      })
-    );
-  });
-
-  it("create with participantCount != 0 — fails (counter forgery guard)", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        participantCount: 999999,
-      })
-    );
-  });
-
-  it("create with malformed tiers (missing silver) — fails", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        tiers: { bronze: 1, gold: 10 },
-      })
-    );
-  });
-
-  it("create with negative tier values — fails", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "weekly-2026-01-01"), {
-        ...validChallengeData,
-        tiers: { bronze: -5, silver: 4, gold: 6 },
-      })
-    );
-  });
-
-  it("create with optional targetDistance (positive) — succeeds", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertSucceeds(
-      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), {
-        ...validChallengeData,
-        metric: "fastest_effort",
-        targetDistance: 5000,
-      })
-    );
-  });
-
-  it("create with non-numeric targetDistance — fails", async () => {
-    const db = env.authenticatedContext(OWNER_UID).firestore();
-    await assertFails(
-      setDoc(doc(db, "challenges", "fastest-5k-2026-01-01"), {
-        ...validChallengeData,
-        metric: "fastest_effort",
-        targetDistance: "5km",
-      })
     );
   });
 });
