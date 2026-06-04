@@ -71,7 +71,6 @@ import type {
   Goal,
   ProgramState,
   ProgramSettings,
-  SplitType,
 } from "@/features/program/programTypes";
 import type { UserProfile } from "@/lib/auth";
 
@@ -79,7 +78,12 @@ type RunMode = "freeform" | "structured" | "race_prep";
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
 type Experience = "beginner" | "intermediate" | "advanced";
 type Equipment = "full_gym" | "home_gym" | "minimal";
-type SplitChoice = SplitType | "auto";
+// The editor's split vocabulary IS the normalisation allow-list — derive it
+// from VALID_SPLIT_CHOICES so the type can't drift from the runtime guard.
+// (auto / full_body / upper_lower / ppl — a subset of PreferredSplit; the old
+// `SplitType | "auto"` wrongly admitted ppl_ul/ppl_x2/ppl_x2_fb, which the
+// guard at line ~373 can never produce.)
+type SplitChoice = (typeof VALID_SPLIT_CHOICES)[number];
 
 interface ProgrammeSettingsProps {
   profile: UserProfile;

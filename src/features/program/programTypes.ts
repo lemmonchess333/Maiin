@@ -23,6 +23,31 @@ export type SplitType =
   | "ppl_x2"
   | "ppl_x2_fb";
 
+/**
+ * User-facing split *preference* vocabulary — distinct from the engine's
+ * `SplitType` above. This is the coarse choice surfaced in onboarding and
+ * Programme Settings (Full Body / Upper-Lower / PPL / Bro Split / Auto), NOT
+ * the structural split the engine builds.
+ *
+ * Two values here have no `SplitType` equivalent: `"bro_split"` (the engine
+ * never builds a bro split) and `"auto"` (let the engine choose from weekly
+ * lift days). The preference is persisted on `profile.preferredSplit` and
+ * read by `matchTemplate` as a template-scoring signal — it is INERT in plan
+ * generation (`chooseSplit` derives structure from lift days, per Pgm5 Q1).
+ *
+ * It previously lived as four hand-copied unions (Onboarding, TrainingSection,
+ * UserProfile, planBuilder's input cast). Consolidated here so the preference
+ * vocabulary has one source of truth, and the `as SplitType` cast-lie at the
+ * planBuilder boundary — which claimed a value `SplitType` can't represent —
+ * is gone.
+ */
+export type PreferredSplit =
+  | "full_body"
+  | "upper_lower"
+  | "ppl"
+  | "bro_split"
+  | "auto";
+
 export type Goal = "cut" | "lean bulk" | "recomp";
 
 /**
@@ -503,7 +528,10 @@ export interface WeeklyPrescription {
  * without it (older WebViews / jsdom without the global).
  */
 export function generateInstanceId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return `ex_${Date.now().toString(36)}_${Math.random()
