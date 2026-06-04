@@ -26,6 +26,15 @@ const config: CapacitorConfig = {
       style: "DARK",
       backgroundColor: "#7C6EF6",
     },
+    // Native OAuth sign-in (src/lib/nativeAuth.ts). skipNativeAuth keeps the
+    // plugin from signing into the native Firebase SDK — we only want the
+    // credential, which auth.tsx completes via signInWithCredential on the
+    // JS SDK (the single source of auth state the app reads). providers
+    // limits the native sheets to the ones we use.
+    FirebaseAuthentication: {
+      skipNativeAuth: true,
+      providers: ["google.com", "apple.com"],
+    },
   },
   ios: {
     contentInset: "automatic",
