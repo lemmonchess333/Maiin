@@ -50,10 +50,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
           </span>
         </span>
       </div>
-      <div
-        className="h-1.5 rounded-full overflow-hidden"
-        style={{ background: "rgba(0,0,0,0.06)" }}
-      >
+      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, background: color }}
@@ -125,10 +122,7 @@ export default function HeroDrillDownSheet({
               {consumedPct}%
             </span>
           </div>
-          <div
-            className="h-2 rounded-full overflow-hidden"
-            style={{ background: "rgba(0,0,0,0.06)" }}
-          >
+          <div className="h-2 rounded-full overflow-hidden bg-muted">
             <div
               className="h-full rounded-full transition-all"
               style={{

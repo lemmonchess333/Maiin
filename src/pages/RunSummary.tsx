@@ -1035,12 +1035,12 @@ export default function RunSummary() {
                 border: "1px solid rgba(245,158,11,0.25)",
               }}
             >
-              <WifiOff size={20} className="text-amber-400" />
+              <WifiOff size={20} className="text-warning" />
               <div>
-                <p className="font-medium text-amber-400 text-xs">
+                <p className="font-medium text-warning text-xs">
                   You're offline
                 </p>
-                <p className="text-xs text-white/60 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
                 </p>
               </div>
