@@ -11,6 +11,25 @@ import {
   isAdaptiveActive,
   type AdaptiveTdeeView,
 } from "@/lib/adaptiveTarget";
+import {
+  GOAL_CALORIE_OFFSET,
+  offsetFromWeeklyRate,
+} from "@/lib/macroConstants";
+import type { UserProfile } from "@/lib/auth";
+
+/**
+ * The goal calorie offset baked into the stored formula target (mirrors
+ * `tdee.ts`): rate-derived when an explicit weekly rate is set, else the goal
+ * band (cut -500 / lean bulk +300 / recomp 0). Re-applied to the learned
+ * MAINTENANCE estimate so the adaptive target keeps the user's deficit/surplus
+ * (C-NUTRITION) instead of drifting to bare maintenance.
+ */
+function goalCalorieOffset(profile: UserProfile | null): number {
+  const rate = profile?.weeklyRateKg;
+  if (typeof rate === "number" && rate !== 0) return offsetFromWeeklyRate(rate);
+  const goal = profile?.program?.goal ?? "";
+  return GOAL_CALORIE_OFFSET[goal] ?? 0;
+}
 
 /**
  * Nutr2 / #981 + #982 — the client-side adaptive-TDEE plumbing.
@@ -36,6 +55,9 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
 
   // Formula target = the stored base (already customCalorieTarget || formula).
   const formulaTarget = profile?.targetCalories ?? 2200;
+  // Offset baked into formulaTarget, re-applied to the learned maintenance
+  // estimate so the adaptive target preserves the deficit/surplus.
+  const goalOffset = goalCalorieOffset(profile);
   const isManualOverride = !!profile?.customCalorieTarget;
   const active = isAdaptiveActive({ hasUser: !!user, isPro, isManualOverride });
   const capPrev = profile?.adaptiveCapState ?? null;
@@ -118,6 +140,7 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
         isPro,
         isManualOverride,
         formulaTarget,
+        goalOffset,
         intakeByDay,
         weighIns,
         loaded,
@@ -130,6 +153,7 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
       isPro,
       isManualOverride,
       formulaTarget,
+      goalOffset,
       intakeByDay,
       weighIns,
       loaded,
