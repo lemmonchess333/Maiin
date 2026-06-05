@@ -144,7 +144,7 @@ export function NotificationBubbleProvider({
                 className="size-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: config.bg }}
               >
-                <Icon className="size-4.5" style={{ color: config.color }} />
+                <Icon className="size-5" style={{ color: config.color }} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
