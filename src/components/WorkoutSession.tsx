@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
-import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1016,7 +1015,7 @@ export default function WorkoutSession({
       {/* Exercise name + set counter — always visible above scroll */}
       <div className="text-center px-4 pt-2 pb-1">
         <div className="flex items-center justify-center gap-2 mb-1">
-          <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+          <Dumbbell className="size-5 text-lifting" />
           <h2 className="text-lg font-bold text-foreground">
             {currentExercise?.name}
           </h2>
