@@ -175,7 +175,11 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Goal-weight onboarding (Tier 2). Without these in the allowlist the
   // completeOnboarding callable silently strips them on write.
   goalWeightKg: (v) => cleanNumber(v, { min: 30, max: 300 }),
-  weeklyRateKg: (v) => cleanNumber(v, { min: 0, max: 2 }),
+  // SIGNED rate: negative = deficit (cut), positive = surplus (bulk), 0 =
+  // maintain. resolveGoalWeightPlan emits the signed value and the adaptive-TDEE
+  // offset reads it signed (offsetFromWeeklyRate), so the allowed range must
+  // include negatives — a min:0 clamp would silently wipe a cut's deficit.
+  weeklyRateKg: (v) => cleanNumber(v, { min: -2, max: 2 }),
 
   // Preferences
   darkMode: cleanBoolean,
