@@ -367,7 +367,7 @@ export default function ProgressPhotos() {
                 setSelected([]);
               }}
               aria-label={compareMode ? "Exit compare mode" : "Compare photos"}
-              className={`text-xs px-3 py-2 rounded-lg font-medium min-h-[44px] ${compareMode ? "bg-blue-500 text-white" : "bg-muted"}`}
+              className={`text-xs px-3 py-2 rounded-lg font-medium min-h-[44px] ${compareMode ? "bg-primary text-primary-foreground" : "bg-muted"}`}
             >
               Compare
             </button>
