@@ -513,6 +513,10 @@ async function isFlagEnabled(key) {
 // ══════════════════════════════════════════════
 
 const { validatePlanPayload } = require("./lib/validatePlanPayload");
+const {
+  sanitizeProgramState,
+  programStateTooLarge,
+} = require("./lib/programStateSanitizer");
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -684,7 +688,26 @@ exports.completeOnboarding = functions
       } else {
         batch.set(userRef, profileData);
       }
-      batch.set(programRef, programState);
+      // Allow-list the programState doc before persisting. validatePlanPayload
+      // gates SHAPE (and only for v7 payloads); this strips arbitrary
+      // top-level fields a client could inject into its own programState doc.
+      const onbProgram = sanitizeProgramState(programState);
+      if (onbProgram.dropped.length > 0) {
+        functions.logger.warn(
+          "completeOnboarding.programState_dropped_fields",
+          {
+            uid,
+            dropped: onbProgram.dropped,
+          }
+        );
+      }
+      if (programStateTooLarge(onbProgram.value)) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is too large."
+        );
+      }
+      batch.set(programRef, onbProgram.value);
       await batch.commit();
 
       return { success: true };
@@ -823,12 +846,29 @@ exports.configurePlan = functions
       const userRef = db.collection("users").doc(uid);
       const programRef = userRef.collection("programState").doc("current");
 
+      // Allow-list the programState doc before persisting (same rationale as
+      // completeOnboarding) — validatePlanPayload above gates shape but never
+      // strips unknown top-level keys.
+      const cfgProgram = sanitizeProgramState(programState);
+      if (cfgProgram.dropped.length > 0) {
+        functions.logger.warn("configurePlan.programState_dropped_fields", {
+          uid,
+          dropped: cfgProgram.dropped,
+        });
+      }
+      if (programStateTooLarge(cfgProgram.value)) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is too large."
+        );
+      }
+
       // Atomic — same rationale as completeOnboarding above. The
       // profile patch and programState rebuild commit together or
       // not at all.
       const batch = db.batch();
       batch.set(userRef, profileUpdates, { merge: true });
-      batch.set(programRef, programState);
+      batch.set(programRef, cfgProgram.value);
       await batch.commit();
 
       return { success: true };
