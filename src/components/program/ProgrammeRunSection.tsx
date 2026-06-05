@@ -656,8 +656,7 @@ export default function ProgrammeRunSection({
                     );
                   }
                 }}
-                className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                style={{ background: THEME.running }}
+                className="w-full py-2 rounded-lg text-xs font-bold text-white bg-running"
               >
                 Log race now
               </button>
@@ -758,8 +757,7 @@ export default function ProgrammeRunSection({
               <button
                 type="button"
                 onClick={handleRealign}
-                className="w-full py-2 rounded-lg text-xs font-bold text-white"
-                style={{ background: THEME.running }}
+                className="w-full py-2 rounded-lg text-xs font-bold text-white bg-running"
               >
                 Realign my plan
               </button>
@@ -790,8 +788,7 @@ export default function ProgrammeRunSection({
             <button
               type="button"
               onClick={handleSkipRecoveryEarly}
-              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95"
-              style={{ color: THEME.running }}
+              className="inline-flex items-center gap-0.5 text-xs font-semibold motion-safe:active:scale-95 text-running"
             >
               Skip recovery early &rsaquo;
             </button>
@@ -802,11 +799,7 @@ export default function ProgrammeRunSection({
       {/* Run7 Q6: section label as 10px uppercase a11y h2, RunningNavIcon
           inline left, coral icon + muted-foreground label. */}
       <header className="flex items-center gap-1.5">
-        <Footprints
-          aria-hidden="true"
-          className="size-3.5"
-          style={{ color: THEME.running }}
-        />
+        <Footprints aria-hidden="true" className="size-3.5 text-running" />
         <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Run training
         </h2>
@@ -879,23 +872,13 @@ export default function ProgrammeRunSection({
               haptic();
               navigate("/run");
             }}
-            className="w-full rounded-xl p-4 text-left flex items-center gap-3"
-            style={{
-              background: `${THEME.running}0F`,
-              border: `1px solid ${THEME.running}30`,
-            }}
+            className="w-full rounded-xl p-4 text-left flex items-center gap-3 bg-running/6 border border-running/19"
           >
-            <div
-              className="size-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${THEME.running}1A` }}
-            >
-              <Footprints className="size-5" style={{ color: THEME.running }} />
+            <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+              <Footprints className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
-                className="text-xs font-semibold mb-0.5"
-                style={{ color: THEME.running }}
-              >
+              <p className="text-xs font-semibold mb-0.5 text-running">
                 Start a run
               </p>
               <p className="text-sm font-bold text-foreground">
@@ -1009,13 +992,7 @@ export default function ProgrammeRunSection({
               Planner (/settings/training). Dismissible; once a goal is set the
               mode flips to race_prep and this freeform block stops rendering. */}
           {!setRaceGoalDismissed && (
-            <div
-              className="w-full rounded-xl p-4 flex items-center gap-3"
-              style={{
-                background: `${THEME.running}0A`,
-                border: `1px solid ${THEME.running}26`,
-              }}
-            >
+            <div className="w-full rounded-xl p-4 flex items-center gap-3 bg-running/4 border border-running/15">
               <button
                 type="button"
                 onClick={() => {
@@ -1025,17 +1002,11 @@ export default function ProgrammeRunSection({
                 className="flex-1 flex items-center gap-3 text-left min-w-0"
                 style={{ minHeight: 44 }}
               >
-                <div
-                  className="size-10 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${THEME.running}1A` }}
-                >
-                  <Trophy className="size-5" style={{ color: THEME.running }} />
+                <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+                  <Trophy className="size-5 text-running" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p
-                    className="text-xs font-semibold mb-0.5"
-                    style={{ color: THEME.running }}
-                  >
+                  <p className="text-xs font-semibold mb-0.5 text-running">
                     Set a race goal
                   </p>
                   <p className="text-sm font-bold text-foreground">
@@ -1082,25 +1053,13 @@ export default function ProgrammeRunSection({
           paths do) + an overflow that opens DayActionSheet's race-day variant
           for the DNF / DNS edge cases. */}
       {heroState === "race-today" && raceGoal && (
-        <div
-          className="w-full rounded-xl p-4 space-y-3"
-          style={{
-            background: `${THEME.running}14`,
-            border: `1px solid ${THEME.running}40`,
-          }}
-        >
+        <div className="w-full rounded-xl p-4 space-y-3 bg-running/8 border border-running/25">
           <div className="flex items-center gap-3">
-            <div
-              className="size-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${THEME.running}1A` }}
-            >
-              <Trophy className="size-5" style={{ color: THEME.running }} />
+            <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+              <Trophy className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
-                className="text-xs font-semibold mb-0.5"
-                style={{ color: THEME.running }}
-              >
+              <p className="text-xs font-semibold mb-0.5 text-running">
                 Race day
               </p>
               <p className="text-sm font-bold text-foreground">
@@ -1131,8 +1090,7 @@ export default function ProgrammeRunSection({
                   : "/run"
               );
             }}
-            className="w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5"
-            style={{ background: THEME.running }}
+            className="w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
           >
             <Play className="size-3.5" fill="white" />
             Start race
@@ -1154,25 +1112,13 @@ export default function ProgrammeRunSection({
               server owns the race_no_show flip at T+3 (PR-L — the client
               never writes that status). */}
       {heroState === "race-recent" && raceGoal && !raceRecentDismissed && (
-        <div
-          className="w-full rounded-xl p-4 space-y-3"
-          style={{
-            background: `${THEME.running}0F`,
-            border: `1px solid ${THEME.running}30`,
-          }}
-        >
+        <div className="w-full rounded-xl p-4 space-y-3 bg-running/6 border border-running/19">
           <div className="flex items-center gap-3">
-            <div
-              className="size-10 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${THEME.running}1A` }}
-            >
-              <Footprints className="size-5" style={{ color: THEME.running }} />
+            <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+              <Footprints className="size-5 text-running" />
             </div>
             <div className="flex-1 min-w-0">
-              <p
-                className="text-xs font-semibold mb-0.5"
-                style={{ color: THEME.running }}
-              >
+              <p className="text-xs font-semibold mb-0.5 text-running">
                 Did you race?
               </p>
               <p className="text-sm font-bold text-foreground">
@@ -1202,8 +1148,7 @@ export default function ProgrammeRunSection({
                     : "/run"
                 );
               }}
-              className="flex-1 py-2 rounded-lg text-xs font-bold text-white"
-              style={{ background: THEME.running }}
+              className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-running"
             >
               Log it
             </button>
@@ -1279,13 +1224,7 @@ export default function ProgrammeRunSection({
             ) : (
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
-              <div
-                className="rounded-2xl border p-4 shadow-card"
-                style={{
-                  backgroundColor: `${THEME.running}0A`,
-                  borderColor: `${THEME.running}24`,
-                }}
-              >
+              <div className="rounded-2xl border p-4 shadow-card bg-running/4 border-running/14">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {selectedDateLabel}
                 </p>
@@ -1309,8 +1248,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="mt-3 w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5"
-                  style={{ background: THEME.running }}
+                  className="mt-3 w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
                 >
                   <Play className="size-3.5" fill="white" />
                   Start free run
