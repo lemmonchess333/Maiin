@@ -14,6 +14,7 @@ import {
   QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { noteActivitySnapshot } from "@/lib/activationTracker";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { sumMealTotals } from "@/lib/mealTotals";
@@ -113,9 +114,9 @@ function safeNum(v: unknown): number {
 function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
   return {
     id,
-    date: typeof raw.date === 'string' ? raw.date : '',
-    foodName: typeof raw.foodName === 'string' ? raw.foodName : '',
-    items: Array.isArray(raw.items) ? raw.items as MealItem[] : [],
+    date: typeof raw.date === "string" ? raw.date : "",
+    foodName: typeof raw.foodName === "string" ? raw.foodName : "",
+    items: Array.isArray(raw.items) ? (raw.items as MealItem[]) : [],
     totalCalories: safeNum(raw.totalCalories),
     totalProtein: safeNum(raw.totalProtein),
     totalCarbs: safeNum(raw.totalCarbs),
@@ -136,7 +137,7 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
       raw.meal === "dinner"
         ? raw.meal
         : undefined,
-    confidence: typeof raw.confidence === 'string' ? raw.confidence : '',
+    confidence: typeof raw.confidence === "string" ? raw.confidence : "",
     createdAt: raw.createdAt,
     // F5c: missing field is interpreted as active (null). Restored
     // meals also carry deletedAt: null after the restore write.
@@ -148,15 +149,17 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
     // modified" comparisons work for unmigrated docs without a
     // separate flag check.
     updatedAt: raw.updatedAt ?? raw.createdAt,
-    revisionCount: typeof raw.revisionCount === 'number' ? raw.revisionCount : 0,
-    userEditCount: typeof raw.userEditCount === 'number' ? raw.userEditCount : 0,
+    revisionCount:
+      typeof raw.revisionCount === "number" ? raw.revisionCount : 0,
+    userEditCount:
+      typeof raw.userEditCount === "number" ? raw.userEditCount : 0,
     // F1d: defensive read — field is an array of strings (field keys
     // the user has manually edited). Anything else (missing, wrong
     // type, non-string entries) defaults to an empty array so
     // downstream consumers can iterate without guards.
     userEditedFields: Array.isArray(raw.userEditedFields)
       ? (raw.userEditedFields as unknown[]).filter(
-          (k): k is string => typeof k === 'string',
+          (k): k is string => typeof k === "string"
         )
       : [],
   };
@@ -180,7 +183,10 @@ export function useMeals() {
 
   useEffect(() => {
     if (!user) {
-      const reset = () => { setAllMeals([]); setLoading(false); };
+      const reset = () => {
+        setAllMeals([]);
+        setLoading(false);
+      };
       reset();
       return;
     }
@@ -191,11 +197,20 @@ export function useMeals() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
+        const data = snapshot.docs.map((d) =>
+          parseMealDoc(d.id, d.data() as Record<string, unknown>)
+        );
         setAllMeals(data);
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length >= PAGE_SIZE);
         setLoading(false);
+        // Activation funnel: fire `food_logged` once per newly-created meal
+        // across all creation sites. Baseline-guarded + deduped by uid.
+        noteActivitySnapshot(
+          "food",
+          user.uid,
+          snapshot.docs.map((d) => d.id)
+        );
       },
       // Surface the failure so the UI can exit its skeleton state; keep any
       // previously loaded meals in state so a transient permission blip or
@@ -217,15 +232,22 @@ export function useMeals() {
   const meals = useMemo(() => allMeals.filter((m) => !m.deletedAt), [allMeals]);
   const deletedMeals = useMemo(
     () => allMeals.filter((m) => !!m.deletedAt),
-    [allMeals],
+    [allMeals]
   );
 
   const loadMore = useCallback(async () => {
     if (!user || !lastDoc || !hasMore) return;
     const mealsRef = collection(db, "users", user.uid, "meals");
-    const q = query(mealsRef, orderBy("createdAt", "desc"), startAfter(lastDoc), limit(PAGE_SIZE));
+    const q = query(
+      mealsRef,
+      orderBy("createdAt", "desc"),
+      startAfter(lastDoc),
+      limit(PAGE_SIZE)
+    );
     const snapshot = await getDocs(q);
-    const newData = snapshot.docs.map((d) => parseMealDoc(d.id, d.data() as Record<string, unknown>));
+    const newData = snapshot.docs.map((d) =>
+      parseMealDoc(d.id, d.data() as Record<string, unknown>)
+    );
     setAllMeals((prev) => [...prev, ...newData]);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setHasMore(snapshot.docs.length >= PAGE_SIZE);
@@ -245,10 +267,10 @@ export function useMeals() {
       await setDocGuarded(
         doc(db, "users", user.uid, "meals", mealId),
         { deletedAt: serverTimestamp() },
-        { merge: true },
+        { merge: true }
       );
     },
-    [user],
+    [user]
   );
 
   const restoreMeal = useCallback(
@@ -257,10 +279,10 @@ export function useMeals() {
       await setDocGuarded(
         doc(db, "users", user.uid, "meals", mealId),
         { deletedAt: null },
-        { merge: true },
+        { merge: true }
       );
     },
-    [user],
+    [user]
   );
 
   /**
@@ -313,11 +335,11 @@ export function useMeals() {
         // doc doesn't propagate junk.
         const currentLocks = Array.isArray(current.userEditedFields)
           ? (current.userEditedFields as unknown[]).filter(
-              (k): k is string => typeof k === "string",
+              (k): k is string => typeof k === "string"
             )
           : [];
         const nextLocks = Array.from(
-          new Set<string>([...currentLocks, ...Object.keys(updates)]),
+          new Set<string>([...currentLocks, ...Object.keys(updates)])
         );
         tx.update(ref, {
           ...updates,
@@ -328,7 +350,7 @@ export function useMeals() {
         });
       });
     },
-    [user],
+    [user]
   );
 
   /** Hard-delete — bypasses the soft-delete window. Reserved for the
@@ -339,7 +361,7 @@ export function useMeals() {
       if (!user) return;
       await deleteDoc(doc(db, "users", user.uid, "meals", mealId));
     },
-    [user],
+    [user]
   );
 
   const getMealsForDate = useCallback(
@@ -355,7 +377,7 @@ export function useMeals() {
   // mealTotals.ts — the two callers get it for free.
   const getDailyTotals = useCallback(
     (date: string) => sumMealTotals(meals.filter((m) => m.date === date)),
-    [meals],
+    [meals]
   );
 
   return {
