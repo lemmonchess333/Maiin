@@ -64,3 +64,31 @@ export function track(
 ): void {
   emit("lifecycle", event, metadata as Record<string, unknown>);
 }
+
+/**
+ * Fire a one-time activation milestone (`first_*`) at most once per user.
+ *
+ * The `first_*` funnel events mark "the user reached this milestone for the
+ * first time", so they must not re-emit on every workout / meal / run. A
+ * uid-scoped localStorage guard gives funnel-grade dedup with no Firestore
+ * write and no profileSanitizer change. Cross-device re-fires are acceptable
+ * for activation analysis — the cohort that matters is new users on their
+ * first device, and Firebase A/B / funnel reports count distinct users
+ * regardless. (When private-mode localStorage throws, we emit rather than drop
+ * — a possible duplicate beats a missing activation signal.)
+ */
+export function trackFirst(
+  event: LifecycleEvent,
+  uid: string | undefined,
+  metadata: LifecycleEventMetadata = {}
+): void {
+  if (!uid) return;
+  const key = `tropos.lifecycle.${uid}.${event}`;
+  try {
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, "1");
+  } catch {
+    /* localStorage unavailable (private mode / webview) — emit anyway */
+  }
+  track(event, metadata);
+}

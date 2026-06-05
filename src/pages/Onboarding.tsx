@@ -57,7 +57,10 @@ import { cn } from "@/lib/utils";
 import OptionCard from "@/components/onboarding/OptionCard";
 import Stepper from "@/components/onboarding/Stepper";
 import { toast } from "@/lib/toast";
-import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+import {
+  track as trackLifecycle,
+  trackFirst as trackLifecycleFirst,
+} from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
 
 /* ============================
@@ -726,6 +729,13 @@ export default function Onboarding() {
         primaryGoal,
         daysPerWeek,
         runMode: effectiveRunMode,
+      });
+      // completeOnboarding generated the initial programme server-side, so the
+      // user's first plan exists by now — record the activation milestone
+      // (once/user; distinct from onboarding_completed for re-derived plans).
+      trackLifecycleFirst("first_plan_generated", user?.uid, {
+        primaryGoal,
+        daysPerWeek,
       });
 
       // Save succeeded — leave the onboarding surface explicitly. Flipping

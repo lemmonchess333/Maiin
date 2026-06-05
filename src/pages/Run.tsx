@@ -69,6 +69,7 @@ import {
   initialRunPhase,
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
+import { trackFirst } from "../lib/lifecycleAnalytics";
 import { formatRaceDistance } from "../lib/runLabels";
 import { toast } from "../lib/toast";
 
@@ -466,6 +467,8 @@ export default function Run() {
     !isFreeformUser && programLoading && skeletonThresholdElapsed;
 
   const handleStart = async (config: RunConfig) => {
+    // Activation funnel — first run started (once per user).
+    trackFirst("first_run_started", profile?.uid);
     audioCues.prime();
     await wakeLock.request();
     // Phase B1: finalise plan metadata against the user's actual

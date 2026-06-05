@@ -20,6 +20,7 @@ import { estimateCalories } from "@/lib/exercises";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
+import { trackFirst } from "@/lib/lifecycleAnalytics";
 
 /**
  * Normalise a caller-supplied workout date to a local "yyyy-MM-dd" string.
@@ -186,6 +187,8 @@ export function useWorkouts() {
         totalCalories,
         createdAt: Timestamp.now(),
       });
+      // Activation funnel — first completed workout (once per user).
+      trackFirst("first_workout_completed", user.uid);
       return workoutId;
     },
     [user, profile?.weightKg]

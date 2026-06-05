@@ -57,6 +57,7 @@ import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
 import { Spinner } from "@/components/ui/Spinner";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
+import { trackFirst } from "@/lib/lifecycleAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -1191,6 +1192,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                     type="button"
                     onClick={() => {
                       haptic("light");
+                      // Activation funnel — first workout started (once/user).
+                      trackFirst("first_workout_started", profile?.uid);
                       setSessionDayIndex(idx);
                     }}
                     className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
