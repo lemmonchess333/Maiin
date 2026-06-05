@@ -36,6 +36,13 @@ export type LifecycleEvent =
   | "first_workout_completed"
   | "first_run_started"
   | "first_food_logged"
+  // Activation activity events — per-occurrence (fired by the snapshot
+  // observer in activationTracker.ts for food/workout, and at the run save
+  // site). GA4 derives first-occurrence/activation from these natively, and
+  // per-occurrence also captures ongoing engagement.
+  | "workout_completed"
+  | "run_completed"
+  | "food_logged"
   | "trial_started"
   | "subscription_started";
 
