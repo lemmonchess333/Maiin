@@ -31,7 +31,10 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 const indexCss = readFileSync(resolve(repoRoot, "src/index.css"), "utf8");
-const tokensCss = readFileSync(resolve(repoRoot, "src/styles/tokens.css"), "utf8");
+const tokensCss = readFileSync(
+  resolve(repoRoot, "src/styles/tokens.css"),
+  "utf8"
+);
 
 describe("Sprint 0 theme contract — @theme exposes semantic status colours", () => {
   // Pull out the @theme block so the assertions don't accidentally
@@ -83,7 +86,9 @@ describe("Sprint 0 theme contract — :root + .dark define the underlying variab
     // this anchor an `@theme` comment mentioning ".dark" would
     // hijack the search and the function would return the wrong
     // block (whichever rule comes next in source order).
-    const pattern = new RegExp(`${anchor.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}\\s*\\{`);
+    const pattern = new RegExp(
+      `${anchor.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}\\s*\\{`
+    );
     const m = pattern.exec(indexCss);
     if (!m) return "";
     const open = indexCss.indexOf("{", m.index);
@@ -130,8 +135,67 @@ describe("Sprint 0 theme contract — :root + .dark define the underlying variab
     // stays readable on the filled button). The chosen value is
     // approximately 240 10% 3.9% — same dark navy as :root's
     // --foreground.
-    expect(darkBlock).toMatch(/--destructive-foreground\s*:\s*240\s+10%\s+3\.9%/);
+    expect(darkBlock).toMatch(
+      /--destructive-foreground\s*:\s*240\s+10%\s+3\.9%/
+    );
   });
+});
+
+describe("DS1 sport-colour token contract — --running / --lifting bridge + fixed value", () => {
+  // Re-extract the blocks (the Sprint 0 helpers are scoped to their own
+  // describe). Same brace-balanced extraction.
+  function block(anchor: string): string {
+    const pattern = new RegExp(
+      `${anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{`
+    );
+    const m = pattern.exec(indexCss);
+    if (!m) return "";
+    const open = indexCss.indexOf("{", m.index);
+    let depth = 1;
+    let i = open + 1;
+    while (i < indexCss.length && depth > 0) {
+      if (indexCss[i] === "{") depth += 1;
+      else if (indexCss[i] === "}") depth -= 1;
+      i += 1;
+    }
+    return indexCss.slice(open + 1, i - 1);
+  }
+  const themeBlock = block("@theme");
+  const rootBlock = block(":root");
+  const darkBlock = block(".dark");
+
+  it("@theme exposes --color-running and --color-lifting", () => {
+    expect(themeBlock).toMatch(/--color-running\s*:/);
+    expect(themeBlock).toMatch(/--color-lifting\s*:/);
+  });
+
+  for (const name of ["--running", "--lifting"]) {
+    it(`:root defines ${name}`, () => {
+      expect(rootBlock).toMatch(
+        new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)
+      );
+    });
+    it(`.dark defines ${name}`, () => {
+      expect(darkBlock).toMatch(
+        new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)
+      );
+    });
+  }
+
+  // Load-bearing invariant: sport colours are a FIXED identity — the
+  // SAME in light + dark. A future agent must NOT silently theme-split
+  // them; that would make coral/purple drift between modes and diverge
+  // from the chart/gradient sites that still consume the single THEME
+  // hex. Pin the identity so the decision can't be quietly reversed.
+  for (const name of ["--running", "--lifting"]) {
+    it(`${name} is identical in :root and .dark (fixed sport colour)`, () => {
+      const re = new RegExp(`${name.replace(/-/g, "\\-")}\\s*:\\s*([^;]+);`);
+      const r = re.exec(rootBlock)?.[1].trim();
+      const d = re.exec(darkBlock)?.[1].trim();
+      expect(r).toBeTruthy();
+      expect(d).toBe(r);
+    });
+  }
 });
 
 describe("Sprint 0 theme contract — tokens.css bridges legacy --ds-* to semantic variables", () => {
@@ -139,19 +203,25 @@ describe("Sprint 0 theme contract — tokens.css bridges legacy --ds-* to semant
     expect(tokensCss).toMatch(/--ds-error\s*:\s*hsl\(var\(--destructive\)\)/);
   });
   it("--ds-error-bg bridges to hsl(var(--destructive-bg))", () => {
-    expect(tokensCss).toMatch(/--ds-error-bg\s*:\s*hsl\(var\(--destructive-bg\)\)/);
+    expect(tokensCss).toMatch(
+      /--ds-error-bg\s*:\s*hsl\(var\(--destructive-bg\)\)/
+    );
   });
   it("--ds-success bridges to hsl(var(--success))", () => {
     expect(tokensCss).toMatch(/--ds-success\s*:\s*hsl\(var\(--success\)\)/);
   });
   it("--ds-success-bg bridges to hsl(var(--success-bg))", () => {
-    expect(tokensCss).toMatch(/--ds-success-bg\s*:\s*hsl\(var\(--success-bg\)\)/);
+    expect(tokensCss).toMatch(
+      /--ds-success-bg\s*:\s*hsl\(var\(--success-bg\)\)/
+    );
   });
   it("--ds-warning bridges to hsl(var(--warning))", () => {
     expect(tokensCss).toMatch(/--ds-warning\s*:\s*hsl\(var\(--warning\)\)/);
   });
   it("--ds-warning-bg bridges to hsl(var(--warning-bg))", () => {
-    expect(tokensCss).toMatch(/--ds-warning-bg\s*:\s*hsl\(var\(--warning-bg\)\)/);
+    expect(tokensCss).toMatch(
+      /--ds-warning-bg\s*:\s*hsl\(var\(--warning-bg\)\)/
+    );
   });
 
   it("tokens.css no longer ships hardcoded hex values for the four status colours", () => {
@@ -164,7 +234,9 @@ describe("Sprint 0 theme contract — tokens.css bridges legacy --ds-* to semant
     const lines = tokensCss.split("\n");
     const offenders: string[] = [];
     for (const line of lines) {
-      const m = line.match(/--ds-(success|warning|error)(?:-bg)?\s*:\s*#[0-9a-fA-F]/);
+      const m = line.match(
+        /--ds-(success|warning|error)(?:-bg)?\s*:\s*#[0-9a-fA-F]/
+      );
       if (m) offenders.push(line.trim());
     }
     expect(offenders).toEqual([]);
@@ -178,7 +250,8 @@ describe("Sprint 0 theme contract — no source uses undefined var(--text-muted)
   // var name simply doesn't exist anywhere in the codebase.
   function walk(dir: string, files: string[] = []): string[] {
     for (const name of readdirSync(dir)) {
-      if (name === "node_modules" || name === ".git" || name === "dist") continue;
+      if (name === "node_modules" || name === ".git" || name === "dist")
+        continue;
       const full = join(dir, name);
       let s;
       try {
@@ -216,7 +289,7 @@ describe("Sprint 0 theme contract — no source uses undefined var(--text-muted)
       throw new Error(
         `The undefined CSS variable is not defined anywhere in the design system. ` +
           `Replace with className "text-muted-foreground" (preferred) or ` +
-          `inline color "hsl(var(--muted-foreground))". Offending files:\n  ${offenders.join("\n  ")}`,
+          `inline color "hsl(var(--muted-foreground))". Offending files:\n  ${offenders.join("\n  ")}`
       );
     }
     expect(offenders).toEqual([]);
