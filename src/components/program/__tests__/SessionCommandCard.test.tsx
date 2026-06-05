@@ -73,9 +73,9 @@ describe("SessionCommandCard", () => {
         onPrimaryAction={() => {}}
       />
     );
-    // Run → coral `sport` Button variant (inline coral background).
+    // Run → coral `sport` Button variant (DS1b --running token class).
     const runBtn = screen.getByRole("button", { name: /Start run/i });
-    expect(runBtn.style.backgroundColor).not.toBe("");
+    expect(runBtn.className).toContain("bg-running");
 
     rerender(
       <SessionCommandCard
