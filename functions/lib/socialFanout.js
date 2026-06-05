@@ -148,11 +148,16 @@ async function fanoutActivityToFeeds({
 
   let fanned = 0;
   for (const rid of recipientIds) {
+    // Deterministic doc id (= activityId) so an at-least-once trigger
+    // re-delivery overwrites the same feed item instead of appending a
+    // duplicate. One activity → exactly one item per recipient feed
+    // (CROSS-H1). feeds are server-only writes, so no reader depends on the
+    // previous auto-generated id.
     const itemRef = firestore
       .collection("feeds")
       .doc(rid)
       .collection("items")
-      .doc();
+      .doc(activityId);
     await itemRef.set(feedItem);
     fanned += 1;
   }
