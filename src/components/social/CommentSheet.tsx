@@ -184,7 +184,7 @@ export default function CommentSheet({
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-destructive transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive transition-all shrink-0"
                     aria-label="Delete comment"
                   >
                     <Trash2 className="size-3.5" />
@@ -199,7 +199,7 @@ export default function CommentSheet({
           <button
             type="button"
             onClick={handleLoadMore}
-            className="text-xs text-primary font-medium hover:underline w-full text-center py-1"
+            className="text-xs text-primary font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
           >
             Load more comments
           </button>
