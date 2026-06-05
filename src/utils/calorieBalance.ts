@@ -18,20 +18,26 @@ export interface DayBalance {
   balance: number;
 }
 
+/**
+ * Daily energy balance. `expenditure` is the user's MAINTENANCE TDEE
+ * (BMR × activity multiplier) — expenditure-inclusive per the Nutr1 model, so
+ * logged exercise is NOT added on top (the multiplier already accounts for it;
+ * adding it again double-counts and, with a bare-BMR baseline, understated
+ * expenditure by ~20-40% — showing a "surplus" to someone eating at
+ * maintenance, NUTR-H1). Positive balance = deficit (burned more than eaten).
+ */
 export function calcDayBalance(
   date: string,
   day: string,
   consumed: number,
-  bmr: number,
-  activityBurn: number
+  expenditure: number
 ): DayBalance {
-  const burned = bmr + activityBurn;
   return {
     date,
     day,
     consumed,
-    burned,
-    balance: burned - consumed,
+    burned: expenditure,
+    balance: expenditure - consumed,
   };
 }
 
@@ -81,7 +87,7 @@ export interface PhaseAlignment {
 
 export function getPhaseAlignment(
   goal: string | undefined,
-  avgBalance: number,
+  avgBalance: number
 ): PhaseAlignment | null {
   if (goal === "lean bulk") {
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
@@ -93,7 +99,10 @@ export function getPhaseAlignment(
     if (avgBalance < -NEAR_MAINTENANCE_THRESHOLD) {
       return { state: "on-track", message: "On track — gaining as planned" };
     }
-    return { state: "maintaining", message: "Holding — eating near maintenance" };
+    return {
+      state: "maintaining",
+      message: "Holding — eating near maintenance",
+    };
   }
 
   if (goal === "cut") {
@@ -106,7 +115,10 @@ export function getPhaseAlignment(
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
       return { state: "on-track", message: "On track — losing as planned" };
     }
-    return { state: "maintaining", message: "Holding — eating near maintenance" };
+    return {
+      state: "maintaining",
+      message: "Holding — eating near maintenance",
+    };
   }
 
   if (goal === "recomp") {
