@@ -20,6 +20,7 @@ import { estimateCalories } from "@/lib/exercises";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
+import { noteActivitySnapshot } from "@/lib/activationTracker";
 
 /**
  * Normalise a caller-supplied workout date to a local "yyyy-MM-dd" string.
@@ -110,6 +111,14 @@ export function useWorkouts() {
         setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
         setHasMore(snapshot.docs.length >= PAGE_SIZE);
         setLoading(false);
+        // Activation funnel: fire `workout_completed` once per newly-created
+        // workout across all write paths (saveWorkout / completeWorkoutDay /
+        // session). Baseline-guarded + deduped by uid.
+        noteActivitySnapshot(
+          "workout",
+          user.uid,
+          snapshot.docs.map((d) => d.id)
+        );
       },
       // Surface the failure so the UI exits its skeleton; retain any
       // previously loaded workouts so a transient rule or network error
