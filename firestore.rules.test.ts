@@ -1820,3 +1820,75 @@ suite(
     });
   }
 );
+
+// ── Security audit 2026-06: user-doc CREATE self-grant guard ───────────
+// computeEffectiveTier (functions/helpers.js) grants server-side Pro on a
+// future trialExpiresAt REGARDLESS of subscriptionTier. The create rule
+// pins subscriptionTier == 'free' but billingFieldsUnsetOnCreate() must
+// also block a client from seeding trial/billing timestamps, or a free
+// user self-grants Pro (incl. paid AI compute) with one direct write.
+suite("firestore.rules — users/{uid} create self-grant guard", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  const future = new Date(Date.now() + 30 * 86_400_000).toISOString();
+
+  it("free user CAN create their own doc with no billing fields", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        subscriptionTier: "free",
+        trialExpiresAt: null,
+      })
+    );
+  });
+
+  it("free user CANNOT self-grant via a future trialExpiresAt on create", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        subscriptionTier: "free",
+        trialExpiresAt: future,
+      })
+    );
+  });
+
+  it("free user CANNOT seed a future subscriptionExpiresAt on create", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        subscriptionTier: "free",
+        subscriptionExpiresAt: future,
+      })
+    );
+  });
+
+  it("free user CANNOT seed a stripeSubscriptionId on create", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(doc(ownerDb, "users", OWNER_UID), {
+        subscriptionTier: "free",
+        stripeSubscriptionId: "sub_attacker",
+      })
+    );
+  });
+});
