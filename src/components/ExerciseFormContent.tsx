@@ -107,10 +107,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       {/* Metadata tags */}
       <div className="flex items-center gap-2">
         {demo.category && (
-          <span
-            className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-semibold text-white"
-            style={{ backgroundColor: THEME.lifting }}
-          >
+          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-semibold text-white bg-lifting">
             {demo.category}
           </span>
         )}
@@ -211,11 +208,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 {demo.primaryMuscles.map((m) => (
                   <span
                     key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium"
-                    style={{
-                      backgroundColor: THEME.lifting + "14",
-                      color: THEME.lifting,
-                    }}
+                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-lifting/8 text-lifting"
                   >
                     {m}
                   </span>
@@ -254,10 +247,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             <div className="flex flex-col gap-4 mt-3">
               {demo.instructions.map((step, i) => (
                 <div key={i} className="flex gap-2">
-                  <span
-                    className="text-[15px] font-bold shrink-0"
-                    style={{ color: THEME.lifting }}
-                  >
+                  <span className="text-[15px] font-bold shrink-0 text-lifting">
                     {i + 1}.
                   </span>
                   <p className="text-[15px] text-foreground/80 leading-relaxed">
@@ -296,8 +286,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
-              className="flex items-center gap-1 mt-2 text-[15px] font-medium"
-              style={{ color: THEME.lifting }}
+              className="flex items-center gap-1 mt-2 text-[15px] font-medium text-lifting"
             >
               {showInstructions ? (
                 <>
