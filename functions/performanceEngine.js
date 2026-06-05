@@ -242,6 +242,13 @@ async function fetchLifetimeData(uid) {
  * inclusive day-count for downstream baseline normalisation.
  */
 function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
+  // Distinct 7-day sub-periods of the window that had a lift or run session —
+  // the server-side equivalent of the client's "weeks with a session" count
+  // (performanceEngine.ts computeBaseline). Drives weeksUsed so a zero-activity
+  // baseline window yields 0, not floor(days/7) (PERF-M).
+  const activeWeeks = new Set();
+  const WEEK_MS = 7 * 86400000;
+
   // ── Lifting ──
   let liftTonnage = 0;
   let liftHardSets = 0;
@@ -251,6 +258,7 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     const d = new Date(w.date + "T00:00:00Z");
     if (d < start || d >= end) return;
     liftSessions++;
+    activeWeeks.add(Math.floor((d.getTime() - start.getTime()) / WEEK_MS));
     (w.exercises || []).forEach((ex) => {
       const isCardio = (ex.category || "").toLowerCase() === "cardio";
       (ex.sets || []).forEach((set, idx) => {
@@ -273,6 +281,7 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
       r.completedAt && r.completedAt.toDate ? r.completedAt.toDate() : null;
     if (!d || d < start || d >= end) return;
     runSessions++;
+    activeWeeks.add(Math.floor((d.getTime() - start.getTime()) / WEEK_MS));
     const km = (r.distance || 0) / 1000;
     runKm += km;
     if (km > runLongKm) runLongKm = km;
@@ -331,6 +340,7 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
       mealDaysLogged > 0 ? Math.round(totalProt / mealDaysLogged) : 0,
     bwCurrent7dAvg: avg(bwCurrent),
     bwPrevious7dAvg: avg(bwPrev),
+    activeWeeks: activeWeeks.size,
     dayCount,
   };
 }
@@ -352,7 +362,15 @@ function computeBaselineFromAgg(baselineAgg) {
     liftHardSets: baselineAgg.liftHardSets * scale,
     runKm: baselineAgg.runKm * scale,
     runLongKm: baselineAgg.runLongKm,
-    weeksUsed: Math.max(0, Math.floor(days / WINDOW_DAYS)),
+    // Mirror the client's count of weeks-with-a-session, not raw calendar
+    // weeks: a zero-activity baseline window must yield 0 so the deload-
+    // suppression gate (weeksUsed >= 3) stays closed for a user just back from
+    // a vacation/illness gap (PERF-M). activeWeeks is set by aggregateWindow;
+    // manually-built aggregates without it fall back to the calendar count.
+    weeksUsed:
+      typeof baselineAgg.activeWeeks === "number"
+        ? baselineAgg.activeWeeks
+        : Math.max(0, Math.floor(days / WINDOW_DAYS)),
   };
 }
 
