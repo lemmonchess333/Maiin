@@ -74,21 +74,14 @@ export default function RunCTACard({
         trackHomeEvent("home_card_tapped", { card: "today_run" });
         navigate("/run" + queryString);
       }}
-      className="w-full rounded-xl bg-card text-left p-4"
-      style={{ backgroundColor: THEME.running + "14" }}
+      className="w-full rounded-xl bg-running/8 text-left p-4"
     >
       <div className="flex items-center gap-3">
-        <div
-          className="size-10 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: THEME.running + "18" }}
-        >
-          <RunIconComp className="size-5" style={{ color: THEME.running }} />
+        <div className="size-10 rounded-lg flex items-center justify-center bg-running/9">
+          <RunIconComp className="size-5 text-running" />
         </div>
         <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-semibold mb-0.5"
-            style={{ color: THEME.running }}
-          >
+          <p className="text-xs font-semibold mb-0.5 text-running">
             {isFirst ? "Your first run" : "Today · Run day"}
           </p>
           <div className="flex items-baseline gap-2">
@@ -96,10 +89,7 @@ export default function RunCTACard({
               {runLabel}
             </p>
             {runKeyMetric && (
-              <span
-                className="text-sm font-bold font-mono tabular-nums"
-                style={{ color: THEME.running }}
-              >
+              <span className="text-sm font-bold font-mono tabular-nums text-running">
                 {runKeyMetric}
               </span>
             )}
