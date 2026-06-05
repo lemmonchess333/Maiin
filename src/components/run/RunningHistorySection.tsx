@@ -121,7 +121,7 @@ function RunCard({
           <MiniRoute preview={run.routePreview} />
         ) : (
           <div className="size-full flex items-center justify-center">
-            <Footprints className="size-4" style={{ color: THEME.running }} />
+            <Footprints className="size-4 text-running" />
           </div>
         )}
       </div>
@@ -221,7 +221,7 @@ export default function RunningHistorySection() {
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-semibold flex items-center gap-2">
-        <Footprints size={14} style={{ color: THEME.running }} /> Running
+        <Footprints size={14} className="text-running" /> Running
       </h3>
 
       {weeklyData.length > 0 && (
@@ -270,10 +270,7 @@ export default function RunningHistorySection() {
           return (
             <div className="grid grid-cols-3 gap-2">
               <div className="p-3 rounded-xl bg-card border border-border text-center">
-                <p
-                  className="text-lg font-bold font-mono tabular-nums"
-                  style={{ color: THEME.running }}
-                >
+                <p className="text-lg font-bold font-mono tabular-nums text-running">
                   {(volume.reduce((s, r) => s + r.distance, 0) / 1000).toFixed(
                     1
                   )}
@@ -287,10 +284,7 @@ export default function RunningHistorySection() {
                 <p className="text-xs text-muted-foreground">total runs</p>
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
-                <p
-                  className="text-lg font-bold font-mono tabular-nums"
-                  style={{ color: THEME.running }}
-                >
+                <p className="text-lg font-bold font-mono tabular-nums text-running">
                   {paceMinSec(bestPace)}
                 </p>
                 <p className="text-xs text-muted-foreground">best pace</p>

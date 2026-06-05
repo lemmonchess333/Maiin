@@ -529,11 +529,10 @@ export default function Social() {
               }}
             />
             {notifications.unreadCount > 0 && (
-              <span
-                className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none"
-                style={{ backgroundColor: THEME.semantic.vitals }}
-              >
-                {notifications.unreadCount > 9 ? "9+" : notifications.unreadCount}
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
+                {notifications.unreadCount > 9
+                  ? "9+"
+                  : notifications.unreadCount}
               </span>
             )}
           </div>
@@ -1237,43 +1236,43 @@ export default function Social() {
                 className="bg-[var(--glass-bg)] border border-[var(--glass-border)]"
               >
                 <div className="p-5 space-y-4">
-                    <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                    <p className="text-base font-semibold text-foreground">
-                      Leave crew?
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      You can rejoin this crew later.
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setLeavingCrewId(null)}
-                        disabled={leavingInFlight}
-                        className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm disabled:opacity-60"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (leavingInFlight) return;
-                          setLeavingInFlight(true);
-                          try {
-                            await leaveCrew();
-                            setLeavingCrewId(null);
-                            toast.success("Left crew");
-                          } catch {
-                            toast.error("Couldn't leave. Try again.");
-                          } finally {
-                            setLeavingInFlight(false);
-                          }
-                        }}
-                        disabled={leavingInFlight}
-                        className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm disabled:opacity-60"
-                      >
-                        {leavingInFlight ? "Leaving…" : "Leave"}
-                      </button>
-                    </div>
+                  <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                  <p className="text-base font-semibold text-foreground">
+                    Leave crew?
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    You can rejoin this crew later.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLeavingCrewId(null)}
+                      disabled={leavingInFlight}
+                      className="flex-1 py-3 rounded-xl bg-muted text-foreground font-medium text-sm disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (leavingInFlight) return;
+                        setLeavingInFlight(true);
+                        try {
+                          await leaveCrew();
+                          setLeavingCrewId(null);
+                          toast.success("Left crew");
+                        } catch {
+                          toast.error("Couldn't leave. Try again.");
+                        } finally {
+                          setLeavingInFlight(false);
+                        }
+                      }}
+                      disabled={leavingInFlight}
+                      className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-medium text-sm disabled:opacity-60"
+                    >
+                      {leavingInFlight ? "Leaving…" : "Leave"}
+                    </button>
+                  </div>
                 </div>
               </BottomSheet>
 
@@ -1286,84 +1285,82 @@ export default function Social() {
                 className="bg-[var(--glass-bg)] border border-[var(--glass-border)]"
               >
                 <div className="p-5 space-y-4">
-                    <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                    <h3 className="text-base font-semibold text-foreground">
-                      Create a Crew
-                    </h3>
-                    <input
-                      type="text"
-                      aria-label="Crew name"
-                      placeholder="Crew name"
-                      value={newGroupName}
-                      onChange={(e) => setNewGroupName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground"
-                    />
-                    <input
-                      type="text"
-                      aria-label="Crew description"
-                      placeholder="Description"
-                      value={newGroupDesc}
-                      onChange={(e) => setNewGroupDesc(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground"
-                    />
-                    <div className="flex gap-2 flex-wrap">
-                      {[
-                        { name: "dumbbell", Icon: Dumbbell },
-                        { name: "footprints", Icon: Footprints },
-                        { name: "zap", Icon: Zap },
-                        { name: "target", Icon: Target },
-                        { name: "flame", Icon: Flame },
-                        { name: "salad", Icon: Salad },
-                        { name: "person", Icon: PersonStanding },
-                        { name: "medal", Icon: Medal },
-                        { name: "sunrise", Icon: Sunrise },
-                      ].map(({ name, Icon }) => (
-                        <button
-                          type="button"
-                          key={name}
-                          onClick={() => setNewGroupIcon(name)}
-                          className={`p-2.5 rounded-lg ${newGroupIcon === name ? "bg-primary/20 ring-2 ring-primary" : "bg-muted"}`}
-                        >
-                          <Icon
-                            size={24}
-                            className={
-                              newGroupIcon === name
-                                ? "text-primary"
-                                : "text-muted-foreground"
-                            }
-                          />
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!newGroupName.trim() || creatingCrew) return;
-                        setCreatingCrew(true);
-                        try {
-                          await createCrew(
-                            newGroupName,
-                            newGroupDesc,
-                            newGroupIcon || "dumbbell"
-                          );
-                          setShowCreateGroup(false);
-                          setNewGroupName("");
-                          setNewGroupDesc("");
-                          setNewGroupIcon("");
-                          toast.success("Crew created!");
-                        } catch {
-                          toast.error(
-                            "Failed to create crew. Please try again."
-                          );
-                        } finally {
-                          setCreatingCrew(false);
-                        }
-                      }}
-                      disabled={!newGroupName.trim() || creatingCrew}
-                      className="w-full py-3 rounded-xl bg-primary-strong text-white font-medium text-sm disabled:opacity-50"
-                    >
-                      {creatingCrew ? "Creating..." : "Create Crew"}
-                    </button>
+                  <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+                  <h3 className="text-base font-semibold text-foreground">
+                    Create a Crew
+                  </h3>
+                  <input
+                    type="text"
+                    aria-label="Crew name"
+                    placeholder="Crew name"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground"
+                  />
+                  <input
+                    type="text"
+                    aria-label="Crew description"
+                    placeholder="Description"
+                    value={newGroupDesc}
+                    onChange={(e) => setNewGroupDesc(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground"
+                  />
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { name: "dumbbell", Icon: Dumbbell },
+                      { name: "footprints", Icon: Footprints },
+                      { name: "zap", Icon: Zap },
+                      { name: "target", Icon: Target },
+                      { name: "flame", Icon: Flame },
+                      { name: "salad", Icon: Salad },
+                      { name: "person", Icon: PersonStanding },
+                      { name: "medal", Icon: Medal },
+                      { name: "sunrise", Icon: Sunrise },
+                    ].map(({ name, Icon }) => (
+                      <button
+                        type="button"
+                        key={name}
+                        onClick={() => setNewGroupIcon(name)}
+                        className={`p-2.5 rounded-lg ${newGroupIcon === name ? "bg-primary/20 ring-2 ring-primary" : "bg-muted"}`}
+                      >
+                        <Icon
+                          size={24}
+                          className={
+                            newGroupIcon === name
+                              ? "text-primary"
+                              : "text-muted-foreground"
+                          }
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!newGroupName.trim() || creatingCrew) return;
+                      setCreatingCrew(true);
+                      try {
+                        await createCrew(
+                          newGroupName,
+                          newGroupDesc,
+                          newGroupIcon || "dumbbell"
+                        );
+                        setShowCreateGroup(false);
+                        setNewGroupName("");
+                        setNewGroupDesc("");
+                        setNewGroupIcon("");
+                        toast.success("Crew created!");
+                      } catch {
+                        toast.error("Failed to create crew. Please try again.");
+                      } finally {
+                        setCreatingCrew(false);
+                      }
+                    }}
+                    disabled={!newGroupName.trim() || creatingCrew}
+                    className="w-full py-3 rounded-xl bg-primary-strong text-white font-medium text-sm disabled:opacity-50"
+                  >
+                    {creatingCrew ? "Creating..." : "Create Crew"}
+                  </button>
                 </div>
               </BottomSheet>
             </section>

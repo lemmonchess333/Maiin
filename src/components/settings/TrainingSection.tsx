@@ -22,7 +22,6 @@ import {
 import { setRaceGoalPatch } from "@/features/program/runModeResolution";
 import type { PreferredSplit } from "@/features/program/programTypes";
 import { logger } from "@/lib/logger";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /**
@@ -367,15 +366,12 @@ export default function TrainingSection({
                     "flex-1 min-h-[44px] px-3 rounded-lg text-xs font-medium",
                     "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
                     isSelected
-                      ? "text-white"
+                      ? "bg-running text-white"
                       : "bg-muted text-muted-foreground",
                     modeChangePending &&
                       !isSelected &&
                       "opacity-40 cursor-not-allowed"
                   )}
-                  style={
-                    isSelected ? { backgroundColor: THEME.running } : undefined
-                  }
                 >
                   {mode === "race_prep"
                     ? "Race Prep"
@@ -390,11 +386,7 @@ export default function TrainingSection({
           {modeChangePending ? (
             <p className="text-xs text-muted-foreground">Updating your plan…</p>
           ) : modeError ? (
-            <p
-              className="text-xs"
-              style={{ color: THEME.running }}
-              role="alert"
-            >
+            <p className="text-xs text-running" role="alert">
               {modeError}
             </p>
           ) : null}
@@ -406,8 +398,7 @@ export default function TrainingSection({
             {hasRaceGoal && !showRaceForm && (
               <div className="rounded-xl bg-card border border-border/40 px-3 py-2.5 flex items-center gap-2.5">
                 <Flag
-                  className="size-4 shrink-0"
-                  style={{ color: THEME.running }}
+                  className="size-4 shrink-0 text-running"
                   aria-hidden="true"
                 />
                 <div className="flex-1 min-w-0">
@@ -440,11 +431,7 @@ export default function TrainingSection({
             {showRaceForm && (
               <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Flag
-                    className="size-4"
-                    style={{ color: THEME.running }}
-                    aria-hidden="true"
-                  />
+                  <Flag className="size-4 text-running" aria-hidden="true" />
                   <p className="text-sm font-medium text-foreground">
                     {profile.raceGoal ? "Edit race goal" : "Set your race goal"}
                   </p>

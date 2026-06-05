@@ -25,12 +25,15 @@ describe("Banner — variants", () => {
     expect(banner.textContent).toContain("Race day passed");
   });
 
-  it("info variant tints surface with running coral at 6% (hex 0F)", () => {
+  it("info variant tints surface with the running coral token at 6%", () => {
     render(<Banner variant="info" title="Recovering" />);
     const banner = screen.getByRole("status") as HTMLElement;
-    // #D4637A with hex 0F alpha ≈ rgba(212, 99, 122, 0.06) once jsdom
-    // normalises the 8-digit hex.
-    expect(banner.style.background).toContain("rgba(212, 99, 122, 0.06)");
+    // DS1b: coral 6% tint (was `${THEME.running}0F`) + ~19% border now
+    // resolve via the --running token rather than inline 8-digit hex.
+    expect(banner.className).toContain("bg-running/6");
+    expect(banner.className).toContain("border-running/19");
+    // No inline surface colour on the token path.
+    expect(banner.style.background).toBe("");
   });
 
   it("warning variant tints surface with amber at 8% (hex 14)", () => {
@@ -49,12 +52,14 @@ describe("Banner — content composition", () => {
         title="Recovering"
         description="3 days left until you're back to base."
         action={<button type="button">Skip early</button>}
-      />,
+      />
     );
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("Recovering");
     expect(status).toHaveTextContent("3 days left until you're back to base.");
-    expect(screen.getByRole("button", { name: "Skip early" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Skip early" })
+    ).toBeInTheDocument();
   });
 
   it("omits the description block when description is not provided", () => {
@@ -70,7 +75,7 @@ describe("Banner — content composition", () => {
         variant="info"
         title="With custom icon"
         icon={<span data-testid="custom-icon">★</span>}
-      />,
+      />
     );
     expect(screen.getByTestId("custom-icon")).toBeInTheDocument();
   });
@@ -80,7 +85,7 @@ describe("Banner — dismiss affordance", () => {
   it("renders no close button when onDismiss is not provided (state-derived banners)", () => {
     render(<Banner variant="info" title="State-derived" />);
     expect(
-      screen.queryByRole("button", { name: /dismiss/i }),
+      screen.queryByRole("button", { name: /dismiss/i })
     ).not.toBeInTheDocument();
   });
 
@@ -92,7 +97,7 @@ describe("Banner — dismiss affordance", () => {
         title="Race elapsed"
         onDismiss={onDismiss}
         dismissLabel="Dismiss race-elapsed banner"
-      />,
+      />
     );
     const closeBtn = screen.getByRole("button", {
       name: "Dismiss race-elapsed banner",

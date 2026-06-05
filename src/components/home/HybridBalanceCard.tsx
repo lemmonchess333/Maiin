@@ -28,10 +28,7 @@ export default function HybridBalanceCard({
       <div className="p-4 rounded-2xl bg-card">
         <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
-          <Dumbbell
-            className="size-6 mx-auto"
-            style={{ color: THEME.lifting }}
-          />
+          <Dumbbell className="size-6 mx-auto text-lifting" />
           <p className="text-sm font-semibold text-foreground">Fresh week</p>
           <p className="text-xs text-muted-foreground">
             {targetLiftSessions > 0 && targetRunSessions > 0
@@ -59,6 +56,10 @@ export default function HybridBalanceCard({
   const liftDiff = liftSessions - targetLiftSessions;
   const runDiff = runSessions - targetRunSessions;
   let balanceLabel: string;
+  // DS1b: balanceColor stays inline — it spans positive/lifting/running/
+  // warning; the positive/warning branches are status colours whose THEME
+  // hex may not equal the --success/--warning tokens, so a class swap would
+  // risk a colour shift. The lift/run branches ride along inline.
   let balanceColor: string;
 
   if (liftDiff >= 0 && runDiff >= 0) {
@@ -114,9 +115,8 @@ export default function HybridBalanceCard({
           >
             {liftPct > 0 && (
               <motion.div
-                className="h-full"
+                className="h-full bg-lifting"
                 style={{
-                  backgroundColor: THEME.lifting,
                   borderRadius: runPct > 0 ? "9999px 0 0 9999px" : "9999px",
                 }}
                 initial={
@@ -132,9 +132,8 @@ export default function HybridBalanceCard({
             )}
             {runPct > 0 && (
               <motion.div
-                className="h-full"
+                className="h-full bg-running"
                 style={{
-                  backgroundColor: THEME.running,
                   borderRadius: liftPct > 0 ? "0 9999px 9999px 0" : "9999px",
                 }}
                 initial={
@@ -167,7 +166,7 @@ export default function HybridBalanceCard({
         {/* Stats row — sessions + volume/distance with labels */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5">
-            <Dumbbell className="size-3" style={{ color: THEME.lifting }} />
+            <Dumbbell className="size-3 text-lifting" />
             <span className="text-muted-foreground">Lifts</span>
             <span className="font-mono tabular-nums">
               <span className="font-semibold text-foreground">
@@ -184,7 +183,7 @@ export default function HybridBalanceCard({
             )}
           </div>
           <div className="flex items-center gap-1.5">
-            <Footprints className="size-3" style={{ color: THEME.running }} />
+            <Footprints className="size-3 text-running" />
             <span className="text-muted-foreground">Runs</span>
             <span className="font-mono tabular-nums">
               <span className="font-semibold text-foreground">

@@ -150,14 +150,13 @@ describe("IconButton — variants", () => {
     expect(btn.className).toContain("bg-destructive");
   });
 
-  it("applies inline style for sport variant (theme.running color)", () => {
+  it("sport variant fills via the bg-running token class", () => {
     render(
       <IconButton aria-label="Start" variant="sport" icon={<StubIcon />} />
     );
     const btn = screen.getByRole("button", { name: "Start" });
-    /* sport variant carries an inline backgroundColor (THEME.running)
-       because Tailwind can't drive arbitrary token-based hex values. */
-    expect(btn.getAttribute("style")).toMatch(/background-color/i);
+    // DS1b: sport resolves via the --running token, not inline style.
+    expect(btn.className).toContain("bg-running");
   });
 });
 

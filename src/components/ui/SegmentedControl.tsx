@@ -21,9 +21,8 @@
  *   - 44px touch-target floor, focus ring, reduced-motion-aware
  */
 import { useRef } from "react";
-import type { CSSProperties, ReactNode, Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { cn } from "@/lib/utils";
-import { THEME } from "@/lib/theme";
 
 export interface SegmentedOption<T extends string | number> {
   value: T;
@@ -132,10 +131,6 @@ function SegmentedControl<T extends string | number>({
     >
       {options.map((opt, i) => {
         const selected = opt.value === value;
-        const runningSelectedStyle: CSSProperties | undefined =
-          selected && tone === "running"
-            ? { backgroundColor: THEME.running }
-            : undefined;
         return (
           <button
             key={String(opt.value)}
@@ -154,11 +149,10 @@ function SegmentedControl<T extends string | number>({
               layout === "fill" ? "flex-1" : "px-4",
               selected
                 ? tone === "running"
-                  ? "text-white"
+                  ? "bg-running text-white"
                   : "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground"
             )}
-            style={runningSelectedStyle}
           >
             {opt.label}
           </button>

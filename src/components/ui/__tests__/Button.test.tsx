@@ -76,26 +76,26 @@ describe("Button — variants", () => {
   // sport = coral-solid Start/Go CTA (pairs with brand-purple primary).
   // sport-tinted = coral-tinted Skip-style destructive (distinct from
   // the red `destructive` variant which stays for genuinely destructive
-  // flows). Both use inline style via THEME.running because the
-  // running coral isn't an HSL token yet.
-  it("sport variant fills with the running coral via inline style", () => {
+  // flows). DS1b: both now resolve via the --running token, so they carry
+  // bg-running / bg-running/10 classes rather than inline style.
+  it("sport variant fills with the running coral via the bg-running token", () => {
     render(<Button variant="sport">Start</Button>);
     const btn = screen.getByRole("button") as HTMLButtonElement;
-    expect(btn.style.backgroundColor).toBe("rgb(212, 99, 122)"); // #D4637A
+    expect(btn.className).toContain("bg-running");
     expect(btn.className).toContain("text-white");
+    // No inline colour — the token class drives the fill now.
+    expect(btn.style.backgroundColor).toBe("");
   });
 
   it("sport-tinted variant uses a coral tint surface + coral text", () => {
     render(<Button variant="sport-tinted">Skip recovery</Button>);
     const btn = screen.getByRole("button") as HTMLButtonElement;
-    // 10% (1A hex) tint of coral
-    expect(btn.style.backgroundColor.replace(/\s/g, "")).toMatch(
-      /rgba\(212,99,122,0\.1/
-    );
-    expect(btn.style.color).toBe("rgb(212, 99, 122)");
+    // 10% (1A hex ≈ 10%) coral tint surface + full-saturation coral text.
+    expect(btn.className).toContain("bg-running/10");
+    expect(btn.className).toContain("text-running");
   });
 
-  it("caller-supplied style overrides variant inline style fields", () => {
+  it("caller-supplied style is applied to the button", () => {
     render(
       <Button variant="sport" style={{ backgroundColor: "rgb(0, 0, 0)" }}>
         Override
