@@ -39,6 +39,7 @@ import { toast } from "@/lib/toast";
 
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
+import { IconButton } from "../ui/IconButton";
 
 function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   const lats = preview.map((p) => p.lat);
@@ -912,15 +913,12 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     if (!user || activity?.authorId === user.uid) return null;
     return (
       <div className="relative">
-        <button
-          type="button"
+        <IconButton
           onClick={() => setShowMenu(!showMenu)}
           aria-label="More options"
           aria-expanded={showMenu}
-          className="p-2.5 rounded-lg hover:bg-muted transition-colors"
-        >
-          <MoreHorizontal className="size-4 text-muted-foreground" />
-        </button>
+          icon={<MoreHorizontal />}
+        />
         {showMenu && (
           <>
             <div
