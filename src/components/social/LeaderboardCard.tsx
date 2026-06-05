@@ -100,9 +100,9 @@ export default function LeaderboardCard({
     <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         {icon === "footprints" ? (
-          <Footprints className="size-5" style={{ color: THEME.running }} />
+          <Footprints className="size-5 text-running" />
         ) : icon === "dumbbell" ? (
-          <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+          <Dumbbell className="size-5 text-lifting" />
         ) : (
           <Zap className="size-5" style={{ color: THEME.brand }} />
         )}

@@ -271,6 +271,10 @@ function ShareCard({
             )}
             {!hidden.has("distance") && (
               <div className="text-center">
+                {/* DS1b: ShareCard stays on inline THEME hex — it's captured
+                    by html-to-image, whose CSS-variable resolution during the
+                    DOM-clone is unreliable; a token swap could silently break
+                    the rendered share image. Inline rgb is capture-safe. */}
                 <p
                   className="text-6xl font-bold font-mono"
                   style={{ color: THEME.running }}
