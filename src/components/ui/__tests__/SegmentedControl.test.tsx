@@ -183,7 +183,7 @@ describe("SegmentedControl", () => {
       />
     );
     const selected = screen.getByRole("radio", { name: "10K" });
-    // THEME.running coral — jsdom normalises hex to rgb.
-    expect(selected.getAttribute("style")).toContain("background-color");
+    // DS1b: running tone resolves via the --running token class.
+    expect(selected.className).toContain("bg-running");
   });
 });
