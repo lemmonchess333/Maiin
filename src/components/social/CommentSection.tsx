@@ -135,13 +135,13 @@ export default function CommentSection({
           placeholder="Add a comment..."
           aria-label="Add a comment"
           disabled={sending}
-          className="flex-1 text-xs px-3 py-2 rounded-lg bg-muted border border-border"
+          className="flex-1 text-xs px-3 min-h-[44px] rounded-lg bg-muted border border-border"
         />
         <button
           type="button"
           onClick={handleSend}
           disabled={sending || !text.trim()}
-          className="text-xs px-3 py-2 rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40"
+          className="text-xs px-4 min-h-[44px] rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40"
         >
           Send
         </button>
