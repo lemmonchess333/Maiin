@@ -158,6 +158,25 @@ describe("aggregateWindow", () => {
     expect(agg.runSessions).toBe(0);
     expect(agg.mealDaysLogged).toBe(0);
     expect(agg.dayCount).toBe(7);
+    expect(agg.activeWeeks).toBe(0); // PERF-M: no activity → 0 active weeks
+  });
+
+  it("counts distinct active weeks across the window (PERF-M)", () => {
+    const wStart = new Date("2026-05-01T00:00:00Z");
+    const wEnd = new Date("2026-05-29T00:00:00Z"); // 28-day baseline window
+    const lift = (date) => ({
+      date,
+      exercises: [{ category: "lift", sets: [{ weightKg: 100, reps: 5 }] }],
+    });
+    const workouts = [
+      lift("2026-05-02"), // week 0
+      lift("2026-05-05"), // week 0 (same week — counts once)
+      lift("2026-05-16"), // week 2
+      // weeks 1 (May 8-14) and 3 (May 22-28): no activity
+    ];
+    const agg = aggregateWindow(wStart, wEnd, workouts, [], [], []);
+    expect(agg.liftSessions).toBe(3);
+    expect(agg.activeWeeks).toBe(2); // weeks 0 & 2 only — NOT floor(28/7)=4
   });
 
   it("aggregates lift tonnage within window", () => {
@@ -252,6 +271,32 @@ describe("computeBaselineFromAgg", () => {
     };
     const bl = computeBaselineFromAgg(baselineAgg);
     expect(bl.liftTonnage).toBe(1000); // still 4000 * (7/28)
+  });
+
+  it("weeksUsed reflects activeWeeks, not calendar weeks (PERF-M)", () => {
+    // Zero-activity full window → 0 (deload-suppression gate stays closed for a
+    // gap-returning user), not floor(28/7)=4.
+    expect(
+      computeBaselineFromAgg({
+        liftTonnage: 0,
+        liftHardSets: 0,
+        runKm: 0,
+        runLongKm: 0,
+        activeWeeks: 0,
+        dayCount: 28,
+      }).weeksUsed
+    ).toBe(0);
+    // Partial activity → the real active-week count.
+    expect(
+      computeBaselineFromAgg({
+        liftTonnage: 2000,
+        liftHardSets: 20,
+        runKm: 10,
+        runLongKm: 6,
+        activeWeeks: 2,
+        dayCount: 28,
+      }).weeksUsed
+    ).toBe(2);
   });
 });
 
