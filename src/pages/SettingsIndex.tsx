@@ -182,7 +182,7 @@ export default function SettingsIndex() {
                 haptic();
                 navigate(`/user/${user.uid}`);
               }}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+              className="px-3 min-h-[44px] inline-flex items-center rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
             >
               View Profile
             </button>
