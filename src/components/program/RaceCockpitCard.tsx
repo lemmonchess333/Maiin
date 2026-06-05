@@ -18,7 +18,6 @@
 
 import { ChevronRight, Flag } from "lucide-react";
 import { format } from "date-fns";
-import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import PhaseRail from "./PhaseRail";
 
@@ -69,10 +68,7 @@ export default function RaceCockpitCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1 min-w-0">
-          <div
-            className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider"
-            style={{ color: THEME.running }}
-          >
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-running">
             <Flag className="size-3.5" aria-hidden="true" />
             Race plan
           </div>
@@ -123,8 +119,8 @@ export default function RaceCockpitCard({
         <div className="space-y-2">
           <div className="h-2 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${progress}%`, backgroundColor: THEME.running }}
+              className="h-full rounded-full transition-all bg-running"
+              style={{ width: `${progress}%` }}
             />
           </div>
           <PhaseRail activePhase={phaseLabel} />
@@ -132,10 +128,7 @@ export default function RaceCockpitCard({
       )}
 
       {inTaper && (
-        <p
-          className="text-[10px] font-semibold uppercase tracking-wider"
-          style={{ color: THEME.running }}
-        >
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-running">
           Taper week
           {" · "}
           race in {daysToRace} {daysToRace === 1 ? "day" : "days"}

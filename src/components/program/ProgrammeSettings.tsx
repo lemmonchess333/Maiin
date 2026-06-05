@@ -283,7 +283,7 @@ const EQUIPMENT_OPTIONS: {
     id: "full_gym",
     label: "Full gym",
     desc: "Barbells, dumbbells, cables, machines",
-    icon: <Warehouse size={20} style={{ color: THEME.lifting }} />,
+    icon: <Warehouse size={20} className="text-lifting" />,
   },
   {
     id: "home_gym",
@@ -697,7 +697,7 @@ export default function ProgrammeSettings({
                 selected={runMode === opt.id}
                 onSelect={() => setRunMode(opt.id)}
                 index={i}
-                icon={<Footprints size={18} style={{ color: THEME.running }} />}
+                icon={<Footprints size={18} className="text-running" />}
                 accent={THEME.running}
                 label={opt.label}
                 desc={opt.desc}
@@ -721,8 +721,7 @@ export default function ProgrammeSettings({
                 max={7}
                 value={weeklyRunDays}
                 onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-                className="w-full mt-1"
-                style={{ accentColor: THEME.running }}
+                className="w-full mt-1 accent-running"
               />
               {liftDays + weeklyRunDays > 7 && (
                 <p className="text-xs mt-1 text-muted-foreground">
