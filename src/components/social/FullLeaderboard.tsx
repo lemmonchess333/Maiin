@@ -87,7 +87,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         <button
           type="button"
           onClick={onBack}
-          className="p-2.5 rounded-lg hover:bg-muted transition-colors"
+          className="size-11 inline-flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
           aria-label="Back"
         >
           <ChevronLeft className="size-5" />
