@@ -3007,11 +3007,20 @@ function _decideReconciliationActions(
       // stored recoveryEndDate IS the race recovery was entered for
       // (raceGoalIsCompletedRace). A current raceGoal that doesn't reproduce
       // it is a newer race set during recovery → kept (stay race_prep).
-      const currentRaceGoal = runPlan.raceGoal || null;
+      // The user's CURRENT declared race lives on the PROFILE; the runPlan
+      // still carries the race recovery was ENTERED for (its anchor reproduces
+      // the stored recoveryEndDate). Reading currentRaceGoal from the runPlan
+      // made a newer race set during recovery INVISIBLE — when the client's
+      // in-recovery branch preserves the stale (completed) runPlan.raceGoal,
+      // the sweep saw "same race" and DELETED the successor, dropping the user
+      // to freeform (C-RUN). Read the current race from the profile so a
+      // successor is preserved; anchor the completed race off the runPlan.
+      const currentRaceGoal = (profile && profile.raceGoal) || null;
+      const recoveryRaceGoal = runPlan.raceGoal || null;
       const anchorMatches =
-        !!currentRaceGoal &&
-        _recoveryEndDateForRace(currentRaceGoal) === runPlan.recoveryEndDate;
-      const completedRaceGoal = anchorMatches ? currentRaceGoal : null;
+        !!recoveryRaceGoal &&
+        _recoveryEndDateForRace(recoveryRaceGoal) === runPlan.recoveryEndDate;
+      const completedRaceGoal = anchorMatches ? recoveryRaceGoal : null;
       const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
 
       if (exit.runMode === "freeform") {
@@ -3025,10 +3034,18 @@ function _decideReconciliationActions(
         // expressible via a recursive merge write.
         clearedRunPlan.raceGoal = null;
         profilePayload = { runMode: "freeform", raceGoal: null };
-      } else if (profile && profile.runMode !== exit.runMode) {
-        // Newer race set during recovery → stay race_prep. Defensive co-write
-        // so a drifted profile.runMode converges to the materialized value.
-        profilePayload = { runMode: exit.runMode };
+      } else {
+        // Newer race set during recovery → stay race_prep with the SUCCESSOR.
+        // Materialize it onto the runPlan too: the runPlan.raceGoal mirror may
+        // be stale (the client's in-recovery branch preserves the completed
+        // race), so without this the no-show / recovery-entry deciders would
+        // keep acting on the already-completed race. The full plan is
+        // regenerated client-side once phase is cleared. Defensive runMode
+        // co-write so a drifted profile.runMode converges.
+        clearedRunPlan.raceGoal = currentRaceGoal;
+        if (profile && profile.runMode !== exit.runMode) {
+          profilePayload = { runMode: exit.runMode };
+        }
       }
 
       updatePayload.runPlan = clearedRunPlan;
