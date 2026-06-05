@@ -315,6 +315,11 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState({
+        // Isolate the L3 branch: empty runDays so the L1 no-show pass is
+        // short-circuited (a planned type:"race" day with a 20-days-past race
+        // date would otherwise correctly no-show — #1128 made the lookup find
+        // it by type, not just exact date). Mirrors the grace test below.
+        runDays: [],
         runPlan: {
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: nDaysAgo(20) },
