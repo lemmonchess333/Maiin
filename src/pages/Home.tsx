@@ -1035,6 +1035,49 @@ export default function Home() {
         visible={!profile?.age || !profile?.sex}
       />
 
+      {/* Progressive profiling (fast-start #1087 deferred goal weight).
+          Onboarding now saves goalWeightKg == weightKg (a maintenance default,
+          no direction expressed), so once the user has logged food, invite them
+          to set a real target for a precise calorie offset. Hides once a goal
+          weight diverges from current weight (a direction is set) or on
+          dismiss. Lower priority than the age/sex gap (which breaks TDEE
+          outright) but above the generic nutrition explainer. */}
+      <ContextualTipBanner
+        tipKey="goal-weight-v1"
+        lanePriority={15}
+        title="Set a goal weight"
+        description="Add a target weight so we can dial in your calories — right now you're on a maintenance default."
+        visible={
+          !!profile &&
+          totalLifetimeMeals > 0 &&
+          (profile.goalWeightKg == null ||
+            profile.goalWeightKg === profile.weightKg)
+        }
+        ctaLabel="Set a goal weight"
+        ctaHref="/settings"
+      />
+
+      {/* Progressive profiling: race-goal invitation. Fast-start runners default
+          to freeform (Run9a); once they've logged a run, invite race-prep via
+          the Race Goal Planner (/settings/training, Run8/Run10). Hides when
+          already race_prep with a date, or on dismiss. Discovery nudge, so it
+          sits at the bottom of the lane priority. */}
+      <ContextualTipBanner
+        tipKey="race-goal-v1"
+        lanePriority={5}
+        title="Training for a race?"
+        description="Set a target date and we'll shape your runs into a race plan."
+        visible={
+          !!profile &&
+          !runStatsLoading &&
+          lifetimeRunCount > 0 &&
+          profile.runMode !== "race_prep" &&
+          !profile.raceGoal?.targetDate
+        }
+        ctaLabel="Set a race goal"
+        ctaHref="/settings/training"
+      />
+
       {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
           bottom of the scroll it was below the fold on first load. Now lives
