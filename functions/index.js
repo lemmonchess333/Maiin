@@ -4486,52 +4486,56 @@ exports.onCommentCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("comments/{activityId}/items/{commentId}")
   .onCreate(async (snap, context) => {
+    const { activityId, commentId } = context.params;
     try {
       const data = snap.data();
       if (!profanityFilter.containsProfanity(data.text)) return;
 
-      functions.logger.warn("onCommentCreated.auto_delete", {
-        activityId: context.params.activityId,
-        commentId: context.params.commentId,
-        authorId: data.authorId,
-      });
+      const db = admin.firestore();
+      // At-least-once delivery + retries: do the delete, the commentCount
+      // decrement, and the audit write ATOMICALLY and idempotently. Re-reading
+      // the comment inside a transaction and bailing when it's already gone
+      // stops a re-delivery from double-decrementing the counter (it could go
+      // negative) or duplicating the audit record (CROSS-H2). The audit doc is
+      // keyed on commentId so a re-run overwrites rather than appends, and the
+      // activity decrement only fires when the activity still exists.
+      const handled = await db.runTransaction(async (tx) => {
+        const commentSnap = await tx.get(snap.ref);
+        if (!commentSnap.exists) return false; // an earlier delivery handled it
+        const activityRef = db.doc(`activities/${activityId}`);
+        const activitySnap = await tx.get(activityRef);
 
-      // Write the audit record FIRST so a partial failure on
-      // delete still leaves a trace.
-      await admin
-        .firestore()
-        .collection("commentModeration")
-        .add({
+        tx.delete(snap.ref);
+        // Redact the offending text — the audit holds the cleaned form, not
+        // the original. Moderators don't need to re-read the slur.
+        tx.set(db.collection("commentModeration").doc(commentId), {
           action: "auto_delete",
           reason: "profanity",
-          activityId: context.params.activityId,
-          commentId: context.params.commentId,
+          activityId,
+          commentId,
           authorId: data.authorId || null,
-          // Redact the offending text — the audit record holds the
-          // cleaned form, not the original. Moderators don't need
-          // to re-read the slur.
           textRedacted: profanityFilter.cleanProfanity(data.text || ""),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-      await snap.ref.delete();
-      // Best-effort: decrement the parent activity's commentCount
-      // so the counter stays accurate. Wrapped in try so a stale
-      // activity doc doesn't fail the cleanup.
-      try {
-        await admin
-          .firestore()
-          .doc(`activities/${context.params.activityId}`)
-          .update({
+        if (activitySnap.exists) {
+          tx.update(activityRef, {
             commentCount: admin.firestore.FieldValue.increment(-1),
           });
-      } catch (_) {
-        // Activity doc may have been deleted — silent.
+        }
+        return true;
+      });
+
+      if (handled) {
+        functions.logger.warn("onCommentCreated.auto_delete", {
+          activityId,
+          commentId,
+          authorId: data.authorId,
+        });
       }
     } catch (err) {
       functions.logger.error("onCommentCreated.error", {
-        activityId: context.params.activityId,
-        commentId: context.params.commentId,
+        activityId,
+        commentId,
         message: err.message,
       });
     }
