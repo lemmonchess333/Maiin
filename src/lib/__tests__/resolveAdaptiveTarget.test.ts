@@ -36,6 +36,7 @@ const baseInput = {
   isPro: true,
   isManualOverride: false,
   formulaTarget: 2200,
+  goalOffset: 0,
   intakeByDay: [] as { dateKey: string; kcal: number }[],
   weighIns: [] as { dateKey: string; weightKg: number }[],
   loaded: true,
@@ -164,5 +165,59 @@ describe("resolveAdaptiveTarget — latch-derived display", () => {
     });
     expect(view.ready).toBe(true);
     expect(view.stalled).toBe(false);
+  });
+});
+
+describe("resolveAdaptiveTarget — deficit/surplus preservation (C-NUTRITION)", () => {
+  // avgIntake N, flat weight (slope 0) → learned MAINTENANCE = N.
+  function windowAtIntake(kcal: number) {
+    const intakeByDay = Array.from({ length: 14 }, (_, i) => ({
+      dateKey: `2026-05-${String(i + 1).padStart(2, "0")}`,
+      kcal,
+    }));
+    const weighIns = [1, 3, 5, 7, 9, 11, 13, 15].map((d) => ({
+      dateKey: `2026-05-${String(d).padStart(2, "0")}`,
+      weightKg: 80,
+    }));
+    return { intakeByDay, weighIns };
+  }
+
+  it("cut: learned target keeps the deficit (maintenance + offset), not bare maintenance", () => {
+    // Learned maintenance 2350; cut formula target 1850 (= base 2350 − 500).
+    const { view, capState } = resolveAdaptiveTarget({
+      ...baseInput,
+      formulaTarget: 1850,
+      goalOffset: -500,
+      ...windowAtIntake(2350),
+    });
+    expect(view.source).toBe("learned");
+    // rawLearned = 2350 + (−500) = 1850; seeded from formula 1850 → holds 1850.
+    // Pre-fix this walked toward bare maintenance 2350 (deficit silently erased).
+    expect(view.value).toBe(1850);
+    expect(capState?.lastApplied).toBe(1850);
+  });
+
+  it("lean bulk: learned target keeps the surplus (maintenance + offset)", () => {
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      formulaTarget: 2650, // base 2350 + 300
+      goalOffset: 300,
+      ...windowAtIntake(2350),
+    });
+    expect(view.value).toBe(2650);
+  });
+
+  it("applies the learned correction but still keeps the deficit when real maintenance exceeds the formula", () => {
+    // Real learned maintenance 2500 > formula's assumed 2350; cut.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      formulaTarget: 1850, // formula assumed base 2350 − 500
+      goalOffset: -500,
+      ...windowAtIntake(2500),
+    });
+    // rawLearned = 2500 − 500 = 2000; first step from 1850 capped at +150 → 2000.
+    // Target rises to reflect the higher real maintenance but stays 500 below it,
+    // NOT erased up to 2500.
+    expect(view.value).toBe(2000);
   });
 });
