@@ -202,7 +202,7 @@ function FoodComposerCard({
               setTargetMeal(null);
             }}
             aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg active:scale-90 text-muted-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
           >
             <X className="size-4" />
           </button>
