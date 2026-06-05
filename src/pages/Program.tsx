@@ -1455,7 +1455,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <CalendarDays className="size-4.5 text-muted-foreground" />
+                  <CalendarDays className="size-5 text-muted-foreground" />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
                       Edit weekly layout
@@ -1480,7 +1480,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
                 >
-                  <Settings2 className="size-4.5 text-muted-foreground" />
+                  <Settings2 className="size-5 text-muted-foreground" />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
                       Edit programme
