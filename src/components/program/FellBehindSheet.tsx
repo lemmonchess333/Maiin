@@ -28,7 +28,6 @@
 
 import { Footprints } from "lucide-react";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
-import { THEME } from "@/lib/theme";
 
 interface FellBehindSheetProps {
   open: boolean;
@@ -106,11 +105,8 @@ export default function FellBehindSheet({
       logTag="fellBehind"
     >
       <div className="flex items-center gap-3">
-        <div
-          className="size-10 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${THEME.running}1A` }}
-        >
-          <Footprints className="size-5" style={{ color: THEME.running }} />
+        <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+          <Footprints className="size-5 text-running" />
         </div>
         <div>
           <p className="text-xs uppercase tracking-wider text-muted-foreground">

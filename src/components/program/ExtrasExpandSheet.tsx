@@ -26,7 +26,6 @@ import { useNavigate } from "react-router-dom";
 import { Footprints } from "lucide-react";
 import { format } from "date-fns";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
@@ -158,11 +157,8 @@ function ExtraRunListItem({
         "hover:border-border"
       )}
     >
-      <div
-        className="size-8 rounded-lg flex items-center justify-center shrink-0"
-        style={{ backgroundColor: `${THEME.running}1A` }}
-      >
-        <Footprints className="size-4" style={{ color: THEME.running }} />
+      <div className="size-8 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
+        <Footprints className="size-4 text-running" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">
