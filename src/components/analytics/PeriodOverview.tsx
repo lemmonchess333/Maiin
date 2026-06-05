@@ -97,7 +97,7 @@ export default function PeriodOverview({
 
   const stats = [
     {
-      icon: <Footprints className="size-4" style={{ color: THEME.running }} />,
+      icon: <Footprints className="size-4 text-running" />,
       label: "Runs",
       value: runCount,
       sub: runDistance > 0 ? `${runDistance.toFixed(1)} km` : "—",
@@ -106,7 +106,7 @@ export default function PeriodOverview({
       ringMax: runsTarget,
     },
     {
-      icon: <Dumbbell className="size-4" style={{ color: THEME.lifting }} />,
+      icon: <Dumbbell className="size-4 text-lifting" />,
       label: "Sessions",
       value: liftCount,
       sub: formatVolumeSub(liftVolume),
