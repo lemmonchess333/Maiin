@@ -193,7 +193,7 @@ export function Dialog({
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="absolute top-3 right-3 size-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="absolute top-3 right-3 size-11 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <X className="size-4" aria-hidden="true" />
               </button>

@@ -101,6 +101,7 @@ import {
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   localDateString,
   localWeekKey,
@@ -280,9 +281,7 @@ export default function ProgrammeRunSection({
     () => {
       if (typeof window === "undefined") return false;
       try {
-        return (
-          window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1"
-        );
+        return window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1";
       } catch {
         return false;
       }
@@ -1112,17 +1111,15 @@ export default function ProgrammeRunSection({
               </p>
             </div>
             {/* Overflow → race-day DayActionSheet variant (DNF / DNS, PR1d). */}
-            <button
-              type="button"
+            <IconButton
               onClick={() => {
                 haptic();
                 setManageDate(raceDayRunDay?.date ?? null);
               }}
               aria-label="More options for race day"
-              className="shrink-0 size-9 -my-1 -mr-1 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 motion-safe:active:scale-95"
-            >
-              <MoreVertical className="size-5" aria-hidden="true" />
-            </button>
+              icon={<MoreVertical aria-hidden="true" />}
+              className="shrink-0 -mr-1"
+            />
           </div>
           <button
             type="button"
