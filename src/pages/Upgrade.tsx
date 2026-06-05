@@ -185,7 +185,7 @@ export default function Upgrade() {
           <button
             onClick={() => navigate("/settings")}
             type="button"
-            className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             aria-label="Back to Settings"
           >
             <ArrowLeft className="size-5 text-foreground" />
