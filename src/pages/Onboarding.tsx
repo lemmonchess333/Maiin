@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
@@ -274,6 +274,21 @@ const STEP_META: { title: string; subtitle: string }[] = [
   },
 ];
 
+// Stable, non-PII step identifiers for funnel analytics — parallel to
+// STEP_META (same order). Used as the `step` dimension on
+// onboarding_step_viewed / _completed so dashboards attribute drop-off to a
+// named step rather than a bare index.
+const STEP_IDS = [
+  "goal",
+  "days",
+  "equipment",
+  "run",
+  "injuries",
+  "about",
+  "preview",
+  "confirm",
+] as const;
+
 /* ============================
    COMPONENT
 ============================ */
@@ -288,6 +303,16 @@ export default function Onboarding() {
   // TOTAL_STEPS.
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+
+  // Funnel: emit a step-view on mount and on each step change. Fires for
+  // every onboarding (not first-only), so dashboards see per-step drop-off.
+  // Non-PII — stable step id + index only.
+  useEffect(() => {
+    trackLifecycle("onboarding_step_viewed", {
+      step: STEP_IDS[step],
+      stepIndex: step,
+    });
+  }, [step]);
 
   // ── Display name (DEFERRED from the fast-start flow — no UI step)
   // The dedicated name step was removed; displayName is now defaulted so the
@@ -690,6 +715,13 @@ export default function Onboarding() {
 
       // Save succeeded — close the top of the activation funnel before
       // leaving. Non-PII dimensions only (goal enum, days/week, run mode).
+      // first_plan_generated marks the first plan ever (onboarding runs once),
+      // distinct from onboarding_completed; both fire on full save success.
+      trackLifecycle("first_plan_generated", {
+        primaryGoal,
+        daysPerWeek,
+        runMode: effectiveRunMode,
+      });
       trackLifecycle("onboarding_completed", {
         primaryGoal,
         daysPerWeek,
@@ -1597,6 +1629,10 @@ export default function Onboarding() {
           type="button"
           onClick={() => {
             if (step < TOTAL_STEPS - 1) {
+              trackLifecycle("onboarding_step_completed", {
+                step: STEP_IDS[step],
+                stepIndex: step,
+              });
               setStep((s) => s + 1);
             } else {
               handleFinish();
