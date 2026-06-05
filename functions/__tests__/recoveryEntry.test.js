@@ -225,6 +225,21 @@ describe("_decideRecoveryEntry — positive cases", () => {
     expect(result.payload.runPlan.recoveryEndDate).toBe("2026-05-29");
   });
 
+  it("#1128 — finds the race day by type when its date is the long-run slot, not the race date (weekday race)", () => {
+    // Weekday race: the generator placed the race template on the long-run
+    // weekday (2026-05-17), so runDay.date !== targetDate (2026-05-15). The
+    // saved run is logged on the actual race date. Pre-fix Gate 5's exact
+    // date-match missed the race day → write:false → recovery never entered.
+    const result = _decideRecoveryEntry(
+      profile(),
+      programState({ runDays: [raceDayRunDay({ date: "2026-05-17" })] }),
+      savedRun()
+    );
+    expect(result.write).toBe(true);
+    expect(result.raceDayRunDayId).toBe(RACE_DAY_ID);
+    expect(result.payload.runPlan.phase).toBe("recovery");
+  });
+
   it("writes at exactly 95% (≥ boundary)", () => {
     const result = _decideRecoveryEntry(
       profile(),
