@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { Spinner } from "@/components/ui/Spinner";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface NutrientData {
   name: string;
@@ -147,14 +148,12 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
           <ScanLine className="size-4 text-primary" />
           Barcode Scanner
         </h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 rounded-lg hover:bg-muted"
+        <IconButton
           aria-label="Close scanner"
-        >
-          <X className="size-4 text-muted-foreground" />
-        </button>
+          onClick={onClose}
+          icon={<X />}
+          className="text-muted-foreground"
+        />
       </div>
 
       <AnimatePresence mode="wait">

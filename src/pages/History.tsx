@@ -1140,7 +1140,10 @@ export default function History() {
                   className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
                   style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
                 >
-                  <LineChart className="size-6" style={{ color: THEME.brand }} />
+                  <LineChart
+                    className="size-6"
+                    style={{ color: THEME.brand }}
+                  />
                 </div>
                 <p className="text-base font-bold text-foreground">
                   No analytics yet
@@ -1221,7 +1224,7 @@ export default function History() {
                     </div>
                     <Link
                       to="/run"
-                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white"
                       style={{ background: THEME.running }}
                     >
                       Start Run
@@ -1302,7 +1305,7 @@ export default function History() {
                     </div>
                     <Link
                       to="/program"
-                      className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white"
                       style={{ background: THEME.lifting }}
                     >
                       Start Lift
@@ -1409,7 +1412,7 @@ export default function History() {
                       </div>
                       <Link
                         to="/food"
-                        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                        className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white"
                         style={{ background: THEME.success }}
                       >
                         Log Meal
