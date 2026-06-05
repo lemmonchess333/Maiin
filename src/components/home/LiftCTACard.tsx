@@ -28,21 +28,14 @@ export default function LiftCTACard({
         trackHomeEvent("home_card_tapped", { card: "today_workout" });
         navigate("/program");
       }}
-      className="w-full rounded-xl bg-card text-left p-4"
-      style={{ backgroundColor: THEME.lifting + "14" }}
+      className="w-full rounded-xl bg-lifting/8 text-left p-4"
     >
       <div className="flex items-center gap-3">
-        <div
-          className="size-10 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: THEME.lifting + "18" }}
-        >
-          <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+        <div className="size-10 rounded-lg flex items-center justify-center bg-lifting/9">
+          <Dumbbell className="size-5 text-lifting" />
         </div>
         <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-semibold mb-0.5"
-            style={{ color: THEME.lifting }}
-          >
+          <p className="text-xs font-semibold mb-0.5 text-lifting">
             {isFirst ? "Your first workout" : "Today · Lift day"}
           </p>
           <p className="text-sm font-bold text-foreground truncate">
