@@ -1,12 +1,13 @@
-name: Deploy Firestore Rules
+name: Deploy Firestore Rules & Indexes
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'firestore.rules'
-      - 'firebase.json'
+      - "firestore.rules"
+      - "firestore.indexes.json"
+      - "firebase.json"
 
 jobs:
   deploy:
@@ -28,3 +29,16 @@ jobs:
 
       - name: Deploy Firestore rules
         run: firebase deploy --only firestore:rules --project adaptive-fitness-af8bb --force
+
+      # Indexes were previously never deployed by CI — a composite index the app
+      # needed (activities visibility+createdAt, for the Explore/Discover feed)
+      # was missing in prod, so getDiscoverFeed threw failed-precondition and the
+      # Explore tab showed "Couldn't load the community feed". Deploy indexes too.
+      #
+      # Intentionally NO --force here: a forced index deploy DELETES any prod
+      # index not present in firestore.indexes.json (which may be incomplete, if
+      # an index was ever created from a console "create index" link). Without
+      # --force the deploy is additive — it creates missing indexes and leaves
+      # untracked ones alone (deletions are skipped in non-interactive CI).
+      - name: Deploy Firestore indexes
+        run: firebase deploy --only firestore:indexes --project adaptive-fitness-af8bb
