@@ -3,6 +3,7 @@ import { THEME } from "@/lib/theme";
 import { X } from "lucide-react";
 import { localDateString } from "@/lib/dateHelpers";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
+import { IconButton } from "@/components/ui/IconButton";
 
 export default function WelcomeBackCard() {
   const todayKey = localDateString();
@@ -28,14 +29,12 @@ export default function WelcomeBackCard() {
         <p className="flex-1 text-xs font-medium text-foreground">
           Welcome back! Pick up where you left off.
         </p>
-        <button
-          type="button"
-          onClick={dismiss}
+        <IconButton
           aria-label="Dismiss welcome message"
-          className="p-1.5 -m-0.5 rounded-lg hover:bg-muted transition-colors"
-        >
-          <X aria-hidden="true" className="size-3.5 text-muted-foreground" />
-        </button>
+          onClick={dismiss}
+          icon={<X aria-hidden="true" />}
+          className="-mr-2 shrink-0 text-muted-foreground"
+        />
       </div>
     </motion.div>
   );
