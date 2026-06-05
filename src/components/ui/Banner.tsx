@@ -60,11 +60,16 @@ interface BannerProps {
 }
 
 interface VariantStyle {
-  /** Surface background — applied to the outer card via inline style
-   *  so we can use computed alphas on top of the theme constant. */
-  background: string;
-  /** Icon + emphasis text colour. */
-  accent: string;
+  /** Surface + border classes — the DS1b token path (--running). Present
+   *  for variants whose colour has a sport token. */
+  surfaceClass?: string;
+  /** Icon + emphasis text colour class (token path). */
+  accentClass?: string;
+  /** Inline surface background — the no-token fallback. Amber warning is
+   *  out of DS1b scope, so it stays a computed alpha on a theme const. */
+  background?: string;
+  /** Inline accent — paired with `background` on the no-token path. */
+  accent?: string;
   /** WAI-ARIA role for the live region. */
   role: "status" | "alert";
   /** Default icon rendered when `icon` prop is not supplied. */
@@ -83,8 +88,10 @@ interface VariantStyle {
  * dark-mode bump lands when banners migrate in B2.6. */
 const VARIANT_STYLES: Record<BannerVariant, VariantStyle> = {
   info: {
-    background: `${THEME.running}0F`, // 6% in hex
-    accent: THEME.running,
+    // coral 6% surface + ~19% border (was `${THEME.running}0F` / `30`),
+    // now the --running token (DS1b). Theme-invariant coral identity.
+    surfaceClass: "bg-running/6 border-running/19",
+    accentClass: "text-running",
     role: "status",
     DefaultIcon: Info,
   },
@@ -114,17 +121,24 @@ export function Banner({
       className={cn(
         "relative flex gap-3 rounded-xl p-3 text-xs",
         // Border at higher alpha so the surface reads as a contained
-        // element on white. Matches existing banner pattern in
-        // ProgrammeRunSection (THEME.running}30 etc).
+        // element on white. The token path carries its own border via
+        // surfaceClass (border-running/19); the inline path keeps the
+        // `${accent}30` border. Matches existing banner pattern in
+        // ProgrammeRunSection.
         "border",
+        style.surfaceClass,
         className
       )}
-      style={{ background: style.background, borderColor: `${style.accent}30` }}
+      style={
+        style.background
+          ? { background: style.background, borderColor: `${style.accent}30` }
+          : undefined
+      }
     >
       <span
         aria-hidden="true"
-        className="flex-shrink-0 mt-0.5"
-        style={{ color: style.accent }}
+        className={cn("flex-shrink-0 mt-0.5", style.accentClass)}
+        style={style.accent ? { color: style.accent } : undefined}
       >
         {icon ?? <IconComponent className="size-4" />}
       </span>
