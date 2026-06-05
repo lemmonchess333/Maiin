@@ -209,14 +209,8 @@ function ScheduleLayoutSheetBody({
               </span>
               {s.type === "both" ? (
                 <div className="size-4 rounded-full overflow-hidden flex shadow-sm">
-                  <div
-                    className="w-1/2 h-full"
-                    style={{ backgroundColor: THEME.lifting }}
-                  />
-                  <div
-                    className="w-1/2 h-full"
-                    style={{ backgroundColor: THEME.running }}
-                  />
+                  <div className="w-1/2 h-full bg-lifting" />
+                  <div className="w-1/2 h-full bg-running" />
                 </div>
               ) : color ? (
                 <div
