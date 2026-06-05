@@ -16,7 +16,6 @@
  * chips (Run9a). Coral (running) accent only, calm copy, no medical warnings or
  * performance promises.
  */
-import { THEME } from "@/lib/theme";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
@@ -112,10 +111,7 @@ export default function RaceGoalPlanner({
             <p className="text-base font-bold tabular-nums font-mono text-foreground">
               {outLabel(state)}
             </p>
-            <p
-              className="text-[11px] font-semibold uppercase tracking-wider"
-              style={{ color: THEME.running }}
-            >
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-running">
               {state.statusTitle}
             </p>
           </div>
