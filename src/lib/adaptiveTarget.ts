@@ -198,6 +198,16 @@ export interface ResolveAdaptiveTargetInput {
   isManualOverride: boolean;
   /** baseTarget — customCalorieTarget if set, else the formula TDEE. */
   formulaTarget: number;
+  /**
+   * The goal calorie offset baked into `formulaTarget` (cut -500 / lean bulk
+   * +300, or rate-derived; 0 for recomp/maintain). The estimator returns the
+   * user's MAINTENANCE TDEE, so this offset is re-applied to the learned value
+   * before the cap — otherwise the learned target converges on bare maintenance
+   * and silently erases the user's deficit/surplus over a few weeks
+   * (C-NUTRITION). Both the cap's formula seed and its learned destination then
+   * carry the same offset, so the deficit is preserved through the handoff.
+   */
+  goalOffset: number;
   /** Trailing-window intake, summed per date (loaded by the hook). */
   intakeByDay: { dateKey: string; kcal: number }[];
   /** Raw dated weigh-ins within the window (loaded by the hook). */
@@ -251,6 +261,7 @@ export function resolveAdaptiveTarget(
     isPro,
     isManualOverride,
     formulaTarget,
+    goalOffset,
     intakeByDay,
     weighIns,
     loaded,
@@ -271,10 +282,14 @@ export function resolveAdaptiveTarget(
 
   // Apply the weekly rate cap once the gate is ready (seeded from formula on
   // first engage → no jump).
+  // Re-apply the goal offset to the learned MAINTENANCE estimate so the capped
+  // learned target preserves the deficit/surplus (C-NUTRITION). The cap is
+  // seeded from `formulaTarget` (which already carries the offset), so both
+  // endpoints share it and the formula→learned handoff stays continuous.
   const cap =
     result.ready && result.learnedTDEE != null
       ? applyWeeklyCap({
-          rawLearned: result.learnedTDEE,
+          rawLearned: result.learnedTDEE + goalOffset,
           formulaTarget,
           prev: capPrev,
           now,
