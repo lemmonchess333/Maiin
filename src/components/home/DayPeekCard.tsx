@@ -104,7 +104,7 @@ export default function DayPeekCard({
         ? THEME.running
         : st === "both"
           ? THEME.lifting
-          : THEME.textMuted;
+          : THEME.text.muted;
   let tonnage = 0;
   let totalMinutes = 0;
   workouts.forEach(function (w) {

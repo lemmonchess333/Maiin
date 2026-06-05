@@ -1056,9 +1056,9 @@ export default function RunSummary() {
                 border: "1px solid rgba(52,211,153,0.25)",
               }}
             >
-              <CheckCircle size={20} className="text-emerald-400" />
+              <CheckCircle size={20} className="text-success" />
               <div>
-                <p className="font-medium text-emerald-400 text-xs">
+                <p className="font-medium text-success text-xs">
                   {isOnline
                     ? "Run saved!"
                     : "Saved locally — will sync when online"}
