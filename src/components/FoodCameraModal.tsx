@@ -348,7 +348,7 @@ export default function FoodCameraModal({
           <button
             type="button"
             onClick={onClose}
-            className="size-10 rounded-full bg-muted text-foreground flex items-center justify-center"
+            className="size-11 rounded-full bg-muted text-foreground flex items-center justify-center"
             aria-label="Close"
           >
             <X className="size-5" />
@@ -433,7 +433,7 @@ export default function FoodCameraModal({
         <button
           type="button"
           onClick={onClose}
-          className="size-10 rounded-full bg-black/50 text-white flex items-center justify-center"
+          className="size-11 rounded-full bg-black/50 text-white flex items-center justify-center"
           aria-label="Close"
         >
           <X className="size-5" />

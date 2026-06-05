@@ -968,7 +968,7 @@ export default function RunSummary() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]"
         >
           <ChevronLeft className="size-4" />
           Back
