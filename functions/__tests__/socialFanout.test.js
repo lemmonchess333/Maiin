@@ -111,6 +111,36 @@ describe("fanoutActivityToFeeds", () => {
     expect(paths.some((p) => p.startsWith("feeds/alice/items/"))).toBe(true);
   });
 
+  it("CROSS-H1: re-delivery overwrites the same feed item (deterministic doc id = activityId)", async () => {
+    const { fanoutActivityToFeeds } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub({
+      collections: {
+        "followers/alice/users": [{ id: "bob" }, { id: "carol" }],
+      },
+    });
+    const args = {
+      firestore,
+      activityId: "act1",
+      authorId: "alice",
+      activityData: { authorName: "Alice", type: "run", visibility: "public" },
+      serverTimestamp,
+    };
+
+    await fanoutActivityToFeeds(args);
+    await fanoutActivityToFeeds(args); // simulate at-least-once re-delivery
+
+    const feedPaths = firestore._writes
+      .filter((w) => w.path.startsWith("feeds/"))
+      .map((w) => w.path);
+    // Both deliveries write, but each recipient's item is keyed on activityId
+    // → the second run overwrites. 3 DISTINCT paths, not 6 (pre-fix the
+    // auto-generated ids produced 6 → duplicate feed items).
+    expect(new Set(feedPaths).size).toBe(3);
+    expect(feedPaths).toContain("feeds/bob/items/act1");
+    expect(feedPaths).toContain("feeds/carol/items/act1");
+    expect(feedPaths).toContain("feeds/alice/items/act1");
+  });
+
   it("skips fan-out for private activities entirely", async () => {
     const { fanoutActivityToFeeds } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub({
