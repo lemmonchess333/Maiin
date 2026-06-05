@@ -49,6 +49,7 @@ import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "@/lib/toast";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import {
   WifiOff,
   CheckCircle,
@@ -786,6 +787,9 @@ export default function RunSummary() {
          plausibly have set a PR — invalid 0km / 0:00 runs (the
          "Save anyway" exits) shouldn't tease a PR celebration. */
       if (!isInvalid) {
+        // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
+        // "save anyway" runs are excluded — same gate as the PR toast/share.
+        trackLifecycle("run_completed");
         toast.success("Run saved", {
           action: {
             label: "View PRs",
