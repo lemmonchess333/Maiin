@@ -234,7 +234,7 @@ export default function PerformanceTab() {
     pi,
     loadBand,
     establishing ? null : delta,
-    establishing,
+    establishing
   );
 
   const summaryColor = establishing
@@ -286,6 +286,9 @@ export default function PerformanceTab() {
             {headline}
           </h3>
           {delta !== null && !establishing && (
+            // DS1b: stays inline — the chip mixes THEME.success (a status
+            // colour with no guaranteed --success equality) with running, so
+            // a class swap would risk shifting the positive-delta colour.
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2"
               style={{
@@ -537,19 +540,10 @@ export default function PerformanceTab() {
                 (planAdj.lift.length > 0 || planAdj.run.length > 0) && (
                   <div className="space-y-3">
                     {planAdj.lift.length > 0 && (
-                      <div
-                        className="p-4 rounded-2xl"
-                        style={{ background: THEME.lifting + "14" }}
-                      >
+                      <div className="p-4 rounded-2xl bg-lifting/8">
                         <div className="flex items-center gap-2 mb-2">
-                          <Dumbbell
-                            className="size-4"
-                            style={{ color: THEME.lifting }}
-                          />
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{ color: THEME.lifting }}
-                          >
+                          <Dumbbell className="size-4 text-lifting" />
+                          <h3 className="text-sm font-semibold text-lifting">
                             Lifting Suggestions
                           </h3>
                         </div>
@@ -566,19 +560,10 @@ export default function PerformanceTab() {
                       </div>
                     )}
                     {planAdj.run.length > 0 && (
-                      <div
-                        className="p-4 rounded-2xl"
-                        style={{ background: THEME.running + "14" }}
-                      >
+                      <div className="p-4 rounded-2xl bg-running/8">
                         <div className="flex items-center gap-2 mb-2">
-                          <Footprints
-                            className="size-4"
-                            style={{ color: THEME.running }}
-                          />
-                          <h3
-                            className="text-sm font-semibold"
-                            style={{ color: THEME.running }}
-                          >
+                          <Footprints className="size-4 text-running" />
+                          <h3 className="text-sm font-semibold text-running">
                             Running Suggestions
                           </h3>
                         </div>
