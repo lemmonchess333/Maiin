@@ -330,7 +330,10 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2027-01-01" } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      },
     } as ProgramState;
     mockDocExists = true;
 
@@ -1028,6 +1031,61 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     expect(lastWrite.runPlan?.phase).toBe("recovery");
   });
 
+  it("RUN-H1 — advanceToNextWeek mid-recovery keeps the phase + emits a recovery week (not a race regen)", async () => {
+    // A week rolling over while recovery is still active must NOT regenerate a
+    // race plan — that path drops phase/recoveryEndDate via makeRunPlanRecord
+    // and emits race-training runDays. Pre-fix the regen branch wiped recovery.
+    const future = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [], // shouldAdvanceWeek([]) === true → advanceToNextWeek proceeds
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        phase: "recovery",
+        recoveryEndDate: future,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.advanceToNextWeek();
+    });
+
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    // Recovery preserved across the week advance.
+    expect(lastWrite.runPlan?.phase).toBe("recovery");
+    expect(lastWrite.runPlan?.recoveryEndDate).toBe(future);
+    // The rolled week is a recovery week (easy_30), not race training.
+    expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+    for (const rd of lastWrite.runDays!) {
+      expect(rd.templateId).toBe("easy_30");
+    }
+  });
+
   // PR-L L5: the recovery-exit `useEffect` that used to clear phase
   // after `recoveryEndDate + 7d` was deleted. Server-side
   // `dailyRaceReconciliationSweep` now owns that clear. The previous
@@ -1196,7 +1254,10 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           completed: false,
         } as ScheduledRunDay,
       ],
-      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate: "2027-01-01" } },
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      },
     } as ProgramState;
     mockDocExists = true;
 
