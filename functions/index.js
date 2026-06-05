@@ -2917,6 +2917,32 @@ function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
   return false;
 }
 
+/** Locate the plan's race-day runDay.
+ *
+ *  Primary match is exact `date === raceDate` — the common case where the race
+ *  falls on the user's long-run weekday (long-run slots prefer the weekend, and
+ *  races are usually weekends, so the race template's date equals targetDate).
+ *
+ *  Fallback: the week's `type: "race"` day. The generator places the race
+ *  template on the long-run slot's weekday (`runScheduler.ts`), so for a race
+ *  on a NON-long-run weekday the runDay's `date` is the long-run day, not the
+ *  race date — exact date-match misses it and the no-show / recovery-entry
+ *  reconciliation silently never fires (#1128). There is exactly one race day
+ *  per plan, so the fallback is unambiguous. Conservative by construction: the
+ *  date match wins whenever it exists, so weekend-race behaviour is unchanged.
+ *
+ *  NOTE: this only fixes the SERVER lookup. The runDay's `date` is still on the
+ *  long-run weekday (a UI/calendar correctness issue) until the generator is
+ *  fixed to place the race day on targetDate — see #1128. */
+function _findRaceDayRunDay(runDays, raceDate) {
+  const days = runDays || [];
+  return (
+    days.find((rd) => rd && rd.date === raceDate) ||
+    days.find((rd) => rd && rd.type === "race") ||
+    null
+  );
+}
+
 /** Whether the race-no-show pass needs to fetch the bounded
  *  saved-run query for this user. Pure; called BEFORE the read so
  *  we can skip the I/O when grace / mode / status disqualify the
@@ -2927,8 +2953,9 @@ function _needsRaceNoShowEvaluation(profile, programState, nowMs) {
   if (!runPlan || !runPlan.raceGoal) return false;
   const raceDate = runPlan.raceGoal.targetDate;
   if (typeof raceDate !== "string") return false;
-  const raceDayRunDay = ((programState && programState.runDays) || []).find(
-    (rd) => rd && rd.date === raceDate
+  const raceDayRunDay = _findRaceDayRunDay(
+    programState && programState.runDays,
+    raceDate
   );
   if (!raceDayRunDay || raceDayRunDay.status !== "planned") return false;
   const dayMs = 24 * 60 * 60 * 1000;
@@ -2960,9 +2987,7 @@ function _decideReconciliationActions(
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
     const runPlan = programState.runPlan;
     const raceDate = runPlan.raceGoal.targetDate;
-    const raceDayRunDay = programState.runDays.find(
-      (rd) => rd && rd.date === raceDate
-    );
+    const raceDayRunDay = _findRaceDayRunDay(programState.runDays, raceDate);
     const plannedDistance =
       PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
     if (!_hasStrictRaceMatch(savedRunsForRaceDate, plannedDistance)) {
@@ -3280,8 +3305,9 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
   }
 
   // Gate 5 — race-day runDay must exist in the plan.
-  const raceDayRunDay = ((programState && programState.runDays) || []).find(
-    (rd) => rd && rd.date === raceDate
+  const raceDayRunDay = _findRaceDayRunDay(
+    programState && programState.runDays,
+    raceDate
   );
   if (!raceDayRunDay || !raceDayRunDay.id) {
     return { write: false };
