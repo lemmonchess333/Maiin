@@ -28,7 +28,23 @@ function pruneOldTimestamps(timestamps, now, windowMs) {
  */
 function computeEffectiveTier(userData, now = new Date()) {
   if (!userData) return "free";
-  if (userData.subscriptionTier === "pro") return "pro";
+  if (userData.subscriptionTier === "pro") {
+    // Defence-in-depth, mirrors client getSubscriptionInfo: if
+    // subscriptionExpiresAt has elapsed, treat as free even though the
+    // tier is still "pro". A dropped Stripe/Apple expiry webhook can
+    // strand a user at tier "pro" past their entitlement; without this
+    // the server would keep serving Pro (e.g. paid AI compute)
+    // indefinitely. Absent / unparseable timestamp = legacy doc / dev
+    // override / lifetime — treat as active (matches the client's
+    // fall-through).
+    const expiresMs = userData.subscriptionExpiresAt
+      ? Date.parse(userData.subscriptionExpiresAt)
+      : NaN;
+    if (!Number.isFinite(expiresMs) || expiresMs >= now.getTime()) {
+      return "pro";
+    }
+    // else: expired — fall through to trial / free.
+  }
   if (userData.trialExpiresAt) {
     const expiresAt = new Date(userData.trialExpiresAt);
     if (!isNaN(expiresAt.getTime()) && expiresAt > now) return "pro";
