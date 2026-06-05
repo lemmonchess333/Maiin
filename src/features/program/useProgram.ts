@@ -51,7 +51,6 @@ export interface CompletedSessionData {
   setLogs: CompletedSetLog[][];
 }
 import {
-  scheduleStructuredWeekV2,
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
   clampPlanWeek,
@@ -607,12 +606,13 @@ export function useProgram() {
         advanced.runDays = r.runDays;
         advanced.runPlan = r.runPlan;
       } else {
-        advanced.runDays = scheduleStructuredWeekV2({
-          weekSchedule,
-          weekNumber: advanced.weekNumber,
-          weekStart: nextWeekStart,
-        });
-        advanced.runPlan = { mode: "structured" };
+        // RUN-M: structured mode is retired (Run9a — the Run surface is two
+        // states, freeform + race_prep). This else is unreachable today (the
+        // effect early-returns on freeform), so a non-race state IS freeform:
+        // no auto-assigned runDays, no runPlan. Never resurrect a structured
+        // week here.
+        advanced.runDays = [];
+        advanced.runPlan = undefined;
       }
 
       rolling = advanced;
@@ -925,11 +925,9 @@ export function useProgram() {
         advanced.runDays = r.runDays;
         advanced.runPlan = r.runPlan;
       } else {
-        advanced.runDays = scheduleStructuredWeekV2({
-          weekSchedule,
-          weekNumber: advanced.weekNumber,
-          weekStart: nextWeekStart,
-        });
+        // RUN-M: structured retired — a non-race state is freeform (no runDays).
+        advanced.runDays = [];
+        advanced.runPlan = undefined;
       }
     }
 
@@ -1322,12 +1320,9 @@ export function useProgram() {
             weekStart,
           }));
         } else {
-          runDays = scheduleStructuredWeekV2({
-            weekSchedule: effectiveSchedule,
-            weekNumber: 1,
-            weekStart,
-          });
-          runPlan = { mode: "structured" };
+          // RUN-M: structured retired — a non-race state is freeform.
+          runDays = [];
+          runPlan = undefined;
         }
       }
 
@@ -1451,12 +1446,9 @@ export function useProgram() {
           },
         }));
       } else {
-        runDays = scheduleStructuredWeekV2({
-          weekSchedule,
-          weekNumber: programState.weekNumber,
-          weekStart,
-        });
-        runPlan = { mode: "structured" };
+        // RUN-M: structured retired — a non-race state is freeform.
+        runDays = [];
+        runPlan = undefined;
       }
 
       // Re-apply preserved overrides. The generator emits entries
