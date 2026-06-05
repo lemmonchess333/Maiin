@@ -18,7 +18,6 @@
  * Start new / Discard. z lifted to z-[60] to dominate the run-flow overlays.
  */
 
-import { THEME } from "../../lib/theme";
 import { Play, Plus, Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 
@@ -54,7 +53,8 @@ function formatStartedAgo(startedAt: number): string {
   if (mins < 60) return `Started ${mins} minute${mins === 1 ? "" : "s"} ago`;
   const hours = Math.floor(mins / 60);
   const remMins = mins % 60;
-  if (remMins === 0) return `Started ${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (remMins === 0)
+    return `Started ${hours} hour${hours === 1 ? "" : "s"} ago`;
   return `Started ${hours}h ${remMins}m ago`;
 }
 
@@ -121,8 +121,7 @@ export default function RunResumePrompt({
           <button
             type="button"
             onClick={onResume}
-            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ background: THEME.running, color: "#FFFFFF" }}
+            className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform bg-running text-white"
           >
             <Play size={16} aria-hidden="true" />
             Resume run
