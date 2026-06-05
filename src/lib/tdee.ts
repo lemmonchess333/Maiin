@@ -85,9 +85,16 @@ export function calculateTDEE(
   const fatCals = Math.round(targetCalories * FAT_CALORIE_FRACTION);
   const fat = Math.round(fatCals / 9);
 
-  // Carbs: remainder (minimum 50g for brain function and training performance)
+  // Carbs are the balancing macro, floored at 0 — the SAME policy as
+  // getAdjustedTargets (the canonical display splitter). A 50g floor here made
+  // the STORED macros overshoot targetCalories on aggressive cuts
+  // (protein*4 + 50*4 + fat*9 > targetCalories) while the displayed carbs
+  // floored at 0, so the two disagreed and any direct reader of
+  // profile.targetCarbs (e.g. performanceEngine) saw an inflated value
+  // (NUTR-M3). Floor 0 makes the stored split reconcile: protein*4 + carbs*4 +
+  // fat*9 === targetCalories (modulo per-gram rounding).
   const carbCals = Math.max(0, targetCalories - proteinCals - fatCals);
-  const carbs = Math.max(50, Math.round(carbCals / 4));
+  const carbs = Math.max(0, Math.round(carbCals / 4));
 
   return {
     bmr,
