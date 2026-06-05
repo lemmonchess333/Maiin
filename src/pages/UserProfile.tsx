@@ -22,6 +22,7 @@ import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { Button } from "../components/ui/Button";
+import { IconButton } from "../components/ui/IconButton";
 import { logger } from "../lib/logger";
 import {
   TIER_COLORS,
@@ -327,14 +328,12 @@ export default function UserProfile() {
           {uid && <FollowButton targetUid={uid} />}
           {!isOwnProfile && uid && (
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+              <IconButton
                 aria-label="More options"
-              >
-                <MoreHorizontal className="size-4 text-muted-foreground" />
-              </button>
+                onClick={() => setShowMenu(!showMenu)}
+                icon={<MoreHorizontal />}
+                className="bg-muted hover:bg-muted/80 text-muted-foreground"
+              />
               {showMenu && (
                 <>
                   <div
