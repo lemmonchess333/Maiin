@@ -108,7 +108,7 @@ export default function FollowButton({
             : "Follow user"
       }
       aria-busy={showSpinner}
-      className={`inline-flex items-center justify-center h-8 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+      className={`inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
         following
           ? "bg-muted text-muted-foreground border border-border"
           : "bg-primary-strong text-white"
