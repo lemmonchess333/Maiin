@@ -108,10 +108,7 @@ export default function WeekStrip({
             </div>
             <div className="flex items-center gap-1">
               {(day.sType === "both" || day.sType === "lift") && (
-                <div
-                  className="size-[7px] rounded-full"
-                  style={{ backgroundColor: THEME.lifting }}
-                />
+                <div className="size-[7px] rounded-full bg-lifting" />
               )}
               {/* PR-0c: actual-state precedence on run indicator.
                   Resolver-aware: completed renders Check, skipped
@@ -121,22 +118,14 @@ export default function WeekStrip({
                   the recurring weekSchedule. */}
               {(day.sType === "both" || day.sType === "run") &&
                 day.runCompleted && (
-                  <Check
-                    className="size-[10px]"
-                    style={{ color: THEME.running }}
-                    strokeWidth={3}
-                  />
+                  <Check className="size-[10px] text-running" strokeWidth={3} />
                 )}
               {(day.sType === "both" || day.sType === "run") &&
                 !day.runCompleted && (
                   <div
-                    className="size-[7px] rotate-45"
-                    style={{
-                      backgroundColor: day.runSkipped
-                        ? "hsl(var(--muted-foreground))"
-                        : THEME.running,
-                      opacity: day.runSkipped ? 0.4 : 1,
-                    }}
+                    className={`size-[7px] rotate-45 ${
+                      day.runSkipped ? "bg-muted-foreground/40" : "bg-running"
+                    }`}
                   />
                 )}
               {day.sType === "rest" && <div className="size-[7px]" />}
