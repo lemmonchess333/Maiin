@@ -673,7 +673,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   <button
                     type="button"
                     onClick={() => setReorderMode(false)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary"
+                    className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-primary"
                   >
                     Done
                   </button>
