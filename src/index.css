@@ -146,8 +146,16 @@
   --warning-bg: 38 45% 15%;
 }
 
-* {
-  border-color: hsl(var(--border));
+/* Default border colour. Must live in @layer base so explicit
+   `border-{color}` utilities (Tailwind's `utilities` layer) win the
+   cascade. As an UNLAYERED rule this beat every border-color utility,
+   so `border-running/19`, `border-primary/15`, etc. silently rendered
+   as --border grey. Elements with no border-color utility still inherit
+   --border from this rule. (DS1b border-token fix, verified via Playwright.) */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 }
 
 /* App-shell layout variables — single place to tune spacing math so
