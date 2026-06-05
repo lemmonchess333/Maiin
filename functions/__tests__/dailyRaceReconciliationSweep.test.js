@@ -625,6 +625,75 @@ describe("_decideReconciliationActions — idempotency + combined", () => {
   });
 });
 
+describe("_decideReconciliationActions — L4 no-show auto-return (#1109)", () => {
+  it("returns the user to freeform when a no-show race is >14d past with no successor", () => {
+    const raceDate = nDaysAgo(15);
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "10k", targetDate: raceDate } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: raceDate })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: raceDate },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(true);
+    expect(result.profilePayload).toEqual({
+      runMode: "freeform",
+      raceGoal: null,
+    });
+    expect(result.payload.runPlan.raceGoal).toBeNull();
+  });
+
+  it("does NOT exit while the no-show race is still within the 14-day grace", () => {
+    const raceDate = nDaysAgo(10); // past the +3d no-show flip, before +14d exit
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "10k", targetDate: raceDate } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: raceDate })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: raceDate },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(false);
+    expect(result.payload).toBeNull();
+  });
+
+  it("keeps race_prep with a successor race declared during the no-show window", () => {
+    const oldRace = nDaysAgo(15);
+    const newRace = "2099-09-15"; // future successor on the profile
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "half", targetDate: newRace } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: oldRace })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: oldRace },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(true);
+    // Successor preserved — not dropped to freeform.
+    expect(result.profilePayload).not.toEqual({
+      runMode: "freeform",
+      raceGoal: null,
+    });
+    expect(result.payload.runPlan.raceGoal).toEqual({
+      distance: "half",
+      targetDate: newRace,
+    });
+  });
+});
+
 describe("_utcDateString", () => {
   it("formats a known instant as YYYY-MM-DD in UTC", () => {
     expect(_utcDateString(new Date("2026-05-19T15:30:00Z"))).toBe("2026-05-19");
