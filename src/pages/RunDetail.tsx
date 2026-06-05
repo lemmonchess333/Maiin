@@ -303,8 +303,7 @@ export default function RunDetail() {
               type="button"
               onClick={handleShare}
               disabled={sharing}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform"
-              style={{ background: `${THEME.running}15`, color: THEME.running }}
+              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-running/8 text-running"
             >
               {sharing ? "Generating…" : "↗ Share"}
             </button>
