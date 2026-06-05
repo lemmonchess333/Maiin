@@ -97,3 +97,64 @@ regardless of provider:
   are **closed-by-deletion**, not by patching — do not spend effort on them.
 - Net backend surface for billing shrinks substantially; the security focus
   shifts to "verify the RevenueCat webhook signature" + the invariants above.
+
+## Locked decisions (2026-06-05)
+
+Four implementation forks, reasoned through and locked. These refine — not
+replace — the decision above.
+
+1. **Web monetisation: iOS-only for v1.** All paid conversion goes through
+   StoreKit/RevenueCat. The web app stays a free preview; the marketing
+   funnel drives App Store installs (on web the paywall UI renders for
+   review, the buy button is a "Get it on iOS" CTA). The current Stripe
+   path is **gated off in v1**, not ripped out immediately — full Stripe
+   code retirement is a later cleanup because it has tendrils into the
+   account-deletion machinery (`deletedBillingIdentities`,
+   `paymentEventsPostDeletion`, `subscriptionReconciliation.js`,
+   `stripeAutoCancel.js`). Web billing is **deferred to RevenueCat Web
+   Billing** (Stripe-backed, unified entitlement) if/when web-pay demand
+   appears — RC makes that an incremental add, so deferring costs nothing.
+   Standalone Stripe-for-web was rejected (two entitlement systems, no
+   upside over RC Web Billing).
+
+2. **Trial model: StoreKit introductory offer + a tiny bounded free-taste.**
+   The card-gated, auto-converting StoreKit intro offer is THE trial. The
+   no-card 7-day onboarding grant in `completeOnboarding`
+   (`trialExpiresAt = now + 7d`) is **removed — this closes the M2
+   trial-farming finding.** Separately, free users get a _tiny bounded
+   free-taste_ of AI logging (single-digit lifetime scans, or ~1/day) so the
+   headline feature is discoverable without a card; the exact number is a
+   product call. Rationale: Tropos's Pro headline (AI food logging) costs
+   real Vertex compute per use, so a no-card full trial is uniquely bad here
+   (farmable AND bleeds compute on zero-intent users); the dominant
+   nutrition-app pattern (MyFitnessPal / MacroFactor / Cronometer / Hevy /
+   Fitbod) is the card-gated trial.
+
+3. **Identity: Firebase `uid` as the RevenueCat App User ID.**
+   `Purchases.logIn(uid)` / `logOut()` wired to `onAuthStateChanged`
+   (same uid-scoping discipline as the offline-queue rule). Tropos's
+   mandatory auth removes RC's anonymous-purchase alias-merge risk — there
+   is no anonymous state, so `logIn` always precedes any purchase. **Set
+   RevenueCat's dashboard "transfer behaviour" deliberately** (transfer vs
+   keep-with-original on an Apple-ID / App-User-ID conflict) — this is the
+   RC-native equivalent of the `appAccountToken` purchaser-binding concern
+   the audit raised; do not leave it on the unconsidered default.
+
+4. **Source of truth: client `customerInfo` for UX + webhook for server,
+   with a sync-on-purchase close.** `customerInfo` drives instant in-app
+   gating; the RevenueCat webhook → user-doc write is server truth that
+   `aiScanQuota` reads. To close the post-purchase lag window (customerInfo
+   updates instantly, the webhook trails by seconds — an AI scan in that
+   window would hit the server still reading `free`), **on purchase success
+   the client calls a callable that pulls RC subscriber status via the RC
+   REST API and writes the user doc synchronously.** The webhook is the
+   backstop for renewals / cancellations / out-of-band changes.
+
+### Cross-cutting
+
+- **Android compounds the decision.** RC unifies iOS + Android behind one
+  Entitlement, so this also avoids hand-rolling Play Billing validation when
+  Android lands.
+- **The RC webhook is not an App Check surface.** It authenticates via a
+  shared `Authorization` header (constant-time compare) + event-id
+  idempotency — separate from the app callables' App Check rollout.
