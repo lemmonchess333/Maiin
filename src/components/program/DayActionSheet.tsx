@@ -197,14 +197,8 @@ export default function DayActionSheet({
             }}
           >
             <div className="flex items-start gap-3">
-              <div
-                className="size-11 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: `${THEME.running}1A` }}
-              >
-                <Footprints
-                  className="size-5"
-                  style={{ color: THEME.running }}
-                />
+              <div className="size-11 rounded-2xl flex items-center justify-center shrink-0 bg-running/10">
+                <Footprints className="size-5 text-running" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -438,11 +432,8 @@ export default function DayActionSheet({
             }}
           >
             <div className="flex items-start gap-3">
-              <div
-                className="size-11 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: `${THEME.lifting}1A` }}
-              >
-                <Dumbbell className="size-5" style={{ color: THEME.lifting }} />
+              <div className="size-11 rounded-2xl flex items-center justify-center shrink-0 bg-lifting/10">
+                <Dumbbell className="size-5 text-lifting" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">

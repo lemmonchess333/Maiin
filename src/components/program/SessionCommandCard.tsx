@@ -15,7 +15,7 @@
  */
 
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
-import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -41,33 +41,38 @@ export default function SessionCommandCard({
   onPrimaryAction,
   onManage,
 }: SessionCommandCardProps) {
-  const colour = sport === "run" ? THEME.running : THEME.lifting;
-  const Icon = sport === "run" ? Footprints : Dumbbell;
+  const isRun = sport === "run";
+  const Icon = isRun ? Footprints : Dumbbell;
+  // DS1b: sport tint via tokens (both branches are in-scope sport colours).
+  const surfaceClass = isRun
+    ? "bg-running/6 border-running/19"
+    : "bg-lifting/6 border-lifting/19";
+  const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
+  const accentText = isRun ? "text-running" : "text-lifting";
 
   return (
     <section
       aria-label={`${eyebrow} — ${title}`}
-      className="rounded-2xl border p-4 space-y-4 shadow-card"
-      style={{
-        backgroundColor: `${colour}0F`,
-        borderColor: `${colour}30`,
-      }}
+      className={cn(
+        "rounded-2xl border p-4 space-y-4 shadow-card",
+        surfaceClass
+      )}
     >
       <div className="flex items-start gap-3">
         <div
-          className="size-11 rounded-2xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${colour}1F` }}
+          className={cn(
+            "size-11 rounded-2xl flex items-center justify-center shrink-0",
+            tileClass
+          )}
         >
-          <Icon
-            className="size-5"
-            style={{ color: colour }}
-            aria-hidden="true"
-          />
+          <Icon className={cn("size-5", accentText)} aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <p
-            className="text-[10px] font-bold uppercase tracking-wider"
-            style={{ color: colour }}
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-wider",
+              accentText
+            )}
           >
             {eyebrow}
           </p>
