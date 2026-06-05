@@ -143,6 +143,14 @@ function regenerateRacePlan({
     currentWeek?: number;
     totalWeeks?: number;
     completedRaces?: string[];
+    /** RUN-H1: an active recovery phase + its end date. A regen must NEVER
+     *  silently drop recovery (makeRunPlanRecord doesn't emit these fields), so
+     *  callers that run while recovery is live pass them through to be
+     *  preserved. Recovery EXIT stays a deliberate decision
+     *  (resolveRecoveryExit) — callers that intend to exit simply don't pass
+     *  them. */
+    phase?: "recovery";
+    recoveryEndDate?: string;
   };
   /** Run9 phase-3 Slice A — when a regen rewrites the CURRENT week with
    *  existing completions (compress / shift / schedule edit), pass the
@@ -183,6 +191,12 @@ function regenerateRacePlan({
   if (carry?.completedRaces) {
     runPlan.completedRaces = carry.completedRaces;
   }
+  // RUN-H1: preserve an active recovery phase across regen when the caller
+  // passes it. makeRunPlanRecord emits a fresh race_prep record with no
+  // phase/recoveryEndDate, so without this a regen during recovery (e.g.
+  // week auto-rollover, realign) would silently exit recovery.
+  if (carry?.phase) runPlan.phase = carry.phase;
+  if (carry?.recoveryEndDate) runPlan.recoveryEndDate = carry.recoveryEndDate;
   // Compress / late-mid-week regen can produce a smaller totalWeeks
   // than the carried currentWeek (user on week 5 of 8, plan compresses
   // to 3 → "Week 5 of 3" surfaces in the race-strip and downstream
@@ -559,7 +573,25 @@ export function useProgram() {
       const weekSchedule = profile.weekSchedule ?? [];
       const runTarget = getWeeklyRunTarget(profile) || 3;
 
-      if (profile.runMode === "race_prep" && profile.raceGoal) {
+      const advRunPlan = advanced.runPlan;
+      const inRecovery =
+        advRunPlan?.phase === "recovery" &&
+        advRunPlan?.recoveryEndDate &&
+        nextWeekCurrentDate < advRunPlan.recoveryEndDate;
+
+      if (inRecovery) {
+        // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
+        // and keep phase/recoveryEndDate — never regenerate a race plan (which
+        // emits race-training runDays AND drops the recovery flags via
+        // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
+        // recovery exit is a deliberate decision (resolveRecoveryExit), not a
+        // rollover side effect.
+        advanced.runDays = scheduleRecoveryWeekV2({
+          weekSchedule,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { ...advRunPlan };
+      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const r = regenerateRacePlan({
           raceGoal: profile.raceGoal,
           weekSchedule,
@@ -859,7 +891,25 @@ export function useProgram() {
       const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
       const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
 
-      if (profile.runMode === "race_prep" && profile.raceGoal) {
+      const advRunPlan = advanced.runPlan;
+      const inRecovery =
+        advRunPlan?.phase === "recovery" &&
+        advRunPlan?.recoveryEndDate &&
+        nextWeekCurrentDate < advRunPlan.recoveryEndDate;
+
+      if (inRecovery) {
+        // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
+        // and keep phase/recoveryEndDate — never regenerate a race plan (which
+        // emits race-training runDays AND drops the recovery flags via
+        // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
+        // recovery exit is a deliberate decision (resolveRecoveryExit), not a
+        // rollover side effect.
+        advanced.runDays = scheduleRecoveryWeekV2({
+          weekSchedule,
+          weekStart: nextWeekStart,
+        });
+        advanced.runPlan = { ...advRunPlan };
+      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const r = regenerateRacePlan({
           raceGoal: profile.raceGoal,
           weekSchedule,
@@ -1528,6 +1578,18 @@ export function useProgram() {
     if (!programState || !profile) return { timing: "healthy", totalWeeks: 0 };
     if (profile.runMode !== "race_prep" || !profile.raceGoal)
       return { timing: "healthy", totalWeeks: 0 };
+    // RUN-H1: realign re-plans race-training weeks; it is meaningless during an
+    // active recovery window (the race is done) and would regenerate a race
+    // plan that drops the recovery phase. The fell-behind prompt that triggers
+    // realign is already suppressed during recovery, but guard explicitly so
+    // recovery exit stays a deliberate decision (resolveRecoveryExit).
+    if (
+      programState.runPlan?.phase === "recovery" &&
+      programState.runPlan?.recoveryEndDate &&
+      localDateString() < programState.runPlan.recoveryEndDate
+    ) {
+      return { timing: "healthy", totalWeeks: 0 };
+    }
     const prevRunPlan = programState.runPlan;
     const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       raceGoal: profile.raceGoal,
