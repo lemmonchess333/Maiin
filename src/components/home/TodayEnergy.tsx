@@ -212,7 +212,7 @@ export default function TodayEnergy({
                     <BreakdownRow
                       label="Steps"
                       value={burn.stepCalories}
-                      color={THEME.textMuted}
+                      color={THEME.text.muted}
                     />
                   )}
                 </>
