@@ -194,7 +194,7 @@ export default function MacroColumn({
       <div
         className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
         style={{
-          background: "#F2F2F7",
+          background: "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
           opacity: consumed === 0 ? 0.4 : 1,
         }}
