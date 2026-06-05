@@ -5,7 +5,10 @@ import { Spinner } from "@/components/ui/Spinner";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { getTimeAgo } from "@/lib/timeAgo";
-import type { NotificationItem, NotificationType } from "@/hooks/useNotifications";
+import type {
+  NotificationItem,
+  NotificationType,
+} from "@/hooks/useNotifications";
 
 /**
  * The in-app notification tray (kudos / comment / follow / milestone).
@@ -98,7 +101,7 @@ export default function NotificationsSheet({
                       className="size-9 rounded-full flex items-center justify-center shrink-0"
                       style={{ backgroundColor: color + "1A" }}
                     >
-                      <Icon className="size-4.5" style={{ color }} />
+                      <Icon className="size-5" style={{ color }} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground leading-snug">

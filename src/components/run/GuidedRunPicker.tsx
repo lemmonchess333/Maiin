@@ -27,7 +27,8 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
               key={w.id}
               onClick={() => onSelect(w)}
               className={cn(
-                "w-full p-3.5 rounded-xl text-left transition-all active:scale-[0.98]"
+                "w-full p-3.5 rounded-xl text-left transition-all active:scale-[0.98] border-2",
+                !isSelected && "bg-muted border-border"
               )}
               style={
                 isSelected
@@ -36,10 +37,7 @@ export default function GuidedRunPicker({ selected, onSelect }: Props) {
                       border: `2px solid ${w.color}60`,
                       boxShadow: `0 0 0 3px ${w.color}20`,
                     }
-                  : {
-                      background: "rgba(255,255,255,0.04)",
-                      border: "2px solid rgba(255,255,255,0.08)",
-                    }
+                  : undefined
               }
             >
               <div className="flex items-center justify-between mb-1">
