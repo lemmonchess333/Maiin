@@ -21,16 +21,22 @@ describe("estimateBMR", () => {
 });
 
 describe("calcDayBalance", () => {
-  it("computes deficit when burn exceeds intake", () => {
-    const result = calcDayBalance("2026-03-15", "Sat", 1800, 1700, 400);
+  it("computes deficit when maintenance expenditure exceeds intake", () => {
+    // expenditure = maintenance TDEE (already exercise-inclusive, Nutr1)
+    const result = calcDayBalance("2026-03-15", "Sat", 1800, 2100);
     expect(result.balance).toBe(300);
     expect(result.burned).toBe(2100);
     expect(result.consumed).toBe(1800);
   });
 
-  it("computes surplus when intake exceeds burn", () => {
-    const result = calcDayBalance("2026-03-15", "Sat", 2500, 1700, 200);
+  it("computes surplus when intake exceeds maintenance expenditure", () => {
+    const result = calcDayBalance("2026-03-15", "Sat", 2500, 1900);
     expect(result.balance).toBe(-600);
+  });
+
+  it("a day eaten exactly at maintenance reads ~0 balance (NUTR-H1)", () => {
+    const result = calcDayBalance("2026-03-15", "Sat", 2700, 2700);
+    expect(result.balance).toBe(0);
   });
 });
 
@@ -135,7 +141,10 @@ describe("getPhaseAlignment", () => {
     });
 
     it("just above threshold is at-odds (bulk + deficit)", () => {
-      const result = getPhaseAlignment("lean bulk", NEAR_MAINTENANCE_THRESHOLD + 1);
+      const result = getPhaseAlignment(
+        "lean bulk",
+        NEAR_MAINTENANCE_THRESHOLD + 1
+      );
       expect(result?.state).toBe("at-odds");
     });
   });
