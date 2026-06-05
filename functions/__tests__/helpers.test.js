@@ -87,6 +87,55 @@ describe("computeEffectiveTier", () => {
     ).toBe("pro");
   });
 
+  // H-1 (security audit 2026-06): the server must honour
+  // subscriptionExpiresAt the same way the client (getSubscriptionInfo)
+  // does, so a dropped expiry webhook can't strand a user on server-side
+  // Pro (paid AI compute) indefinitely.
+  it("returns 'pro' for tier 'pro' with a future subscriptionExpiresAt", () => {
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    expect(
+      computeEffectiveTier(
+        { subscriptionTier: "pro", subscriptionExpiresAt: future },
+        new Date()
+      )
+    ).toBe("pro");
+  });
+
+  it("returns 'free' for tier 'pro' with an ELAPSED subscriptionExpiresAt", () => {
+    const past = new Date(Date.now() - 86_400_000).toISOString();
+    expect(
+      computeEffectiveTier(
+        { subscriptionTier: "pro", subscriptionExpiresAt: past },
+        new Date()
+      )
+    ).toBe("free");
+  });
+
+  it("falls through to an active trial when the paid sub has expired", () => {
+    const past = new Date(Date.now() - 86_400_000).toISOString();
+    const future = new Date(Date.now() + 86_400_000).toISOString();
+    expect(
+      computeEffectiveTier(
+        {
+          subscriptionTier: "pro",
+          subscriptionExpiresAt: past,
+          trialExpiresAt: future,
+        },
+        new Date()
+      )
+    ).toBe("pro");
+  });
+
+  it("treats tier 'pro' with absent/malformed subscriptionExpiresAt as active (legacy/lifetime)", () => {
+    expect(computeEffectiveTier({ subscriptionTier: "pro" })).toBe("pro");
+    expect(
+      computeEffectiveTier(
+        { subscriptionTier: "pro", subscriptionExpiresAt: "not-a-date" },
+        new Date()
+      )
+    ).toBe("pro");
+  });
+
   it("returns 'pro' for an unexpired trial", () => {
     const future = new Date(Date.now() + 86_400_000).toISOString();
     expect(computeEffectiveTier({ trialExpiresAt: future }, new Date())).toBe(

@@ -953,6 +953,15 @@ exports.analyzeFood = functions
           res.status(400).json({ error: "No image provided" });
           return;
         }
+        // Cap input size to prevent token-cost inflation (mirrors the
+        // askGeminiText prompt cap). A normal compressed food photo is
+        // well under this ceiling; the limit blocks padding the payload
+        // toward the 10MB request size purely to inflate Vertex token
+        // cost within an otherwise-legitimate quota.
+        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
+          res.status(400).json({ error: "Image too large" });
+          return;
+        }
 
         const projectId = process.env.GCLOUD_PROJECT;
         const accessToken = await admin.credential
@@ -1126,6 +1135,16 @@ exports.analyzeFoodText = functions
         const { text } = req.body;
         if (!text || !text.trim()) {
           res.status(400).json({ error: "No text provided" });
+          return;
+        }
+        // Cap input size to prevent token-cost inflation (mirrors the
+        // askGeminiText prompt cap). A food description is short; this
+        // blocks padding the payload toward the 10MB request size to
+        // inflate Vertex token cost within an otherwise-legitimate quota.
+        if (text.length > 2000) {
+          res
+            .status(400)
+            .json({ error: "Text too long (max 2000 characters)" });
           return;
         }
 
