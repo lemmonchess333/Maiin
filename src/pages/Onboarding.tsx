@@ -847,7 +847,7 @@ export default function Onboarding() {
                   id: "hypertrophy" as PrimaryGoal,
                   label: "Build muscle",
                   desc: "Hypertrophy training with a small calorie surplus",
-                  icon: <Dumbbell size={22} style={{ color: THEME.lifting }} />,
+                  icon: <Dumbbell size={22} className="text-lifting" />,
                 },
                 {
                   id: "strength" as PrimaryGoal,
@@ -859,7 +859,7 @@ export default function Onboarding() {
                   id: "fat_loss" as PrimaryGoal,
                   label: "Lose fat",
                   desc: "Calorie deficit with muscle preservation",
-                  icon: <Flame size={22} style={{ color: THEME.running }} />,
+                  icon: <Flame size={22} className="text-running" />,
                 },
                 {
                   id: "general" as PrimaryGoal,
@@ -871,9 +871,7 @@ export default function Onboarding() {
                   id: "running" as PrimaryGoal,
                   label: "Improve running",
                   desc: "Run-focused training with maintenance calories",
-                  icon: (
-                    <Footprints size={22} style={{ color: THEME.running }} />
-                  ),
+                  icon: <Footprints size={22} className="text-running" />,
                 },
               ].map((opt, i) => (
                 <OptionCard
@@ -940,9 +938,7 @@ export default function Onboarding() {
                   id: "full_gym" as Equipment,
                   label: "Full gym",
                   desc: "Barbells, dumbbells, cables, machines",
-                  icon: (
-                    <Warehouse size={22} style={{ color: THEME.lifting }} />
-                  ),
+                  icon: <Warehouse size={22} className="text-lifting" />,
                 },
                 {
                   id: "home_gym" as Equipment,
@@ -981,9 +977,7 @@ export default function Onboarding() {
                     id: "regular" as RunFrequency,
                     label: "Regular runner",
                     desc: "3+ runs per week",
-                    icon: (
-                      <Footprints size={22} style={{ color: THEME.running }} />
-                    ),
+                    icon: <Footprints size={22} className="text-running" />,
                   },
                   {
                     id: "occasional" as RunFrequency,
@@ -997,9 +991,7 @@ export default function Onboarding() {
                     id: "none" as RunFrequency,
                     label: "I don't run",
                     desc: "Lifting only, no cardio programming",
-                    icon: (
-                      <Dumbbell size={22} style={{ color: THEME.lifting }} />
-                    ),
+                    icon: <Dumbbell size={22} className="text-lifting" />,
                   },
                 ].map((opt, i) => (
                   <OptionCard
@@ -1056,9 +1048,7 @@ export default function Onboarding() {
                         selected={runMode === opt.id}
                         onSelect={() => setRunMode(opt.id)}
                         index={i}
-                        icon={
-                          <Target size={20} style={{ color: THEME.running }} />
-                        }
+                        icon={<Target size={20} className="text-running" />}
                         label={opt.label}
                         desc={opt.desc}
                       />
@@ -1284,12 +1274,12 @@ export default function Onboarding() {
                   {
                     id: "male" as Gender,
                     label: "Male",
-                    icon: <User size={22} style={{ color: THEME.lifting }} />,
+                    icon: <User size={22} className="text-lifting" />,
                   },
                   {
                     id: "female" as Gender,
                     label: "Female",
-                    icon: <Heart size={22} style={{ color: THEME.running }} />,
+                    icon: <Heart size={22} className="text-running" />,
                   },
                   {
                     id: "unspecified" as Gender,
