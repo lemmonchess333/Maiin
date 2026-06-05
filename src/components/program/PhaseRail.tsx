@@ -11,7 +11,6 @@
  * "Peak" segment, so the active highlight always maps to a phase the scheduler
  * can emit. Coral (running) accent only.
  */
-import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 /** The engine's real phases (getPhaseForWeek), ordered for the rail. */
@@ -37,9 +36,8 @@ export default function PhaseRail({ activePhase, className }: PhaseRailProps) {
           key={label}
           className={cn(
             "text-center",
-            label === activePhase && "font-bold text-foreground"
+            label === activePhase && "font-bold text-foreground text-running"
           )}
-          style={label === activePhase ? { color: THEME.running } : undefined}
         >
           {label}
         </span>
