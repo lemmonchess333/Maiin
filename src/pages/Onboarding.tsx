@@ -49,12 +49,9 @@ import {
   Heart,
   Ruler,
   Target,
-  Award,
   Calendar,
   Warehouse,
-  LayoutGrid,
   AlertTriangle,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import OptionCard from "@/components/onboarding/OptionCard";
@@ -234,13 +231,15 @@ function equipmentLabel(e: Equipment): string {
    STEP DEFINITIONS
 ============================ */
 
-// P0-5: bumped to 13 to insert "Your week at a glance" between
-// injuries (10) and confirmation (12). The preview step renders
-// the planBuilder-derived weekSchedule so users see exactly how
-// their lift + run choices map onto the seven days before they
-// commit. Same step IDs as v6 (0-9 identity + program inputs),
-// new 10 = injuries, 11 = preview, 12 = confirm.
-const TOTAL_STEPS = 13;
+// Fast-start flow (onboarding-fast-start): 13 → 8 steps. We front-load the
+// program-shaping questions (goal, days, equipment, run, injuries), collect
+// the body metrics once on a single "About you" screen, then preview +
+// confirm. Deferred from the flow: name (defaulted from email), experience
+// (defaults intermediate), preferred split (defaults auto), and the
+// goal-weight slider (target defaults to current weight → maintenance).
+// New 0-indexed order: 0 goal · 1 days · 2 equipment · 3 run · 4 injuries ·
+// 5 about-you (sex + age + height/weight) · 6 preview · 7 confirm.
+const TOTAL_STEPS = 8;
 
 // Sport-coding for the weekly preview step now lives in
 // scheduleUtils.SCHEDULE_TYPE_META — single source across
@@ -248,28 +247,8 @@ const TOTAL_STEPS = 13;
 
 const STEP_META: { title: string; subtitle: string }[] = [
   {
-    title: "What should we call you?",
-    subtitle: "We'll show this on your profile and to friends.",
-  },
-  {
-    title: "What's your gender?",
-    subtitle: "This helps us personalize your plan",
-  },
-  {
-    title: "How old are you?",
-    subtitle: "We'll tailor intensity recommendations",
-  },
-  {
-    title: "Your body metrics",
-    subtitle: "Used to calculate calories and macros",
-  },
-  {
     title: "What's your primary goal?",
     subtitle: "We'll build your program around this",
-  },
-  {
-    title: "Experience level",
-    subtitle: "So we program the right volume and intensity",
   },
   {
     title: "Training days per week",
@@ -279,12 +258,12 @@ const STEP_META: { title: string; subtitle: string }[] = [
     title: "Equipment access",
     subtitle: "We'll choose exercises you can actually do",
   },
-  {
-    title: "Preferred training style",
-    subtitle: "Pick a split or let us decide",
-  },
   { title: "Do you run?", subtitle: "We'll weave runs into your schedule" },
   { title: "Any injuries?", subtitle: "We'll program around limitations" },
+  {
+    title: "About you",
+    subtitle: "Used to calculate your calories and macros",
+  },
   {
     title: "Your week at a glance",
     subtitle: "Here's how we'll lay out your training week",
@@ -310,58 +289,60 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
-  // ── Step 0: Display name
-  // Pre-populated from Firebase Auth's displayName when available (e.g. Google
-  // / Apple signin often supplies one). Users can edit it. Empty string when
-  // plain email signup — the input collects it.
-  const [displayName, setDisplayName] = useState<string>(
-    user?.displayName || ""
-  );
-  // Tracks first blur — the validation hint only appears after the user has
-  // interacted with the input, not on the initial empty state.
-  const [displayNameTouched, setDisplayNameTouched] = useState(false);
+  // ── Display name (DEFERRED from the fast-start flow — no UI step)
+  // The dedicated name step was removed; displayName is now defaulted so the
+  // save always writes a valid name and validateDisplayName() passes:
+  //   1. Firebase Auth's displayName when available (Google / Apple signin),
+  //   2. else the email local-part (before "@"),
+  //   3. else "Athlete".
+  // Users edit it later from Settings → Profile (progressive profiling).
+  const [displayName] = useState<string>(() => {
+    if (user?.displayName) return user.displayName;
+    const local = user?.email?.split("@")[0]?.trim();
+    return local && local.length > 0 ? local : "Athlete";
+  });
 
-  // ── Step 1: Gender
+  // ── About you: Gender
   const [gender, setGender] = useState<Gender>("unspecified");
 
-  // ── Step 1: Age range
+  // ── About you: Age range
   const [ageRange, setAgeRange] = useState<AgeRange>("25-34");
 
-  // ── Step 2: Body metrics
+  // ── About you: Body metrics
   const [heightCm, setHeightCm] = useState(175);
   const [weightKg, setWeightKg] = useState(75);
   const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
   const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
-  // Tier 2 — goal weight + rate, collected on the body-metrics step (right
-  // after current weight). Defaults to current weight (= maintain/recomp) so
-  // a user who skips it gets today's behaviour. Rate magnitude is unsigned;
-  // direction is derived from target vs current.
-  const [goalWeightKg, setGoalWeightKg] = useState(75);
-  const [weeklyRateKg, setWeeklyRateKg] = useState(0.5);
-
-  // ── Step 3: Primary goal
-  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>("hypertrophy");
-
-  // ── Step 4: Experience
-  const [experience, setExperience] = useState<Experience>("intermediate");
-
-  // ── Step 5: Days per week
-  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(4);
-
-  // ── Step 6: Equipment
-  const [equipment, setEquipment] = useState<Equipment>("full_gym");
-
-  // ── Step 7: Preferred split
-  const [preferredSplit, setPreferredSplit] = useState<PreferredSplit>("auto");
-
-  // ── Step 8: Run frequency
+  // Goal weight (DEFERRED — the in-flow slider was removed in fast-start).
+  // CRITICAL: the saved goal weight is derived as the entered current weight
+  // (see handleFinish: `goalWeightKg: weightKg`, `weeklyRateKg: 0`) so the
+  // plan always resolves to maintenance/recomp (zero calorie offset). We no
+  // longer keep goal-weight state — the slider that drove it is gone, and a
+  // stale default (the old 75) would have given a non-75kg user an unintended
+  // cut/bulk. The live nutrition preview below uses weightKg for both
+  // current and target, which is the same maintenance result.
   const [runFrequency, setRunFrequency] = useState<RunFrequency>("occasional");
   const [runMode, setRunMode] = useState<RunMode>("freeform");
   const [weeklyRunDays, setWeeklyRunDays] = useState(2);
   const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
   const [raceTargetDate, setRaceTargetDate] = useState("");
 
-  // ── Step 9: Injuries
+  // ── Primary goal
+  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>("hypertrophy");
+
+  // ── Experience (DEFERRED — no UI step; default kept at intermediate)
+  const experience: Experience = "intermediate";
+
+  // ── Days per week
+  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(4);
+
+  // ── Equipment
+  const [equipment, setEquipment] = useState<Equipment>("full_gym");
+
+  // ── Preferred split (DEFERRED — no UI step; default kept at auto)
+  const preferredSplit: PreferredSplit = "auto";
+
+  // ── Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
 
   // ── Derived values
@@ -375,11 +356,6 @@ export default function Onboarding() {
       ? `${Math.round(weightKg * 2.205)} lbs`
       : `${weightKg} kg`;
 
-  const displayGoalWeight =
-    weightUnit === "lbs"
-      ? `${Math.round(goalWeightKg * 2.205)} lbs`
-      : `${goalWeightKg} kg`;
-
   const heightStepSize = heightUnit === "ft" ? 2.54 : 1; // ~1 inch or 1 cm
   const weightStepSize = weightUnit === "lbs" ? 0.45 : 1; // ~1 lb or 1 kg
 
@@ -390,19 +366,21 @@ export default function Onboarding() {
     return "light";
   }, [daysPerWeek]);
 
-  // Tier 2 — target weight + rate owns the nutrition direction (locked
-  // decision): below current → cut, above → lean bulk, ~equal → recomp;
-  // rate sets the calorie-offset magnitude. `primaryGoal` still drives the
-  // lifting programme. Defaults (goalWeight == current) resolve to recomp /
-  // 0 offset, so a user who never touches it gets maintenance.
+  // Fast-start: the goal-weight slider was deferred out of the flow, so the
+  // target weight equals the current weight and the rate is 0 → the plan
+  // resolves to recomp / maintenance (zero calorie offset). This guarantees
+  // a user of any body weight gets maintenance rather than the unintended
+  // cut/bulk a stale default would have produced. Target weight can be set
+  // later via the goal-weight surface; `primaryGoal` still drives the lift
+  // programme.
   const goalPlan = useMemo(
     () =>
       resolveGoalWeightPlan({
         currentKg: weightKg,
-        targetKg: goalWeightKg,
-        rateKgPerWeek: weeklyRateKg,
+        targetKg: weightKg,
+        rateKgPerWeek: 0,
       }),
-    [weightKg, goalWeightKg, weeklyRateKg]
+    [weightKg]
   );
 
   // TDEE computation — nutrition phase + offset come from the goal-weight
@@ -443,40 +421,25 @@ export default function Onboarding() {
     [daysPerWeek, effectiveRunDays]
   );
 
-  // Split compatibility check
-  function isSplitDisabled(split: PreferredSplit): boolean {
-    if (split === "ppl" && daysPerWeek < 5) return true;
-    if (split === "bro_split" && daysPerWeek < 5) return true;
-    if (split === "upper_lower" && daysPerWeek < 4) return true;
-    return false;
-  }
-
-  // Display-name validation derived once per render. Both `canAdvance[0]` and
-  // the inline error message consume the same result.
+  // Display-name validation derived once per render. displayName is now
+  // defaulted (email local-part / "Athlete"), so this is always valid; it's
+  // consumed by handleFinish for the trimmed value written to the profile.
   const displayNameValidation = validateDisplayName(displayName);
 
-  // Can advance per step
+  // Can advance per step (fast-start 8-step order)
   const canAdvance: boolean[] = [
-    displayNameValidation.valid, // 0: display name (2-30 chars after trim)
-    true, // 1: gender (always has default)
-    ageRange !== "under-16", // 2: age range (blocks under 16)
-    weightKg > 0 && heightCm > 0, // 3: body metrics
-    true, // 4: primary goal
-    true, // 5: experience
-    true, // 6: days per week
-    true, // 7: equipment
-    !isSplitDisabled(preferredSplit), // 8: preferred split
-    // P0-5: doubles blocker dropped. `daysPerWeek + weeklyRunDays > 7`
-    // is no longer a constraint — generateSchedule emits Both days
-    // when the total exceeds 7 (see P0-B).
-    // #975: the race-prep date is now OPTIONAL — selecting race_prep no
-    // longer blocks advancing without a date. A no-date race_prep lands
-    // on the freeform substrate (Run9a); the date can be set later via the
-    // Race Goal Planner. So step 9 is always advanceable.
-    true, // 9: run frequency + mode
-    injuries.length > 0, // 10: injuries (must select at least one, including "none")
-    true, // 11: weekly preview (always advanceable)
-    true, // 12: confirmation
+    true, // 0: primary goal (always has default)
+    true, // 1: days per week (always has default)
+    true, // 2: equipment (always has default)
+    // #975: the race-prep date is OPTIONAL — selecting race_prep no longer
+    // blocks advancing without a date. A no-date race_prep lands on the
+    // freeform substrate (Run9a); the date can be set later via the Race
+    // Goal Planner. So the run step is always advanceable.
+    true, // 3: run intent
+    injuries.length > 0, // 4: injuries (must select at least one, including "none")
+    ageRange !== "under-16" && weightKg > 0 && heightCm > 0, // 5: about you (age gate + metrics)
+    true, // 6: weekly preview (always advanceable)
+    true, // 7: confirmation
   ];
 
   // ── Save handler — uses Cloud Function (Admin SDK) to bypass Firestore rules
@@ -520,9 +483,13 @@ export default function Onboarding() {
         ageRange,
         heightCm,
         weightKg,
-        // Tier 2 — goal-weight onboarding (drives nutrition direction).
-        goalWeightKg,
-        weeklyRateKg,
+        // Fast-start: the goal-weight step was deferred, so we persist the
+        // target weight as the current weight with a 0 rate → maintenance /
+        // recomp (zero offset). This is the same maintenance result the
+        // goalPlan above resolves to; a stale non-current default would have
+        // written an unintended cut/bulk. Editable later via Settings.
+        goalWeightKg: weightKg,
+        weeklyRateKg: 0,
         preferredHeightUnit: heightUnit,
         preferredWeightUnit: weightUnit,
         primaryGoal,
@@ -839,308 +806,9 @@ export default function Onboarding() {
           </p>
 
           {/* ════════════════════════════════
-             STEP 0 — Display name
+             STEP 0 — Primary Goal
           ════════════════════════════════ */}
           {step === 0 && (
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                onBlur={() => setDisplayNameTouched(true)}
-                onKeyDown={(e) => {
-                  // Enter advances when valid, matching the Continue button.
-                  if (e.key === "Enter" && canAdvance[0] && !saving) {
-                    e.preventDefault();
-                    setStep((s) => s + 1);
-                  }
-                }}
-                placeholder="Your name"
-                aria-label="Your name"
-                aria-invalid={
-                  displayNameTouched && !displayNameValidation.valid
-                }
-                // Dedicated single-input onboarding step; focus is the
-                // intended behaviour. iOS Safari may still withhold the
-                // keyboard until tap — accepted platform constraint.
-                // eslint-disable-next-line jsx-a11y/no-autofocus
-                autoFocus
-                autoCapitalize="words"
-                autoComplete="nickname"
-                autoCorrect="off"
-                spellCheck={false}
-                inputMode="text"
-                className="w-full p-4 rounded-2xl text-base outline-none border bg-muted text-foreground border-border focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-transparent"
-              />
-              {displayNameTouched && !displayNameValidation.valid && (
-                <p className="text-xs text-destructive" role="alert">
-                  Please enter a name between 2 and 30 characters.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 1 — Gender
-          ════════════════════════════════ */}
-          {step === 1 && (
-            <div className="space-y-2">
-              {[
-                {
-                  id: "male" as Gender,
-                  label: "Male",
-                  icon: <User size={22} style={{ color: THEME.lifting }} />,
-                },
-                {
-                  id: "female" as Gender,
-                  label: "Female",
-                  icon: <Heart size={22} style={{ color: THEME.running }} />,
-                },
-                {
-                  id: "unspecified" as Gender,
-                  label: "Prefer not to say",
-                  icon: <User size={22} className="text-muted-foreground" />,
-                },
-              ].map((opt, i) => (
-                <OptionCard
-                  key={opt.id}
-                  selected={gender === opt.id}
-                  onSelect={() => setGender(opt.id)}
-                  icon={opt.icon}
-                  label={opt.label}
-                  index={i}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 1 — Age Range
-          ════════════════════════════════ */}
-          {step === 2 && (
-            <div className="space-y-2">
-              {[
-                { id: "under-16" as AgeRange, label: "Under 16" },
-                { id: "16-24" as AgeRange, label: "16 – 24" },
-                { id: "25-34" as AgeRange, label: "25 – 34" },
-                { id: "35-44" as AgeRange, label: "35 – 44" },
-                { id: "45-54" as AgeRange, label: "45 – 54" },
-                { id: "55+" as AgeRange, label: "55+" },
-              ].map((opt, i) => (
-                <OptionCard
-                  key={opt.id}
-                  selected={ageRange === opt.id}
-                  onSelect={() => setAgeRange(opt.id)}
-                  icon={<Calendar size={22} style={{ color: THEME.brand }} />}
-                  label={opt.label}
-                  index={i}
-                />
-              ))}
-              {ageRange === "under-16" && (
-                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle className="size-4 shrink-0" />
-                    <span className="font-medium">Age requirement not met</span>
-                  </div>
-                  <p className="text-xs text-red-500/80 dark:text-red-400/80">
-                    Tropos is only available for users aged 16 and over. Please
-                    check back when you meet the age requirement.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 2 — Body Metrics
-          ════════════════════════════════ */}
-          {step === 3 && (
-            <div className="space-y-5">
-              {/* Height */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Ruler size={16} style={{ color: THEME.brand }} />
-                    <span className="text-xs font-medium">Height</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {(["cm", "ft"] as const).map((u) => (
-                      <button
-                        type="button"
-                        key={u}
-                        onClick={() => setHeightUnit(u)}
-                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
-                        style={{
-                          background:
-                            heightUnit === u
-                              ? THEME.brand
-                              : "hsl(var(--muted))",
-                          color:
-                            heightUnit === u
-                              ? "#fff"
-                              : "hsl(var(--muted-foreground))",
-                        }}
-                      >
-                        {u}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <Stepper
-                  label="Height"
-                  value={heightCm}
-                  displayValue={displayHeight}
-                  onDecrement={() =>
-                    setHeightCm((v) =>
-                      Math.max(100, Math.round(v - heightStepSize))
-                    )
-                  }
-                  onIncrement={() =>
-                    setHeightCm((v) =>
-                      Math.min(250, Math.round(v + heightStepSize))
-                    )
-                  }
-                />
-              </div>
-
-              {/* Weight */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Dumbbell size={16} style={{ color: THEME.brand }} />
-                    <span className="text-xs font-medium">Weight</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {(["kg", "lbs"] as const).map((u) => (
-                      <button
-                        type="button"
-                        key={u}
-                        onClick={() => setWeightUnit(u)}
-                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
-                        style={{
-                          background:
-                            weightUnit === u
-                              ? THEME.brand
-                              : "hsl(var(--muted))",
-                          color:
-                            weightUnit === u
-                              ? "#fff"
-                              : "hsl(var(--muted-foreground))",
-                        }}
-                      >
-                        {u}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <Stepper
-                  label="Weight"
-                  value={weightKg}
-                  displayValue={displayWeight}
-                  onDecrement={() =>
-                    setWeightKg((v) =>
-                      Math.max(30, parseFloat((v - weightStepSize).toFixed(1)))
-                    )
-                  }
-                  onIncrement={() =>
-                    setWeightKg((v) =>
-                      Math.min(250, parseFloat((v + weightStepSize).toFixed(1)))
-                    )
-                  }
-                />
-              </div>
-
-              {/* Goal weight (Tier 2) */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Target size={16} style={{ color: THEME.brand }} />
-                  <span className="text-xs font-medium">Goal weight</span>
-                </div>
-                <Stepper
-                  label="Goal weight"
-                  value={goalWeightKg}
-                  displayValue={displayGoalWeight}
-                  onDecrement={() =>
-                    setGoalWeightKg((v) =>
-                      Math.max(30, parseFloat((v - weightStepSize).toFixed(1)))
-                    )
-                  }
-                  onIncrement={() =>
-                    setGoalWeightKg((v) =>
-                      Math.min(250, parseFloat((v + weightStepSize).toFixed(1)))
-                    )
-                  }
-                />
-              </div>
-
-              {/* Rate — only when the target differs from current weight.
-                  Maintain needs no rate. */}
-              {goalPlan.direction !== "maintain" && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium">
-                      {goalPlan.direction === "lose" ? "Lose" : "Gain"} per week
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    {[0.25, 0.5, 0.75].map((r) => {
-                      const selected = weeklyRateKg === r;
-                      const lbs = Math.round(r * 2.205 * 10) / 10;
-                      return (
-                        <button
-                          type="button"
-                          key={r}
-                          onClick={() => setWeeklyRateKg(r)}
-                          className="flex-1 min-h-[48px] rounded-xl text-xs font-semibold transition-all active:scale-[0.98]"
-                          style={{
-                            background: selected
-                              ? `${THEME.brand}14`
-                              : "hsl(var(--card))",
-                            border: selected
-                              ? `1px solid ${THEME.brand}45`
-                              : "1px solid hsl(var(--border) / 0.7)",
-                            color: selected
-                              ? THEME.brand
-                              : "hsl(var(--foreground))",
-                          }}
-                        >
-                          {weightUnit === "lbs" ? `${lbs} lbs` : `${r} kg`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Live nutrition preview — surfaces the derived phase the
-                  moment the user sets a target, not just at the end. */}
-              <div
-                className="rounded-xl px-3.5 py-3 text-xs"
-                style={{
-                  background: `${THEME.warning}10`,
-                  border: `1px solid ${THEME.warning}25`,
-                }}
-              >
-                <span
-                  className="font-semibold"
-                  style={{ color: THEME.warning }}
-                >
-                  Nutrition:{" "}
-                </span>
-                <span className="text-muted-foreground">
-                  {nutritionPhaseLabel(
-                    goalPlan.fitnessGoal,
-                    goalPlan.dailyOffset
-                  )}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 3 — Primary Goal
-          ════════════════════════════════ */}
-          {step === 4 && (
             <div className="space-y-2">
               {[
                 {
@@ -1190,66 +858,15 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 4 — Experience Level
+             STEP 1 — Days Per Week
           ════════════════════════════════ */}
-          {step === 5 && (
-            <div className="space-y-2">
-              {[
-                {
-                  id: "beginner" as Experience,
-                  label: "Beginner",
-                  desc: "0 – 6 months of consistent training",
-                  icon: <Target size={22} style={{ color: THEME.success }} />,
-                },
-                {
-                  id: "intermediate" as Experience,
-                  label: "Intermediate",
-                  desc: "6 months – 2 years of training",
-                  icon: <Award size={22} style={{ color: THEME.brand }} />,
-                },
-                {
-                  id: "advanced" as Experience,
-                  label: "Advanced",
-                  desc: "2+ years of structured training",
-                  icon: <Sparkles size={22} style={{ color: THEME.warning }} />,
-                },
-              ].map((opt, i) => (
-                <OptionCard
-                  key={opt.id}
-                  selected={experience === opt.id}
-                  onSelect={() => setExperience(opt.id)}
-                  icon={opt.icon}
-                  label={opt.label}
-                  desc={opt.desc}
-                  index={i}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 5 — Days Per Week
-          ════════════════════════════════ */}
-          {step === 6 && (
+          {step === 1 && (
             <div className="grid grid-cols-5 gap-2">
               {([2, 3, 4, 5, 6] as DaysPerWeek[]).map((d) => (
                 <button
                   type="button"
                   key={d}
-                  onClick={() => {
-                    setDaysPerWeek(d);
-                    // Reset split if incompatible
-                    if (
-                      d < 5 &&
-                      (preferredSplit === "ppl" ||
-                        preferredSplit === "bro_split")
-                    ) {
-                      setPreferredSplit("auto");
-                    }
-                    if (d < 4 && preferredSplit === "upper_lower") {
-                      setPreferredSplit("auto");
-                    }
-                  }}
+                  onClick={() => setDaysPerWeek(d)}
                   className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all active:scale-[0.95]"
                   style={{
                     background:
@@ -1282,9 +899,9 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 6 — Equipment Access
+             STEP 2 — Equipment Access
           ════════════════════════════════ */}
-          {step === 7 && (
+          {step === 2 && (
             <div className="space-y-2">
               {[
                 {
@@ -1322,64 +939,9 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 7 — Preferred Split
+             STEP 3 — Run Frequency + Mode
           ════════════════════════════════ */}
-          {step === 8 && (
-            <div className="space-y-2">
-              {[
-                {
-                  id: "full_body" as PreferredSplit,
-                  label: "Full Body",
-                  desc: "Hit everything each session",
-                  icon: <User size={22} style={{ color: THEME.success }} />,
-                },
-                {
-                  id: "upper_lower" as PreferredSplit,
-                  label: "Upper / Lower",
-                  desc: "Alternate upper and lower days (4+ days)",
-                  icon: <LayoutGrid size={22} style={{ color: THEME.brand }} />,
-                },
-                {
-                  id: "ppl" as PreferredSplit,
-                  label: "Push / Pull / Legs",
-                  desc: "Classic PPL rotation (5-6 days)",
-                  icon: <Dumbbell size={22} style={{ color: THEME.lifting }} />,
-                },
-                {
-                  id: "bro_split" as PreferredSplit,
-                  label: "Bro Split",
-                  desc: "One muscle group per day (5-6 days)",
-                  icon: <Flame size={22} style={{ color: THEME.running }} />,
-                },
-                {
-                  id: "auto" as PreferredSplit,
-                  label: "No preference",
-                  desc: "We'll pick the best split for you",
-                  icon: <Sparkles size={22} style={{ color: THEME.brand }} />,
-                },
-              ].map((opt, i) => (
-                <OptionCard
-                  key={opt.id}
-                  selected={preferredSplit === opt.id}
-                  onSelect={() => setPreferredSplit(opt.id)}
-                  index={i}
-                  icon={opt.icon}
-                  label={opt.label}
-                  desc={
-                    isSplitDisabled(opt.id)
-                      ? `${opt.desc} — needs ${opt.id === "upper_lower" ? "4+" : "5-6"} days/week`
-                      : opt.desc
-                  }
-                  disabled={isSplitDisabled(opt.id)}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* ════════════════════════════════
-             STEP 8 — Run Frequency + Mode
-          ════════════════════════════════ */}
-          {step === 9 && (
+          {step === 3 && (
             <div className="space-y-4">
               <div className="space-y-2">
                 {[
@@ -1590,9 +1152,9 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 9 — Injuries
+             STEP 4 — Injuries
           ════════════════════════════════ */}
-          {step === 10 && (
+          {step === 4 && (
             <div className="space-y-2">
               {[
                 {
@@ -1671,9 +1233,187 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 11 — Weekly preview (P0-5)
+             STEP 5 — About you (fast-start merge of the old gender +
+             age + body-metrics steps onto one scrollable screen). These
+             are the TDEE inputs (calculateTDEE(weightKg, heightCm, age,
+             activityLevel, sex)); activity level stays DERIVED from
+             daysPerWeek (no input here). Goal weight + weekly rate were
+             deferred — the saved target is the current weight at a 0 rate
+             (→ maintenance), see handleFinish.
           ════════════════════════════════ */}
-          {step === 11 && (
+          {step === 5 && (
+            <div className="space-y-7">
+              {/* Sex / gender */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Sex
+                </p>
+                {[
+                  {
+                    id: "male" as Gender,
+                    label: "Male",
+                    icon: <User size={22} style={{ color: THEME.lifting }} />,
+                  },
+                  {
+                    id: "female" as Gender,
+                    label: "Female",
+                    icon: <Heart size={22} style={{ color: THEME.running }} />,
+                  },
+                  {
+                    id: "unspecified" as Gender,
+                    label: "Prefer not to say",
+                    icon: <User size={22} className="text-muted-foreground" />,
+                  },
+                ].map((opt, i) => (
+                  <OptionCard
+                    key={opt.id}
+                    selected={gender === opt.id}
+                    onSelect={() => setGender(opt.id)}
+                    icon={opt.icon}
+                    label={opt.label}
+                    index={i}
+                  />
+                ))}
+              </div>
+
+              {/* Age band */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Age
+                </p>
+                {[
+                  { id: "under-16" as AgeRange, label: "Under 16" },
+                  { id: "16-24" as AgeRange, label: "16 – 24" },
+                  { id: "25-34" as AgeRange, label: "25 – 34" },
+                  { id: "35-44" as AgeRange, label: "35 – 44" },
+                  { id: "45-54" as AgeRange, label: "45 – 54" },
+                  { id: "55+" as AgeRange, label: "55+" },
+                ].map((opt, i) => (
+                  <OptionCard
+                    key={opt.id}
+                    selected={ageRange === opt.id}
+                    onSelect={() => setAgeRange(opt.id)}
+                    icon={<Calendar size={22} style={{ color: THEME.brand }} />}
+                    label={opt.label}
+                    index={i}
+                  />
+                ))}
+                {ageRange === "under-16" && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="size-4 shrink-0" />
+                      <span className="font-medium">
+                        Age requirement not met
+                      </span>
+                    </div>
+                    <p className="text-xs text-red-500/80 dark:text-red-400/80">
+                      Tropos is only available for users aged 16 and over.
+                      Please check back when you meet the age requirement.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Height */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Ruler size={16} style={{ color: THEME.brand }} />
+                    <span className="text-xs font-medium">Height</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {(["cm", "ft"] as const).map((u) => (
+                      <button
+                        type="button"
+                        key={u}
+                        onClick={() => setHeightUnit(u)}
+                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
+                        style={{
+                          background:
+                            heightUnit === u
+                              ? THEME.brand
+                              : "hsl(var(--muted))",
+                          color:
+                            heightUnit === u
+                              ? "#fff"
+                              : "hsl(var(--muted-foreground))",
+                        }}
+                      >
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Stepper
+                  label="Height"
+                  value={heightCm}
+                  displayValue={displayHeight}
+                  onDecrement={() =>
+                    setHeightCm((v) =>
+                      Math.max(100, Math.round(v - heightStepSize))
+                    )
+                  }
+                  onIncrement={() =>
+                    setHeightCm((v) =>
+                      Math.min(250, Math.round(v + heightStepSize))
+                    )
+                  }
+                />
+              </div>
+
+              {/* Weight */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell size={16} style={{ color: THEME.brand }} />
+                    <span className="text-xs font-medium">Weight</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {(["kg", "lbs"] as const).map((u) => (
+                      <button
+                        type="button"
+                        key={u}
+                        onClick={() => setWeightUnit(u)}
+                        className="px-3 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
+                        style={{
+                          background:
+                            weightUnit === u
+                              ? THEME.brand
+                              : "hsl(var(--muted))",
+                          color:
+                            weightUnit === u
+                              ? "#fff"
+                              : "hsl(var(--muted-foreground))",
+                        }}
+                      >
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Stepper
+                  label="Weight"
+                  value={weightKg}
+                  displayValue={displayWeight}
+                  onDecrement={() =>
+                    setWeightKg((v) =>
+                      Math.max(30, parseFloat((v - weightStepSize).toFixed(1)))
+                    )
+                  }
+                  onIncrement={() =>
+                    setWeightKg((v) =>
+                      Math.min(250, parseFloat((v + weightStepSize).toFixed(1)))
+                    )
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ════════════════════════════════
+             STEP 6 — Weekly preview (P0-5)
+          ════════════════════════════════ */}
+          {step === 6 && (
             <div
               className="rounded-2xl p-5 space-y-4"
               style={{
@@ -1748,9 +1488,9 @@ export default function Onboarding() {
           )}
 
           {/* ════════════════════════════════
-             STEP 12 — Confirmation
+             STEP 7 — Confirmation
           ════════════════════════════════ */}
-          {step === 12 && (
+          {step === 7 && (
             <div
               className="rounded-2xl p-5 space-y-0"
               style={{
@@ -1891,16 +1631,20 @@ export default function Onboarding() {
           className="text-center text-xs"
           style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
         >
-          {step === 2 &&
-            ageRange === "under-16" &&
-            "You must be 16 or older to use Tropos"}
-          {step === 3 && "Enter your height and weight to continue"}
-          {step === 8 && "This split requires more training days"}
-          {/* #975: step 9 (run mode) no longer gates on a race date — it's
-              always advanceable, so no hint here. */}
-          {step === 10 &&
+          {/* Step 4 — injuries: at least one selection required. */}
+          {step === 4 &&
             injuries.length === 0 &&
             'Select at least one option (or "None")'}
+          {/* Step 5 — about you: age gate + body metrics. The under-16 gate
+              takes priority; otherwise prompt for the missing metric. */}
+          {step === 5 &&
+            ageRange === "under-16" &&
+            "You must be 16 or older to use Tropos"}
+          {step === 5 &&
+            ageRange !== "under-16" &&
+            "Enter your height and weight to continue"}
+          {/* #975: the run step (step 3) no longer gates on a race date —
+              it's always advanceable, so no hint there. */}
         </p>
       )}
     </div>
