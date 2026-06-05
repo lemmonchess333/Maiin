@@ -1,10 +1,19 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
-import { Calculator, ChevronDown, ChevronUp, Flame, Zap } from "lucide-react";
+import {
+  Calculator,
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  Minus,
+  Plus,
+  Target,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
+import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import AccordionSection from "@/components/AccordionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
@@ -14,8 +23,12 @@ interface NutritionSectionProps {
   setAge: (v: number) => void;
   activityLevel: ActivityLevel;
   setActivityLevel: (v: ActivityLevel) => void;
-  trainingPhase: "cut" | "lean bulk" | "recomp";
-  setTrainingPhase: (v: "cut" | "lean bulk" | "recomp") => void;
+  currentKg: number;
+  goalWeightKg: number;
+  setGoalWeightKg: (v: number) => void;
+  weeklyRateKg: number;
+  setWeeklyRateKg: (v: number) => void;
+  goalPlan: GoalWeightPlan;
   mealsTarget: number;
   setMealsTarget: (v: number) => void;
   tdee: {
@@ -31,7 +44,6 @@ interface NutritionSectionProps {
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
   ) => Promise<UpdateProfileResult>;
-  onPhaseChange: (phase: "cut" | "lean bulk" | "recomp") => void;
   inline?: boolean;
 }
 
@@ -41,13 +53,16 @@ export default function NutritionSection({
   setAge,
   activityLevel,
   setActivityLevel,
-  trainingPhase,
-  setTrainingPhase,
+  currentKg,
+  goalWeightKg,
+  setGoalWeightKg,
+  weeklyRateKg,
+  setWeeklyRateKg,
+  goalPlan,
   mealsTarget,
   setMealsTarget,
   tdee,
   updateProfile,
-  onPhaseChange,
   inline = false,
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
@@ -175,75 +190,124 @@ export default function NutritionSection({
         )}
       </div>
 
-      {/* Training Phase */}
+      {/* Goal Weight — owns the nutrition direction (target vs current → phase) */}
       <div className="bg-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <Zap className="size-5 text-primary" />
+          <Target className="size-5 text-primary" />
           <div>
-            <p className="text-sm font-medium text-foreground">
-              Training Phase
-            </p>
+            <p className="text-sm font-medium text-foreground">Goal Weight</p>
             <p className="text-xs text-muted-foreground">
-              Adjusts macro targets and performance insights
+              Sets your calorie target — current{" "}
+              <span className="font-mono tabular-nums">
+                {currentKg.toFixed(1)}
+              </span>{" "}
+              kg
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            {
-              value: "lean bulk" as const,
-              label: "Lean Bulk",
-              desc: "Muscle gain",
-              color: "#22c55e",
-            },
-            {
-              value: "cut" as const,
-              label: "Cut",
-              desc: "Fat loss",
-              color: "#ef4444",
-            },
-            {
-              value: "recomp" as const,
-              label: "Recomp",
-              desc: "Body recomp",
-              color: "#a855f7",
-            },
-          ].map((phase) => (
-            <button
-              type="button"
-              key={phase.value}
-              onClick={() => {
-                haptic("medium");
-                setTrainingPhase(phase.value);
-                onPhaseChange(phase.value);
-              }}
-              className={cn(
-                "p-3 rounded-xl border text-center transition-all",
-                trainingPhase === phase.value
-                  ? "border-primary bg-primary/10"
-                  : "border-border/50 bg-muted/30 hover:border-border"
-              )}
-            >
-              <div
-                className="size-2 rounded-full mx-auto mb-2"
-                style={{ backgroundColor: phase.color }}
-              />
-              <p
-                className={cn(
-                  "text-xs font-medium",
-                  trainingPhase === phase.value
-                    ? "text-primary"
-                    : "text-foreground"
-                )}
-              >
-                {phase.label}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {phase.desc}
-              </p>
-            </button>
-          ))}
+        {/* Target weight stepper (0.5 kg steps) */}
+        <div className="flex items-center justify-between rounded-xl bg-muted/30 p-2">
+          <button
+            type="button"
+            aria-label="Lower goal weight"
+            onClick={() => {
+              haptic("light");
+              setGoalWeightKg(
+                Math.max(30, Math.round((goalWeightKg - 0.5) * 10) / 10)
+              );
+            }}
+            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
+          >
+            <Minus className="size-4" />
+          </button>
+          <div className="text-center">
+            <p className="text-2xl font-mono tabular-nums font-bold text-foreground">
+              {goalWeightKg.toFixed(1)}
+            </p>
+            <p className="text-xs text-muted-foreground">kg target</p>
+          </div>
+          <button
+            type="button"
+            aria-label="Raise goal weight"
+            onClick={() => {
+              haptic("light");
+              setGoalWeightKg(
+                Math.min(250, Math.round((goalWeightKg + 0.5) * 10) / 10)
+              );
+            }}
+            className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
+          >
+            <Plus className="size-4" />
+          </button>
+        </div>
+
+        {/* Weekly pace — only meaningful when not maintaining */}
+        {goalPlan.direction !== "maintain" && (
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">
+              Weekly pace ({goalPlan.direction === "lose" ? "loss" : "gain"})
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 0.25, label: "Relaxed" },
+                { value: 0.5, label: "Steady" },
+                { value: 0.75, label: "Fast" },
+              ].map((r) => (
+                <button
+                  type="button"
+                  key={r.value}
+                  onClick={() => {
+                    haptic("medium");
+                    setWeeklyRateKg(r.value);
+                  }}
+                  className={cn(
+                    "min-h-11 p-2 rounded-xl border text-center transition-all",
+                    weeklyRateKg === r.value
+                      ? "border-primary bg-primary/10"
+                      : "border-border/50 bg-muted/30 hover:border-border"
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "text-xs font-medium",
+                      weeklyRateKg === r.value
+                        ? "text-primary"
+                        : "text-foreground"
+                    )}
+                  >
+                    {r.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
+                    {r.value} kg/wk
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Derived: direction → phase + the daily offset it produces */}
+        <div className="rounded-xl bg-muted/30 p-3 flex items-center justify-between gap-2">
+          <span className="text-xs text-muted-foreground">
+            {goalPlan.direction === "lose"
+              ? "Losing"
+              : goalPlan.direction === "gain"
+                ? "Gaining"
+                : "Maintaining"}
+            {" → "}
+            <span className="text-foreground font-medium">
+              {goalPlan.fitnessGoal === "lean bulk"
+                ? "Lean Bulk"
+                : goalPlan.fitnessGoal === "cut"
+                  ? "Cut"
+                  : "Recomp"}
+            </span>
+          </span>
+          <span className="text-xs font-mono tabular-nums font-medium text-foreground">
+            {goalPlan.dailyOffset > 0 ? "+" : ""}
+            {goalPlan.dailyOffset} cal/day
+          </span>
         </div>
 
         {/* Calorie calculation chain */}
@@ -256,15 +320,14 @@ export default function NutritionSection({
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  Phase (
-                  {trainingPhase === "lean bulk"
+                  {goalPlan.fitnessGoal === "lean bulk"
                     ? "Lean Bulk"
-                    : trainingPhase === "cut"
+                    : goalPlan.fitnessGoal === "cut"
                       ? "Cut"
-                      : "Recomp"}
-                  )
+                      : "Recomp"}{" "}
+                  offset
                 </span>
-                <span>
+                <span className="font-mono tabular-nums">
                   {tdee.deficit > 0 ? "+" : ""}
                   {tdee.deficit} cal
                 </span>
