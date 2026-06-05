@@ -167,7 +167,7 @@ export default function DayPeekCard({
               <button
                 type="button"
                 onClick={() => onManage(dateKey)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 rounded-md active:scale-[0.97]"
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary px-2 py-1 -ml-2 min-h-[44px] rounded-md active:scale-[0.97]"
               >
                 <Settings2 className="size-3" />
                 Manage day
