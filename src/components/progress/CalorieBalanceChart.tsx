@@ -1,7 +1,5 @@
 import { useMemo } from "react";
 import type { Meal } from "@/hooks/useMeals";
-import type { Workout } from "@/hooks/useWorkouts";
-import { useRunningStats } from "@/hooks/useRunningStats";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { format, subDays } from "date-fns";
@@ -17,36 +15,39 @@ import {
 } from "recharts";
 import { AlertTriangle } from "lucide-react";
 import {
-  estimateBMR,
   calcDayBalance,
   getBalanceColor,
   getPhaseAlignment,
 } from "@/utils/calorieBalance";
+import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
 
 interface CalorieBalanceChartProps {
-  // Passed down from History, which already holds these live listeners — the
-  // chart used to open its OWN useMeals/useWorkouts onSnapshots, duplicating
-  // the 400-doc meals + workouts listeners on the same collections.
+  // Passed down from History, which already holds the live meals listener.
   meals: Meal[];
-  workouts: Workout[];
 }
 
 export default function CalorieBalanceChart({
   meals,
-  workouts,
 }: CalorieBalanceChartProps) {
-  const { runs } = useRunningStats(14);
   const { profile } = useAuth();
 
   const weightKg = profile?.weightKg ?? 70;
   const heightCm = profile?.heightCm ?? 175;
   const age = profile?.age ?? 30;
   const sex = (profile?.sex as "male" | "female") ?? "male";
+  const activityLevel = (profile?.activityLevel as ActivityLevel) ?? "moderate";
   const goal = profile?.program?.goal;
 
-  const bmr = useMemo(
-    () => estimateBMR(weightKg, heightCm, age, sex),
-    [weightKg, heightCm, age, sex]
+  // Expenditure baseline = MAINTENANCE TDEE (BMR × activity multiplier) — the
+  // same value calculateTDEE uses everywhere else. Expenditure-inclusive
+  // (Nutr1): logged exercise is already captured by the multiplier, so it is
+  // NOT added per-day. The prior bare-BMR baseline understated expenditure by
+  // ~20-40% and showed a "surplus" to a user eating at maintenance (NUTR-H1).
+  // tdee is goal-independent, so a fixed goal arg is passed.
+  const maintenance = useMemo(
+    () =>
+      calculateTDEE(weightKg, heightCm, age, activityLevel, "recomp", sex).tdee,
+    [weightKg, heightCm, age, activityLevel, sex]
   );
 
   const data = useMemo(() => {
@@ -62,25 +63,9 @@ export default function CalorieBalanceChart({
         0
       );
 
-      let activityBurn = 0;
-      const dayWorkouts = workouts.filter((w) => w.date === dateStr);
-      const dayRuns = runs.filter(
-        (r) => format(r.completedAt, "yyyy-MM-dd") === dateStr
-      );
-
-      dayRuns.forEach((r) => {
-        const distKm = (r.distance || 0) / 1000;
-        activityBurn += Math.round(weightKg * distKm * 1.036);
-      });
-
-      dayWorkouts.forEach((w) => {
-        const mins = w.durationMinutes || 0;
-        activityBurn += Math.round((weightKg * mins * 5) / 60);
-      });
-
-      return calcDayBalance(dateStr, dayLabel, consumed, bmr, activityBurn);
+      return calcDayBalance(dateStr, dayLabel, consumed, maintenance);
     });
-  }, [meals, workouts, runs, bmr, weightKg]);
+  }, [meals, maintenance]);
 
   const rawAvg = data.length
     ? data.reduce((s, d) => s + d.balance, 0) / data.length
@@ -117,9 +102,7 @@ export default function CalorieBalanceChart({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        BMR + workout burn − food intake
-      </p>
+      <p className="text-xs text-muted-foreground">Maintenance − food intake</p>
 
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
