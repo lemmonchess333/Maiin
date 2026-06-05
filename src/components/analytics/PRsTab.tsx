@@ -96,10 +96,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
       </div>
       <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
         <div>
-          <p
-            className="text-sm font-bold font-mono tabular-nums"
-            style={{ color: THEME.lifting }}
-          >
+          <p className="text-sm font-bold font-mono tabular-nums text-lifting">
             {isBW && pr.weight === 0 ? (
               "BW"
             ) : isBW && pr.weight > 0 ? (
@@ -171,8 +168,7 @@ function LiftPRList({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors"
-              style={{ color: THEME.lifting }}
+              className="w-full px-4 py-3 text-xs font-medium border-t border-border/20 active:bg-muted/40 transition-colors text-lifting"
             >
               Show all ({prs.length})
             </button>
@@ -233,8 +229,7 @@ export default function PRsTab({
           <div className="flex gap-2 justify-center pt-1">
             <Link
               to="/run"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-              style={{ background: THEME.running }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running"
             >
               <Footprints
                 className="size-3.5 inline-block mr-1"
@@ -244,8 +239,7 @@ export default function PRsTab({
             </Link>
             <Link
               to="/program"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-              style={{ background: THEME.lifting }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-lifting"
             >
               Start Lift
             </Link>
@@ -263,10 +257,7 @@ export default function PRsTab({
           Indoor (only when user has treadmill / manual runs). */}
       {hasAnyLifetimeRun && (
         <section aria-label="Running personal records" className="space-y-3">
-          <p
-            className="text-xs font-semibold uppercase tracking-wide"
-            style={{ color: THEME.running }}
-          >
+          <p className="text-xs font-semibold uppercase tracking-wide text-running">
             Running
           </p>
           <PRCard
@@ -301,10 +292,7 @@ export default function PRsTab({
           a confusing empty recent-window). */}
       {hasAnyLifetimeWorkout && (
         <section aria-label="Lifting personal records" className="space-y-3">
-          <p
-            className="text-xs font-semibold uppercase tracking-wide"
-            style={{ color: THEME.lifting }}
-          >
+          <p className="text-xs font-semibold uppercase tracking-wide text-lifting">
             Lifting
           </p>
           <LiftPRList
