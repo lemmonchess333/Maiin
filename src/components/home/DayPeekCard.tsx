@@ -97,6 +97,10 @@ export default function DayPeekCard({
         : st === "both"
           ? "Lift + Run day"
           : "Rest day";
+  // DS1b: typeColor stays inline — the rest-day branch is THEME.text.muted
+  // (#8E8E93), whose match to --muted-foreground isn't guaranteed, so the
+  // lift/run/both sport branches ride along inline rather than risk the rest
+  // pill shifting.
   const typeColor =
     st === "lift"
       ? THEME.lifting
@@ -177,10 +181,7 @@ export default function DayPeekCard({
             <div className="space-y-1 text-xs">
               {hasW && (
                 <div className="flex items-center gap-1.5">
-                  <Dumbbell
-                    className="size-3.5 shrink-0"
-                    style={{ color: THEME.lifting }}
-                  />
+                  <Dumbbell className="size-3.5 shrink-0 text-lifting" />
                   <span className="text-foreground font-mono tabular-nums">
                     {workouts.length} session{workouts.length !== 1 ? "s" : ""}
                     {totalMinutes > 0 && (
@@ -221,10 +222,7 @@ export default function DayPeekCard({
                   "Run scheduled" line for an inherited slot. */}
               {hasRun && (
                 <div className="flex items-center gap-1.5">
-                  <Footprints
-                    className="size-3.5 shrink-0"
-                    style={{ color: THEME.running }}
-                  />
+                  <Footprints className="size-3.5 shrink-0 text-running" />
                   <span className="text-foreground">
                     {resolved.run.isCompleted ? (
                       // Q2 P24 — distinguish real vs manual ✅. Real /
@@ -281,10 +279,7 @@ export default function DayPeekCard({
                   aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} logged for this date — open all`}
                   className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground -ml-1 px-1 py-0.5 rounded-md active:scale-[0.97]"
                 >
-                  <Footprints
-                    className="size-3.5 shrink-0 opacity-50"
-                    style={{ color: THEME.running }}
-                  />
+                  <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
                   <span>
                     +{overflowCount} more extra{" "}
                     {overflowCount === 1 ? "run" : "runs"}
@@ -346,10 +341,7 @@ function ExtraRunRow({
       aria-label={`Extra run: ${distanceText} ${bucketText}, tap to open`}
       className="inline-flex items-center gap-1.5 -ml-1 px-1 py-0.5 rounded-md text-foreground/80 hover:text-foreground active:scale-[0.97]"
     >
-      <Footprints
-        className="size-3.5 shrink-0 opacity-50"
-        style={{ color: THEME.running }}
-      />
+      <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
       <span className="text-muted-foreground">
         Extra: {distanceText} {bucketText}
       </span>
