@@ -2871,6 +2871,10 @@ exports.sendTestPush = functions
 
 const RACE_NO_SHOW_GRACE_DAYS = 3;
 const RECOVERY_EXIT_GRACE_DAYS = 7;
+// A no-show race auto-returns the user to freeform this many days after the
+// race date (well after the +3d no-show flip), so they're not stranded in
+// race_prep on a race that never happened (#1109).
+const NO_SHOW_EXIT_GRACE_DAYS = 14;
 const RACE_STRICT_DISTANCE_RATIO_FNS = 0.95;
 const PLANNED_RACE_DISTANCE_METERS_FNS = {
   "5k": 5000,
@@ -2982,6 +2986,7 @@ function _decideReconciliationActions(
   let profilePayload = null;
   let noShowWritten = false;
   let recoveryCleared = false;
+  let noShowCleared = false;
 
   // ── L1 decision ────────────────────────────────────────────────
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
@@ -3078,12 +3083,68 @@ function _decideReconciliationActions(
     }
   }
 
-  if (!noShowWritten && !recoveryCleared) {
+  // ── L4 decision (no-show auto-return) ──────────────────────────
+  // A no-show race left the user stranded in race_prep on a race that never
+  // happened (L1 flips the slot to race_no_show but there was no exit). Once
+  // the slot is race_no_show and the race is more than NO_SHOW_EXIT_GRACE_DAYS
+  // past, return the user to freeform — or to a successor race they declared in
+  // the meantime. Reuses resolveRecoveryExit: the no-show race plays the
+  // "resolved race" role, so same-race (no successor) → freeform, a newer
+  // declared race → stay race_prep with it (symmetric with L3). (#1109)
+  if (
+    !recoveryCleared &&
+    profile &&
+    profile.runMode === "race_prep" &&
+    runPlan &&
+    runPlan.raceGoal &&
+    typeof runPlan.raceGoal.targetDate === "string" &&
+    runPlan.phase !== "recovery"
+  ) {
+    const raceDate = runPlan.raceGoal.targetDate;
+    // Use the post-L1 runDays so a slot flipped THIS sweep (function was down
+    // past +14d) is seen as race_no_show, not its stale "planned".
+    const effectiveRunDays =
+      updatePayload.runDays || (programState && programState.runDays) || [];
+    const raceDayRunDay = _findRaceDayRunDay(effectiveRunDays, raceDate);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysPast = Math.floor(
+      (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
+    );
+    if (
+      raceDayRunDay &&
+      raceDayRunDay.status === "race_no_show" &&
+      daysPast > NO_SHOW_EXIT_GRACE_DAYS
+    ) {
+      const currentRaceGoal = profile.raceGoal || null;
+      const exit = resolveRecoveryExit({
+        currentRaceGoal,
+        completedRaceGoal: runPlan.raceGoal,
+      });
+      const clearedRunPlan = { ...runPlan };
+      if (exit.runMode === "freeform") {
+        // No successor → freeform. Clear raceGoal on the runPlan (deciders read
+        // it) and co-write the profile (materialization invariant).
+        clearedRunPlan.raceGoal = null;
+        profilePayload = { runMode: "freeform", raceGoal: null };
+      } else {
+        // A newer race was declared during the no-show window → keep it.
+        clearedRunPlan.raceGoal = currentRaceGoal;
+        if (profile.runMode !== exit.runMode) {
+          profilePayload = { runMode: exit.runMode };
+        }
+      }
+      updatePayload.runPlan = clearedRunPlan;
+      noShowCleared = true;
+    }
+  }
+
+  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
     return {
       payload: null,
       profilePayload: null,
       noShowWritten,
       recoveryCleared,
+      noShowCleared,
     };
   }
   return {
@@ -3091,6 +3152,7 @@ function _decideReconciliationActions(
     profilePayload,
     noShowWritten,
     recoveryCleared,
+    noShowCleared,
   };
 }
 
@@ -3117,7 +3179,11 @@ function _recoveryEndDateForRace(raceGoal) {
 async function _runDailyRaceReconciliationForUser(uid) {
   const ctx = await readUserProgramContext(uid);
   if (!ctx) {
-    return { noShowWritten: false, recoveryCleared: false };
+    return {
+      noShowWritten: false,
+      recoveryCleared: false,
+      noShowCleared: false,
+    };
   }
   const { userRef, programRef, profile, programState } = ctx;
   const nowMs = Date.now();
@@ -3142,16 +3208,21 @@ async function _runDailyRaceReconciliationForUser(uid) {
     }
   }
 
-  const { payload, profilePayload, noShowWritten, recoveryCleared } =
-    _decideReconciliationActions(
-      profile,
-      programState,
-      savedRunsForRaceDate,
-      nowMs
-    );
+  const {
+    payload,
+    profilePayload,
+    noShowWritten,
+    recoveryCleared,
+    noShowCleared,
+  } = _decideReconciliationActions(
+    profile,
+    programState,
+    savedRunsForRaceDate,
+    nowMs
+  );
 
   if (!payload && !profilePayload) {
-    return { noShowWritten, recoveryCleared };
+    return { noShowWritten, recoveryCleared, noShowCleared };
   }
 
   // R1A: tombstone guard immediately before the write — per spec
@@ -3165,7 +3236,11 @@ async function _runDailyRaceReconciliationForUser(uid) {
       "dailyRaceReconciliationSweep"
     ))
   ) {
-    return { noShowWritten: false, recoveryCleared: false };
+    return {
+      noShowWritten: false,
+      recoveryCleared: false,
+      noShowCleared: false,
+    };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
   // runMode + raceGoal) are separate docs. Write both when present. They're
@@ -3189,19 +3264,22 @@ exports.dailyRaceReconciliationSweep = functions
       console.log("dailyRaceReconciliationSweep: starting");
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
+      let totalNoShowCleared = 0;
       await sweepActiveUsers({
         name: "dailyRaceReconciliationSweep",
         cutoffDays: 30,
         perUser: async (uid) => {
-          const { noShowWritten, recoveryCleared } =
+          const { noShowWritten, recoveryCleared, noShowCleared } =
             await _runDailyRaceReconciliationForUser(uid);
           if (noShowWritten) totalNoShow += 1;
           if (recoveryCleared) totalRecoveryCleared += 1;
+          if (noShowCleared) totalNoShowCleared += 1;
         },
       });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
-          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}`
+          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
+          `noShowCleared=${totalNoShowCleared}`
       );
     } catch (err) {
       console.error("dailyRaceReconciliationSweep: fatal error:", {
