@@ -18,7 +18,6 @@ import { THEME } from "@/lib/theme";
 import {
   Check,
   Dumbbell,
-  RefreshCw,
   Settings2,
   CalendarDays,
   MoreHorizontal,
@@ -55,7 +54,8 @@ import {
 } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
-import { Spinner } from "@/components/ui/Spinner";
+import { ProgramSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
@@ -436,27 +436,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   }, [selectedDayIndex]);
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <Spinner size="md" variant="primary" label="Loading programme" />
-      </div>
-    );
+    // Mirror the in-Layout Suspense fallback (PageContentSkeleton →
+    // ProgramSkeleton) so the route-chunk placeholder and this
+    // data-loading gate are the SAME shape — no flash from skeleton to
+    // a bare spinner while useProgram() resolves. Replaces a lone
+    // centred Spinner that floated high (its wrapper had no height) and
+    // gave the page no structure during the cold-start window.
+    return <ProgramSkeleton />;
   }
 
   if (!programState || !prescription) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted-foreground">
-          Failed to load programme
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
-        >
-          <RefreshCw className="size-4" /> Retry
-        </button>
-      </div>
+      <ErrorState
+        title="Couldn't load your programme"
+        description="Something went wrong fetching your training plan. Check your connection and try again."
+        retry={{ label: "Retry", onClick: () => window.location.reload() }}
+      />
     );
   }
 
