@@ -43,16 +43,40 @@ describe("getVerbState — verb derivation", () => {
 
 describe("getVerb — state + label", () => {
   it("returns matching label for each state", () => {
-    expect(getVerb("deload", false)).toEqual({ state: "recovering", label: "Recovering" });
-    expect(getVerb("low", false)).toEqual({ state: "building", label: "Building" });
-    expect(getVerb("moderate", false)).toEqual({ state: "cruising", label: "Cruising" });
-    expect(getVerb("high", false)).toEqual({ state: "sharpening", label: "Sharpening" });
-    expect(getVerb("overreach", false)).toEqual({ state: "backing-off", label: "Backing off" });
-    expect(getVerb("high", true)).toEqual({ state: "backing-off", label: "Backing off" });
+    expect(getVerb("deload", false)).toEqual({
+      state: "recovering",
+      label: "Recovering",
+    });
+    expect(getVerb("low", false)).toEqual({
+      state: "building",
+      label: "Building",
+    });
+    expect(getVerb("moderate", false)).toEqual({
+      state: "cruising",
+      label: "Cruising",
+    });
+    expect(getVerb("high", false)).toEqual({
+      state: "sharpening",
+      label: "Sharpening",
+    });
+    expect(getVerb("overreach", false)).toEqual({
+      state: "backing-off",
+      label: "Backing off",
+    });
+    expect(getVerb("high", true)).toEqual({
+      state: "backing-off",
+      label: "Backing off",
+    });
   });
 
   it("VERB_LABEL covers all 5 states", () => {
-    const states: VerbState[] = ["recovering", "building", "cruising", "sharpening", "backing-off"];
+    const states: VerbState[] = [
+      "recovering",
+      "building",
+      "cruising",
+      "sharpening",
+      "backing-off",
+    ];
     states.forEach((s) => {
       expect(VERB_LABEL[s]).toBeTruthy();
       expect(VERB_LABEL[s].length).toBeGreaterThan(0);
@@ -62,28 +86,38 @@ describe("getVerb — state + label", () => {
 
 describe("getLine — backing-off state", () => {
   it("recoveryWeak signal: 'Recovery signals down — ease this week'", () => {
-    expect(getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true }))
-      .toBe("Recovery signals down — ease this week");
+    expect(
+      getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true })
+    ).toBe("Recovery signals down — ease this week");
   });
 
   it("no recoveryWeak: generic 'Loads high — ease this week'", () => {
-    expect(getLine("backing-off", ZERO_SIGNALS)).toBe("Loads high — ease this week");
+    expect(getLine("backing-off", ZERO_SIGNALS)).toBe(
+      "Loads high — ease this week"
+    );
   });
 });
 
 describe("getLine — sharpening state", () => {
   it("bothLoadsStrong signal: hybrid celebration line", () => {
-    expect(getLine("sharpening", { ...ZERO_SIGNALS, bothLoadsStrong: true }))
-      .toBe("Both loads strong — solid hybrid output");
+    expect(
+      getLine("sharpening", { ...ZERO_SIGNALS, bothLoadsStrong: true })
+    ).toBe("Both loads strong — solid hybrid output");
   });
 
   it("liftAheadOfBaseline > 0.15: cites the percentage", () => {
-    const line = getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.18 });
+    const line = getLine("sharpening", {
+      ...ZERO_SIGNALS,
+      liftAheadOfBaseline: 0.18,
+    });
     expect(line).toBe("Lifting load 18% above baseline");
   });
 
   it("runAheadOfBaseline > 0.2: cites the percentage", () => {
-    const line = getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.25 });
+    const line = getLine("sharpening", {
+      ...ZERO_SIGNALS,
+      runAheadOfBaseline: 0.25,
+    });
     expect(line).toBe("Run volume 25% up");
   });
 
@@ -98,24 +132,29 @@ describe("getLine — sharpening state", () => {
   });
 
   it("no signals: generic 'Loads strong — keep the line'", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("Loads strong — keep the line");
+    expect(getLine("sharpening", ZERO_SIGNALS)).toBe(
+      "Loads strong — keep the line"
+    );
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
-    expect(getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 }))
-      .toBe("Loads strong — keep the line");
+    expect(
+      getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
+    ).toBe("Loads strong — keep the line");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
-    expect(getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 }))
-      .toBe("Loads strong — keep the line");
+    expect(
+      getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
+    ).toBe("Loads strong — keep the line");
   });
 });
 
 describe("getLine — cruising state", () => {
-  it("adherenceWeak: 'Adherence dipped — focus on showing up'", () => {
-    expect(getLine("cruising", { ...ZERO_SIGNALS, adherenceWeak: true }))
-      .toBe("Adherence dipped — focus on showing up");
+  it("adherenceWeak: 'Fewer sessions than usual'", () => {
+    expect(getLine("cruising", { ...ZERO_SIGNALS, adherenceWeak: true })).toBe(
+      "Fewer sessions than usual"
+    );
   });
 
   it("no signals: 'Holding a steady rhythm'", () => {
@@ -125,37 +164,50 @@ describe("getLine — cruising state", () => {
 
 describe("getLine — building state", () => {
   it("lifetimeWeeks >= 4: 'Building back up' (returning user)", () => {
-    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 4 }))
-      .toBe("Building back up");
-    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 12 }))
-      .toBe("Building back up");
+    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 4 })).toBe(
+      "Building back up"
+    );
+    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 12 })).toBe(
+      "Building back up"
+    );
   });
 
   it("lifetimeWeeks < 4: 'Establishing your week' (new user)", () => {
-    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 0 }))
-      .toBe("Establishing your week");
-    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 3 }))
-      .toBe("Establishing your week");
+    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 0 })).toBe(
+      "Establishing your week"
+    );
+    expect(getLine("building", { ...ZERO_SIGNALS, lifetimeWeeks: 3 })).toBe(
+      "Establishing your week"
+    );
   });
 });
 
 describe("getLine — recovering state", () => {
   it("daysSinceLastTraining > 7: 'Quiet week — log when you're back'", () => {
-    expect(getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 10 }))
-      .toBe("Quiet week — log when you're back");
+    expect(
+      getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 10 })
+    ).toBe("Quiet week — log when you're back");
   });
 
   it("daysSinceLastTraining <= 7: 'Light week — take it easy'", () => {
-    expect(getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 7 }))
-      .toBe("Light week — take it easy");
-    expect(getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 0 }))
-      .toBe("Light week — take it easy");
+    expect(
+      getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 7 })
+    ).toBe("Light week — take it easy");
+    expect(
+      getLine("recovering", { ...ZERO_SIGNALS, daysSinceLastTraining: 0 })
+    ).toBe("Light week — take it easy");
   });
 });
 
 describe("getLine — coverage across all states", () => {
   it("every state returns a non-empty string with zero signals", () => {
-    const states: VerbState[] = ["recovering", "building", "cruising", "sharpening", "backing-off"];
+    const states: VerbState[] = [
+      "recovering",
+      "building",
+      "cruising",
+      "sharpening",
+      "backing-off",
+    ];
     states.forEach((state) => {
       const line = getLine(state, ZERO_SIGNALS);
       expect(typeof line).toBe("string");

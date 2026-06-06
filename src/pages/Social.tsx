@@ -491,7 +491,7 @@ export default function Social() {
       }
     } else {
       await navigator.clipboard.writeText(text + " " + window.location.origin);
-      toast.success("Invite link copied!");
+      toast.success("Invite link copied");
     }
   };
 
@@ -1013,7 +1013,9 @@ export default function Social() {
                                 await joinCrew(crew.id);
                                 toast.success(`Joined ${crew.name}`);
                               } catch {
-                                toast.error("Failed to join crew");
+                                toast.error(
+                                  "Couldn't join the crew. Try again."
+                                );
                               } finally {
                                 setJoiningCrewId(null);
                               }
@@ -1349,7 +1351,7 @@ export default function Social() {
                         setNewGroupName("");
                         setNewGroupDesc("");
                         setNewGroupIcon("");
-                        toast.success("Crew created!");
+                        toast.success("Crew created");
                       } catch {
                         toast.error("Failed to create crew. Please try again.");
                       } finally {

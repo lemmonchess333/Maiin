@@ -191,11 +191,11 @@ function generateInsight(doc) {
   }
 
   if (rs < 50 && bullets.length < 3) {
-    bullets.push("Recovery signals are low — check sleep, hydration, and nutrition consistency.");
+    bullets.push("Recovery below baseline — sleep is the biggest lever.");
   }
 
   if (as_ < 50 && bullets.length < 3) {
-    bullets.push("Adherence dipped — focus on showing up consistently over hitting PRs.");
+    bullets.push("Consistency matters more than PRs this week.");
   }
 
   if (lp > 1.15 && bullets.length < 3) {
