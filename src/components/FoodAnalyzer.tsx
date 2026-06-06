@@ -901,7 +901,7 @@ export default function FoodAnalyzer({
                               type="button"
                               onClick={() => removeItem(i)}
                               aria-label={`Remove ${item.name}`}
-                              className="size-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+                              className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
                             >
                               <X className="size-3.5" />
                             </button>
