@@ -152,7 +152,7 @@ function BadgeEarnedContent({
             border: `1px solid ${TIER_COLORS[badge.tier]}30`,
           }}
         >
-          Awesome!
+          Done
         </button>
       </motion.div>
     </motion.div>

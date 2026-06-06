@@ -93,7 +93,7 @@ export function getPhaseAlignment(
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
       return {
         state: "at-odds",
-        message: "At odds with your phase — eating below maintenance",
+        message: `~${Math.round(avgBalance).toLocaleString()} kcal/day below maintenance`,
       };
     }
     if (avgBalance < -NEAR_MAINTENANCE_THRESHOLD) {
@@ -109,7 +109,7 @@ export function getPhaseAlignment(
     if (avgBalance < -NEAR_MAINTENANCE_THRESHOLD) {
       return {
         state: "at-odds",
-        message: "At odds with your phase — eating above maintenance",
+        message: `~${Math.round(Math.abs(avgBalance)).toLocaleString()} kcal/day above maintenance`,
       };
     }
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
