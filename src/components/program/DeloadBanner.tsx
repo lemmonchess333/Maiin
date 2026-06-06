@@ -121,7 +121,7 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
               type="button"
               onClick={handleDismiss}
               aria-label="Dismiss deload banner"
-              className="size-7 -m-1 rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
+              className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
             >
               <X className="size-4" aria-hidden="true" />
             </button>
