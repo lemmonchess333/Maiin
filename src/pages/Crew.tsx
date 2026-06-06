@@ -427,7 +427,7 @@ export default function Crew() {
                 if (!user) return;
                 try {
                   await joinCrew(crewDoc.id);
-                  toast.success("Joined!");
+                  toast.success("Joined");
                 } catch {
                   toast.error("Couldn't join. Try again.");
                 }

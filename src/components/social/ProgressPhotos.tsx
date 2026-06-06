@@ -313,7 +313,7 @@ export default function ProgressPhotos() {
           );
         }
 
-        toast.success("Photo uploaded!");
+        toast.success("Photo uploaded");
       } catch (err) {
         logger.error("[UPLOAD] Upload failed:", err);
         // Surface the actual error so the user can tell what went
