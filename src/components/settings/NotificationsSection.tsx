@@ -201,12 +201,14 @@ export default function NotificationsSection({
       {permission === "denied" && anyReminderOn && (
         <div
           role="alert"
-          className="flex items-start gap-3 p-3 rounded-lg border border-amber-400/50 bg-amber-50 text-amber-900"
+          className="flex items-start gap-3 p-3 rounded-lg border border-warning/15 bg-warning-bg"
         >
-          <AlertTriangle className="size-4 mt-[2px] shrink-0" />
+          <AlertTriangle className="size-4 mt-[2px] shrink-0 text-warning" />
           <div className="space-y-1">
-            <p className="text-sm font-medium">Notifications are blocked</p>
-            <p className="text-xs leading-snug opacity-80">
+            <p className="text-sm font-medium text-foreground">
+              Notifications are blocked
+            </p>
+            <p className="text-xs leading-snug text-muted-foreground">
               Reminders won&apos;t fire until you enable notifications for
               Tropos in your device settings.
             </p>

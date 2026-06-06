@@ -1140,7 +1140,10 @@ export default function History() {
                   className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
                   style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
                 >
-                  <LineChart className="size-6" style={{ color: THEME.brand }} />
+                  <LineChart
+                    className="size-6"
+                    style={{ color: THEME.brand }}
+                  />
                 </div>
                 <p className="text-base font-bold text-foreground">
                   No analytics yet
@@ -1477,7 +1480,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-[11px] text-amber-600 -mt-1 italic">
+                      <p className="text-[11px] text-warning -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
