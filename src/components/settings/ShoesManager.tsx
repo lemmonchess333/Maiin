@@ -9,7 +9,11 @@ import { Spinner } from "@/components/ui/Spinner";
 
 function MileageBar({ shoe }: { shoe: Shoe }) {
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
-  const color = pct < 60 ? "#22c55e" : pct < 85 ? "#f59e0b" : "#ef4444";
+  // Wear sentiment: fresh → success, mid-life → warning, overdue →
+  // destructive. Tokenised so the bar tracks the theme's AA-tuned
+  // status colours instead of fixed Tailwind palette hexes.
+  const wearClass =
+    pct < 60 ? "bg-success" : pct < 85 ? "bg-warning" : "bg-destructive";
 
   return (
     <div className="space-y-1">
@@ -21,8 +25,8 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: color }}
+          className={cn("h-full rounded-full transition-all", wearClass)}
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
