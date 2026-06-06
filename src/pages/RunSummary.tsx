@@ -424,7 +424,7 @@ export default function RunSummary() {
      left without feedback. The `error` state drives an inline banner
      above the action stack with a Retry button. `saved` is kept as a
      derived const so out-of-scope readers (the H1 copy, the
-     'Run saved!' confirmation strip, the offline notice) keep working
+     'Run saved' confirmation strip, the offline notice) keep working
      without rippling the migration through every condition in
      this commit. */
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -924,13 +924,13 @@ export default function RunSummary() {
     } catch (error) {
       logger.error("[RunSave] Failed:", error);
       const message =
-        error instanceof Error ? error.message : "Failed to save run";
+        error instanceof Error ? error.message : "Couldn't save run";
       setSaveStatus("error");
       setSaveError(message);
       /* Toast still fires as supplementary feedback for users who
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
-      toast.error("Failed to save run. Tap Retry below.");
+      toast.error("Couldn't save run. Tap Retry below.");
     }
   };
 
@@ -1060,7 +1060,7 @@ export default function RunSummary() {
               <div>
                 <p className="font-medium text-emerald-400 text-xs">
                   {isOnline
-                    ? "Run saved!"
+                    ? "Run saved"
                     : "Saved locally — will sync when online"}
                 </p>
               </div>

@@ -81,32 +81,38 @@ export interface PhaseAlignment {
 
 export function getPhaseAlignment(
   goal: string | undefined,
-  avgBalance: number,
+  avgBalance: number
 ): PhaseAlignment | null {
   if (goal === "lean bulk") {
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
       return {
         state: "at-odds",
-        message: "At odds with your phase — eating below maintenance",
+        message: `~${Math.round(avgBalance).toLocaleString()} kcal/day below your bulk target`,
       };
     }
     if (avgBalance < -NEAR_MAINTENANCE_THRESHOLD) {
       return { state: "on-track", message: "On track — gaining as planned" };
     }
-    return { state: "maintaining", message: "Holding — eating near maintenance" };
+    return {
+      state: "maintaining",
+      message: "Holding — eating near maintenance",
+    };
   }
 
   if (goal === "cut") {
     if (avgBalance < -NEAR_MAINTENANCE_THRESHOLD) {
       return {
         state: "at-odds",
-        message: "At odds with your phase — eating above maintenance",
+        message: `~${Math.round(Math.abs(avgBalance)).toLocaleString()} kcal/day above your cut target`,
       };
     }
     if (avgBalance > NEAR_MAINTENANCE_THRESHOLD) {
       return { state: "on-track", message: "On track — losing as planned" };
     }
-    return { state: "maintaining", message: "Holding — eating near maintenance" };
+    return {
+      state: "maintaining",
+      message: "Holding — eating near maintenance",
+    };
   }
 
   if (goal === "recomp") {

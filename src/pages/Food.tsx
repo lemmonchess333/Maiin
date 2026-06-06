@@ -512,7 +512,7 @@ export default function Food() {
     if (mealCount === 0) return;
     // Fire-and-forget previously: a failed log write (permission, offline)
     // would silently desync the streak system from the user's actual
-    // activity. We removed the "Meal logged!" success toast in 0f68ff3
+    // activity. We removed the meal success toast in 0f68ff3
     // arguing visible meal-list state is the confirmation, but that
     // assumption only holds if the daily-log write actually succeeds.
     // Now we capture the failure — toast.error already same-id'd as
@@ -747,7 +747,7 @@ export default function Food() {
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Failed to save. Please try again.", {
+      toast.error("Couldn't save. Please try again.", {
         id: "food-save-error",
       });
     }
@@ -875,7 +875,7 @@ export default function Food() {
         if (confidence === "ai-parse") {
           toast.success("Logged from AI estimate", { id: "food-nl-success" });
         } else {
-          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, {
+          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}`, {
             id: "food-nl-success",
           });
         }
@@ -901,7 +901,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Failed to save. Please try again.", {
+        toast.error("Couldn't save. Please try again.", {
           id: "food-save-error",
         });
       }
@@ -1446,7 +1446,7 @@ export default function Food() {
       setTargetMeal(null);
       // No success toast — meal list updates, macros animate.
     } catch {
-      toast.error("Failed to save. Please try again.", {
+      toast.error("Couldn't save. Please try again.", {
         id: "food-save-error",
       });
     }
@@ -1506,7 +1506,7 @@ export default function Food() {
       setSuggestionsActive(false);
       setTargetMeal(null);
     } catch {
-      toast.error("Failed to save. Please try again.", {
+      toast.error("Couldn't save. Please try again.", {
         id: "food-save-error",
       });
     }

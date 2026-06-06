@@ -317,7 +317,7 @@ export default function TrainingSection({
           );
         }
       }
-      toast.success("Race plan created!", { id: "race-goal" });
+      toast.success("Race plan created", { id: "race-goal" });
       setShowRaceForm(false);
     } catch (e) {
       logger.error("[TrainingSection] race save updateProfile failed", e);

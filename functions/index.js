@@ -3462,7 +3462,7 @@ async function syncFastestEffortProgress(
  * `updateDoc(challenge, { participantCount: increment(±1) })` inside join/leave
  * — was already DENIED by the `allow update: if false` rule, so joining wrote
  * the participant doc, then threw on the count update, surfacing a spurious
- * "Failed to join challenge" toast even though the join had landed.
+ * "Couldn't join the challenge" toast even though the join had landed.
  *
  * Recompute-and-set (rather than increment) is deliberately idempotent: a
  * re-delivered onCreate/onDelete (triggers are at-least-once — CLAUDE.md) sets
@@ -5025,7 +5025,7 @@ exports.setCrewMembershipCallable = functions
 // ══════════════════════════════════════════════
 //
 // New surface (not a port — this didn't exist client-side before).
-// Once per week, check whether each active user actually ran ≥50%
+// Once per week, check whether each active user ran ≥50%
 // of their weekly target the prior week. If not, set
 // `programState.pendingFellBehindPrompt` so the client can surface
 // the adaptive-plan prompt on next app open (per the Q24 lock —
