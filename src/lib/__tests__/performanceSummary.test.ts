@@ -13,7 +13,7 @@ describe("getPlainLanguageSummary — establishing baseline (cold-start)", () =>
     const s = getPlainLanguageSummary(45, "moderate", 12, true);
     expect(s.headline).toBe("Establishing your baseline");
     expect(s.body).toContain("Keep logging");
-    // The confident "Moderate effort" verdict must NOT leak through.
+    // The confident "Moderate load" verdict must NOT leak through.
     expect(s.headline).not.toContain("Moderate");
     // No delta trend sentence in the establishing copy.
     expect(s.body).not.toContain("pts");
@@ -21,7 +21,7 @@ describe("getPlainLanguageSummary — establishing baseline (cold-start)", () =>
 
   it("defaults to the normal (non-establishing) copy when the flag is omitted", () => {
     expect(getPlainLanguageSummary(85, "high", null).headline).toBe(
-      "Strong week — your training is on track",
+      "Strong week — your training is on track"
     );
   });
 });
@@ -29,49 +29,49 @@ describe("getPlainLanguageSummary — establishing baseline (cold-start)", () =>
 describe("getPlainLanguageSummary — headline tiers (PI)", () => {
   it("PI 80+ → Strong week", () => {
     expect(getPlainLanguageSummary(85, "moderate", null).headline).toBe(
-      "Strong week — your training is on track",
+      "Strong week — your training is on track"
     );
   });
 
-  it("PI 60-79 → Solid progress", () => {
+  it("PI 60-79 → Solid week", () => {
     expect(getPlainLanguageSummary(65, "moderate", null).headline).toBe(
-      "Solid progress — keep building momentum",
+      "Solid week — keep the cadence"
     );
   });
 
-  it("PI 40-59 → Moderate effort", () => {
+  it("PI 40-59 → Moderate load", () => {
     expect(getPlainLanguageSummary(45, "moderate", null).headline).toBe(
-      "Moderate effort — room to push harder",
+      "Moderate load — room to push or hold"
     );
   });
 
   it("PI < 40 → Light week", () => {
     expect(getPlainLanguageSummary(25, "moderate", null).headline).toBe(
-      "Light week — focus on recovery or ramp up",
+      "Light week — focus on recovery or ramp up"
     );
   });
 
   it("boundary at PI=80 belongs to Strong tier (>= 80)", () => {
     expect(getPlainLanguageSummary(80, "moderate", null).headline).toBe(
-      "Strong week — your training is on track",
+      "Strong week — your training is on track"
     );
   });
 
   it("boundary at PI=60 belongs to Solid tier", () => {
     expect(getPlainLanguageSummary(60, "moderate", null).headline).toBe(
-      "Solid progress — keep building momentum",
+      "Solid week — keep the cadence"
     );
   });
 
   it("boundary at PI=40 belongs to Moderate tier", () => {
     expect(getPlainLanguageSummary(40, "moderate", null).headline).toBe(
-      "Moderate effort — room to push harder",
+      "Moderate load — room to push or hold"
     );
   });
 
   it("boundary at PI=39 falls into Light tier", () => {
     expect(getPlainLanguageSummary(39, "moderate", null).headline).toBe(
-      "Light week — focus on recovery or ramp up",
+      "Light week — focus on recovery or ramp up"
     );
   });
 });
@@ -79,47 +79,47 @@ describe("getPlainLanguageSummary — headline tiers (PI)", () => {
 describe("getPlainLanguageSummary — body by load band", () => {
   it("'overreach' surfaces the recovery message", () => {
     expect(getPlainLanguageSummary(50, "overreach", null).body).toContain(
-      "pushing hard",
+      "pushing hard"
     );
   });
 
   it("'high' surfaces the keep-fuelling message", () => {
     expect(getPlainLanguageSummary(50, "high", null).body).toContain(
-      "High training load",
+      "High training load"
     );
   });
 
   it("'moderate' surfaces the balanced-workload message", () => {
     expect(getPlainLanguageSummary(50, "moderate", null).body).toContain(
-      "Balanced workload",
+      "Balanced load"
     );
   });
 
   it("'low' surfaces the low-load message", () => {
     expect(getPlainLanguageSummary(50, "low", null).body).toContain(
-      "Low training load",
+      "Low training load"
     );
   });
 
   it("unknown band falls through to the low-load message", () => {
     /* The else-branch acts as the default. */
     expect(getPlainLanguageSummary(50, "deload", null).body).toContain(
-      "Low training load",
+      "Low training load"
     );
   });
 
   it("undefined band falls through to the low-load message", () => {
     expect(getPlainLanguageSummary(50, undefined, null).body).toContain(
-      "Low training load",
+      "Low training load"
     );
   });
 
   it("band matching is case-insensitive (loadBand is normalised lowercase)", () => {
     expect(getPlainLanguageSummary(50, "Overreach", null).body).toContain(
-      "pushing hard",
+      "pushing hard"
     );
     expect(getPlainLanguageSummary(50, "HIGH", null).body).toContain(
-      "High training load",
+      "High training load"
     );
   });
 });

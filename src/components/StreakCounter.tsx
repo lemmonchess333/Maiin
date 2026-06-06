@@ -27,7 +27,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
             No streak yet
           </p>
           <p className="text-xs text-muted-foreground">
-            Log a workout today to start your fire
+            Log a workout to start
           </p>
         </div>
       </div>
@@ -67,18 +67,18 @@ export function StreakCounter({ streak }: StreakCounterProps) {
         </p>
         <p className="text-xs text-orange-600/80 dark:text-orange-400/80 font-medium">
           {streak >= 30
-            ? "Legendary — you're unstoppable"
+            ? "A month strong"
             : streak >= 14
-              ? "On absolute fire — keep this momentum"
+              ? "Two weeks strong"
               : streak >= 7
-                ? "Crushing it — you're in the zone"
-                : "Building strong — one more day!"}
+                ? "One week strong"
+                : "Keep it going"}
         </p>
       </div>
 
       {/* Subtle streak badge */}
       <div className="px-3 py-1 text-xs font-bold tracking-widest bg-orange-500 text-white rounded-full self-start">
-        <Flame size={12} className="inline" /> HOT
+        <Flame size={12} className="inline" /> STREAK
       </div>
     </motion.div>
   );

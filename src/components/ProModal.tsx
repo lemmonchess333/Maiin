@@ -207,7 +207,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
     const result = await restorePurchases();
     const { toast } = await import("sonner");
     if (result.success) {
-      toast.success("Purchases restored successfully.");
+      toast.success("Purchases restored");
     } else if (result.error) {
       toast.error(result.error);
     }

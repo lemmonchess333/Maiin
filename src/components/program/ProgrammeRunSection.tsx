@@ -280,9 +280,7 @@ export default function ProgrammeRunSection({
     () => {
       if (typeof window === "undefined") return false;
       try {
-        return (
-          window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1"
-        );
+        return window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1";
       } catch {
         return false;
       }
@@ -644,7 +642,7 @@ export default function ProgrammeRunSection({
         <Banner
           variant="warning"
           title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
-          description="We marked this as no-show after 3 days with no log. Log it now if you actually ran."
+          description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
             <div className="flex flex-col gap-2">
               <button
@@ -1301,7 +1299,7 @@ export default function ProgrammeRunSection({
                 </p>
                 <p className="text-micro text-muted-foreground mt-0.5">
                   {selectedRun.isCompleted
-                    ? "Nice work. Add another if you fancy it."
+                    ? "Nice work — add another if you want."
                     : selectedRun.status === "skipped"
                       ? "Marked as skipped — you can still head out."
                       : "Rest day. Head out whenever you like."}
