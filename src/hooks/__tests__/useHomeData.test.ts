@@ -144,7 +144,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   // contribute phantom calories to today's energy aggregate.
   // Pre-fix this hook only read `distance` and the calorie estimate
   // pulled in ~414kcal for a 5km "too-fast" save the user never
-  // actually ran.
+  // ran.
   it("excludes isInvalid runs from todayRunCals", async () => {
     const runsSnap = makeSnap([
       { distance: 5000, duration: 1800, isInvalid: true },

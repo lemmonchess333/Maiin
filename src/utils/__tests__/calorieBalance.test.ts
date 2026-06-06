@@ -71,10 +71,10 @@ describe("getBalanceColor", () => {
    Balance convention: positive avgBalance = deficit. */
 describe("getPhaseAlignment", () => {
   describe("lean bulk goal", () => {
-    it("flags deficit as at-odds (eating below maintenance)", () => {
+    it("flags deficit as at-odds (below maintenance)", () => {
       const result = getPhaseAlignment("lean bulk", 500);
       expect(result?.state).toBe("at-odds");
-      expect(result?.message).toMatch(/below maintenance/i);
+      expect(result?.message).toBe("~500 kcal/day below maintenance");
     });
 
     it("flags surplus as on-track (gaining as planned)", () => {
@@ -91,10 +91,10 @@ describe("getPhaseAlignment", () => {
   });
 
   describe("cut goal", () => {
-    it("flags surplus as at-odds (eating above maintenance)", () => {
+    it("flags surplus as at-odds (above maintenance)", () => {
       const result = getPhaseAlignment("cut", -500);
       expect(result?.state).toBe("at-odds");
-      expect(result?.message).toMatch(/above maintenance/i);
+      expect(result?.message).toBe("~500 kcal/day above maintenance");
     });
 
     it("flags deficit as on-track (losing as planned)", () => {
