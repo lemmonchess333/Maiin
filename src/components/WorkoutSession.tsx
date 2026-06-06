@@ -1186,7 +1186,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
+                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-3">
@@ -1203,7 +1203,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
+                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
@@ -1220,8 +1220,10 @@ export default function WorkoutSession({
                               type="button"
                               aria-label="Mark set complete"
                               onClick={() => completeInlineSet(setIdx)}
-                              className="size-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
-                            />
+                              className="group size-11 flex items-center justify-center active:scale-90"
+                            >
+                              <span className="size-7 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors" />
+                            </button>
                           )}
                         </div>
                       </div>
