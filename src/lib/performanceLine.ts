@@ -48,7 +48,7 @@ export const VERB_LABEL: Record<VerbState, string> = {
  */
 export function getVerbState(
   loadBand: LoadBand,
-  deloadRecommended: boolean,
+  deloadRecommended: boolean
 ): VerbState {
   if (deloadRecommended || loadBand === "overreach") return "backing-off";
   switch (loadBand) {
@@ -66,7 +66,7 @@ export function getVerbState(
 /** Convenience: state + label in one call. */
 export function getVerb(
   loadBand: LoadBand,
-  deloadRecommended: boolean,
+  deloadRecommended: boolean
 ): { state: VerbState; label: string } {
   const state = getVerbState(loadBand, deloadRecommended);
   return { state, label: VERB_LABEL[state] };
@@ -87,7 +87,8 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
       return "Loads high — ease this week";
 
     case "sharpening":
-      if (signals.bothLoadsStrong) return "Both loads strong — solid hybrid output";
+      if (signals.bothLoadsStrong)
+        return "Both loads strong — solid hybrid output";
       if (signals.liftAheadOfBaseline > 0.15) {
         return `Lifting load ${Math.round(signals.liftAheadOfBaseline * 100)}% above baseline`;
       }
@@ -97,7 +98,7 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
       return "Loads strong — keep the line";
 
     case "cruising":
-      if (signals.adherenceWeak) return "Adherence dipped — focus on showing up";
+      if (signals.adherenceWeak) return "Fewer sessions than usual";
       return "Holding a steady rhythm";
 
     case "building":
@@ -107,7 +108,8 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 
     case "recovering":
       // Recently active recovery vs lapsed/sick gap
-      if (signals.daysSinceLastTraining > 7) return "Quiet week — log when you're back";
+      if (signals.daysSinceLastTraining > 7)
+        return "Quiet week — log when you're back";
       return "Light week — take it easy";
   }
 }

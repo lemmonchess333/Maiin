@@ -265,7 +265,7 @@ export default function UserProfile() {
       toast.success(`Blocked ${profile.displayName || "user"}`);
       navigate(-1);
     } catch {
-      toast.error("Failed to block user");
+      toast.error("Couldn't block user. Try again.");
     }
   };
 

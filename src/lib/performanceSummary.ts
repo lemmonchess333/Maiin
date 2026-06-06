@@ -33,7 +33,7 @@ export function getPlainLanguageSummary(
    * verdict instead of a confident one. Matches the Home hero's existing
    * ", establishing baseline" treatment so the two surfaces don't disagree.
    */
-  establishing = false,
+  establishing = false
 ): PerformanceSummary {
   if (establishing) {
     return {
@@ -46,9 +46,9 @@ export function getPlainLanguageSummary(
     pi >= 80
       ? "Strong week — your training is on track"
       : pi >= 60
-        ? "Solid progress — keep building momentum"
+        ? "Solid week — keep the cadence"
         : pi >= 40
-          ? "Moderate effort — room to push harder"
+          ? "Moderate load — room to push or hold"
           : "Light week — focus on recovery or ramp up";
 
   const band = (loadBand ?? "").toLowerCase();
@@ -58,7 +58,7 @@ export function getPlainLanguageSummary(
       : band === "high"
         ? "High training load. Keep nutrition and sleep on point."
         : band === "moderate"
-          ? "Balanced workload. Room to push harder or maintain."
+          ? "Balanced load. Push or hold from here."
           : "Low training load. Good time to recover or increase intensity.";
 
   if (delta !== null && Math.abs(delta) > 5) {
