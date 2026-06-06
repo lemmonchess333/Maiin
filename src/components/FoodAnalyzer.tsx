@@ -639,8 +639,8 @@ export default function FoodAnalyzer({
       )}
 
       {showError && !activeResult && (
-        <div className="bg-red-50 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-red-600">
+        <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
+          <p className="text-sm text-destructive">
             Couldn't identify food. Try manual entry.
           </p>
           <div className="flex gap-3">
@@ -648,7 +648,7 @@ export default function FoodAnalyzer({
               type="button"
               onClick={handleResetAll}
               aria-label="Try food analysis again"
-              className="text-sm text-red-500 font-medium flex items-center gap-1"
+              className="text-sm text-destructive font-medium flex items-center gap-1"
             >
               <RotateCcw className="size-3.5" /> Try again
             </button>
