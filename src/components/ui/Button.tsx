@@ -49,15 +49,9 @@
  * playful animation, and locked-state semantics. Tracked for a later
  * sprint.
  */
-import type {
-  ButtonHTMLAttributes,
-  CSSProperties,
-  ReactNode,
-  Ref,
-} from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { THEME } from "@/lib/theme";
 
 export type ButtonVariant =
   | "primary"
@@ -105,10 +99,11 @@ const BASE_CLASSES = [
  * borderline for white text contrast. The strong variant is the
  * AA-clearing CTA filled colour.
  */
-/* The sport variants use inline style via THEME.running rather than a
- * CSS variable because the running coral is a theme constant that
- * doesn't live in :root / .dark yet. If/when --running lands as an
- * HSL token, swap these to bg-running classes. */
+/* The sport variants resolve via the --running token (DS1b): bg-running
+ * is the full-saturation coral fill; bg-running/10 the 10% tint surface
+ * (the prior `${THEME.running}1A` — 1A hex alpha ≈ 10%). The token is
+ * theme-invariant — coral is a fixed sport-coding identity, identical in
+ * light and dark. */
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     "bg-primary-strong text-primary-foreground hover:bg-primary-strong/90",
@@ -117,19 +112,11 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
-  sport: "text-white",
-  "sport-tinted": "",
-};
-
-const VARIANT_INLINE_STYLES: Partial<Record<ButtonVariant, CSSProperties>> = {
-  sport: { backgroundColor: THEME.running },
+  sport: "bg-running text-white",
   // 10% coral tint surface + full-saturation coral text — pairs with
   // the standard destructive variant for sport-discipline actions
   // that aren't genuinely destructive.
-  "sport-tinted": {
-    backgroundColor: `${THEME.running}1A`,
-    color: THEME.running,
-  },
+  "sport-tinted": "bg-running/10 text-running",
 };
 
 /**
@@ -158,7 +145,6 @@ function Button({
   ...rest
 }: ButtonProps) {
   const isInteractive = !disabled && !loading;
-  const variantStyle = VARIANT_INLINE_STYLES[variant];
   return (
     <button
       ref={ref}
@@ -175,9 +161,7 @@ function Button({
         fullWidth && "w-full",
         className
       )}
-      // Variant inline style (sport / sport-tinted) merges under any
-      // caller-supplied `style` so consumers can still override.
-      style={variantStyle ? { ...variantStyle, ...style } : style}
+      style={style}
       {...rest}
     >
       {loading ? (

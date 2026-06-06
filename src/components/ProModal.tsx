@@ -254,7 +254,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           onClick={onClose}
           aria-label="Close upgrade modal"
           disabled={loading}
-          className="absolute top-2 right-3 size-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
+          className="absolute top-2 right-3 size-11 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-40"
         >
           <X className="size-4" aria-hidden="true" />
         </button>

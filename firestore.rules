@@ -96,12 +96,31 @@ service cloud.firestore {
       ];
     }
 
+    // Self-grant guard for user-doc CREATE. A client creating its OWN
+    // user doc must not set any trial/billing/subscription timestamp to a
+    // non-null value. The server's computeEffectiveTier grants Pro on a
+    // future trialExpiresAt REGARDLESS of subscriptionTier, so an
+    // unguarded create lets a free user self-grant server Pro (incl. paid
+    // AI compute) with a single direct write. Trials/subscriptions are
+    // granted server-side ONLY (Stripe/Apple webhooks, Admin SDK).
+    // subscriptionTier is separately pinned to 'free' by the create rule,
+    // and updates are already locked by subscriptionFieldsUnchanged().
+    function billingFieldsUnsetOnCreate() {
+      return (!('trialExpiresAt' in request.resource.data) || request.resource.data.trialExpiresAt == null)
+        && (!('subscriptionExpiresAt' in request.resource.data) || request.resource.data.subscriptionExpiresAt == null)
+        && (!('stripeCustomerId' in request.resource.data) || request.resource.data.stripeCustomerId == null)
+        && (!('stripeSubscriptionId' in request.resource.data) || request.resource.data.stripeSubscriptionId == null)
+        && (!('appleOriginalTransactionId' in request.resource.data) || request.resource.data.appleOriginalTransactionId == null)
+        && (!('appleProductId' in request.resource.data) || request.resource.data.appleProductId == null);
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
         && !isDeleting(uid)
         && request.resource.data.keys().hasOnly(allowedUserFields())
-        && request.resource.data.subscriptionTier == 'free';
+        && request.resource.data.subscriptionTier == 'free'
+        && billingFieldsUnsetOnCreate();
       allow update: if isOwner(uid)
         && !isDeleting(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())

@@ -85,23 +85,16 @@ function RetryBanner({
 }) {
   return (
     <div
-      className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl"
-      style={{
-        background: `${THEME.running}1a`,
-        border: `1px solid ${THEME.running}40`,
-      }}
+      className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-running/10 border border-running/25"
       role="alert"
     >
       <AlertCircle
         size={18}
-        className="mt-0.5 shrink-0"
-        style={{ color: THEME.running }}
+        className="mt-0.5 shrink-0 text-running"
         aria-hidden="true"
       />
       <div className="flex-1 text-xs text-foreground/80">
-        <p className="font-medium" style={{ color: THEME.running }}>
-          Couldn&apos;t save your run
-        </p>
+        <p className="font-medium text-running">Couldn&apos;t save your run</p>
         <p className="mt-0.5 text-muted-foreground">
           {error || "We couldn't save this run."}
         </p>
@@ -109,8 +102,7 @@ function RetryBanner({
       <button
         type="button"
         onClick={onRetry}
-        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-        style={{ background: THEME.running }}
+        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running"
       >
         Retry
       </button>
@@ -976,7 +968,7 @@ export default function RunSummary() {
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 min-h-[44px]"
         >
           <ChevronLeft className="size-4" />
           Back
@@ -1035,12 +1027,12 @@ export default function RunSummary() {
                 border: "1px solid rgba(245,158,11,0.25)",
               }}
             >
-              <WifiOff size={20} className="text-amber-400" />
+              <WifiOff size={20} className="text-warning" />
               <div>
-                <p className="font-medium text-amber-400 text-xs">
+                <p className="font-medium text-warning text-xs">
                   You're offline
                 </p>
-                <p className="text-xs text-white/60 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Run will sync automatically when you reconnect
                 </p>
               </div>
@@ -1056,9 +1048,9 @@ export default function RunSummary() {
                 border: "1px solid rgba(52,211,153,0.25)",
               }}
             >
-              <CheckCircle size={20} className="text-emerald-400" />
+              <CheckCircle size={20} className="text-success" />
               <div>
-                <p className="font-medium text-emerald-400 text-xs">
+                <p className="font-medium text-success text-xs">
                   {isOnline
                     ? "Run saved"
                     : "Saved locally — will sync when online"}
@@ -1271,14 +1263,8 @@ export default function RunSummary() {
               else falls through and the 3-col grid below is the
               primary read. */}
           {primaryStat && (
-            <div
-              className="mx-4 mb-3 p-4 rounded-2xl text-center shadow-sm"
-              style={{ background: `${THEME.running}14` }}
-            >
-              <p
-                className="text-3xl font-extrabold font-mono tabular-nums leading-tight"
-                style={{ color: THEME.running }}
-              >
+            <div className="mx-4 mb-3 p-4 rounded-2xl text-center shadow-sm bg-running/8">
+              <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">
                 {primaryStat.value}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -1290,10 +1276,7 @@ export default function RunSummary() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 px-4 mb-4">
             <div className="p-3 rounded-xl bg-card text-center shadow-sm">
-              <p
-                className="text-2xl font-bold font-mono tabular-nums"
-                style={{ color: THEME.running }}
-              >
+              <p className="text-2xl font-bold font-mono tabular-nums text-running">
                 {(distance / 1000).toFixed(2)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">km</p>
@@ -1536,8 +1519,7 @@ export default function RunSummary() {
                 type="button"
                 onClick={handleSave}
                 disabled={saveStatus === "saving"}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90"
-                style={{ background: THEME.running, color: "white" }}
+                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-running text-white"
               >
                 {saveStatus === "saving" ? "Saving…" : "Save Run"}
               </button>

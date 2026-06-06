@@ -14,7 +14,6 @@ import {
   Dumbbell,
   Headphones,
 } from "lucide-react";
-import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
@@ -503,15 +502,9 @@ export default function RunSetupModal({
               {/* Run7 Q4 — coral icon container (was purple 10%). The
                   selected-run card sits within a sport-discipline
                   context; brand purple is reserved for lifting. */}
-              <div
-                className="size-11 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: `${THEME.running}1A` }}
-              >
+              <div className="size-11 rounded-xl flex items-center justify-center shrink-0 bg-running/10">
                 {SelectedIcon && (
-                  <SelectedIcon
-                    className="size-5"
-                    style={{ color: THEME.running }}
-                  />
+                  <SelectedIcon className="size-5 text-running" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -1380,8 +1373,7 @@ export default function RunSetupModal({
               // (THEME.running) — matches the Programme Run section's
               // Next · Pending Start button + Pgm3 Start CTA discipline.
               // The pulse animation stays via btn-start-run-pulse.
-              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed"
-              style={{ background: THEME.running }}
+              className="btn-start-run-pulse w-full py-5 rounded-2xl text-white font-semibold text-lg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed bg-running"
             >
               <Icon className="inline size-5 mr-1" /> Start {selected.name}
             </button>
@@ -1442,44 +1434,26 @@ export default function RunSetupModal({
                         updateConfig({ activityType: at.type });
                         setShowChooser(false);
                       }}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left motion-safe:transition-colors motion-safe:active:scale-[0.98]"
                       // Run7 Q4 — coral discipline. Selected card uses
                       // coral-tinted bg + coral icon container + coral
                       // checkmark, replacing the legacy purple-tinted
                       // selected state. Brand purple stays reserved for
                       // lifting / Save buttons.
-                      style={
-                        isActive ? { background: `${THEME.running}1A` } : {}
-                      }
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left motion-safe:transition-colors motion-safe:active:scale-[0.98]${isActive ? " bg-running/10" : ""}`}
                     >
                       <div
-                        className="size-10 rounded-xl flex items-center justify-center shrink-0"
-                        style={{
-                          background: isActive
-                            ? `${THEME.running}2E`
-                            : "var(--color-muted)",
-                        }}
+                        className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${isActive ? "bg-running/18" : "bg-muted"}`}
                       >
                         {IC && (
                           <IC
-                            className="size-5"
-                            style={{
-                              color: isActive
-                                ? THEME.running
-                                : "var(--color-muted-foreground)",
-                            }}
+                            className={`size-5 ${isActive ? "text-running" : "text-muted-foreground"}`}
                           />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p
-                            className="text-sm font-bold"
-                            style={{
-                              color: isActive
-                                ? THEME.running
-                                : "var(--color-foreground)",
-                            }}
+                            className={`text-sm font-bold ${isActive ? "text-running" : "text-foreground"}`}
                           >
                             {at.name}
                           </p>
@@ -1493,8 +1467,7 @@ export default function RunSetupModal({
                       </div>
                       {isActive && (
                         <Check
-                          className="size-4 shrink-0"
-                          style={{ color: THEME.running }}
+                          className="size-4 shrink-0 text-running"
                           aria-label="Selected"
                         />
                       )}

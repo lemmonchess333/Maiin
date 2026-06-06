@@ -285,7 +285,7 @@ export default function ShoesManager() {
                 type="button"
                 onClick={() => setDefault(shoe.id)}
                 className={cn(
-                  "p-1.5 rounded-lg transition-colors",
+                  "size-11 inline-flex items-center justify-center rounded-lg transition-colors",
                   shoe.isDefault
                     ? "text-yellow-500"
                     : "text-muted-foreground hover:text-yellow-500"
@@ -300,7 +300,7 @@ export default function ShoesManager() {
               <button
                 type="button"
                 onClick={() => retireShoe(shoe.id)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive transition-colors"
+                className="size-11 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive transition-colors"
                 title="Retire shoe"
               >
                 <Archive className="size-4" />

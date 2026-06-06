@@ -513,6 +513,10 @@ async function isFlagEnabled(key) {
 // ══════════════════════════════════════════════
 
 const { validatePlanPayload } = require("./lib/validatePlanPayload");
+const {
+  sanitizeProgramState,
+  programStateTooLarge,
+} = require("./lib/programStateSanitizer");
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -684,7 +688,26 @@ exports.completeOnboarding = functions
       } else {
         batch.set(userRef, profileData);
       }
-      batch.set(programRef, programState);
+      // Allow-list the programState doc before persisting. validatePlanPayload
+      // gates SHAPE (and only for v7 payloads); this strips arbitrary
+      // top-level fields a client could inject into its own programState doc.
+      const onbProgram = sanitizeProgramState(programState);
+      if (onbProgram.dropped.length > 0) {
+        functions.logger.warn(
+          "completeOnboarding.programState_dropped_fields",
+          {
+            uid,
+            dropped: onbProgram.dropped,
+          }
+        );
+      }
+      if (programStateTooLarge(onbProgram.value)) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is too large."
+        );
+      }
+      batch.set(programRef, onbProgram.value);
       await batch.commit();
 
       return { success: true };
@@ -823,12 +846,29 @@ exports.configurePlan = functions
       const userRef = db.collection("users").doc(uid);
       const programRef = userRef.collection("programState").doc("current");
 
+      // Allow-list the programState doc before persisting (same rationale as
+      // completeOnboarding) — validatePlanPayload above gates shape but never
+      // strips unknown top-level keys.
+      const cfgProgram = sanitizeProgramState(programState);
+      if (cfgProgram.dropped.length > 0) {
+        functions.logger.warn("configurePlan.programState_dropped_fields", {
+          uid,
+          dropped: cfgProgram.dropped,
+        });
+      }
+      if (programStateTooLarge(cfgProgram.value)) {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "programState is too large."
+        );
+      }
+
       // Atomic — same rationale as completeOnboarding above. The
       // profile patch and programState rebuild commit together or
       // not at all.
       const batch = db.batch();
       batch.set(userRef, profileUpdates, { merge: true });
-      batch.set(programRef, programState);
+      batch.set(programRef, cfgProgram.value);
       await batch.commit();
 
       return { success: true };
@@ -951,6 +991,15 @@ exports.analyzeFood = functions
         const { imageBase64 } = req.body;
         if (!imageBase64) {
           res.status(400).json({ error: "No image provided" });
+          return;
+        }
+        // Cap input size to prevent token-cost inflation (mirrors the
+        // askGeminiText prompt cap). A normal compressed food photo is
+        // well under this ceiling; the limit blocks padding the payload
+        // toward the 10MB request size purely to inflate Vertex token
+        // cost within an otherwise-legitimate quota.
+        if (typeof imageBase64 !== "string" || imageBase64.length > 5000000) {
+          res.status(400).json({ error: "Image too large" });
           return;
         }
 
@@ -1126,6 +1175,16 @@ exports.analyzeFoodText = functions
         const { text } = req.body;
         if (!text || !text.trim()) {
           res.status(400).json({ error: "No text provided" });
+          return;
+        }
+        // Cap input size to prevent token-cost inflation (mirrors the
+        // askGeminiText prompt cap). A food description is short; this
+        // blocks padding the payload toward the 10MB request size to
+        // inflate Vertex token cost within an otherwise-legitimate quota.
+        if (text.length > 2000) {
+          res
+            .status(400)
+            .json({ error: "Text too long (max 2000 characters)" });
           return;
         }
 
@@ -2812,6 +2871,10 @@ exports.sendTestPush = functions
 
 const RACE_NO_SHOW_GRACE_DAYS = 3;
 const RECOVERY_EXIT_GRACE_DAYS = 7;
+// A no-show race auto-returns the user to freeform this many days after the
+// race date (well after the +3d no-show flip), so they're not stranded in
+// race_prep on a race that never happened (#1109).
+const NO_SHOW_EXIT_GRACE_DAYS = 14;
 const RACE_STRICT_DISTANCE_RATIO_FNS = 0.95;
 const PLANNED_RACE_DISTANCE_METERS_FNS = {
   "5k": 5000,
@@ -2858,6 +2921,32 @@ function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
   return false;
 }
 
+/** Locate the plan's race-day runDay.
+ *
+ *  Primary match is exact `date === raceDate` — the common case where the race
+ *  falls on the user's long-run weekday (long-run slots prefer the weekend, and
+ *  races are usually weekends, so the race template's date equals targetDate).
+ *
+ *  Fallback: the week's `type: "race"` day. The generator places the race
+ *  template on the long-run slot's weekday (`runScheduler.ts`), so for a race
+ *  on a NON-long-run weekday the runDay's `date` is the long-run day, not the
+ *  race date — exact date-match misses it and the no-show / recovery-entry
+ *  reconciliation silently never fires (#1128). There is exactly one race day
+ *  per plan, so the fallback is unambiguous. Conservative by construction: the
+ *  date match wins whenever it exists, so weekend-race behaviour is unchanged.
+ *
+ *  NOTE: this only fixes the SERVER lookup. The runDay's `date` is still on the
+ *  long-run weekday (a UI/calendar correctness issue) until the generator is
+ *  fixed to place the race day on targetDate — see #1128. */
+function _findRaceDayRunDay(runDays, raceDate) {
+  const days = runDays || [];
+  return (
+    days.find((rd) => rd && rd.date === raceDate) ||
+    days.find((rd) => rd && rd.type === "race") ||
+    null
+  );
+}
+
 /** Whether the race-no-show pass needs to fetch the bounded
  *  saved-run query for this user. Pure; called BEFORE the read so
  *  we can skip the I/O when grace / mode / status disqualify the
@@ -2868,8 +2957,9 @@ function _needsRaceNoShowEvaluation(profile, programState, nowMs) {
   if (!runPlan || !runPlan.raceGoal) return false;
   const raceDate = runPlan.raceGoal.targetDate;
   if (typeof raceDate !== "string") return false;
-  const raceDayRunDay = ((programState && programState.runDays) || []).find(
-    (rd) => rd && rd.date === raceDate
+  const raceDayRunDay = _findRaceDayRunDay(
+    programState && programState.runDays,
+    raceDate
   );
   if (!raceDayRunDay || raceDayRunDay.status !== "planned") return false;
   const dayMs = 24 * 60 * 60 * 1000;
@@ -2896,14 +2986,13 @@ function _decideReconciliationActions(
   let profilePayload = null;
   let noShowWritten = false;
   let recoveryCleared = false;
+  let noShowCleared = false;
 
   // ── L1 decision ────────────────────────────────────────────────
   if (_needsRaceNoShowEvaluation(profile, programState, nowMs)) {
     const runPlan = programState.runPlan;
     const raceDate = runPlan.raceGoal.targetDate;
-    const raceDayRunDay = programState.runDays.find(
-      (rd) => rd && rd.date === raceDate
-    );
+    const raceDayRunDay = _findRaceDayRunDay(programState.runDays, raceDate);
     const plannedDistance =
       PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
     if (!_hasStrictRaceMatch(savedRunsForRaceDate, plannedDistance)) {
@@ -2948,11 +3037,20 @@ function _decideReconciliationActions(
       // stored recoveryEndDate IS the race recovery was entered for
       // (raceGoalIsCompletedRace). A current raceGoal that doesn't reproduce
       // it is a newer race set during recovery → kept (stay race_prep).
-      const currentRaceGoal = runPlan.raceGoal || null;
+      // The user's CURRENT declared race lives on the PROFILE; the runPlan
+      // still carries the race recovery was ENTERED for (its anchor reproduces
+      // the stored recoveryEndDate). Reading currentRaceGoal from the runPlan
+      // made a newer race set during recovery INVISIBLE — when the client's
+      // in-recovery branch preserves the stale (completed) runPlan.raceGoal,
+      // the sweep saw "same race" and DELETED the successor, dropping the user
+      // to freeform (C-RUN). Read the current race from the profile so a
+      // successor is preserved; anchor the completed race off the runPlan.
+      const currentRaceGoal = (profile && profile.raceGoal) || null;
+      const recoveryRaceGoal = runPlan.raceGoal || null;
       const anchorMatches =
-        !!currentRaceGoal &&
-        _recoveryEndDateForRace(currentRaceGoal) === runPlan.recoveryEndDate;
-      const completedRaceGoal = anchorMatches ? currentRaceGoal : null;
+        !!recoveryRaceGoal &&
+        _recoveryEndDateForRace(recoveryRaceGoal) === runPlan.recoveryEndDate;
+      const completedRaceGoal = anchorMatches ? recoveryRaceGoal : null;
       const exit = resolveRecoveryExit({ currentRaceGoal, completedRaceGoal });
 
       if (exit.runMode === "freeform") {
@@ -2966,10 +3064,18 @@ function _decideReconciliationActions(
         // expressible via a recursive merge write.
         clearedRunPlan.raceGoal = null;
         profilePayload = { runMode: "freeform", raceGoal: null };
-      } else if (profile && profile.runMode !== exit.runMode) {
-        // Newer race set during recovery → stay race_prep. Defensive co-write
-        // so a drifted profile.runMode converges to the materialized value.
-        profilePayload = { runMode: exit.runMode };
+      } else {
+        // Newer race set during recovery → stay race_prep with the SUCCESSOR.
+        // Materialize it onto the runPlan too: the runPlan.raceGoal mirror may
+        // be stale (the client's in-recovery branch preserves the completed
+        // race), so without this the no-show / recovery-entry deciders would
+        // keep acting on the already-completed race. The full plan is
+        // regenerated client-side once phase is cleared. Defensive runMode
+        // co-write so a drifted profile.runMode converges.
+        clearedRunPlan.raceGoal = currentRaceGoal;
+        if (profile && profile.runMode !== exit.runMode) {
+          profilePayload = { runMode: exit.runMode };
+        }
       }
 
       updatePayload.runPlan = clearedRunPlan;
@@ -2977,12 +3083,68 @@ function _decideReconciliationActions(
     }
   }
 
-  if (!noShowWritten && !recoveryCleared) {
+  // ── L4 decision (no-show auto-return) ──────────────────────────
+  // A no-show race left the user stranded in race_prep on a race that never
+  // happened (L1 flips the slot to race_no_show but there was no exit). Once
+  // the slot is race_no_show and the race is more than NO_SHOW_EXIT_GRACE_DAYS
+  // past, return the user to freeform — or to a successor race they declared in
+  // the meantime. Reuses resolveRecoveryExit: the no-show race plays the
+  // "resolved race" role, so same-race (no successor) → freeform, a newer
+  // declared race → stay race_prep with it (symmetric with L3). (#1109)
+  if (
+    !recoveryCleared &&
+    profile &&
+    profile.runMode === "race_prep" &&
+    runPlan &&
+    runPlan.raceGoal &&
+    typeof runPlan.raceGoal.targetDate === "string" &&
+    runPlan.phase !== "recovery"
+  ) {
+    const raceDate = runPlan.raceGoal.targetDate;
+    // Use the post-L1 runDays so a slot flipped THIS sweep (function was down
+    // past +14d) is seen as race_no_show, not its stale "planned".
+    const effectiveRunDays =
+      updatePayload.runDays || (programState && programState.runDays) || [];
+    const raceDayRunDay = _findRaceDayRunDay(effectiveRunDays, raceDate);
+    const dayMs = 24 * 60 * 60 * 1000;
+    const daysPast = Math.floor(
+      (nowMs - _parseUtcDate(raceDate).getTime()) / dayMs
+    );
+    if (
+      raceDayRunDay &&
+      raceDayRunDay.status === "race_no_show" &&
+      daysPast > NO_SHOW_EXIT_GRACE_DAYS
+    ) {
+      const currentRaceGoal = profile.raceGoal || null;
+      const exit = resolveRecoveryExit({
+        currentRaceGoal,
+        completedRaceGoal: runPlan.raceGoal,
+      });
+      const clearedRunPlan = { ...runPlan };
+      if (exit.runMode === "freeform") {
+        // No successor → freeform. Clear raceGoal on the runPlan (deciders read
+        // it) and co-write the profile (materialization invariant).
+        clearedRunPlan.raceGoal = null;
+        profilePayload = { runMode: "freeform", raceGoal: null };
+      } else {
+        // A newer race was declared during the no-show window → keep it.
+        clearedRunPlan.raceGoal = currentRaceGoal;
+        if (profile.runMode !== exit.runMode) {
+          profilePayload = { runMode: exit.runMode };
+        }
+      }
+      updatePayload.runPlan = clearedRunPlan;
+      noShowCleared = true;
+    }
+  }
+
+  if (!noShowWritten && !recoveryCleared && !noShowCleared) {
     return {
       payload: null,
       profilePayload: null,
       noShowWritten,
       recoveryCleared,
+      noShowCleared,
     };
   }
   return {
@@ -2990,6 +3152,7 @@ function _decideReconciliationActions(
     profilePayload,
     noShowWritten,
     recoveryCleared,
+    noShowCleared,
   };
 }
 
@@ -3016,7 +3179,11 @@ function _recoveryEndDateForRace(raceGoal) {
 async function _runDailyRaceReconciliationForUser(uid) {
   const ctx = await readUserProgramContext(uid);
   if (!ctx) {
-    return { noShowWritten: false, recoveryCleared: false };
+    return {
+      noShowWritten: false,
+      recoveryCleared: false,
+      noShowCleared: false,
+    };
   }
   const { userRef, programRef, profile, programState } = ctx;
   const nowMs = Date.now();
@@ -3041,16 +3208,21 @@ async function _runDailyRaceReconciliationForUser(uid) {
     }
   }
 
-  const { payload, profilePayload, noShowWritten, recoveryCleared } =
-    _decideReconciliationActions(
-      profile,
-      programState,
-      savedRunsForRaceDate,
-      nowMs
-    );
+  const {
+    payload,
+    profilePayload,
+    noShowWritten,
+    recoveryCleared,
+    noShowCleared,
+  } = _decideReconciliationActions(
+    profile,
+    programState,
+    savedRunsForRaceDate,
+    nowMs
+  );
 
   if (!payload && !profilePayload) {
-    return { noShowWritten, recoveryCleared };
+    return { noShowWritten, recoveryCleared, noShowCleared };
   }
 
   // R1A: tombstone guard immediately before the write — per spec
@@ -3064,7 +3236,11 @@ async function _runDailyRaceReconciliationForUser(uid) {
       "dailyRaceReconciliationSweep"
     ))
   ) {
-    return { noShowWritten: false, recoveryCleared: false };
+    return {
+      noShowWritten: false,
+      recoveryCleared: false,
+      noShowCleared: false,
+    };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
   // runMode + raceGoal) are separate docs. Write both when present. They're
@@ -3088,19 +3264,22 @@ exports.dailyRaceReconciliationSweep = functions
       console.log("dailyRaceReconciliationSweep: starting");
       let totalNoShow = 0;
       let totalRecoveryCleared = 0;
+      let totalNoShowCleared = 0;
       await sweepActiveUsers({
         name: "dailyRaceReconciliationSweep",
         cutoffDays: 30,
         perUser: async (uid) => {
-          const { noShowWritten, recoveryCleared } =
+          const { noShowWritten, recoveryCleared, noShowCleared } =
             await _runDailyRaceReconciliationForUser(uid);
           if (noShowWritten) totalNoShow += 1;
           if (recoveryCleared) totalRecoveryCleared += 1;
+          if (noShowCleared) totalNoShowCleared += 1;
         },
       });
       console.log(
         `dailyRaceReconciliationSweep: done — ` +
-          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}`
+          `noShow=${totalNoShow}, recoveryCleared=${totalRecoveryCleared}, ` +
+          `noShowCleared=${totalNoShowCleared}`
       );
     } catch (err) {
       console.error("dailyRaceReconciliationSweep: fatal error:", {
@@ -3204,8 +3383,9 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
   }
 
   // Gate 5 — race-day runDay must exist in the plan.
-  const raceDayRunDay = ((programState && programState.runDays) || []).find(
-    (rd) => rd && rd.date === raceDate
+  const raceDayRunDay = _findRaceDayRunDay(
+    programState && programState.runDays,
+    raceDate
   );
   if (!raceDayRunDay || !raceDayRunDay.id) {
     return { write: false };
@@ -4410,52 +4590,56 @@ exports.onCommentCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("comments/{activityId}/items/{commentId}")
   .onCreate(async (snap, context) => {
+    const { activityId, commentId } = context.params;
     try {
       const data = snap.data();
       if (!profanityFilter.containsProfanity(data.text)) return;
 
-      functions.logger.warn("onCommentCreated.auto_delete", {
-        activityId: context.params.activityId,
-        commentId: context.params.commentId,
-        authorId: data.authorId,
-      });
+      const db = admin.firestore();
+      // At-least-once delivery + retries: do the delete, the commentCount
+      // decrement, and the audit write ATOMICALLY and idempotently. Re-reading
+      // the comment inside a transaction and bailing when it's already gone
+      // stops a re-delivery from double-decrementing the counter (it could go
+      // negative) or duplicating the audit record (CROSS-H2). The audit doc is
+      // keyed on commentId so a re-run overwrites rather than appends, and the
+      // activity decrement only fires when the activity still exists.
+      const handled = await db.runTransaction(async (tx) => {
+        const commentSnap = await tx.get(snap.ref);
+        if (!commentSnap.exists) return false; // an earlier delivery handled it
+        const activityRef = db.doc(`activities/${activityId}`);
+        const activitySnap = await tx.get(activityRef);
 
-      // Write the audit record FIRST so a partial failure on
-      // delete still leaves a trace.
-      await admin
-        .firestore()
-        .collection("commentModeration")
-        .add({
+        tx.delete(snap.ref);
+        // Redact the offending text — the audit holds the cleaned form, not
+        // the original. Moderators don't need to re-read the slur.
+        tx.set(db.collection("commentModeration").doc(commentId), {
           action: "auto_delete",
           reason: "profanity",
-          activityId: context.params.activityId,
-          commentId: context.params.commentId,
+          activityId,
+          commentId,
           authorId: data.authorId || null,
-          // Redact the offending text — the audit record holds the
-          // cleaned form, not the original. Moderators don't need
-          // to re-read the slur.
           textRedacted: profanityFilter.cleanProfanity(data.text || ""),
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
-
-      await snap.ref.delete();
-      // Best-effort: decrement the parent activity's commentCount
-      // so the counter stays accurate. Wrapped in try so a stale
-      // activity doc doesn't fail the cleanup.
-      try {
-        await admin
-          .firestore()
-          .doc(`activities/${context.params.activityId}`)
-          .update({
+        if (activitySnap.exists) {
+          tx.update(activityRef, {
             commentCount: admin.firestore.FieldValue.increment(-1),
           });
-      } catch (_) {
-        // Activity doc may have been deleted — silent.
+        }
+        return true;
+      });
+
+      if (handled) {
+        functions.logger.warn("onCommentCreated.auto_delete", {
+          activityId,
+          commentId,
+          authorId: data.authorId,
+        });
       }
     } catch (err) {
       functions.logger.error("onCommentCreated.error", {
-        activityId: context.params.activityId,
-        commentId: context.params.commentId,
+        activityId,
+        commentId,
         message: err.message,
       });
     }

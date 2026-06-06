@@ -315,6 +315,11 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState({
+        // Isolate the L3 branch: empty runDays so the L1 no-show pass is
+        // short-circuited (a planned type:"race" day with a 20-days-past race
+        // date would otherwise correctly no-show — #1128 made the lookup find
+        // it by type, not just exact date). Mirrors the grace test below.
+        runDays: [],
         runPlan: {
           mode: "race_prep",
           raceGoal: { distance: "10k", targetDate: nDaysAgo(20) },
@@ -463,6 +468,38 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
     expect(result.profilePayload).toBeNull();
   });
 
+  it("preserves a newer race even when runPlan.raceGoal is STALE (the completed race) — C-RUN regression", () => {
+    // The real bug: the client's in-recovery branch keeps the COMPLETED race on
+    // the runPlan while the user's new race lives on the profile. Pre-fix the
+    // sweep read currentRaceGoal from runPlan (the completed race), matched the
+    // anchor, saw "same race", and DELETED the successor to freeform.
+    const completedRace = { distance: "10k", targetDate: nDaysAgo(25) };
+    const recoveryEndDate = _recoveryEndDateForRace(completedRace); // anchors to it
+    const newRace = { distance: "half", targetDate: nDaysAgo(-40) }; // 40d future
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: newRace }), // user's CURRENT race = the new Half
+      programState({
+        runDays: [],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: completedRace, // STALE — completed race still on the runPlan
+          phase: "recovery",
+          recoveryEndDate,
+          totalWeeks: 8,
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.recoveryCleared).toBe(true);
+    expect(result.payload.runPlan.phase).toBeNull();
+    // The successor is NOT deleted: no freeform profile clear is written…
+    expect(result.profilePayload).toBeNull();
+    // …and the stale runPlan is materialized to the successor so the server
+    // deciders stop acting on the already-completed race.
+    expect(result.payload.runPlan.raceGoal).toEqual(newRace);
+  });
+
   it("recovery-exit materialization is idempotent (post-write state is a no-op)", () => {
     const raceGoal = { distance: "marathon", targetDate: nDaysAgo(40) };
     const recoveryEndDate = _recoveryEndDateForRace(raceGoal);
@@ -470,7 +507,12 @@ describe("_decideReconciliationActions — L3 recovery-exit", () => {
       profile({ raceGoal }),
       programState({
         runDays: [],
-        runPlan: { mode: "race_prep", raceGoal, phase: "recovery", recoveryEndDate },
+        runPlan: {
+          mode: "race_prep",
+          raceGoal,
+          phase: "recovery",
+          recoveryEndDate,
+        },
       }),
       [],
       FIXED_NOW_MS
@@ -504,7 +546,10 @@ describe("_recoveryEndDateForRace", () => {
       _recoveryEndDateForRace({ distance: "half", targetDate: "2026-06-01" })
     ).toBe("2026-06-22"); // +3 weeks
     expect(
-      _recoveryEndDateForRace({ distance: "marathon", targetDate: "2026-06-01" })
+      _recoveryEndDateForRace({
+        distance: "marathon",
+        targetDate: "2026-06-01",
+      })
     ).toBe("2026-06-29"); // +4 weeks
   });
 
@@ -577,6 +622,75 @@ describe("_decideReconciliationActions — idempotency + combined", () => {
     // Cleared via explicit null overwrite — set(merge:true) doesn't
     // remove fields omitted from a nested map.
     expect(result.payload.runPlan.phase).toBeNull();
+  });
+});
+
+describe("_decideReconciliationActions — L4 no-show auto-return (#1109)", () => {
+  it("returns the user to freeform when a no-show race is >14d past with no successor", () => {
+    const raceDate = nDaysAgo(15);
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "10k", targetDate: raceDate } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: raceDate })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: raceDate },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(true);
+    expect(result.profilePayload).toEqual({
+      runMode: "freeform",
+      raceGoal: null,
+    });
+    expect(result.payload.runPlan.raceGoal).toBeNull();
+  });
+
+  it("does NOT exit while the no-show race is still within the 14-day grace", () => {
+    const raceDate = nDaysAgo(10); // past the +3d no-show flip, before +14d exit
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "10k", targetDate: raceDate } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: raceDate })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: raceDate },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(false);
+    expect(result.payload).toBeNull();
+  });
+
+  it("keeps race_prep with a successor race declared during the no-show window", () => {
+    const oldRace = nDaysAgo(15);
+    const newRace = "2099-09-15"; // future successor on the profile
+    const result = _decideReconciliationActions(
+      profile({ raceGoal: { distance: "half", targetDate: newRace } }),
+      programState({
+        runDays: [runDay({ status: "race_no_show", date: oldRace })],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: oldRace },
+        },
+      }),
+      [],
+      FIXED_NOW_MS
+    );
+    expect(result.noShowCleared).toBe(true);
+    // Successor preserved — not dropped to freeform.
+    expect(result.profilePayload).not.toEqual({
+      runMode: "freeform",
+      raceGoal: null,
+    });
+    expect(result.payload.runPlan.raceGoal).toEqual({
+      distance: "half",
+      targetDate: newRace,
+    });
   });
 });
 

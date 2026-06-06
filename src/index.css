@@ -11,6 +11,15 @@
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-primary-strong: hsl(var(--primary-strong));
+  /* Sport-identity colours — fixed coral (running) + purple (lifting),
+     IDENTICAL in light + dark (sport-coding is a fixed identity, not
+     theme-tuned). Bridged so bg-running / text-running / bg-running/14
+     (and lifting equivalents) resolve through the design system instead
+     of inline THEME.running / THEME.lifting style props. Tints use the
+     /<alpha> modifier — no separate -bg token. Definitions in :root +
+     .dark below. */
+  --color-running: hsl(var(--running));
+  --color-lifting: hsl(var(--lifting));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -67,6 +76,12 @@
      lighter --primary (#7B72E9) is borderline. Kept separate from
      --primary so tinted accents (`${THEME.brand}14`) stay light. */
   --primary-strong: 243 49% 58%;
+  /* Sport-identity colours — coral=running, purple=lifting. SAME value
+     in :root and .dark (fixed sport identity, not AA-tuned per-theme).
+     --lifting is the literal brand purple (#7B72E9) and is deliberately
+     NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
+  --running: 348 57% 61%; /* #D4637A coral */
+  --lifting: 245 73% 68%; /* #7B72E9 purple */
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
@@ -103,6 +118,9 @@
   /* Dark-mode pairing for --primary-strong. Same hue, slightly more
      saturated to keep filled buttons readable against #1A-#16 cards. */
   --primary-strong: 243 55% 60%;
+  /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
+  --running: 348 57% 61%; /* #D4637A coral */
+  --lifting: 245 73% 68%; /* #7B72E9 purple */
   --muted: 240 3% 15%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 16%;
@@ -128,8 +146,16 @@
   --warning-bg: 38 45% 15%;
 }
 
-* {
-  border-color: hsl(var(--border));
+/* Default border colour. Must live in @layer base so explicit
+   `border-{color}` utilities (Tailwind's `utilities` layer) win the
+   cascade. As an UNLAYERED rule this beat every border-color utility,
+   so `border-running/19`, `border-primary/15`, etc. silently rendered
+   as --border grey. Elements with no border-color utility still inherit
+   --border from this rule. (DS1b border-token fix, verified via Playwright.) */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
 }
 
 /* App-shell layout variables — single place to tune spacing math so

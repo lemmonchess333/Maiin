@@ -21,16 +21,22 @@ describe("estimateBMR", () => {
 });
 
 describe("calcDayBalance", () => {
-  it("computes deficit when burn exceeds intake", () => {
-    const result = calcDayBalance("2026-03-15", "Sat", 1800, 1700, 400);
+  it("computes deficit when maintenance expenditure exceeds intake", () => {
+    // expenditure = maintenance TDEE (already exercise-inclusive, Nutr1)
+    const result = calcDayBalance("2026-03-15", "Sat", 1800, 2100);
     expect(result.balance).toBe(300);
     expect(result.burned).toBe(2100);
     expect(result.consumed).toBe(1800);
   });
 
-  it("computes surplus when intake exceeds burn", () => {
-    const result = calcDayBalance("2026-03-15", "Sat", 2500, 1700, 200);
+  it("computes surplus when intake exceeds maintenance expenditure", () => {
+    const result = calcDayBalance("2026-03-15", "Sat", 2500, 1900);
     expect(result.balance).toBe(-600);
+  });
+
+  it("a day eaten exactly at maintenance reads ~0 balance (NUTR-H1)", () => {
+    const result = calcDayBalance("2026-03-15", "Sat", 2700, 2700);
+    expect(result.balance).toBe(0);
   });
 });
 
@@ -65,10 +71,10 @@ describe("getBalanceColor", () => {
    Balance convention: positive avgBalance = deficit. */
 describe("getPhaseAlignment", () => {
   describe("lean bulk goal", () => {
-    it("flags deficit as at-odds (below bulk target)", () => {
+    it("flags deficit as at-odds (below maintenance)", () => {
       const result = getPhaseAlignment("lean bulk", 500);
       expect(result?.state).toBe("at-odds");
-      expect(result?.message).toBe("~500 kcal/day below your bulk target");
+      expect(result?.message).toBe("~500 kcal/day below maintenance");
     });
 
     it("flags surplus as on-track (gaining as planned)", () => {
@@ -85,10 +91,10 @@ describe("getPhaseAlignment", () => {
   });
 
   describe("cut goal", () => {
-    it("flags surplus as at-odds (above cut target)", () => {
+    it("flags surplus as at-odds (above maintenance)", () => {
       const result = getPhaseAlignment("cut", -500);
       expect(result?.state).toBe("at-odds");
-      expect(result?.message).toBe("~500 kcal/day above your cut target");
+      expect(result?.message).toBe("~500 kcal/day above maintenance");
     });
 
     it("flags deficit as on-track (losing as planned)", () => {

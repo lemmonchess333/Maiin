@@ -39,6 +39,7 @@ import { toast } from "@/lib/toast";
 
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
+import { IconButton } from "../ui/IconButton";
 
 function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
   const lats = preview.map((p) => p.lat);
@@ -217,6 +218,9 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     | { toDate?: () => Date }
     | undefined;
   const timeAgo = createdAtObj?.toDate ? getTimeAgo(createdAtObj.toDate()) : "";
+  // DS1b: these stay inline — they're passed as `fallbackBg`/`fallbackColor`
+  // string PROPS to <Avatar/>, not applied as classes here, so there's no
+  // className form to migrate to.
   const avatarBg = isRun ? `${THEME.running}20` : `${THEME.lifting}20`;
   const avatarColor = isRun ? THEME.running : THEME.lifting;
   const chips = isRun ? RUN_CHIPS : LIFT_CHIPS;
@@ -250,10 +254,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
       {activity && (
         <div className="flex gap-5 p-4 pb-0">
           <div>
-            <p
-              className="text-xl font-bold font-mono tabular-nums leading-none"
-              style={{ color: THEME.running }}
-            >
+            <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
               {((activity.distance || 0) / 1000).toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
@@ -402,11 +403,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 {labels.map((label) => (
                   <span
                     key={label}
-                    className="text-xs px-2 py-0.5 rounded-full font-medium"
-                    style={{
-                      background: `${THEME.lifting}15`,
-                      color: THEME.lifting,
-                    }}
+                    className="text-xs px-2 py-0.5 rounded-full font-medium bg-lifting/8 text-lifting"
                   >
                     {label}
                   </span>
@@ -419,10 +416,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         <div className="flex gap-4">
           {(activity.totalVolume ?? 0) > 0 && (
             <div>
-              <p
-                className="text-lg font-bold font-mono tabular-nums leading-none"
-                style={{ color: THEME.lifting }}
-              >
+              <p className="text-lg font-bold font-mono tabular-nums leading-none text-lifting">
                 {Math.round(activity.totalVolume ?? 0).toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
@@ -570,15 +564,9 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                   </div>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     {isRun ? (
-                      <Footprints
-                        className="size-3.5"
-                        style={{ color: THEME.running }}
-                      />
+                      <Footprints className="size-3.5 text-running" />
                     ) : (
-                      <Dumbbell
-                        className="size-3.5"
-                        style={{ color: THEME.lifting }}
-                      />
+                      <Dumbbell className="size-3.5 text-lifting" />
                     )}
                     <p className="text-[13px]">{timeAgo}</p>
                   </div>
@@ -616,10 +604,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             {isRun && activity && (
               <div className="flex gap-5 mb-3">
                 <div>
-                  <p
-                    className="text-xl font-bold font-mono tabular-nums leading-none"
-                    style={{ color: THEME.running }}
-                  >
+                  <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
                     {((activity.distance || 0) / 1000).toFixed(2)}
                   </p>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
@@ -912,15 +897,12 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     if (!user || activity?.authorId === user.uid) return null;
     return (
       <div className="relative">
-        <button
-          type="button"
+        <IconButton
           onClick={() => setShowMenu(!showMenu)}
           aria-label="More options"
           aria-expanded={showMenu}
-          className="p-2.5 rounded-lg hover:bg-muted transition-colors"
-        >
-          <MoreHorizontal className="size-4 text-muted-foreground" />
-        </button>
+          icon={<MoreHorizontal />}
+        />
         {showMenu && (
           <>
             <div

@@ -529,10 +529,7 @@ export default function Social() {
               }}
             />
             {notifications.unreadCount > 0 && (
-              <span
-                className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none"
-                style={{ backgroundColor: THEME.semantic.vitals }}
-              >
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
                 {notifications.unreadCount > 9
                   ? "9+"
                   : notifications.unreadCount}

@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { calculateTDEE } from "@/lib/tdee";
+import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import type { ActivityLevel } from "@/lib/tdee";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -71,9 +72,14 @@ export default function Settings() {
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
     (profile?.activityLevel as ActivityLevel) ?? "moderate"
   );
-  const [trainingPhase, setTrainingPhase] = useState<
-    "cut" | "lean bulk" | "recomp"
-  >((profile?.program?.goal as "cut" | "lean bulk" | "recomp") ?? "recomp");
+  // Goal weight owns the nutrition direction (MFP/MacroFactor model); the
+  // cut/recomp/lean-bulk phase is derived from target-vs-current weight.
+  const [goalWeightKg, setGoalWeightKg] = useState<number>(
+    profile?.goalWeightKg ?? profile?.weightKg ?? 70
+  );
+  const [weeklyRateKg, setWeeklyRateKg] = useState<number>(
+    Math.abs(profile?.weeklyRateKg ?? 0) || 0.5
+  );
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
@@ -86,52 +92,61 @@ export default function Settings() {
   const { prefs: streakReminder, updatePrefs: updateStreakReminder } =
     useStreakReminder();
 
+  const goalPlan = useMemo(
+    () =>
+      resolveGoalWeightPlan({
+        currentKg: weightKg,
+        targetKg: goalWeightKg,
+        rateKgPerWeek: weeklyRateKg,
+      }),
+    [weightKg, goalWeightKg, weeklyRateKg]
+  );
+
   const tdee = useMemo(() => {
     return calculateTDEE(
       weightKg,
       heightCm,
       age,
       activityLevel,
-      trainingPhase,
-      profile?.sex || "male"
+      goalPlan.fitnessGoal,
+      profile?.sex || "male",
+      goalPlan.dailyOffset
     );
-  }, [weightKg, heightCm, age, activityLevel, trainingPhase, profile?.sex]);
+  }, [
+    weightKg,
+    heightCm,
+    age,
+    activityLevel,
+    goalPlan.fitnessGoal,
+    goalPlan.dailyOffset,
+    profile?.sex,
+  ]);
 
-  // Reactive TDEE persistence — auto-save derived values when inputs change
-  const prevTdeeRef = useRef(tdee);
+  // Reactive persistence — save derived values + goal-weight fields when inputs
+  // change. Mount write skipped (migration-safe: stored program.goal/targets
+  // untouched until the user actually changes the goal).
   const hasMounted = useRef(false);
   useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true;
       return;
     }
-    if (prevTdeeRef.current.targetCalories !== tdee.targetCalories) {
-      updateProfile({
-        tdeeBase: tdee.targetCalories,
-        targetCalories: profile?.customCalorieTarget || tdee.targetCalories,
-        targetProtein: tdee.protein,
-        targetCarbs: tdee.carbs,
-        targetFat: tdee.fat,
-      });
-    }
-    prevTdeeRef.current = tdee;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tdee]);
-
-  const handlePhaseChange = async (phase: "cut" | "lean bulk" | "recomp") => {
-    const prevPhase = trainingPhase;
-    const result = await updateProfile({
+    updateProfile({
+      goalWeightKg,
+      weeklyRateKg: goalPlan.effectiveRateKgPerWeek,
       program: {
-        goal: phase,
+        goal: goalPlan.fitnessGoal,
         startWeight: profile?.program?.startWeight ?? weightKg,
         currentPhase: profile?.program?.currentPhase ?? "base",
       },
+      tdeeBase: tdee.targetCalories,
+      targetCalories: profile?.customCalorieTarget || tdee.targetCalories,
+      targetProtein: tdee.protein,
+      targetCarbs: tdee.carbs,
+      targetFat: tdee.fat,
     });
-    // NutritionSection set trainingPhase optimistically before
-    // calling onPhaseChange — revert if the write failed so the
-    // pills don't claim a phase that didn't persist.
-    if (!result.ok) setTrainingPhase(prevPhase);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goalWeightKg, weeklyRateKg, tdee.targetCalories]);
 
   const toggleUnit = async (
     key: "preferredWeightUnit" | "preferredHeightUnit",
@@ -273,13 +288,16 @@ export default function Settings() {
           setAge={setAge}
           activityLevel={activityLevel}
           setActivityLevel={setActivityLevel}
-          trainingPhase={trainingPhase}
-          setTrainingPhase={setTrainingPhase}
+          currentKg={weightKg}
+          goalWeightKg={goalWeightKg}
+          setGoalWeightKg={setGoalWeightKg}
+          weeklyRateKg={weeklyRateKg}
+          setWeeklyRateKg={setWeeklyRateKg}
+          goalPlan={goalPlan}
           mealsTarget={mealsTarget}
           setMealsTarget={setMealsTarget}
           tdee={tdee}
           updateProfile={updateProfile}
-          onPhaseChange={handlePhaseChange}
         />
       </TrackSettingsSectionView>
 
