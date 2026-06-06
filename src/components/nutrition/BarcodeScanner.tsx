@@ -238,11 +238,11 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             key="error"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 space-y-3"
+            className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 space-y-3"
           >
             <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-red-500" />
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+              <AlertCircle className="size-4 text-destructive" />
+              <p className="text-sm text-destructive">{error}</p>
             </div>
             <button
               type="button"

@@ -333,7 +333,7 @@ function InvalidRunReview({
             <button
               type="button"
               onClick={onDiscard}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-red-500/10 text-red-500 border border-red-500/20"
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-destructive/10 text-destructive border border-destructive/20"
             >
               Discard
             </button>
@@ -1450,9 +1450,9 @@ export default function RunSummary() {
                   );
                   const color =
                     s.paceSeconds === fastest
-                      ? "text-emerald-500"
+                      ? "text-success"
                       : s.paceSeconds === slowest
-                        ? "text-red-500"
+                        ? "text-destructive"
                         : "text-muted-foreground";
                   return (
                     <div
@@ -1585,7 +1585,7 @@ export default function RunSummary() {
               <button
                 type="button"
                 onClick={handleDiscard}
-                className="w-full py-2 text-sm text-red-400"
+                className="w-full py-2 text-sm text-destructive"
               >
                 Discard
               </button>
