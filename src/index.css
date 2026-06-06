@@ -38,6 +38,12 @@
   --color-warning: hsl(var(--warning));
   --color-warning-foreground: hsl(var(--warning-foreground));
   --color-warning-bg: hsl(var(--warning-bg));
+  /* Achievement accent — contrast-safe gold for PR stars / trophies /
+     default markers. The AA-text counterpart to the metallic
+     `tier.gold` (#FFD700) used on medals, which fails AA as text.
+     Definitions in :root + .dark below. */
+  --color-achievement: hsl(var(--achievement));
+  --color-achievement-bg: hsl(var(--achievement-bg));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -106,6 +112,11 @@
   --warning: 26 90% 37%;
   --warning-foreground: 0 0% 98%;
   --warning-bg: 48 100% 96%;
+  /* Achievement accent — light mode. A deep gold that clears WCAG AA for
+     the PR count / trophy text on a white card and still reads as a gold
+     star fill. */
+  --achievement: 40 90% 35%;
+  --achievement-bg: 45 100% 95%;
 }
 
 .dark {
@@ -144,6 +155,10 @@
   --warning: 38 92% 50%;
   --warning-foreground: 240 10% 3.9%;
   --warning-bg: 38 45% 15%;
+  /* Achievement accent — dark mode. Brighter gold for luminance on dark
+     cards. */
+  --achievement: 45 92% 58%;
+  --achievement-bg: 42 50% 14%;
 }
 
 /* Default border colour. Must live in @layer base so explicit
