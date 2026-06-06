@@ -68,9 +68,9 @@ export default function SplitsBarChart({
             key={i}
             className={`text-xs font-mono tabular-nums ${
               d.isFast
-                ? "text-emerald-500"
+                ? "text-success"
                 : d.isSlow
-                  ? "text-red-500"
+                  ? "text-destructive"
                   : "text-muted-foreground"
             }`}
           >
