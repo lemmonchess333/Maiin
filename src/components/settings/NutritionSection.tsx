@@ -15,6 +15,7 @@ import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import AccordionSection from "@/components/AccordionSection";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface NutritionSectionProps {
@@ -67,6 +68,11 @@ export default function NutritionSection({
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
   const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Contrast-safe macro colours from the shared palette — protein=pink,
+  // carbs=gold, fat=sage everywhere else in the app. These tiles were
+  // previously mis-coloured (protein blue / carbs amber / fat pink) with
+  // raw Tailwind palette classes that also broke the token invariant.
+  const { text: macroText } = useMacroPalette();
 
   const handleMealsChange = useCallback(
     (val: number) => {
@@ -356,7 +362,10 @@ export default function NutritionSection({
               animate={{ opacity: 1 }}
               className="text-center flex-1"
             >
-              <p className="text-sm font-bold text-blue-500">
+              <p
+                className="text-sm font-bold font-mono tabular-nums"
+                style={{ color: macroText.protein }}
+              >
                 {tdee.protein} g
               </p>
               <p className="text-xs text-muted-foreground">protein</p>
@@ -368,7 +377,12 @@ export default function NutritionSection({
               animate={{ opacity: 1 }}
               className="text-center flex-1"
             >
-              <p className="text-sm font-bold text-amber-500">{tdee.carbs} g</p>
+              <p
+                className="text-sm font-bold font-mono tabular-nums"
+                style={{ color: macroText.carbs }}
+              >
+                {tdee.carbs} g
+              </p>
               <p className="text-xs text-muted-foreground">carbs</p>
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
@@ -378,7 +392,12 @@ export default function NutritionSection({
               animate={{ opacity: 1 }}
               className="text-center flex-1"
             >
-              <p className="text-sm font-bold text-pink-500">{tdee.fat} g</p>
+              <p
+                className="text-sm font-bold font-mono tabular-nums"
+                style={{ color: macroText.fat }}
+              >
+                {tdee.fat} g
+              </p>
               <p className="text-xs text-muted-foreground">fat</p>
             </motion.div>
           </div>
