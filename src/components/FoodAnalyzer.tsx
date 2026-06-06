@@ -599,7 +599,7 @@ export default function FoodAnalyzer({
       const meal = await fetchOpenFoodFacts(code);
       setBarcodeResult(meal);
       setCameraOpen(false);
-      toast.success("Barcode found!");
+      toast.success("Barcode found");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Barcode lookup failed.";
       setBarcodeError(msg);

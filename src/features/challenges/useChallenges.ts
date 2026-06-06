@@ -215,7 +215,7 @@ export function useChallenges() {
         // challenge doc is server-owned (rules deny client writes). The old
         // client-side increment() here was already rejected by those rules,
         // throwing AFTER the participant write landed and surfacing a false
-        // "Failed to join challenge" toast.
+        // "Couldn't join the challenge. Try again." toast.
         setMyProgress((prev) => ({
           ...prev,
           [challengeId]: {
@@ -226,7 +226,7 @@ export function useChallenges() {
         }));
       } catch (error) {
         logger.error("[Challenges] Join failed:", error);
-        toast.error("Failed to join challenge");
+        toast.error("Couldn't join the challenge. Try again.");
       }
     },
     [user]
@@ -248,7 +248,7 @@ export function useChallenges() {
         });
       } catch (error) {
         logger.error("[Challenges] Leave failed:", error);
-        toast.error("Failed to leave challenge");
+        toast.error("Couldn't leave the challenge. Try again.");
       }
     },
     [user]
@@ -280,7 +280,7 @@ export function useChallenges() {
         }));
       } catch (error) {
         logger.error("[Challenges] Progress update failed:", error);
-        toast.error("Failed to update challenge progress");
+        toast.error("Couldn't update progress. Try again.");
       }
     },
     [user, challenges]

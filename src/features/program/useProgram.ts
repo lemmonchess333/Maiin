@@ -478,7 +478,7 @@ export function useProgram() {
         setProgramState(state);
       } catch (error) {
         logger.error("[Program] Save failed:", error);
-        toast.error("Failed to save programme changes");
+        toast.error("Couldn't save your changes. Try again.");
         throw error;
       }
     },
