@@ -32,6 +32,10 @@ import type { ProgramState, ScheduledRunDay } from "../programTypes";
 // Storage we control across tests.
 let mockDocData: ProgramState | null = null;
 let mockDocExists = false;
+// Separate store for the IndexedDB cache read (getDocFromCache) so a test
+// can simulate "cached locally but server is slow / unreachable".
+let mockCacheData: ProgramState | null = null;
+let mockCacheExists = false;
 const setDocCalls: { ref: unknown; data: any; opts?: any }[] = [];
 
 vi.mock("firebase/firestore", () => ({
@@ -40,6 +44,13 @@ vi.mock("firebase/firestore", () => ({
     exists: () => mockDocExists,
     data: () => mockDocData,
   })),
+  // Mirrors the real SDK: getDocFromCache REJECTS on a cache miss rather
+  // than returning a non-existent snapshot. useProgram's cache-first paint
+  // relies on that (its try/catch falls through to the server read).
+  getDocFromCache: vi.fn(async () => {
+    if (!mockCacheExists) throw new Error("Failed to get document from cache.");
+    return { exists: () => mockCacheExists, data: () => mockCacheData };
+  }),
   setDoc: vi.fn(async (ref: unknown, data: any, opts?: any) => {
     setDocCalls.push({ ref, data, opts });
     // Mirror the write back into our mock store so subsequent
@@ -150,11 +161,15 @@ function expectV2Shape(rd: ScheduledRunDay) {
 // import here resolves to the mocked dependencies. We deliberately
 // import last so the read order is "mocks → consumers".
 import { useProgram } from "../useProgram";
+// Mocked above — imported here to override per-test (e.g. hang the server read).
+import { getDoc } from "firebase/firestore";
 
 beforeEach(() => {
   setDocCalls.length = 0;
   mockDocData = null;
   mockDocExists = false;
+  mockCacheData = null;
+  mockCacheExists = false;
   mockProfile = null;
   mockUpdateProfile.mockClear();
 });
@@ -1353,5 +1368,54 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     setDocCalls.length = 0;
     await new Promise((r) => setTimeout(r, 100));
     expect(setDocCalls.length).toBe(0);
+  });
+});
+
+describe("cache-first paint (cold-open latency)", () => {
+  it("paints programState from the local cache without waiting on the server read", async () => {
+    // Returning user: a valid doc is already in IndexedDB. Make the server
+    // read hang so the only way the UI can unblock is the cache-first paint.
+    const cached: ProgramState = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 3,
+      splitType: "full_body",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+    } as ProgramState;
+    mockCacheData = cached;
+    mockCacheExists = true;
+    // Server read never resolves — proves the cache paint alone flips loading.
+    (getDoc as any).mockImplementationOnce(() => new Promise(() => {}));
+    mockProfile = structuredProfile({ runMode: "freeform" });
+
+    const { result } = renderHook(() => useProgram());
+
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(result.current.programState).toBeTruthy();
+    expect(result.current.programState?.weekNumber).toBe(3);
+  });
+
+  it("falls through to the server read on a cache miss (no regression)", async () => {
+    // First-ever load: nothing cached → getDocFromCache rejects. The server
+    // read must still drive the load exactly as it did pre-cache-first.
+    mockCacheExists = false;
+    mockDocExists = false; // no server doc either → initial-creation path
+    mockProfile = structuredProfile({ runMode: "freeform" });
+
+    const { result } = renderHook(() => useProgram());
+
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    // The server path ran (initial-creation write) and produced state.
+    expect(setDocCalls.length).toBeGreaterThan(0);
+    expect(result.current.programState).toBeTruthy();
   });
 });
