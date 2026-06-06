@@ -49,9 +49,9 @@ export default function StatCard({
         : "bad";
   const deltaColor =
     sentiment === "good"
-      ? "text-emerald-500"
+      ? "text-success"
       : sentiment === "bad"
-        ? "text-red-400"
+        ? "text-destructive"
         : "text-muted-foreground";
 
   const showSparkline = !!sparklineData && sparklineData.length > 2;
