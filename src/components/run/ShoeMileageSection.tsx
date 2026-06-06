@@ -4,7 +4,10 @@ import { useShoes, type Shoe } from "@/hooks/useShoes";
 
 function MileagePill({ shoe }: { shoe: Shoe }) {
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
-  const color = pct < 60 ? "#22c55e" : pct < 85 ? "#f59e0b" : "#ef4444";
+  // Wear sentiment → AA-tuned status tokens (see MileageBar in ShoesManager):
+  // fresh → success, mid-life → warning, overdue → destructive.
+  const wearClass =
+    pct < 60 ? "bg-success" : pct < 85 ? "bg-warning" : "bg-destructive";
   const remainingKm = Math.max(0, Math.round(shoe.maxKm - shoe.totalKm));
 
   return (
@@ -24,12 +27,14 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
       </div>
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: color }}
+          className={`h-full rounded-full transition-all ${wearClass}`}
+          style={{ width: `${pct}%` }}
         />
       </div>
       {pct >= 85 && (
-        <p className="text-xs" style={{ color }}>
+        <p
+          className={`text-xs ${pct >= 100 ? "text-destructive" : "text-warning"}`}
+        >
           {pct >= 100
             ? "Time to replace"
             : `${remainingKm} km until replacement`}
