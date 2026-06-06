@@ -1330,7 +1330,7 @@ export default function WorkoutSession({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               onClick={handleUndo}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95"
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-warning/15 text-warning active:scale-95"
             >
               <RotateCcw className="size-3.5" /> Undo last set
             </motion.button>
