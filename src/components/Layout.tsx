@@ -200,23 +200,26 @@ export default function Layout() {
                     onClick={() => {
                       haptic("light");
                       if (tab.to === "/social") markSeen();
-                      /* Soc5 cross-cutting pin (3): tap on already-active
-                     Social tab → scroll-to-top + dispatch a retap event
-                     so the visible feed refreshes. Standard iOS pattern
-                     (Twitter/X). Scoped to /social by the lock — other
-                     tabs keep their default Link behaviour. */
-                      if (
-                        tab.to === "/social" &&
-                        location.pathname === "/social"
-                      ) {
+                      /* Tap on an already-active tab → scroll to top. The
+                     standard iOS tab-bar convention applies to ALL tabs
+                     (matches Twitter/X / Apple's first-party apps), so the
+                     plain scroll-to-top runs for Home/Programme/Food/
+                     Social/Analytics alike.
+                       Soc5 cross-cutting pin (3) additionally locks the
+                     Social tab to *refresh its feed* on retap — that part
+                     stays scoped to /social via the retap CustomEvent below;
+                     the other tabs get scroll-to-top only. */
+                      if (location.pathname === tab.to) {
                         try {
                           window.scrollTo({ top: 0, behavior: "smooth" });
                         } catch {
                           window.scrollTo(0, 0);
                         }
-                        window.dispatchEvent(
-                          new CustomEvent("tropos:social-tab-retap")
-                        );
+                        if (tab.to === "/social") {
+                          window.dispatchEvent(
+                            new CustomEvent("tropos:social-tab-retap")
+                          );
+                        }
                       }
                     }}
                     className={({ isActive }) =>
