@@ -287,8 +287,8 @@ export default function ShoesManager() {
                 className={cn(
                   "size-11 inline-flex items-center justify-center rounded-lg transition-colors",
                   shoe.isDefault
-                    ? "text-yellow-500"
-                    : "text-muted-foreground hover:text-yellow-500"
+                    ? "text-achievement"
+                    : "text-muted-foreground hover:text-achievement"
                 )}
                 title="Set as default"
               >

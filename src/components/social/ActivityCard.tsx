@@ -437,8 +437,8 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           {(prCount ?? 0) > 0 && (
             <div>
               <div className="flex items-center gap-1">
-                <Star className="size-4 text-yellow-500 fill-yellow-500" />
-                <p className="text-lg font-bold font-mono tabular-nums leading-none text-yellow-500">
+                <Star className="size-4 text-achievement fill-achievement" />
+                <p className="text-lg font-bold font-mono tabular-nums leading-none text-achievement">
                   {prCount}
                 </p>
               </div>
@@ -662,15 +662,9 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
       <div className="px-4 pb-4">
         {/* PR Highlight */}
         {(feedItem.prHit || activity?.prHit) && (
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3"
-            style={{
-              background: "rgba(255, 215, 0, 0.08)",
-              border: "1px solid rgba(255, 215, 0, 0.2)",
-            }}
-          >
-            <Trophy className="size-4 text-yellow-500 shrink-0" />
-            <p className="text-xs font-medium text-yellow-500">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-3 bg-achievement/10 border border-achievement/20">
+            <Trophy className="size-4 text-achievement shrink-0" />
+            <p className="text-xs font-medium text-achievement">
               New PR:{" "}
               {feedItem.prExercise || activity?.prExercise || "Personal Record"}{" "}
               {feedItem.prWeight || activity?.prWeight
