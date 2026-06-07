@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
 import { calculateEMA } from "@/utils/weightTrend";
@@ -60,9 +61,7 @@ export function TrendWeight() {
     const d = new Date(entry.date);
     return (
       <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-          Weight Trend
-        </p>
+        <SectionLabel>Weight Trend</SectionLabel>
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
@@ -182,7 +181,9 @@ export function TrendWeight() {
       const remaining = goalWeight - currentTrend;
       if (isFlat) return "Holding steady";
       const towardGoal = remaining > 0 === slope > 0;
-      return towardGoal ? "Trending toward your goal" : "Trending away from goal";
+      return towardGoal
+        ? "Trending toward your goal"
+        : "Trending away from goal";
     }
     if (isFlat) return "Holding steady";
     return slope < 0 ? "Trending down" : "Trending up";
@@ -191,9 +192,7 @@ export function TrendWeight() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-          Weight Trend
-        </p>
+        <SectionLabel>Weight Trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
             <span className="text-primary font-bold">{hiddenHeadline}</span>

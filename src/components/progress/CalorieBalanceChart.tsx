@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import type { Meal } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -85,9 +86,7 @@ export default function CalorieBalanceChart({
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-          Calorie Balance
-        </p>
+        <SectionLabel>Calorie Balance</SectionLabel>
         <div className="flex items-center gap-2">
           <span
             className="text-xs px-2 py-0.5 rounded-full font-medium"
