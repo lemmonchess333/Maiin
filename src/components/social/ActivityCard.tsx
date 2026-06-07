@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
 import { giveHighFive, getKudosList, blockUser } from "../../lib/socialApi";
@@ -257,9 +258,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
               {((activity.distance || 0) / 1000).toFixed(2)}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-              km
-            </p>
+            <SectionLabel className="mt-0.5">km</SectionLabel>
           </div>
           <div>
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
@@ -267,18 +266,14 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 ? formatDur(activity.avgPace)
                 : activity.avgPace || "--:--"}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-              /km
-            </p>
+            <SectionLabel className="mt-0.5">/km</SectionLabel>
           </div>
           {activity.duration && (
             <div>
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                 {formatDur(activity.duration)}
               </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                time
-              </p>
+              <SectionLabel className="mt-0.5">time</SectionLabel>
             </div>
           )}
           {(activity.elevationGain || 0) > 0 && (
@@ -288,9 +283,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                   {activity.elevationGain}m
                 </p>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                  elev
-                </p>
+                <SectionLabel className="mt-0.5">elev</SectionLabel>
               </div>
             </div>
           )}
@@ -419,9 +412,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <p className="text-lg font-bold font-mono tabular-nums leading-none text-lifting">
                 {Math.round(activity.totalVolume ?? 0).toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                kg volume
-              </p>
+              <SectionLabel className="mt-0.5">kg volume</SectionLabel>
             </div>
           )}
           {(activity.exerciseCount ?? 0) > 0 && (
@@ -429,9 +420,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
                 {activity.exerciseCount}
               </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                exercises
-              </p>
+              <SectionLabel className="mt-0.5">exercises</SectionLabel>
             </div>
           )}
           {(prCount ?? 0) > 0 && (
@@ -442,9 +431,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                   {prCount}
                 </p>
               </div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                PRs
-              </p>
+              <SectionLabel className="mt-0.5">PRs</SectionLabel>
             </div>
           )}
           {(activity.duration ?? 0) > 0 && (
@@ -452,9 +439,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
                 {Math.round((activity.duration ?? 0) / 60)}
               </p>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                min
-              </p>
+              <SectionLabel className="mt-0.5">min</SectionLabel>
             </div>
           )}
         </div>
@@ -607,9 +592,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                   <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
                     {((activity.distance || 0) / 1000).toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                    km
-                  </p>
+                  <SectionLabel className="mt-0.5">km</SectionLabel>
                 </div>
                 <div>
                   <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
@@ -617,18 +600,14 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                       ? formatDur(activity.avgPace)
                       : activity.avgPace || "--:--"}
                   </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                    /km
-                  </p>
+                  <SectionLabel className="mt-0.5">/km</SectionLabel>
                 </div>
                 {activity.duration && (
                   <div>
                     <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                       {formatDur(activity.duration)}
                     </p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                      time
-                    </p>
+                    <SectionLabel className="mt-0.5">time</SectionLabel>
                   </div>
                 )}
                 {(activity.elevationGain || 0) > 0 && (
@@ -638,9 +617,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                       <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                         {activity.elevationGain}m
                       </p>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                        elev
-                      </p>
+                      <SectionLabel className="mt-0.5">elev</SectionLabel>
                     </div>
                   </div>
                 )}
@@ -772,9 +749,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         {/* Kudos list popup */}
         {showKudosList && (
           <div className="mt-2 p-3 rounded-xl bg-muted space-y-2">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-              Props from
-            </p>
+            <SectionLabel>Props from</SectionLabel>
             {kudosLoading ? (
               <div className="flex items-center justify-center py-2">
                 <Spinner size="sm" variant="primary" label="Loading props" />
