@@ -472,7 +472,12 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
       />
     );
     expect(container.querySelector("section")).not.toBeNull();
-    expect(screen.getByText(/Run training/i)).toBeInTheDocument();
+    // "Run training" is now the section's accessible landmark name
+    // (aria-label) rather than a visible coral label — the visible label was
+    // removed to align the Run tab's vertical rhythm with the Lift tab.
+    expect(
+      screen.getByRole("region", { name: /Run training/i })
+    ).toBeInTheDocument();
   });
 });
 
