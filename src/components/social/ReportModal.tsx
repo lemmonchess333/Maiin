@@ -17,6 +17,7 @@
  * relationship.
  */
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import {
   blockUser,
   reportContent,
@@ -224,9 +225,7 @@ export default function ReportModal({
           freeform note covers the unstructured case. */}
       {activeCategory && activeCategory.subReasons.length > 0 ? (
         <fieldset className="mt-3 space-y-2">
-          <legend className="text-xs uppercase tracking-wider text-muted-foreground">
-            More specifically
-          </legend>
+          <SectionLabel as="legend">More specifically</SectionLabel>
           <div
             role="radiogroup"
             aria-label="Sub-reason"
