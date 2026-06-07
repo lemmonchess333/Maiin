@@ -1,4 +1,5 @@
 import { GUIDED_WORKOUTS, type GuidedRunWorkout } from "@/lib/guidedRun";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -15,9 +16,7 @@ const DIFFICULTY_LABEL: Record<string, string> = {
 export default function GuidedRunPicker({ selected, onSelect }: Props) {
   return (
     <div className="space-y-2">
-      <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-        Pick a Guided Run
-      </p>
+      <SectionLabel>Pick a Guided Run</SectionLabel>
       <div className="space-y-2">
         {GUIDED_WORKOUTS.map((w) => {
           const isSelected = selected?.id === w.id;
