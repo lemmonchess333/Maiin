@@ -215,7 +215,12 @@ suite("_runDailyRaceReconciliationForUser — emulator integration", () => {
       profile: { runMode: "race_prep", raceGoal },
       programState: {
         runDays: [],
-        runPlan: { mode: "race_prep", raceGoal, phase: "recovery", recoveryEndDate },
+        runPlan: {
+          mode: "race_prep",
+          raceGoal,
+          phase: "recovery",
+          recoveryEndDate,
+        },
       },
     });
 
