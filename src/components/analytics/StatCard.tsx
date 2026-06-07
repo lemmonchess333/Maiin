@@ -1,4 +1,5 @@
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 /**
  * Direction tells us which way is "good" so the delta chip can colour
@@ -62,9 +63,7 @@ export default function StatCard({
       onClick={onClick}
       className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98] card-shadow"
     >
-      <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">
-        {label}
-      </p>
+      <SectionLabel className="mb-2">{label}</SectionLabel>
 
       {/* Value + unit on their own full-width row. Side-by-side layout
           with the sparkline doesn't fit on phone-sized stat cards once
