@@ -1,4 +1,5 @@
 import { getSegmentColor, type GuidedRunWorkout } from "@/lib/guidedRun";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { paceMinSec } from "@/lib/runLabels";
 
 interface IntervalSpec {
@@ -71,9 +72,7 @@ export default function SessionStructureView(props: Props) {
 
     return (
       <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-        <h3 className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-          Session structure
-        </h3>
+        <SectionLabel as="h3">Session structure</SectionLabel>
         <div className="space-y-3">
           {s.warmupDuration ? (
             <Block
@@ -102,9 +101,7 @@ export default function SessionStructureView(props: Props) {
   const segments = props.workout.segments;
   return (
     <div className="p-4 rounded-xl border border-border bg-card space-y-3">
-      <h3 className="text-xs text-muted-foreground font-medium uppercase tracking-widest">
-        Session structure
-      </h3>
+      <SectionLabel as="h3">Session structure</SectionLabel>
       <div className="space-y-3">
         {segments.map((seg, idx) => (
           <Block

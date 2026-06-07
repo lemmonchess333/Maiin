@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints, ChevronRight } from "lucide-react";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 
@@ -16,9 +17,9 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
         <p className="text-sm font-medium text-foreground truncate">
           {shoe.name}
           {shoe.isDefault && (
-            <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <SectionLabel as="span" tier="section" className="ml-1.5">
               Default
-            </span>
+            </SectionLabel>
           )}
         </p>
         <p className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
@@ -57,9 +58,7 @@ export default function ShoeMileageSection() {
     >
       <div className="flex items-center gap-2">
         <Footprints className="size-4 text-muted-foreground" />
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex-1">
-          Shoe Mileage
-        </p>
+        <SectionLabel className="flex-1">Shoe Mileage</SectionLabel>
         <ChevronRight className="size-4 text-muted-foreground/60" />
       </div>
       <div className="space-y-3">
