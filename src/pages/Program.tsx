@@ -7,7 +7,6 @@ import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
-import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
@@ -743,20 +742,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               }[]
             }
           />
-          <div className="mt-2 flex items-center gap-2 px-1 text-[11px] font-medium text-muted-foreground">
-            <span
-              aria-hidden="true"
-              className={cn(
-                "size-1.5 rounded-full",
-                activeTab === "run" ? "bg-running" : "bg-primary"
-              )}
-            />
-            <span>
-              {activeTab === "run"
-                ? "Coral marks your running plan and start-run actions."
-                : "Purple marks your lift plan, exercise order, and workout actions."}
-            </span>
-          </div>
         </div>
 
         {/* ── LIFT tab — WeekPhaseRow + ProgrammeWeekSelector (split-ordered
