@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
 import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
@@ -317,9 +318,7 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">
-            Retired
-          </p>
+          <SectionLabel className="mb-2">Retired</SectionLabel>
           {retired.map((shoe) => (
             <div
               key={shoe.id}
