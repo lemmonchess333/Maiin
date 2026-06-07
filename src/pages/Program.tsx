@@ -499,7 +499,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     (w, i) => ({
       key: String(i),
       center: String(i + 1),
-      bottomLabel: w.dayName,
+      // Show only the split CATEGORY ("Push" / "Pull" / "Legs" / "Upper" /
+      // "Full Body") on the chip, not the full "Push — Chest Focus". The chip
+      // is `line-clamp-1`, so the full name truncated to a dangling "Push —…"
+      // — and it's redundant: the full name already shows in the day header
+      // below ("Day N · Push — Chest Focus"). The category alone reads clean
+      // and makes the rotation legible across the week.
+      bottomLabel: w.dayName.split(/\s*[—–-]\s*/)[0].trim() || w.dayName,
       status: w.completed ? "completed" : w.skipped ? "skipped" : "upcoming",
       isToday: !isViewingHistory && i === todayIndex,
     })
