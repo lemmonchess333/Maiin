@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { logger } from "@/lib/logger";
+import { THEME } from "@/lib/theme";
 
 type CaptureMode = "food" | "label";
 type TabMode = "food" | "barcode" | "label";
@@ -506,9 +507,12 @@ export default function FoodCameraModal({
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all",
                   tab === key
-                    ? "bg-[#FF6B4A] text-white shadow-sm"
+                    ? "text-white shadow-sm"
                     : "text-white/70 hover:text-white"
                 )}
+                style={
+                  tab === key ? { background: THEME.food.scan } : undefined
+                }
               >
                 {label}
               </button>

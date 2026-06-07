@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
+import { THEME } from "@/lib/theme";
 import { Search, X, Plus, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
@@ -333,7 +334,9 @@ export default function ExercisePicker({
                           transition={{ duration: 0.15 }}
                           className="size-9 rounded-full flex items-center justify-center"
                           style={{
-                            backgroundColor: isSelected ? "#4DB872" : "#7B72E9",
+                            backgroundColor: isSelected
+                              ? THEME.success
+                              : THEME.brand,
                           }}
                         >
                           {isSelected ? (

@@ -11,13 +11,18 @@ import {
   readStoredRun,
   writeStoredRun,
   clearStoredRun,
-  RUN_RESUME_KEY,
+  runResumeKey,
+  LEGACY_RUN_RESUME_KEY,
   RUN_RESUME_MAX_AGE_MS,
   RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "../runResumeStorage";
 import { freeformPlanMetadata } from "../runPlanMetadata";
 import type { RunConfig } from "@/components/run/RunSetupModal";
+
+const UID = "user-A";
+/** The uid-scoped key under test — derived, not hardcoded. */
+const RUN_RESUME_KEY = runResumeKey(UID);
 
 function makeSnapshot(overrides: Partial<StoredRun> = {}): StoredRun {
   const config: RunConfig = {
@@ -58,8 +63,8 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
     // resume flow reads on the way back in.
     const now = 2_000_000;
     const snap = makeSnapshot({ lastWriteAt: now });
-    expect(writeStoredRun(snap)).toBe(true);
-    const restored = readStoredRun(now);
+    expect(writeStoredRun(UID, snap)).toBe(true);
+    const restored = readStoredRun(UID, now);
     expect(restored).not.toBeNull();
     expect(restored).toEqual(snap);
   });
@@ -72,12 +77,30 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
     const snap = makeSnapshot({
       lastWriteAt: now,
       points: [
-        { lat: 51.5, lon: -0.12, timestamp: now - 60_000, altitude: 10, accuracy: 5, speed: null, rawLat: 51.5, rawLon: -0.12 },
-        { lat: 51.501, lon: -0.121, timestamp: now - 30_000, altitude: 11, accuracy: 5, speed: null, rawLat: 51.501, rawLon: -0.121 },
+        {
+          lat: 51.5,
+          lon: -0.12,
+          timestamp: now - 60_000,
+          altitude: 10,
+          accuracy: 5,
+          speed: null,
+          rawLat: 51.5,
+          rawLon: -0.12,
+        },
+        {
+          lat: 51.501,
+          lon: -0.121,
+          timestamp: now - 30_000,
+          altitude: 11,
+          accuracy: 5,
+          speed: null,
+          rawLat: 51.501,
+          rawLon: -0.121,
+        },
       ],
     });
-    writeStoredRun(snap);
-    const restored = readStoredRun(now);
+    writeStoredRun(UID, snap);
+    const restored = readStoredRun(UID, now);
     expect(restored?.points).toHaveLength(2);
     expect(restored?.points[0].lat).toBe(51.5);
     expect(restored?.points[1].timestamp).toBe(now - 30_000);
@@ -111,8 +134,8 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
       },
     };
     const now = 2_000_000;
-    writeStoredRun(makeSnapshot({ config, lastWriteAt: now }));
-    const restored = readStoredRun(now);
+    writeStoredRun(UID, makeSnapshot({ config, lastWriteAt: now }));
+    const restored = readStoredRun(UID, now);
     expect(restored?.config.planMetadata.plannedTemplateId).toBe("tempo_20");
     expect(restored?.config.planMetadata.matchedPlanExact).toBe(true);
   });
@@ -120,7 +143,7 @@ describe("writeStoredRun + readStoredRun — round-trip", () => {
 
 describe("readStoredRun — discard conditions", () => {
   it("returns null when nothing is stored", () => {
-    expect(readStoredRun(Date.now())).toBeNull();
+    expect(readStoredRun(UID, Date.now())).toBeNull();
   });
 
   it("discards entries older than the 6h cutoff", () => {
@@ -128,8 +151,8 @@ describe("readStoredRun — discard conditions", () => {
     // cleared (subsequent reads see nothing).
     const now = 100_000_000;
     const sevenHoursAgo = now - 7 * 60 * 60 * 1000;
-    writeStoredRun(makeSnapshot({ lastWriteAt: sevenHoursAgo }));
-    expect(readStoredRun(now)).toBeNull();
+    writeStoredRun(UID, makeSnapshot({ lastWriteAt: sevenHoursAgo }));
+    expect(readStoredRun(UID, now)).toBeNull();
     // Defensive: a second read with a younger `now` shouldn't
     // resurrect the entry — read() should have cleared it.
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
@@ -138,8 +161,8 @@ describe("readStoredRun — discard conditions", () => {
   it("accepts entries inside the 6h cutoff", () => {
     const now = 100_000_000;
     const fiveHoursAgo = now - 5 * 60 * 60 * 1000;
-    writeStoredRun(makeSnapshot({ lastWriteAt: fiveHoursAgo }));
-    expect(readStoredRun(now)).not.toBeNull();
+    writeStoredRun(UID, makeSnapshot({ lastWriteAt: fiveHoursAgo }));
+    expect(readStoredRun(UID, now)).not.toBeNull();
   });
 
   it("accepts an entry at exactly the cutoff boundary", () => {
@@ -148,8 +171,8 @@ describe("readStoredRun — discard conditions", () => {
     // inclusive-strict drift.
     const now = 100_000_000;
     const exactlyCutoff = now - RUN_RESUME_MAX_AGE_MS;
-    writeStoredRun(makeSnapshot({ lastWriteAt: exactlyCutoff }));
-    expect(readStoredRun(now)).not.toBeNull();
+    writeStoredRun(UID, makeSnapshot({ lastWriteAt: exactlyCutoff }));
+    expect(readStoredRun(UID, now)).not.toBeNull();
   });
 
   it("discards entries with a different schema version", () => {
@@ -161,9 +184,9 @@ describe("readStoredRun — discard conditions", () => {
       JSON.stringify({
         ...makeSnapshot(),
         v: 0,
-      }),
+      })
     );
-    expect(readStoredRun(Date.now())).toBeNull();
+    expect(readStoredRun(UID, Date.now())).toBeNull();
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 
@@ -172,7 +195,7 @@ describe("readStoredRun — discard conditions", () => {
     // read path must not propagate the parse error to the live
     // run — it just clears and reports nothing to resume.
     localStorage.setItem(RUN_RESUME_KEY, "not-valid-json{");
-    expect(readStoredRun(Date.now())).toBeNull();
+    expect(readStoredRun(UID, Date.now())).toBeNull();
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 
@@ -181,9 +204,9 @@ describe("readStoredRun — discard conditions", () => {
     // pass JSON.parse but fail the shape check. Don't crash.
     localStorage.setItem(
       RUN_RESUME_KEY,
-      JSON.stringify({ v: 1, partial: true }),
+      JSON.stringify({ v: 1, partial: true })
     );
-    expect(readStoredRun(Date.now())).toBeNull();
+    expect(readStoredRun(UID, Date.now())).toBeNull();
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 
@@ -192,30 +215,30 @@ describe("readStoredRun — discard conditions", () => {
     // 'waiting' or 'finished' would be a write-side bug.
     localStorage.setItem(
       RUN_RESUME_KEY,
-      JSON.stringify({ ...makeSnapshot(), phase: "finished" }),
+      JSON.stringify({ ...makeSnapshot(), phase: "finished" })
     );
-    expect(readStoredRun(Date.now())).toBeNull();
+    expect(readStoredRun(UID, Date.now())).toBeNull();
   });
 });
 
 describe("clearStoredRun", () => {
   it("removes a stored entry", () => {
-    writeStoredRun(makeSnapshot());
+    writeStoredRun(UID, makeSnapshot());
     expect(localStorage.getItem(RUN_RESUME_KEY)).not.toBeNull();
-    clearStoredRun();
+    clearStoredRun(UID);
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 
   it("is a no-op when no entry exists", () => {
-    expect(() => clearStoredRun()).not.toThrow();
+    expect(() => clearStoredRun(UID)).not.toThrow();
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 
   it("is idempotent on repeated calls", () => {
-    writeStoredRun(makeSnapshot());
-    clearStoredRun();
-    clearStoredRun();
-    clearStoredRun();
+    writeStoredRun(UID, makeSnapshot());
+    clearStoredRun(UID);
+    clearStoredRun(UID);
+    clearStoredRun(UID);
     expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
   });
 });
@@ -228,7 +251,7 @@ describe("writeStoredRun — failure modes", () => {
       throw new Error("QuotaExceeded");
     };
     try {
-      const result = writeStoredRun(makeSnapshot());
+      const result = writeStoredRun(UID, makeSnapshot());
       expect(result).toBe(false);
     } finally {
       Storage.prototype.setItem = original;
@@ -245,9 +268,63 @@ describe("readStoredRun — getItem throw guard", () => {
       throw new Error("Storage error");
     };
     try {
-      expect(readStoredRun(Date.now())).toBeNull();
+      expect(readStoredRun(UID, Date.now())).toBeNull();
     } finally {
       Storage.prototype.getItem = original;
     }
+  });
+});
+
+// ─── Cross-account leak defence (uid scoping + legacy migration) ──────
+
+describe("uid scoping — cross-account leak defence", () => {
+  it("writes under a uid-scoped key, not the legacy global key", () => {
+    // The whole point of the fix: a snapshot must land at
+    // `<prefix>:<uid>`, never the un-scoped global key that account B
+    // would also read on a shared device.
+    writeStoredRun(UID, makeSnapshot());
+    expect(localStorage.getItem(runResumeKey(UID))).not.toBeNull();
+    expect(localStorage.getItem(LEGACY_RUN_RESUME_KEY)).toBeNull();
+  });
+
+  it("scopes keys per uid — distinct users get distinct keys", () => {
+    expect(runResumeKey("user-A")).not.toBe(runResumeKey("user-B"));
+    expect(runResumeKey("user-A")).toContain("user-A");
+  });
+
+  it("never returns user A's snapshot when reading as user B", () => {
+    // The HIGH finding: user B must not be offered user A's GPS trail.
+    const now = 2_000_000;
+    writeStoredRun("user-A", makeSnapshot({ lastWriteAt: now }));
+    expect(readStoredRun("user-B", now)).toBeNull();
+    // ...and user A still reads their own snapshot back.
+    expect(readStoredRun("user-A", now)).not.toBeNull();
+  });
+
+  it("clearStoredRun only clears the given uid's entry", () => {
+    const now = 2_000_000;
+    writeStoredRun("user-A", makeSnapshot({ lastWriteAt: now }));
+    writeStoredRun("user-B", makeSnapshot({ lastWriteAt: now }));
+    clearStoredRun("user-A");
+    expect(readStoredRun("user-A", now)).toBeNull();
+    // user-B's entry is untouched.
+    expect(readStoredRun("user-B", now)).not.toBeNull();
+  });
+
+  it("drops the legacy un-scoped key on the first read", () => {
+    // A pre-scoping snapshot sitting at the global key must be purged
+    // on the next read so it can never surface under the wrong account.
+    localStorage.setItem(LEGACY_RUN_RESUME_KEY, JSON.stringify(makeSnapshot()));
+    // Reading (even with no scoped entry for this uid) drops the legacy key.
+    expect(readStoredRun(UID, 2_000_000)).toBeNull();
+    expect(localStorage.getItem(LEGACY_RUN_RESUME_KEY)).toBeNull();
+  });
+
+  it("writeStoredRun / clearStoredRun no-op without a uid", () => {
+    // Defensive: a missing uid (signed-out edge) must never write to or
+    // clear a global key.
+    expect(writeStoredRun("", makeSnapshot())).toBe(false);
+    expect(() => clearStoredRun("")).not.toThrow();
+    expect(localStorage.getItem(LEGACY_RUN_RESUME_KEY)).toBeNull();
   });
 });

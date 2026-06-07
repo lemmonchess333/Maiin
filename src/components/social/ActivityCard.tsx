@@ -705,7 +705,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 type="button"
                 onClick={handleShowKudosList}
                 aria-label={`${kudosCount} props — show list`}
-                className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
               >
                 {kudosCount}
               </button>
@@ -719,7 +719,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           >
             <MessageCircle className="size-5" />
             {(activity?.commentCount ?? 0) > 0 && (
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium font-mono tabular-nums">
                 {activity!.commentCount}
               </span>
             )}
