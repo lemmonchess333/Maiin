@@ -69,6 +69,14 @@
   --text-micro: var(--ds-text-micro);
 }
 
+/* Canonical card elevation. `shadow-card` is a trap — Tailwind parses it
+   as shadow-color=card (a no-op without a shadow size), so cards that used
+   it rendered FLAT. `card-shadow` applies the design-system card box-shadow;
+   single source of truth so a future elevation change is one line here. */
+@utility card-shadow {
+  box-shadow: var(--ds-shadow-card);
+}
+
 :root {
   --background: 240 5% 96%;
   --foreground: 240 10% 3.9%;
