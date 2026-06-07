@@ -143,17 +143,11 @@ function RunCard({
               path sets both); preferring the more specific
               "Saved anyway" label when they coexist. */}
           {run.savedAnyway ? (
-            <span
-              className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-              style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444" }}
-            >
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">
               Saved anyway
             </span>
           ) : run.isInvalid ? (
-            <span
-              className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-              style={{ background: "rgba(239,68,68,0.10)", color: "#EF4444" }}
-            >
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">
               Invalid
             </span>
           ) : null}
@@ -167,14 +161,14 @@ function RunCard({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-mono tabular-nums">
             {formatDuration(run.duration)}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground font-mono tabular-nums">
             {paceMinSec(run.avgPace)}/km
           </span>
           {run.elevationGain > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground font-mono tabular-nums">
               ↑{run.elevationGain}m
             </span>
           )}

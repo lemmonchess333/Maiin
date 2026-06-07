@@ -19,10 +19,12 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground font-mono tabular-nums">
           {Math.round(shoe.totalKm)} km
         </span>
-        <span className="text-muted-foreground">{shoe.maxKm} km</span>
+        <span className="text-muted-foreground font-mono tabular-nums">
+          {shoe.maxKm} km
+        </span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
