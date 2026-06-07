@@ -32,6 +32,12 @@ const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
+// __PROTOTYPE__ Home2-hierarchy — dev-only throwaway route. Delete with
+// src/pages/__prototype__ + src/components/__prototype__ once a Home
+// arrangement is chosen.
+const HomeHierarchyPrototype = lazyRetry(
+  () => import("@/pages/__prototype__/HomeHierarchyPrototype")
+);
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
@@ -322,6 +328,12 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          {import.meta.env.DEV && (
+            <Route
+              path="/prototype/home-hierarchy"
+              element={<HomeHierarchyPrototype />}
+            />
+          )}
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
