@@ -655,8 +655,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 Programme
               </h1>
               {/* Subtitle is tab-aware so the Run tab no longer reads as a
-                  secondary add-on under a lifting-only header. */}
-              <p className="text-xs text-muted-foreground">
+                  secondary add-on under a lifting-only header.
+
+                  Reserve a stable 2-line height so the segmented control — and
+                  everything below it — sits at the SAME Y on both tabs. The
+                  lift subtitle ("Built for … · split · N days/week") often
+                  wraps to two lines while the run subtitle ("Free running · …")
+                  is one; without the reserve the whole page shifted up ~12px
+                  when toggling Lift↔Run. line-clamp-2 caps longer lines so it
+                  can't grow to three and re-introduce the jump. */}
+              <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
                 {activeTab === "run" ? programRunHeaderLine : programHeaderLine}
               </p>
             </div>
