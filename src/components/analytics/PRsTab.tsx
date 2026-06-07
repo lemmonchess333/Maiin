@@ -146,10 +146,7 @@ function LiftPRList({
   const hiddenCount = prs.length - visible.length;
 
   return (
-    <div
-      className="rounded-2xl bg-card overflow-hidden"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
-    >
+    <div className="rounded-2xl bg-card overflow-hidden card-shadow">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-foreground flex-1">

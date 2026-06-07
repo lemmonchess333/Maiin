@@ -50,10 +50,7 @@ export default function MacroDistribution({
   const pct = (v: number) => Math.round((v / total) * 100);
 
   return (
-    <div
-      className="p-4 rounded-2xl bg-card"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
-    >
+    <div className="p-4 rounded-2xl bg-card card-shadow">
       <p className="text-xs uppercase tracking-wider font-medium mb-3 text-muted-foreground">
         Macro Distribution
       </p>
