@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useAuth } from "@/lib/auth";
@@ -7,6 +8,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
@@ -20,6 +22,7 @@ import {
   Dumbbell,
   Settings2,
   CalendarDays,
+  Footprints,
   MoreHorizontal,
   Plus,
   FastForward,
@@ -698,36 +701,61 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
         {/* PR-3: 2-tab segmented control. Today / Week were retired —
             Home owns today-glance, DayActionSheet owns per-day
-            actions, and the Footprint nav icon starts a run. */}
+            actions, and the Footprint nav icon starts a run.
+
+            Sport-coding matters here: Programme is the point where the
+            athlete chooses between two training modes, so the switch should
+            not read as two anonymous grey tabs. The shared SegmentedControl
+            keeps the iOS pill interaction, 44px targets, roving-keyboard
+            support, and reduced-motion behaviour in one primitive while the
+            active tone reinforces the design-system rule: purple = lift,
+            coral = run. */}
         <div className="pt-2">
-          <div
-            role="tablist"
-            aria-label="Programme sections"
-            className="grid grid-cols-2 gap-1 p-1 rounded-xl"
-            style={{ background: "hsl(var(--muted) / 0.5)" }}
-          >
-            {(
+          <SegmentedControl
+            ariaLabel="Programme mode"
+            value={activeTab}
+            onChange={(value) => setActiveTab(value)}
+            tone={activeTab === "run" ? "running" : "brand"}
+            className="rounded-2xl bg-muted/50 p-1.5"
+            options={
               [
-                { id: "lift", label: "Lift" },
-                { id: "run", label: "Run" },
-              ] as { id: ProgramTab; label: string }[]
-            ).map((t) => (
-              <button
-                type="button"
-                key={t.id}
-                role="tab"
-                aria-selected={activeTab === t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={cn(
-                  "min-h-[44px] py-2 rounded-lg text-xs font-semibold transition-all",
-                  activeTab === t.id
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
+                {
+                  value: "lift",
+                  label: (
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Dumbbell className="size-4" aria-hidden="true" />
+                      <span>Lift</span>
+                    </span>
+                  ),
+                },
+                {
+                  value: "run",
+                  label: (
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Footprints className="size-4" aria-hidden="true" />
+                      <span>Run</span>
+                    </span>
+                  ),
+                },
+              ] satisfies {
+                value: ProgramTab;
+                label: ReactNode;
+              }[]
+            }
+          />
+          <div className="mt-2 flex items-center gap-2 px-1 text-[11px] font-medium text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "size-1.5 rounded-full",
+                activeTab === "run" ? "bg-running" : "bg-primary"
+              )}
+            />
+            <span>
+              {activeTab === "run"
+                ? "Coral marks your running plan and start-run actions."
+                : "Purple marks your lift plan, exercise order, and workout actions."}
+            </span>
           </div>
         </div>
 
