@@ -374,9 +374,9 @@ function VariantB() {
 VariantB.variantName = "Grouped (iOS sections)";
 
 /**
- * C — Recommended: compact alerts zone (Pro+streak shrunk so they don't
- * outrank data), THIS WEEK, TODAY promoted (it's what you act on), and
- * the passive Performance score demoted + compacted below.
+ * C — Chosen: compact alerts zone (streak chip + Pro shrunk so they don't
+ * outrank data) + grouped sections, with Performance kept in its current
+ * slot at full size (between the week and today).
  */
 function VariantC() {
   return (
@@ -396,6 +396,13 @@ function VariantC() {
 
       <section className="space-y-2">
         <SectionLabel tier="section" className="px-1">
+          Performance
+        </SectionLabel>
+        <PerformanceMock />
+      </section>
+
+      <section className="space-y-2">
+        <SectionLabel tier="section" className="px-1">
           Today
         </SectionLabel>
         <TodayEnergyMock />
@@ -403,17 +410,10 @@ function VariantC() {
         <WaterMock />
         <WeightStepsMock />
       </section>
-
-      <section className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
-        <PerformanceMock compact />
-      </section>
     </div>
   );
 }
-VariantC.variantName = "Recommended (alerts zone + Today-first)";
+VariantC.variantName = "Chosen (alerts zone + grouped, Performance in place)";
 
 const VARIANTS: Record<string, { Comp: () => ReactElement; name: string }> = {
   A: { Comp: VariantA, name: VariantA.variantName },
