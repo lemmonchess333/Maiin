@@ -1152,10 +1152,7 @@ export default function History() {
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
             {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <div
-                className="p-6 rounded-2xl bg-card text-center"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}
-              >
+              <div className="p-6 rounded-2xl bg-card text-center card-shadow">
                 <div
                   className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
                   style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
@@ -1217,10 +1214,7 @@ export default function History() {
                     No runs in this period
                   </p>
                 ) : runs.length === 0 ? (
-                  <div
-                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                    style={{ boxShadow: "var(--ds-shadow-card)" }}
-                  >
+                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Footprints className="size-5 shrink-0 text-running" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
@@ -1291,10 +1285,7 @@ export default function History() {
                     No workouts in this period
                   </p>
                 ) : liftingData.liftCount === 0 ? (
-                  <div
-                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                    style={{ boxShadow: "var(--ds-shadow-card)" }}
-                  >
+                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Trophy className="size-5 shrink-0 text-lifting" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
@@ -1394,10 +1385,7 @@ export default function History() {
                   </>
                 ) : nutrition.avgCalories === 0 ? (
                   <>
-                    <div
-                      className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                       <UtensilsCrossed
                         className="size-5 shrink-0"
                         style={{ color: THEME.success }}
@@ -1615,10 +1603,7 @@ export default function History() {
                     Lifetime
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.runKm >= 1000
@@ -1629,10 +1614,7 @@ export default function History() {
                         km · {lifetimeTotals.runCount} runs
                       </p>
                     </div>
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {formatVolume(lifetimeTotals.liftVolume).value}
@@ -1646,10 +1628,7 @@ export default function History() {
                         lifted · {lifetimeTotals.liftCount} sessions
                       </p>
                     </div>
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.success }}

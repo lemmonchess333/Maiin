@@ -163,12 +163,12 @@ export default function FoodMealSection({
     <motion.div
       layout
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className="bg-card rounded-xl overflow-hidden"
+      className="bg-card rounded-xl overflow-hidden card-shadow"
       /* Food6e-S3: CSS `contain: layout paint` scopes layout/paint
          invalidation to this slot so a re-render of one section
          doesn't trigger reflow on siblings. Cheap browser-native
          perf hint per Hist5f-pattern freebie value-add. */
-      style={{ boxShadow: "var(--ds-shadow-card)", contain: "layout paint" }}
+      style={{ contain: "layout paint" }}
     >
       {/* Header caption — meal name · item count · total kcal.
           Item count is more glanceable than "BREAKFAST · 12:09 AM"
