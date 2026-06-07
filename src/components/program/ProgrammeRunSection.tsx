@@ -797,14 +797,14 @@ export default function ProgrammeRunSection({
         />
       )}
 
-      {/* Run7 Q6: section label as 10px uppercase a11y h2, RunningNavIcon
-          inline left, coral icon + muted-foreground label. */}
-      <header className="flex items-center gap-1.5">
-        <Footprints aria-hidden="true" className="size-3.5 text-running" />
-        <SectionLabel as="h2" tier="section">
-          Run training
-        </SectionLabel>
-      </header>
+      {/* a11y landmark only (was a visible "Run training" coral section label
+          — Run7 Q6). The visible label was removed to align the Run tab's
+          vertical rhythm with the Lift tab: the Lift tab has no "Lift training"
+          header above its content, so this label pushed the Run tab's content
+          ~one row out of step and made the page jump when toggling tabs. The
+          active "Run" segment already names the section; the h2 is kept sr-only
+          so the screen-reader landmark structure is preserved. */}
+      <h2 className="sr-only">Run training</h2>
 
       {/* Run8 PR1a — section subtitle replaces the mode-pill row
           for Structured / Race Prep. Carries mode + at-a-glance
