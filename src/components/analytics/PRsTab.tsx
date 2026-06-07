@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -254,9 +255,7 @@ export default function PRsTab({
           Indoor (only when user has treadmill / manual runs). */}
       {hasAnyLifetimeRun && (
         <section aria-label="Running personal records" className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-running">
-            Running
-          </p>
+          <SectionLabel className="text-running">Running</SectionLabel>
           <PRCard
             title="Running PRs"
             subtitle="All-time · outdoor GPS only"
@@ -289,9 +288,7 @@ export default function PRsTab({
           a confusing empty recent-window). */}
       {hasAnyLifetimeWorkout && (
         <section aria-label="Lifting personal records" className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-lifting">
-            Lifting
-          </p>
+          <SectionLabel className="text-lifting">Lifting</SectionLabel>
           <LiftPRList
             prs={lifetimePRs}
             title="Lift PRs"
