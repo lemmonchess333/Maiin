@@ -10,6 +10,7 @@
  * also duplicate option-label text into the DOM).
  */
 import { cn } from "@/lib/utils";
+import SectionLabel from "@/components/ui/SectionLabel";
 
 interface CurrentProgrammeSummaryProps {
   /** Pre-composed summary lines, e.g. "Build muscle · Recomp". */
@@ -23,9 +24,9 @@ export default function CurrentProgrammeSummary({
 }: CurrentProgrammeSummaryProps) {
   return (
     <div className={cn("rounded-2xl bg-muted px-4 py-3.5", className)}>
-      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <SectionLabel tier="section" className="mb-1.5">
         Current setup
-      </p>
+      </SectionLabel>
       <div className="space-y-0.5">
         {lines.map((line, i) => (
           <p key={i} className="text-sm leading-snug text-foreground">

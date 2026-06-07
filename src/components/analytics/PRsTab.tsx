@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -146,10 +147,7 @@ function LiftPRList({
   const hiddenCount = prs.length - visible.length;
 
   return (
-    <div
-      className="rounded-2xl bg-card overflow-hidden"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
-    >
+    <div className="rounded-2xl bg-card overflow-hidden card-shadow">
       <div className="px-4 pt-4 pb-3 flex items-center gap-2 border-b border-border/30">
         <Trophy size={16} className="text-amber-500" />
         <h3 className="text-sm font-semibold text-foreground flex-1">
@@ -257,9 +255,7 @@ export default function PRsTab({
           Indoor (only when user has treadmill / manual runs). */}
       {hasAnyLifetimeRun && (
         <section aria-label="Running personal records" className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-running">
-            Running
-          </p>
+          <SectionLabel className="text-running">Running</SectionLabel>
           <PRCard
             title="Running PRs"
             subtitle="All-time · outdoor GPS only"
@@ -292,9 +288,7 @@ export default function PRsTab({
           a confusing empty recent-window). */}
       {hasAnyLifetimeWorkout && (
         <section aria-label="Lifting personal records" className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-lifting">
-            Lifting
-          </p>
+          <SectionLabel className="text-lifting">Lifting</SectionLabel>
           <LiftPRList
             prs={lifetimePRs}
             title="Lift PRs"

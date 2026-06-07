@@ -28,3 +28,17 @@ export const MEAL_LABELS: Record<MealKey, string> = {
   dinner: "Dinner",
   snacks: "Snacks",
 };
+
+/**
+ * Best-guess meal slot for "now" (local hour), used to pre-select the
+ * logging destination so the common case doesn't force a breakfast/
+ * lunch/snacks/dinner decision before every save. Kept here with the
+ * other meal-slot identity so it's pure + unit-testable without
+ * loading the Food page.
+ */
+export function inferMostLikelyMealSlot(hour: number): MealKey {
+  if (hour < 10) return "breakfast";
+  if (hour < 15) return "lunch";
+  if (hour < 17) return "snacks";
+  return "dinner";
+}

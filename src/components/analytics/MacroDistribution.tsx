@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import { THEME } from "@/lib/theme";
 import { CHART_TOOLTIP_STYLE } from "./chartStyles";
@@ -50,13 +51,8 @@ export default function MacroDistribution({
   const pct = (v: number) => Math.round((v / total) * 100);
 
   return (
-    <div
-      className="p-4 rounded-2xl bg-card"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
-    >
-      <p className="text-xs uppercase tracking-wider font-medium mb-3 text-muted-foreground">
-        Macro Distribution
-      </p>
+    <div className="p-4 rounded-2xl bg-card card-shadow">
+      <SectionLabel className="mb-3">Macro Distribution</SectionLabel>
       <div className="flex items-center gap-4">
         {/* Donut is decorative re: VoiceOver — the legend below it
             already announces the same percentages + grams as text.

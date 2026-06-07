@@ -991,7 +991,7 @@ export default function WorkoutSession({
                 className={cn(
                   "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
                   done
-                    ? "bg-green-500 text-white font-medium"
+                    ? "bg-success text-success-foreground font-medium"
                     : active
                       ? "bg-primary text-primary-foreground font-bold"
                       : "bg-muted text-muted-foreground"
@@ -1156,7 +1156,7 @@ export default function WorkoutSession({
                             }}
                             disabled={set.completed || !canFillPrev}
                             className={cn(
-                              "text-[13px] text-center w-full",
+                              "text-[13px] font-mono tabular-nums text-center w-full",
                               canFillPrev && !set.completed
                                 ? "text-primary active:opacity-70"
                                 : "text-muted-foreground"
@@ -1186,7 +1186,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
+                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center placeholder:text-muted-foreground/50 disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-3">
@@ -1203,7 +1203,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-1.5 rounded-lg bg-muted text-foreground text-sm text-center disabled:opacity-50"
+                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center disabled:opacity-50"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
@@ -1213,15 +1213,17 @@ export default function WorkoutSession({
                               animate={{ scale: 1 }}
                               transition={{ duration: 0.15 }}
                             >
-                              <Check className="size-5 text-green-500" />
+                              <Check className="size-5 text-success" />
                             </motion.div>
                           ) : (
                             <button
                               type="button"
                               aria-label="Mark set complete"
                               onClick={() => completeInlineSet(setIdx)}
-                              className="size-7 rounded-full border-2 border-border flex items-center justify-center hover:border-primary/50 transition-colors active:scale-90"
-                            />
+                              className="group size-11 flex items-center justify-center active:scale-90"
+                            >
+                              <span className="size-7 rounded-full border-2 border-border group-hover:border-primary/50 transition-colors" />
+                            </button>
                           )}
                         </div>
                       </div>
@@ -1328,7 +1330,7 @@ export default function WorkoutSession({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               onClick={handleUndo}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-amber-500/15 text-amber-400 active:scale-95"
+              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-warning/15 text-warning active:scale-95"
             >
               <RotateCcw className="size-3.5" /> Undo last set
             </motion.button>
@@ -1391,7 +1393,7 @@ export default function WorkoutSession({
                 <button
                   type="button"
                   onClick={() => setSessionComplete(true)}
-                  className="w-full py-3.5 rounded-xl bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                  className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                 >
                   <Trophy className="size-4" /> Finish Workout
                 </button>

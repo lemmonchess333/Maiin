@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import FoodRow, { type FoodRowGroup } from "./FoodRow";
 import MealMacroBar from "./MealMacroBar";
+import Button from "@/components/ui/Button";
 import { MEAL_LABELS, type MealKey } from "./mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import type { Meal } from "@/hooks/useMeals";
@@ -162,12 +163,12 @@ export default function FoodMealSection({
     <motion.div
       layout
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className="bg-card rounded-xl overflow-hidden"
+      className="bg-card rounded-xl overflow-hidden card-shadow"
       /* Food6e-S3: CSS `contain: layout paint` scopes layout/paint
          invalidation to this slot so a re-render of one section
          doesn't trigger reflow on siblings. Cheap browser-native
          perf hint per Hist5f-pattern freebie value-add. */
-      style={{ boxShadow: "var(--ds-shadow-card)", contain: "layout paint" }}
+      style={{ contain: "layout paint" }}
     >
       {/* Header caption — meal name · item count · total kcal.
           Item count is more glanceable than "BREAKFAST · 12:09 AM"
@@ -230,15 +231,18 @@ export default function FoodMealSection({
           broken". Tapping routes through onTargetMeal so it shares
           the composer-focus path with the header + pill. */}
       {groupedEntries.length === 0 ? (
-        <button
-          type="button"
-          onClick={() => onTargetMeal(mealKey)}
-          aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
-          className="w-full flex items-center justify-center gap-1.5 p-3.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors active:scale-[0.99]"
-        >
-          <Plus className="size-3.5" aria-hidden="true" />
-          Add to {MEAL_LABELS[mealKey]}
-        </button>
+        <div className="px-3.5 pb-3.5">
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => onTargetMeal(mealKey)}
+            aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
+            leftIcon={<Plus className="size-3.5" />}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            Add to {MEAL_LABELS[mealKey]}
+          </Button>
+        </div>
       ) : (
         <>
           {/* Food rows with swipe-to-delete. Each row receives the
@@ -289,15 +293,18 @@ export default function FoodMealSection({
               bottom of a populated slot — section-level CTA, not
               an in-list row, so it doesn't shift swipe targets or
               compete with the header + button or the per-slot pill. */}
-          <button
-            type="button"
-            onClick={() => onTargetMeal(mealKey)}
-            aria-label={`Add another to ${MEAL_LABELS[mealKey]}`}
-            className="w-full flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-[11px] font-medium text-muted-foreground/80 hover:text-foreground hover:bg-muted/40 transition-colors active:scale-[0.99]"
-          >
-            <Plus className="size-3" aria-hidden="true" />
-            Add another
-          </button>
+          <div className="px-3.5 py-2.5">
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => onTargetMeal(mealKey)}
+              aria-label={`Add another to ${MEAL_LABELS[mealKey]}`}
+              leftIcon={<Plus className="size-3.5" />}
+              className="text-muted-foreground/80 hover:text-foreground"
+            >
+              Add another
+            </Button>
+          </div>
         </>
       )}
     </motion.div>

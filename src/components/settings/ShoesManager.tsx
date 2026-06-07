@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
 import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
@@ -9,7 +10,11 @@ import { Spinner } from "@/components/ui/Spinner";
 
 function MileageBar({ shoe }: { shoe: Shoe }) {
   const pct = Math.min((shoe.totalKm / shoe.maxKm) * 100, 100);
-  const color = pct < 60 ? "#22c55e" : pct < 85 ? "#f59e0b" : "#ef4444";
+  // Wear sentiment: fresh → success, mid-life → warning, overdue →
+  // destructive. Tokenised so the bar tracks the theme's AA-tuned
+  // status colours instead of fixed Tailwind palette hexes.
+  const wearClass =
+    pct < 60 ? "bg-success" : pct < 85 ? "bg-warning" : "bg-destructive";
 
   return (
     <div className="space-y-1">
@@ -23,8 +28,8 @@ function MileageBar({ shoe }: { shoe: Shoe }) {
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, background: color }}
+          className={cn("h-full rounded-full transition-all", wearClass)}
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -289,8 +294,8 @@ export default function ShoesManager() {
                 className={cn(
                   "size-11 inline-flex items-center justify-center rounded-lg transition-colors",
                   shoe.isDefault
-                    ? "text-yellow-500"
-                    : "text-muted-foreground hover:text-yellow-500"
+                    ? "text-achievement"
+                    : "text-muted-foreground hover:text-achievement"
                 )}
                 title="Set as default"
               >
@@ -315,9 +320,7 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mb-2">
-            Retired
-          </p>
+          <SectionLabel className="mb-2">Retired</SectionLabel>
           {retired.map((shoe) => (
             <div
               key={shoe.id}

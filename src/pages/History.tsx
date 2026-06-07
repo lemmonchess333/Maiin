@@ -1141,13 +1141,30 @@ export default function History() {
               who navigated by sport can still see each section's
               sport-coded header inline as they scroll. */}
 
+            {/* Loading — always show a skeleton while the run/workout/meal
+                queries resolve, INCLUDING for eventual cold-start users.
+                Previously the cold-start card was gated on `!dataLoading`
+                while the skeleton was nested under `!isAnalyticsColdStart`,
+                so the `dataLoading && isAnalyticsColdStart` window (a fresh
+                user's first Analytics load) rendered NOTHING — a blank tab.
+                Splitting the three states keeps them mutually exclusive and
+                exhaustive: loading → skeleton, then cold-start → card, else
+                → overview. */}
+            {filter === "analytics" && dataLoading && (
+              <div className="p-4 rounded-2xl bg-card space-y-3">
+                <Skeleton className="h-3 w-20" />
+                <div className="grid grid-cols-3 gap-2">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+              </div>
+            )}
+
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
             {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <div
-                className="p-6 rounded-2xl bg-card text-center"
-                style={{ boxShadow: "var(--ds-shadow-card)" }}
-              >
+              <div className="p-6 rounded-2xl bg-card text-center card-shadow">
                 <div
                   className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
                   style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
@@ -1168,17 +1185,8 @@ export default function History() {
             )}
 
             {filter === "analytics" &&
-              !isAnalyticsColdStart &&
-              (dataLoading ? (
-                <div className="p-4 rounded-2xl bg-card space-y-3">
-                  <Skeleton className="h-3 w-20" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                  </div>
-                </div>
-              ) : (
+              !dataLoading &&
+              !isAnalyticsColdStart && (
                 <PeriodOverview
                   runCount={runningTotals.runCount}
                   runDistance={runningTotals.runDistance}
@@ -1189,7 +1197,7 @@ export default function History() {
                   timeRange={timeRange}
                   rangeDays={rangeDays}
                 />
-              ))}
+              )}
 
             {/* Hist5b pin 3 — Performance fold. Compact PI strip with
               inline-accordion expansion. Replaces the dedicated
@@ -1218,10 +1226,7 @@ export default function History() {
                     No runs in this period
                   </p>
                 ) : runs.length === 0 ? (
-                  <div
-                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                    style={{ boxShadow: "var(--ds-shadow-card)" }}
-                  >
+                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Footprints className="size-5 shrink-0 text-running" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
@@ -1292,10 +1297,7 @@ export default function History() {
                     No workouts in this period
                   </p>
                 ) : liftingData.liftCount === 0 ? (
-                  <div
-                    className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                    style={{ boxShadow: "var(--ds-shadow-card)" }}
-                  >
+                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Trophy className="size-5 shrink-0 text-lifting" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
@@ -1395,10 +1397,7 @@ export default function History() {
                   </>
                 ) : nutrition.avgCalories === 0 ? (
                   <>
-                    <div
-                      className="p-4 rounded-2xl bg-card flex items-center gap-3"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                       <UtensilsCrossed
                         className="size-5 shrink-0"
                         style={{ color: THEME.success }}
@@ -1478,7 +1477,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-[11px] text-amber-600 -mt-1 italic">
+                      <p className="text-[11px] text-warning -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
@@ -1616,10 +1615,7 @@ export default function History() {
                     Lifetime
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.runKm >= 1000
@@ -1630,10 +1626,7 @@ export default function History() {
                         km · {lifetimeTotals.runCount} runs
                       </p>
                     </div>
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {formatVolume(lifetimeTotals.liftVolume).value}
@@ -1647,10 +1640,7 @@ export default function History() {
                         lifted · {lifetimeTotals.liftCount} sessions
                       </p>
                     </div>
-                    <div
-                      className="p-3 rounded-2xl bg-card text-center"
-                      style={{ boxShadow: "var(--ds-shadow-card)" }}
-                    >
+                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.success }}

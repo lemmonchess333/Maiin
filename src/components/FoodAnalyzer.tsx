@@ -12,12 +12,12 @@ import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
-import { THEME } from "@/lib/theme";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
+import Button from "@/components/ui/Button";
 import {
   validateFoodEntry,
   checkAggregateAgainstTarget,
@@ -640,8 +640,8 @@ export default function FoodAnalyzer({
       )}
 
       {showError && !activeResult && (
-        <div className="bg-red-50 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-red-600">
+        <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
+          <p className="text-sm text-destructive">
             Couldn't identify food. Try manual entry.
           </p>
           <div className="flex gap-3">
@@ -649,7 +649,7 @@ export default function FoodAnalyzer({
               type="button"
               onClick={handleResetAll}
               aria-label="Try food analysis again"
-              className="text-sm text-red-500 font-medium flex items-center gap-1"
+              className="text-sm text-destructive font-medium flex items-center gap-1"
             >
               <RotateCcw className="size-3.5" /> Try again
             </button>
@@ -686,20 +686,19 @@ export default function FoodAnalyzer({
               Try another photo, or log it manually.
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="primary"
               onClick={() => {
                 handleResetAll();
                 setCameraOpen(true);
               }}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: THEME.brand }}
+              leftIcon={<RotateCcw className="size-4" />}
             >
-              <RotateCcw className="size-4" /> Try again
-            </button>
-            <button
-              type="button"
+              Try again
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => {
                 /* Mirrors the AI failure → manual fallback wired
                    in F1's followup. Resets analyzer state, closes
@@ -710,10 +709,9 @@ export default function FoodAnalyzer({
                 setCameraOpen(false);
                 onRequestManualLog?.();
               }}
-              className="flex-1 py-3 rounded-xl text-sm font-medium text-foreground bg-muted active:scale-95 transition-transform border border-border"
             >
               Log manually
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -738,12 +736,7 @@ export default function FoodAnalyzer({
                 doesn't block. */}
             {activeResult.confidence === "low" && (
               <div
-                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border flex items-start gap-2"
-                style={{
-                  background: "rgba(229,154,11,0.10)",
-                  borderColor: "rgba(229,154,11,0.30)",
-                  color: "#a26a05",
-                }}
+                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning flex items-start gap-2"
                 role="status"
               >
                 <span aria-hidden="true">⚠</span>
@@ -902,7 +895,7 @@ export default function FoodAnalyzer({
                               type="button"
                               onClick={() => removeItem(i)}
                               aria-label={`Remove ${item.name}`}
-                              className="size-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
+                              className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all shrink-0"
                             >
                               <X className="size-3.5" />
                             </button>

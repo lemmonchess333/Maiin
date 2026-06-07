@@ -312,8 +312,7 @@ export default function ExerciseHistory() {
           type="button"
           onClick={goBack}
           aria-label="Back"
-          className="size-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
+          className="size-11 flex items-center justify-center rounded-full bg-card active:scale-90 transition-transform card-shadow"
         >
           <ChevronLeft className="size-5 text-foreground" />
         </button>
@@ -336,10 +335,7 @@ export default function ExerciseHistory() {
 
       {/* ── Stat strip ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
-        <div
-          className="p-3 rounded-xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="p-3 rounded-xl bg-card card-shadow">
           <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
             {isBodyweight ? "Max reps" : "Best 1RM"}
           </p>
@@ -356,10 +352,7 @@ export default function ExerciseHistory() {
             )}
           </p>
         </div>
-        <div
-          className="p-3 rounded-xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="p-3 rounded-xl bg-card card-shadow">
           <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
             Sessions
           </p>
@@ -367,10 +360,7 @@ export default function ExerciseHistory() {
             {headerStats.totalSessions}
           </p>
         </div>
-        <div
-          className="p-3 rounded-xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="p-3 rounded-xl bg-card card-shadow">
           <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
             Total sets
           </p>
@@ -403,10 +393,7 @@ export default function ExerciseHistory() {
       </div>
 
       {tab === "form" ? (
-        <div
-          className="rounded-2xl bg-card p-4"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="rounded-2xl bg-card p-4 card-shadow">
           <Suspense
             fallback={
               <div className="h-40 bg-muted/30 rounded animate-pulse" />
@@ -420,10 +407,7 @@ export default function ExerciseHistory() {
       ) : (
         <>
           {/* ── Rep-range PRs ───────────────────────────────────────── */}
-          <div
-            className="rounded-2xl bg-card p-4 space-y-3"
-            style={{ boxShadow: "var(--ds-shadow-card)" }}
-          >
+          <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
             <div className="flex items-center gap-2">
               <Trophy className="size-4 text-amber-500" />
               <h3 className="text-sm font-semibold text-foreground">
@@ -487,19 +471,13 @@ export default function ExerciseHistory() {
 
           {/* ── Chart with metric toggle ────────────────────────────── */}
           {hasOnlyOneSession ? (
-            <div
-              className="p-4 rounded-2xl bg-card text-center py-8"
-              style={{ boxShadow: "var(--ds-shadow-card)" }}
-            >
+            <div className="p-4 rounded-2xl bg-card text-center py-8 card-shadow">
               <p className="text-sm text-muted-foreground">
                 Log more sessions to see progression
               </p>
             </div>
           ) : (
-            <div
-              className="rounded-2xl bg-card p-4 space-y-3"
-              style={{ boxShadow: "var(--ds-shadow-card)" }}
-            >
+            <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
                   Progression
@@ -543,10 +521,7 @@ export default function ExerciseHistory() {
           )}
 
           {/* ── Recent sessions list ────────────────────────────────── */}
-          <div
-            className="rounded-2xl bg-card overflow-hidden"
-            style={{ boxShadow: "var(--ds-shadow-card)" }}
-          >
+          <div className="rounded-2xl bg-card overflow-hidden card-shadow">
             <div className="px-4 pt-4 pb-3 border-b border-border/30">
               <h3 className="text-sm font-semibold text-foreground">
                 Recent sessions

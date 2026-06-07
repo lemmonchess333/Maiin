@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import {
   ArrowLeft,
   ChevronDown,
@@ -561,9 +562,7 @@ export default function RunSetupModal({
             const type = labelMap[lastRun.activityType] || "Run";
             return (
               <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-widest font-medium">
-                  Last run
-                </p>
+                <SectionLabel>Last run</SectionLabel>
                 <p className="text-sm font-mono tabular-nums text-foreground mt-0.5">
                   {km}km · {time} ·{" "}
                   <span className="font-sans text-muted-foreground">
@@ -774,9 +773,7 @@ export default function RunSetupModal({
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-              <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-widest">
-                Goal
-              </p>
+              <SectionLabel className="mb-2">Goal</SectionLabel>
               <div className="flex gap-2">
                 {(["none", "distance", "time", "pace"] as const).map((t) => (
                   <button
@@ -1420,9 +1417,9 @@ export default function RunSetupModal({
             const items = ACTIVITY_TYPES.filter((a) => a.group === group);
             return (
               <div key={group} className="space-y-1">
-                <p className="px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <SectionLabel className="px-2">
                   {group === "outdoor" ? "Outdoor" : "Other"}
-                </p>
+                </SectionLabel>
                 {items.map((at) => {
                   const IC = ICON_MAP[at.icon];
                   const isActive = config.activityType === at.type;

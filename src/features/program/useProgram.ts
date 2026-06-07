@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, getDoc, Timestamp, deleteField } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getDocFromCache,
+  Timestamp,
+  deleteField,
+} from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
@@ -235,6 +241,7 @@ export function useProgram() {
 
   // Load program from Firestore (with backward-compat normalize)
   useEffect(() => {
+    let cancelled = false;
     const loadProgram = async () => {
       if (!user || !profile) {
         setProgramState(null);
@@ -289,6 +296,36 @@ export function useProgram() {
       }
 
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+
+      // Cache-first paint. Firestore persistence is enabled (firebase.ts),
+      // but a plain getDoc is server-first when online — it only falls back
+      // to IndexedDB when offline. So on every cold open a returning user
+      // waits a full network round-trip even though a fresh copy is already
+      // cached locally. Read that cached copy first and paint it immediately
+      // while the authoritative server read below runs and reconciles.
+      //
+      // Safe by construction: normalize/migrate are pure (no writes), the
+      // whole block is wrapped so a cache miss (first-ever load, eviction,
+      // or persistence unavailable) just falls through to the server read
+      // exactly as before, and the server path below remains the sole writer
+      // and source of truth — it overwrites this paint within the same load.
+      // `cancelled` guards against a superseded run (e.g. account switch)
+      // flashing stale cached state after the effect re-ran.
+      try {
+        const cachedSnap = await getDocFromCache(ref);
+        if (!cancelled && cachedSnap.exists()) {
+          const cachedNorm = normalizeProgramState(
+            cachedSnap.data() as ProgramState,
+            { primaryGoal: profile.primaryGoal }
+          );
+          setProgramState(migrateProgramState(cachedNorm, localWeekKey()));
+          setLoading(false);
+        }
+      } catch {
+        // Cache miss / persistence unavailable — fall through to the
+        // server read. No regression: this is the pre-cache-first path.
+      }
+
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
@@ -454,6 +491,10 @@ export function useProgram() {
       logger.error("Failed to load program:", err);
       setLoading(false);
     });
+
+    return () => {
+      cancelled = true;
+    };
     // updateProfile is intentionally omitted: it's a stable
     // function reference from useAuth's context and including it
     // would force a re-run on every render that recreates it.

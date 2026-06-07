@@ -30,6 +30,7 @@ import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
   getDoc,
+  getDocFromCache,
   serverTimestamp,
   writeBatch,
   Timestamp,
@@ -537,6 +538,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setErrorReportingUid(firebaseUser?.uid ?? null);
 
       if (firebaseUser) {
+        // Cache-first paint (mirrors useProgram's programState read). A plain
+        // getDoc is server-first when online — it only falls back to IndexedDB
+        // when offline — so a returning user waits a full network round-trip to
+        // boot the whole app even though their profile is already cached. Read
+        // the cached profile first and unblock the app shell immediately, then
+        // the authoritative server read below reconciles. Pure paint:
+        // hydrateProfile does no writes, and the timezone-capture write stays
+        // on the server branch only so it isn't double-fired.
+        try {
+          const cachedDoc = await getDocFromCache(
+            doc(db, "users", firebaseUser.uid)
+          );
+          if (isMounted && cachedDoc.exists()) {
+            const cachedProfile = hydrateProfile(
+              firebaseUser.uid,
+              cachedDoc.data(),
+              "",
+              firebaseUser.email ?? ""
+            );
+            setProfile(cachedProfile);
+            syncDarkMode(cachedProfile.darkMode);
+            setLoading(false);
+          }
+        } catch {
+          // Cache miss / persistence unavailable — fall through to the server
+          // read exactly as before. No regression on the fresh / cold path.
+        }
+
         try {
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           if (!isMounted) return;

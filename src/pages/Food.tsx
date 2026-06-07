@@ -48,14 +48,15 @@ import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
 import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown";
 import {
   MEAL_ORDER,
   MEAL_LABELS,
+  inferMostLikelyMealSlot,
   type MealKey,
 } from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
-import { localDateString } from "@/lib/dateHelpers";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -151,7 +152,13 @@ export default function Food() {
   // kind of string the NL parser understands without needing a help doc.
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
-  const [targetMeal, setTargetMeal] = useState<MealKey | null>(null);
+  // Default the logging destination to the meal a user is most likely
+  // trying to log right now. They can still tap the selected pill to
+  // clear it, but the common case stops requiring a breakfast/lunch/
+  // snacks/dinner decision before every save.
+  const [targetMeal, setTargetMeal] = useState<MealKey | null>(() =>
+    inferMostLikelyMealSlot(new Date().getHours())
+  );
   // Food6 a2: tap-on-hero opens a detailed nutrition-breakdown sheet
   // (calories + macros + activity-burn adjustment). Read-only — the
   // sheet is a drill-down for review, not an editing surface.
@@ -1217,19 +1224,10 @@ export default function Food() {
     }
 
     // 2. Frequency-ranked history over the last 30 days.
-    //    `meal.date` is a `YYYY-MM-DD` string; lexical comparison
-    //    against the cutoff string is correct (and avoids parsing
-    //    every meal's date into a Date object).
-    const cutoff = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 30);
-      // `meal.date` is a LOCAL "YYYY-MM-DD" string, so the cutoff must be
-      // the LOCAL date string too. `d.toISOString()` (UTC) can land on a
-      // different calendar day than the user's local date (the direction
-      // depends on the offset + wall-clock hour), shifting the 30-day
-      // window boundary by a day.
-      return localDateString(d); // "YYYY-MM-DD"
-    })();
+    //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
+    //    against the (also-local) cutoff string is correct and avoids
+    //    parsing every meal's date into a Date object.
+    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
     const freq = new Map<
       string,
       { count: number; lastLogged: string; meal: (typeof meals)[number] }
@@ -1315,6 +1313,22 @@ export default function Food() {
     timeRelevantHour,
     pendingRemovalIds,
   ]);
+
+  const hasStrongQuickAddSuggestions = useMemo(() => {
+    if (quickMeals.length === 0) return false;
+    if (favourites.length > 0) return true;
+
+    // Local 30-day cutoff. meal.date is a local YYYY-MM-DD (it mirrors
+    // selectedDate, which derives from a local `format`), so the cutoff
+    // must be local too — a UTC toISOString cutoff skews the window by a
+    // day near midnight in non-UTC zones (CLAUDE.md: no local/UTC mix).
+    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
+
+    return meals.some((meal) => {
+      if (!meal.date || meal.date < cutoff) return false;
+      return !isGenericAiFoodName(meal.foodName);
+    });
+  }, [favourites.length, meals, quickMeals.length]);
 
   /* Reset Quick Add scroll position whenever the rendered chips
      change. Without this, the carousel keeps its previous scrollLeft
@@ -1539,6 +1553,48 @@ export default function Food() {
       excludeSelector: "[data-food-row]",
     });
 
+  const renderQuickAddRow = (className = "mt-3.5") => (
+    <motion.div variants={itemVariant} className={className}>
+      {coachmarkActive ? (
+        <Coachmark
+          storageKey="quickAdd-firstGraduation-v1"
+          content="Tap a chip to log instantly. Long-press to remove."
+          placement="top"
+          onDismiss={() => setCoachmarkActive(false)}
+        >
+          <div>
+            <FoodQuickAddRow
+              ref={quickAddScrollRef}
+              meals={quickMeals}
+              adding={quickAdding}
+              onAdd={handleQuickMealAdd}
+              onRemoveFavourite={handleRemoveFavourite}
+            />
+          </div>
+        </Coachmark>
+      ) : (
+        <FoodQuickAddRow
+          ref={quickAddScrollRef}
+          meals={quickMeals}
+          adding={quickAdding}
+          onAdd={handleQuickMealAdd}
+          onRemoveFavourite={handleRemoveFavourite}
+        />
+      )}
+    </motion.div>
+  );
+
+  // Cold-start guard: until the day's meals resolve, render a structural
+  // skeleton instead of the zeroed hero + four empty meal sections, which
+  // otherwise flash as real content and then pop in. Mirrors HomeSkeleton /
+  // ProgramSkeleton (every other top page already gates its load). A
+  // genuinely empty *loaded* day still shows the real per-slot empty
+  // states — the skeleton only covers the loading window. Placed after all
+  // hooks (no conditional-hook / React #310 risk).
+  if (mealsLoading && meals.length === 0) {
+    return <FoodSkeleton />;
+  }
+
   return (
     <motion.div
       {...pullBindProps}
@@ -1625,6 +1681,13 @@ export default function Food() {
         }}
         dailyTargets={dailyTargets}
       />
+
+      {/* Quick Add moves above the full composer only when it is backed
+          by personal evidence (favourites or recent history), not just
+          seeded defaults. That makes the repeat-log path the first
+          action for returning users while cold-start users still see
+          the explanatory composer before generic chips. */}
+      {hasStrongQuickAddSuggestions && renderQuickAddRow("mt-1")}
 
       {/* Composer: NL textarea + Add to pills + Scan CTA + manual
           log fallback. Extracted to components/food/FoodComposerCard.
@@ -1713,40 +1776,10 @@ export default function Food() {
         </Suspense>
       )}
 
-      {/* Quick Add — merged favourites + recents row, extracted to
-          components/food/FoodQuickAddRow.tsx. Coachmark wraps the
-          row container on first graduation; anchor at the row level
-          (not a specific chip) because the user's newest graduated
-          chip may scroll off-screen inside the carousel, leaving an
-          arrow pointing at empty space. */}
-      <motion.div variants={itemVariant} className="mt-3.5">
-        {coachmarkActive ? (
-          <Coachmark
-            storageKey="quickAdd-firstGraduation-v1"
-            content="Tap a chip to log instantly. Long-press to remove."
-            placement="top"
-            onDismiss={() => setCoachmarkActive(false)}
-          >
-            <div>
-              <FoodQuickAddRow
-                ref={quickAddScrollRef}
-                meals={quickMeals}
-                adding={quickAdding}
-                onAdd={handleQuickMealAdd}
-                onRemoveFavourite={handleRemoveFavourite}
-              />
-            </div>
-          </Coachmark>
-        ) : (
-          <FoodQuickAddRow
-            ref={quickAddScrollRef}
-            meals={quickMeals}
-            adding={quickAdding}
-            onAdd={handleQuickMealAdd}
-            onRemoveFavourite={handleRemoveFavourite}
-          />
-        )}
-      </motion.div>
+      {/* Cold-start fallback: when Quick Add only contains seeded examples,
+          keep it below the composer so it reads as help rather than an
+          unsupported recommendation. */}
+      {!hasStrongQuickAddSuggestions && renderQuickAddRow()}
 
       {/* Meal sections — Food6d locks per-slot independent empty
           states: all four slots always render so mixed states

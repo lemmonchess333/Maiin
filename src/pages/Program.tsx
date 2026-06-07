@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useAuth } from "@/lib/auth";
@@ -6,7 +7,7 @@ import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
-import { cn } from "@/lib/utils";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
@@ -18,9 +19,9 @@ import { THEME } from "@/lib/theme";
 import {
   Check,
   Dumbbell,
-  RefreshCw,
   Settings2,
   CalendarDays,
+  Footprints,
   MoreHorizontal,
   Plus,
   FastForward,
@@ -55,7 +56,8 @@ import {
 } from "@dnd-kit/sortable";
 import SortableExerciseRow from "@/components/SortableExerciseRow";
 import ExercisePicker from "@/components/program/ExercisePicker";
-import { Spinner } from "@/components/ui/Spinner";
+import { ProgramSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ui/ErrorState";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
@@ -436,27 +438,22 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   }, [selectedDayIndex]);
 
   if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <Spinner size="md" variant="primary" label="Loading programme" />
-      </div>
-    );
+    // Mirror the in-Layout Suspense fallback (PageContentSkeleton →
+    // ProgramSkeleton) so the route-chunk placeholder and this
+    // data-loading gate are the SAME shape — no flash from skeleton to
+    // a bare spinner while useProgram() resolves. Replaces a lone
+    // centred Spinner that floated high (its wrapper had no height) and
+    // gave the page no structure during the cold-start window.
+    return <ProgramSkeleton />;
   }
 
   if (!programState || !prescription) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center gap-3">
-        <p className="text-sm text-muted-foreground">
-          Failed to load programme
-        </p>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold active:scale-[0.97] transition-transform"
-        >
-          <RefreshCw className="size-4" /> Retry
-        </button>
-      </div>
+      <ErrorState
+        title="Couldn't load your programme"
+        description="Something went wrong fetching your training plan. Check your connection and try again."
+        retry={{ label: "Retry", onClick: () => window.location.reload() }}
+      />
     );
   }
 
@@ -703,37 +700,48 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
         {/* PR-3: 2-tab segmented control. Today / Week were retired —
             Home owns today-glance, DayActionSheet owns per-day
-            actions, and the Footprint nav icon starts a run. */}
+            actions, and the Footprint nav icon starts a run.
+
+            Sport-coding matters here: Programme is the point where the
+            athlete chooses between two training modes, so the switch should
+            not read as two anonymous grey tabs. The shared SegmentedControl
+            keeps the iOS pill interaction, 44px targets, roving-keyboard
+            support, and reduced-motion behaviour in one primitive while the
+            active tone reinforces the design-system rule: purple = lift,
+            coral = run. */}
         <div className="pt-2">
-          <div
-            role="tablist"
-            aria-label="Programme sections"
-            className="grid grid-cols-2 gap-1 p-1 rounded-xl"
-            style={{ background: "hsl(var(--muted) / 0.5)" }}
-          >
-            {(
+          <SegmentedControl
+            ariaLabel="Programme mode"
+            value={activeTab}
+            onChange={(value) => setActiveTab(value)}
+            tone={activeTab === "run" ? "running" : "brand"}
+            className="rounded-2xl bg-muted/50 p-1.5"
+            options={
               [
-                { id: "lift", label: "Lift" },
-                { id: "run", label: "Run" },
-              ] as { id: ProgramTab; label: string }[]
-            ).map((t) => (
-              <button
-                type="button"
-                key={t.id}
-                role="tab"
-                aria-selected={activeTab === t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={cn(
-                  "min-h-[44px] py-2 rounded-lg text-xs font-semibold transition-all",
-                  activeTab === t.id
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+                {
+                  value: "lift",
+                  label: (
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Dumbbell className="size-4" aria-hidden="true" />
+                      <span>Lift</span>
+                    </span>
+                  ),
+                },
+                {
+                  value: "run",
+                  label: (
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Footprints className="size-4" aria-hidden="true" />
+                      <span>Run</span>
+                    </span>
+                  ),
+                },
+              ] satisfies {
+                value: ProgramTab;
+                label: ReactNode;
+              }[]
+            }
+          />
         </div>
 
         {/* ── LIFT tab — WeekPhaseRow + ProgrammeWeekSelector (split-ordered

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import {
@@ -346,9 +347,7 @@ export default function TrainingSection({
     <div className="space-y-5">
       {/* ── Run plan section ──────────────────────────────────────── */}
       <div className="space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Run plan
-        </p>
+        <SectionLabel tier="section">Run plan</SectionLabel>
 
         {/* Mode picker. Run9 (3a) retired the user-selectable `structured`
             mode — running is freeform by default; a race goal is the only
@@ -442,9 +441,7 @@ export default function TrainingSection({
                   </p>
                 </div>
                 <fieldset>
-                  <legend className="text-xs text-muted-foreground uppercase tracking-wider">
-                    Distance
-                  </legend>
+                  <SectionLabel as="legend">Distance</SectionLabel>
                   <div className="flex gap-1.5 mt-1.5">
                     {(["5k", "10k", "half", "marathon"] as const).map((d) => {
                       const isSel = raceDistance === d;
@@ -545,9 +542,7 @@ export default function TrainingSection({
 
       {/* ── Lift plan section ─────────────────────────────────────── */}
       <div className="space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Lift plan
-        </p>
+        <SectionLabel tier="section">Lift plan</SectionLabel>
 
         {/* Lift days stepper */}
         <div className="flex items-center justify-between rounded-xl bg-card border border-border/40 px-3 py-2.5">
@@ -621,9 +616,7 @@ export default function TrainingSection({
 
       {/* ── Weekly layout section ─────────────────────────────────── */}
       <div className="space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Weekly layout
-        </p>
+        <SectionLabel tier="section">Weekly layout</SectionLabel>
         <button
           type="button"
           onClick={() => {

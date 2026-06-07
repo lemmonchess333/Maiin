@@ -63,6 +63,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
+import SectionLabel from "@/components/ui/SectionLabel";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
@@ -944,56 +945,64 @@ export default function Home() {
         </motion.button>
       )}
 
-      <motion.div
-        ref={weekStripRef}
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-        className="space-y-3"
-      >
-        {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
+      {/* Home2-hierarchy: grouped sections (This week / Performance /
+          Today) replace the prior flat equal-altitude stack — tight
+          within a group, airy between, via SectionLabel headers. */}
+      <div className="space-y-2.5">
+        <SectionLabel tier="section" className="px-1">
+          This week
+        </SectionLabel>
+        <motion.div
+          ref={weekStripRef}
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+          className="space-y-3"
+        >
+          {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
             Isolated in a SectionErrorBoundary like the hero/energy/insight
             siblings below — a data-shape bug here degrades to a single
             "couldn't load" card (and still logs via captureError) instead
             of taking the whole Home page into RouteErrorBoundary. */}
-        <SectionErrorBoundary sectionName="week-strip">
-          <WeekStrip
-            dayMap={weeklyDayMap}
-            profile={profile}
-            programState={programState}
-            claimMap={claimMap}
-            selectedDate={peekDate}
-            onDayTap={handleDayTap}
-          />
-          {/* One-shot discoverability hint. Latches off on first day-tap
+          <SectionErrorBoundary sectionName="week-strip">
+            <WeekStrip
+              dayMap={weeklyDayMap}
+              profile={profile}
+              programState={programState}
+              claimMap={claimMap}
+              selectedDate={peekDate}
+              onDayTap={handleDayTap}
+            />
+            {/* One-shot discoverability hint. Latches off on first day-tap
               so users who already know don't keep seeing it. */}
-          {showDayTapHint && !peekDate && (
-            <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
-              Tap a day to see details
-            </p>
-          )}
-          <AnimatePresence>
-            {peekDate && (
-              <DayPeekCard
-                dateKey={peekDate}
-                profile={profile}
-                programState={programState}
-                claimMap={claimMap}
-                extras={unclaimedByDate.get(peekDate) ?? []}
-                workouts={peekW}
-                dailyTotals={peekT}
-                onClose={function () {
-                  setPeekDate(null);
-                }}
-                onManage={function (dk) {
-                  setManageDate(dk);
-                }}
-              />
+            {showDayTapHint && !peekDate && (
+              <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
+                Tap a day to see details
+              </p>
             )}
-          </AnimatePresence>
-        </SectionErrorBoundary>
-      </motion.div>
+            <AnimatePresence>
+              {peekDate && (
+                <DayPeekCard
+                  dateKey={peekDate}
+                  profile={profile}
+                  programState={programState}
+                  claimMap={claimMap}
+                  extras={unclaimedByDate.get(peekDate) ?? []}
+                  workouts={peekW}
+                  dailyTotals={peekT}
+                  onClose={function () {
+                    setPeekDate(null);
+                  }}
+                  onManage={function (dk) {
+                    setManageDate(dk);
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </SectionErrorBoundary>
+        </motion.div>
+      </div>
 
       {/* PI1 + PI4: consolidated Performance hero. Replaces the
           earlier HealthScoreCard (daily 0-100 composite) + the
@@ -1001,194 +1010,209 @@ export default function Home() {
           delta chip driven by the weekly PI doc. Tap →
           /history#performance per the canonical deep-link target.
           Sits in HealthScoreCard's original slot (PI4 drop-in);
-          the PerformanceCard slot below it was removed. */}
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-      >
-        <TrackSectionView section="hero">
-          <SectionErrorBoundary sectionName="performance-hero">
-            <PerformanceHeroCard
-              currentWeek={perfWeek ?? null}
-              previousWeek={perfPrevWeek}
-              weeksAvailable={perfWeeks.length}
-              loading={perfLoading}
-            />
-          </SectionErrorBoundary>
-        </TrackSectionView>
-      </motion.div>
+          the PerformanceCard slot below it was removed.
+          Home2-hierarchy: kept in place (between This week and Today)
+          per the chosen arrangement. */}
+      <div className="space-y-2.5">
+        <SectionLabel tier="section" className="px-1">
+          Performance
+        </SectionLabel>
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <TrackSectionView section="hero">
+            <SectionErrorBoundary sectionName="performance-hero">
+              <PerformanceHeroCard
+                currentWeek={perfWeek ?? null}
+                previousWeek={perfPrevWeek}
+                weeksAvailable={perfWeeks.length}
+                loading={perfLoading}
+              />
+            </SectionErrorBoundary>
+          </TrackSectionView>
+        </motion.div>
+      </div>
 
-      {/* A1 contextual tip: nudge the user to add age + sex if
+      {/* Home2-hierarchy: Today group — contextual nudges + energy +
+          quick actions + insight, clustered under one "Today" header. */}
+      <div className="space-y-2.5">
+        <SectionLabel tier="section" className="px-1">
+          Today
+        </SectionLabel>
+
+        {/* A1 contextual tip: nudge the user to add age + sex if
           either is missing. These two fields drive TDEE precision
           (calculateTDEE consumes both); without them the user gets
           generic defaults and the calorie targets drift from
           accurate. One-shot per dismiss — the banner doesn't re-
           appear after dismissal even if the user re-introduces
           the gap. */}
-      <ContextualTipBanner
-        tipKey="body-metrics-v1"
-        lanePriority={20}
-        title="Personalise your calorie targets"
-        description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
-        visible={!profile?.age || !profile?.sex}
-      />
+        <ContextualTipBanner
+          tipKey="body-metrics-v1"
+          lanePriority={20}
+          title="Personalise your calorie targets"
+          description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
+          visible={!profile?.age || !profile?.sex}
+        />
 
-      {/* Progressive profiling (fast-start #1087 deferred goal weight).
+        {/* Progressive profiling (fast-start #1087 deferred goal weight).
           Onboarding now saves goalWeightKg == weightKg (a maintenance default,
           no direction expressed), so once the user has logged food, invite them
           to set a real target for a precise calorie offset. Hides once a goal
           weight diverges from current weight (a direction is set) or on
           dismiss. Lower priority than the age/sex gap (which breaks TDEE
           outright) but above the generic nutrition explainer. */}
-      <ContextualTipBanner
-        tipKey="goal-weight-v1"
-        lanePriority={15}
-        title="Set a goal weight"
-        description="Add a target weight so we can dial in your calories — right now you're on a maintenance default."
-        visible={
-          !!profile &&
-          totalLifetimeMeals > 0 &&
-          (profile.goalWeightKg == null ||
-            profile.goalWeightKg === profile.weightKg)
-        }
-        ctaLabel="Set a goal weight"
-        ctaHref="/settings"
-      />
+        <ContextualTipBanner
+          tipKey="goal-weight-v1"
+          lanePriority={15}
+          title="Set a goal weight"
+          description="Add a target weight so we can dial in your calories — right now you're on a maintenance default."
+          visible={
+            !!profile &&
+            totalLifetimeMeals > 0 &&
+            (profile.goalWeightKg == null ||
+              profile.goalWeightKg === profile.weightKg)
+          }
+          ctaLabel="Set a goal weight"
+          ctaHref="/settings"
+        />
 
-      {/* Progressive profiling: race-goal invitation. Fast-start runners default
+        {/* Progressive profiling: race-goal invitation. Fast-start runners default
           to freeform (Run9a); once they've logged a run, invite race-prep via
           the Race Goal Planner (/settings/training, Run8/Run10). Hides when
           already race_prep with a date, or on dismiss. Discovery nudge, so it
           sits at the bottom of the lane priority. */}
-      <ContextualTipBanner
-        tipKey="race-goal-v1"
-        lanePriority={5}
-        title="Training for a race?"
-        description="Set a target date and we'll shape your runs into a race plan."
-        visible={
-          !!profile &&
-          !runStatsLoading &&
-          lifetimeRunCount > 0 &&
-          profile.runMode !== "race_prep" &&
-          !profile.raceGoal?.targetDate
-        }
-        ctaLabel="Set a race goal"
-        ctaHref="/settings/training"
-      />
+        <ContextualTipBanner
+          tipKey="race-goal-v1"
+          lanePriority={5}
+          title="Training for a race?"
+          description="Set a target date and we'll shape your runs into a race plan."
+          visible={
+            !!profile &&
+            !runStatsLoading &&
+            lifetimeRunCount > 0 &&
+            profile.runMode !== "race_prep" &&
+            !profile.raceGoal?.targetDate
+          }
+          ctaLabel="Set a race goal"
+          ctaHref="/settings/training"
+        />
 
-      {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
+        {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
           bottom of the scroll it was below the fold on first load. Now lives
           directly under the Health Score card so it's always visible in the
           first paint. */}
-      <section aria-label="Today's energy">
+        <section aria-label="Today's energy">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <TrackSectionView section="today_energy">
+              <SectionErrorBoundary sectionName="today-intake">
+                <TodayEnergy
+                  calories={dailyCal}
+                  protein={dailyProt}
+                  carbs={dailyCarbs}
+                  fat={dailyFat}
+                  burn={dailyBurn}
+                  targets={effectiveTargets}
+                  totalLifetimeMeals={totalLifetimeMeals}
+                  daysSinceLastMeal={daysSinceLastMeal}
+                  mealsLoading={mealsLoading}
+                  postWorkoutNudge={postWorkoutNudge}
+                  nutritionInsight={topNutritionInsight}
+                />
+              </SectionErrorBoundary>
+            </TrackSectionView>
+          </motion.div>
+        </section>
+
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 12 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <TrackSectionView section="today_energy">
-            <SectionErrorBoundary sectionName="today-intake">
-              <TodayEnergy
-                calories={dailyCal}
-                protein={dailyProt}
-                carbs={dailyCarbs}
-                fat={dailyFat}
-                burn={dailyBurn}
-                targets={effectiveTargets}
-                totalLifetimeMeals={totalLifetimeMeals}
-                daysSinceLastMeal={daysSinceLastMeal}
-                mealsLoading={mealsLoading}
-                postWorkoutNudge={postWorkoutNudge}
-                nutritionInsight={topNutritionInsight}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
+          {programLoading ? (
+            <div className="h-20 rounded-2xl bg-muted animate-pulse" />
+          ) : (
+            <TrackSectionView section="stacked_cta">
+              <SectionErrorBoundary sectionName="quick-actions">
+                <StackedCTACards
+                  nextWorkout={nextWorkout}
+                  todayType={todayType}
+                  navigate={function (p: string) {
+                    closePeek();
+                    navigate(p);
+                  }}
+                  waterGlasses={waterGlasses}
+                  waterTarget={waterTarget}
+                  onAddWater={function () {
+                    closePeek();
+                    logWater(1);
+                  }}
+                  onRemoveWater={function () {
+                    setWaterAmount(waterGlasses - 1);
+                  }}
+                  lastWeight={lastWeightInfo?.weight || null}
+                  weightUnit={weightUnit}
+                  onLogWeight={function () {
+                    closePeek();
+                    setWeightInput(lastWeightInfo?.weight || "");
+                    setShowWeightSheet(true);
+                  }}
+                  lastWeightDate={weightRelativeTime}
+                  hideWeightNumber={profile?.hideWeightNumber}
+                  weightTrend={weightTrend}
+                  todayRun={todayRun}
+                  userSegment={userSegment}
+                  muscleGroups={muscleGroups}
+                  firstWorkout={activationFraming.firstWorkout}
+                  firstRun={activationFraming.firstRun}
+                  firstMeal={activationFraming.firstMeal}
+                />
+              </SectionErrorBoundary>
+            </TrackSectionView>
+          )}
         </motion.div>
-      </section>
 
-      <motion.div
-        variants={{
-          hidden: { opacity: 0, y: 12 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-        }}
-      >
-        {programLoading ? (
-          <div className="h-20 rounded-2xl bg-muted animate-pulse" />
-        ) : (
-          <TrackSectionView section="stacked_cta">
-            <SectionErrorBoundary sectionName="quick-actions">
-              <StackedCTACards
-                nextWorkout={nextWorkout}
-                todayType={todayType}
-                navigate={function (p: string) {
-                  closePeek();
-                  navigate(p);
-                }}
-                waterGlasses={waterGlasses}
-                waterTarget={waterTarget}
-                onAddWater={function () {
-                  closePeek();
-                  logWater(1);
-                }}
-                onRemoveWater={function () {
-                  setWaterAmount(waterGlasses - 1);
-                }}
-                lastWeight={lastWeightInfo?.weight || null}
-                weightUnit={weightUnit}
-                onLogWeight={function () {
-                  closePeek();
-                  setWeightInput(lastWeightInfo?.weight || "");
-                  setShowWeightSheet(true);
-                }}
-                lastWeightDate={weightRelativeTime}
-                hideWeightNumber={profile?.hideWeightNumber}
-                weightTrend={weightTrend}
-                todayRun={todayRun}
-                userSegment={userSegment}
-                muscleGroups={muscleGroups}
-                firstWorkout={activationFraming.firstWorkout}
-                firstRun={activationFraming.firstRun}
-                firstMeal={activationFraming.firstMeal}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        )}
-      </motion.div>
-
-      {showInsightStrip && perfWeek?.insight && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <TrackSectionView section="insights">
-            <SectionErrorBoundary sectionName="insight-strip">
-              {/* Home2d-pin-1: Suspense fallback dimensioned at ~80pt
+        {showInsightStrip && perfWeek?.insight && (
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <TrackSectionView section="insights">
+              <SectionErrorBoundary sectionName="insight-strip">
+                {/* Home2d-pin-1: Suspense fallback dimensioned at ~80pt
                   to match InsightStrip's rendered height — prevents
                   layout shift on first hydration. */}
-              <Suspense
-                fallback={
-                  <div
-                    className="h-20 rounded-xl bg-muted/40 animate-pulse"
-                    aria-hidden="true"
+                <Suspense
+                  fallback={
+                    <div
+                      className="h-20 rounded-xl bg-muted/40 animate-pulse"
+                      aria-hidden="true"
+                    />
+                  }
+                >
+                  <InsightStrip
+                    title={perfWeek.insight.title}
+                    bullet={perfWeek.insight.bullets[0] || ""}
+                    loadBand={perfLoadBand}
                   />
-                }
-              >
-                <InsightStrip
-                  title={perfWeek.insight.title}
-                  bullet={perfWeek.insight.bullets[0] || ""}
-                  loadBand={perfLoadBand}
-                />
-              </Suspense>
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        </motion.div>
-      )}
+                </Suspense>
+              </SectionErrorBoundary>
+            </TrackSectionView>
+          </motion.div>
+        )}
+      </div>
 
       {/* Weight Log Bottom Sheet */}
       <AnimatePresence>

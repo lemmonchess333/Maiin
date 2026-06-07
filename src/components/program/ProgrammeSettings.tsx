@@ -55,6 +55,7 @@ import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Toggle } from "@/components/ui/Toggle";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
@@ -101,11 +102,14 @@ interface ProgrammeSettingsProps {
   onSaved?: () => void;
 }
 
+/* Programme-settings convenience wrapper — the page's section labels
+   are the 10px section tier with a consistent mb-2. Delegates to the
+   shared SectionLabel primitive so the treatment can't drift. */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+    <BaseSectionLabel tier="section" className="mb-2">
       {children}
-    </p>
+    </BaseSectionLabel>
   );
 }
 
@@ -1001,9 +1005,9 @@ export default function ProgrammeSettings({
               {/* What's changing — recap of the touched fields (rebuild only). */}
               {!confirmReset && changes.length > 0 && (
                 <div className="rounded-xl bg-muted/60 px-3 py-2.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                  <BaseSectionLabel tier="section" className="mb-1.5">
                     Changes
-                  </p>
+                  </BaseSectionLabel>
                   <ul className="space-y-1 max-h-44 overflow-y-auto">
                     {changes.map((c) => (
                       <li
