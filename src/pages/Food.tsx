@@ -52,6 +52,7 @@ import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown
 import {
   MEAL_ORDER,
   MEAL_LABELS,
+  inferMostLikelyMealSlot,
   type MealKey,
 } from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
@@ -83,13 +84,6 @@ const NL_EXAMPLE_PROMPTS = [
 // so the extracted child components (FoodComposerCard,
 // FoodSuggestionsDropdown) share the same identity without prop-
 // drilling.
-
-function inferMostLikelyMealSlot(hour: number): MealKey {
-  if (hour < 10) return "breakfast";
-  if (hour < 15) return "lunch";
-  if (hour < 17) return "snacks";
-  return "dinner";
-}
 
 interface OFFResult {
   name: string;
@@ -1229,14 +1223,10 @@ export default function Food() {
     }
 
     // 2. Frequency-ranked history over the last 30 days.
-    //    `meal.date` is a `YYYY-MM-DD` string; lexical comparison
-    //    against the cutoff string is correct (and avoids parsing
-    //    every meal's date into a Date object).
-    const cutoff = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 30);
-      return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
-    })();
+    //    `meal.date` is a local `YYYY-MM-DD` string; lexical comparison
+    //    against the (also-local) cutoff string is correct and avoids
+    //    parsing every meal's date into a Date object.
+    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
     const freq = new Map<
       string,
       { count: number; lastLogged: string; meal: (typeof meals)[number] }
@@ -1327,11 +1317,11 @@ export default function Food() {
     if (quickMeals.length === 0) return false;
     if (favourites.length > 0) return true;
 
-    const cutoff = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 30);
-      return d.toISOString().slice(0, 10);
-    })();
+    // Local 30-day cutoff. meal.date is a local YYYY-MM-DD (it mirrors
+    // selectedDate, which derives from a local `format`), so the cutoff
+    // must be local too — a UTC toISOString cutoff skews the window by a
+    // day near midnight in non-UTC zones (CLAUDE.md: no local/UTC mix).
+    const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
 
     return meals.some((meal) => {
       if (!meal.date || meal.date < cutoff) return false;

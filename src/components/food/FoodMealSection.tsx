@@ -233,12 +233,12 @@ export default function FoodMealSection({
       {groupedEntries.length === 0 ? (
         <div className="px-3.5 pb-3.5">
           <Button
-            variant="secondary"
+            variant="ghost"
             fullWidth
             onClick={() => onTargetMeal(mealKey)}
             aria-label={`Add to ${MEAL_LABELS[mealKey]}`}
             leftIcon={<Plus className="size-3.5" />}
-            className="bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             Add to {MEAL_LABELS[mealKey]}
           </Button>
