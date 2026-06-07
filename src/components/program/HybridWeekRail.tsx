@@ -22,6 +22,7 @@
  */
 
 import { useMemo, useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -144,9 +145,9 @@ export default function HybridWeekRail({
 
   return (
     <section className="rounded-2xl bg-card border border-border p-3 space-y-3 card-shadow">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+      <SectionLabel as="h3" tier="section">
         This week
-      </h3>
+      </SectionLabel>
       <ol className="grid grid-cols-7 gap-1 list-none items-start">
         {items.map((item) => {
           const ariaParts = [DAY_LABELS[item.dayIndex]];
