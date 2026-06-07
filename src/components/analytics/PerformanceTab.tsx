@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -327,9 +328,7 @@ export default function PerformanceTab() {
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
         <div className="p-4 rounded-2xl bg-card space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Weekly Insights
-          </h3>
+          <SectionLabel as="h3">Weekly Insights</SectionLabel>
           <ul className="space-y-1.5">
             {insightBullets.map((bullet, i) => (
               <li
