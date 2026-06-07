@@ -53,8 +53,7 @@ export default function ShoeMileageSection() {
   return (
     <Link
       to="/settings"
-      className="block rounded-2xl bg-card p-4 space-y-3 active:scale-[0.98] transition-transform"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
+      className="block rounded-2xl bg-card p-4 space-y-3 active:scale-[0.98] transition-transform card-shadow"
     >
       <div className="flex items-center gap-2">
         <Footprints className="size-4 text-muted-foreground" />
