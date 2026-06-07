@@ -25,5 +25,20 @@ export default defineConfig({
     // global bump doesn't hide a genuinely-stuck test for more
     // than a few extra seconds.
     testTimeout: 30_000,
+    // Serialise test FILES. The ~6 integration suites under
+    // __tests__/integration/ all drive ONE shared Firestore emulator;
+    // running them in parallel produces cross-file contention that surfaces
+    // as transient, non-deterministic failures in whichever suite loses the
+    // race (observed CI 2026-06-07: dailyRaceReconciliation L1
+    // `noShowWritten:false`; reproduced locally as recoveryEntry / rateLimiter
+    // failures on other runs — NOT a product bug, each passes deterministically
+    // when run alone). Serialising files means only one suite touches the
+    // emulator at a time, eliminating the contention. Tests WITHIN a file still
+    // run normally, and the rate-limiter's intentional 10-/20-way intra-test
+    // `Promise.all` concurrency (what the timeout note above protects) is
+    // unaffected — that's one file's own parallel calls, not cross-file
+    // parallelism. Cost: the mostly-instant unit files run sequentially too,
+    // adding modest wall-clock; worth it to stop the recurring CI flake.
+    fileParallelism: false,
   },
 });
