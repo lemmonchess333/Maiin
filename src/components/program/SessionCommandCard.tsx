@@ -15,6 +15,7 @@
  */
 
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -68,14 +69,9 @@ export default function SessionCommandCard({
           <Icon className={cn("size-5", accentText)} aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
-          <p
-            className={cn(
-              "text-[10px] font-bold uppercase tracking-wider",
-              accentText
-            )}
-          >
+          <SectionLabel tier="section" className={accentText}>
             {eyebrow}
-          </p>
+          </SectionLabel>
           <h3 className="text-xl font-extrabold leading-tight text-foreground truncate">
             {title}
           </h3>
