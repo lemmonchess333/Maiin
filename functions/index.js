@@ -3444,22 +3444,67 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
  *  function. */
 async function _maybeWriteRecoveryEntryForRun(uid, savedRun) {
   try {
-    const ctx = await readUserProgramContext(uid);
-    if (!ctx) {
-      return;
-    }
-    const { programRef, profile, programState } = ctx;
+    const userRef = db.collection("users").doc(uid);
+    const programRef = userRef.collection("programState").doc("current");
 
-    const decision = _decideRecoveryEntry(profile, programState, savedRun);
-    if (!decision.write) {
-      return;
-    }
+    // Read-check-write inside a transaction. onCreate triggers are
+    // at-least-once and can run concurrently, so the previous plain
+    // `.get()` → whole-runPlan spread → `set(merge)` had two races:
+    //   (a) a redelivered/concurrent trigger read the same pre-write
+    //       snapshot, so the Gate-6 `completedRaces.includes(id)`
+    //       idempotency check passed twice and double-appended the
+    //       same runDay id;
+    //   (b) the whole-runPlan merge payload clobbered concurrent
+    //       runPlan edits (dailyRaceReconciliationSweep L3 / client)
+    //       that landed between the read and the write.
+    // The transaction re-reads programState (and the profile) on the
+    // fresh snapshot, re-runs `_decideRecoveryEntry` against it so the
+    // includes() check + the completedRaces append both see committed
+    // state, and writes ONLY the three fields that change. Firestore's
+    // recursive merge leaves every other runPlan field (and any
+    // concurrent edit to them) untouched.
+    let logFields = null;
+    await db.runTransaction(async (tx) => {
+      const [userSnap, programSnap] = await Promise.all([
+        tx.get(userRef),
+        tx.get(programRef),
+      ]);
+      if (!userSnap.exists || !programSnap.exists) {
+        return;
+      }
+      const profile = userSnap.data() || {};
+      const programState = programSnap.data() || {};
 
-    await programRef.set(decision.payload, { merge: true });
-    console.log(
-      `onRunCreated: recovery-entry written for ${uid} ` +
-        `(runDay=${decision.raceDayRunDayId}, endDate=${decision.recoveryEndDate})`
-    );
+      const decision = _decideRecoveryEntry(profile, programState, savedRun);
+      if (!decision.write) {
+        return;
+      }
+
+      // Minimal field-level merge — never the whole-runPlan spread.
+      // The decision derived these from the fresh in-txn snapshot:
+      // `completedRaces` is the fresh array + this race's id (no
+      // double-append because the includes() check ran on the same
+      // committed read), `phase`/`recoveryEndDate` are the new values.
+      const { phase, recoveryEndDate, completedRaces } =
+        decision.payload.runPlan;
+      tx.set(
+        programRef,
+        { runPlan: { phase, recoveryEndDate, completedRaces } },
+        { merge: true }
+      );
+
+      logFields = {
+        raceDayRunDayId: decision.raceDayRunDayId,
+        recoveryEndDate: decision.recoveryEndDate,
+      };
+    });
+
+    if (logFields) {
+      console.log(
+        `onRunCreated: recovery-entry written for ${uid} ` +
+          `(runDay=${logFields.raceDayRunDayId}, endDate=${logFields.recoveryEndDate})`
+      );
+    }
   } catch (err) {
     console.error(
       `onRunCreated: recovery-entry failed for ${uid}: ${err.message}`

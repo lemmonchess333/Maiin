@@ -290,11 +290,16 @@ export default function TrainingSection({
     setSavingRaceGoal(true);
     setModeError(null);
     try {
+      // Route through setRaceGoalPatch — the single materialization source
+      // for the raceGoal→runMode invariant (mirrors the clear path above).
+      // It emits { raceGoal, runMode: "race_prep" } in one patch. The cast
+      // bridges the pure core's loose `distance: string` to UserProfile's
+      // narrow RaceDistance union.
       await updateProfile(
-        {
-          runMode: "race_prep",
-          raceGoal: { distance: raceDistance, targetDate: raceTargetDate },
-        },
+        setRaceGoalPatch({
+          distance: raceDistance,
+          targetDate: raceTargetDate,
+        }) as Partial<UserProfile>,
         { throwOnError: true }
       );
       const target3 = getWeeklyRunTarget(profile) || 3;

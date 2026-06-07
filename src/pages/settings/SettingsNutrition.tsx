@@ -9,15 +9,20 @@
  * program.goal isn't silently flipped until they actually edit the goal).
  */
 import { useState, useMemo, useRef, useEffect } from "react";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/lib/auth";
+import { db } from "@/lib/firebase";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { calculateTDEE } from "@/lib/tdee";
-import type { ActivityLevel } from "@/lib/tdee";
+import type { ActivityLevel, FitnessGoal } from "@/lib/tdee";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
+import { logger } from "@/lib/logger";
+import { resolveProgramGoalMirror } from "./resolveProgramGoalMirror";
 import SettingsSection from "@/components/settings/SettingsSection";
 import NutritionSection from "@/components/settings/NutritionSection";
 
 export default function SettingsNutrition() {
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const currentKg = profile?.weightKg ?? 70;
 
   const [age, setAge] = useState(profile?.age ?? 25);
@@ -98,6 +103,34 @@ export default function SettingsNutrition() {
       targetCarbs: tdee.carbs,
       targetFat: tdee.fat,
     });
+
+    // Mirror the derived nutrition phase into programState.goal in the same
+    // logical operation (see resolveProgramGoalMirror above). Without this the
+    // profile copy (macros) and the programState copy (lift rep scheme / header
+    // / regenerate preference) drift after a goal-weight change. Only the scalar
+    // `goal` field is merged — workouts and the rest of programState are left
+    // untouched (Pgm5: no silent restructure). Read-then-merge so we only write
+    // when a plan already exists and the phase actually changed; fire-and-forget
+    // with the same error discipline as the profile write.
+    if (!user) return;
+    const derivedPhase = goalPlan.fitnessGoal;
+    const programRef = doc(db, "users", user.uid, "programState", "current");
+    void (async () => {
+      try {
+        const snap = await getDoc(programRef);
+        const storedGoal = snap.exists()
+          ? (snap.data().goal as FitnessGoal | undefined)
+          : undefined;
+        const mirror = resolveProgramGoalMirror(derivedPhase, storedGoal);
+        if (mirror === null) return;
+        await setDocGuarded(programRef, { goal: mirror }, { merge: true });
+      } catch (error) {
+        logger.error(
+          "[SettingsNutrition] programState goal mirror failed:",
+          error
+        );
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [goalWeightKg, weeklyRateKg, tdee.targetCalories]);
 
