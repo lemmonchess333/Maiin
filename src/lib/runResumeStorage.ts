@@ -24,9 +24,27 @@ import type { RunConfig } from "@/components/run/RunSetupModal";
 /** Schema version. Bump invalidates every stored entry on next read. */
 export const RUN_RESUME_SCHEMA_VERSION = 1 as const;
 
-/** localStorage key. Includes the schema-version suffix so a bump
- *  doesn't collide with old entries lingering at the previous key. */
-export const RUN_RESUME_KEY = "tropos:run:resume:v1";
+/**
+ * localStorage key PREFIX. Includes the schema-version suffix so a bump
+ * doesn't collide with old entries lingering at the previous key. The
+ * actual key is uid-scoped (`<prefix>:<uid>`) so account B on a shared
+ * device never sees account A's in-flight GPS trail in the Resume
+ * chooser — and can't save A's run into B's account. See `runResumeKey`.
+ */
+export const RUN_RESUME_KEY_PREFIX = "tropos:run:resume:v1";
+
+/**
+ * Legacy un-scoped key from before uid scoping. Dropped on the first
+ * read (mirrors the offlineQueue.ts PR #820 legacy-drop pattern): we
+ * have no safe way to attribute the snapshot to a uid retroactively, so
+ * better to discard than to risk offering it to the wrong account.
+ */
+export const LEGACY_RUN_RESUME_KEY = "tropos:run:resume:v1";
+
+/** Build the uid-scoped localStorage key for a given user. */
+export function runResumeKey(uid: string): string {
+  return `${RUN_RESUME_KEY_PREFIX}:${uid}`;
+}
 
 /** Max age before a stored run silently discards on read. Six hours
  *  comfortably exceeds any plausible interrupted-run gap (marathon
@@ -71,10 +89,11 @@ export interface StoredRun {
  * failures. Never propagates the error — the live run is more
  * important than recoverability.
  */
-export function writeStoredRun(snapshot: StoredRun): boolean {
+export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
   if (typeof localStorage === "undefined") return false;
+  if (!uid) return false;
   try {
-    localStorage.setItem(RUN_RESUME_KEY, JSON.stringify(snapshot));
+    localStorage.setItem(runResumeKey(uid), JSON.stringify(snapshot));
     return true;
   } catch {
     return false;
@@ -92,13 +111,22 @@ export function writeStoredRun(snapshot: StoredRun): boolean {
  *     shouldn't crash the app)
  *
  * Side effect: any of the discard branches above also clears the
- * stored entry so subsequent reads don't keep trying.
+ * stored entry so subsequent reads don't keep trying. Also drops the
+ * legacy un-scoped key on every read (one-time migration — see
+ * LEGACY_RUN_RESUME_KEY).
  */
-export function readStoredRun(now: number = Date.now()): StoredRun | null {
+export function readStoredRun(
+  uid: string,
+  now: number = Date.now()
+): StoredRun | null {
   if (typeof localStorage === "undefined") return null;
+  // Drop the legacy un-scoped entry on first read so a pre-scoping
+  // snapshot can never surface in the chooser under the wrong account.
+  dropLegacyKey();
+  if (!uid) return null;
   let raw: string | null;
   try {
-    raw = localStorage.getItem(RUN_RESUME_KEY);
+    raw = localStorage.getItem(runResumeKey(uid));
   } catch {
     return null;
   }
@@ -109,22 +137,22 @@ export function readStoredRun(now: number = Date.now()): StoredRun | null {
     parsed = JSON.parse(raw);
   } catch {
     // Corrupt entry — drop it so we don't re-read it next mount.
-    clearStoredRun();
+    clearStoredRun(uid);
     return null;
   }
 
   if (!isValidStoredRun(parsed)) {
-    clearStoredRun();
+    clearStoredRun(uid);
     return null;
   }
 
   if (parsed.v !== RUN_RESUME_SCHEMA_VERSION) {
-    clearStoredRun();
+    clearStoredRun(uid);
     return null;
   }
 
   if (now - parsed.lastWriteAt > RUN_RESUME_MAX_AGE_MS) {
-    clearStoredRun();
+    clearStoredRun(uid);
     return null;
   }
 
@@ -132,13 +160,28 @@ export function readStoredRun(now: number = Date.now()): StoredRun | null {
 }
 
 /**
+ * Best-effort removal of the legacy un-scoped key. Idempotent; never
+ * throws. The legacy key has no `:uid` suffix so it can never collide
+ * with a scoped key — this only removes the pre-scoping global entry.
+ */
+function dropLegacyKey(): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.removeItem(LEGACY_RUN_RESUME_KEY);
+  } catch {
+    // Best-effort.
+  }
+}
+
+/**
  * Idempotent delete. Safe to call from save-success, discard, and
  * cancel paths without checking whether anything was stored.
  */
-export function clearStoredRun(): void {
+export function clearStoredRun(uid: string): void {
   if (typeof localStorage === "undefined") return;
+  if (!uid) return;
   try {
-    localStorage.removeItem(RUN_RESUME_KEY);
+    localStorage.removeItem(runResumeKey(uid));
   } catch {
     // Best-effort.
   }

@@ -11,21 +11,40 @@ import type {
   PerformanceDoc,
 } from "./performanceTypes";
 import { PI_WEIGHTS } from "./performanceTypes";
+import { localWeekKey, localDateString, parseLocalDate } from "./dateHelpers";
 
 // ── Helpers ──────────────────────────────────
 
-/** Sunday-start week key matching useRunningStats convention */
+/**
+ * Sunday-start week key matching the useRunningStats / localWeekKey
+ * convention.
+ *
+ * UTC/local note: the prior implementation rewound to Sunday with
+ * LOCAL date math (`setDate(getDate() - getDay())`) then stringified
+ * with `toISOString()` (UTC) — in negative-offset zones a local
+ * Sunday-midnight stringified back to the previous Saturday, keying
+ * the wrong week. Now delegates to the shared `localWeekKey` helper
+ * (pure local-date math, no UTC read), matching every other Sunday-
+ * week bucket in the app (useRunningStats, trainingResolver, …).
+ *
+ * NOTE — NOT a parity-bound copy of the server. The Cloud Function
+ * (`functions/performanceEngine.js` `getComputeKey`) is a DIFFERENT
+ * function: post-PI1a it keys perf docs by today's compute date with
+ * NO Sunday alignment. These two are semantically distinct by design
+ * and do NOT need to stay in lockstep — only `scorePerformance`
+ * (below) is the parity seam.
+ */
 export function getWeekKey(date: Date): string {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay()); // rewind to Sunday
-  return d.toISOString().split("T")[0];
+  return localWeekKey(date);
 }
 
-/** Get the Sunday date N weeks before a given weekKey */
+/** Get the Sunday date N weeks before a given weekKey. Pure local-date
+ *  math via parseLocalDate (never UTC parsing — `new Date("YYYY-MM-DD")`
+ *  parses as UTC midnight and shifts a day in negative-offset zones). */
 export function weekKeyMinusN(weekKey: string, n: number): string {
-  const d = new Date(weekKey + "T00:00:00");
+  const d = parseLocalDate(weekKey);
   d.setDate(d.getDate() - 7 * n);
-  return d.toISOString().split("T")[0];
+  return localDateString(d);
 }
 
 /** Clamp 0–100 */
