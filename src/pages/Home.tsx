@@ -30,7 +30,6 @@ import {
   Dumbbell,
   Sparkles,
   Settings as SettingsIcon,
-  Flame,
   Moon,
   RotateCcw,
   UtensilsCrossed,
@@ -850,33 +849,11 @@ export default function Home() {
         ctaHref="/settings"
       />
 
-      {/* Streak at-risk nudge — show when streak > 2 and nothing logged today */}
-      {streak >= 3 &&
-        !weeklyDayMap.get(format(new Date(), "yyyy-MM-dd"))?.workouts &&
-        !weeklyDayMap.get(format(new Date(), "yyyy-MM-dd"))?.meals &&
-        dailyCal === 0 && (
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 8 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-            className="flex items-center gap-3 p-3 rounded-xl border"
-            style={{
-              background: "hsl(var(--warning) / 0.08)",
-              borderColor: "hsl(var(--warning) / 0.2)",
-            }}
-          >
-            <Flame className="size-5 text-warning shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-warning">
-                {streak}-day streak at risk
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Log a workout, run or meal to keep it alive.
-              </p>
-            </div>
-          </motion.div>
-        )}
+      {/* No pre-emptive streak at-risk signal. The Streak1 lock permits only
+          gentle AFTER-the-fact reassurance (the grace card just below) —
+          "NEVER a pre-emptive threat". The old orange "streak at risk" banner
+          that lived here was an un-locked violation of that clause; removed
+          (Streak1 STATUS 2026-06-07). The 🔥 pill shows the count only. */}
 
       {/* Grace reassurance (Streak1 visibility) — calm, after-the-fact: shown
           only when today is logged AND yesterday was an off-day that grace
