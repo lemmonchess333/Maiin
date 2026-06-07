@@ -29,8 +29,9 @@ import {
   isSupported,
   onMessage,
 } from "firebase/messaging";
-import { doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { doc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { app, db, firebaseConfig } from "@/lib/firebase";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY ?? "";
@@ -115,7 +116,12 @@ export async function registerDeviceToken(
     });
     if (!token)
       return { ok: false, reason: "token-failed", detail: "empty token" };
-    await setDoc(
+    // Guarded (strips undefined) but NOT offline-queued: token
+    // registration must hit the server immediately and must never
+    // queue-and-replay under a later account on this device.
+    // setDocGuarded calls fbSetDoc directly (no offline queue), so it's
+    // the correct guarded path for a privacy-sensitive device-token write.
+    await setDocGuarded(
       doc(db, "users", uid, "devices", token),
       { token, platform: "web", updatedAt: serverTimestamp() },
       { merge: true }
@@ -142,6 +148,11 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
       () => null
     );
     if (token) {
+      // Raw deleteDoc (no guarded wrapper exists for deletes, and a
+      // delete carries no payload to strip). Crucially this is NOT
+      // offline-queued: a sign-out token-revoke must never replay under
+      // the NEXT account on a shared device — an immediate, fire-once
+      // delete is exactly the privacy invariant this function exists for.
       await deleteDoc(doc(db, "users", uid, "devices", token)).catch(() => {});
     }
     await deleteToken(messaging).catch(() => {});

@@ -30,15 +30,17 @@ import { setErrorReportingUid } from "./errorReporting";
 import {
   doc,
   getDoc,
-  updateDoc,
   serverTimestamp,
   writeBatch,
   Timestamp,
   type FieldValue,
 } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { unregisterDeviceToken } from "@/lib/pushNotifications";
+import { clearStoredRun } from "@/lib/runResumeStorage";
+import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { stripUndefined } from "@/lib/firestoreGuards";
 import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -554,7 +556,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // scan-quota day-keying). Fire-and-forget; idempotent.
             const deviceTz = getDeviceTimezone();
             if (shouldUpdateTimezone(safeProfile.timezone, deviceTz)) {
-              updateDoc(doc(db, "users", firebaseUser.uid), {
+              updateDocGuarded(doc(db, "users", firebaseUser.uid), {
                 timezone: deviceTz,
               }).catch((err) =>
                 logger.warn("[AuthProvider] timezone capture failed", err)
@@ -691,6 +693,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // next account on this device never inherits the previous user's pushes.
     const uid = auth.currentUser?.uid;
     if (uid) await unregisterDeviceToken(uid).catch(() => {});
+    // Cross-account leak defence (belt-and-braces on top of uid-scoped
+    // keys): wipe THIS user's in-flight run snapshot + workout draft so
+    // the next account on a shared device starts clean even if scoping
+    // ever regresses.
+    if (uid) {
+      clearStoredRun(uid);
+      clearWorkoutDraft(uid);
+    }
     await firebaseSignOut(auth);
     setProfile(null);
     // Remove dark mode preference so next user gets their own setting from Firestore
@@ -740,11 +750,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // call sites that want to handle the error themselves.
       try {
         if (Object.keys(publicPatch).length > 0) {
+          // Strip undefined from both writes — Firestore rejects any doc
+          // containing an explicit `undefined` outright. The non-batch
+          // path below routes through setDocGuarded which strips for
+          // free; the batch path has no guarded equivalent, so apply the
+          // same firestoreWrite sanitiser (stripUndefined) by hand here.
           const batch = writeBatch(db);
-          batch.set(doc(db, "users", user.uid), writeData, { merge: true });
+          batch.set(doc(db, "users", user.uid), stripUndefined(writeData), {
+            merge: true,
+          });
           batch.set(
             doc(db, "users", user.uid, "public", "profile"),
-            publicPatch,
+            stripUndefined(publicPatch),
             { merge: true }
           );
           await batch.commit();

@@ -649,7 +649,7 @@ export default function RunSummary() {
       // Phase B3: invalid-run shortcut also clears any persisted
       // snapshot so the discarded run can't be resurrected by the
       // chooser on next /run open.
-      clearStoredRun();
+      if (user?.uid) clearStoredRun(user.uid);
       navigate("/");
     } else {
       setShowDiscardConfirm(true);
@@ -892,7 +892,7 @@ export default function RunSummary() {
       // Phase B3: the saved run is now durable in Firestore, so the
       // in-flight localStorage snapshot is no longer needed. Clear so
       // the next /run mount sees no resume prompt.
-      clearStoredRun();
+      if (user?.uid) clearStoredRun(user.uid);
 
       // ── Phase B1: programme reconciliation ───────────────────────
       // Mark the scheduled run day complete IFF the saved run is a
@@ -1629,7 +1629,7 @@ export default function RunSummary() {
         destructive
         onConfirm={() => {
           setShowDiscardConfirm(false);
-          clearStoredRun();
+          if (user?.uid) clearStoredRun(user.uid);
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}

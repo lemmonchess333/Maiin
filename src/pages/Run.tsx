@@ -444,13 +444,16 @@ export default function Run() {
   // defensive) doesn't blow away in-flight state.
   useEffect(() => {
     if (phase !== "waiting") return;
-    const stored = readStoredRun();
+    const uid = profile?.uid;
+    if (!uid) return;
+    const stored = readStoredRun(uid);
     if (stored) setResumePrompt(stored);
-    // Intentionally only runs once on mount. The 6h cutoff is enforced
-    // inside readStoredRun, and we want a snapshot of "what was there
-    // when /run opened", not a reactive view of localStorage.
+    // Runs once the uid is available. The 6h cutoff is enforced inside
+    // readStoredRun, and we want a snapshot of "what was there when
+    // /run opened", not a reactive view of localStorage — so phase is
+    // intentionally excluded from the deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [profile?.uid]);
 
   // 100ms threshold for the skeleton — programme reads usually return
   // from cache faster than this, so the skeleton only shows on cold
@@ -511,6 +514,8 @@ export default function Run() {
     if (!runConfig) return;
     if (phase !== "active" && phase !== "paused") return;
     if (startedAtRef.current === null) return;
+    const uid = profile?.uid;
+    if (!uid) return;
     const snapshot: StoredRun = {
       v: 1,
       config: runConfig,
@@ -521,8 +526,8 @@ export default function Run() {
       lastWriteAt: Date.now(),
       phase: phase === "paused" ? "paused" : "active",
     };
-    writeStoredRun(snapshot);
-  }, [runConfig, phase, timer, gps]);
+    writeStoredRun(uid, snapshot);
+  }, [runConfig, phase, timer, gps, profile?.uid]);
 
   // Periodic write: every 5s while a run is in flight. The interval
   // re-arms whenever the deps change (e.g. pause flips phase) so the
@@ -591,15 +596,15 @@ export default function Run() {
   }, [resumePrompt, timer, gps, audioCues, wakeLock]);
 
   const handleStartNewFromPrompt = useCallback(() => {
-    clearStoredRun();
+    if (profile?.uid) clearStoredRun(profile.uid);
     setResumePrompt(null);
-  }, []);
+  }, [profile?.uid]);
 
   const handleDiscardFromPrompt = useCallback(() => {
-    clearStoredRun();
+    if (profile?.uid) clearStoredRun(profile.uid);
     setResumePrompt(null);
     navigate("/");
-  }, [navigate]);
+  }, [navigate, profile?.uid]);
 
   // Auto-start without GPS if permission denied or geolocation unavailable
   useEffect(() => {
@@ -1148,7 +1153,7 @@ export default function Run() {
                 finishRun(distance);
               }}
               onDiscard={() => {
-                clearStoredRun();
+                if (profile?.uid) clearStoredRun(profile.uid);
                 navigate("/");
               }}
             />
@@ -1280,7 +1285,7 @@ export default function Run() {
                   // Phase B3: clear the persisted snapshot so a
                   // discarded sub-threshold run doesn't reappear in
                   // the chooser on next /run open.
-                  clearStoredRun();
+                  if (profile?.uid) clearStoredRun(profile.uid);
                   navigate("/");
                 } else {
                   setShowDiscardConfirm(true);
@@ -1340,7 +1345,7 @@ export default function Run() {
           wakeLock.release();
           // Phase B3: clear so the discarded run doesn't get
           // resurrected by the chooser on next mount.
-          clearStoredRun();
+          if (profile?.uid) clearStoredRun(profile.uid);
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}
