@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -188,12 +189,12 @@ export default function TodayEnergy({
                 burn.stepCalories > 0) && (
                 <>
                   <div className="h-px bg-border/50" />
-                  <p
-                    className="text-[10px] uppercase tracking-wider font-semibold"
+                  <SectionLabel
+                    tier="section"
                     style={{ color: THEME.text.muted }}
                   >
                     Burned today · already in your target
-                  </p>
+                  </SectionLabel>
                   {burn.workoutCalories > 0 && (
                     <BreakdownRow
                       label="Workout"

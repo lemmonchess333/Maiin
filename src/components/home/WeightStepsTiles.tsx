@@ -1,4 +1,5 @@
 import { THEME } from "@/lib/theme";
+import SectionLabel from "@/components/ui/SectionLabel";
 import {
   Scale,
   Footprints,
@@ -89,12 +90,9 @@ export default function WeightStepsTiles({
               aria-hidden="true"
             />
           </div>
-          <p
-            className="text-micro uppercase tracking-wider font-medium"
-            style={{ color: THEME.text.muted }}
-          >
+          <SectionLabel style={{ color: THEME.text.muted }}>
             Weight
-          </p>
+          </SectionLabel>
         </div>
         {hidden ? (
           <div className="flex items-center gap-1.5">
@@ -148,12 +146,7 @@ export default function WeightStepsTiles({
               aria-hidden="true"
             />
           </div>
-          <p
-            className="text-micro uppercase tracking-wider font-medium"
-            style={{ color: THEME.text.muted }}
-          >
-            Steps
-          </p>
+          <SectionLabel style={{ color: THEME.text.muted }}>Steps</SectionLabel>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-medium" style={{ color: THEME.brand }}>
