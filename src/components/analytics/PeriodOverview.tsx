@@ -1,4 +1,5 @@
 import { THEME } from "@/lib/theme";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints, Dumbbell, UtensilsCrossed } from "lucide-react";
 import { formatVolumeSub } from "@/utils/formatters";
 
@@ -132,9 +133,7 @@ export default function PeriodOverview({
 
   return (
     <div className="p-4 rounded-2xl bg-card">
-      <p className="text-xs uppercase tracking-wider font-medium mb-4 text-muted-foreground">
-        {rangeLabel}
-      </p>
+      <SectionLabel className="mb-4">{rangeLabel}</SectionLabel>
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => {
           const isEmpty = s.ringVal === 0;
