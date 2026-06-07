@@ -64,7 +64,7 @@ export default function RaceCockpitCard({
   return (
     <section
       aria-label="Race plan"
-      className="rounded-2xl bg-card border border-border p-4 space-y-4 shadow-card"
+      className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1 min-w-0">
