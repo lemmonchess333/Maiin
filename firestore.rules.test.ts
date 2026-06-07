@@ -546,10 +546,64 @@ suite("firestore.rules — /challenges", () => {
       );
     });
     const db = env.authenticatedContext(OWNER_UID).firestore();
+    // A real client join (useChallenges.joinChallenge): currentValue starts
+    // at 0, tierAchieved null — both server-owned thereafter. The old test
+    // body { progress, tier } used field names the app never writes and that
+    // the create allowlist now correctly rejects.
     await assertSucceeds(
       setDoc(
         doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
-        { progress: 3, tier: "bronze" }
+        { currentValue: 0, tierAchieved: null, joinedAt: serverTimestamp() }
+      )
+    );
+  });
+
+  it("owner CANNOT join with a forged non-zero currentValue — server-owned", async () => {
+    // Core of the 2026-06 audit finding: currentValue / tierAchieved are
+    // server-owned (syncChallengeProgress, Admin SDK). A client join must
+    // start neutral; a forged base value would bake into the world-readable
+    // leaderboard (sorted by currentValue desc).
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+        { currentValue: 99, tierAchieved: "gold", joinedAt: serverTimestamp() }
+      )
+    );
+  });
+
+  it("owner CANNOT bump currentValue on update — server-owned", async () => {
+    // Seed a valid participant doc, then attempt a client-side progress bump.
+    // The update rule permits only cosmetic identity (displayName/photoURL);
+    // any diff touching currentValue/tierAchieved is denied.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "challenges", "weekly-2026-01-01"),
+        validChallengeData
+      );
+      await setDoc(
+        doc(
+          ctx.firestore(),
+          "challenges",
+          "weekly-2026-01-01",
+          "participants",
+          OWNER_UID
+        ),
+        { currentValue: 0, tierAchieved: null, joinedAt: serverTimestamp() }
+      );
+    });
+    const db = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID),
+        { currentValue: 500, tierAchieved: "gold" },
+        { merge: true }
       )
     );
   });
