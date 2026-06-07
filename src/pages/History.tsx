@@ -1129,6 +1129,26 @@ export default function History() {
               who navigated by sport can still see each section's
               sport-coded header inline as they scroll. */}
 
+            {/* Loading — always show a skeleton while the run/workout/meal
+                queries resolve, INCLUDING for eventual cold-start users.
+                Previously the cold-start card was gated on `!dataLoading`
+                while the skeleton was nested under `!isAnalyticsColdStart`,
+                so the `dataLoading && isAnalyticsColdStart` window (a fresh
+                user's first Analytics load) rendered NOTHING — a blank tab.
+                Splitting the three states keeps them mutually exclusive and
+                exhaustive: loading → skeleton, then cold-start → card, else
+                → overview. */}
+            {filter === "analytics" && dataLoading && (
+              <div className="p-4 rounded-2xl bg-card space-y-3">
+                <Skeleton className="h-3 w-20" />
+                <div className="grid grid-cols-3 gap-2">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+              </div>
+            )}
+
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
             {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
@@ -1156,17 +1176,8 @@ export default function History() {
             )}
 
             {filter === "analytics" &&
-              !isAnalyticsColdStart &&
-              (dataLoading ? (
-                <div className="p-4 rounded-2xl bg-card space-y-3">
-                  <Skeleton className="h-3 w-20" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                    <Skeleton className="h-20 w-full rounded-xl" />
-                  </div>
-                </div>
-              ) : (
+              !dataLoading &&
+              !isAnalyticsColdStart && (
                 <PeriodOverview
                   runCount={runningTotals.runCount}
                   runDistance={runningTotals.runDistance}
@@ -1177,7 +1188,7 @@ export default function History() {
                   timeRange={timeRange}
                   rangeDays={rangeDays}
                 />
-              ))}
+              )}
 
             {/* Hist5b pin 3 — Performance fold. Compact PI strip with
               inline-accordion expansion. Replaces the dedicated
