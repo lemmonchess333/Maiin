@@ -17,6 +17,7 @@ import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
+import Button from "@/components/ui/Button";
 import {
   validateFoodEntry,
   checkAggregateAgainstTarget,
@@ -685,20 +686,19 @@ export default function FoodAnalyzer({
               Try another photo, or log it manually.
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="primary"
               onClick={() => {
                 handleResetAll();
                 setCameraOpen(true);
               }}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#7B72E9" }}
+              leftIcon={<RotateCcw className="size-4" />}
             >
-              <RotateCcw className="size-4" /> Try again
-            </button>
-            <button
-              type="button"
+              Try again
+            </Button>
+            <Button
+              variant="secondary"
               onClick={() => {
                 /* Mirrors the AI failure → manual fallback wired
                    in F1's followup. Resets analyzer state, closes
@@ -709,10 +709,9 @@ export default function FoodAnalyzer({
                 setCameraOpen(false);
                 onRequestManualLog?.();
               }}
-              className="flex-1 py-3 rounded-xl text-sm font-medium text-foreground bg-muted active:scale-95 transition-transform border border-border"
             >
               Log manually
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -737,12 +736,7 @@ export default function FoodAnalyzer({
                 doesn't block. */}
             {activeResult.confidence === "low" && (
               <div
-                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border flex items-start gap-2"
-                style={{
-                  background: "rgba(229,154,11,0.10)",
-                  borderColor: "rgba(229,154,11,0.30)",
-                  color: "#a26a05",
-                }}
+                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning flex items-start gap-2"
                 role="status"
               >
                 <span aria-hidden="true">⚠</span>
