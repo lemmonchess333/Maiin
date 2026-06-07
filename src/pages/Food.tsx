@@ -48,6 +48,7 @@ import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
 import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown";
 import {
   MEAL_ORDER,
@@ -1582,6 +1583,17 @@ export default function Food() {
       )}
     </motion.div>
   );
+
+  // Cold-start guard: until the day's meals resolve, render a structural
+  // skeleton instead of the zeroed hero + four empty meal sections, which
+  // otherwise flash as real content and then pop in. Mirrors HomeSkeleton /
+  // ProgramSkeleton (every other top page already gates its load). A
+  // genuinely empty *loaded* day still shows the real per-slot empty
+  // states — the skeleton only covers the loading window. Placed after all
+  // hooks (no conditional-hook / React #310 risk).
+  if (mealsLoading && meals.length === 0) {
+    return <FoodSkeleton />;
+  }
 
   return (
     <motion.div
