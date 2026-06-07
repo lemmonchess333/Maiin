@@ -193,6 +193,30 @@ export function useChallenges() {
     async (challengeId: string) => {
       if (!user) return;
       try {
+        const participantRef = doc(
+          db,
+          "challenges",
+          challengeId,
+          "participants",
+          user.uid
+        );
+        // Already a participant (double-tap, stale UI state)? Re-creating
+        // would be an UPDATE in rules terms — rejected by the server-owned
+        // currentValue/tierAchieved lockdown — and resetting progress on
+        // rejoin would be wrong anyway. Just resync local state.
+        const existingSnap = await getDoc(participantRef);
+        if (existingSnap.exists()) {
+          const data = existingSnap.data();
+          setMyProgress((prev) => ({
+            ...prev,
+            [challengeId]: {
+              currentValue: (data.currentValue as number) ?? 0,
+              tierAchieved: (data.tierAchieved as ChallengeTier | null) ?? null,
+              joinedAt: (data.joinedAt as Timestamp) ?? Timestamp.now(),
+            },
+          }));
+          return;
+        }
         const profileSnap = await getDoc(doc(db, "users", user.uid));
         const name = profileSnap.exists()
           ? profileSnap.data().displayName || "Athlete"
@@ -200,16 +224,13 @@ export function useChallenges() {
         const photoURL = profileSnap.exists()
           ? ((profileSnap.data().photoURL as string | null | undefined) ?? null)
           : null;
-        await setDocGuarded(
-          doc(db, "challenges", challengeId, "participants", user.uid),
-          {
-            currentValue: 0,
-            tierAchieved: null,
-            joinedAt: Timestamp.now(),
-            displayName: name,
-            ...(photoURL ? { photoURL } : {}),
-          }
-        );
+        await setDocGuarded(participantRef, {
+          currentValue: 0,
+          tierAchieved: null,
+          joinedAt: Timestamp.now(),
+          displayName: name,
+          ...(photoURL ? { photoURL } : {}),
+        });
         // participantCount is maintained server-side by the
         // onChallengeParticipantCreated/Deleted triggers — the parent
         // challenge doc is server-owned (rules deny client writes). The old
@@ -254,37 +275,19 @@ export function useChallenges() {
     [user]
   );
 
-  const updateProgress = useCallback(
-    async (challengeId: string, newValue: number) => {
-      if (!user) return;
-      const ch = challenges.find((c) => c.id === challengeId);
-      if (!ch) return;
-      const tier = resolveTier(newValue, ch.tiers, ch.metric);
-      try {
-        await setDocGuarded(
-          doc(db, "challenges", challengeId, "participants", user.uid),
-          {
-            currentValue: newValue,
-            tierAchieved: tier,
-          },
-          { merge: true }
-        );
-        setMyProgress((prev) => ({
-          ...prev,
-          [challengeId]: {
-            ...prev[challengeId],
-            currentValue: newValue,
-            tierAchieved: tier,
-            joinedAt: prev[challengeId]?.joinedAt || Timestamp.now(),
-          },
-        }));
-      } catch (error) {
-        logger.error("[Challenges] Progress update failed:", error);
-        toast.error("Couldn't update progress. Try again.");
-      }
-    },
-    [user, challenges]
-  );
+  /* 2026-06-07 audit (HIGH): challenge progress is SERVER-OWNED.
+     currentValue + tierAchieved on participants/{uid} are written ONLY
+     by the Admin SDK triggers (syncChallengeProgress /
+     syncFastestEffortProgress in functions/index.js), which the
+     firestore.rules participant block now enforces — a client write to
+     either field is rejected. The old client `updateProgress()` wrote a
+     client-computed currentValue/tierAchieved directly, which the server
+     then incremented on top of, baking a forged base value into the
+     world-readable leaderboard. It had no callers (progress is driven by
+     run/workout saves → triggers), so it is removed rather than neutered.
+     The UI derives tier from currentValue + challenge tiers at render
+     time via resolveTier (see ChallengeCard); the stored tierAchieved is
+     a server-written denormalisation, still read but never client-written. */
 
   const myChallenges = challenges.filter((c) => !!myProgress[c.id]);
   const availableChallenges = challenges.filter((c) => !myProgress[c.id]);
@@ -298,6 +301,5 @@ export function useChallenges() {
     loading,
     joinChallenge,
     leaveChallenge,
-    updateProgress,
   };
 }
