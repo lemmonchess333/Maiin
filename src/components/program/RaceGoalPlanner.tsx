@@ -17,6 +17,7 @@
  * performance promises.
  */
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import SectionLabel from "@/components/ui/SectionLabel";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
 
@@ -61,9 +62,7 @@ export default function RaceGoalPlanner({
     <div className="mt-3 space-y-3 p-3 rounded-xl bg-card border border-border/50">
       {/* Distance */}
       <div>
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1.5">
-          Distance
-        </p>
+        <SectionLabel className="mb-1.5">Distance</SectionLabel>
         <SegmentedControl
           ariaLabel="Race distance"
           tone="running"
@@ -111,9 +110,9 @@ export default function RaceGoalPlanner({
             <p className="text-base font-bold tabular-nums font-mono text-foreground">
               {outLabel(state)}
             </p>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-running">
+            <SectionLabel className="text-running">
               {state.statusTitle}
-            </p>
+            </SectionLabel>
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">

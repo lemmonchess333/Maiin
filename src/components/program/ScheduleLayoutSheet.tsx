@@ -23,6 +23,7 @@
  */
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
@@ -146,9 +147,9 @@ function ScheduleLayoutSheetBody({
             >
               {item.value}
             </p>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <SectionLabel tier="section" className="mt-1">
               {item.label}
-            </p>
+            </SectionLabel>
           </div>
         ))}
       </div>
