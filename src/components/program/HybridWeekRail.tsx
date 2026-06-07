@@ -143,7 +143,7 @@ export default function HybridWeekRail({
   }, [items, unclaimedByDate]);
 
   return (
-    <section className="rounded-2xl bg-card border border-border p-3 space-y-3 shadow-card">
+    <section className="rounded-2xl bg-card border border-border p-3 space-y-3 card-shadow">
       <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
         This week
       </h3>

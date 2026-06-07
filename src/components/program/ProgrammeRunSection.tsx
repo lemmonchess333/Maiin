@@ -1224,7 +1224,7 @@ export default function ProgrammeRunSection({
             ) : (
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
-              <div className="rounded-2xl border p-4 shadow-card bg-running/4 border-running/14">
+              <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {selectedDateLabel}
                 </p>

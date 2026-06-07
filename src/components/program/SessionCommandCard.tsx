@@ -54,7 +54,7 @@ export default function SessionCommandCard({
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "rounded-2xl border p-4 space-y-4 shadow-card",
+        "rounded-2xl border p-4 space-y-4 card-shadow",
         surfaceClass
       )}
     >
