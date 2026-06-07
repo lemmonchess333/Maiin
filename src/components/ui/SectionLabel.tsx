@@ -12,8 +12,9 @@ interface SectionLabelProps {
    *               called out in the design system as intentional)
    */
   tier?: SectionLabelTier;
-  /** Rendered element. Defaults to <p>; pass "h2"/"h3" for a heading. */
-  as?: "p" | "span" | "h2" | "h3";
+  /** Rendered element. Defaults to <p>; pass "h2"/"h3" for a heading,
+   *  or "legend" for a fieldset caption. */
+  as?: "p" | "span" | "h2" | "h3" | "legend";
   /** Extra classes — spacing (e.g. mb-2) or a token colour override
    *  (e.g. text-running) which twMerge resolves over the muted default. */
   className?: string;
