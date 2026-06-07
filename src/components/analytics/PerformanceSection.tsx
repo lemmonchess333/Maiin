@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -113,12 +114,9 @@ export default function PerformanceSection() {
         ref={sectionRef}
         aria-label="Performance Index"
       >
-        <p
-          className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-          style={{ color: THEME.brand }}
-        >
+        <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
           Performance
-        </p>
+        </SectionLabel>
         <div className="p-4 rounded-2xl bg-card animate-pulse">
           <div className="h-8 w-20 bg-muted rounded" />
         </div>
@@ -137,12 +135,9 @@ export default function PerformanceSection() {
         ref={sectionRef}
         aria-label="Performance Index"
       >
-        <p
-          className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-          style={{ color: THEME.brand }}
-        >
+        <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
           Performance
-        </p>
+        </SectionLabel>
         <div className="p-4 rounded-2xl bg-card">
           <p className="text-sm text-muted-foreground">
             Your Performance Index will appear after your first logged session.
@@ -158,12 +153,9 @@ export default function PerformanceSection() {
       ref={sectionRef}
       aria-label="Performance Index"
     >
-      <p
-        className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-        style={{ color: THEME.brand }}
-      >
+      <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
         Performance
-      </p>
+      </SectionLabel>
       <button
         type="button"
         onClick={toggleExpanded}
