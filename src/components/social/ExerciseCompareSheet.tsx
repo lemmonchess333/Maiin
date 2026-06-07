@@ -1,4 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useAuth } from "@/lib/auth";
 import { useUserPRMap } from "@/hooks/useUserPRMap";
 import {
@@ -88,9 +89,7 @@ export default function ExerciseCompareSheet({
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Their set */}
         <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-            Their set
-          </p>
+          <SectionLabel>Their set</SectionLabel>
           <p className="text-sm font-mono tabular-nums text-foreground mt-1">
             {authorSummary ||
               `${authorSetCount}×${authorTargetReps}×${authorTargetWeightKg}kg`}
@@ -117,9 +116,7 @@ export default function ExerciseCompareSheet({
 
         {!loading && !error && !yourPR && (
           <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-              Your best
-            </p>
+            <SectionLabel>Your best</SectionLabel>
             <p className="text-sm text-muted-foreground mt-1">
               No record yet — log this exercise to start tracking.
             </p>
@@ -129,9 +126,7 @@ export default function ExerciseCompareSheet({
         {!loading && !error && yourPR && (
           <>
             <div className="rounded-xl bg-muted/50 px-3.5 py-3">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Your best
-              </p>
+              <SectionLabel>Your best</SectionLabel>
               <div className="flex items-baseline justify-between mt-1">
                 <p className="text-sm font-mono tabular-nums text-foreground">
                   {yourPR.reps}×{yourPR.weight}kg
