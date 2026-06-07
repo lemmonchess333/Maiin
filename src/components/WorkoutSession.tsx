@@ -139,7 +139,7 @@ export default function WorkoutSession({
     load: loadDraft,
     save: saveDraft,
     clear: clearDraft,
-  } = useWorkoutDraft(dayIndex);
+  } = useWorkoutDraft(user?.uid, dayIndex);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
   const [showResumePrompt, setShowResumePrompt] = useState(

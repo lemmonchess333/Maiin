@@ -17,6 +17,15 @@ const admin = require("firebase-admin");
 // server-specific concerns: windowing, aggregation, confidence, signals, I/O.
 const perfScoring = require("./lib/perfScoring");
 
+// Volume-eligibility predicate for saved-run docs. Single shared copy in
+// functions/lib/runEligibility.js (already consumed by index.js). This file
+// previously inlined the same isInvalid / savedAnyway / distance>=50 /
+// duration>=30 rule a third time (the LOW dual-copy finding) — now routed
+// through the shared helper so the rule lives in exactly one place per
+// runtime. The TS source of truth is src/lib/runStatsEligibility.ts
+// (isVolumeEligible); keep all three in lockstep when the rule changes.
+const { isVolumeEligibleRun } = require("./lib/runEligibility");
+
 const db = admin.firestore();
 
 // ── Constants ────────────────────────────────
@@ -142,17 +151,12 @@ async function fetchWindowData(uid, windowStart, windowEnd) {
 
   const workouts = workoutsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  // Volume-eligibility filter mirrors src/lib/runStatsEligibility.ts
-  // (functions/ is plain JS, no path alias for direct import).
+  // Volume-eligibility filter — shared helper (functions/lib/runEligibility.js),
+  // itself a mirror of src/lib/runStatsEligibility.ts. Was a third inline copy
+  // of the isInvalid / savedAnyway / distance>=50 / duration>=30 rule; now
+  // consolidated to the one shared predicate so it can't drift independently.
   const runs = runsSnap.docs
-    .filter((d) => {
-      const data = d.data();
-      if (data.isInvalid === true) return false;
-      if (data.savedAnyway === true) return false;
-      const distance = Number(data.distance) || 0;
-      const duration = Number(data.duration) || 0;
-      return distance >= 50 && duration >= 30;
-    })
+    .filter((d) => isVolumeEligibleRun(d.data()))
     .map((d) => ({ id: d.id, ...d.data() }));
 
   const meals = mealsResult

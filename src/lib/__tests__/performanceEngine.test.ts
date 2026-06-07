@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
 import {
   getWeekKey,
   weekKeyMinusN,
@@ -99,13 +101,61 @@ describe("weekKeyMinusN", () => {
   });
 });
 
+// ── UTC/local drift pin (regression) ─────────
+//
+// The vitest runner is pinned to UTC, so an in-process assertion can't
+// observe the negative-offset drift these functions previously had
+// (local Sunday-rewind + UTC toISOString → previous Saturday key). We
+// re-exec a tiny script under TZ=America/New_York (UTC-5) to prove the
+// fix: a Sunday 23:30 LOCAL must key to that local Sunday, not the
+// UTC-rolled Monday.
+describe("getWeekKey / weekKeyMinusN — UTC/local drift", () => {
+  it("getWeekKey keys a late-Sunday-night local time to the local Sunday under a negative-offset TZ", () => {
+    const tsx = path.resolve(__dirname, "../../../node_modules/.bin/tsx");
+    const enginePath = path.resolve(__dirname, "../performanceEngine.ts");
+    // Actually import + call the REAL exported functions under TZ=America/
+    // New_York (UTC-5). Sun 2025-01-05 23:30 local NY = 2025-01-06 04:30Z.
+    // Pre-fix (local Sunday-rewind + UTC toISOString) this drifted to the
+    // previous Saturday 2025-01-04; the fix must return the local Sunday.
+    const script = `
+      import { getWeekKey, weekKeyMinusN } from ${JSON.stringify(enginePath)};
+      const d = new Date(2025, 0, 5, 23, 30, 0); // local Sun 23:30
+      process.stdout.write(JSON.stringify({
+        weekKey: getWeekKey(d),
+        minus1: weekKeyMinusN(getWeekKey(d), 1),
+      }));
+    `;
+    const out = execFileSync(tsx, ["--eval", script], {
+      env: { ...process.env, TZ: "America/New_York" },
+      encoding: "utf8",
+    });
+    const result = JSON.parse(out.trim().split("\n").pop() as string);
+    expect(result.weekKey).toBe("2025-01-05"); // local Sunday, not 2025-01-04
+    expect(result.minus1).toBe("2024-12-29"); // prior local Sunday, no UTC drift
+  });
+});
+
 // ── computeBaseline ──────────────────────────
 
 describe("computeBaseline", () => {
   it("averages prior weeks correctly", () => {
     const weeks: WeeklyAggregates[] = [
-      makeAgg({ liftTonnage: 8000, liftHardSets: 16, runKm: 20, runLongKm: 8, liftSessions: 3, runSessions: 2 }),
-      makeAgg({ liftTonnage: 12000, liftHardSets: 24, runKm: 30, runLongKm: 12, liftSessions: 4, runSessions: 3 }),
+      makeAgg({
+        liftTonnage: 8000,
+        liftHardSets: 16,
+        runKm: 20,
+        runLongKm: 8,
+        liftSessions: 3,
+        runSessions: 2,
+      }),
+      makeAgg({
+        liftTonnage: 12000,
+        liftHardSets: 24,
+        runKm: 30,
+        runLongKm: 12,
+        liftSessions: 4,
+        runSessions: 3,
+      }),
     ];
     const bl = computeBaseline(weeks);
     expect(bl.liftTonnage).toBe(10000);
@@ -118,7 +168,14 @@ describe("computeBaseline", () => {
   it("filters out weeks with zero sessions", () => {
     const weeks: WeeklyAggregates[] = [
       makeAgg({ liftTonnage: 8000, liftHardSets: 16, runKm: 20, runLongKm: 8 }),
-      makeAgg({ liftTonnage: 0, liftHardSets: 0, runKm: 0, runLongKm: 0, liftSessions: 0, runSessions: 0 }),
+      makeAgg({
+        liftTonnage: 0,
+        liftHardSets: 0,
+        runKm: 0,
+        runLongKm: 0,
+        liftSessions: 0,
+        runSessions: 0,
+      }),
     ];
     const bl = computeBaseline(weeks);
     expect(bl.liftTonnage).toBe(8000);
@@ -181,7 +238,11 @@ describe("computeLiftLoadScore", () => {
   });
 
   it("handles zero baseline with non-zero current (safeRatio returns 1.0)", () => {
-    const agg = makeAgg({ liftTonnage: 5000, liftHardSets: 10, liftSessions: 2 });
+    const agg = makeAgg({
+      liftTonnage: 5000,
+      liftHardSets: 10,
+      liftSessions: 2,
+    });
     const bl = makeBaseline({ liftTonnage: 0, liftHardSets: 0 });
     // safeRatio returns 1.0 for both → raw = 1.0 → clamp(1.0*67) = 67
     expect(computeLiftLoadScore(agg, bl)).toBe(67);
@@ -417,7 +478,13 @@ describe("shouldRecommendDeload", () => {
 
 describe("computeAdherenceScore", () => {
   it("returns 50 when no targets or data available", () => {
-    const agg = makeAgg({ liftSessions: 0, runSessions: 0, mealDaysLogged: 0, avgDailyCalories: 0, avgDailyProtein: 0 });
+    const agg = makeAgg({
+      liftSessions: 0,
+      runSessions: 0,
+      mealDaysLogged: 0,
+      avgDailyCalories: 0,
+      avgDailyProtein: 0,
+    });
     expect(computeAdherenceScore(agg, 0, null, null)).toBe(50);
   });
 
@@ -447,10 +514,18 @@ describe("computeAdherenceScore", () => {
 describe("computePerformanceIndex", () => {
   it("returns valid doc for all-zero aggregates", () => {
     const zeroAgg = makeAgg({
-      liftTonnage: 0, liftHardSets: 0, liftSessions: 0,
-      runKm: 0, runLongKm: 0, runSessions: 0, runQualityCount: 0,
-      mealDaysLogged: 0, avgDailyCalories: 0, avgDailyProtein: 0,
-      bwCurrent7dAvg: null, bwPrevious7dAvg: null,
+      liftTonnage: 0,
+      liftHardSets: 0,
+      liftSessions: 0,
+      runKm: 0,
+      runLongKm: 0,
+      runSessions: 0,
+      runQualityCount: 0,
+      mealDaysLogged: 0,
+      avgDailyCalories: 0,
+      avgDailyProtein: 0,
+      bwCurrent7dAvg: null,
+      bwPrevious7dAvg: null,
     });
     const doc = computePerformanceIndex(zeroAgg, [], {});
     expect(doc.performanceIndex).toBeGreaterThanOrEqual(0);
@@ -469,19 +544,36 @@ describe("computePerformanceIndex", () => {
   it("does not recommend deload when baseline has <3 weeks (M6)", () => {
     const agg = makeAgg({ liftTonnage: 30000, liftHardSets: 50 }); // very high load
     const priorWeeks = [makeAgg(), makeAgg()]; // only 2 weeks of baseline
-    const doc = computePerformanceIndex(agg, priorWeeks, { weeklyWorkoutsTarget: 4 }, 90);
+    const doc = computePerformanceIndex(
+      agg,
+      priorWeeks,
+      { weeklyWorkoutsTarget: 4 },
+      90
+    );
     expect(doc.baseline.weeksUsed).toBe(2);
     expect(doc.deloadRecommended).toBe(false); // insufficient baseline
   });
 
   it("uses goal-dependent lift/run weights (M3)", () => {
-    const agg = makeAgg({ liftTonnage: 15000, liftHardSets: 30, runKm: 10, runLongKm: 5, runSessions: 1 });
+    const agg = makeAgg({
+      liftTonnage: 15000,
+      liftHardSets: 30,
+      runKm: 10,
+      runLongKm: 5,
+      runSessions: 1,
+    });
     const priorWeeks = [makeAgg(), makeAgg(), makeAgg()];
-    const bulkDoc = computePerformanceIndex(agg, priorWeeks, { goal: "lean bulk" });
-    const recompDoc = computePerformanceIndex(agg, priorWeeks, { goal: "recomp" });
+    const bulkDoc = computePerformanceIndex(agg, priorWeeks, {
+      goal: "lean bulk",
+    });
+    const recompDoc = computePerformanceIndex(agg, priorWeeks, {
+      goal: "recomp",
+    });
     // Lean bulk weights lifting higher (0.65 vs 0.5), so with higher lift and lower run,
     // the bulk PI should be higher than recomp PI
-    expect(bulkDoc.performanceIndex).toBeGreaterThanOrEqual(recompDoc.performanceIndex);
+    expect(bulkDoc.performanceIndex).toBeGreaterThanOrEqual(
+      recompDoc.performanceIndex
+    );
   });
 
   it("uses goal-aware default workout target (L6)", () => {
@@ -490,7 +582,9 @@ describe("computePerformanceIndex", () => {
     // Cut default = 3 sessions, so 3/3 = 100% adherence
     const cutDoc = computePerformanceIndex(agg, priorWeeks, { goal: "cut" });
     // Bulk default = 5 sessions, so 3/5 = 60% adherence
-    const bulkDoc = computePerformanceIndex(agg, priorWeeks, { goal: "lean bulk" });
+    const bulkDoc = computePerformanceIndex(agg, priorWeeks, {
+      goal: "lean bulk",
+    });
     expect(cutDoc.adherenceScore).toBeGreaterThan(bulkDoc.adherenceScore);
   });
 });
@@ -542,7 +636,12 @@ describe("computeRecoveryScore — goal-aware", () => {
 
 describe("computeAdherenceScore — goal-aware calorie tolerance", () => {
   it("uses ±10% for cuts (tighter)", () => {
-    const agg = makeAgg({ liftSessions: 0, runSessions: 0, mealDaysLogged: 5, avgDailyCalories: 2300 });
+    const agg = makeAgg({
+      liftSessions: 0,
+      runSessions: 0,
+      mealDaysLogged: 5,
+      avgDailyCalories: 2300,
+    });
     // 2300/2000 = 1.15 → 15% over target
     // Cut tolerance = 10% → 1.15 is outside [0.9, 1.1] → penalized
     const cutScore = computeAdherenceScore(agg, 0, 2000, null, "cut");
@@ -610,7 +709,12 @@ describe("computePerformanceIndex — multi-week integration", () => {
   it("suppresses the deload recommendation when the baseline is < 3 weeks", () => {
     // Identical overreach + previousWeekPI, but only 2 prior weeks — the
     // score is statistically unreliable, so the gate forces deload off.
-    const doc = computePerformanceIndex(strongWeek, baselineWeeks(2), profile, 90);
+    const doc = computePerformanceIndex(
+      strongWeek,
+      baselineWeeks(2),
+      profile,
+      90
+    );
     expect(doc.baseline.weeksUsed).toBeLessThan(3);
     expect(doc.deloadRecommended).toBe(false);
   });
@@ -626,7 +730,12 @@ describe("computePerformanceIndex — multi-week integration", () => {
       runQualityCount: 0,
       runSessions: 1,
     });
-    const strong = computePerformanceIndex(strongWeek, baselineWeeks(4), profile, 90);
+    const strong = computePerformanceIndex(
+      strongWeek,
+      baselineWeeks(4),
+      profile,
+      90
+    );
     const doc = computePerformanceIndex(
       recoveryWeek,
       baselineWeeks(4),
