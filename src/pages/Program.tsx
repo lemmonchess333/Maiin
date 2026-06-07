@@ -832,6 +832,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             race-prep progress / setup CTA / zero-runs CTA); no
             parallel Program.tsx fallback needed. */}
       {activeTab === "run" && profile && (
+        // pt-4 positions the Run day-selector so its day circles line up with
+        // the Lift tab's day circles (verified on the harness: run button-top
+        // 190 vs lift 192). The Run selector carries a weekday-letter row the
+        // Lift selector lacks, so a little more top padding here lands the
+        // circles — not the container — at the same Y, which is what the eye
+        // tracks when toggling tabs.
         <div className="pt-4">
           <ProgrammeRunSection
             profile={profile}
