@@ -17,6 +17,7 @@
  */
 
 import { ChevronRight, Flag } from "lucide-react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import PhaseRail from "./PhaseRail";
@@ -97,17 +98,13 @@ export default function RaceCockpitCard({
       {hasProgress && (
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-muted/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Week
-            </p>
+            <SectionLabel tier="section">Week</SectionLabel>
             <p className="text-lg font-semibold tabular-nums font-mono text-foreground">
               {currentWeek! + 1} / {totalWeeks!}
             </p>
           </div>
           <div className="rounded-xl bg-muted/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Phase
-            </p>
+            <SectionLabel tier="section">Phase</SectionLabel>
             <p className="text-lg font-semibold text-foreground">
               {phaseLabel ?? "—"}
             </p>
@@ -128,11 +125,11 @@ export default function RaceCockpitCard({
       )}
 
       {inTaper && (
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-running">
+        <SectionLabel tier="section" className="text-running">
           Taper week
           {" · "}
           race in {daysToRace} {daysToRace === 1 ? "day" : "days"}
-        </p>
+        </SectionLabel>
       )}
 
       {compressed && (

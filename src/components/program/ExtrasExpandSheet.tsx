@@ -23,6 +23,7 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Footprints } from "lucide-react";
 import { format } from "date-fns";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -66,9 +67,7 @@ export default function ExtrasExpandSheet({
         {/* Drag handle (BottomSheet hides its own when hideHeader). */}
         <div className="w-9 h-1 rounded-full bg-border mx-auto" />
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Extra runs
-          </p>
+          <SectionLabel>Extra runs</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
             {dateLabel}
             {headerCount > 0 && (
