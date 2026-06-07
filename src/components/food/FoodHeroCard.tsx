@@ -286,10 +286,7 @@ export default function FoodHeroCard({
   return (
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
-      <div
-        className="p-4 rounded-2xl bg-card"
-        style={{ boxShadow: "var(--ds-shadow-card)" }}
-      >
+      <div className="p-4 rounded-2xl bg-card card-shadow">
         {/* Top row: caption (left) + adjust-targets gear (right).
             The gear is a small Settings shortcut so users can fix
             a wrong target without hunting through nav → Settings →
@@ -398,10 +395,7 @@ export default function FoodHeroCard({
       {/* Macro tile row — three independent floating tiles. mt-4 = 16px
           gap to the calorie card above; gap-4 = 16px between tiles. */}
       <div className="flex gap-4 mt-4">
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="protein"
             Icon={Beef}
@@ -415,10 +409,7 @@ export default function FoodHeroCard({
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="carbs"
             Icon={Wheat}
@@ -432,10 +423,7 @@ export default function FoodHeroCard({
             barDurationSec={LOG_MOMENT_SEC}
           />
         </div>
-        <div
-          className="flex-1 flex p-3 rounded-2xl bg-card"
-          style={{ boxShadow: "var(--ds-shadow-card)" }}
-        >
+        <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="fat"
             Icon={Avocado}

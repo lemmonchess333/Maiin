@@ -60,8 +60,7 @@ export default function StatCard({
     <button
       type="button"
       onClick={onClick}
-      className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98]"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
+      className="p-4 rounded-2xl bg-card text-left w-full active:scale-[0.98] card-shadow"
     >
       <p className="text-xs uppercase tracking-wider font-medium mb-2 text-muted-foreground">
         {label}
