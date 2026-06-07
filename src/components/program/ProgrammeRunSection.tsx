@@ -61,6 +61,7 @@
  */
 
 import { useState, useMemo } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useNavigate } from "react-router-dom";
 import {
   Footprints,
@@ -800,9 +801,9 @@ export default function ProgrammeRunSection({
           inline left, coral icon + muted-foreground label. */}
       <header className="flex items-center gap-1.5">
         <Footprints aria-hidden="true" className="size-3.5 text-running" />
-        <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <SectionLabel as="h2" tier="section">
           Run training
-        </h2>
+        </SectionLabel>
       </header>
 
       {/* Run8 PR1a — section subtitle replaces the mode-pill row
@@ -1225,9 +1226,7 @@ export default function ProgrammeRunSection({
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
               <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {selectedDateLabel}
-                </p>
+                <SectionLabel tier="section">{selectedDateLabel}</SectionLabel>
                 <p className="text-sm font-bold text-foreground mt-0.5">
                   {selectedRun.isCompleted
                     ? `${selectedTemplate?.name ?? "Run"} — done`
