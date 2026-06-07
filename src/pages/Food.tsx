@@ -55,6 +55,7 @@ import {
   type MealKey,
 } from "@/components/food/mealConstants";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
+import { localDateString } from "@/lib/dateHelpers";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -1222,7 +1223,12 @@ export default function Food() {
     const cutoff = (() => {
       const d = new Date();
       d.setDate(d.getDate() - 30);
-      return d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      // `meal.date` is a LOCAL "YYYY-MM-DD" string, so the cutoff must be
+      // the LOCAL date string too. `d.toISOString()` (UTC) can land on a
+      // different calendar day than the user's local date (the direction
+      // depends on the offset + wall-clock hour), shifting the 30-day
+      // window boundary by a day.
+      return localDateString(d); // "YYYY-MM-DD"
     })();
     const freq = new Map<
       string,

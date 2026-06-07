@@ -7,6 +7,7 @@ import { EXERCISES } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
+import { localDateString } from "@/lib/dateHelpers";
 
 const ExerciseProgressChart = lazy(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -202,7 +203,11 @@ export default function ExerciseHistory() {
     if (!Number.isFinite(days)) return allSessions;
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    const cutoffStr = cutoff.toISOString().split("T")[0];
+    // `s.date` is a LOCAL "YYYY-MM-DD" string (workout.date), so the cutoff
+    // must be the LOCAL date too. `cutoff.toISOString()` (UTC) can land on a
+    // different calendar day than the user's local date (direction depends on
+    // the offset + wall-clock hour), shifting the time-range boundary a day.
+    const cutoffStr = localDateString(cutoff);
     return allSessions.filter((s) => s.date >= cutoffStr);
   }, [allSessions, timeRange]);
 

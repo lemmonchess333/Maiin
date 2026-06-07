@@ -37,6 +37,7 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
+import { localWeekKey, localDateString } from "@/lib/dateHelpers";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(
@@ -497,7 +498,11 @@ export default function History() {
       const end = new Date();
       end.setDate(end.getDate() - end.getDay());
       while (cursor <= end) {
-        allWeekKeys.push(cursor.toISOString().split("T")[0]);
+        // weeklyData[].week is keyed by localWeekKey (useRunningStats),
+        // so the axis MUST use the same local-week helper. The prior
+        // cursor.toISOString() (UTC) key never matched in non-UTC zones,
+        // flatlining the sparkline.
+        allWeekKeys.push(localWeekKey(cursor));
         cursor.setDate(cursor.getDate() + 7);
       }
     }
@@ -703,7 +708,12 @@ export default function History() {
       const end = new Date();
       end.setDate(end.getDate() - end.getDay());
       while (cursor <= end) {
-        allWeekKeys.push(cursor.toISOString().split("T")[0]);
+        // weekMap is keyed by binKeyForDate(d, granularity) (UTC-Sunday
+        // for the weekly bins these sparklines step over), so the axis
+        // MUST derive its keys with the SAME helper. The prior local-
+        // cursor + cursor.toISOString() key never matched binKeyForDate's
+        // UTC-Sunday anchor in non-UTC zones, flatlining the sparkline.
+        allWeekKeys.push(binKeyForDate(cursor, "weekly"));
         cursor.setDate(cursor.getDate() + 7);
       }
     }
@@ -819,7 +829,9 @@ export default function History() {
        different scopes. */
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const thirtyDaysAgoKey = thirtyDaysAgo.toISOString().split("T")[0];
+    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoff must be the LOCAL
+    // date too (same UTC/local-mixing family as the sparkline axes above).
+    const thirtyDaysAgoKey = localDateString(thirtyDaysAgo);
     const recentBestSet: Record<
       string,
       { weight: number; reps: number; date: string; score: number }
