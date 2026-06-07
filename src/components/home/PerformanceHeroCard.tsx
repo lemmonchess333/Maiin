@@ -99,8 +99,7 @@ export default function PerformanceHeroCard({
           haptic();
           trackHomeEvent("home_card_tapped", { card: "performance" });
         }}
-        className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
-        style={{ boxShadow: "var(--ds-shadow-card)" }}
+        className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
         aria-label="Performance — loading"
       >
         <div className="flex items-center gap-2 mb-3">
@@ -133,8 +132,7 @@ export default function PerformanceHeroCard({
           haptic();
           trackHomeEvent("home_card_tapped", { card: "performance" });
         }}
-        className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
-        style={{ boxShadow: "var(--ds-shadow-card)" }}
+        className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
         aria-label="Performance — no data yet"
       >
         <div className="flex items-center gap-2 mb-3">
@@ -186,8 +184,7 @@ export default function PerformanceHeroCard({
         haptic();
         trackHomeEvent("home_card_tapped", { card: "performance" });
       }}
-      className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform"
-      style={{ boxShadow: "var(--ds-shadow-card)" }}
+      className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
       aria-label={`Performance Index ${pi}, ${verb.label}`}
       aria-describedby={`perf-detail-${currentWeek.weekKey}`}
     >
