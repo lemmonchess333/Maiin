@@ -86,7 +86,7 @@ export default function SortableExerciseRow({
       className={cn(
         "relative overflow-hidden transition-colors",
         isDragging && "scale-[1.02] shadow-lg opacity-90",
-        justDropped && "bg-green-50 dark:bg-green-950/20"
+        justDropped && "bg-success/10"
       )}
     >
       {/* Delete panel behind the card */}
@@ -97,8 +97,8 @@ export default function SortableExerciseRow({
             haptic("light");
             onDelete();
           }}
-          className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center"
-          style={{ background: "#FF3B30", borderRadius: 10 }}
+          className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center bg-destructive"
+          style={{ borderRadius: 10 }}
           aria-label="Delete exercise"
         >
           <Trash2 className="size-5 text-white" />
@@ -139,11 +139,11 @@ export default function SortableExerciseRow({
               {[0, 1, 2, 3, 4, 5].map((j) => (
                 <div
                   key={j}
+                  className="bg-muted-foreground"
                   style={{
                     width: 3,
                     height: 3,
                     borderRadius: "50%",
-                    backgroundColor: "#8E8E93",
                     opacity: 0.22,
                   }}
                 />
