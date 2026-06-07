@@ -970,3 +970,67 @@ describe("DayActionSheet — lift section", () => {
     expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
   });
 });
+
+describe("DayActionSheet — scope (Run tab shows run only)", () => {
+  // A hybrid day: today has BOTH a planned run and a planned lift.
+  function setupHybrid() {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("both" as const) : ("rest" as const),
+      }))
+    );
+    const runDay = makeRunDay({
+      id: "runday_target",
+      dayIndex: todayDow(),
+      date: todayKey(),
+      weekKey: todayWeekKey(),
+      status: "planned",
+    });
+    const programState = makeProgramState([runDay], [makeWorkout()]);
+    return { profile, programState, callbacks: commonCallbacks() };
+  }
+
+  it("default (day) scope on a hybrid day shows BOTH run and lift", () => {
+    const { profile, programState, callbacks } = setupHybrid();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    expect(screen.getByText("Manage day")).toBeInTheDocument();
+    expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+    expect(screen.getByText(/Skip this lift/i)).toBeInTheDocument();
+  });
+
+  it('scope="run" on the same hybrid day shows ONLY the run block', () => {
+    const { profile, programState, callbacks } = setupHybrid();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        scope="run"
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    // Run-scoped header + run actions present…
+    expect(screen.getByText("Manage run")).toBeInTheDocument();
+    expect(screen.getByText(/Skip this run/i)).toBeInTheDocument();
+    // …and the lift block is fully suppressed (no "Skip this lift", no
+    // workout name) so the Run tab stays sport-consistent.
+    expect(screen.queryByText(/Skip this lift/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Push")).not.toBeInTheDocument();
+  });
+});
