@@ -83,19 +83,6 @@ function programRef() {
 async function seed({ profile, programState }) {
   await userRef().set({ uid: UID, ...profile });
   await programRef().set(programState);
-  // Read-back guard. Under the 10-/20-way parallel emulator contention this
-  // suite runs in (see vitest.config.js), a read can transiently lag the
-  // just-written doc. The reconciliation wrapper reads via
-  // readUserProgramContext, which returns null when programState/current isn't
-  // yet visible — that silently skips the L1/L3 passes and surfaced as a flaky
-  // `noShowWritten: false` (CI 2026-06-07). Confirm both docs are readable
-  // before any test invokes the wrapper so the function never races the seed.
-  for (let i = 0; i < 40; i++) {
-    const [u, p] = await Promise.all([userRef().get(), programRef().get()]);
-    if (u.exists && p.exists) return;
-    await new Promise((r) => setTimeout(r, 25));
-  }
-  throw new Error("seed read-back never became visible (emulator contention)");
 }
 
 async function readProfile() {
