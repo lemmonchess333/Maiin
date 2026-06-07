@@ -12,6 +12,7 @@ import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
+import { THEME } from "@/lib/theme";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
@@ -693,7 +694,7 @@ export default function FoodAnalyzer({
                 setCameraOpen(true);
               }}
               className="flex-1 py-3 rounded-xl text-sm font-semibold text-white active:scale-95 transition-transform flex items-center justify-center gap-1.5"
-              style={{ backgroundColor: "#7B72E9" }}
+              style={{ backgroundColor: THEME.brand }}
             >
               <RotateCcw className="size-4" /> Try again
             </button>
