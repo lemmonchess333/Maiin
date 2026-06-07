@@ -140,7 +140,11 @@ MUST:
 - Capture console errors via `page.on("pageerror", ...)` and
   `page.on("console", m => m.type() === "error" && ...)`
 
-Example skeleton at `./drive.mjs` in this skill directory.
+Example skeleton at `./drive.mjs` in this skill directory. For a broad
+"act as a user / what's working vs broken" sweep across every top-level
+surface (auth → Home → Food → Program+WorkoutSession → Social → History →
+Settings → Run → dark mode), use `./drive-qa.mjs` — it screenshots each
+screen and writes per-surface console errors to `out-qa/errors.json`.
 
 ### 6. Tear down
 
@@ -179,11 +183,14 @@ These come from the container, not the diff under review:
 These reproduce against the seeded user but aren't introduced by
 any specific PR — note them in findings, don't FAIL for them:
 
-- **`useProgram` setDoc with `undefined primaryGoal`**: the seed
-  script writes a profile without `primaryGoal`, then `useProgram`
-  attempts `setDoc({ primaryGoal: undefined })` which Firestore
-  rejects. Surfaces as "Failed to load programme" on `/program`.
-  The Section error boundary catches and renders Retry. Pre-existing.
+- **`useProgram` setDoc with `undefined primaryGoal` — FIXED (2026-06).**
+  This used to surface as "Failed to load programme" on `/program` for
+  the seeded user (no `primaryGoal` → `setDoc({ primaryGoal: undefined })`
+  rejected by Firestore). The `setDocGuarded` migration (which strips
+  `undefined` recursively) closed it: `/program` now creates the initial
+  program and renders the cockpit cleanly for a fresh seeded user. Kept
+  here as a record — if it ever recurs, suspect a raw `setDoc`/`addDoc`
+  bypassing the guarded wrappers.
 
 ## What to verify per common change type
 
