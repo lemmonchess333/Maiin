@@ -60,10 +60,13 @@ export default function RunCTACard({
   const RunIconComp =
     runIcon && RUN_ICON_MAP[runIcon] ? RUN_ICON_MAP[runIcon] : Footprints;
 
-  const runKeyMetric = runDesc
-    ? runDesc.match(/(\d+\.?\d*\s*k(?:m|ilom[ei]t[er]*))/i)?.[1] ||
-      runDesc.match(/(\d+\.?\d*\s*mi(?:les?)?)/i)?.[1] ||
-      null
+  // Key metric = the planned distance, read from the template config (the
+  // source of truth) rather than regex-parsed out of the prose description.
+  // Descriptions are coaching-led now ("Steady, controlled effort"), so the
+  // distance no longer lives in the text; reading config also makes the metric
+  // work for race templates whose descriptions carry no distance.
+  const runKeyMetric = tmpl?.config.targetDistance
+    ? `${tmpl.config.targetDistance}km`
     : null;
 
   return (
