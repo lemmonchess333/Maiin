@@ -77,7 +77,6 @@ import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -797,67 +796,27 @@ export default function ProgrammeRunSection({
         />
       )}
 
-      {/* a11y landmark only (was a visible "Run training" coral section label
-          — Run7 Q6). The visible label was removed to align the Run tab's
-          vertical rhythm with the Lift tab: the Lift tab has no "Lift training"
-          header above its content, so this label pushed the Run tab's content
-          ~one row out of step and made the page jump when toggling tabs. The
-          active "Run" segment already names the section; the h2 is kept sr-only
-          so the screen-reader landmark structure is preserved. */}
-      <h2 className="sr-only">Run training</h2>
+      {/* The visible "Run training" coral section label (Run7 Q6) was removed
+          to align the Run tab's vertical rhythm with the Lift tab: the Lift tab
+          has no "Lift training" header above its content, so this label pushed
+          the Run content ~one row out of step and made the page jump when
+          toggling tabs. The active "Run" segment already names the section, and
+          the `aria-label="Run training"` on the <section> above still provides
+          the screen-reader landmark name — so no sr-only heading is needed here
+          (an sr-only h2 as the first child of this `space-y-4` flow would also
+          re-introduce a 16px top margin on the first visible row). */}
 
-      {/* Run8 PR1a — section subtitle replaces the mode-pill row
-          for Structured / Race Prep. Carries mode + at-a-glance
-          context (run frequency for Structured, week-of-N + days-
-          to-race for Race Prep). Tap navigates to /settings/training
-          where the mode picker + race goal editor live. Freeform
-          shows no subtitle — the hero below IS the mode reveal. */}
-      {currentMode !== "freeform" && (
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            navigate("/settings/training");
-          }}
-          aria-label="Run plan summary — tap to manage"
-          className="w-full text-left px-1 -mx-1 py-1 rounded-md motion-safe:active:scale-[0.99]"
-        >
-          <p className="text-xs font-medium text-muted-foreground">
-            {currentMode === "race_prep" && raceGoal ? (
-              <>
-                Race Prep
-                {programState?.runPlan?.totalWeeks &&
-                  programState?.runPlan?.currentWeek != null && (
-                    <>
-                      {" · "}
-                      Week {programState.runPlan.currentWeek + 1} of{" "}
-                      {programState.runPlan.totalWeeks}
-                    </>
-                  )}
-                {(() => {
-                  const ms =
-                    new Date(raceGoal.targetDate).getTime() -
-                    new Date().getTime();
-                  const days = Math.max(
-                    0,
-                    Math.round(ms / (24 * 60 * 60 * 1000))
-                  );
-                  return (
-                    <>
-                      {" · "}
-                      {days} {days === 1 ? "day" : "days"} to race
-                    </>
-                  );
-                })()}
-              </>
-            ) : currentMode === "race_prep" ? (
-              <>Race Prep · Set your race goal</>
-            ) : (
-              <>Structured · {getWeeklyRunTarget(profile)} runs/week</>
-            )}
-          </p>
-        </button>
-      )}
+      {/* Run8 PR1a's section subtitle (mode + week-of-N + days-to-race, tap →
+          /settings/training) was REMOVED here. It was fully redundant: the
+          tab-aware page header (`programRunHeaderLine` in Program.tsx) now
+          carries the same mode + week context ("Race prep · Marathon · Week
+          2/20" / "Structured · N runs/week"), and the RaceCockpitCard below
+          shows days-to-race. Worse, as a row directly above the day-selector it
+          forced the Run selector's day circles ~33px lower than the Lift tab's
+          (the selector also has a weekday-letter row the Lift one lacks), so
+          the stepper visibly jumped when toggling tabs. The manage affordance
+          is preserved by the "Edit run plan ›" footer link and the overflow
+          menu. */}
 
       {/* ── Hero: freeform ──────────────────────────────────────────
           Start CTA + last-run + this-week summary lines. Empty
