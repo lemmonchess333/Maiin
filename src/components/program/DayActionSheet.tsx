@@ -78,6 +78,18 @@ interface DayActionSheetProps {
   markManualComplete: (runDayId: string) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
+  /** Which blocks to surface.
+   *
+   *  - "day" (default) — the whole-day manager: run + lift blocks. Used by
+   *    Home, which is the sport-agnostic daily glance, so "manage Monday"
+   *    legitimately means "manage everything on Monday".
+   *  - "run" — run block only. Used by the Programme **Run tab**, whose entire
+   *    layout is partitioned by the Lift | Run segmented control. The `…` that
+   *    opens this sheet lives on a run card inside the run-scoped surface, so
+   *    handing back a lift block would violate that partition (and the lift
+   *    has its own tab with richer management). Lift skipping on the Run tab
+   *    was never the job of this affordance. */
+  scope?: "day" | "run";
 }
 
 export default function DayActionSheet({
@@ -92,6 +104,7 @@ export default function DayActionSheet({
   markManualComplete,
   skipRunDay,
   skipWorkoutDay,
+  scope = "day",
 }: DayActionSheetProps) {
   // The resolver is the single source of truth for what training
   // exists on this date. Same call Home and Programme Today make
@@ -131,6 +144,9 @@ export default function DayActionSheet({
   const { lift, run } = resolved;
   const hasLift = lift.workout !== null && lift.index !== null;
   const hasRun = run.runDay !== null;
+  // Run-scoped invocations (Programme Run tab) never surface the lift block —
+  // see the `scope` prop doc. Home keeps the full whole-day view.
+  const showLift = scope === "day" && hasLift;
   const selectedRunTemplate = run.runDay
     ? RUN_TEMPLATES.find(
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
@@ -163,7 +179,9 @@ export default function DayActionSheet({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <SectionLabel>Manage day</SectionLabel>
+            <SectionLabel>
+              {scope === "run" ? "Manage run" : "Manage day"}
+            </SectionLabel>
             <p className="text-base font-semibold text-foreground mt-0.5">
               {dayLabel}
             </p>
@@ -178,10 +196,12 @@ export default function DayActionSheet({
           </button>
         </div>
 
-        {/* Empty state — no training scheduled. */}
-        {!hasLift && !hasRun && (
+        {/* Empty state — nothing to manage in this scope. */}
+        {(scope === "run" ? !hasRun : !showLift && !hasRun) && (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            Nothing scheduled for this day.
+            {scope === "run"
+              ? "No run scheduled for this day."
+              : "Nothing scheduled for this day."}
           </p>
         )}
 
@@ -416,8 +436,8 @@ export default function DayActionSheet({
           </section>
         )}
 
-        {/* Lift section */}
-        {hasLift && lift.workout && lift.index !== null && (
+        {/* Lift section — day-scope only (hidden on the Run tab; see `scope`). */}
+        {showLift && lift.workout && lift.index !== null && (
           <section
             aria-label="Lift actions"
             className="rounded-2xl p-4 space-y-4 shadow-sm"
