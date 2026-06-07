@@ -31,6 +31,7 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
@@ -1944,5 +1945,46 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
         stripeSubscriptionId: "sub_attacker",
       })
     );
+  });
+
+  // ── useStreaks badge-save coverage: the hook commits a 2-doc batch
+  //    (streaks/data badges + public/profile badgeSummary). Pin that the
+  //    batch + each write individually are rules-valid (no deletion ledger). ──
+  it("owner writes streaks/data alone — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
+        { badges: [{ id: "first_step", earnedAt: "2026-06-07" }] },
+        { merge: true }
+      )
+    );
+  });
+
+  it("owner writes public/profile badgeSummary — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 } },
+        { merge: true }
+      )
+    );
+  });
+
+  it("owner commits the useStreaks badge-save batch (streaks/data + public/profile) — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    const batch = writeBatch(ownerDb);
+    batch.set(
+      doc(ownerDb, "users", OWNER_UID, "streaks", "data"),
+      { badges: [{ id: "first_step", earnedAt: "2026-06-07" }] },
+      { merge: true }
+    );
+    batch.set(
+      doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+      { badgeSummary: { earnedMap: { first_step: "2026-06-07" }, count: 1 } },
+      { merge: true }
+    );
+    await assertSucceeds(batch.commit());
   });
 });
