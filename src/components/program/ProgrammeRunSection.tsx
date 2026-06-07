@@ -1273,11 +1273,15 @@ export default function ProgrammeRunSection({
         </button>
       </div>
 
-      {/* PR-1: per-day action sheet. */}
+      {/* PR-1: per-day action sheet. scope="run" — the Run tab is sport-
+          partitioned by the Lift|Run control, so this manager shows only the
+          run block. The full whole-day (run + lift) view lives on Home, where
+          there's no sport partition. */}
       <DayActionSheet
         open={manageDate !== null}
         onClose={() => setManageDate(null)}
         dateKey={manageDate}
+        scope="run"
         profile={profile}
         programState={programState}
         claimMap={claimMap}
