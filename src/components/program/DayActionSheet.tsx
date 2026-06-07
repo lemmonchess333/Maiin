@@ -31,6 +31,7 @@
  */
 
 import { useMemo } from "react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Footprints, Dumbbell, Check, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -162,9 +163,7 @@ export default function DayActionSheet({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              Manage day
-            </p>
+            <SectionLabel>Manage day</SectionLabel>
             <p className="text-base font-semibold text-foreground mt-0.5">
               {dayLabel}
             </p>
@@ -201,9 +200,7 @@ export default function DayActionSheet({
                 <Footprints className="size-5 text-running" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Run
-                </p>
+                <SectionLabel>Run</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
                   {selectedRunTemplate?.name ?? "Run"}
                 </p>
@@ -266,9 +263,7 @@ export default function DayActionSheet({
             <>
               {/* Template swap — only enabled when startable. */}
               <label className="block">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Template
-                </span>
+                <SectionLabel as="span">Template</SectionLabel>
                 <select
                   value={run.runDay.userOverride || run.runDay.templateId}
                   onChange={(e) =>
@@ -436,9 +431,7 @@ export default function DayActionSheet({
                 <Dumbbell className="size-5 text-lifting" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Lift
-                </p>
+                <SectionLabel>Lift</SectionLabel>
                 <p className="text-lg font-extrabold leading-tight text-foreground truncate">
                   {lift.workout.dayName || "Lift"}
                 </p>

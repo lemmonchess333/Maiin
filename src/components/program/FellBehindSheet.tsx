@@ -27,6 +27,7 @@
  */
 
 import { Footprints } from "lucide-react";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 
 interface FellBehindSheetProps {
@@ -109,9 +110,7 @@ export default function FellBehindSheet({
           <Footprints className="size-5 text-running" />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Last week
-          </p>
+          <SectionLabel>Last week</SectionLabel>
           <p className="text-base font-semibold text-foreground mt-0.5">
             {prompt.realRunCount} of {prompt.weeklyTarget} runs ({percent}%)
           </p>
