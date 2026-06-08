@@ -656,7 +656,7 @@ export default function ProgrammeRunSection({
                     );
                   }
                 }}
-                className="w-full py-2 rounded-lg text-xs font-bold text-white bg-running"
+                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running"
               >
                 Log race now
               </button>
@@ -667,7 +667,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate("/settings/training");
                   }}
-                  className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
                 >
                   Set next race
                 </button>
@@ -677,7 +677,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate("/settings/training");
                   }}
-                  className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
                   Manage plan
                 </button>
@@ -702,7 +702,7 @@ export default function ProgrammeRunSection({
                 haptic();
                 navigate("/settings/training");
               }}
-              className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+              className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
             >
               Configure plan
             </button>
@@ -726,14 +726,14 @@ export default function ProgrammeRunSection({
                   haptic();
                   navigate("/settings/training");
                 }}
-                className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
               >
                 Set next race
               </button>
               <button
                 type="button"
                 onClick={handleSkipRecoveryEarly}
-                className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 Switch to structured
               </button>
@@ -757,7 +757,7 @@ export default function ProgrammeRunSection({
               <button
                 type="button"
                 onClick={handleRealign}
-                className="w-full py-2 rounded-lg text-xs font-bold text-white bg-running"
+                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running"
               >
                 Realign my plan
               </button>
@@ -768,7 +768,7 @@ export default function ProgrammeRunSection({
                   void dismissFellBehindPrompt();
                   navigate("/settings/training");
                 }}
-                className="w-full py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+                className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 My race moved →
               </button>
@@ -1050,7 +1050,7 @@ export default function ProgrammeRunSection({
                   : "/run"
               );
             }}
-            className="w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
+            className="w-full min-h-[44px] py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
           >
             <Play className="size-3.5" fill="white" />
             Start race
@@ -1108,7 +1108,7 @@ export default function ProgrammeRunSection({
                     : "/run"
                 );
               }}
-              className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-running"
+              className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg text-xs font-bold text-white bg-running"
             >
               Log it
             </button>
@@ -1118,7 +1118,7 @@ export default function ProgrammeRunSection({
                 haptic();
                 dismissRaceRecent();
               }}
-              className="flex-1 py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
+              className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
             >
               I didn't race
             </button>
@@ -1206,7 +1206,7 @@ export default function ProgrammeRunSection({
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="mt-3 w-full py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
+                  className="mt-3 w-full min-h-[44px] py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running"
                 >
                   <Play className="size-3.5" fill="white" />
                   Start free run
