@@ -290,7 +290,7 @@ function InvalidRunReview({
                 className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-center"
               />
               {!editValid && editValue !== "" && (
-                <p className="text-xs" style={{ color: "#D4637A" }}>
+                <p className="text-xs" style={{ color: THEME.running }}>
                   Distance must be between 0.05km and 100km.
                 </p>
               )}
@@ -307,7 +307,7 @@ function InvalidRunReview({
                   onClick={commitEdit}
                   disabled={!editValid}
                   className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
-                  style={{ background: "#7B72E9" }}
+                  style={{ background: THEME.lifting }}
                 >
                   Update
                 </button>
