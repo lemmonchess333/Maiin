@@ -44,10 +44,8 @@ export default function WeekPhaseRow({
 
       {phaseName && (
         <span
-          className="text-[10px] font-bold uppercase"
+          className="text-[10px] font-bold uppercase text-lifting bg-lifting/10"
           style={{
-            color: "#7B72E9",
-            backgroundColor: "rgba(123,114,233,0.1)",
             padding: "3px 8px",
             borderRadius: 6,
             letterSpacing: "0.04em",
