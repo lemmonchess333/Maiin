@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   ArrowLeft,
   ChevronDown,
@@ -774,51 +775,36 @@ export default function RunSetupModal({
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
               <SectionLabel className="mb-2">Goal</SectionLabel>
-              <div className="flex gap-2">
-                {(["none", "distance", "time", "pace"] as const).map((t) => (
-                  <button
-                    type="button"
-                    key={t}
-                    onClick={() =>
-                      updateConfig({
-                        target: {
-                          type: t,
-                          value:
-                            t === "distance"
-                              ? 5000
-                              : t === "time"
-                                ? 1800
-                                : t === "pace"
-                                  ? 330
-                                  : undefined,
-                        },
-                      })
-                    }
-                    className="flex-1 min-h-[44px] inline-flex items-center justify-center rounded-xl text-xs font-medium transition-all active:scale-[0.97]"
-                    style={
-                      config.target.type === t
-                        ? {
-                            background: "rgba(212,99,122,0.12)",
-                            color: "#D4637A",
-                            border: "1px solid rgba(212,99,122,0.30)",
-                          }
-                        : {
-                            background: "rgba(0,0,0,0.04)",
-                            color: "var(--color-muted-foreground)",
-                            border: "1px solid rgba(0,0,0,0.08)",
-                          }
-                    }
-                  >
-                    {t === "none"
-                      ? "None"
-                      : t === "distance"
-                        ? "Distance"
-                        : t === "time"
-                          ? "Time"
-                          : "Pace"}
-                  </button>
-                ))}
-              </div>
+              {/* Goal type — shared SegmentedControl (tone=running). Was a
+                  hand-rolled pill row that hardcoded the coral hex and used
+                  rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the
+                  radiogroup primitive with tokens + keyboard nav. */}
+              <SegmentedControl
+                ariaLabel="Run goal"
+                tone="running"
+                value={config.target.type}
+                onChange={(type) =>
+                  updateConfig({
+                    target: {
+                      type,
+                      value:
+                        type === "distance"
+                          ? 5000
+                          : type === "time"
+                            ? 1800
+                            : type === "pace"
+                              ? 330
+                              : undefined,
+                    },
+                  })
+                }
+                options={[
+                  { value: "none", label: "None" },
+                  { value: "distance", label: "Distance" },
+                  { value: "time", label: "Time" },
+                  { value: "pace", label: "Pace" },
+                ]}
+              />
             </div>
           )}
 
