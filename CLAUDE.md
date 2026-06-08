@@ -449,6 +449,32 @@ Constraints these primitives must keep:
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
 
+### Button variants (canonical CTA mapping)
+
+Every **CTA / action button** uses the shared `Button` primitive
+(`src/components/ui/Button.tsx`) — never a hand-rolled `<button>` with bespoke
+Tailwind. The primitive already supplies the 44px floor, focus-visible ring,
+0.97 press, loading state, and `type="button"` default, so reusing it is also
+how the "every interactive element clears 44px" invariant is satisfied. Pick
+the variant by the action's role:
+
+| Action role                 | Variant                    |
+| --------------------------- | -------------------------- |
+| Main lifting / brand CTA    | `primary`                  |
+| Main running CTA            | `sport` (coral)            |
+| Secondary action            | `secondary` or `outline`   |
+| Low-emphasis action         | `ghost`                    |
+| Destructive action          | `destructive`              |
+| Running non-critical action | `sport-tinted` (coral 10%) |
+
+Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
+mandate to wrap every `<button>` element: pressable cards, list/table rows,
+day-cells, chips, and icon taps are legitimately their own controls (use
+`IconButton` for icon taps; `SegmentedControl` for single-select pill groups).
+Unlike the hex guardrail, "use `Button`" can't be lint-enforced (a linter can't
+tell a CTA from a pressable card), so this is a per-PR convention: when adding
+or touching a CTA button, route it through `Button` with the variant above.
+
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
