@@ -87,7 +87,7 @@
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
-    "lint-staged": "^17.0.5",
+    "lint-staged": "^17.0.7",
     "prettier": "^3.8.3",
     "react-doctor": "^0.2.16",
     "tailwindcss": "^4.3.0",
