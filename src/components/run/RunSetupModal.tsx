@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { THEME } from "@/lib/theme";
 import {
   ArrowLeft,
   ChevronDown,
@@ -848,7 +849,7 @@ export default function RunSetupModal({
                                 active
                                   ? {
                                       background: "rgba(212,99,122,0.12)",
-                                      color: "#D4637A",
+                                      color: THEME.running,
                                       border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
@@ -875,7 +876,7 @@ export default function RunSetupModal({
                             isCustom
                               ? {
                                   background: "rgba(212,99,122,0.12)",
-                                  color: "#D4637A",
+                                  color: THEME.running,
                                   border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
@@ -963,7 +964,7 @@ export default function RunSetupModal({
                                 active
                                   ? {
                                       background: "rgba(212,99,122,0.12)",
-                                      color: "#D4637A",
+                                      color: THEME.running,
                                       border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
@@ -990,7 +991,7 @@ export default function RunSetupModal({
                             isCustom
                               ? {
                                   background: "rgba(212,99,122,0.12)",
-                                  color: "#D4637A",
+                                  color: THEME.running,
                                   border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
@@ -1073,7 +1074,7 @@ export default function RunSetupModal({
                                 active
                                   ? {
                                       background: "rgba(212,99,122,0.12)",
-                                      color: "#D4637A",
+                                      color: THEME.running,
                                       border: "1px solid rgba(212,99,122,0.30)",
                                     }
                                   : {
@@ -1100,7 +1101,7 @@ export default function RunSetupModal({
                             isCustom
                               ? {
                                   background: "rgba(212,99,122,0.12)",
-                                  color: "#D4637A",
+                                  color: THEME.running,
                                   border: "1px solid rgba(212,99,122,0.30)",
                                 }
                               : {
@@ -1157,7 +1158,7 @@ export default function RunSetupModal({
               {targetError && (
                 <p
                   className="text-xs mt-1"
-                  style={{ color: "#D4637A" }}
+                  style={{ color: THEME.running }}
                   role="alert"
                 >
                   {targetError}
