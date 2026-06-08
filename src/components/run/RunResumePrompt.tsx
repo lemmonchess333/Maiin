@@ -96,7 +96,7 @@ export default function RunResumePrompt({
             </p>
             <p
               className="font-mono tabular-nums text-xl font-bold"
-              style={{ color: "#FFFFFF" }}
+              style={{ color: "white" }}
             >
               {formatElapsed(accumulatedSeconds)}
             </p>
@@ -110,7 +110,7 @@ export default function RunResumePrompt({
             </p>
             <p
               className="font-mono tabular-nums text-xl font-bold"
-              style={{ color: "#FFFFFF" }}
+              style={{ color: "white" }}
             >
               {km} km
             </p>
@@ -130,7 +130,7 @@ export default function RunResumePrompt({
             type="button"
             onClick={onStartNew}
             className="w-full py-3 rounded-2xl font-medium text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{ background: "rgba(255,255,255,0.08)", color: "#FFFFFF" }}
+            style={{ background: "rgba(255,255,255,0.08)", color: "white" }}
           >
             <Plus size={16} aria-hidden="true" />
             Start new run
