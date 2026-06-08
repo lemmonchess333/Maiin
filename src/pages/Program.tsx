@@ -12,12 +12,11 @@ import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
+import SessionCommandCard from "@/components/program/SessionCommandCard";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
-import { THEME } from "@/lib/theme";
 import {
-  Check,
   Dumbbell,
   Settings2,
   CalendarDays,
@@ -25,7 +24,6 @@ import {
   MoreHorizontal,
   Plus,
   FastForward,
-  Play,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -886,85 +884,63 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 >
                   {selectedWorkout && (
                     <div className="space-y-3">
-                      {/* ── Session Header ── */}
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="size-9 rounded-[10px] flex items-center justify-center shrink-0"
-                          style={{
-                            backgroundColor:
-                              status === "completed" || status === "skipped"
-                                ? "rgba(77,184,114,0.1)"
-                                : status === "today"
-                                  ? "rgba(123,114,233,0.1)"
-                                  : "hsl(var(--muted))",
-                          }}
-                        >
-                          {status === "completed" ? (
-                            <Check
-                              className="size-[18px]"
-                              style={{ color: "#4DB872" }}
-                              strokeWidth={2.5}
-                            />
-                          ) : (
-                            <Dumbbell
-                              className={`size-[18px] ${status === "today" ? "" : "text-muted-foreground"}`}
-                              style={
-                                status === "today"
-                                  ? { color: "#7B72E9" }
-                                  : undefined
+                      {/* ── Session hero — shared command-card chrome
+                            (SessionCommandCard sport="lift"), mirroring the Run
+                            tab so both sports get the same "what's next"
+                            moment. Cursor-aware eyebrow; the primary "Begin
+                            Workout" CTA renders only on the startable cursor
+                            session (terminal/upcoming days show status, no
+                            button). The editable exercise list stays its own
+                            body below. Replaces the old hand-rolled header that
+                            hardcoded the lift purple / success green. */}
+                      <SessionCommandCard
+                        sport="lift"
+                        eyebrow={`${
+                          status === "completed"
+                            ? "Completed"
+                            : status === "skipped"
+                              ? "Skipped"
+                              : status === "today"
+                                ? "Up next"
+                                : "Upcoming"
+                        } · Day ${idx + 1}`}
+                        title={selectedWorkout.dayName}
+                        description={muscleGroups || undefined}
+                        meta={[
+                          `${exerciseCount} exercises`,
+                          `~${estimatedMinutes} min`,
+                        ]}
+                        primaryActionLabel={
+                          status === "today" && !selectedWorkout.completed
+                            ? "Begin Workout"
+                            : undefined
+                        }
+                        onPrimaryAction={
+                          status === "today" && !selectedWorkout.completed
+                            ? () => {
+                                haptic("light");
+                                setSessionDayIndex(idx);
                               }
-                            />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-lg font-bold truncate text-foreground">
-                              Day {idx + 1} · {selectedWorkout.dayName}
-                            </p>
-                            {status === "completed" && (
-                              <span
-                                className="text-[11px] font-semibold shrink-0"
-                                style={{
-                                  color: "#4DB872",
-                                  backgroundColor: "rgba(77,184,114,0.1)",
-                                  padding: "2px 8px",
-                                  borderRadius: 6,
-                                }}
-                              >
-                                Done
-                              </span>
-                            )}
-                            {status === "skipped" && (
-                              <span
-                                className="text-[11px] font-semibold shrink-0 text-muted-foreground bg-muted"
-                                style={{ padding: "2px 8px", borderRadius: 6 }}
-                              >
-                                Skipped
-                              </span>
-                            )}
-                            {status === "today" && (
-                              <span
-                                className="text-[11px] font-semibold shrink-0"
-                                style={{
-                                  color: "#7B72E9",
-                                  backgroundColor: "rgba(123,114,233,0.1)",
-                                  padding: "2px 8px",
-                                  borderRadius: 6,
-                                }}
-                              >
-                                Today
-                              </span>
-                            )}
-                          </div>
-                          <p
-                            className="text-[13px] text-muted-foreground"
-                            style={{ marginTop: 2 }}
+                            : undefined
+                        }
+                      />
+
+                      {/* Secondary action: skip the cursor session — mirrors
+                          the Run card's "Start free run instead" link. */}
+                      {status === "today" && !selectedWorkout.completed && (
+                        <div className="flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSkipTargetDay(idx);
+                              setShowSkipConfirm(true);
+                            }}
+                            className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                           >
-                            {exerciseCount} exercises · ~{estimatedMinutes} min
-                            {muscleGroups ? ` · ${muscleGroups}` : ""}
-                          </p>
+                            Skip Session
+                          </button>
                         </div>
-                      </div>
+                      )}
 
                       {/* ── Exercise Cards ── */}
                       {reorderMode ? (
@@ -1209,70 +1185,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   )}
                 </motion.div>
               </AnimatePresence>
-            </div>
-
-            {/* ── CTA Zone ── */}
-            <div className="mt-4">
-              {status === "today" && !selectedWorkout?.completed ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptic("light");
-                      setSessionDayIndex(idx);
-                    }}
-                    className="w-full py-3 rounded-xl text-white text-sm font-semibold active:scale-[0.97] flex items-center justify-center gap-2"
-                    style={{ background: THEME.gradient.brand }}
-                  >
-                    <Play className="size-4" /> Begin Workout
-                  </button>
-                  <div className="flex items-center justify-center mt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSkipTargetDay(idx);
-                        setShowSkipConfirm(true);
-                      }}
-                      className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-                    >
-                      Skip Session
-                    </button>
-                  </div>
-                </>
-              ) : status === "completed" ? (
-                <div
-                  className="flex items-center justify-center gap-2 py-3.5 rounded-[14px]"
-                  style={{
-                    backgroundColor: "rgba(77,184,114,0.06)",
-                    border: "1px solid rgba(77,184,114,0.12)",
-                  }}
-                >
-                  <Check
-                    className="size-4"
-                    style={{ color: "#4DB872" }}
-                    strokeWidth={2.5}
-                  />
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: "#4DB872" }}
-                  >
-                    Completed · ~{estimatedMinutes} min ·{" "}
-                    {formatVolume(totalVolume)}
-                  </span>
-                </div>
-              ) : status === "skipped" ? (
-                <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Skipped
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center py-3.5 rounded-[14px] bg-muted">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Scheduled
-                  </span>
-                </div>
-              )}
             </div>
           </TrackProgrammeSectionView>
         </>
