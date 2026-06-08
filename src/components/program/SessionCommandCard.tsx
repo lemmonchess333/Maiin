@@ -27,8 +27,11 @@ interface SessionCommandCardProps {
   description?: string;
   meta: string[];
   sport: "run" | "lift";
-  primaryActionLabel: string;
-  onPrimaryAction: () => void;
+  /** Optional primary action. Omit for terminal / non-startable sessions
+   *  (e.g. a completed or skipped lift day) — the card then shows the
+   *  eyebrow + title + meta with no Start button. Run always passes both. */
+  primaryActionLabel?: string;
+  onPrimaryAction?: () => void;
   onManage?: () => void;
 }
 
@@ -106,15 +109,17 @@ export default function SessionCommandCard({
         </div>
       )}
 
-      <Button
-        variant={sport === "run" ? "sport" : "primary"}
-        size="lg"
-        fullWidth
-        leftIcon={<Play className="size-4" fill="currentColor" />}
-        onClick={onPrimaryAction}
-      >
-        {primaryActionLabel}
-      </Button>
+      {primaryActionLabel && onPrimaryAction && (
+        <Button
+          variant={sport === "run" ? "sport" : "primary"}
+          size="lg"
+          fullWidth
+          leftIcon={<Play className="size-4" fill="currentColor" />}
+          onClick={onPrimaryAction}
+        >
+          {primaryActionLabel}
+        </Button>
+      )}
     </section>
   );
 }
