@@ -306,7 +306,7 @@ export default function FoodHeroCard({
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.3 }}
                   className="text-micro uppercase tracking-wider font-semibold"
-                  style={{ color: "#4DB872" }}
+                  style={{ color: THEME.success }}
                 >
                   {celebrationCaptionText}
                 </motion.p>
