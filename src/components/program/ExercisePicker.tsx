@@ -385,7 +385,7 @@ export default function ExercisePicker({
                     onClick={handleAddSelected}
                     className="w-full py-3.5 text-white font-semibold text-[15px] flex items-center justify-center gap-2"
                     style={{
-                      backgroundColor: "#7B72E9",
+                      backgroundColor: THEME.lifting,
                       borderRadius: 14,
                       boxShadow: "0 6px 24px rgba(123,114,233,0.3)",
                     }}
