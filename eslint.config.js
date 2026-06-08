@@ -68,18 +68,21 @@ export default defineConfig([
     },
   },
   {
-    // Hex-colour guardrail BASELINE (burn-down list). These files have
-    // pre-existing hardcoded hex — sport/semantic colours that should become
-    // THEME tokens (most of them), plus genuinely-fixed artwork (ShareCard's
-    // generated share image, PRBadge's gold). Grandfathered so the guardrail
-    // can land now without a risky 29-site swap; tokenize a file's hex when
-    // you next touch it, then delete it from this list. The `text-muted`
-    // guard stays enforced — only the hex selectors are relaxed here.
+    // Hex-colour guardrail EXEMPTIONS. The original burn-down list has been
+    // tokenized; these four remain by design, not as TODOs, because the hex
+    // has no faithful THEME/Tailwind token home:
+    //   - ShareCard      generated share IMAGE — fixed colours for export,
+    //                    must not shift with theme.
+    //   - PRBadge        gold badge ARTWORK (#facc15) — no gold token.
+    //   - PRCard         driven by a configurable `accentColor` PROP; the hex
+    //                    are component-config defaults, not stray drift.
+    //   - ActivityCard   the "liked" amber (#F59E0B) has no semantic token
+    //                    (closest is the nutrition orange — wrong meaning).
+    // The `text-muted` guard stays enforced; only the hex selectors are
+    // relaxed for these files.
     files: [
       "src/components/analytics/PRBadge.tsx",
       "src/components/analytics/PRCard.tsx",
-      "src/components/run/RunBottomSheet.tsx",
-      "src/components/run/RunResumePrompt.tsx",
       "src/components/social/ActivityCard.tsx",
       "src/components/social/ShareCard.tsx",
     ],
