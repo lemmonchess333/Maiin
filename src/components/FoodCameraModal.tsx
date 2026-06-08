@@ -363,7 +363,10 @@ export default function FoodCameraModal({
               border: "1px solid rgba(217,136,78,0.25)",
             }}
           >
-            <CameraOff className="size-7" style={{ color: "#D9884E" }} />
+            <CameraOff
+              className="size-7"
+              style={{ color: THEME.semantic.nutrition }}
+            />
           </div>
           <div className="space-y-2 max-w-[320px]">
             <p className="text-base font-semibold text-foreground">
@@ -389,7 +392,7 @@ export default function FoodCameraModal({
                 fileInputRef.current?.click();
               }}
               className="w-full h-12 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2"
-              style={{ background: "#D9884E" }}
+              style={{ background: THEME.semantic.nutrition }}
             >
               <ImageIcon className="size-4" />
               Upload a photo instead
@@ -583,7 +586,7 @@ export default function FoodCameraModal({
                   "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
                   disableShutter && "opacity-50"
                 )}
-                style={{ borderColor: "#FF6B4A" }}
+                style={{ borderColor: THEME.food.scan }}
                 aria-label="Capture"
               >
                 <div className="size-[60px] rounded-full bg-white" />
