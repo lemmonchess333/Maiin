@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { THEME } from "@/lib/theme";
 import { doc, Timestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
@@ -252,7 +253,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               style={
                 !saved
                   ? {
-                      backgroundColor: "#7B72E9",
+                      backgroundColor: THEME.lifting,
                       boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
                     }
                   : undefined

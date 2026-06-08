@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, Zap } from "lucide-react";
+import { THEME } from "@/lib/theme";
 import { useAuth } from "../../lib/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -129,7 +130,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
               className="size-12 rounded-2xl flex items-center justify-center mx-auto"
               style={{ background: "rgba(123,114,233,0.12)" }}
             >
-              <Zap size={24} style={{ color: "#7B72E9" }} />
+              <Zap size={24} style={{ color: THEME.lifting }} />
             </div>
             <p className="text-sm font-medium text-foreground">
               No activity this week

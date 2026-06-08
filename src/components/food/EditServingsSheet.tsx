@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -406,7 +407,12 @@ function EditServingsSheet({
               {countDelta !== 0 && (
                 <span
                   className="ml-2"
-                  style={{ color: countDelta > 0 ? "#D9884E" : "#8E8E93" }}
+                  style={{
+                    color:
+                      countDelta > 0
+                        ? THEME.semantic.nutrition
+                        : THEME.text.muted,
+                  }}
                 >
                   ({countDelta > 0 ? "+" : ""}
                   {countDelta}{" "}
