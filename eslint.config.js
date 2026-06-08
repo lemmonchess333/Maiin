@@ -76,18 +76,12 @@ export default defineConfig([
     // you next touch it, then delete it from this list. The `text-muted`
     // guard stays enforced — only the hex selectors are relaxed here.
     files: [
-      "src/components/FoodCameraModal.tsx",
-      "src/components/ManualFoodLogger.tsx",
       "src/components/analytics/PRBadge.tsx",
       "src/components/analytics/PRCard.tsx",
-      "src/components/food/EditServingsSheet.tsx",
-      "src/components/program/ExercisePicker.tsx",
       "src/components/run/RunBottomSheet.tsx",
       "src/components/run/RunResumePrompt.tsx",
       "src/components/social/ActivityCard.tsx",
-      "src/components/social/FullLeaderboard.tsx",
       "src/components/social/ShareCard.tsx",
-      "src/pages/RunSummary.tsx",
     ],
     rules: {
       "no-restricted-syntax": [
