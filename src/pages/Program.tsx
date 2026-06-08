@@ -13,6 +13,7 @@ import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
+import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
@@ -1141,8 +1142,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         <div
                           className="rounded-xl p-3"
                           style={{
-                            backgroundColor: "rgba(77,184,114,0.05)",
-                            border: "1px solid rgba(77,184,114,0.15)",
+                            // Brand success green via the THEME token (=#4DB872)
+                            // + hex alpha, not a raw rgb literal. Faithful swap:
+                            // the Tailwind `--success` token is a different,
+                            // darker green, so bg-success/5 would shift the
+                            // colour — THEME.success keeps it exact.
+                            backgroundColor: `${THEME.success}0D`,
+                            border: `1px solid ${THEME.success}26`,
                           }}
                         >
                           <div className="flex justify-around items-center">
