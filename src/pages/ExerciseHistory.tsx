@@ -441,29 +441,20 @@ export default function ExerciseHistory() {
             </div>
           </div>
 
-          {/* ── Time range pills ────────────────────────────────────── */}
-          <div
-            className="flex gap-1.5 overflow-x-auto"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {RANGE_ORDER.map((r) => (
-              <button
-                type="button"
-                key={r}
-                onClick={() => {
-                  haptic("light");
-                  setTimeRange(r);
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0 ${
-                  timeRange === r
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
+          {/* ── Time range — shared SegmentedControl (wrap layout). Was a
+                row of sub-44px scroll pills (touch-target gap + no a11y); now
+                the radiogroup primitive with proper targets + keyboard nav,
+                matching the Progress/Form switch above. */}
+          <SegmentedControl
+            ariaLabel="Chart time range"
+            layout="wrap"
+            value={timeRange}
+            onChange={(value) => {
+              haptic("light");
+              setTimeRange(value);
+            }}
+            options={RANGE_ORDER.map((r) => ({ value: r, label: r }))}
+          />
 
           {/* ── Chart with metric toggle ────────────────────────────── */}
           {hasOnlyOneSession ? (
