@@ -6,6 +6,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
 import { localDateString } from "@/lib/dateHelpers";
 
@@ -370,27 +371,22 @@ export default function ExerciseHistory() {
         </div>
       </div>
 
-      {/* ── Tab toggle — Progress / Form ─────────────────────────── */}
-      <div className="flex gap-1 bg-muted rounded-full p-0.5">
-        {(["progress", "form"] as const).map((t) => (
-          <button
-            type="button"
-            key={t}
-            onClick={() => {
-              haptic("light");
-              setTab(t);
-            }}
-            className={`flex-1 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              tab === t ? "bg-card text-foreground" : "text-muted-foreground"
-            }`}
-            style={
-              tab === t ? { boxShadow: "var(--ds-shadow-card)" } : undefined
-            }
-          >
-            {t === "progress" ? "Progress" : "Form"}
-          </button>
-        ))}
-      </div>
+      {/* ── Tab toggle — Progress / Form. Shared SegmentedControl
+            primitive (replaces a hand-rolled pill row that had no a11y —
+            now a full WAI-ARIA radiogroup with roving tabindex + keyboard,
+            and the same switch treatment as the Programme tabs). */}
+      <SegmentedControl
+        ariaLabel="Exercise view"
+        value={tab}
+        onChange={(value) => {
+          haptic("light");
+          setTab(value);
+        }}
+        options={[
+          { value: "progress", label: "Progress" },
+          { value: "form", label: "Form" },
+        ]}
+      />
 
       {tab === "form" ? (
         <div className="rounded-2xl bg-card p-4 card-shadow">
