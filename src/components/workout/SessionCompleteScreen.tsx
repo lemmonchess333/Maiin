@@ -4,6 +4,7 @@ import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
+import { Button } from "@/components/ui/Button";
 import ShareCard from "@/components/social/ShareCard";
 import { generateAndShare } from "@/lib/shareCardGenerator";
 import { getVolumeComparison } from "@/lib/funComparisons";
@@ -376,21 +377,24 @@ export default function SessionCompleteScreen({
                     prsHit: prCount,
                   }}
                 />
+                {/* Share-as buttons → Button primitive (outline). Were
+                    hand-rolled sub-44px buttons; now consistent focus ring,
+                    press feedback and 44px touch targets. */}
                 <div className="flex gap-3">
                   {(["dark", "light", "transparent"] as const).map((theme) => (
-                    <button
-                      type="button"
+                    <Button
                       key={theme}
+                      variant="outline"
+                      className="flex-1 capitalize"
                       onClick={() => {
                         const node = shareRef.current;
                         if (node) {
                           generateAndShare(node, dayName, theme);
                         }
                       }}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-medium capitalize border border-border/50"
                     >
                       {theme}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
