@@ -544,7 +544,7 @@ export default function RunBottomSheet({
                       style={{
                         width: 22,
                         height: 22,
-                        background: "#EF4444",
+                        background: "hsl(var(--destructive))",
                         borderRadius: 5,
                       }}
                     />
@@ -782,7 +782,7 @@ export default function RunBottomSheet({
                   onDiscard();
                 }}
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: "#EF4444" }}
+                style={{ background: "hsl(var(--destructive))" }}
               >
                 Discard Run
               </button>
@@ -818,7 +818,7 @@ export default function RunBottomSheet({
                   onStop();
                 }}
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm"
-                style={{ background: "#EF4444" }}
+                style={{ background: "hsl(var(--destructive))" }}
               >
                 End Run
               </button>
