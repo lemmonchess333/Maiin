@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { activeTabForPath } from "@/lib/activeTab";
 import {
   Home,
   BarChart3,
@@ -45,6 +46,10 @@ const tabs: { to: string; icon: typeof Home; label: string }[] = [
 export default function Layout() {
   const location = useLocation();
   const hideNav = location.pathname === "/run";
+  // Single source of truth for the active tab — drives the pill below instead
+  // of each NavLink's own isActive (which let the shared layoutId pill linger
+  // on non-tab routes like /upgrade and /run/:id). null = no tab active.
+  const activeTab = activeTabForPath(location.pathname);
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
@@ -196,6 +201,7 @@ export default function Layout() {
               {tabs.map((tab) => {
                 const hasBadge = tab.to === "/social" && unreadCount > 0;
                 const Icon = tab.icon;
+                const isActive = activeTab === tab.to;
                 return (
                   <NavLink
                     key={tab.to}
@@ -233,19 +239,20 @@ export default function Layout() {
                         }
                       }
                     }}
-                    className={({ isActive }) =>
-                      cn(
-                        // `min-w-0` lets flex-1 actually shrink the cells on
-                        // iPhone SE width so the longest label ("Analytics")
-                        // doesn't push siblings off-screen.
-                        "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
-                        isActive
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
-                      )
-                    }
+                    className={cn(
+                      // `min-w-0` lets flex-1 actually shrink the cells on
+                      // iPhone SE width so the longest label ("Analytics")
+                      // doesn't push siblings off-screen. Active state comes
+                      // from activeTabForPath (not NavLink's isActive) so the
+                      // pill never lingers on non-tab routes.
+                      "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
+                      isActive
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
+                    )}
+                    aria-current={isActive ? "page" : undefined}
                   >
-                    {({ isActive }) => (
+                    {
                       <>
                         {/* Active-destination indicator: a single shared pill
                             (layoutId) that GLIDES + morphs between tabs with a
@@ -316,7 +323,7 @@ export default function Layout() {
                           {tab.label}
                         </span>
                       </>
-                    )}
+                    }
                   </NavLink>
                 );
               })}

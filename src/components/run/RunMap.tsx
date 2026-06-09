@@ -279,7 +279,13 @@ export default function RunMap({
       className={`relative w-full ${height} ${className}`}
     >
       {tilesUnavailable && (
-        <div className="absolute inset-x-2 top-2 z-10 rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
+        // Centred, width-constrained pill rather than a full-width top bar.
+        // The old `inset-x-2 top-2` strip spanned the whole top edge and
+        // painted over the top-left back button on RunDetail (audit #3c).
+        // max-w reserves ~8rem (2× a top-4 size-11 corner control) so the
+        // pill can never sit under a corner button in any consumer; in the
+        // active-run map it lines up with the existing centred GPS pills.
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 w-max max-w-[calc(100%-8rem)] rounded-lg bg-black/70 px-3 py-2 text-center text-xs text-white/90 backdrop-blur">
           Map can&apos;t load — you&apos;re offline. Your route is still being
           recorded.
         </div>
