@@ -45,7 +45,7 @@ export default function ScanQuotaIndicator({
           onClick={onUpgrade}
           className="text-xs text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
-          Out of scans — upgrade for unlimited (resets {resetStr})
+          Out of scans · free scans reset {resetStr}
         </button>
       </div>
     );
