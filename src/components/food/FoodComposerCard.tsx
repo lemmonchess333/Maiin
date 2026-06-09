@@ -1,5 +1,5 @@
 import type { Ref, RefObject } from "react";
-import { PenLine, SendHorizontal, X } from "lucide-react";
+import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -8,7 +8,6 @@ import FoodSuggestionsDropdown, {
   type OFFResult,
   type PantrySuggestion,
 } from "./FoodSuggestionsDropdown";
-import ScanMealButton from "./ScanMealButton";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
@@ -71,9 +70,9 @@ interface FoodComposerCardProps {
 }
 
 /**
- * The Food page's input surface: NL textarea (with send button +
- * suggestions dropdown), "Add to" meal pills, full-width Scan CTA
- * with quota footnote, and the secondary "Log manually" link.
+ * The Food page's input surface: NL textarea (with scan icon, send
+ * button + suggestions dropdown), "Add to" meal pills, quota
+ * footnote, and the secondary "Log manually" link.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -165,7 +164,9 @@ function FoodComposerCard({
           aria-label="What did you eat"
           rows={1}
           maxLength={500}
-          className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
+          /* pr-20: room for the always-present scan icon plus the
+             contextual send / cancel control beside it. */
+          className="w-full pl-10 pr-20 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
           style={{
             borderColor: inputFocused
               ? "var(--ds-color-input-border-focus-nutrition)"
@@ -176,37 +177,72 @@ function FoodComposerCard({
               : "var(--ds-shadow-input-rest)",
           }}
         />
-        {nlInput.trim() && (
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+          {nlInput.trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                onParse();
+              }}
+              disabled={nlParsing}
+              aria-label="Log meal"
+              className={cn(
+                "p-1.5 rounded-lg transition-all active:scale-90",
+                nlParsing ? "opacity-50" : ""
+              )}
+              style={{ color: THEME.semantic.nutrition }}
+            >
+              <SendHorizontal className="size-5" />
+            </button>
+          )}
+          {!nlInput.trim() && targetMeal && (
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTargetMeal(null);
+              }}
+              aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
+              className="size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+          {/* Scan affordance — a camera icon IN the input row (wave2 A),
+              replacing the old full-width gradient ScanMealButton card
+              section. The coral scan identity travels with the icon
+              (DESIGN_GUIDE 3e: #FF6B4A = scan affordance only). Locked
+              (quota exhausted / Pro-only) keeps the calm receded
+              philosophy: dimmed icon + small lock badge, no glow — tap
+              opens the upgrade path via the unchanged
+              useScanButtonOverrides contract. */}
           <button
             type="button"
             onClick={() => {
               haptic();
-              onParse();
+              scanOverrides.onClick();
             }}
-            disabled={nlParsing}
-            aria-label="Log meal"
-            className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90",
-              nlParsing ? "opacity-50" : ""
+            aria-label={
+              scanOverrides.locked ? "Unlock unlimited scans" : "Scan your meal"
+            }
+            className="relative size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-transform shrink-0"
+            style={{ color: THEME.food.scan }}
+          >
+            <Camera
+              className={cn("size-5", scanOverrides.locked && "opacity-60")}
+              strokeWidth={2}
+            />
+            {scanOverrides.locked && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 right-1.5 inline-flex items-center justify-center size-3.5 rounded-full bg-card"
+              >
+                <Lock className="size-2.5" strokeWidth={2.5} />
+              </span>
             )}
-            style={{ color: THEME.semantic.nutrition }}
-          >
-            <SendHorizontal className="size-5" />
           </button>
-        )}
-        {!nlInput.trim() && targetMeal && (
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTargetMeal(null);
-            }}
-            aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-            className="absolute right-2 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
+        </div>
         {showSuggestions && (
           <FoodSuggestionsDropdown
             ref={suggestionsRef}
@@ -265,13 +301,6 @@ function FoodComposerCard({
         })}
       </div>
       <div className="mt-3">
-        <ScanMealButton
-          onClick={() => {
-            haptic();
-            scanOverrides.onClick();
-          }}
-          locked={scanOverrides.locked}
-        />
         {!scanUsage.isUnlimited && !scanUsage.loading && (
           <div className="mt-2">
             <ScanQuotaIndicator
