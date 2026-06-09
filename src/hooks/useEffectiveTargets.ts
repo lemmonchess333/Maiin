@@ -13,6 +13,7 @@ import { localDateString } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
+import { classifyDayIntensity, type DayIntensity } from "@/lib/dayIntensity";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -82,10 +83,13 @@ export interface EffectiveTargets {
   protein: number;
   carbs: number;
   fat: number;
-  /** Human-readable annotation (e.g. "Run day — extra carbs for fuel"). */
+  /** Human-readable annotation (e.g. "Hard day — carbs up, fat down"). */
   annotation: string;
   /** Structured caption for the Food hero card. Null on rest days. */
   caption: DailyTargetsCaption | null;
+  /** The cut is too aggressive to fit bodyweight protein + essential fat —
+   *  protein was capped to keep the macro sum valid. Surface a warning. */
+  targetTooAggressive: boolean;
 }
 
 // ── Subscription window ──────────────────────────────────────────────────
@@ -114,6 +118,7 @@ interface PlannedTargets {
   annotation: string;
   caption: DailyTargetsCaption | null;
   finalTarget: number;
+  aggressive: boolean;
 }
 
 /**
@@ -135,7 +140,8 @@ function getDayTypeForDate(date: Date, schedule: ScheduleDay[]): DayType {
 function computePlannedTargets(
   profile: UserProfile | null,
   date: Date,
-  program?: ProgramState
+  program: ProgramState | undefined,
+  intensity: DayIntensity
 ): PlannedTargets {
   const schedule =
     profile?.weekSchedule && profile.weekSchedule.length === 7
@@ -160,10 +166,11 @@ function computePlannedTargets(
       annotation: "",
       caption: buildCaption(dayType, 0),
       finalTarget: baseTarget,
+      aggressive: false,
     };
   }
 
-  const adjusted = getAdjustedTargets(profile, dayType, program);
+  const adjusted = getAdjustedTargets(profile, dayType, program, intensity);
 
   return {
     baseTarget,
@@ -178,6 +185,7 @@ function computePlannedTargets(
     // Flat calories. adjusted.calories === baseTarget by construction; we use
     // baseTarget directly so the no-eat-back invariant is explicit.
     finalTarget: baseTarget,
+    aggressive: adjusted.aggressive,
   };
 }
 
@@ -312,10 +320,24 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     const programForNutrition: ProgramState | undefined = program
       ? { ...program, primaryGoal: program.primaryGoal ?? profile?.primaryGoal }
       : undefined;
+    // Day-load intensity drives the macro fast-loop. Use the REAL weekSchedule
+    // (not a generated fallback) so a planless user (FREE_RUN) classifies REST
+    // every day instead of fabricated training. Computed once and shared by the
+    // planned + learned-TDEE macro paths. runDays are joined by local date.
+    const realWeekSchedule =
+      profile?.weekSchedule && profile.weekSchedule.length === 7
+        ? profile.weekSchedule
+        : undefined;
+    const intensity = classifyDayIntensity({
+      date: targetDate,
+      program: programForNutrition,
+      weekSchedule: realWeekSchedule,
+    });
     const planned = computePlannedTargets(
       profile,
       targetDate,
-      programForNutrition
+      programForNutrition,
+      intensity
     );
 
     // Burn is DISPLAY ONLY (Nutr1) — it never feeds finalTarget. Compute it
@@ -349,6 +371,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       carbs: planned.carbs,
       fat: planned.fat,
     };
+    let aggressive = planned.aggressive;
     if (
       profile &&
       adaptiveSource === "learned" &&
@@ -358,11 +381,13 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       const m = getAdjustedTargets(
         { ...profile, targetCalories: adaptiveValue },
         planned.dayType,
-        programForNutrition
+        programForNutrition,
+        intensity
       );
       protein = m.protein;
       carbs = m.carbs;
       fat = m.fat;
+      aggressive = m.aggressive;
     }
 
     return {
@@ -383,6 +408,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       fat,
       annotation: planned.annotation,
       caption: planned.caption,
+      targetTooAggressive: aggressive,
     };
   }, [
     profile,

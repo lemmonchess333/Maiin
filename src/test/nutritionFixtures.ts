@@ -19,6 +19,23 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
+import { localDateString } from "@/lib/dateHelpers";
+
+/**
+ * Reference week (Sunday 2025-06-01, LOCAL). Scheduled-run dates are anchored
+ * here so the dayIntensity classifier — which joins runDays on local date —
+ * can be tested deterministically. Tests pass `fixtureDateFor(dayIndex)` as
+ * the classification date.
+ */
+export const FIXTURE_SUNDAY = new Date(2025, 5, 1); // Sun Jun 1 2025, local
+export function fixtureDateFor(dayIndex: number): Date {
+  const d = new Date(FIXTURE_SUNDAY);
+  d.setDate(d.getDate() + dayIndex);
+  return d;
+}
+export const fixtureKeyDay = (dayIndex: number) =>
+  localDateString(fixtureDateFor(dayIndex));
+const fixtureKey = fixtureKeyDay;
 
 export interface NutritionFixture {
   profile: UserProfile;
@@ -118,11 +135,18 @@ function schedule(types: Array<ScheduleDay["type"]>): ScheduleDay[] {
 export function RUN_ONLY(
   programOverrides: Partial<ProgramState> = {}
 ): NutritionFixture {
-  const runDays: ScheduledRunDay[] = [1, 2, 4, 6].map((dayIndex, i) => ({
+  // Mix of easy + a long (HARD) run so the classifier can be driven purely by
+  // run type: easy on Mon/Tue/Sat, a long run on Thu.
+  const runDays: ScheduledRunDay[] = [
+    { dayIndex: 1, type: "easy", templateId: "easy_30" },
+    { dayIndex: 2, type: "easy", templateId: "easy_30" },
+    { dayIndex: 4, type: "long", templateId: "long_90" },
+    { dayIndex: 6, type: "easy", templateId: "easy_30" },
+  ].map((rd, i) => ({
     id: `run-${i}`,
-    dayIndex,
-    templateId: "easy_30",
-    type: "easy",
+    weekKey: localDateString(FIXTURE_SUNDAY),
+    date: fixtureKey(rd.dayIndex),
+    ...rd,
   }));
   return {
     profile: makeProfile({
@@ -189,11 +213,20 @@ export function BOTH(
   programOverrides: Partial<ProgramState> = {}
 ): NutritionFixture {
   const runDays: ScheduledRunDay[] = [
-    { id: "run-easy", dayIndex: 2, templateId: "easy_30", type: "easy" },
-    // hard (long) run forced onto a lift day → clashes flag set
+    {
+      id: "run-easy",
+      dayIndex: 2,
+      date: fixtureKey(2),
+      templateId: "easy_30",
+      type: "easy",
+    },
+    // hard (long) run forced onto dayIndex 3 — a LIFT weekday (non-run). The
+    // classifier must still read this as HARD from runDays, never letting the
+    // weekSchedule "lift" downgrade it.
     {
       id: "run-long",
-      dayIndex: 1,
+      dayIndex: 3,
+      date: fixtureKey(3),
       templateId: "long_90",
       type: "long",
       clashesWithLift: true,
