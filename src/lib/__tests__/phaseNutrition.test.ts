@@ -384,5 +384,34 @@ describe("getAdjustedTargets", () => {
       expect(result.carbs).toBe(0);
       expect(result.carbs).toBeGreaterThanOrEqual(0);
     });
+
+    // The ring shows `finalTarget`; the hook derives the macro split by
+    // feeding finalTarget in as targetCalories. This pins the engine half of
+    // that contract: macros reconcile to the EXACT target whether or not a
+    // calorie bonus is layered on, with carbs absorbing the whole bonus while
+    // protein (bodyweight) and fat (floor/fraction) hold steady.
+    it("reconciles to the exact target with no bonus AND with a +400 bonus", () => {
+      const base = makeProfile({
+        weightKg: 75,
+        targetCalories: 2000,
+        targetFat: 60,
+      });
+
+      const noBonus = getAdjustedTargets(base, "both");
+      expect(reconciles(noBonus)).toBe(true);
+      expect(noBonus.calories).toBe(2000);
+
+      // A +400 bonus is modelled by raising targetCalories (exactly what the
+      // hook does when finalTarget > base). Carbs must absorb the full +400.
+      const bonus = getAdjustedTargets(
+        { ...base, targetCalories: 2400 },
+        "both"
+      );
+      expect(reconciles(bonus)).toBe(true);
+      expect(bonus.calories).toBe(2400);
+      expect(bonus.protein).toBe(noBonus.protein); // bodyweight-derived
+      expect(bonus.fat).toBe(noBonus.fat); // floor/fraction
+      expect(bonus.carbs).toBe(noBonus.carbs + 100); // +400 kcal / 4
+    });
   });
 });

@@ -302,24 +302,42 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     }
     const actualBurn = actualLiftBurn + actualRunBurn;
 
-    // Nutr2 (#982): when the learned target takes over, the calorie total
-    // changes — recompute the macro split off the learned value so the
-    // rendered macros still reconcile (protein*4 + carbs*4 + fat*9 === target).
-    // Protein stays bodyweight-derived; carbs rebalance at the new total.
-    let { finalTarget, protein, carbs, fat } = {
-      finalTarget: planned.finalTarget,
-      protein: planned.protein,
-      carbs: planned.carbs,
-      fat: planned.fat,
-    };
+    // The macro tiles MUST reconcile to the exact number the ring shows. The
+    // ring renders `finalTarget`, so we resolve finalTarget first and then
+    // derive the macro split off it — NOT off the flat profile base — which
+    // guarantees protein*4 + carbs*4 + fat*9 === finalTarget (modulo per-gram
+    // rounding) in every case.
+    //
+    // Resolve finalTarget: flat base by default (Nutr1 — no eat-back), or the
+    // learned TDEE when the Nutr2 (#982) estimator takes over.
+    let finalTarget = planned.finalTarget;
     if (
       profile &&
       adaptiveSource === "learned" &&
       adaptiveValue !== finalTarget
     ) {
       finalTarget = adaptiveValue;
+    }
+
+    // Derive the macro split off the resolved finalTarget. getAdjustedTargets
+    // keeps protein bodyweight-derived and fat at its floor/fraction; carbs is
+    // the single balancing macro that absorbs the difference to the target.
+    // Splitting off finalTarget (not the base) is what keeps the tiles summed
+    // to the ring whether finalTarget equals the flat base (formula users —
+    // identical to the planned split, no behaviour change) OR a bumped value
+    // (learned takeover — carbs rebalance to the new total instead of staying
+    // summed to the stale base). There is no separate "bonus" term added here,
+    // so the day-type fat→carb shift and any target delta both flow through
+    // carbs in ONE balancing step — they cannot double-count. Null-profile
+    // keeps the planned fallback split; spreading only `targetCalories` leaves
+    // the targetProtein/targetFat/weightKg `|| …` fallbacks intact for legacy
+    // (TestFlight) profile docs missing those stored fields.
+    let protein = planned.protein;
+    let carbs = planned.carbs;
+    let fat = planned.fat;
+    if (profile) {
       const m = getAdjustedTargets(
-        { ...profile, targetCalories: adaptiveValue },
+        { ...profile, targetCalories: finalTarget },
         planned.dayType
       );
       protein = m.protein;
