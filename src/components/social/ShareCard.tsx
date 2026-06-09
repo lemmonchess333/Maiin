@@ -56,7 +56,7 @@ const THEME_STYLES: Record<
     bg: "#ffffff",
     text: "#1a1a2e",
     muted: "rgba(0,0,0,0.4)",
-    accent: "#7B72E9",
+    accent: THEME.brand, // #7B72E9
   },
   transparent: {
     bg: "transparent",
@@ -321,7 +321,8 @@ function ShareCard({
       {/* Streak card */}
       {data.type === "streak" && (
         <div className="text-center space-y-6">
-          <Flame size={120} style={{ color: "#e87316" }} />
+          {/* streak flame = generic warm orange (NOT the nutrition orange) */}
+          <Flame size={120} style={{ color: "var(--ds-orange-500)" }} />
           <p
             className="text-8xl font-bold font-mono"
             style={{ color: THEME.semantic.nutrition }}
