@@ -13,8 +13,14 @@ import { localDateString } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
-import { classifyDayIntensity, type DayIntensity } from "@/lib/dayIntensity";
+import {
+  classifyDayIntensity,
+  describeDayIntensity,
+  type DayIntensity,
+} from "@/lib/dayIntensity";
 import { resolveTaper } from "@/lib/taperNutrition";
+import { trainingSignalsForNutrition } from "@/lib/trainingSignals";
+import { useSubscription } from "@/lib/subscription";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -209,6 +215,12 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     stalled: adaptiveStalled,
   } = useAdaptiveTdee();
 
+  // The training-aware macro MOVEMENT (fat↔carb shift + taper) is a Pro/trial
+  // feature — gated here the same way the learned-TDEE layer is. Free users
+  // still see the descriptive day LABEL (the conversion hook), but their macros
+  // stay flat baseline. Trial counts as Pro (useSubscription.isPro).
+  const { isPro } = useSubscription();
+
   const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
@@ -338,11 +350,15 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       program: programForNutrition,
       weekSchedule: realWeekSchedule,
     });
+    // MACRO-MOVEMENT GATE: the fat↔carb shift applies only for Pro/trial. Free
+    // users compute the split as REST (flat baseline) — the day's real
+    // `intensity` still drives the descriptive LABEL below, just not the macros.
+    const macroIntensity: DayIntensity = isPro ? intensity : "REST";
     const planned = computePlannedTargets(
       profile,
       targetDate,
       programForNutrition,
-      intensity
+      macroIntensity
     );
 
     // Burn is DISPLAY ONLY (Nutr1) — it never feeds finalTarget. Compute it
@@ -377,7 +393,6 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       fat: planned.fat,
     };
     let aggressive = planned.aggressive;
-    let annotation = planned.annotation;
     if (
       profile &&
       adaptiveSource === "learned" &&
@@ -388,7 +403,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
         { ...profile, targetCalories: adaptiveValue },
         planned.dayType,
         programForNutrition,
-        intensity
+        macroIntensity
       );
       protein = m.protein;
       carbs = m.carbs;
@@ -403,11 +418,15 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     // HARD day: fat floored to essential, protein anchored, carbs maximised.
     // Reconciliation still holds (getAdjustedTargets balances carbs). No-op for
     // everyone not in a taper.
+    // The taper is computed for EVERYONE (it drives the descriptive race-week
+    // label below), but the calorie/macro MOVE is APPLIED only for Pro/trial —
+    // same gate as the fat↔carb shift. A free race-prep user sees "Race week —
+    // carb load" with flat macros (the conversion hook); Pro sees it applied.
     let taperActive = false;
     const taper = profile
       ? resolveTaper(targetDate, profile, finalTarget)
       : null;
-    if (taper && profile) {
+    if (taper && profile && isPro) {
       finalTarget = taper.taperedCalories;
       const m = getAdjustedTargets(
         { ...profile, targetCalories: finalTarget },
@@ -419,9 +438,21 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       carbs = m.carbs;
       fat = m.fat;
       aggressive = m.aggressive;
-      annotation = taper.annotation;
       taperActive = true;
     }
+
+    // Descriptive day LABEL (the conversion hook) — derived from the REAL day
+    // for ALL users, never from the gated macro split. NEVER asserts a macro
+    // change. "" on a plain rest day so the Food hero suppresses it. Priority:
+    // race week → deload week → training-intensity label.
+    const signals = trainingSignalsForNutrition(programForNutrition);
+    const annotation = taper
+      ? taper.annotation
+      : signals.isDeload
+        ? "Deload week"
+        : intensity === "REST"
+          ? ""
+          : describeDayIntensity(intensity);
 
     return {
       baseTarget: planned.baseTarget,
@@ -457,5 +488,6 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     warmupFraction,
     adaptiveStalled,
     program,
+    isPro,
   ]);
 }

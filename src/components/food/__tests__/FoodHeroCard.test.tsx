@@ -119,3 +119,39 @@ describe("FoodHeroCard — single shared display mode", () => {
     expect(ringButton().getAttribute("aria-label")).toMatch(/eaten/i);
   });
 });
+
+describe("FoodHeroCard — training day label (conversion hook)", () => {
+  function renderWithAnnotation(annotation: string, isToday: boolean) {
+    const targets = {
+      ...dailyTargets,
+      annotation,
+    } as unknown as EffectiveTargets;
+    return render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={isToday}
+          dailyTargets={targets}
+          dailyTotals={dailyTotals}
+        />
+      </MemoryRouter>
+    );
+  }
+
+  it("renders the descriptive label today", () => {
+    renderWithAnnotation("Hard training day", true);
+    expect(screen.getByText("Hard training day")).toBeInTheDocument();
+  });
+
+  it("suppressed on past/future (diary) views", () => {
+    renderWithAnnotation("Hard training day", false);
+    expect(screen.queryByText("Hard training day")).not.toBeInTheDocument();
+  });
+
+  it("suppressed when empty (rest day → hook returns '')", () => {
+    const { container } = renderWithAnnotation("", true);
+    // No stray label paragraph for an empty annotation.
+    expect(container.querySelector("[data-macro]")).toBeInTheDocument();
+    expect(screen.queryByText("Rest day")).not.toBeInTheDocument();
+  });
+});
