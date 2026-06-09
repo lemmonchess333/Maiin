@@ -807,8 +807,8 @@ export default function Home() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Dumbbell className="size-4 text-primary shrink-0" />
               <span>
-                Tap <strong className="text-foreground">Programme</strong> to
-                start a workout or run
+                Tap <strong className="text-foreground">Train</strong> to start
+                a workout or run
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
