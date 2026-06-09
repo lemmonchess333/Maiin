@@ -650,9 +650,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <header>
           <div className="flex items-center justify-between pt-1 pb-1">
             <div>
-              <h1 className="text-xl font-extrabold text-foreground">
-                Programme
-              </h1>
+              <h1 className="text-xl font-extrabold text-foreground">Train</h1>
               {/* Subtitle is tab-aware so the Run tab no longer reads as a
                   secondary add-on under a lifting-only header.
 
@@ -724,7 +722,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             coral = run. */}
         <div className="pt-2">
           <SegmentedControl
-            ariaLabel="Programme mode"
+            ariaLabel="Train mode"
             value={activeTab}
             onChange={(value) => setActiveTab(value)}
             tone={activeTab === "run" ? "running" : "brand"}
