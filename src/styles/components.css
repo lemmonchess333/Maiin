@@ -79,7 +79,9 @@
   background: var(--ds-purple-100);
   border-color: var(--ds-purple-400);
 }
-.feature-btn:active { transform: scale(0.98); }
+.feature-btn:active {
+  transform: scale(0.98);
+}
 
 .dark .feature-btn {
   background: rgba(123, 114, 233, 0.06);
@@ -92,11 +94,13 @@
   transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
   -webkit-tap-highlight-color: transparent;
 }
-.pressable:active { transform: scale(0.97); }
+.pressable:active {
+  transform: scale(0.97);
+}
 
 /* ─── QUOTE CARD — Gradient version ─────────────────────────── */
 .quote-card {
-  background: linear-gradient(135deg, #7B72E9 0%, #6560C8 50%, #5B4DB8 100%);
+  background: linear-gradient(135deg, #7b72e9 0%, #6560c8 50%, #5b4db8 100%);
   color: white;
   border-radius: 0.75rem;
   padding: 1.25rem;
@@ -116,7 +120,6 @@
      glyph. Removing it aligns with the two-font system (Plus Jakarta
      Sans + JetBrains Mono only). */
 }
-
 
 /* ─── PROGRESS RING ─────────────────────────────────────────── */
 .progress-ring {
@@ -265,22 +268,35 @@ select.ds-input:focus {
   min-height: 100dvh;
   overflow-y: auto;
   background:
-    radial-gradient(circle at 18% 0%, rgba(123, 114, 233, 0.045), transparent 36%),
-    radial-gradient(circle at 92% 8%, rgba(217, 136, 78, 0.025), transparent 32%),
+    radial-gradient(
+      circle at 18% 0%,
+      rgba(123, 114, 233, 0.045),
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(217, 136, 78, 0.025),
+      transparent 32%
+    ),
     hsl(var(--background));
   display: flex;
   align-items: center;
   justify-content: center;
-  padding:
-    calc(var(--safe-top) + 1rem)
-    1rem
-    calc(var(--safe-bottom) + 1rem);
+  padding: calc(var(--safe-top) + 1rem) 1rem calc(var(--safe-bottom) + 1rem);
 }
 
 .dark .ds-auth-shell {
   background:
-    radial-gradient(circle at 18% 0%, rgba(123, 114, 233, 0.10), transparent 38%),
-    radial-gradient(circle at 92% 8%, rgba(212, 99, 122, 0.055), transparent 34%),
+    radial-gradient(
+      circle at 18% 0%,
+      rgba(123, 114, 233, 0.1),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(212, 99, 122, 0.055),
+      transparent 34%
+    ),
     hsl(var(--background));
 }
 
@@ -318,6 +334,15 @@ select.ds-input:focus {
   background: hsl(var(--background) / 0.94);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  /* Force the occluder onto its OWN compositor layer. Without this,
+     position:fixed + backdrop-filter elements get folded into the page's
+     scroll layer and the compositor drops them mid-scroll (the known iOS
+     Safari/WKWebView bug — fine at rest, content slides under the clock
+     unprotected once scrolled; reproduced identically in the visual-audit
+     rig, where the Food calorie ring painted through this strip at full
+     contrast). translateZ(0) pins the layer so the bg + blur survive
+     scrolling on every page. */
+  transform: translateZ(0);
 }
 
 .ds-auth-logo {
@@ -327,7 +352,11 @@ select.ds-input:focus {
   display: grid;
   place-items: center;
   color: hsl(var(--primary-foreground));
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-strong)) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary-strong)) 100%
+  );
   box-shadow: var(--ds-shadow-purple-glow);
 }
 
