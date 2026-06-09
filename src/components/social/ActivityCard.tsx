@@ -695,7 +695,9 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <Flame
                 className={`size-5 ${liked ? "fill-current" : ""}`}
                 style={{
-                  color: liked ? "#F59E0B" : "var(--color-muted-foreground)",
+                  color: liked
+                    ? THEME.amberLight
+                    : "var(--color-muted-foreground)",
                   opacity: liked ? 1 : 0.5,
                 }}
               />
