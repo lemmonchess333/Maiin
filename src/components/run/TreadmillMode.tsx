@@ -55,7 +55,11 @@ export default function TreadmillMode({
   };
 
   return (
-    <div className="space-y-6 px-6">
+    // w-full: the parent (Run.tsx) mounts this inside a `flex items-center`
+    // row, where a block child shrink-fits to content width — that clipped the
+    // distance input + Save button off the right edge at 393px (audit #4).
+    // Filling the row keeps everything inside the viewport.
+    <div className="w-full space-y-6 px-6">
       <div className="text-center">
         <p className="text-xs text-white/50 uppercase tracking-widest">
           {title}
@@ -78,7 +82,10 @@ export default function TreadmillMode({
             value={distance}
             onChange={(e) => setDistance(e.target.value)}
             placeholder="0.00"
-            className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl font-mono"
+            /* min-w-0: a flex item defaults to min-width:auto, so flex-1 alone
+               can't shrink a number input below its intrinsic width — it
+               overflowed the row at 393px. min-w-0 lets it actually flex. */
+            className="flex-1 min-w-0 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white text-center text-2xl font-mono"
           />
           <span className="text-white/60 text-sm">km</span>
         </div>
