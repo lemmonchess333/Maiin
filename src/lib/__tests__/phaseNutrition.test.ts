@@ -108,7 +108,7 @@ describe("getAdjustedTargets — tier-driven fat↔carb shift", () => {
     const p = makeProfile();
     expect(
       getAdjustedTargets(p, "lift", undefined, "HARD").annotation
-    ).toContain("Hard day");
+    ).toContain("Hard training");
     expect(
       getAdjustedTargets(p, "lift", undefined, "MODERATE").annotation
     ).toContain("Training day");

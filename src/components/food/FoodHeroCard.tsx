@@ -385,6 +385,19 @@ export default function FoodHeroCard({
           />
         </div>
       </div>
+
+      {/* Training-aware day label (the free→premium conversion hook). DESCRIBES
+          the planned day — "Hard training day" / "Deload week" / "Race week —
+          carb load" — and is shown to ALL users (the macro MOVE is Pro-gated in
+          useEffectiveTargets, but the rationale is visible to free users; the
+          copy never asserts a change that didn't happen). Today-only; the hook
+          returns "" on plain rest days so this suppresses on rest + diary
+          views, mirroring the glanceLine gating. */}
+      {isToday && dailyTargets.annotation && (
+        <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
+          {dailyTargets.annotation}
+        </p>
+      )}
     </>
   );
 }
