@@ -188,7 +188,7 @@ export default function SaveRoutineSheet({
       open={open}
       onOpenChange={handleOpenChange}
       title="Save as routine"
-      description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from your Programme.`}
+      description={`Snapshot of ${sourceAuthorName}'s workout. You can run it later from the Train tab.`}
     >
       <div className="px-5 pb-5 pt-3 space-y-4">
         {/* Name input */}

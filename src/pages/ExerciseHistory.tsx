@@ -592,7 +592,7 @@ function EmptyState({ exerciseName }: { exerciseName: string }) {
       icon={<Trophy className="size-5" />}
       title="No sessions logged yet"
       description={`Log ${exerciseName} on a workout to start tracking your progression here.`}
-      action={{ label: "Go to Program", href: "/program" }}
+      action={{ label: "Go to Train", href: "/program" }}
       accentColor={THEME.lifting}
     />
   );
