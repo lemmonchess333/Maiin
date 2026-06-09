@@ -589,6 +589,7 @@ export default function FoodCameraModal({
                 style={{ borderColor: THEME.food.scan }}
                 aria-label="Capture"
               >
+                {/* eslint-disable-next-line no-restricted-syntax -- camera shutter is white in every theme (universal camera idiom on the always-black camera chrome) */}
                 <div className="size-[60px] rounded-full bg-white" />
               </button>
             ) : (

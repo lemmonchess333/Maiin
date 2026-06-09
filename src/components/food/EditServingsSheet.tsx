@@ -257,7 +257,7 @@ function EditServingsSheet({
             this picker IS the intended outcome but the section
             label here would be misleading. */}
         <div className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
             Meal slot
           </p>
           <div className="flex gap-1.5 justify-center flex-wrap">
@@ -274,7 +274,7 @@ function EditServingsSheet({
                   disabled={saving}
                   aria-pressed={isPicked}
                   className={cn(
-                    "px-3 py-1 rounded-full text-[12px] font-semibold transition-colors active:scale-[0.97]",
+                    "px-3 py-1 rounded-full text-micro font-semibold transition-colors active:scale-[0.97]",
                     isPicked
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
@@ -297,7 +297,7 @@ function EditServingsSheet({
             propagated to editMeal — parseMacro() above gates which
             fields land in macroOverrides. */}
         <div className="space-y-1.5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
+          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold text-center">
             Per serving
           </p>
           <div className="grid grid-cols-4 gap-2">
@@ -332,7 +332,7 @@ function EditServingsSheet({
               <div key={id} className="flex flex-col items-center gap-1">
                 <label
                   htmlFor={id}
-                  className="text-[10px] uppercase tracking-wide text-muted-foreground"
+                  className="text-caption uppercase tracking-wide text-muted-foreground"
                 >
                   {label}
                 </label>
@@ -379,7 +379,7 @@ function EditServingsSheet({
             >
               {target}
             </p>
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">
+            <p className="text-caption text-muted-foreground uppercase tracking-wider mt-0.5">
               {target === 1 ? "serving" : "servings"}
             </p>
           </div>

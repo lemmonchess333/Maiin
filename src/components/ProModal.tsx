@@ -332,7 +332,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                 )}
               >
                 {plan.topBadge ? (
-                  <span className="absolute -top-2.5 left-4 text-[10px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
+                  <span className="absolute -top-2.5 left-4 text-caption px-2 py-0.5 rounded-full bg-primary text-primary-foreground font-semibold uppercase tracking-wider">
                     {plan.topBadge}
                   </span>
                 ) : null}
@@ -413,7 +413,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           )}
         </button>
 
-        <p className="text-[11px] text-muted-foreground text-center leading-snug">
+        <p className="text-caption text-muted-foreground text-center leading-snug">
           {getRenewalDisclosure(selectedPlan, platform)}
         </p>
 
@@ -422,7 +422,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             type="button"
             onClick={handleRestore}
             disabled={loading}
-            className="block mx-auto text-[11px] text-muted-foreground underline underline-offset-2 disabled:opacity-50"
+            className="block mx-auto text-caption text-muted-foreground underline underline-offset-2 disabled:opacity-50"
           >
             Restore purchases
           </button>

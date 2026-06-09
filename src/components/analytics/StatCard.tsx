@@ -128,7 +128,7 @@ export default function StatCard({
         </p>
       )}
       {target && (
-        <p className="text-[10px] text-muted-foreground/80 mt-0.5 font-mono tabular-nums">
+        <p className="text-caption text-muted-foreground/80 mt-0.5 font-mono tabular-nums">
           {target}
         </p>
       )}

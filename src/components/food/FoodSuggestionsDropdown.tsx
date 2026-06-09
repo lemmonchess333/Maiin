@@ -104,7 +104,7 @@ function FoodSuggestionsDropdown({
               local DB + OFF results follow. */}
           <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
             <Star aria-hidden="true" className="size-3 text-amber-500" />
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+            <span className="text-caption uppercase tracking-wide text-muted-foreground font-medium">
               Your pantry
             </span>
           </div>

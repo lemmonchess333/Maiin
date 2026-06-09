@@ -802,7 +802,7 @@ export default function FoodAnalyzer({
                           {activeResult.foodName}
                         </p>
                       )}
-                      <p className="text-[11px] text-muted-foreground/70 mt-1">
+                      <p className="text-caption text-muted-foreground/70 mt-1">
                         AI estimate — adjust portions before logging.
                       </p>
                     </>
@@ -936,7 +936,7 @@ export default function FoodAnalyzer({
                         cal
                       </span>
                     </p>
-                    <p className="text-[13px] text-muted-foreground">
+                    <p className="text-small text-muted-foreground">
                       <span className="font-mono tabular-nums text-foreground/80">
                         {Math.round(displayTotals.protein)}
                       </span>

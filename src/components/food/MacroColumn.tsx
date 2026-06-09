@@ -235,7 +235,7 @@ export default function MacroColumn({
 
       {/* Tertiary line — consumed value tweens with the big number so all
           three (big number, bar fill, tertiary) advance together during a log. */}
-      <p className="text-[10px] text-muted-foreground/70 font-mono tabular-nums mt-1.5">
+      <p className="text-caption text-muted-foreground/70 font-mono tabular-nums mt-1.5">
         <AnimatedNumber
           value={Math.round(consumed)}
           duration={numberDurationSec}
@@ -249,7 +249,7 @@ export default function MacroColumn({
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5 text-muted-foreground">
+      <p className="text-caption font-semibold uppercase tracking-wider mt-0.5 text-muted-foreground">
         {label}
       </p>
     </button>

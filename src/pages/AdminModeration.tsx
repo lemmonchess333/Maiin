@@ -219,7 +219,7 @@ export default function AdminModeration() {
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       {report.targetType} · {REASON_LABEL[report.reason]}
                     </p>
-                    <p className="text-[11px] font-mono tabular-nums text-muted-foreground/70 mt-0.5">
+                    <p className="text-caption font-mono tabular-nums text-muted-foreground/70 mt-0.5">
                       {report.createdAt
                         ? new Date(report.createdAt).toISOString()
                         : "(unknown date)"}
@@ -233,7 +233,7 @@ export default function AdminModeration() {
                     {targetPreview(report)}
                   </p>
                   {report.target?.flagged === true && (
-                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1.5 font-medium">
+                    <p className="text-caption text-amber-700 dark:text-amber-400 mt-1.5 font-medium">
                       Already flagged by auto-filter
                     </p>
                   )}

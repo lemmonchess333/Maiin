@@ -327,7 +327,7 @@ export default function FoodHeroCard({
                 onTapDrillDown();
               }}
               aria-label="View nutrition breakdown"
-              className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
+              className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
             >
               <span>Details</span>
               <ChevronRight aria-hidden="true" className="size-3" />

@@ -52,8 +52,15 @@ export default function GuidedRunOverlay({
     <div
       className="mx-4 mb-3 rounded-2xl overflow-hidden"
       style={{
-        background: "var(--glass-bg)",
-        border: "1px solid var(--glass-border)",
+        /* Pinned DARK glass, deliberately NOT var(--glass-bg). This overlay
+           only mounts on the active-run screen, which is always-dark by
+           design (THEME.bg + text-white full-screen map) regardless of the
+           app theme. The theme-aware glass vars flipped to white in light
+           mode here, rendering a white card with this component's white
+           text/tracks on the dark map — unreadable. Values = the .dark
+           definitions of --glass-bg / --glass-border in index.css. */
+        background: "rgba(18, 18, 20, 0.97)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
       }}
     >
       {/* Overall progress bar */}

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 const SIZE_CLASSES: Record<AvatarSize, string> = {
-  xs: "size-5 text-[10px]",
+  xs: "size-5 text-caption",
   sm: "size-7 text-xs",
   md: "size-9 text-sm",
   lg: "size-11 text-base",
