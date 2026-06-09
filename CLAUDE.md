@@ -458,14 +458,29 @@ Tailwind. The primitive already supplies the 44px floor, focus-visible ring,
 how the "every interactive element clears 44px" invariant is satisfied. Pick
 the variant by the action's role:
 
-| Action role                 | Variant                    |
-| --------------------------- | -------------------------- |
-| Main lifting / brand CTA    | `primary`                  |
-| Main running CTA            | `sport` (coral)            |
-| Secondary action            | `secondary` or `outline`   |
-| Low-emphasis action         | `ghost`                    |
-| Destructive action          | `destructive`              |
-| Running non-critical action | `sport-tinted` (coral 10%) |
+| Action role                   | Variant                         |
+| ----------------------------- | ------------------------------- |
+| Main lifting / brand CTA      | `primary`                       |
+| Main running CTA              | `sport` (coral)                 |
+| Secondary action              | `secondary` or `outline`        |
+| Low-emphasis action           | `ghost`                         |
+| Destructive action            | `destructive`                   |
+| Running non-critical action   | `sport-tinted` (coral 10%)      |
+| Nutrition-primary CTA         | `nutrition` (orange)            |
+| Nutrition low-emphasis action | `nutrition-tinted` (orange 10%) |
+
+The `nutrition` / `nutrition-tinted` variants are the food-domain analogue of
+`sport` / `sport-tinted`, resolving via the `--nutrition` / `--nutrition-strong`
+tokens (warm orange #D9884E identity; #B45309 amber-700 AA white-text/text step).
+They exist to close the design-system gap — nutrition was the only documented
+domain/sport colour with no first-class token + variant, which is what kept
+leaking one-off hex orange past the hex guardrail. **This is NOT a licence to
+paint Food buttons orange.** Orange is a domain/data identity (section labels,
+macro rings, calorie data), not a per-screen button colour: reserve the filled
+`nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
+orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
+The Scan CTA stays its own special coral case (`ScanMealButton.tsx`), not this
+variant.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,
