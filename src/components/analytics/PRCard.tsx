@@ -55,7 +55,7 @@ export default function PRCard({
               {pr.isNew && (
                 <span
                   className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                  style={{ background: "#e87316", color: "#fff" }}
+                  style={{ background: "var(--ds-orange-500)", color: "#fff" }}
                 >
                   NEW
                 </span>

@@ -9,8 +9,9 @@
  * their trend visibility.
  */
 
-import type { ActivityType } from '@/types/run';
-import { isPaceTrendEligible } from './runStatsEligibility';
+import type { ActivityType } from "@/types/run";
+import { THEME } from "@/lib/theme";
+import { isPaceTrendEligible } from "./runStatsEligibility";
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
 
@@ -45,7 +46,8 @@ export function calculatePaceTrend(
 
   // Find comparable runs (within 20% distance, excluding the current one)
   const comparable = allRuns.filter((r) => {
-    if (r.completedAt.getTime() === currentRun.completedAt.getTime()) return false;
+    if (r.completedAt.getTime() === currentRun.completedAt.getTime())
+      return false;
     if (!isPaceTrendEligible(r)) return false;
     const ratio = r.distance / currentRun.distance;
     return ratio >= 1 - DISTANCE_TOLERANCE && ratio <= 1 + DISTANCE_TOLERANCE;
@@ -62,14 +64,15 @@ export function calculatePaceTrend(
 
   const bestPace = Math.min(...sorted.map((r) => r.avgPace));
   const recentAvg =
-    sorted.slice(-3).reduce((s, r) => s + r.avgPace, 0) / Math.min(3, sorted.length);
+    sorted.slice(-3).reduce((s, r) => s + r.avgPace, 0) /
+    Math.min(3, sorted.length);
 
   // PR — current run is faster than all comparable
   if (currentRun.avgPace < bestPace) {
     return {
       trend: "pr",
       label: "PR!",
-      color: "#f59e0b",
+      color: THEME.amberLight,
       bgColor: "rgba(245, 158, 11, 0.15)",
     };
   }
@@ -89,7 +92,7 @@ export function calculatePaceTrend(
     return {
       trend: "consistent",
       label: "Steady",
-      color: "#7B72E9",
+      color: THEME.brand,
       bgColor: "rgba(124, 110, 246, 0.15)",
     };
   }

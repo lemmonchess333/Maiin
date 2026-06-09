@@ -1,4 +1,5 @@
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 
 /**
@@ -34,7 +35,7 @@ export default function StatCard({
   direction = "up-good",
   target,
   sparklineData,
-  accentColor = "#7B72E9",
+  accentColor = THEME.brand,
   onClick,
 }: StatCardProps) {
   const gradientId = `spark-${label.replace(/\s/g, "-")}`;
