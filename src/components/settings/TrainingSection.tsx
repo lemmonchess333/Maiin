@@ -648,7 +648,7 @@ export default function TrainingSection({
       >
         <Target className="size-4 text-primary" />
         <div className="flex-1 text-left">
-          <p className="text-sm font-medium">Open Programme</p>
+          <p className="text-sm font-medium">Open Train</p>
           <p className="text-xs text-muted-foreground">
             Today's training, week strip, run history
           </p>
