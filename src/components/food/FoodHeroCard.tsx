@@ -224,6 +224,30 @@ export default function FoodHeroCard({
     ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
     : null;
 
+  /* Carb-periodization rationale. On training days getAdjustedTargets
+     (phaseNutrition) shifts fat into carbs at constant calories and floors
+     fat at the essential minimum (0.6 g/kg) — which makes the macro split
+     look unusual (high carbs, low fat) and can read as a bug. We surface the
+     engine's OWN annotation (already on EffectiveTargets) as a distinct muted
+     line under the macro tiles so the split explains itself. Gated exactly
+     like glanceLine: today-only (a rationale for a past/future diary day
+     reads wrong). Also suppressed on rest days — no fat→carb shift happens
+     there, so the annotation is just "baseline targets", not a rationale.
+     The day label itself ("Lift + Run") is already shown by the ring caption,
+     so we strip the leading "<day> — " prefix and render only the rationale
+     clause — this is the macro reasoning, NOT a second copy of trainingType. */
+  const macroRationale =
+    isToday && dailyTargets.dayType !== "rest" && dailyTargets.annotation
+      ? (() => {
+          const sepIdx = dailyTargets.annotation.search(/\s[—–-]\s/);
+          const clause =
+            sepIdx >= 0
+              ? dailyTargets.annotation.slice(sepIdx + 3)
+              : dailyTargets.annotation;
+          return clause.charAt(0).toUpperCase() + clause.slice(1);
+        })()
+      : null;
+
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
   // markup renders correctly in both themes.
@@ -385,6 +409,16 @@ export default function FoodHeroCard({
           />
         </div>
       </div>
+
+      {/* Carb-periodization rationale — one muted line under the macro tiles
+          explaining the training-day fat→carb fuelling shift so the unusual
+          split (high carbs, low fat) reads as intentional, not broken.
+          Today-only + rest-day suppressed (see macroRationale derivation). */}
+      {macroRationale && (
+        <p className="text-center text-xs font-medium text-muted-foreground/80 mt-3 px-2">
+          {macroRationale}
+        </p>
+      )}
     </>
   );
 }

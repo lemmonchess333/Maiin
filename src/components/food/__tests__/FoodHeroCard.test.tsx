@@ -39,13 +39,20 @@ const dailyTargets = {
   showWarmup: false,
 } as unknown as EffectiveTargets;
 
-function renderHero() {
+function renderHero(
+  opts: { isToday?: boolean; targets?: Partial<EffectiveTargets> } = {}
+) {
+  const { isToday = false, targets } = opts;
   return render(
     <MemoryRouter>
       <FoodHeroCard
         selectedDate="2026-06-09"
-        isToday={false}
-        dailyTargets={dailyTargets}
+        isToday={isToday}
+        dailyTargets={
+          (targets
+            ? { ...dailyTargets, ...targets }
+            : dailyTargets) as EffectiveTargets
+        }
         dailyTotals={dailyTotals}
       />
     </MemoryRouter>
@@ -117,5 +124,54 @@ describe("FoodHeroCard — single shared display mode", () => {
     const { container } = renderHero();
     expect(tileModes(container)).toEqual(["eaten", "eaten", "eaten"]);
     expect(ringButton().getAttribute("aria-label")).toMatch(/eaten/i);
+  });
+});
+
+describe("FoodHeroCard — carb-periodization rationale", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const TRAINING_ANNOTATION =
+    "Lift + Run day — extra carbs for fuel & recovery";
+
+  it("renders the rationale clause on a training day, today", () => {
+    renderHero({
+      isToday: true,
+      targets: { dayType: "both", annotation: TRAINING_ANNOTATION },
+    });
+    // The "<day> — " prefix is stripped (the day label is already shown by the
+    // ring caption); only the rationale clause is surfaced, capitalised.
+    expect(
+      screen.getByText("Extra carbs for fuel & recovery")
+    ).toBeInTheDocument();
+    // …and it does NOT re-render the raw day-label prefix as the line.
+    expect(screen.queryByText(TRAINING_ANNOTATION)).not.toBeInTheDocument();
+  });
+
+  it("suppresses the rationale on rest days", () => {
+    renderHero({
+      isToday: true,
+      targets: { dayType: "rest", annotation: "Rest day — baseline targets" },
+    });
+    expect(screen.queryByText(/baseline targets/i)).not.toBeInTheDocument();
+  });
+
+  it("suppresses the rationale on past/future diary views (not today)", () => {
+    renderHero({
+      isToday: false,
+      targets: { dayType: "both", annotation: TRAINING_ANNOTATION },
+    });
+    expect(screen.queryByText(/extra carbs for fuel/i)).not.toBeInTheDocument();
+  });
+
+  it("suppresses the rationale when the annotation is empty", () => {
+    const { container } = renderHero({
+      isToday: true,
+      targets: { dayType: "both", annotation: "" },
+    });
+    // No stray rationale paragraph — the macro tile row is the last block.
+    expect(container.querySelector("[data-macro]")).toBeInTheDocument();
+    expect(screen.queryByText(/extra carbs/i)).not.toBeInTheDocument();
   });
 });
