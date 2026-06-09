@@ -524,7 +524,7 @@ export default function RunSetupModal({
                   <span className="text-xs text-muted-foreground truncate min-w-0">
                     {selected.cardDescription}
                   </span>
-                  <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                  <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
                     {selected.cardChip}
                   </span>
                 </div>
@@ -1441,7 +1441,7 @@ export default function RunSetupModal({
                           >
                             {at.name}
                           </p>
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                          <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
                             {at.chooserChip}
                           </span>
                         </div>

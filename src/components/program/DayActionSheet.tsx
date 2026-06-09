@@ -230,7 +230,7 @@ export default function DayActionSheet({
                   </p>
                 )}
                 {selectedRunMeta && (
-                  <span className="mt-2 inline-flex rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                  <span className="mt-2 inline-flex rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground">
                     {selectedRunMeta}
                   </span>
                 )}
@@ -307,7 +307,7 @@ export default function DayActionSheet({
                   ))}
                 </select>
                 {run.isStartable && (
-                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                  <span className="mt-1 block text-caption text-muted-foreground">
                     Changes this day only.
                   </span>
                 )}

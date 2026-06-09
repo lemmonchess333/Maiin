@@ -474,7 +474,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                     </p>
                     {fromYourCrew && (
                       <span
-                        className="inline-flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded shrink-0"
+                        className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded shrink-0"
                         style={{
                           background: `${THEME.brand}14`,
                           color: THEME.brand,
@@ -484,7 +484,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-[13px] text-muted-foreground">{timeAgo}</p>
+                  <p className="text-small text-muted-foreground">{timeAgo}</p>
                 </div>
               </Link>
               {renderMenuButton()}
@@ -537,7 +537,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                     </p>
                     {fromYourCrew && (
                       <span
-                        className="inline-flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded shrink-0"
+                        className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded shrink-0"
                         style={{
                           background: `${THEME.brand}14`,
                           color: THEME.brand,
@@ -553,7 +553,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                     ) : (
                       <Dumbbell className="size-3.5 text-lifting" />
                     )}
-                    <p className="text-[13px]">{timeAgo}</p>
+                    <p className="text-small">{timeAgo}</p>
                   </div>
                 </div>
               </Link>
@@ -569,7 +569,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
 
             {/* Summary line (fallback for old activities without title) */}
             {!activityTitle && feedItem.summary && (
-              <p className="text-[13px] text-muted-foreground mb-3">
+              <p className="text-small text-muted-foreground mb-3">
                 {feedItem.summary}
               </p>
             )}

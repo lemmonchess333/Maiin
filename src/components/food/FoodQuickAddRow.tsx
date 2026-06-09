@@ -192,7 +192,7 @@ function FoodQuickAddRow({
                 userSelect: "none",
               }}
               className={cn(
-                "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-[13px] text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
+                "shrink-0 snap-start min-h-[44px] px-4 rounded-full bg-card border border-border text-small text-foreground whitespace-nowrap transition-all active:scale-95 max-w-[240px] flex items-center",
                 adding !== null && "opacity-60 cursor-not-allowed"
               )}
             >

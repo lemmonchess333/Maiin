@@ -323,7 +323,7 @@ export default function ExerciseHistory() {
           </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting">
+              <span className="text-caption font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting">
                 {exercise.muscleGroup}
               </span>
               <span className="text-xs text-muted-foreground">
@@ -337,7 +337,7 @@ export default function ExerciseHistory() {
       {/* ── Stat strip ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
             {isBodyweight ? "Max reps" : "Best 1RM"}
           </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
@@ -354,7 +354,7 @@ export default function ExerciseHistory() {
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
             Sessions
           </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
@@ -362,7 +362,7 @@ export default function ExerciseHistory() {
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-[10px] uppercase tracking-wider font-medium text-muted-foreground">
+          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
             Total sets
           </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
@@ -415,7 +415,7 @@ export default function ExerciseHistory() {
                 const pr = repRangePRs[b];
                 return (
                   <div key={b} className="text-center">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                    <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
                       {b}RM
                     </p>
                     <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
@@ -425,13 +425,13 @@ export default function ExerciseHistory() {
                           : `${pr.weightKg}`
                         : "—"}
                       {pr && pr.weightKg > 0 && !isBodyweight && (
-                        <span className="text-[10px] font-normal text-muted-foreground ml-0.5">
+                        <span className="text-caption font-normal text-muted-foreground ml-0.5">
                           kg
                         </span>
                       )}
                     </p>
                     {pr && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-caption text-muted-foreground mt-0.5">
                         {formatDate(pr.date)}
                       </p>
                     )}
@@ -478,7 +478,7 @@ export default function ExerciseHistory() {
                         haptic("light");
                         setMetric(m);
                       }}
-                      className={`px-2 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                      className={`px-2 py-1 rounded-full text-caption font-semibold transition-colors ${
                         displayMetric === m
                           ? "bg-card text-foreground"
                           : "text-muted-foreground"
@@ -533,7 +533,7 @@ export default function ExerciseHistory() {
                           </p>
                           {isPR && (
                             <span
-                              className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-full"
+                              className="text-caption font-bold tracking-wider px-1.5 py-0.5 rounded-full"
                               style={{
                                 backgroundColor: THEME.semantic.nutrition,
                                 color: "white",
@@ -559,7 +559,7 @@ export default function ExerciseHistory() {
                         </p>
                         {delta != null && delta !== 0 && (
                           <p
-                            className="text-[10px] font-medium mt-0.5"
+                            className="text-caption font-medium mt-0.5"
                             style={{
                               color:
                                 delta > 0 ? THEME.success : THEME.text.muted,

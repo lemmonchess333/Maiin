@@ -44,7 +44,7 @@ export default function WeekPhaseRow({
 
       {phaseName && (
         <span
-          className="text-[10px] font-bold uppercase text-lifting bg-lifting/10"
+          className="text-caption font-bold uppercase text-lifting bg-lifting/10"
           style={{
             padding: "3px 8px",
             borderRadius: 6,
