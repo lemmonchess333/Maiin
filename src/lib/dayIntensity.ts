@@ -88,6 +88,27 @@ export function fatFloorPerKgForTier(tier: DayIntensity): number {
 export { FAT_CALORIE_FRACTION };
 
 /**
+ * Descriptive day-load label for the Food hero. DESCRIBES the planned day —
+ * it must NEVER assert a macro change ("carbs up" / "fat down"), because the
+ * label is shown to FREE users for whom the macro movement is gated OFF. The
+ * same labels are honest for Pro (where the move did occur). Deload / taper /
+ * race labels are layered on by the caller (useEffectiveTargets).
+ */
+export function describeDayIntensity(tier: DayIntensity): string {
+  switch (tier) {
+    case "HARD":
+      return "Hard training day";
+    case "MODERATE":
+      return "Training day";
+    case "EASY":
+      return "Easy day";
+    case "REST":
+    default:
+      return "Rest day";
+  }
+}
+
+/**
  * Run-limb tier from the scheduled run type for `date`. runDays are
  * AUTHORITATIVE: a real long run counts as HARD even if weekSchedule says the
  * day is rest/lift (the clashesWithLift case). Falls back to weekSchedule only

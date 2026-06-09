@@ -100,7 +100,9 @@ export function resolveTaper(
       phase: days === 0 ? "race" : "carb_load",
       taperedCalories: Math.round(baseCalories * (1 + CARB_LOAD_BUMP)),
       carbLoad: true,
-      annotation: "Carb-load — fuelling up for race day",
+      // Descriptive of the race-week PLAN, not an assertion the user's macros
+      // changed (the move is Pro-gated — see useEffectiveTargets).
+      annotation: "Race week — carb load",
     };
   }
 
@@ -112,7 +114,7 @@ export function resolveTaper(
     phase: "taper",
     taperedCalories: Math.round(baseCalories * (1 - cut)),
     carbLoad: false,
-    annotation: "Taper — easing volume, carbs up",
+    annotation: "Taper week",
   };
 }
 
