@@ -132,3 +132,45 @@ describe("useAdaptiveTdee — active assembly", () => {
     );
   });
 });
+
+describe("useAdaptiveTdee — race-taper freeze", () => {
+  const pad = (x: number) => String(x).padStart(2, "0");
+  const futureKey = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + n);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+
+  it("holds the pre-taper learned value through the taper window, ignoring taper intake/weight", async () => {
+    // Race 5 days out (inside a half-marathon's 2-week taper) → frozen. A prior
+    // learned value lives in adaptiveCapState; taper-period intake is high but
+    // must NOT move the estimate.
+    authMock.mockReturnValue({
+      user: { uid: "u1" },
+      profile: {
+        targetCalories: 2200,
+        runMode: "race_prep",
+        raceGoal: { distance: "half", targetDate: futureKey(5) },
+        adaptiveCapState: {
+          lastApplied: 2450,
+          lastAppliedAt: "2026-01-01T00:00:00.000Z",
+        },
+      },
+      updateProfile: updateProfileMock,
+    });
+    updateProfileMock.mockClear(); // module-level mock isn't auto-reset
+    const ds = recentDays(21);
+    getDocsMock.mockResolvedValue({
+      docs: ds.map((date) => ({ data: () => ({ date, totalCalories: 3200 }) })),
+    });
+    bodyweightMock.mockResolvedValue(ds.map((date) => ({ date, weight: 78 })));
+
+    const { result } = renderHook(() => useAdaptiveTdee());
+    // Frozen short-circuits to the persisted pre-taper value immediately.
+    expect(result.current.source).toBe("learned");
+    expect(result.current.value).toBe(2450);
+    // The cap is never advanced during the freeze (no corruption).
+    await waitFor(() => expect(result.current.value).toBe(2450));
+    expect(updateProfileMock).not.toHaveBeenCalled();
+  });
+});

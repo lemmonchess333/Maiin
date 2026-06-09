@@ -14,7 +14,7 @@ import { useEffectiveTargets } from "../useEffectiveTargets";
 import type { AdaptiveTdeeView } from "@/lib/adaptiveTarget";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
-import { LIFT_ONLY, makeProfile } from "@/test/nutritionFixtures";
+import { LIFT_ONLY, PRO_TAPER, makeProfile } from "@/test/nutritionFixtures";
 
 const h = vi.hoisted(() => ({
   profile: null as UserProfile | null,
@@ -103,5 +103,48 @@ describe("useEffectiveTargets — live program-phase wiring", () => {
     const t = result.current;
     const sum = t.protein * 4 + t.carbs * 4 + t.fat * 9;
     expect(Math.abs(sum - t.finalTarget)).toBeLessThanOrEqual(2);
+  });
+});
+
+describe("useEffectiveTargets — race taper (the only forward calorie move)", () => {
+  beforeEach(() => {
+    h.program = null;
+  });
+
+  const reconciles = (t: {
+    finalTarget: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  }) => Math.abs(t.protein * 4 + t.carbs * 4 + t.fat * 9 - t.finalTarget);
+
+  it("PRO_TAPER taper week: calories contract vs base, split reconciles, taperActive", () => {
+    const { profile } = PRO_TAPER({ daysToRace: 6 });
+    h.profile = profile; // targetCalories 2500
+    const { result } = renderHook(() => useEffectiveTargets());
+    const t = result.current;
+    expect(t.taperActive).toBe(true);
+    expect(t.finalTarget).toBeLessThan(2500); // contracted
+    expect(reconciles(t)).toBeLessThanOrEqual(2);
+  });
+
+  it("final-days carb-load: calories bump back up and carbs exceed a taper-week day", () => {
+    h.profile = PRO_TAPER({ daysToRace: 6 }).profile;
+    const taperDay = renderHook(() => useEffectiveTargets()).result.current;
+
+    h.profile = PRO_TAPER({ daysToRace: 1 }).profile;
+    const carbLoad = renderHook(() => useEffectiveTargets()).result.current;
+
+    expect(carbLoad.taperActive).toBe(true);
+    expect(carbLoad.finalTarget).toBeGreaterThan(2500); // +carb-load bump
+    expect(carbLoad.carbs).toBeGreaterThan(taperDay.carbs); // loading
+    expect(reconciles(carbLoad)).toBeLessThanOrEqual(2);
+  });
+
+  it("LIFT_ONLY / no-race user: taper NEVER fires (no spurious calorie cut)", () => {
+    h.profile = LIFT_ONLY().profile; // no runMode/raceGoal
+    const { result } = renderHook(() => useEffectiveTargets());
+    expect(result.current.taperActive).toBe(false);
+    expect(result.current.finalTarget).toBe(2500); // flat, uncut
   });
 });
