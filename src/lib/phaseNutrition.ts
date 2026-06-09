@@ -12,6 +12,7 @@ import {
   fuelShiftCalsForTier,
   fatFloorPerKgForTier,
   tierFromDayType,
+  describeDayIntensity,
 } from "./dayIntensity";
 
 /** Re-export for back-compat (the constant moved to macroConstants to break a
@@ -29,21 +30,6 @@ export interface AdjustedTargets {
    *  floored to a broken sum; protein is capped to keep the sum valid and this
    *  flag is raised so the UI can warn. */
   aggressive: boolean;
-}
-
-/** Tier → one-line rationale surfaced on the Food hero. */
-function annotationForTier(tier: DayIntensity): string {
-  switch (tier) {
-    case "HARD":
-      return "Hard day — carbs up, fat down for fuelling";
-    case "MODERATE":
-      return "Training day — carbs up for fuel";
-    case "EASY":
-      return "Easy day — steady fuelling";
-    case "REST":
-    default:
-      return "Rest day — baseline targets";
-  }
 }
 
 /**
@@ -135,7 +121,7 @@ export function getAdjustedTargets(
     protein,
     carbs,
     fat,
-    annotation: annotationForTier(tier),
+    annotation: describeDayIntensity(tier),
     aggressive,
   };
 }

@@ -14,7 +14,14 @@ import { useEffectiveTargets } from "../useEffectiveTargets";
 import type { AdaptiveTdeeView } from "@/lib/adaptiveTarget";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
-import { LIFT_ONLY, PRO_TAPER, makeProfile } from "@/test/nutritionFixtures";
+import {
+  LIFT_ONLY,
+  PRO_TAPER,
+  FREE_RUN,
+  makeProfile,
+  makeProgram,
+  liftDay,
+} from "@/test/nutritionFixtures";
 
 const h = vi.hoisted(() => ({
   profile: null as UserProfile | null,
@@ -146,5 +153,90 @@ describe("useEffectiveTargets — race taper (the only forward calorie move)", (
     const { result } = renderHook(() => useEffectiveTargets());
     expect(result.current.taperActive).toBe(false);
     expect(result.current.finalTarget).toBe(2500); // flat, uncut
+  });
+});
+
+describe("useEffectiveTargets — training label gating (free→Pro conversion hook)", () => {
+  // High-volume lift on an all-lift week → classifier HARD on any date, so the
+  // gate is exercised without date alignment.
+  const hardProgram = () =>
+    makeProgram({
+      primaryGoal: "hypertrophy",
+      currentPhase: "progression",
+      weekNumber: 2,
+      workouts: [liftDay("Heavy", 8, 4, 6)], // 192 reps → HARD
+    });
+  const hardProfile = (tier: "free" | "pro") =>
+    makeProfile({
+      weightKg: 80,
+      targetCalories: 2500,
+      subscriptionTier: tier,
+      weekSchedule: ALL_LIFT,
+    });
+
+  it("FREE on a HARD day: descriptive label shows, macros stay FLAT (no shift), copy never claims a change", () => {
+    h.profile = hardProfile("free");
+    h.program = hardProgram();
+    const free = renderHook(() => useEffectiveTargets()).result.current;
+
+    expect(free.annotation).toBe("Hard training day"); // label visible to free
+    // Flat baseline: fat at the ~25% calorie-fraction baseline (REST), NOT cut.
+    expect(free.fat).toBe(69); // round(0.25 * 2500 / 9)
+    expect(free.taperActive).toBe(false);
+    // Honest copy — must not assert carbs/fat moved.
+    expect(free.annotation).not.toMatch(/up|down|increase|loaded/i);
+  });
+
+  it("PRO on the SAME HARD day: same label AND macros shift (fat down, carbs up)", () => {
+    h.profile = hardProfile("free");
+    h.program = hardProgram();
+    const free = renderHook(() => useEffectiveTargets()).result.current;
+
+    h.profile = hardProfile("pro");
+    h.program = hardProgram();
+    const pro = renderHook(() => useEffectiveTargets()).result.current;
+
+    expect(pro.annotation).toBe(free.annotation); // same descriptive label
+    expect(pro.fat).toBeLessThan(free.fat); // shift applied for Pro
+    expect(pro.carbs).toBeGreaterThan(free.carbs);
+    // Both still reconcile to the (flat) calorie target.
+    for (const t of [free, pro]) {
+      expect(
+        Math.abs(t.protein * 4 + t.carbs * 4 + t.fat * 9 - t.finalTarget)
+      ).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("rest / planless day: annotation suppressed (empty)", () => {
+    h.profile = makeProfile({
+      subscriptionTier: "pro",
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: "rest" as const,
+      })),
+    });
+    h.program = null;
+    expect(
+      renderHook(() => useEffectiveTargets()).result.current.annotation
+    ).toBe("");
+
+    h.profile = FREE_RUN().profile; // no plan
+    h.program = null;
+    expect(
+      renderHook(() => useEffectiveTargets()).result.current.annotation
+    ).toBe("");
+  });
+
+  it("free race-prep user sees the race-week label but no calorie move (conversion hook)", () => {
+    const free = {
+      ...PRO_TAPER({ daysToRace: 1 }).profile, // final days → carb-load label
+      subscriptionTier: "free" as const,
+    };
+    h.profile = free;
+    h.program = null;
+    const t = renderHook(() => useEffectiveTargets()).result.current;
+    expect(t.annotation).toBe("Race week — carb load"); // label shown to free
+    expect(t.taperActive).toBe(false); // but the calorie move is NOT applied
+    expect(t.finalTarget).toBe(free.targetCalories); // flat, uncut
   });
 });
