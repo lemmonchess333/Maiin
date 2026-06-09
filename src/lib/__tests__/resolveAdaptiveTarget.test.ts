@@ -221,3 +221,56 @@ describe("resolveAdaptiveTarget — deficit/surplus preservation (C-NUTRITION)",
     expect(view.value).toBe(2000);
   });
 });
+
+// ── Race-taper freeze (Prompt C) ─────────────────────────────────────────
+describe("resolveAdaptiveTarget — taper freeze", () => {
+  const capPrev: CapState = {
+    lastApplied: 2400, // pre-taper learned value
+    lastAppliedAt: "2026-05-01T00:00:00.000Z",
+  };
+
+  it("frozen + capPrev: holds the pre-taper learned value, ignores window data, no cap advance", () => {
+    // Even with a full window that WOULD move the estimate, freeze pins 2400.
+    const { view, capChanged, capState } = resolveAdaptiveTarget({
+      ...baseInput,
+      ...fullWindow(),
+      capPrev,
+      frozen: true,
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(2400); // frozen, not re-estimated
+    expect(capChanged).toBe(false); // cap untouched → value can't be corrupted
+    expect(capState).toEqual(capPrev);
+  });
+
+  it("frozen with NO prior learned value falls through (nothing to freeze)", () => {
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      capPrev: null,
+      frozen: true,
+    });
+    // No capPrev → normal path: warmup/formula, never a fabricated learned value.
+    expect(view.source).toBe("formula");
+  });
+
+  it("post-window (not frozen): adaptation resumes from the preserved pre-taper value, not formula", () => {
+    // capPrev (2400) was preserved through the freeze; a full window now wants
+    // higher, but the weekly cap steps at most +150 FROM 2400 → 2550 (not from
+    // the 2200 formula). Proves no post-race over-correction.
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      intakeByDay: Array.from({ length: 14 }, (_, i) => ({
+        dateKey: `2026-05-${String(i + 1).padStart(2, "0")}`,
+        kcal: 2900,
+      })),
+      weighIns: [1, 3, 5, 7, 9, 11, 13, 15].map((d) => ({
+        dateKey: `2026-05-${String(d).padStart(2, "0")}`,
+        weightKg: 80,
+      })),
+      capPrev,
+      frozen: false,
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(2550); // 2400 + 150 cap step
+  });
+});
