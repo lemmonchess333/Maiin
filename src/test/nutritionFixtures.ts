@@ -19,7 +19,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, addLocalDays } from "@/lib/dateHelpers";
 
 /**
  * Reference week (Sunday 2025-06-01, LOCAL). Scheduled-run dates are anchored
@@ -310,13 +310,22 @@ export function HEAVY_CUTTER(
   };
 }
 
-/** 6. PRO_TAPER — Pro user, race_prep run plan, in taper with a future race. */
+/**
+ * 6. PRO_TAPER — Pro user, race_prep run plan, in taper with a FUTURE race.
+ *
+ * The race date is relative to `now` so the taper window actually fires in
+ * tests: `daysToRace` defaults to 6 (mid-taper for a half — taperWeeks 2 →
+ * 14-day window — and clear of the final-days carb-load). Pass a smaller value
+ * (≤2) for carb-load, or a negative value for a past race / post-race window.
+ */
 export function PRO_TAPER(
-  programOverrides: Partial<ProgramState> = {}
+  opts: { daysToRace?: number; programOverrides?: Partial<ProgramState> } = {}
 ): NutritionFixture {
+  const { daysToRace = 6, programOverrides = {} } = opts;
+  const targetDate = localDateString(addLocalDays(new Date(), daysToRace));
   const runPlan: RunPlan = {
     mode: "race_prep",
-    raceGoal: { distance: "half", targetDate: "2099-01-01" },
+    raceGoal: { distance: "half", targetDate },
     totalWeeks: 12,
     currentWeek: 11, // taper week (near the end)
   };
@@ -325,6 +334,9 @@ export function PRO_TAPER(
       subscriptionTier: "pro",
       primaryGoal: "running",
       weeklyWorkoutsTarget: 2,
+      // Canonical profile mirrors the taper layer reads.
+      runMode: "race_prep",
+      raceGoal: { distance: "half", targetDate },
       weekSchedule: schedule([
         "rest",
         "run",
