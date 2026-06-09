@@ -117,6 +117,20 @@ export default function RunDetail() {
       ? `${Math.floor(avgPace / 60)}:${(Math.floor(avgPace) % 60).toString().padStart(2, "0")}`
       : "--:--";
 
+  // Splits are per-kilometre segments derived from the GPS trace
+  // (`calculateSplits` in lib/gps.ts — needs ≥2 points and at least one full
+  // km). A run legitimately has zero in three cases, so instead of a raw "0"
+  // the tile explains the actual reason: no GPS trace at all (treadmill /
+  // "track without GPS" manual runs), a run under 1 km (no km boundary
+  // crossed), or GPS present but no split data recorded.
+  const splitCount = run.splits?.length ?? 0;
+  const hasGpsTrace = (run.points?.length ?? 0) > 1;
+  const splitsEmptyReason = !hasGpsTrace
+    ? "No GPS route"
+    : run.distance < 1000
+      ? "Under 1 km"
+      : "No splits yet";
+
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);
@@ -338,10 +352,18 @@ export default function RunDetail() {
               Elevation Gain
             </p>
           </div>
-          <div className="p-3 rounded-xl bg-card text-center shadow-sm">
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {run.splits?.length ?? 0}
-            </p>
+          <div className="p-3 rounded-xl bg-card text-center shadow-sm flex flex-col justify-center">
+            {splitCount > 0 ? (
+              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
+                {splitCount}
+              </p>
+            ) : (
+              /* Empty splits: one muted explanatory line in place of a raw
+                 "0", matching the real reason (audit #6.5). */
+              <p className="text-sm text-muted-foreground leading-snug px-1">
+                {splitsEmptyReason}
+              </p>
+            )}
             <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
               Splits
             </p>
