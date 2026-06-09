@@ -15,6 +15,7 @@ import {
   GOAL_CALORIE_OFFSET,
   offsetFromWeeklyRate,
 } from "@/lib/macroConstants";
+import { isAdaptiveExcludedDate, isAdaptiveFrozen } from "@/lib/taperNutrition";
 import type { UserProfile } from "@/lib/auth";
 
 /**
@@ -133,35 +134,43 @@ export function useAdaptiveTdee(): AdaptiveTdeeView {
 
   // The whole decision is one pure call. Memoized for render stability; the
   // latch value flows in so `warmupFraction`/`stalled` stay pure.
-  const resolved = useMemo(
-    () =>
-      resolveAdaptiveTarget({
-        hasUser: !!user,
-        isPro,
-        isManualOverride,
-        formulaTarget,
-        goalOffset,
-        intakeByDay,
-        weighIns,
-        loaded,
-        capPrev,
-        now,
-        latched,
-      }),
-    [
-      user,
+  //
+  // Taper handling (Prompt C): permanently EXCLUDE taper/race/post-race dates
+  // from the estimation window (their glycogen/water swings + reduced intake
+  // would poison the learned maintenance estimate), and FREEZE the pre-taper
+  // learned value while today is inside that window.
+  const resolved = useMemo(() => {
+    const excluded = (k: string) => isAdaptiveExcludedDate(k, profile);
+    const intakeFiltered = intakeByDay.filter((i) => !excluded(i.dateKey));
+    const weighInsFiltered = weighIns.filter((w) => !excluded(w.dateKey));
+    return resolveAdaptiveTarget({
+      hasUser: !!user,
       isPro,
       isManualOverride,
       formulaTarget,
       goalOffset,
-      intakeByDay,
-      weighIns,
+      intakeByDay: intakeFiltered,
+      weighIns: weighInsFiltered,
       loaded,
       capPrev,
       now,
       latched,
-    ]
-  );
+      frozen: isAdaptiveFrozen(now, profile),
+    });
+  }, [
+    user,
+    profile,
+    isPro,
+    isManualOverride,
+    formulaTarget,
+    goalOffset,
+    intakeByDay,
+    weighIns,
+    loaded,
+    capPrev,
+    now,
+    latched,
+  ]);
 
   // Persist the new cap state once (guarded so the resulting profile reload
   // doesn't re-trigger the write).
