@@ -15,7 +15,7 @@ import { haptic } from "@/lib/haptic";
 import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
-import MacroColumn, { type MacroColumnKey } from "./MacroColumn";
+import MacroColumn from "./MacroColumn";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 
 interface DailyTotals {
@@ -39,7 +39,6 @@ interface FoodHeroCardProps {
 }
 
 const MODE_STORAGE_KEY = "tropos.food.calorieRingMode";
-const MACRO_TILE_MODE_KEY = "tropos.food.macroTileMode";
 const CELEBRATED_STORAGE_KEY = "tropos.food.celebratedDate";
 
 // All log-moment animations share this duration so they finish in sync.
@@ -53,49 +52,6 @@ function readInitialMode(): CalorieRingMode {
     return stored === "eaten" ? "eaten" : "left";
   } catch {
     return "left";
-  }
-}
-
-type MacroTileModes = Record<MacroColumnKey, CalorieRingMode>;
-
-// Per-tile consumed⇄left state (Cal.AI pattern, #848): each macro tile is
-// independently toggleable. First-run defaults every tile to the calorie
-// ring's persisted mode so existing users see no change until they tap a
-// tile; thereafter the tiles are independent of the ring.
-function readInitialTileModes(): MacroTileModes {
-  const fallback = readInitialMode();
-  const base: MacroTileModes = {
-    protein: fallback,
-    carbs: fallback,
-    fat: fallback,
-  };
-  if (typeof window === "undefined") return base;
-  try {
-    const raw = window.localStorage.getItem(MACRO_TILE_MODE_KEY);
-    if (!raw) return base;
-    const parsed = JSON.parse(raw) as Partial<MacroTileModes>;
-    return {
-      protein:
-        parsed.protein === "eaten"
-          ? "eaten"
-          : parsed.protein === "left"
-            ? "left"
-            : base.protein,
-      carbs:
-        parsed.carbs === "eaten"
-          ? "eaten"
-          : parsed.carbs === "left"
-            ? "left"
-            : base.carbs,
-      fat:
-        parsed.fat === "eaten"
-          ? "eaten"
-          : parsed.fat === "left"
-            ? "left"
-            : base.fat,
-    };
-  } catch {
-    return base;
   }
 }
 
@@ -118,29 +74,17 @@ export default function FoodHeroCard({
   const { profile } = useAuth();
   const targetsAreDefault = !profile?.targetCalories;
 
-  // Synchronous init prevents first-paint flash of wrong mode
+  // Single shared display mode for the whole hero — the calorie ring AND
+  // all three macro tiles read the same left⇄eaten framing. Persisted under
+  // the calorie-ring key so the choice survives reloads. Synchronous init
+  // prevents a first-paint flash of the wrong mode.
+  //
+  // Was previously split: the ring owned `mode` while each macro tile carried
+  // its own independent state (the #848 per-tile pattern). That let the ring
+  // read "2,583 kcal LEFT" while all three tiles read "Xg eaten" — two
+  // opposite framings on one card. Unifying to one mode makes the hero speak
+  // with a single voice; tapping the ring OR any tile flips all four at once.
   const [mode, setMode] = useState<CalorieRingMode>(() => readInitialMode());
-
-  // Per-tile macro mode (#848): each tile toggles consumed⇄left on its own.
-  const [tileModes, setTileModes] = useState<MacroTileModes>(() =>
-    readInitialTileModes()
-  );
-
-  const toggleTile = (key: MacroColumnKey) => {
-    haptic("light");
-    setTileModes((prev) => {
-      const next: MacroTileModes = {
-        ...prev,
-        [key]: prev[key] === "left" ? "eaten" : "left",
-      };
-      try {
-        window.localStorage.setItem(MACRO_TILE_MODE_KEY, JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
-  };
 
   // Celebration state — driven by a log that completes all three macros today
   const [celebrating, setCelebrating] = useState(false);
@@ -392,8 +336,11 @@ export default function FoodHeroCard({
         )}
       </div>
 
-      {/* Macro tile row — three independent floating tiles. mt-4 = 16px
-          gap to the calorie card above; gap-4 = 16px between tiles. */}
+      {/* Macro tile row — three floating tiles. Each reads the SAME shared
+          `mode` as the calorie ring, and tapping any tile flips that one
+          shared mode (via toggleMode) so the ring + all three tiles stay in
+          lockstep. mt-4 = 16px gap to the calorie card above; gap-4 = 16px
+          between tiles. */}
       <div className="flex gap-4 mt-4">
         <div className="flex-1 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
@@ -403,8 +350,8 @@ export default function FoodHeroCard({
             target={dailyTargets.protein}
             label="PROTEIN"
             color={THEME.macros.protein}
-            mode={tileModes.protein}
-            onTap={() => toggleTile("protein")}
+            mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
@@ -417,8 +364,8 @@ export default function FoodHeroCard({
             target={dailyTargets.carbs}
             label="CARBS"
             color={THEME.macros.carbs}
-            mode={tileModes.carbs}
-            onTap={() => toggleTile("carbs")}
+            mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
@@ -431,8 +378,8 @@ export default function FoodHeroCard({
             target={dailyTargets.fat}
             label="FAT"
             color={THEME.macros.fat}
-            mode={tileModes.fat}
-            onTap={() => toggleTile("fat")}
+            mode={mode}
+            onTap={toggleMode}
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
