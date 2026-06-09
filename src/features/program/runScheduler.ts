@@ -7,6 +7,7 @@
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ScheduledRunDay, RunPlan } from "./programTypes";
+import { HARD_RUN_TYPES } from "./programTypes";
 import {
   generateScheduledRunId,
   localDateString,
@@ -859,10 +860,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const bothDays = new Set(
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
-  const HARD_TYPES = new Set(["long", "tempo", "intervals", "race"]);
   const flaggedWeeks = weeks.map((week) =>
     week.map((rd) =>
-      HARD_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
+      HARD_RUN_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
         ? { ...rd, clashesWithLift: true }
         : rd
     )

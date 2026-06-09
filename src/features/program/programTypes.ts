@@ -201,6 +201,19 @@ export const CURRENT_PROGRAM_SCHEMA_VERSION = 2 as const;
  *  type-safety tightening, not a runtime change. */
 export type RunPlannedType = "easy" | "tempo" | "intervals" | "long" | "race";
 
+/**
+ * Run types that impose HIGH glycogen demand (long / tempo / intervals /
+ * race). Single source of truth shared by the run scheduler (clash flagging)
+ * and the nutrition day-intensity classifier (HARD tier). `easy` is the only
+ * non-hard planned type. Declared here (the shared types module) so neither
+ * consumer re-derives the set and drifts. */
+export const HARD_RUN_TYPES: ReadonlySet<string> = new Set([
+  "long",
+  "tempo",
+  "intervals",
+  "race",
+]);
+
 /** State machine for scheduled-run completion lifecycle.
  *
  *  Legal transitions (enforced by `transitionStatus`):
