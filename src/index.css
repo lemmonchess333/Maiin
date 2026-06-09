@@ -242,6 +242,26 @@ body {
   overflow-x: hidden;
 }
 
+/* ─── SCROLLBAR SUPPRESSION (app shell) ─────────────────────
+   The iOS/Android webview renders a persistent desktop-style scrollbar
+   down the right edge of every page (visible in the TestFlight device
+   screenshots) — native apps never show one. Suppress the VISUAL
+   scrollbar everywhere; scrolling itself is untouched. No internal pane
+   in this app needs a visible scrollbar: every scroll surface is a
+   touch-scrolled mobile pane (chip rails, sheets, pickers) where iOS
+   convention is no persistent indicator. */
+html,
+body,
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 body {
   margin: 0;
   /* The global app canvas is a clean neutral grey. PR #511's
