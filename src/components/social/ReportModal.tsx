@@ -274,7 +274,7 @@ export default function ReportModal({
             rows={3}
             maxLength={FREEFORM_MAX}
           />
-          <p className="text-[10px] text-muted-foreground text-right mt-0.5 font-mono tabular-nums">
+          <p className="text-caption text-muted-foreground text-right mt-0.5 font-mono tabular-nums">
             {freeform.length} / {FREEFORM_MAX}
           </p>
         </div>

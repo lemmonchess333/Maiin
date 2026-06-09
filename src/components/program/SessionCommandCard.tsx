@@ -101,7 +101,7 @@ export default function SessionCommandCard({
           {meta.map((item) => (
             <span
               key={item}
-              className="rounded-full bg-background/70 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground"
+              className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
             >
               {item}
             </span>

@@ -27,11 +27,11 @@ export default function AdaptiveWarmupBar({
   return (
     <div className="mt-2" role="status" aria-live="polite">
       <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-[11px] font-medium text-muted-foreground/80">
+        <span className="text-caption font-medium text-muted-foreground/80">
           Personalizing your metabolism
         </span>
         <span
-          className="text-[10px] font-mono tabular-nums text-muted-foreground/60"
+          className="text-caption font-mono tabular-nums text-muted-foreground/60"
           aria-hidden="true"
         >
           {pct}%
@@ -47,7 +47,7 @@ export default function AdaptiveWarmupBar({
         />
       </div>
       {stalled && (
-        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-1 text-caption leading-snug text-muted-foreground">
           Keep logging meals + weigh-ins to keep personalizing.
         </p>
       )}
