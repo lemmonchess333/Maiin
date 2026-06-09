@@ -843,6 +843,16 @@ export default function WorkoutSession({
     // throws above, the draft survives so the user can retry the finish.
     clearDraft();
 
+    // Streak-priming trigger (audit #10): completing a workout — post
+    // celebration — is the ONLY moment the streak-reminder priming modal may
+    // surface. The global modal listens for this event; it no longer fires on
+    // app-open or page mount, so landing on the Programme page never pops it.
+    try {
+      window.dispatchEvent(new CustomEvent("tropos:workout-completed"));
+    } catch {
+      // CustomEvent unsupported / SSR — priming simply won't prompt; harmless.
+    }
+
     setCompleting(false);
     onClose();
   };

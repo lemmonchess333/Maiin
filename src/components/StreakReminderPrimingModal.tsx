@@ -36,44 +36,52 @@ export function StreakReminderPrimingModal() {
   const [open, setOpen] = useState(false);
   const surface = useSurface({ id: "priming", priority: 10, eligible: open });
 
-  // Latest eligibility check, held in a ref so the mount-once listener
-  // always reads fresh values without needing re-registration. Updated
-  // after every render inside a deps-less effect (standard useLatest
-  // pattern) so the closure always sees the newest loading / prefs /
-  // currentStreak values.
-  const checkRef = useRef<() => void>(() => {});
+  // Latest eligibility check, held in a ref (useLatest) so the mount-once
+  // listener always reads fresh loading / prefs / currentStreak values
+  // without re-registration. Returns true once it has opened the modal so
+  // the retry loop below can stop. Preserves the once-ever gate
+  // (primingShown) and the streak floor (>= 2); the SurfaceCoordinator still
+  // applies the frequency cap.
+  const checkRef = useRef<() => boolean>(() => false);
   useEffect(() => {
     checkRef.current = () => {
-      if (loading) return;
-      if (prefs.primingShown) return;
-      if (currentStreak < 2) return;
+      if (loading) return false;
+      if (prefs.primingShown) return false;
+      if (currentStreak < 2) return false;
       setOpen(true);
+      return true;
     };
   });
 
-  // Single mount-once effect: register the visibilitychange listener and
-  // tear it down on unmount. Empty deps — the listener reads through the
-  // ref so no re-registration is ever needed when values change.
+  // Trigger rule (audit #10): the priming modal fires ONLY after a workout is
+  // completed (post-celebration), never on app-open, foreground/
+  // visibilitychange, or any page mount — landing on the Programme page (or
+  // anywhere) must never pop it mid-task. The old seed-on-first-render +
+  // visibilitychange triggers did exactly that and were removed.
+  //
+  // `currentStreak` settles asynchronously via the useStreaks snapshot after
+  // the workout save, so the handler re-checks on a short bounded interval
+  // until the freshly-earned streak value lands (or it gives up after ~4s).
+  const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") checkRef.current();
+    const onWorkoutComplete = () => {
+      if (retryRef.current) clearInterval(retryRef.current);
+      if (checkRef.current()) return;
+      let tries = 0;
+      retryRef.current = setInterval(() => {
+        tries += 1;
+        if (checkRef.current() || tries >= 12) {
+          if (retryRef.current) clearInterval(retryRef.current);
+          retryRef.current = null;
+        }
+      }, 350);
     };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+    window.addEventListener("tropos:workout-completed", onWorkoutComplete);
+    return () => {
+      window.removeEventListener("tropos:workout-completed", onWorkoutComplete);
+      if (retryRef.current) clearInterval(retryRef.current);
+    };
   }, []);
-
-  // One-shot seed: fire the check exactly once, the first render where
-  // `loading === false`. First app-open after sign-in qualifies as a
-  // foreground event for priming purposes. The latch ref prevents
-  // subsequent prefs / streak state changes from re-triggering the
-  // modal mid-session.
-  const didSeedRef = useRef(false);
-  useEffect(() => {
-    if (loading) return;
-    if (didSeedRef.current) return;
-    didSeedRef.current = true;
-    checkRef.current();
-  }, [loading]);
 
   const close = useCallback(() => {
     setOpen(false);
