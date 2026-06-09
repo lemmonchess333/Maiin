@@ -199,8 +199,15 @@ export default function FoodMealSection({
           <span
             className={cn(
               "size-6 rounded-full flex items-center justify-center",
+              // Selected meal target = nutrition orange, NOT brand purple.
+              // This + button mirrors the composer pill's selection state
+              // (FoodComposerCard) — the same `targetMeal === mealKey`
+              // boolean must read as ONE colour across both surfaces.
+              // Purple here made "selected food target" look like a brand
+              // action; orange is the nutrition domain identity. Uses the
+              // AA-clearing -strong step to match the pill exactly.
               targetMeal === mealKey
-                ? "bg-primary text-white"
+                ? "bg-nutrition-strong text-white"
                 : "border border-black/[0.12] text-muted-foreground"
             )}
           >
