@@ -80,6 +80,10 @@
   --text-body: var(--ds-text-body);
   --text-small: var(--ds-text-small);
   --text-micro: var(--ds-text-micro);
+  /* 11px dense-UI caption — official scale step + the app's hard minimum
+     text size (see tokens.css). Use text-caption instead of text-[11px];
+     never use arbitrary values below it. */
+  --text-caption: var(--ds-text-caption);
 }
 
 /* Canonical card elevation. `shadow-card` is a trap — Tailwind parses it

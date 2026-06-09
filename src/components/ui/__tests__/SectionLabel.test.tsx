@@ -3,7 +3,9 @@
  *
  * Pins the canonical contract that replaced ~60 hand-rolled uppercase
  * label variants:
- *   1. Default tier "caption" → 12px (text-xs); "section" → 10px.
+ *   1. Default tier "caption" → 12px (text-xs); "section" → 11px
+ *      (text-caption — floored up from the legacy 10px when the type
+ *      scale gained its official 11px minimum step).
  *   2. Always carries the canonical treatment (semibold · tracking-wider
  *      · uppercase · muted) regardless of tier.
  *   3. `className` rides through (spacing + token colour overrides like
@@ -29,10 +31,10 @@ describe("SectionLabel", () => {
     expect(el.className).toContain("text-muted-foreground");
   });
 
-  it("renders the section tier at 10px", () => {
+  it("renders the section tier at the 11px caption token", () => {
     render(<SectionLabel tier="section">Running</SectionLabel>);
     const el = screen.getByText("Running");
-    expect(el.className).toContain("text-[10px]");
+    expect(el.className).toContain("text-caption");
     expect(el.className).not.toContain("text-xs");
   });
 

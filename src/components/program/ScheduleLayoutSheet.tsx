@@ -222,7 +222,7 @@ function ScheduleLayoutSheetBody({
                 <div className="size-4 rounded-full bg-muted-foreground/20" />
               )}
               <span
-                className="text-[11px] font-bold leading-none"
+                className="text-caption font-bold leading-none"
                 style={{ color: color || "hsl(var(--muted-foreground))" }}
               >
                 {label}

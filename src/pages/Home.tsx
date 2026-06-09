@@ -751,7 +751,7 @@ export default function Home() {
               </>
             )}
           </span>
-          <span className="text-[11px] font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+          <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
             Subscribe
           </span>
         </button>
@@ -771,7 +771,7 @@ export default function Home() {
           <span className="text-xs font-medium text-foreground flex-1 text-pretty">
             Upgrade to Pro
           </span>
-          <span className="text-[11px] font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+          <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
             See plans
           </span>
         </button>
@@ -954,7 +954,7 @@ export default function Home() {
             {/* One-shot discoverability hint. Latches off on first day-tap
               so users who already know don't keep seeing it. */}
             {showDayTapHint && !peekDate && (
-              <p className="text-[10px] text-muted-foreground/70 text-center -mt-1">
+              <p className="text-caption text-muted-foreground/70 text-center -mt-1">
                 Tap a day to see details
               </p>
             )}

@@ -169,7 +169,7 @@ export default function FoodRow({
           )}
           {group.wasEdited && (
             <span
-              className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+              className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
               aria-label="Edited"
               title="Edited"
             >
@@ -229,7 +229,7 @@ export default function FoodRow({
               type="button"
               onClick={onEdit}
               aria-label={`Edit ${group.foodName}`}
-              className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide active:opacity-80 transition-opacity"
+              className="flex flex-col items-center justify-center gap-1 text-white text-caption font-medium tracking-wide active:opacity-80 transition-opacity"
               style={{ background: EDIT_COLOR, width: ACTION_WIDTH }}
             >
               <Pencil
@@ -244,7 +244,7 @@ export default function FoodRow({
             type="button"
             onClick={onDelete}
             aria-label={`Delete ${group.foodName}`}
-            className="flex flex-col items-center justify-center gap-1 text-white text-[11px] font-medium tracking-wide flex-1 active:opacity-80 transition-opacity"
+            className="flex flex-col items-center justify-center gap-1 text-white text-caption font-medium tracking-wide flex-1 active:opacity-80 transition-opacity"
             style={{ background: DELETE_COLOR }}
           >
             <Trash2
@@ -284,7 +284,7 @@ export default function FoodRow({
             )}
             {group.wasEdited && (
               <span
-                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+                className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
                 aria-label="Edited"
                 title="Edited"
               >

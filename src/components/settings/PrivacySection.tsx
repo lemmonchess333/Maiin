@@ -201,6 +201,7 @@ export default function PrivacySection({
           >
             <div
               className={cn(
+                // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
                 "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
                 autoPostRuns ? "translate-x-5" : "translate-x-1"
               )}
@@ -239,6 +240,7 @@ export default function PrivacySection({
           >
             <div
               className={cn(
+                // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
                 "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
                 autoPostWorkouts ? "translate-x-5" : "translate-x-1"
               )}

@@ -1,4 +1,4 @@
-import { useFollowersOfMe } from '../../hooks/useFollowersOfMe';
+import { useFollowersOfMe } from "../../hooks/useFollowersOfMe";
 
 interface Props {
   /** The candidate user's uid — the one being looked at, not the
@@ -22,7 +22,7 @@ export default function FollowsYouBadge({ uid }: Props) {
   if (!followers.has(uid)) return null;
   return (
     <span
-      className="inline-flex items-center text-[11px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
+      className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0"
       aria-label="This athlete follows you"
     >
       Follows you

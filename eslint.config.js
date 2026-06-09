@@ -64,6 +64,24 @@ export default defineConfig([
           message:
             "No Tailwind arbitrary hex (bg-[#…]) — use a semantic token class (bg-lifting, text-running, bg-success/…).",
         },
+        // ── Dark-mode leak guard ─────────────────────────────────────────
+        // Solid `bg-white` / `text-black` don't flip with the .dark theme —
+        // on theme-aware surfaces they render dark-on-dark / white flashes.
+        // Use the semantic classes (bg-card / bg-background / text-foreground)
+        // instead. Alpha tints (bg-white/10) stay allowed: they're deliberate
+        // overlays on the ALWAYS-dark surfaces (active-run screen, camera
+        // chrome). Genuinely always-white elements (iOS-style switch thumbs,
+        // the camera shutter) carry a line-level eslint-disable with a reason.
+        {
+          selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
+          message:
+            "Solid bg-white doesn't flip in dark mode — use bg-card / bg-background. If this surface is genuinely always-white (switch thumb, camera shutter), add an eslint-disable-next-line with the reason.",
+        },
+        {
+          selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
+          message:
+            "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
+        },
       ],
     },
   },
@@ -78,8 +96,8 @@ export default defineConfig([
     //                    are component-config defaults, not stray drift.
     //   - ActivityCard   the "liked" amber (#F59E0B) has no semantic token
     //                    (closest is the nutrition orange — wrong meaning).
-    // The `text-muted` guard stays enforced; only the hex selectors are
-    // relaxed for these files.
+    // The `text-muted` + dark-mode-leak guards stay enforced; only the hex
+    // selectors are relaxed for these files.
     files: [
       "src/components/analytics/PRBadge.tsx",
       "src/components/analytics/PRCard.tsx",
@@ -93,6 +111,16 @@ export default defineConfig([
           selector: "Literal[value=/(^|\\s)text-muted(\\s|$)/]",
           message:
             'Use "text-muted-foreground" — the bare "text-muted" class maps to the muted SURFACE fill and renders near-invisible text.',
+        },
+        {
+          selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
+          message:
+            "Solid bg-white doesn't flip in dark mode — use bg-card / bg-background. If this surface is genuinely always-white (switch thumb, camera shutter), add an eslint-disable-next-line with the reason.",
+        },
+        {
+          selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
+          message:
+            "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
         },
       ],
     },
