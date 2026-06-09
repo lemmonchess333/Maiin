@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   collection,
+  doc,
   limit,
   onSnapshot,
   orderBy,
@@ -24,6 +25,7 @@ import { useAdaptiveTdee } from "@/hooks/useAdaptiveTdee";
 import type { TargetSource } from "@/lib/adaptiveTarget";
 import type { UserProfile } from "@/lib/auth";
 import type { DayType } from "@/lib/types";
+import type { ProgramState } from "@/features/program/programTypes";
 
 // Re-export so existing consumers can continue importing
 // DailyTargetsCaption from this module.
@@ -132,7 +134,8 @@ function getDayTypeForDate(date: Date, schedule: ScheduleDay[]): DayType {
  */
 function computePlannedTargets(
   profile: UserProfile | null,
-  date: Date
+  date: Date,
+  program?: ProgramState
 ): PlannedTargets {
   const schedule =
     profile?.weekSchedule && profile.weekSchedule.length === 7
@@ -160,7 +163,7 @@ function computePlannedTargets(
     };
   }
 
-  const adjusted = getAdjustedTargets(profile, dayType);
+  const adjusted = getAdjustedTargets(profile, dayType, program);
 
   return {
     baseTarget,
@@ -197,6 +200,31 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   const [runs, setRuns] = useState<RunRow[]>([]);
   const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
   const [runsLoaded, setRunsLoaded] = useState(false);
+
+  // ── Subscribe to the user's programState (READ-ONLY) ────────────────────
+  // The macro fast-loop is driven by the PLANNED training of the day, which
+  // lives in the full ProgramState (currentPhase, weekNumber, primaryGoal,
+  // workouts) — NOT in the narrow `profile.program` mirror. We read the doc
+  // directly (no writes, no migrations) rather than composing useProgram(),
+  // which performs auto-rollover/migration writes on mount that must NOT fire
+  // from the Food/Home render tree. Null until loaded / when absent → the
+  // translator's zero state → legacy phase behaviour (safe).
+  const [program, setProgram] = useState<ProgramState | null>(null);
+  useEffect(() => {
+    if (!user) {
+      setProgram(null); // eslint-disable-line react-hooks/set-state-in-effect
+      return;
+    }
+    const ref = doc(db, "users", user.uid, "programState", "current");
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        setProgram(snap.exists() ? (snap.data() as ProgramState) : null);
+      },
+      () => setProgram(null) // permission/transient error → safe zero state
+    );
+    return unsub;
+  }, [user]);
 
   // ── Subscribe to windowed workouts + runs (for informational burn) ──────
   // Nutr1: burn no longer drives the target, but the Today's Energy tiles and
@@ -279,7 +307,16 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   // ── Derive effective targets ──────────────────────────────────────────
   return useMemo<EffectiveTargets>(() => {
     const targetDate = date || new Date();
-    const planned = computePlannedTargets(profile, targetDate);
+    // Ensure primaryGoal is populated for the translator: pre-W1a programState
+    // docs lack it, but profile.primaryGoal is its backfill source.
+    const programForNutrition: ProgramState | undefined = program
+      ? { ...program, primaryGoal: program.primaryGoal ?? profile?.primaryGoal }
+      : undefined;
+    const planned = computePlannedTargets(
+      profile,
+      targetDate,
+      programForNutrition
+    );
 
     // Burn is DISPLAY ONLY (Nutr1) — it never feeds finalTarget. Compute it
     // once the windowed subscriptions have loaded; show zeros until then.
@@ -320,7 +357,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       finalTarget = adaptiveValue;
       const m = getAdjustedTargets(
         { ...profile, targetCalories: adaptiveValue },
-        planned.dayType
+        planned.dayType,
+        programForNutrition
       );
       protein = m.protein;
       carbs = m.carbs;
@@ -358,5 +396,6 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     showWarmup,
     warmupFraction,
     adaptiveStalled,
+    program,
   ]);
 }
