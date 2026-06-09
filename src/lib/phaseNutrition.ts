@@ -1,144 +1,141 @@
 import type { UserProfile } from "./auth";
 import type { DayType } from "./types";
 import type { ProgramState } from "@/features/program/programTypes";
-import { resolveProteinMultiplier } from "./macroConstants";
+import {
+  resolveProteinMultiplier,
+  FAT_CALORIE_FRACTION,
+  ESSENTIAL_FAT_FLOOR_PER_KG,
+} from "./macroConstants";
 import { trainingSignalsForNutrition } from "./trainingSignals";
+import {
+  type DayIntensity,
+  fuelShiftCalsForTier,
+  fatFloorPerKgForTier,
+  tierFromDayType,
+} from "./dayIntensity";
 
-export interface DayAdjustment {
-  /**
-   * Calories of fat redirected INTO carbs on training days (0 on rest).
-   * NOT a calorie surplus — Nutr1 holds the daily calorie target flat
-   * (expenditure-inclusive). This is the magnitude of the net-neutral
-   * fat→carb fuelling shift; getAdjustedTargets clamps it at the
-   * essential-fat floor.
-   */
-  fuelShiftCalories: number;
-  proteinMultiplier: number;
-  reason: string;
-}
+/** Re-export for back-compat (the constant moved to macroConstants to break a
+ *  phaseNutrition↔dayIntensity cycle). */
+export { ESSENTIAL_FAT_FLOOR_PER_KG };
 
-/**
- * Essential-fat floor. Fat is never periodized below this many grams per kg
- * bodyweight when shifting calories into carbs for training-day fuelling.
- */
-export const ESSENTIAL_FAT_FLOOR_PER_KG = 0.6;
-
-export function getDayAdjustment(
-  dayType: DayType,
-  phase: string,
-  goal?: string
-): DayAdjustment {
-  const isCut = goal === "cut" || (!goal && phase === "cut");
-  const proteinMultiplier = resolveProteinMultiplier(
-    isCut ? "cut" : phase,
-    goal
-  );
-
-  // Nutr1 (expenditure-inclusive): training days carry NO net calorie
-  // surplus — the stored TDEE already accounts for activity, and completed
-  // exercise is never eaten back. Fuelling is instead a NET-NEUTRAL macro
-  // shift: `fuelShiftCalories` worth of fat is moved into carbs (glycogen
-  // for the work), holding total calories constant. The magnitudes mirror
-  // the pre-Nutr1 net-additive bumps so training-day CARB levels are
-  // preserved (where the essential-fat floor allows) — only the calorie
-  // total and fat now stay flat instead of climbing.
-  switch (dayType) {
-    case "lift": {
-      const shift = isCut ? 150 : phase === "strength" ? 400 : 200;
-      return {
-        fuelShiftCalories: shift,
-        proteinMultiplier,
-        reason: "Lift day — extra carbs for recovery",
-      };
-    }
-    case "run": {
-      const shift = isCut ? 100 : 200;
-      return {
-        fuelShiftCalories: shift,
-        proteinMultiplier,
-        reason: "Run day — extra carbs for fuel",
-      };
-    }
-    case "both": {
-      const shift = isCut ? 250 : phase === "strength" ? 500 : 350;
-      return {
-        fuelShiftCalories: shift,
-        proteinMultiplier,
-        reason: "Lift + Run day — extra carbs for fuel & recovery",
-      };
-    }
-    case "rest":
-    default:
-      return {
-        fuelShiftCalories: 0,
-        proteinMultiplier,
-        reason: "Rest day — baseline targets",
-      };
-  }
-}
-
-export function getAdjustedTargets(
-  profile: UserProfile,
-  dayType: DayType,
-  program?: ProgramState
-): {
+export interface AdjustedTargets {
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
   annotation: string;
-} {
-  const base = {
-    calories: profile.targetCalories || 2200,
-    protein: profile.targetProtein || 160,
-    carbs: profile.targetCarbs || 250,
-    fat: profile.targetFat || 60,
-  };
+  /** True when the calorie target is too low to fit bodyweight protein + the
+   *  essential fat floor — the cut is too aggressive. Carbs are NOT silently
+   *  floored to a broken sum; protein is capped to keep the sum valid and this
+   *  flag is raised so the UI can warn. */
+  aggressive: boolean;
+}
 
-  // Phase fed to getDayAdjustment now comes from the program↔nutrition
-  // translator instead of the raw `currentPhase` mirror. This revives the
-  // dead branches: a strength PrimaryGoal yields liftPhase "strength" (the
-  // 400/500-cal carb shift + 2.2 protein), and a deload week yields liftPhase
-  // "deload" (1.8 protein) — both of which the engine's
-  // base/progression/deload `currentPhase` vocabulary never matched.
-  //
-  // When the translator reports "none" (no lift program — run-only / free /
-  // pre-onboarding, or a caller that didn't pass a ProgramState) we fall back
-  // to the legacy `currentPhase` read so non-lifters and any not-yet-wired
-  // call site keep their exact prior behaviour.
+/** Tier → one-line rationale surfaced on the Food hero. */
+function annotationForTier(tier: DayIntensity): string {
+  switch (tier) {
+    case "HARD":
+      return "Hard day — carbs up, fat down for fuelling";
+    case "MODERATE":
+      return "Training day — carbs up for fuel";
+    case "EASY":
+      return "Easy day — steady fuelling";
+    case "REST":
+    default:
+      return "Rest day — baseline targets";
+  }
+}
+
+/**
+ * The protein multiplier (g/kg) for the day. Cut goal pins 2.2 (preserve lean
+ * mass in a deficit) regardless of lift phase; otherwise the Prompt-A
+ * lift-phase drives it (strength 2.2 / hypertrophy 2.0 / deload 1.8 / base 2.0)
+ * with the goal as fallback.
+ */
+function dayProteinMultiplier(phase: string, goal?: string): number {
+  const isCut = goal === "cut" || (!goal && phase === "cut");
+  return resolveProteinMultiplier(isCut ? "cut" : phase, goal);
+}
+
+/**
+ * Daily macro split, calorie-flat (Nutr1). The fat↔carb fast-loop is driven by
+ * the day-load `intensity` tier (from the dayIntensity classifier). When no
+ * tier is supplied (callers without a date/runDays join, e.g. unit tests) it
+ * is derived from `dayType` + the program's lift signals.
+ *
+ * Model:
+ *  - protein: bodyweight × phase multiplier, CAPPED so it can't crowd out the
+ *    essential fat floor (overshoot → `aggressive` flag).
+ *  - fat: starts at the FAT_CALORIE_FRACTION baseline, cut toward the tier's
+ *    fat floor by the tier's fuel shift, never below ESSENTIAL_FAT_FLOOR_PER_KG.
+ *  - carbs: the balancing remainder; the fat freed by the shift becomes carbs
+ *    at constant calories (net-neutral). Clamped ≥ 0.
+ *
+ * Invariant: protein*4 + carbs*4 + fat*9 === calories (±2 cal rounding), OR
+ * `aggressive` is true on an over-budget cut.
+ */
+export function getAdjustedTargets(
+  profile: UserProfile,
+  dayType: DayType,
+  program?: ProgramState,
+  intensity?: DayIntensity
+): AdjustedTargets {
+  const calories = profile.targetCalories || 2200;
+  const weightKg = profile.weightKg || 70;
+
+  // Lift phase (Prompt A translator) → protein multiplier. Falls back to the
+  // legacy currentPhase mirror when there's no lift program.
   const signals = trainingSignalsForNutrition(program);
   const phase =
     signals.liftPhase === "none"
       ? profile.program?.currentPhase || "base"
       : signals.liftPhase;
   const goal = profile.program?.goal;
-  const adj = getDayAdjustment(dayType, phase, goal);
+  const multiplier = dayProteinMultiplier(phase, goal);
 
-  // Nutr1: calories are FLAT across day types (expenditure-inclusive) — no
-  // training-day surplus. Day-type fuelling is the net-neutral fat→carb shift
-  // below, NOT a calorie bump.
-  const calories = base.calories;
-  const protein = Math.round(adj.proteinMultiplier * (profile.weightKg || 70));
+  // Day-load tier drives the fat↔carb shift (replaces the per-dayType carb
+  // constant). Carb DIRECTION is glycogen-demand-driven (volume + run stress),
+  // NOT the strength/hypertrophy label — see dayIntensity.ts header.
+  const tier = intensity ?? tierFromDayType(dayType, program);
 
-  // Net-neutral carb periodization: move `fuelShiftCalories` of fat into
-  // carbs on training days, clamped so fat never drops below the essential
-  // floor (and never goes negative when stored fat is already below it). The
-  // lowered fat is absorbed by the balancing-carbs formula below as extra
-  // carbs at constant calories — so a +200-cal lift day yields the SAME carb
-  // grams it did under the old net-additive model, just without the surplus.
-  const weightKg = profile.weightKg || 70;
-  const fatFloorG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
-  const desiredFatCutG = Math.round(adj.fuelShiftCalories / 9);
-  const fatCutG = Math.max(0, Math.min(desiredFatCutG, base.fat - fatFloorG));
-  const fat = base.fat - fatCutG;
+  const essentialFatG = Math.round(ESSENTIAL_FAT_FLOOR_PER_KG * weightKg);
+  const baselineFatG = Math.round((FAT_CALORIE_FRACTION * calories) / 9);
 
-  // Carbs are the balancing macro. They absorb the fat reduction above AND
-  // any gap between the bodyweight-derived protein and the stored base
-  // protein target, so the rendered macros always reconcile with the (flat)
-  // calorie goal (protein*4 + carbs*4 + fat*9 === calories, modulo ≤2 cal of
-  // per-gram rounding). Clamped at 0 for aggressive cuts where protein + fat
-  // alone already meet the budget.
-  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
+  // Cut fat from baseline toward the tier floor (≥ essential), by the shift.
+  const shiftFloorG = Math.max(
+    Math.round(fatFloorPerKgForTier(tier) * weightKg),
+    essentialFatG
+  );
+  const desiredCutG = Math.round(fuelShiftCalsForTier(tier) / 9);
+  const cutG = Math.max(0, Math.min(desiredCutG, baselineFatG - shiftFloorG));
+  // Never below the essential floor (raises a too-low baseline UP to essential
+  // on deep deficits — periodization is intentionally inert there).
+  const fat = Math.max(baselineFatG - cutG, essentialFatG);
 
-  return { calories, protein, carbs, fat, annotation: adj.reason };
+  // Protein anchored to bodyweight, capped so protein + fat fit the budget
+  // (carbs ≥ 0). A cap means the cut is too aggressive to hit both → flag it.
+  let aggressive = false;
+  let protein = Math.round(multiplier * weightKg);
+  const proteinRoomCals = calories - fat * 9;
+  if (protein * 4 > proteinRoomCals) {
+    protein = Math.max(0, Math.floor(proteinRoomCals / 4));
+    aggressive = true;
+  }
+
+  // Carbs = balancing remainder. Clamp ≥ 0 (a forced clamp is the over-budget
+  // signal too — but the protein cap above already keeps the sum valid).
+  let carbs = Math.round((calories - protein * 4 - fat * 9) / 4);
+  if (carbs < 0) {
+    carbs = 0;
+    aggressive = true;
+  }
+
+  return {
+    calories,
+    protein,
+    carbs,
+    fat,
+    annotation: annotationForTier(tier),
+    aggressive,
+  };
 }
