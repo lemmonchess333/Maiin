@@ -5,6 +5,16 @@ import {
   ESSENTIAL_FAT_FLOOR_PER_KG,
 } from "../phaseNutrition";
 import type { UserProfile } from "../auth";
+import {
+  RUN_ONLY,
+  LIFT_ONLY,
+  BOTH,
+  FREE_RUN,
+  HEAVY_CUTTER,
+  PRO_TAPER,
+  makeProgram,
+  liftDay,
+} from "@/test/nutritionFixtures";
 
 // Helper to create a minimal UserProfile for testing
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -384,5 +394,99 @@ describe("getAdjustedTargets", () => {
       expect(result.carbs).toBe(0);
       expect(result.carbs).toBeGreaterThanOrEqual(0);
     });
+  });
+});
+
+// ── Program-driven phase via the translator (vocabulary-drift fix) ────────
+// Passing the full ProgramState revives the dead branches: protein now
+// follows the user's PrimaryGoal (strength/hypertrophy) on progression weeks
+// and eases on deload weeks, instead of the engine's base/progression/deload
+// `currentPhase` vocabulary matching nothing in PHASE_PROTEIN.
+describe("getAdjustedTargets — program-driven phase (translator)", () => {
+  it("LIFT_ONLY deload week: protein eases to the deload multiplier (1.8)", () => {
+    const { profile, program } = LIFT_ONLY({
+      currentPhase: "deload",
+      weekNumber: 4,
+    });
+    const r = getAdjustedTargets(profile, "lift", program);
+    expect(r.protein).toBe(Math.round(1.8 * (profile.weightKg ?? 0))); // 144
+  });
+
+  it("LIFT_ONLY progression week: protein = the PrimaryGoal phase value (strength 2.2), not the goal default", () => {
+    const { profile, program } = LIFT_ONLY(); // strength, progression, wk2
+    const r = getAdjustedTargets(profile, "lift", program);
+    expect(r.protein).toBe(Math.round(2.2 * (profile.weightKg ?? 0))); // 176
+
+    // The dead-branch bug being fixed: feeding the engine's raw "progression"
+    // string falls back to the goal/default multiplier (2.0), NOT the phase.
+    expect(
+      getDayAdjustment("lift", "progression", "recomp").proteinMultiplier
+    ).toBe(2.0);
+  });
+
+  it("revives the strength carb-shift branch end-to-end (richer carbs than a base lifter, fat headroom allowing)", () => {
+    // targetFat well above the essential floor so the 400-vs-200 fuel shift is
+    // visible rather than clamped.
+    const strength = getAdjustedTargets(
+      makeProfile({ weightKg: 80, targetFat: 100 }),
+      "lift",
+      makeProgram({
+        primaryGoal: "strength",
+        currentPhase: "progression",
+        weekNumber: 2,
+        workouts: [liftDay("A", 5)],
+      })
+    );
+    const general = getAdjustedTargets(
+      makeProfile({ weightKg: 80, targetFat: 100 }),
+      "lift",
+      makeProgram({
+        primaryGoal: "general",
+        currentPhase: "progression",
+        weekNumber: 2,
+        workouts: [liftDay("A", 5)],
+      })
+    );
+    expect(strength.carbs).toBeGreaterThan(general.carbs);
+  });
+
+  it("RUN_ONLY / no-lift program → safe legacy fallback (base 2.0), no throw", () => {
+    const { profile, program } = RUN_ONLY();
+    expect(() => getAdjustedTargets(profile, "run", program)).not.toThrow();
+    const r = getAdjustedTargets(profile, "run", program);
+    // translator 'none' → falls back to profile.program.currentPhase ("base")
+    expect(r.protein).toBe(Math.round(2.0 * (profile.weightKg ?? 0)));
+  });
+
+  it("omitting the program argument preserves exact legacy behaviour", () => {
+    const { profile } = LIFT_ONLY();
+    // No program passed → legacy currentPhase mirror ("base") → 2.0
+    const legacy = getAdjustedTargets(profile, "lift");
+    expect(legacy.protein).toBe(Math.round(2.0 * (profile.weightKg ?? 0)));
+  });
+
+  it("reconciliation invariant holds for every fixture (or carbs clamp at 0)", () => {
+    const fixtures = [
+      RUN_ONLY(),
+      LIFT_ONLY(),
+      LIFT_ONLY({ currentPhase: "deload", weekNumber: 4 }),
+      BOTH(),
+      FREE_RUN(),
+      HEAVY_CUTTER(),
+      PRO_TAPER(),
+    ];
+    const dayTypes = ["lift", "run", "both", "rest"] as const;
+    for (const { profile, program } of fixtures) {
+      for (const dt of dayTypes) {
+        const r = getAdjustedTargets(profile, dt, program);
+        const sum = r.protein * 4 + r.carbs * 4 + r.fat * 9;
+        const reconciled = Math.abs(sum - r.calories) <= 2;
+        // HEAVY_CUTTER is over-budget by design: protein + floored fat already
+        // exceed calories, so carbs clamp at 0 and the sum can't equal
+        // calories. That clamp is the correct, intended state.
+        const clampedOverBudget = r.carbs === 0 && sum >= r.calories;
+        expect(reconciled || clampedOverBudget).toBe(true);
+      }
+    }
   });
 });
