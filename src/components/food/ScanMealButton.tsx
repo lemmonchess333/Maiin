@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 interface ScanMealButtonProps {
   onClick: () => void;
   ariaLabel?: string;
-  /** Quota-exhausted upsell state. Renders a confident scan-coral "unlock"
-   *  CTA — a filled coral lock badge + value-led label on a coral-tinted
-   *  surface — that opens the paywall on tap. Distinct from the active
-   *  gradient+glow hero (no glow, lock not camera), but not faded: it's a
-   *  conversion CTA, so it keeps real presence. */
+  /** Quota-exhausted state. Reads as an upgrade-GATED action, not a second
+   *  primary CTA: a soft coral-tinted surface + hairline border + a plain
+   *  (un-badged) coral lock + value-led label that opens the paywall on
+   *  tap. Deliberately lower-presence than the active gradient+glow hero so
+   *  the locked scan doesn't compete with the Food logging flow (composer,
+   *  quick-add, meal pills). Coral is retained as the scan affordance's
+   *  identity — only the *weight* is dialled down, not the colour. */
   locked?: boolean;
 }
 
@@ -34,19 +36,23 @@ export default function ScanMealButton({
       }
       className={cn(
         "relative w-full h-[60px] rounded-2xl flex items-center justify-center gap-3 font-semibold text-base",
-        // Active = full scan gradient + glow. Locked = coral-tinted surface with
-        // a defined border + readable coral text (no glow — that read as a
-        // glitch on a disabled fill; white-on-bright-coral also fails contrast,
-        // so coral-on-tint is the legible + good-looking choice).
+        // Active = full scan gradient + glow (the deliberate scan signature).
+        // Locked = soft coral-tinted surface + hairline border + coral text.
+        // No glow, no filled badge — the locked state reads as gated, not as
+        // a second primary CTA. Coral-on-tint stays legible (white-on-bright-
+        // coral fails contrast, so coral text is also the correct choice).
         locked ? "border" : "text-white shadow-[var(--shadow-scan)]"
       )}
       style={
         locked
           ? {
-              // scan colour at ~15% bg / ~33% border via hex-alpha on the THEME
-              // token — confident coral presence, not the washed-out 8% tint.
-              background: `${THEME.food.scan}26`,
-              borderColor: `${THEME.food.scan}55`,
+              // scan colour at ~10% bg / ~18% border via hex-alpha on the
+              // THEME token. Lighter than the prior 15%/33% "conversion CTA"
+              // weight so the locked state recedes to gated/unavailable —
+              // present and tappable, but not loud. (Not the washed-out 8%
+              // either; a clean coral lock + value copy keeps it intentional.)
+              background: `${THEME.food.scan}1A`,
+              borderColor: `${THEME.food.scan}2E`,
               color: THEME.food.scan,
             }
           : {
@@ -56,14 +62,10 @@ export default function ScanMealButton({
     >
       {locked ? (
         <>
-          {/* filled coral lock badge — a premium accent, echoes the active
-              button's icon weight without the loud full-width glow */}
-          <span
-            className="inline-flex size-7 items-center justify-center rounded-lg shrink-0"
-            style={{ background: THEME.food.scan }}
-          >
-            <Lock size={15} strokeWidth={2.5} className="text-white" />
-          </span>
+          {/* Plain coral lock (inherits the button's coral `color`) — no
+              filled badge. The badge was the element that made the locked
+              state read as a primary CTA; a bare lock reads as "gated". */}
+          <Lock size={18} strokeWidth={2.25} className="shrink-0" />
           <span>Unlock unlimited scans</span>
         </>
       ) : (
