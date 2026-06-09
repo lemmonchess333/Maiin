@@ -47,7 +47,7 @@ describe("resolveTaper — calorie override", () => {
     const t = resolveTaper(TODAY, raceProfile(CARB_LOAD_DAYS), BASE);
     expect(t!.carbLoad).toBe(true);
     expect(t!.taperedCalories).toBeGreaterThan(BASE);
-    expect(t!.annotation).toContain("Carb-load");
+    expect(t!.annotation).toContain("carb load");
   });
 
   it("race day is a carb-load (phase 'race')", () => {
