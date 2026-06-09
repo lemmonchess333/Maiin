@@ -85,7 +85,12 @@ export default function Layout() {
           nav at the bottom of the screen. */}
       <div
         aria-hidden="true"
-        className="fixed top-0 left-0 right-0 z-30 ds-safe-top-occluder"
+        /* z-40, deliberately ABOVE the page-chrome tier (sticky bars like
+           FoodDateBar + the bottom nav sit at z-30): at an equal z-30 the
+           later-DOM sticky bars painted OVER the occluder while transiting
+           the status-bar zone on scroll. Stays BELOW sheets/drawers (z-50),
+           which must cover the full screen including the safe area. */
+        className="fixed top-0 left-0 right-0 z-40 ds-safe-top-occluder"
         style={{ height: "var(--safe-top)" }}
       />
       {/* Sprint 5: removed the React-rendered skip link from this
