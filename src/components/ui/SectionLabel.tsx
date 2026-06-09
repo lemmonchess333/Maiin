@@ -8,8 +8,10 @@ interface SectionLabelProps {
   /**
    * Typographic tier, per the two documented Tropos label sizes:
    *   "caption" — 12px, card-internal section captions (default)
-   *   "section" — 10px, page-section labels (the deliberate 10px tier
-   *               called out in the design system as intentional)
+   *   "section" — 11px (text-caption), page-section labels. Historically
+   *               the deliberate 10px tier; floored up to the official
+   *               11px scale step when it became the app-wide minimum
+   *               text size (accessibility floor).
    */
   tier?: SectionLabelTier;
   /** Rendered element. Defaults to <p>; pass "h2"/"h3" for a heading,
@@ -25,7 +27,7 @@ interface SectionLabelProps {
 
 const TIER_SIZE: Record<SectionLabelTier, string> = {
   caption: "text-xs", // 12px
-  section: "text-[10px]", // 10px — deliberate page-section size
+  section: "text-caption", // 11px — page-section size (a11y-floored from 10px)
 };
 
 /**

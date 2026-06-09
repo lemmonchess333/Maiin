@@ -77,7 +77,7 @@ function Lane({
   return (
     <span
       className={cn(
-        "min-h-[20px] rounded-md px-0.5 text-[9px] font-semibold leading-none",
+        "min-h-[20px] rounded-md px-0.5 text-caption font-semibold leading-none",
         "flex items-center justify-center gap-0.5",
         isSkipped && "bg-muted text-muted-foreground line-through",
         isDone && "text-white",
@@ -185,7 +185,7 @@ export default function HybridWeekRail({
               >
                 <span
                   className={cn(
-                    "text-[10px] font-bold uppercase leading-none",
+                    "text-caption font-bold uppercase leading-none",
                     item.isToday ? "" : "text-muted-foreground"
                   )}
                   style={item.isToday ? { color: THEME.brand } : undefined}
@@ -209,7 +209,7 @@ export default function HybridWeekRail({
                     />
                   )}
                   {!item.run && !item.lift && (
-                    <span className="min-h-[20px] flex items-center justify-center text-[10px] text-muted-foreground">
+                    <span className="min-h-[20px] flex items-center justify-center text-caption text-muted-foreground">
                       —
                     </span>
                   )}
@@ -246,7 +246,7 @@ export default function HybridWeekRail({
                       onClick={() => setExtrasSheetDate(item.dateKey)}
                       aria-label={`${overflowCount} more extra ${overflowCount === 1 ? "run" : "runs"} for ${DAY_LABELS[item.dayIndex]} — open all`}
                       className={cn(
-                        "min-h-[24px] rounded-md px-1 text-[9px] leading-tight",
+                        "min-h-[24px] rounded-md px-1 text-caption leading-tight",
                         "border border-dashed border-muted-foreground/40",
                         "text-muted-foreground/80 hover:text-foreground",
                         "motion-safe:transition-colors motion-safe:active:scale-[0.97]"
@@ -308,7 +308,7 @@ function ExtraRunPill({
       aria-label={ariaLabel}
       className={cn(
         "min-h-[24px] rounded-md px-1 py-0.5",
-        "border text-[9px] leading-tight",
+        "border text-caption leading-tight",
         "border-muted-foreground/40 text-muted-foreground",
         "motion-safe:transition-colors motion-safe:active:scale-[0.97]",
         "hover:text-foreground hover:border-muted-foreground/70",

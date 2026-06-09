@@ -1480,7 +1480,7 @@ export default function History() {
                   appears — below that, the user already understands they
                   haven't logged much. */}
                     {nutrition.adherence < 50 && nutrition.daysLogged >= 5 && (
-                      <p className="text-[11px] text-warning -mt-1 italic">
+                      <p className="text-caption text-warning -mt-1 italic">
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
@@ -1625,7 +1625,7 @@ export default function History() {
                           ? (lifetimeTotals.runKm / 1000).toFixed(1) + "k"
                           : Math.round(lifetimeTotals.runKm).toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-caption text-muted-foreground mt-0.5">
                         km · {lifetimeTotals.runCount} runs
                       </p>
                     </div>
@@ -1639,7 +1639,7 @@ export default function History() {
                           </span>
                         )}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-caption text-muted-foreground mt-0.5">
                         lifted · {lifetimeTotals.liftCount} sessions
                       </p>
                     </div>
@@ -1651,7 +1651,7 @@ export default function History() {
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.daysLogged.toLocaleString()}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                      <p className="text-caption text-muted-foreground mt-0.5">
                         days logged
                       </p>
                     </div>

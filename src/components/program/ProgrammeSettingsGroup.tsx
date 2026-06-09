@@ -32,7 +32,7 @@ export default function ProgrammeSettingsGroup({
       <header className="space-y-0.5">
         <h2
           className={cn(
-            "text-[15px] font-bold leading-tight",
+            "text-body font-bold leading-tight",
             tone === "danger" ? "text-destructive" : "text-foreground"
           )}
         >

@@ -261,7 +261,7 @@ export default function ExercisePicker({
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
-                    "h-9 px-3.5 rounded-full text-[13px] whitespace-nowrap transition-colors shrink-0",
+                    "h-9 px-3.5 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
                       ? "font-semibold text-white bg-primary"
                       : "font-normal bg-transparent border-[1.5px] border-border text-foreground"
@@ -383,7 +383,7 @@ export default function ExercisePicker({
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={handleAddSelected}
-                    className="w-full py-3.5 text-white font-semibold text-[15px] flex items-center justify-center gap-2"
+                    className="w-full py-3.5 text-white font-semibold text-body flex items-center justify-center gap-2"
                     style={{
                       backgroundColor: THEME.lifting,
                       borderRadius: 14,

@@ -39,7 +39,7 @@ export default function PRCard({
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-foreground">{title}</h3>
           {subtitle && (
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-caption text-muted-foreground mt-0.5">
               {subtitle}
             </p>
           )}
