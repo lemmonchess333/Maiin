@@ -196,7 +196,13 @@ export default function Layout() {
                     key={tab.to}
                     to={tab.to}
                     end={tab.to === "/"}
-                    aria-label={tab.label}
+                    aria-label={
+                      hasBadge
+                        ? `${tab.label}, ${
+                            unreadCount > 9 ? "9+" : unreadCount
+                          } unread`
+                        : tab.label
+                    }
                     onClick={() => {
                       haptic("light");
                       if (tab.to === "/social") markSeen();
@@ -290,8 +296,15 @@ export default function Layout() {
                             />
                           </motion.div>
                           {/* Notification badge */}
+                          {/* Unread Social activity is "new", not an error —
+                              use the brand token, NOT bg-destructive (reserved
+                              for genuine errors / destructive states; a red dot
+                              over-escalates ordinary unread to "problem"). The
+                              dot stays small to keep the 5-tab nav calm; the
+                              count + accessible unread detail live in the
+                              aria-label above and the Social header. */}
                           {hasBadge && (
-                            <div className="absolute -top-1 -right-1 size-2 rounded-full bg-destructive" />
+                            <div className="absolute -top-1 -right-1 size-2 rounded-full bg-primary" />
                           )}
                         </motion.div>
                         <span className="relative z-10 max-w-full truncate text-xs font-medium tracking-wide">
