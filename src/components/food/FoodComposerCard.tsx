@@ -19,8 +19,8 @@ import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
    FoodComposerCard doesn't pull in the hook itself. */
 interface ScanOverrides {
   onClick: () => void;
-  style?: React.CSSProperties;
-  icon?: React.ReactNode;
+  /** Quota-exhausted upsell state — drives ScanMealButton's locked look. */
+  locked?: boolean;
 }
 
 interface ScanUsageSnapshot {
@@ -270,8 +270,7 @@ function FoodComposerCard({
               ? "Scan your meal"
               : "Upgrade to scan your meal"
           }
-          styleOverride={scanOverrides.style}
-          statusIcon={scanOverrides.icon}
+          locked={scanOverrides.locked}
         />
         {!scanUsage.isUnlimited && !scanUsage.loading && (
           <div className="mt-2">
