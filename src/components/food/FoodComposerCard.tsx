@@ -244,13 +244,17 @@ function FoodComposerCard({
                      overlapping adjacent meal pills' tap areas. */
                 "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
                 selected
-                  ? // Selected meal target = nutrition domain identity. Uses
-                    // the AA-clearing -strong step (#B45309, ~5:1) rather
-                    // than the lighter identity orange (#D9884E fails AA
-                    // with white text). The meal-section + button mirrors
-                    // this exact treatment so the same state reads as ONE
-                    // colour everywhere on the Food page.
-                    "border-transparent text-white bg-nutrition-strong"
+                  ? // Selected meal target = the nutrition IDENTITY orange
+                    // (--nutrition #D9884E), not the amber -strong step. The
+                    // visual audit flagged the amber-brown fill clashing with
+                    // the coral paywall + warm nutrition palette around it;
+                    // the identity orange sits in-family. Deliberate AA
+                    // trade-off: white on #D9884E is ~2.8:1 — accepted for
+                    // this one short-label pill by the design call recorded
+                    // in the audit (REPORT.md). The meal-section + button
+                    // mirrors this exact treatment so the same state reads
+                    // as ONE colour everywhere on the Food page.
+                    "border-transparent text-white bg-nutrition"
                   : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
               )}
               aria-pressed={selected}
