@@ -205,9 +205,10 @@ export default function FoodMealSection({
               // boolean must read as ONE colour across both surfaces.
               // Purple here made "selected food target" look like a brand
               // action; orange is the nutrition domain identity. Uses the
-              // AA-clearing -strong step to match the pill exactly.
+              // identity orange (--nutrition) to match the pill exactly
+              // (audit fix C — see FoodComposerCard for the AA trade-off note).
               targetMeal === mealKey
-                ? "bg-nutrition-strong text-white"
+                ? "bg-nutrition text-white"
                 : "border border-black/[0.12] text-muted-foreground"
             )}
           >
