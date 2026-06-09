@@ -1,6 +1,8 @@
 import type { UserProfile } from "./auth";
 import type { DayType } from "./types";
+import type { ProgramState } from "@/features/program/programTypes";
 import { resolveProteinMultiplier } from "./macroConstants";
+import { trainingSignalsForNutrition } from "./trainingSignals";
 
 export interface DayAdjustment {
   /**
@@ -77,7 +79,8 @@ export function getDayAdjustment(
 
 export function getAdjustedTargets(
   profile: UserProfile,
-  dayType: DayType
+  dayType: DayType,
+  program?: ProgramState
 ): {
   calories: number;
   protein: number;
@@ -92,7 +95,22 @@ export function getAdjustedTargets(
     fat: profile.targetFat || 60,
   };
 
-  const phase = profile.program?.currentPhase || "base";
+  // Phase fed to getDayAdjustment now comes from the program↔nutrition
+  // translator instead of the raw `currentPhase` mirror. This revives the
+  // dead branches: a strength PrimaryGoal yields liftPhase "strength" (the
+  // 400/500-cal carb shift + 2.2 protein), and a deload week yields liftPhase
+  // "deload" (1.8 protein) — both of which the engine's
+  // base/progression/deload `currentPhase` vocabulary never matched.
+  //
+  // When the translator reports "none" (no lift program — run-only / free /
+  // pre-onboarding, or a caller that didn't pass a ProgramState) we fall back
+  // to the legacy `currentPhase` read so non-lifters and any not-yet-wired
+  // call site keep their exact prior behaviour.
+  const signals = trainingSignalsForNutrition(program);
+  const phase =
+    signals.liftPhase === "none"
+      ? profile.program?.currentPhase || "base"
+      : signals.liftPhase;
   const goal = profile.program?.goal;
   const adj = getDayAdjustment(dayType, phase, goal);
 
