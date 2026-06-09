@@ -56,7 +56,7 @@ const MUSCLE_MAP: Record<string, IExerciseData["muscles"]> = {
 
 const LOW_COLOR = THEME.liftingLight;
 const MID_COLOR = THEME.lifting;
-const HIGH_COLOR = "#6560C8"; // darker lifting shade
+const HIGH_COLOR = THEME.brandStrong; // #6560C8 — darker lifting shade
 
 /* Hist5c pin 8 — relative-volume share thresholds in ./muscleShare.
    Replaces the previous absolute set-count buckets which saturated

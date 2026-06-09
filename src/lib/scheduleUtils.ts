@@ -3,6 +3,8 @@
  * day: 0=Sun, 1=Mon ... 6=Sat (matches JS Date.getDay())
  */
 
+import { THEME } from "@/lib/theme";
+
 export type DayType = "lift" | "run" | "both" | "rest";
 
 export interface ScheduleDay {
@@ -30,10 +32,13 @@ export { DAY_LABELS, DAY_LABELS_SHORT };
  * schedule API (generateSchedule, day labels) lives in one
  * import statement for callers.
  */
-export const SCHEDULE_TYPE_META: Record<DayType, { label: string; color: string }> = {
-  lift: { label: "Lift", color: "#7B72E9" },
-  run: { label: "Run", color: "#D4637A" },
-  both: { label: "Both", color: "#52A3BD" },
+export const SCHEDULE_TYPE_META: Record<
+  DayType,
+  { label: string; color: string }
+> = {
+  lift: { label: "Lift", color: THEME.lifting },
+  run: { label: "Run", color: THEME.running },
+  both: { label: "Both", color: THEME.teal },
   rest: { label: "Rest", color: "#8E8E93" },
 };
 
@@ -77,7 +82,10 @@ export const SCHEDULE_TYPE_META: Record<DayType, { label: string; color: string 
  * cap individual targets at 7 so this case shouldn't arise in
  * production, but the function stays safe under bad input.
  */
-export function generateSchedule(liftDays: number, runDays: number): ScheduleDay[] {
+export function generateSchedule(
+  liftDays: number,
+  runDays: number
+): ScheduleDay[] {
   const totalActive = liftDays + runDays;
   const schedule: ScheduleDay[] = Array.from({ length: 7 }, (_, i) => ({
     day: i,
@@ -99,8 +107,14 @@ export function generateSchedule(liftDays: number, runDays: number): ScheduleDay
     let r = runDays;
 
     while (l > 0 || r > 0) {
-      if (l > 0) { pattern.push("lift"); l--; }
-      if (r > 0) { pattern.push("run"); r--; }
+      if (l > 0) {
+        pattern.push("lift");
+        l--;
+      }
+      if (r > 0) {
+        pattern.push("run");
+        r--;
+      }
     }
 
     for (let i = 0; i < pattern.length && i < slotOrder.length; i++) {
@@ -128,10 +142,16 @@ export function generateSchedule(liftDays: number, runDays: number): ScheduleDay
     const overflow = totalDaysNeeded - 7;
     if (liftOnlyCount >= runOnlyCount) {
       const cappedLift = Math.max(0, liftOnlyCount - overflow);
-      return assembleSlots({ bothCount, liftOnlyCount: cappedLift, runOnlyCount }, slotOrder);
+      return assembleSlots(
+        { bothCount, liftOnlyCount: cappedLift, runOnlyCount },
+        slotOrder
+      );
     }
     const cappedRun = Math.max(0, runOnlyCount - overflow);
-    return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount: cappedRun }, slotOrder);
+    return assembleSlots(
+      { bothCount, liftOnlyCount, runOnlyCount: cappedRun },
+      slotOrder
+    );
   }
 
   return assembleSlots({ bothCount, liftOnlyCount, runOnlyCount }, slotOrder);
@@ -146,7 +166,7 @@ export function generateSchedule(liftDays: number, runDays: number): ScheduleDay
  *  Mon/Wed/Fri). Lift days follow, then run days. */
 function assembleSlots(
   counts: { bothCount: number; liftOnlyCount: number; runOnlyCount: number },
-  slotOrder: number[],
+  slotOrder: number[]
 ): ScheduleDay[] {
   const schedule: ScheduleDay[] = Array.from({ length: 7 }, (_, i) => ({
     day: i,
@@ -195,7 +215,7 @@ export function getTodaySchedule(schedule: ScheduleDay[]): ScheduleDay | null {
  */
 export function liftIndexForDayOfWeek(
   schedule: ScheduleDay[] | undefined | null,
-  dayOfWeek: number,
+  dayOfWeek: number
 ): number {
   if (!schedule || schedule.length !== 7) return -1;
   const sorted = [...schedule].sort((a, b) => a.day - b.day);
@@ -224,7 +244,9 @@ const VALID_DAY_TYPES = new Set<DayType>(["lift", "run", "both", "rest"]);
  * authoritative invariant lives here — one place to update if the
  * day-type enum changes.
  */
-export function isValidWeekSchedule(schedule: unknown): schedule is ScheduleDay[] {
+export function isValidWeekSchedule(
+  schedule: unknown
+): schedule is ScheduleDay[] {
   if (!Array.isArray(schedule) || schedule.length !== 7) return false;
   const seenDays = new Set<number>();
   for (const entry of schedule) {
@@ -242,7 +264,12 @@ export function isValidWeekSchedule(schedule: unknown): schedule is ScheduleDay[
 /**
  * Count active days by type.
  */
-export function countByType(schedule: ScheduleDay[]): { lift: number; run: number; both: number; rest: number } {
+export function countByType(schedule: ScheduleDay[]): {
+  lift: number;
+  run: number;
+  both: number;
+  rest: number;
+} {
   return schedule.reduce(
     (acc, s) => {
       acc[s.type]++;
@@ -274,7 +301,9 @@ type ProfileLike = {
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
 };
-export function getWeeklyRunTarget(profile: ProfileLike | null | undefined): number {
+export function getWeeklyRunTarget(
+  profile: ProfileLike | null | undefined
+): number {
   return profile?.weeklyRunDaysTarget ?? profile?.weeklyRunsTarget ?? 0;
 }
 
@@ -289,5 +318,3 @@ export function runTargetWriteFields(target: number): {
 } {
   return { weeklyRunsTarget: target, weeklyRunDaysTarget: target };
 }
-
-

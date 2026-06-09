@@ -1,4 +1,5 @@
 import { getSegmentColor } from "@/lib/guidedRun";
+import { THEME } from "@/lib/theme";
 import type { RunSegment } from "@/lib/guidedRun";
 
 interface Props {
@@ -45,7 +46,7 @@ export default function GuidedRunOverlay({
 
   const segColor = currentSegment
     ? getSegmentColor(currentSegment.type)
-    : "#7B72E9";
+    : THEME.brand;
 
   return (
     <div

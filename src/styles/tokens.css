@@ -4,15 +4,29 @@
 ============================================================= */
 
 :root {
-  /* Brand Colors — unified around #7B72E9 */
+  /* Brand purple — CANONICAL HEX layer. These mirror THEME.brand /
+     THEME.brandLight / THEME.brandStrong in src/lib/theme.ts EXACTLY (pinned
+     by src/lib/__tests__/colorCanonical.test.ts so the two can't drift).
+     Deliberately NOT derived from index.css `hsl(var(--lifting))`: that HSL
+     triple (245 73% 68%) round-trips to #7c72e9, one unit off the canonical
+     #7b72e9 — so `hsl(var())` here would shift the pixel. The fixed-identity
+     brand hex is the source of truth; index.css `--lifting` is the
+     theme-tunable approximation that drives the Tailwind sport classes. */
   --ds-purple-50: #f5f4fe;
   --ds-purple-100: #eceafe;
   --ds-purple-200: #d9d5fa;
-  --ds-purple-400: #9590e0;
-  --ds-purple-500: #7b72e9;
-  --ds-purple-600: #6560c8;
+  --ds-purple-400: #9590e0; /* THEME.brandLight */
+  --ds-purple-500: #7b72e9; /* THEME.brand / lifting */
+  --ds-purple-600: #6560c8; /* THEME.brandStrong */
   --ds-purple-700: #4e4aa8;
 
+  /* GENERIC warm orange ramp — PR-celebration flash, streak flame, the "NEW"
+     badge, the progress-ring fill, achievement accents. This is NOT the
+     nutrition/food/macro orange: that identity is `--nutrition` (#D9884E, in
+     index.css). Renamed-by-comment after the #E87316↔#D9884E drift where these
+     two oranges were confused (~8 nutrition uses repointed to --nutrition;
+     this ramp kept for the genuinely non-nutrition warm-accent uses). Do NOT
+     use --ds-orange-* for calorie/macro context. */
   --ds-orange-400: #f0923c;
   --ds-orange-500: #e87316;
   --ds-orange-600: #d6580c;

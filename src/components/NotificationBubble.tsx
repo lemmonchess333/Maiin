@@ -6,6 +6,7 @@ import {
   createContext,
   use,
 } from "react";
+import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, CheckCircle, Bell } from "lucide-react";
 
@@ -55,7 +56,7 @@ const VARIANT_CONFIG: Record<
   },
   generic: {
     icon: Bell,
-    color: "#7B72E9",
+    color: THEME.brand,
     bg: "rgba(123, 114, 233, 0.07)",
     border: "rgba(123, 114, 233, 0.12)",
   },
