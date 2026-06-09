@@ -244,14 +244,15 @@ function FoodComposerCard({
                      overlapping adjacent meal pills' tap areas. */
                 "relative h-8 px-3.5 rounded-full border text-xs font-medium shrink-0 transition-all active:scale-95 before:content-[''] before:absolute before:inset-x-0 before:-inset-y-1.5",
                 selected
-                  ? "border-transparent text-white"
+                  ? // Selected meal target = nutrition domain identity. Uses
+                    // the AA-clearing -strong step (#B45309, ~5:1) rather
+                    // than the lighter identity orange (#D9884E fails AA
+                    // with white text). The meal-section + button mirrors
+                    // this exact treatment so the same state reads as ONE
+                    // colour everywhere on the Food page.
+                    "border-transparent text-white bg-nutrition-strong"
                   : "border-border/80 text-muted-foreground bg-card hover:bg-muted/60"
               )}
-              style={
-                selected
-                  ? { backgroundColor: THEME.semantic.nutrition }
-                  : undefined
-              }
               aria-pressed={selected}
             >
               {MEAL_LABELS[mealKey]}
