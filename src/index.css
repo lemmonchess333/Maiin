@@ -20,6 +20,19 @@
      .dark below. */
   --color-running: hsl(var(--running));
   --color-lifting: hsl(var(--lifting));
+  /* Nutrition domain colour — warm orange (#D9884E), the food/calorie/
+     macro identity. `--nutrition` is the identity tint value (bg-nutrition,
+     bg-nutrition/10); `--nutrition-strong` (#B45309 amber-700, ~4.95:1) is
+     the AA-clearing step for white text on a filled surface and for the
+     nutrition text colour on a light tint — mirrors --primary /
+     --primary-strong. Closes the last domain-colour gap: running, lifting,
+     and the semantic statuses all have tokens; nutrition was the only
+     documented sport/domain colour without one, which is what kept leaking
+     one-off hex orange past the hex guardrail. NOT a mandate to recolour
+     Food CTAs — reserved (via the `nutrition` / `nutrition-tinted` Button
+     variants) for genuinely nutrition-primary surfaces. */
+  --color-nutrition: hsl(var(--nutrition));
+  --color-nutrition-strong: hsl(var(--nutrition-strong));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -96,6 +109,11 @@
      NOT --primary (246 88% 70%, hand-tuned for white-text AA). */
   --running: 348 57% 61%; /* #D4637A coral */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
+  /* Nutrition domain colour — fixed warm-orange identity (same in light +
+     dark, like running/lifting). --nutrition is the tint/identity value;
+     --nutrition-strong is the AA white-text fill step. */
+  --nutrition: 25 65% 58%; /* #D9884E warm orange */
+  --nutrition-strong: 26 91% 37%; /* #B45309 amber-700, AA on white */
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
@@ -140,6 +158,9 @@
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
+  /* Nutrition — IDENTICAL to :root (fixed domain colour). */
+  --nutrition: 25 65% 58%; /* #D9884E warm orange */
+  --nutrition-strong: 26 91% 37%; /* #B45309 amber-700 */
   --muted: 240 3% 15%;
   --muted-foreground: 240 4% 64%;
   --border: 240 3% 16%;

@@ -75,6 +75,10 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // Mirrors Button.tsx — sport variants resolve via the --running token
   // (DS1b): bg-running fill, bg-running/10 the 10% coral tint.
   "sport-tinted": "bg-running/10 text-running",
+  // Mirrors Button.tsx — nutrition variants resolve via --nutrition /
+  // --nutrition-strong. Filled uses the AA -strong step for white text.
+  nutrition: "bg-nutrition-strong text-white",
+  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
 };
 
 /**
