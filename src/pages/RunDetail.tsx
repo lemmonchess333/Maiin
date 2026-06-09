@@ -198,7 +198,6 @@ export default function RunDetail() {
           >
             {replaying ? "▶ Replaying…" : "▶ Replay"}
           </button>
-          <PaceLegend />
         </div>
       ) : (
         /* No map — show back button inline */
@@ -224,6 +223,13 @@ export default function RunDetail() {
           </button>
         </div>
       )}
+
+      {/* Pace legend — its own strip BELOW the map. Previously it was the
+          last child INSIDE the fixed `h-72` map container, so it overflowed
+          the bottom of that box and collided with the header section's
+          "FREE RUN" label + Share pill at 393px (audit #3a/#3b). Only shown
+          with a pace-coloured map (points > 1). */}
+      {run.points?.length > 1 && <PaceLegend />}
 
       <div className="px-4 pt-4 space-y-4">
         {/* Saved-anyway notice. Surfaces only when the run was
