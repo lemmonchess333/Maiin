@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
@@ -54,7 +55,7 @@ function BadgeEarnedContent({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.4 },
-        colors: [tierColor, "#7B72E9", "#fbbf24", "#34d399"],
+        colors: [tierColor, THEME.brand, "#fbbf24", "#34d399"],
       })
     );
     playChime();

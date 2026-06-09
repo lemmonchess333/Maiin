@@ -1437,13 +1437,16 @@ export default function History() {
                       const adh = nutrition.adherence;
                       const tone =
                         adh >= 80
-                          ? { color: "#4DB872", bg: "#4DB8721A" }
+                          ? { color: THEME.success, bg: `${THEME.success}1A` }
                           : adh >= 50
                             ? {
                                 color: "var(--muted-foreground)",
                                 bg: "transparent",
                               }
-                            : { color: "#f59e0b", bg: "#f59e0b1A" };
+                            : {
+                                color: THEME.amberLight,
+                                bg: `${THEME.amberLight}1A`,
+                              };
                       return (
                         <div
                           className="flex items-center justify-between mt-2 px-3 py-2 rounded-xl"
