@@ -58,6 +58,63 @@ export function isWithinActivationWindow(
   return age >= 0 && age <= ACTIVATION_WINDOW_DAYS * DAY_MS;
 }
 
+/** Hard-suppress the welcome checklist once a user has this many workouts. */
+export const WELCOME_CHECKLIST_WORKOUT_CAP = 3;
+
+export interface WelcomeChecklistInput {
+  /** profile.createdAt in epoch ms, or null when not yet a Timestamp. */
+  createdAtMs: number | null;
+  /** Injected for determinism. */
+  nowMs: number;
+  /** Lifetime logged-workout count. */
+  workoutCount: number;
+  /** Lifetime logged-run count. */
+  runCount: number;
+  /** Lifetime logged-meal count. */
+  mealCount: number;
+  /** Persisted "user tapped the dismiss X" flag. */
+  dismissed: boolean;
+}
+
+/**
+ * The welcome checklist's job is done once the user has completed the core
+ * activation loop derived from real signals: started training (a workout OR a
+ * run) AND logged a meal. (Viewing Analytics is a passive surface with no
+ * loggable signal, so it isn't a completion gate.)
+ */
+export function isWelcomeChecklistComplete(
+  input: Pick<WelcomeChecklistInput, "workoutCount" | "runCount" | "mealCount">
+): boolean {
+  const startedTraining = input.workoutCount + input.runCount > 0;
+  const loggedMeal = input.mealCount > 0;
+  return startedTraining && loggedMeal;
+}
+
+/**
+ * Whether the Home "Welcome to Tropos!" cold-start checklist should render.
+ *
+ * Visibility is DATA-DERIVED, not just a one-time localStorage flag — the old
+ * behaviour (a bare `useCoachMarks` dismissed-flag) left the card stranded on
+ * rich accounts that never tapped the X, e.g. a returning user on a fresh
+ * device or after clearing storage (audit #7). It hides when ANY of:
+ *   - the user explicitly dismissed it, OR
+ *   - hard suppression: an established account — >= WELCOME_CHECKLIST_WORKOUT_CAP
+ *     logged workouts, or older than the 14-day activation window (a null
+ *     createdAt fails closed here too), OR
+ *   - auto-hide: the activation loop is already complete.
+ */
+export function shouldShowWelcomeChecklist(
+  input: WelcomeChecklistInput
+): boolean {
+  if (input.dismissed) return false;
+  // Hard suppression — established accounts are past cold-start.
+  if (input.workoutCount >= WELCOME_CHECKLIST_WORKOUT_CAP) return false;
+  if (!isWithinActivationWindow(input.createdAtMs, input.nowMs)) return false;
+  // Auto-hide once the user has actually activated.
+  if (isWelcomeChecklistComplete(input)) return false;
+  return true;
+}
+
 export function getActivationFraming(
   input: ActivationFramingInput
 ): ActivationFraming {
