@@ -228,17 +228,37 @@ export default function Layout() {
                         // on iPhone SE width so the "Programme" label
                         // (the longest of the five) doesn't push siblings
                         // off-screen.
-                        "flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
+                        "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
                         isActive
-                          ? "text-primary bg-primary/10"
+                          ? "text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
                       )
                     }
                   >
                     {({ isActive }) => (
                       <>
+                        {/* Active-destination indicator: a single shared pill
+                            (layoutId) that GLIDES + morphs between tabs with a
+                            crisp spring — motion continuity is what makes the
+                            bar feel premium vs a per-cell cross-fade. Inset so
+                            it reads as a contained chip, sitting behind the
+                            icon + label. Reduced-motion → static, no slide. */}
+                        {isActive &&
+                          (prefersReducedMotion ? (
+                            <div className="absolute inset-x-2 inset-y-1.5 rounded-2xl bg-primary/10 z-0" />
+                          ) : (
+                            <motion.div
+                              layoutId="nav-active-pill"
+                              className="absolute inset-x-2 inset-y-1.5 rounded-2xl bg-primary/10 z-0"
+                              transition={{
+                                type: "spring",
+                                stiffness: 600,
+                                damping: 38,
+                              }}
+                            />
+                          ))}
                         <motion.div
-                          className="relative"
+                          className="relative z-10"
                           whileTap={
                             prefersReducedMotion ? undefined : { scale: 0.85 }
                           }
@@ -250,12 +270,15 @@ export default function Layout() {
                         >
                           <motion.div
                             initial={false}
-                            animate={
-                              !prefersReducedMotion && isActive
-                                ? { scale: [1, 1.08, 1] }
-                                : { scale: 1 }
-                            }
-                            transition={{ duration: 0.25, ease: "easeOut" }}
+                            animate={{
+                              scale:
+                                !prefersReducedMotion && isActive ? 1.06 : 1,
+                            }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 30,
+                            }}
                           >
                             <Icon
                               aria-hidden="true"
@@ -271,13 +294,8 @@ export default function Layout() {
                           {hasBadge && (
                             <div className="absolute -top-1 -right-1 size-2 rounded-full bg-destructive" />
                           )}
-                          {/* Active-destination affordance is now the soft
-                              bg-primary/10 pill on the NavLink itself (wraps
-                              icon + label as one glanceable unit) — the tiny
-                              dot it replaced was too low-surface-area to read
-                              at a glance, especially in dark mode. */}
                         </motion.div>
-                        <span className="max-w-full truncate text-xs font-medium tracking-wide">
+                        <span className="relative z-10 max-w-full truncate text-xs font-medium tracking-wide">
                           {tab.label}
                         </span>
                       </>
