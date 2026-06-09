@@ -302,14 +302,14 @@ export default function CalorieRing({
                   so it clears WCAG AA (~5.3:1) on the lavender tint at 10px,
                   keeping the single purple ring identity. */}
               <span
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider tabular-nums"
+                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold uppercase tracking-wider tabular-nums"
                 style={{ color: COLOR_RING_DEEP, backgroundColor: trackColor }}
               >
                 {CALORIE_UNIT} {labelMode}
                 <ArrowLeftRight className="size-2.5" aria-hidden="true" />
               </span>
               {trajectoryLabel && (
-                <p className="text-[10px] mt-1 text-muted-foreground/70 font-mono tabular-nums">
+                <p className="text-caption mt-1 text-muted-foreground/70 font-mono tabular-nums">
                   {trajectoryLabel}
                 </p>
               )}

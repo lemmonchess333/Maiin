@@ -1076,7 +1076,7 @@ export default function WorkoutSession({
 
             return (
               <>
-                <div className="grid grid-cols-12 gap-1 px-3 py-2.5 bg-muted/50 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="grid grid-cols-12 gap-1 px-3 py-2.5 bg-muted/50 text-caption font-semibold text-muted-foreground uppercase tracking-wider">
                   <div className="col-span-1">Set</div>
                   <div className="col-span-2">Prev</div>
                   <div className="col-span-4">Weight (kg)</div>
@@ -1156,7 +1156,7 @@ export default function WorkoutSession({
                             }}
                             disabled={set.completed || !canFillPrev}
                             className={cn(
-                              "text-[13px] font-mono tabular-nums text-center w-full",
+                              "text-small font-mono tabular-nums text-center w-full",
                               canFillPrev && !set.completed
                                 ? "text-primary active:opacity-70"
                                 : "text-muted-foreground"
@@ -1302,13 +1302,13 @@ export default function WorkoutSession({
                       setTypePopover(null);
                       haptic(10);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-[13px] font-semibold text-foreground hover:bg-muted transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-small font-semibold text-foreground hover:bg-muted transition-colors"
                   >
                     {type === "working" ? (
                       <div className="size-6 rounded-full border-2 border-muted-foreground/30" />
                     ) : (
                       <div
-                        className="size-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
+                        className="size-6 rounded-full flex items-center justify-center text-caption font-bold text-white"
                         style={{ backgroundColor: TYPE_COLORS[type] }}
                       >
                         {TYPE_LABELS[type].charAt(0)}
@@ -1366,7 +1366,7 @@ export default function WorkoutSession({
 
         {/* #985 — plate breakdown per side (barbell only). */}
         {plateLoad && plateLoad.perSide.length > 0 && (
-          <p className="mt-0.5 text-center text-[11px] font-mono tabular-nums text-muted-foreground">
+          <p className="mt-0.5 text-center text-caption font-mono tabular-nums text-muted-foreground">
             Per side: {plateLoad.perSide.join(" + ")}
             {!plateLoad.exact && ` · ${plateLoad.leftover}kg short`}
           </p>

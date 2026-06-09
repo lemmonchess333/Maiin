@@ -53,7 +53,14 @@
   --ds-text-h3: 1.25rem; /* 20px — card titles */
   --ds-text-body: 1rem; /* 16px — body text (accessibility baseline) */
   --ds-text-small: 0.875rem; /* 14px — secondary text */
-  --ds-text-micro: 0.75rem; /* 12px — labels, captions (accessibility floor) */
+  --ds-text-micro: 0.75rem; /* 12px — labels, captions */
+  /* 11px — the dense-UI caption step and the HARD accessibility floor.
+     Promoted from de-facto convention (text-[11px] ×~55 across dense
+     surfaces: section labels, pills, week-rail lanes) to an official scale
+     step so components stop reaching for arbitrary values. Nothing in the
+     app may render text below this size — the former 9/10px stragglers
+     were floored here. */
+  --ds-text-caption: 0.6875rem;
 
   /* Shadows — subtle, not neon */
   /* Phase 2 — perceptible soft lift. The previous 0.03–0.05 alphas were

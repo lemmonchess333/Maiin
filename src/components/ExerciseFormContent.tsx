@@ -107,12 +107,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       {/* Metadata tags */}
       <div className="flex items-center gap-2">
         {demo.category && (
-          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-semibold text-white bg-lifting">
+          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-small font-semibold text-white bg-lifting">
             {demo.category}
           </span>
         )}
         {demo.equipment && (
-          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-[13px] font-medium border-[1.5px] border-border text-foreground/80">
+          <span className="inline-flex items-center justify-center whitespace-nowrap h-7 px-3 rounded-full text-small font-medium border-[1.5px] border-border text-foreground/80">
             {demo.equipment}
           </span>
         )}
@@ -202,13 +202,13 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           <div className="mt-4">
             {demo.primaryMuscles.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">
+                <span className="text-caption font-medium text-muted-foreground/50 mr-1">
                   Primary:
                 </span>
                 {demo.primaryMuscles.map((m) => (
                   <span
                     key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-lifting/8 text-lifting"
+                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-lifting/8 text-lifting"
                   >
                     {m}
                   </span>
@@ -217,13 +217,13 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             )}
             {secondaryDedup.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="text-[11px] font-medium text-muted-foreground/50 mr-1">
+                <span className="text-caption font-medium text-muted-foreground/50 mr-1">
                   Secondary:
                 </span>
                 {secondaryDedup.map((m) => (
                   <span
                     key={m}
-                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-[13px] font-medium bg-muted text-foreground/70"
+                    className="inline-flex items-center whitespace-nowrap h-6 px-2.5 rounded-xl text-small font-medium bg-muted text-foreground/70"
                   >
                     {m}
                   </span>
@@ -247,10 +247,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             <div className="flex flex-col gap-4 mt-3">
               {demo.instructions.map((step, i) => (
                 <div key={i} className="flex gap-2">
-                  <span className="text-[15px] font-bold shrink-0 text-lifting">
+                  <span className="text-body font-bold shrink-0 text-lifting">
                     {i + 1}.
                   </span>
-                  <p className="text-[15px] text-foreground/80 leading-relaxed">
+                  <p className="text-body text-foreground/80 leading-relaxed">
                     {step}
                   </p>
                 </div>
@@ -267,12 +267,12 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 />
                 <div>
                   <p
-                    className="text-[13px] font-semibold"
+                    className="text-small font-semibold"
                     style={{ color: MACROS_TEXT_LIGHT.nutrition }}
                   >
                     Watch out
                   </p>
-                  <p className="mt-0.5 text-[14px] leading-relaxed text-foreground/80">
+                  <p className="mt-0.5 text-small leading-relaxed text-foreground/80">
                     {demo.tip}
                   </p>
                 </div>
@@ -286,7 +286,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
-              className="flex items-center gap-1 mt-2 text-[15px] font-medium text-lifting"
+              className="flex items-center gap-1 mt-2 text-body font-medium text-lifting"
             >
               {showInstructions ? (
                 <>

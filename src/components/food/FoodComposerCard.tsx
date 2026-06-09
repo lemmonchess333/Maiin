@@ -226,7 +226,7 @@ function FoodComposerCard({
         )}
       </div>
       <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">
+        <span className="text-caption uppercase tracking-wide text-muted-foreground shrink-0">
           Add to
         </span>
         {MEAL_ORDER.map((mealKey) => {

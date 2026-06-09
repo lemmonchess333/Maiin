@@ -153,7 +153,7 @@ export default function ShareComposerSheet() {
             className="w-full resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           {caption.length > 0 && (
-            <span className="absolute bottom-2 right-3 text-[10px] font-mono tabular-nums text-muted-foreground/70">
+            <span className="absolute bottom-2 right-3 text-caption font-mono tabular-nums text-muted-foreground/70">
               {caption.length}/{CAPTION_MAX}
             </span>
           )}
@@ -221,7 +221,7 @@ export default function ShareComposerSheet() {
         </label>
 
         {!isOnline && (
-          <p className="text-[11px] text-muted-foreground text-center">
+          <p className="text-caption text-muted-foreground text-center">
             You&apos;re offline — your post will be queued and shared when
             you&apos;re back online.
           </p>

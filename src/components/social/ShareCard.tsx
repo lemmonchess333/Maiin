@@ -206,6 +206,9 @@ function ShareCard({
       {/* Badge card */}
       {data.type === "badge" && (
         <div className="text-center space-y-6">
+          {/* REVIEW: intentional off-scale hero — 120px badge emoji on the
+              fixed-size export share image, not a UI text surface. Left as
+              an arbitrary value; the modular scale tops out at 48px. */}
           <p className="text-[120px]">{data.badgeIcon || "trophy"}</p>
           <div>
             <p className="text-5xl font-bold">{data.badgeName}</p>

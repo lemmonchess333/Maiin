@@ -1460,13 +1460,13 @@ export default function Onboarding() {
                       }}
                     >
                       <p
-                        className="text-[10px] uppercase tracking-wider"
+                        className="text-caption uppercase tracking-wider"
                         style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
                       >
                         {dayLetters[i]}
                       </p>
                       <p
-                        className="text-[11px] font-semibold mt-1 leading-tight"
+                        className="text-caption font-semibold mt-1 leading-tight"
                         style={{ color: meta.color }}
                       >
                         {meta.label}
