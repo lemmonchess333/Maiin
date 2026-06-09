@@ -382,7 +382,7 @@ export default function Crew() {
                 {crewDoc.description}
               </p>
             )}
-            <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground mt-2">
+            <div className="flex items-center gap-1.5 text-small text-muted-foreground mt-2">
               <Users size={13} />
               <span>{memberLabel}</span>
             </div>
@@ -482,7 +482,7 @@ export default function Crew() {
         return (
           <motion.div variants={itemVariant} className="space-y-2">
             <div className="flex items-center justify-between">
-              <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                 This week
               </h2>
               {isMember && (
@@ -585,7 +585,7 @@ export default function Crew() {
                 >
                   <Trophy size={16} style={{ color: THEME.brand }} />
                 </div>
-                <p className="text-[13px] text-muted-foreground leading-snug">
+                <p className="text-small text-muted-foreground leading-snug">
                   No activity yet this week. Be the first to put {crewDoc.name}{" "}
                   on the board.
                 </p>
@@ -599,7 +599,7 @@ export default function Crew() {
                   >
                     <span
                       className={cn(
-                        "size-6 rounded-full flex items-center justify-center text-[11px] font-bold tabular-nums shrink-0",
+                        "size-6 rounded-full flex items-center justify-center text-caption font-bold tabular-nums shrink-0",
                         entry.rank === 1
                           ? "bg-primary/15 text-primary"
                           : "text-muted-foreground"
@@ -629,7 +629,7 @@ export default function Crew() {
 
       {/* Recent activity */}
       <motion.div variants={itemVariant} className="space-y-2">
-        <h2 className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
           Recent activity
         </h2>
 
@@ -653,7 +653,7 @@ export default function Crew() {
               >
                 <Users size={16} style={{ color: THEME.brand }} />
               </div>
-              <p className="text-[13px] text-muted-foreground leading-snug">
+              <p className="text-small text-muted-foreground leading-snug">
                 {isMember
                   ? "Be the first to log a workout or run for this crew"
                   : "No activity yet — join to start posting here"}

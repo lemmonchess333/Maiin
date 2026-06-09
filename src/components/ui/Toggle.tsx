@@ -25,7 +25,13 @@ interface ToggleProps {
  * duplicated across settings/run surfaces (each rendering a sub-44px
  * 40×24 tap target).
  */
-export function Toggle({ checked, onChange, label, disabled, className }: ToggleProps) {
+export function Toggle({
+  checked,
+  onChange,
+  label,
+  disabled,
+  className,
+}: ToggleProps) {
   return (
     <button
       type="button"
@@ -47,6 +53,7 @@ export function Toggle({ checked, onChange, label, disabled, className }: Toggle
       >
         <span
           className={cn(
+            // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
             "size-4 rounded-full bg-white absolute top-1 shadow-sm transition-transform",
             checked ? "translate-x-5" : "translate-x-1"
           )}

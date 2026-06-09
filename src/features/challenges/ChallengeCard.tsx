@@ -189,7 +189,7 @@ export function ChallengeCard({
             <p className="text-sm font-semibold text-foreground">
               {challenge.name}
             </p>
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-small text-muted-foreground">
               {challenge.description}
             </p>
           </div>
@@ -204,7 +204,7 @@ export function ChallengeCard({
         </div>
 
         {/* Meta row */}
-        <div className="flex items-center gap-3 text-[13px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-small text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="size-3.5" />
             {timeLeft}
@@ -317,7 +317,7 @@ export function ChallengeCard({
                   </span>{" "}
                   / {formatChallengeValue(challenge.metric, target)} together
                 </p>
-                <p className="text-[11px] text-center text-muted-foreground/70">
+                <p className="text-caption text-center text-muted-foreground/70">
                   You contributed{" "}
                   {formatChallengeValue(challenge.metric, currentValue)}
                 </p>

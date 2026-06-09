@@ -289,6 +289,7 @@ export default function NotificationsSection({
                   >
                     <div
                       className={cn(
+                        // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
                         "size-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm",
                         mealReminders[meal].enabled
                           ? "translate-x-[14px]"

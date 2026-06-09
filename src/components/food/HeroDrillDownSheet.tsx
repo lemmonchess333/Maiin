@@ -37,7 +37,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+        <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
           {label}
         </span>
         <span className="font-mono tabular-nums text-sm">
@@ -56,7 +56,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <p className="text-[11px] text-muted-foreground tabular-nums">
+      <p className="text-caption text-muted-foreground tabular-nums">
         {remaining > 0
           ? `${formatMacro(remaining)}g left`
           : `${formatMacro(consumed - target)}g over`}
@@ -106,7 +106,7 @@ export default function HeroDrillDownSheet({
       <div className="p-4 space-y-5 overflow-y-auto">
         {/* Calorie summary */}
         <section className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
             Calories
           </p>
           <div className="flex items-baseline justify-between">
@@ -141,7 +141,7 @@ export default function HeroDrillDownSheet({
 
         {/* Macros */}
         <section className="space-y-4">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+          <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
             Macros
           </p>
           <MacroRow
@@ -170,7 +170,7 @@ export default function HeroDrillDownSheet({
             calories are shown for context, NOT added back to the target. */}
         {showBurnBreakdown && (
           <section className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+            <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
               Activity today
             </p>
             <div className="space-y-1.5 text-sm">

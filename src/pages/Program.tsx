@@ -1154,7 +1154,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 ~{estimatedMinutes} min
                               </p>
-                              <p className="text-[11px] font-medium text-muted-foreground">
+                              <p className="text-caption font-medium text-muted-foreground">
                                 Duration
                               </p>
                             </div>
@@ -1166,7 +1166,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 {formatVolume(totalVolume)}
                               </p>
-                              <p className="text-[11px] font-medium text-muted-foreground">
+                              <p className="text-caption font-medium text-muted-foreground">
                                 Volume
                               </p>
                             </div>
@@ -1178,7 +1178,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               <p className="text-base font-bold font-mono tabular-nums text-foreground">
                                 {exerciseCount}
                               </p>
-                              <p className="text-[11px] font-medium text-muted-foreground">
+                              <p className="text-caption font-medium text-muted-foreground">
                                 Exercises
                               </p>
                             </div>

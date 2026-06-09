@@ -529,7 +529,7 @@ export default function Social() {
               }}
             />
             {notifications.unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
                 {notifications.unreadCount > 9
                   ? "9+"
                   : notifications.unreadCount}
@@ -567,10 +567,10 @@ export default function Social() {
               >
                 <Users className="size-5 text-primary shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-foreground">
+                  <p className="text-small font-medium text-foreground">
                     Join a crew to connect with others
                   </p>
-                  <p className="text-[13px] text-muted-foreground">
+                  <p className="text-small text-muted-foreground">
                     Browse crews
                   </p>
                 </div>
@@ -705,7 +705,7 @@ export default function Social() {
                           >
                             <Users size={16} style={{ color: THEME.brand }} />
                           </div>
-                          <p className="text-[13px] text-muted-foreground leading-snug">
+                          <p className="text-small text-muted-foreground leading-snug">
                             Follow people or join a crew to compete this week
                           </p>
                         </div>
@@ -882,7 +882,7 @@ export default function Social() {
                         the prior copy — surfaces both growth paths
                         (1:1 follow OR group membership) rather than
                         only following. */}
-                            <p className="text-[13px] text-muted-foreground leading-snug">
+                            <p className="text-small text-muted-foreground leading-snug">
                               Your feed is empty · Follow people or join crews
                               to see their activities
                             </p>
@@ -946,7 +946,7 @@ export default function Social() {
                     <p className="text-sm font-semibold text-foreground">
                       You're not in any crews yet
                     </p>
-                    <p className="text-[13px] text-muted-foreground mt-1">
+                    <p className="text-small text-muted-foreground mt-1">
                       Create one or join via invite link
                     </p>
                   </div>
@@ -973,7 +973,7 @@ export default function Social() {
               localStorage. */}
               {suggestedCrews.length > 0 && (
                 <div className="space-y-3">
-                  <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                     Suggested for you
                   </p>
                   <div className="space-y-2">
@@ -1000,7 +1000,7 @@ export default function Social() {
                             <p className="text-sm font-semibold text-foreground truncate">
                               {crew.name}
                             </p>
-                            <p className="text-[12px] text-muted-foreground truncate">
+                            <p className="text-micro text-muted-foreground truncate">
                               {crew.matchedFollows} of your follows
                               {crew.matchedFollows === 1 ? " is" : " are"} here
                             </p>
@@ -1044,7 +1044,7 @@ export default function Social() {
               {/* Crews list */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                     Crews
                   </p>
                   {/* Sort pills. Mirrors the visual language of the feed
@@ -1058,7 +1058,7 @@ export default function Social() {
                         type="button"
                         key={s}
                         onClick={() => setCrewSort(s)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors ${
+                        className={`px-2.5 py-1 rounded-full text-caption font-semibold transition-colors ${
                           crewSort === s
                             ? "bg-card text-foreground shadow-sm"
                             : "text-muted-foreground"
@@ -1411,7 +1411,7 @@ export default function Social() {
               still fires immediately — so it's been folded into the
               field instead of competing for visual weight beside it. */}
                 <div className="space-y-3">
-                  <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                     Find someone
                   </p>
                   <div className="relative">
@@ -1517,7 +1517,7 @@ export default function Social() {
                         className="py-4 text-center space-y-1"
                         aria-live="polite"
                       >
-                        <p className="text-[13px] text-foreground">
+                        <p className="text-small text-foreground">
                           No matches for &ldquo;{searchQuery.trim()}&rdquo;
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -1554,7 +1554,7 @@ export default function Social() {
                 {/* Suggested People */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                       Suggested people
                     </p>
                     {suggestedPeople.length > 0 && !suggestedLoading && (
@@ -1678,7 +1678,7 @@ export default function Social() {
                   if (otherCrews.length === 0) return null;
                   return (
                     <div className="space-y-2">
-                      <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                         Popular crews
                       </p>
                       <div className="space-y-2">
@@ -1722,7 +1722,7 @@ export default function Social() {
               previous arrangement put it above search which is wrong
               for high-intent users trying to find someone specific. */}
                 <div className="space-y-3">
-                  <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                     Bring a friend
                   </p>
                   <div
@@ -1746,7 +1746,7 @@ export default function Social() {
                         <p className="text-sm font-semibold text-foreground">
                           Invite a training partner
                         </p>
-                        <p className="text-[13px] text-muted-foreground leading-relaxed mt-0.5">
+                        <p className="text-small text-muted-foreground leading-relaxed mt-0.5">
                           Share your link and compare lifts, runs and challenge
                           progress.
                         </p>

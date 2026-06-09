@@ -168,7 +168,7 @@ export default function ProgrammeWeekSelector({
             className="flex flex-col items-center flex-1 min-w-0"
           >
             {cell.topLabel !== undefined && (
-              <span className="text-[10px] text-muted-foreground mb-0.5">
+              <span className="text-caption text-muted-foreground mb-0.5">
                 {cell.topLabel}
               </span>
             )}
@@ -210,7 +210,7 @@ export default function ProgrammeWeekSelector({
               </motion.div>
             </button>
             <span
-              className="text-[10px] font-semibold text-center line-clamp-1 leading-tight max-w-full mt-1"
+              className="text-caption font-semibold text-center line-clamp-1 leading-tight max-w-full mt-1"
               style={{ color: labelColor }}
             >
               {cell.bottomLabel}

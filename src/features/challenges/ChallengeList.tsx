@@ -210,7 +210,7 @@ export function ChallengeList({
             </p>
           </div>
           {timeLeft && (
-            <span className="text-[11px] text-muted-foreground shrink-0 mt-0.5">
+            <span className="text-caption text-muted-foreground shrink-0 mt-0.5">
               {timeLeft}
             </span>
           )}
@@ -234,7 +234,7 @@ export function ChallengeList({
 
         {/* Secondary: this-week standings among people you follow. */}
         {(rankingsLoading || weeklyRankings.length > 0) && (
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
+          <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
             This week
           </p>
         )}
@@ -321,7 +321,7 @@ export function ChallengeList({
       {/* Other joined challenges */}
       {otherMy.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
             Your challenges
           </p>
           {otherMy.map((ch) => (
@@ -344,7 +344,7 @@ export function ChallengeList({
       {/* Other available challenges */}
       {otherAvailable.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
             Available
           </p>
           {otherAvailable.map((ch) => (
