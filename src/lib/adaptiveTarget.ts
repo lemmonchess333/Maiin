@@ -224,6 +224,14 @@ export interface ResolveAdaptiveTargetInput {
    * pure function. `warmupFraction = max(latched, liveFraction)`.
    */
   latched: number;
+  /**
+   * Race-taper freeze: TODAY is inside the taper/race/post-race exclusion
+   * window. Hold the pre-taper learned value (`capPrev.lastApplied`) and do NOT
+   * advance the cap, so glycogen/water swings + reduced taper intake can't
+   * drift the estimate and cause post-race over-correction. No-op when there's
+   * no prior learned value to freeze.
+   */
+  frozen?: boolean;
 }
 
 export interface ResolveAdaptiveTargetResult {
@@ -268,12 +276,32 @@ export function resolveAdaptiveTarget(
     capPrev,
     now,
     latched,
+    frozen,
   } = input;
 
   if (!isAdaptiveActive({ hasUser, isPro, isManualOverride })) {
     return {
       view: inactiveView(formulaTarget),
       capState: null,
+      capChanged: false,
+    };
+  }
+
+  // Taper freeze: hold the persisted pre-taper learned value, no cap advance.
+  // Only when a learned value already exists (capPrev) — otherwise there's
+  // nothing to freeze, so fall through to the normal (formula/warmup) path.
+  if (frozen && capPrev) {
+    return {
+      view: {
+        active: true,
+        ready: true,
+        source: "learned",
+        value: capPrev.lastApplied,
+        showWarmup: false,
+        warmupFraction: Math.max(latched, 1),
+        stalled: false,
+      },
+      capState: capPrev,
       capChanged: false,
     };
   }
