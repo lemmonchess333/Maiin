@@ -27,8 +27,25 @@ export const GOAL_PROTEIN: Record<string, number> = {
 /** Default protein multiplier when neither phase nor goal is known */
 export const DEFAULT_PROTEIN_MULTIPLIER = 2.0;
 
-/** Fat percentage of total calories */
+/** Fat percentage of total calories — the REST/baseline fat level before any
+ *  training-day fat→carb shift. */
 export const FAT_CALORIE_FRACTION = 0.25;
+
+/**
+ * Standing daily fat floor (g per kg bodyweight). The macro fast-loop never
+ * periodizes fat below this on EASY/MODERATE days. The lower
+ * `ESSENTIAL_FAT_FLOOR_PER_KG` (0.6) is the absolute hard backstop, reachable
+ * only on the HARD tier when glycogen demand is highest.
+ */
+export const DAILY_FAT_FLOOR_PER_KG = 0.8;
+
+/**
+ * Essential-fat floor (g per kg bodyweight) — the absolute minimum fat the
+ * periodizer will ever emit. Lives here (not phaseNutrition) so the
+ * dayIntensity tier-floor model can reference it without a phaseNutrition↔
+ * dayIntensity import cycle. Re-exported from phaseNutrition for back-compat.
+ */
+export const ESSENTIAL_FAT_FLOOR_PER_KG = 0.6;
 
 /** Calorie adjustments by goal */
 export const GOAL_CALORIE_OFFSET: Record<string, number> = {
