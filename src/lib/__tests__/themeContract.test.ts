@@ -198,6 +198,58 @@ describe("DS1 sport-colour token contract — --running / --lifting bridge + fix
   }
 });
 
+describe("Nutrition domain-colour token contract — --nutrition / --nutrition-strong bridge + fixed value", () => {
+  function block(anchor: string): string {
+    const pattern = new RegExp(
+      `${anchor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{`
+    );
+    const m = pattern.exec(indexCss);
+    if (!m) return "";
+    const open = indexCss.indexOf("{", m.index);
+    let depth = 1;
+    let i = open + 1;
+    while (i < indexCss.length && depth > 0) {
+      if (indexCss[i] === "{") depth += 1;
+      else if (indexCss[i] === "}") depth -= 1;
+      i += 1;
+    }
+    return indexCss.slice(open + 1, i - 1);
+  }
+  const themeBlock = block("@theme");
+  const rootBlock = block(":root");
+  const darkBlock = block(".dark");
+
+  it("@theme exposes --color-nutrition and --color-nutrition-strong", () => {
+    expect(themeBlock).toMatch(/--color-nutrition\s*:/);
+    expect(themeBlock).toMatch(/--color-nutrition-strong\s*:/);
+  });
+
+  for (const name of ["--nutrition", "--nutrition-strong"]) {
+    it(`:root defines ${name}`, () => {
+      expect(rootBlock).toMatch(
+        new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)
+      );
+    });
+    it(`.dark defines ${name}`, () => {
+      expect(darkBlock).toMatch(
+        new RegExp(`${name.replace(/-/g, "\\-")}\\s*:`)
+      );
+    });
+  }
+
+  // Fixed domain identity — orange is the SAME in light + dark, like the
+  // sport colours. A future agent must not silently theme-split it.
+  for (const name of ["--nutrition", "--nutrition-strong"]) {
+    it(`${name} is identical in :root and .dark (fixed domain colour)`, () => {
+      const re = new RegExp(`${name.replace(/-/g, "\\-")}\\s*:\\s*([^;]+);`);
+      const r = re.exec(rootBlock)?.[1].trim();
+      const d = re.exec(darkBlock)?.[1].trim();
+      expect(r).toBeTruthy();
+      expect(d).toBe(r);
+    });
+  }
+});
+
 describe("Sprint 0 theme contract — tokens.css bridges legacy --ds-* to semantic variables", () => {
   it("--ds-error bridges to hsl(var(--destructive))", () => {
     expect(tokensCss).toMatch(/--ds-error\s*:\s*hsl\(var\(--destructive\)\)/);

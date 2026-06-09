@@ -23,6 +23,19 @@
  *                   Distinct from the red `destructive` variant which
  *                   stays for genuinely destructive flows (delete
  *                   account, end subscription).
+ *   - nutrition     orange-solid food CTA — the nutrition-domain analogue
+ *                   of `sport`. Use SPARINGLY, only for genuinely
+ *                   nutrition-PRIMARY, glanceable actions where orange IS
+ *                   the meaning (a macro-target nudge, "Log under-target
+ *                   protein"). Ordinary Food actions (Add, Save, Log) stay
+ *                   on `primary` — orange is a domain/data identity, not a
+ *                   per-screen button colour, so do NOT recolour every Food
+ *                   button. (The Scan CTA is its own special coral case in
+ *                   ScanMealButton.tsx, NOT this variant.)
+ *   - nutrition-tinted  orange-tinted nutrition surface — the nutrition
+ *                   analogue of `sport-tinted`. Soft orange pill for
+ *                   secondary/low-emphasis nutrition actions. Text uses the
+ *                   AA-clearing nutrition-strong step.
  *
  * Sizes:
  *   - sm   36px tall — used for inline / compact contexts (chips,
@@ -60,7 +73,9 @@ export type ButtonVariant =
   | "ghost"
   | "outline"
   | "sport"
-  | "sport-tinted";
+  | "sport-tinted"
+  | "nutrition"
+  | "nutrition-tinted";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -117,6 +132,13 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   // the standard destructive variant for sport-discipline actions
   // that aren't genuinely destructive.
   "sport-tinted": "bg-running/10 text-running",
+  // Nutrition domain CTA — filled uses the AA-clearing -strong step
+  // (#B45309) for white text, mirroring how `primary` uses
+  // -strong; the identity orange (#D9884E) is too light for white
+  // text. The tinted surface is the identity orange at 10%, with the
+  // -strong step as the AA-clearing text colour.
+  nutrition: "bg-nutrition-strong text-white",
+  "nutrition-tinted": "bg-nutrition/10 text-nutrition-strong",
 };
 
 /**
