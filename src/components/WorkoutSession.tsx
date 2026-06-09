@@ -22,6 +22,7 @@ import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { platesPerSide } from "@/lib/plateCalculator";
 import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
 import StallModal from "@/components/workout/StallModal";
@@ -171,7 +172,14 @@ export default function WorkoutSession({
     left: 0,
     bottom: 0,
   });
-  const tabsRef = useRef<HTMLDivElement>(null);
+  // Exercise-rail scroller: `tabsRef` drives both the active-pill
+  // scrollIntoView and the overflow-aware edge fades (atStart/atEnd) below.
+  const {
+    ref: tabsRef,
+    atStart: railAtStart,
+    atEnd: railAtEnd,
+    measure: measureRail,
+  } = useScrollEdges<HTMLDivElement>();
   const sessionStartRef = useRef(0);
 
   // a11y: the set-type popover dismisses on backdrop click (mouse) — give
@@ -203,7 +211,11 @@ export default function WorkoutSession({
       block: "nearest",
       inline: "center",
     });
-  }, [currentExIndex]);
+    // Re-measure the edge fades after the programmatic scroll settles (the
+    // scroll event also fires, but this covers the no-op/cut-short cases).
+    const t = setTimeout(measureRail, 350);
+    return () => clearTimeout(t);
+  }, [currentExIndex, measureRail, tabsRef]);
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
@@ -1009,7 +1021,25 @@ export default function WorkoutSession({
             );
           })}
         </div>
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-5 bg-gradient-to-l from-background to-transparent" />
+        {/* Overflow-aware edge fades (visual-audit wave1 #5). The left fade
+            appears once the rail has been scrolled away from the start; the
+            right fade hints at more pills off-screen and hides at the end.
+            Both stay hidden when the rail fits. Opacity toggle only animates
+            for motion-safe users. */}
+        <div
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent motion-safe:transition-opacity",
+            railAtStart ? "opacity-0" : "opacity-100"
+          )}
+        />
+        <div
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent motion-safe:transition-opacity",
+            railAtEnd ? "opacity-0" : "opacity-100"
+          )}
+        />
       </div>
 
       {/* Exercise name + set counter — always visible above scroll */}
