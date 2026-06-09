@@ -15,6 +15,7 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import {
   getActivationFraming,
   isWithinActivationWindow,
+  shouldShowWelcomeChecklist,
 } from "@/lib/activationFraming";
 
 import { useSubscription } from "@/lib/subscription";
@@ -57,7 +58,7 @@ import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
 import type { FitnessGoal } from "@/lib/tdee";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
-import { useCoachMarks } from "@/hooks/useCoachMarks";
+import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
 
@@ -162,7 +163,11 @@ export default function Home() {
   const [weightSaving, setWeightSaving] = useState(false);
   const [weightSaved, setWeightSaved] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
-  const { showCoachMarks, dismiss: dismissCoachMarks } = useCoachMarks();
+  // Welcome checklist dismissal — persisted once-ever (audit #7). Visibility
+  // is data-derived below via shouldShowWelcomeChecklist; this is only the
+  // explicit "I tapped the X" signal.
+  const { dismissed: welcomeDismissed, dismiss: dismissCoachMarks } =
+    useDismissOnce("tropos-welcome-checklist-dismissed");
 
   // PR-0c: single resolver call. Replaces three inline derivations
   // that disagreed with each other and with the (now-retired) Programme Today tab:
@@ -540,10 +545,24 @@ export default function Home() {
   // #995 tier-3 education lane (≤1 inline card at a time). The first-run
   // welcome coachmark wins over the two explainer banners (priorities set at
   // their call sites: body-metrics 20 > expenditure 10).
+  // Data-derived visibility: only a genuine cold-start account (within the
+  // activation window, < 3 workouts, activation loop not yet complete, not
+  // dismissed) sees the welcome checklist — never a rich/returning account
+  // that merely never tapped the X (audit #7).
+  const welcomeChecklistVisible = shouldShowWelcomeChecklist({
+    createdAtMs,
+    nowMs,
+    workoutCount: workouts.length,
+    // Mirror the activation-framing read: treat in-flight runs as "has runs"
+    // so the card doesn't briefly show before the lifetime count resolves.
+    runCount: runStatsLoading ? 1 : lifetimeRunCount,
+    mealCount: totalLifetimeMeals,
+    dismissed: welcomeDismissed,
+  });
   const welcomeCard = useEducationCard({
     id: "welcome-coachmark",
     priority: 30,
-    eligible: showCoachMarks,
+    eligible: welcomeChecklistVisible,
   });
   // Discoverability latch: the tiny "Tap a day to see details" hint under
   // the week strip disappears as soon as the user taps any day once (the
