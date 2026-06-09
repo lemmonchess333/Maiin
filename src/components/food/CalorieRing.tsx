@@ -41,7 +41,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // macro ring colours (which stayed pink/blue/orange). Now the ring stays
 // purple, the number stays purple, and "over" is communicated by the
 // tertiary "kcal over" label + the overshoot arc in a darker purple shade.
-const COLOR_RING = "#7B72E9"; // brand purple
+const COLOR_RING = THEME.brand; // brand purple
 const COLOR_RING_LIGHT = "#A8A2EF"; // lighter stop for the arc gradient
 const COLOR_RING_DEEP = "#5D55C9"; // deeper stop for the overshoot arc
 const COLOR_TRACK = "rgba(123, 114, 233, 0.10)";

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { calculatePaceTrend } from "../paceTrends";
+import { THEME } from "@/lib/theme";
 
 // ── Helpers ──────────────────────────────────
 
@@ -13,7 +14,12 @@ function makeRun(avgPace: number, distance: number, daysAgo: number) {
  * Generate N comparable runs at a given pace and distance,
  * spread out over consecutive days starting from daysAgo.
  */
-function generateRuns(n: number, avgPace: number, distance: number, startDaysAgo: number) {
+function generateRuns(
+  n: number,
+  avgPace: number,
+  distance: number,
+  startDaysAgo: number
+) {
   return Array.from({ length: n }, (_, i) =>
     makeRun(avgPace, distance, startDaysAgo + i)
   );
@@ -74,7 +80,10 @@ describe("calculatePaceTrend", () => {
       const current = makeRun(300, 5000, 0);
       const validRuns = generateRuns(7, 310, 5000, 1);
       const invalidRuns = generateRuns(3, 0, 5000, 10); // zero pace
-      const result = calculatePaceTrend(current, [...validRuns, ...invalidRuns]);
+      const result = calculatePaceTrend(current, [
+        ...validRuns,
+        ...invalidRuns,
+      ]);
       expect(result.trend).toBe("no-data"); // only 7 valid comparable
     });
   });
@@ -86,7 +95,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("pr");
       expect(result.label).toBe("PR!");
-      expect(result.color).toBe("#f59e0b");
+      expect(result.color).toBe(THEME.amberLight);
     });
 
     it("returns pr when barely beating the best", () => {
@@ -127,7 +136,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("consistent");
       expect(result.label).toBe("Steady");
-      expect(result.color).toBe("#7B72E9");
+      expect(result.color).toBe(THEME.brand);
     });
 
     it("returns consistent when pace matches recent average exactly", () => {
@@ -225,7 +234,7 @@ describe("calculatePaceTrend", () => {
          with only treadmill comparables the outdoor candidate gets
          no-data (not enough eligible comparables). */
       const current = makeRun(280, 5000, 0); // outdoor (no activityType set, defaults to outdoor)
-      const treadmillComparables = generateRuns(10, 300, 5000, 1).map(r => ({
+      const treadmillComparables = generateRuns(10, 300, 5000, 1).map((r) => ({
         ...r,
         activityType: "treadmill" as const,
       }));
@@ -235,7 +244,7 @@ describe("calculatePaceTrend", () => {
 
     it("invalid comparables are excluded from the comparable pool", () => {
       const current = makeRun(280, 5000, 0);
-      const invalidPool = generateRuns(10, 300, 5000, 1).map(r => ({
+      const invalidPool = generateRuns(10, 300, 5000, 1).map((r) => ({
         ...r,
         isInvalid: true,
       }));
@@ -253,7 +262,7 @@ describe("calculatePaceTrend", () => {
         ...makeRun(290, 5000, 0),
         activityType: "easy" as const,
       };
-      const allRuns = generateRuns(10, 300, 5000, 1).map(r => ({
+      const allRuns = generateRuns(10, 300, 5000, 1).map((r) => ({
         ...r,
         activityType: "easy" as const,
       }));

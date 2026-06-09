@@ -2,6 +2,8 @@
  * Guided Run Engine — structured workouts with segment-by-segment coaching.
  */
 
+import { THEME } from "@/lib/theme";
+
 export type SegmentType =
   | "warmup"
   | "easy"
@@ -45,7 +47,7 @@ const SEGMENT_COLORS: Record<SegmentType, string> = {
   easy: "#22b558",
   moderate: "#3b7ee6",
   hard: "#e04040",
-  recovery: "#7B72E9",
+  recovery: THEME.brand,
   cooldown: "#06a8c8",
 };
 

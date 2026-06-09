@@ -33,6 +33,7 @@
  * name independent of visible decoration.
  */
 import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
+import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 export type RunControlVariant = "neutral" | "primary" | "danger";
@@ -97,7 +98,7 @@ function variantStyle(
       // THEME.teal filled — used on Resume. Glow always-on for this
       // variant because the user is looking for the go-action.
       return {
-        background: "#52A3BD",
+        background: THEME.teal,
         boxShadow: glow
           ? "0 0 32px rgba(82, 163, 189, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4)"
           : "0 8px 24px rgba(0, 0, 0, 0.4)",
