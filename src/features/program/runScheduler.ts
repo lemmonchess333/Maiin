@@ -144,7 +144,7 @@ const RACE_CONFIGS: Record<string, RaceConfig> = {
  * but the build phase collapses first. Base phase is then whatever
  * remains, never negative.
  */
-const TAPER_WEEKS_BY_DISTANCE: Record<
+export const TAPER_WEEKS_BY_DISTANCE: Record<
   "5k" | "10k" | "half" | "marathon",
   number
 > = {

@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import { classifyDayIntensity, type DayIntensity } from "@/lib/dayIntensity";
+import { resolveTaper } from "@/lib/taperNutrition";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -90,6 +91,10 @@ export interface EffectiveTargets {
   /** The cut is too aggressive to fit bodyweight protein + essential fat —
    *  protein was capped to keep the macro sum valid. Surface a warning. */
   targetTooAggressive: boolean;
+  /** Race taper is active for this date — `finalTarget` is the tapered (or
+   *  carb-load) number, and the split is recomputed off it. Drives taper /
+   *  carb-load copy on the Food hero. */
+  taperActive: boolean;
 }
 
 // ── Subscription window ──────────────────────────────────────────────────
@@ -372,6 +377,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       fat: planned.fat,
     };
     let aggressive = planned.aggressive;
+    let annotation = planned.annotation;
     if (
       profile &&
       adaptiveSource === "learned" &&
@@ -390,6 +396,33 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       aggressive = m.aggressive;
     }
 
+    // TAPER — the ONLY forward-looking calorie move (the one bridge between the
+    // slow calorie loop and the fast macro loop). During an active race-prep
+    // taper the calorie target contracts (carb-load bumps it back up in the
+    // final days) and the WHOLE split is recomputed off the tapered number as a
+    // HARD day: fat floored to essential, protein anchored, carbs maximised.
+    // Reconciliation still holds (getAdjustedTargets balances carbs). No-op for
+    // everyone not in a taper.
+    let taperActive = false;
+    const taper = profile
+      ? resolveTaper(targetDate, profile, finalTarget)
+      : null;
+    if (taper && profile) {
+      finalTarget = taper.taperedCalories;
+      const m = getAdjustedTargets(
+        { ...profile, targetCalories: finalTarget },
+        planned.dayType,
+        programForNutrition,
+        "HARD"
+      );
+      protein = m.protein;
+      carbs = m.carbs;
+      fat = m.fat;
+      aggressive = m.aggressive;
+      annotation = taper.annotation;
+      taperActive = true;
+    }
+
     return {
       baseTarget: planned.baseTarget,
       dayType: planned.dayType,
@@ -406,9 +439,10 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       protein,
       carbs,
       fat,
-      annotation: planned.annotation,
+      annotation,
       caption: planned.caption,
       targetTooAggressive: aggressive,
+      taperActive,
     };
   }, [
     profile,
