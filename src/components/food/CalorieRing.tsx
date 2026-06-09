@@ -291,16 +291,23 @@ export default function CalorieRing({
                   ease={RING_EASE}
                 />
               </p>
-              <p
-                className="text-[10px] font-semibold uppercase tracking-wider mt-1 flex items-center gap-1"
-                style={{ color: numberColor, opacity: 0.7 }}
+              {/* Mode indicator promoted from a faint caption into an
+                  obvious toggle pill: a purple-tinted rounded chip carrying
+                  the active mode word + the swap glyph. The tinted background
+                  + the ⇄ icon read as "tap to switch" at a glance, so the
+                  active framing (LEFT vs EATEN) is legible without parsing
+                  the 10px text. Reuses the ring's own track tint
+                  (`trackColor`) for the chip. Text uses the deeper brand
+                  purple (`COLOR_RING_DEEP`, already the overshoot-arc shade)
+                  so it clears WCAG AA (~5.3:1) on the lavender tint at 10px,
+                  keeping the single purple ring identity. */}
+              <span
+                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider tabular-nums"
+                style={{ color: COLOR_RING_DEEP, backgroundColor: trackColor }}
               >
                 {CALORIE_UNIT} {labelMode}
-                <ArrowLeftRight
-                  className="size-2.5 opacity-60"
-                  aria-hidden="true"
-                />
-              </p>
+                <ArrowLeftRight className="size-2.5" aria-hidden="true" />
+              </span>
               {trajectoryLabel && (
                 <p className="text-[10px] mt-1 text-muted-foreground/70 font-mono tabular-nums">
                   {trajectoryLabel}
