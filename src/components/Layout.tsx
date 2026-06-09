@@ -36,7 +36,7 @@ function useQueueCount(isOnline: boolean): number {
 
 const tabs: { to: string; icon: typeof Home; label: string }[] = [
   { to: "/", icon: Home, label: "Home" },
-  { to: "/program", icon: Dumbbell, label: "Programme" },
+  { to: "/program", icon: Dumbbell, label: "Train" },
   { to: "/food", icon: UtensilsCrossed, label: "Food" },
   { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "Analytics" },
@@ -224,10 +224,9 @@ export default function Layout() {
                     }}
                     className={({ isActive }) =>
                       cn(
-                        // `min-w-0` lets flex-1 actually shrink the cells
-                        // on iPhone SE width so the "Programme" label
-                        // (the longest of the five) doesn't push siblings
-                        // off-screen.
+                        // `min-w-0` lets flex-1 actually shrink the cells on
+                        // iPhone SE width so the longest label ("Analytics")
+                        // doesn't push siblings off-screen.
                         "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
                         isActive
                           ? "text-primary"
