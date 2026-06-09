@@ -265,11 +265,6 @@ function FoodComposerCard({
             haptic();
             scanOverrides.onClick();
           }}
-          ariaLabel={
-            scanUsage.isUnlimited || scanUsage.remaining > 0
-              ? "Scan your meal"
-              : "Upgrade to scan your meal"
-          }
           locked={scanOverrides.locked}
         />
         {!scanUsage.isUnlimited && !scanUsage.loading && (
