@@ -230,7 +230,7 @@ export default function Layout() {
                         // off-screen.
                         "flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
                         isActive
-                          ? "text-primary"
+                          ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
                       )
                     }
@@ -252,7 +252,7 @@ export default function Layout() {
                             initial={false}
                             animate={
                               !prefersReducedMotion && isActive
-                                ? { scale: [1, 1.15, 1] }
+                                ? { scale: [1, 1.08, 1] }
                                 : { scale: 1 }
                             }
                             transition={{ duration: 0.25, ease: "easeOut" }}
@@ -271,21 +271,11 @@ export default function Layout() {
                           {hasBadge && (
                             <div className="absolute -top-1 -right-1 size-2 rounded-full bg-destructive" />
                           )}
-                          {/* Active indicator dot */}
-                          {isActive &&
-                            (prefersReducedMotion ? (
-                              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary" />
-                            ) : (
-                              <motion.div
-                                layoutId="tab-indicator"
-                                className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary"
-                                transition={{
-                                  type: "spring",
-                                  stiffness: 500,
-                                  damping: 30,
-                                }}
-                              />
-                            ))}
+                          {/* Active-destination affordance is now the soft
+                              bg-primary/10 pill on the NavLink itself (wraps
+                              icon + label as one glanceable unit) — the tiny
+                              dot it replaced was too low-surface-area to read
+                              at a glance, especially in dark mode. */}
                         </motion.div>
                         <span className="max-w-full truncate text-xs font-medium tracking-wide">
                           {tab.label}
