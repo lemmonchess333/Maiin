@@ -1,34 +1,20 @@
-import { Lock } from "lucide-react";
-import { THEME } from "@/lib/theme";
-
 /**
- * Returns style overrides and onClick handler for the scan button based on quota.
+ * Returns the quota-based behaviour for the scan button.
  *
- * Active state (has scans remaining or unlimited): no inline style — the
- *   button inherits the calmed white pill styling from its Tailwind classes
- *   in Food.tsx so it visually matches the input bar alongside it.
- * Exhausted state: greyed background + lock icon, opens upgrade.
+ * Active state (scans remaining or unlimited): `locked: false` — the button
+ *   renders its full scan gradient + glow and runs `onScan`.
+ * Exhausted state: `locked: true` — ScanMealButton renders the calm
+ *   scan-tinted "locked" treatment (readable text + lock, no glow), and the
+ *   tap opens the upgrade paywall (`onUpgrade`).
  */
 export function useScanButtonOverrides(
   remaining: number,
   isUnlimited: boolean,
   onUpgrade: () => void,
   onScan: () => void
-): { style: React.CSSProperties; onClick: () => void; icon: React.ReactNode } {
+): { onClick: () => void; locked: boolean } {
   if (isUnlimited || remaining > 0) {
-    return {
-      style: {},
-      onClick: onScan,
-      icon: null,
-    };
+    return { onClick: onScan, locked: false };
   }
-
-  // Out of scans — disabled state
-  return {
-    style: { background: THEME.neutral[300] },
-    onClick: onUpgrade,
-    icon: (
-      <Lock className="size-3.5 absolute -bottom-0.5 -right-0.5 text-muted-foreground" />
-    ),
-  };
+  return { onClick: onUpgrade, locked: true };
 }

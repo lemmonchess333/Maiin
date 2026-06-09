@@ -11,21 +11,21 @@ describe("useScanButtonOverrides — AI-scan gate", () => {
   const onUpgrade = vi.fn();
   const onScan = vi.fn();
 
-  it("free user out of scans → onClick opens upgrade (the ProModal gate) + lock icon", () => {
+  it("free user out of scans → onClick opens upgrade (the ProModal gate) + locked", () => {
     const o = useScanButtonOverrides(0, false, onUpgrade, onScan);
     expect(o.onClick).toBe(onUpgrade);
-    expect(o.icon).not.toBeNull();
+    expect(o.locked).toBe(true);
   });
 
   it("Pro/trial (unlimited) → never the paywall, just scans", () => {
     const o = useScanButtonOverrides(0, true, onUpgrade, onScan);
     expect(o.onClick).toBe(onScan);
-    expect(o.icon).toBeNull();
+    expect(o.locked).toBe(false);
   });
 
   it("free user with scans remaining → scans, no paywall", () => {
     const o = useScanButtonOverrides(3, false, onUpgrade, onScan);
     expect(o.onClick).toBe(onScan);
-    expect(o.icon).toBeNull();
+    expect(o.locked).toBe(false);
   });
 });
