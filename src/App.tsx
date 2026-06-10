@@ -92,6 +92,17 @@ const Diagnostics = lazyRetry(() => import("@/pages/Diagnostics"));
 // server-side so the route gate is UX only, not a trust boundary.
 const AdminModeration = lazyRetry(() => import("@/pages/AdminModeration"));
 
+// Dev-only brand bake-off comparison route. `import.meta.env.MODE` is
+// statically replaced at build time, so in the real production build
+// (`npm run build`, mode "production") this is null and the dynamic import —
+// plus the candidate-font chunk it pulls in — is dead-code-eliminated. It is
+// present in `vite dev` and the e2e/test build (mode "test") so the Playwright
+// rig can capture it. Nothing here ever ships to users.
+const BrandBakeoff =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BrandBakeoff"))
+    : null;
+
 function PageLoader() {
   // Route-aware skeleton instead of a bare centered spinner. This is the
   // app-root Suspense fallback — under BrowserRouter it's the boundary that
@@ -621,6 +632,19 @@ function AppRoutes() {
                     path="/log"
                     element={<Navigate to="/food" replace />}
                   />
+                  {/* Dev/test-only brand bake-off — absent from production
+                      builds (BrandBakeoff is null there). Standalone (no
+                      Layout nav) for clean full-page captures. */}
+                  {BrandBakeoff && (
+                    <Route
+                      path="/dev/brand-bakeoff"
+                      element={
+                        <RouteErrorBoundary>
+                          <BrandBakeoff />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                  )}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </EducationLaneProvider>
