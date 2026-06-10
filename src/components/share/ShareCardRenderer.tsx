@@ -24,12 +24,13 @@ import type { CSSProperties, Ref } from "react";
  * (shareCardGenerator) and entry wiring live elsewhere.
  */
 
-export type ShareTemplate = "run" | "lift" | "hybrid";
+export type ShareTemplate = "run" | "lift" | "hybrid" | "nutrition";
 export type ShareFormat = "story" | "square";
 export type ShareBackground = "brand" | "dark" | "transparent" | "photo";
 
 const RUN_CORAL = "#D4637A";
 const LIFT_PURPLE = "#7B72E9";
+const NUTRITION_ORANGE = "#D9884E";
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
 const JAKARTA = "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
 
@@ -63,6 +64,13 @@ export interface ShareCardRenderData {
   prExercise?: string; // PR callout headline
 
   // ── HYBRID reuses totalVolumeKg + distanceKm + durationSec ──
+
+  // ── NUTRITION (macro-day card) ──
+  calories?: number;
+  calorieTarget?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
 }
 
 const DIMS: Record<ShareFormat, { w: number; h: number }> = {
@@ -83,7 +91,9 @@ function bgStyle(background: ShareBackground, template: ShareTemplate): CSSPrope
             ? `linear-gradient(155deg, #140a0e 0%, #21131a 55%, #301a24 100%)`
             : template === "lift"
               ? `linear-gradient(155deg, #100e1a 0%, #181428 55%, #221c38 100%)`
-              : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
+              : template === "nutrition"
+                ? `linear-gradient(155deg, #15100a 0%, #221a10 55%, #33260f 100%)`
+                : `linear-gradient(155deg, #130f1a 0%, #1b1430 55%, #2a1a26 100%)`,
       };
     case "dark":
       return { backgroundColor: "#0a0a0f" };
@@ -95,7 +105,9 @@ function bgStyle(background: ShareBackground, template: ShareTemplate): CSSPrope
 }
 
 function accentFor(template: ShareTemplate): string {
-  return template === "run" ? RUN_CORAL : LIFT_PURPLE;
+  if (template === "run") return RUN_CORAL;
+  if (template === "nutrition") return NUTRITION_ORANGE;
+  return LIFT_PURPLE;
 }
 
 function fmtDuration(sec?: number): string {
@@ -315,6 +327,15 @@ function ShareCardRenderer({
         {/* HYBRID */}
         {data.template === "hybrid" && (
           <HybridTemplate data={data} scale={scale} show={show} />
+        )}
+        {/* NUTRITION */}
+        {data.template === "nutrition" && (
+          <NutritionTemplate
+            data={data}
+            accent={accent}
+            scale={scale}
+            show={show}
+          />
         )}
 
         {/* Footer: small hexagon mark + handle + date (the ONLY branding) */}
@@ -541,6 +562,65 @@ function HybridTemplate({
       {show("totalTime") && (
         <div style={{ alignSelf: "center" }}>
           <Stat value={fmtDuration(data.durationSec)} label="total time" scale={scale} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NutritionTemplate({
+  data,
+  accent,
+  scale,
+  show,
+}: {
+  data: ShareCardRenderData;
+  accent: string;
+  scale: number;
+  show: (k: string) => boolean;
+}) {
+  // Minimal macro-day card (S2): calories hero + a P/C/F line. Orange is
+  // the nutrition identity. One glanceable card, not a dashboard.
+  const macroLine = [
+    `${Math.round(data.protein ?? 0)}P`,
+    `${Math.round(data.carbs ?? 0)}C`,
+    `${Math.round(data.fat ?? 0)}F`,
+  ].join("  ·  ");
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        justifyContent: "center",
+        gap: 40 * scale,
+      }}
+    >
+      {show("calories") && (
+        <Hero
+          value={Math.round(data.calories ?? 0).toLocaleString()}
+          label={
+            data.calorieTarget
+              ? `of ${Math.round(data.calorieTarget).toLocaleString()} kcal`
+              : "kcal"
+          }
+          color="#ffffff"
+          scale={scale}
+        />
+      )}
+      {show("macros") && (
+        <div
+          style={{
+            alignSelf: "center",
+            fontFamily: ARCHIVO,
+            fontVariantNumeric: "tabular-nums",
+            fontWeight: 700,
+            fontSize: 56 * scale,
+            color: accent,
+            letterSpacing: 1 * scale,
+          }}
+        >
+          {macroLine}
         </div>
       )}
     </div>
