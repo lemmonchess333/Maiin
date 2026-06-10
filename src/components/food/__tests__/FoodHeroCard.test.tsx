@@ -144,20 +144,20 @@ describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", ()
   }
 
   it("merges the rationale into the hero caption today: '{dayType} · {rationale}'", () => {
-    renderMerged("Hard training day", true);
-    expect(screen.getByText("Run day · Hard training day")).toBeInTheDocument();
+    renderMerged("Hard session", true);
+    expect(screen.getByText("Run day · Hard session")).toBeInTheDocument();
   });
 
   it("shows only the day type on past/future (diary) views — rationale suppressed", () => {
-    renderMerged("Hard training day", false);
+    renderMerged("Hard session", false);
     expect(screen.getByText("Run day")).toBeInTheDocument();
-    expect(screen.queryByText(/Hard training day/)).toBeNull();
+    expect(screen.queryByText(/Hard session/)).toBeNull();
   });
 
   it("does NOT render a separate floating annotation line (single source)", () => {
-    const { container } = renderMerged("Hard training day", true);
+    const { container } = renderMerged("Hard session", true);
     const matches = [...container.querySelectorAll("p")].filter((p) =>
-      /Hard training day/.test(p.textContent || "")
+      /Hard session/.test(p.textContent || "")
     );
     expect(matches).toHaveLength(1);
   });
