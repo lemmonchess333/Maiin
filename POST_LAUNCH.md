@@ -62,8 +62,11 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 
 ### Font rebrand experiment
 
-**Status:** Deferred. Current pair (Plus Jakarta Sans + JetBrains Mono)
-ships for launch; re-evaluate post-launch once real users weigh in.
+**Status:** Numeral half SHIPPED — the brand bake-off replaced JetBrains Mono
+with **Archivo** for all numbers (PR #1229; `docs/visual-audit/bakeoff/
+DECISION.md`). The pair is now Plus Jakarta Sans (text) + Archivo (numbers).
+Any further change to the _display/body_ face (Jakarta) stays deferred —
+re-evaluate post-launch once real users weigh in.
 
 **Context:** Pre-launch audit of typography flagged Plus Jakarta Sans as
 "fine but generic" — it's become the 2024–25 default for consumer apps
@@ -146,15 +149,20 @@ Nothing else. The rest of the codebase reads through the variables.
 Parked from the Wave 3 design pass (visual-audit follow-up). Both are
 deliberately deferred — they need a brand-level decision, not a polish PR.
 
-- **Third display typeface for hero numerals.** The hero stat numbers
-  (health/performance score, calorie totals) currently use the mono
-  (JetBrains Mono). A dedicated display numeral face could give the
-  glanceable hero numbers more identity. Revisit alongside any typography
-  rebrand (see the font-rebrand note above) — don't add a third family in
-  isolation.
+- **Third display typeface for hero numerals.** ~~The hero stat numbers
+  currently use the mono.~~ ADDRESSED by the bake-off: all numbers (hero +
+  data) now use Archivo (a hero-only third face was rejected — it clashed
+  with the data tier's zeros; see `docs/visual-audit/bakeoff/DECISION.md`).
+  Only revisit if a future identity refresh wants a _distinct_ hero-numeral
+  face above Archivo — and don't add a third family in isolation.
 - **Hexagon-segmented calorie ring experiment.** The brand hexagon now
   appears in empty-states + streak badges (Wave 3 F). A speculative next
   step is a calorie/macro ring rendered as hexagon segments rather than a
   smooth arc — visually ties the data viz to the brand mark. Experiment
   only; the smooth ring is the safe default and the hexagon-usage rule
   (empty-states + badges only) holds until this is explicitly validated.
+
+## Bake-off — settled, do not re-litigate
+
+- **Hex calorie ring:** prototyped and rejected — partial-fill legibility loses to the circle (see `bakeoff/DECISION.md`); do not re-litigate without new evidence.
+- **`--font-mono` / `.font-mono`** is a historical name that now resolves to Archivo (documented in `index.css` + guide); optional future rename to `font-num` is a call-site-wide churn — only do it with tooling.
