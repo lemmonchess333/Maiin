@@ -559,6 +559,23 @@
       "testCoverageStatus": "planned"
     },
     {
+      "key": "partnerBondsMember",
+      "domain": "D_crossUserEdge",
+      "type": "topLevelQueryByField",
+      "path": "partnerBonds",
+      "where": ["members", "array-contains", "{uid}"],
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "userContent",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "callable-actor",
+      "hasNestedSubcollections": false,
+      "reason": "SOCIAL S3 partner-streak bonds (1:1). The deleting user is one of two `members`; the bond is deleted on their account deletion (deletion-safe — the surviving partner reverts to invite state). Query-delete by members array-contains, mirroring activitiesOwn. Executor: accountDeletion.js step 3b.",
+      "testCoverageKey": "smoke::partnerBonds",
+      "testCoverageStatus": "planned"
+    },
+    {
       "key": "activitiesOwnKudos",
       "domain": "E_fanout",
       "type": "contentIdReferenceCleanup",

@@ -239,6 +239,24 @@ async function deleteAccount({
     );
   }
 
+  // 3b. Partner-streak bonds the user is a member of (SOCIAL S3).
+  // Bonds are 1:1; when one member deletes their account the bond is
+  // deleted (the deletion-safe behaviour — the surviving partner's
+  // PartnerStreak surface reverts to its invite state). Query by the
+  // `members` array (array-contains), same query-delete shape as (3),
+  // and BEFORE the auth user (7) so a throw here leaves credentials
+  // intact for a retry.
+  const bondsSnap = await firestore
+    .collection("partnerBonds")
+    .where("members", "array-contains", uid)
+    .get();
+  if (!bondsSnap.empty) {
+    await deleteRefsInBatches(
+      firestore,
+      bondsSnap.docs.map((d) => d.ref)
+    );
+  }
+
   // 4. Public profile projection — `.catch(() => {})` because a
   // missing doc (e.g. user never finished onboarding) shouldn't
   // block the rest of the flow.

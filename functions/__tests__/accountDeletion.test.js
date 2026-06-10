@@ -84,6 +84,15 @@ function makeStubs() {
       },
     });
 
+    // SOCIAL S3 step 3b — partnerBonds query-delete (members array-contains
+    // uid). Same where().get() shape as activities; empty by default.
+    const partnerBondsQueryStub = (field, op, value) => ({
+      get: async () => {
+        calls.push(`firestore.partnerBonds.where.${field}.${op}.${value}.get`);
+        return { empty: true, docs: [] };
+      },
+    });
+
     return {
       collection(name) {
         if (name === "users") {
@@ -92,6 +101,12 @@ function makeStubs() {
         if (name === "activities") {
           return {
             where: (field, op, value) => activitiesQueryStub(field, op, value),
+          };
+        }
+        if (name === "partnerBonds") {
+          return {
+            where: (field, op, value) =>
+              partnerBondsQueryStub(field, op, value),
           };
         }
         return { doc: (uid) => topLevelDocStub(name, uid) };
