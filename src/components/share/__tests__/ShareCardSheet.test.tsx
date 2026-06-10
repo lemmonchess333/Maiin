@@ -19,6 +19,8 @@ vi.mock("@/lib/shareCardGenerator", () => ({
 const track = vi.fn();
 vi.mock("@/lib/socialAnalytics", () => ({ track: (...a: unknown[]) => track(...a) }));
 
+import { setNativeInstagramProvider } from "@/lib/shareCard/instagramShare";
+
 const runData: ShareCardSheetData = {
   template: "run",
   handle: "Alex",
@@ -33,8 +35,12 @@ beforeEach(() => {
   generateShareImage.mockReset();
   shareImageFile.mockReset();
   track.mockReset();
+  setNativeInstagramProvider(null); // web default: no IG bridge
 });
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  setNativeInstagramProvider(null);
+});
 
 describe("ShareCardSheet — export funnel", () => {
   it("emits share_card_opened when opened", () => {
@@ -77,6 +83,37 @@ describe("ShareCardSheet — export funnel", () => {
         template: "run",
         format: "story",
         background: "brand",
+        destination: "sheet",
+        outcome: "shared",
+      })
+    );
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+  });
+
+  it("with a native IG provider, exports direct to Instagram (destination=instagram), skipping the sheet", async () => {
+    const file = new File(["x"], "tropos-story.png", { type: "image/png" });
+    generateShareImage.mockResolvedValue(file);
+    const igProvider = vi.fn().mockResolvedValue(true);
+    setNativeInstagramProvider(igProvider);
+    const onOpenChange = vi.fn();
+
+    render(<ShareCardSheet open onOpenChange={onOpenChange} data={runData} />);
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+
+    await waitFor(() => expect(igProvider).toHaveBeenCalled());
+    // Brand (opaque) export → background asset, not a sticker.
+    expect(igProvider).toHaveBeenCalledWith({
+      file,
+      asTransparentSticker: false,
+    });
+    // Direct IG handoff → the OS sheet is NOT used.
+    expect(shareImageFile).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(track).toHaveBeenCalledWith("share_card_exported", {
+        template: "run",
+        format: "story",
+        background: "brand",
+        destination: "instagram",
         outcome: "shared",
       })
     );

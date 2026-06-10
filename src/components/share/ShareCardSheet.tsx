@@ -10,6 +10,7 @@ import {
   generateShareImage,
   shareImageFile,
 } from "@/lib/shareCardGenerator";
+import { shareToInstagramStories } from "@/lib/shareCard/instagramShare";
 import { buildRoutePath } from "@/lib/shareCard/polyline";
 import {
   TOGGLEABLE_STATS,
@@ -203,6 +204,24 @@ export function ShareCardSheet({
         });
         return;
       }
+      // S2: try a direct Instagram-Stories handoff first (native only —
+      // the seam returns false on web / before the plugin lands), then
+      // fall back to the generic OS share sheet.
+      const toIg = await shareToInstagramStories({
+        file,
+        asTransparentSticker: background === "transparent",
+      });
+      if (toIg) {
+        track("share_card_exported", {
+          template: data.template,
+          format,
+          background,
+          destination: "instagram",
+          outcome: "shared",
+        });
+        onOpenChange(false);
+        return;
+      }
       const outcome = await shareImageFile(
         file,
         `My ${data.template} on Tropos`
@@ -211,6 +230,7 @@ export function ShareCardSheet({
         template: data.template,
         format,
         background,
+        destination: "sheet",
         outcome,
       });
       if (outcome === "shared" || outcome === "downloaded") {
