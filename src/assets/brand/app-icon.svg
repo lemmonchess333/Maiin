@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Tropos app icon — candidate B (solid hexagon + upward-chevron cutout)
+     from the brand bake-off (docs/visual-audit/bakeoff/DECISION.md). Geometry
+     consistent with the in-app EmptyState hexagon. Full-bleed brand-purple
+     field (iOS / maskable crop the corners). Regenerate PNGs from this with
+     scripts/gen-app-icon (or the sharp render in the rollout PR). -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Tropos">
 
   <defs>
@@ -8,6 +13,6 @@
       <polyline points="356,600 512,400 668,600" fill="none" stroke="black" stroke-width="86" stroke-linejoin="round" stroke-linecap="round"/>
     </mask>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="#7B72E9"/>
-  <rect width="1024" height="1024" rx="224" fill="#FFFFFF" mask="url(#cut)"/>
+  <rect width="1024" height="1024" fill="#7B72E9"/>
+  <rect width="1024" height="1024" fill="#FFFFFF" mask="url(#cut)"/>
 </svg>
