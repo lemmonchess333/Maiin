@@ -34,7 +34,7 @@ const FullLeaderboard = lazyRetry(
   () => import("../components/social/FullLeaderboard")
 );
 import {
-  Share2,
+  Share,
   Users,
   Globe,
   Dumbbell,
@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import IconButton from "@/components/ui/IconButton";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { toast } from "@/lib/toast";
@@ -603,72 +604,69 @@ export default function Social() {
         </Suspense>
       )}
 
-      {/* Tab bar — primary navigation, sized for the 44pt iOS / 48dp
-          Material touch-target floor. Was previously 12px on py-2 (~32px
-          tall) which read like metadata. */}
+      {/* Tab bar — primary navigation on the canonical iOS "track"
+          SegmentedControl (44pt floor + full radiogroup a11y handled by
+          the primitive). Was a hand-rolled button row; migrated in the
+          Social-uniformity pass so every switcher across the app shares
+          one control. */}
       {!showFullLeaderboard && (
         <>
-          <div className="flex gap-1 p-1.5 rounded-xl bg-muted">
-            {(["feed", "crews", "find"] as SocialTab[]).map((t) => (
-              <button
-                type="button"
-                key={t}
-                onClick={() => setTab(t)}
-                className={`flex-1 min-h-[44px] py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                  tab === t
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {t === "feed" ? "Feed" : t === "crews" ? "Crews" : "People"}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            ariaLabel="Social section"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "feed", label: "Feed" },
+              { value: "crews", label: "Crews" },
+              { value: "find", label: "People" },
+            ]}
+          />
 
           {/* ========== FEED TAB ========== */}
           {tab === "feed" && (
             <section aria-label="Activity feed">
               <div className="!mt-3">
-                {/* Feed sub-tabs: Following | Explore */}
-                <div className="flex gap-2">
-                  {(["following", "explore"] as FeedSubTab[]).map((st) => {
-                    const hasNew =
-                      st === "following" ? followingHasNew : exploreHasNew;
-                    return (
-                      <button
-                        type="button"
-                        key={st}
-                        onClick={() => {
-                          setFeedSubTab(st);
-                          trackSocialEvent("social_feed_subtab_changed", {
-                            subTab: st,
-                          });
-                        }}
-                        className={`relative px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          feedSubTab === st
-                            ? "bg-primary-strong text-white"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                        aria-label={
-                          hasNew
-                            ? `${st === "following" ? "Following" : "Explore"} (new content)`
-                            : undefined
-                        }
-                      >
-                        {st === "following" ? "Following" : "Explore"}
-                        {/* Soc5b pin (3): subtle dot indicator — not a count
-                      badge. Coral brand colour matches semantic-positive
-                      for new-content; suppressed on the active sub-tab. */}
-                        {hasNew && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-primary"
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Feed sub-tabs: Following | Explore. Same canonical
+                    SegmentedControl as the section tabs above — secondary
+                    track. The Soc5b new-content dot rides inside each
+                    option's label node (a relative wrapper) with an
+                    sr-only "new content" hint replacing the old per-button
+                    aria-label. Suppressed on the active sub-tab by the
+                    freshness hook. */}
+                <SegmentedControl
+                  ariaLabel="Feed source"
+                  value={feedSubTab}
+                  onChange={(st) => {
+                    setFeedSubTab(st);
+                    trackSocialEvent("social_feed_subtab_changed", {
+                      subTab: st,
+                    });
+                  }}
+                  options={(["following", "explore"] as FeedSubTab[]).map(
+                    (st) => {
+                      const hasNew =
+                        st === "following" ? followingHasNew : exploreHasNew;
+                      const text = st === "following" ? "Following" : "Explore";
+                      return {
+                        value: st,
+                        label: (
+                          <span className="relative inline-flex items-center">
+                            {text}
+                            {hasNew && (
+                              <>
+                                <span
+                                  aria-hidden="true"
+                                  className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
+                                />
+                                <span className="sr-only"> new content</span>
+                              </>
+                            )}
+                          </span>
+                        ),
+                      };
+                    }
+                  )}
+                />
 
                 {feedSubTab === "following" && (
                   <div className="mt-4 space-y-3">
@@ -1047,32 +1045,22 @@ export default function Social() {
                   <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
                     Crews
                   </p>
-                  {/* Sort pills. Mirrors the visual language of the feed
-                  sub-tabs (rounded-full, muted background, active state
-                  in card-on-muted). Three options keep the bar narrow
-                  enough to sit beside the section eyebrow without
-                  wrapping on a 320px viewport. */}
-                  <div className="flex gap-1 p-1 rounded-full bg-muted shrink-0">
-                    {(["popular", "new", "alpha"] as const).map((s) => (
-                      <button
-                        type="button"
-                        key={s}
-                        onClick={() => setCrewSort(s)}
-                        className={`px-2.5 py-1 rounded-full text-caption font-semibold transition-colors ${
-                          crewSort === s
-                            ? "bg-card text-foreground shadow-sm"
-                            : "text-muted-foreground"
-                        }`}
-                        aria-pressed={crewSort === s}
-                      >
-                        {s === "popular"
-                          ? "Popular"
-                          : s === "new"
-                            ? "New"
-                            : "A–Z"}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Sort — same canonical SegmentedControl, compact
+                  `wrap` layout so the three short options sit beside the
+                  section eyebrow without stretching. Three options keep
+                  the bar narrow enough not to wrap on a 320px viewport. */}
+                  <SegmentedControl
+                    ariaLabel="Sort crews"
+                    layout="wrap"
+                    className="shrink-0"
+                    value={crewSort}
+                    onChange={setCrewSort}
+                    options={[
+                      { value: "popular", label: "Popular" },
+                      { value: "new", label: "New" },
+                      { value: "alpha", label: "A–Z" },
+                    ]}
+                  />
                 </div>
                 <div className="space-y-2">
                   {(() => {
@@ -1743,7 +1731,7 @@ export default function Social() {
                         className="size-9 rounded-xl flex items-center justify-center shrink-0"
                         style={{ background: `${THEME.brand}25` }}
                       >
-                        <Share2
+                        <Share
                           className="size-4"
                           style={{ color: THEME.brand }}
                         />

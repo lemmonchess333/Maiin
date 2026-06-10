@@ -169,7 +169,23 @@ describe("SegmentedControl", () => {
     expect(onChange).toHaveBeenCalledWith(5);
   });
 
-  it("running tone applies the coral fill to the selected option", () => {
+  it("lifts the selected option onto a white card (iOS track look)", () => {
+    render(
+      <SegmentedControl
+        options={DAYS}
+        value={4}
+        onChange={() => {}}
+        ariaLabel="Lift days"
+      />
+    );
+    const selected = screen.getByRole("radio", { name: "4" });
+    expect(selected.className).toContain("bg-card");
+    // Unselected segments are transparent on the shared track.
+    const unselected = screen.getByRole("radio", { name: "3" });
+    expect(unselected.className).not.toContain("bg-card");
+  });
+
+  it("running tone tints the selected label coral", () => {
     render(
       <SegmentedControl
         options={[
@@ -183,7 +199,8 @@ describe("SegmentedControl", () => {
       />
     );
     const selected = screen.getByRole("radio", { name: "10K" });
-    // DS1b: running tone resolves via the --running token class.
-    expect(selected.className).toContain("bg-running");
+    // DS1b: running tone resolves via the --running token class — now on
+    // the selected label (the track keeps the segment itself a white card).
+    expect(selected.className).toContain("text-running");
   });
 });
