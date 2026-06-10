@@ -1,6 +1,5 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import CalorieRing from "@/components/food/CalorieRing";
-import HexCalorieRing from "@/components/food/HexCalorieRing";
 import { THEME } from "@/lib/theme";
 
 /*
@@ -199,50 +198,9 @@ function FontSurfaceSheet({
   );
 }
 
-// ── Experiment 2: hexagon vs circle calorie ring ────────────────────────────
-const RING_LEVELS: { pct: number; consumed: number; target: number }[] = [
-  { pct: 30, consumed: 660, target: 2200 },
-  { pct: 60, consumed: 1320, target: 2200 },
-  { pct: 90, consumed: 1980, target: 2200 },
-  { pct: 110, consumed: 2420, target: 2200 },
-];
-
-function RingCompareSheet({ level }: { level: (typeof RING_LEVELS)[number] }) {
-  const noop = () => {};
-  return (
-    <div
-      data-shot={`ring-${level.pct}`}
-      className="bg-background p-4 flex items-center justify-center gap-6"
-    >
-      <div className="text-center space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground">
-          Circle · {level.pct}%
-        </p>
-        <CalorieRing
-          consumed={level.consumed}
-          target={level.target}
-          mode="eaten"
-          onToggleMode={noop}
-          trajectoryLabel={null}
-          ringDurationMs={0}
-        />
-      </div>
-      <div className="text-center space-y-2">
-        <p className="text-xs font-semibold text-muted-foreground">
-          Hexagon · {level.pct}%
-        </p>
-        <HexCalorieRing
-          consumed={level.consumed}
-          target={level.target}
-          mode="eaten"
-          onToggleMode={noop}
-          trajectoryLabel={null}
-          ringDurationMs={0}
-        />
-      </div>
-    </div>
-  );
-}
+// Experiment 2 (hexagon vs circle calorie ring) was REJECTED — the hexagon's
+// partial-fill legibility lost to the circle. HexCalorieRing has been deleted;
+// the captures + docs/visual-audit/bakeoff/DECISION.md are the permanent record.
 
 // ── Experiment 3: app icon candidates ───────────────────────────────────────
 // All derive from the canonical hexagon-chevron geometry (src/assets/brand).
@@ -400,7 +358,7 @@ function IconSheet() {
 }
 
 export default function BrandBakeoff() {
-  const [section, setSection] = useState<"fonts" | "ring" | "icon">("fonts");
+  const [section, setSection] = useState<"fonts" | "icon">("fonts");
   return (
     <div className="min-h-screen bg-background px-4 py-6 space-y-6">
       <style>{SCOPED_STYLE}</style>
@@ -412,7 +370,7 @@ export default function BrandBakeoff() {
           Dev-only comparison harness — nothing here ships.
         </p>
         <div className="flex gap-2 mt-3">
-          {(["fonts", "ring", "icon"] as const).map((s) => (
+          {(["fonts", "icon"] as const).map((s) => (
             <button
               key={s}
               type="button"
@@ -452,14 +410,6 @@ export default function BrandBakeoff() {
             surface="runstats"
             render={() => <RunStatCards />}
           />
-        </div>
-      )}
-
-      {section === "ring" && (
-        <div className="space-y-8">
-          {RING_LEVELS.map((lvl) => (
-            <RingCompareSheet key={lvl.pct} level={lvl} />
-          ))}
         </div>
       )}
 
