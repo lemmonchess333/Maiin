@@ -647,6 +647,15 @@ Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definit
 - [ ] **Hybrid accrues from BOTH disciplines.** Join the global challenge, log a run (≥threshold) and a workout with volume; confirm the participant `currentValue` increases by ≈`km×100` (run) + `kg×0.1` (workout). Two separate sessions → two increments (different `applied/<sourceId>` markers).
 - [ ] **Autumn Push revival (Sep–Nov only).** The seasonal `hybrid_score` challenge that previously never progressed should now accrue identically — spot-check during its window.
 
+### Solo-first Social feed (SOCIAL S4 Soc8, PR3)
+
+Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
+
+- [ ] **Light + dark capture of the solo state.** As a fresh user (0 follows, 0 crew), open Social → Feed. Confirm the curated stack renders top-to-bottom — PartnerStreak hero → June Hybrid Hero challenge card → Share-your-training → "Crews unlock…" hexagon row — with NO empty-feed copy or skeleton beneath it, in both themes.
+- [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
+- [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
+- [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
+
 ### App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.
