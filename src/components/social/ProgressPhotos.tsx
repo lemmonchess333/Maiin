@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
 import { THEME } from "../../lib/theme";
 import { logger } from "../../lib/logger";
-import { EmptyState } from "../EmptyState";
+import { EmptyState } from "../ui/EmptyState";
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
@@ -454,10 +454,10 @@ export default function ProgressPhotos() {
 
       {photos.length === 0 && (
         <EmptyState
-          icon={<Camera size={32} />}
-          title="Track your transformation"
-          description="Take a front, side, and back photo each week to see your progress over time"
-          accentColor={THEME.brand}
+          icon={Camera}
+          headline="Track your transformation"
+          sub="Take a front, side, and back photo each week to see your progress over time"
+          accent={THEME.brand}
           action={{
             label: "+ Add Photo",
             onClick: () => fileInputRef.current?.click(),
