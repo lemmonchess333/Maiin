@@ -6,6 +6,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getCardColour } from "@/lib/performanceColour";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getVerb,
   getLine,
@@ -36,10 +37,10 @@ const RING_STROKE = 7;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const RING_ARC_LENGTH = RING_CIRCUMFERENCE * 0.75;
 
-/** "Your Performance will appear after your first logged session" —
- *  no ring fill, no verb, no delta. Distinct from low-confidence
- *  (which keeps the chrome and shows a verb against a small ring fill). */
-function EmptyState() {
+/** Muted ring placeholder — used by the LOADING branch only (the genuine
+ *  no-data branch now renders the hexagon <EmptyState> primitive). No ring
+ *  fill, no verb, no delta. */
+function EmptyRing() {
   return (
     <div className="flex items-center gap-6">
       <div className="relative size-24 flex-shrink-0">
@@ -115,27 +116,20 @@ export default function PerformanceHeroCard({
             Performance
           </p>
         </div>
-        <EmptyState />
+        <EmptyRing />
       </Link>
     );
   }
 
   /* Empty state — loading has cleared but no doc exists (pre-first-log).
-     Cold-start users genuinely have no data, so the card renders the
-     "appear after your first session" line. Re-introduced after PI1
-     stress-test caught earlier "no empty state needed" claim. */
+     Cold-start users genuinely have no data. Wave3 F: the undesigned
+     ring + sentence is replaced by the hexagon EmptyState primitive with
+     a real next step (start a workout — Performance is computed FROM
+     logged sessions, so that's the unlock). */
   if (!currentWeek) {
     return (
-      <Link
-        to="/history#performance"
-        onClick={() => {
-          haptic();
-          trackHomeEvent("home_card_tapped", { card: "performance" });
-        }}
-        className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
-        aria-label="Performance — no data yet"
-      >
-        <div className="flex items-center gap-2 mb-3">
+      <div className="p-4 rounded-2xl bg-card card-shadow">
+        <div className="flex items-center gap-2 mb-1">
           <Activity
             className="size-4"
             style={{ color: THEME.text.muted }}
@@ -148,8 +142,14 @@ export default function PerformanceHeroCard({
             Performance
           </p>
         </div>
-        <EmptyState />
-      </Link>
+        <EmptyState
+          icon={Activity}
+          accent={THEME.brand}
+          headline="No sessions logged yet"
+          sub={EMPTY_STATE_LINE}
+          action={{ label: "Start a workout", href: "/program" }}
+        />
+      </div>
     );
   }
 

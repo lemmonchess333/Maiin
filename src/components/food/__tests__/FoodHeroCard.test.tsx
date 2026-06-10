@@ -120,11 +120,16 @@ describe("FoodHeroCard — single shared display mode", () => {
   });
 });
 
-describe("FoodHeroCard — training day label (conversion hook)", () => {
-  function renderWithAnnotation(annotation: string, isToday: boolean) {
+describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", () => {
+  function renderMerged(
+    annotation: string,
+    isToday: boolean,
+    caption: unknown = { trainingType: "Run day", adjustment: "" }
+  ) {
     const targets = {
       ...dailyTargets,
       annotation,
+      caption,
     } as unknown as EffectiveTargets;
     return render(
       <MemoryRouter>
@@ -138,20 +143,32 @@ describe("FoodHeroCard — training day label (conversion hook)", () => {
     );
   }
 
-  it("renders the descriptive label today", () => {
-    renderWithAnnotation("Hard training day", true);
-    expect(screen.getByText("Hard training day")).toBeInTheDocument();
+  it("merges the rationale into the hero caption today: '{dayType} · {rationale}'", () => {
+    renderMerged("Hard training day", true);
+    expect(screen.getByText("Run day · Hard training day")).toBeInTheDocument();
   });
 
-  it("suppressed on past/future (diary) views", () => {
-    renderWithAnnotation("Hard training day", false);
-    expect(screen.queryByText("Hard training day")).not.toBeInTheDocument();
+  it("shows only the day type on past/future (diary) views — rationale suppressed", () => {
+    renderMerged("Hard training day", false);
+    expect(screen.getByText("Run day")).toBeInTheDocument();
+    expect(screen.queryByText(/Hard training day/)).toBeNull();
   });
 
-  it("suppressed when empty (rest day → hook returns '')", () => {
-    const { container } = renderWithAnnotation("", true);
-    // No stray label paragraph for an empty annotation.
-    expect(container.querySelector("[data-macro]")).toBeInTheDocument();
-    expect(screen.queryByText("Rest day")).not.toBeInTheDocument();
+  it("does NOT render a separate floating annotation line (single source)", () => {
+    const { container } = renderMerged("Hard training day", true);
+    const matches = [...container.querySelectorAll("p")].filter((p) =>
+      /Hard training day/.test(p.textContent || "")
+    );
+    expect(matches).toHaveLength(1);
+  });
+
+  it("caption shows just the day type when the annotation is empty", () => {
+    renderMerged("", true);
+    expect(screen.getByText("Run day")).toBeInTheDocument();
+  });
+
+  it("renders no day label at all on a rest day (caption null)", () => {
+    renderMerged("", true, null);
+    expect(screen.queryByText(/Run day|Rest day/)).toBeNull();
   });
 });

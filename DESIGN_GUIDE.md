@@ -262,6 +262,22 @@ behaviour.
 - **`BottomSheet`** (vaul): the standard editing surface (exercises, weight
   logging). Sheets for editing, dialogs for confirmation.
 - **`ConfirmDialog`** for destructive confirmations.
+- **`EmptyState`** (`src/components/ui/EmptyState.tsx`): the canonical
+  designed empty-state — a stroke-vector **brand hexagon** + one-line
+  headline (`text-h3`) + optional one-line sub (`text-small`) + **at most one**
+  action (`href` → `<Link>`, or `onClick` → `Button`). Pass the page's domain
+  accent (`accent` — purple/coral/orange/teal) to tint the hexagon; pass an
+  optional lucide `icon` to centre context inside it (else it shows the
+  upward-chevron brand cutout). Subtle one-time draw-in, suppressed under
+  reduced motion. Use it for genuine cold-start / no-data branches; complement
+  (don't replace) an existing designed card on the same surface.
+  - **Hexagon usage rule:** the hexagon mark appears in **empty-states and
+    streak badges ONLY** — never as decoration on a populated surface, never
+    as a loading placeholder, never inline in content. It is the brand
+    signature; keep it scarce.
+  - _(Legacy: `src/components/EmptyState.tsx` is an older square-icon variant
+    still used by Crew / ExerciseHistory; migrate those to the hexagon
+    primitive post-launch.)_
 - **Toasts:** `sonner` — `toast.success()` / `toast.error()`. This is the
   channel for transient feedback.
 - **Icons:** `lucide-react`, imported individually. No other icon set.
