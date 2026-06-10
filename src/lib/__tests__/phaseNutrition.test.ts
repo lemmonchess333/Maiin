@@ -106,15 +106,18 @@ describe("getAdjustedTargets — tier-driven fat↔carb shift", () => {
 
   it("tier annotations are intensity-appropriate", () => {
     const p = makeProfile();
-    expect(
-      getAdjustedTargets(p, "lift", undefined, "HARD").annotation
-    ).toContain("Hard training");
+    // Wave3 G follow-up: labels merge into the hero caption as
+    // "{day type} · {label}", so they drop the redundant "…day" suffix and a
+    // plain MODERATE day adds nothing (empty).
+    expect(getAdjustedTargets(p, "lift", undefined, "HARD").annotation).toBe(
+      "Hard session"
+    );
     expect(
       getAdjustedTargets(p, "lift", undefined, "MODERATE").annotation
-    ).toContain("Training day");
-    expect(
-      getAdjustedTargets(p, "lift", undefined, "EASY").annotation
-    ).toContain("Easy day");
+    ).toBe("");
+    expect(getAdjustedTargets(p, "lift", undefined, "EASY").annotation).toBe(
+      "Easy session"
+    );
   });
 });
 
