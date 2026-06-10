@@ -11,7 +11,7 @@ import { isBodyweightExerciseId } from "@/lib/exercises";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
 /**
- * Renders the per-exercise summary with numbers in JetBrains Mono and
+ * Renders the per-exercise summary with numbers in Archivo (the numeral font) and
  * units ("kg", "BW", "sets") in Plus Jakarta — Tropos's "numerals in
  * mono, words in sans" convention. The shared lib formatter returns a
  * pure string and would render the units in mono too, which read as

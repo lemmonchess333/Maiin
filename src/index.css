@@ -68,9 +68,14 @@
   --font-display:
     "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif, system-ui,
     sans-serif;
-  --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular,
-    monospace;
+  /* The numeral / data font. Despite the historical `mono` name (and the
+     `font-mono` Tailwind utility it powers), this is NOT a monospace face —
+     it's Archivo, chosen in the brand bake-off (docs/visual-audit/bakeoff/
+     DECISION.md) to replace JetBrains Mono for all numbers. Archivo is
+     proportional, so digit alignment comes from tabular figures, forced on
+     every `.font-mono` element by the rule below. Sans fallbacks (NOT
+     monospace) for the variable-font-fails case. */
+  --font-mono: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
 
   /* Typography scale — bridged from design tokens (use: text-display, text-h1, etc.) */
   --text-display: var(--ds-text-display);
@@ -289,6 +294,16 @@ body {
      the sizes we use. */
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: contain;
+}
+
+/* Numeral font (Archivo) is proportional, so force tabular figures on every
+   `.font-mono` element — this gives the equal digit width that JetBrains Mono
+   provided inherently (stable count-up animations, aligned stat columns /
+   set-log grids / splits). tnum only affects digits, so units like "kg"/"km"
+   are unaffected. */
+.font-mono {
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── HEADING DEFAULTS ────────────────────────────────────── */
