@@ -61,6 +61,16 @@ export default function TodayEnergy({
   const carbsColor = THEME.macros.carbs;
   const fatColor = THEME.macros.fat;
 
+  // Wave3 E1 — collapsed macro summary. The three macro rings (pink/gold/sage
+  // = 3 of the 6 accent hues the audit flagged on the Home scroll) now live
+  // ONLY in the expanded breakdown; the collapsed default shows a single muted
+  // mono line of grams-remaining instead, derived from the exact data the
+  // rings use (target − consumed, clamped at 0). No macro colour rendered
+  // collapsed, so the accent count drops to purple/orange/coral + neutrals.
+  const proteinLeft = Math.max(0, Math.round(tProt - protein));
+  const carbsLeft = Math.max(0, Math.round(tCarbs - carbs));
+  const fatLeft = Math.max(0, Math.round(tFat - fat));
+
   // Cold-start: a brand-new user with no meals ever. The macro rings carry
   // no information at 0g (their targets already live in the calorie header),
   // so we render a clean inline CTA in their place rather than overlaying
@@ -98,13 +108,7 @@ export default function TodayEnergy({
               Today's Energy
             </p>
             {burn.phase && (
-              <span
-                className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                style={{
-                  backgroundColor: THEME.semantic.nutrition + "15",
-                  color: THEME.semantic.nutrition,
-                }}
-              >
+              <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                 {burn.phase === "lean bulk"
                   ? "Bulk"
                   : burn.phase === "cut"
@@ -171,6 +175,56 @@ export default function TodayEnergy({
             className="overflow-hidden"
           >
             <div className="p-4 space-y-2.5">
+              {/* Wave3 E1 — the macro rings live here, in the expanded
+                  breakdown (collapsed shows a muted summary line instead).
+                  Tap-to-flip consumed/left preserved; unchanged macro
+                  colours (semantics are fixed in DESIGN_GUIDE 3e). */}
+              {!isColdStart && (
+                <motion.button
+                  type="button"
+                  layout
+                  onClick={() => {
+                    haptic();
+                    setMacroMode((m) =>
+                      m === "consumed" ? "left" : "consumed"
+                    );
+                  }}
+                  aria-label={
+                    macroMode === "consumed"
+                      ? "Macros showing consumed. Tap to switch to remaining."
+                      : "Macros showing remaining. Tap to switch to consumed."
+                  }
+                  className={cn(
+                    "w-full flex items-center justify-around pb-1 motion-safe:active:scale-[0.99] transition-transform",
+                    calories === 0 && "opacity-50"
+                  )}
+                >
+                  <MacroRing
+                    value={protein}
+                    target={tProt}
+                    color={proteinColor}
+                    label="Protein"
+                    unit="g"
+                    displayMode={macroMode}
+                  />
+                  <MacroRing
+                    value={carbs}
+                    target={tCarbs}
+                    color={carbsColor}
+                    label="Carbs"
+                    unit="g"
+                    displayMode={macroMode}
+                  />
+                  <MacroRing
+                    value={fat}
+                    target={tFat}
+                    color={fatColor}
+                    label="Fat"
+                    unit="g"
+                    displayMode={macroMode}
+                  />
+                </motion.button>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">
                   Daily target ({burn.phaseLabel})
@@ -256,10 +310,10 @@ export default function TodayEnergy({
         )}
       </AnimatePresence>
 
-      {/* Macro rings — tap to flip between consumed / left (cal.ai
-          pattern). Navigation to /food moved to the empty-state
-          overlay + the "View food log →" link inside the expandable
-          breakdown above; the rings row itself is now a toggle. */}
+      {/* Macro area. Collapsed (default) shows a single muted mono line of
+          grams-remaining; the full colour rings live in the expanded
+          breakdown above (Wave3 E1). Cold-start shows its CTA in both
+          states. */}
       <div className="block relative">
         {postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0 && (
           <p
@@ -271,7 +325,12 @@ export default function TodayEnergy({
               : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`}
           </p>
         )}
-        {isColdStart ? (
+        {!isColdStart && !expanded && (
+          <p className="text-micro text-muted-foreground font-mono tabular-nums text-center px-4 py-3">
+            P {proteinLeft}g · C {carbsLeft}g · F {fatLeft}g left
+          </p>
+        )}
+        {isColdStart && (
           /* Home2c-locked empty-state copy. Single sentence per spec
              (was a two-line title/sub: "Log your first meal" + "Tap
              to start tracking"). Rendered INLINE in place of the macro
@@ -302,49 +361,6 @@ export default function TodayEnergy({
               Log a meal to see your daily energy
             </p>
           </Link>
-        ) : (
-          <motion.button
-            type="button"
-            layout
-            onClick={() => {
-              haptic();
-              setMacroMode((m) => (m === "consumed" ? "left" : "consumed"));
-            }}
-            aria-label={
-              macroMode === "consumed"
-                ? "Macros showing consumed. Tap to switch to remaining."
-                : "Macros showing remaining. Tap to switch to consumed."
-            }
-            className={cn(
-              "w-full flex items-center justify-around px-4 py-3 motion-safe:active:scale-[0.99] transition-transform",
-              calories === 0 && "opacity-50"
-            )}
-          >
-            <MacroRing
-              value={protein}
-              target={tProt}
-              color={proteinColor}
-              label="Protein"
-              unit="g"
-              displayMode={macroMode}
-            />
-            <MacroRing
-              value={carbs}
-              target={tCarbs}
-              color={carbsColor}
-              label="Carbs"
-              unit="g"
-              displayMode={macroMode}
-            />
-            <MacroRing
-              value={fat}
-              target={tFat}
-              color={fatColor}
-              label="Fat"
-              unit="g"
-              displayMode={macroMode}
-            />
-          </motion.button>
         )}
         {!mealsLoading &&
           calories === 0 &&
