@@ -1,12 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
-import { Button } from "@/components/ui/Button";
-import ShareCard from "@/components/social/ShareCard";
-import { generateAndShare } from "@/lib/shareCardGenerator";
+import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { getVolumeComparison } from "@/lib/funComparisons";
 import { usePostCompletionKudos } from "@/hooks/usePostCompletionKudos";
 import PostCompletionKudos from "@/components/social/PostCompletionKudos";
@@ -51,7 +49,6 @@ export default function SessionCompleteScreen({
     fromName: profile?.displayName,
   });
   const [showShareCard, setShowShareCard] = useState(false);
-  const shareRef = useRef<HTMLDivElement>(null);
 
   const durationDisplay =
     sessionDurationMinutes >= 60
@@ -342,66 +339,27 @@ export default function SessionCompleteScreen({
         </motion.div>
       </div>
 
-      {/* Share Card Modal */}
-      <AnimatePresence>
-        {showShareCard && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowShareCard(false)}
-              className="fixed inset-0 bg-black/50 z-50"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card safe-area-pb"
-            >
-              <div className="max-w-md mx-auto p-5 space-y-4">
-                <div className="w-10 h-1 rounded-full bg-border mx-auto" />
-                <ShareCard
-                  ref={shareRef}
-                  data={{
-                    type: "workout",
-                    userName: profile?.displayName || "Athlete",
-                    date: new Date().toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }),
-                    exerciseCount: exerciseSummary.length,
-                    totalVolume: totalVolume,
-                    prsHit: prCount,
-                  }}
-                />
-                {/* Share-as buttons → Button primitive (outline). Were
-                    hand-rolled sub-44px buttons; now consistent focus ring,
-                    press feedback and 44px touch targets. */}
-                <div className="flex gap-3">
-                  {(["dark", "light", "transparent"] as const).map((theme) => (
-                    <Button
-                      key={theme}
-                      variant="outline"
-                      className="flex-1 capitalize"
-                      onClick={() => {
-                        const node = shareRef.current;
-                        if (node) {
-                          generateAndShare(node, dayName, theme);
-                        }
-                      }}
-                    >
-                      {theme}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* S1 share-card system — opened AFTER the celebration screen (this
+          screen only renders once the session is complete), never stacked
+          over the celebration sequence. */}
+      <ShareCardSheet
+        open={showShareCard}
+        onOpenChange={setShowShareCard}
+        data={{
+          template: "lift",
+          handle: profile?.displayName || "Athlete",
+          date: new Date().toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+          totalVolumeKg: totalVolume,
+          exerciseCount: exerciseSummary.length,
+          durationSec: sessionDurationMinutes * 60,
+          prCount,
+          prExercise: prDetails[0]?.name,
+        }}
+      />
     </motion.div>
   );
 }
