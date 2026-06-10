@@ -3,7 +3,7 @@
  *
  * Share cards let the user hide individual stats (the eye-icon pattern).
  * The visibility model is a Set of HIDDEN stat keys — matches the
- * existing `ShareCardData.hiddenStats: Set<string>` contract, so a card
+ * ShareCardRenderData.hiddenStats contract (the offscreen renderer), so a card
  * with no toggles touched shows everything (empty set = all visible).
  *
  * Pure + immutable: every mutator returns a NEW set so React state
