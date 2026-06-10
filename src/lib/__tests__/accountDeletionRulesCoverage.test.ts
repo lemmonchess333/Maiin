@@ -120,6 +120,18 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     sides: ["actor"],
     notes: "deleting users cannot create/update crews",
   },
+  {
+    // SOCIAL S3 — partner-streak bond. Symmetric 1:1 doc naming two
+    // members. Create is a cross-user write (you name another user in
+    // members[]) so the freeze checks BOTH members' isDeleting; update
+    // freezes the writing actor. Declaring "actor"+"target" makes the
+    // cross-user assertion require >=2 !isDeleting applications — the
+    // block has 3 (members[0], members[1], request.auth.uid).
+    pathPattern: "match /partnerBonds/{bondId}",
+    sides: ["actor", "target"],
+    notes:
+      "create freezes both members (!isDeleting on members[0] AND members[1]); update freezes the writer; delete is member-only (executor sweeps in step 3b)",
+  },
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} is now
   // server-only (write `if false`). R1A protection moved to the CF
   // (`setCrewMembershipCallable` in functions/index.js) which checks
@@ -223,12 +235,13 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (27 paths — push #961 added users/{uid}/devices)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (28 paths — SOCIAL S3 added partnerBonds)", () => {
     // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
     // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
     // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
     // /groups/{crewId}/members/{userId} moved to server-only (→26);
-    // push #961 added /users/{uid}/devices/{token} (→27).
-    expect(PROTECTED_PATHS.length).toBe(27);
+    // push #961 added /users/{uid}/devices/{token} (→27);
+    // SOCIAL S3 added /partnerBonds/{bondId} (→28).
+    expect(PROTECTED_PATHS.length).toBe(28);
   });
 });
