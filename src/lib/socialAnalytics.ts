@@ -33,7 +33,7 @@ export type SocialEvent =
 
 export type SocialTab = "feed" | "crews" | "find";
 export type SocialFeedSubTab = "following" | "explore";
-export type ShareCardTemplate = "run" | "lift" | "hybrid";
+export type ShareCardTemplate = "run" | "lift" | "hybrid" | "nutrition";
 export type ShareCardFormat = "story" | "square";
 export type ShareCardBackground = "brand" | "dark" | "transparent" | "photo";
 
