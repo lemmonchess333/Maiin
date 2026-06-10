@@ -66,6 +66,12 @@ Use this when building.
 
 ### Programme — segmented control (Section D in v8)
 
+> **Updated (Social-uniformity pass):** the "active state as filled pill"
+> note below is historical. `SegmentedControl` is now the single app-wide
+> switcher and uses the canonical iOS **track** look (muted track + white
+> `bg-card` selected segment), shared by Social tabs/sub-tabs/sort and the
+> Analytics section tabs + time range. See `src/components/ui/SegmentedControl.tsx`.
+
 | Mockup element                                          | Actual component                                                                 | Notes                                                                                                                                  |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Today / Week / Lift / Run tabs                          | **NEW segmented control** matching `WorkoutSession.tsx`'s scrolling-pill pattern | Don't invent a third pattern. Reuse the existing pill style: `flex gap-1.5 px-4 py-3 overflow-x-auto` with active state as filled pill |
