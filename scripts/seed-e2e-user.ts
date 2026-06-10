@@ -110,7 +110,16 @@ async function ensureProfile(uid: string): Promise<void> {
     athleteType: "Lifter",
     weightKg: 70,
     heightCm: 170,
-    weeklyWorkoutsTarget: 4,
+    // 7 lift days + an all-lift weekSchedule so "today" is ALWAYS a
+    // workout day — the journeys spec (journeys.auth.spec.ts) relies
+    // on the Programme page showing "Begin Workout" regardless of
+    // which weekday CI runs on. Without this the workout journey
+    // would only pass on the seeded schedule's lift days.
+    weeklyWorkoutsTarget: 7,
+    weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: "lift" as const,
+    })),
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
