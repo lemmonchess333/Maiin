@@ -11,10 +11,14 @@
  */
 
 /** Toggleable stats per template — the keys a card's eye-icons control. */
-export const TOGGLEABLE_STATS: Record<"run" | "lift" | "hybrid", readonly string[]> = {
+export const TOGGLEABLE_STATS: Record<
+  "run" | "lift" | "hybrid" | "nutrition",
+  readonly string[]
+> = {
   run: ["distance", "duration", "pace", "splits", "elevation"],
   lift: ["volume", "exercises", "duration", "prs"],
   hybrid: ["liftVolume", "runDistance", "totalTime"],
+  nutrition: ["calories", "macros"],
 };
 
 /** Is a stat currently shown? (hidden-set membership is the inverse.) */

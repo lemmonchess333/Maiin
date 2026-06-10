@@ -6,13 +6,19 @@ import {
   Wheat,
   Settings as SettingsIcon,
   ChevronRight,
+  Share2,
 } from "lucide-react";
 import { Avocado } from "@/components/icons/Avocado";
 import { THEME } from "@/lib/theme";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
-import { didJustCompleteAll, todayIsoDate } from "@/lib/foodCelebration";
+import {
+  allMacrosHit,
+  didJustCompleteAll,
+  todayIsoDate,
+} from "@/lib/foodCelebration";
+import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
@@ -88,6 +94,20 @@ export default function FoodHeroCard({
 
   // Celebration state — driven by a log that completes all three macros today
   const [celebrating, setCelebrating] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  // S2 item 3: the share affordance appears ONLY on a goal-hit day (all
+  // macros met) and only for today — a single, low-key entry point, not a
+  // campaign. allMacrosHit is the steady predicate (consumed ≥ target),
+  // so the entry persists for the day rather than flashing during the
+  // brief celebration animation window.
+  const goalHit =
+    isToday &&
+    allMacrosHit(dailyTotals, {
+      protein: dailyTargets.protein,
+      carbs: dailyTargets.carbs,
+      fat: dailyTargets.fat,
+    });
   const [showCelebrationCaption, setShowCelebrationCaption] = useState(false);
 
   // Previous macro totals for transition detection
@@ -276,14 +296,29 @@ export default function FoodHeroCard({
               ) : null}
             </AnimatePresence>
           </div>
-          <Link
-            to="/settings"
-            aria-label="Adjust nutrition targets"
-            onClick={() => haptic("light")}
-            className="shrink-0 -mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
-          >
-            <SettingsIcon className="size-4" aria-hidden="true" />
-          </Link>
+          <div className="shrink-0 flex items-center">
+            {goalHit && (
+              <button
+                type="button"
+                aria-label="Share your day"
+                onClick={() => {
+                  haptic("light");
+                  setShareOpen(true);
+                }}
+                className="-mt-2 size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
+              >
+                <Share2 className="size-4" aria-hidden="true" />
+              </button>
+            )}
+            <Link
+              to="/settings"
+              aria-label="Adjust nutrition targets"
+              onClick={() => haptic("light")}
+              className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+            >
+              <SettingsIcon className="size-4" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
 
         {/* Calorie ring */}
@@ -401,6 +436,26 @@ export default function FoodHeroCard({
           tiles (audit: duplicate day-labels, the lower one orphaned). The
           rationale text + its all-users visibility + today-only gating are
           unchanged — only the render location moved. */}
+
+      {/* S2: goal-hit macro-day share card (nutrition template) */}
+      <ShareCardSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          template: "nutrition",
+          handle: profile?.displayName || "Athlete",
+          date: new Date().toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+          calories: dailyTotals.calories,
+          calorieTarget: dailyTargets.finalTarget,
+          protein: dailyTotals.protein,
+          carbs: dailyTotals.carbs,
+          fat: dailyTotals.fat,
+        }}
+      />
     </>
   );
 }

@@ -61,6 +61,12 @@ export interface ShareCardSheetData {
   exerciseCount?: number;
   prCount?: number;
   prExercise?: string;
+  // NUTRITION
+  calories?: number;
+  calorieTarget?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
 }
 
 const STAT_LABELS: StatLabels = {
@@ -75,6 +81,8 @@ const STAT_LABELS: StatLabels = {
   liftVolume: "Lift",
   runDistance: "Run",
   totalTime: "Time",
+  calories: "Calories",
+  macros: "Macros",
 };
 
 /** Stats with no data for this run/session aren't offered as toggles. */
@@ -167,6 +175,11 @@ export function ShareCardSheet({
     exerciseCount: data.exerciseCount,
     prCount: data.prCount,
     prExercise: data.prExercise,
+    calories: data.calories,
+    calorieTarget: data.calorieTarget,
+    protein: data.protein,
+    carbs: data.carbs,
+    fat: data.fat,
   };
 
   const toggleKeys = TOGGLEABLE_STATS[data.template].filter((k) =>
