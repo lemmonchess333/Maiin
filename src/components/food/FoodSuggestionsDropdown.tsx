@@ -1,8 +1,33 @@
-import type { Ref } from "react";
+import {
+  useRef,
+  type Ref,
+  type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { motion } from "framer-motion";
 import { Plus, Star } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
+import type { QuickAddItem } from "@/lib/quickAddOrder";
+
+/* Long-press gesture constants — moved verbatim from the retired
+   FoodQuickAddRow (wave2 D). Rationale unchanged: */
+/** Long-press fires after this many ms held without moving. iOS
+ *  text-selection callout starts ~500ms; we match so the gesture
+ *  feels native. */
+const LONG_PRESS_MS = 500;
+/** Touch drift (px) that cancels a pending long-press — fingers
+ *  rarely stay perfectly still. 10px is comfortably below the scroll
+ *  threshold and above accidental jitter. */
+const TOUCH_MOVE_CANCEL_PX = 10;
+/** Window after a long-press where the trailing `click` event from
+ *  finger-lift is swallowed. iOS Safari synthesises a click on
+ *  touchend even when the long-press fired its own action, which
+ *  without this guard would double-trigger (log meal AND open
+ *  remove sheet). */
+const GHOST_CLICK_SUPPRESS_MS = 400;
 
 /** Subset of FoodFavourite used by the typeahead pantry section.
  *  Only the fields the dropdown needs to display + hand back to the
@@ -37,9 +62,30 @@ export interface OFFResult {
   unitConfidence?: "high" | "low";
 }
 
+/** Empty-query mode payload (wave2 D). Non-null ONLY while the input is
+ *  focused and empty — the parent owns that decision. The dropdown then
+ *  renders the user's Quick Add items as instant-add rows (the replacement
+ *  for the retired FoodQuickAddRow chip strip). `asExamples` keeps the
+ *  cold-start distinction: when the items are only seeded defaults rather
+ *  than the user's own history, the section is framed as examples. */
+export interface QuickAddSection {
+  items: QuickAddItem[];
+  asExamples: boolean;
+  /** Lowercased food name of the meal currently being saved — when
+   *  non-null every row is dimmed + disabled to prevent concurrent saves
+   *  (same contract as the old chip strip). */
+  adding: string | null;
+  onAdd: (item: QuickAddItem) => void;
+  /** Long-press remove for favourite-backed rows — preserved from the
+   *  chip strip. Only rows with a `favouriteId` arm the gesture. */
+  onRemove?: (favouriteId: string, name: string) => void;
+}
+
 interface FoodSuggestionsDropdownProps {
   suggestions: FoodSuggestion[];
   offResults: OFFResult[];
+  /** Non-null = render the empty-query Quick Add section. */
+  quickAdd?: QuickAddSection | null;
   /** F2d PR 4: matches from the user's own pantry (favourites). Renders
    *  at the TOP of the dropdown above local DB + OFF — when the user
    *  types a food they've eaten before, the one-tap log lands first.
@@ -82,6 +128,7 @@ interface FoodSuggestionsDropdownProps {
 function FoodSuggestionsDropdown({
   suggestions,
   offResults,
+  quickAdd = null,
   pantryResults,
   offEmpty,
   offSearchQuery,
@@ -91,11 +138,137 @@ function FoodSuggestionsDropdown({
   onLogManually,
   ref,
 }: FoodSuggestionsDropdownProps) {
+  /* Long-press gesture state for the Quick Add rows — moved verbatim from
+     the retired FoodQuickAddRow. Refs (not state) so a long-press trigger
+     doesn't re-render the list and tear down the timers mid-press. One
+     finger at a time, so a single shared timer set is correct. */
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextClickRef = useRef<boolean>(false);
+  const ghostClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current !== null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const armGhostClickSuppress = () => {
+    suppressNextClickRef.current = true;
+    if (ghostClickTimerRef.current !== null) {
+      clearTimeout(ghostClickTimerRef.current);
+    }
+    ghostClickTimerRef.current = setTimeout(() => {
+      suppressNextClickRef.current = false;
+      ghostClickTimerRef.current = null;
+    }, GHOST_CLICK_SUPPRESS_MS);
+  };
+
+  const beginPress = (
+    e: ReactPointerEvent<HTMLButtonElement>,
+    item: QuickAddItem
+  ) => {
+    // Only arm the timer for rows that CAN be removed.
+    if (!item.favouriteId || !quickAdd?.onRemove) return;
+    pressStartRef.current = { x: e.clientX, y: e.clientY };
+    clearLongPressTimer();
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTimerRef.current = null;
+      armGhostClickSuppress();
+      haptic("medium");
+      quickAdd.onRemove!(item.favouriteId!, item.name);
+    }, LONG_PRESS_MS);
+  };
+
+  const movePress = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const start = pressStartRef.current;
+    if (!start || longPressTimerRef.current === null) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (dx * dx + dy * dy > TOUCH_MOVE_CANCEL_PX * TOUCH_MOVE_CANCEL_PX) {
+      clearLongPressTimer();
+    }
+  };
+
+  const endPress = () => {
+    clearLongPressTimer();
+    pressStartRef.current = null;
+  };
+
+  const handleQuickAddClick = (item: QuickAddItem) => {
+    // Ghost-click suppression — see GHOST_CLICK_SUPPRESS_MS.
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+    haptic();
+    quickAdd?.onAdd(item);
+  };
+
   return (
     <div
       ref={ref}
       className="absolute z-20 left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden max-h-80 overflow-y-auto"
     >
+      {quickAdd && quickAdd.items.length > 0 && (
+        <div>
+          {/* Empty-focus Quick Add section (wave2 D) — the user's instant
+              repeat-log items, shown while the input is focused + empty.
+              Tap = instant log (same semantics as the old chip strip:
+              haptic, instant save via the parent's handler, no portion
+              drawer). Long-press on a favourite-backed row = remove.
+              Cold-start accounts whose items are only seeded defaults get
+              the same rows framed as EXAMPLES, not as their own history. */}
+          <div className="px-4 pt-2 pb-1 flex items-center gap-1.5">
+            {!quickAdd.asExamples && (
+              <Star aria-hidden="true" className="size-3 text-amber-500" />
+            )}
+            <span className="text-caption uppercase tracking-wide text-muted-foreground font-medium">
+              {quickAdd.asExamples ? "Examples" : "Quick Add"}
+            </span>
+          </div>
+          {quickAdd.items.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              onMouseDown={(e) => e.preventDefault()}
+              onPointerDown={(e) => beginPress(e, item)}
+              onPointerMove={movePress}
+              onPointerUp={endPress}
+              onPointerCancel={endPress}
+              onPointerLeave={endPress}
+              onContextMenu={(e: ReactMouseEvent<HTMLButtonElement>) => {
+                // Desktop right-click + iOS long-press both fire
+                // contextmenu; suppressing it lets our pointer-based
+                // long-press own the gesture without the browser also
+                // opening its native menu.
+                if (item.favouriteId) e.preventDefault();
+              }}
+              onClick={() => handleQuickAddClick(item)}
+              disabled={quickAdd.adding !== null}
+              style={{
+                // iOS text-selection callout suppression — a held row
+                // would otherwise pop Copy / Look Up over our remove flow.
+                WebkitTouchCallout: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+              }}
+              className={cn(
+                "w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
+                quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
+              )}
+            >
+              <span className="text-sm font-medium text-foreground truncate min-w-0">
+                {item.name}
+              </span>
+              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                {item.cal} kcal
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
       {pantryResults.length > 0 && (
         <div>
           {/* Section header — only renders when there are matches.
