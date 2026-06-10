@@ -22,7 +22,7 @@ If you only remember ten things:
    is a regression, not an improvement.
 2. **Purple = lifting/brand. Coral = running.** This sport-coding is everywhere
    (dots, labels, icons, CTAs). Never cross the wires.
-3. **All numbers are JetBrains Mono + `tabular-nums`.** Calories, weight, reps,
+3. **All numbers are Archivo (the numeral font) + `tabular-nums`.** Calories, weight, reps,
    pace, volume — every numeric display. Use the `.stat-number` class or
    `font-mono tabular-nums`.
 4. **All other text is Plus Jakarta Sans.** Two fonts total. No third font, ever
@@ -409,7 +409,7 @@ no new colours, no gradient, no emoji.
 - [ ] No new colours / gradients / decorative elements introduced.
 - [ ] No hardcoded hex — everything via tokens (`bg-*`) or `THEME.*`.
 - [ ] Sport-coding correct (purple = lift, coral = run) and semantic colours intact.
-- [ ] Numbers use JetBrains Mono + `tabular-nums`; text uses Plus Jakarta Sans.
+- [ ] Numbers use Archivo (the numeral font, via `font-mono`) + `tabular-nums`; text uses Plus Jakarta Sans.
 - [ ] Font weights follow the 600/700/800 tier rules (no 700+800 mixing).
 - [ ] Used primitives (`Button`/`IconButton`/`Banner`/`BottomSheet`/`.ds-card`)
       instead of hand-rolled markup.
