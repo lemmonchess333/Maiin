@@ -1,9 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { captureError, getRecentErrors, clearErrors } from '../errorReporting';
+import {
+  captureError,
+  getRecentErrors,
+  clearErrors,
+  setErrorReportingUid,
+  __getPendingPreAuthCount,
+} from '../errorReporting';
 
 describe('errorReporting', () => {
   beforeEach(() => {
     clearErrors();
+    // Reset to the unauthenticated state + drop any pending pre-auth
+    // queue so each test starts clean.
+    setErrorReportingUid(null);
   });
 
   it('captures errors', () => {
@@ -42,5 +51,43 @@ describe('errorReporting', () => {
     captureError(new Error('test'));
     const errors = getRecentErrors();
     expect(Array.isArray(errors)).toBe(true);
+  });
+
+  it('stamps appVersion + a stable sessionId on every report', () => {
+    captureError(new Error('one'));
+    captureError(new Error('two'));
+    const errors = getRecentErrors();
+    expect(errors[0].appVersion).toBeTruthy();
+    expect(errors[0].sessionId).toBeTruthy();
+    // Same page-load → same session id across reports (so a cascade
+    // groups together in triage).
+    expect(errors[0].sessionId).toBe(errors[1].sessionId);
+  });
+
+  it('queues a pre-auth critical instead of dropping it', () => {
+    // No uid set (pre-auth). A "component" error is critical → would
+    // previously be dropped by persistToFirestore's null-uid guard.
+    captureError(new Error('boom'), 'component');
+    expect(__getPendingPreAuthCount()).toBe(1);
+  });
+
+  it('does NOT queue a non-critical pre-auth error', () => {
+    captureError(new Error('just a warning'), 'error');
+    expect(__getPendingPreAuthCount()).toBe(0);
+  });
+
+  it('flushes the pre-auth queue when a uid arrives', () => {
+    captureError(new Error('login blew up'), 'component');
+    expect(__getPendingPreAuthCount()).toBe(1);
+    // Sign-in resolves → flush (fire-and-forget persist; queue drains).
+    setErrorReportingUid('user-123');
+    expect(__getPendingPreAuthCount()).toBe(0);
+  });
+
+  it('drops the pre-auth queue on sign-out (no cross-account attribution)', () => {
+    captureError(new Error('pre-auth crash'), 'component');
+    expect(__getPendingPreAuthCount()).toBe(1);
+    setErrorReportingUid(null);
+    expect(__getPendingPreAuthCount()).toBe(0);
   });
 });
