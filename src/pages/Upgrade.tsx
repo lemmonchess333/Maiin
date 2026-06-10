@@ -374,7 +374,12 @@ export default function Upgrade() {
                 <p className="font-medium text-muted-foreground uppercase tracking-wider text-xs">
                   Free (forever)
                 </p>
-                <ul className="space-y-1.5 text-muted-foreground">
+                {/* Wave3 H — was text-muted-foreground, which fell below the
+                    AA contrast floor for 12px text on the dark card (REPORT
+                    10.3). Raised a step to text-foreground/80: clears AA in
+                    both themes while staying a touch softer than the Pro
+                    column's full text-foreground, so Pro keeps the emphasis. */}
+                <ul className="space-y-1.5 text-foreground/80">
                   <li>Weight tracking + trend chart</li>
                   <li>Manual meal logging</li>
                   <li>Full workout logging</li>

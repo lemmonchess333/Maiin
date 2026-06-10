@@ -112,3 +112,52 @@ describe("TodayEnergy — always-on Log affordance (#973)", function () {
     expect(hapticMock).toHaveBeenCalled();
   });
 });
+
+describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)", function () {
+  it("collapsed default shows the muted grams-remaining line, NOT the rings", function () {
+    renderAt({
+      calories: 1450,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      totalLifetimeMeals: 420,
+    });
+    // target − consumed, clamped: P 160-80=80, C 220-56=164, F 70-38=32
+    expect(screen.getByText("P 80g · C 164g · F 32g left")).toBeInTheDocument();
+    expect(screen.queryByTestId("macro-ring")).toBeNull();
+  });
+
+  it("expanding the card reveals the three macro rings", function () {
+    renderAt({
+      calories: 1450,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      totalLifetimeMeals: 420,
+    });
+    fireEvent.click(screen.getByText("Today's Energy"));
+    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
+    // summary line hides once expanded (rings carry the detail)
+    expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
+  });
+
+  it("grams-remaining never goes negative (clamped at 0)", function () {
+    renderAt({
+      calories: 3000,
+      protein: 200,
+      carbs: 300,
+      fat: 90,
+      totalLifetimeMeals: 420,
+    });
+    expect(screen.getByText("P 0g · C 0g · F 0g left")).toBeInTheDocument();
+  });
+
+  it("cold-start (no meals ever) shows neither the summary line nor the rings", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 0 });
+    expect(screen.queryByText(/left$/)).toBeNull();
+    expect(screen.queryByTestId("macro-ring")).toBeNull();
+    expect(
+      screen.getByText("Log a meal to see your daily energy")
+    ).toBeInTheDocument();
+  });
+});
