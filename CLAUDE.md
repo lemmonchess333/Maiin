@@ -628,6 +628,34 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 - [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
 
+### Partner-streak server persist (SOCIAL S3 Soc7, PR5a)
+
+Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
+
+- [ ] **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
+- [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
+- [ ] **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
+- [ ] **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
+- [ ] **Freeze ledger uses Monday weeks.** Over a gap that consumes a freeze, confirm `freezeWeek.<uid>` is the Monday-anchored week key (e.g. a Friday log stores that week's Monday), NOT a Sunday — proves the mirror's `weekKey` (not the Sunday `getWeekKey`) is the one that ran.
+
+### Global hybrid challenge + hybrid_score sync (SOCIAL S4 Soc8, PR2)
+
+Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definition), `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now sync `hybrid_score`). Deploys via `deploy-functions.yml`. The daily `rolloverChallenges` cron materialises the new challenge doc; the trigger sync feeds it.
+
+- [ ] **Deployed-source spot-check (do first).** In the Console (`…/onRunCreated/source`), confirm the bundle contains `"hybrid_score"` in a `syncChallengeProgress` call. Per the dedup gotcha — `.js` change, dedup shouldn't bite, but verify.
+- [ ] **Rollover materialises it.** After the next 00:05 UTC `rolloverChallenges`, confirm `challenges/global-monthly-<YYYY-MM-01>` exists with `metric: "hybrid_score"`, `participantCount: 0`.
+- [ ] **Hybrid accrues from BOTH disciplines.** Join the global challenge, log a run (≥threshold) and a workout with volume; confirm the participant `currentValue` increases by ≈`km×100` (run) + `kg×0.1` (workout). Two separate sessions → two increments (different `applied/<sourceId>` markers).
+- [ ] **Autumn Push revival (Sep–Nov only).** The seasonal `hybrid_score` challenge that previously never progressed should now accrue identically — spot-check during its window.
+
+### Solo-first Social feed (SOCIAL S4 Soc8, PR3)
+
+Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
+
+- [ ] **Light + dark capture of the solo state.** As a fresh user (0 follows, 0 crew), open Social → Feed. Confirm the curated stack renders top-to-bottom — PartnerStreak hero → June Hybrid Hero challenge card → Share-your-training → "Crews unlock…" hexagon row — with NO empty-feed copy or skeleton beneath it, in both themes.
+- [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
+- [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
+- [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
+
 ### App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.

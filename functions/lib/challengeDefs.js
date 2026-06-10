@@ -164,6 +164,25 @@ function buildCurrentChallenges(now = new Date()) {
       endDate: monthEnd,
     },
     {
+      // SOCIAL S4 (Soc8) — the featured "This month on Tropos" global
+      // challenge. A TRUE km+kg HYBRID: hybrid_score = km×100 + kg×0.1,
+      // summed server-side from onRunCreated (+km×100) and
+      // onWorkoutCreated (+kg×0.1). Solo-viable by design — you compete
+      // against the target number, not friends — so it anchors the
+      // solo-first Social tab. The solo layout selects it by the
+      // `global-monthly-` id prefix. (Same metric as the seasonal Autumn
+      // Push, which now also progresses thanks to the Soc8 trigger sync.)
+      id: `global-monthly-${ymd(monthStart)}`,
+      name: `${monthName} Hybrid Hero`,
+      description: "Km run + kg lifted, combined — show up however you train",
+      type: "monthly",
+      metric: "hybrid_score",
+      icon: "trophy",
+      tiers: { bronze: 3000, silver: 8000, gold: 15000 },
+      startDate: monthStart,
+      endDate: monthEnd,
+    },
+    {
       id: `seasonal-${ymd(seasonStart)}`,
       name: season.name,
       description: season.description,

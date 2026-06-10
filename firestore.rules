@@ -751,6 +751,49 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
+    // tracks a shared streak (days both logged a session). Only the two
+    // members may read or write their bond.
+    //
+    //   - READ: either member.
+    //   - CREATE: the creator must be one of exactly two DISTINCT members,
+    //     and the streak must start COLD (streak == 0) so no one can mint
+    //     a bond with a forged head-start. Neither member may be
+    //     mid-deletion (R1A: both endpoints must be writable).
+    //   - UPDATE: SERVER-ONLY (`if false`). Streak state is materialized by
+    //     the Cloud Function persist path (applyPartnerActivity on
+    //     onWorkoutCreated / onRunCreated, via the Admin SDK which bypasses
+    //     rules) — the engine runs server-side (Soc7). Pre-Soc7 this allowed
+    //     either member to write streak fields; once the engine moved
+    //     server-side that client path became BOTH unused AND a cheat vector
+    //     (a member could hand-edit their own shared streak). `if false`
+    //     removes it and the client/server double-writer race. The client
+    //     only ever creates + deletes a bond (lifecycle).
+    //   - DELETE: either member may dissolve the bond.
+    //
+    // R1A-Deletion: bonds the deleted user is a member of are tombstoned
+    // by the account-deletion executor (added to accountDeletionInventory).
+    // ========================================
+    match /partnerBonds/{bondId} {
+      function bondMember() {
+        return request.auth != null
+          && request.auth.uid in resource.data.members;
+      }
+      allow read: if bondMember();
+      allow create: if request.auth != null
+        && request.resource.data.members is list
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] != request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.streak == 0
+        && !isDeleting(request.resource.data.members[0])
+        && !isDeleting(request.resource.data.members[1]);
+      // Soc7: streak state is server-written (Admin SDK). No client update.
+      allow update: if false;
+      allow delete: if bondMember();
+    }
+
+    // ========================================
     // Social: Notifications — owner-only read; writes are server-only.
     //
     // 2026-05-26 audit PR 3 (finding #6) — pre-PR-3 the client wrote
