@@ -54,6 +54,9 @@ export interface SocialEventMetadata {
   format?: ShareCardFormat;
   background?: ShareCardBackground;
   outcome?: "shared" | "downloaded" | "cancelled" | "failed";
+  /** share_card_exported (S2): where the card went — a direct Instagram
+   *  Stories handoff, or the generic OS share sheet (incl. download). */
+  destination?: "instagram" | "sheet";
 }
 
 export function track(
