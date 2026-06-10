@@ -24,7 +24,7 @@ import {
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
-import { EmptyState } from "../components/EmptyState";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Skeleton } from "../components/LoadingSkeleton";
 import { THEME } from "../lib/theme";
 import { CREW_ICON_MAP } from "../lib/crewIcons";
@@ -262,9 +262,9 @@ export default function Crew() {
   if (!crewDoc) {
     return (
       <EmptyState
-        icon={<Users size={24} />}
-        title="Crew not found"
-        description="This crew doesn't exist or you don't have access to it. Try refreshing or contact whoever shared the link."
+        icon={Users}
+        headline="Crew not found"
+        sub="This crew doesn't exist or you don't have access to it. Try refreshing or contact whoever shared the link."
         action={{ label: "Go back", onClick: () => navigate(-1) }}
       />
     );

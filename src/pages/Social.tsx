@@ -56,7 +56,6 @@ import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
-import { EmptyState } from "../components/EmptyState";
 import { EmptyState as HexEmptyState } from "../components/ui/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -855,11 +854,11 @@ export default function Social() {
                    themselves (which is what the Following empty
                    state implicitly does via "find people"). No
                    action CTA per the lock. */
-                        <EmptyState
-                          icon={<Globe size={32} />}
-                          title="Tropos is quiet right now"
-                          description="Check back later"
-                          accentColor={THEME.brand}
+                        <HexEmptyState
+                          icon={Globe}
+                          headline="Tropos is quiet right now"
+                          sub="Check back later"
+                          accent={THEME.brand}
                         />
                       ) : (
                         /* Inline prompt — sits as a supporting element under
