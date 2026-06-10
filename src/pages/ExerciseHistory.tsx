@@ -1,13 +1,13 @@
 import { useMemo, useState, lazy, Suspense, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Trophy } from "lucide-react";
+import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { EmptyState as SharedEmptyState } from "@/components/ui/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { localDateString } from "@/lib/dateHelpers";
 
 const ExerciseProgressChart = lazy(
@@ -269,31 +269,18 @@ export default function ExerciseHistory() {
   }
 
   // Exercise name didn't match anything in the database (user renamed
-  // an exercise, or a typo in the URL). Still handle gracefully.
+  // an exercise, or a typo in the URL). Still handle gracefully — the
+  // shared hexagon EmptyState carries the single back affordance, so the
+  // separate top "Back" button is dropped here (it duplicated the action).
   if (!exercise && allSessions.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="space-y-4 pt-2"
-      >
-        <button
-          type="button"
-          onClick={goBack}
-          className="flex items-center gap-1 text-sm text-muted-foreground active:scale-95"
-        >
-          <ChevronLeft className="size-4" /> Back
-        </button>
-        <div className="p-6 rounded-2xl bg-card text-center space-y-2">
-          <p className="text-sm font-semibold text-foreground">
-            Exercise not found
-          </p>
-          <p className="text-xs text-muted-foreground">
-            &ldquo;{decodedName}&rdquo; isn&apos;t in your logs or the exercise
-            database.
-          </p>
-        </div>
-      </motion.div>
+      <EmptyState
+        icon={Search}
+        accent={THEME.lifting}
+        headline="Exercise not found"
+        sub={`"${decodedName}" isn't in your logs or the exercise database.`}
+        action={{ label: "Browse exercises", onClick: goBack }}
+      />
     );
   }
 
@@ -399,7 +386,13 @@ export default function ExerciseHistory() {
           </Suspense>
         </div>
       ) : hasNoSessions ? (
-        <EmptyState exerciseName={decodedName} />
+        <EmptyState
+          icon={Dumbbell}
+          accent={THEME.lifting}
+          headline="No sessions logged yet"
+          sub={`Log ${decodedName} on a workout to start tracking your progression here.`}
+          action={{ label: "Go to Train", href: "/program" }}
+        />
       ) : (
         <>
           {/* ── Rep-range PRs ───────────────────────────────────────── */}
@@ -578,22 +571,5 @@ export default function ExerciseHistory() {
         </>
       )}
     </motion.div>
-  );
-}
-
-function EmptyState({ exerciseName }: { exerciseName: string }) {
-  // Sprint 4: thin wrapper around the shared EmptyState primitive.
-  // The local component is kept so the calling site doesn't need
-  // to know about the exerciseName → description templating; the
-  // visual + a11y contract now comes from the shared primitive
-  // (one accent colour driven by THEME.lifting, action via Button).
-  return (
-    <SharedEmptyState
-      icon={Trophy}
-      headline="No sessions logged yet"
-      sub={`Log ${exerciseName} on a workout to start tracking your progression here.`}
-      action={{ label: "Go to Train", href: "/program" }}
-      accent={THEME.lifting}
-    />
   );
 }
