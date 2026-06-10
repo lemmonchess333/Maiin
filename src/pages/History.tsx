@@ -1,12 +1,4 @@
-import {
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  lazy,
-  Suspense,
-} from "react";
+import { useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
@@ -19,6 +11,7 @@ import { THEME } from "@/lib/theme";
 import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
@@ -123,55 +116,20 @@ function FilterPills({
   filter: FilterTab;
   setFilter: (f: FilterTab) => void;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrolled, setScrolled] = useState(false);
-
-  const handleScroll = useCallback(() => {
-    if (scrollRef.current) setScrolled(scrollRef.current.scrollLeft > 4);
-  }, []);
-
+  // Canonical iOS "track" SegmentedControl — the same control Social's
+  // tabs use. Replaced the bespoke scrolling brand-fill chip row (only
+  // ever three short tabs, so the scroll + edge-fades were dead weight)
+  // in the Social-uniformity pass.
   return (
-    <div className="relative">
-      {scrolled && (
-        <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-4 bg-gradient-to-r from-background to-transparent z-10" />
-      )}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-      >
-        {VALID_TABS.map((f) => {
-          const active = filter === f;
-          const tabColor = THEME.brand;
-          return (
-            <button
-              type="button"
-              key={f}
-              onClick={() => setFilter(f)}
-              className={[
-                "shrink-0 inline-flex items-center justify-center min-h-[44px] text-xs px-4 rounded-full font-medium transition-all",
-                active ? "text-white" : "bg-muted text-muted-foreground",
-              ].join(" ")}
-              style={
-                active
-                  ? {
-                      backgroundColor: tabColor,
-                      boxShadow: `0 2px 12px ${tabColor}59`,
-                    }
-                  : undefined
-              }
-            >
-              {f === "analytics"
-                ? "Analytics"
-                : f === "prs"
-                  ? "PRs"
-                  : f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          );
-        })}
-      </div>
-      <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-background to-transparent z-10" />
-    </div>
+    <SegmentedControl
+      ariaLabel="History view"
+      value={filter}
+      onChange={setFilter}
+      options={VALID_TABS.map((f) => ({
+        value: f,
+        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+      }))}
+    />
   );
 }
 

@@ -1,30 +1,30 @@
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+
 interface TimeRangePillsProps {
   options?: string[];
   selected: string;
   onChange: (value: string) => void;
 }
 
+/**
+ * Analytics time-range selector. Thin wrapper over the canonical
+ * SegmentedControl so the range row shares the one iOS "track" look +
+ * radiogroup a11y with every other switcher in the app. Was a
+ * hand-rolled track that already matched the look but had no roving
+ * tabindex / arrow-key nav; the Social-uniformity pass folded it onto
+ * the primitive. Keeps the original string-array API its call-sites use.
+ */
 export default function TimeRangePills({
   options = ["1W", "1M", "3M", "6M", "1Y"],
   selected,
   onChange,
 }: TimeRangePillsProps) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-muted">
-      {options.map((opt) => (
-        <button
-          type="button"
-          key={opt}
-          onClick={() => onChange(opt)}
-          className={`flex-1 min-h-[44px] py-2.5 rounded-lg text-xs font-medium transition-all ${
-            selected === opt
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      ariaLabel="Time range"
+      value={selected}
+      onChange={onChange}
+      options={options.map((opt) => ({ value: opt, label: opt }))}
+    />
   );
 }
