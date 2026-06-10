@@ -30,8 +30,9 @@
  *                   protein"). Ordinary Food actions (Add, Save, Log) stay
  *                   on `primary` — orange is a domain/data identity, not a
  *                   per-screen button colour, so do NOT recolour every Food
- *                   button. (The Scan CTA is its own special coral case in
- *                   ScanMealButton.tsx, NOT this variant.)
+ *                   button. (The scan affordance is its own special coral
+ *                   case — the camera icon in FoodComposerCard.tsx, NOT
+ *                   this variant.)
  *   - nutrition-tinted  orange-tinted nutrition surface — the nutrition
  *                   analogue of `sport-tinted`. Soft orange pill for
  *                   secondary/low-emphasis nutrition actions. Text uses the

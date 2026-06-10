@@ -45,11 +45,12 @@ import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
-import FoodQuickAddRow from "@/components/food/FoodQuickAddRow";
-import Coachmark from "@/components/ui/Coachmark";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
-import type { PantrySuggestion } from "@/components/food/FoodSuggestionsDropdown";
+import type {
+  PantrySuggestion,
+  QuickAddSection,
+} from "@/components/food/FoodSuggestionsDropdown";
 import {
   MEAL_ORDER,
   MEAL_LABELS,
@@ -198,12 +199,10 @@ export default function Food() {
     favourites,
     removeFavourite,
     restoreFavourite,
-    graduationToken,
   } = useFoodFavourites();
   const { isPro } = useSubscription();
   const { analyzeFoodText } = useFoodAnalysis();
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const quickAddScrollRef = useRef<HTMLDivElement>(null);
   /* Optimistic-hide set for long-press → remove. Chips with an id
      in here are filtered from the rendered row immediately so the
      user sees their action take effect before the deleteDoc round-
@@ -1330,45 +1329,7 @@ export default function Food() {
     });
   }, [favourites.length, meals, quickMeals.length]);
 
-  /* Reset Quick Add scroll position whenever the rendered chips
-     change. Without this, the carousel keeps its previous scrollLeft
-     across re-renders — so when the frequency-ranked ordering
-     reshuffles after a new log, the user can land on a half-scrolled
-     state where the leftmost visible chip is mid-clipped (e.g.
-     "rink · 160 kcal" instead of the start of "Energy Drink").
-     auto behaviour (no animation) — the layout shouldn't appear to
-     "scroll back" on update; it should just be at the start. */
-  useEffect(() => {
-    quickAddScrollRef.current?.scrollTo({ left: 0, behavior: "auto" });
-  }, [quickMeals]);
-
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
-
-  /* Coachmark gating. Default false so we don't flash on every
-     Food page mount — the user must actually graduate a favourite
-     for the explainer to surface. Once the underlying useCoachMarks
-     localStorage flag is set (by Coachmark's dismiss path), this
-     state still flips but the primitive will no-op. */
-  const [coachmarkActive, setCoachmarkActive] = useState(false);
-  useEffect(() => {
-    if (graduationToken === 0) return;
-    // Skip if the user already dismissed the coachmark in a prior
-    // session — useCoachMarks would otherwise immediately resolve
-    // to "not showing" and flicker the wrapper for a frame.
-    try {
-      if (
-        window.localStorage.getItem(
-          "tropos-coach-marks-dismissed:quickAdd-firstGraduation-v1"
-        )
-      ) {
-        return;
-      }
-    } catch {
-      // localStorage unavailable (private mode) — let the coachmark
-      // run; it'll just re-show on every graduation in that session.
-    }
-    setCoachmarkActive(true);
-  }, [graduationToken]);
 
   const handleRemoveFavourite = async (favouriteId: string, name: string) => {
     /* Capture the doc BEFORE the optimistic hide so undo can
@@ -1533,6 +1494,25 @@ export default function Food() {
     setQuickAdding(null);
   };
 
+  /* wave2 D: empty-focus Quick Add payload. Non-null only while the
+     input is FOCUSED and EMPTY — the dropdown then renders the same
+     `quickMeals` the retired chip strip consumed, as instant-add rows
+     (tap routes through the unchanged handleQuickMealAdd, long-press
+     remove through the unchanged handleRemoveFavourite). Cold-start
+     accounts whose items are only seeded defaults (no favourites, no
+     recent real history) get the section framed as examples — the
+     same distinction the old above/below-composer placement encoded. */
+  const quickAddSection: QuickAddSection | null =
+    inputFocused && !nlInput.trim() && quickMeals.length > 0
+      ? {
+          items: quickMeals,
+          asExamples: !hasStrongQuickAddSuggestions,
+          adding: quickAdding,
+          onAdd: handleQuickMealAdd,
+          onRemove: handleRemoveFavourite,
+        }
+      : null;
+
   /* Food6 F1: pull-to-refresh on the Food page via the shared
      usePullToRefresh hook (same gesture as Social + History).
      useMeals is onSnapshot-driven so the page is already auto-
@@ -1552,37 +1532,6 @@ export default function Food() {
       minDisplayMs: 600,
       excludeSelector: "[data-food-row]",
     });
-
-  const renderQuickAddRow = (className = "mt-3.5") => (
-    <motion.div variants={itemVariant} className={className}>
-      {coachmarkActive ? (
-        <Coachmark
-          storageKey="quickAdd-firstGraduation-v1"
-          content="Tap a chip to log instantly. Long-press to remove."
-          placement="top"
-          onDismiss={() => setCoachmarkActive(false)}
-        >
-          <div>
-            <FoodQuickAddRow
-              ref={quickAddScrollRef}
-              meals={quickMeals}
-              adding={quickAdding}
-              onAdd={handleQuickMealAdd}
-              onRemoveFavourite={handleRemoveFavourite}
-            />
-          </div>
-        </Coachmark>
-      ) : (
-        <FoodQuickAddRow
-          ref={quickAddScrollRef}
-          meals={quickMeals}
-          adding={quickAdding}
-          onAdd={handleQuickMealAdd}
-          onRemoveFavourite={handleRemoveFavourite}
-        />
-      )}
-    </motion.div>
-  );
 
   // Cold-start guard: until the day's meals resolve, render a structural
   // skeleton instead of the zeroed hero + four empty meal sections, which
@@ -1682,18 +1631,12 @@ export default function Food() {
         dailyTargets={dailyTargets}
       />
 
-      {/* Quick Add moves above the full composer only when it is backed
-          by personal evidence (favourites or recent history), not just
-          seeded defaults. That makes the repeat-log path the first
-          action for returning users while cold-start users still see
-          the explanatory composer before generic chips. */}
-      {hasStrongQuickAddSuggestions && renderQuickAddRow("mt-1")}
-
-      {/* Composer: NL textarea + Add to pills + Scan CTA + manual
-          log fallback. Extracted to components/food/FoodComposerCard.
-          The dropdown surfacing under the input is owned by the
-          composer; its ref + outside-click dismissal still resolve
-          here via the forwarded `suggestionsRef`. */}
+      {/* Composer: the ONE food entry surface (wave2 D) — NL textarea
+          with the scan icon, Add-to pills, and the dropdown. Quick Add
+          lives INSIDE the dropdown's empty-focus state now (the old
+          standing chip strip at two page positions is gone); the same
+          items render as instant-add rows when the input is focused
+          and empty, framed as examples for cold-start accounts. */}
       <motion.div variants={itemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}
@@ -1712,10 +1655,11 @@ export default function Food() {
           targetMeal={targetMeal}
           setTargetMeal={setTargetMeal}
           onTargetMeal={handleTargetMeal}
-          showSuggestions={showSuggestions}
+          showSuggestions={showSuggestions || quickAddSection !== null}
           suggestions={suggestions}
           offResults={offResults}
           pantryResults={pantrySuggestions}
+          quickAdd={quickAddSection}
           offEmpty={offEmpty}
           offSearchQuery={offSearchQuery}
           onSelectSuggestion={handleSuggestionSelect}
@@ -1775,11 +1719,6 @@ export default function Food() {
           />
         </Suspense>
       )}
-
-      {/* Cold-start fallback: when Quick Add only contains seeded examples,
-          keep it below the composer so it reads as help rather than an
-          unsupported recommendation. */}
-      {!hasStrongQuickAddSuggestions && renderQuickAddRow()}
 
       {/* Meal sections — Food6d locks per-slot independent empty
           states: all four slots always render so mixed states
