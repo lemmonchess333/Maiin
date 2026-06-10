@@ -13,8 +13,7 @@ import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
-import { generateAndShare } from "../lib/shareCardGenerator";
-import ShareCard from "../components/social/ShareCard";
+import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { Spinner } from "../components/ui/Spinner";
 
 const ACTIVITY_LABELS: Record<string, string> = {
@@ -61,8 +60,7 @@ export default function RunDetail() {
   const { user, profile } = useAuth();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [run, setRun] = useState<Record<string, any> | null>(null);
-  const [sharing, setSharing] = useState(false);
-  const shareRef = useRef<HTMLDivElement>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [replaying, setReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -149,14 +147,8 @@ export default function RunDetail() {
       year: "numeric",
     }) ?? "";
 
-  const handleShare = async () => {
-    if (!shareRef.current) return;
-    setSharing(true);
-    try {
-      await generateAndShare(shareRef.current, "run");
-    } finally {
-      setSharing(false);
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   return (
@@ -322,10 +314,9 @@ export default function RunDetail() {
             <button
               type="button"
               onClick={handleShare}
-              disabled={sharing}
               className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-running/8 text-running"
             >
-              {sharing ? "Generating…" : "↗ Share"}
+              ↗ Share
             </button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">{dateStr}</p>
@@ -385,22 +376,27 @@ export default function RunDetail() {
         )}
       </div>
 
-      {/* Hidden share card */}
-      <ShareCard
-        ref={shareRef}
+      {/* S1 share-card system — customization sheet + new renderer */}
+      <ShareCardSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
         data={{
-          type: "run",
-          userName: profile?.displayName ?? "Athlete",
+          template: "run",
+          handle: profile?.displayName ?? "Athlete",
           date:
             date?.toLocaleDateString("en-GB", {
               day: "numeric",
               month: "short",
               year: "numeric",
             }) ?? "",
-          distance: run.distance,
-          duration: run.duration,
+          points: run.points,
+          distanceKm: run.distance / 1000,
+          durationSec: run.duration,
           pace: avgPaceStr,
-          elevationGain: run.elevationGain,
+          elevationM: run.elevationGain ?? undefined,
+          splits: (run.splits ?? []).map(
+            (s: { km: number; pace: string }) => ({ km: s.km, pace: s.pace })
+          ),
         }}
       />
     </div>
