@@ -479,8 +479,8 @@ paint Food buttons orange.** Orange is a domain/data identity (section labels,
 macro rings, calorie data), not a per-screen button colour: reserve the filled
 `nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
 orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
-The Scan CTA stays its own special coral case (`ScanMealButton.tsx`), not this
-variant.
+The scan affordance stays its own special coral case (the camera icon in
+`FoodComposerCard.tsx`), not this variant.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,
