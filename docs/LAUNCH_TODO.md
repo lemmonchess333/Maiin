@@ -58,6 +58,12 @@ different fix (likely Storage rules, not CORS).
 > each function with `runWith({ secrets: [...] })` and read as
 > `process.env.<NAME>`. Provision each one ONCE (interactive prompt for
 > the value):
+>
+> **Get the authoritative list from source** (so a new bound secret can't
+> be missed) — `npm run secrets:check` statically enumerates every
+> `defineSecret(...)` the functions bind and prints the exact
+> `firebase functions:secrets:set` / `:access` commands. Run it before
+> every functions deploy.
 
 ```bash
 # Apple Server API (functions/appleIAP.js → restoreApplePurchases)
