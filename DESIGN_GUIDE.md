@@ -275,9 +275,10 @@ behaviour.
     streak badges ONLY** — never as decoration on a populated surface, never
     as a loading placeholder, never inline in content. It is the brand
     signature; keep it scarce.
-  - _(Legacy: `src/components/EmptyState.tsx` is an older square-icon variant
-    still used by Crew / ExerciseHistory; migrate those to the hexagon
-    primitive post-launch.)_
+  - This is the **only** empty-state component — every empty/no-data branch
+    routes through it (the older square-icon `components/EmptyState.tsx` was
+    retired once all surfaces migrated). Don't reintroduce a bespoke
+    empty-state; extend this primitive.
 - **Toasts:** `sonner` — `toast.success()` / `toast.error()`. This is the
   channel for transient feedback.
 - **Icons:** `lucide-react`, imported individually. No other icon set.

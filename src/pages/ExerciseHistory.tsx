@@ -7,7 +7,7 @@ import { EXERCISES } from "@/lib/exercises";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
+import { EmptyState as SharedEmptyState } from "@/components/ui/EmptyState";
 import { localDateString } from "@/lib/dateHelpers";
 
 const ExerciseProgressChart = lazy(
@@ -589,11 +589,11 @@ function EmptyState({ exerciseName }: { exerciseName: string }) {
   // (one accent colour driven by THEME.lifting, action via Button).
   return (
     <SharedEmptyState
-      icon={<Trophy className="size-5" />}
-      title="No sessions logged yet"
-      description={`Log ${exerciseName} on a workout to start tracking your progression here.`}
+      icon={Trophy}
+      headline="No sessions logged yet"
+      sub={`Log ${exerciseName} on a workout to start tracking your progression here.`}
       action={{ label: "Go to Train", href: "/program" }}
-      accentColor={THEME.lifting}
+      accent={THEME.lifting}
     />
   );
 }
