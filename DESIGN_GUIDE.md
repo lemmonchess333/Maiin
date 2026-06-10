@@ -182,8 +182,15 @@ Never repurpose one of these for an unrelated feature.
 
 ## 4. Typography
 
-- **Display font:** Plus Jakarta Sans (everything that isn't a number).
-- **Mono font:** JetBrains Mono (every number — with `tabular-nums`).
+- **Display / text font:** Plus Jakarta Sans (everything that isn't a number).
+- **Numeral font:** **Archivo** (every number) — chosen in the brand bake-off
+  to replace JetBrains Mono (see `docs/visual-audit/bakeoff/DECISION.md`). It is
+  proportional, not monospace, so digit alignment comes from tabular figures:
+  the `.font-mono` rule in `index.css` forces `tnum` on every numeral element,
+  and you should still add `tabular-nums` on numbers in columns. **The
+  `font-mono` Tailwind utility / `--font-mono` token still carries numbers —
+  the `mono` name is historical; it now resolves to Archivo.** Keep using
+  `font-mono` for numbers; don't reintroduce a monospace face.
 - **Scale** (1.25 modular; available as `text-display`, `text-h1`, … Tailwind classes):
 
 | Token          | Size  | Use                                                              |

@@ -4,7 +4,7 @@ import { formatScore, formatTotalForMetric } from "../crewLeaderboardFormat";
 /* These two helpers drive the per-row leaderboard string and the
  * "This week" stat band on the Crew page. The band was added in PR E
  * and is the first surface where the metric total is rendered in
- * value/unit pairs (numbers in JetBrains Mono, units in sans), so the
+ * value/unit pairs (numbers in Archivo, units in sans), so the
  * shape contract — `{label, value, unit}` — needs to stay stable. */
 
 const make = (uid: string, score: number) => ({
@@ -38,7 +38,7 @@ describe("formatScore", () => {
 
 describe("formatTotalForMetric", () => {
   /* The shape is consumed by the stat band, which renders numbers in
-     JetBrains Mono and the unit in Plus Jakarta. Tests pin the value
+     Archivo and the unit in Plus Jakarta. Tests pin the value
      vs unit split per metric so a future refactor can't accidentally
      fold the unit back into the value string. */
 
