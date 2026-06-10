@@ -25,6 +25,10 @@ interface ScanOverrides {
 interface ScanUsageSnapshot {
   loading: boolean;
   remaining: number;
+  /** Per-tier cap for the action. 0 = the action is Pro-only for this
+   *  tier (not a consumed quota) — the locked scan icon carries that
+   *  gate, so the quota caption must NOT render for it. */
+  limit: number;
   isUnlimited: boolean;
   resetDate: Date;
 }
@@ -261,6 +265,24 @@ function FoodComposerCard({
           />
         )}
       </div>
+      {/* Quota caption (wave2 B) — a single 11px muted line directly under
+          the input row, ONLY when a real quota is scarce: a consumable
+          limit exists (limit > 0) and remaining <= 1. No standing quota
+          furniture when the user has headroom; limit === 0 (Pro-only
+          tier) renders nothing because the locked scan icon already
+          carries that gate. */}
+      {!scanUsage.isUnlimited &&
+        !scanUsage.loading &&
+        scanUsage.limit > 0 &&
+        scanUsage.remaining <= 1 && (
+          <div className="mt-1.5">
+            <ScanQuotaIndicator
+              remaining={scanUsage.remaining}
+              resetDate={scanUsage.resetDate}
+              onUpgrade={onUpgrade}
+            />
+          </div>
+        )}
       <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
         <span className="text-caption uppercase tracking-wide text-muted-foreground shrink-0">
           Add to
@@ -301,15 +323,6 @@ function FoodComposerCard({
         })}
       </div>
       <div className="mt-3">
-        {!scanUsage.isUnlimited && !scanUsage.loading && (
-          <div className="mt-2">
-            <ScanQuotaIndicator
-              remaining={scanUsage.remaining}
-              resetDate={scanUsage.resetDate}
-              onUpgrade={onUpgrade}
-            />
-          </div>
-        )}
         {/* Manual logging fallback. Centered text-only so it
               doesn't compete with Scan or the NL composer. The
               drawer is the only escape hatch when AI / barcode /

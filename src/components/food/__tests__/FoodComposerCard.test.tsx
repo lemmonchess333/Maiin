@@ -53,6 +53,7 @@ function renderComposer(over: Record<string, any> = {}) {
     scanUsage: {
       loading: false,
       remaining: 0,
+      limit: 0,
       isUnlimited: true,
       resetDate: new Date("2026-06-10T00:00:00"),
     },
@@ -108,5 +109,56 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
       screen.getByRole("button", { name: /cancel adding to dinner/i })
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Scan your meal" })).toBeTruthy();
+  });
+});
+
+describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
+  const quota = (over: Record<string, unknown> = {}) => ({
+    loading: false,
+    remaining: 5,
+    limit: 10,
+    isUnlimited: false,
+    resetDate: new Date("2026-06-10T00:00:00"),
+    ...over,
+  });
+
+  it("renders NO quota caption when the user has headroom (remaining > 1)", () => {
+    renderComposer({ scanUsage: quota({ remaining: 5 }) });
+    expect(screen.queryByText(/scan.* left/i)).toBeNull();
+    expect(screen.queryByText(/out of scans/i)).toBeNull();
+  });
+
+  it("renders NO quota caption for unlimited (Pro/trial) users", () => {
+    renderComposer({
+      scanUsage: quota({ remaining: 0, isUnlimited: true }),
+    });
+    expect(screen.queryByText(/out of scans/i)).toBeNull();
+  });
+
+  it("renders NO quota caption when limit === 0 (Pro-only tier — the locked icon carries the gate)", () => {
+    renderComposer({
+      scanUsage: quota({ remaining: 0, limit: 0 }),
+      scanOverrides: { onClick: vi.fn(), locked: true },
+    });
+    expect(screen.queryByText(/out of scans/i)).toBeNull();
+    // The gate is still present — as the locked icon.
+    expect(
+      screen.getByRole("button", { name: "Unlock unlimited scans" })
+    ).toBeTruthy();
+  });
+
+  it("renders the last-scan caption at remaining === 1", () => {
+    renderComposer({ scanUsage: quota({ remaining: 1 }) });
+    expect(screen.getByText(/1 free scan left · resets Jun 10/i)).toBeTruthy();
+  });
+
+  it("renders the exhausted caption with a working upgrade action at remaining === 0 (real quota)", () => {
+    const onUpgrade = vi.fn();
+    renderComposer({ scanUsage: quota({ remaining: 0 }), onUpgrade });
+    const cta = screen.getByRole("button", {
+      name: /out of scans — upgrade for unlimited/i,
+    });
+    fireEvent.click(cta);
+    expect(onUpgrade).toHaveBeenCalledTimes(1);
   });
 });
