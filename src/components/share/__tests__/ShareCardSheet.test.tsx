@@ -83,6 +83,18 @@ describe("ShareCardSheet — export funnel", () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 
+  it("picking a photo switches to photo background and overlays the image", async () => {
+    render(<ShareCardSheet open onOpenChange={() => {}} data={runData} />);
+    const input = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    expect(input).toBeTruthy();
+    const file = new File(["x"], "pic.png", { type: "image/png" });
+    fireEvent.change(input, { target: { files: [file] } });
+    // FileReader → data URL → photo background → renderer paints an <img>.
+    await waitFor(() => expect(document.querySelector("img")).toBeTruthy());
+  });
+
   it("a failed generation reports failed and does NOT close the sheet", async () => {
     generateShareImage.mockResolvedValue(null);
     const onOpenChange = vi.fn();
