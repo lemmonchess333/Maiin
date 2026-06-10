@@ -751,6 +751,46 @@ service cloud.firestore {
     }
 
     // ========================================
+    // Partner streaks (SOCIAL S3): a 1:1 bond between two users that
+    // tracks a shared streak (days both logged a session). Only the two
+    // members may read or write their bond.
+    //
+    //   - READ: either member.
+    //   - CREATE: the creator must be one of exactly two DISTINCT members,
+    //     and the streak must start COLD (streak == 0) so no one can mint
+    //     a bond with a forged head-start. Neither member may be
+    //     mid-deletion (R1A: both endpoints must be writable).
+    //   - UPDATE: either member writes streak state (the shared streak is
+    //     between two consenting partners — lower stakes than a world-
+    //     readable counter), BUT the `members` array is IMMUTABLE so a
+    //     third party can never be swapped in, and not while the writer is
+    //     deleting.
+    //   - DELETE: either member may dissolve the bond.
+    //
+    // R1A-Deletion: bonds the deleted user is a member of are tombstoned
+    // by the account-deletion executor (added to accountDeletionInventory).
+    // ========================================
+    match /partnerBonds/{bondId} {
+      function bondMember() {
+        return request.auth != null
+          && request.auth.uid in resource.data.members;
+      }
+      allow read: if bondMember();
+      allow create: if request.auth != null
+        && request.resource.data.members is list
+        && request.resource.data.members.size() == 2
+        && request.resource.data.members[0] != request.resource.data.members[1]
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.streak == 0
+        && !isDeleting(request.resource.data.members[0])
+        && !isDeleting(request.resource.data.members[1]);
+      allow update: if bondMember()
+        && request.resource.data.members == resource.data.members
+        && !isDeleting(request.auth.uid);
+      allow delete: if bondMember();
+    }
+
+    // ========================================
     // Social: Notifications — owner-only read; writes are server-only.
     //
     // 2026-05-26 audit PR 3 (finding #6) — pre-PR-3 the client wrote

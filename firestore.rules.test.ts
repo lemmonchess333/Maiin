@@ -1988,3 +1988,147 @@ suite("firestore.rules — users/{uid} create self-grant guard", () => {
     await assertSucceeds(batch.commit());
   });
 });
+
+const A_UID = "partner-a";
+const B_UID = "partner-b";
+const C_UID = "partner-c";
+
+suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  const BOND = "bond-ab";
+  const coldBond = (members: string[]) => ({
+    members,
+    streak: 0,
+    lastSharedDay: null,
+    lastActive: {},
+    freezeWeek: {},
+    createdAt: serverTimestamp(),
+  });
+
+  async function seedBond(members: string[], extra: Record<string, unknown> = {}) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), {
+        ...coldBond(members),
+        ...extra,
+      });
+    });
+  }
+
+  it("a member reads the bond; a non-member cannot", async () => {
+    await seedBond([A_UID, B_UID]);
+    await assertSucceeds(
+      getDoc(doc(env.authenticatedContext(A_UID).firestore(), "partnerBonds", BOND))
+    );
+    await assertFails(
+      getDoc(doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND))
+    );
+  });
+
+  it("creates a cold bond when the creator is one of two distinct members", async () => {
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
+    );
+  });
+
+  it("rejects a create with a forged head-start (streak != 0)", async () => {
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertFails(
+      setDoc(doc(aDb, "partnerBonds", BOND), {
+        ...coldBond([A_UID, B_UID]),
+        streak: 99,
+      })
+    );
+  });
+
+  it("rejects a create where the creator isn't a member", async () => {
+    const cDb = env.authenticatedContext(C_UID).firestore();
+    await assertFails(
+      setDoc(doc(cDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
+    );
+  });
+
+  it("rejects a create with duplicate / non-2 members", async () => {
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertFails(
+      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, A_UID]))
+    );
+    await assertFails(
+      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID, C_UID]))
+    );
+  });
+
+  it("a member updates the streak; a non-member cannot", async () => {
+    await seedBond([A_UID, B_UID]);
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(aDb, "partnerBonds", BOND), {
+        ...coldBond([A_UID, B_UID]),
+        streak: 3,
+        lastSharedDay: "2026-06-12",
+      })
+    );
+    const cDb = env.authenticatedContext(C_UID).firestore();
+    await assertFails(
+      setDoc(doc(cDb, "partnerBonds", BOND), {
+        ...coldBond([A_UID, B_UID]),
+        streak: 3,
+      })
+    );
+  });
+
+  it("members are IMMUTABLE — can't swap in a third party", async () => {
+    await seedBond([A_UID, B_UID]);
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertFails(
+      setDoc(doc(aDb, "partnerBonds", BOND), {
+        ...coldBond([A_UID, C_UID]), // tried to replace B with C
+        streak: 1,
+      })
+    );
+  });
+
+  it("either member can delete the bond; a non-member cannot", async () => {
+    await seedBond([A_UID, B_UID]);
+    await assertFails(
+      deleteDoc(doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND))
+    );
+    await assertSucceeds(
+      deleteDoc(doc(env.authenticatedContext(B_UID).firestore(), "partnerBonds", BOND))
+    );
+  });
+
+  it("R1A: can't create a bond while a member is mid-deletion", async () => {
+    // Seed a running deletion request for B via admin bypass.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "accountDeletionRequests", B_UID), {
+        status: "running",
+      });
+    });
+    const aDb = env.authenticatedContext(A_UID).firestore();
+    await assertFails(
+      setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
+    );
+  });
+});
