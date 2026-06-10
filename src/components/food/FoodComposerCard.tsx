@@ -7,6 +7,7 @@ import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import FoodSuggestionsDropdown, {
   type OFFResult,
   type PantrySuggestion,
+  type QuickAddSection,
 } from "./FoodSuggestionsDropdown";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
@@ -60,6 +61,9 @@ interface FoodComposerCardProps {
    *  collection — typing 2+ chars is intent enough; no graduation
    *  filter here. Max 3 enforced upstream. */
   pantryResults: PantrySuggestion[];
+  /** Empty-focus Quick Add payload (wave2 D) — non-null only while the
+   *  input is focused + empty; forwarded straight to the dropdown. */
+  quickAdd?: QuickAddSection | null;
   offEmpty: boolean;
   offSearchQuery: string | null;
   onSelectSuggestion: (s: FoodSuggestion) => void;
@@ -110,6 +114,7 @@ function FoodComposerCard({
   suggestions,
   offResults,
   pantryResults,
+  quickAdd = null,
   offEmpty,
   offSearchQuery,
   onSelectSuggestion,
@@ -254,6 +259,7 @@ function FoodComposerCard({
             suggestions={suggestions}
             offResults={offResults}
             pantryResults={pantryResults}
+            quickAdd={quickAdd}
             offEmpty={offEmpty}
             offSearchQuery={offSearchQuery}
             onSelectSuggestion={onSelectSuggestion}
