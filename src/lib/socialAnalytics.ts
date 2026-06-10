@@ -24,10 +24,18 @@ export type SocialEvent =
    *  user gate visible (search input disabled + restriction banner
    *  shown). One event per Find-tab mount; tracks how often the
    *  gate actually surfaces in production. */
-  | "social_restricted_gate_shown";
+  | "social_restricted_gate_shown"
+  /** SOCIAL S1: share-card sheet opened (top of the share funnel). */
+  | "share_card_opened"
+  /** SOCIAL S1: a share card was exported (shared or downloaded) — the
+   *  funnel's conversion event for the >10% share-rate benchmark. */
+  | "share_card_exported";
 
 export type SocialTab = "feed" | "crews" | "find";
 export type SocialFeedSubTab = "following" | "explore";
+export type ShareCardTemplate = "run" | "lift" | "hybrid";
+export type ShareCardFormat = "story" | "square";
+export type ShareCardBackground = "brand" | "dark" | "transparent" | "photo";
 
 export interface SocialEventMetadata {
   /** social_tab_selected: which top-level tab. */
@@ -40,6 +48,12 @@ export interface SocialEventMetadata {
    *  non-loading render (target: <500ms p95 per Soc5 cross-cutting
    *  performance pin). */
   durationMs?: number;
+  /** share_card_*: which template / format / background. `exported`
+   *  also carries the dispatch outcome. */
+  template?: ShareCardTemplate;
+  format?: ShareCardFormat;
+  background?: ShareCardBackground;
+  outcome?: "shared" | "downloaded" | "cancelled" | "failed";
 }
 
 export function track(
