@@ -4,10 +4,12 @@ import { createRoot } from "react-dom/client";
 // subset fetched on demand via unicode-range. Bundled by Vite (hashed,
 // same-origin) so the service worker's stale-while-revalidate caches
 // them for offline, and no third-party request leaks the user's IP to
-// Google on every load. @font-face families: "Plus Jakarta Sans
-// Variable" / "JetBrains Mono Variable" (referenced in index.css).
+// Google on every load. @font-face families: "Plus Jakarta Sans Variable"
+// (text) / "Archivo Variable" (numbers — the brand-bake-off numeral face
+// that replaced JetBrains Mono; see docs/visual-audit/bakeoff/DECISION.md).
+// Both referenced via the --font-display / --font-mono tokens in index.css.
 import "@fontsource-variable/plus-jakarta-sans/index.css";
-import "@fontsource-variable/jetbrains-mono/index.css";
+import "@fontsource-variable/archivo/wght.css";
 import "./index.css";
 import App from "./App.tsx";
 import { registerServiceWorker } from "./lib/register-sw";
