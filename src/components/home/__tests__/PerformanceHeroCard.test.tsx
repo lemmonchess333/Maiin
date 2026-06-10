@@ -66,7 +66,7 @@ function renderCard(props: React.ComponentProps<typeof PerformanceHeroCard>) {
   return render(
     <MemoryRouter>
       <PerformanceHeroCard {...props} />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -79,18 +79,24 @@ describe("PerformanceHeroCard — empty state", () => {
       loading: false,
     });
     expect(
-      screen.getByText(/Your Performance will appear after your first logged session/i),
+      screen.getByText(
+        /Your Performance will appear after your first logged session/i
+      )
     ).toBeInTheDocument();
   });
 
-  it("renders the dash placeholder, not a numeric PI", () => {
+  it("renders the hexagon empty state (headline + action), not a numeric PI", () => {
+    // Wave3 F: the empty (non-loading) branch is now the hexagon EmptyState
+    // primitive — a directive headline + a real next step — instead of the
+    // muted ring + dash (which the LOADING branch still uses).
     renderCard({
       currentWeek: null,
       previousWeek: null,
       weeksAvailable: 0,
       loading: false,
     });
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("No sessions logged yet")).toBeInTheDocument();
+    expect(screen.queryByText("—")).toBeNull();
   });
 });
 
@@ -102,9 +108,7 @@ describe("PerformanceHeroCard — loading state", () => {
       weeksAvailable: 0,
       loading: true,
     });
-    expect(
-      screen.getByLabelText(/Performance — loading/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/Performance — loading/i)).toBeInTheDocument();
   });
 });
 
@@ -249,7 +253,10 @@ describe("PerformanceHeroCard — deep link (PI4)", () => {
     expect(link?.getAttribute("href")).toBe("/history#performance");
   });
 
-  it("empty-state card also links to /history#performance", () => {
+  it("empty-state card's action routes to the workout flow (Wave3 F)", () => {
+    // The empty card no longer wraps the whole surface in a link to
+    // /history#performance (an empty history would just be empty too). Its
+    // single action is the real unlock: start a workout.
     const { container } = renderCard({
       currentWeek: null,
       previousWeek: null,
@@ -257,7 +264,8 @@ describe("PerformanceHeroCard — deep link (PI4)", () => {
       loading: false,
     });
     const link = container.querySelector("a");
-    expect(link?.getAttribute("href")).toBe("/history#performance");
+    expect(link?.getAttribute("href")).toBe("/program");
+    expect(link?.textContent).toMatch(/start a workout/i);
   });
 });
 
@@ -270,7 +278,7 @@ describe("PerformanceHeroCard — accessibility (PI1 Q5)", () => {
       loading: false,
     });
     expect(
-      screen.getByLabelText(/Performance Index 60, Cruising/i),
+      screen.getByLabelText(/Performance Index 60, Cruising/i)
     ).toBeInTheDocument();
   });
 
