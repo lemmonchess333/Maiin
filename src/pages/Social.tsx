@@ -57,6 +57,7 @@ import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState } from "../components/EmptyState";
+import { EmptyState as HexEmptyState } from "../components/ui/EmptyState";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import Coachmark from "@/components/ui/Coachmark";
@@ -1590,40 +1591,46 @@ export default function Social() {
                  the two so the unavailable case gets honest copy +
                  a Retry affordance instead of nudging users toward
                  a Browse path that will fail again. */
-                    <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2">
-                      {crewsError === "unavailable" ? (
-                        <>
-                          <p className="text-sm text-muted-foreground">
-                            Crews are unavailable right now. Try again, or
-                            contact support if it keeps happening.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => refreshCrews()}
-                            className="text-sm font-medium text-primary hover:text-primary/80"
-                          >
-                            Try again
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm text-muted-foreground">
-                            {profile?.crewId && currentCrew
+                    crewsError === "unavailable" ? (
+                      <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          Crews are unavailable right now. Try again, or contact
+                          support if it keeps happening.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => refreshCrews()}
+                          className="text-sm font-medium text-primary hover:text-primary/80"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    ) : (
+                      /* Wave3 F — designed hexagon empty state, complementing
+                         (not replacing) the "Invite a training partner" card
+                         lower on this tab. Action routes into the follow flow
+                         (browse crews) for users not yet in a crew. */
+                      <div className="rounded-xl bg-card border border-border/50">
+                        <HexEmptyState
+                          icon={Users}
+                          accent={THEME.brand}
+                          headline="No suggestions yet"
+                          sub={
+                            profile?.crewId && currentCrew
                               ? "Suggestions show up as people in your crew get active."
-                              : "Join a crew or follow people to start seeing suggestions."}
-                          </p>
-                          {!profile?.crewId && (
-                            <button
-                              type="button"
-                              onClick={() => setTab("crews")}
-                              className="inline-flex items-center min-h-[44px] -my-2 text-sm font-medium text-primary hover:text-primary/80"
-                            >
-                              Browse crews
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
+                              : "Join a crew or follow people to start seeing suggestions."
+                          }
+                          action={
+                            !profile?.crewId
+                              ? {
+                                  label: "Browse crews",
+                                  onClick: () => setTab("crews"),
+                                }
+                              : undefined
+                          }
+                        />
+                      </div>
+                    )
                   ) : (
                     <div className="space-y-2">
                       {suggestedPeople.map((p) => (
