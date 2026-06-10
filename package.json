@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
+    "secrets:check": "node scripts/check-required-secrets.mjs",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
     "seed:rich": "tsx scripts/seed-rich-user.ts",
     "seed:default-crews": "tsx scripts/seed-default-crews.ts",
