@@ -102,8 +102,37 @@ export function ShareCardSheet({
   const [format, setFormat] = useState<ShareFormat>("story");
   const [background, setBackground] = useState<ShareBackground>("brand");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
   const [exporting, setExporting] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Photo background: read the picked image as a data URL. A same-origin
+  // data: URI rasterises cleanly (no cross-origin canvas taint, unlike a
+  // remote map tile), and a <input type=file accept=image/*> opens the
+  // photo library in both the browser and the iOS WKWebView — no
+  // Capacitor Camera plugin needed.
+  const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPhotoUrl(reader.result as string);
+      setBackground("photo");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const onBackgroundChange = (bg: ShareBackground) => {
+    // "Photo" first opens the picker; we only switch to photo mode once a
+    // file is chosen (a cancelled picker leaves the current background).
+    if (bg === "photo") {
+      fileInputRef.current?.click();
+      return;
+    }
+    setBackground(bg);
+  };
 
   // Top of the funnel — once per open.
   useEffect(() => {
@@ -126,6 +155,7 @@ export function ShareCardSheet({
     handle: data.handle,
     date: data.date,
     hiddenStats: hidden,
+    photoUrl,
     routePath,
     distanceKm: data.distanceKm,
     durationSec: data.durationSec,
@@ -230,12 +260,21 @@ export function ShareCardSheet({
         <SegmentedControl
           ariaLabel="Card background"
           value={background}
-          onChange={(v) => setBackground(v as ShareBackground)}
+          onChange={(v) => onBackgroundChange(v as ShareBackground)}
           options={[
             { value: "brand", label: "Brand" },
             { value: "dark", label: "Dark" },
-            { value: "transparent", label: "Transparent" },
+            { value: "transparent", label: "Clear" },
+            { value: "photo", label: "Photo" },
           ]}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          aria-hidden="true"
+          onChange={onPickPhoto}
         />
 
         {/* Per-stat eye toggles */}
