@@ -72,6 +72,14 @@ const PROTECTED_PATHS = [
   "match /blocks/{uid}/users/{targetUid}",
   "match /reports/{reportId}",
   "match /groups/{crewId}",
+  // SOCIAL S3 — partner-streak bond. Client-writable create + delete
+  // (either of the two members); Soc7 made UPDATE server-only
+  // (`if false` — streak state is written by the Admin SDK persist path).
+  // Create freezes BOTH members (!isDeleting on members[0] AND members[1])
+  // so a bond can't be minted naming a mid-deletion user. Still a
+  // protected path (create+delete are client-writable). R1A executor
+  // sweeps these in step 3b (inventory key: partnerBondsMember).
+  "match /partnerBonds/{bondId}",
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} removed
   // from PROTECTED_PATHS — the rule is now `if false` (server-only).
   // R1A protection moved to setCrewMembershipCallable.
@@ -260,14 +268,16 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 27 (push #961 added users/{uid}/devices)", () => {
+  it("authoritative count is 28 (SOCIAL S3 added partnerBonds)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
     // push #961 added the owner-only /users/{uid}/devices/{token}
     // FCM-token subcollection (freeze via isOwnerAndNotDeleting),
-    // bringing it back to 27. Counting methodology unchanged: one
-    // `match /PATH {` block with at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(27);
+    // bringing it back to 27. SOCIAL S3 added the client-writable
+    // /partnerBonds/{bondId} block (freeze via !isDeleting), → 28.
+    // Counting methodology unchanged: one `match /PATH {` block with
+    // at least one client-write rule.
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(28);
   });
 });

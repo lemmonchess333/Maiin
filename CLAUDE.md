@@ -628,6 +628,16 @@ Affects: `functions/index.js` `stripeWebhook` handler, `stripeEvents/{event.id}`
 - [ ] Post-deploy, on the next real Stripe webhook delivery, confirm the `stripeEvents/<event.id>` doc has a `claimedAt` field (new) AND a `processedAt` field (existing). Pre-fix only `processedAt` was set.
 - [ ] If a webhook handler crashes mid-process (force via stripe-cli test event), confirm the `stripeEvents/<event.id>` doc is DELETED so Stripe's retry can re-attempt. Pre-fix the partial claim would persist and the retry would silently skip.
 
+### Partner-streak server persist (SOCIAL S3 Soc7, PR5a)
+
+Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `applyPartnerActivity`), new `functions/lib/partnerStreakEngine.js` + `functions/lib/partnerStreakPersist.js`. Deploys via `deploy-functions.yml`. The server is now the SOLE writer of `partnerBonds` streak state.
+
+- [ ] **Deployed-source spot-check (do first).** In the Console (`console.cloud.google.com/functions/details/us-central1/onWorkoutCreated/source` and `…/onRunCreated/source`), confirm the deployed bundle contains `applyPartnerActivity` and the `require("./lib/partnerStreakPersist")`. CI-green is necessary-not-sufficient (the dedup/bundle-hash gotcha) — though this is a `.js` change so dedup shouldn't bite, verify anyway.
+- [ ] **First real shared day counts.** With two test accounts that mutually follow + have a bond, log a workout (or run) as A, then as B on the same local day. Confirm the `partnerBonds/<id>` doc flips `streak: 0 → 1` and `lastSharedDay` to today, and `onWorkoutCreated`/`onRunCreated` logs show no `applyPartnerActivity: error`.
+- [ ] **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
+- [ ] **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
+- [ ] **Freeze ledger uses Monday weeks.** Over a gap that consumes a freeze, confirm `freezeWeek.<uid>` is the Monday-anchored week key (e.g. a Friday log stores that week's Monday), NOT a Sunday — proves the mirror's `weekKey` (not the Sunday `getWeekKey`) is the one that ran.
+
 ### App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.
