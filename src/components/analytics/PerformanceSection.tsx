@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { getCardColour } from "@/lib/performanceColour";
 import { getVerb } from "@/lib/performanceLine";
@@ -138,10 +139,17 @@ export default function PerformanceSection() {
         <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
           Performance
         </SectionLabel>
-        <div className="p-4 rounded-2xl bg-card">
-          <p className="text-sm text-muted-foreground">
-            Your Performance Index will appear after your first logged session.
-          </p>
+        <div className="rounded-2xl bg-card">
+          {/* Wave3 F — designed hexagon empty state in place of the bare
+              sentence. Action routes to the workout flow (Performance is
+              computed from logged sessions). */}
+          <EmptyState
+            icon={Activity}
+            accent={THEME.brand}
+            headline="No sessions logged yet"
+            sub="Your Performance Index appears after your first logged session."
+            action={{ label: "Start a workout", href: "/program" }}
+          />
         </div>
       </section>
     );

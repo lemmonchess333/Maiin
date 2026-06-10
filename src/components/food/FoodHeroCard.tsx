@@ -261,9 +261,17 @@ export default function FoodHeroCard({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.3 }}
-                  className="text-xs font-medium text-muted-foreground/80"
+                  className="text-xs font-medium text-muted-foreground/80 truncate"
                 >
+                  {/* Wave3 G — the day annotation is merged INTO the hero
+                      caption as one line ("{dayType} · {rationale}") instead
+                      of a second, container-less line orphaned below the
+                      macro tiles. Rationale is today-only (matching the old
+                      annotation gating); truncates to one line at 393px. */}
                   {caption.trainingType}
+                  {isToday && dailyTargets.annotation
+                    ? ` · ${dailyTargets.annotation}`
+                    : ""}
                 </motion.p>
               ) : null}
             </AnimatePresence>
@@ -386,18 +394,13 @@ export default function FoodHeroCard({
         </div>
       </div>
 
-      {/* Training-aware day label (the free→premium conversion hook). DESCRIBES
-          the planned day — "Hard training day" / "Deload week" / "Race week —
-          carb load" — and is shown to ALL users (the macro MOVE is Pro-gated in
-          useEffectiveTargets, but the rationale is visible to free users; the
-          copy never asserts a change that didn't happen). Today-only; the hook
-          returns "" on plain rest days so this suppresses on rest + diary
-          views, mirroring the glanceLine gating. */}
-      {isToday && dailyTargets.annotation && (
-        <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
-          {dailyTargets.annotation}
-        </p>
-      )}
+      {/* Wave3 G — the training-aware day annotation (the free→premium
+          conversion hook: "Hard training day" / "Race week — carb load")
+          moved INTO the hero caption above as one merged line. It no longer
+          renders here as a separate, container-less line below the macro
+          tiles (audit: duplicate day-labels, the lower one orphaned). The
+          rationale text + its all-users visibility + today-only gating are
+          unchanged — only the render location moved. */}
     </>
   );
 }

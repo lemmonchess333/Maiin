@@ -84,13 +84,13 @@ without needing a font change. That's shipped; rebrand deferred.
 
 **Candidate fonts evaluated (ranked by fit for Tropos's brand):**
 
-| Font | Source | Why it's a candidate |
-|---|---|---|
-| **DM Sans** | Google Fonts | Warmer + more open than Jakarta, used by Vercel / Supabase. Already loaded for `privacy.html` so there's precedent. Biggest bang-for-buck swap. |
-| **Satoshi** | [Fontshare](https://www.fontshare.com/fonts/satoshi) (free) | Premium editorial feel, distinctive numerals, stands apart from Cal AI / MyFitnessPal. Slight risk at very small sizes on Android. |
-| **Geist** | [Vercel](https://vercel.com/font) | Sharp technical numerals — great for stats-heavy surfaces. Reads tech-brand rather than consumer-fitness, so only a fit if the brand pivots. |
-| **SF Pro / system** | Apple / OS default | Native iOS feel, zero font-download cost, fastest cold-start. Uninterested/invisible brand identity — only pick if speed > personality. |
-| **Plus Jakarta Sans** | Google Fonts | **Current.** Friendly geometric sans. Fine but common. |
+| Font                  | Source                                                      | Why it's a candidate                                                                                                                            |
+| --------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **DM Sans**           | Google Fonts                                                | Warmer + more open than Jakarta, used by Vercel / Supabase. Already loaded for `privacy.html` so there's precedent. Biggest bang-for-buck swap. |
+| **Satoshi**           | [Fontshare](https://www.fontshare.com/fonts/satoshi) (free) | Premium editorial feel, distinctive numerals, stands apart from Cal AI / MyFitnessPal. Slight risk at very small sizes on Android.              |
+| **Geist**             | [Vercel](https://vercel.com/font)                           | Sharp technical numerals — great for stats-heavy surfaces. Reads tech-brand rather than consumer-fitness, so only a fit if the brand pivots.    |
+| **SF Pro / system**   | Apple / OS default                                          | Native iOS feel, zero font-download cost, fastest cold-start. Uninterested/invisible brand identity — only pick if speed > personality.         |
+| **Plus Jakarta Sans** | Google Fonts                                                | **Current.** Friendly geometric sans. Fine but common.                                                                                          |
 
 Plus two to avoid:
 
@@ -140,3 +140,21 @@ Small surface area; could run a week-long experiment before committing.
 - `CLAUDE.md` — typography section update.
 
 Nothing else. The rest of the codebase reads through the variables.
+
+## Brand refresh candidates
+
+Parked from the Wave 3 design pass (visual-audit follow-up). Both are
+deliberately deferred — they need a brand-level decision, not a polish PR.
+
+- **Third display typeface for hero numerals.** The hero stat numbers
+  (health/performance score, calorie totals) currently use the mono
+  (JetBrains Mono). A dedicated display numeral face could give the
+  glanceable hero numbers more identity. Revisit alongside any typography
+  rebrand (see the font-rebrand note above) — don't add a third family in
+  isolation.
+- **Hexagon-segmented calorie ring experiment.** The brand hexagon now
+  appears in empty-states + streak badges (Wave 3 F). A speculative next
+  step is a calorie/macro ring rendered as hexagon segments rather than a
+  smooth arc — visually ties the data viz to the brand mark. Experiment
+  only; the smooth ring is the safe default and the hexagon-usage rule
+  (empty-states + badges only) holds until this is explicitly validated.
