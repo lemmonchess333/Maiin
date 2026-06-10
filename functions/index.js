@@ -3796,6 +3796,17 @@ exports.onWorkoutCreated = functions
           data.totalVolume,
           workoutId
         );
+        // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A workout
+        // contributes its volume term (kg×0.1). SUM-based, idempotent on
+        // workoutId — same path as the metrics above. Feeds the global
+        // monthly hybrid challenge AND the existing Autumn Push seasonal
+        // (which declared hybrid_score but had no sync until now).
+        await syncChallengeProgress(
+          uid,
+          "hybrid_score",
+          Math.round(data.totalVolume * 0.1),
+          workoutId
+        );
       }
 
       // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
@@ -3927,6 +3938,16 @@ exports.onRunCreated = functions
             uid,
             "total_km",
             Math.round(distanceKm * 100) / 100,
+            runId
+          );
+          // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A run
+          // contributes its distance term (km×100). SUM-based, idempotent
+          // on runId. Feeds the global monthly hybrid challenge + Autumn
+          // Push seasonal. Gated by isCountable (no isInvalid/savedAnyway).
+          await syncChallengeProgress(
+            uid,
+            "hybrid_score",
+            Math.round(distanceKm * 100),
             runId
           );
         }

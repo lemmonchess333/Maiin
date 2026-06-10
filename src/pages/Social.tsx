@@ -55,6 +55,7 @@ import IconButton from "@/components/ui/IconButton";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
+import SoloFirstFeed from "@/components/social/SoloFirstFeed";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState as HexEmptyState } from "../components/ui/EmptyState";
@@ -186,6 +187,15 @@ export default function Social() {
   // the user as established — that way an existing user with a slow
   // network never sees a flash of the new-user coachmark.
   const isNewUser = followingCount === 0 && !profileCrewId;
+
+  // SOCIAL S4 — the solo-first curated stack leads the Feed tab for a
+  // cold-start user (0 follows ⇒ 0 partners, since a bond needs mutual
+  // follow). Sub-tab-agnostic on purpose: a new user's sub-tab defaults to
+  // Explore (n>0?following:explore), so gating on "following" would never
+  // fire. The stack renders above whatever the active sub-tab shows; the
+  // empty-feed states below are suppressed so nothing reads as broken.
+  // PR4 will refine the gate to the full `isSoloUser` density check.
+  const showSoloFeed = isNewUser;
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // In-app social notification tray (kudos / comment / follow). Closes the
@@ -668,7 +678,9 @@ export default function Social() {
                   )}
                 />
 
-                {feedSubTab === "following" && (
+                {showSoloFeed && <SoloFirstFeed onNavigateTab={setTab} />}
+
+                {feedSubTab === "following" && !showSoloFeed && (
                   <div className="mt-4 space-y-3">
                     {/*
                 If the user has <2 follows, a real leaderboard would just
@@ -807,17 +819,19 @@ export default function Social() {
                 small centred spinner; full skeletons below real
                 cards would be visually noisy.
           */}
-                {activeFeed.loading && activeFeed.items.length === 0 && (
-                  <div
-                    className="space-y-3"
-                    aria-live="polite"
-                    aria-label="Loading feed"
-                  >
-                    <ActivityCardSkeleton stagger={0} />
-                    <ActivityCardSkeleton stagger={1} />
-                    <ActivityCardSkeleton stagger={2} />
-                  </div>
-                )}
+                {activeFeed.loading &&
+                  activeFeed.items.length === 0 &&
+                  !showSoloFeed && (
+                    <div
+                      className="space-y-3"
+                      aria-live="polite"
+                      aria-label="Loading feed"
+                    >
+                      <ActivityCardSkeleton stagger={0} />
+                      <ActivityCardSkeleton stagger={1} />
+                      <ActivityCardSkeleton stagger={2} />
+                    </div>
+                  )}
                 {activeFeed.loading && activeFeed.items.length > 0 && (
                   <div className="flex items-center justify-center py-4">
                     <Spinner
@@ -842,6 +856,7 @@ export default function Social() {
               double message. */}
                 {!activeFeed.loading &&
                   activeFeed.items.length === 0 &&
+                  !showSoloFeed &&
                   !(feedSubTab === "explore" && exploreFeed.error) && (
                     <div className="mt-6" aria-live="polite">
                       {feedSubTab === "explore" ? (
