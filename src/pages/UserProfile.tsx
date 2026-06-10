@@ -18,6 +18,7 @@ import {
 } from "../lib/socialApi";
 import { useAuth } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
+import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
 import { Skeleton } from "../components/LoadingSkeleton";
@@ -377,6 +378,17 @@ export default function UserProfile() {
           )}
         </div>
       </motion.div>
+
+      {/* Partner-streak entry (SOCIAL S3) — renders only for another
+          user you mutually follow; null otherwise. */}
+      {!isOwnProfile && uid && (
+        <motion.div variants={itemVariant}>
+          <PartnerStreakCard
+            partnerUid={uid}
+            partnerName={profile.displayName || "them"}
+          />
+        </motion.div>
+      )}
 
       {/* Stat pills */}
       <div className="flex gap-2">
