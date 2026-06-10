@@ -1,5 +1,5 @@
 import type { Ref, RefObject } from "react";
-import { PenLine, SendHorizontal, X } from "lucide-react";
+import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -7,8 +7,8 @@ import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import FoodSuggestionsDropdown, {
   type OFFResult,
   type PantrySuggestion,
+  type QuickAddSection,
 } from "./FoodSuggestionsDropdown";
-import ScanMealButton from "./ScanMealButton";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
 
@@ -26,6 +26,10 @@ interface ScanOverrides {
 interface ScanUsageSnapshot {
   loading: boolean;
   remaining: number;
+  /** Per-tier cap for the action. 0 = the action is Pro-only for this
+   *  tier (not a consumed quota) — the locked scan icon carries that
+   *  gate, so the quota caption must NOT render for it. */
+  limit: number;
   isUnlimited: boolean;
   resetDate: Date;
 }
@@ -57,6 +61,9 @@ interface FoodComposerCardProps {
    *  collection — typing 2+ chars is intent enough; no graduation
    *  filter here. Max 3 enforced upstream. */
   pantryResults: PantrySuggestion[];
+  /** Empty-focus Quick Add payload (wave2 D) — non-null only while the
+   *  input is focused + empty; forwarded straight to the dropdown. */
+  quickAdd?: QuickAddSection | null;
   offEmpty: boolean;
   offSearchQuery: string | null;
   onSelectSuggestion: (s: FoodSuggestion) => void;
@@ -71,9 +78,10 @@ interface FoodComposerCardProps {
 }
 
 /**
- * The Food page's input surface: NL textarea (with send button +
- * suggestions dropdown), "Add to" meal pills, full-width Scan CTA
- * with quota footnote, and the secondary "Log manually" link.
+ * The Food page's input surface: NL textarea (with scan icon, send
+ * button + suggestions dropdown), the conditional quota caption, and
+ * the "Add to" meal pills. ONE entry surface — manual logging is
+ * contextual (dropdown no-results row), not a standing link.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -106,6 +114,7 @@ function FoodComposerCard({
   suggestions,
   offResults,
   pantryResults,
+  quickAdd = null,
   offEmpty,
   offSearchQuery,
   onSelectSuggestion,
@@ -165,7 +174,9 @@ function FoodComposerCard({
           aria-label="What did you eat"
           rows={1}
           maxLength={500}
-          className="w-full pl-10 pr-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
+          /* pr-20: room for the always-present scan icon plus the
+             contextual send / cancel control beside it. */
+          className="w-full pl-10 pr-20 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
           style={{
             borderColor: inputFocused
               ? "var(--ds-color-input-border-focus-nutrition)"
@@ -176,43 +187,79 @@ function FoodComposerCard({
               : "var(--ds-shadow-input-rest)",
           }}
         />
-        {nlInput.trim() && (
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+          {nlInput.trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                haptic();
+                onParse();
+              }}
+              disabled={nlParsing}
+              aria-label="Log meal"
+              className={cn(
+                "p-1.5 rounded-lg transition-all active:scale-90",
+                nlParsing ? "opacity-50" : ""
+              )}
+              style={{ color: THEME.semantic.nutrition }}
+            >
+              <SendHorizontal className="size-5" />
+            </button>
+          )}
+          {!nlInput.trim() && targetMeal && (
+            <button
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setTargetMeal(null);
+              }}
+              aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
+              className="size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+          {/* Scan affordance — a camera icon IN the input row (wave2 A),
+              replacing the old full-width gradient ScanMealButton card
+              section. The coral scan identity travels with the icon
+              (DESIGN_GUIDE 3e: #FF6B4A = scan affordance only). Locked
+              (quota exhausted / Pro-only) keeps the calm receded
+              philosophy: dimmed icon + small lock badge, no glow — tap
+              opens the upgrade path via the unchanged
+              useScanButtonOverrides contract. */}
           <button
             type="button"
             onClick={() => {
               haptic();
-              onParse();
+              scanOverrides.onClick();
             }}
-            disabled={nlParsing}
-            aria-label="Log meal"
-            className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all active:scale-90",
-              nlParsing ? "opacity-50" : ""
+            aria-label={
+              scanOverrides.locked ? "Unlock unlimited scans" : "Scan your meal"
+            }
+            className="relative size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-transform shrink-0"
+            style={{ color: THEME.food.scan }}
+          >
+            <Camera
+              className={cn("size-5", scanOverrides.locked && "opacity-60")}
+              strokeWidth={2}
+            />
+            {scanOverrides.locked && (
+              <span
+                aria-hidden="true"
+                className="absolute bottom-1.5 right-1.5 inline-flex items-center justify-center size-3.5 rounded-full bg-card"
+              >
+                <Lock className="size-2.5" strokeWidth={2.5} />
+              </span>
             )}
-            style={{ color: THEME.semantic.nutrition }}
-          >
-            <SendHorizontal className="size-5" />
           </button>
-        )}
-        {!nlInput.trim() && targetMeal && (
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              setTargetMeal(null);
-            }}
-            aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-            className="absolute right-2 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        )}
+        </div>
         {showSuggestions && (
           <FoodSuggestionsDropdown
             ref={suggestionsRef}
             suggestions={suggestions}
             offResults={offResults}
             pantryResults={pantryResults}
+            quickAdd={quickAdd}
             offEmpty={offEmpty}
             offSearchQuery={offSearchQuery}
             onSelectSuggestion={onSelectSuggestion}
@@ -225,6 +272,24 @@ function FoodComposerCard({
           />
         )}
       </div>
+      {/* Quota caption (wave2 B) — a single 11px muted line directly under
+          the input row, ONLY when a real quota is scarce: a consumable
+          limit exists (limit > 0) and remaining <= 1. No standing quota
+          furniture when the user has headroom; limit === 0 (Pro-only
+          tier) renders nothing because the locked scan icon already
+          carries that gate. */}
+      {!scanUsage.isUnlimited &&
+        !scanUsage.loading &&
+        scanUsage.limit > 0 &&
+        scanUsage.remaining <= 1 && (
+          <div className="mt-1.5">
+            <ScanQuotaIndicator
+              remaining={scanUsage.remaining}
+              resetDate={scanUsage.resetDate}
+              onUpgrade={onUpgrade}
+            />
+          </div>
+        )}
       <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
         <span className="text-caption uppercase tracking-wide text-muted-foreground shrink-0">
           Add to
@@ -264,39 +329,11 @@ function FoodComposerCard({
           );
         })}
       </div>
-      <div className="mt-3">
-        <ScanMealButton
-          onClick={() => {
-            haptic();
-            scanOverrides.onClick();
-          }}
-          locked={scanOverrides.locked}
-        />
-        {!scanUsage.isUnlimited && !scanUsage.loading && (
-          <div className="mt-2">
-            <ScanQuotaIndicator
-              remaining={scanUsage.remaining}
-              resetDate={scanUsage.resetDate}
-              onUpgrade={onUpgrade}
-            />
-          </div>
-        )}
-        {/* Manual logging fallback. Centered text-only so it
-              doesn't compete with Scan or the NL composer. The
-              drawer is the only escape hatch when AI / barcode /
-              OFF search all fail to find a match. */}
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            onManualOpen();
-          }}
-          className="w-full mt-2 min-h-[44px] py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
-          aria-label="Log a meal manually"
-        >
-          Log manually
-        </button>
-      </div>
+      {/* No standing manual-log link (wave2 C). Manual entry remains
+          reachable exactly when flows fail the user: the dropdown's
+          no-results row (below, via onManualOpen), the AI-failure
+          fallback (FoodAnalyzer onRequestManualLog), and the OFF
+          search-error toast action — all owned by the parent. */}
     </div>
   );
 }
