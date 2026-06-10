@@ -48,6 +48,7 @@ Folder map and architectural notes live in `CLAUDE.md`.
 Copied to `.env.local` for dev, set via deploy environment for production.
 
 ### Firebase (web SDK)
+
 ```
 VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=
@@ -58,12 +59,14 @@ VITE_FIREBASE_APP_ID=
 ```
 
 ### App Check
+
 ```
 VITE_RECAPTCHA_V3_SITE_KEY=           # from Firebase console → App Check
 VITE_APP_CHECK_DEBUG_TOKEN=           # optional, local dev only
 ```
 
 ### Stripe (web + Android payments)
+
 ```
 VITE_STRIPE_MONTHLY_PRICE_ID=         # client-side display + checkout
 VITE_STRIPE_YEARLY_PRICE_ID=
@@ -71,12 +74,14 @@ VITE_STRIPE_CHECKOUT_URL=             # defaults to /api/create-checkout-session
 ```
 
 ### Vertex AI / Gemini (Cloud Functions only — set in functions config)
+
 ```
 firebase functions:config:set vertex.location=us-central1
 firebase functions:config:set vertex.project_id=$PROJECT_ID
 ```
 
 ### Apple IAP (Cloud Functions only)
+
 ```
 firebase functions:config:set apple.key_id=$APPLE_KEY_ID
 firebase functions:config:set apple.issuer_id=$APPLE_ISSUER_ID
@@ -88,6 +93,7 @@ The `BUNDLE_ID` constant in `functions/appleIAP.js:7` must match the
 Store Connect. Drift breaks signature verification silently.
 
 ### Stripe (Cloud Functions only — server-side keys)
+
 ```
 firebase functions:config:set stripe.secret_key=$STRIPE_SECRET_KEY
 firebase functions:config:set stripe.webhook_secret=$STRIPE_WEBHOOK_SECRET
@@ -104,15 +110,15 @@ firebase functions:config:set stripe.price_id_lifetime=price_xxxxx   # optional
 
 ## Test commands
 
-| Command | Scope |
-|---|---|
-| `npm run lint` | ESLint over TypeScript + TSX |
-| `npx tsc --noEmit` | TypeScript type check (project + functions are separate) |
-| `npm run test` | Vitest unit tests (`src/**`) |
-| `npm run test:watch` | Vitest watch mode |
-| `npm run test:e2e` | Playwright E2E (requires `npm run preview` server) |
-| `npm run test:e2e:ui` | Playwright interactive UI |
-| `npm run build` | Production Vite build (also runs `tsc -b`) |
+| Command               | Scope                                                    |
+| --------------------- | -------------------------------------------------------- |
+| `npm run lint`        | ESLint over TypeScript + TSX                             |
+| `npx tsc --noEmit`    | TypeScript type check (project + functions are separate) |
+| `npm run test`        | Vitest unit tests (`src/**`)                             |
+| `npm run test:watch`  | Vitest watch mode                                        |
+| `npm run test:e2e`    | Playwright E2E (requires `npm run preview` server)       |
+| `npm run test:e2e:ui` | Playwright interactive UI                                |
+| `npm run build`       | Production Vite build (also runs `tsc -b`)               |
 
 Functions tests are excluded from the root Vitest run by
 `vitest.config.ts:21`. Cloud Function unit tests are a separate
@@ -176,6 +182,7 @@ npx cap open ios         # opens Xcode workspace
 ```
 
 In Xcode:
+
 - "Signing & Capabilities" → your team must be selected.
 - App Attest capability must be added (App Check rollout).
 - Push Notifications capability if you ever wire FCM (not currently
@@ -226,7 +233,7 @@ Generate a signed APK / AAB from Android Studio's Build menu.
    - `npm run build`
    - `firebase deploy --only hosting` (or push to `main` to
      trigger GitHub Pages workflow at `.github/workflows/deploy.yml`)
-4. **Functions deploy (if `functions/**` changed):**
+4. **Functions deploy (if `functions/**` changed):\*\*
    - `firebase deploy --only functions`
    - The `.github/workflows/deploy-functions.yml` workflow handles
      this automatically on push.
@@ -247,6 +254,7 @@ Generate a signed APK / AAB from Android Studio's Build menu.
 Cause: AI quota bypass or kill switch failed to fire.
 
 Action:
+
 1. Open Firebase console → Remote Config (or `config/flags` doc).
 2. Set `geminiEnabled = false`. The change propagates within ~60s
    and both `analyzeFood` / `analyzeFoodText` return 503 before
@@ -382,7 +390,7 @@ See `CLAUDE.md`. Key invariants enforced there:
 - One Button / IconButton / Dialog / BottomSheet / Spinner /
   ErrorState / EmptyState primitive each — don't roll your own.
 - `THEME` object in `src/lib/theme.ts` for chart colours.
-- Numeric displays use `JetBrains Mono` + `tabular-nums`.
+- Numeric displays use `Archivo` (the numeral font) + `tabular-nums`.
 - Reduced-motion guarded via `useReducedMotion` hook.
 - Path alias: `@/` → `src/`.
 - Base path: `/Maiin/` (for GitHub Pages).

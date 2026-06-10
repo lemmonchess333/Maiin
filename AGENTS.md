@@ -43,7 +43,7 @@ non-negotiables, inline so you can't miss them:
 
 1. **No new colours, gradients, or decorative elements.** The palette is closed.
 2. **Purple = lifting/brand. Coral = running.** Never cross the sport-coding.
-3. **Numbers = JetBrains Mono + `tabular-nums`. Everything else = Plus Jakarta
+3. **Numbers = Archivo (the numeral font) + `tabular-nums`. Everything else = Plus Jakarta
    Sans.** Two fonts, no third — ever.
 4. **44px minimum touch target** (iOS shell).
 5. **Use the primitives** (`Button`, `IconButton`, `Banner`, `BottomSheet`,
