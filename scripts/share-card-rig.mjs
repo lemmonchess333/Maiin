@@ -70,8 +70,17 @@ const DATA = {
 };
 
 const templates = ["run", "lift", "hybrid"];
-const backgrounds = ["brand", "dark", "transparent"];
+const backgrounds = ["brand", "dark", "transparent", "photo"];
 const formats = ["story", "square"];
+
+// Sample "photo" for the photo-background captures — an SVG gradient data
+// URL (real users pick a JPEG; this just verifies the photo layout +
+// scrim + stat overlay compose). Same-origin data URI = no canvas taint.
+const SAMPLE_PHOTO =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#e8995a'/><stop offset='1' stop-color='#5a4fc4'/></linearGradient></defs><rect width='100%' height='100%' fill='url(#g)'/></svg>"
+  );
 
 // Checkerboard so a TRANSPARENT card's emptiness is visible in the audit.
 const CHECKER =
@@ -86,7 +95,13 @@ let count = 0;
 for (const template of templates) {
   for (const background of backgrounds) {
     for (const format of formats) {
-      const data = { ...DATA[template], template, format, background };
+      const data = {
+        ...DATA[template],
+        template,
+        format,
+        background,
+        ...(background === "photo" ? { photoUrl: SAMPLE_PHOTO } : {}),
+      };
       const markup = renderToStaticMarkup(
         h(ShareCardRenderer, { data, offscreen: false })
       );
