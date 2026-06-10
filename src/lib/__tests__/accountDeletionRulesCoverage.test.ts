@@ -123,14 +123,16 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   {
     // SOCIAL S3 — partner-streak bond. Symmetric 1:1 doc naming two
     // members. Create is a cross-user write (you name another user in
-    // members[]) so the freeze checks BOTH members' isDeleting; update
-    // freezes the writing actor. Declaring "actor"+"target" makes the
-    // cross-user assertion require >=2 !isDeleting applications — the
-    // block has 3 (members[0], members[1], request.auth.uid).
+    // members[]) so the freeze checks BOTH members' isDeleting. Declaring
+    // "actor"+"target" makes the cross-user assertion require >=2
+    // !isDeleting applications — CREATE supplies exactly 2 (members[0],
+    // members[1]). Soc7: UPDATE is now `allow update: if false` (streak
+    // state is server-written via the Admin SDK), so it contributes no
+    // freeze and needs none; create's pair still satisfies the assertion.
     pathPattern: "match /partnerBonds/{bondId}",
     sides: ["actor", "target"],
     notes:
-      "create freezes both members (!isDeleting on members[0] AND members[1]); update freezes the writer; delete is member-only (executor sweeps in step 3b)",
+      "create freezes both members (!isDeleting on members[0] AND members[1]); update is server-only (if false); delete is member-only (executor sweeps in step 3b)",
   },
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} is now
   // server-only (write `if false`). R1A protection moved to the CF

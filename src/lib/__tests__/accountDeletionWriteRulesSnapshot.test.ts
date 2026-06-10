@@ -72,10 +72,12 @@ const PROTECTED_PATHS = [
   "match /blocks/{uid}/users/{targetUid}",
   "match /reports/{reportId}",
   "match /groups/{crewId}",
-  // SOCIAL S3 — partner-streak bond. Client-writable create/update/delete
-  // (either of the two members). Create freezes BOTH members
-  // (!isDeleting on members[0] AND members[1]) so a bond can't be minted
-  // naming a mid-deletion user; update freezes the writer. R1A executor
+  // SOCIAL S3 — partner-streak bond. Client-writable create + delete
+  // (either of the two members); Soc7 made UPDATE server-only
+  // (`if false` — streak state is written by the Admin SDK persist path).
+  // Create freezes BOTH members (!isDeleting on members[0] AND members[1])
+  // so a bond can't be minted naming a mid-deletion user. Still a
+  // protected path (create+delete are client-writable). R1A executor
   // sweeps these in step 3b (inventory key: partnerBondsMember).
   "match /partnerBonds/{bondId}",
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} removed

@@ -760,11 +760,15 @@ service cloud.firestore {
     //     and the streak must start COLD (streak == 0) so no one can mint
     //     a bond with a forged head-start. Neither member may be
     //     mid-deletion (R1A: both endpoints must be writable).
-    //   - UPDATE: either member writes streak state (the shared streak is
-    //     between two consenting partners — lower stakes than a world-
-    //     readable counter), BUT the `members` array is IMMUTABLE so a
-    //     third party can never be swapped in, and not while the writer is
-    //     deleting.
+    //   - UPDATE: SERVER-ONLY (`if false`). Streak state is materialized by
+    //     the Cloud Function persist path (applyPartnerActivity on
+    //     onWorkoutCreated / onRunCreated, via the Admin SDK which bypasses
+    //     rules) — the engine runs server-side (Soc7). Pre-Soc7 this allowed
+    //     either member to write streak fields; once the engine moved
+    //     server-side that client path became BOTH unused AND a cheat vector
+    //     (a member could hand-edit their own shared streak). `if false`
+    //     removes it and the client/server double-writer race. The client
+    //     only ever creates + deletes a bond (lifecycle).
     //   - DELETE: either member may dissolve the bond.
     //
     // R1A-Deletion: bonds the deleted user is a member of are tombstoned
@@ -784,9 +788,8 @@ service cloud.firestore {
         && request.resource.data.streak == 0
         && !isDeleting(request.resource.data.members[0])
         && !isDeleting(request.resource.data.members[1]);
-      allow update: if bondMember()
-        && request.resource.data.members == resource.data.members
-        && !isDeleting(request.auth.uid);
+      // Soc7: streak state is server-written (Admin SDK). No client update.
+      allow update: if false;
       allow delete: if bondMember();
     }
 

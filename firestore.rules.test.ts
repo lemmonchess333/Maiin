@@ -2026,7 +2026,10 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     createdAt: serverTimestamp(),
   });
 
-  async function seedBond(members: string[], extra: Record<string, unknown> = {}) {
+  async function seedBond(
+    members: string[],
+    extra: Record<string, unknown> = {}
+  ) {
     await env.withSecurityRulesDisabled(async (ctx) => {
       await setDoc(doc(ctx.firestore(), "partnerBonds", BOND), {
         ...coldBond(members),
@@ -2038,10 +2041,14 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
   it("a member reads the bond; a non-member cannot", async () => {
     await seedBond([A_UID, B_UID]);
     await assertSucceeds(
-      getDoc(doc(env.authenticatedContext(A_UID).firestore(), "partnerBonds", BOND))
+      getDoc(
+        doc(env.authenticatedContext(A_UID).firestore(), "partnerBonds", BOND)
+      )
     );
     await assertFails(
-      getDoc(doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND))
+      getDoc(
+        doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND)
+      )
     );
   });
 
@@ -2079,31 +2086,25 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     );
   });
 
-  it("a member updates the streak; a non-member cannot", async () => {
+  it("Soc7: streak writes are SERVER-ONLY — even a member cannot update", async () => {
+    // The engine now runs server-side (applyPartnerActivity, Admin SDK).
+    // `allow update: if false` removes the client-write cheat vector, so a
+    // member's attempt to bump their own streak is rejected. (A non-member
+    // was always rejected; the new invariant is that a MEMBER is too.)
     await seedBond([A_UID, B_UID]);
     const aDb = env.authenticatedContext(A_UID).firestore();
-    await assertSucceeds(
+    await assertFails(
       setDoc(doc(aDb, "partnerBonds", BOND), {
         ...coldBond([A_UID, B_UID]),
         streak: 3,
         lastSharedDay: "2026-06-12",
       })
     );
-    const cDb = env.authenticatedContext(C_UID).firestore();
-    await assertFails(
-      setDoc(doc(cDb, "partnerBonds", BOND), {
-        ...coldBond([A_UID, B_UID]),
-        streak: 3,
-      })
-    );
-  });
-
-  it("members are IMMUTABLE — can't swap in a third party", async () => {
-    await seedBond([A_UID, B_UID]);
-    const aDb = env.authenticatedContext(A_UID).firestore();
+    // A members-swap is just one form of update — also blocked by `if false`
+    // (the dedicated immutability check is now subsumed).
     await assertFails(
       setDoc(doc(aDb, "partnerBonds", BOND), {
-        ...coldBond([A_UID, C_UID]), // tried to replace B with C
+        ...coldBond([A_UID, C_UID]),
         streak: 1,
       })
     );
@@ -2112,10 +2113,14 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
   it("either member can delete the bond; a non-member cannot", async () => {
     await seedBond([A_UID, B_UID]);
     await assertFails(
-      deleteDoc(doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND))
+      deleteDoc(
+        doc(env.authenticatedContext(C_UID).firestore(), "partnerBonds", BOND)
+      )
     );
     await assertSucceeds(
-      deleteDoc(doc(env.authenticatedContext(B_UID).firestore(), "partnerBonds", BOND))
+      deleteDoc(
+        doc(env.authenticatedContext(B_UID).firestore(), "partnerBonds", BOND)
+      )
     );
   });
 
