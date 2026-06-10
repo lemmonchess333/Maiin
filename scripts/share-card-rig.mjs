@@ -67,9 +67,18 @@ const DATA = {
     distanceKm: 6.2,
     durationSec: 5400,
   },
+  nutrition: {
+    handle: "@alexeats",
+    date: "12 Jun 2026",
+    calories: 2284,
+    calorieTarget: 2300,
+    protein: 162,
+    carbs: 248,
+    fat: 61,
+  },
 };
 
-const templates = ["run", "lift", "hybrid"];
+const templates = ["run", "lift", "hybrid", "nutrition"];
 const backgrounds = ["brand", "dark", "transparent", "photo"];
 const formats = ["story", "square"];
 
