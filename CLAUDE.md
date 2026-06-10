@@ -360,10 +360,10 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - Page background: hsl(240 5% 96%) = ~#F2F2F7 (light) / #121214 (dark)
 - Text muted: #8E8E93 (iOS system grey)
 
-### Typography (Plus Jakarta Sans + JetBrains Mono)
+### Typography (Plus Jakarta Sans + Archivo)
 
 - **Display font:** Plus Jakarta Sans (all UI text)
-- **Mono font:** JetBrains Mono (stat numbers — calories, weight, reps, volume)
+- **Numeral font:** Archivo (stat numbers — calories, weight, reps, volume). Proportional, not monospace; tabular figures forced on `.font-mono`. Replaced JetBrains Mono (brand bake-off — `docs/visual-audit/bakeoff/DECISION.md`). The `font-mono` utility / `--font-mono` token still means "numbers"; the name is historical.
 - **Scale (1.25 modular):**
   - Display: 3rem/48px — hero stat numbers (health score)
   - H1: ~31px — page titles ("Program", "Social", "Analytics")
@@ -506,7 +506,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Calm over flashy** — subtle shadows, soft tinted backgrounds, no harsh contrasts
 - **Breathing room over density** — generous padding, clear visual hierarchy
 - **iOS conventions** — grouped background, card-based layout, safe area padding, 44px minimum touch targets
-- **Consistent numeric treatment** — all numbers in JetBrains Mono with tabular-nums
+- **Consistent numeric treatment** — all numbers in Archivo (the numeral font) with tabular-nums
 - **Sport-coding everywhere** — lift content uses purple tints, run content uses coral tints
 - **Semantic colour consistency** — orange always = nutrition, teal always = hydration, coral always = vitals/running, purple always = brand/lifting
 - **Progressive disclosure** — cards link to detail views, sheets for editing, don't overload screens

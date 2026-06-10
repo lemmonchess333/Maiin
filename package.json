@@ -43,7 +43,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@floating-ui/react": "^0.27.19",
-    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/archivo": "^5.2.8",
     "@fontsource-variable/plus-jakarta-sans": "^5.2.8",
     "@stripe/stripe-js": "^8.7.0",
     "@zxing/browser": "^0.1.5",
@@ -69,7 +69,6 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@firebase/rules-unit-testing": "^5.0.1",
-    "@fontsource-variable/archivo": "^5.2.8",
     "@fontsource-variable/bricolage-grotesque": "^5.2.10",
     "@fontsource/barlow-semi-condensed": "^5.2.7",
     "@playwright/test": "^1.60.0",
