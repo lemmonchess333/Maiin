@@ -13,16 +13,41 @@ import { buildCurrentChallenges } from "../lib/challengeDefs";
 const MON_JUN_1 = new Date(Date.UTC(2026, 5, 1, 12, 0, 0));
 
 describe("buildCurrentChallenges", () => {
-  it("returns the five canonical challenges with prefixed, dated IDs", () => {
+  it("returns the six canonical challenges with prefixed, dated IDs", () => {
     const defs = buildCurrentChallenges(MON_JUN_1);
     const ids = defs.map((d) => d.id).sort();
     expect(ids).toEqual([
       "fastest-5k-2026-06-01",
+      "global-monthly-2026-06-01", // SOCIAL S4 global hybrid challenge
       "group-goal-2026-06-01",
       "monthly-2026-06-01",
       "seasonal-2026-06-01",
       "weekly-2026-06-01",
     ]);
+  });
+
+  it("global monthly challenge is a hybrid_score, monthly-windowed challenge", () => {
+    const defs = buildCurrentChallenges(MON_JUN_1);
+    const global = defs.find((d) => d.id.startsWith("global-monthly-"));
+    expect(global).toBeTruthy();
+    expect(global.metric).toBe("hybrid_score");
+    expect(global.type).toBe("monthly");
+    expect(global.name).toBe("June Hybrid Hero");
+    // Monthly window: June 1 → July 1.
+    expect(global.id).toBe("global-monthly-2026-06-01");
+    expect(global.endDate.getTime()).toBeGreaterThan(
+      global.startDate.getTime()
+    );
+    // Tiers are ascending non-negative numbers (the progress-bar target).
+    expect(global.tiers.bronze).toBeLessThan(global.tiers.silver);
+    expect(global.tiers.silver).toBeLessThan(global.tiers.gold);
+  });
+
+  it("rolls the global monthly hybrid ID at the month boundary", () => {
+    const jul = buildCurrentChallenges(new Date(Date.UTC(2026, 6, 15, 12)));
+    expect(jul.find((d) => d.id.startsWith("global-monthly-")).id).toBe(
+      "global-monthly-2026-07-01"
+    );
   });
 
   it("anchors the weekly window to the Monday on or before `now`", () => {
