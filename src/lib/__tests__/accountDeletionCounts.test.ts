@@ -37,7 +37,9 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
  */
 // S4e (PR #722) bumped to 41 — added globalRestrictedUids entry for
 // the restricted-user marker cleanup.
-export const EXPECTED_INCLUDED_COUNT = 41;
+// SOCIAL S3 bumped to 42 — added partnerBondsMember entry for the
+// partner-streak bond cleanup (cross-user edge, deleteQueryInBatches).
+export const EXPECTED_INCLUDED_COUNT = 42;
 export const EXPECTED_EXCLUDED_COUNT = 7;
 
 describe("inventory counts are programmatically guarded", () => {
