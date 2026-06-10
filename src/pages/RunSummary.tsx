@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   collection,
@@ -29,8 +29,7 @@ import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
-import ShareCard from "../components/social/ShareCard";
-import { generateAndShare } from "../lib/shareCardGenerator";
+import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
@@ -407,8 +406,7 @@ export default function RunSummary() {
       // tap in the rare error path.
     }
   }, [savedRunId]);
-  const shareRef = useRef<HTMLDivElement>(null);
-  const [sharing, setSharing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   /* Save flow state. Replaces a single `saved: boolean` so the UI can
      distinguish "still working", "succeeded", and "failed — retry".
      A toast was the only failure signal previously; on Safari PWA the
@@ -926,17 +924,8 @@ export default function RunSummary() {
     }
   };
 
-  const handleShare = async () => {
-    if (!shareRef.current || sharing) return;
-    setSharing(true);
-    try {
-      await generateAndShare(
-        shareRef.current,
-        `${(distance / 1000).toFixed(2)}km run`
-      );
-    } finally {
-      setSharing(false);
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleExportGPX = () => {
@@ -1572,10 +1561,9 @@ export default function RunSummary() {
                     <button
                       type="button"
                       onClick={handleShare}
-                      disabled={sharing}
-                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground disabled:opacity-50 active:scale-[0.97] transition-transform"
+                      className="flex-1 py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
                     >
-                      {sharing ? "Sharing…" : "Share"}
+                      Share
                     </button>
                   )}
                 </div>
@@ -1594,32 +1582,26 @@ export default function RunSummary() {
         </>
       )}
 
-      {/* Offscreen share card rendered for html-to-image */}
-      <div
-        style={{
-          position: "absolute",
-          left: -9999,
-          top: -9999,
-          pointerEvents: "none",
+      {/* S1 share-card system — customization sheet + new renderer */}
+      <ShareCardSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={{
+          template: "run",
+          handle: profile?.displayName || "Athlete",
+          date: new Date().toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+          points,
+          distanceKm: distance / 1000,
+          durationSec: elapsed,
+          pace: avgPace,
+          elevationM: elevationGain ?? undefined,
+          splits: (splits ?? []).map((s) => ({ km: s.km, pace: s.pace })),
         }}
-      >
-        <ShareCard
-          ref={shareRef}
-          data={{
-            type: "run",
-            userName: profile?.displayName || "Athlete",
-            date: new Date().toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }),
-            distance: distance / 1000,
-            duration: elapsed,
-            pace: avgPace,
-            elevationGain,
-          }}
-        />
-      </div>
+      />
 
       <ConfirmDialog
         open={showDiscardConfirm}
