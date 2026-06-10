@@ -93,17 +93,27 @@ export { FAT_CALORIE_FRACTION };
  * label is shown to FREE users for whom the macro movement is gated OFF. The
  * same labels are honest for Pro (where the move did occur). Deload / taper /
  * race labels are layered on by the caller (useEffectiveTargets).
+ *
+ * Wave3 G follow-up: the label is now merged INTO the hero caption as
+ * "{day type} · {label}" (e.g. "Run day · Hard session"). So it drops the
+ * redundant "…day" suffix that doubled up after the day type, and a plain
+ * MODERATE day returns "" — there's nothing to add beyond the day type, and
+ * "Run day · Training day" read as a bug. HARD/EASY keep an intensity word
+ * (the Pro fuelling/conversion cue); "session" is purely descriptive (no
+ * macro-change assertion, per the contract above).
  */
 export function describeDayIntensity(tier: DayIntensity): string {
   switch (tier) {
     case "HARD":
-      return "Hard training day";
+      return "Hard session";
     case "MODERATE":
-      return "Training day";
+      return "";
     case "EASY":
-      return "Easy day";
+      return "Easy session";
     case "REST":
     default:
+      // Unused by the caption (rest days render no caption — buildCaption
+      // returns null); kept descriptive for any non-caption consumer.
       return "Rest day";
   }
 }

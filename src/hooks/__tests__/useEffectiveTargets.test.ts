@@ -179,7 +179,7 @@ describe("useEffectiveTargets — training label gating (free→Pro conversion h
     h.program = hardProgram();
     const free = renderHook(() => useEffectiveTargets()).result.current;
 
-    expect(free.annotation).toBe("Hard training day"); // label visible to free
+    expect(free.annotation).toBe("Hard session"); // label visible to free
     // Flat baseline: fat at the ~25% calorie-fraction baseline (REST), NOT cut.
     expect(free.fat).toBe(69); // round(0.25 * 2500 / 9)
     expect(free.taperActive).toBe(false);
