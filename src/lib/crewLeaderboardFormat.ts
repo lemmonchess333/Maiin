@@ -32,23 +32,35 @@ export function formatScore(metric: string, entry: CrewLeaderboardRow): string {
 
 /**
  * Aggregated total for the "This week" stat band — splits the value
- * from the unit so the band can render numbers in JetBrains Mono and
+ * from the unit so the band can render numbers in Archivo (the numeral font) and
  * the unit in Plus Jakarta. Returns the field label too so callers
  * don't have to keep a parallel switch in JSX.
  */
 export function formatTotalForMetric(
   metric: string,
-  total: number,
+  total: number
 ): { label: string; value: string; unit: string } {
   switch (metric) {
     case "workout_count":
-      return { label: "Sessions logged", value: String(Math.round(total)), unit: "" };
+      return {
+        label: "Sessions logged",
+        value: String(Math.round(total)),
+        unit: "",
+      };
     case "total_volume":
-      return { label: "Volume lifted", value: Math.round(total).toLocaleString(), unit: "kg" };
+      return {
+        label: "Volume lifted",
+        value: Math.round(total).toLocaleString(),
+        unit: "kg",
+      };
     case "total_km":
       return { label: "Distance run", value: total.toFixed(1), unit: "km" };
     case "hybrid_score":
     default:
-      return { label: "Hybrid score", value: Math.round(total).toLocaleString(), unit: "pts" };
+      return {
+        label: "Hybrid score",
+        value: Math.round(total).toLocaleString(),
+        unit: "pts",
+      };
   }
 }
