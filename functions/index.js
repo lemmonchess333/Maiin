@@ -37,6 +37,10 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
+const {
+  applyPartnerActivity,
+  resolvePartnerActivityDay,
+} = require("./lib/partnerStreakPersist");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
@@ -3794,6 +3798,16 @@ exports.onWorkoutCreated = functions
         );
       }
 
+      // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
+      // rolling-window / cooldown early-returns below so a workout always
+      // counts toward the streak even when it's outside the perf window.
+      const workoutStreakDay = await resolvePartnerActivityDay(
+        db,
+        uid,
+        data.date
+      );
+      await applyPartnerActivity(db, uid, workoutStreakDay);
+
       if (data.date) {
         const currentKey = getWeekKey(new Date());
         // PI1a: skip recompute when the workout falls outside the
@@ -3895,6 +3909,16 @@ exports.onRunCreated = functions
         (Number(data.duration) || 0) >= 30;
 
       if (isCountable) {
+        // SOCIAL S3 (Soc7) — advance partner-streak bonds. Gated on the
+        // same eligibility predicate as challenges so isInvalid /
+        // savedAnyway / sub-threshold runs don't count toward a streak.
+        const runStreakDay = await resolvePartnerActivityDay(
+          db,
+          uid,
+          data.date
+        );
+        await applyPartnerActivity(db, uid, runStreakDay);
+
         // Auto-progress km-based challenges
         const distanceKm =
           data.distanceKm || (data.distance ? data.distance / 1000 : 0);
