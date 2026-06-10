@@ -73,24 +73,72 @@ export default defineConfig(({ mode }) => ({
 
     rollupOptions: {
       output: {
-        manualChunks: {
-          "firebase-auth": ["firebase/app", "firebase/auth"],
-          "firebase-db": ["firebase/firestore", "firebase/storage"],
-          // firebase/analytics (web SDK) and @capacitor-firebase/analytics
-          // (native plugin) are deliberately NOT forced into manual chunks:
-          // both are loaded via dynamic import from analyticsProvider, and a
-          // forced chunk would union the API surface used by each consumer,
-          // making the web path ship the larger surface the native plugin's
-          // web-fallback references. Letting Rollup auto-split keeps the web
-          // analytics chunk tree-shaken to just what the web path uses.
-          charts: ["recharts"],
-          vendor: ["react", "react-dom", "react-router-dom"],
-          maplibre: ["maplibre-gl"],
-          motion: ["framer-motion"],
-          "date-fns": ["date-fns"],
-          barcode: ["@zxing/browser"],
-          "body-highlighter": ["react-body-highlighter"],
-          stripe: ["@stripe/stripe-js"],
+        // FUNCTION form, not the object form. The object form
+        // (`charts: ["recharts"]`) claims the listed package AND its
+        // entire dependency subtree into the chunk — recharts' subtree
+        // includes shared utilities (clsx, react-is, tiny-invariant,
+        // use-sync-external-store) that eager code also imports, which
+        // gave the entry chunk a static edge to the 403KB charts chunk
+        // and made index.html modulepreload it on every cold start.
+        // The function form pins ONLY the named packages; shared deps
+        // float free and Rollup hoists them into the eager graph where
+        // they belong.
+        //
+        // firebase/analytics (web SDK) and @capacitor-firebase/analytics
+        // (native plugin) are deliberately NOT pinned: both are loaded
+        // via dynamic import from analyticsProvider, and a forced chunk
+        // would union the API surface used by each consumer, making the
+        // web path ship the larger surface the native plugin's
+        // web-fallback references. Letting Rollup auto-split keeps the
+        // web analytics chunk tree-shaken to just what the web path uses.
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("node_modules/recharts/")) return "charts";
+          if (id.includes("node_modules/maplibre-gl/")) return "maplibre";
+          if (
+            /node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)
+          )
+            return "motion";
+          if (id.includes("node_modules/date-fns/")) return "date-fns";
+          if (id.includes("node_modules/@zxing/")) return "barcode";
+          if (id.includes("node_modules/react-body-highlighter/"))
+            return "body-highlighter";
+          if (id.includes("node_modules/@stripe/stripe-js/")) return "stripe";
+          // firestore/storage product code + their shims → firebase-db;
+          // everything else firebase (+ idb, used by @firebase/app for
+          // IndexedDB persistence) → firebase-auth. Order matters: the
+          // db match must run before the catch-all.
+          if (
+            /node_modules\/(@firebase\/(firestore|storage|webchannel-wrapper)|firebase\/(firestore|storage))\//.test(
+              id
+            )
+          )
+            return "firebase-db";
+          if (/node_modules\/(@firebase\/|firebase\/|idb\/)/.test(id))
+            return "firebase-auth";
+          if (
+            /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(
+              id
+            )
+          )
+            return "vendor";
+          // Micro-utils shared by BOTH the eager graph and lazy-pinned
+          // libs (recharts et al). Left unpinned, Rollup's small-chunk
+          // merging can host them INSIDE a lazy chunk (it merged clsx
+          // into charts), which silently gives the entry a static edge
+          // to that whole chunk — index.html then modulepreloads 403KB
+          // of recharts on every cold start just to reach clsx. Pin
+          // them to vendor (always eager) so a lazy chunk can never
+          // become their host. If a future bundle-size audit shows a
+          // lazy chunk back in index.html's modulepreload list, look
+          // for a new shared micro-dep first.
+          if (
+            /node_modules\/(clsx|react-is|tiny-invariant|use-sync-external-store)\//.test(
+              id
+            )
+          )
+            return "vendor";
+          return undefined;
         },
       },
     },
