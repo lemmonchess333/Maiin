@@ -133,6 +133,27 @@ describe("ShareCardRenderer", () => {
     expect(screen.getByText("total time")).toBeTruthy();
   });
 
+  it("NUTRITION renders the calories hero + macro line (S2 macro-day card)", () => {
+    render(
+      <ShareCardRenderer
+        data={{
+          ...base,
+          template: "nutrition",
+          calories: 2284,
+          calorieTarget: 2300,
+          protein: 162,
+          carbs: 248,
+          fat: 61,
+        }}
+        offscreen={false}
+      />
+    );
+    expect(screen.getByText("2,284")).toBeTruthy();
+    expect(screen.getByText(/of 2,300 kcal/)).toBeTruthy();
+    expect(screen.getByText(/162P/)).toBeTruthy();
+    expect(screen.getByText(/248C/)).toBeTruthy();
+  });
+
   it("forwards a ref to the root node (for html-to-image rasterisation)", () => {
     const ref = createRef<HTMLDivElement>();
     render(<ShareCardRenderer data={base} ref={ref} />);
