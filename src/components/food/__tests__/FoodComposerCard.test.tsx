@@ -112,6 +112,35 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
   });
 });
 
+describe("FoodComposerCard — no standing manual-log link (wave2 C)", () => {
+  it("renders no always-visible 'Log manually' control", () => {
+    renderComposer();
+    expect(screen.queryByText("Log manually")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /log a meal manually/i })
+    ).toBeNull();
+  });
+
+  it("manual entry stays reachable via the dropdown's no-results row", () => {
+    const onManualOpen = vi.fn();
+    renderComposer({
+      onManualOpen,
+      showSuggestions: true,
+      offEmpty: true,
+      offSearchQuery: "zzqxv",
+    });
+    fireEvent.click(screen.getByRole("button", { name: /no matches found/i }));
+    expect(onManualOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("composer body is exactly the input surface: textarea + scan + meal pills (no extra CTA shapes)", () => {
+    renderComposer();
+    // Visible buttons: 1 scan icon + 4 meal pills. Nothing else.
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(5);
+  });
+});
+
 describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
   const quota = (over: Record<string, unknown> = {}) => ({
     loading: false,

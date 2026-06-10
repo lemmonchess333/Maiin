@@ -75,8 +75,9 @@ interface FoodComposerCardProps {
 
 /**
  * The Food page's input surface: NL textarea (with scan icon, send
- * button + suggestions dropdown), "Add to" meal pills, quota
- * footnote, and the secondary "Log manually" link.
+ * button + suggestions dropdown), the conditional quota caption, and
+ * the "Add to" meal pills. ONE entry surface — manual logging is
+ * contextual (dropdown no-results row), not a standing link.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -322,23 +323,11 @@ function FoodComposerCard({
           );
         })}
       </div>
-      <div className="mt-3">
-        {/* Manual logging fallback. Centered text-only so it
-              doesn't compete with Scan or the NL composer. The
-              drawer is the only escape hatch when AI / barcode /
-              OFF search all fail to find a match. */}
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            onManualOpen();
-          }}
-          className="w-full mt-2 min-h-[44px] py-2 text-sm font-medium text-muted-foreground active:scale-[0.98] transition-transform"
-          aria-label="Log a meal manually"
-        >
-          Log manually
-        </button>
-      </div>
+      {/* No standing manual-log link (wave2 C). Manual entry remains
+          reachable exactly when flows fail the user: the dropdown's
+          no-results row (below, via onManualOpen), the AI-failure
+          fallback (FoodAnalyzer onRequestManualLog), and the OFF
+          search-error toast action — all owned by the parent. */}
     </div>
   );
 }
