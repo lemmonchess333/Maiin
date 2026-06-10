@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" role="img" aria-label="Tropos hexagon-chevron mark">
+  <!--
+    Canonical Tropos brand mark — pointy-top hexagon + upward chevron.
+    Geometry is shared with the in-app EmptyState primitive
+    (src/components/ui/EmptyState.tsx: HEX_POINTS / CHEVRON) so the empty-state
+    hexagon, the streak badges, and the app icon all read as one mark.
+
+    This asset is the single source of truth for icon + brand derivations.
+    It is NOT yet wired into any production surface — the EmptyState refactor
+    to consume it, and any app-icon swap, happen in a later rollout. Stroke
+    uses currentColor so callers theme it.
+  -->
+  <polygon points="50,6 89,28 89,72 50,94 11,72 11,28"
+           stroke="currentColor" stroke-width="6"
+           stroke-linejoin="round" stroke-linecap="round" />
+  <polyline points="34,58 50,40 66,58"
+            stroke="currentColor" stroke-width="6"
+            stroke-linejoin="round" stroke-linecap="round" />
+</svg>
