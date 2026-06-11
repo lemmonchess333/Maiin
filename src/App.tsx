@@ -25,6 +25,8 @@ import { captureError } from "@/lib/errorReporting";
 /* Chunk-error-recovering lazy wrapper. Extracted to src/lib/lazyRetry
    so sub-component lazy loads (Soc5 item 10) can share it. */
 import { lazyRetry } from "@/lib/lazyRetry";
+// Shipped ambient brand glow — eager (tiny, renders on every authed page).
+import AmbientGlow from "@/components/AmbientGlow";
 
 // Lazy-loaded pages & layout for code splitting
 const Layout = lazyRetry(() => import("@/components/Layout"));
@@ -103,15 +105,11 @@ const BrandBakeoff =
     ? lazyRetry(() => import("@/pages/dev/BrandBakeoff"))
     : null;
 
-// Dev/test-only ambient-glow bake-off layer. Same MODE gate as the brand
-// bake-off above — dead-code-eliminated from production, present in
-// `vite dev` + the e2e/test build so the rig can capture candidates on the
-// real seeded pages. Reads its candidate/intensity from localStorage and
-// renders a fixed top-glow behind the app (or nothing). Never ships.
-const AmbientEmission =
-  import.meta.env.MODE !== "production"
-    ? lazyRetry(() => import("@/dev/AmbientEmission"))
-    : null;
+// The ambient-emission bake-off (#1252) concluded: candidate A (single
+// brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
+// to avoid a double-render with the shipped layer; it's recoverable from
+// history + the contact sheet in docs/visual-audit/ambient/ if a future
+// re-tune needs it.
 
 function PageLoader() {
   // Route-aware skeleton instead of a bare centered spinner. This is the
@@ -385,12 +383,12 @@ function AppRoutes() {
               {/* #995 tier-3: ≤1 inline education card at a time. */}
               <EducationLaneProvider>
                 <RoutePrefetcher />
-                {/* Dev/test-only ambient-glow bake-off layer (null in prod).
-                    Sits at the authenticated root so it renders behind every
-                    app page; reads its candidate from localStorage. The
-                    unauthenticated auth-shell branch above never mounts it,
-                    so the shipped auth ambience is untouched. */}
-                {AmbientEmission && <AmbientEmission />}
+                {/* Shipped single-hue brand ambient glow. Authenticated root
+                    only, so it sits behind every app page but the
+                    unauthenticated auth-shell branch (its own ambience) is
+                    untouched. Renders nothing on run/map routes and under
+                    prefers-reduced-transparency. */}
+                <AmbientGlow />
                 {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and
