@@ -86,6 +86,11 @@ service cloud.firestore {
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',
+        // Goal-weight editor (#1140) — persisted by the CLIENT (Settings →
+        // Goal Weight) + allowed in profileSanitizer.js, but were never added
+        // to this client-write allow-list, so every Goal-Weight save was
+        // rejected ("Couldn't save your settings"). Both gates now agree.
+        'goalWeightKg', 'weeklyRateKg',
         'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes', 'lastActiveAt',
         'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
