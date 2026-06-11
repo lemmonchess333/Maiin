@@ -331,7 +331,12 @@ select.ds-input:focus {
    that scroll under fixed top-aligned cards, keeping the
    transition smooth. */
 .ds-safe-top-occluder {
-  background: hsl(var(--background) / 0.94);
+  /* Translucent + blurred so the ambient brand glow (`.ambient-glow`)
+     blurs THROUGH the status-bar zone without a hard colour seam where
+     the occluder meets the glow below. (Was 0.94/near-opaque while the
+     canvas was flat neutral and there was nothing to blur through; the
+     shipped glow reverses that rationale.) */
+  background: hsl(var(--background) / 0.47);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   /* Force the occluder onto its OWN compositor layer. Without this,
