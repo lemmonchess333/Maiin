@@ -72,10 +72,28 @@ is deliberately calm (subtle shadows, no decorative gradients, no new
 colours); the goal here is hitch-free motion within that restraint, not the
 shader-heavy "delight" of the article this idea came from.
 
+## What the CI calibration found (runs 1-3)
+
+The non-blocking lane earned its keep immediately:
+
+1. **`networkidle` never fires** against a Firebase app — Firestore's realtime
+   listeners hold the connection open, so the wait timed out. → wait for the
+   trigger element instead.
+2. **Single-frame "stalls"** were the CDP screencast emitting duplicate frames
+   at ~120fps, not hitches. → a stall must be a RUN of ≥3 frozen frames.
+3. **Discrete pop/stall counts are noisy** on a web screencast (non-deterministic
+   across retries) — but **`smoothness` is robust** (0.87-0.93, and it ranked the
+   water-fill smoother than the route transition). JPEG compression noise also
+   manufactured false pops. → capture **PNG** (lossless), and treat this lane as
+   a **diagnostic, not an oracle**: it logs `smoothness` + candidate frames for
+   review and hard-fails only on `hasMotion` (a dead selector).
+
+**The durable takeaway:** pixel-diffing a screencast gives you a reliable
+_smoothness metric_, not reliable _binary jank flags_. Use it to watch
+smoothness for regressions and to surface frames worth eyeballing.
+
 ## Not yet done
 
-- **Calibration pass** — the FIRST CI run is the calibration: confirm each
-  trigger animates and that `settleMs` covers the whole transition, then
-  tighten thresholds and flip the CI step from non-blocking to blocking.
-- A baseline/regression mode (compare a transition's smoothness to a stored
-  reference, like Playwright's screenshot snapshots).
+- A smoothness baseline/regression GATE — compare each transition's smoothness
+  to a stored reference (like Playwright's screenshot snapshots) and fail on a
+  drop. That's the point to flip the CI step from non-blocking to blocking.
