@@ -84,7 +84,7 @@ function formatDur(seconds: number): string {
 }
 
 const RUN_CHIPS = ["Nice run!", "Great pace!", "Keep it up!"];
-const LIFT_CHIPS = ["Great lift!", "Beast mode!", "Strong work!"];
+const LIFT_CHIPS = ["Great lift!", "Solid session!", "Strong work!"];
 
 interface ActivityCardProps {
   feedItem: FeedItem;
