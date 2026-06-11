@@ -16,7 +16,8 @@ import { getQueueLength } from "@/lib/offlineQueue";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useEffect, useSyncExternalStore, useCallback } from "react";
+import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
+import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
 
 /** Subscribe to offline queue length — polls every 3s while offline */
 function useQueueCount(isOnline: boolean): number {
@@ -54,6 +55,29 @@ export default function Layout() {
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
   const queueCount = useQueueCount(isOnline);
+
+  // Swipe-between-tabs. Active only on the tab roots (the hook no-ops on
+  // sub-pages); conflict avoidance lives in the hook + the data-no-page-swipe
+  // / data-swipe-card opt-outs on horizontal-gesture owners.
+  const tabRoutes = tabs.map((t) => t.to);
+  const { onTouchStart: onSwipeStart, onTouchEnd: onSwipeEnd } =
+    useSwipeNavigation(tabRoutes, location.pathname);
+
+  // Directional page transition: slide toward the new tab's side. Derived
+  // from the tab-index delta so a TAP on the nav slides the same way a swipe
+  // does. Uses React's "adjust state during render" pattern to remember the
+  // previous tab index — computing slideDir synchronously so the keyed
+  // motion.div below mounts with the correct entry offset (an effect would
+  // land one render too late). Sub-page nav (idx -1) just fades (slideDir 0).
+  const activeIdx = tabRoutes.indexOf(location.pathname);
+  const [prevIdx, setPrevIdx] = useState(activeIdx);
+  const [slideDir, setSlideDir] = useState<-1 | 0 | 1>(0);
+  if (prevIdx !== activeIdx) {
+    setSlideDir(
+      activeIdx !== -1 && prevIdx !== -1 ? (activeIdx > prevIdx ? 1 : -1) : 0
+    );
+    setPrevIdx(activeIdx);
+  }
 
   // PWA Safeguard 2: Fix iOS 17+ position:fixed drift after backgrounding
   useEffect(() => {
@@ -167,13 +191,20 @@ export default function Layout() {
       {/* Page fade also gated on reduced motion — the cross-page
           opacity transition is purely cosmetic. Reduced-motion users
           get an instant change. */}
-      <main id="main-content" className="max-w-md mx-auto px-4 py-6 sm:py-7">
+      <main
+        id="main-content"
+        className="max-w-md mx-auto px-4 py-6 sm:py-7"
+        onTouchStart={onSwipeStart}
+        onTouchEnd={onSwipeEnd}
+      >
         <motion.div
           key={location.pathname}
-          initial={prefersReducedMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={
+            prefersReducedMotion ? false : { opacity: 0, x: slideDir * 24 }
+          }
+          animate={{ opacity: 1, x: 0 }}
           transition={
-            prefersReducedMotion ? { duration: 0 } : { duration: 0.15 }
+            prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
           }
         >
           <Outlet />
