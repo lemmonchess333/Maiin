@@ -163,12 +163,14 @@ Mirror Adaptive TDEE's shape (`adaptiveTdee.ts` estimator → `adaptiveTarget.ts
 
 ---
 
-## 10. Open product decisions (need the owner — they shape Phase 1/2 specifics)
+## 10. Locked decisions (2026-06-11, with product owner)
 
-1. **Free vs Pro.** Adaptive TDEE is Pro-gated. Is _personalized paces_ free (drive adoption / the "made for me" hook on first run) with _Pace Insights adaptivity_ as Pro? Or all-Pro? Or all-free?
-2. **Benchmark capture.** Ask a recent race in onboarding, derive silently from early runs, or both?
-3. **Volume personalization.** v1 personalizes _pace_ only; should the scheduler also scale _distances_ by fitness (Runna does) — now or later?
-4. **GAP (grade-adjusted pace).** Worth it for hilly-area accuracy now, or defer?
+1. **Gating — paces FREE, adaptivity PRO.** Personalized paces (the "made for me on your first run" hook) are **free** — a concrete reason to switch from free NRC. The adaptive **Pace Insights** recalibration loop is **Pro** (mirrors Adaptive TDEE being Pro). So Phase 1 ships free; Phase 2 sits behind the Pro gate (`isAdaptiveActive`-style eligibility). Free users still get personalized paces and can set/update their benchmark manually; they just don't get auto-suggested recalibration.
+2. **Benchmark capture — BOTH ask + derive.** Optional onboarding question (recent 5K/10K time or self-rated level → conservative VDOT) **and** silent derivation from early `isVolumeEligible` runs, converging via Pace Insights. Skipping the question is never a dead-end (derive + warmup).
+3. **Scope — paces only in v1.** Personalize the _effort_ (pace) per session; keep today's distances/durations. Fitness-scaled _volume_ (a beginner's "long run" is shorter) is a **later** scheduler change, explicitly deferred — keeps Phase 1 small and non-breaking.
+4. **GAP — deferred.** v1 compares **raw** pace; grade-adjusted pace (using our elevation capture) is a later accuracy upgrade, not in the first build.
+
+> Gating consequence for the build: keep the **pace engine + resolver (Phase 1)** free of any Pro check; put the Pro gate only on the **Pace Insights suggestion surface (Phase 2)**, reusing the Adaptive TDEE eligibility pattern so the two adaptive loops gate identically.
 
 ---
 
