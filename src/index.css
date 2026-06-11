@@ -269,16 +269,18 @@ body,
 
 body {
   margin: 0;
-  /* The global app canvas is a clean neutral grey. PR #511's
-     attempt at a global radial-gradient ambient layer (purple +
-     warm) was reverted because it cast a muddy warm haze behind
-     every logged-in page (Home, Food, Programme, History, Social),
-     reducing perceived sharpness of cards and chart surfaces.
-     The product is data-dense — cards, charts, macros, food
-     colours, run/lift accents — and reads more premium on a
-     clean neutral canvas than on a tinted gradient. Ambience now
-     only lives on dedicated marketing surfaces (.ds-auth-shell)
-     where it has room to breathe without competing with data. */
+  /* The app canvas is a clean neutral grey carrying a single subtle
+     brand glow at the very top (see `.ambient-glow` below). PR #511's
+     earlier attempt at a global ambient layer was REVERTED — it mixed
+     TWO hues (purple + warm) into a muddy haze behind every logged-in
+     page that dulled the data-dense cards/charts. The shipped glow is
+     the deliberate answer to that post-mortem, NOT a repeat of it:
+     ONE hue (brand purple), eased falloff COMPLETE high up so the
+     lower half of every page stays clean neutral canvas, a faint noise
+     overlay against OLED banding, and a dark-primary treatment (light
+     merely brightens tinted-white → canvas). Tuned via the
+     --ambient-glow-* tokens. Auth-shell ambience (.ds-auth-shell) is a
+     separate surface and is unchanged. */
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family:
@@ -294,6 +296,83 @@ body {
      the sizes we use. */
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: contain;
+}
+
+/* ─── AMBIENT BRAND GLOW ──────────────────────────────────────
+   Single subtle top glow behind the app canvas (the deliberate,
+   post-#511 reintroduction — see the body comment above). ONE hue
+   (brand purple), eased multi-stop falloff complete high up so the
+   lower half of every page stays clean neutral canvas, faint noise
+   against banding. Dark = an emission glow; light = a brighten
+   (tinted-white → canvas). Rendered by `src/components/AmbientGlow.tsx`
+   as a fixed, pointer-events-none layer behind content (the app's
+   Layout root is transparent, so it shows through the gaps between
+   cards while opaque cards paint over it). Route exclusions
+   (run/map surfaces) live in that component.
+
+   Tunable knobs — dial intensity here, not in the component: */
+:root {
+  --ambient-glow-peak: 0.12; /* dark emission peak alpha */
+  --ambient-glow-light: 8%; /* light brighten: mix toward white */
+}
+
+.ambient-glow {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  height: 22vh; /* light: falloff completes above the first card */
+  z-index: -1;
+  pointer-events: none;
+  /* LIGHT — brighten, NOT the #511 accent-over-grey method. */
+  background: radial-gradient(
+    120% 100% at 20% -5%,
+    color-mix(in oklch, hsl(var(--primary)) var(--ambient-glow-light), white) 0%,
+    color-mix(
+        in oklch,
+        hsl(var(--primary)) calc(var(--ambient-glow-light) / 2),
+        white
+      )
+      30%,
+    hsl(var(--background)) 78%
+  );
+}
+
+.dark .ambient-glow {
+  height: 45vh; /* dark: more room; falloff complete by ~45vh */
+  /* DARK — tight bright core over a wider soft halo, single hue. */
+  background:
+    radial-gradient(
+      circle at 20% -5%,
+      hsl(var(--primary) / var(--ambient-glow-peak)) 0%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.55)) 12%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.2)) 22%,
+      transparent 30%
+    ),
+    radial-gradient(
+      120% 60% at 50% 0%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.5)) 0%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.22)) 22%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.08)) 34%,
+      transparent 45%
+    );
+}
+
+/* Faint fractal noise (data-URI) breaks up gradient banding on OLED. */
+.ambient-glow__noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .ambient-glow__noise {
+  opacity: 0.025;
+}
+
+/* Accessibility: users who ask for less transparency get no glow. */
+@media (prefers-reduced-transparency: reduce) {
+  .ambient-glow {
+    display: none;
+  }
 }
 
 /* Numeral font (Archivo) is proportional, so force tabular figures on every
