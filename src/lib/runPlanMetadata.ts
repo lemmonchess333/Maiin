@@ -101,6 +101,9 @@ export interface RunPlanPrefill {
     reps: number;
     workDistance?: number;
     workDuration?: number;
+    /** Adaptive Paces: personalized interval work pace (sec/km), resolved from
+     *  the user's fitness when available. Undefined → PaceZoneBar falls back. */
+    workPace?: number;
     restDuration: number;
     warmupDuration?: number;
     cooldownDuration?: number;
@@ -674,7 +677,13 @@ function templateToPrefill(
     }
   }
   if (tmpl.config.intervals) {
-    prefill.intervals = tmpl.config.intervals;
+    // Adaptive Paces: personalize the interval work pace (VO₂max) from the
+    // user's fitness; falls through to undefined (PaceZoneBar's own fallback)
+    // when there's no benchmark.
+    const workPace = resolveSessionPaces(tmpl.type, paceTable ?? null).workPace;
+    prefill.intervals = workPace
+      ? { ...tmpl.config.intervals, workPace }
+      : tmpl.config.intervals;
   }
   return prefill;
 }
