@@ -101,7 +101,7 @@ export default function SettingsRecentlyDeleted() {
       {loading && sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : sorted.length === 0 ? (
-        <div className="rounded-xl bg-card border border-border/40 p-4 text-center space-y-1">
+        <div className="rounded-xl bg-card card-shadow p-4 text-center space-y-1">
           <Utensils
             aria-hidden="true"
             className="size-5 mx-auto text-muted-foreground"
@@ -118,10 +118,7 @@ export default function SettingsRecentlyDeleted() {
             const isPending = pendingId === meal.id;
             const relative = formatRelative(deletedAtMs(meal));
             return (
-              <li
-                key={meal.id}
-                className="rounded-xl bg-card border border-border/40 p-3"
-              >
+              <li key={meal.id} className="rounded-xl bg-card card-shadow p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
