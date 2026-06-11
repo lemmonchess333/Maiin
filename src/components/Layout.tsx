@@ -262,11 +262,11 @@ export default function Layout() {
                             icon + label. Reduced-motion → static, no slide. */}
                         {isActive &&
                           (prefersReducedMotion ? (
-                            <div className="absolute inset-x-2 inset-y-1.5 rounded-2xl bg-primary/10 z-0" />
+                            <div className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0" />
                           ) : (
                             <motion.div
                               layoutId="nav-active-pill"
-                              className="absolute inset-x-2 inset-y-1.5 rounded-2xl bg-primary/10 z-0"
+                              className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0"
                               transition={{
                                 type: "spring",
                                 stiffness: 600,
@@ -319,7 +319,12 @@ export default function Layout() {
                             <div className="absolute -top-1 -right-1 size-2 rounded-full bg-primary" />
                           )}
                         </motion.div>
-                        <span className="relative z-10 max-w-full truncate text-xs font-medium tracking-wide">
+                        <span
+                          className={cn(
+                            "relative z-10 max-w-full truncate text-xs tracking-wide",
+                            isActive ? "font-semibold" : "font-medium"
+                          )}
+                        >
                           {tab.label}
                         </span>
                       </>
