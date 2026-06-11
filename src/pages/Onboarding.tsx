@@ -1513,89 +1513,110 @@ export default function Onboarding() {
              STEP 7 — Confirmation
           ════════════════════════════════ */}
           {step === 7 && (
-            <div
-              className="rounded-2xl p-5 space-y-0"
-              style={{
-                background: `${THEME.brand}08`,
-                border: `1px solid ${THEME.brand}25`,
-              }}
-            >
-              {[
-                {
-                  label: "Your plan",
-                  value: splitLabel(preferredSplit),
-                  color: THEME.brand,
-                },
-                {
-                  label: "Schedule",
-                  value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`,
-                  color: THEME.brand,
-                },
-                {
-                  label: "Setup",
-                  value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
-                  color: THEME.lifting,
-                },
-                {
-                  label: "Running",
-                  value:
-                    runFrequency === "none"
-                      ? "No running"
-                      : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`,
-                  color: THEME.running,
-                },
-                {
-                  label: "Metrics",
-                  value: `${displayHeight} · ${displayWeight}`,
-                  color: THEME.warning,
-                },
-                {
-                  // Surfaces the derived nutrition phase + its calorie
-                  // consequence — the decision goalToFitnessGoal makes that
-                  // was previously invisible (only the numbers showed below).
-                  // Tier 2 — phase comes from the goal-weight plan.
-                  label: "Nutrition",
-                  value: nutritionPhaseLabel(
-                    goalPlan.fitnessGoal,
-                    tdee.deficit
-                  ),
-                  color: THEME.warning,
-                },
-                {
-                  label: "Daily targets",
-                  value: `${tdee.targetCalories} cal · ${tdee.protein}g P · ${tdee.carbs}g C · ${tdee.fat}g F`,
-                  color: THEME.success,
-                },
-              ].map((row, i, rows) => (
-                <motion.div
-                  key={row.label}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.3 }}
-                  className="flex items-start gap-3 py-3"
-                  style={{
-                    borderBottom:
-                      i < rows.length - 1
-                        ? "1px solid hsl(var(--border))"
-                        : "none",
-                  }}
-                >
-                  <div
-                    className="size-2 rounded-full mt-1.5 flex-shrink-0"
-                    style={{ background: row.color }}
-                  />
-                  <div>
-                    <p
-                      className="text-xs uppercase tracking-wider"
-                      style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
-                    >
-                      {row.label}
-                    </p>
-                    <p className="text-sm font-semibold mt-0.5">{row.value}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            <>
+              <div
+                className="rounded-2xl p-5 space-y-0"
+                style={{
+                  background: `${THEME.brand}08`,
+                  border: `1px solid ${THEME.brand}25`,
+                }}
+              >
+                {[
+                  {
+                    label: "Your plan",
+                    value: splitLabel(preferredSplit),
+                    color: THEME.brand,
+                  },
+                  {
+                    label: "Schedule",
+                    value: `${daysPerWeek} days/week · ${goalLabel(primaryGoal)}`,
+                    color: THEME.brand,
+                  },
+                  {
+                    label: "Setup",
+                    value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
+                    color: THEME.lifting,
+                  },
+                  {
+                    label: "Running",
+                    value:
+                      runFrequency === "none"
+                        ? "No running"
+                        : `${runFreqLabel(runFrequency)}${runMode !== "freeform" ? ` · ${runMode === "race_prep" ? `Race prep (${raceDistance.toUpperCase()})` : "Structured"}` : ""}`,
+                    color: THEME.running,
+                  },
+                  {
+                    label: "Metrics",
+                    value: `${displayHeight} · ${displayWeight}`,
+                    color: THEME.warning,
+                  },
+                  {
+                    // Surfaces the derived nutrition phase + its calorie
+                    // consequence — the decision goalToFitnessGoal makes that
+                    // was previously invisible (only the numbers showed below).
+                    // Tier 2 — phase comes from the goal-weight plan.
+                    label: "Nutrition",
+                    value: nutritionPhaseLabel(
+                      goalPlan.fitnessGoal,
+                      tdee.deficit
+                    ),
+                    color: THEME.warning,
+                  },
+                  {
+                    label: "Daily targets",
+                    value: `${tdee.targetCalories} cal · ${tdee.protein}g P · ${tdee.carbs}g C · ${tdee.fat}g F`,
+                    color: THEME.success,
+                  },
+                ].map((row, i, rows) => (
+                  <motion.div
+                    key={row.label}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1, duration: 0.3 }}
+                    className="flex items-start gap-3 py-3"
+                    style={{
+                      borderBottom:
+                        i < rows.length - 1
+                          ? "1px solid hsl(var(--border))"
+                          : "none",
+                    }}
+                  >
+                    <div
+                      className="size-2 rounded-full mt-1.5 flex-shrink-0"
+                      style={{ background: row.color }}
+                    />
+                    <div>
+                      <p
+                        className="text-xs uppercase tracking-wider"
+                        style={{ color: "hsl(var(--muted-foreground) / 0.7)" }}
+                      >
+                        {row.label}
+                      </p>
+                      <p className="text-sm font-semibold mt-0.5">
+                        {row.value}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              {/* D8 — adaptivity framing. The single highest-retention sentence
+                for cold-start: it reframes a thin Week-1 plan from
+                "disappointing / not personalised" to "as designed", which is
+                the documented #1 cold-start risk. */}
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+                className="text-xs text-center leading-relaxed mt-4 px-2"
+                style={{ color: "hsl(var(--muted-foreground))" }}
+              >
+                Week 1 is just where we start. Your plan{" "}
+                <span style={{ color: THEME.brand, fontWeight: 600 }}>
+                  adapts every time you log
+                </span>{" "}
+                — sessions, runs, and weight all tune it as you go.
+              </motion.p>
+            </>
           )}
         </motion.div>
       </AnimatePresence>
