@@ -242,6 +242,51 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   targetWaterGlasses: (v) => cleanNumber(v, { min: 0, max: 50, integer: true }),
   adjustCaloriesForTraining: cleanBoolean,
 
+  // Adaptive TDEE weekly-rate cap smoothing (client-managed). Shipped + written
+  // by useAdaptiveTdee but was missing here AND from firestore.rules, so writes
+  // were silently dropped/rejected. `null` clears it.
+  adaptiveCapState: (v) => {
+    if (v === null) return null;
+    return cleanObject(v, {
+      lastApplied: (n) => cleanNumber(n, { min: 0, max: 10000 }),
+      lastAppliedAt: (s) => cleanString(s, 40),
+    });
+  },
+
+  // Adaptive Paces — run fitness benchmark (the INPUT; paces are derived, never
+  // stored). See docs/adaptive-paces-design.md. `null` clears it; `benchmark`
+  // may itself be null (vdot/source set without a stored effort).
+  runFitness: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    const out = {};
+    if (v.benchmark === null) {
+      out.benchmark = null;
+    } else if (v.benchmark && typeof v.benchmark === "object") {
+      const distanceM = cleanNumber(v.benchmark.distanceM, {
+        min: 100,
+        max: 200000,
+      });
+      const timeS = cleanNumber(v.benchmark.timeS, { min: 30, max: 86400 });
+      if (distanceM !== undefined && timeS !== undefined) {
+        out.benchmark = { distanceM, timeS };
+      }
+    }
+    const vdot =
+      v.vdot === null ? null : cleanNumber(v.vdot, { min: 20, max: 90 });
+    if (vdot !== undefined) out.vdot = vdot;
+    const source = cleanEnum(v.source, [
+      "race",
+      "manual",
+      "estimate",
+      "derived",
+    ]);
+    if (source !== undefined) out.source = source;
+    const updatedAt = cleanString(v.updatedAt, 40);
+    if (updatedAt !== undefined) out.updatedAt = updatedAt;
+    return Object.keys(out).length > 0 ? out : undefined;
+  },
+
   macroTargets: (v) =>
     cleanObject(v, {
       calories: (n) => cleanNumber(n, { min: 0, max: 10000 }),
