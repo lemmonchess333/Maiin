@@ -25,7 +25,7 @@ export default function PostCompletionKudos({
   const verb = candidate.type === "run" ? "ran" : "trained";
 
   return (
-    <div className="rounded-2xl bg-card border border-border/50 shadow-sm p-4">
+    <div className="rounded-2xl bg-card card-shadow p-4">
       <div className="flex items-center gap-3">
         <BlockAwareAvatar
           uid={candidate.authorId}

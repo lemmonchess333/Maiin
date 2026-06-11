@@ -89,7 +89,7 @@ export default function SoloFirstFeed({ onNavigateTab }: SoloFirstFeedProps) {
       )}
 
       {/* Share your training */}
-      <div className="rounded-2xl bg-card border border-border/50 p-4">
+      <div className="rounded-2xl bg-card card-shadow p-4">
         <div className="flex items-start gap-3">
           <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
             <Dumbbell className="size-6 text-primary" />
