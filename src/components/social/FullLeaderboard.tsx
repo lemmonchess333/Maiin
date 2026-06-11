@@ -116,7 +116,10 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* Tab row */}
-      <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+      <div
+        data-no-page-swipe
+        className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1"
+      >
         {TABS.map((t) => (
           <button
             type="button"

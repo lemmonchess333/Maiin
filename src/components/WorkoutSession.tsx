@@ -992,6 +992,7 @@ export default function WorkoutSession({
       <div className="relative">
         <div
           ref={tabsRef}
+          data-no-page-swipe
           className="flex gap-1.5 px-4 py-3 overflow-x-auto"
           style={{ scrollbarWidth: "none" }}
         >
