@@ -1,6 +1,15 @@
-import { useMemo, useState, useRef, useId, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useId,
+  type ReactNode,
+} from "react";
+import { motion, useMotionValue, animate } from "framer-motion";
 import { THEME } from "../../lib/theme";
 import { haptic } from "../../lib/haptic";
+import { projectAndSnap } from "../../lib/sheetSnap";
 import {
   calculatePace,
   rollingPace,
@@ -35,8 +44,10 @@ interface RunBottomSheetProps {
   weightKg: number;
 }
 
-// Sheet height as fraction of viewport: full, mid, compact
+// Visible sheet height as fraction of viewport: compact, mid, full.
+// idx 2 = expanded timer view; idx 0 = compact bar (map mostly visible).
 const SNAPS: [number, number, number] = [0.13, 0.4, 0.91];
+const SHEET_SPRING = { type: "spring" as const, stiffness: 520, damping: 44 };
 
 /* haptic moved to the shared @/lib/haptic implementation in
    W1f, which routes through the Capacitor Haptics plugin in the
@@ -161,8 +172,91 @@ export default function RunBottomSheet({
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
-  const dragY = useRef<number | null>(null);
   const isExpanded = snapIdx === 2;
+
+  // ── Draggable bottom sheet ────────────────────────────────────────────
+  // Was a touchstart→touchend Y-delta wired ONLY to the 36px handle: tiny
+  // target, no live feedback, and — with no touch-action — the browser
+  // scrolled / rubber-banded the page underneath mid-drag ("it just swipes
+  // the page"). Now the WHOLE sheet is a pointer-drag surface that follows
+  // the finger and snaps with momentum; touch-action:none stops the page
+  // from moving while you drag.
+  const [vh, setVh] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight : 800
+  );
+  useEffect(() => {
+    const onResize = () => setVh(window.innerHeight);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  // Sheet `top` in px for each snap (smaller top = taller sheet).
+  const snapTops = useMemo(() => SNAPS.map((s) => (1 - s) * vh), [vh]);
+  const top = useMotionValue(snapTops[snapIdx]);
+  const draggingRef = useRef(false);
+  const dragStartY = useRef(0);
+  const dragStartTop = useRef(0);
+  const lastY = useRef(0);
+  const lastT = useRef(0);
+  const velRef = useRef(0);
+
+  // Settle to the active snap when it changes externally (tap-to-expand,
+  // keyboard, viewport resize) — never while a drag is in flight.
+  useEffect(() => {
+    if (draggingRef.current) return;
+    const controls = animate(top, snapTops[snapIdx], SHEET_SPRING);
+    return () => controls.stop();
+  }, [snapIdx, snapTops, top]);
+
+  const onSheetPointerDown = (e: React.PointerEvent) => {
+    // Let interactive controls keep their taps — don't hijack into a drag.
+    if (
+      (e.target as HTMLElement).closest(
+        "button,[role='button'],a,input,select,textarea"
+      )
+    ) {
+      return;
+    }
+    draggingRef.current = true;
+    dragStartY.current = e.clientY;
+    dragStartTop.current = top.get();
+    lastY.current = e.clientY;
+    lastT.current = e.timeStamp;
+    velRef.current = 0;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* setPointerCapture can throw if the pointer already released */
+    }
+  };
+  const onSheetPointerMove = (e: React.PointerEvent) => {
+    if (!draggingRef.current) return;
+    const minTop = snapTops[2];
+    const maxTop = snapTops[0];
+    const next = Math.max(
+      minTop,
+      Math.min(maxTop, dragStartTop.current + (e.clientY - dragStartY.current))
+    );
+    top.set(next);
+    const dt = e.timeStamp - lastT.current;
+    if (dt > 0) velRef.current = ((e.clientY - lastY.current) / dt) * 1000;
+    lastY.current = e.clientY;
+    lastT.current = e.timeStamp;
+  };
+  const onSheetPointerUp = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    const target = projectAndSnap(top.get(), velRef.current, snapTops) as
+      | 0
+      | 1
+      | 2;
+    if (target !== snapIdx) {
+      setSnapIdx(target);
+      haptic("light");
+    } else {
+      // Same snap — settle back (the effect won't re-fire: snapIdx unchanged).
+      animate(top, snapTops[snapIdx], SHEET_SPRING);
+    }
+  };
 
   const pace = calculatePace(distance, elapsed);
   /* Rolling 30s pace = "what am I doing right now" — the live signal
@@ -175,23 +269,6 @@ export default function RunBottomSheet({
   const calories = estimateRunCalories(distance, weightKg);
   const elevation = totalElevationGain(points);
   const splits = useMemo(() => calculateSplits(points), [points]);
-  const sheetTop = `${(1 - SNAPS[snapIdx]) * 100}vh`;
-
-  const dragStart = (y: number) => {
-    dragY.current = y;
-  };
-  const dragEnd = (y: number) => {
-    if (dragY.current === null) return;
-    const d = y - dragY.current;
-    dragY.current = null;
-    if (d > 55 && snapIdx > 0) {
-      setSnapIdx((s) => (s - 1) as 0 | 1 | 2);
-      haptic("light");
-    } else if (d < -55 && snapIdx < 2) {
-      setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
-      haptic("light");
-    }
-  };
 
   return (
     <>
@@ -216,26 +293,27 @@ export default function RunBottomSheet({
         />
       )}
 
-      <div
+      <motion.div
         className="fixed left-0 right-0 bottom-0 z-40 flex flex-col rounded-t-[28px]"
         style={{
-          top: sheetTop,
+          top,
           background: `linear-gradient(180deg, ${THEME.surface} 0%, ${THEME.bg} 100%)`,
-          transition: "top 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
           boxShadow: "0 -12px 60px rgba(0,0,0,0.7)",
           borderTop: "1px solid rgba(255,255,255,0.07)",
+          touchAction: "none",
         }}
+        onPointerDown={onSheetPointerDown}
+        onPointerMove={onSheetPointerMove}
+        onPointerUp={onSheetPointerUp}
+        onPointerCancel={onSheetPointerUp}
       >
-        {/* Drag handle */}
+        {/* Drag handle — the whole sheet is draggable now, but the handle
+            stays as the visible affordance + a keyboard target. */}
         <div
-          className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing select-none flex-shrink-0"
           role="button"
           tabIndex={0}
-          aria-label="Drag to resize"
-          onMouseDown={(e) => dragStart(e.clientY)}
-          onMouseUp={(e) => dragEnd(e.clientY)}
-          onTouchStart={(e) => dragStart(e.touches[0].clientY)}
-          onTouchEnd={(e) => dragEnd(e.changedTouches[0].clientY)}
+          aria-label="Drag to resize the run panel"
           onKeyDown={(e) => {
             if (e.key === "ArrowUp" && snapIdx < 2) {
               setSnapIdx((s) => (s + 1) as 0 | 1 | 2);
@@ -248,10 +326,10 @@ export default function RunBottomSheet({
         >
           <div
             style={{
-              width: 36,
-              height: 4,
+              width: 40,
+              height: 5,
               borderRadius: 99,
-              background: "rgba(255,255,255,0.18)",
+              background: "rgba(255,255,255,0.22)",
             }}
           />
         </div>
@@ -699,7 +777,7 @@ export default function RunBottomSheet({
             </button>
           </div>
         )}
-      </div>
+      </motion.div>
       {/* Sprint 3: stop-confirmation migrated onto the shared <Dialog>
           primitive. Pre-Sprint-3 this modal had no escape-to-close
           handler — useFocusTrap was wired but Escape did nothing.
