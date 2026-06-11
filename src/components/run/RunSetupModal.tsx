@@ -16,6 +16,14 @@ import {
   Flag,
   Dumbbell,
   Headphones,
+  Sun,
+  CloudSun,
+  Cloud,
+  CloudFog,
+  CloudDrizzle,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -65,6 +73,23 @@ const ICON_MAP: Record<
   Flag,
   Dumbbell,
   Headphones,
+};
+
+// getWeatherIcon() returns an icon-NAME ("cloud-drizzle"), not display text.
+// Map it to the matching lucide component so the weather strip shows an icon
+// instead of printing the raw id (the "cloud-drizzle" heading bug).
+const WEATHER_ICON: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
+  sun: Sun,
+  "cloud-sun": CloudSun,
+  cloud: Cloud,
+  "cloud-fog": CloudFog,
+  "cloud-drizzle": CloudDrizzle,
+  "cloud-rain": CloudRain,
+  "cloud-snow": CloudSnow,
+  "cloud-lightning": CloudLightning,
 };
 
 export interface RunConfig {
@@ -586,9 +611,13 @@ export default function RunSetupModal({
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <span className="text-2xl">
-              {getWeatherIcon(weather.weatherCode)}
-            </span>
+            {(() => {
+              const WIcon =
+                WEATHER_ICON[getWeatherIcon(weather.weatherCode)] ?? Cloud;
+              return (
+                <WIcon className="size-6 shrink-0 text-muted-foreground" />
+              );
+            })()}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-foreground">
                 {weather.temperature}°C
@@ -597,6 +626,9 @@ export default function RunSetupModal({
                     (feels {weather.feelsLike}°)
                   </span>
                 )}
+                <span className="text-xs text-muted-foreground ml-1.5">
+                  · {weather.description}
+                </span>
               </p>
               <motion.p
                 key={config.activityType}

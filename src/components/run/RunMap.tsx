@@ -39,10 +39,16 @@ export default function RunMap({
   // leaving a silent blank map.
   const [tilesUnavailable, setTilesUnavailable] = useState(false);
   const markerRef = useRef<maplibregl.Marker | null>(null);
+  const coneRef = useRef<HTMLDivElement | null>(null);
   const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const endMarkerRef = useRef<maplibregl.Marker | null>(null);
 
-  // Initialize map
+  // Initialize map — once per (interactive / paceColored / darkMode), NOT per
+  // GPS fix. Listing points/currentPoint as deps re-ran init on every fix,
+  // which `map.remove()`d and rebuilt the whole map each time — the root cause
+  // of the jank, the route not persisting, and the camera not following. They
+  // are read here ONLY for the initial centre (intentionally non-reactive), so
+  // they're excluded from the dep array below.
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -56,7 +62,7 @@ export default function RunMap({
       container: containerRef.current,
       style: darkMode ? TILE_STYLES.dark : TILE_STYLES.light,
       center: initialCenter,
-      zoom: 15,
+      zoom: 16,
       attributionControl: false,
       interactive: interactive,
       dragRotate: false,
@@ -73,6 +79,22 @@ export default function RunMap({
         },
       });
 
+      // Casing under the route — a soft dark, slightly-blurred wider line so
+      // the bright route reads clearly over busy streets (the "premium" route
+      // look). Drawn first so the coloured line sits on top.
+      map.addLayer({
+        id: "route-casing",
+        type: "line",
+        source: "route",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": "#000000",
+          "line-width": 9,
+          "line-opacity": 0.28,
+          "line-blur": 1,
+        },
+      });
+
       map.addLayer({
         id: "route-line",
         type: "line",
@@ -81,7 +103,7 @@ export default function RunMap({
         paint: {
           "line-color": THEME.teal,
           "line-width": 5,
-          "line-opacity": 0.9,
+          "line-opacity": 0.95,
         },
       });
 
@@ -98,7 +120,7 @@ export default function RunMap({
           paint: {
             "line-color": ["get", "color"],
             "line-width": 5,
-            "line-opacity": 0.9,
+            "line-opacity": 0.95,
           },
         });
         map.setLayoutProperty("route-line", "visibility", "none");
@@ -119,8 +141,16 @@ export default function RunMap({
       map.off("load", onLoad);
       map.remove();
       mapRef.current = null;
+      // Null the marker refs too — they pointed at markers the removed map
+      // owned. Without this, a re-init (theme/mode change) would try to
+      // setLngLat on a dead marker instead of creating a fresh one.
+      markerRef.current = null;
+      coneRef.current = null;
+      startMarkerRef.current = null;
+      endMarkerRef.current = null;
     };
-  }, [interactive, paceColored, darkMode, currentPoint, points]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init runs once; points/currentPoint read only for the initial centre, updates handled by the route effect below
+  }, [interactive, paceColored, darkMode]);
 
   // Update route
   useEffect(() => {
@@ -192,27 +222,51 @@ export default function RunMap({
         }
       }
 
-      // Current position marker (live tracking)
+      // Current position marker (live tracking) — a heading "puck": a dot with
+      // a direction cone that rotates to the travel bearing (was a plain dot
+      // with no direction).
       if (currentPoint) {
         if (!markerRef.current) {
-          // Safe DOM construction instead of innerHTML. The values
-          // here come from THEME and aren't user-controlled, so the
-          // XSS surface is zero today — but innerHTML is a habit we
-          // don't want to carry into an app with UGC (runs, photos,
-          // comments), because any future refactor that threads a
-          // user string through this path would silently turn into
-          // an XSS sink.
           const outer = document.createElement("div");
-          outer.style.cssText = `width:24px;height:24px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
+          outer.style.cssText =
+            "position:relative;width:30px;height:30px;display:flex;align-items:center;justify-content:center;";
+          // Heading cone — hidden until we actually have a bearing so it
+          // doesn't point a misleading direction while stationary.
+          const cone = document.createElement("div");
+          cone.style.cssText = `position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:11px solid ${THEME.teal};opacity:0;transition:opacity .2s;`;
+          coneRef.current = cone;
+          const halo = document.createElement("div");
+          halo.style.cssText = `width:22px;height:22px;border-radius:50%;background:${THEME.teal}33;display:flex;align-items:center;justify-content:center;`;
           const inner = document.createElement("div");
-          inner.style.cssText = `width:12px;height:12px;border-radius:50%;background:${THEME.teal};border:2px solid white;`;
-          outer.appendChild(inner);
-          markerRef.current = new maplibregl.Marker({ element: outer })
+          inner.style.cssText = `width:13px;height:13px;border-radius:50%;background:${THEME.teal};border:2.5px solid white;box-shadow:0 0 0 1px ${THEME.teal}55;`;
+          halo.appendChild(inner);
+          outer.appendChild(cone);
+          outer.appendChild(halo);
+          markerRef.current = new maplibregl.Marker({
+            element: outer,
+            rotationAlignment: "map",
+          })
             .setLngLat([currentPoint.lon, currentPoint.lat])
             .addTo(map);
         } else {
           markerRef.current.setLngLat([currentPoint.lon, currentPoint.lat]);
         }
+
+        // Heading: bearing from the previous recorded point to the latest,
+        // but only once we've actually moved a few metres (so GPS jitter
+        // while standing still doesn't spin the cone).
+        if (visiblePoints.length >= 2) {
+          const prev = visiblePoints[visiblePoints.length - 2];
+          const last = visiblePoints[visiblePoints.length - 1];
+          const moved = haversineQuick(prev.lat, prev.lon, last.lat, last.lon);
+          if (moved > 3) {
+            markerRef.current.setRotation(
+              bearingDeg(prev.lat, prev.lon, last.lat, last.lon)
+            );
+            if (coneRef.current) coneRef.current.style.opacity = "1";
+          }
+        }
+
         map.easeTo({
           center: [currentPoint.lon, currentPoint.lat],
           duration: 500,
@@ -309,4 +363,20 @@ function haversineQuick(
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Initial bearing from point 1 → point 2, degrees clockwise from north. */
+function bearingDeg(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
