@@ -73,7 +73,7 @@ export default function TrajectoryCard() {
           : Minus;
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
+    <div className="p-4 rounded-2xl bg-card card-shadow">
       <div className="flex items-center gap-2 mb-3">
         <Zap className="size-5" style={{ color: THEME.brand }} />
         <div className="flex-1">

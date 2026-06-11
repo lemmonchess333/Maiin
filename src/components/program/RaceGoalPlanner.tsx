@@ -59,7 +59,7 @@ export default function RaceGoalPlanner({
     state.status === "below-floor";
 
   return (
-    <div className="mt-3 space-y-3 p-3 rounded-xl bg-card border border-border/50">
+    <div className="mt-3 space-y-3 p-3 rounded-xl bg-card card-shadow">
       {/* Distance */}
       <div>
         <SectionLabel className="mb-1.5">Distance</SectionLabel>

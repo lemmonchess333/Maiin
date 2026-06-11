@@ -43,6 +43,11 @@ interface EmptyStateProps {
   /** Page domain accent — tints the hexagon stroke + inner icon at low
    *  opacity. Defaults to brand purple. */
   accent?: string;
+  /** Compact treatment for empty states that live INSIDE a card (e.g. the
+   *  Performance hero on Home / Analytics) rather than filling a page —
+   *  smaller hexagon + tighter rhythm so the empty card doesn't dominate
+   *  the screen. Defaults to the full page-level size. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -52,10 +57,11 @@ export function EmptyState({
   icon: Icon,
   action,
   accent = THEME.brand,
+  compact = false,
   className,
 }: EmptyStateProps) {
   const reduced = useReducedMotion();
-  const size = 72;
+  const size = compact ? 52 : 72;
 
   // Draw-in: hexagon strokes on once, inner content fades in after. Fully
   // static under prefers-reduced-motion.
@@ -76,7 +82,7 @@ export function EmptyState({
 
   return (
     <div
-      className={`text-center py-10 px-6 space-y-4 ${className ?? ""}`}
+      className={`text-center px-6 ${compact ? "py-6 space-y-2.5" : "py-10 space-y-4"} ${className ?? ""}`}
       role="status"
     >
       <div className="relative mx-auto" style={{ width: size, height: size }}>
