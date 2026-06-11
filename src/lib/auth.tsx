@@ -218,6 +218,11 @@ export interface UserProfileSocial {
   autoPostWorkouts?: boolean;
   autoPostBadges?: boolean;
   crewId?: string;
+  /** Shared-run route privacy. When unset or true (the DEFAULT), the route
+   *  preview on shared run activities is clipped ~200m off each end so the
+   *  user's home/start isn't broadcast to followers. Explicit `false` opts
+   *  out (shares the full route, subject to any explicit privacy zones). */
+  hideSharedRouteEnds?: boolean;
 }
 
 /** Run and schedule configuration */

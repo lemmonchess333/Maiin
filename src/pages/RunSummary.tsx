@@ -34,6 +34,7 @@ import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
 import { applyPrivacyZones } from "../lib/privacyZones";
+import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import {
@@ -826,6 +827,19 @@ export default function RunSummary() {
             (decision.visibility === "crews" ||
               decision.visibility === "public") &&
             !!profile?.crewId;
+          // Shared-route privacy default. The public activity routePreview is
+          // rendered as a REAL map on the feed, so a user who hasn't set
+          // explicit privacy zones would otherwise broadcast their home/start
+          // to anyone who follows them (follows are unilateral). Clip ~200m off
+          // each end by default. Scoped to the SHARE only — the user's own map
+          // + saved run keep the full `points`. Opt out in Settings → Privacy
+          // (profile.hideSharedRouteEnds === false). Already-zoned points stay
+          // zoned (this composes on top). clipRouteEnds is self-protecting: a
+          // route too short to clip is returned whole, never emptied.
+          const sharedRoutePoints =
+            profile?.hideSharedRouteEnds === false
+              ? points
+              : clipRouteEnds(points, DEFAULT_CLIP_METERS);
           const payload = {
             authorId: user.uid,
             authorName: profile?.displayName || "Athlete",
@@ -842,11 +856,14 @@ export default function RunSummary() {
             calories,
             ...(includeCrewId ? { crewId: profile?.crewId } : {}),
             routePreview:
-              points.length > 20
-                ? points
-                    .filter((_, i) => i % Math.ceil(points.length / 20) === 0)
+              sharedRoutePoints.length > 20
+                ? sharedRoutePoints
+                    .filter(
+                      (_, i) =>
+                        i % Math.ceil(sharedRoutePoints.length / 20) === 0
+                    )
                     .map((p) => ({ lat: p.lat, lon: p.lon }))
-                : points.map((p) => ({ lat: p.lat, lon: p.lon })),
+                : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
           };
           if (isOnline) {
             try {
