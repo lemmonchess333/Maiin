@@ -323,22 +323,27 @@ select.ds-input:focus {
 }
 
 /* Fixed iOS safe-area cover. Sits behind the iOS status bar /
-   Dynamic Island and hides scrolling content. With the global
-   ambient gradient removed, the page canvas is a uniform neutral
-   colour — the occluder can be more opaque (and blur a little
-   less aggressively) without producing a colour seam. The slight
-   translucency + blur are still useful for the gradient/charts
-   that scroll under fixed top-aligned cards, keeping the
-   transition smooth. */
+   Dynamic Island and hides scrolling content from showing behind the
+   clock. Implemented as a soft gradient scrim (see below) so it never
+   reads as a hard frosted bar over the shipped ambient glow. */
 .ds-safe-top-occluder {
-  /* Translucent + blurred so the ambient brand glow (`.ambient-glow`)
-     blurs THROUGH the status-bar zone without a hard colour seam where
-     the occluder meets the glow below. (Was 0.94/near-opaque while the
-     canvas was flat neutral and there was nothing to blur through; the
-     shipped glow reverses that rationale.) */
-  background: hsl(var(--background) / 0.47);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  /* Soft top SCRIM, not a flat bar. Opaque behind the status-bar clock,
+     fading to transparent at its lower edge — so there is NO hard
+     horizontal seam over the ambient glow (top of page) or over content
+     scrolling underneath. The earlier flat `hsl(bg / 0.47)` fill left a
+     visible frosted "bar" with a hard bottom edge, worst once scrolled.
+     The backdrop blur is masked to fade out together with the scrim so
+     the blur rect doesn't reintroduce an edge. */
+  background: linear-gradient(
+    to bottom,
+    hsl(var(--background)) 0%,
+    hsl(var(--background)) 58%,
+    hsl(var(--background) / 0) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, black 56%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 56%, transparent 100%);
   /* Force the occluder onto its OWN compositor layer. Without this,
      position:fixed + backdrop-filter elements get folded into the page's
      scroll layer and the compositor drops them mid-scroll (the known iOS
