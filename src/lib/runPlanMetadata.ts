@@ -18,6 +18,7 @@
  */
 
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
+import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
@@ -196,6 +197,14 @@ export interface ComputePlanInputs {
    */
   runDays: ScheduledRunDay[] | undefined;
   /**
+   * Adaptive Paces — the user's derived pace table (from
+   * `paceTableFromFitness(profile.runFitness)`). When present, a
+   * prescribed pace session resolves its target to the user's personalized
+   * pace; when null/undefined the template's hardcoded pace is used (current
+   * behaviour, fully non-breaking). See docs/adaptive-paces-design.md.
+   */
+  paceTable?: PaceTable | null;
+  /**
    * `?template=` URL param value, if present.
    */
   urlTemplateId: string | null;
@@ -316,7 +325,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
         planTotalWeeks,
         scheduledRunId: resolvedPlannedDay?.id ?? null,
       },
-      prefill: templateToPrefill(tmpl),
+      prefill: templateToPrefill(tmpl, inputs.paceTable),
     };
   }
 
@@ -437,7 +446,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
           planTotalWeeks,
           scheduledRunId: todayDay.id ?? null,
         },
-        prefill: templateToPrefill(plannedTemplate),
+        prefill: templateToPrefill(plannedTemplate, inputs.paceTable),
       };
     }
 
@@ -633,7 +642,10 @@ function isRacePlanElapsed(runPlan: RunPlan | undefined): boolean {
   return false;
 }
 
-function templateToPrefill(tmpl: RunTemplate): RunPlanPrefill {
+function templateToPrefill(
+  tmpl: RunTemplate,
+  paceTable?: PaceTable | null
+): RunPlanPrefill {
   const prefill: RunPlanPrefill = { activityType: tmpl.type };
   if (tmpl.config.targetDistance) {
     // RUN_TEMPLATES authoring uses kilometres (friendlier for
@@ -647,8 +659,19 @@ function templateToPrefill(tmpl: RunTemplate): RunPlanPrefill {
       type: "distance",
       value: tmpl.config.targetDistance * 1000,
     };
-  } else if (tmpl.config.targetPace) {
-    prefill.target = { type: "pace", value: tmpl.config.targetPace };
+  } else if (tmpl.config.targetPace || paceTable) {
+    // Adaptive Paces: resolve the prescribed pace from the user's fitness
+    // (e.g. tempo → personalized threshold pace) when a pace table is
+    // available; otherwise fall back to the template's hardcoded pace —
+    // the exact pre-Adaptive-Paces value, so users without a benchmark see
+    // no change. (Interval work-pace + race pace flow through their own
+    // fields and are personalized in a later slice.)
+    const resolved = resolveSessionPaces(tmpl.type, paceTable ?? null, {
+      fallbackPace: tmpl.config.targetPace,
+    });
+    if (resolved.targetPace) {
+      prefill.target = { type: "pace", value: resolved.targetPace };
+    }
   }
   if (tmpl.config.intervals) {
     prefill.intervals = tmpl.config.intervals;
