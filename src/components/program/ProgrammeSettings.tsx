@@ -54,6 +54,7 @@ import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { Toggle } from "@/components/ui/Toggle";
+import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
@@ -894,13 +895,13 @@ export default function ProgrammeSettings({
         tone="danger"
         subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
       >
-        <button
-          type="button"
+        <Button
+          variant="destructive-tinted"
+          fullWidth
           onClick={() => setConfirmReset(true)}
-          className="w-full py-2.5 rounded-xl bg-destructive/10 text-destructive text-sm font-medium hover:bg-destructive/20 transition-colors"
         >
           Reset Programme
-        </button>
+        </Button>
       </ProgrammeSettingsGroup>
 
       {/* ── Sticky save bar ── */}
