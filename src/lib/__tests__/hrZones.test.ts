@@ -4,6 +4,7 @@ import {
   hrZones,
   zoneForHr,
   zoneDistribution,
+  targetZoneForRun,
   ZONE_NAMES,
 } from "../hrZones";
 
@@ -68,6 +69,29 @@ describe("zoneForHr — bucket a single reading", () => {
     expect(zoneForHr(0, 200)).toBe(0);
     expect(zoneForHr(150, 0)).toBe(0);
     expect(zoneForHr(NaN, 200)).toBe(0);
+  });
+});
+
+describe("targetZoneForRun — intensity → prescribed zone", () => {
+  it("maps each intensity to the coaching-conventional zone", () => {
+    const max = 200;
+    expect(targetZoneForRun("recovery", max)?.zone).toBe(1);
+    expect(targetZoneForRun("easy", max)?.zone).toBe(2);
+    expect(targetZoneForRun("long", max)?.zone).toBe(2);
+    expect(targetZoneForRun("tempo", max)?.zone).toBe(4);
+    expect(targetZoneForRun("intervals", max)?.zone).toBe(5);
+    expect(targetZoneForRun("race", max)?.zone).toBe(4);
+  });
+
+  it("returns the full band (bpm + name) for the zone", () => {
+    const band = targetZoneForRun("easy", 200);
+    expect(band).toMatchObject({ zone: 2, minBpm: 120, maxBpm: 140 });
+    expect(band?.name).toBe(ZONE_NAMES[2]);
+  });
+
+  it("returns null when max HR is unknown", () => {
+    expect(targetZoneForRun("easy", 0)).toBeNull();
+    expect(targetZoneForRun("tempo", NaN)).toBeNull();
   });
 });
 
