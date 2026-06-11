@@ -198,7 +198,7 @@ export default function PerformanceHeroCard({
         aria-hidden="true"
         className="pointer-events-none absolute -left-8 -top-8 size-48 rounded-full"
         style={{
-          background: `radial-gradient(circle, ${hue}24, transparent 70%)`,
+          background: `radial-gradient(circle, ${hue}33, transparent 70%)`,
         }}
       />
       <div className="relative flex items-center gap-2 mb-4">

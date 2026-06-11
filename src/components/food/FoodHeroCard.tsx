@@ -260,7 +260,7 @@ export default function FoodHeroCard({
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
           style={{
-            background: `radial-gradient(circle, ${THEME.brand}1f, transparent 70%)`,
+            background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
           }}
         />
         {/* Content sits above the absolute halo (positioned siblings paint
