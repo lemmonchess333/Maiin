@@ -84,6 +84,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
+import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
@@ -1058,6 +1059,26 @@ export default function Home() {
           description="Add your age and sex so we can tune your TDEE more accurately than the defaults."
           visible={!profile?.age || !profile?.sex}
         />
+
+        {/* D7 — proactive recalibration check-in at natural seams (a few weeks
+            in / after a gap). Per-seam tipKey so each seam can re-surface even
+            after an earlier one was dismissed; gentle + dismiss-once. */}
+        {(() => {
+          const recal = recalibrationCheckIn({
+            weekNumber: programState?.weekNumber,
+          });
+          return recal ? (
+            <ContextualTipBanner
+              tipKey={recal.tipKey}
+              lanePriority={12}
+              title={recal.title}
+              description={recal.description}
+              ctaLabel="Edit plan"
+              ctaHref="/settings/training"
+              visible={true}
+            />
+          ) : null;
+        })()}
 
         {/* Progressive profiling (fast-start #1087 deferred goal weight).
           Onboarding now saves goalWeightKg == weightKg (a maintenance default,
