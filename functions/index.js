@@ -1678,6 +1678,11 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // ══════════════════════════════════════════════
 
 exports.stripeWebhook = functions
+  // ⛔ NEVER add `enforceAppCheck: true` here. This is an EXTERNAL webhook —
+  // Stripe's servers call it and cannot send a Firebase App Check token, so
+  // enforcement would 403 every webhook and silently break all subscription
+  // billing/reconciliation. Auth is the Stripe signature (STRIPE_WEBHOOK_SECRET)
+  // below, not App Check. See docs/app-check-rollout.md → "Never enforce".
   // Both secrets from Secret Manager via defineSecret bindings:
   // STRIPE_SECRET_KEY (Stripe client) + STRIPE_WEBHOOK_SECRET
   // (signature verification).
