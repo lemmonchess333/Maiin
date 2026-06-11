@@ -50,6 +50,7 @@ export type SettingsToggle =
   | "workout_reminders"
   | "streak_reminder"
   | "ai_analysis_enabled"
+  | "hide_shared_route_ends"
   | "push_notifications"
   | "push_streak"
   | "push_recap"
