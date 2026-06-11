@@ -21,6 +21,7 @@ import {
   totalElevationGain,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
+import { paceTableFromFitness } from "../lib/runPaces";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -389,6 +390,9 @@ export default function Run() {
       urlTemplateId,
       urlType,
       urlScheduledRunId,
+      // Adaptive Paces: personalize the prescribed pace from the user's
+      // fitness benchmark. null (no benchmark) → template defaults.
+      paceTable: paceTableFromFitness(profile?.runFitness ?? null),
     });
     // Missing URL template — surface the developer signal here,
     // not in the pure helper. The helper falls back to freeform
@@ -432,6 +436,7 @@ export default function Run() {
     urlTemplateId,
     urlType,
     urlScheduledRunId,
+    profile?.runFitness,
   ]);
 
   // Phase B3: restore-on-mount. Reads the persisted snapshot exactly
