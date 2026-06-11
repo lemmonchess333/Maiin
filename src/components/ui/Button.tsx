@@ -71,6 +71,7 @@ export type ButtonVariant =
   | "primary"
   | "secondary"
   | "destructive"
+  | "destructive-tinted"
   | "ghost"
   | "outline"
   | "sport"
@@ -126,6 +127,10 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: "bg-muted text-foreground hover:bg-muted/80",
   destructive:
     "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+  // 10% red tint + full-saturation red text — soft "danger zone" actions
+  // that are gated by a confirm step, so a filled red would over-escalate.
+  "destructive-tinted":
+    "bg-destructive/10 text-destructive hover:bg-destructive/20",
   ghost: "bg-transparent text-foreground hover:bg-muted",
   outline: "bg-transparent text-foreground border border-border hover:bg-muted",
   sport: "bg-running text-white",
