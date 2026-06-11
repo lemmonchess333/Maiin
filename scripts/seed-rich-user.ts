@@ -21,6 +21,14 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
+import {
+  computePerformanceIndex,
+  getWeekKey,
+} from "../src/lib/performanceEngine";
+import type {
+  WeeklyAggregates,
+  PerformanceSignals,
+} from "../src/lib/performanceTypes";
 
 assertEmulatorEnvOrExit();
 
@@ -41,6 +49,12 @@ async function main() {
   const user = await auth.getUserByEmail(EMAIL);
   const uid = user.uid;
   const base = db.collection("users").doc(uid);
+
+  // ── Profile overlay: promote the cold-start seed user to a *mature*
+  //    profile. seed-e2e deliberately omits age/sex (drives the cold-start
+  //    "Personalise your calorie targets" nag); a rich/alive user has them,
+  //    so merge them in here. Keeps seed-e2e as the pure cold-start fixture. ──
+  await base.set({ age: 31, sex: "male" }, { merge: true });
 
   // ── Workouts: 12 sessions over ~8 weeks, bench progressing 60→82.5kg
   //    (drives lifting volume charts + a Bench Press PR ladder). ──
@@ -131,6 +145,13 @@ async function main() {
         .set({
           date: ymd(d),
           mealType: slots[mi],
+          // Top-level total* fields are what the app sums (mealTotals.ts reads
+          // `totalCalories ?? calories`, never items[].calories) — without
+          // these Home's Today's Energy stays at 0 despite logged meals.
+          totalCalories: m[1],
+          totalProtein: m[2],
+          totalCarbs: m[3],
+          totalFat: m[4],
           items: [
             {
               name: m[0],
@@ -145,8 +166,69 @@ async function main() {
     });
   }
 
+  // ── Performance: 6 weekly rollup docs scored through the REAL engine
+  //    (computePerformanceIndex), so the Home Performance hero card lights
+  //    up with a truthful PI, load band, and week-over-week delta — not a
+  //    hand-faked number. Aggregates trend gently upward (a healthy build);
+  //    the engine derives the score, band, and deload flag from them. ──
+  const profile = {
+    goal: "recomp",
+    weeklyWorkoutsTarget: 4,
+    targetCalories: 2400,
+    targetProtein: 150,
+  };
+  const NUM_PERF_WEEKS = 6;
+  // weekKeys oldest→newest, anchored on the seeded activity window.
+  const weekKeys: string[] = [];
+  for (let i = NUM_PERF_WEEKS - 1; i >= 0; i--) {
+    weekKeys.push(getWeekKey(day(i * 7)));
+  }
+  const priorAggs: WeeklyAggregates[] = [];
+  let prevPI: number | undefined;
+  for (let w = 0; w < weekKeys.length; w++) {
+    const t = w / (weekKeys.length - 1); // 0→1 progression
+    const agg: WeeklyAggregates = {
+      weekKey: weekKeys[w],
+      liftTonnage: Math.round(12000 + t * 4500),
+      liftHardSets: 12 + Math.round(t * 4),
+      liftSessions: 2,
+      runKm: Math.round(18 + t * 9),
+      runLongKm: Math.round(8 + t * 5),
+      runQualityCount: 1,
+      runSessions: 3,
+      mealDaysLogged: 6,
+      avgDailyCalories: 2380,
+      avgDailyProtein: 152,
+      bwCurrent7dAvg: 70.6 - t * 0.8,
+      bwPrevious7dAvg: 70.9 - t * 0.8,
+    };
+    const doc = computePerformanceIndex(
+      agg,
+      priorAggs.slice(),
+      profile,
+      prevPI
+    );
+    const signals: PerformanceSignals = {
+      bothLoadsStrong: doc.loadBand === "high" || doc.loadBand === "overreach",
+      liftAheadOfBaseline: 0,
+      runAheadOfBaseline: 0,
+      recoveryWeak: false,
+      adherenceWeak: false,
+      deloadFlag: doc.deloadRecommended,
+      lifetimeWeeks: w + 1, // ≥4 by the latest week → full-confidence card
+      daysSinceLastTraining: 1,
+    };
+    await base
+      .collection("performance")
+      .doc(weekKeys[w])
+      .set({ ...doc, signals });
+    priorAggs.push(agg);
+    prevPI = doc.performanceIndex;
+  }
+
   console.log(
-    `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 12 meals written.`
+    `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 12 meals, ` +
+      `${weekKeys.length} performance weeks written.`
   );
 }
 
