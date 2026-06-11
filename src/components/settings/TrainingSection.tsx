@@ -25,6 +25,7 @@ import type { PreferredSplit } from "@/features/program/programTypes";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import RunFitnessSection from "./RunFitnessSection";
+import HeartRateZonesSection from "./HeartRateZonesSection";
 
 /**
  * Set1.1 + A1c + Run8: TrainingSection hosts post-onboarding plan
@@ -543,6 +544,9 @@ export default function TrainingSection({
 
       {/* ── Adaptive Paces — your running fitness ─────────────────── */}
       <RunFitnessSection profile={profile} updateProfile={updateProfile} />
+
+      {/* ── Heart-rate zones ──────────────────────────────────────── */}
+      <HeartRateZonesSection updateProfile={updateProfile} />
 
       {/* ── Lift plan section ─────────────────────────────────────── */}
       <div className="space-y-3">

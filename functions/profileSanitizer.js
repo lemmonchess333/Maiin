@@ -151,6 +151,10 @@ function cleanWeekSchedule(value) {
   return cleaned.length > 0 ? cleaned : undefined;
 }
 
+// The keys of this object (PROFILE_ALLOWED_FIELDS) are pinned equal to the
+// `sanitized: true` fields in src/lib/profileFieldRegistry.ts by the D1 parity
+// test (src/lib/__tests__/profileFieldRegistry.test.ts) — a missing validator
+// for a registry-sanitized field fails CI instead of silently dropping writes.
 const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Identity / display
   displayName: (v) => cleanString(v, MAX_DISPLAY_NAME_LENGTH),
@@ -287,6 +291,14 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     const updatedAt = cleanString(v.updatedAt, 40);
     if (updatedAt !== undefined) out.updatedAt = updatedAt;
     return Object.keys(out).length > 0 ? out : undefined;
+  },
+
+  // Heart-rate zones — user-measured max HR (the INPUT; zones are derived,
+  // never stored). See src/lib/hrZones.ts. `null` clears it (fall back to the
+  // age estimate); the bounds reject nonsensical values.
+  maxHeartRate: (v) => {
+    if (v === null) return null;
+    return cleanNumber(v, { min: 100, max: 240 });
   },
 
   macroTargets: (v) =>
