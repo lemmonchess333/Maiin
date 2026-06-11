@@ -96,6 +96,7 @@ import {
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
+import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
@@ -532,8 +533,17 @@ export default function ProgrammeRunSection({
     if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
     return null;
   })();
+  // Target HR zone for the selected session — the HR companion to the pace
+  // (mirrors DayActionSheet). Measured max, else the age estimate; null when
+  // neither, so the card just shows pace/type as before.
+  const selectedHrLabel: string | null = (() => {
+    if (!selectedTemplate) return null;
+    const maxHr = profile.maxHeartRate ?? maxHrFromAge(profile.age ?? 0);
+    const band = targetZoneForRun(selectedTemplate.type, maxHr);
+    return band ? `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm` : null;
+  })();
 
-  // Meta line for the selected run (distance/duration · pace · type).
+  // Meta line for the selected run (distance/duration · pace · HR zone · type).
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
@@ -543,6 +553,7 @@ export default function ProgrammeRunSection({
       meta.push(`${selectedTemplate.estimatedDuration} min`);
     }
     if (selectedPaceLabel) meta.push(selectedPaceLabel);
+    if (selectedHrLabel) meta.push(selectedHrLabel);
     meta.push(
       selectedTemplate.type.charAt(0).toUpperCase() +
         selectedTemplate.type.slice(1)
