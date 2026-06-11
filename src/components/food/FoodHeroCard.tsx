@@ -250,8 +250,23 @@ export default function FoodHeroCard({
   return (
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
-      <div className="p-4 rounded-2xl bg-card card-shadow">
-        {/* Top row: caption (left) + adjust-targets gear (right).
+      <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
+        {/* Brand-hue ambient halo behind the calorie ring — the cross-screen
+            cohesion twin of the Performance hero's band-state halo. The ring
+            is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
+            halo is brand purple, centered behind the ring. Decorative-free:
+            functional state/identity wash, low alpha, fades to transparent. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
+          style={{
+            background: `radial-gradient(circle, ${THEME.brand}1f, transparent 70%)`,
+          }}
+        />
+        {/* Content sits above the absolute halo (positioned siblings paint
+            in DOM order; a non-positioned block would render beneath it). */}
+        <div className="relative">
+          {/* Top row: caption (left) + adjust-targets gear (right).
             The gear is a small Settings shortcut so users can fix
             a wrong target without hunting through nav → Settings →
             scroll. Subtle muted-foreground colour so it doesn't
@@ -259,90 +274,90 @@ export default function FoodHeroCard({
             Routes to the Settings page (top); deep-linking to the
             NutritionSection isn't supported by the route today —
             documented limitation. */}
-        <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <AnimatePresence mode="wait">
-              {showCelebrationCaption ? (
-                <motion.p
-                  key="celebration"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-micro uppercase tracking-wider font-semibold"
-                  style={{ color: THEME.success }}
-                >
-                  {celebrationCaptionText}
-                </motion.p>
-              ) : caption ? (
-                <motion.p
-                  key="caption"
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-xs font-medium text-muted-foreground/80 truncate"
-                >
-                  {/* Wave3 G — the day annotation is merged INTO the hero
+          <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <AnimatePresence mode="wait">
+                {showCelebrationCaption ? (
+                  <motion.p
+                    key="celebration"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-micro uppercase tracking-wider font-semibold"
+                    style={{ color: THEME.success }}
+                  >
+                    {celebrationCaptionText}
+                  </motion.p>
+                ) : caption ? (
+                  <motion.p
+                    key="caption"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-xs font-medium text-muted-foreground/80 truncate"
+                  >
+                    {/* Wave3 G — the day annotation is merged INTO the hero
                       caption as one line ("{dayType} · {rationale}") instead
                       of a second, container-less line orphaned below the
                       macro tiles. Rationale is today-only (matching the old
                       annotation gating); truncates to one line at 393px. */}
-                  {caption.trainingType}
-                  {isToday && dailyTargets.annotation
-                    ? ` · ${dailyTargets.annotation}`
-                    : ""}
-                </motion.p>
-              ) : null}
-            </AnimatePresence>
-          </div>
-          <div className="shrink-0 flex items-center">
-            {goalHit && (
-              <button
-                type="button"
-                aria-label="Share your day"
-                onClick={() => {
-                  haptic("light");
-                  setShareOpen(true);
-                }}
-                className="-mt-2 size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
+                    {caption.trainingType}
+                    {isToday && dailyTargets.annotation
+                      ? ` · ${dailyTargets.annotation}`
+                      : ""}
+                  </motion.p>
+                ) : null}
+              </AnimatePresence>
+            </div>
+            <div className="shrink-0 flex items-center">
+              {goalHit && (
+                <button
+                  type="button"
+                  aria-label="Share your day"
+                  onClick={() => {
+                    haptic("light");
+                    setShareOpen(true);
+                  }}
+                  className="-mt-2 size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
+                >
+                  <Share2 className="size-4" aria-hidden="true" />
+                </button>
+              )}
+              <Link
+                to="/settings"
+                aria-label="Adjust nutrition targets"
+                onClick={() => haptic("light")}
+                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
               >
-                <Share2 className="size-4" aria-hidden="true" />
-              </button>
-            )}
-            <Link
-              to="/settings"
-              aria-label="Adjust nutrition targets"
-              onClick={() => haptic("light")}
-              className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
-            >
-              <SettingsIcon className="size-4" aria-hidden="true" />
-            </Link>
+                <SettingsIcon className="size-4" aria-hidden="true" />
+              </Link>
+            </div>
           </div>
-        </div>
 
-        {/* Calorie ring */}
-        <CalorieRing
-          consumed={dailyTotals.calories}
-          target={dailyTargets.finalTarget}
-          mode={mode}
-          onToggleMode={toggleMode}
-          trajectoryLabel={trajectoryLabel}
-          glowing={celebrating}
-          ringDurationMs={LOG_MOMENT_MS}
-        />
+          {/* Calorie ring */}
+          <CalorieRing
+            consumed={dailyTotals.calories}
+            target={dailyTargets.finalTarget}
+            mode={mode}
+            onToggleMode={toggleMode}
+            trajectoryLabel={trajectoryLabel}
+            glowing={celebrating}
+            ringDurationMs={LOG_MOMENT_MS}
+          />
 
-        {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
+          {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
             ring. Reads from the single source of truth (useEffectiveTargets).
             Hidden once the gate clears (learned takeover, #982). */}
-        {isToday && dailyTargets.showWarmup && (
-          <AdaptiveWarmupBar
-            fraction={dailyTargets.warmupFraction}
-            stalled={dailyTargets.adaptiveStalled}
-          />
-        )}
+          {isToday && dailyTargets.showWarmup && (
+            <AdaptiveWarmupBar
+              fraction={dailyTargets.warmupFraction}
+              stalled={dailyTargets.adaptiveStalled}
+            />
+          )}
 
-        {/* Today-at-a-glance line. One sentence, protein-priority,
+          {/* Today-at-a-glance line. One sentence, protein-priority,
             neutral over-target language. Sits inside the calorie
             card below the ring so it summarises what the ring +
             macro tiles already show without claiming a separate
@@ -351,32 +366,33 @@ export default function FoodHeroCard({
             missing-target prompt copy; component just routes
             inputs and renders the result. Skips on past/future
             dates (diary-mode views). */}
-        {glanceLine && (
-          <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
-            {glanceLine}
-          </p>
-        )}
-        {/* Food6 a2: drill-down affordance. Subtle chevron pill at the
+          {glanceLine && (
+            <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
+              {glanceLine}
+            </p>
+          )}
+          {/* Food6 a2: drill-down affordance. Subtle chevron pill at the
             bottom of the calorie card opens the detailed breakdown
             sheet. Distinct tap target so it doesn't conflict with the
             CalorieRing mode-toggle, the Settings link, or any nested
             buttons in the card. */}
-        {onTapDrillDown && (
-          <div className="flex justify-center mt-3">
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                onTapDrillDown();
-              }}
-              aria-label="View nutrition breakdown"
-              className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
-            >
-              <span>Details</span>
-              <ChevronRight aria-hidden="true" className="size-3" />
-            </button>
-          </div>
-        )}
+          {onTapDrillDown && (
+            <div className="flex justify-center mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  onTapDrillDown();
+                }}
+                aria-label="View nutrition breakdown"
+                className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
+              >
+                <span>Details</span>
+                <ChevronRight aria-hidden="true" className="size-3" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Macro tile row — three floating tiles. Each reads the SAME shared
