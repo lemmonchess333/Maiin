@@ -1331,8 +1331,15 @@ export default function RunSetupModal({
           Start text is contextual per run type ("Start Free Run",
           "Start Treadmill", "Start Guided Run") so the button
           mirrors the user's selection. */}
+      {/* Pinned to the viewport bottom with `fixed` (was `sticky bottom-0`).
+          As a sibling of the scroll area the sticky element had no scrolling
+          ancestor, so it degraded to `relative` and floated UP over the
+          "Ready to run?" title on short-content layouts (race-prep Easy Run
+          etc.). `fixed` pins it to the screen bottom regardless of how the
+          flex-height chain resolves on iOS. The scroll area's pb-40 reserves
+          space so the last options never hide behind it. */}
       <div
-        className="sticky bottom-0 px-5 pt-3 pb-5 safe-area-pb"
+        className="fixed bottom-0 left-0 right-0 z-20 px-5 pt-3 pb-5 safe-area-pb"
         style={{
           background:
             "linear-gradient(to top, var(--color-background) 80%, transparent)",
