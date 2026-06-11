@@ -323,7 +323,7 @@ export default function RunDetail() {
         </div>
 
         {/* Primary stats row */}
-        <div className="rounded-2xl bg-card shadow-sm flex divide-x divide-border/40">
+        <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
           <StatPill value={formatTime(run.duration)} label="Time" />
           <StatPill value={avgPaceStr} label="/km Pace" color={THEME.teal} />
           <StatPill
@@ -335,7 +335,7 @@ export default function RunDetail() {
 
         {/* Secondary stats */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+          <div className="p-3 rounded-xl bg-card text-center card-shadow">
             <p className="text-lg font-bold font-mono tabular-nums text-foreground">
               {run.elevationGain ?? 0}m
             </p>
@@ -343,7 +343,7 @@ export default function RunDetail() {
               Elevation Gain
             </p>
           </div>
-          <div className="p-3 rounded-xl bg-card text-center shadow-sm flex flex-col justify-center">
+          <div className="p-3 rounded-xl bg-card text-center card-shadow flex flex-col justify-center">
             {splitCount > 0 ? (
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">
                 {splitCount}
@@ -394,9 +394,10 @@ export default function RunDetail() {
           durationSec: run.duration,
           pace: avgPaceStr,
           elevationM: run.elevationGain ?? undefined,
-          splits: (run.splits ?? []).map(
-            (s: { km: number; pace: string }) => ({ km: s.km, pace: s.pace })
-          ),
+          splits: (run.splits ?? []).map((s: { km: number; pace: string }) => ({
+            km: s.km,
+            pace: s.pace,
+          })),
         }}
       />
     </div>
