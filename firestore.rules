@@ -103,6 +103,9 @@ service cloud.firestore {
         // cap-state write was silently rejected by the update rule; fixed
         // alongside `runFitness` (Adaptive Paces fitness benchmark).
         'adaptiveCapState', 'runFitness',
+        // Heart-rate zones — user-measured max HR (hrZones.ts). Also in
+        // profileSanitizer.js.
+        'maxHeartRate',
         'trialExpiryPromptShown',
         'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
       ];
