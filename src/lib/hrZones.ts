@@ -82,6 +82,47 @@ export function zoneForHr(hr: number, maxHr: number): 0 | ZoneNumber {
   return 5;
 }
 
+/**
+ * Run session intensity → prescribed HR zone. The HR analogue of
+ * `resolveSessionPaces` (runPaces.ts): "run easy in Zone 2", "tempo in Zone 4".
+ * Mirrors the template intensity union (easy|tempo|intervals|long|race) plus
+ * `recovery`. Conventional coaching mapping:
+ *   recovery → Z1 · easy/long → Z2 · tempo → Z4 (threshold) · intervals → Z5 ·
+ *   race → Z4 (a sustainable race-effort proxy; finer per-distance tuning can
+ *   layer on later without changing callers).
+ */
+export type RunIntensity =
+  | "easy"
+  | "tempo"
+  | "intervals"
+  | "long"
+  | "race"
+  | "recovery";
+
+const ZONE_FOR_INTENSITY: Record<RunIntensity, ZoneNumber> = {
+  recovery: 1,
+  easy: 2,
+  long: 2,
+  tempo: 4,
+  intervals: 5,
+  race: 4,
+};
+
+/**
+ * The prescribed HR-zone band for a run session type, or `null` when the max
+ * HR is unknown (so callers fall back to the pace-only display rather than
+ * rendering a bogus band).
+ */
+export function targetZoneForRun(
+  type: RunIntensity,
+  maxHr: number
+): HrZone | null {
+  if (!Number.isFinite(maxHr) || maxHr <= 0) return null;
+  const z = ZONE_FOR_INTENSITY[type];
+  if (!z) return null;
+  return hrZones(maxHr).find((b) => b.zone === z) ?? null;
+}
+
 export interface ZoneShare {
   zone: ZoneNumber;
   name: string;

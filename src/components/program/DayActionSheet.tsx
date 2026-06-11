@@ -43,6 +43,7 @@ import {
   resolveSessionPaces,
   raceDistanceKeyFromKm,
 } from "@/lib/runPaces";
+import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
@@ -182,6 +183,16 @@ export default function DayActionSheet({
         ...(selectedRunPace ? [selectedRunPace] : []),
       ].join(" · ")
     : null;
+  // Target HR zone — the HR analogue of the pace target ("run easy in Zone 2").
+  // Uses the measured max HR, else the age estimate; null when neither exists
+  // (then we just don't show the pill — the pace pill still stands alone).
+  const selectedRunHr: string | null = (() => {
+    if (!selectedRunTemplate) return null;
+    const maxHr = profile?.maxHeartRate ?? maxHrFromAge(profile?.age ?? 0);
+    const band = targetZoneForRun(selectedRunTemplate.type, maxHr);
+    if (!band) return null;
+    return `Z${band.zone} · ${band.minBpm}–${band.maxBpm} bpm`;
+  })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
   // Race templates have ids like `5k_race` / `marathon_race` (never the
   // literal "race"), so the old string-equality check was always false —
@@ -254,10 +265,19 @@ export default function DayActionSheet({
                     {selectedRunTemplate.description}
                   </p>
                 )}
-                {selectedRunMeta && (
-                  <span className="mt-2 inline-flex rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground">
-                    {selectedRunMeta}
-                  </span>
+                {(selectedRunMeta || selectedRunHr) && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {selectedRunMeta && (
+                      <span className="inline-flex rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground">
+                        {selectedRunMeta}
+                      </span>
+                    )}
+                    {selectedRunHr && (
+                      <span className="inline-flex rounded-full bg-running/10 px-2.5 py-1 text-caption font-semibold text-running tabular-nums">
+                        {selectedRunHr}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="shrink-0 pt-1">
