@@ -1,4 +1,4 @@
-const CACHE_NAME = "tropos-v12";
+const CACHE_NAME = "tropos-v13";
 const BASE_PATH = "/Maiin/";
 const MAX_CACHE_ENTRIES = 150;
 
@@ -8,12 +8,19 @@ const STATIC_ASSETS = [
   BASE_PATH + "manifest.json",
 ];
 
-// Install: cache static assets
+// Install: cache static assets. The HTML entries are fetched no-store so
+// the precached SPA shell (the offline fallback) can't be a stale index
+// pointing at deleted asset hashes — same staleness that blanks the app
+// online (see the navigation handler).
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        STATIC_ASSETS.map((url) =>
+          cache.add(new Request(url, { cache: "no-store" }))
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
@@ -95,9 +102,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network-first for everything else
+  // Network-first for everything else (HTML navigations included). Use
+  // `cache: "no-store"` so the browser HTTP cache can NEVER hand back a
+  // stale index.html: a stale index references Vite asset hashes that the
+  // latest deploy already replaced, so the entry chunk 404s and the app
+  // boots to a blank screen (unrecoverable — the entry script isn't a lazy
+  // chunk, so lazyRetry can't catch it). Always fetching a fresh document
+  // guarantees its asset refs exist on the server. Falls back to the
+  // cached index only when truly offline.
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request, { cache: "no-store" })
       .then((response) => {
         if (response.status === 200) {
           const responseClone = response.clone();
