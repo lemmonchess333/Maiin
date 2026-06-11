@@ -53,73 +53,87 @@ export default function SessionCommandCard({
     : "bg-lifting/6 border-lifting/19";
   const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
   const accentText = isRun ? "text-running" : "text-lifting";
+  // DS2: sport-hue ambient halo — the cohesion twin of the Performance /
+  // Food hero halos, in the session's sport colour. A soft directional glow
+  // from the icon corner layered over the flat tint for depth (functional
+  // sport-state expression, not a new colour/gradient palette).
+  const haloVar = isRun ? "var(--running)" : "var(--lifting)";
 
   return (
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "rounded-2xl border p-4 space-y-4 card-shadow",
+        "relative overflow-hidden rounded-2xl border p-4 card-shadow",
         surfaceClass
       )}
     >
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "size-11 rounded-2xl flex items-center justify-center shrink-0",
-            tileClass
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-6 -top-6 size-40 rounded-full"
+        style={{
+          background: `radial-gradient(circle, hsl(${haloVar} / 0.18), transparent 70%)`,
+        }}
+      />
+      <div className="relative space-y-4">
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              "size-11 rounded-2xl flex items-center justify-center shrink-0",
+              tileClass
+            )}
+          >
+            <Icon className={cn("size-5", accentText)} aria-hidden="true" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <SectionLabel tier="section" className={accentText}>
+              {eyebrow}
+            </SectionLabel>
+            <h3 className="text-xl font-extrabold leading-tight text-foreground truncate">
+              {title}
+            </h3>
+            {description && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                {description}
+              </p>
+            )}
+          </div>
+          {onManage && (
+            <IconButton
+              aria-label="Manage session"
+              variant="ghost"
+              size="sm"
+              icon={<MoreHorizontal />}
+              onClick={onManage}
+              className="-mt-1 -mr-1"
+            />
           )}
-        >
-          <Icon className={cn("size-5", accentText)} aria-hidden="true" />
         </div>
-        <div className="flex-1 min-w-0">
-          <SectionLabel tier="section" className={accentText}>
-            {eyebrow}
-          </SectionLabel>
-          <h3 className="text-xl font-extrabold leading-tight text-foreground truncate">
-            {title}
-          </h3>
-          {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-              {description}
-            </p>
-          )}
-        </div>
-        {onManage && (
-          <IconButton
-            aria-label="Manage session"
-            variant="ghost"
-            size="sm"
-            icon={<MoreHorizontal />}
-            onClick={onManage}
-            className="-mt-1 -mr-1"
-          />
+
+        {meta.length > 0 && (
+          <div className="flex flex-wrap gap-1.5" aria-hidden="true">
+            {meta.map((item) => (
+              <span
+                key={item}
+                className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {primaryActionLabel && onPrimaryAction && (
+          <Button
+            variant={sport === "run" ? "sport" : "primary"}
+            size="lg"
+            fullWidth
+            leftIcon={<Play className="size-4" fill="currentColor" />}
+            onClick={onPrimaryAction}
+          >
+            {primaryActionLabel}
+          </Button>
         )}
       </div>
-
-      {meta.length > 0 && (
-        <div className="flex flex-wrap gap-1.5" aria-hidden="true">
-          {meta.map((item) => (
-            <span
-              key={item}
-              className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {primaryActionLabel && onPrimaryAction && (
-        <Button
-          variant={sport === "run" ? "sport" : "primary"}
-          size="lg"
-          fullWidth
-          leftIcon={<Play className="size-4" fill="currentColor" />}
-          onClick={onPrimaryAction}
-        >
-          {primaryActionLabel}
-        </Button>
-      )}
     </section>
   );
 }
