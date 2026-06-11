@@ -81,6 +81,7 @@ service cloud.firestore {
         'aiCalorieAdjustment', 'targetCalories', 'targetProtein', 'targetCarbs',
         'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
         'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',
+        'hideSharedRouteEnds',
         'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
         'weekScheduleVersion',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',

@@ -191,6 +191,8 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     cleanNumber(v, { min: 0, max: 600, integer: true }),
   audioCues: cleanBoolean,
   enableRolloverCalories: cleanBoolean,
+  // Shared-run route privacy (opt-out; default-on enforced client-side).
+  hideSharedRouteEnds: cleanBoolean,
 
   // Streak summary
   currentStreak: (v) => cleanNumber(v, { min: 0, max: 100000, integer: true }),
