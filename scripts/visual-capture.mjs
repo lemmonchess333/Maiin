@@ -16,7 +16,7 @@
  */
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
-import { initializeApp } from "firebase-admin/app";
+import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
@@ -49,7 +49,11 @@ const settle = async (p, ms = 1400) => {
 async function setDarkMode(value) {
   // Admin write — the app reads profile.darkMode as the source of truth, so
   // toggling localStorage alone isn't enough for a real dark capture.
-  const app = initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+  // Guard init: setDarkMode runs twice (light → dark) and a second
+  // initializeApp would throw "default app already exists".
+  if (!getApps().length) {
+    initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+  }
   const u = await getAuth().getUserByEmail(CREDS.email);
   await getFirestore()
     .doc(`users/${u.uid}`)
