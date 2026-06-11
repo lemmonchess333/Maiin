@@ -56,6 +56,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
+import { SOCIAL_GATES, shouldShowFollowingFeed } from "@/lib/socialGates";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
 import { EmptyState as HexEmptyState } from "../components/ui/EmptyState";
@@ -137,15 +138,16 @@ export default function Social() {
    * "do I have ≥2 follows" (leaderboard vs trajectory card).
    * While we wait, we default to 'explore' so a brand-new user
    * never sees a flash of the empty Following state before
-   * resolution. `followingCount` is bounded at 2 — we only care
-   * about the threshold, not the exact number.
+   * resolution. `followingCount` is bounded at 3 — we only care about
+   * the thresholds (0 = solo, ≥3 = following-feed unlocked per S4), not
+   * the exact number.
    */
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>("explore");
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   useEffect(() => {
     if (!user || followingCount !== null) return;
     let cancelled = false;
-    getBoundedFollowingCount(user.uid, 2)
+    getBoundedFollowingCount(user.uid, SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS)
       .then((n) => {
         if (cancelled) return;
         setFollowingCount(n);
@@ -196,6 +198,16 @@ export default function Social() {
   // empty-feed states below are suppressed so nothing reads as broken.
   // PR4 will refine the gate to the full `isSoloUser` density check.
   const showSoloFeed = isNewUser;
+
+  // SOCIAL S4 — the following ACTIVITY feed (the list of activities from
+  // people you follow) only renders at ≥3 follows; below that it's a
+  // sparse list that reads as broken, so we show the leaderboard/
+  // trajectory slot instead (never an empty feed). Explore is unaffected.
+  const followingFeedUnlocked = shouldShowFollowingFeed(followingCount ?? 0);
+  const showActivityList =
+    !showSoloFeed &&
+    (feedSubTab === "explore" ||
+      (feedSubTab === "following" && followingFeedUnlocked));
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // In-app social notification tray (kudos / comment / follow). Closes the
@@ -706,7 +718,7 @@ export default function Social() {
                   somewhere instead of dead-ending on personal stats.
                   One row, text-link CTA — same compact pattern as
                   the empty-feed prompt below. */}
-                    {followingCount !== null && followingCount < 2 && (
+                    {followingCount !== null && !followingFeedUnlocked && (
                       <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/40">
                         <div className="flex items-center gap-3 min-w-0">
                           <div
@@ -716,7 +728,8 @@ export default function Social() {
                             <Users size={16} style={{ color: THEME.brand }} />
                           </div>
                           <p className="text-small text-muted-foreground leading-snug">
-                            Follow people or join a crew to compete this week
+                            Follow {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}+
+                            people to unlock your activity feed
                           </p>
                         </div>
                         <button
@@ -795,19 +808,21 @@ export default function Social() {
                     </div>
                   )}
 
-                <div className="space-y-3">
-                  {activeFeed.items.map((item) => (
-                    /* feedSource lets ActivityCard render the "From your
+                {showActivityList && (
+                  <div className="space-y-3">
+                    {activeFeed.items.map((item) => (
+                      /* feedSource lets ActivityCard render the "From your
                  crew" trust chip on Explore only — Following posts
                  are by definition from people the user already
                  chose, so the chip would be redundant noise there. */
-                    <ActivityCard
-                      key={item.id}
-                      feedItem={item}
-                      feedSource={feedSubTab}
-                    />
-                  ))}
-                </div>
+                      <ActivityCard
+                        key={item.id}
+                        feedItem={item}
+                        feedSource={feedSubTab}
+                      />
+                    ))}
+                  </div>
+                )}
 
                 {/*
             Two different loading states:
@@ -821,7 +836,7 @@ export default function Social() {
           */}
                 {activeFeed.loading &&
                   activeFeed.items.length === 0 &&
-                  !showSoloFeed && (
+                  showActivityList && (
                     <div
                       className="space-y-3"
                       aria-live="polite"
@@ -856,7 +871,7 @@ export default function Social() {
               double message. */}
                 {!activeFeed.loading &&
                   activeFeed.items.length === 0 &&
-                  !showSoloFeed &&
+                  showActivityList &&
                   !(feedSubTab === "explore" && exploreFeed.error) && (
                     <div className="mt-6" aria-live="polite">
                       {feedSubTab === "explore" ? (

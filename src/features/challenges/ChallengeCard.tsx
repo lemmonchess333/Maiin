@@ -26,6 +26,7 @@ import {
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
+import { useChallengePercentile } from "./useChallengePercentile";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -146,6 +147,14 @@ export function ChallengeCard({
   };
   const currentValue = myProgress?.currentValue || 0;
   const currentTier = myProgress?.tierAchieved;
+  // SOCIAL S4 — percentile line, gated to ≥50 participants (else null).
+  const percentile = useChallengePercentile({
+    challengeId: challenge.id,
+    participantCount: challenge.participantCount,
+    metric: challenge.metric,
+    myValue: currentValue,
+    joined,
+  });
   const maxTier = challenge.tiers.gold;
   const pct = Math.min((currentValue / maxTier) * 100, 100);
   const timeLeft = getTimeRemaining(challenge.endDate);
@@ -213,6 +222,11 @@ export function ChallengeCard({
             <Users className="size-3.5" />
             {challenge.participantCount} joined
           </span>
+          {percentile !== null && (
+            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono tabular-nums font-medium">
+              Top {percentile}%
+            </span>
+          )}
           {challenge.season && (
             <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 font-medium">
               {challenge.season}
