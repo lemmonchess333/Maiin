@@ -11,6 +11,13 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import TrainingSection from "../TrainingSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
+// TrainingSection renders RunFitnessSection, whose Pace Insights hook pulls in
+// auth/subscription/running-stats. Stub it — this suite tests the plan-structure
+// controls, not Adaptive Paces (covered by runPaces + RunFitnessSection tests).
+vi.mock("@/hooks/usePaceInsight", () => ({
+  usePaceInsight: () => ({ insight: null, accept: vi.fn(), dismiss: vi.fn() }),
+}));
+
 type UpdateProfileFn = (
   data: Partial<UserProfile>,
   opts?: { allowProtected?: boolean; throwOnError?: boolean }
