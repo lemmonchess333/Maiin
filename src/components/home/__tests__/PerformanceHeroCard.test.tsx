@@ -141,14 +141,14 @@ describe("PerformanceHeroCard — verb taxonomy (PI1)", () => {
     expect(screen.getByText("Building")).toBeInTheDocument();
   });
 
-  it("'Cruising' for moderate band", () => {
+  it("'Steady' for moderate band", () => {
     renderCard({
       currentWeek: makeWeek({ performanceIndex: 60 }),
       previousWeek: null,
       weeksAvailable: 5,
       loading: false,
     });
-    expect(screen.getByText("Cruising")).toBeInTheDocument();
+    expect(screen.getByText("Steady")).toBeInTheDocument();
   });
 
   it("'Sharpening' for high band", () => {
@@ -278,7 +278,7 @@ describe("PerformanceHeroCard — accessibility (PI1 Q5)", () => {
       loading: false,
     });
     expect(
-      screen.getByLabelText(/Performance Index 60, Cruising/i)
+      screen.getByLabelText(/Performance Index 60, Steady/i)
     ).toBeInTheDocument();
   });
 
