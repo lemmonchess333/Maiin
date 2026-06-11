@@ -254,7 +254,7 @@ const DELOAD_TEMPLATES: PerformanceInsight[] = [
   },
   {
     source: "deload",
-    headline: "Recovery phase",
+    headline: "Step-back week",
     body: "This is a planned step back. Use it — easy sessions + sleep are the work.",
   },
 ];

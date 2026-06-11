@@ -37,4 +37,20 @@ When writing or reviewing any user-facing string — button, toast, empty state,
 
 - **Celebration moments** (PR set, badge earned, race day) may be warm and may use a single exclamation — they're rare and earned. Everything routine stays calm.
 - **Badge/streak names** can be lightly playful (Duolingo-style: "Week Warrior", "Speed Demon") — but never hype-cringe. Judge each; when in doubt, plainer.
-- **Nutrition copy is never judgmental about food** — no "bad", "cheat", "over" as a verdict. Surplus is "above target", a neutral fact, not a failure.
+- **Nutrition copy is never judgmental about food** — no "bad", "cheat", or "fail" verdicts. Surplus is stated as a neutral quantity ("200 cal over"), never a telling-off.
+
+## Judgment calls (decided in the 2026-06-11 audit)
+
+So the next person doesn't re-litigate these:
+
+**Changed** (and why): "Cruising" → "Steady" (decode-able), "Beast mode!" → "Solid session!" (cringe), "keep the line"/"hybrid output" (jargon), "Disciplined week"/"Plan executed" (robotic), "Great consistency!"/"Great calorie control" (state the number instead), "No worries" ×2 (chatbot), "Great run!" → "Nice run", "Tap to log" → "Log", badge "Locked In" → "Unbroken" (it's on our own banned list), insight "Recovery phase" → "Step-back week", "Fresh week" → "Week ahead", lift CTA "View" → "Start" (the icon is a ▶), "Try adding…" → "Add…".
+
+**Kept on purpose** (good copy; don't churn it):
+
+- **"N cal over"** — standard, neutral nutrition phrasing every app uses; "over" here is a quantity, not a verdict. (The "over as a verdict" ban is about tone like "you went over — bad", not the number.)
+- **"Speed Demon" / "Week Warrior"** badge names — badges are the one sanctioned place for light play; these are recognised idioms, not try-hard hype. Stripping all flavour makes badges sterile.
+- **"Backing off"** (performance verb) — clear and calm; accurate for the overreach/deload state.
+- **The `performanceInsights.ts` load/recovery/adherence templates** — already calm, observational, actionable, no exclamations. The model, not a target.
+- **Status labels** like "On track / More lifting needed / Behind this week" — plain, factual, not shaming.
+
+Lesson: over-editing good copy is its own failure mode. Change what's cringe, AI, vague, or shaming — leave what's already plain and clear.
