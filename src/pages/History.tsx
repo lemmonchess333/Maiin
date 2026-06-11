@@ -13,6 +13,8 @@ import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import EmptyState from "@/components/ui/EmptyState";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
@@ -1123,24 +1125,12 @@ export default function History() {
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
             {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <div className="p-6 rounded-2xl bg-card text-center card-shadow">
-                <div
-                  className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                  style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
-                >
-                  <LineChart
-                    className="size-6"
-                    style={{ color: THEME.brand }}
-                  />
-                </div>
-                <p className="text-base font-bold text-foreground">
-                  No analytics yet
-                </p>
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-[280px] mx-auto">
-                  Log a workout, run, or meal and your trends — volume, pace,
-                  calories and your Performance Index — will show up here.
-                </p>
-              </div>
+              <EmptyState
+                icon={LineChart}
+                accent={THEME.brand}
+                headline="No analytics yet"
+                sub="Log a workout, run, or meal and your trends — volume, pace, calories and your Performance Index — will show up here."
+              />
             )}
 
             {filter === "analytics" &&
@@ -1194,7 +1184,10 @@ export default function History() {
                     </div>
                     <Link
                       to="/run"
-                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white bg-running"
+                      className={buttonClasses({
+                        variant: "sport",
+                        className: "shrink-0",
+                      })}
                     >
                       Start Run
                     </Link>
@@ -1265,7 +1258,10 @@ export default function History() {
                     </div>
                     <Link
                       to="/program"
-                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white bg-lifting"
+                      className={buttonClasses({
+                        variant: "primary",
+                        className: "shrink-0",
+                      })}
                     >
                       Start Lift
                     </Link>
@@ -1368,8 +1364,10 @@ export default function History() {
                       </div>
                       <Link
                         to="/food"
-                        className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white"
-                        style={{ background: THEME.success }}
+                        className={buttonClasses({
+                          variant: "nutrition",
+                          className: "shrink-0",
+                        })}
                       >
                         Log Meal
                       </Link>
