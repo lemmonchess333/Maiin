@@ -313,7 +313,9 @@ body {
    Tunable knobs — dial intensity here, not in the component: */
 :root {
   --ambient-glow-peak: 0.12; /* dark emission peak alpha */
-  --ambient-glow-light: 8%; /* light brighten: mix toward white */
+  --ambient-glow-light: 12%; /* light brighten: mix toward white (perceptible
+     in light mode without re-introducing the #511 tint — still a brighten
+     toward white, falloff complete above the first card) */
 }
 
 .ambient-glow {
