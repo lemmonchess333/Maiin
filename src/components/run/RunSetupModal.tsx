@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { THEME } from "@/lib/theme";
@@ -31,6 +31,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
 import {
   getCurrentWeather,
   getWeatherIcon,
@@ -381,7 +382,14 @@ export default function RunSetupModal({
   savedPreferences,
   programContext,
 }: RunSetupModalProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  // Adaptive Paces: the user's pace table (null when no benchmark). Used to
+  // personalize the prescription when picking a run type in the ad-hoc
+  // launcher (the programme path personalizes via templateToPrefill).
+  const paceTable = useMemo(
+    () => paceTableFromFitness(profile?.runFitness ?? null),
+    [profile?.runFitness]
+  );
   const [config, setConfig] = useState<RunConfig>({
     ...DEFAULT_CONFIG,
     ...savedPreferences,
@@ -411,6 +419,33 @@ export default function RunSetupModal({
     reps: 5,
     workDistance: 1000,
     restDuration: 90,
+  };
+
+  /**
+   * Adaptive Paces — config patch to personalize a chosen run type from the
+   * user's pace table. Tempo → a threshold target pace; Intervals → an
+   * interval work pace seeded into the interval config. Other types (easy /
+   * long / race / treadmill / guided) keep today's behaviour. Returns just the
+   * activityType when there's no benchmark.
+   */
+  const pacePatchForType = (type: ActivityType): Partial<RunConfig> => {
+    if (!paceTable) return { activityType: type };
+    if (type === "tempo") {
+      const { targetPace } = resolveSessionPaces("tempo", paceTable);
+      return targetPace
+        ? { activityType: type, target: { type: "pace", value: targetPace } }
+        : { activityType: type };
+    }
+    if (type === "intervals") {
+      const { workPace } = resolveSessionPaces("intervals", paceTable);
+      return workPace
+        ? {
+            activityType: type,
+            intervals: { ...(config.intervals ?? intervalConfig), workPace },
+          }
+        : { activityType: type };
+    }
+    return { activityType: type };
   };
 
   /* Pre-flight target validation. Catches the case where the user
@@ -1454,7 +1489,7 @@ export default function RunSetupModal({
                       type="button"
                       key={at.type}
                       onClick={() => {
-                        updateConfig({ activityType: at.type });
+                        updateConfig(pacePatchForType(at.type));
                         setShowChooser(false);
                       }}
                       // Run7 Q4 — coral discipline. Selected card uses
