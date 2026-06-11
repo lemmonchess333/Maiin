@@ -548,7 +548,7 @@ export default function RunSummary() {
     if (heroTemplateName && adherenceLabel === "Custom") {
       return `${heroTemplateName} · custom`;
     }
-    return "Great run!";
+    return "Nice run";
   })();
 
   // Run8 PR3d — context-aware primary stat. Intervals get a

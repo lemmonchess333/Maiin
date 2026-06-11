@@ -266,7 +266,7 @@ export default function ProgrammeRunSection({
       // localStorage unavailable / quota — swallow; the in-memory state still
       // hides the prompt for this session.
     }
-    toast("No worries — we'll wrap up your plan.");
+    toast("Got it — we'll wrap up your plan.");
   }
 
   // #975: one-time "Set a race goal" nudge for freeform runners — the skip
@@ -1234,7 +1234,7 @@ export default function ProgrammeRunSection({
                 </p>
                 <p className="text-micro text-muted-foreground mt-0.5">
                   {selectedRun.isCompleted
-                    ? "Nice work — add another if you want."
+                    ? "Add another whenever you like."
                     : selectedRun.status === "skipped"
                       ? "Marked as skipped — you can still head out."
                       : "Rest day. Head out whenever you like."}

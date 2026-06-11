@@ -371,7 +371,7 @@ export default function TodayEnergy({
               className="block text-center text-xs font-medium pb-1"
               style={{ color: THEME.semantic.nutrition, opacity: 0.7 }}
             >
-              Tap to log today's meals
+              Log today's meals
             </Link>
           )}
       </div>
