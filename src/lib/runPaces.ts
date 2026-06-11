@@ -125,6 +125,24 @@ const INTENSITY_PCT: Record<RunIntensity, [number, number]> = {
   repetition: [1.1, 1.05],
 };
 
+/** Parse a "mm:ss" or "h:mm:ss" finish time to seconds. Null when unparseable
+ *  (UI benchmark entry). Minutes/seconds must be < 60; result must be > 0. */
+export function parseRaceTimeToSeconds(input: string): number | null {
+  const parts = input.trim().split(":");
+  if (parts.length < 2 || parts.length > 3) return null;
+  const nums = parts.map((p) => Number(p));
+  if (nums.some((n) => !Number.isFinite(n) || n < 0)) return null;
+  let seconds: number;
+  if (nums.length === 2) {
+    if (nums[1] >= 60) return null;
+    seconds = nums[0] * 60 + nums[1];
+  } else {
+    if (nums[1] >= 60 || nums[2] >= 60) return null;
+    seconds = nums[0] * 3600 + nums[1] * 60 + nums[2];
+  }
+  return seconds > 0 ? seconds : null;
+}
+
 /** Riegel race-time prediction: T2 = T1 · (D2/D1)^1.06. */
 export function predictRaceTimeS(
   benchmark: { distanceM: number; timeS: number },
