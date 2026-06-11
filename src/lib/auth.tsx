@@ -263,6 +263,14 @@ export interface UserProfileRunning {
     source: "race" | "manual" | "estimate" | "derived";
     updatedAt: string;
   } | null;
+  /**
+   * Max heart rate (bpm) — the single INPUT for HR-zone math (see
+   * src/lib/hrZones.ts). A user-measured max always beats the age estimate
+   * (Tanaka 208−0.7·age). `null`/absent = fall back to the age estimate at
+   * read time. Client-managed (written via updateProfile). Must stay in sync
+   * with firestore.rules allowedUserFields() + functions/profileSanitizer.js.
+   */
+  maxHeartRate?: number | null;
 }
 
 /** Onboarding quiz answers */
@@ -458,6 +466,7 @@ function hydrateProfile(
     adaptiveCapState:
       (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
     runFitness: (data.runFitness as UserProfile["runFitness"]) ?? null,
+    maxHeartRate: (data.maxHeartRate as number | undefined) ?? null,
     program: {
       goal:
         ((data.program as Record<string, unknown>)
