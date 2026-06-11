@@ -13,6 +13,8 @@ import { Skeleton } from "../LoadingSkeleton";
 import { RANK_COLORS } from "../../lib/theme";
 import Avatar from "../Avatar";
 import BlockAwareAvatar from "./BlockAwareAvatar";
+import { SOCIAL_GATES, shouldShowLeaderboard } from "@/lib/socialGates";
+import { topPercent } from "@/features/challenges/useChallengePercentile";
 
 interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
@@ -81,6 +83,23 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
 
   const currentUnit = TABS.find((t) => t.key === activeTab)?.unit || "pts";
 
+  // SOCIAL S4 — a vs-others leaderboard only earns its place at a ≥20
+  // athlete cohort, and even then is percentile/neighbourhood-framed
+  // (never a global absolute-rank list that exposes individuals). Below
+  // the threshold we show a "unlocks at N" state instead.
+  const cohortSize = entries.length;
+  const leaderboardUnlocked = shouldShowLeaderboard(cohortSize);
+  const myIndex = entries.findIndex((e) => e.uid === user?.uid);
+  const myPercentile =
+    myIndex >= 0 ? topPercent(entries[myIndex].rank, cohortSize) : null;
+  // Neighbourhood: the 5 athletes above + you + 5 below. When you have no
+  // ranked entry this week, fall back to the top 10 of the cohort.
+  const visibleEntries = !leaderboardUnlocked
+    ? []
+    : myIndex >= 0
+      ? entries.slice(Math.max(0, myIndex - 5), myIndex + 6)
+      : entries.slice(0, 10);
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -124,7 +143,7 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
           </>
         )}
 
-        {!loading && entries.length === 0 && (
+        {!loading && cohortSize === 0 && (
           <div className="text-center py-10 space-y-2">
             <div
               className="size-12 rounded-2xl flex items-center justify-center mx-auto"
@@ -141,8 +160,42 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
           </div>
         )}
 
+        {/* Sub-cohort gate: a ranked list among <20 athletes is meaningless
+            and exposes individuals — show the unlock state instead. */}
+        {!loading && cohortSize > 0 && !leaderboardUnlocked && (
+          <div className="text-center py-10 space-y-2">
+            <div
+              className="size-12 rounded-2xl flex items-center justify-center mx-auto"
+              style={{ background: "rgba(123,114,233,0.12)" }}
+            >
+              <Zap size={24} style={{ color: THEME.lifting }} />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Rankings unlock at {SOCIAL_GATES.LEADERBOARD_MIN_COHORT} athletes
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {cohortSize} active this week — follow more athletes to fill the
+              board
+            </p>
+          </div>
+        )}
+
+        {/* Percentile header — the always-on framing for an unlocked board. */}
+        {!loading && leaderboardUnlocked && myPercentile !== null && (
+          <div className="flex items-center justify-between rounded-lg bg-primary/5 border border-primary/15 px-3 py-2 mb-1.5">
+            <span className="text-sm font-semibold text-foreground">
+              You&apos;re in the top{" "}
+              <span className="font-mono tabular-nums">{myPercentile}%</span>
+            </span>
+            <span className="text-xs text-muted-foreground font-mono tabular-nums">
+              {cohortSize} athletes
+            </span>
+          </div>
+        )}
+
         {!loading &&
-          entries.map((entry) => (
+          leaderboardUnlocked &&
+          visibleEntries.map((entry) => (
             <div
               key={entry.uid}
               className={`flex items-center gap-3 p-2.5 rounded-lg ${
