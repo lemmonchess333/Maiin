@@ -21,7 +21,10 @@ interface PrivacySectionProps {
   /** Subset of the profile fields read by this section. Required for
    *  F1's aiAnalysisEnabled toggle which renders the switch in its
    *  current state. */
-  profile: Pick<UserProfile, "aiAnalysisEnabled"> | null;
+  profile: Pick<
+    UserProfile,
+    "aiAnalysisEnabled" | "hideSharedRouteEnds"
+  > | null;
   updateProfile: (
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
@@ -279,6 +282,34 @@ export default function PrivacySection({
                 value: next,
               });
               await updateProfile({ aiAnalysisEnabled: next });
+            }}
+          />
+        </div>
+
+        {/* Shared-route end clipping — default-on home-location protection,
+            independent of (and composed with) explicit Privacy Zones below. */}
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+          <div className="flex-1 mr-3">
+            <p className="text-sm font-medium text-foreground">
+              Hide route start &amp; end on shared runs
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Clips ~200m off each end of the route shown to followers, so your
+              home isn&apos;t broadcast. Your own map keeps the full route.
+            </p>
+          </div>
+          <Toggle
+            checked={profile?.hideSharedRouteEnds !== false}
+            label="Toggle hiding route ends on shared runs"
+            onChange={async () => {
+              haptic("light");
+              const currentlyOn = profile?.hideSharedRouteEnds !== false;
+              const next = !currentlyOn;
+              trackSettingsEvent("settings_toggle_changed", {
+                toggle: "hide_shared_route_ends",
+                value: next,
+              });
+              await updateProfile({ hideSharedRouteEnds: next });
             }}
           />
         </div>
