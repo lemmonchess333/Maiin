@@ -184,7 +184,7 @@ export function ChallengeList({
   return (
     <div className="space-y-4">
       {/* Weekly accountability card — action first, ranking second */}
-      <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
+      <div className="p-4 rounded-2xl bg-card border border-border/50 card-shadow">
         <div className="flex items-start gap-3 mb-3">
           <div
             className="size-9 rounded-xl flex items-center justify-center shrink-0"
