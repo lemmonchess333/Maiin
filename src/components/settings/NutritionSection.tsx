@@ -17,6 +17,10 @@ import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
+import {
+  adaptiveCalorieStatus,
+  adaptiveCalorieStatusLabel,
+} from "@/lib/adaptiveStatus";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface NutritionSectionProps {
@@ -341,6 +345,11 @@ export default function NutritionSection({
                 {tdee.targetCalories} cal
               </motion.span>
             </div>
+            {/* D6 — is this target engine-adapted, manual, or formula? So the
+                user can tell what's learning vs what they own. */}
+            <p className="text-caption text-muted-foreground leading-snug pt-1">
+              {adaptiveCalorieStatusLabel(adaptiveCalorieStatus(profile))}
+            </p>
           </div>
 
           <div className="flex items-center justify-between pt-1">
