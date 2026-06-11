@@ -103,6 +103,16 @@ const BrandBakeoff =
     ? lazyRetry(() => import("@/pages/dev/BrandBakeoff"))
     : null;
 
+// Dev/test-only ambient-glow bake-off layer. Same MODE gate as the brand
+// bake-off above — dead-code-eliminated from production, present in
+// `vite dev` + the e2e/test build so the rig can capture candidates on the
+// real seeded pages. Reads its candidate/intensity from localStorage and
+// renders a fixed top-glow behind the app (or nothing). Never ships.
+const AmbientEmission =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/dev/AmbientEmission"))
+    : null;
+
 function PageLoader() {
   // Route-aware skeleton instead of a bare centered spinner. This is the
   // app-root Suspense fallback — under BrowserRouter it's the boundary that
@@ -375,6 +385,12 @@ function AppRoutes() {
               {/* #995 tier-3: ≤1 inline education card at a time. */}
               <EducationLaneProvider>
                 <RoutePrefetcher />
+                {/* Dev/test-only ambient-glow bake-off layer (null in prod).
+                    Sits at the authenticated root so it renders behind every
+                    app page; reads its candidate from localStorage. The
+                    unauthenticated auth-shell branch above never mounts it,
+                    so the shipped auth ambience is untouched. */}
+                {AmbientEmission && <AmbientEmission />}
                 {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and
