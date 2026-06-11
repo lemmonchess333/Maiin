@@ -1,8 +1,8 @@
 import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
-import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -120,70 +120,32 @@ export default function ProfileInfoSection({
 
       <div>
         <span className="text-sm text-muted-foreground">Gender</span>
-        <div className="mt-1.5 grid grid-cols-3 gap-2">
-          {GENDER_OPTIONS.map((opt) => {
-            const selected = profile.gender === opt.value;
-            return (
-              <button
-                type="button"
-                key={opt.value}
-                onClick={async () => {
-                  haptic("light");
-                  await updateProfile({ gender: opt.value });
-                }}
-                className={cn(
-                  "min-h-14 flex items-center justify-center p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
-                  selected
-                    ? "border-primary bg-primary/10"
-                    : "border-border/50 bg-muted/30 hover:border-border"
-                )}
-              >
-                <p
-                  className={cn(
-                    "text-xs font-medium leading-tight",
-                    selected ? "text-primary" : "text-foreground"
-                  )}
-                >
-                  {opt.label}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          ariaLabel="Gender"
+          layout="wrap"
+          className="mt-1.5"
+          value={profile.gender}
+          onChange={(value) => {
+            haptic("light");
+            void updateProfile({ gender: value });
+          }}
+          options={GENDER_OPTIONS}
+        />
       </div>
 
       <div>
         <span className="text-sm text-muted-foreground">Age range</span>
-        <div className="mt-1.5 grid grid-cols-3 gap-2">
-          {AGE_RANGE_OPTIONS.map((opt) => {
-            const selected = profile.ageRange === opt.value;
-            return (
-              <button
-                type="button"
-                key={opt.value}
-                onClick={async () => {
-                  haptic("light");
-                  await updateProfile({ ageRange: opt.value });
-                }}
-                className={cn(
-                  "min-h-14 flex items-center justify-center p-3 rounded-xl border text-center transition-all active:scale-[0.97]",
-                  selected
-                    ? "border-primary bg-primary/10"
-                    : "border-border/50 bg-muted/30 hover:border-border"
-                )}
-              >
-                <p
-                  className={cn(
-                    "text-xs font-medium leading-tight",
-                    selected ? "text-primary" : "text-foreground"
-                  )}
-                >
-                  {opt.label}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          ariaLabel="Age range"
+          layout="wrap"
+          className="mt-1.5"
+          value={profile.ageRange}
+          onChange={(value) => {
+            haptic("light");
+            void updateProfile({ ageRange: value });
+          }}
+          options={AGE_RANGE_OPTIONS}
+        />
       </div>
     </AccordionSection>
   );

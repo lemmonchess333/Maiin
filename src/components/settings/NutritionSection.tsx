@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel } from "@/lib/tdee";
 import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
@@ -254,42 +255,29 @@ export default function NutritionSection({
             <p className="text-xs text-muted-foreground">
               Weekly pace ({goalPlan.direction === "lose" ? "loss" : "gain"})
             </p>
-            <div className="grid grid-cols-3 gap-2">
-              {[
+            <SegmentedControl
+              ariaLabel="Weekly pace"
+              value={weeklyRateKg}
+              onChange={(value) => {
+                haptic("medium");
+                setWeeklyRateKg(value);
+              }}
+              options={[
                 { value: 0.25, label: "Relaxed" },
                 { value: 0.5, label: "Steady" },
                 { value: 0.75, label: "Fast" },
-              ].map((r) => (
-                <button
-                  type="button"
-                  key={r.value}
-                  onClick={() => {
-                    haptic("medium");
-                    setWeeklyRateKg(r.value);
-                  }}
-                  className={cn(
-                    "min-h-11 p-2 rounded-xl border text-center transition-all",
-                    weeklyRateKg === r.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border/50 bg-muted/30 hover:border-border"
-                  )}
-                >
-                  <p
-                    className={cn(
-                      "text-xs font-medium",
-                      weeklyRateKg === r.value
-                        ? "text-primary"
-                        : "text-foreground"
-                    )}
-                  >
-                    {r.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
-                    {r.value} kg/wk
-                  </p>
-                </button>
-              ))}
-            </div>
+              ].map((r) => ({
+                value: r.value,
+                label: (
+                  <span className="flex flex-col items-center leading-tight">
+                    <span>{r.label}</span>
+                    <span className="text-caption font-normal text-muted-foreground font-mono tabular-nums mt-0.5">
+                      {r.value} kg/wk
+                    </span>
+                  </span>
+                ),
+              }))}
+            />
           </div>
         )}
 
