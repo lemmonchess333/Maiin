@@ -58,7 +58,7 @@ import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
-import { buildPlan } from "@/features/program/planBuilder";
+import { buildPlan, type RunMode } from "@/features/program/planBuilder";
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { computeProgrammeChanges } from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -73,13 +73,14 @@ import type {
   Goal,
   ProgramState,
   ProgramSettings,
+  Experience,
+  Equipment,
+  RaceDistance,
 } from "@/features/program/programTypes";
 import type { UserProfile } from "@/lib/auth";
 
-type RunMode = "freeform" | "structured" | "race_prep";
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
-type Experience = "beginner" | "intermediate" | "advanced";
-type Equipment = "full_gym" | "home_gym" | "minimal";
+// RunMode / RaceDistance / Experience / Equipment are imported from the
+// single-source measure vocabularies (D3) — no longer re-declared here.
 // The editor's split vocabulary IS the normalisation allow-list — derive it
 // from VALID_SPLIT_CHOICES so the type can't drift from the runtime guard.
 // (auto / full_body / upper_lower / ppl — a subset of PreferredSplit; the old

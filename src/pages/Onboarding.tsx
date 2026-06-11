@@ -29,8 +29,11 @@ import type {
   ProgramExercise,
   PreferredSplit,
   SplitType,
+  Experience,
+  Equipment,
+  RaceDistance,
 } from "@/features/program/programTypes";
-import { buildPlan } from "@/features/program/planBuilder";
+import { buildPlan, type RunMode } from "@/features/program/planBuilder";
 import {
   generateSchedule,
   SCHEDULE_TYPE_META,
@@ -72,12 +75,10 @@ type PrimaryGoal =
   | "fat_loss"
   | "general"
   | "running";
-type Experience = "beginner" | "intermediate" | "advanced";
+// Experience / Equipment / RunMode / RaceDistance are imported from the
+// single-source measure vocabularies (D3) — no longer re-declared here.
 type DaysPerWeek = 2 | 3 | 4 | 5 | 6;
-type Equipment = "full_gym" | "home_gym" | "minimal";
 type RunFrequency = "regular" | "occasional" | "none";
-type RunMode = "freeform" | "structured" | "race_prep";
-type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
 /* ============================
    HELPERS
