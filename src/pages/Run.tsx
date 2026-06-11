@@ -1164,7 +1164,15 @@ export default function Run() {
         isOutdoorGpsRun(runConfig?.activityType) && (
           <div
             className="fixed inset-0 z-50 text-white"
-            style={{ backgroundColor: THEME.bg }}
+            style={{
+              backgroundColor: THEME.bg,
+              // The map is non-interactive and the sheet owns its own drag,
+              // so nothing here should scroll. Locking touch-action +
+              // overscroll stops iOS from rubber-banding / scrolling the page
+              // out from under a sheet drag.
+              touchAction: "none",
+              overscrollBehavior: "none",
+            }}
           >
             <div className="absolute top-3 left-4 z-50">
               <GPSIndicator
