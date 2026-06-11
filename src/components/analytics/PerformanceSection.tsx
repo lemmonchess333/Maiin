@@ -144,6 +144,7 @@ export default function PerformanceSection() {
               sentence. Action routes to the workout flow (Performance is
               computed from logged sessions). */}
           <EmptyState
+            compact
             icon={Activity}
             accent={THEME.brand}
             headline="No sessions logged yet"
