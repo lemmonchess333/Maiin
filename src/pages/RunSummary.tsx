@@ -1252,7 +1252,7 @@ export default function RunSummary() {
               else falls through and the 3-col grid below is the
               primary read. */}
           {primaryStat && (
-            <div className="mx-4 mb-3 p-4 rounded-2xl text-center shadow-sm bg-running/8">
+            <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
               <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">
                 {primaryStat.value}
               </p>
@@ -1264,19 +1264,19 @@ export default function RunSummary() {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-            <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+            <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p className="text-2xl font-bold font-mono tabular-nums text-running">
                 {(distance / 1000).toFixed(2)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">km</p>
             </div>
-            <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+            <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
                 {formatTime(elapsed)}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">time</p>
             </div>
-            <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+            <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p
                 className="text-2xl font-bold font-mono tabular-nums"
                 style={{ color: THEME.teal }}
@@ -1287,7 +1287,7 @@ export default function RunSummary() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-            <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+            <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p
                 className="text-lg font-bold font-mono tabular-nums"
                 style={{ color: THEME.success }}
@@ -1296,7 +1296,7 @@ export default function RunSummary() {
               </p>
               <p className="text-xs text-muted-foreground">calories</p>
             </div>
-            <div className="p-3 rounded-xl bg-card text-center shadow-sm">
+            <div className="p-3 rounded-xl bg-card text-center card-shadow">
               <p className="text-lg font-bold font-mono tabular-nums text-foreground">
                 {elevationGain}m
               </p>

@@ -447,7 +447,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     );
 
   return (
-    <div className="bg-card rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-card rounded-2xl overflow-hidden card-shadow">
       {/* Hybrid card: map on top (shorter), then divider, then workout content */}
       {isHybrid ? (
         <>
