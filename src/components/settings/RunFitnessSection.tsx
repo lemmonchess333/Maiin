@@ -10,6 +10,7 @@ import {
   parseRaceTimeToSeconds,
   type RaceDistanceKey,
 } from "@/lib/runPaces";
+import { usePaceInsight } from "@/hooks/usePaceInsight";
 import type { UserProfile } from "@/lib/auth";
 
 /**
@@ -49,6 +50,8 @@ export default function RunFitnessSection({
 }) {
   const fitness = profile.runFitness ?? null;
   const paceTable = paceTableFromFitness(fitness);
+  // Pace Insights (Pro) — adaptive recalibration suggestion.
+  const { insight, accept, dismiss } = usePaceInsight();
 
   const [editing, setEditing] = useState(false);
   const [distance, setDistance] = useState<RaceDistanceKey>("5k");
@@ -95,6 +98,51 @@ export default function RunFitnessSection({
   return (
     <div className="space-y-3">
       <SectionLabel tier="section">Your running fitness</SectionLabel>
+
+      {insight && (
+        <div className="rounded-xl border border-running/25 bg-running/8 p-3 space-y-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {insight.direction === "faster"
+                ? "You're running faster than your saved fitness"
+                : "Your saved fitness looks out of date"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Recent runs suggest VDOT{" "}
+              <span className="font-mono tabular-nums">
+                {insight.suggestedVdot}
+              </span>{" "}
+              (saved:{" "}
+              <span className="font-mono tabular-nums">
+                {insight.currentVdot}
+              </span>
+              ). Update to re-tune every pace?
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="sport"
+              size="sm"
+              onClick={() => {
+                haptic("success");
+                void accept();
+              }}
+            >
+              Update fitness
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                haptic("light");
+                dismiss();
+              }}
+            >
+              Not now
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
         {paceTable ? (
