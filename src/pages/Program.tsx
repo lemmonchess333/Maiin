@@ -857,6 +857,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <TrackProgrammeSectionView section="session_card">
             <div
               className="pt-4"
+              data-no-page-swipe
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
