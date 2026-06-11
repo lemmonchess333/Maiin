@@ -143,6 +143,7 @@ export default function PerformanceHeroCard({
           </p>
         </div>
         <EmptyState
+          compact
           icon={Activity}
           accent={THEME.brand}
           headline="No sessions logged yet"
