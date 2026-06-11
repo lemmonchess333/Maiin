@@ -296,6 +296,11 @@ exports.verifyApplePurchase = functions
 
 // App Store Server Notifications V2 webhook — configure the URL in App Store Connect.
 exports.appleIAPWebhook = functions
+  // ⛔ NEVER add `enforceAppCheck: true` here. This is an EXTERNAL webhook —
+  // Apple's App Store Server Notifications call it and cannot send a Firebase
+  // App Check token, so enforcement would 403 every notification and silently
+  // break subscription state sync. Auth is the signed JWS payload, not App
+  // Check. See docs/app-check-rollout.md → "Never enforce".
   // STRIPE_SECRET_KEY: same displaced-sub cancel path via
   // applySubscriptionToUser.
   .runWith({ ...APPLE_IAP_CAP, secrets: [STRIPE_SECRET_KEY] })
