@@ -126,7 +126,7 @@ export const BADGE_DEFINITIONS: BadgeDef[] = [
   },
   {
     id: "two_month",
-    name: "Locked In",
+    name: "Unbroken",
     description: "60-day streak",
     icon: "lock",
     lucideIcon: "Lock",
