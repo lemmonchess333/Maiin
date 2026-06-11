@@ -110,14 +110,19 @@ test.describe("design-qa · transitions are hitch-free", () => {
 
   test("bottom-nav Home → Food transition", async ({ page }) => {
     await page.goto("");
-    await page.waitForLoadState("networkidle");
+    // NOT `waitForLoadState("networkidle")` — Firestore's realtime snapshot
+    // listeners hold persistent connections, so the network is never idle and
+    // that wait times out (the first-CI-run calibration finding). Wait for the
+    // actual trigger element to be ready instead.
+    const foodNav = page.getByRole("link", { name: /food/i }).first();
+    await foodNav.waitFor({ state: "visible" });
 
     const ratios = await captureTransition(
       page,
       async () => {
-        // Tropos bottom nav. If this selector drifts, the analyzer reports
-        // "no motion captured" — a loud, correct failure, not a silent pass.
-        await page.getByRole("link", { name: /food/i }).first().click();
+        // If this selector drifts, the analyzer reports "no motion captured"
+        // — a loud, correct failure, not a silent pass.
+        await foodNav.click();
       },
       { settleMs: 900 }
     );
@@ -137,15 +142,15 @@ test.describe("design-qa · transitions are hitch-free", () => {
     // (CLAUDE.md flags them) — the highest-value jank target. The fill
     // plays when water is added (WaterCard.tsx `aria-label="Add water"`).
     await page.goto("");
-    await page.waitForLoadState("networkidle");
+    // See the nav test: wait for the trigger, not `networkidle` (a Firebase
+    // realtime app never goes network-idle).
+    const addWater = page.getByRole("button", { name: /add water/i }).first();
+    await addWater.waitFor({ state: "visible" });
 
     const ratios = await captureTransition(
       page,
       async () => {
-        await page
-          .getByRole("button", { name: /add water/i })
-          .first()
-          .click();
+        await addWater.click();
       },
       // The fill-from-bottom + wave + bubble particles take longer than a
       // route transition to settle.
