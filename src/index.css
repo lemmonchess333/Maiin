@@ -158,10 +158,13 @@
 }
 
 .dark {
+  /* DS2 — richer dark canvas (the primary surface). Card lifted 10→13%
+     vs the 7% bg so layered surfaces SEPARATE (was only ~3% apart →
+     near-flat); pairs with the deeper DS2 card shadow. */
   --background: 240 4% 7%;
-  --foreground: 240 5% 90%;
-  --card: 240 4% 10%;
-  --card-foreground: 240 5% 90%;
+  --foreground: 240 5% 92%;
+  --card: 240 4% 13%;
+  --card-foreground: 240 5% 92%;
   --primary: 244 72% 66%;
   --primary-foreground: 0 0% 98%;
   /* Dark-mode pairing for --primary-strong. Same hue, slightly more
@@ -173,13 +176,13 @@
   /* Nutrition — IDENTICAL to :root (fixed domain colour). */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700 */
-  --muted: 240 3% 15%;
+  --muted: 240 3% 17%;
   --muted-foreground: 240 4% 64%;
-  --border: 240 3% 16%;
-  --input-fill: 240 3% 12%;
-  --glass-bg: rgba(18, 18, 20, 0.97);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --surface-solid: #161618;
+  --border: 240 3% 18%;
+  --input-fill: 240 3% 14%;
+  --glass-bg: rgba(20, 20, 24, 0.97);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --surface-solid: #1c1c20;
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
