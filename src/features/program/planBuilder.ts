@@ -367,10 +367,26 @@ export function validatePlanOutput(output: PlanBuilderOutput): void {
     }
   });
 
-  if (profileUpdates.runMode === "race_prep" && !profileUpdates.raceGoal) {
-    throw new Error(
-      "planBuilder: race_prep mode requires raceGoal in profileUpdates"
-    );
+  if (profileUpdates.runMode === "race_prep") {
+    if (!profileUpdates.raceGoal) {
+      throw new Error(
+        "planBuilder: race_prep mode requires raceGoal in profileUpdates"
+      );
+    }
+    // Parity with the server gate (functions/lib/validatePlanPayload.js):
+    // race_prep also requires the materialized programState.runPlan.raceGoal.
+    // Unlike runMode-vocabulary and weekScheduleVersion-is-number — which the
+    // typed PlanBuilderOutput already guarantees, so the client need not
+    // re-check what the server validates off untyped wire data — this is a
+    // SEMANTIC invariant TS can't enforce (runPlan and runPlan.raceGoal are
+    // both optional). Without it, a buildPlan bug that drops runPlan.raceGoal
+    // for a race-prep plan slips past the client preflight and only surfaces
+    // as a server rejection.
+    if (!programState.runPlan || !programState.runPlan.raceGoal) {
+      throw new Error(
+        "planBuilder: race_prep mode requires programState.runPlan.raceGoal"
+      );
+    }
   }
 
   if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION) {

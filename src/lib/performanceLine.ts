@@ -36,7 +36,7 @@ export type VerbState =
 export const VERB_LABEL: Record<VerbState, string> = {
   recovering: "Recovering",
   building: "Building",
-  cruising: "Cruising",
+  cruising: "Steady",
   sharpening: "Sharpening",
   "backing-off": "Backing off",
 };
@@ -88,14 +88,14 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 
     case "sharpening":
       if (signals.bothLoadsStrong)
-        return "Both loads strong — solid hybrid output";
+        return "Lifting and running both strong this week";
       if (signals.liftAheadOfBaseline > 0.15) {
         return `Lifting load ${Math.round(signals.liftAheadOfBaseline * 100)}% above baseline`;
       }
       if (signals.runAheadOfBaseline > 0.2) {
         return `Run volume ${Math.round(signals.runAheadOfBaseline * 100)}% up`;
       }
-      return "Loads strong — keep the line";
+      return "Strong week — keep it going";
 
     case "cruising":
       if (signals.adherenceWeak) return "Fewer sessions than usual";
