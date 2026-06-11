@@ -53,7 +53,7 @@ describe("getVerb — state + label", () => {
     });
     expect(getVerb("moderate", false)).toEqual({
       state: "cruising",
-      label: "Cruising",
+      label: "Steady",
     });
     expect(getVerb("high", false)).toEqual({
       state: "sharpening",
@@ -102,7 +102,7 @@ describe("getLine — sharpening state", () => {
   it("bothLoadsStrong signal: hybrid celebration line", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, bothLoadsStrong: true })
-    ).toBe("Both loads strong — solid hybrid output");
+    ).toBe("Lifting and running both strong this week");
   });
 
   it("liftAheadOfBaseline > 0.15: cites the percentage", () => {
@@ -128,25 +128,25 @@ describe("getLine — sharpening state", () => {
       liftAheadOfBaseline: 0.2,
       runAheadOfBaseline: 0.3,
     });
-    expect(line).toBe("Both loads strong — solid hybrid output");
+    expect(line).toBe("Lifting and running both strong this week");
   });
 
-  it("no signals: generic 'Loads strong — keep the line'", () => {
+  it("no signals: generic 'Strong week — keep it going'", () => {
     expect(getLine("sharpening", ZERO_SIGNALS)).toBe(
-      "Loads strong — keep the line"
+      "Strong week — keep it going"
     );
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
-    ).toBe("Loads strong — keep the line");
+    ).toBe("Strong week — keep it going");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
-    ).toBe("Loads strong — keep the line");
+    ).toBe("Strong week — keep it going");
   });
 });
 
