@@ -29,7 +29,7 @@ export default function HybridBalanceCard({
         <p className="text-sm font-bold text-foreground mb-3">This Week</p>
         <div className="text-center py-4 space-y-1.5 bg-gradient-to-br from-muted/30 to-transparent rounded-xl">
           <Dumbbell className="size-6 mx-auto text-lifting" />
-          <p className="text-sm font-semibold text-foreground">Fresh week</p>
+          <p className="text-sm font-semibold text-foreground">Week ahead</p>
           <p className="text-xs text-muted-foreground">
             {targetLiftSessions > 0 && targetRunSessions > 0
               ? `${targetLiftSessions} lift${targetLiftSessions !== 1 ? "s" : ""} · ${targetRunSessions} run${targetRunSessions !== 1 ? "s" : ""} planned`

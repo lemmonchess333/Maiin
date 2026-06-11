@@ -54,7 +54,7 @@ export default function LiftCTACard({
           }}
         >
           <Play className="size-3" fill="white" />
-          View
+          Start
         </div>
       </div>
     </motion.button>
