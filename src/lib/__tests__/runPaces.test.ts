@@ -6,6 +6,7 @@ import {
   paceTableFromFitness,
   resolveSessionPaces,
   deriveBenchmarkFromRuns,
+  parseRaceTimeToSeconds,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -166,5 +167,19 @@ describe("deriveBenchmarkFromRuns", () => {
       deriveBenchmarkFromRuns([{ distanceM: 800, durationS: 200 }])
     ).toBeNull();
     expect(deriveBenchmarkFromRuns([])).toBeNull();
+  });
+});
+
+describe("parseRaceTimeToSeconds", () => {
+  it("parses mm:ss and h:mm:ss", () => {
+    expect(parseRaceTimeToSeconds("22:30")).toBe(22 * 60 + 30);
+    expect(parseRaceTimeToSeconds("1:45:00")).toBe(3600 + 45 * 60);
+  });
+  it("rejects malformed input", () => {
+    expect(parseRaceTimeToSeconds("")).toBeNull();
+    expect(parseRaceTimeToSeconds("90")).toBeNull();
+    expect(parseRaceTimeToSeconds("22:90")).toBeNull();
+    expect(parseRaceTimeToSeconds("a:bc")).toBeNull();
+    expect(parseRaceTimeToSeconds("0:00")).toBeNull();
   });
 });
