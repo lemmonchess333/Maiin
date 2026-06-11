@@ -1,0 +1,139 @@
+# Build the web bundle, sync it into the native iOS project, archive a
+# signed Release build, and upload it to TestFlight.
+#
+# WHY THIS EXISTS
+#   A push to `main` updates the GitHub Pages WEB build automatically, but
+#   the native iOS app bundles its web assets at BUILD time (capacitor
+#   `webDir: dist` → `cap sync ios`). So native never updates from a web
+#   deploy — it only changes when an Xcode/TestFlight build runs. This
+#   workflow IS that build, on a macOS runner, so native delivery stops
+#   being a manual Mac chore.
+#
+# ⚠️ SCAFFOLD — NOT YET VERIFIED. This was authored in a Linux environment
+#   with no macOS runner or Apple credentials, so it has never executed.
+#   Before relying on it, an operator must (one-time):
+#     1. Add the secrets listed under `env:` below (see docs/ios-release.md).
+#     2. Run it once via the Actions tab ("Run workflow") and fix any
+#        signing/scheme specifics for this exact project.
+#   It is `workflow_dispatch` ONLY (manual) on purpose — it will never fire
+#   on push, so merging it changes nothing until you deliberately trigger it.
+#
+# Canonical pattern: import a distribution cert + provisioning profile into
+# an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
+# with an App Store Connect API key. See docs/ios-release.md for the full
+# secret-provisioning guide.
+
+name: Deploy iOS to TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Optional what-to-test note for this TestFlight build"
+        required: false
+        default: ""
+
+# Never run two TestFlight uploads at once (build numbers must be unique).
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-14
+    timeout-minutes: 40
+    env:
+      # ── App identity (match capacitor.config.ts appId) ──────────────
+      BUNDLE_ID: com.tropos.app
+      SCHEME: App
+      # ── Secrets (add in Settings → Secrets and variables → Actions) ──
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+      IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+      ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build web bundle (production)
+        run: npm run build
+
+      - name: Sync web bundle into the iOS project
+        run: npx cap sync ios
+
+      - name: Import signing certificate + provisioning profile
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+
+          echo "$IOS_DIST_CERT_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT_PATH" -P "$IOS_DIST_CERT_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+
+      - name: Archive
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/App/App.xcworkspace \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -destination "generic/platform=iOS" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            clean archive
+
+      - name: Export .ipa
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>teamID</key><string>${APPLE_TEAM_ID}</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>uploadSymbols</key><true/>
+            <key>destination</key><string>export</string>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export"
+
+      - name: Upload to TestFlight
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
+          IPA=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$ASC_API_KEY_ID" \
+            --apiIssuer "$ASC_API_ISSUER_ID"
