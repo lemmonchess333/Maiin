@@ -71,7 +71,7 @@ export function registerNativeAppCheck() {
             expireTimeMillis: Date.now() + 60 * 60 * 1000, // 1h
           };
         },
-      }),
+      })
   );
 }
 ```
@@ -119,7 +119,8 @@ causes:
 Diagnostics inside the app: the operator diagnostics page (audit P2
 #17, separate ticket) reads `getAppCheckToken()` and `isAppCheckActive()`
 from `src/lib/appCheck.ts` to surface "App Check: active / inactive"
-+ a debug-only token preview.
+
+- a debug-only token preview.
 
 ## Phase 4 — Enable enforcement (per-service, staged)
 
@@ -138,6 +139,59 @@ In the Firebase console → App Check → APIs tab:
 
 Each enforcement flip is reversible from the same console panel.
 Rollback playbook below.
+
+## Phase 4b — per-callable enforcement (`functions/index.js`)
+
+The Console "Cloud Functions" toggle above is the coarse switch. This repo's
+convention (CLAUDE.md → App Check) is **per-callable** enforcement in code:
+add `enforceAppCheck: true` to a function's `runWith({...})`. This lets you
+stage one endpoint at a time and keep destructive ones unenforced until last.
+
+**`enforceAppCheck` only applies to `https.onCall`.** `https.onRequest`
+functions are raw HTTP — the flag does nothing; if you want to gate one you
+must verify the `X-Firebase-AppCheck` header in code. **And some `onRequest`
+functions must stay open forever** (see Never enforce).
+
+### ✅ `onCall` — enforce, staged low-risk → destructive
+
+Add `enforceAppCheck: true` ONE at a time, watching error-reporting for
+App-Check-rejection spikes between each (the rate must already be ≥99% per
+Phase 3 before starting). Order:
+
+| Tier                                  | Callables                                                                                                             | If it breaks                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1 — low risk (flip first)             | `askGeminiText`, `sendTestPush`, `backfillMyActivityCategories`, `refreshMyCrewLeaderboard`, `computePerformanceWeek` | a non-critical feature errors; user retries                                                     |
+| 2 — core flows                        | `completeOnboarding`, `configurePlan`                                                                                 | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
+| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `verifyApplePurchase`, `restoreApplePurchases`                                                     | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
+
+### ⚠️ `onRequest`, client-called — manual verification only
+
+`analyzeFood`, `analyzeFoodText`, `createCheckoutSession` are client-called raw
+HTTP. The `enforceAppCheck` flag is a no-op here. Gating them (optional, lower
+priority) means verifying the `X-Firebase-AppCheck` header in the handler.
+Don't bother until the `onCall` rollout is complete and stable.
+
+### ⛔ Never enforce — EXTERNAL webhooks
+
+These are called by Stripe / Apple servers, which **cannot send an App Check
+token**. Enforcing (via the flag OR a manual header check OR an over-broad
+Console API toggle) would 403 every delivery and **silently break billing /
+subscription reconciliation**:
+
+- `stripeWebhook` — authed by the Stripe signature (`STRIPE_WEBHOOK_SECRET`).
+- `appleIAPWebhook` — authed by the signed JWS payload.
+
+Both declaration sites carry an inline `⛔ NEVER add enforceAppCheck` marker so
+a future "secure all HTTP functions" pass can't accidentally break them.
+
+### No App Check (no client request)
+
+The scheduled (`pubsub.schedule`) and Firestore-trigger functions —
+`weeklyPerformanceRollup`, `dailyPerformanceRefresh`, `rolloverChallenges`,
+`hourlyStreakNudge`, `dailyRaceReconciliationSweep`,
+`crewWeeklyLeaderboardRollup`, `onWorkoutCreated`, `onRunCreated`,
+`onActivityCreated`, `onChallengeParticipant{Created,Deleted}` — never receive
+a client request, so App Check does not apply to them.
 
 ## Rollback playbook
 
