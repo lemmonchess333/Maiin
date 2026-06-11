@@ -1084,6 +1084,20 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
+            {/* Hist6 — PI hero pinned to the top, range-independent
+              ("this week"). The TimeRange control below scopes only the
+              historical body (PeriodOverview + sport sections), so changing
+              the range never moves the hero — the two mental models
+              (current form vs adjustable history) are separated spatially.
+              Suppressed in cold-start: the "No analytics yet" card below
+              stands in until the first session is logged. Deep-links to
+              /history#performance scroll to this section's anchor. */}
+            {filter === "analytics" && !isAnalyticsColdStart && (
+              <SectionErrorBoundary sectionName="performance-section">
+                <PerformanceSection />
+              </SectionErrorBoundary>
+            )}
+
             <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
@@ -1147,18 +1161,6 @@ export default function History() {
                   rangeDays={rangeDays}
                 />
               )}
-
-            {/* Hist5b pin 3 — Performance fold. Compact PI strip with
-              inline-accordion expansion. Replaces the dedicated
-              Performance tab; deep-links to /history#performance
-              scroll to this section's anchor. Suppressed in cold-start —
-              its own "PI appears later" empty state would duplicate the
-              cold-start card above. */}
-            {filter === "analytics" && !isAnalyticsColdStart && (
-              <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection />
-              </SectionErrorBoundary>
-            )}
 
             {showRunningSection && filter === "analytics" && (
               <section id="analytics-running" aria-label="Running analytics">
