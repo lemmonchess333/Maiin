@@ -37,6 +37,12 @@ import { Footprints, Dumbbell, Check, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { paceLabel } from "@/lib/runLabels";
+import {
+  paceTableFromFitness,
+  resolveSessionPaces,
+  raceDistanceKeyFromKm,
+} from "@/lib/runPaces";
 import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
@@ -152,10 +158,29 @@ export default function DayActionSheet({
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
       )
     : null;
+  // Adaptive Paces: the user's personalized pace for this session, appended to
+  // the meta pill (e.g. "10km · 4:18 /km"). Null when there's no benchmark.
+  const selectedRunPace: string | null = (() => {
+    if (!selectedRunTemplate) return null;
+    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    if (!table) return null;
+    const r = resolveSessionPaces(selectedRunTemplate.type, table, {
+      raceDistanceKey: raceDistanceKeyFromKm(
+        selectedRunTemplate.config.targetDistance
+      ),
+    });
+    if (r.targetPace) return `${paceLabel(r.targetPace)} /km`;
+    if (r.workPace) return `${paceLabel(r.workPace)} /km`;
+    if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
+    return null;
+  })();
   const selectedRunMeta = selectedRunTemplate
-    ? selectedRunTemplate.config.targetDistance
-      ? `${selectedRunTemplate.config.targetDistance}km`
-      : `${selectedRunTemplate.estimatedDuration} min`
+    ? [
+        selectedRunTemplate.config.targetDistance
+          ? `${selectedRunTemplate.config.targetDistance}km`
+          : `${selectedRunTemplate.estimatedDuration} min`,
+        ...(selectedRunPace ? [selectedRunPace] : []),
+      ].join(" · ")
     : null;
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
   // Race templates have ids like `5k_race` / `marathon_race` (never the
