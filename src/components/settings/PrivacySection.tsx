@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
@@ -337,8 +338,10 @@ export default function PrivacySection({
               <option value={1000}>1km</option>
             </select>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            fullWidth
+            leftIcon={<Plus className="size-3.5" />}
             onClick={async () => {
               if (!newZoneName.trim()) {
                 toast.error("Enter a zone name");
@@ -364,10 +367,9 @@ export default function PrivacySection({
                 toast.error("Could not get your location");
               }
             }}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 text-primary text-sm font-medium"
           >
-            <Plus className="size-3.5" /> Add Current Location
-          </button>
+            Add Current Location
+          </Button>
         </div>
 
         {/* Blocked Users (#25) */}
@@ -385,8 +387,10 @@ export default function PrivacySection({
               </div>
             </div>
             {!blockedUsersLoaded && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={blockedUsersLoading}
                 onClick={async () => {
                   if (!user) return;
                   setBlockedUsersLoading(true);
@@ -421,11 +425,9 @@ export default function PrivacySection({
                     setBlockedUsersLoading(false);
                   }
                 }}
-                disabled={blockedUsersLoading}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-card text-foreground"
               >
-                {blockedUsersLoading ? "..." : "Show"}
-              </button>
+                Show
+              </Button>
             )}
           </div>
           {blockedUsersLoaded &&
