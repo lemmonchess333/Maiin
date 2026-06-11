@@ -1125,3 +1125,37 @@ describe("Adaptive Paces — prescribed pace personalization", () => {
     expect(prefill.target).toEqual({ type: "distance", value: 10000 });
   });
 });
+
+describe("Adaptive Paces — interval work-pace personalization", () => {
+  const fastTable = paceTableFromFitness({
+    benchmark: { distanceM: 5000, timeS: 20 * 60 },
+    vdot: null,
+  });
+
+  it("personalizes interval work pace from the pace table", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "5x1k",
+      urlType: null,
+      paceTable: fastTable,
+    });
+    expect(prefill.intervals?.reps).toBe(5);
+    expect(prefill.intervals?.workPace).toBeGreaterThan(0);
+  });
+
+  it("leaves interval work pace undefined with no pace table", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "5x1k",
+      urlType: null,
+    });
+    expect(prefill.intervals?.reps).toBe(5);
+    expect(prefill.intervals?.workPace).toBeUndefined();
+  });
+});
