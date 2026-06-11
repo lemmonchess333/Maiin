@@ -1327,7 +1327,7 @@ export default function History() {
               >
                 <SectionLabel
                   className="mt-6 mb-2"
-                  style={{ color: THEME.success }}
+                  style={{ color: THEME.semantic.nutrition }}
                 >
                   Nutrition
                 </SectionLabel>
@@ -1357,7 +1357,7 @@ export default function History() {
                     <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                       <UtensilsCrossed
                         className="size-5 shrink-0"
-                        style={{ color: THEME.success }}
+                        style={{ color: THEME.semantic.nutrition }}
                       />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">
@@ -1471,7 +1471,7 @@ export default function History() {
                             ? nutrition.caloriesSparkline
                             : undefined
                         }
-                        accentColor={THEME.success}
+                        accentColor={THEME.semantic.nutrition}
                       />
                       <StatCard
                         label="Protein"
@@ -1603,7 +1603,7 @@ export default function History() {
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
-                        style={{ color: THEME.success }}
+                        style={{ color: THEME.semantic.nutrition }}
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.daysLogged.toLocaleString()}
