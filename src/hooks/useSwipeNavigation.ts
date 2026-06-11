@@ -17,11 +17,18 @@ import { haptic } from "@/lib/haptic";
  *  - Distance OR flick-velocity threshold: a deliberate swipe, not a twitch.
  *  - Edge guard: ignore gestures starting at the screen edge so iOS keeps
  *    its system back-swipe (and we don't double-navigate).
- *  - Opt-out: bail if the gesture STARTED inside any element that owns its
- *    own horizontal gesture — `[data-no-page-swipe]` (scrollers, charts,
- *    Program's day-swiper) or `[data-swipe-card]` (swipe-to-delete rows).
- *    This is why you can't accidentally page-swipe while clearing an
- *    exercise / food row or scrolling a pill row.
+ *  - Opt-out / hand-off (resolved at touchEND because it's direction-
+ *    dependent): find the nearest gesture-owning ancestor of the start
+ *    target.
+ *      • `[data-no-page-swipe]` / `[data-swipe-card]` → HARD block: never
+ *        page-swipe from inside a horizontal scroller, chart, or
+ *        swipe-to-delete row (these have no discrete boundary to hand off).
+ *      • `[data-swipe-pager]` → an inner day-pager (Programme Lift/Run).
+ *        Hand the gesture off to a tab change ONLY when the pager is at its
+ *        boundary in the swipe direction (`data-swipe-at-start` /
+ *        `data-swipe-at-end`); otherwise the inner pager consumes it. This
+ *        is the iOS nested-pager behaviour: mid-list swipes change the day,
+ *        edge swipes change the tab.
  *  - Single-touch only (ignore pinch/multi-touch).
  *  - Only fires when on one of `orderedRoutes` (the tab roots) — never on
  *    sub-pages like /settings or /crew/:id.
@@ -41,6 +48,7 @@ interface SwipeStart {
   y: number;
   t: number;
   ignore: boolean;
+  target: HTMLElement | null;
 }
 
 export function useSwipeNavigation(
@@ -53,20 +61,22 @@ export function useSwipeNavigation(
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length !== 1) {
-      start.current = { x: 0, y: 0, t: 0, ignore: true };
+      start.current = { x: 0, y: 0, t: 0, ignore: true, target: null };
       return;
     }
     const t = e.touches[0];
-    const target = e.target as HTMLElement | null;
+    // Only the direction-INDEPENDENT bails happen here (multi-touch + edge
+    // guard). The opt-out / pager hand-off is resolved at touchEND because
+    // it depends on the swipe direction (which boundary we'd cross).
     const ignore =
       t.clientX < EDGE_GUARD_PX ||
-      t.clientX > window.innerWidth - EDGE_GUARD_PX ||
-      !!target?.closest?.("[data-no-page-swipe],[data-swipe-card]");
+      t.clientX > window.innerWidth - EDGE_GUARD_PX;
     start.current = {
       x: t.clientX,
       y: t.clientY,
       t: performance.now(),
       ignore,
+      target: e.target as HTMLElement | null,
     };
   }, []);
 
@@ -88,6 +98,24 @@ export function useSwipeNavigation(
       const flick =
         Math.abs(dx) > FLICK_DISTANCE_PX && Math.abs(dx) / dt > FLICK_VELOCITY;
       if (!farEnough && !flick) return;
+
+      // Opt-out / hand-off: consult the nearest gesture-owning ancestor of
+      // the start target (see the docblock). data-no-page-swipe / -swipe-card
+      // hard-block; data-swipe-pager hands off only at its boundary in the
+      // swipe direction.
+      const optOut = s.target?.closest?.(
+        "[data-no-page-swipe],[data-swipe-card],[data-swipe-pager]"
+      );
+      if (optOut) {
+        if (!optOut.hasAttribute("data-swipe-pager")) return; // hard block
+        const atStart = optOut.getAttribute("data-swipe-at-start") === "true";
+        const atEnd = optOut.getAttribute("data-swipe-at-end") === "true";
+        // Right-swipe (prev) only escapes when the pager is at its start;
+        // left-swipe (next) only when it's at its end. Otherwise the inner
+        // day-pager consumes the gesture.
+        if (dx > 0 && !atStart) return;
+        if (dx < 0 && !atEnd) return;
+      }
 
       // dx<0 = swipe left = advance to the next tab; dx>0 = previous.
       if (dx < 0 && idx < orderedRoutes.length - 1) {
