@@ -96,6 +96,12 @@ service cloud.firestore {
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
+        // Adaptive engines — client-managed state, also in profileSanitizer.js.
+        // `adaptiveCapState` (Adaptive TDEE weekly-rate smoothing) shipped +
+        // was written by useAdaptiveTdee but never added here, so every
+        // cap-state write was silently rejected by the update rule; fixed
+        // alongside `runFitness` (Adaptive Paces fitness benchmark).
+        'adaptiveCapState', 'runFitness',
         'trialExpiryPromptShown',
         'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
       ];
