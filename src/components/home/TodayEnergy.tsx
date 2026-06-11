@@ -129,7 +129,7 @@ export default function TodayEnergy({
           )}
         </div>
         <div className="flex items-baseline gap-2 mb-2.5">
-          <span className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
+          <span className="text-2xl font-bold font-mono tabular-nums leading-none text-foreground">
             {formatCalories(calories || 0)}
           </span>
           <span className="text-micro text-muted-foreground">
@@ -141,7 +141,7 @@ export default function TodayEnergy({
           const barWidth = Math.min((calPct / maxPct) * 100, 100);
           const tickPos = (100 / maxPct) * 100;
           return (
-            <div className="relative h-2">
+            <div className="relative h-2.5">
               <div className="absolute inset-0 rounded-full bg-muted overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
