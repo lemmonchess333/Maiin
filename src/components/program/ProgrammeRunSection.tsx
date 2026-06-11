@@ -91,6 +91,11 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
+import {
+  paceTableFromFitness,
+  resolveSessionPaces,
+  type RaceDistanceKey,
+} from "@/lib/runPaces";
 import DayActionSheet from "./DayActionSheet";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
@@ -143,6 +148,15 @@ interface ProgrammeRunSectionProps {
   /** Clears `pendingFellBehindPrompt` without a plan change — used by the
    *  in-tab "My race moved →" path before routing to the date editor. */
   dismissFellBehindPrompt: () => Promise<void>;
+}
+
+/** Map a race template's target distance (km) to a PaceTable race key. */
+function raceDistanceKey(distanceKm?: number): RaceDistanceKey | undefined {
+  if (distanceKm == null) return undefined;
+  if (distanceKm <= 5) return "5k";
+  if (distanceKm <= 10) return "10k";
+  if (distanceKm <= 21.2) return "half";
+  return "marathon";
 }
 
 export default function ProgrammeRunSection({
@@ -509,7 +523,24 @@ export default function ProgrammeRunSection({
     parseLocalDate(selectedDateKey),
     "EEE d MMM"
   );
-  // Meta line for the selected run (distance/duration + type).
+  // Adaptive Paces: the user's personalized pace for the selected session,
+  // surfaced on the command card so the "made for you" pace is visible where
+  // the run is started — not just in Settings. Null when there's no benchmark
+  // (the run then shows distance/type only, as before).
+  const selectedPaceLabel: string | null = (() => {
+    if (!selectedTemplate) return null;
+    const table = paceTableFromFitness(profile.runFitness ?? null);
+    if (!table) return null;
+    const r = resolveSessionPaces(selectedTemplate.type, table, {
+      raceDistanceKey: raceDistanceKey(selectedTemplate.config.targetDistance),
+    });
+    if (r.targetPace) return `${paceLabel(r.targetPace)} /km`;
+    if (r.workPace) return `${paceLabel(r.workPace)} /km`;
+    if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
+    return null;
+  })();
+
+  // Meta line for the selected run (distance/duration · pace · type).
   const selectedRunMeta: string[] = (() => {
     if (!selectedTemplate) return [];
     const meta: string[] = [];
@@ -518,6 +549,7 @@ export default function ProgrammeRunSection({
     } else if (selectedTemplate.estimatedDuration) {
       meta.push(`${selectedTemplate.estimatedDuration} min`);
     }
+    if (selectedPaceLabel) meta.push(selectedPaceLabel);
     meta.push(
       selectedTemplate.type.charAt(0).toUpperCase() +
         selectedTemplate.type.slice(1)
