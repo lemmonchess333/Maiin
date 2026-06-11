@@ -50,8 +50,11 @@ export interface SegmentedControlProps<T extends string | number> {
   onChange: (value: T) => void;
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
-  /** Selected-label tint. `brand` = neutral foreground (default), `running` = coral. */
-  tone?: "brand" | "running";
+  /** Selected-label tint. `brand` = neutral foreground (default),
+   *  `running` = coral, `lifting` = brand purple. The sport tones colour
+   *  the selected segment's label + (currentColor) icon so the Programme
+   *  Lift/Run switch reads its sport identity symmetrically. */
+  tone?: "brand" | "running" | "lifting";
   /** `fill` = equal-width row (default); `wrap` = auto-width pills. */
   layout?: "fill" | "wrap";
   /** Disable the whole group (e.g. a write in progress). */
@@ -168,7 +171,11 @@ function SegmentedControl<T extends string | number>({
               selected
                 ? cn(
                     "bg-card shadow-sm",
-                    tone === "running" ? "text-running" : "text-foreground"
+                    tone === "running"
+                      ? "text-running"
+                      : tone === "lifting"
+                        ? "text-lifting"
+                        : "text-foreground"
                   )
                 : // Unselected: transparent on the shared track (fill), or
                   // an individual muted pill when wrapped (no track behind).
