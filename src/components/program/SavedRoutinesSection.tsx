@@ -95,7 +95,7 @@ export default function SavedRoutinesSection() {
                sibling so its click doesn't bubble through the Link. */
             <div
               key={routine.id}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/40"
+              className="flex items-center gap-3 p-3 rounded-xl bg-card card-shadow"
             >
               <Link
                 to={`/routine/${routine.id}`}

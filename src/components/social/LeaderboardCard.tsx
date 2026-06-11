@@ -97,7 +97,7 @@ export default function LeaderboardCard({
   const selfInTop3 = top3.some((e) => e.uid === user?.uid);
 
   return (
-    <div className="p-4 rounded-2xl bg-card border border-border/50 shadow-sm">
+    <div className="p-4 rounded-2xl bg-card card-shadow">
       <div className="flex items-center gap-2 mb-3">
         {icon === "footprints" ? (
           <Footprints className="size-5 text-running" />
