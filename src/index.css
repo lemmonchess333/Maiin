@@ -57,11 +57,14 @@
      Definitions in :root + .dark below. */
   --color-achievement: hsl(var(--achievement));
   --color-achievement-bg: hsl(var(--achievement-bg));
+  /* DS2 redesign — premium radius CURVE. Base bumped 8→10px and the card
+     tiers widened (xl 12→16, 2xl 16→22) so cards read modern/soft while
+     small controls stay tight. Cascades to every rounded-* consumer. */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
   /* "… Variable" is the @font-face family name fontsource declares for
      the self-hosted variable build; the bare name is kept as a fallback
      for any environment where the variable face fails to load. */
@@ -100,7 +103,11 @@
 }
 
 :root {
-  --background: 240 5% 96%;
+  /* DS2 — deeper, cooler light canvas so white cards float instead of
+     smudging into the page (the prior 96% page vs 95.9% muted gave the
+     secondary cards ZERO separation = the "muddy middle"). The ladder is
+     now page 93% < muted 97.5% < card 100%, each gap real. */
+  --background: 240 6% 93%;
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
@@ -123,11 +130,11 @@
      --nutrition-strong is the AA white-text fill step. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700, AA on white */
-  --muted: 240 4.8% 95.9%;
+  --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
-  --radius: 0.5rem;
-  --input-fill: 240 5% 93%;
+  --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
+  --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
+  --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
@@ -155,10 +162,13 @@
 }
 
 .dark {
+  /* DS2 — richer dark canvas (the primary surface). Card lifted 10→13%
+     vs the 7% bg so layered surfaces SEPARATE (was only ~3% apart →
+     near-flat); pairs with the deeper DS2 card shadow. */
   --background: 240 4% 7%;
-  --foreground: 240 5% 90%;
-  --card: 240 4% 10%;
-  --card-foreground: 240 5% 90%;
+  --foreground: 240 5% 92%;
+  --card: 240 4% 13%;
+  --card-foreground: 240 5% 92%;
   --primary: 244 72% 66%;
   --primary-foreground: 0 0% 98%;
   /* Dark-mode pairing for --primary-strong. Same hue, slightly more
@@ -170,13 +180,13 @@
   /* Nutrition — IDENTICAL to :root (fixed domain colour). */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700 */
-  --muted: 240 3% 15%;
+  --muted: 240 3% 17%;
   --muted-foreground: 240 4% 64%;
-  --border: 240 3% 16%;
-  --input-fill: 240 3% 12%;
-  --glass-bg: rgba(18, 18, 20, 0.97);
-  --glass-border: rgba(255, 255, 255, 0.06);
-  --surface-solid: #161618;
+  --border: 240 3% 18%;
+  --input-fill: 240 3% 14%;
+  --glass-bg: rgba(20, 20, 24, 0.97);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --surface-solid: #1c1c20;
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
