@@ -289,6 +289,14 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     return Object.keys(out).length > 0 ? out : undefined;
   },
 
+  // Heart-rate zones — user-measured max HR (the INPUT; zones are derived,
+  // never stored). See src/lib/hrZones.ts. `null` clears it (fall back to the
+  // age estimate); the bounds reject nonsensical values.
+  maxHeartRate: (v) => {
+    if (v === null) return null;
+    return cleanNumber(v, { min: 100, max: 240 });
+  },
+
   macroTargets: (v) =>
     cleanObject(v, {
       calories: (n) => cleanNumber(n, { min: 0, max: 10000 }),
