@@ -46,8 +46,8 @@ It runs automatically as a **non-blocking** step in
 executes the captures against the emulator-backed app and uploads a
 `design-qa-report` artifact. It's `continue-on-error` on purpose — until the
 selectors/`settleMs` are calibrated, a flagged transition surfaces in the log
-
-- artifact **without blocking the merge**. Flip it to blocking once tuned.
+and the uploaded artifact **without blocking the merge**. Flip it to blocking
+once tuned.
 
 For PR design review, run `npm run test:design-qa` (the same hook the
 `verifier-tropos-web` / `/qa-design-review` flow can call) and read the jank
