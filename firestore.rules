@@ -70,7 +70,9 @@ service cloud.firestore {
     }
 
     // When adding new fields to UserProfile in src/lib/auth.tsx,
-    // also add them here to allow client writes.
+    // also add them here to allow client writes. This list is pinned
+    // equal to src/lib/profileFieldRegistry.ts by the D1 parity test
+    // (src/lib/__tests__/profileFieldRegistry.test.ts) — drift fails CI.
     function allowedUserFields() {
       return [
         'uid', 'displayName', 'email', 'athleteType', 'weightKg', 'heightCm',
