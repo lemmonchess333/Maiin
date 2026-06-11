@@ -60,7 +60,7 @@
  *     (the unified Programme Settings editor).
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useNavigate } from "react-router-dom";
 import {
@@ -90,6 +90,7 @@ import type { RaceTiming } from "@/features/program/runScheduler";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
+import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import DayActionSheet from "./DayActionSheet";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
@@ -471,6 +472,37 @@ export default function ProgrammeRunSection({
   const selectedDay =
     runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[0];
   const selectedRun = selectedDay.run;
+
+  // Run day-pager — swipe left/right across the run week to change the
+  // selected day, mirroring the Lift tab's session swiper (shared
+  // resolveDayPagerDelta thresholds). At the window boundary it does nothing
+  // and the outer tab-swipe takes over via the data-swipe-pager contract on
+  // the wrapper below.
+  const runTouchStartRef = useRef({ x: 0, y: 0 });
+  const selectedRunIdx = Math.max(
+    0,
+    runWindow.findIndex((d) => d.dateKey === selectedDateKey)
+  );
+  const handleRunTouchStart = (e: React.TouchEvent) => {
+    runTouchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+  };
+  const handleRunTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - runTouchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - runTouchStartRef.current.y;
+    const delta = resolveDayPagerDelta(
+      dx,
+      dy,
+      selectedRunIdx,
+      runWindow.length
+    );
+    if (delta !== 0) {
+      haptic("light");
+      setSelectedDateKey(runWindow[selectedRunIdx + delta].dateKey);
+    }
+  };
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
   const selectedDateLabel = format(
@@ -1133,7 +1165,14 @@ export default function ProgrammeRunSection({
           freeform has no scheduled runs ("start whenever"); its hero above
           owns the Start CTA. */}
       {currentMode !== "freeform" && (
-        <div className="space-y-3">
+        <div
+          className="space-y-3"
+          data-swipe-pager
+          data-swipe-at-start={selectedRunIdx <= 0}
+          data-swipe-at-end={selectedRunIdx >= runWindow.length - 1}
+          onTouchStart={handleRunTouchStart}
+          onTouchEnd={handleRunTouchEnd}
+        >
           <ProgrammeWeekSelector
             sport="run"
             ariaLabel="Run week"
