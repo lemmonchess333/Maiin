@@ -252,6 +252,7 @@ export default function ExercisePicker({
 
             {/* Filter pills */}
             <div
+              data-no-page-swipe
               className="flex overflow-x-auto gap-2 px-4 pb-2"
               style={{ scrollbarWidth: "none" }}
             >
