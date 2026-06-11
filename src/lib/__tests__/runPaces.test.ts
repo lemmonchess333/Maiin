@@ -7,6 +7,7 @@ import {
   resolveSessionPaces,
   deriveBenchmarkFromRuns,
   parseRaceTimeToSeconds,
+  resolvePaceInsight,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -181,5 +182,54 @@ describe("parseRaceTimeToSeconds", () => {
     expect(parseRaceTimeToSeconds("22:90")).toBeNull();
     expect(parseRaceTimeToSeconds("a:bc")).toBeNull();
     expect(parseRaceTimeToSeconds("0:00")).toBeNull();
+  });
+});
+
+describe("resolvePaceInsight", () => {
+  const fitness = { benchmark: { distanceM: 5000, timeS: 1500 }, vdot: null }; // 25:00 5K
+
+  it("returns null without fitness or with too few runs", () => {
+    expect(
+      resolvePaceInsight(null, [{ distanceM: 5000, durationS: 1200 }])
+    ).toBeNull();
+    expect(
+      resolvePaceInsight(fitness, [{ distanceM: 5000, durationS: 1200 }])
+    ).toBeNull();
+  });
+
+  it("suggests a FASTER benchmark when recent runs imply higher fitness", () => {
+    const runs = [
+      { distanceM: 5000, durationS: 1200 }, // 20:00 — much faster (VDOT ~50)
+      { distanceM: 5000, durationS: 1230 },
+      { distanceM: 10000, durationS: 2550 },
+    ];
+    const ins = resolvePaceInsight(fitness, runs);
+    expect(ins).not.toBeNull();
+    expect(ins!.direction).toBe("faster");
+    expect(ins!.suggestedVdot).toBeGreaterThan(ins!.currentVdot);
+  });
+
+  it("suggests SLOWER when even the best recent effort is well below the mark", () => {
+    const fastFitness = {
+      benchmark: { distanceM: 5000, timeS: 1080 },
+      vdot: null,
+    }; // 18:00
+    const runs = [
+      { distanceM: 5000, durationS: 1560 }, // 26:00 — all slow
+      { distanceM: 5000, durationS: 1620 },
+      { distanceM: 8000, durationS: 2520 },
+    ];
+    const ins = resolvePaceInsight(fastFitness, runs);
+    expect(ins).not.toBeNull();
+    expect(ins!.direction).toBe("slower");
+  });
+
+  it("returns null when recent fitness matches the stored mark (small delta)", () => {
+    const runs = [
+      { distanceM: 5000, durationS: 1500 },
+      { distanceM: 5000, durationS: 1510 },
+      { distanceM: 5000, durationS: 1495 },
+    ];
+    expect(resolvePaceInsight(fitness, runs)).toBeNull();
   });
 });

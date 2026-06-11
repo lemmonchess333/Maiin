@@ -4,6 +4,13 @@ import { MemoryRouter } from "react-router-dom";
 import RunFitnessSection from "../RunFitnessSection";
 import type { UserProfile } from "@/lib/auth";
 
+// Pace Insights pulls in auth/subscription/running-stats hooks; this render
+// test covers RunFitnessSection's own UI, so stub the insight hook (its logic
+// is unit-tested via resolvePaceInsight).
+vi.mock("@/hooks/usePaceInsight", () => ({
+  usePaceInsight: () => ({ insight: null, accept: vi.fn(), dismiss: vi.fn() }),
+}));
+
 function renderWith(profile: Partial<UserProfile>) {
   return render(
     <MemoryRouter>
