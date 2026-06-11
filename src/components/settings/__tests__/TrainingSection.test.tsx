@@ -18,6 +18,19 @@ vi.mock("@/hooks/usePaceInsight", () => ({
   usePaceInsight: () => ({ insight: null, accept: vi.fn(), dismiss: vi.fn() }),
 }));
 
+// TrainingSection also renders HeartRateZonesSection, whose useHeartRate hook
+// reads useAuth. Stub it — HR-zone maths is covered by hrZones tests.
+vi.mock("@/hooks/useHeartRate", () => ({
+  useHeartRate: () => ({
+    maxHr: 188,
+    maxHrSource: "estimate",
+    zones: [],
+    liveAvailable: false,
+    bpm: null,
+    zone: null,
+  }),
+}));
+
 type UpdateProfileFn = (
   data: Partial<UserProfile>,
   opts?: { allowProtected?: boolean; throwOnError?: boolean }
