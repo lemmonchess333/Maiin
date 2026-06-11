@@ -46,7 +46,9 @@ export interface SegmentedOption<T extends string | number> {
 
 export interface SegmentedControlProps<T extends string | number> {
   options: SegmentedOption<T>[];
-  value: T;
+  /** Selected value. `null`/`undefined` = nothing selected yet (a settings
+   *  field the user hasn't set) — renders with no active segment. */
+  value: T | null | undefined;
   onChange: (value: T) => void;
   /** Required accessible name for the radiogroup. */
   ariaLabel: string;
