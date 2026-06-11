@@ -673,7 +673,7 @@ export default function Home() {
                 redundant with the iOS Home Screen / PWA launch icon. The icon
                 SVG itself is intentionally kept in `public/` and the manifest
                 so the device installer still has it. */}
-            <h1 className="text-xl font-extrabold tracking-wider text-foreground uppercase leading-tight">
+            <h1 className="text-2xl font-extrabold tracking-[0.14em] text-foreground uppercase leading-none">
               TROPOS
             </h1>
             {programState && (
