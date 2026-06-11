@@ -29,13 +29,24 @@ describe("analyzeFrameDiffs", () => {
     expect(r.jankFlags.join(" ")).toMatch(/pop\/hitch/);
   });
 
-  it("flags a STALL — a frozen frame between two moving ones", () => {
+  it("flags a STALL — a sustained frozen run mid-motion", () => {
+    // A run of 3 near-zero frames (indices 3-5) between moving frames.
     const r = analyzeFrameDiffs([
-      0, 0.05, 0.08, 0.002, 0.08, 0.05, 0.005, 0.001, 0.0005,
+      0, 0.05, 0.08, 0.002, 0.001, 0.0008, 0.08, 0.05, 0.005, 0.001, 0.0005,
     ]);
     expect(r.ok).toBe(false);
     expect(r.stalls).toContain(3);
     expect(r.jankFlags.join(" ")).toMatch(/stall/);
+  });
+
+  it("does NOT flag isolated frozen frames (screencast duplicate artifact)", () => {
+    // The exact pattern CI surfaced on the water-fill: smooth motion with
+    // periodic single-frame duplicates. High smoothness, no real freeze.
+    const r = analyzeFrameDiffs([
+      0, 0.05, 0.002, 0.06, 0.002, 0.05, 0.002, 0.05, 0.005, 0.001, 0.0005,
+    ]);
+    expect(r.stalls).toEqual([]);
+    expect(r.ok).toBe(true);
   });
 
   it("flags a transition that never settles (still moving at the tail)", () => {
