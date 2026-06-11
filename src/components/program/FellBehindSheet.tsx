@@ -120,7 +120,7 @@ export default function FellBehindSheet({
       <p className="text-sm text-muted-foreground">
         {raceModeActive
           ? "Want to adjust the plan to match where you are now?"
-          : "No worries — your weekly target stays the same."}
+          : "Your weekly target stays the same."}
       </p>
     </ChoiceSheet>
   );
