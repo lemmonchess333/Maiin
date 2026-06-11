@@ -725,7 +725,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             ariaLabel="Train mode"
             value={activeTab}
             onChange={(value) => setActiveTab(value)}
-            tone={activeTab === "run" ? "running" : "brand"}
+            tone={activeTab === "run" ? "running" : "lifting"}
             className="rounded-2xl bg-muted/50 p-1.5"
             options={
               [
