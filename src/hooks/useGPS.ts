@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { KalmanFilter, isValidReading, haversine } from "../lib/gps";
 import { getLocationSource, type LocationWatch } from "../lib/locationSource";
+import { logger } from "../lib/logger";
 import type { GPSPoint } from "../lib/gps";
 
 export type GPSSignalQuality =
@@ -51,6 +52,11 @@ export function useGPS(elapsedSeconds = 0) {
   });
 
   const watchRef = useRef<LocationWatch | null>(null);
+  // iOS-Safari/PWA fallback: see the watchdog in `start()`. `pollRef` is the
+  // getCurrentPosition polling interval; `watchHealthyRef` flips true the
+  // first time watchPosition actually delivers a fix.
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const watchHealthyRef = useRef(false);
   const kalmanRef = useRef(new KalmanFilter());
   const pointsRef = useRef<GPSPoint[]>([]);
   const distanceRef = useRef(0);
@@ -150,9 +156,8 @@ export function useGPS(elapsedSeconds = 0) {
       timeout: elapsedRef.current > 1800 ? 15000 : 12000,
     };
 
-    watchRef.current = getLocationSource().watch(
-      options,
-      (pos) => {
+    const handleFix: PositionCallback = (pos) => {
+      {
         const { latitude, longitude, accuracy, altitude, speed } = pos.coords;
         const lastPoint =
           pointsRef.current[pointsRef.current.length - 1] || null;
@@ -200,6 +205,13 @@ export function useGPS(elapsedSeconds = 0) {
             return; // hold out a little longer for a clean first fix
           }
           provisionalStartRef.current = accuracy > GOOD_FIX_M;
+          // Diagnostic: which source broke the acquisition deadlock. Visible
+          // in Safari Web Inspector → Console when debugging the device.
+          logger.log(
+            `[useGPS] first fix via ${
+              watchHealthyRef.current ? "watch" : "poll"
+            } (±${Math.round(accuracy)}m)`
+          );
           const point = makePoint(true);
           pointsRef.current.push(point);
           setState((s) => ({
@@ -266,19 +278,61 @@ export function useGPS(elapsedSeconds = 0) {
           error: null,
           lastFixAt: point.timestamp,
         }));
+      }
+    };
+
+    const handleError: PositionErrorCallback = (err) =>
+      setState((s) => ({
+        ...s,
+        error: err.message,
+        // err.code 1 = PERMISSION_DENIED. Set permissionState from it too —
+        // iOS Safari often doesn't support navigator.permissions for
+        // geolocation, so this is the reliable signal that the user blocked
+        // location (lets the UI show a clear "turn it on" message).
+        permissionState: err.code === 1 ? "denied" : s.permissionState,
+        signalQuality: "searching",
+      }));
+
+    // iOS Safari / standalone PWA: watchPosition can silently never fire
+    // (it ignores its own `timeout`) even when the device locates fine in
+    // other apps — the run then spins on "Acquiring GPS" forever. Defend
+    // with a getCurrentPosition fallback poll that runs until the watch
+    // proves healthy (delivers a fix). If the watch never does, the poll
+    // stays our continuous fix source for the rest of the run. getCurrent
+    // is the reliable path on iOS web where watch is flaky.
+    watchHealthyRef.current = false;
+    watchRef.current = getLocationSource().watch(
+      options,
+      (pos) => {
+        if (!watchHealthyRef.current) {
+          watchHealthyRef.current = true;
+          // Watch is alive — drop the fallback poll to save battery.
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+        }
+        handleFix(pos);
       },
-      (err) =>
-        setState((s) => ({
-          ...s,
-          error: err.message,
-          // err.code 1 = PERMISSION_DENIED. Set permissionState from it too —
-          // iOS Safari often doesn't support navigator.permissions for
-          // geolocation, so this is the reliable signal that the user blocked
-          // location (lets the UI show a clear "turn it on" message).
-          permissionState: err.code === 1 ? "denied" : s.permissionState,
-          signalQuality: "searching",
-        }))
+      handleError
     );
+
+    const pollOnce = () => {
+      if (watchHealthyRef.current) return;
+      getLocationSource().getCurrent(
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 },
+        handleFix,
+        (err) => {
+          // Only a definitive permission denial is worth surfacing from the
+          // poll; transient timeouts are expected while acquiring, and the
+          // watch's onError owns the generic error UI.
+          if (err.code === 1) handleError(err);
+        }
+      );
+    };
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollOnce();
+    pollRef.current = setInterval(pollOnce, 3000);
 
     setState((s) => ({ ...s, isTracking: true }));
   }, []);
@@ -288,15 +342,24 @@ export function useGPS(elapsedSeconds = 0) {
       watchRef.current.clear();
       watchRef.current = null;
     }
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
     setState((s) => ({ ...s, isTracking: false }));
   }, []);
 
-  // Clean up the active watch on unmount to prevent memory/battery leak
+  // Clean up the active watch + fallback poll on unmount to prevent
+  // memory/battery leak.
   useEffect(() => {
     return () => {
       if (watchRef.current) {
         watchRef.current.clear();
         watchRef.current = null;
+      }
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
       }
     };
   }, []);
