@@ -38,6 +38,7 @@ import { normalizeExercise } from "@/features/program/programTypes";
 import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
+import { useRunFitnessAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 
 import {
   DndContext,
@@ -112,6 +113,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     dismissFellBehindPrompt,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
+  // Adaptive Paces: silently derive a fitness benchmark from recent runs when
+  // the user hasn't set one (the "derive" half of the capture decision).
+  useRunFitnessAutoDerive();
   // Pgm3: deload banner data source. usePerformanceWeeks reads the
   // server-side performance rollup; the `deloadRecommended` flag on
   // the current week is the spec's banner trigger. Lazy — at most 2
