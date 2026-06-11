@@ -37,6 +37,7 @@ import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
 import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
+import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 
 import {
   DndContext,
@@ -621,7 +622,10 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     else viewWeek(null);
   };
 
-  // Swipe handlers
+  // Swipe handlers — inner day-pager (Lift session swiper). Shares
+  // resolveDayPagerDelta with the Run swiper so both use identical
+  // thresholds. At its boundary it returns 0 and the outer tab-swipe
+  // (useSwipeNavigation) takes over via the data-swipe-pager contract below.
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = {
       x: e.touches[0].clientX,
@@ -629,16 +633,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     };
   };
   const handleTouchEnd = (e: React.TouchEvent) => {
-    let el = e.target as HTMLElement;
+    let el = e.target as HTMLElement | null;
     while (el && el !== e.currentTarget) {
       if (el.dataset.swipeCard) return;
-      el = el.parentElement!;
+      el = el.parentElement;
     }
     const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
     const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      if (dx < 0 && idx < displayWorkouts.length - 1) handleSelect(idx + 1);
-      else if (dx > 0 && idx > 0) handleSelect(idx - 1);
+    const delta = resolveDayPagerDelta(dx, dy, idx, displayWorkouts.length);
+    if (delta !== 0) {
+      haptic("light");
+      handleSelect(idx + delta);
     }
   };
 
@@ -857,7 +862,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <TrackProgrammeSectionView section="session_card">
             <div
               className="pt-4"
-              data-no-page-swipe
+              data-swipe-pager
+              data-swipe-at-start={idx <= 0}
+              data-swipe-at-end={idx >= displayWorkouts.length - 1}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >

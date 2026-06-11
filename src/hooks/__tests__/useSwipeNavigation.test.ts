@@ -4,9 +4,10 @@ import { useSwipeNavigation } from "../useSwipeNavigation";
 
 /* These tests pin the conflict-avoidance maths that can't be felt on the
    rig (CI has no touch device): direction-lock, distance/flick thresholds,
-   edge guard, the data-no-page-swipe / data-swipe-card opt-out, multi-touch
-   bail, and the tab-root gating. They drive the hook's two handlers with
-   synthetic touch events and assert which adjacent route it navigates to. */
+   edge guard, the data-no-page-swipe / data-swipe-card hard-block, the
+   data-swipe-pager boundary hand-off, multi-touch bail, and tab-root gating.
+   They drive the hook's two handlers with synthetic touch events and assert
+   which adjacent route it navigates to. */
 
 const navigate = vi.fn();
 vi.mock("react-router-dom", () => ({
@@ -30,14 +31,27 @@ beforeEach(() => {
   });
 });
 
+/** A fake element returned by target.closest() — mimics an opt-out / pager
+ *  ancestor with the data-* attributes the hook reads. */
+function fakeOptOut(
+  attrs: Record<string, string>
+): Pick<Element, "hasAttribute" | "getAttribute"> {
+  return {
+    hasAttribute: (name: string) => name in attrs,
+    getAttribute: (name: string) => attrs[name] ?? null,
+  };
+}
+
 function startEvent(
   x: number,
   y: number,
-  opts: { touches?: number; target?: Partial<HTMLElement> } = {}
+  opts: {
+    touches?: number;
+    optOut?: Pick<Element, "hasAttribute" | "getAttribute"> | null;
+  } = {}
 ) {
   const target = {
-    closest: (sel: string) =>
-      opts.target?.closest ? opts.target.closest(sel) : null,
+    closest: () => opts.optOut ?? null,
   };
   return {
     touches: { length: opts.touches ?? 1, 0: { clientX: x, clientY: y } },
@@ -138,10 +152,18 @@ describe("useSwipeNavigation — conflict avoidance", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it("bails when the gesture starts inside a data-no-page-swipe element", () => {
+  it("hard-blocks a swipe starting inside a data-no-page-swipe element", () => {
     const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
     swipe(result, 200, 300, 100, 305, 200, {
-      target: { closest: () => ({}) as Element },
+      optOut: fakeOptOut({ "data-no-page-swipe": "" }),
+    });
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("hard-blocks a swipe starting inside a data-swipe-card row", () => {
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
+    swipe(result, 200, 300, 100, 305, 200, {
+      optOut: fakeOptOut({ "data-swipe-card": "true" }),
     });
     expect(navigate).not.toHaveBeenCalled();
   });
@@ -158,5 +180,57 @@ describe("useSwipeNavigation — conflict avoidance", () => {
     );
     swipe(result, 200, 300, 100, 305);
     expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe("useSwipeNavigation — inner-pager boundary hand-off", () => {
+  // A day-pager NOT at its boundary keeps the gesture (inner pager moves a day)
+  it("left swipe is consumed by a pager that can still advance (not at end)", () => {
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
+    swipe(result, 200, 300, 100, 305, 200, {
+      optOut: fakeOptOut({
+        "data-swipe-pager": "",
+        "data-swipe-at-start": "false",
+        "data-swipe-at-end": "false",
+      }),
+    });
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("right swipe is consumed by a pager that can still go back (not at start)", () => {
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
+    swipe(result, 200, 300, 300, 305, 200, {
+      optOut: fakeOptOut({
+        "data-swipe-pager": "",
+        "data-swipe-at-start": "false",
+        "data-swipe-at-end": "false",
+      }),
+    });
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  // At the boundary, the gesture escapes to a tab change
+  it("left swipe hands off to the next tab when the pager is at its end", () => {
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
+    swipe(result, 200, 300, 100, 305, 200, {
+      optOut: fakeOptOut({
+        "data-swipe-pager": "",
+        "data-swipe-at-start": "false",
+        "data-swipe-at-end": "true",
+      }),
+    });
+    expect(navigate).toHaveBeenCalledWith("/food");
+  });
+
+  it("right swipe hands off to the previous tab when the pager is at its start", () => {
+    const { result } = renderHook(() => useSwipeNavigation(ROUTES, "/program"));
+    swipe(result, 200, 300, 300, 305, 200, {
+      optOut: fakeOptOut({
+        "data-swipe-pager": "",
+        "data-swipe-at-start": "true",
+        "data-swipe-at-end": "false",
+      }),
+    });
+    expect(navigate).toHaveBeenCalledWith("/");
   });
 });
