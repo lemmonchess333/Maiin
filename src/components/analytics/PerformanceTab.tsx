@@ -6,7 +6,6 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
-import { ResponsiveContainer, LineChart, Line, XAxis, Tooltip } from "recharts";
 import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
@@ -217,9 +216,6 @@ export default function PerformanceTab() {
   const delta = prev
     ? Math.round(currentWeek.performanceIndex - prev.performanceIndex)
     : null;
-  const trendData = weeks
-    .slice(-8)
-    .map((w) => ({ week: w.weekKey, score: Math.round(w.performanceIndex) }));
   const b = currentWeek.breakdown;
   const m = currentWeek.multipliers;
 
@@ -280,50 +276,45 @@ export default function PerformanceTab() {
         </div>
       )}
 
-      {/* Plain language summary card */}
+      {/* Hero — the gauge is the single number-of-record (number + band +
+          Info tooltip live inside PIGauge); the plain-language verdict and
+          delta sit beneath it. Promoted out of the old "technical details"
+          fold so the progress check is the first thing on the tab. The
+          duplicate "{pi} /100" line is gone — the gauge owns the number. */}
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-bold" style={{ color: summaryColor }}>
-            {headline}
-          </h3>
-          {delta !== null && !establishing && (
-            // DS1b: stays inline — the chip mixes THEME.success (a status
-            // colour with no guaranteed --success equality) with running, so
-            // a class swap would risk shifting the positive-delta colour.
-            <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ml-2"
-              style={{
-                color: delta >= 0 ? THEME.success : THEME.running,
-                background: `${delta >= 0 ? THEME.success : THEME.running}18`,
-              }}
-            >
-              {delta >= 0 ? "+" : ""}
-              {delta} pts
-            </span>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-        <div className="flex items-center gap-2 mt-2">
-          <span
-            className="text-3xl font-extrabold tabular-nums"
-            style={{ color: summaryColor }}
-          >
-            {pi}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            /100 Performance Index
-          </span>
-          <UITooltip content={PI_EXPLAINER}>
-            <button
-              type="button"
-              aria-label="About Performance Index"
-              className="p-0.5 -m-0.5 text-muted-foreground/70 hover:text-muted-foreground transition-colors"
-            >
-              <Info className="size-3" aria-hidden="true" />
-            </button>
-          </UITooltip>
+        <PIGauge score={currentWeek.performanceIndex} />
+        <div className="mt-3 text-center space-y-1.5">
+          <div className="flex items-center justify-center gap-2">
+            <h3 className="text-base font-bold" style={{ color: summaryColor }}>
+              {headline}
+            </h3>
+            {delta !== null && !establishing && (
+              // DS1b: stays inline — the chip mixes THEME.success (a status
+              // colour with no guaranteed --success equality) with running, so
+              // a class swap would risk shifting the positive-delta colour.
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
+                style={{
+                  color: delta >= 0 ? THEME.success : THEME.running,
+                  background: `${delta >= 0 ? THEME.success : THEME.running}18`,
+                }}
+              >
+                {delta >= 0 ? "+" : ""}
+                {delta} pts
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {body}
+          </p>
         </div>
       </div>
+
+      {/* Trend — the canonical PI area chart, promoted out of the fold.
+          Deduped: the old inline 8-week LineChart is removed; this richer
+          chart (zone reference lines, band-coloured dots, tap telemetry)
+          is the single trend surface. */}
+      {weeks.length >= 2 && <PerformanceIndexChart weeks={weeks} />}
 
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
@@ -355,7 +346,7 @@ export default function PerformanceTab() {
           "hover:text-foreground transition-colors w-full justify-center py-2"
         )}
       >
-        {showTechnical ? "Hide technical details" : "Show technical details"}
+        {showTechnical ? "Hide details" : "Show details"}
         <ChevronDown
           className={cn(
             "size-3.5 transition-transform duration-200",
@@ -376,83 +367,6 @@ export default function PerformanceTab() {
             className="overflow-hidden"
           >
             <div className="space-y-4">
-              {/* Gauge card */}
-              <div className="p-4 rounded-2xl border border-border/50 bg-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    This Week
-                  </h3>
-                  {delta !== null && (
-                    <span
-                      className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                      style={{
-                        color: delta >= 0 ? THEME.success : THEME.running,
-                        background: `${delta >= 0 ? THEME.success : THEME.running}18`,
-                      }}
-                    >
-                      {delta >= 0 ? "+" : ""}
-                      {delta} pts
-                    </span>
-                  )}
-                </div>
-                <PIGauge score={currentWeek.performanceIndex} />
-              </div>
-
-              {/* PI Trend — last 8 weeks */}
-              {trendData.length >= 2 && (
-                <div className="p-4 rounded-2xl border border-border/50 bg-card">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      Performance Index — last 8 weeks
-                    </h3>
-                    <span
-                      className="text-2xl font-extrabold tabular-nums"
-                      style={{ color: THEME.brand }}
-                    >
-                      {Math.round(currentWeek.performanceIndex)}
-                    </span>
-                  </div>
-                  <ResponsiveContainer width="100%" height={120}>
-                    <LineChart data={trendData}>
-                      <XAxis
-                        dataKey="week"
-                        fontSize={10}
-                        opacity={0.3}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v: string) => {
-                          const parts = v.split("-W");
-                          if (parts.length === 2) {
-                            const weekNum = parseInt(parts[1], 10);
-                            return `W${weekNum}`;
-                          }
-                          return v;
-                        }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: 8,
-                          fontSize: 12,
-                          color: "hsl(var(--foreground))",
-                        }}
-                        labelStyle={{ color: "hsl(var(--muted-foreground))" }}
-                        itemStyle={{ color: THEME.brand }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke={THEME.brand}
-                        strokeWidth={2}
-                        dot={{ r: 3, fill: THEME.brand }}
-                        activeDot={{ r: 5 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-
               {/* Breakdown bars */}
               <div className="p-4 rounded-2xl bg-card space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">
@@ -479,9 +393,6 @@ export default function PerformanceTab() {
                   color={THEME.teal}
                 />
               </div>
-
-              {/* Trend chart */}
-              <PerformanceIndexChart weeks={weeks} />
 
               {/* Load band + adjustments */}
               <div className="grid grid-cols-2 gap-3">
