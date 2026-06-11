@@ -185,11 +185,23 @@ export default function PerformanceHeroCard({
         haptic();
         trackHomeEvent("home_card_tapped", { card: "performance" });
       }}
-      className="block p-4 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
+      className="relative overflow-hidden block p-5 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
       aria-label={`Performance Index ${pi}, ${verb.label}`}
       aria-describedby={`perf-detail-${currentWeek.weekKey}`}
     >
-      <div className="flex items-center gap-2 mb-3">
+      {/* Band-state halo — extends the PI3 ring-glow mechanic to a soft
+          ambient wash behind the ring so the hero reads as state-aware on
+          every band (incl. amber, where the ring drop-shadow is suppressed).
+          Functional state expression, not decoration; band hue at low alpha,
+          fades to transparent. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-8 -top-8 size-48 rounded-full"
+        style={{
+          background: `radial-gradient(circle, ${hue}24, transparent 70%)`,
+        }}
+      />
+      <div className="relative flex items-center gap-2 mb-4">
         <Activity
           className="size-4"
           style={{ color: hue }}
@@ -199,8 +211,8 @@ export default function PerformanceHeroCard({
           Performance
         </p>
       </div>
-      <div className="flex items-center gap-6">
-        <div className="relative size-24 flex-shrink-0">
+      <div className="relative flex items-center gap-6">
+        <div className="relative size-28 flex-shrink-0">
           <svg
             viewBox="0 0 100 100"
             className="size-full -rotate-[135deg] motion-safe:transition-[filter] motion-safe:duration-300"
@@ -262,15 +274,15 @@ export default function PerformanceHeroCard({
         </div>
         <div className="flex-1 min-w-0">
           <motion.p
-            className="text-sm font-semibold"
-            style={{ color: hue, opacity: 0.8 }}
+            className="text-base font-bold leading-tight"
+            style={{ color: hue }}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.8 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.2 }}
           >
             {verb.label}
           </motion.p>
-          <p className="text-xs mt-0.5" style={{ color: THEME.text.muted }}>
+          <p className="text-xs mt-1" style={{ color: THEME.text.muted }}>
             {line}
           </p>
           {/* Delta chip — hidden when low-confidence (sparse data
