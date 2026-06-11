@@ -274,3 +274,16 @@ metadata.
 - When a competitor changes a relevant pattern (and the change is material)
 - When we adopt or reject a competitor pattern — write the reasoning here, not just the decision
 - When new domain vocabulary stabilises in conversation (one term used 3+ times)
+
+---
+
+## Whole-product competitive landscape & hybrid differentiation (2026)
+
+Full report: **`docs/competitive-analysis-running-2026.md`** (per-app teardown, table-stakes matrix, pricing map, prioritised roadmap, sources). The reference-app subsections above cover _training-plan mechanics_; this is the _whole-product / why-switch_ layer. Summary of the locked thesis:
+
+- **Tropos is near parity on running SOFTWARE.** The credibility gaps are hardware-adjacent — **heart-rate + zones** and an **Apple Watch / HealthKit** path — plus performance-**adaptive** plans (Runna's bar) and Strava's discovery/social (segments, route builder). These are the table-stakes that make a serious runner bounce.
+- **The "why switch from free NRC / cheap Strava+Runna" answer is NOT "better running"** (they're free/cheap + polished). It's the **hybrid loop**: run + lift + nutrition + recovery in one _adaptive_ app.
+- **White space (evidence-backed):** no mainstream app combines serious run training + progressive strength + measured nutrition + cross-discipline recovery. The DIY stack (MyFitnessPal + Whoop + Strong) is **≈$370–430/yr across silo'd apps that don't read each other's data**. The one purpose-built hybrid app, **Edge**, uses **human coaches at £179.99/yr** (users call it too pricey) and has **no measured nutrition engine**.
+- **Tropos's moat:** **algorithmic** (no human coach → scalable/cheap) + **nutrition-native** (measured adaptive-TDEE + day-type fuelling, already built) + **single price** replacing the stack. Positioning: _"one adaptive app for athletes who run AND lift AND eat with intent — for the price of one app instead of three."_
+- **Sequencing (locked):** P0 running credibility (HR/zones, HealthKit/Watch, adaptive plans) → P1 the hybrid moat (daily cross-discipline readiness, the visible nutrition↔training loop, a unified load dashboard, "replace your stack" imports) → P2 chase Strava's social/discovery only after retention is proven. **Don't let P2 jump the queue ahead of the P1 differentiators.**
+- **Strava acquired Runna (Apr 2025) + a $149.99/yr bundle (Jul 2025)** — confirmed; the run+plan+social layer is consolidating, so win on the axes they don't own (nutrition + serious lifting), don't out-Strava Strava.
