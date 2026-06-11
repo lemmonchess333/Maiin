@@ -63,7 +63,7 @@ export function analyzeNutritionPatterns(
       id: "protein-low",
       type: "warning",
       title: "Low protein intake",
-      message: `Averaging ${Math.round(avgProtein)}g protein vs ${targets.protein}g target. Try adding a protein source to each meal.`,
+      message: `Averaging ${Math.round(avgProtein)}g protein vs ${targets.protein}g target. Add a protein source to each meal.`,
       priority: 3,
     });
   }
