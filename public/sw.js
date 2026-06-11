@@ -1,4 +1,4 @@
-const CACHE_NAME = "tropos-v5";
+const CACHE_NAME = "tropos-v6";
 const BASE_PATH = "/Maiin/";
 const MAX_CACHE_ENTRIES = 150;
 

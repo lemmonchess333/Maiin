@@ -312,10 +312,13 @@ body {
 
    Tunable knobs — dial intensity here, not in the component: */
 :root {
-  --ambient-glow-peak: 0.12; /* dark emission peak alpha */
-  --ambient-glow-light: 12%; /* light brighten: mix toward white (perceptible
-     in light mode without re-introducing the #511 tint — still a brighten
-     toward white, falloff complete above the first card) */
+  --ambient-glow-peak: 0.18; /* dark emission peak alpha — visible T212-style
+     top glow. Safe to raise the PEAK because the eased falloff still
+     completes by ~45vh, so the data area below stays clean canvas (the
+     #511 failure was tint behind data, not a bright top). */
+  --ambient-glow-light: 16%; /* light brighten: mix toward white — perceptible
+     in light mode; still a brighten toward white (NOT the #511 tint),
+     falloff complete above the first card */
 }
 
 .ambient-glow {
