@@ -939,7 +939,7 @@ export default function Run() {
               <RunSetupSkeleton />
             ) : null
           ) : (
-            <div className="flex-1 flex flex-col bg-background text-foreground">
+            <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
               <RunSetupModal
                 onStart={handleStart}
                 onCancel={() => navigate("/program")}
