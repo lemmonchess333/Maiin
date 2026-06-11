@@ -35,6 +35,15 @@ export interface FrameAnalysisConfig {
   popFloor: number;
   /** …and exceed this multiple of its local-neighbour median to be isolated. */
   popFactor: number;
+  /**
+   * A stall must be a RUN of at least this many consecutive frozen frames.
+   * Calibrated from CI: the CDP screencast emits duplicate frames at high
+   * capture rates (~120fps), so a SINGLE frozen frame (~8ms) is a
+   * duplicate-frame artifact, not a perceptible hitch — only a sustained
+   * frozen run is real jank. (De-duping frames instead would mask genuine
+   * freezes, so we filter on run length, not identity.)
+   */
+  minStallRun: number;
 }
 
 export const DEFAULT_CONFIG: FrameAnalysisConfig = {
@@ -43,6 +52,7 @@ export const DEFAULT_CONFIG: FrameAnalysisConfig = {
   settleWindow: 3,
   popFloor: 0.08,
   popFactor: 4,
+  minStallRun: 3,
 };
 
 export interface FrameAnalysis {
@@ -136,20 +146,26 @@ export function analyzeFrameDiffs(
     );
   }
 
-  // STALLS: a frozen pair between two moving pairs inside the active region.
+  // STALLS: a SUSTAINED frozen run (≥ minStallRun consecutive near-zero
+  // frames) inside the active region. A single/short frozen run is a
+  // screencast duplicate-frame artifact at high capture rates, not a hitch.
   const stalls: number[] = [];
+  let runStart = -1;
   for (let i = firstActive + 1; i < lastActive; i++) {
-    if (
-      diffs[i] <= cfg.settleThreshold &&
-      diffs[i - 1] > cfg.activeThreshold &&
-      diffs[i + 1] > cfg.activeThreshold
-    ) {
-      stalls.push(i);
+    const frozen = diffs[i] <= cfg.settleThreshold;
+    if (frozen) {
+      if (runStart === -1) runStart = i;
+    } else if (runStart !== -1) {
+      if (i - runStart >= cfg.minStallRun) stalls.push(runStart);
+      runStart = -1;
     }
+  }
+  if (runStart !== -1 && lastActive - runStart >= cfg.minStallRun) {
+    stalls.push(runStart);
   }
   if (stalls.length) {
     jankFlags.push(
-      `${stalls.length} stall(s) — animation froze mid-flight at frame pair ${stalls.join(", ")}`
+      `${stalls.length} stall(s) — animation froze mid-flight starting at frame pair ${stalls.join(", ")}`
     );
   }
 
