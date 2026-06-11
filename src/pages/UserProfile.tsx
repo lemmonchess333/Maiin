@@ -162,13 +162,21 @@ export default function UserProfile() {
       );
       setActivities(acts);
 
-      let totalKm = 0;
-      let totalSessions = 0;
-      acts.forEach((a) => {
-        totalSessions++;
-        if (a.distance) totalKm += a.distance / 1000;
-      });
-      setStats({ totalKm, totalSessions });
+      // Cross-user profiles show the public/followers activity projection
+      // (privacy-correct — you can only read others' shared activity). Own
+      // profile totals come from the viewer's own runs/workouts subcollections
+      // instead (see ownStatsPromise) so YOUR profile reflects YOUR true
+      // lifetime totals — including private/unshared sessions, and uncapped
+      // (this activities query is limit(10), so summing it would undercount).
+      if (!isOwnProfile) {
+        let totalKm = 0;
+        let totalSessions = 0;
+        acts.forEach((a) => {
+          totalSessions++;
+          if (a.distance) totalKm += a.distance / 1000;
+        });
+        setStats({ totalKm, totalSessions });
+      }
     });
 
     // Cross-user-readable streak + display fields + badgeSummary from the
@@ -247,11 +255,37 @@ export default function UserProfile() {
           .catch(() => {})
       : Promise.resolve();
 
+    // Own-profile lifetime totals — read from the viewer's OWN runs + workouts
+    // subcollections (owner-only per firestore.rules), so the profile reflects
+    // true totals regardless of share/visibility rather than the public
+    // activities projection (which is public/followers-only AND limit(10), so
+    // a private-only logger saw 0 km / 0 sessions on their own profile).
+    // Mirrors useLifetimeRunStats' read-all-and-sum pattern; cross-user views
+    // can't read these subcollections (rules deny) and keep the public stats.
+    const ownStatsPromise = isOwnProfile
+      ? Promise.all([
+          getDocs(collection(db, "users", uid, "runs")),
+          getDocs(collection(db, "users", uid, "workouts")),
+        ])
+          .then(([runSnap, woSnap]) => {
+            let totalKm = 0;
+            runSnap.forEach((d) => {
+              const dist = (d.data() as { distance?: number }).distance;
+              if (typeof dist === "number") totalKm += dist / 1000;
+            });
+            setStats({ totalKm, totalSessions: runSnap.size + woSnap.size });
+          })
+          .catch((err) => {
+            logger.warn("UserProfile: own lifetime stats read failed:", err);
+          })
+      : Promise.resolve();
+
     Promise.all([
       profilePromise,
       activitiesPromise,
       publicProfilePromise,
       badgesPromise,
+      ownStatsPromise,
     ]).finally(() => {
       setStatsLoading(false);
     });
