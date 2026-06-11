@@ -12,6 +12,7 @@ import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import SectionLabel from "@/components/ui/SectionLabel";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
@@ -1171,9 +1172,9 @@ export default function History() {
 
             {showRunningSection && filter === "analytics" && (
               <section id="analytics-running" aria-label="Running analytics">
-                <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-running">
+                <SectionLabel className="mt-6 mb-2 text-running">
                   Running
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
@@ -1239,9 +1240,9 @@ export default function History() {
 
             {showLiftingSection && filter === "analytics" && (
               <section id="analytics-lifting" aria-label="Lifting analytics">
-                <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-lifting">
+                <SectionLabel className="mt-6 mb-2 text-lifting">
                   Lifting
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1326,12 +1327,12 @@ export default function History() {
                 id="analytics-nutrition"
                 aria-label="Nutrition analytics"
               >
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
+                <SectionLabel
+                  className="mt-6 mb-2"
                   style={{ color: THEME.success }}
                 >
                   Nutrition
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1572,9 +1573,7 @@ export default function History() {
                 lifetimeTotals.daysLogged >
                 0 && (
                 <section id="analytics-lifetime" aria-label="Lifetime totals">
-                  <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
-                    Lifetime
-                  </p>
+                  <SectionLabel className="mt-6 mb-2">Lifetime</SectionLabel>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
