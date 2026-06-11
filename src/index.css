@@ -57,11 +57,14 @@
      Definitions in :root + .dark below. */
   --color-achievement: hsl(var(--achievement));
   --color-achievement-bg: hsl(var(--achievement-bg));
+  /* DS2 redesign — premium radius CURVE. Base bumped 8→10px and the card
+     tiers widened (xl 12→16, 2xl 16→22) so cards read modern/soft while
+     small controls stay tight. Cascades to every rounded-* consumer. */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
   /* "… Variable" is the @font-face family name fontsource declares for
      the self-hosted variable build; the bare name is kept as a fallback
      for any environment where the variable face fails to load. */
@@ -126,7 +129,7 @@
   --muted: 240 4.8% 95.9%;
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 5.9% 90%;
-  --radius: 0.5rem;
+  --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
   --input-fill: 240 5% 93%;
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
