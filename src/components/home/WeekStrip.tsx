@@ -70,18 +70,21 @@ export default function WeekStrip({
         // Rule 3). Others: 40px. Selected-not-today: 40px filled purple
         // to match Program Rule 5. Default: 40px filled grey.
         const isBig = day.isToday;
+        // Day numbers are numeric displays → font-mono (Archivo) + tabular-nums
+        // per the design-system invariant, and text-sm so the week's dates are
+        // confidently scannable (was text-xs, and missing the numeral font).
         let cls =
           (isBig ? "size-12 " : "size-10 ") +
-          "rounded-full flex items-center justify-center text-xs font-medium transition-all relative";
+          "rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
         let st: React.CSSProperties = {};
         if (day.isToday) {
-          cls += " text-white font-semibold";
+          cls += " text-white";
           st = {
             backgroundColor: THEME.brand,
             boxShadow: `0 0 0 4px ${THEME.brand}1A, 0 4px 14px ${THEME.brand}40`,
           };
         } else if (day.isSelected) {
-          cls += " text-white font-semibold";
+          cls += " text-white";
           st = { backgroundColor: THEME.brand };
         } else {
           cls += " text-muted-foreground bg-muted";
