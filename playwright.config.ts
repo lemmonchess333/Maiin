@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 /**
  * bypassCSP is scoped to the `auth-emulator` project only — the
@@ -14,39 +14,41 @@ import { defineConfig, devices } from '@playwright/test';
  * non-local Firebase target.
  */
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: "html",
   use: {
-    baseURL: 'http://localhost:4173/Maiin/',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:4173/Maiin/",
+    trace: "on-first-retry",
   },
   projects: [
     {
-      name: 'chromium',
-      testIgnore: /auth\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      // Design-QA capture specs drive authed surfaces + use CDP screencast,
+      // so they run only in the auth-emulator project (below), not here.
+      testIgnore: [/auth\.spec\.ts/, /\.capture\.spec\.ts/],
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'mobile',
-      testIgnore: /auth\.spec\.ts/,
-      use: { ...devices['iPhone 14'] },
+      name: "mobile",
+      testIgnore: [/auth\.spec\.ts/, /\.capture\.spec\.ts/],
+      use: { ...devices["iPhone 14"] },
     },
     {
-      name: 'auth-emulator',
-      testMatch: /auth\.spec\.ts/,
+      name: "auth-emulator",
+      testMatch: [/auth\.spec\.ts/, /\.capture\.spec\.ts/],
       use: {
-        ...devices['Desktop Chrome'],
+        ...devices["Desktop Chrome"],
         bypassCSP: true,
       },
     },
   ],
   webServer: {
-    command: 'npm run preview',
-    url: 'http://localhost:4173/Maiin/',
+    command: "npm run preview",
+    url: "http://localhost:4173/Maiin/",
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
