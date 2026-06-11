@@ -56,7 +56,6 @@ import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { calcDailyBurn } from "@/utils/dailyBurn";
-import type { FitnessGoal } from "@/lib/tdee";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -82,6 +81,7 @@ import {
   type MealEntry,
 } from "@/lib/nutritionInsights";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 
@@ -262,7 +262,7 @@ export default function Home() {
       // calculateTDEE. This avoids the previous double-count / underestimate
       // where calcDailyBurn was recomputing with a fixed 1.2 NEAT.
       const targetCalories = profile?.targetCalories ?? 2200;
-      const phase = (profile?.program?.goal as FitnessGoal) || "recomp";
+      const phase = getNutritionPhase(profile);
       return calcDailyBurn(
         targetCalories,
         phase,
