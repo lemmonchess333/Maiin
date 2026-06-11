@@ -339,7 +339,7 @@ export default function PrivacySection({
             </select>
           </div>
           <Button
-            variant="secondary"
+            variant="primary"
             fullWidth
             leftIcon={<Plus className="size-3.5" />}
             onClick={async () => {
@@ -388,7 +388,7 @@ export default function PrivacySection({
             </div>
             {!blockedUsersLoaded && (
               <Button
-                variant="secondary"
+                variant="outline"
                 size="sm"
                 loading={blockedUsersLoading}
                 onClick={async () => {
