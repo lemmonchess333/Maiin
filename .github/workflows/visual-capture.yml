@@ -1,0 +1,105 @@
+name: Visual capture
+
+# Screenshots every key screen (light + dark) on a GitHub runner and
+# uploads them as a downloadable artifact, so UI changes can be reviewed
+# pic-by-pic WITHOUT a local rig. This exists because the ephemeral dev
+# container can't run the Firestore emulator JVM (it gets OOM-killed), but
+# a hosted runner has the memory — the same setup emulator-tests.yml already
+# proves works in CI.
+#
+# Trigger from the Actions tab ("Run workflow") whenever you want a fresh
+# set; download the `visual-capture` artifact from the run summary.
+
+on:
+  workflow_dispatch:
+  # Also runs on the validation branch so the workflow itself can be
+  # shaken out before merge. Extend to `pull_request` later if you want a
+  # screenshot set attached to every UI PR automatically.
+  push:
+    branches: ["claude/visual-capture"]
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: "npm"
+
+      # Firebase emulators need Java 21+ (firebase-tools 14.x+ hard-errors
+      # on older JDKs). Mirrors emulator-tests.yml.
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: x64
+
+      - run: npm ci
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
+          echo "version=$PW_VERSION" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v5
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Chromium for Playwright
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Install Chromium deps only (cache hit path)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npm install -g firebase-tools
+
+      # Build the SPA wired to the emulators (placeholder Firebase config —
+      # connectAuthEmulator/connectFirestoreEmulator reroute to localhost;
+      # the client just refuses to init on empty strings). Matches
+      # emulator-tests.yml's build step.
+      - name: Build app with emulator wiring
+        run: npm run build:e2e
+        env:
+          VITE_USE_EMULATORS: "true"
+          VITE_FIREBASE_API_KEY: emulator-dummy-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-tropos.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-tropos
+          VITE_FIREBASE_STORAGE_BUCKET: demo-tropos.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+          VITE_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
+
+      # Boot emulators, seed the user + rich data, start the preview server,
+      # wait for it, then run the capture. emulators:exec tears the emulators
+      # down when the command exits.
+      - name: Capture screens (light + dark)
+        env:
+          E2E_AUTH_EMULATOR: "1"
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8080
+          FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+          GCLOUD_PROJECT: demo-tropos
+        run: |
+          firebase emulators:exec --only auth,firestore --project demo-tropos '
+            set -e
+            npm run seed:e2e
+            npm run seed:rich
+            npm run preview > /tmp/preview.log 2>&1 &
+            for i in $(seq 1 40); do
+              curl -sf http://localhost:4173/Maiin/ > /dev/null && break
+              sleep 1
+            done
+            node scripts/visual-capture.mjs
+          '
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-capture
+          path: visual-capture/
+          retention-days: 14
