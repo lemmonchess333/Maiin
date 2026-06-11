@@ -8,6 +8,7 @@ import {
   deriveBenchmarkFromRuns,
   parseRaceTimeToSeconds,
   resolvePaceInsight,
+  raceDistanceKeyFromKm,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -231,5 +232,15 @@ describe("resolvePaceInsight", () => {
       { distanceM: 5000, durationS: 1495 },
     ];
     expect(resolvePaceInsight(fitness, runs)).toBeNull();
+  });
+});
+
+describe("raceDistanceKeyFromKm", () => {
+  it("maps template distances to race keys", () => {
+    expect(raceDistanceKeyFromKm(5)).toBe("5k");
+    expect(raceDistanceKeyFromKm(10)).toBe("10k");
+    expect(raceDistanceKeyFromKm(21.1)).toBe("half");
+    expect(raceDistanceKeyFromKm(42.2)).toBe("marathon");
+    expect(raceDistanceKeyFromKm(undefined)).toBeUndefined();
   });
 });

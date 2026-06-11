@@ -290,6 +290,18 @@ function mid([fast, slow]: PaceBand): number {
   return Math.round((fast + slow) / 2);
 }
 
+/** Map a race template's target distance (km) to a PaceTable race key. Shared
+ *  by the run surfaces that show a race session's predicted pace. */
+export function raceDistanceKeyFromKm(
+  distanceKm?: number
+): RaceDistanceKey | undefined {
+  if (distanceKm == null) return undefined;
+  if (distanceKm <= 5) return "5k";
+  if (distanceKm <= 10) return "10k";
+  if (distanceKm <= 21.2) return "half";
+  return "marathon";
+}
+
 /**
  * Pace Insights (Phase 2, Pro) — the adaptive recalibration signal. Compares
  * the VDOT the user's recent runs IMPLY against their stored benchmark; when
