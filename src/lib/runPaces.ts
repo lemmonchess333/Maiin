@@ -291,6 +291,54 @@ function mid([fast, slow]: PaceBand): number {
 }
 
 /**
+ * Pace Insights (Phase 2, Pro) — the adaptive recalibration signal. Compares
+ * the VDOT the user's recent runs IMPLY against their stored benchmark; when
+ * the best recent effort diverges by a meaningful margin, returns a suggestion
+ * to recalibrate (the user approves — we never silently change the benchmark).
+ *
+ * Pure. `recentRuns` are caller-filtered to eligible outdoor efforts.
+ * `direction` is relative to the stored benchmark: "faster" = improved (best
+ * recent effort implies a higher VDOT); "slower" = even the best recent effort
+ * is well below the stored mark (detrained / stale benchmark).
+ */
+export interface PaceInsight {
+  currentVdot: number;
+  suggestedVdot: number;
+  suggestedBenchmark: { distanceM: number; timeS: number };
+  direction: "faster" | "slower";
+}
+
+export function resolvePaceInsight(
+  fitness: RunFitnessInput | null | undefined,
+  recentRuns: { distanceM: number; durationS: number }[],
+  minDeltaVdot = 1.5,
+  minRuns = 3
+): PaceInsight | null {
+  if (!fitness) return null;
+  const currentVdot =
+    fitness.vdot && fitness.vdot > 0
+      ? fitness.vdot
+      : fitness.benchmark
+        ? vdotFromRace(fitness.benchmark.distanceM, fitness.benchmark.timeS)
+        : 0;
+  if (currentVdot <= 0) return null;
+  if (recentRuns.length < minRuns) return null;
+
+  const best = deriveBenchmarkFromRuns(recentRuns);
+  if (!best) return null;
+  const bestVdot = vdotFromRace(best.distanceM, best.timeS);
+  if (bestVdot <= 0) return null;
+  if (Math.abs(bestVdot - currentVdot) < minDeltaVdot) return null;
+
+  return {
+    currentVdot: Math.round(currentVdot * 10) / 10,
+    suggestedVdot: Math.round(bestVdot * 10) / 10,
+    suggestedBenchmark: best,
+    direction: bestVdot > currentVdot ? "faster" : "slower",
+  };
+}
+
+/**
  * Derive a fitness benchmark from a runner's history (the silent-derive path,
  * locked decision §10). Picks the effort implying the HIGHEST VDOT among
  * representative runs (≥ 2 km, finite positive pace). Caller passes
