@@ -129,4 +129,34 @@ test.describe("design-qa · transitions are hitch-free", () => {
         `(pairs=${report.pairs}, smoothness=${report.smoothness.toFixed(2)})`
     ).toBe(true);
   });
+
+  test("water-card fill animation (the signature SVG transition)", async ({
+    page,
+  }) => {
+    // WaterWave + WaterBubbles are the app's most complex animation
+    // (CLAUDE.md flags them) — the highest-value jank target. The fill
+    // plays when water is added (WaterCard.tsx `aria-label="Add water"`).
+    await page.goto("");
+    await page.waitForLoadState("networkidle");
+
+    const ratios = await captureTransition(
+      page,
+      async () => {
+        await page
+          .getByRole("button", { name: /add water/i })
+          .first()
+          .click();
+      },
+      // The fill-from-bottom + wave + bubble particles take longer than a
+      // route transition to settle.
+      { settleMs: 1400 }
+    );
+
+    const report = analyzeFrameDiffs(ratios);
+    expect(
+      report.ok,
+      `water-fill jank — ${report.jankFlags.join("; ")} ` +
+        `(pairs=${report.pairs}, smoothness=${report.smoothness.toFixed(2)})`
+    ).toBe(true);
+  });
 });

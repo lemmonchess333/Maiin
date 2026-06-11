@@ -19,6 +19,15 @@ visual QA for a human on a device.
   diff, and runs them through the analyzer. Chromium-only, runs in the
   `auth-emulator` Playwright project.
 
+## Targets
+
+- **bottom-nav Home → Food** — a route transition.
+- **water-card fill** — `WaterWave` + `WaterBubbles`, the app's most complex
+  SVG animation (CLAUDE.md flags it); the highest-value jank target.
+
+Add a surface by copying a test and swapping the `trigger` (e.g. a
+bottom-sheet open, the `SoloFirstFeed` mount).
+
 ## Run it
 
 ```bash
@@ -27,8 +36,22 @@ npm run test -- scripts/design-qa
 
 # a real capture (needs chromium + the Firebase emulator + a seeded user)
 npm run seed:e2e
-E2E_AUTH_EMULATOR=1 npx playwright test --project=auth-emulator transition.capture
+E2E_AUTH_EMULATOR=1 npm run test:design-qa
 ```
+
+## In CI / the QA workflow
+
+It runs automatically as a **non-blocking** step in
+`.github/workflows/emulator-tests.yml` (after the auth E2E): the next CI run
+executes the captures against the emulator-backed app and uploads a
+`design-qa-report` artifact. It's `continue-on-error` on purpose — until the
+selectors/`settleMs` are calibrated, a flagged transition surfaces in the log
+
+- artifact **without blocking the merge**. Flip it to blocking once tuned.
+
+For PR design review, run `npm run test:design-qa` (the same hook the
+`verifier-tropos-web` / `/qa-design-review` flow can call) and read the jank
+flags in the failure message.
 
 The **first real run is a calibration pass**: confirm the trigger actually
 animates (the analyzer says `no motion captured` if the selector drifted) and
@@ -51,7 +74,8 @@ shader-heavy "delight" of the article this idea came from.
 
 ## Not yet done
 
-- Wire into the `/qa-design-review` skill so feature PRs auto-run it.
-- Calibrate selectors/`settleMs` against the real authed surfaces.
+- **Calibration pass** — the FIRST CI run is the calibration: confirm each
+  trigger animates and that `settleMs` covers the whole transition, then
+  tighten thresholds and flip the CI step from non-blocking to blocking.
 - A baseline/regression mode (compare a transition's smoothness to a stored
   reference, like Playwright's screenshot snapshots).
