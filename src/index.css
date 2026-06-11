@@ -103,7 +103,11 @@
 }
 
 :root {
-  --background: 240 5% 96%;
+  /* DS2 — deeper, cooler light canvas so white cards float instead of
+     smudging into the page (the prior 96% page vs 95.9% muted gave the
+     secondary cards ZERO separation = the "muddy middle"). The ladder is
+     now page 93% < muted 97.5% < card 100%, each gap real. */
+  --background: 240 6% 93%;
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
@@ -126,11 +130,11 @@
      --nutrition-strong is the AA white-text fill step. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700, AA on white */
-  --muted: 240 4.8% 95.9%;
+  --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   --muted-foreground: 240 3.8% 46.1%;
-  --border: 240 5.9% 90%;
+  --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
   --radius: 0.625rem; /* DS2: 8→10px base (premium radius curve) */
-  --input-fill: 240 5% 93%;
+  --input-fill: 240 6% 95.5%; /* DS2: lighter than the deepened page so fields stay distinct */
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
