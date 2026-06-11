@@ -361,7 +361,7 @@ export default function Crew() {
       {/* Header card */}
       <motion.div
         variants={itemVariant}
-        className="p-4 rounded-2xl bg-card border border-border/40"
+        className="p-4 rounded-2xl bg-card card-shadow"
       >
         <div className="flex items-start gap-3">
           <div
@@ -485,7 +485,7 @@ export default function Crew() {
       {!shouldShowCrewSurface(crewDoc.memberCount) ? (
         <motion.div
           variants={itemVariant}
-          className="rounded-2xl bg-card border border-border/50 p-4"
+          className="rounded-2xl bg-card card-shadow p-4"
         >
           <div className="flex items-start gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
@@ -591,7 +591,7 @@ export default function Crew() {
                 const hasActivity = board.length > 0 && totalScore > 0;
                 return (
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-card border border-border/40 p-3">
+                    <div className="rounded-xl bg-card card-shadow p-3">
                       <p className="text-xs text-muted-foreground">
                         Active this week
                       </p>
@@ -602,7 +602,7 @@ export default function Crew() {
                         </span>
                       </p>
                     </div>
-                    <div className="rounded-xl bg-card border border-border/40 p-3">
+                    <div className="rounded-xl bg-card card-shadow p-3">
                       <p className="text-xs text-muted-foreground">
                         {totalLabel.label}
                       </p>
@@ -620,7 +620,7 @@ export default function Crew() {
               })()}
 
               {board.length === 0 ? (
-                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-card card-shadow">
                   <div
                     className="size-8 rounded-lg flex items-center justify-center shrink-0"
                     style={{ background: `${THEME.brand}14` }}
@@ -633,7 +633,7 @@ export default function Crew() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-xl bg-card border border-border/40 divide-y divide-border/20">
+                <div className="rounded-xl bg-card card-shadow divide-y divide-border/20">
                   {board.map((entry) => (
                     <div
                       key={entry.uid}
@@ -688,7 +688,7 @@ export default function Crew() {
              ChallengeList empty state on the Crews tab and the
              Following empty state on Feed. Keeps surface low-emotion
              when there's nothing to render. */
-          <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card card-shadow">
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className="size-8 rounded-lg flex items-center justify-center shrink-0"
