@@ -312,13 +312,15 @@ body {
 
    Tunable knobs — dial intensity here, not in the component: */
 :root {
-  --ambient-glow-peak: 0.18; /* dark emission peak alpha — visible T212-style
-     top glow. Safe to raise the PEAK because the eased falloff still
-     completes by ~45vh, so the data area below stays clean canvas (the
-     #511 failure was tint behind data, not a bright top). */
-  --ambient-glow-light: 16%; /* light brighten: mix toward white — perceptible
-     in light mode; still a brighten toward white (NOT the #511 tint),
-     falloff complete above the first card */
+  /* Dark bloom strength. Drives the layered radial alphas below. */
+  --ambient-glow-peak: 0.2;
+  /* Luminous hot-core hue (dark): a LIGHTER, slightly-desaturated violet in
+     the brand-purple family. The lightness ramp (light core → brand body →
+     transparent) is what makes the glow read as emitted LIGHT rather than
+     flat translucent paint — within ONE hue family, so no #511 mud. */
+  --ambient-glow-core: 248 96% 84%;
+  /* Light-mode brighten strength (mix toward white). */
+  --ambient-glow-light: 16%;
 }
 
 .ambient-glow {
@@ -328,38 +330,44 @@ body {
   height: 22vh; /* light: falloff completes above the first card */
   z-index: -1;
   pointer-events: none;
-  /* LIGHT — brighten, NOT the #511 accent-over-grey method. */
+  /* LIGHT — brighten from a top-CENTRE bloom (not a corner), NOT the #511
+     accent-over-grey method. */
   background: radial-gradient(
-    120% 100% at 20% -5%,
+    125% 105% at 50% -8%,
     color-mix(in oklch, hsl(var(--primary)) var(--ambient-glow-light), white) 0%,
     color-mix(
         in oklch,
         hsl(var(--primary)) calc(var(--ambient-glow-light) / 2),
         white
       )
-      30%,
+      34%,
     hsl(var(--background)) 78%
   );
 }
 
 .dark .ambient-glow {
-  height: 45vh; /* dark: more room; falloff complete by ~45vh */
-  /* DARK — tight bright core over a wider soft halo, single hue. */
+  height: 48vh; /* dark: room for a soft bloom; falloff complete by ~48vh */
+  /* DARK — a T212-class bloom from top CENTRE: a luminous light-violet hot
+     core (reads as emitted light) over a wide, soft brand-purple ambient
+     halo. Single hue family; eased multi-stop falloff complete well within
+     the layer so the data area stays clean canvas. */
   background:
+    /* 1) luminous hot core — the "light source" */
     radial-gradient(
-      circle at 20% -5%,
-      hsl(var(--primary) / var(--ambient-glow-peak)) 0%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.55)) 12%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.2)) 22%,
-      transparent 30%
+      58% 42% at 50% -4%,
+      hsl(var(--ambient-glow-core) / calc(var(--ambient-glow-peak) * 1.15)) 0%,
+      hsl(var(--ambient-glow-core) / calc(var(--ambient-glow-peak) * 0.7)) 24%,
+      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.45)) 44%,
+      transparent 66%
     ),
+    /* 2) wide soft ambient bloom — the brand-purple spread */
     radial-gradient(
-      120% 60% at 50% 0%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.5)) 0%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.22)) 22%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.08)) 34%,
-      transparent 45%
-    );
+        135% 88% at 50% -10%,
+        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.55)) 0%,
+        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.26)) 30%,
+        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.09)) 50%,
+        transparent 76%
+      );
 }
 
 /* Faint fractal noise (data-URI) breaks up gradient banding on OLED. */
