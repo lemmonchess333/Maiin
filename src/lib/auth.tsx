@@ -242,6 +242,22 @@ export interface UserProfileRunning {
    * ScheduleDay shape changes incompatibly.
    */
   weekScheduleVersion?: number;
+  /**
+   * Adaptive Paces (design: docs/adaptive-paces-design.md). The user's run
+   * fitness BENCHMARK — the single INPUT from which all training paces are
+   * derived (we never persist the derived paces). `benchmark` is a
+   * representative effort; `vdot` is a cached convenience (derivable from the
+   * benchmark); `source` records how it was set. `null` = no benchmark yet →
+   * paces fall back to the template defaults. Client-managed (written via
+   * updateProfile). Must stay in sync with firestore.rules allowedUserFields()
+   * + functions/profileSanitizer.js.
+   */
+  runFitness?: {
+    benchmark: { distanceM: number; timeS: number } | null;
+    vdot: number | null;
+    source: "race" | "manual" | "estimate" | "derived";
+    updatedAt: string;
+  } | null;
 }
 
 /** Onboarding quiz answers */
@@ -436,6 +452,7 @@ function hydrateProfile(
       (data.adjustCaloriesForTraining as boolean | undefined) ?? true,
     adaptiveCapState:
       (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
+    runFitness: (data.runFitness as UserProfile["runFitness"]) ?? null,
     program: {
       goal:
         ((data.program as Record<string, unknown>)
