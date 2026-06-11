@@ -26,8 +26,8 @@ import {
   type FrameAnalysis,
 } from "../../scripts/design-qa/frameAnalysis";
 
-// Decode a base64 JPEG screencast frame in the page (the browser has native
-// JPEG decode + canvas), diff it against the previous frame, and return the
+// Decode a base64 PNG screencast frame in the page (the browser has native
+// PNG decode + canvas), diff it against the previous frame, and return the
 // fraction of pixels that changed beyond a small per-channel threshold.
 // Maintains the previous frame on `window` so callers just stream frames in.
 const DIFF_AGAINST_PREV = (b64: string): Promise<number> =>
