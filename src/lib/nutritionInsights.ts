@@ -55,7 +55,7 @@ export function analyzeNutritionPatterns(
       id: "protein-consistent",
       type: "positive",
       title: "Protein consistency",
-      message: `You hit your protein target ${proteinHitDays}/${dates.length} days. Great consistency!`,
+      message: `You hit your protein target ${proteinHitDays} of the last ${dates.length} days.`,
       priority: 1,
     });
   } else if (avgProtein < targets.protein * 0.7) {
@@ -81,7 +81,7 @@ export function analyzeNutritionPatterns(
       id: "skipping-breakfast",
       type: "tip",
       title: "Breakfast pattern",
-      message: `You logged breakfast on ${breakfastCount} of the last ${dates.length} days. A high-protein breakfast can support your goals.`,
+      message: `You logged breakfast on ${breakfastCount} of the last ${dates.length} days. A protein-rich breakfast helps recovery.`,
       priority: 2,
     });
   }
@@ -102,7 +102,7 @@ export function analyzeNutritionPatterns(
       id: "calorie-inconsistent",
       type: "tip",
       title: "Calorie swings",
-      message: `Your daily calories vary widely (${Math.round(avgCals - calStdDev)}–${Math.round(avgCals + calStdDev)} kcal). More consistency may help with your goals.`,
+      message: `Your daily calories vary widely (${Math.round(avgCals - calStdDev)}–${Math.round(avgCals + calStdDev)} kcal). Steadier intake makes your trends easier to read.`,
       priority: 2,
     });
   }
@@ -115,7 +115,7 @@ export function analyzeNutritionPatterns(
     insights.push({
       id: "calories-on-target",
       type: "positive",
-      title: "Great calorie control",
+      title: "Consistent calories",
       message: `You were within 15% of your calorie target on ${onTargetDays}/${dates.length} days.`,
       priority: 1,
     });
