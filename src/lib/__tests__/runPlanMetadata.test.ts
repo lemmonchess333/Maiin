@@ -9,6 +9,7 @@
  * elapsed-plan checks are deterministic.
  */
 import { describe, it, expect } from "vitest";
+import { paceTableFromFitness } from "../runPaces";
 import {
   computePlanMetadata,
   finalisePlanMetadata,
@@ -1072,5 +1073,55 @@ describe("getAdherenceLabel", () => {
   it("returns null for null / undefined planMetadata (legacy or missing field)", () => {
     expect(getAdherenceLabel(null)).toBeNull();
     expect(getAdherenceLabel(undefined)).toBeNull();
+  });
+});
+
+describe("Adaptive Paces — prescribed pace personalization", () => {
+  const fastTable = paceTableFromFitness({
+    benchmark: { distanceM: 5000, timeS: 20 * 60 }, // VDOT ~49.8
+    vdot: null,
+  });
+
+  it("personalizes a tempo target pace from the user's pace table", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "tempo_20",
+      urlType: null,
+      paceTable: fastTable,
+    });
+    expect(prefill.target?.type).toBe("pace");
+    // tempo_20's hardcoded fallback is 270; a 20:00-5K runner's threshold is
+    // faster (smaller sec/km), so the personalized value must differ from 270.
+    expect(prefill.target?.value).toBeLessThan(270);
+    expect(prefill.target?.value).toBeGreaterThan(230);
+  });
+
+  it("falls back to the template's hardcoded pace with no pace table", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "tempo_20",
+      urlType: null,
+      // no paceTable
+    });
+    expect(prefill.target).toEqual({ type: "pace", value: 270 });
+  });
+
+  it("leaves distance-based templates (long/race) untouched by personalization", () => {
+    const { prefill } = computePlanMetadata({
+      profileRunMode: "race_prep",
+      todayDayIndex: 1,
+      runPlan: undefined,
+      runDays: undefined,
+      urlTemplateId: "long_10k",
+      urlType: null,
+      paceTable: fastTable,
+    });
+    expect(prefill.target).toEqual({ type: "distance", value: 10000 });
   });
 });
