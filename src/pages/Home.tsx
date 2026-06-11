@@ -73,6 +73,8 @@ import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
+import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
+import { useHybridGuidance } from "@/hooks/useHybridGuidance";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import {
@@ -207,6 +209,9 @@ export default function Home() {
   );
 
   const todayType = resolvedToday.scheduleType;
+  // Hybrid loop — cross-discipline "today" guidance (yesterday's training →
+  // today's plan + fuel). Null while data loads / nothing to surface.
+  const hybridGuidance = useHybridGuidance(todayType);
   const streakDisplay = useCountUp(streak, {
     sessionKey: "streak",
     duration: 0.5,
@@ -1128,6 +1133,19 @@ export default function Home() {
             </TrackSectionView>
           </motion.div>
         </section>
+
+        {hybridGuidance && (
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <SectionErrorBoundary sectionName="today-guidance">
+              <TodayGuidanceCard guidance={hybridGuidance} />
+            </SectionErrorBoundary>
+          </motion.div>
+        )}
 
         <motion.div
           variants={{
