@@ -794,7 +794,7 @@ export default function Food() {
       confidence = "nl-parse";
     }
     if (items.length === 0) {
-      toast.error("Could not parse any foods. Try a different description.", {
+      toast.error("Couldn't read that. Try rewording it, or add it manually.", {
         id: "food-nl-error",
       });
       setNlParsing(false);
@@ -882,7 +882,7 @@ export default function Food() {
         if (confidence === "ai-parse") {
           toast.success("Logged from AI estimate", { id: "food-nl-success" });
         } else {
-          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}!`, {
+          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}`, {
             id: "food-nl-success",
           });
         }
