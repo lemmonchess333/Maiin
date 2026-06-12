@@ -49,6 +49,7 @@ import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
+import GhostDeltaChip from "../components/run/GhostDeltaChip";
 import GpxImportButton from "../components/run/GpxImportButton";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
@@ -1260,12 +1261,19 @@ export default function Run() {
             {/* Top-centre nav aid (clear of the left GPS indicator + the
                 tempo/interval PaceZoneBar at top-10). When following a route the
                 route guidance supersedes the generic back-to-start aid. */}
-            <div className="absolute top-3 left-1/2 z-50 -translate-x-1/2">
+            <div className="absolute top-3 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center gap-1.5">
               {targetRoute ? (
-                <RouteFollowChip
-                  targetRoute={targetRoute}
-                  currentPoint={gps.currentPoint}
-                />
+                <>
+                  <RouteFollowChip
+                    targetRoute={targetRoute}
+                    currentPoint={gps.currentPoint}
+                  />
+                  <GhostDeltaChip
+                    targetRoute={targetRoute}
+                    currentPoint={gps.currentPoint}
+                    elapsedSec={timer.elapsed}
+                  />
+                </>
               ) : (
                 <BackToStartChip
                   points={gps.points}
