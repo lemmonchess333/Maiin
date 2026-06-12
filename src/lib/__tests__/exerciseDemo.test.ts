@@ -10,11 +10,12 @@
  *   needsPosterior  — body diagram needs a back view?
  *   needsAnterior   — body diagram needs a front view?
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   mapMuscles,
   needsPosterior,
   needsAnterior,
+  getExerciseDemo,
 } from "../exerciseDemo";
 
 describe("mapMuscles", () => {
@@ -78,5 +79,41 @@ describe("needsAnterior", () => {
 
   it("returns false for an empty input", () => {
     expect(needsAnterior([])).toBe(false);
+  });
+});
+
+describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps authored instructions/tip but borrows free-exercise-db images (prefixed)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => [
+        {
+          name: "Bench Press",
+          category: "strength",
+          equipment: "barbell",
+          primaryMuscles: ["chest"],
+          secondaryMuscles: ["triceps"],
+          instructions: ["remote step"],
+          images: ["Bench_Press/0.jpg", "Bench_Press/1.jpg"],
+        },
+      ],
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const demo = await getExerciseDemo("Bench Press");
+    expect(demo).toBeTruthy();
+    // Authored local content wins for text (Bench Press has multi-step
+    // instructions + a tip), so it is NOT the single remote step.
+    expect(demo!.instructions.length).toBeGreaterThanOrEqual(2);
+    expect(demo!.tip).toBeTruthy();
+    // …but the images are borrowed from free-exercise-db and prefixed to full
+    // URLs (previously the authored path returned images: []).
+    expect(demo!.images).toHaveLength(2);
+    expect(demo!.images[0]).toMatch(
+      /^https:\/\/raw\.githubusercontent\.com\/.*\/exercises\/Bench_Press\/0\.jpg$/
+    );
   });
 });
