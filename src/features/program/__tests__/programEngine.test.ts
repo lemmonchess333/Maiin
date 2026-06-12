@@ -12,6 +12,7 @@ import {
   getProgressionLabel,
   goalProfileFor,
   applyFatigue,
+  dedupeDayExercises,
 } from "../programEngine";
 import type {
   ProgramExercise,
@@ -139,6 +140,97 @@ describe("applyProgression — bodyweight exercises", () => {
     const result = applyProgression(ex, 10, 0, "recomp", false);
     expect(result.weight).toBe(0);
     expect(result.reps).toBe(9);
+  });
+});
+
+// ── RPE autoregulation (D-LIFT-6) ───────────────
+
+describe("applyProgression — RPE autoregulation", () => {
+  it("HOLDS load when the completed set was at RPE ≥ 9.5 (double)", () => {
+    const ex = makeTestExercise({ reps: 6, weight: 60 });
+    // hit ceiling (8 reps) but at maximal effort → no weight increase
+    const held = applyProgression(ex, 8, 60, "recomp", false, 10);
+    expect(held.weight).toBe(60); // held
+    expect(held.consecutiveFailures).toBe(0); // still a success, not a failure
+    // same set at a sub-maximal RPE → normal weight increase
+    const up = applyProgression(ex, 8, 60, "recomp", false, 8);
+    expect(up.weight).toBe(62.5);
+  });
+
+  it("HOLDS the microloading bump at RPE ≥ 9.5 (linear)", () => {
+    const ex = makeTestExercise({
+      progressionType: "linear",
+      reps: 6,
+      weight: 60,
+    });
+    expect(applyProgression(ex, 6, 60, "recomp", true, 9.5).weight).toBe(60);
+    expect(applyProgression(ex, 6, 60, "recomp", true, 7).weight).toBe(61);
+  });
+
+  it("progresses normally when no RPE is logged (back-compat)", () => {
+    const ex = makeTestExercise({ reps: 6, weight: 60 });
+    expect(applyProgression(ex, 8, 60, "recomp", false).weight).toBe(62.5);
+  });
+});
+
+// ── Bodyweight rep cap (D-LIFT-11) ──────────────
+
+describe("applyProgression — bodyweight rep cap", () => {
+  it("caps the rep target at 20 and prompts adding load", () => {
+    const ex = makeBodyweightExercise({ reps: 20 });
+    const out = applyProgression(ex, 22, 0, "recomp", false);
+    expect(out.reps).toBe(20); // not 21 — capped
+    expect(out.notes).toMatch(/add load/i);
+  });
+
+  it("still increments below the cap", () => {
+    const ex = makeBodyweightExercise({ reps: 12 });
+    const out = applyProgression(ex, 14, 0, "recomp", false);
+    expect(out.reps).toBe(13);
+    expect(out.notes).toBeUndefined();
+  });
+});
+
+// ── Day dedupe (D-LIFT-12) ──────────────────────
+
+describe("dedupeDayExercises", () => {
+  it("re-points a duplicate exercise id to another variation in the category", () => {
+    const dup = makeTestExercise({
+      exerciseId: "bench-press",
+      movementCategory: "horizontal_push",
+    });
+    const out = dedupeDayExercises([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [dup, { ...dup }], // two bench-press on one day
+      },
+    ]);
+    const ids = out[0].exercises.map((e) => e.exerciseId);
+    expect(ids[0]).toBe("bench-press");
+    expect(ids[1]).not.toBe("bench-press"); // re-pointed
+    expect(new Set(ids).size).toBe(2); // no duplicate
+  });
+
+  it("leaves a day with no duplicates unchanged", () => {
+    const a = makeTestExercise({ exerciseId: "bench-press" });
+    const b = makeTestExercise({
+      exerciseId: "squat",
+      movementCategory: "knee_dominant",
+    });
+    const out = dedupeDayExercises([
+      {
+        dayName: "D",
+        dayType: "full_body",
+        completed: false,
+        exercises: [a, b],
+      },
+    ]);
+    expect(out[0].exercises.map((e) => e.exerciseId)).toEqual([
+      "bench-press",
+      "squat",
+    ]);
   });
 });
 
