@@ -32,6 +32,7 @@ import {
   ArrowDown,
   Repeat,
   Trash2,
+  Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
@@ -1153,6 +1154,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                             reps
                                           </>
                                         )}
+                                      </p>
+                                    )}
+                                    {ex.notes && (
+                                      <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+                                        <Info className="size-3 shrink-0 mt-0.5" />
+                                        <span>{ex.notes}</span>
                                       </p>
                                     )}
                                   </button>
