@@ -6,6 +6,7 @@ import { useSubscription } from "@/lib/subscription";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { localDateString } from "@/lib/dateHelpers";
 import { ADAPTIVE_TDEE_DEFAULTS } from "@/lib/adaptiveTdee";
+import { getNutritionPhase } from "@/lib/nutritionPhase";
 import {
   resolveAdaptiveTarget,
   isAdaptiveActive,
@@ -28,7 +29,7 @@ import type { UserProfile } from "@/lib/auth";
 function goalCalorieOffset(profile: UserProfile | null): number {
   const rate = profile?.weeklyRateKg;
   if (typeof rate === "number" && rate !== 0) return offsetFromWeeklyRate(rate);
-  const goal = profile?.program?.goal ?? "";
+  const goal = getNutritionPhase(profile);
   return GOAL_CALORIE_OFFSET[goal] ?? 0;
 }
 
