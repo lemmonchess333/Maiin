@@ -7,6 +7,7 @@ import {
   ESSENTIAL_FAT_FLOOR_PER_KG,
 } from "./macroConstants";
 import { trainingSignalsForNutrition } from "./trainingSignals";
+import { getNutritionPhase } from "./nutritionPhase";
 import {
   type DayIntensity,
   fuelShiftCalsForTier,
@@ -76,7 +77,7 @@ export function getAdjustedTargets(
     signals.liftPhase === "none"
       ? profile.program?.currentPhase || "base"
       : signals.liftPhase;
-  const goal = profile.program?.goal;
+  const goal = getNutritionPhase(profile);
   const multiplier = dayProteinMultiplier(phase, goal);
 
   // Day-load tier drives the fat↔carb shift (replaces the per-dayType carb
