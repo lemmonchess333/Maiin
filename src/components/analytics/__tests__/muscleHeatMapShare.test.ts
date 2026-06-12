@@ -7,7 +7,7 @@
  * is 1W with 50 total sets or 1Y with 2,500 total sets.
  */
 import { describe, it, expect } from "vitest";
-import { getShareTier } from "../muscleShare";
+import { getShareTier, getFrequencyForShare } from "../muscleShare";
 
 describe("getShareTier — relative share thresholds", () => {
   it("returns 'high' at ≥18% share", () => {
@@ -61,5 +61,24 @@ describe("getShareTier — edge cases", () => {
 
   it("threshold at exactly 8% is mid", () => {
     expect(getShareTier(8, 100)).toBe("mid");
+  });
+});
+
+// getFrequencyForShare — maps the share tier to the 1/2/3 frequency dots the
+// share card renders. low→1, mid→2, high→3 (so it tracks getShareTier's bounds).
+describe("getFrequencyForShare", () => {
+  it("returns 1 for low share (and the zero-total guard)", () => {
+    expect(getFrequencyForShare(0, 0)).toBe(1);
+    expect(getFrequencyForShare(1, 100)).toBe(1); // 1% < 8%
+  });
+
+  it("returns 2 for mid share, including the 8% lower bound", () => {
+    expect(getFrequencyForShare(10, 100)).toBe(2); // 10%
+    expect(getFrequencyForShare(8, 100)).toBe(2); // exactly 8%
+  });
+
+  it("returns 3 for high share, including the 18% lower bound", () => {
+    expect(getFrequencyForShare(20, 100)).toBe(3); // 20%
+    expect(getFrequencyForShare(18, 100)).toBe(3); // exactly 18%
   });
 });
