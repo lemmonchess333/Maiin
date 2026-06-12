@@ -4,6 +4,7 @@ import {
   volumeLandmark,
   classifyVolume,
   balanceWeeklyVolume,
+  balancePushPull,
 } from "../volumeModel";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -193,6 +194,92 @@ describe("balanceWeeklyVolume (D-LIFT-1 active)", () => {
     ];
     balanceWeeklyVolume(input, hyper);
     expect(input[0].exercises[0].sets).toBe(2); // original untouched
+  });
+});
+
+describe("balancePushPull (D-LIFT-3)", () => {
+  it("grows pull accessories until pull ≥ push when push-dominant", () => {
+    const out = balancePushPull([
+      day([
+        // push: bench main 5 + triceps accessory 3 = 8 push
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 5,
+          isAccessory: false,
+        }),
+        ex({ movementCategory: "arms_triceps", sets: 3, isAccessory: true }),
+        // pull: row main 4 = 4 pull (under push)
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 4,
+          isAccessory: false,
+        }),
+        // pull accessory to grow
+        ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true }),
+      ]),
+    ]);
+    const sets = (cat: string) =>
+      out[0].exercises
+        .filter((e) => e.movementCategory === cat)
+        .reduce((s, e) => s + e.sets, 0);
+    const push = sets("horizontal_push") + sets("arms_triceps");
+    const pull = sets("horizontal_pull") + sets("arms_biceps");
+    expect(pull).toBeGreaterThanOrEqual(push);
+    // mains untouched
+    expect(
+      out[0].exercises.find(
+        (e) => e.movementCategory === "horizontal_pull" && !e.isAccessory
+      )?.sets
+    ).toBe(4);
+  });
+
+  it("does nothing when pull already ≥ push", () => {
+    const input = [
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 3,
+          isAccessory: false,
+        }),
+        ex({ movementCategory: "horizontal_pull", sets: 4, isAccessory: true }),
+      ]),
+    ];
+    const out = balancePushPull(input);
+    expect(out[0].exercises[1].sets).toBe(4); // untouched
+  });
+
+  it("never touches main lifts (only pull accessories grow)", () => {
+    const out = balancePushPull([
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 8,
+          isAccessory: false,
+        }),
+        // only pull is a MAIN — cannot grow it
+        ex({
+          movementCategory: "horizontal_pull",
+          sets: 3,
+          isAccessory: false,
+        }),
+      ]),
+    ]);
+    expect(out[0].exercises[1].sets).toBe(3); // main pull unchanged despite imbalance
+  });
+
+  it("does not mutate the input", () => {
+    const input = [
+      day([
+        ex({
+          movementCategory: "horizontal_push",
+          sets: 6,
+          isAccessory: false,
+        }),
+        ex({ movementCategory: "arms_biceps", sets: 2, isAccessory: true }),
+      ]),
+    ];
+    balancePushPull(input);
+    expect(input[0].exercises[1].sets).toBe(2);
   });
 });
 
