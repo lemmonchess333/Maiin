@@ -614,3 +614,24 @@ export function normalizeProgramState(
     })),
   };
 }
+
+/* ── Plan-measure value vocabularies (D3 — single source) ─────────────────
+   These plan-shaping enums were duplicated across the onboarding + settings
+   capture surfaces (Onboarding.tsx, ProgrammeSettings.tsx, TrainingSection.tsx)
+   and ~5 lib modules — each able to drift. Canonicalise here next to Goal /
+   PrimaryGoal / PreferredSplit. The `VALID_*` arrays are the runtime allow-
+   lists; the types derive from them so the two can't disagree. RunMode stays
+   in planBuilder (it already exports the 3-state union; runModeResolution's
+   2-state variant is a deliberately distinct type). */
+export const VALID_EXPERIENCE = [
+  "beginner",
+  "intermediate",
+  "advanced",
+] as const;
+export type Experience = (typeof VALID_EXPERIENCE)[number];
+
+export const VALID_EQUIPMENT = ["full_gym", "home_gym", "minimal"] as const;
+export type Equipment = (typeof VALID_EQUIPMENT)[number];
+
+export const VALID_RACE_DISTANCE = ["5k", "10k", "half", "marathon"] as const;
+export type RaceDistance = (typeof VALID_RACE_DISTANCE)[number];
