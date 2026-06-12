@@ -9,29 +9,38 @@
 # genuine conflict, the API call fails for that PR and the user gets
 # notified via the PR conversation; we log + continue with the others.
 #
-# PAT vs GITHUB_TOKEN — known trade-off:
-#   Pushes made by GITHUB_TOKEN do NOT trigger other workflows on the
-#   same repo (GitHub's anti-loop policy — see
-#   https://docs.github.com/en/actions/using-workflows/triggering-a-workflow).
-#   That means a merge commit pushed by this workflow under
-#   GITHUB_TOKEN does NOT fire `emulator-tests` on the PR's new head
-#   SHA, so the PR sits at `mergeable_state: "blocked"` until someone
-#   nudges its branch manually (empty commit, push from a clone, etc).
+# Re-triggering the required checks on the new head SHA
+# ----------------------------------------------------
+# Pushes made by GITHUB_TOKEN do NOT trigger other workflows on the
+# same repo (GitHub's anti-loop policy — see
+# https://docs.github.com/en/actions/using-workflows/triggering-a-workflow).
+# So the merge commit this workflow creates under GITHUB_TOKEN does NOT
+# fire `emulator-tests` / `CI` on the PR's new head SHA on its own — the
+# PR would sit at `mergeable_state: "blocked"` with ZERO checks until
+# someone nudges its branch manually (the empty-commit dance).
 #
-#   The cure is a PAT (Personal Access Token) scoped to this repo
-#   with `contents: write` + `pull-requests: write`, stored as repo
-#   secret `AUTO_UPDATE_PR_BRANCHES_PAT`. PAT-attributed pushes DO
-#   trigger downstream workflows, so emulator-tests re-runs on the
-#   merge commit automatically.
+# We close that ourselves: `workflow_dispatch` and `repository_dispatch`
+# are the DOCUMENTED EXCEPTION to the anti-loop policy — they create runs
+# even when invoked with GITHUB_TOKEN (the call is explicit, not
+# loop-prone; see the 2022-09-08 Actions changelog). So after an update
+# that actually moved the head, we explicitly `gh workflow run` the
+# required check workflows on the PR branch. They run on the new head
+# SHA and report `emulator-tests` / `unit` back onto the PR — no manual
+# nudge needed. (Both workflows declare `workflow_dispatch:`.)
 #
-#   When the PAT is present we use it. When it's absent we fall back
-#   to GITHUB_TOKEN with a loud warning in the job log: PR branches
-#   still get auto-updated (the main goal), but each will need a
-#   manual nudge before merge. This avoids red-crossing every main
-#   push in the repos that haven't configured the secret yet.
+# PAT vs GITHUB_TOKEN:
+#   When the optional `AUTO_UPDATE_PR_BRANCHES_PAT` secret is present we
+#   use it for `update-branch` — PAT-attributed pushes trigger the
+#   downstream workflows by themselves (and let pull_request workflows
+#   run without the automation-approval prompt), so we DON'T also
+#   dispatch (that would double-run CI). When the PAT is absent we fall
+#   back to GITHUB_TOKEN + the explicit dispatch above. Either way the
+#   PR ends up with fresh checks on its new head; the PAT path is just
+#   tidier (one run instead of push+dispatch) — it is NOT required to
+#   avoid the manual nudge anymore.
 #
-# This workflow is intentionally tolerant — `|| true` on each
-# update-branch call so one failing PR doesn't abort the loop.
+# This workflow is intentionally tolerant — a single PR that fails to
+# update (conflict) doesn't abort the loop.
 
 name: Auto-update PR branches on main push
 
@@ -42,6 +51,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write # required for `gh workflow run` (dispatch the checks)
 
 # Serialise the job so two main pushes in quick succession don't race.
 # We don't need to cancel — each run handles whichever PRs are open at
@@ -56,26 +66,27 @@ jobs:
     steps:
       - name: Update every open PR branch with main
         env:
-          # Prefer the PAT; fall back to GITHUB_TOKEN. See workflow
-          # comment for the trade-off: GITHUB_TOKEN doesn't retrigger
-          # emulator-tests on the new head SHA (anti-loop policy), so
-          # auto-updated PRs will need a manual nudge before merging.
+          # Prefer the PAT; fall back to GITHUB_TOKEN. See the workflow
+          # header for the trade-off — both paths now leave the PR with
+          # fresh checks; the GITHUB_TOKEN path re-dispatches them
+          # explicitly (the workflow_dispatch anti-loop exception).
           PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          # Required check workflows to re-dispatch on the new head SHA
+          # when running under GITHUB_TOKEN. Keep in sync with the repo's
+          # required status checks (branch protection / ruleset for main).
+          CHECK_WORKFLOWS: "emulator-tests.yml ci.yml"
         run: |
           if [ -n "$PAT" ]; then
             export GH_TOKEN="$PAT"
-            echo "Using AUTO_UPDATE_PR_BRANCHES_PAT — emulator-tests will re-run on each auto-updated PR."
+            USE_DISPATCH=0
+            echo "Using AUTO_UPDATE_PR_BRANCHES_PAT — its push re-runs the checks on each auto-updated PR."
           else
             export GH_TOKEN="$GITHUB_TOKEN"
-            echo "::warning::AUTO_UPDATE_PR_BRANCHES_PAT not configured — falling back to GITHUB_TOKEN."
-            echo "::warning::PR branches will still be auto-updated, but emulator-tests will NOT re-run"
-            echo "::warning::on the merge commits (GitHub's anti-loop policy). Each affected PR needs a"
-            echo "::warning::manual nudge (e.g. empty commit) before it can be merged."
-            echo "::warning::To restore automatic re-runs, create a fine-grained PAT for this repo with"
-            echo "::warning::Contents: Read and write + Pull requests: Read and write, and add it as the"
-            echo "::warning::repository secret AUTO_UPDATE_PR_BRANCHES_PAT."
+            USE_DISPATCH=1
+            echo "AUTO_UPDATE_PR_BRANCHES_PAT not configured — using GITHUB_TOKEN and re-dispatching"
+            echo "the required checks explicitly (workflow_dispatch anti-loop exception)."
           fi
 
           # List all open PRs targeting main.
@@ -85,11 +96,37 @@ jobs:
             exit 0
           fi
           echo "Open PRs to update: $PR_NUMBERS"
+
           for pr in $PR_NUMBERS; do
             echo ""
             echo "→ Updating PR #$pr"
-            # `|| true` so a single PR with a conflict doesn't abort the
-            # whole job. The CLI prints a useful error per-PR; check the
-            # job log if a PR stays stale.
-            gh pr update-branch "$pr" --repo "$REPO" || echo "  (PR #$pr could not be updated — likely a conflict or already up-to-date)"
+
+            # Capture the head SHA before, so we can tell whether the
+            # update actually moved it (vs already-up-to-date). We only
+            # re-dispatch checks when the head genuinely changed, to
+            # avoid needlessly re-running CI on every open PR per merge.
+            before=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
+
+            if ! gh pr update-branch "$pr" --repo "$REPO"; then
+              echo "  (PR #$pr not updated — likely a conflict or already up-to-date)"
+              continue
+            fi
+
+            after=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
+            if [ -z "$after" ] || [ "$before" = "$after" ]; then
+              echo "  (PR #$pr head unchanged — no re-dispatch needed)"
+              continue
+            fi
+            echo "  PR #$pr head moved: ${before:0:7} → ${after:0:7}"
+
+            if [ "$USE_DISPATCH" = "1" ]; then
+              branch=$(gh pr view "$pr" --repo "$REPO" --json headRefName --jq '.headRefName')
+              for wf in $CHECK_WORKFLOWS; do
+                if gh workflow run "$wf" --repo "$REPO" --ref "$branch"; then
+                  echo "    dispatched $wf on $branch"
+                else
+                  echo "::warning::could not dispatch $wf on $branch for PR #$pr (workflow_dispatch missing? branch gone?)"
+                fi
+              done
+            fi
           done
