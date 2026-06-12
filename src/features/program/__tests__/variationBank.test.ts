@@ -16,11 +16,7 @@
  * specific id (which would require mocking Math.random).
  */
 import { describe, it, expect } from "vitest";
-import {
-  exerciseBank,
-  pickExercise,
-  pickAccessory,
-} from "../variationBank";
+import { exerciseBank, pickExercise, pickAccessory } from "../variationBank";
 
 describe("exerciseBank — structural invariants", () => {
   it("covers every MovementCategory", () => {
@@ -98,9 +94,7 @@ describe("pickExercise — plateau rotation", () => {
 
   it("returns a valid exercise from the category", () => {
     /* The picked exercise must be one of the category's options. */
-    const validIds = new Set(
-      exerciseBank.knee_dominant.map((o) => o.id),
-    );
+    const validIds = new Set(exerciseBank.knee_dominant.map((o) => o.id));
     for (let i = 0; i < 30; i++) {
       const result = pickExercise("knee_dominant", 5, "squat");
       expect(validIds.has(result.id)).toBe(true);
@@ -111,9 +105,7 @@ describe("pickExercise — plateau rotation", () => {
     /* options.filter(e => e.id !== currentExerciseId) keeps all
        options when current is undefined; picker still rotates
        within the full set. */
-    const validIds = new Set(
-      exerciseBank.arms_biceps.map((o) => o.id),
-    );
+    const validIds = new Set(exerciseBank.arms_biceps.map((o) => o.id));
     for (let i = 0; i < 20; i++) {
       const result = pickExercise("arms_biceps", 4);
       expect(validIds.has(result.id)).toBe(true);
@@ -142,12 +134,38 @@ describe("pickAccessory", () => {
   });
 
   it("returns a valid exercise from the category", () => {
-    const validIds = new Set(
-      exerciseBank.vertical_pull.map((o) => o.id),
-    );
+    const validIds = new Set(exerciseBank.vertical_pull.map((o) => o.id));
     for (let i = 0; i < 30; i++) {
       const result = pickAccessory("vertical_pull");
       expect(validIds.has(result.id)).toBe(true);
+    }
+  });
+
+  it("biases toward LENGTHENED options when the category has any (D-LIFT-2)", () => {
+    // Categories with tagged lengthened accessories should ONLY return those
+    // (lengthened bias), never a non-lengthened non-primary.
+    const withLengthened = (
+      Object.keys(exerciseBank) as (keyof typeof exerciseBank)[]
+    ).filter((cat) => exerciseBank[cat].some((e) => e.lengthened));
+    expect(withLengthened.length).toBeGreaterThan(0);
+    for (const cat of withLengthened) {
+      const lengthenedIds = new Set(
+        exerciseBank[cat].filter((e) => e.lengthened).map((e) => e.id)
+      );
+      for (let i = 0; i < 25; i++) {
+        expect(lengthenedIds.has(pickAccessory(cat).id)).toBe(true);
+      }
+    }
+  });
+
+  it("still returns a valid non-primary for categories with NO lengthened tag", () => {
+    // core has no lengthened accessories — falls back to the full non-primary
+    // pool, preserving variety.
+    const nonPrimary = new Set(
+      exerciseBank.core.filter((e) => !e.primary).map((e) => e.id)
+    );
+    for (let i = 0; i < 25; i++) {
+      expect(nonPrimary.has(pickAccessory("core").id)).toBe(true);
     }
   });
 
