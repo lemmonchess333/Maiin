@@ -13,7 +13,9 @@ import {
   goalProfileFor,
   applyFatigue,
   dedupeDayExercises,
+  rotateUntrainedAccessories,
 } from "../programEngine";
+import { exerciseBank } from "../variationBank";
 import type {
   ProgramExercise,
   ProgramState,
@@ -231,6 +233,73 @@ describe("dedupeDayExercises", () => {
       "bench-press",
       "squat",
     ]);
+  });
+});
+
+// ── Accessory rotation (D-LIFT-4) ───────────────
+
+describe("rotateUntrainedAccessories", () => {
+  const accessory = (over: Partial<ProgramExercise>): ProgramExercise =>
+    makeTestExercise({
+      exerciseId: "incline-db-press",
+      movementCategory: "horizontal_push",
+      isAccessory: true,
+      performanceHistory: [],
+      ...over,
+    });
+
+  it("rotates an untrained accessory to a different variation in its category", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [accessory({})],
+      },
+    ]);
+    const e = out[0].exercises[0];
+    expect(e.isAccessory).toBe(true);
+    expect(e.exerciseId).not.toBe("incline-db-press"); // rotated
+    // still a horizontal_push variation
+    const validIds = new Set(exerciseBank.horizontal_push.map((o) => o.id));
+    expect(validIds.has(e.exerciseId)).toBe(true);
+  });
+
+  it("never rotates a main lift", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [
+          makeTestExercise({ exerciseId: "bench-press", isAccessory: false }),
+        ],
+      },
+    ]);
+    expect(out[0].exercises[0].exerciseId).toBe("bench-press");
+  });
+
+  it("never rotates an accessory the user has trained (has history)", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [
+          accessory({
+            performanceHistory: [
+              {
+                date: "2026-01-01",
+                weight: 20,
+                repsCompleted: 10,
+                repsTarget: 10,
+              },
+            ],
+          }),
+        ],
+      },
+    ]);
+    expect(out[0].exercises[0].exerciseId).toBe("incline-db-press"); // kept
   });
 });
 
