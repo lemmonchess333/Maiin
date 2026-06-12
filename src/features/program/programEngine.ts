@@ -10,7 +10,7 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
-import { pickExercise, pickAccessory } from "./variationBank";
+import { pickExercise, pickAccessory, exerciseBank } from "./variationBank";
 import {
   balanceWeeklyVolume,
   balancePushPull,
@@ -77,6 +77,12 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 export function calculateE1RM(weight: number, reps: number): number {
   return weight * (1 + reps / 30);
 }
+
+// Progression tuning (D-LIFT-6 / D-LIFT-11).
+/** A logged set at this RPE or above holds load/reps for the cycle. */
+const RPE_HOLD_THRESHOLD = 9.5;
+/** Bodyweight rep target stops climbing here; the user is prompted to add load. */
+const MAX_BODYWEIGHT_REPS = 20;
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -809,6 +815,35 @@ export function expectedDayCount(weeklyTarget: number): number {
   return Math.min(weeklyTarget, 6);
 }
 
+/**
+ * D-LIFT-12: within each day, ensure no exercise id appears twice. A duplicate
+ * (a main that rotated onto a variation an accessory also picked) is re-pointed
+ * to the first unused variation in the same movement category. Deterministic;
+ * leaves the duplicate as-is only if the category has no free alternative.
+ * Pure — returns a new array.
+ */
+export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => {
+    const seen = new Set<string>();
+    const exercises = day.exercises.map((ex) => {
+      if (!seen.has(ex.exerciseId)) {
+        seen.add(ex.exerciseId);
+        return ex;
+      }
+      const alt = (exerciseBank[ex.movementCategory] ?? []).find(
+        (o) => !seen.has(o.id)
+      );
+      if (!alt) {
+        seen.add(ex.exerciseId);
+        return ex; // no free variation — leave it
+      }
+      seen.add(alt.id);
+      return { ...ex, exerciseId: alt.id, name: alt.name };
+    });
+    return { ...day, exercises };
+  });
+}
+
 export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
@@ -889,6 +924,10 @@ export function generateProgram(
       workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
   }
 
+  // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
+  // rotated to a variation an accessory then matched). Re-picks the duplicate
+  // to another variation in the same movement category.
+  workouts = dedupeDayExercises(workouts);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
@@ -910,7 +949,8 @@ export function applyProgression(
   actualReps: number,
   actualWeight: number,
   goal: Goal,
-  microloading: boolean
+  microloading: boolean,
+  actualRpe?: number
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
   const record = {
@@ -958,13 +998,28 @@ export function applyProgression(
   }
   const resetReps = exercise.baseReps ?? exercise.reps; // anchor to original prescription
 
+  // D-LIFT-6 (RPE autoregulation): a logged near-maximal effort (RPE ≥ 9.5)
+  // means the load is already at the edge — HOLD this cycle rather than add
+  // load/reps, even on a completed set. No RPE logged → progress as before.
+  const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
+  // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
+  const bumpBodyweightReps = () => {
+    if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
+      updated.notes =
+        "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";
+    } else {
+      updated.reps = exercise.reps + 1;
+    }
+  };
+
   if (exercise.progressionType === "double") {
     if (completed) {
       // True double progression: accumulate reps until ceiling, then increase weight
-      if (actualReps >= exercise.reps + 2) {
+      if (actualReps >= exercise.reps + 2 && rpeOk) {
         if (isBodyweight) {
-          // Bodyweight: progress via rep target increase
-          updated.reps = exercise.reps + 1;
+          // Bodyweight: progress via rep target increase (capped)
+          bumpBodyweightReps();
         } else {
           // Weighted: increase weight and reset reps to base prescription
           updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
@@ -992,14 +1047,14 @@ export function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        // Bodyweight linear: increase rep target when exceeding by 2
-        if (actualReps >= exercise.reps + 2) {
-          updated.reps = exercise.reps + 1;
+        // Bodyweight linear: increase rep target when exceeding by 2 (capped)
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
+          bumpBodyweightReps();
         }
-      } else if (microloading) {
+      } else if (microloading && rpeOk) {
         updated.weight = exercise.weight + 1;
       } else {
-        if (actualReps >= exercise.reps + 2) {
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
           updated.weight = exercise.weight + 2.5;
           updated.reps = resetReps; // reset to original prescription, not drifted value
         }
