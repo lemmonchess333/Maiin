@@ -52,7 +52,7 @@ export default function AiUsageSection() {
         <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
           <p className="text-sm font-medium text-foreground">AI usage today</p>
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-xs text-muted-foreground font-mono tabular-nums">
             Text: {textAi.used} / {textAi.limit} · Image: {imageAi.used} /{" "}
             {imageAi.limit}
           </p>
@@ -75,7 +75,7 @@ export default function AiUsageSection() {
         <Sparkles className="size-5 text-primary" aria-hidden="true" />
         <div className="text-left">
           <p className="text-sm font-medium text-foreground">AI usage today</p>
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-xs text-muted-foreground font-mono tabular-nums">
             Text: {textAi.used} / {textAi.limit} · Image is Pro-only
           </p>
         </div>
