@@ -14,6 +14,7 @@ import {
   applyFatigue,
   dedupeDayExercises,
   rotateUntrainedAccessories,
+  splitRationale,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
 import type {
@@ -767,5 +768,26 @@ describe("applyFatigue", () => {
   it("never drops a lift below 2 working sets", () => {
     const [d] = applyFatigue([day(2)], 90);
     expect(d.exercises[0].sets).toBe(2);
+  });
+});
+
+// ── Split rationale (D-LIFT-7) ──────────────────
+
+describe("splitRationale", () => {
+  it("returns a non-empty 'why' for every day count 0..7", () => {
+    for (let d = 0; d <= 7; d++) {
+      expect(splitRationale(d).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("explains the frequency logic for the headline cases", () => {
+    expect(splitRationale(3)).toMatch(/full-body/i);
+    expect(splitRationale(3)).toMatch(/3×|3x|week/i);
+    expect(splitRationale(2)).toMatch(/upper.*lower/i);
+    expect(splitRationale(6)).toMatch(/push\/pull\/legs|twice/i);
+  });
+
+  it("clamps out-of-range day counts (7 → 6's rationale)", () => {
+    expect(splitRationale(7)).toBe(splitRationale(6));
   });
 });
