@@ -15,6 +15,7 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  EXERCISES,
   getExercisesByCategory,
   getExerciseById,
   isBodyweightExerciseId,
@@ -118,5 +119,38 @@ describe("estimateCalories", () => {
   it("returns a rounded integer (Math.round)", () => {
     const result = estimateCalories("bench-press", 3, 10, 60);
     expect(Number.isInteger(result)).toBe(true);
+  });
+});
+
+// ── Richer form-guide / programming data (D-LIFT-19) ──
+
+describe("extended exercise fields (D-LIFT-19)", () => {
+  it("bench-press carries the backfilled coaching data", () => {
+    const bench = getExerciseById("bench-press")!;
+    expect(bench.difficulty).toBe("intermediate");
+    expect(bench.tempo).toMatch(/^\d+-\d+-\d+$/);
+    expect(bench.commonMistakes?.length).toBeGreaterThan(0);
+    expect(bench.alternatives?.length).toBeGreaterThan(0);
+  });
+
+  it("any backfilled `alternatives` / `regressions` point at real exercise ids", () => {
+    for (const ex of EXERCISES) {
+      for (const id of [
+        ...(ex.alternatives ?? []),
+        ...(ex.regressions ?? []),
+      ]) {
+        expect(
+          getExerciseById(id),
+          `${ex.id} references missing exercise "${id}"`
+        ).toBeDefined();
+      }
+    }
+  });
+
+  it("`difficulty` is one of the allowed levels where present", () => {
+    const allowed = new Set(["beginner", "intermediate", "advanced"]);
+    for (const ex of EXERCISES) {
+      if (ex.difficulty) expect(allowed.has(ex.difficulty)).toBe(true);
+    }
   });
 });
