@@ -276,3 +276,76 @@ export function balanceWeeklyVolume(
 
   return days;
 }
+
+// Movement categories grouped by push vs pull (knee/hip/core are neither).
+// Push:pull balance is computed at the MOVEMENT level (robust + unambiguous)
+// rather than the muscle level — the canonical "Shoulders" group lumps the
+// push-y front delt with the pull-y rear delt, so a muscle-level ratio would
+// be misleading.
+const PUSH_CATEGORIES = new Set([
+  "horizontal_push",
+  "vertical_push",
+  "arms_triceps",
+]);
+const PULL_CATEGORIES = new Set([
+  "horizontal_pull",
+  "vertical_pull",
+  "arms_biceps",
+]);
+
+/** Safety bound on auto-added pull sets per week. */
+const MAX_ADDED_PULL_SETS = 8;
+
+function categorySetTotals(workouts: WorkoutDay[]): {
+  push: number;
+  pull: number;
+} {
+  let push = 0;
+  let pull = 0;
+  for (const day of workouts) {
+    if (day.skipped) continue;
+    for (const ex of day.exercises) {
+      const sets = ex.sets ?? 0;
+      if (sets <= 0) continue;
+      if (PUSH_CATEGORIES.has(ex.movementCategory)) push += sets;
+      else if (PULL_CATEGORIES.has(ex.movementCategory)) pull += sets;
+    }
+  }
+  return { push, pull };
+}
+
+/**
+ * Push/pull balance (D-LIFT-3) — keep weekly PULL volume at least equal to PUSH.
+ * Pull-dominant programming protects the shoulders (the most-cited balance
+ * principle) and the procedural builders skew slightly push-heavy. When push >
+ * pull, grow PULL accessories until pull ≥ push. Pure; conservative + add-only,
+ * same rails as the volume balancer (accessories only, mains untouched, each
+ * capped, total bounded). Uses movement category (not muscle) so it's immune to
+ * the front/rear-delt lumping. Add-only — never trims push.
+ */
+export function balancePushPull(workouts: WorkoutDay[]): WorkoutDay[] {
+  const days = workouts.map((d) => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  }));
+
+  const pullAccessories = days
+    .filter((d) => !d.skipped)
+    .flatMap((d) => d.exercises)
+    .filter((e) => e.isAccessory && PULL_CATEGORIES.has(e.movementCategory));
+  if (pullAccessories.length === 0) return days; // nothing to grow
+
+  let added = 0;
+  while (added < MAX_ADDED_PULL_SETS) {
+    const { push, pull } = categorySetTotals(days);
+    if (pull >= push) break;
+    const target = pullAccessories
+      .filter((e) => e.sets < ACCESSORY_SET_CAP)
+      .sort((a, b) => a.sets - b.sets)[0];
+    if (!target) break; // all capped
+    target.sets += 1;
+    added += 1;
+  }
+
+  return days;
+}
