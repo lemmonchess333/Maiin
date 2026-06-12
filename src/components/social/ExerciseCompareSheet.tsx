@@ -131,7 +131,7 @@ export default function ExerciseCompareSheet({
                 <p className="text-sm font-mono tabular-nums text-foreground">
                   {yourPR.reps}×{yourPR.weight}kg
                 </p>
-                <p className="text-xs text-muted-foreground/70 tabular-nums">
+                <p className="text-xs text-muted-foreground/70 font-mono tabular-nums">
                   {formatDate(yourPR.date)}
                 </p>
               </div>
@@ -148,7 +148,7 @@ export default function ExerciseCompareSheet({
               }}
             >
               <Icon className="size-4 shrink-0" aria-hidden="true" />
-              <p className="text-xs font-semibold tabular-nums">
+              <p className="text-xs font-semibold font-mono tabular-nums">
                 {delta === 0
                   ? "Matched"
                   : `${deltaSign}${delta.toFixed(1)}kg vs them`}
