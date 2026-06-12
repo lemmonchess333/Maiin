@@ -47,6 +47,7 @@ const PROTECTED_PATHS: ProtectedPath[] = [
   },
   { pathPattern: "match /users/{uid}/meals/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/savedRoutines/{doc}", sides: ["owner"] },
+  { pathPattern: "match /users/{uid}/savedRoutes/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/workouts/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/runs/{doc}", sides: ["owner"] },
   { pathPattern: "match /users/{uid}/weights/{doc}", sides: ["owner"] },
@@ -237,13 +238,14 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (28 paths — SOCIAL S3 added partnerBonds)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (29 paths — saved-routes library added savedRoutes)", () => {
     // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
     // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
     // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
     // /groups/{crewId}/members/{userId} moved to server-only (→26);
     // push #961 added /users/{uid}/devices/{token} (→27);
-    // SOCIAL S3 added /partnerBonds/{bondId} (→28).
-    expect(PROTECTED_PATHS.length).toBe(28);
+    // SOCIAL S3 added /partnerBonds/{bondId} (→28);
+    // saved-routes library added /users/{uid}/savedRoutes/{doc} (→29).
+    expect(PROTECTED_PATHS.length).toBe(29);
   });
 });

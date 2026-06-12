@@ -48,6 +48,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}",
   "match /users/{uid}/meals/{doc}",
   "match /users/{uid}/savedRoutines/{doc}",
+  "match /users/{uid}/savedRoutes/{doc}",
   "match /users/{uid}/workouts/{doc}",
   "match /users/{uid}/runs/{doc}",
   "match /users/{uid}/weights/{doc}",
@@ -268,7 +269,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 28 (SOCIAL S3 added partnerBonds)", () => {
+  it("authoritative count is 29 (saved-routes library added savedRoutes)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -276,8 +277,9 @@ describe("Blocker E — path-count reconciliation", () => {
     // FCM-token subcollection (freeze via isOwnerAndNotDeleting),
     // bringing it back to 27. SOCIAL S3 added the client-writable
     // /partnerBonds/{bondId} block (freeze via !isDeleting), → 28.
+    // Saved-routes library added /users/{uid}/savedRoutes/{doc}, → 29.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(28);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(29);
   });
 });
