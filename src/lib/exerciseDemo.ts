@@ -43,43 +43,61 @@ const MUSCLE_MAP: Record<string, string> = {
 // Mapping from local exercises.ts muscleGroup/secondaryMuscles names → free-exercise-db names
 // (which then get mapped through MUSCLE_MAP to highlighter IDs)
 const LOCAL_MUSCLE_MAP: Record<string, string[]> = {
-  "pectorals": ["chest"],
+  pectorals: ["chest"],
   "upper chest": ["chest", "shoulders"],
   "lower chest": ["chest"],
-  "triceps": ["triceps"],
-  "biceps": ["biceps"],
+  triceps: ["triceps"],
+  biceps: ["biceps"],
   "front delts": ["shoulders"],
   "rear delts": ["shoulders"],
-  "deltoids": ["shoulders"],
-  "lats": ["lats"],
+  deltoids: ["shoulders"],
+  lats: ["lats"],
   "upper back": ["middle back"],
   "full back": ["lats", "lower back", "middle back"],
   "lower back": ["lower back"],
-  "traps": ["traps"],
-  "quads": ["quadriceps"],
-  "quadriceps": ["quadriceps"],
-  "hamstrings": ["hamstrings"],
-  "glutes": ["glutes"],
-  "calves": ["calves"],
-  "core": ["abdominals", "obliques"],
-  "abs": ["abdominals"],
-  "obliques": ["obliques"],
-  "forearms": ["forearms"],
-  "legs": ["quadriceps", "hamstrings", "glutes"],
+  traps: ["traps"],
+  quads: ["quadriceps"],
+  quadriceps: ["quadriceps"],
+  hamstrings: ["hamstrings"],
+  glutes: ["glutes"],
+  calves: ["calves"],
+  core: ["abdominals", "obliques"],
+  abs: ["abdominals"],
+  obliques: ["obliques"],
+  forearms: ["forearms"],
+  legs: ["quadriceps", "hamstrings", "glutes"],
   "full body": ["chest", "lats", "quadriceps", "shoulders", "abdominals"],
-  "shoulders": ["shoulders"],
+  shoulders: ["shoulders"],
   "hip flexors": ["quadriceps", "abdominals"],
-  "adductors": ["adductors"],
-  "abductors": ["abductors"],
-  "cardio": ["quadriceps", "hamstrings", "calves", "glutes"],
+  adductors: ["adductors"],
+  abductors: ["abductors"],
+  cardio: ["quadriceps", "hamstrings", "calves", "glutes"],
 };
 
 // Valid muscle IDs accepted by react-body-highlighter
 const VALID_MUSCLES = new Set([
-  "trapezius", "upper-back", "lower-back", "chest", "biceps", "triceps",
-  "forearm", "back-deltoids", "front-deltoids", "abs", "obliques",
-  "adductor", "hamstring", "quadriceps", "abductors", "calves", "gluteal",
-  "head", "neck", "knees", "left-soleus", "right-soleus",
+  "trapezius",
+  "upper-back",
+  "lower-back",
+  "chest",
+  "biceps",
+  "triceps",
+  "forearm",
+  "back-deltoids",
+  "front-deltoids",
+  "abs",
+  "obliques",
+  "adductor",
+  "hamstring",
+  "quadriceps",
+  "abductors",
+  "calves",
+  "gluteal",
+  "head",
+  "neck",
+  "knees",
+  "left-soleus",
+  "right-soleus",
 ]);
 
 export function mapMuscles(names: string[]): string[] {
@@ -89,12 +107,30 @@ export function mapMuscles(names: string[]): string[] {
 }
 
 export function needsPosterior(muscles: string[]): boolean {
-  const posterior = new Set(["upper-back", "lower-back", "trapezius", "hamstring", "gluteal", "calves", "back-deltoids"]);
+  const posterior = new Set([
+    "upper-back",
+    "lower-back",
+    "trapezius",
+    "hamstring",
+    "gluteal",
+    "calves",
+    "back-deltoids",
+  ]);
   return muscles.some((m) => posterior.has(m));
 }
 
 export function needsAnterior(muscles: string[]): boolean {
-  const anterior = new Set(["chest", "biceps", "forearm", "front-deltoids", "abs", "obliques", "adductor", "quadriceps", "abductors"]);
+  const anterior = new Set([
+    "chest",
+    "biceps",
+    "forearm",
+    "front-deltoids",
+    "abs",
+    "obliques",
+    "adductor",
+    "quadriceps",
+    "abductors",
+  ]);
   return muscles.some((m) => anterior.has(m));
 }
 
@@ -104,6 +140,12 @@ let fetchPromise: Promise<void> | null = null;
 
 const DEMO_URL =
   "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json";
+
+// free-exercise-db `images` are repo-relative paths (e.g. "Bench_Press/0.jpg");
+// the renderable URL is this base + the path. Prefixed at load so consumers get
+// full URLs.
+const IMAGE_BASE =
+  "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
 
 async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
   if (demoCache) return demoCache;
@@ -115,7 +157,15 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
   fetchPromise = (async () => {
     try {
       const res = await fetch(DEMO_URL);
-      const data: { name: string; category?: string; equipment?: string; primaryMuscles?: string[]; secondaryMuscles?: string[]; instructions?: string[]; images?: string[] }[] = await res.json();
+      const data: {
+        name: string;
+        category?: string;
+        equipment?: string;
+        primaryMuscles?: string[];
+        secondaryMuscles?: string[];
+        instructions?: string[];
+        images?: string[];
+      }[] = await res.json();
       const map = new Map<string, ExerciseDemo>();
       for (const ex of data) {
         map.set(normaliseKey(ex.name), {
@@ -125,7 +175,9 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
           primaryMuscles: ex.primaryMuscles ?? [],
           secondaryMuscles: ex.secondaryMuscles ?? [],
           instructions: ex.instructions ?? [],
-          images: ex.images ?? [],
+          images: (ex.images ?? []).map((p) =>
+            p.startsWith("http") ? p : IMAGE_BASE + p
+          ),
         });
       }
       demoCache = map;
@@ -146,7 +198,7 @@ function normaliseKey(name: string): string {
 function buildLocalFallback(name: string): ExerciseDemo | null {
   const key = name.toLowerCase().trim();
   const match = EXERCISES.find(
-    (ex) => ex.name.toLowerCase() === key || ex.id === key.replace(/\s+/g, "-"),
+    (ex) => ex.name.toLowerCase() === key || ex.id === key.replace(/\s+/g, "-")
   );
   if (!match) return null;
 
@@ -166,32 +218,22 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
   };
 }
 
-// Resolution order:
-// 1. If the local EXERCISES entry has been upgraded to our coach-voice format
-//    (multi-step instructions or a tip), prefer it — this is the authored
-//    content and the only path that surfaces tips in the UI.
-// 2. Otherwise try free-exercise-db via exact / partial / word-overlap match.
-// 3. Fall back to the raw local entry (single-paragraph pre-rewrite content)
-//    so at-least-something renders for exercises free-exercise-db doesn't cover.
-export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null> {
-  const local = buildLocalFallback(name);
-  if (local && (local.tip || local.instructions.length >= 2)) {
-    return local;
-  }
-
-  const demos = await loadDemos();
+// Best free-exercise-db match for a name (exact → partial → word-overlap), or
+// null. Pulled out so both the remote-preferred path AND the local-preferred
+// path can reach it — the latter borrows the remote's demo IMAGES (D-LIFT-18).
+function matchRemote(
+  demos: Map<string, ExerciseDemo>,
+  name: string
+): ExerciseDemo | null {
   const key = normaliseKey(name);
-
-  // Exact
   if (demos.has(key)) return demos.get(key)!;
-
-  // Partial match
   for (const [k, v] of demos) {
     if (k.includes(key) || key.includes(k)) return v;
   }
-
-  // Word overlap — split on actual words (not arbitrary 3-char chunks)
-  const words = name.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3);
+  const words = name
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 3);
   if (words.length >= 2) {
     let bestMatch: ExerciseDemo | null = null;
     let bestScore = 0;
@@ -204,7 +246,31 @@ export async function getExerciseDemo(name: string): Promise<ExerciseDemo | null
     }
     if (bestScore >= 2) return bestMatch;
   }
+  return null;
+}
 
-  // Raw local fallback for anything remote doesn't cover
+// Resolution order:
+// 1. If the local EXERCISES entry has been upgraded to our coach-voice format
+//    (multi-step instructions or a tip), prefer it for text/tip — but borrow
+//    the free-exercise-db start/end IMAGES when a match exists (D-LIFT-18: the
+//    images were fetched but never surfaced; the local fallback set images:[]).
+// 2. Otherwise use the free-exercise-db match (it carries instructions+images).
+// 3. Fall back to the raw local entry so at-least-something renders for
+//    exercises free-exercise-db doesn't cover.
+export async function getExerciseDemo(
+  name: string
+): Promise<ExerciseDemo | null> {
+  const local = buildLocalFallback(name);
+  const demos = await loadDemos();
+  const remote = matchRemote(demos, name);
+
+  if (local && (local.tip || local.instructions.length >= 2)) {
+    // Authored text wins; attach remote images so the demo is visual too.
+    return remote && remote.images.length > 0
+      ? { ...local, images: remote.images }
+      : local;
+  }
+
+  if (remote) return remote;
   return local;
 }
