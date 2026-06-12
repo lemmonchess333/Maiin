@@ -144,7 +144,7 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
   // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
   // wrong (proportional UI) font.
-  const MONO_BASELINE = 22; // burned down from 30 (prominent stat displays fixed); keep lowering as surfaces are touched
+  const MONO_BASELINE = 20; // burned down from 30 (prominent stat displays + challenge leaderboard values fixed); keep lowering as surfaces are touched
   it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
