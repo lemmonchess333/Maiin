@@ -61,6 +61,7 @@ test.describe("app screenshots", () => {
       ["history", "history"],
       ["program", "program"],
       ["social", "social"],
+      ["settings", "settings"],
     ];
     for (const [route, name] of tabs) {
       await page.goto(route);
@@ -95,5 +96,88 @@ test.describe("app screenshots", () => {
         document.documentElement.classList.remove("dark")
       );
     }
+  });
+
+  // Deeper, less-travelled sub-surfaces that the tab capture can't reach —
+  // driven deterministically off the seeded fixtures (no brittle interaction
+  // scripting). Each block is independent so one failing nav doesn't sink the
+  // rest.
+  test("deeper sub-surfaces — light + dark", async ({ page }) => {
+    async function shootLightDark(name: string) {
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+      await shoot(page, `${name}-light`);
+      await page.evaluate(() => document.documentElement.classList.add("dark"));
+      await page.waitForTimeout(350);
+      await shoot(page, `${name}-dark`);
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+    }
+
+    // Run Detail — historical run view. rich-r0 is seeded by seed-rich, read
+    // from users/{uid}/runs/{runId}; run pages render full-screen (no nav), so
+    // wait on a fixed settle rather than the nav proxy.
+    await page.goto("run/rich-r0");
+    await page.waitForTimeout(2500);
+    await shootLightDark("run-detail");
+
+    // User Profile (own) — reached via Settings → View Profile so the spec
+    // never has to know the uid.
+    await page.goto("settings");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page
+      .getByRole("button", { name: /view profile/i })
+      .click()
+      .catch(() => {
+        /* button moved/absent — capture lands on settings, still useful */
+      });
+    await page.waitForTimeout(2000);
+    await shootLightDark("user-profile");
+  });
+
+  // Editing sheets (vaul drawers) — interaction-gated, so each trigger is
+  // best-effort (try/catch) and independent: a brittle open doesn't sink the
+  // other capture. Goal is to SEE/verify the sheets, not assert.
+  test("editing sheets", async ({ page }) => {
+    // ShareCardSheet — opened from Run Detail's "Share" button.
+    await page.goto("run/rich-r0");
+    await page.waitForTimeout(2200);
+    await page
+      .getByRole("button", { name: /share/i })
+      .first()
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(1400); // share-card preview renders (html-to-image)
+    await shoot(page, "sheet-share-light");
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(350);
+    await shoot(page, "sheet-share-dark");
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+
+    // DayActionSheet — Home → tap today's day node → "Manage day".
+    await page.goto("");
+    await page
+      .getByRole("button", { name: /add water/i })
+      .first()
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(800);
+    await page
+      .getByRole("button", { name: /today/i })
+      .first()
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(700);
+    await page
+      .getByRole("button", { name: /manage day/i })
+      .click()
+      .catch(() => {});
+    await page.waitForTimeout(1100);
+    await shoot(page, "sheet-dayaction-light");
   });
 });

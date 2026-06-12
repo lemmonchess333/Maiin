@@ -59,7 +59,11 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { chooseSplit, splitLabel } from "@/features/program/programEngine";
+import {
+  chooseSplit,
+  splitLabel,
+  splitRationale,
+} from "@/features/program/programEngine";
 import {
   computeProgrammeChanges,
   programmePreservationNote,
@@ -678,7 +682,7 @@ export default function ProgrammeSettings({
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              Your coach sets the split from your weekly training days.
+              {splitRationale(liftDays)}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
