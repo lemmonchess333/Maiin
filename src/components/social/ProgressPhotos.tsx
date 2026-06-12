@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
   collection,
@@ -372,14 +373,12 @@ export default function ProgressPhotos() {
               Compare
             </button>
           )}
-          <button
-            type="button"
+          <Button
             onClick={() => fileInputRef.current?.click()}
             aria-label="Add progress photo"
-            className="text-xs px-3 py-2 rounded-lg bg-primary text-primary-foreground font-medium min-h-[44px]"
           >
             + Add
-          </button>
+          </Button>
         </div>
         <input
           ref={fileInputRef}
