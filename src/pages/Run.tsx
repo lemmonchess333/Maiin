@@ -1171,10 +1171,11 @@ export default function Run() {
             className="fixed inset-0 z-50 text-white"
             style={{
               backgroundColor: THEME.bg,
-              // The map is non-interactive and the sheet owns its own drag,
-              // so nothing here should scroll. Locking touch-action +
-              // overscroll stops iOS from rubber-banding / scrolling the page
-              // out from under a sheet drag.
+              // MapLibre handles its own pan/pinch via pointer events (it works
+              // fine under touch-action:none), and the sheet owns its own drag.
+              // Locking touch-action + overscroll here stops iOS from
+              // rubber-banding / scrolling the page out from under a sheet drag
+              // or a map gesture.
               touchAction: "none",
               overscrollBehavior: "none",
             }}
@@ -1206,7 +1207,8 @@ export default function Run() {
             <RunMap
               points={gps.points}
               currentPoint={gps.currentPoint}
-              interactive={false}
+              interactive={true}
+              liveControls={true}
               height="h-full"
               className="absolute inset-0"
             />

@@ -1,8 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Plus, Minus, LocateFixed } from "lucide-react";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface RunMapProps {
   points: GPSPoint[];
@@ -14,6 +16,14 @@ interface RunMapProps {
   className?: string;
   darkMode?: boolean;
   replayIndex?: number;
+  /**
+   * Live-run controls: enables "follow mode" (auto-centre on the runner that
+   * suspends the moment they pan/pinch by hand) plus an on-map control stack
+   * (zoom +/- and a Recenter button that reappears once following is
+   * suspended). Off for the static post-run maps, which only need pinch/pan.
+   * Requires `interactive` to actually receive gestures.
+   */
+  liveControls?: boolean;
 }
 
 const TILE_STYLES = {
@@ -31,9 +41,16 @@ export default function RunMap({
   className = "",
   darkMode = true,
   replayIndex,
+  liveControls = false,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  // Live "follow mode": true means the camera auto-centres on the runner on
+  // every fix. A hand pan/pinch flips it false (and reveals Recenter); the
+  // Recenter button flips it back on. A ref (not state) so the per-fix route
+  // effect reads the live value without re-subscribing.
+  const followingRef = useRef(true);
+  const [showRecenter, setShowRecenter] = useState(false);
   // True when the basemap tiles can't load (offline / no signal). The route
   // line still draws on the dark canvas; we surface a plain note rather than
   // leaving a silent blank map.
@@ -135,10 +152,28 @@ export default function RunMap({
       if (e.isSourceLoaded) setTilesUnavailable(false);
     });
 
+    // Follow-mode suspend: any HAND gesture (pan / pinch-zoom / rotate) carries
+    // an `originalEvent`; our programmatic `easeTo`/`zoomIn` calls do not. So we
+    // only drop out of follow on real user input — then surface the Recenter
+    // button. No-op unless this is a live-controls map.
+    const onUserGesture = (e: { originalEvent?: unknown }) => {
+      if (!liveControls || !e.originalEvent) return;
+      followingRef.current = false;
+      setShowRecenter(true);
+    };
+    if (liveControls) {
+      map.on("dragstart", onUserGesture);
+      map.on("zoomstart", onUserGesture);
+      map.on("rotatestart", onUserGesture);
+    }
+
     mapRef.current = map;
 
     return () => {
       map.off("load", onLoad);
+      map.off("dragstart", onUserGesture);
+      map.off("zoomstart", onUserGesture);
+      map.off("rotatestart", onUserGesture);
       map.remove();
       mapRef.current = null;
       // Null the marker refs too — they pointed at markers the removed map
@@ -150,7 +185,7 @@ export default function RunMap({
       endMarkerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init runs once; points/currentPoint read only for the initial centre, updates handled by the route effect below
-  }, [interactive, paceColored, darkMode]);
+  }, [interactive, paceColored, darkMode, liveControls]);
 
   // Update route
   useEffect(() => {
@@ -267,10 +302,14 @@ export default function RunMap({
           }
         }
 
-        map.easeTo({
-          center: [currentPoint.lon, currentPoint.lat],
-          duration: 500,
-        });
+        // Only chase the runner while following is active. Once they've panned
+        // away by hand we leave the camera where they put it (until Recenter).
+        if (followingRef.current) {
+          map.easeTo({
+            center: [currentPoint.lon, currentPoint.lat],
+            duration: 500,
+          });
+        }
       }
 
       // Fit bounds for post-run static view
@@ -327,11 +366,51 @@ export default function RunMap({
     };
   }, [points, currentPoint, paceColored, avgPaceSecPerKm, replayIndex]);
 
+  const recenter = () => {
+    followingRef.current = true;
+    setShowRecenter(false);
+    const map = mapRef.current;
+    if (map && currentPoint) {
+      map.easeTo({
+        center: [currentPoint.lon, currentPoint.lat],
+        duration: 400,
+      });
+    }
+  };
+
   return (
     <div
       ref={containerRef}
       className={`relative w-full ${height} ${className}`}
     >
+      {liveControls && (
+        // On-map control stack (right edge, clear of the top GPS pills and the
+        // bottom stats sheet). Glass zoom +/- always; Recenter appears only
+        // once follow has been suspended by a hand gesture. Coral = running.
+        <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
+          <IconButton
+            aria-label="Zoom in"
+            icon={<Plus />}
+            onClick={() => mapRef.current?.zoomIn()}
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+          />
+          <IconButton
+            aria-label="Zoom out"
+            icon={<Minus />}
+            onClick={() => mapRef.current?.zoomOut()}
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+          />
+          {showRecenter && (
+            <IconButton
+              aria-label="Recenter map on your location"
+              icon={<LocateFixed />}
+              onClick={recenter}
+              className="bg-running text-white shadow-sm"
+            />
+          )}
+        </div>
+      )}
+
       {tilesUnavailable && (
         // Centred, width-constrained pill rather than a full-width top bar.
         // The old `inset-x-2 top-2` strip spanned the whole top edge and
