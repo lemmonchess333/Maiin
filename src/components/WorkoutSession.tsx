@@ -115,7 +115,8 @@ interface Props {
     dayIndex: number,
     exIndex: number,
     reps: number,
-    weight: number
+    weight: number,
+    rpe?: number
   ) => Promise<void>;
   onCompleteDay: (
     dayIndex: number,
@@ -675,8 +676,15 @@ export default function WorkoutSession({
     const isLastExercise = currentExIndex >= day.exercises.length - 1;
 
     if (isLastSet) {
-      // Log exercise performance (use last set's reps/weight)
-      await onLogExercise(dayIndex, currentExIndex, set.reps, set.weight);
+      // Log exercise performance (use last set's reps/weight/RPE — the latter
+      // drives RPE autoregulation in applyProgression, D-LIFT-6).
+      await onLogExercise(
+        dayIndex,
+        currentExIndex,
+        set.reps,
+        set.weight,
+        set.rpe
+      );
 
       if (isLastExercise) {
         setSessionDurationMinutes(
