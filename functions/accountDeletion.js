@@ -31,6 +31,9 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   "progressPhotos",
   "favorites",
   "preferences",
+  // Saved routes (users/{uid}/savedRoutes) — follow-a-route library. Enumerated
+  // here so a user's saved routes don't orphan when the account is deleted.
+  "savedRoutes",
   // FCM device tokens (push #961). The executor enumerates rather than
   // recursing, and deleting users/{uid} does NOT cascade to its
   // subcollections — without this, device-token docs orphan under a
