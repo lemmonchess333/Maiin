@@ -941,20 +941,19 @@ export default function WorkoutSession({
               </span>
             </div>
             <div className="mt-5 flex gap-2">
-              <button
-                type="button"
+              <Button
+                className="flex-1"
                 onClick={() => setShowResumePrompt(false)}
-                className="flex-1 h-11 rounded-xl font-semibold text-sm bg-primary text-primary-foreground transition-transform active:scale-[0.97]"
               >
                 Resume
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
                 onClick={handleStartFresh}
-                className="flex-1 h-11 rounded-xl font-semibold text-sm bg-muted text-foreground transition-transform active:scale-[0.97]"
               >
                 Start fresh
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

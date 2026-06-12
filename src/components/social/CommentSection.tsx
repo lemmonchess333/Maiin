@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../lib/auth";
+import { Button } from "@/components/ui/Button";
 import { getComments, addComment } from "../../lib/socialApi";
 import { getTimeAgo } from "../../lib/timeAgo";
 import type { DocumentSnapshot } from "firebase/firestore";
@@ -137,14 +138,9 @@ export default function CommentSection({
           disabled={sending}
           className="flex-1 text-xs px-3 min-h-[44px] rounded-lg bg-muted border border-border"
         />
-        <button
-          type="button"
-          onClick={handleSend}
-          disabled={sending || !text.trim()}
-          className="text-xs px-4 min-h-[44px] rounded-lg bg-primary-strong text-white font-medium disabled:opacity-40"
-        >
+        <Button onClick={handleSend} disabled={sending || !text.trim()}>
           Send
-        </button>
+        </Button>
       </div>
     </div>
   );
