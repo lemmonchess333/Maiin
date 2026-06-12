@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users, Globe, EyeOff, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
@@ -166,15 +167,14 @@ export default function ShareComposerSheet() {
 
         {/* Visibility actions */}
         <div className="space-y-2">
-          <button
-            type="button"
+          <Button
+            fullWidth
             onClick={() => choose("followers")}
             disabled={captionIsProfane}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary text-primary-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
+            leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
-            <Users className="size-4 shrink-0" aria-hidden="true" />
-            <span className="text-sm font-semibold">Share to followers</span>
-          </button>
+            Share to followers
+          </Button>
           {hasCrew && (
             <button
               type="button"
