@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseGpx } from "../gpx";
+import { parseGpx, parseGpxName } from "../gpx";
 import { toGPX, type GPSPoint } from "../gps";
 
 const TRK_GPX = `<?xml version="1.0" encoding="UTF-8"?>
@@ -59,6 +59,18 @@ describe("parseGpx", () => {
         `<gpx xmlns="http://www.topografix.com/GPX/1/1"><trk><trkseg><trkpt lat="200" lon="0"/></trkseg></trk></gpx>`
       )
     ).toEqual([]);
+  });
+
+  it("reads the route name (trk/rte/metadata), null when absent", () => {
+    expect(parseGpxName(TRK_GPX)).toBe("Loop");
+    expect(parseGpxName(RTE_GPX)).toBeNull();
+    expect(
+      parseGpxName(
+        `<gpx xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>Meta Route</name></metadata><trk><trkseg><trkpt lat="51.5" lon="-0.1"/></trkseg></trk></gpx>`
+      )
+    ).toBe("Meta Route");
+    expect(parseGpxName("")).toBeNull();
+    expect(parseGpxName("garbage")).toBeNull();
   });
 
   it("round-trips with toGPX (lat/lon preserved)", () => {
