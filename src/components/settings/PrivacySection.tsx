@@ -99,13 +99,9 @@ export default function PrivacySection({
                   : "Not in a crew"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowCrewPicker(!showCrewPicker)}
-              className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-medium bg-primary text-primary-foreground"
-            >
+            <Button onClick={() => setShowCrewPicker(!showCrewPicker)}>
               {currentCrew ? "Switch" : "Join"}
-            </button>
+            </Button>
           </div>
           {showCrewPicker && (
             <div className="space-y-2 pt-2 border-t border-border/50">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { repBucketLabel, type RepBucket } from "@/lib/prTracking";
@@ -311,14 +312,9 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
         >
-          <button
-            type="button"
-            onClick={onFinish}
-            disabled={completing}
-            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold active:scale-[0.97]"
-          >
+          <Button fullWidth onClick={onFinish} disabled={completing}>
             {completing ? "Saving..." : "Save Workout"}
-          </button>
+          </Button>
 
           <button
             type="button"
