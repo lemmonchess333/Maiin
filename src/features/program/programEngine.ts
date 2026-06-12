@@ -169,6 +169,32 @@ export function splitLabel(split: SplitType): string {
   }
 }
 
+/**
+ * D-LIFT-7: the one-line "why" behind the days→split mapping, so the derived
+ * split (Pgm5 Q1: structure follows lift-days, not a user toggle) reads as a
+ * deliberate coaching choice rather than an ignored preference. Mirrors
+ * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
+ */
+export function splitRationale(weeklyLiftDays: number): string {
+  const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
+  switch (d) {
+    case 0:
+      return "No lift days set — add some to build a split.";
+    case 1:
+      return "One day a week is full-body so you still train everything.";
+    case 2:
+      return "Two days splits upper / lower — each trained about twice a week.";
+    case 3:
+      return "Three days stays full-body: every muscle 3× a week beats a 3-way split at the same volume.";
+    case 4:
+      return "Four days is upper / lower twice — each muscle about twice a week.";
+    case 5:
+      return "Five days layers push/pull/legs onto upper/lower to keep most muscles near 2× a week.";
+    default:
+      return "Six days runs push/pull/legs twice — each muscle about twice a week.";
+  }
+}
+
 export function primaryGoalLabel(g?: PrimaryGoal): string {
   switch (g) {
     case "strength":
