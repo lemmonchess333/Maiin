@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { shareRoute, routeSlug } from "../shareRoute";
+import { shareRoute, routeSlug, resolveShareRoute } from "../shareRoute";
 import type { GPSPoint } from "../gps";
+import type { PrivacyZone } from "../privacyZones";
 
 function pt(lat: number, lon: number): GPSPoint {
   return {
@@ -23,6 +24,35 @@ describe("routeSlug", () => {
     expect(routeSlug("  Park 5K!! ")).toBe("park-5k");
     expect(routeSlug("")).toBe("route");
     expect(routeSlug("///")).toBe("route");
+  });
+});
+
+describe("resolveShareRoute (privacy trim)", () => {
+  // A 12-point line heading north from ~(51.500..51.511, -0.1).
+  const line: GPSPoint[] = Array.from({ length: 12 }, (_, i) =>
+    pt(51.5 + i * 0.001, -0.1)
+  );
+
+  it("returns the route unchanged when there are no zones", () => {
+    expect(resolveShareRoute(line, [])).toBe(line);
+  });
+
+  it("trims start/end points inside a zone (fewer points, still ≥2)", () => {
+    // Zone over the start point only.
+    const zones: PrivacyZone[] = [
+      { id: "z", name: "Home", lat: 51.5, lon: -0.1, radiusMeters: 150 },
+    ];
+    const out = resolveShareRoute(line, zones);
+    expect(out).not.toBeNull();
+    expect(out!.length).toBeGreaterThanOrEqual(2);
+    expect(out!.length).toBeLessThan(line.length);
+  });
+
+  it("returns null when the whole route is inside a zone", () => {
+    const zones: PrivacyZone[] = [
+      { id: "z", name: "Home", lat: 51.505, lon: -0.1, radiusMeters: 100000 },
+    ];
+    expect(resolveShareRoute(line, zones)).toBeNull();
   });
 });
 
