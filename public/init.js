@@ -15,11 +15,12 @@
  * script had.
  */
 (function () {
+  // Dark is the app's default theme. Apply it unless the user has
+  // EXPLICITLY chosen light in-app (stored as "false"). A missing
+  // preference — a new user, or before the signed-in profile loads —
+  // boots dark, so there's no flash of light on first paint.
   var d = localStorage.getItem("tropos-dark-mode");
-  if (
-    d === "true" ||
-    (d === null && window.matchMedia("(prefers-color-scheme: dark)").matches)
-  ) {
+  if (d !== "false") {
     document.documentElement.classList.add("dark");
   }
   // GitHub Pages SPA redirect: restore route from query string set by 404.html
