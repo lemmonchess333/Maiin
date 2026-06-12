@@ -107,6 +107,25 @@ export const THEME = {
     fat: "#7CB46C", // sage avocado
   },
 
+  // Calorie-ring arc gradient stops — purpose-built purple shades around
+  // the brand: `light` sits above brandLight (#9590E0), `deep` below
+  // brandStrong (#6560C8) for the overshoot arc. Named here (Food7) so
+  // the Food hero's focal colour isn't a stray hex in CalorieRing.tsx.
+  calorieRing: {
+    light: "#A8A2EF", // lighter stop for the arc gradient
+    deep: "#5D55C9", // deeper stop for the overshoot arc
+  },
+
+  // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —
+  // chosen over the previous #EF4444 / slate #4B5563 pair because they
+  // sit better against the warm light surfaces. Tokenised here (Food7)
+  // without changing the values; transient (swipe only), so not part of
+  // the resting-viewport palette.
+  swipe: {
+    destructive: "#FF3B30", // iOS system red — delete
+    neutral: "#48484A", // neutral dark grey — edit
+  },
+
   // Charts
   chartGrid: "rgba(255,255,255,0.05)",
   chartTooltipBg: "#242429",
