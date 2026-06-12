@@ -47,48 +47,36 @@
    in 18.0 but the fallback costs nothing. */
 .bottom-nav-frost {
   background: var(--surface-solid);
-  background: color-mix(in srgb, var(--surface-solid) 94%, transparent);
+  /* Frosted glass (Opal / Cal-AI effect): the surface at a lower opacity so
+     scrolling content reads as a soft blur BEHIND the fixed bar, held legible
+     by a strong blur + saturate. Was 94% (near-solid) — too flat to read as
+     glass. */
+  background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
   border-top: 1px solid var(--glass-border);
   box-shadow: var(--ds-shadow-nav);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(24px) saturate(1.7);
+  -webkit-backdrop-filter: blur(24px) saturate(1.7);
 }
 
 .dark .bottom-nav-frost {
-  background: rgba(22, 22, 24, 0.94);
+  background: rgba(22, 22, 24, 0.7);
 }
 
-/* ─── BOTTOM NAV — FLOATING GLASS CAPSULE (NAV GLASS-UP) ──────
-   Detached, fully-rounded capsule floating above the home indicator.
-   Material: translucent `--background` fill + a strong blur/saturate so
-   scrolling content reads as soft glass beneath, plus a top-edge specular
-   hairline (inset highlight) and the elevated drop shadow. Geometry +
-   per-tab layout live in Layout.tsx; this owns only the glass surface so
-   the @supports / reduced-transparency fallbacks sit in one place. */
-.nav-capsule {
-  background: hsl(var(--background) / var(--nav-capsule-alpha));
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: 1px solid var(--glass-border);
-  /* elevated lift beneath the capsule + 1px specular highlight on the top
-     edge (the box-shadow hairline trick, here as an inset). */
-  box-shadow:
-    var(--ds-shadow-elevated),
-    inset 0 1px 0 var(--nav-capsule-highlight);
-}
-
-/* No backdrop-filter (older WebViews) → opaque surface, never a smudge. */
+/* No backdrop-filter (older WebViews) → opaque bar, never an unreadable
+   translucent wash. Both selectors so the dark override is covered too. */
 @supports not (
   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
 ) {
-  .nav-capsule {
+  .bottom-nav-frost,
+  .dark .bottom-nav-frost {
     background: var(--surface-solid);
   }
 }
 
-/* Reduced transparency → solid capsule, no blur. */
+/* Reduced transparency → solid bar, no blur. */
 @media (prefers-reduced-transparency: reduce) {
-  .nav-capsule {
+  .bottom-nav-frost,
+  .dark .bottom-nav-frost {
     background: var(--surface-solid);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
