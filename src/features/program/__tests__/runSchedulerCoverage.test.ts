@@ -27,6 +27,8 @@ import { describe, it, expect } from "vitest";
 import {
   scheduleStructuredWeek,
   generateRacePlan,
+  recoveryWeeksForDistance,
+  getCurrentRaceWeek,
   type ScheduledRunDay,
 } from "../runScheduler";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -42,13 +44,13 @@ const TEMPLATE_BY_ID = new Map(RUN_TEMPLATES.map((t) => [t.id, t]));
  * the feature depends on.
  */
 const SCHEDULER_EMITS = [
-  "easy_30",   // both schedulers, multiple branches
-  "tempo_20",  // structured week (quality slot, even weeks) + race plan build phase
-  "5x1k",      // structured week (intervals, odd weeks, w%4<2) + race plan build phase
-  "8x400",     // structured week (intervals, odd weeks, w%4>=2) + race plan taper phase
-  "long_10k",  // race plan, peakLongKm < 15
-  "long_15k",  // race plan, peakLongKm >= 15
-  "5k_race",   // race plan, race week
+  "easy_30", // both schedulers, multiple branches
+  "tempo_20", // structured week (quality slot, even weeks) + race plan build phase
+  "5x1k", // structured week (intervals, odd weeks, w%4<2) + race plan build phase
+  "8x400", // structured week (intervals, odd weeks, w%4>=2) + race plan taper phase
+  "long_10k", // race plan, peakLongKm < 15
+  "long_15k", // race plan, peakLongKm >= 15
+  "5k_race", // race plan, race week
 ] as const;
 
 describe("RUN_TEMPLATES coverage — static set", () => {
@@ -146,7 +148,12 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlan", () =>
       for (const ahead of DAYS_AHEAD) {
         for (let lift = 0; lift <= 5; lift++) {
           for (let run = 1; run <= 5; run++) {
-            const plan = generateRacePlan(distance, farFutureDate(ahead), lift, run);
+            const plan = generateRacePlan(
+              distance,
+              farFutureDate(ahead),
+              lift,
+              run
+            );
             for (const week of plan.weeks) {
               for (const d of week) {
                 if (!KNOWN_TEMPLATE_IDS.has(d.templateId)) {
@@ -174,12 +181,45 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlan", () =>
             const tmpl = TEMPLATE_BY_ID.get(d.templateId);
             if (!tmpl) continue;
             if (tmpl.type !== d.type) {
-              mismatches.push({ day: d, ctx: `distance=${distance} ahead=${ahead}` });
+              mismatches.push({
+                day: d,
+                ctx: `distance=${distance} ahead=${ahead}`,
+              });
             }
           }
         }
       }
     }
     expect(mismatches).toEqual([]);
+  });
+});
+
+// ── recoveryWeeksForDistance ─────────────────
+describe("recoveryWeeksForDistance", () => {
+  it("scales recovery with race distance (5k=1 … marathon=4)", () => {
+    expect(recoveryWeeksForDistance("5k")).toBe(1);
+    expect(recoveryWeeksForDistance("10k")).toBe(2);
+    expect(recoveryWeeksForDistance("half")).toBe(3);
+    expect(recoveryWeeksForDistance("marathon")).toBe(4);
+  });
+});
+
+// ── getCurrentRaceWeek ───────────────────────
+// Uses new Date() internally, so assert the clamp behaviour with dates far
+// enough either side of "now" to be robust regardless of when the suite runs.
+describe("getCurrentRaceWeek", () => {
+  it("clamps to the final week index when the race is in the past", () => {
+    // weeksLeft is very negative → totalWeeks - weeksLeft overflows → clamp to last.
+    expect(getCurrentRaceWeek(12, "2000-01-01")).toBe(11);
+  });
+
+  it("clamps to week 0 when the race is far in the future", () => {
+    // weeksLeft huge → totalWeeks - weeksLeft negative → clamp to 0.
+    expect(getCurrentRaceWeek(12, "2099-01-01")).toBe(0);
+  });
+
+  it("returns a valid in-range index for a degenerate single-week plan", () => {
+    const w = getCurrentRaceWeek(1, "2099-01-01");
+    expect(w).toBe(0); // min(totalWeeks-1, …) with totalWeeks=1 → 0
   });
 });
