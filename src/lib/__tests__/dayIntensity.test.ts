@@ -11,6 +11,7 @@ import {
   tierFromDayType,
   fuelShiftCalsForTier,
   fatFloorPerKgForTier,
+  describeDayIntensity,
 } from "../dayIntensity";
 import {
   RUN_ONLY,
@@ -229,5 +230,19 @@ describe("tier → fuel parameters", () => {
     expect(fatFloorPerKgForTier("HARD")).toBeLessThan(
       fatFloorPerKgForTier("MODERATE")
     );
+  });
+});
+
+// describeDayIntensity — the descriptive day LABEL (conversion hook). MODERATE
+// is intentionally "" (no caption); REST is descriptive but unused by buildCaption.
+describe("describeDayIntensity", () => {
+  it("maps each tier to its label", () => {
+    expect(describeDayIntensity("HARD")).toBe("Hard session");
+    expect(describeDayIntensity("EASY")).toBe("Easy session");
+    expect(describeDayIntensity("REST")).toBe("Rest day");
+  });
+
+  it("returns empty string for MODERATE (no caption on a normal day)", () => {
+    expect(describeDayIntensity("MODERATE")).toBe("");
   });
 });
