@@ -1030,23 +1030,22 @@ export default function ProgrammeSettings({
                 </div>
               )}
               <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  className="flex-1"
                   onClick={() => {
                     setConfirmRebuild(false);
                     setConfirmReset(false);
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  className="flex-1"
                   onClick={confirmReset ? applyReset : applyRebuild}
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold"
                 >
                   {confirmReset ? "Reset" : "Save"}
-                </button>
+                </Button>
               </div>
             </motion.div>
           </>
