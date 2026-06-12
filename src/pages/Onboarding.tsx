@@ -605,6 +605,9 @@ export default function Onboarding() {
         primaryGoal,
         nutritionPhase: fitnessGoal,
         experience,
+        // D-LIFT-5: seed bodyweight-relative cold-start loads for the first plan.
+        bodyweightKg: weightKg,
+        sex: gender === "female" ? "female" : "male",
         liftDays: daysPerWeek,
         preferredSplit,
         runMode: effectiveRunMode,
