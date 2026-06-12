@@ -1,9 +1,25 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  lazy,
+  Suspense,
+} from "react";
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
-import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
+import {
+  Play,
+  RotateCcw,
+  Check,
+  X,
+  Dumbbell,
+  Trophy,
+  Info,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -26,6 +42,14 @@ import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
 import StallModal from "@/components/workout/StallModal";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { IconButton } from "@/components/ui/IconButton";
+import { Spinner } from "@/components/ui/Spinner";
+// Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
+// when the user opens the "How to" sheet mid-workout (D-LIFT-14).
+const ExerciseFormContent = lazy(
+  () => import("@/components/ExerciseFormContent")
+);
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 
 function playChime() {
@@ -163,6 +187,8 @@ export default function WorkoutSession({
       )
   );
   const [showRPE, setShowRPE] = useState(false);
+  // D-LIFT-14: form guide reachable mid-workout (no more exit → History → Form).
+  const [showFormGuide, setShowFormGuide] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(
     initialDraft?.exerciseNotes ?? {}
   );
@@ -1060,6 +1086,18 @@ export default function WorkoutSession({
           <h2 className="text-lg font-bold text-foreground">
             {currentExercise?.name}
           </h2>
+          {currentExercise?.name && (
+            <IconButton
+              aria-label={`How to do ${currentExercise.name}`}
+              variant="ghost"
+              size="sm"
+              icon={<Info className="size-5 text-muted-foreground" />}
+              onClick={() => {
+                haptic("light");
+                setShowFormGuide(true);
+              }}
+            />
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           Set {currentSetIndex + 1} of {currentSets.length} ·{" "}
@@ -1470,6 +1508,29 @@ export default function WorkoutSession({
           })()
         )}
       </div>
+
+      {currentExercise?.name && (
+        <BottomSheet
+          open={showFormGuide}
+          onOpenChange={setShowFormGuide}
+          title={currentExercise.name}
+        >
+          <div className="px-4 pb-6">
+            <Suspense
+              fallback={
+                <div className="py-10 flex justify-center">
+                  <Spinner />
+                </div>
+              }
+            >
+              <ExerciseFormContent
+                exerciseName={currentExercise.name}
+                active={showFormGuide}
+              />
+            </Suspense>
+          </div>
+        </BottomSheet>
+      )}
     </div>
   );
 }
