@@ -6,6 +6,11 @@ import {
   generateProgram,
   generateWeekPrescription,
   expectedDayCount,
+  calculateE1RM,
+  getProgressionDirection,
+  getProgressionLabel,
+  goalProfileFor,
+  applyFatigue,
 } from "../programEngine";
 import type {
   ProgramExercise,
@@ -392,5 +397,126 @@ describe("expectedDayCount · parity with generateProgram", () => {
     expect(expectedDayCount(0)).toBe(0);
     const { workouts } = generateProgram("recomp", 0, undefined, "hypertrophy");
     expect(workouts).toHaveLength(0);
+  });
+});
+
+// ── calculateE1RM (Epley) ────────────────────
+describe("calculateE1RM", () => {
+  it("returns the lifted weight at 1 rep", () => {
+    expect(calculateE1RM(100, 1)).toBeCloseTo(103.33, 2);
+  });
+
+  it("returns the bare weight at 0 reps (degenerate)", () => {
+    expect(calculateE1RM(100, 0)).toBe(100);
+  });
+
+  it("scales with reps per the Epley 1 + reps/30 factor", () => {
+    expect(calculateE1RM(100, 10)).toBeCloseTo(133.33, 2);
+    expect(calculateE1RM(60, 5)).toBeCloseTo(70, 5);
+  });
+});
+
+// ── getProgressionDirection / Label ──────────
+describe("getProgressionDirection", () => {
+  it("is stable when there's no prior attempt", () => {
+    expect(
+      getProgressionDirection(makeTestExercise({ lastAttemptedWeight: 0 }))
+    ).toBe("stable");
+  });
+
+  it("reads up / down / stable off the weight delta", () => {
+    expect(
+      getProgressionDirection(
+        makeTestExercise({ weight: 65, lastAttemptedWeight: 60 })
+      )
+    ).toBe("up");
+    expect(
+      getProgressionDirection(
+        makeTestExercise({ weight: 55, lastAttemptedWeight: 60 })
+      )
+    ).toBe("down");
+    expect(
+      getProgressionDirection(
+        makeTestExercise({ weight: 60, lastAttemptedWeight: 60 })
+      )
+    ).toBe("stable");
+  });
+});
+
+describe("getProgressionLabel", () => {
+  it("shows an up arrow for a weight increase", () => {
+    expect(
+      getProgressionLabel(
+        makeTestExercise({ weight: 65, lastAttemptedWeight: 60 })
+      )
+    ).toBe("65kg ↑");
+  });
+
+  it("shows a down arrow for a regression", () => {
+    expect(
+      getProgressionLabel(
+        makeTestExercise({ weight: 55, lastAttemptedWeight: 60 })
+      )
+    ).toBe("55kg ↓");
+  });
+
+  it("renders BW (no kg) for bodyweight exercises", () => {
+    expect(
+      getProgressionLabel(
+        makeBodyweightExercise({ weight: 0, lastAttemptedWeight: 0 })
+      )
+    ).toBe("BW");
+  });
+
+  it("renders the plain weight when stable", () => {
+    expect(
+      getProgressionLabel(
+        makeTestExercise({ weight: 60, lastAttemptedWeight: 60 })
+      )
+    ).toBe("60kg");
+  });
+});
+
+// ── goalProfileFor ───────────────────────────
+describe("goalProfileFor", () => {
+  it("returns a defined profile for every primary goal", () => {
+    for (const g of [
+      "hypertrophy",
+      "strength",
+      "fat_loss",
+      "general",
+      "running",
+    ] as const) {
+      expect(goalProfileFor(g)).toBeTruthy();
+    }
+  });
+
+  it("falls back to the 'general' profile when the goal is undefined", () => {
+    expect(goalProfileFor(undefined)).toEqual(goalProfileFor("general"));
+  });
+});
+
+// ── applyFatigue ─────────────────────────────
+describe("applyFatigue", () => {
+  const day = (sets: number): WorkoutDay => ({
+    dayName: "Push",
+    dayType: "lift",
+    completed: false,
+    exercises: [makeTestExercise({ sets })],
+  });
+
+  it("leaves workouts untouched at or below the 20 fatigue threshold", () => {
+    const input = [day(10)];
+    expect(applyFatigue(input, 20)).toBe(input); // same ref — early return
+  });
+
+  it("trims sets ~10% (floored at 2) above the threshold", () => {
+    const [d] = applyFatigue([day(10)], 50);
+    expect(d.exercises[0].sets).toBe(9); // round(10 * 0.9)
+  });
+
+  it("never drops a lift below 2 working sets", () => {
+    const [d] = applyFatigue([day(2)], 90);
+    expect(d.exercises[0].sets).toBe(2);
   });
 });
