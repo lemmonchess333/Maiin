@@ -32,6 +32,20 @@ export interface StreakData {
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string;
+  /**
+   * WINDOWED, not lifetime (D13). Recomputed each load as the size of the
+   * active-date set built from the recent-window subscriptions (≤400 workout /
+   * 400 run / 500 meal docs), so it saturates around ~400 distinct days — a
+   * 2-year daily user does NOT see 730 here. `currentStreak` / `longestStreak`
+   * stay accurate (any realistic streak ≤ ~380d fits the window; `longestStreak`
+   * is also persisted monotonically), but this count is genuinely capped.
+   *
+   * HONESTY CONTRACT: any UI that renders this MUST label it as recent/windowed
+   * ("active days", "active days · last 400") — NEVER "total" or "lifetime"
+   * active days. To present a true-lifetime number, move to a server-maintained
+   * aggregate FIRST; don't relabel the windowed value. Pinned in
+   * `streakWindowing.test.ts`.
+   */
   totalActiveDays: number;
   badges: EarnedBadge[];
 }
@@ -49,7 +63,11 @@ const DEFAULT_STREAKS: StreakData = {
 // real active-day streak longer than ~380 days. A user with 1000+ historical
 // docs only has their most recent N read — enough to compute any realistic
 // streak with headroom for the 365-day badge. totalActiveDays is therefore
-// windowed, not truly lifetime. Acceptable for launch.
+// windowed, not truly lifetime (D13 — the saturation is a DELIBERATE accepted
+// limit, documented on the StreakData.totalActiveDays field; any consumer that
+// displays it must label it as windowed, never "total/lifetime"). The honest
+// alternative — a server-maintained lifetime aggregate — is deferred until a
+// surface actually needs a true-lifetime number.
 const WORKOUT_LIMIT = 400;
 const RUN_LIMIT = 400;
 const MEAL_LIMIT = 500;
