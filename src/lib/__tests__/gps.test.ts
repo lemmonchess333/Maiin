@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   haversine,
+  bearing,
   isValidReading,
   calculatePace,
   rollingPace,
@@ -68,6 +69,34 @@ describe("haversine", () => {
     // ~222 km
     expect(dist).toBeGreaterThan(220000);
     expect(dist).toBeLessThan(224000);
+  });
+});
+
+// ── bearing ──────────────────────────────────
+
+describe("bearing", () => {
+  it("points ~north (0°) for due-north travel", () => {
+    const b = bearing(51.5, -0.1, 51.51, -0.1);
+    expect(b).toBeGreaterThanOrEqual(0);
+    expect(b).toBeLessThan(1);
+  });
+
+  it("points ~east (90°) for due-east travel", () => {
+    expect(bearing(51.5, -0.1, 51.5, -0.09)).toBeCloseTo(90, 0);
+  });
+
+  it("points ~south (180°) for due-south travel", () => {
+    expect(bearing(51.5, -0.1, 51.49, -0.1)).toBeCloseTo(180, 0);
+  });
+
+  it("points ~west (270°) for due-west travel", () => {
+    expect(bearing(51.5, -0.1, 51.5, -0.11)).toBeCloseTo(270, 0);
+  });
+
+  it("always returns a value in [0, 360)", () => {
+    const b = bearing(51.5, -0.1, 51.49, -0.11);
+    expect(b).toBeGreaterThanOrEqual(0);
+    expect(b).toBeLessThan(360);
   });
 });
 
