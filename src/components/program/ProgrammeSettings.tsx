@@ -65,7 +65,10 @@ import {
   splitLabel,
   splitRationale,
 } from "@/features/program/programEngine";
-import { computeProgrammeChanges } from "@/lib/programmeChanges";
+import {
+  computeProgrammeChanges,
+  programmePreservationNote,
+} from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
@@ -987,9 +990,10 @@ export default function ProgrammeSettings({
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {confirmReset
                       ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1 — past week summaries clear. Your logged workouts and runs stay in History."
-                      : liftDaysChanged
-                        ? "Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. Your current week, history, and logged sessions are kept."
-                        : "We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. Your week, history, and logged sessions stay."}
+                      : programmePreservationNote({
+                          liftDaysChanged,
+                          weekNumber: programState?.weekNumber,
+                        })}
                   </p>
                   {!confirmReset &&
                     runMode === "race_prep" &&
