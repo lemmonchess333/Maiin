@@ -64,6 +64,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
@@ -1504,17 +1505,16 @@ export default function Home() {
                 >
                   Maybe later
                 </button>
-                <button
-                  type="button"
+                <Button
+                  className="flex-1"
                   onClick={function () {
                     trialSurface.dismiss();
                     updateProfile({ trialExpiryPromptShown: true });
                     navigate("/upgrade");
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-opacity"
                 >
                   Upgrade
-                </button>
+                </Button>
               </div>
             </motion.div>
           </>

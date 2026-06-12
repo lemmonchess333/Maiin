@@ -1455,17 +1455,17 @@ export default function WorkoutSession({
               );
             }
             return (
-              <button
-                type="button"
+              <Button
+                fullWidth
                 onClick={completeSet}
                 disabled={
                   !currentSets[currentSetIndex] ||
                   currentSets[currentSetIndex]?.completed
                 }
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                leftIcon={<Check className="size-4" />}
               >
-                <Check className="size-4" /> Complete Set {currentSetIndex + 1}
-              </button>
+                Complete Set {currentSetIndex + 1}
+              </Button>
             );
           })()
         )}

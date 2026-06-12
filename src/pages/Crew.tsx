@@ -423,8 +423,8 @@ export default function Crew() {
             visually competing with Invite. */}
         {!isMember ? (
           <div className="mt-4">
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={async () => {
                 if (!user) return;
                 try {
@@ -434,10 +434,9 @@ export default function Crew() {
                   toast.error("Couldn't join. Try again.");
                 }
               }}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white active:scale-[0.98] transition-transform"
             >
               Join crew
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="mt-4 space-y-2">

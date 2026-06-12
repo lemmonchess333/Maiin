@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import IconButton from "@/components/ui/IconButton";
+import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
@@ -1354,8 +1355,8 @@ export default function Social() {
                       </button>
                     ))}
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    fullWidth
                     onClick={async () => {
                       if (!newGroupName.trim() || creatingCrew) return;
                       setCreatingCrew(true);
@@ -1377,10 +1378,9 @@ export default function Social() {
                       }
                     }}
                     disabled={!newGroupName.trim() || creatingCrew}
-                    className="w-full py-3 rounded-xl bg-primary-strong text-white font-medium text-sm disabled:opacity-50"
                   >
                     {creatingCrew ? "Creating..." : "Create Crew"}
-                  </button>
+                  </Button>
                 </div>
               </BottomSheet>
             </section>

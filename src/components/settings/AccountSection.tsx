@@ -492,15 +492,14 @@ export default function AccountSection({
 
               <div className="space-y-2">
                 {providers.map((p) => (
-                  <button
-                    type="button"
+                  <Button
+                    fullWidth
                     key={p}
                     onClick={() => handleReauth(p)}
                     disabled={
                       inReauthFlight ||
                       (p === "password" && password.length === 0)
                     }
-                    className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {inReauthFlight && modalState.provider === p ? (
                       <>
@@ -514,7 +513,7 @@ export default function AccountSection({
                     ) : (
                       providerLabel(p)
                     )}
-                  </button>
+                  </Button>
                 ))}
               </div>
 

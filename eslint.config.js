@@ -82,6 +82,20 @@ export default defineConfig([
           message:
             "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
         },
+        // ── Hand-rolled primary-CTA guard ────────────────────────────────
+        // Every primary CTA routes through the <Button> primitive (variant
+        // primary = the canonical bg-primary-strong). A `<button>` with a
+        // STATIC primary-fill className is a hand-rolled CTA that bypasses the
+        // primitive's shade + focus ring + 44px floor. Targets the button's own
+        // string className only — tab/segment selectors that set bg-primary in a
+        // ternary/template (active-state) aren't a plain Literal, so they're not
+        // flagged. Use <Button> / <Button variant="primary"> instead.
+        {
+          selector:
+            "JSXOpeningElement[name.name='button'] > JSXAttribute[name.name='className'] > Literal[value=/(?=.*bg-primary(-strong)?(\\s|$))(?=.*text-(primary-foreground|white)(\\s|$))/]",
+          message:
+            "Hand-rolled primary CTA — use the <Button> primitive (variant primary) instead of bg-primary[-strong] text-primary-foreground/white markup on a raw <button>.",
+        },
       ],
     },
   },
@@ -121,6 +135,20 @@ export default defineConfig([
           selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
           message:
             "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
+        },
+        // ── Hand-rolled primary-CTA guard ────────────────────────────────
+        // Every primary CTA routes through the <Button> primitive (variant
+        // primary = the canonical bg-primary-strong). A `<button>` with a
+        // STATIC primary-fill className is a hand-rolled CTA that bypasses the
+        // primitive's shade + focus ring + 44px floor. Targets the button's own
+        // string className only — tab/segment selectors that set bg-primary in a
+        // ternary/template (active-state) aren't a plain Literal, so they're not
+        // flagged. Use <Button> / <Button variant="primary"> instead.
+        {
+          selector:
+            "JSXOpeningElement[name.name='button'] > JSXAttribute[name.name='className'] > Literal[value=/(?=.*bg-primary(-strong)?(\\s|$))(?=.*text-(primary-foreground|white)(\\s|$))/]",
+          message:
+            "Hand-rolled primary CTA — use the <Button> primitive (variant primary) instead of bg-primary[-strong] text-primary-foreground/white markup on a raw <button>.",
         },
       ],
     },

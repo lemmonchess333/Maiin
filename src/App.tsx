@@ -237,6 +237,7 @@ class ErrorBoundary extends Component<
                 });
                 window.location.reload();
               }}
+              // eslint-disable-next-line no-restricted-syntax -- root error-boundary fallback stays self-contained; it must not import the Button primitive (which, with its deps, could be part of what crashed).
               className="w-full px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm"
             >
               Reload App
