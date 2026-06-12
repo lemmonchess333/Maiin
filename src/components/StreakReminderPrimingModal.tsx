@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flame } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { Button } from "@/components/ui/Button";
 import { useStreakReminder } from "@/hooks/RemindersProvider";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { haptic } from "@/lib/haptic";
@@ -193,13 +194,9 @@ function PrimingDialog({
           </p>
         </div>
         <div className="space-y-2 pt-2">
-          <button
-            type="button"
-            onClick={onYes}
-            className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
-          >
+          <Button fullWidth onClick={onYes}>
             Yes, remind me
-          </button>
+          </Button>
           <button
             type="button"
             onClick={onNo}
