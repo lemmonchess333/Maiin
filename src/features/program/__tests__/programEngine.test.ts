@@ -3,6 +3,7 @@ import {
   applyProgression,
   applyDeload,
   advanceWeek,
+  computeFatigueScore,
   generateProgram,
   generateWeekPrescription,
   expectedDayCount,
@@ -183,6 +184,56 @@ describe("applyDeload", () => {
   });
 });
 
+// ── computeFatigueScore (D-LIFT-8) ──────────────
+
+describe("computeFatigueScore", () => {
+  const day = (exs: ProgramExercise[]): WorkoutDay => ({
+    dayName: "D",
+    dayType: "upper",
+    completed: true,
+    exercises: exs,
+  });
+
+  it("is 0 when nothing is failing", () => {
+    expect(
+      computeFatigueScore([day([makeTestExercise({ consecutiveFailures: 0 })])])
+    ).toBe(0);
+  });
+
+  it("scales with unresolved recent failures (×8)", () => {
+    expect(
+      computeFatigueScore([
+        day([
+          makeTestExercise({ consecutiveFailures: 2 }),
+          makeTestExercise({ consecutiveFailures: 1 }),
+        ]),
+      ])
+    ).toBe(24); // (2+1)*8
+  });
+
+  it("needs a meaningful share failing to clear the >20 cut threshold", () => {
+    // one lift at two misses = 16 → below 20 (no cut); two lifts = 32 → trips
+    expect(
+      computeFatigueScore([day([makeTestExercise({ consecutiveFailures: 2 })])])
+    ).toBeLessThanOrEqual(20);
+    expect(
+      computeFatigueScore([
+        day([
+          makeTestExercise({ consecutiveFailures: 2 }),
+          makeTestExercise({ consecutiveFailures: 2 }),
+        ]),
+      ])
+    ).toBeGreaterThan(20);
+  });
+
+  it("clamps to 100 (can't ratchet unbounded)", () => {
+    const exs = Array.from({ length: 30 }, () =>
+      makeTestExercise({ consecutiveFailures: 2 })
+    );
+    expect(computeFatigueScore([day(exs)])).toBe(100);
+  });
+});
+
 // ── advanceWeek ─────────────────────────────────
 
 describe("advanceWeek", () => {
@@ -217,15 +268,52 @@ describe("advanceWeek", () => {
     // fatigue should NOT have been applied. We verify sets is exactly 3 (deload only).
   });
 
-  it("applies fatigue on non-deload weeks", () => {
-    // Week 2 (2%4=2) is NOT deload
-    const state = { ...baseProgramState, weekNumber: 1, fatigueScore: 50 };
+  it("applies COMPUTED fatigue on non-deload weeks (D-LIFT-8)", () => {
+    // Week 2 (2%4=2) is NOT deload. fatigueScore is now DERIVED from the week's
+    // per-exercise consecutiveFailures, not the persisted scalar. Three lifts at
+    // 2 straight misses → 6×8 = 48 (>20) → next week's volume trims.
+    const state: ProgramState = {
+      ...baseProgramState,
+      weekNumber: 1,
+      fatigueScore: 0, // persisted value is ignored now
+      workouts: [
+        {
+          dayName: "Upper A",
+          dayType: "upper",
+          completed: true,
+          exercises: [
+            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
+            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
+            makeTestExercise({ sets: 6, consecutiveFailures: 2 }),
+          ],
+        },
+      ],
+    };
     const result = advanceWeek(state);
     expect(result.weekNumber).toBe(2);
     expect(result.currentPhase).toBe("progression");
-    // Fatigue: sets=round(4*0.9)=4 (rounds to 4)
-    const ex = result.workouts[0].exercises[0];
-    expect(ex.sets).toBe(4); // round(4*0.9)=round(3.6)=4
+    expect(result.fatigueScore).toBe(48);
+    // Fatigue cut: Math.round(6*0.9)=5 — visible reduction.
+    expect(result.workouts[0].exercises[0].sets).toBe(5);
+  });
+
+  it("does NOT cut volume when there are no recent failures (stale scalar ignored)", () => {
+    const state: ProgramState = {
+      ...baseProgramState,
+      weekNumber: 1,
+      fatigueScore: 99, // stale persisted value must NOT trigger a cut
+      workouts: [
+        {
+          dayName: "Upper A",
+          dayType: "upper",
+          completed: true,
+          exercises: [makeTestExercise({ sets: 6, consecutiveFailures: 0 })],
+        },
+      ],
+    };
+    const result = advanceWeek(state);
+    expect(result.fatigueScore).toBe(0);
+    expect(result.workouts[0].exercises[0].sets).toBe(6); // untouched
   });
 
   it("caps week number at 52 and recycles to 1 (L2)", () => {
