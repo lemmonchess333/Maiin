@@ -153,6 +153,32 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
       /size-11|min-h-\[44|h-11|h-12|h-14|min-h-11|min-h-12/.test(toggle)
     ).toBe(true);
   });
+
+  it("the Button primitive's DEFAULT (md) size keeps the 44px floor", () => {
+    // The shared Button is how the "every CTA clears 44px" invariant is actually
+    // satisfied across the app. A regression that shrank the md default would
+    // silently break every default CTA's touch target — pin it. (sm is
+    // intentionally 36px for inline filters; not pinned here.)
+    const button = readFileSync(
+      resolve(srcRoot, "components/ui/Button.tsx"),
+      "utf8"
+    );
+    expect(button, "Button md size must keep min-h-[44px]").toMatch(
+      /md:\s*"min-h-\[44px\]/
+    );
+  });
+
+  it("the IconButton primitive's DEFAULT (md) size keeps the 44px floor", () => {
+    // size-11 = 44px square. Same cascade risk as Button — header chrome / close
+    // buttons all rely on this default. (sm is intentionally size-9; not pinned.)
+    const iconButton = readFileSync(
+      resolve(srcRoot, "components/ui/IconButton.tsx"),
+      "utf8"
+    );
+    expect(iconButton, "IconButton md size must keep size-11 (44px)").toMatch(
+      /md:\s*"size-11"/
+    );
+  });
 });
 
 describe("D15 · DS invariant — numeric displays use the mono numeral font", () => {
