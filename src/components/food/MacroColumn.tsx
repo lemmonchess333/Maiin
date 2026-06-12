@@ -100,13 +100,18 @@ export default function MacroColumn({
   // the tertiary "X / Yg" line.
   const displayLabel = isLeftMode ? (isOver ? "over" : "left") : "eaten";
 
-  // Macro number + bar stay in the macro's own colour regardless of
-  // over/under target. Previously the colour ramped amber → deep red
-  // when over, which made the Food hero read as a failure state
-  // (numbers going red, bars going red) even though "over carbs by 10g"
-  // is not a failure. Going over is now communicated purely by the
-  // "over" text label + the number visibly exceeding the target in
-  // the tertiary row. No red, no amber cascade.
+  // Food7 (audit #34 — calm the loudest screen): the macro hue now lives
+  // ONLY on the icon + progress bar; the big number renders neutral
+  // (text-foreground), mirroring the calorie ring's unified-colour story
+  // (the ring stays one colour, only the centre label changes). This is
+  // the single biggest cut to the Food page's hue count — three saturated
+  // 2xl numbers → three calm neutral numbers with small colour accents.
+  //
+  // The bar keeps the macro's own colour regardless of over/under target.
+  // Previously the number AND bar ramped amber → deep red when over, which
+  // made the hero read as a failure state even though "over carbs by 10g"
+  // isn't a failure. Over-target is communicated by the "over" label + the
+  // tertiary "X / Yg" row + the overshoot overlay. No red, no amber.
   const overColor = color;
 
   // Pulse-once-on-cross: compare current consumed against previous, fire a
@@ -165,11 +170,12 @@ export default function MacroColumn({
         aria-hidden="true"
       />
 
-      {/* Big number */}
-      <p
-        className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2"
-        style={{ color: overColor }}
-      >
+      {/* Big number — Food7: neutral foreground (not the macro hue). The
+          macro identity is carried by the icon + progress bar; a neutral
+          number is the calorie ring's unified-colour story applied to the
+          tiles. text-foreground is theme-aware (dark on light, light on
+          dark) so there's no AA concern. */}
+      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground">
         <AnimatedNumber
           value={displayValue}
           duration={numberDurationSec}

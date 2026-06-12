@@ -7,6 +7,7 @@ import {
   enqueueShare,
   getQueueLength,
   drainQueue,
+  subscribeShareComposer,
   type ActivityPreview,
 } from "../shareComposer";
 
@@ -155,5 +156,40 @@ describe("offline queue", function () {
     // B's item still pending — preserved for B's next sign-in.
     expect(getQueueLength()).toBe(1);
     expect(getQueueLength(UID_B)).toBe(1);
+  });
+});
+
+describe("subscribeShareComposer", function () {
+  it("calls the listener immediately with the current (closed) state", function () {
+    const seen: { open: boolean }[] = [];
+    const unsub = subscribeShareComposer((s) => seen.push({ open: s.open }));
+    expect(seen).toHaveLength(1);
+    expect(seen[0].open).toBe(false);
+    unsub();
+  });
+
+  it("notifies subscribers when compose opens the sheet", async function () {
+    const states: { open: boolean; type: string | null }[] = [];
+    const unsub = subscribeShareComposer((s) =>
+      states.push({ open: s.open, type: s.type })
+    );
+    // No stored pref (localStorage cleared in beforeEach) → compose opens + emits.
+    const p = compose(WORKOUT_PREVIEW);
+    // Initial emit (closed) + the open emit.
+    expect(states[states.length - 1]).toEqual({ open: true, type: "workout" });
+    resolveCompose({ visibility: "followers", caption: "" }, false);
+    await p;
+    unsub();
+  });
+
+  it("stops notifying after unsubscribe", async function () {
+    let count = 0;
+    const unsub = subscribeShareComposer(() => count++);
+    expect(count).toBe(1); // immediate call
+    unsub();
+    const p = compose(WORKOUT_PREVIEW); // would emit if still subscribed
+    expect(count).toBe(1); // no further calls
+    resolveCompose(null, false);
+    await p;
   });
 });
