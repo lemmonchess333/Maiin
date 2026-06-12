@@ -105,6 +105,15 @@ const BrandBakeoff =
     ? lazyRetry(() => import("@/pages/dev/BrandBakeoff"))
     : null;
 
+// THROWAWAY: Home-screen "100x" visual exploration (3 premium variants +
+// live switcher). Dev/preview-only — gated like BrandBakeoff so the real
+// production build dead-code-eliminates it. Reachable by direct URL only
+// (/proto-home), no nav entry. Delete once a direction is chosen.
+const HomePrototype =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/_prototype/HomePrototype"))
+    : null;
+
 // The ambient-emission bake-off (#1252) concluded: candidate A (single
 // brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
 // to avoid a double-render with the shipped layer; it's recoverable from
@@ -341,6 +350,9 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          {HomePrototype && (
+            <Route path="/proto-home" element={<HomePrototype />} />
+          )}
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
@@ -353,6 +365,9 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          {HomePrototype && (
+            <Route path="/proto-home" element={<HomePrototype />} />
+          )}
           <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>
@@ -655,6 +670,18 @@ function AppRoutes() {
                       element={
                         <RouteErrorBoundary>
                           <BrandBakeoff />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                  )}
+                  {/* THROWAWAY Home-redesign exploration — dev/preview only,
+                      standalone (no Layout nav). Delete with the page. */}
+                  {HomePrototype && (
+                    <Route
+                      path="/proto-home"
+                      element={
+                        <RouteErrorBoundary>
+                          <HomePrototype />
                         </RouteErrorBoundary>
                       }
                     />
