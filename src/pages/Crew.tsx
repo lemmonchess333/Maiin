@@ -18,6 +18,7 @@ import { logger } from "../lib/logger";
 import { useCrews, type Crew as CrewType } from "../hooks/useCrews";
 import { SOCIAL_GATES, shouldShowCrewSurface } from "@/lib/socialGates";
 import { cn } from "../lib/utils";
+import { Button } from "@/components/ui/Button";
 import {
   formatScore,
   formatTotalForMetric,
@@ -440,14 +441,13 @@ export default function Crew() {
           </div>
         ) : (
           <div className="mt-4 space-y-2">
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={handleInvite}
-              className="w-full py-3 rounded-xl text-sm font-semibold bg-primary-strong text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              leftIcon={<Share2 className="size-4" />}
             >
-              <Share2 className="size-4" />
               Invite friends
-            </button>
+            </Button>
             <button
               type="button"
               onClick={async () => {
@@ -502,14 +502,13 @@ export default function Crew() {
                 more to start competing this week.
               </p>
               {isMember && (
-                <button
-                  type="button"
+                <Button
                   onClick={handleInvite}
-                  className="mt-3 inline-flex items-center gap-2 px-3 h-11 rounded-xl text-sm font-semibold bg-primary-strong text-white active:scale-[0.98] transition-transform"
+                  leftIcon={<Share2 className="size-4" />}
+                  className="mt-3"
                 >
-                  <Share2 className="size-4" />
                   Invite friends
-                </button>
+                </Button>
               )}
             </div>
           </div>
