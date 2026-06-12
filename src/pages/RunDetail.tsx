@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { Info, AlertTriangle } from "lucide-react";
+import { Info, AlertTriangle, Navigation } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import {
   describeRouteConfidence,
   type RouteQuality,
@@ -332,6 +333,22 @@ export default function RunDetail() {
             color={THEME.warning}
           />
         </div>
+
+        {/* Re-run this route — starts a run that follows this run's GPS line
+            (RunMap ghost line + RouteFollowChip guidance). Only when there's a
+            real trace to follow. */}
+        {hasGpsTrace && (
+          <Button
+            variant="sport-tinted"
+            className="w-full"
+            onClick={() =>
+              navigate("/run", { state: { followRoute: run.points } })
+            }
+          >
+            <Navigation className="size-4" aria-hidden="true" />
+            Re-run this route
+          </Button>
+        )}
 
         {/* Secondary stats */}
         <div className="grid grid-cols-2 gap-2">

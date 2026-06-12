@@ -30,6 +30,11 @@ interface RunMapProps {
    * each km. Skipped while replaying (replayIndex set). Off by default.
    */
   distanceMarkers?: boolean;
+  /**
+   * A route to follow, drawn as a faded "ghost" line beneath the live track.
+   * Static for the run; populate once (e.g. re-running a past run's polyline).
+   */
+  targetRoute?: GPSPoint[];
 }
 
 const TILE_STYLES = {
@@ -49,6 +54,7 @@ export default function RunMap({
   replayIndex,
   liveControls = false,
   distanceMarkers = false,
+  targetRoute,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -103,6 +109,30 @@ export default function RunMap({
     });
 
     const onLoad = () => {
+      // Target route (the plan you're following) — a faded line drawn FIRST so
+      // your live coloured track sits on top of it, reading as progress along
+      // the plan. Empty until `targetRoute` is provided; renders nothing then.
+      map.addSource("target-route", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: [] },
+          properties: {},
+        },
+      });
+      map.addLayer({
+        id: "target-route-line",
+        type: "line",
+        source: "target-route",
+        layout: { "line-join": "round", "line-cap": "round" },
+        paint: {
+          "line-color": THEME.brand,
+          "line-width": 6,
+          "line-opacity": 0.45,
+          "line-dasharray": [2, 1.5],
+        },
+      });
+
       map.addSource("route", {
         type: "geojson",
         data: {
@@ -421,6 +451,34 @@ export default function RunMap({
     replayIndex,
     distanceMarkers,
   ]);
+
+  // Target route (static) — drawn independently of the live track so it shows
+  // from the first frame, before any GPS fix has landed.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !targetRoute || targetRoute.length < 2) return;
+    const apply = () => {
+      const src = map.getSource("target-route") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      src?.setData({
+        type: "Feature",
+        geometry: {
+          type: "LineString",
+          coordinates: targetRoute.map((p) => [p.lon, p.lat]),
+        },
+        properties: {},
+      });
+    };
+    if (map.loaded()) {
+      apply();
+      return;
+    }
+    map.on("load", apply);
+    return () => {
+      map.off("load", apply);
+    };
+  }, [targetRoute]);
 
   const recenter = () => {
     followingRef.current = true;

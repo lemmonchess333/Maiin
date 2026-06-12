@@ -7,7 +7,7 @@ import {
   useCallback,
   useReducer,
 } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
 import { useRunTimer } from "../hooks/useRunTimer";
@@ -19,6 +19,7 @@ import {
   haversine,
   paceAsNumber,
   totalElevationGain,
+  type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
 import { paceTableFromFitness } from "../lib/runPaces";
@@ -46,6 +47,7 @@ import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
 import BackToStartChip from "../components/run/BackToStartChip";
+import RouteFollowChip from "../components/run/RouteFollowChip";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
 import { useHeartRate } from "../hooks/useHeartRate";
@@ -237,6 +239,13 @@ function deriveStrip(
 export default function Run() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  // Optional route to follow — passed via navigation state from RunDetail's
+  // "Re-run this route". Captured once on mount (the polyline of a past run);
+  // null for a normal free run. Drives the RunMap ghost line + RouteFollowChip.
+  const [targetRoute] = useState<GPSPoint[] | null>(
+    () => (location.state as { followRoute?: GPSPoint[] } | null)?.followRoute ?? null
+  );
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
@@ -1216,18 +1225,26 @@ export default function Run() {
               interactive={true}
               liveControls={true}
               distanceMarkers={true}
+              targetRoute={targetRoute ?? undefined}
               height="h-full"
               className="absolute inset-0"
             />
 
-            {/* Crow-flies "back to start" aid — top-centre, clear of the
-                left-anchored GPS indicator and the tempo/interval PaceZoneBar
-                (top-10). Self-hides within 200m of the start. */}
+            {/* Top-centre nav aid (clear of the left GPS indicator + the
+                tempo/interval PaceZoneBar at top-10). When following a route the
+                route guidance supersedes the generic back-to-start aid. */}
             <div className="absolute top-3 left-1/2 z-50 -translate-x-1/2">
-              <BackToStartChip
-                points={gps.points}
-                currentPoint={gps.currentPoint}
-              />
+              {targetRoute ? (
+                <RouteFollowChip
+                  targetRoute={targetRoute}
+                  currentPoint={gps.currentPoint}
+                />
+              ) : (
+                <BackToStartChip
+                  points={gps.points}
+                  currentPoint={gps.currentPoint}
+                />
+              )}
             </div>
 
             {autoPaused && (
