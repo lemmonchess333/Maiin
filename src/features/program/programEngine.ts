@@ -822,6 +822,35 @@ export function expectedDayCount(weeklyTarget: number): number {
  * leaves the duplicate as-is only if the category has no free alternative.
  * Pure — returns a new array.
  */
+/**
+ * D-LIFT-4: rotate UNTRAINED accessories (no logged history) to a different
+ * variation in the same movement category — periodic novelty without disturbing
+ * the user's actual training. Mains and any accessory with logged history are
+ * left untouched. Keeps the slot's `instanceId` (same row, new movement) so the
+ * reorderable list doesn't churn. Pure.
+ */
+export function rotateUntrainedAccessories(
+  workouts: WorkoutDay[]
+): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      if (!ex.isAccessory) return ex; // mains never rotate
+      if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
+      const next = pickAccessory(ex.movementCategory, ex.exerciseId);
+      if (next.id === ex.exerciseId) return ex; // no alternative available
+      return {
+        ...ex,
+        exerciseId: next.id,
+        name: next.name,
+        lastPerformance: null,
+        consecutiveFailures: 0,
+        plateauCount: 0,
+      };
+    }),
+  }));
+}
+
 export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => {
     const seen = new Set<string>();
@@ -1196,6 +1225,15 @@ export function advanceWeek(state: ProgramState): ProgramState {
   } else {
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
+  }
+
+  // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
+  // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
+  // joint health. Trained accessories (logged history) and all mains stay put —
+  // mains are the progression anchor, and a lift the user actually trains is
+  // theirs to keep. Re-deduped so a rotation can't collide within a day.
+  if (nextWeek % 4 === 1) {
+    workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
   }
 
   return {
