@@ -115,7 +115,8 @@ interface Props {
     dayIndex: number,
     exIndex: number,
     reps: number,
-    weight: number
+    weight: number,
+    rpe?: number
   ) => Promise<void>;
   onCompleteDay: (
     dayIndex: number,
@@ -675,8 +676,15 @@ export default function WorkoutSession({
     const isLastExercise = currentExIndex >= day.exercises.length - 1;
 
     if (isLastSet) {
-      // Log exercise performance (use last set's reps/weight)
-      await onLogExercise(dayIndex, currentExIndex, set.reps, set.weight);
+      // Log exercise performance (use last set's reps/weight/RPE — the latter
+      // drives RPE autoregulation in applyProgression, D-LIFT-6).
+      await onLogExercise(
+        dayIndex,
+        currentExIndex,
+        set.reps,
+        set.weight,
+        set.rpe
+      );
 
       if (isLastExercise) {
         setSessionDurationMinutes(
@@ -1005,6 +1013,7 @@ export default function WorkoutSession({
                 type="button"
                 key={i}
                 onClick={() => {
+                  haptic(10);
                   setCurrentExIndex(i);
                   const nextIncomplete = setsForEx.findIndex(
                     (s) => !s.completed
@@ -1012,7 +1021,7 @@ export default function WorkoutSession({
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
+                  "min-h-11 px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
                   done
                     ? "bg-success text-success-foreground font-medium"
                     : active
@@ -1270,7 +1279,7 @@ export default function WorkoutSession({
                       </div>
                       {/* RPE selector for completed sets */}
                       {showRPE && set.completed && (
-                        <div className="flex gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
+                        <div className="flex flex-wrap items-center gap-1 px-4 py-1.5 border-t border-border/30 bg-muted/30">
                           <span className="text-xs text-muted-foreground mr-1 self-center">
                             RPE:
                           </span>
@@ -1278,11 +1287,12 @@ export default function WorkoutSession({
                             <button
                               type="button"
                               key={rpe}
-                              onClick={() =>
-                                updateSetRPE(currentExIndex, setIdx, rpe)
-                              }
+                              onClick={() => {
+                                haptic(10);
+                                updateSetRPE(currentExIndex, setIdx, rpe);
+                              }}
                               className={cn(
-                                "text-xs px-1.5 py-0.5 rounded transition-colors",
+                                "min-h-11 px-2.5 rounded text-xs font-mono tabular-nums transition-colors",
                                 set.rpe === rpe
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
@@ -1343,7 +1353,7 @@ export default function WorkoutSession({
                       setTypePopover(null);
                       haptic(10);
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-small font-semibold text-foreground hover:bg-muted transition-colors"
+                    className="w-full min-h-11 flex items-center gap-3 px-4 py-3 text-small font-semibold text-foreground hover:bg-muted transition-colors"
                   >
                     {type === "working" ? (
                       <div className="size-6 rounded-full border-2 border-muted-foreground/30" />

@@ -13,11 +13,12 @@
  * Exercises with no muscle attribution (Cardio / "Full Body" conditioning, or
  * too-coarse labels) are excluded — this is a *resistance* volume view.
  *
- * v1 is read-only: it surfaces the tally; it does NOT yet drive selection
- * (that's the follow-up once the landmark bands are validated).
+ * It both SURFACES the tally (WeeklyVolumeCard) and DRIVES selection:
+ * `balanceWeeklyVolume` nudges under-dosed muscles toward the landmark low by
+ * growing their accessories (add-only, mains untouched).
  */
 import { getExerciseById, type Exercise } from "@/lib/exercises";
-import type { WorkoutDay } from "./programTypes";
+import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
 export type CanonicalMuscle =
   | "Chest"
@@ -117,6 +118,16 @@ function toCanonical(name: string | undefined): CanonicalMuscle | null {
   return MUSCLE_TO_CANONICAL[name.toLowerCase().trim()] ?? null;
 }
 
+/** The canonical PRIMARY muscle an exercise trains (DB primary, else movement
+ *  category for custom lifts), or null when unattributable (cardio/whole-body). */
+export function primaryCanonicalForExercise(
+  ex: ProgramExercise
+): CanonicalMuscle | null {
+  const dbEx = getExerciseById(ex.exerciseId);
+  if (dbEx) return toCanonical(dbEx.muscleGroup);
+  return CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null;
+}
+
 export interface MuscleVolume {
   muscle: CanonicalMuscle;
   /** Weekly hard sets (primary 1.0 + secondary 0.5), rounded to 0.5. */
@@ -199,4 +210,142 @@ export function classifyVolume(
   if (sets < landmark.low) return "low";
   if (sets > landmark.high) return "high";
   return "optimal";
+}
+
+/** Don't push any single accessory beyond this many sets. */
+const ACCESSORY_SET_CAP = 5;
+/** Safety bound on auto-added sets per muscle per week. */
+const MAX_ADDED_SETS_PER_MUSCLE = 6;
+
+/**
+ * Make the volume model active (D-LIFT-1) — nudge UNDER-dosed muscles up toward
+ * the landmark low (MEV) by adding sets to their existing ACCESSORIES. Pure;
+ * returns a new workouts array (inputs untouched).
+ *
+ * Deliberately conservative + add-only:
+ *   - mains are never touched (they're the progression anchor);
+ *   - only accessories whose PRIMARY muscle is under-dosed gain sets;
+ *   - each accessory is capped (`ACCESSORY_SET_CAP`) and total adds per muscle
+ *     are bounded (`MAX_ADDED_SETS_PER_MUSCLE`);
+ *   - over-MRV trimming is intentionally NOT done here — auto-generated programs
+ *     rarely exceed MRV and trimming wanted work is the riskier direction;
+ *   - a muscle with no accessory to grow is left as-is (adding a brand-new
+ *     exercise is out of scope for "gate accessory volume").
+ *
+ * Legacy programs whose exercises predate the `isAccessory` flag have no
+ * eligible accessories and pass through unchanged (balanced on next regen).
+ */
+export function balanceWeeklyVolume(
+  workouts: WorkoutDay[],
+  landmark: VolumeLandmark
+): WorkoutDay[] {
+  const days = workouts.map((d) => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  }));
+
+  const volumeOf = (muscle: CanonicalMuscle): number =>
+    weeklyVolumeByMuscle(days).find((v) => v.muscle === muscle)?.sets ?? 0;
+
+  for (const muscle of CANONICAL_MUSCLE_ORDER) {
+    if (volumeOf(muscle) >= landmark.low) continue;
+
+    // Accessories (on non-skipped days) whose primary is this muscle.
+    const candidates = days
+      .filter((d) => !d.skipped)
+      .flatMap((d) => d.exercises)
+      .filter(
+        (e) => e.isAccessory && primaryCanonicalForExercise(e) === muscle
+      );
+    if (candidates.length === 0) continue;
+
+    let added = 0;
+    while (
+      volumeOf(muscle) < landmark.low &&
+      added < MAX_ADDED_SETS_PER_MUSCLE
+    ) {
+      // Grow the lowest-set addable accessory first (keeps volume even).
+      const target = candidates
+        .filter((e) => e.sets < ACCESSORY_SET_CAP)
+        .sort((a, b) => a.sets - b.sets)[0];
+      if (!target) break; // all capped
+      target.sets += 1;
+      added += 1;
+    }
+  }
+
+  return days;
+}
+
+// Movement categories grouped by push vs pull (knee/hip/core are neither).
+// Push:pull balance is computed at the MOVEMENT level (robust + unambiguous)
+// rather than the muscle level — the canonical "Shoulders" group lumps the
+// push-y front delt with the pull-y rear delt, so a muscle-level ratio would
+// be misleading.
+const PUSH_CATEGORIES = new Set([
+  "horizontal_push",
+  "vertical_push",
+  "arms_triceps",
+]);
+const PULL_CATEGORIES = new Set([
+  "horizontal_pull",
+  "vertical_pull",
+  "arms_biceps",
+]);
+
+/** Safety bound on auto-added pull sets per week. */
+const MAX_ADDED_PULL_SETS = 8;
+
+function categorySetTotals(workouts: WorkoutDay[]): {
+  push: number;
+  pull: number;
+} {
+  let push = 0;
+  let pull = 0;
+  for (const day of workouts) {
+    if (day.skipped) continue;
+    for (const ex of day.exercises) {
+      const sets = ex.sets ?? 0;
+      if (sets <= 0) continue;
+      if (PUSH_CATEGORIES.has(ex.movementCategory)) push += sets;
+      else if (PULL_CATEGORIES.has(ex.movementCategory)) pull += sets;
+    }
+  }
+  return { push, pull };
+}
+
+/**
+ * Push/pull balance (D-LIFT-3) — keep weekly PULL volume at least equal to PUSH.
+ * Pull-dominant programming protects the shoulders (the most-cited balance
+ * principle) and the procedural builders skew slightly push-heavy. When push >
+ * pull, grow PULL accessories until pull ≥ push. Pure; conservative + add-only,
+ * same rails as the volume balancer (accessories only, mains untouched, each
+ * capped, total bounded). Uses movement category (not muscle) so it's immune to
+ * the front/rear-delt lumping. Add-only — never trims push.
+ */
+export function balancePushPull(workouts: WorkoutDay[]): WorkoutDay[] {
+  const days = workouts.map((d) => ({
+    ...d,
+    exercises: d.exercises.map((e) => ({ ...e })),
+  }));
+
+  const pullAccessories = days
+    .filter((d) => !d.skipped)
+    .flatMap((d) => d.exercises)
+    .filter((e) => e.isAccessory && PULL_CATEGORIES.has(e.movementCategory));
+  if (pullAccessories.length === 0) return days; // nothing to grow
+
+  let added = 0;
+  while (added < MAX_ADDED_PULL_SETS) {
+    const { push, pull } = categorySetTotals(days);
+    if (pull >= push) break;
+    const target = pullAccessories
+      .filter((e) => e.sets < ACCESSORY_SET_CAP)
+      .sort((a, b) => a.sets - b.sets)[0];
+    if (!target) break; // all capped
+    target.sets += 1;
+    added += 1;
+  }
+
+  return days;
 }

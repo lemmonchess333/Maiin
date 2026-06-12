@@ -59,7 +59,11 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
-import { chooseSplit, splitLabel } from "@/features/program/programEngine";
+import {
+  chooseSplit,
+  splitLabel,
+  splitRationale,
+} from "@/features/program/programEngine";
 import { computeProgrammeChanges } from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
@@ -529,6 +533,9 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
+        // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
+        bodyweightKg: profile.weightKg,
+        sex: profile.sex,
         liftDays,
         // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
         // value (inert in generation, keeps profileUpdates consistent).
@@ -672,7 +679,7 @@ export default function ProgrammeSettings({
               {currentSplitLabel}
             </p>
             <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-              Your coach sets the split from your weekly training days.
+              {splitRationale(liftDays)}
               {liftDays !== saved.liftDays && (
                 <>
                   {" "}
