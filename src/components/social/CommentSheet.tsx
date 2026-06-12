@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
@@ -233,14 +234,9 @@ export default function CommentSheet({
             disabled={sending}
             className="flex-1 text-sm px-3 py-2.5 rounded-xl bg-muted border border-border/50 text-foreground placeholder:text-muted-foreground"
           />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={sending || !text.trim()}
-            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm disabled:opacity-40"
-          >
+          <Button onClick={handleSend} disabled={sending || !text.trim()}>
             Send
-          </button>
+          </Button>
         </div>
       </div>
     </BottomSheet>
