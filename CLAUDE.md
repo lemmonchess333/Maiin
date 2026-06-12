@@ -342,8 +342,8 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 
 ### Visual Identity
 
-- **Aesthetic:** Clean, warm light mode (iOS-inspired #F2F2F7 grouped background). Cards on white. NOT a dark glass app in light mode — it's minimal and calm with subtle depth.
-- **Dark mode:** True dark glass aesthetic (bg #121214, surfaces #1A1A1F) — used when toggled
+- **Aesthetic:** Dark is the DEFAULT theme — a true dark glass aesthetic (bg #121214, surfaces #1A1A1F). It is what new users and the signed-out/Login state see.
+- **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section labels, icon tints, and contextual cards.
 - **Logo:** Purple gradient hexagon with upward chevron cutout. Top-left of home screen with "TROPOS" wordmark.

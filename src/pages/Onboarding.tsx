@@ -499,7 +499,8 @@ export default function Onboarding() {
         currentStreak: 0,
         longestStreak: 0,
         lastLogDate: null,
-        darkMode: false,
+        // Dark is the app default (see public/init.js + auth.tsx).
+        darkMode: true,
         weeklyWorkoutsTarget: daysPerWeek,
         weeklyMealsTarget: 10,
         weeklyRunsTarget: effectiveRunDays,
