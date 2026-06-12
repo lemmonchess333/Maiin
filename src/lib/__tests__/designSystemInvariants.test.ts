@@ -31,13 +31,20 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 const srcRoot = resolve(repoRoot, "src");
 
-/** Every .tsx under src (components + pages + features), tests excluded. */
+/** Every .tsx under src (components + pages + features), tests excluded.
+ *  `pages/dev/*` is excluded too — those are internal dev-only tools (e.g. the
+ *  font bake-off), not shipped product surface subject to the DS invariants. */
 function tsxFiles(dir: string): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir)) {
     const full = resolve(dir, name);
     if (statSync(full).isDirectory()) {
-      if (name === "node_modules" || name === "__tests__" || name === "test")
+      if (
+        name === "node_modules" ||
+        name === "__tests__" ||
+        name === "test" ||
+        name === "dev"
+      )
         continue;
       out.push(...tsxFiles(full));
       continue;
@@ -187,7 +194,7 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
   // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
   // wrong (proportional UI) font.
-  const MONO_BASELINE = 16; // burned down from 30 (stat displays, leaderboard, HR/PI/trial counters fixed); scanner now also catches cn() classNames. Keep lowering as surfaces are touched.
+  const MONO_BASELINE = 14; // burned down from 30 (stat displays, leaderboard, HR/PI/trial counters fixed + a spurious tabular-nums removed); scanner catches cn() classNames; dev tools excluded. Keep lowering as surfaces are touched.
   it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
