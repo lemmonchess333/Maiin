@@ -138,6 +138,14 @@
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
+  /* Floating glass capsule nav (NAV GLASS-UP). The fill is the page
+     `--background` at a tuned alpha so scrolling content reads as a soft
+     blur beneath the capsule but never sharp enough to fight the labels.
+     Light needs a higher alpha (the near-white bg goes muddy at low alpha);
+     dark can run more translucent. `--nav-capsule-highlight` is the top-edge
+     specular hairline (inset box-shadow). */
+  --nav-capsule-alpha: 0.72;
+  --nav-capsule-highlight: rgba(255, 255, 255, 0.7);
   /* Semantic status colours — light mode.
      Destructive is a darker red than the legacy #e04040 because that
      value was borderline for white text on the filled surface; this
@@ -187,6 +195,10 @@
   --glass-bg: rgba(20, 20, 24, 0.97);
   --glass-border: rgba(255, 255, 255, 0.07);
   --surface-solid: #1c1c20;
+  /* Dark capsule: more translucent (the dark bg stays legible-as-blur at a
+     lower alpha) + a faint white top hairline for the specular cue. */
+  --nav-capsule-alpha: 0.6;
+  --nav-capsule-highlight: rgba(255, 255, 255, 0.08);
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
@@ -225,14 +237,22 @@
    pages don't hand-roll `pb-20` / `pt-6` values. Values assume the
    iPhone safe-area envs are set; desktop falls back to 0. */
 :root {
-  --tab-bar-height: 64px; /* icon + label + py-3 vertical rhythm */
+  --tab-bar-height: 64px; /* legacy — full-width bar height (kept for any consumer) */
   --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  /* Enough room below scroll content that the bottom tab bar never
-     hides the final row. Bottom nav height + home-indicator inset +
-     breathing room. */
-  --page-bottom-pad: calc(var(--tab-bar-height) + var(--safe-bottom) + 1rem);
+  /* Floating nav-capsule geometry (NAV GLASS-UP). The capsule floats 8px
+     above the home indicator; `--nav-capsule-height` is its outer height
+     (cells ~46px + 6px vertical padding). */
+  --nav-capsule-height: 58px;
+  --nav-capsule-bottom: calc(var(--safe-bottom) + 8px);
+  /* Enough room below scroll content that the floating capsule never hides
+     the final row: float offset + capsule height + breathing room. Global —
+     pages don't hand-roll bottom padding; changing the nav from a full-width
+     bar to a capsule only changes this one value. */
+  --page-bottom-pad: calc(
+    var(--nav-capsule-bottom) + var(--nav-capsule-height) + 1rem
+  );
 }
 
 /* Mobile Safari exposes a transparent status-bar area when the app is opened
