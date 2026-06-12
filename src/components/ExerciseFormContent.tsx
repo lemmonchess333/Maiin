@@ -312,6 +312,28 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 </div>
               </div>
             )}
+            {demo.commonMistakes && demo.commonMistakes.length > 0 && (
+              <div className="mt-4">
+                <p className="text-caption uppercase tracking-wide text-muted-foreground">
+                  Common mistakes
+                </p>
+                <ul className="mt-1.5 space-y-1">
+                  {demo.commonMistakes.map((m) => (
+                    <li
+                      key={m}
+                      className="flex gap-2 text-small leading-relaxed text-foreground/80"
+                    >
+                      <span
+                        className="mt-1.5 size-1 shrink-0 rounded-full"
+                        style={{ background: THEME.semantic.nutrition }}
+                        aria-hidden="true"
+                      />
+                      <span>{m}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {overflows && !showInstructions && (
               <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />
             )}
