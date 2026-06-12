@@ -1039,6 +1039,29 @@ export function getProgressionLabel(ex: ProgramExercise): string {
    FATIGUE / DELOAD / ADVANCEMENT
 ================================ */
 
+/**
+ * Acute training-fatigue score for the week just trained, derived from the
+ * per-exercise failure state the logger already tracks (D-LIFT-8). `applyFatigue`
+ * trims next week's volume when this exceeds 20; previously the score it read
+ * (`state.fatigueScore`) was never updated by anything, so the cut never fired.
+ *
+ * Signal = unresolved recent failures (`consecutiveFailures`, 0..2 — the 3rd
+ * miss triggers a backoff that resets it). Acute by construction: it climbs
+ * while a lifter is grinding sets and falls once loads back off, so it can't
+ * ratchet up forever the way a cumulative `plateauCount` would. Weighted so the
+ * >20 cut needs a meaningful share of the program actively failing (≈2 lifts at
+ * two straight misses, or ~3 at one), and clamped for safety.
+ */
+export function computeFatigueScore(workouts: WorkoutDay[]): number {
+  let failures = 0;
+  for (const day of workouts) {
+    for (const ex of day.exercises) {
+      failures += Math.max(0, ex.consecutiveFailures ?? 0);
+    }
+  }
+  return Math.min(100, failures * 8);
+}
+
 export function applyFatigue(
   workouts: WorkoutDay[],
   fatigueScore: number
@@ -1091,11 +1114,15 @@ export function advanceWeek(state: ProgramState): ProgramState {
     skipped: false,
   }));
 
+  // Acute fatigue from the week just trained (D-LIFT-8) — computed from the
+  // logged per-exercise failure state rather than the formerly-dead persisted
+  // scalar.
+  const fatigue = computeFatigueScore(state.workouts);
   if (prescription.deload) {
     workouts = applyDeload(workouts);
   } else {
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
-    workouts = applyFatigue(workouts, state.fatigueScore);
+    workouts = applyFatigue(workouts, fatigue);
   }
 
   return {
@@ -1104,6 +1131,9 @@ export function advanceWeek(state: ProgramState): ProgramState {
     currentPhase: prescription.deload ? "deload" : "progression",
     workouts,
     weekHistory: history,
+    // A deload clears accumulated acute fatigue; otherwise persist the computed
+    // value so the field is meaningful + observable (no longer dead).
+    fatigueScore: prescription.deload ? 0 : fatigue,
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };
