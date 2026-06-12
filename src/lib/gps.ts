@@ -122,6 +122,47 @@ export function routeProgress(
   };
 }
 
+/**
+ * Elapsed time (seconds) the route's original recording took to reach a given
+ * distance along it — the "ghost" lookup for vs-last-time pacing when
+ * re-running a past run. Interpolates between the bracketing fixes' timestamps.
+ *
+ * Returns null when the route carries no real timestamps (e.g. a GPX import
+ * without <time>, where every timestamp is 0), so callers hide the ghost rather
+ * than show a bogus delta. Beyond the route end, returns the full original time.
+ */
+export function routeTimeAtDistance(
+  route: GPSPoint[],
+  meters: number
+): number | null {
+  if (route.length < 2) return null;
+  const t0 = route[0].timestamp;
+  if (!t0) return null;
+
+  let cum = 0;
+  for (let i = 1; i < route.length; i++) {
+    const seg = haversine(
+      route[i - 1].lat,
+      route[i - 1].lon,
+      route[i].lat,
+      route[i].lon
+    );
+    if (cum + seg >= meters) {
+      const tA = route[i - 1].timestamp;
+      const tB = route[i].timestamp;
+      if (!tA || !tB) return null;
+      const frac = seg > 0 ? (meters - cum) / seg : 0;
+      const interp = tA + (tB - tA) * frac;
+      return Math.max(0, (interp - t0) / 1000);
+    }
+    cum += seg;
+  }
+
+  const tLast = route[route.length - 1].timestamp;
+  if (!tLast) return null;
+  return Math.max(0, (tLast - t0) / 1000);
+}
+
 export class KalmanFilter {
   private lat = 0;
   private lon = 0;

@@ -4,6 +4,7 @@ import {
   bearing,
   routeProgress,
   routeTotalDistance,
+  routeTimeAtDistance,
   isValidReading,
   calculatePace,
   rollingPace,
@@ -158,6 +159,46 @@ describe("routeProgress", () => {
     const p = routeProgress(route, 51.5021, -0.1)!;
     expect(p.remainingMeters).toBeLessThan(20);
     expect(p.fraction).toBeGreaterThan(0.9);
+  });
+});
+
+// ── routeTimeAtDistance ──────────────────────
+
+describe("routeTimeAtDistance", () => {
+  const base = Date.parse("2026-01-01T10:00:00Z");
+  // ~111m per 0.001° lat. Three points 60s apart → 0s @0m, 60s @~111m, 120s @~222m.
+  const route = [
+    makePoint({ lat: 51.5, lon: -0.1, timestamp: base }),
+    makePoint({ lat: 51.501, lon: -0.1, timestamp: base + 60_000 }),
+    makePoint({ lat: 51.502, lon: -0.1, timestamp: base + 120_000 }),
+  ];
+
+  it("returns ~0s at the start", () => {
+    expect(routeTimeAtDistance(route, 0)).toBeCloseTo(0, 0);
+  });
+
+  it("interpolates ~60s at the first km-point distance (~111m)", () => {
+    const t = routeTimeAtDistance(route, 111)!;
+    expect(t).toBeGreaterThan(55);
+    expect(t).toBeLessThan(65);
+  });
+
+  it("interpolates within a segment (~30s at ~55m)", () => {
+    const t = routeTimeAtDistance(route, 55)!;
+    expect(t).toBeGreaterThan(25);
+    expect(t).toBeLessThan(35);
+  });
+
+  it("returns the full original time beyond the route end", () => {
+    expect(routeTimeAtDistance(route, 10_000)).toBeCloseTo(120, 0);
+  });
+
+  it("returns null when the route has no real timestamps (GPX without time)", () => {
+    const noTime = [
+      makePoint({ lat: 51.5, lon: -0.1, timestamp: 0 }),
+      makePoint({ lat: 51.501, lon: -0.1, timestamp: 0 }),
+    ];
+    expect(routeTimeAtDistance(noTime, 50)).toBeNull();
   });
 });
 
