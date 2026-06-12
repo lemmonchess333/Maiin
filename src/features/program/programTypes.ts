@@ -143,6 +143,15 @@ export interface ProgramExercise {
    * program-state conversion.
    */
   notes?: string;
+  /**
+   * True for assistance/isolation lifts (built via `makeAccessory`), false for
+   * the day's main compounds (`makeExercise`). Used by the weekly-volume
+   * balancer (D-LIFT-1 active) to know which sets it may nudge toward the
+   * landmark — mains are the progression anchor and are never auto-adjusted.
+   * Optional for back-compat: legacy programs (no flag) are simply not balanced
+   * until their next regeneration.
+   */
+  isAccessory?: boolean;
 }
 
 /* ================================
