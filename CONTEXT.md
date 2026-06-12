@@ -153,6 +153,30 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Tropos position:** TBD as streak-related features land. When designing streak-break rules, default to: `race_no_show` does NOT break a streak (user raced, system didn't see it); `expired` does NOT break a streak (life happens); `skipped` does NOT break a streak (deliberate rest); only zero-activity days break it.
 
+### Motivation / "why" capture in onboarding (DEFERRED, 2026-06-12)
+
+The idea (internal label **D10**): capture an emotional _why_ during onboarding (orthogonal driver chips — event / health / energy / confidence / proving — distinct from the `primaryGoal` _what_), then resurface it sparsely (a Home milestone reflection + the recalibration check-in) to lift retention. It was specced and stress-tested before any code.
+
+**Reference apps:**
+
+- **MyFitnessPal, Cronometer, MacroFactor, Lose It!:** capture the _what_ (goal + rate). No emotional-why prompt.
+- **Hevy, Strong, Fitbod:** same — goal/experience, then straight into the tool.
+- **Strava, Nike Run Club, Garmin Connect, TrainingPeaks:** no why-capture; goal/plan only.
+- **Duolingo:** ONE optional screen, orthogonal chips (Education / Career / Travel / Connect / Fun), used to tailor messaging. The why is genuinely orthogonal to the what.
+- **Noom:** a 20+ question psychology quiz with heavy resurfacing — but that long funnel **is** the product (coaching + conversion), not a side feature.
+
+**Pattern across the field:** **no mainstream _fitness_ app captures an emotional why.** The only apps that do are a different domain (Duolingo, language) or a different business model (Noom, where the quiz is the coaching funnel). Per our grilling heuristic — _3+ reference apps don't have X → strong signal the feature doesn't justify the build_ — this is well past the threshold.
+
+**Tropos position: DEFER to post-launch.** Three reasons beyond the reference signal:
+
+1. **Unmeasurable pre-launch.** With one user, "did the why-chip lift D10 retention?" is unanswerable — it would ship on faith.
+2. **Onboarding length is a conversion tax** paid now, by everyone, against a speculative payoff.
+3. **The proven retention levers already exist and are reference-aligned** — streaks, the Performance Index, adaptive coaching, the race cockpit. Motivation-capture is speculative _on top_ of a system that already has the real levers.
+
+The one argument _for_ (cheap to build; chip could tailor copy) is "cheap + unproven" — exactly what a pre-launch backlog drops rather than gold-plates.
+
+**What would flip it:** real users + churn data showing drop-off clustering somewhere a motivational nudge could plausibly catch, _and_ the ability to A/B it. Revisit then, with data — if rebuilding, the Duolingo-light shape (one optional screen, orthogonal driver chips, sparse resurfacing) is the locked starting point, **not** the Noom-style quiz.
+
 ---
 
 ## Visual vocabulary
