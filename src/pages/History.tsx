@@ -1139,6 +1139,15 @@ export default function History() {
                   Log a workout, run, or meal and your trends — volume, pace,
                   calories and your Performance Index — will show up here.
                 </p>
+                {/* D9: the cold-start card needs a single concrete next
+                    action, not just an expectation. Mirrors the Home
+                    Performance card's "Start a workout" → /program CTA. */}
+                <Link
+                  to="/program"
+                  className="inline-flex items-center justify-center min-h-[44px] px-4 mt-4 text-sm rounded-xl font-semibold select-none bg-primary-strong text-primary-foreground hover:bg-primary-strong/90 active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  Start a workout
+                </Link>
               </div>
             )}
 
