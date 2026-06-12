@@ -35,12 +35,15 @@ async function applyPartnerActivity(firestore, uid, localDay) {
       .get();
     for (const bondDoc of bondsSnap.docs) {
       const ref = bondDoc.ref;
-      await firestore.runTransaction(async (tx) => {
+      // The transaction returns the committed result (or null on a no-op
+      // skip) so we can log AFTER commit — once per real write, never on a
+      // same-day no-op and never duplicated by a transaction retry.
+      const wrote = await firestore.runTransaction(async (tx) => {
         const snap = await tx.get(ref);
-        if (!snap.exists) return;
+        if (!snap.exists) return null;
         const data = snap.data() || {};
         const members = data.members;
-        if (!Array.isArray(members) || members.length !== 2) return;
+        if (!Array.isArray(members) || members.length !== 2) return null;
 
         const state = {
           streak: data.streak || 0,
@@ -59,7 +62,7 @@ async function applyPartnerActivity(firestore, uid, localDay) {
           next.lastSharedDay !== state.lastSharedDay ||
           JSON.stringify(next.lastActive) !== JSON.stringify(state.lastActive) ||
           JSON.stringify(next.freezeWeek) !== JSON.stringify(state.freezeWeek);
-        if (!changed) return;
+        if (!changed) return null;
 
         tx.set(
           ref,
@@ -71,7 +74,18 @@ async function applyPartnerActivity(firestore, uid, localDay) {
           },
           { merge: true }
         );
+        return { streak: next.streak, lastSharedDay: next.lastSharedDay };
       });
+
+      // Success observability (post-deploy verification): a single greppable
+      // line per real bond write. A same-day re-log returns null → no line,
+      // which is itself the confirmation that the no-op path held.
+      if (wrote) {
+        console.log(
+          `applyPartnerActivity: bond ${bondDoc.id} streak→${wrote.streak} ` +
+            `lastShared=${wrote.lastSharedDay} (uid ${uid}, day ${localDay})`
+        );
+      }
     }
   } catch (err) {
     console.error(`applyPartnerActivity: error for ${uid}:`, err.message);
