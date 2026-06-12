@@ -532,6 +532,9 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
+        // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
+        bodyweightKg: profile.weightKg,
+        sex: profile.sex,
         liftDays,
         // Pgm5 (Q1): split is no longer user-chosen here; thread the persisted
         // value (inert in generation, keeps profileUpdates consistent).
