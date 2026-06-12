@@ -116,4 +116,11 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
       /^https:\/\/raw\.githubusercontent\.com\/.*\/exercises\/Bench_Press\/0\.jpg$/
     );
   });
+
+  it("carries commonMistakes from the authored exercise (D-LIFT-19/20)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => [] }));
+    // Bench Press was backfilled with commonMistakes in D-LIFT-19.
+    const demo = await getExerciseDemo("Bench Press");
+    expect(demo?.commonMistakes?.length).toBeGreaterThan(0);
+  });
 });
