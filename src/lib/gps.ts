@@ -17,6 +17,25 @@ function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
 
+/**
+ * Initial great-circle bearing point 1 → point 2, in degrees clockwise from
+ * north (0–360). Used for the back-to-start direction arrow and heading.
+ */
+export function bearing(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δλ = toRad(lon2 - lon1);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x =
+    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 export class KalmanFilter {
   private lat = 0;
   private lon = 0;

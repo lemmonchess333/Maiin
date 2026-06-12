@@ -45,8 +45,10 @@ import IntervalDisplay from "../components/run/IntervalDisplay";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
+import BackToStartChip from "../components/run/BackToStartChip";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
+import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
@@ -238,6 +240,10 @@ export default function Run() {
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
+  // Live HR (bpm + zone) for the run sheet. No source streams yet
+  // (heartRateSource.ts is inert until the HealthKit plugin lands), so this
+  // resolves to bpm:null today and the HR readout stays hidden.
+  const hr = useHeartRate({ live: true });
   const { profile } = useAuth();
   // Phase B1: programme state drives the Run-setup prefill + context
   // strip + post-save plan reconciliation. The hook is cheap (single
@@ -1171,10 +1177,11 @@ export default function Run() {
             className="fixed inset-0 z-50 text-white"
             style={{
               backgroundColor: THEME.bg,
-              // The map is non-interactive and the sheet owns its own drag,
-              // so nothing here should scroll. Locking touch-action +
-              // overscroll stops iOS from rubber-banding / scrolling the page
-              // out from under a sheet drag.
+              // MapLibre handles its own pan/pinch via pointer events (it works
+              // fine under touch-action:none), and the sheet owns its own drag.
+              // Locking touch-action + overscroll here stops iOS from
+              // rubber-banding / scrolling the page out from under a sheet drag
+              // or a map gesture.
               touchAction: "none",
               overscrollBehavior: "none",
             }}
@@ -1206,10 +1213,22 @@ export default function Run() {
             <RunMap
               points={gps.points}
               currentPoint={gps.currentPoint}
-              interactive={false}
+              interactive={true}
+              liveControls={true}
+              distanceMarkers={true}
               height="h-full"
               className="absolute inset-0"
             />
+
+            {/* Crow-flies "back to start" aid — top-centre, clear of the
+                left-anchored GPS indicator and the tempo/interval PaceZoneBar
+                (top-10). Self-hides within 200m of the start. */}
+            <div className="absolute top-3 left-1/2 z-50 -translate-x-1/2">
+              <BackToStartChip
+                points={gps.points}
+                currentPoint={gps.currentPoint}
+              />
+            </div>
 
             {autoPaused && (
               <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
@@ -1311,6 +1330,8 @@ export default function Run() {
                 ) : undefined
               }
               weightKg={profile?.weightKg || 70}
+              bpm={hr.bpm}
+              hrZone={hr.zone}
             />
           </div>
         )}

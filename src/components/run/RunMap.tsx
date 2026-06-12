@@ -1,8 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface RunMapProps {
   points: GPSPoint[];
@@ -14,6 +16,20 @@ interface RunMapProps {
   className?: string;
   darkMode?: boolean;
   replayIndex?: number;
+  /**
+   * Live-run controls: enables "follow mode" (auto-centre on the runner that
+   * suspends the moment they pan/pinch by hand) plus an on-map control stack
+   * (zoom +/- and a Recenter button that reappears once following is
+   * suspended). Off for the static post-run maps, which only need pinch/pan.
+   * Requires `interactive` to actually receive gestures.
+   */
+  liveControls?: boolean;
+  /**
+   * Numbered waypoints at each whole kilometre along the route (matches the
+   * km-based run stats). Append-only — new markers appear as the run passes
+   * each km. Skipped while replaying (replayIndex set). Off by default.
+   */
+  distanceMarkers?: boolean;
 }
 
 const TILE_STYLES = {
@@ -31,9 +47,23 @@ export default function RunMap({
   className = "",
   darkMode = true,
   replayIndex,
+  liveControls = false,
+  distanceMarkers = false,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  // Live "follow mode": true means the camera auto-centres on the runner on
+  // every fix. A hand pan/pinch flips it false (and reveals Recenter); the
+  // Recenter button flips it back on. A ref (not state) so the per-fix route
+  // effect reads the live value without re-subscribing.
+  const followingRef = useRef(true);
+  const [showRecenter, setShowRecenter] = useState(false);
+  // Map orientation. headingUp rotates the map so the travel direction is up
+  // (Garmin/NRC staple); off = north-up. headingRef holds the latest travel
+  // bearing so follow easeTo and the toggle can rotate to it.
+  const headingUpRef = useRef(false);
+  const [headingUp, setHeadingUp] = useState(false);
+  const headingRef = useRef(0);
   // True when the basemap tiles can't load (offline / no signal). The route
   // line still draws on the dark canvas; we surface a plain note rather than
   // leaving a silent blank map.
@@ -42,6 +72,9 @@ export default function RunMap({
   const coneRef = useRef<HTMLDivElement | null>(null);
   const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const endMarkerRef = useRef<maplibregl.Marker | null>(null);
+  // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).
+  // Append-only: distance only grows live, and static routes compute once.
+  const kmMarkersRef = useRef<maplibregl.Marker[]>([]);
 
   // Initialize map — once per (interactive / paceColored / darkMode), NOT per
   // GPS fix. Listing points/currentPoint as deps re-ran init on every fix,
@@ -135,10 +168,28 @@ export default function RunMap({
       if (e.isSourceLoaded) setTilesUnavailable(false);
     });
 
+    // Follow-mode suspend: any HAND gesture (pan / pinch-zoom / rotate) carries
+    // an `originalEvent`; our programmatic `easeTo`/`zoomIn` calls do not. So we
+    // only drop out of follow on real user input — then surface the Recenter
+    // button. No-op unless this is a live-controls map.
+    const onUserGesture = (e: { originalEvent?: unknown }) => {
+      if (!liveControls || !e.originalEvent) return;
+      followingRef.current = false;
+      setShowRecenter(true);
+    };
+    if (liveControls) {
+      map.on("dragstart", onUserGesture);
+      map.on("zoomstart", onUserGesture);
+      map.on("rotatestart", onUserGesture);
+    }
+
     mapRef.current = map;
 
     return () => {
       map.off("load", onLoad);
+      map.off("dragstart", onUserGesture);
+      map.off("zoomstart", onUserGesture);
+      map.off("rotatestart", onUserGesture);
       map.remove();
       mapRef.current = null;
       // Null the marker refs too — they pointed at markers the removed map
@@ -148,9 +199,12 @@ export default function RunMap({
       coneRef.current = null;
       startMarkerRef.current = null;
       endMarkerRef.current = null;
+      // km markers belonged to the removed map; drop the refs so a re-init
+      // (theme/mode change) rebuilds them instead of touching dead markers.
+      kmMarkersRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init runs once; points/currentPoint read only for the initial centre, updates handled by the route effect below
-  }, [interactive, paceColored, darkMode]);
+  }, [interactive, paceColored, darkMode, liveControls]);
 
   // Update route
   useEffect(() => {
@@ -260,17 +314,23 @@ export default function RunMap({
           const last = visiblePoints[visiblePoints.length - 1];
           const moved = haversineQuick(prev.lat, prev.lon, last.lat, last.lon);
           if (moved > 3) {
-            markerRef.current.setRotation(
-              bearingDeg(prev.lat, prev.lon, last.lat, last.lon)
-            );
+            const b = bearingDeg(prev.lat, prev.lon, last.lat, last.lon);
+            markerRef.current.setRotation(b);
+            headingRef.current = b;
             if (coneRef.current) coneRef.current.style.opacity = "1";
           }
         }
 
-        map.easeTo({
-          center: [currentPoint.lon, currentPoint.lat],
-          duration: 500,
-        });
+        // Only chase the runner while following is active. Once they've panned
+        // away by hand we leave the camera where they put it (until Recenter).
+        if (followingRef.current) {
+          map.easeTo({
+            center: [currentPoint.lon, currentPoint.lat],
+            // heading-up rotates to travel bearing; north-up pins to 0.
+            bearing: headingUpRef.current ? headingRef.current : 0,
+            duration: 500,
+          });
+        }
       }
 
       // Fit bounds for post-run static view
@@ -293,6 +353,34 @@ export default function RunMap({
         startMarkerRef.current = new maplibregl.Marker({ element: el })
           .setLngLat([points[0].lon, points[0].lat])
           .addTo(map);
+      }
+
+      // Numbered km waypoints. Append-only: figure out how many whole km the
+      // route now covers and add any markers we don't have yet (positions
+      // interpolated along the polyline). Skipped during replay.
+      if (distanceMarkers && replayIndex === undefined && visiblePoints.length > 1) {
+        let total = 0;
+        for (let i = 1; i < visiblePoints.length; i++) {
+          total += haversineQuick(
+            visiblePoints[i - 1].lat,
+            visiblePoints[i - 1].lon,
+            visiblePoints[i].lat,
+            visiblePoints[i].lon
+          );
+        }
+        const desired = Math.floor(total / 1000);
+        for (let km = kmMarkersRef.current.length + 1; km <= desired; km++) {
+          const pos = positionAtDistance(visiblePoints, km * 1000);
+          if (!pos) break;
+          const el = document.createElement("div");
+          el.style.cssText =
+            "display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.75);border:1.5px solid white;color:white;font-size:10px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;";
+          el.textContent = String(km);
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([pos[0], pos[1]])
+            .addTo(map);
+          kmMarkersRef.current.push(marker);
+        }
       }
 
       // End marker (for post-run, hidden during replay)
@@ -325,13 +413,86 @@ export default function RunMap({
     return () => {
       map.off("load", updateRoute);
     };
-  }, [points, currentPoint, paceColored, avgPaceSecPerKm, replayIndex]);
+  }, [
+    points,
+    currentPoint,
+    paceColored,
+    avgPaceSecPerKm,
+    replayIndex,
+    distanceMarkers,
+  ]);
+
+  const recenter = () => {
+    followingRef.current = true;
+    setShowRecenter(false);
+    const map = mapRef.current;
+    if (map && currentPoint) {
+      map.easeTo({
+        center: [currentPoint.lon, currentPoint.lat],
+        bearing: headingUpRef.current ? headingRef.current : 0,
+        duration: 400,
+      });
+    }
+  };
+
+  const toggleHeadingUp = () => {
+    const next = !headingUpRef.current;
+    headingUpRef.current = next;
+    setHeadingUp(next);
+    mapRef.current?.easeTo({
+      bearing: next ? headingRef.current : 0,
+      ...(currentPoint
+        ? { center: [currentPoint.lon, currentPoint.lat] as [number, number] }
+        : {}),
+      duration: 400,
+    });
+  };
 
   return (
     <div
       ref={containerRef}
       className={`relative w-full ${height} ${className}`}
     >
+      {liveControls && (
+        // On-map control stack (right edge, clear of the top GPS pills and the
+        // bottom stats sheet). Glass zoom +/- always; Recenter appears only
+        // once follow has been suspended by a hand gesture. Coral = running.
+        <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
+          <IconButton
+            aria-label="Zoom in"
+            icon={<Plus />}
+            onClick={() => mapRef.current?.zoomIn()}
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+          />
+          <IconButton
+            aria-label="Zoom out"
+            icon={<Minus />}
+            onClick={() => mapRef.current?.zoomOut()}
+            className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+          />
+          <IconButton
+            aria-label={
+              headingUp ? "Switch map to north-up" : "Switch map to heading-up"
+            }
+            icon={<Compass />}
+            onClick={toggleHeadingUp}
+            className={
+              headingUp
+                ? "bg-running text-white shadow-sm"
+                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            }
+          />
+          {showRecenter && (
+            <IconButton
+              aria-label="Recenter map on your location"
+              icon={<LocateFixed />}
+              onClick={recenter}
+              className="bg-running text-white shadow-sm"
+            />
+          )}
+        </div>
+      )}
+
       {tilesUnavailable && (
         // Centred, width-constrained pill rather than a full-width top bar.
         // The old `inset-x-2 top-2` strip spanned the whole top edge and
@@ -363,6 +524,35 @@ function haversineQuick(
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Interpolate the [lon, lat] a given distance (metres) along a polyline.
+ * Returns null if the route is shorter than `target`. Used to place the
+ * numbered km waypoints exactly on the route line, not at a recorded fix.
+ */
+function positionAtDistance(
+  pts: GPSPoint[],
+  target: number
+): [number, number] | null {
+  let cum = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const seg = haversineQuick(
+      pts[i - 1].lat,
+      pts[i - 1].lon,
+      pts[i].lat,
+      pts[i].lon
+    );
+    if (cum + seg >= target) {
+      const frac = seg > 0 ? (target - cum) / seg : 0;
+      return [
+        pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * frac,
+        pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * frac,
+      ];
+    }
+    cum += seg;
+  }
+  return null;
 }
 
 /** Initial bearing from point 1 → point 2, degrees clockwise from north. */

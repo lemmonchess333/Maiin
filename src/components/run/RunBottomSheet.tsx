@@ -18,8 +18,20 @@ import {
   calculateSplits,
 } from "../../lib/gps";
 import type { GPSPoint, Split } from "../../lib/gps";
+import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
 import { Dialog } from "@/components/ui/Dialog";
+
+// HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
+// Z1 recovery teal · Z2 easy green · Z3 aerobic amber · Z4 threshold orange ·
+// Z5 max coral-red. Below-Z1 / unknown falls back to the muted stat colour.
+const ZONE_COLOR: Record<ZoneNumber, string> = {
+  1: THEME.teal,
+  2: THEME.success,
+  3: THEME.amberLight,
+  4: THEME.warning,
+  5: THEME.danger,
+};
 
 interface RunBottomSheetProps {
   elapsed: number;
@@ -42,6 +54,14 @@ interface RunBottomSheetProps {
   isInvalid?: boolean;
   intervalDisplay?: ReactNode;
   weightKg: number;
+  /**
+   * Live heart rate (bpm) and current zone, from useHeartRate. Null until a
+   * live HR source streams (no web/native source yet — see heartRateSource.ts),
+   * so the HR readout stays hidden rather than showing a placeholder. Wired now
+   * so it lights up the moment the HealthKit plugin lands.
+   */
+  bpm?: number | null;
+  hrZone?: 0 | ZoneNumber | null;
 }
 
 // Visible sheet height as fraction of viewport: compact, mid, full.
@@ -168,7 +188,11 @@ export default function RunBottomSheet({
   isInvalid = false,
   intervalDisplay,
   weightKg,
+  bpm = null,
+  hrZone = null,
 }: RunBottomSheetProps) {
+  const hrColor =
+    hrZone && hrZone >= 1 ? ZONE_COLOR[hrZone] : "rgba(255,255,255,0.65)";
   const [snapIdx, setSnapIdx] = useState<0 | 1 | 2>(2);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const stopTitleId = useId();
@@ -530,6 +554,43 @@ export default function RunBottomSheet({
                   SPLITS
                 </p>
               </div>
+
+              {/* HR — only when a live source is streaming (bpm != null). No
+                  source yet, so this stays hidden; wired for when one lands. */}
+              {bpm != null && (
+                <>
+                  <div
+                    style={{
+                      width: 1,
+                      height: 28,
+                      background: "rgba(255,255,255,0.08)",
+                    }}
+                  />
+                  <div className="text-center">
+                    <p
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 600,
+                        color: hrColor,
+                        fontVariantNumeric: "tabular-nums",
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      {bpm}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: 8,
+                        color: "rgba(255,255,255,0.25)",
+                        letterSpacing: "0.1em",
+                        marginTop: 2,
+                      }}
+                    >
+                      {hrZone && hrZone >= 1 ? `HR Z${hrZone}` : "HR"}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             {intervalDisplay}
