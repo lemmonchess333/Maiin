@@ -55,3 +55,25 @@ export function parseGpx(xml: string): GPSPoint[] {
   }
   return points;
 }
+
+/**
+ * The route's name from a GPX, preferring <trk>/<rte> name, then <metadata>.
+ * Returns null when absent — callers fall back to a generic default. Used to
+ * pre-fill the import preview / saved-route name.
+ */
+export function parseGpxName(xml: string): string | null {
+  if (typeof DOMParser === "undefined" || !xml) return null;
+  let doc: Document;
+  try {
+    doc = new DOMParser().parseFromString(xml, "application/xml");
+  } catch {
+    return null;
+  }
+  if (doc.getElementsByTagName("parsererror").length > 0) return null;
+  for (const tag of ["trk", "rte", "metadata"]) {
+    const parent = doc.getElementsByTagName(tag)[0];
+    const txt = parent?.getElementsByTagName("name")[0]?.textContent?.trim();
+    if (txt) return txt;
+  }
+  return null;
+}

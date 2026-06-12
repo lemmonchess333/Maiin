@@ -1,13 +1,13 @@
 import { useRef } from "react";
 import { Upload } from "lucide-react";
-import { parseGpx } from "@/lib/gpx";
+import { parseGpx, parseGpxName } from "@/lib/gpx";
 import type { GPSPoint } from "@/lib/gps";
 import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/Button";
 
 interface GpxImportButtonProps {
-  /** Called with the parsed route when a valid GPX is selected. */
-  onRoute: (points: GPSPoint[]) => void;
+  /** Called with the parsed route + its GPX name (null if unnamed). */
+  onRoute: (points: GPSPoint[], name: string | null) => void;
   className?: string;
 }
 
@@ -28,13 +28,13 @@ export default function GpxImportButton({
     e.target.value = "";
     if (!file) return;
     try {
-      const points = parseGpx(await file.text());
+      const text = await file.text();
+      const points = parseGpx(text);
       if (points.length < 2) {
-        toast.error("Couldn't read a route from that GPX file");
+        toast.error("Couldn't read a route from that file");
         return;
       }
-      onRoute(points);
-      toast.success(`Route loaded · ${points.length} points`);
+      onRoute(points, parseGpxName(text));
     } catch {
       toast.error("Couldn't read that file");
     }
@@ -55,7 +55,7 @@ export default function GpxImportButton({
         onClick={() => inputRef.current?.click()}
       >
         <Upload className="size-4" aria-hidden="true" />
-        Follow a GPX route
+        Follow a route
       </Button>
     </>
   );
