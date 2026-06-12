@@ -8,8 +8,10 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
+import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
@@ -37,6 +39,7 @@ import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
 import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
+import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import { useRunFitnessAutoDerive } from "@/hooks/useRunFitnessAutoDerive";
 
@@ -113,6 +116,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     dismissFellBehindPrompt,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
+  // Latest programState for deferred handlers (e.g. the delete-undo toast,
+  // which fires after the removing save has already advanced state).
+  const programStateRef = useRef(programState);
+  useEffect(() => {
+    programStateRef.current = programState;
+  }, [programState]);
   // Adaptive Paces: silently derive a fitness benchmark from recent runs when
   // the user hasn't set one (the "derive" half of the capture decision).
   useRunFitnessAutoDerive();
@@ -225,12 +234,34 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // Exercise management helpers — accept dayIdx to work on any day (auto-save to Firestore)
   const removeExFromDay = async (dayIdx: number, exIndex: number) => {
     if (!programState) return;
+    const removed = programState.workouts[dayIdx]?.exercises[exIndex];
+    if (!removed) return;
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx
         ? { ...d, exercises: d.exercises.filter((_, ei) => ei !== exIndex) }
         : d
     );
     await saveProgram({ ...programState, workouts: updated });
+    // Exercise delete is destructive; offer an undo (parity with set-undo in
+    // the workout session). Re-insert at the original index against the LATEST
+    // state (the removing save has already advanced it).
+    toast(`Removed ${removed.name}`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const latest = programStateRef.current;
+          const day = latest?.workouts[dayIdx];
+          if (!latest || !day) return;
+          const exercises = [...day.exercises];
+          exercises.splice(Math.min(exIndex, exercises.length), 0, removed);
+          const restored = latest.workouts.map((d, i) =>
+            i === dayIdx ? { ...d, exercises } : d
+          );
+          haptic("light");
+          void saveProgram({ ...latest, workouts: restored });
+        },
+      },
+    });
   };
 
   const removeExFromDayById = async (dayIdx: number, exerciseId: string) => {
@@ -821,15 +852,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         !isViewingHistory &&
         !phaseLocked && (
           <div className="pt-4 pb-2">
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={handleAdvanceWeek}
               disabled={advancing}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              leftIcon={<FastForward className="size-4" />}
             >
-              <FastForward className="size-4" />
               {advancing ? "Advancing..." : "Advance to Next Week"}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -1211,6 +1241,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           when the user has no saved entries, so users who don't use
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
+      {/* Weekly sets-per-muscle volume summary (D-LIFT-1) — read-only, for the
+          viewed week, against goal landmarks. */}
+      {activeTab === "lift" && (
+        <WeeklyVolumeCard
+          workouts={displayWorkouts}
+          primaryGoal={profile?.primaryGoal}
+        />
+      )}
+
       {activeTab === "lift" && <SavedRoutinesSection />}
 
       {/* ── Context Menu ── */}

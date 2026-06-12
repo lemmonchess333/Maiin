@@ -8,6 +8,24 @@ export interface Exercise {
   caloriesPerMinute: number;
   instructions?: string[];
   tip?: string;
+  // ── Richer form-guide / programming data (D-LIFT-19) ──
+  // All OPTIONAL + back-compat: existing entries omit them; surfaces render them
+  // only when present, and the engines treat absence as "unknown". Backfilled
+  // incrementally — see docs/lift-section-audit.md D-LIFT-19.
+  /** Relative skill/coordination demand — gates how it's introduced/explained. */
+  difficulty?: "beginner" | "intermediate" | "advanced";
+  /** Prescribed tempo, eccentric-first e.g. "3-1-1" (down-pause-up), seconds. */
+  tempo?: string;
+  /** Trains the target muscle at a long muscle length (more growth per set). */
+  lengthenedBias?: boolean;
+  /** The usual form errors, surfaced as "watch out" cues in the guide. */
+  commonMistakes?: string[];
+  /** Equal-difficulty swaps (same pattern) — feeds Replace / equipment subs. */
+  alternatives?: string[];
+  /** Easier scalings when the movement is too hard (incline / assisted / …). */
+  regressions?: string[];
+  /** Demo media — start/finish/loop assets (D-LIFT-20). Full URLs or asset keys. */
+  media?: string[];
 }
 
 export const EXERCISE_CATEGORIES = [
@@ -39,6 +57,15 @@ export const EXERCISES: Exercise[] = [
       "Drive the bar up and slightly back over your shoulders to full lockout.",
     ],
     tip: "Flared elbows (straight out at 90°) are how shoulders get wrecked. If you can't hold the 45° tuck, drop weight and fix the groove.",
+    difficulty: "intermediate",
+    tempo: "2-1-1",
+    commonMistakes: [
+      "Flaring the elbows to 90° instead of a ~45° tuck.",
+      "Bouncing the bar off the chest instead of a controlled touch.",
+      "Letting the hips lift off the bench to grind a rep.",
+    ],
+    alternatives: ["db-bench", "incline-bench"],
+    regressions: ["db-bench", "push-ups"],
   },
   {
     id: "incline-bench",
@@ -304,6 +331,15 @@ export const EXERCISES: Exercise[] = [
       "Lower under control — don't bounce or drop the bar.",
     ],
     tip: "If your lower back rounds on the lift, the weight's too heavy or you lost your brace. Drop a set, reset, don't train through it.",
+    difficulty: "advanced",
+    tempo: "1-1-2",
+    commonMistakes: [
+      "Rounding the lower back instead of bracing into a flat-back hinge.",
+      "Starting with hips too low, turning it into a squat off the floor.",
+      "Jerking the bar off the floor instead of building tension first.",
+    ],
+    alternatives: ["trap-bar-deadlift", "romanian-deadlift"],
+    regressions: ["romanian-deadlift", "trap-bar-deadlift"],
   },
   {
     id: "barbell-row",
@@ -1196,6 +1232,15 @@ export const EXERCISES: Exercise[] = [
       "Drive through your whole foot to stand, squeezing glutes at the top.",
     ],
     tip: "If your knees cave inward on the way up, think push the floor apart with your feet. This is the #1 form error and it costs you power.",
+    difficulty: "intermediate",
+    tempo: "2-1-1",
+    commonMistakes: [
+      "Knees caving inward (valgus) on the drive out of the hole.",
+      "Heels lifting / weight shifting onto the toes.",
+      "Cutting depth short of parallel under heavier loads.",
+    ],
+    alternatives: ["front-squat", "hack-squat", "leg-press"],
+    regressions: ["leg-press", "bulgarian-split"],
   },
   {
     id: "front-squat",

@@ -10,7 +10,13 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
-import { pickExercise, pickAccessory } from "./variationBank";
+import { pickExercise, pickAccessory, exerciseBank } from "./variationBank";
+import {
+  balanceWeeklyVolume,
+  balancePushPull,
+  volumeLandmark,
+} from "./volumeModel";
+import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -71,6 +77,12 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 export function calculateE1RM(weight: number, reps: number): number {
   return weight * (1 + reps / 30);
 }
+
+// Progression tuning (D-LIFT-6 / D-LIFT-11).
+/** A logged set at this RPE or above holds load/reps for the cycle. */
+const RPE_HOLD_THRESHOLD = 9.5;
+/** Bodyweight rep target stops climbing here; the user is prompted to add load. */
+const MAX_BODYWEIGHT_REPS = 20;
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -157,6 +169,32 @@ export function splitLabel(split: SplitType): string {
   }
 }
 
+/**
+ * D-LIFT-7: the one-line "why" behind the days→split mapping, so the derived
+ * split (Pgm5 Q1: structure follows lift-days, not a user toggle) reads as a
+ * deliberate coaching choice rather than an ignored preference. Mirrors
+ * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
+ */
+export function splitRationale(weeklyLiftDays: number): string {
+  const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
+  switch (d) {
+    case 0:
+      return "No lift days set — add some to build a split.";
+    case 1:
+      return "One day a week is full-body so you still train everything.";
+    case 2:
+      return "Two days splits upper / lower — each trained about twice a week.";
+    case 3:
+      return "Three days stays full-body: every muscle 3× a week beats a 3-way split at the same volume.";
+    case 4:
+      return "Four days is upper / lower twice — each muscle about twice a week.";
+    case 5:
+      return "Five days layers push/pull/legs onto upper/lower to keep most muscles near 2× a week.";
+    default:
+      return "Six days runs push/pull/legs twice — each muscle about twice a week.";
+  }
+}
+
 export function primaryGoalLabel(g?: PrimaryGoal): string {
   switch (g) {
     case "strength":
@@ -208,6 +246,7 @@ function makeExercise(
     plateauCount: existing?.plateauCount ?? 0,
     performanceHistory: existing?.performanceHistory ?? [],
     lastPerformance: existing?.lastPerformance ?? null,
+    isAccessory: false,
   };
 }
 
@@ -235,6 +274,7 @@ function makeAccessory(
     plateauCount: 0,
     performanceHistory: [],
     lastPerformance: null,
+    isAccessory: true,
   };
 }
 
@@ -801,11 +841,70 @@ export function expectedDayCount(weeklyTarget: number): number {
   return Math.min(weeklyTarget, 6);
 }
 
+/**
+ * D-LIFT-12: within each day, ensure no exercise id appears twice. A duplicate
+ * (a main that rotated onto a variation an accessory also picked) is re-pointed
+ * to the first unused variation in the same movement category. Deterministic;
+ * leaves the duplicate as-is only if the category has no free alternative.
+ * Pure — returns a new array.
+ */
+/**
+ * D-LIFT-4: rotate UNTRAINED accessories (no logged history) to a different
+ * variation in the same movement category — periodic novelty without disturbing
+ * the user's actual training. Mains and any accessory with logged history are
+ * left untouched. Keeps the slot's `instanceId` (same row, new movement) so the
+ * reorderable list doesn't churn. Pure.
+ */
+export function rotateUntrainedAccessories(
+  workouts: WorkoutDay[]
+): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      if (!ex.isAccessory) return ex; // mains never rotate
+      if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
+      const next = pickAccessory(ex.movementCategory, ex.exerciseId);
+      if (next.id === ex.exerciseId) return ex; // no alternative available
+      return {
+        ...ex,
+        exerciseId: next.id,
+        name: next.name,
+        lastPerformance: null,
+        consecutiveFailures: 0,
+        plateauCount: 0,
+      };
+    }),
+  }));
+}
+
+export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => {
+    const seen = new Set<string>();
+    const exercises = day.exercises.map((ex) => {
+      if (!seen.has(ex.exerciseId)) {
+        seen.add(ex.exerciseId);
+        return ex;
+      }
+      const alt = (exerciseBank[ex.movementCategory] ?? []).find(
+        (o) => !seen.has(o.id)
+      );
+      if (!alt) {
+        seen.add(ex.exerciseId);
+        return ex; // no free variation — leave it
+      }
+      seen.add(alt.id);
+      return { ...ex, exerciseId: alt.id, name: alt.name };
+    });
+    return { ...day, exercises };
+  });
+}
+
 export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
-  primaryGoal?: PrimaryGoal
+  primaryGoal?: PrimaryGoal,
+  loadCtx?: StartingLoadContext
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -880,6 +979,19 @@ export function generateProgram(
       workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
   }
 
+  // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
+  // rotated to a variation an accessory then matched). Re-picks the duplicate
+  // to another variation in the same movement category.
+  workouts = dedupeDayExercises(workouts);
+  // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
+  // landmark by growing their accessories (add-only, mains untouched).
+  workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
+  // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
+  workouts = balancePushPull(workouts);
+  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
+  // (no-op without a load context, or for lifts with logged history).
+  if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
+
   return { splitType, workouts };
 }
 
@@ -892,7 +1004,8 @@ export function applyProgression(
   actualReps: number,
   actualWeight: number,
   goal: Goal,
-  microloading: boolean
+  microloading: boolean,
+  actualRpe?: number
 ): ProgramExercise {
   const today = format(new Date(), "yyyy-MM-dd");
   const record = {
@@ -940,13 +1053,28 @@ export function applyProgression(
   }
   const resetReps = exercise.baseReps ?? exercise.reps; // anchor to original prescription
 
+  // D-LIFT-6 (RPE autoregulation): a logged near-maximal effort (RPE ≥ 9.5)
+  // means the load is already at the edge — HOLD this cycle rather than add
+  // load/reps, even on a completed set. No RPE logged → progress as before.
+  const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
+  // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
+  const bumpBodyweightReps = () => {
+    if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
+      updated.notes =
+        "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";
+    } else {
+      updated.reps = exercise.reps + 1;
+    }
+  };
+
   if (exercise.progressionType === "double") {
     if (completed) {
       // True double progression: accumulate reps until ceiling, then increase weight
-      if (actualReps >= exercise.reps + 2) {
+      if (actualReps >= exercise.reps + 2 && rpeOk) {
         if (isBodyweight) {
-          // Bodyweight: progress via rep target increase
-          updated.reps = exercise.reps + 1;
+          // Bodyweight: progress via rep target increase (capped)
+          bumpBodyweightReps();
         } else {
           // Weighted: increase weight and reset reps to base prescription
           updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
@@ -974,14 +1102,14 @@ export function applyProgression(
   } else {
     if (completed) {
       if (isBodyweight) {
-        // Bodyweight linear: increase rep target when exceeding by 2
-        if (actualReps >= exercise.reps + 2) {
-          updated.reps = exercise.reps + 1;
+        // Bodyweight linear: increase rep target when exceeding by 2 (capped)
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
+          bumpBodyweightReps();
         }
-      } else if (microloading) {
+      } else if (microloading && rpeOk) {
         updated.weight = exercise.weight + 1;
       } else {
-        if (actualReps >= exercise.reps + 2) {
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
           updated.weight = exercise.weight + 2.5;
           updated.reps = resetReps; // reset to original prescription, not drifted value
         }
@@ -1039,6 +1167,29 @@ export function getProgressionLabel(ex: ProgramExercise): string {
    FATIGUE / DELOAD / ADVANCEMENT
 ================================ */
 
+/**
+ * Acute training-fatigue score for the week just trained, derived from the
+ * per-exercise failure state the logger already tracks (D-LIFT-8). `applyFatigue`
+ * trims next week's volume when this exceeds 20; previously the score it read
+ * (`state.fatigueScore`) was never updated by anything, so the cut never fired.
+ *
+ * Signal = unresolved recent failures (`consecutiveFailures`, 0..2 — the 3rd
+ * miss triggers a backoff that resets it). Acute by construction: it climbs
+ * while a lifter is grinding sets and falls once loads back off, so it can't
+ * ratchet up forever the way a cumulative `plateauCount` would. Weighted so the
+ * >20 cut needs a meaningful share of the program actively failing (≈2 lifts at
+ * two straight misses, or ~3 at one), and clamped for safety.
+ */
+export function computeFatigueScore(workouts: WorkoutDay[]): number {
+  let failures = 0;
+  for (const day of workouts) {
+    for (const ex of day.exercises) {
+      failures += Math.max(0, ex.consecutiveFailures ?? 0);
+    }
+  }
+  return Math.min(100, failures * 8);
+}
+
 export function applyFatigue(
   workouts: WorkoutDay[],
   fatigueScore: number
@@ -1091,11 +1242,24 @@ export function advanceWeek(state: ProgramState): ProgramState {
     skipped: false,
   }));
 
+  // Acute fatigue from the week just trained (D-LIFT-8) — computed from the
+  // logged per-exercise failure state rather than the formerly-dead persisted
+  // scalar.
+  const fatigue = computeFatigueScore(state.workouts);
   if (prescription.deload) {
     workouts = applyDeload(workouts);
   } else {
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
-    workouts = applyFatigue(workouts, state.fatigueScore);
+    workouts = applyFatigue(workouts, fatigue);
+  }
+
+  // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
+  // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
+  // joint health. Trained accessories (logged history) and all mains stay put —
+  // mains are the progression anchor, and a lift the user actually trains is
+  // theirs to keep. Re-deduped so a rotation can't collide within a day.
+  if (nextWeek % 4 === 1) {
+    workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
   }
 
   return {
@@ -1104,6 +1268,9 @@ export function advanceWeek(state: ProgramState): ProgramState {
     currentPhase: prescription.deload ? "deload" : "progression",
     workouts,
     weekHistory: history,
+    // A deload clears accumulated acute fatigue; otherwise persist the computed
+    // value so the field is meaningful + observable (no longer dead).
+    fatigueScore: prescription.deload ? 0 : fatigue,
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };

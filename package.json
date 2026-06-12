@@ -19,6 +19,7 @@
     "test:design-qa": "playwright test --project=auth-emulator e2e/design-qa",
     "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
     "secrets:check": "node scripts/check-required-secrets.mjs",
+    "env:check:web": "node scripts/check-web-env.mjs",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
     "seed:rich": "tsx scripts/seed-rich-user.ts",
     "seed:default-crews": "tsx scripts/seed-default-crews.ts",
