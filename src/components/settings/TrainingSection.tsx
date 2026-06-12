@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import {
@@ -486,25 +487,24 @@ export default function TrainingSection({
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
                     onClick={handleCancelRaceForm}
-                    className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
                   >
                     Cancel
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    className="flex-1"
                     onClick={handleSaveRaceGoal}
                     disabled={savingRaceGoal || !raceTargetDate}
-                    className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
                   >
                     {savingRaceGoal
                       ? "Creating plan…"
                       : profile.raceGoal
                         ? "Save race goal"
                         : "Create race plan"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
