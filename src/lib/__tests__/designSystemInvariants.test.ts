@@ -166,11 +166,14 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
     // satisfied across the app. A regression that shrank the md default would
     // silently break every default CTA's touch target — pin it. (sm is
     // intentionally 36px for inline filters; not pinned here.)
-    const button = readFileSync(
-      resolve(srcRoot, "components/ui/Button.tsx"),
+    // The SIZE_CLASSES map was extracted from Button.tsx into buttonClasses.ts
+    // (so non-button controls — e.g. nav <Link> CTAs — can share the canonical
+    // look via buttonClasses()); the md floor now lives there.
+    const buttonSource = readFileSync(
+      resolve(srcRoot, "components/ui/buttonClasses.ts"),
       "utf8"
     );
-    expect(button, "Button md size must keep min-h-[44px]").toMatch(
+    expect(buttonSource, "Button md size must keep min-h-[44px]").toMatch(
       /md:\s*"min-h-\[44px\]/
     );
   });
