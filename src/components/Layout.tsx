@@ -86,9 +86,7 @@ export default function Layout() {
       if (bar) {
         const rect = bar.getBoundingClientRect();
         if (rect.bottom > window.innerHeight + 2) {
-          // Re-assert the floating capsule's intended offset (not 0px — that
-          // would slam the capsule flush against the home indicator).
-          (bar as HTMLElement).style.bottom = "var(--nav-capsule-bottom)";
+          (bar as HTMLElement).style.bottom = "0px";
         }
       }
     };
@@ -213,31 +211,24 @@ export default function Layout() {
         </motion.div>
       </main>
 
-      {/* Bottom nav — floating glass capsule (NAV GLASS-UP).
-          The <nav> is a full-width, pointer-events-none positioning layer so
-          taps BESIDE the capsule pass through to page content; the capsule
-          re-enables pointer events. It floats `--nav-capsule-bottom` above the
-          home indicator with px-4 side margins, capped at max-w-md and centred.
-          The glass surface (blur / fill / hairline / fallbacks) lives in the
-          `.nav-capsule` class; this owns geometry + per-tab layout. */}
+      {/* Bottom tab bar */}
       {!hideNav && (
         <nav
           aria-label="Main navigation"
           data-tab-bar
-          className="fixed inset-x-0 z-30 flex justify-center px-4 pointer-events-none"
-          style={{ bottom: "var(--nav-capsule-bottom)" }}
+          className="fixed bottom-0 left-0 right-0 bottom-nav-frost safe-area-pb z-30"
+          style={{ overflow: "visible" }}
         >
           <LayoutGroup>
-            {/* The wrapping <nav aria-label="Main navigation"> already gives
-                this surface the correct semantics; a half-implemented
-                role="tablist" (without role="tab" + aria-selected + roving
-                tabindex + tabpanels) would confuse screen readers, so it's
-                deliberately omitted.
-                Tabs: five cells, icon+label kept for ALL of them. Measured at
-                393px the capsule is ~361px wide → ~68px/cell; "Analytics" at
-                text-xs is ~56px and clears with truncate, so no drop to
-                icon-only was needed. */}
-            <div className="nav-capsule pointer-events-auto flex w-full max-w-md items-stretch gap-0.5 rounded-full px-1.5 py-1.5">
+            {/* The wrapping <nav aria-label="Main navigation"> on the
+            parent element already gives this surface the correct
+            semantics. The Codex PR added role="tablist" but a real
+            tablist needs role="tab" + aria-selected + roving tabindex
+            + tabpanel relationships — none of which fit the
+            page-navigation pattern. Removing the role rather than
+            implementing a half-tablist that would confuse screen
+            readers. */}
+            <div className="max-w-md mx-auto flex items-end px-1.5">
               {tabs.map((tab) => {
                 const hasBadge = tab.to === "/social" && unreadCount > 0;
                 const Icon = tab.icon;
@@ -282,14 +273,13 @@ export default function Layout() {
                     className={cn(
                       // `min-w-0` lets flex-1 actually shrink the cells on
                       // iPhone SE width so the longest label ("Analytics")
-                      // doesn't push siblings off-screen. min-h-[46px] keeps the
-                      // touch target ≥44px inside the slimmer capsule. Active
-                      // state comes from activeTabForPath (not NavLink's
-                      // isActive) so the pill never lingers on non-tab routes.
-                      "relative flex-1 min-w-0 min-h-[46px] flex flex-col items-center justify-center gap-0.5 rounded-full py-1.5 transition-colors",
+                      // doesn't push siblings off-screen. Active state comes
+                      // from activeTabForPath (not NavLink's isActive) so the
+                      // pill never lingers on non-tab routes.
+                      "relative flex-1 min-w-0 min-h-[60px] flex flex-col items-center justify-center gap-1 rounded-2xl py-2.5 transition-colors",
                       isActive
                         ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/45"
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >
@@ -298,18 +288,16 @@ export default function Layout() {
                         {/* Active-destination indicator: a single shared pill
                             (layoutId) that GLIDES + morphs between tabs with a
                             crisp spring — motion continuity is what makes the
-                            nav feel premium vs a per-cell cross-fade. Inset so
-                            it reads as a contained chip behind the icon +
-                            label; rounded-full to echo the capsule. No-active
-                            routes (/upgrade, /run/:id) render NO pill because
-                            `activeTab` is null. Reduced-motion → static. */}
+                            bar feel premium vs a per-cell cross-fade. Inset so
+                            it reads as a contained chip, sitting behind the
+                            icon + label. Reduced-motion → static, no slide. */}
                         {isActive &&
                           (prefersReducedMotion ? (
-                            <div className="absolute inset-1 rounded-full bg-primary/12 ring-1 ring-inset ring-primary/15 z-0" />
+                            <div className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0" />
                           ) : (
                             <motion.div
                               layoutId="nav-active-pill"
-                              className="absolute inset-1 rounded-full bg-primary/12 ring-1 ring-inset ring-primary/15 z-0"
+                              className="absolute inset-x-1.5 inset-y-1.5 rounded-xl bg-primary/12 ring-1 ring-inset ring-primary/15 z-0"
                               transition={{
                                 type: "spring",
                                 stiffness: 600,
@@ -364,7 +352,7 @@ export default function Layout() {
                         </motion.div>
                         <span
                           className={cn(
-                            "relative z-10 max-w-full truncate text-xs leading-none tracking-wide",
+                            "relative z-10 max-w-full truncate text-xs tracking-wide",
                             isActive ? "font-semibold" : "font-medium"
                           )}
                         >
