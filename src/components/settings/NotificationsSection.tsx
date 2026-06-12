@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Bell } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Toggle } from "@/components/ui/Toggle";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
@@ -266,12 +265,10 @@ export default function NotificationsSection({
                 className="flex items-center justify-between p-4 rounded-lg bg-muted"
               >
                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={mealReminders[meal].enabled}
-                    aria-label={`${meal} reminder`}
-                    onClick={() => {
+                  <Toggle
+                    checked={mealReminders[meal].enabled}
+                    label={`${meal} reminder`}
+                    onChange={() => {
                       haptic("light");
                       updateMealReminders({
                         [meal]: {
@@ -280,23 +277,7 @@ export default function NotificationsSection({
                         },
                       });
                     }}
-                    className={cn(
-                      "w-8 h-5 rounded-full transition-colors relative",
-                      mealReminders[meal].enabled
-                        ? "bg-primary"
-                        : "bg-muted border border-border"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
-                        "size-3.5 rounded-full bg-white absolute top-[3px] transition-transform shadow-sm",
-                        mealReminders[meal].enabled
-                          ? "translate-x-[14px]"
-                          : "translate-x-[3px]"
-                      )}
-                    />
-                  </button>
+                  />
                   <span className="text-sm text-foreground capitalize">
                     {meal}
                   </span>

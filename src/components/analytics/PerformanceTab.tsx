@@ -170,7 +170,10 @@ function ScoreBar({
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xs font-bold tabular-nums" style={{ color }}>
+        <p
+          className="text-xs font-bold font-mono tabular-nums"
+          style={{ color }}
+        >
           {Math.round(value)}
         </p>
       </div>
