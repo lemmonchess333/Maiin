@@ -101,24 +101,24 @@ jobs:
             echo ""
             echo "→ Updating PR #$pr"
 
-            # Capture the head SHA before, so we can tell whether the
-            # update actually moved it (vs already-up-to-date). We only
-            # re-dispatch checks when the head genuinely changed, to
-            # avoid needlessly re-running CI on every open PR per merge.
-            before=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
-
+            # `gh pr update-branch` exits NON-ZERO when there's nothing to do
+            # (already up to date) or it can't (conflict); it exits 0 ONLY when
+            # it actually created a merge commit (= the head genuinely moved).
+            # So exit 0 is itself the "head changed" signal — we DON'T compare
+            # headRefOid before/after, because the PR object's cached
+            # `headRefOid` lags the ref update and read stale right after the
+            # call, making every PR look "unchanged" and suppressing the
+            # re-dispatch entirely (the bug this replaces).
             if ! gh pr update-branch "$pr" --repo "$REPO"; then
-              echo "  (PR #$pr not updated — likely a conflict or already up-to-date)"
+              echo "  (PR #$pr not updated — conflict or already up-to-date; no re-dispatch)"
               continue
             fi
+            echo "  PR #$pr branch updated"
 
-            after=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
-            if [ -z "$after" ] || [ "$before" = "$after" ]; then
-              echo "  (PR #$pr head unchanged — no re-dispatch needed)"
-              continue
-            fi
-            echo "  PR #$pr head moved: ${before:0:7} → ${after:0:7}"
-
+            # The update is a GITHUB_TOKEN push, so the anti-loop policy
+            # suppressed emulator-tests / CI on the new head. Re-dispatch them
+            # explicitly (workflow_dispatch is the documented exception) on the
+            # branch ref, which IS updated by the time update-branch returns.
             if [ "$USE_DISPATCH" = "1" ]; then
               branch=$(gh pr view "$pr" --repo "$REPO" --json headRefName --jq '.headRefName')
               for wf in $CHECK_WORKFLOWS; do
