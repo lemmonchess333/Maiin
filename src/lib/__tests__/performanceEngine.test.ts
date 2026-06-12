@@ -12,6 +12,7 @@ import {
   computePerformanceIndex,
   computeLoadBand,
   shouldRecommendDeload,
+  generatePlanAdjustments,
 } from "../performanceEngine";
 import type { WeeklyAggregates, Baseline } from "../performanceTypes";
 
@@ -754,5 +755,80 @@ describe("computePerformanceIndex — multi-week integration", () => {
     expect(doc.weekKey).toBe(strongWeek.weekKey);
     // 4 signals (lift + run + meals + baseline≥3) → high confidence.
     expect(doc.confidence).toBe("high");
+  });
+});
+
+// ── generatePlanAdjustments ──────────────────
+// Pure mapping of (loadBand, scores, deload flag) → user-facing lift/run advice.
+// Previously untested despite driving the Performance tab's coaching copy.
+
+describe("generatePlanAdjustments", () => {
+  const base = {
+    loadBand: "moderate" as const,
+    liftLoadScore: 50,
+    runLoadScore: 50,
+    recoveryScore: 50,
+    deloadRecommended: false,
+  };
+
+  it("deload recommendation overrides everything and returns the deload advice", () => {
+    // Even with an overreach band, deload takes precedence (early return).
+    const adj = generatePlanAdjustments({
+      ...base,
+      loadBand: "overreach",
+      deloadRecommended: true,
+    });
+    expect(adj.lift).toHaveLength(1);
+    expect(adj.lift[0]).toMatch(/reduce working sets/i);
+    expect(adj.run[0]).toMatch(/easy pace|active recovery/i);
+  });
+
+  it("overreach band (no deload) advises trimming volume, not intensity", () => {
+    const adj = generatePlanAdjustments({ ...base, loadBand: "overreach" });
+    expect(adj.lift[0]).toMatch(/reducing total volume/i);
+    expect(adj.run[0]).toMatch(/drop one mid-week/i);
+  });
+
+  it("low band with weak scores nudges progressive overload + aerobic base", () => {
+    const adj = generatePlanAdjustments({
+      ...base,
+      loadBand: "low",
+      liftLoadScore: 20,
+      runLoadScore: 20,
+    });
+    expect(adj.lift[0]).toMatch(/progressive overload/i);
+    expect(adj.run[0]).toMatch(/aerobic base/i);
+  });
+
+  it("low band with healthy scores (>=30) gives no nudges", () => {
+    const adj = generatePlanAdjustments({
+      ...base,
+      loadBand: "low",
+      liftLoadScore: 40,
+      runLoadScore: 40,
+    });
+    expect(adj).toEqual({ lift: [], run: [] });
+  });
+
+  it("the 'deload' band (distinct from the deload RECOMMENDATION) also nudges weak lifts", () => {
+    const adj = generatePlanAdjustments({
+      ...base,
+      loadBand: "deload",
+      liftLoadScore: 10,
+      runLoadScore: 50, // healthy run → no run nudge
+    });
+    expect(adj.lift[0]).toMatch(/progressive overload/i);
+    expect(adj.run).toEqual([]);
+  });
+
+  it("moderate/high bands with healthy scores produce no advice", () => {
+    expect(generatePlanAdjustments({ ...base, loadBand: "moderate" })).toEqual({
+      lift: [],
+      run: [],
+    });
+    expect(generatePlanAdjustments({ ...base, loadBand: "high" })).toEqual({
+      lift: [],
+      run: [],
+    });
   });
 });

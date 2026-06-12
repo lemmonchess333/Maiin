@@ -30,6 +30,7 @@ const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazy(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { orderQuickAddItems, type QuickAddItem } from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
@@ -1757,16 +1758,16 @@ export default function Food() {
                 : "Copy yesterday's meals";
             return (
               <div className="flex justify-center pt-2">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   onClick={handleCopyAllMissingFromYesterday}
                   disabled={inFlight}
                   aria-label={label}
-                  className="flex items-center gap-1.5 min-h-[44px] px-4 rounded-full bg-card border border-border text-xs font-medium text-muted-foreground active:scale-[0.97] disabled:opacity-50 transition-transform"
+                  leftIcon={<RotateCcw className="size-3.5" />}
+                  className="text-muted-foreground"
                 >
-                  <RotateCcw className="size-3.5" />
                   {label}
-                </button>
+                </Button>
               </div>
             );
           })()}
