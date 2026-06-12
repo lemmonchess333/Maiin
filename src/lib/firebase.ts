@@ -23,6 +23,20 @@ export const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ?? "",
 };
 
+// Loud self-report when the web build shipped without a Firebase config (the
+// VITE_FIREBASE_* secrets were unset at build time). A blank apiKey makes EVERY
+// sign-in fail with auth/internal-error ("Sign-in is temporarily unavailable"),
+// so surface the real cause in the console instead of leaving it a mystery.
+// Skipped for emulator builds, which don't need real config.
+if (!firebaseConfig.apiKey && import.meta.env.VITE_USE_EMULATORS !== "true") {
+  logger.error(
+    "[Firebase] VITE_FIREBASE_API_KEY is empty — this build has no Firebase " +
+      "config, so ALL auth/data calls will fail with auth/internal-error. This " +
+      "is a deploy/secrets issue (set the VITE_FIREBASE_* GitHub Actions " +
+      "secrets and redeploy), not a user error."
+  );
+}
+
 export const app = initializeApp(firebaseConfig);
 
 // App Check runs BEFORE Firestore / Storage / Functions handles are
