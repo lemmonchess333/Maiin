@@ -8,6 +8,7 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
@@ -850,15 +851,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         !isViewingHistory &&
         !phaseLocked && (
           <div className="pt-4 pb-2">
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={handleAdvanceWeek}
               disabled={advancing}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              leftIcon={<FastForward className="size-4" />}
             >
-              <FastForward className="size-4" />
               {advancing ? "Advancing..." : "Advance to Next Week"}
-            </button>
+            </Button>
           </div>
         )}
 

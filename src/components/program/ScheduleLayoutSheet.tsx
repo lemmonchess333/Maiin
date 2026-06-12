@@ -32,6 +32,7 @@ import { useProgrammeScheduleEditor } from "@/features/program/useProgrammeSched
 import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface RefreshRunScheduleOverrides {
@@ -280,18 +281,17 @@ function ScheduleLayoutSheetBody({
           </p>
         )}
         <div className="flex gap-2 mt-4">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            className="flex-1"
             onClick={cancelRestructure}
-            className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium"
           >
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            className="flex-1"
             onClick={handleConfirmAndClose}
             disabled={restructuring}
-            className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2"
           >
             {restructuring ? (
               <>
@@ -305,7 +305,7 @@ function ScheduleLayoutSheetBody({
             ) : (
               "Confirm"
             )}
-          </button>
+          </Button>
         </div>
       </Dialog>
     </div>
