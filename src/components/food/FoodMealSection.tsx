@@ -176,7 +176,7 @@ export default function FoodMealSection({
           log, which read as redundant for cluster-logged meals).
           "Did I log all five things?" is answered at a glance. */}
       <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5">
-        <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold tabular-nums">
+        <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground/90 font-semibold">
           <span className="font-semibold">
             {MEAL_LABELS[mealKey].toUpperCase()}
           </span>
