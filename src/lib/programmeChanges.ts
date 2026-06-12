@@ -244,3 +244,25 @@ export function computeProgrammeChanges(
 
   return changes;
 }
+
+/**
+ * The Pgm5 "what's preserved" reassurance for the Save-changes confirm modal —
+ * made visible so a cautious user knows recalibrating won't nuke their history.
+ *
+ * Single-sourced + testable (was an inline JSX ternary). A lift-days change
+ * re-derives the skeleton (custom exercises reset); a content edit keeps the
+ * workouts verbatim. Either way `preserveHistory: true` keeps the week count,
+ * weekHistory, fatigue, and logged sessions — so we name the actual week.
+ */
+export function programmePreservationNote(args: {
+  liftDaysChanged: boolean;
+  weekNumber?: number;
+}): string {
+  const week =
+    typeof args.weekNumber === "number" && args.weekNumber > 0
+      ? `Week ${args.weekNumber}`
+      : "Your current week";
+  return args.liftDaysChanged
+    ? `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`
+    : `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. ${week}, your history, and logged sessions stay.`;
+}
