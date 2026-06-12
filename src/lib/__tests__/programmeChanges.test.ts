@@ -1,8 +1,40 @@
 import { describe, it, expect } from "vitest";
 import {
   computeProgrammeChanges,
+  programmePreservationNote,
   type ProgrammeSnapshot,
 } from "../programmeChanges";
+
+describe("programmePreservationNote (D5 — Pgm5 made visible)", () => {
+  it("content edit (no lift-days change) reassures workouts are kept, names the week", () => {
+    const note = programmePreservationNote({
+      liftDaysChanged: false,
+      weekNumber: 6,
+    });
+    expect(note).toMatch(/keep your current workouts/);
+    expect(note).toMatch(/Week 6/);
+    expect(note).toMatch(/logged sessions stay/);
+  });
+
+  it("lift-days change names the skeleton reset AND the preserved history", () => {
+    const note = programmePreservationNote({
+      liftDaysChanged: true,
+      weekNumber: 3,
+    });
+    expect(note).toMatch(/rebuilds your weekly structure/);
+    expect(note).toMatch(/reset to the new plan/);
+    expect(note).toMatch(/Week 3, your history, and logged sessions are kept/);
+  });
+
+  it("falls back to 'Your current week' when weekNumber is missing/zero", () => {
+    expect(programmePreservationNote({ liftDaysChanged: false })).toMatch(
+      /Your current week/
+    );
+    expect(
+      programmePreservationNote({ liftDaysChanged: true, weekNumber: 0 })
+    ).toMatch(/Your current week/);
+  });
+});
 
 const base: ProgrammeSnapshot = {
   primaryGoal: "hypertrophy",
