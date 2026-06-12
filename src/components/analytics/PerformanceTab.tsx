@@ -171,7 +171,10 @@ function ScoreBar({
     <div className="space-y-1">
       <div className="flex justify-between items-center">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xs font-bold tabular-nums" style={{ color }}>
+        <p
+          className="text-xs font-bold font-mono tabular-nums"
+          style={{ color }}
+        >
           {Math.round(value)}
         </p>
       </div>
@@ -305,7 +308,7 @@ export default function PerformanceTab() {
         <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
         <div className="flex items-center gap-2 mt-2">
           <span
-            className="text-3xl font-extrabold tabular-nums"
+            className="text-3xl font-extrabold font-mono tabular-nums"
             style={{ color: summaryColor }}
           >
             {pi}
@@ -406,7 +409,7 @@ export default function PerformanceTab() {
                       Performance Index — last 8 weeks
                     </h3>
                     <span
-                      className="text-2xl font-extrabold tabular-nums"
+                      className="text-2xl font-extrabold font-mono tabular-nums"
                       style={{ color: THEME.brand }}
                     >
                       {Math.round(currentWeek.performanceIndex)}
