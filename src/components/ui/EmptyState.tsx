@@ -2,6 +2,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import {
+  buttonClasses,
+  type ButtonVariant,
+} from "@/components/ui/buttonClasses";
 import { THEME } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -38,8 +42,16 @@ interface EmptyStateProps {
    *  (e.g. Activity for performance, Users for social). When omitted the
    *  hexagon shows its upward-chevron brand cutout. */
   icon?: LucideIcon;
-  /** At most one action. `href` routes via <Link>; `onClick` is a button. */
-  action?: { label: string; href?: string; onClick?: () => void };
+  /** At most one action. `href` routes via <Link>; `onClick` is a button.
+   *  `variant` picks the canonical Button look (defaults to `primary`);
+   *  set it to `sport` / `nutrition` so the CTA colour matches the page
+   *  domain rather than always reading brand-purple. */
+  action?: {
+    label: string;
+    href?: string;
+    onClick?: () => void;
+    variant?: ButtonVariant;
+  };
   /** Page domain accent — tints the hexagon stroke + inner icon at low
    *  opacity. Defaults to brand purple. */
   accent?: string;
@@ -141,12 +153,14 @@ export function EmptyState({
         (action.href ? (
           <Link
             to={action.href}
-            className="inline-flex items-center justify-center min-h-[44px] px-4 text-sm gap-2 rounded-xl font-semibold select-none bg-primary-strong text-primary-foreground hover:bg-primary-strong/90 active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className={buttonClasses({ variant: action.variant })}
           >
             {action.label}
           </Link>
         ) : (
-          <Button onClick={action.onClick}>{action.label}</Button>
+          <Button variant={action.variant} onClick={action.onClick}>
+            {action.label}
+          </Button>
         ))}
     </div>
   );

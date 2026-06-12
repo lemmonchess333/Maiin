@@ -12,6 +12,9 @@ import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import SectionLabel from "@/components/ui/SectionLabel";
+import EmptyState from "@/components/ui/EmptyState";
+import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
@@ -1081,6 +1084,20 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
+            {/* Hist6 — PI hero pinned to the top, range-independent
+              ("this week"). The TimeRange control below scopes only the
+              historical body (PeriodOverview + sport sections), so changing
+              the range never moves the hero — the two mental models
+              (current form vs adjustable history) are separated spatially.
+              Suppressed in cold-start: the "No analytics yet" card below
+              stands in until the first session is logged. Deep-links to
+              /history#performance scroll to this section's anchor. */}
+            {filter === "analytics" && !isAnalyticsColdStart && (
+              <SectionErrorBoundary sectionName="performance-section">
+                <PerformanceSection />
+              </SectionErrorBoundary>
+            )}
+
             <TimeRangePills selected={timeRange} onChange={setTimeRange} />
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
@@ -1122,33 +1139,13 @@ export default function History() {
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
             {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <div className="p-6 rounded-2xl bg-card text-center card-shadow">
-                <div
-                  className="size-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                  style={{ backgroundColor: "rgba(123,114,233,0.10)" }}
-                >
-                  <LineChart
-                    className="size-6"
-                    style={{ color: THEME.brand }}
-                  />
-                </div>
-                <p className="text-base font-bold text-foreground">
-                  No analytics yet
-                </p>
-                <p className="text-sm text-muted-foreground mt-1 leading-relaxed max-w-[280px] mx-auto">
-                  Log a workout, run, or meal and your trends — volume, pace,
-                  calories and your Performance Index — will show up here.
-                </p>
-                {/* D9: the cold-start card needs a single concrete next
-                    action, not just an expectation. Mirrors the Home
-                    Performance card's "Start a workout" → /program CTA. */}
-                <Link
-                  to="/program"
-                  className="inline-flex items-center justify-center min-h-[44px] px-4 mt-4 text-sm rounded-xl font-semibold select-none bg-primary-strong text-primary-foreground hover:bg-primary-strong/90 active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                >
-                  Start a workout
-                </Link>
-              </div>
+              <EmptyState
+                icon={LineChart}
+                accent={THEME.brand}
+                headline="No analytics yet"
+                sub="Log a workout, run, or meal and your trends — volume, pace, calories and your Performance Index — will show up here."
+                action={{ label: "Start a workout", href: "/program" }}
+              />
             )}
 
             {filter === "analytics" &&
@@ -1166,23 +1163,11 @@ export default function History() {
                 />
               )}
 
-            {/* Hist5b pin 3 — Performance fold. Compact PI strip with
-              inline-accordion expansion. Replaces the dedicated
-              Performance tab; deep-links to /history#performance
-              scroll to this section's anchor. Suppressed in cold-start —
-              its own "PI appears later" empty state would duplicate the
-              cold-start card above. */}
-            {filter === "analytics" && !isAnalyticsColdStart && (
-              <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection />
-              </SectionErrorBoundary>
-            )}
-
             {showRunningSection && filter === "analytics" && (
               <section id="analytics-running" aria-label="Running analytics">
-                <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-running">
+                <SectionLabel className="mt-6 mb-2 text-running">
                   Running
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
@@ -1202,7 +1187,10 @@ export default function History() {
                     </div>
                     <Link
                       to="/run"
-                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white bg-running"
+                      className={buttonClasses({
+                        variant: "sport",
+                        className: "shrink-0",
+                      })}
                     >
                       Start Run
                     </Link>
@@ -1248,9 +1236,9 @@ export default function History() {
 
             {showLiftingSection && filter === "analytics" && (
               <section id="analytics-lifting" aria-label="Lifting analytics">
-                <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-lifting">
+                <SectionLabel className="mt-6 mb-2 text-lifting">
                   Lifting
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1273,7 +1261,10 @@ export default function History() {
                     </div>
                     <Link
                       to="/program"
-                      className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white bg-lifting"
+                      className={buttonClasses({
+                        variant: "primary",
+                        className: "shrink-0",
+                      })}
                     >
                       Start Lift
                     </Link>
@@ -1335,12 +1326,12 @@ export default function History() {
                 id="analytics-nutrition"
                 aria-label="Nutrition analytics"
               >
-                <p
-                  className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2"
-                  style={{ color: THEME.success }}
+                <SectionLabel
+                  className="mt-6 mb-2"
+                  style={{ color: THEME.semantic.nutrition }}
                 >
                   Nutrition
-                </p>
+                </SectionLabel>
                 {dataLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1367,7 +1358,7 @@ export default function History() {
                     <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                       <UtensilsCrossed
                         className="size-5 shrink-0"
-                        style={{ color: THEME.success }}
+                        style={{ color: THEME.semantic.nutrition }}
                       />
                       <div className="flex-1">
                         <p className="text-sm font-medium text-foreground">
@@ -1376,8 +1367,10 @@ export default function History() {
                       </div>
                       <Link
                         to="/food"
-                        className="shrink-0 inline-flex items-center justify-center min-h-[44px] px-4 rounded-lg text-xs font-semibold text-white"
-                        style={{ background: THEME.success }}
+                        className={buttonClasses({
+                          variant: "nutrition",
+                          className: "shrink-0",
+                        })}
                       >
                         Log Meal
                       </Link>
@@ -1479,7 +1472,7 @@ export default function History() {
                             ? nutrition.caloriesSparkline
                             : undefined
                         }
-                        accentColor={THEME.success}
+                        accentColor={THEME.semantic.nutrition}
                       />
                       <StatCard
                         label="Protein"
@@ -1581,9 +1574,7 @@ export default function History() {
                 lifetimeTotals.daysLogged >
                 0 && (
                 <section id="analytics-lifetime" aria-label="Lifetime totals">
-                  <p className="text-xs font-semibold uppercase tracking-wide mt-6 mb-2 text-muted-foreground">
-                    Lifetime
-                  </p>
+                  <SectionLabel className="mt-6 mb-2">Lifetime</SectionLabel>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
@@ -1613,7 +1604,7 @@ export default function History() {
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
-                        style={{ color: THEME.success }}
+                        style={{ color: THEME.semantic.nutrition }}
                       />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {lifetimeTotals.daysLogged.toLocaleString()}

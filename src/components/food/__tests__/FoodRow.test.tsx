@@ -4,22 +4,37 @@ import { render, screen, fireEvent } from "@testing-library/react";
 
 // Mock framer-motion to render plain divs so we can test clicks
 // against the rendered buttons without swipe-gesture interference.
-vi.mock("framer-motion", function() {
+vi.mock("framer-motion", function () {
   return {
-    motion: new Proxy({}, {
-      get: function(_target: any, prop: string) {
-        return function(props: any) {
-          const {
-            initial: _i, animate: _a, exit: _e, transition: _t, variants: _v,
-            whileTap: _w, drag: _d, dragDirectionLock: _ddl, dragConstraints: _dc,
-            dragElastic: _de, onDrag: _od, onDragEnd: _ode, ...rest
-          } = props;
-          const Tag = prop === "create" ? "div" : prop;
-          return <Tag {...rest} />;
-        };
-      },
-    }),
-    AnimatePresence: function({ children }: any) { return children; },
+    motion: new Proxy(
+      {},
+      {
+        get: function (_target: any, prop: string) {
+          return function (props: any) {
+            const {
+              initial: _i,
+              animate: _a,
+              exit: _e,
+              transition: _t,
+              variants: _v,
+              whileTap: _w,
+              drag: _d,
+              dragDirectionLock: _ddl,
+              dragConstraints: _dc,
+              dragElastic: _de,
+              onDrag: _od,
+              onDragEnd: _ode,
+              ...rest
+            } = props;
+            const Tag = prop === "create" ? "div" : prop;
+            return <Tag {...rest} />;
+          };
+        },
+      }
+    ),
+    AnimatePresence: function ({ children }: any) {
+      return children;
+    },
   };
 });
 
@@ -27,18 +42,23 @@ vi.mock("framer-motion", function() {
 // as inline icons next to the row (rather than the swipe-revealed
 // overlay). Reduced-motion covers the same callback surface and is
 // much easier to drive via fireEvent.click.
-vi.mock("@/hooks/useReducedMotion", function() {
-  return { useReducedMotion: function() { return true; } };
+vi.mock("@/hooks/useReducedMotion", function () {
+  return {
+    useReducedMotion: function () {
+      return true;
+    },
+  };
 });
 
-vi.mock("@/lib/haptic", function() {
+vi.mock("@/lib/haptic", function () {
   return { haptic: vi.fn() };
 });
 
-vi.mock("@/lib/theme", function() {
+vi.mock("@/lib/theme", function () {
   return {
     THEME: {
       macros: { protein: "#A64", carbs: "#D94", fat: "#EB7" },
+      swipe: { destructive: "#FF3B30", neutral: "#48484A" },
     },
   };
 });
@@ -58,21 +78,21 @@ const baseGroup: FoodRowGroup = {
 
 function noop() {}
 
-describe("FoodRow — inline actions (reduced-motion branch)", function() {
-  it("renders foodName + calories", function() {
+describe("FoodRow — inline actions (reduced-motion branch)", function () {
+  it("renders foodName + calories", function () {
     render(
       <FoodRow
         group={baseGroup}
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     expect(screen.getByText("Chicken salad")).toBeInTheDocument();
     expect(screen.getByText(/420/)).toBeInTheDocument();
   });
 
-  it("invokes onDelete when the delete button is tapped", function() {
+  it("invokes onDelete when the delete button is tapped", function () {
     const onDelete = vi.fn();
     render(
       <FoodRow
@@ -80,25 +100,25 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
         isOpen={false}
         onOpenChange={noop}
         onDelete={onDelete}
-      />,
+      />
     );
     fireEvent.click(screen.getByLabelText("Delete Chicken salad"));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it("hides the Edit button when onEdit is not provided (back-compat)", function() {
+  it("hides the Edit button when onEdit is not provided (back-compat)", function () {
     render(
       <FoodRow
         group={baseGroup}
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     expect(screen.queryByLabelText("Edit Chicken salad")).toBeNull();
   });
 
-  it("shows Edit button when onEdit is provided and invokes it on tap", function() {
+  it("shows Edit button when onEdit is provided and invokes it on tap", function () {
     const onEdit = vi.fn();
     render(
       <FoodRow
@@ -107,16 +127,20 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
         onOpenChange={noop}
         onDelete={vi.fn()}
         onEdit={onEdit}
-      />,
+      />
     );
     fireEvent.click(screen.getByLabelText("Edit Chicken salad"));
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
-  it("formats the quantity badge when count > 1 and portion sizes match", function() {
+  it("formats the quantity badge when count > 1 and portion sizes match", function () {
     const grouped: FoodRowGroup = {
       ...baseGroup,
-      items: [{ portionSize: "1 bowl" }, { portionSize: "1 bowl" }, { portionSize: "1 bowl" }],
+      items: [
+        { portionSize: "1 bowl" },
+        { portionSize: "1 bowl" },
+        { portionSize: "1 bowl" },
+      ],
       count: 3,
       totalCal: 1260,
     };
@@ -126,13 +150,13 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     // "3 bowls" (pluralised, count > 1)
     expect(screen.getByText("3 bowls")).toBeInTheDocument();
   });
 
-  it("falls back to ×N label when portion sizes differ across items", function() {
+  it("falls back to ×N label when portion sizes differ across items", function () {
     const grouped: FoodRowGroup = {
       ...baseGroup,
       items: [{ portionSize: "1 bowl" }, { portionSize: "2 cups" }],
@@ -144,19 +168,19 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     expect(screen.getByText("×2")).toBeInTheDocument();
   });
 
-  it("renders the Edited pill when wasEdited is true (Food6 ci7)", function() {
+  it("renders the Edited pill when wasEdited is true (Food6 ci7)", function () {
     render(
       <FoodRow
         group={{ ...baseGroup, wasEdited: true }}
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     /* Use aria-label so the pill stays findable even if the visible
        text changes (icon + label is the design; the label is the
@@ -164,14 +188,14 @@ describe("FoodRow — inline actions (reduced-motion branch)", function() {
     expect(screen.getByLabelText("Edited")).toBeInTheDocument();
   });
 
-  it("does NOT render the Edited pill when wasEdited is false / absent", function() {
+  it("does NOT render the Edited pill when wasEdited is false / absent", function () {
     render(
       <FoodRow
         group={baseGroup}
         isOpen={false}
         onOpenChange={noop}
         onDelete={vi.fn()}
-      />,
+      />
     );
     expect(screen.queryByLabelText("Edited")).toBeNull();
   });
