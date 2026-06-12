@@ -118,6 +118,40 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         )}
       </div>
 
+      {/* Demo photos (start / finish) — free-exercise-db imagery, D-LIFT-18.
+          Fetched all along but never rendered; now surfaced as a 2-up. */}
+      {demo.images.length > 0 && (
+        <div
+          className={
+            demo.images.length > 1
+              ? "mt-4 grid grid-cols-2 gap-2"
+              : "mt-4 grid grid-cols-1"
+          }
+        >
+          {demo.images.slice(0, 2).map((src, i) => (
+            <figure key={src} className="rounded-2xl overflow-hidden bg-muted">
+              <img
+                src={src}
+                alt={`${demo.name} — ${
+                  demo.images.length > 1
+                    ? i === 0
+                      ? "start position"
+                      : "finish position"
+                    : "demonstration"
+                }`}
+                loading="lazy"
+                className="w-full h-auto aspect-square object-cover"
+              />
+              {demo.images.length > 1 && (
+                <figcaption className="text-caption uppercase tracking-wide text-muted-foreground text-center py-1">
+                  {i === 0 ? "Start" : "Finish"}
+                </figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      )}
+
       {/* Muscle diagrams */}
       <div className="bg-muted rounded-2xl p-5 mt-4">
         <div
