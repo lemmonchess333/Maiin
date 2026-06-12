@@ -49,8 +49,15 @@ function tsxFiles(dir: string): string[] {
 
 const FILES = tsxFiles(srcRoot);
 
-/** Collect every className string literal/template chunk in a file (handles
- *  multi-line className={`…`} and className="…"). Returns the raw inner text. */
+/** Collect every className UNIT in a file — each unit is the resolved class
+ *  string for one element. Handles `className="…"`, `className='…'`, multi-line
+ *  `className={`…`}`, AND `className={cn(…)}` / clsx / twMerge (the dominant
+ *  pattern here — a per-element check would miss it, which is how the
+ *  StreakFlame/RestTimer mono gaps hid). For a cn() call, all string-literal
+ *  segments are concatenated into one unit so `font-mono` in one arg covers
+ *  `tabular-nums` in another (no false positive). Inline `style` objects
+ *  (`fontVariantNumeric: "tabular-nums"`) are deliberately NOT scanned — that's
+ *  a different font mechanism where `font-mono` doesn't apply. */
 function classNameChunks(src: string): string[] {
   const chunks: string[] = [];
   // className="..." and className='...'
@@ -60,6 +67,16 @@ function classNameChunks(src: string): string[] {
   // className={`...`} (template literal — capture the whole literal body)
   for (const m of src.matchAll(/className=\{`([\s\S]*?)`\}/g)) {
     chunks.push(m[1]);
+  }
+  // className={cn(...)} / clsx(...) / twMerge(...) — concat every string-literal
+  // segment in the call body into one unit (non-greedy to the first `)}`).
+  for (const m of src.matchAll(
+    /className=\{(?:cn|clsx|twMerge)\(([\s\S]*?)\)\}/g
+  )) {
+    let combined = "";
+    for (const s of m[1].matchAll(/[`"']([^`"']*)[`"']/g))
+      combined += " " + s[1];
+    chunks.push(combined);
   }
   return chunks;
 }
@@ -144,7 +161,7 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
   // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
   // wrong (proportional UI) font.
-  const MONO_BASELINE = 20; // burned down from 30 (prominent stat displays + challenge leaderboard values fixed); keep lowering as surfaces are touched
+  const MONO_BASELINE = 16; // burned down from 30 (stat displays, leaderboard, HR/PI/trial counters fixed); scanner now also catches cn() classNames. Keep lowering as surfaces are touched.
   it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
