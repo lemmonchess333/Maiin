@@ -45,6 +45,7 @@ import IntervalDisplay from "../components/run/IntervalDisplay";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
+import BackToStartChip from "../components/run/BackToStartChip";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
 import { THEME } from "../lib/theme";
@@ -1213,6 +1214,16 @@ export default function Run() {
               height="h-full"
               className="absolute inset-0"
             />
+
+            {/* Crow-flies "back to start" aid — top-centre, clear of the
+                left-anchored GPS indicator and the tempo/interval PaceZoneBar
+                (top-10). Self-hides within 200m of the start. */}
+            <div className="absolute top-3 left-1/2 z-50 -translate-x-1/2">
+              <BackToStartChip
+                points={gps.points}
+                currentPoint={gps.currentPoint}
+              />
+            </div>
 
             {autoPaused && (
               <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 text-center py-2 px-3 rounded-full bg-yellow-500/20">
