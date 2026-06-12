@@ -48,6 +48,13 @@ Then hard-refresh the app and retest Social → Progress → + Add Photo.
 If a new error (e.g. `storage/unauthorized`) surfaces, send it back —
 different fix (likely Storage rules, not CORS).
 
+> **Pre-flight — the CORS bucket MUST equal the upload bucket.** The command
+> above targets `…firebasestorage.app`. Confirm the prod `VITE_FIREBASE_STORAGE_BUCKET`
+> (Vite env, not `.env.example`) names that **same** bucket — a
+> `.appspot.com` vs `.firebasestorage.app` mismatch sets CORS on a bucket the
+> client never uploads to, leaving the photo-upload bug live. Check with
+> `gsutil ls -L -b gs://<bucket> | grep -i cors` after applying.
+
 ### 2. Firebase Functions secrets — Secret Manager (Apple + Stripe + billing)
 
 > **Changed by the firebase-functions v7 migration (PR #913).**
@@ -79,8 +86,17 @@ firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
 
 # Billing-identity HMAC (account-deletion tombstones → restoreApplePurchases)
 firebase functions:secrets:set BILLING_HMAC_SECRET   # 32-byte hex
-# BILLING_PREVIOUS_HMAC_SECRET — only during a key-rotation window
+# BILLING_PREVIOUS_HMAC_SECRET — the code currently BINDS this on
+# restoreApplePurchases unconditionally, so it MUST be provisioned or the deploy
+# fails the safety gate (it is NOT optional despite being "rotation-only" in
+# intent). Until a real rotation, set it to the SAME value as BILLING_HMAC_SECRET:
+firebase functions:secrets:set BILLING_PREVIOUS_HMAC_SECRET   # = BILLING_HMAC_SECRET for now
 ```
+
+> **Authoritative source:** `cd functions && npm run secrets:check` reads the
+> source and prints the exact `firebase functions:secrets:set` command for every
+> secret the code actually binds (7 today). The hand-written list above can
+> drift; the tool can't. Run it before every deploy.
 
 `ADMIN_UIDS` (moderation allowlist) is **not** a secret — set it as a
 plain env var (`functions/.env` or `--set-env-vars ADMIN_UIDS=uid1,uid2`).
