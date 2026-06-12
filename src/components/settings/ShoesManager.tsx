@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
 import { Plus, Star, Archive, Footprints, RotateCw } from "lucide-react";
@@ -248,13 +249,7 @@ export default function ShoesManager() {
                   km
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={handleAdd}
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
-              >
-                Save
-              </button>
+              <Button onClick={handleAdd}>Save</Button>
             </div>
             <p id="shoe-max-km-hint" className="text-xs text-muted-foreground">
               We'll flag the shoe for replacement at this mileage. Most daily
