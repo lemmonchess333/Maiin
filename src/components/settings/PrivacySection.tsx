@@ -181,12 +181,10 @@ export default function PrivacySection({
               Share runs to feed automatically
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={autoPostRuns}
-            aria-label="Auto-post runs"
-            onClick={async () => {
+          <Toggle
+            checked={autoPostRuns}
+            label="Auto-post runs"
+            onChange={async () => {
               haptic("light");
               const prev = autoPostRuns;
               const next = !autoPostRuns;
@@ -198,19 +196,7 @@ export default function PrivacySection({
               const result = await updateProfile({ autoPostRuns: next });
               if (!result.ok) setAutoPostRuns(prev);
             }}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              autoPostRuns ? "bg-primary" : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                autoPostRuns ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
@@ -220,12 +206,10 @@ export default function PrivacySection({
               Share workouts to feed automatically
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={autoPostWorkouts}
-            aria-label="Auto-post workouts"
-            onClick={async () => {
+          <Toggle
+            checked={autoPostWorkouts}
+            label="Auto-post workouts"
+            onChange={async () => {
               haptic("light");
               const prev = autoPostWorkouts;
               const next = !autoPostWorkouts;
@@ -237,19 +221,7 @@ export default function PrivacySection({
               const result = await updateProfile({ autoPostWorkouts: next });
               if (!result.ok) setAutoPostWorkouts(prev);
             }}
-            className={cn(
-              "w-10 h-6 rounded-full transition-colors relative",
-              autoPostWorkouts ? "bg-primary" : "bg-muted border border-border"
-            )}
-          >
-            <div
-              className={cn(
-                // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
-                "size-4 rounded-full bg-white absolute top-1 transition-transform shadow-sm",
-                autoPostWorkouts ? "translate-x-5" : "translate-x-1"
-              )}
-            />
-          </button>
+          />
         </div>
 
         {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
