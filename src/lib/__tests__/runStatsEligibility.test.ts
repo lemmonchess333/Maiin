@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   isVolumeEligible,
   isPaceEligible,
+  isPaceTrendEligible,
   type RunRecord,
-} from '../runStatsEligibility';
+  type RunPaceTrendInput,
+} from "../runStatsEligibility";
 
 /* The Sprint 1 metric/source matrix. Volume includes treadmill +
  * manual; pace metrics (Best Pace, Fastest 1K, Fastest 5K, Longest
@@ -21,73 +23,115 @@ const validOutdoor: RunRecord = {
   distance: 5000,
   duration: 1500,
   avgPace: 300,
-  activityType: 'easy',
+  activityType: "easy",
 };
 
-describe('isVolumeEligible — base floor', () => {
-  it('counts a normal valid outdoor run', () => {
+describe("isVolumeEligible — base floor", () => {
+  it("counts a normal valid outdoor run", () => {
     expect(isVolumeEligible(validOutdoor)).toBe(true);
   });
 
-  it('counts treadmill runs that meet the floor', () => {
-    expect(isVolumeEligible({ ...validOutdoor, activityType: 'treadmill', distance: 2000, duration: 317 })).toBe(true);
+  it("counts treadmill runs that meet the floor", () => {
+    expect(
+      isVolumeEligible({
+        ...validOutdoor,
+        activityType: "treadmill",
+        distance: 2000,
+        duration: 317,
+      })
+    ).toBe(true);
   });
 
-  it('counts manual runs that meet the floor', () => {
-    expect(isVolumeEligible({ ...validOutdoor, activityType: 'manual', distance: 2000, duration: 317 })).toBe(true);
+  it("counts manual runs that meet the floor", () => {
+    expect(
+      isVolumeEligible({
+        ...validOutdoor,
+        activityType: "manual",
+        distance: 2000,
+        duration: 317,
+      })
+    ).toBe(true);
   });
 
-  it('drops isInvalid records', () => {
+  it("drops isInvalid records", () => {
     expect(isVolumeEligible({ ...validOutdoor, isInvalid: true })).toBe(false);
   });
 
-  it('drops savedAnyway records', () => {
-    expect(isVolumeEligible({ ...validOutdoor, savedAnyway: true })).toBe(false);
+  it("drops savedAnyway records", () => {
+    expect(isVolumeEligible({ ...validOutdoor, savedAnyway: true })).toBe(
+      false
+    );
   });
 
-  it('drops sub-50m distance (legacy zero-distance zombie)', () => {
+  it("drops sub-50m distance (legacy zero-distance zombie)", () => {
     expect(isVolumeEligible({ ...validOutdoor, distance: 0 })).toBe(false);
     expect(isVolumeEligible({ ...validOutdoor, distance: 49 })).toBe(false);
   });
 
-  it('counts exactly 50m / 30s — the floor edge', () => {
-    expect(isVolumeEligible({ ...validOutdoor, distance: 50, duration: 30 })).toBe(true);
+  it("counts exactly 50m / 30s — the floor edge", () => {
+    expect(
+      isVolumeEligible({ ...validOutdoor, distance: 50, duration: 30 })
+    ).toBe(true);
   });
 
-  it('drops sub-30s duration (legacy 0:05 misclick)', () => {
+  it("drops sub-30s duration (legacy 0:05 misclick)", () => {
     expect(isVolumeEligible({ ...validOutdoor, duration: 5 })).toBe(false);
     expect(isVolumeEligible({ ...validOutdoor, duration: 29 })).toBe(false);
   });
 
-  it('drops records missing both distance and duration', () => {
-    expect(isVolumeEligible({ activityType: 'easy' })).toBe(false);
+  it("drops records missing both distance and duration", () => {
+    expect(isVolumeEligible({ activityType: "easy" })).toBe(false);
   });
 });
 
-describe('isPaceEligible — outdoor + finite pace', () => {
-  it('counts a valid outdoor run', () => {
+describe("isPaceEligible — outdoor + finite pace", () => {
+  it("counts a valid outdoor run", () => {
     expect(isPaceEligible(validOutdoor)).toBe(true);
   });
 
-  it('drops treadmill (matrix: not pace-eligible — typed distance, no GPS)', () => {
+  it("drops treadmill (matrix: not pace-eligible — typed distance, no GPS)", () => {
     /* The screenshot case. A treadmill 2km / 5:17 (avgPace 158s/km
        = 2:38/km) is real activity — counts for volume — but a
        believable Best Pace 2:38/km is not something a treadmill
        can authoritatively claim. */
-    expect(isPaceEligible({ ...validOutdoor, activityType: 'treadmill', distance: 2000, duration: 317, avgPace: 158 })).toBe(false);
+    expect(
+      isPaceEligible({
+        ...validOutdoor,
+        activityType: "treadmill",
+        distance: 2000,
+        duration: 317,
+        avgPace: 158,
+      })
+    ).toBe(false);
   });
 
-  it('drops manual (matrix: not pace-eligible — typed distance, GPS never locked)', () => {
-    expect(isPaceEligible({ ...validOutdoor, activityType: 'manual', distance: 2000, duration: 317, avgPace: 158 })).toBe(false);
+  it("drops manual (matrix: not pace-eligible — typed distance, GPS never locked)", () => {
+    expect(
+      isPaceEligible({
+        ...validOutdoor,
+        activityType: "manual",
+        distance: 2000,
+        duration: 317,
+        avgPace: 158,
+      })
+    ).toBe(false);
   });
 
-  it('counts every outdoor activityType', () => {
-    for (const t of ['easy', 'tempo', 'intervals', 'long', 'race', 'freerun', 'guided'] as const) {
+  it("counts every outdoor activityType", () => {
+    for (const t of [
+      "easy",
+      "tempo",
+      "intervals",
+      "long",
+      "race",
+      "freerun",
+      "guided",
+    ] as const) {
       expect(isPaceEligible({ ...validOutdoor, activityType: t })).toBe(true);
     }
   });
 
-  it('drops missing activityType (conservative on legacy/unknown)', () => {
+  it("drops missing activityType (conservative on legacy/unknown)", () => {
     /* A legacy run that doesn't declare its source shouldn't get to
        set a Best Pace — we'd have no way to tell if it was a real
        outdoor effort or a typo treadmill entry. */
@@ -96,14 +140,14 @@ describe('isPaceEligible — outdoor + finite pace', () => {
     expect(isPaceEligible(noType)).toBe(false);
   });
 
-  it('drops zero / non-finite avgPace', () => {
+  it("drops zero / non-finite avgPace", () => {
     expect(isPaceEligible({ ...validOutdoor, avgPace: 0 })).toBe(false);
     expect(isPaceEligible({ ...validOutdoor, avgPace: -1 })).toBe(false);
     expect(isPaceEligible({ ...validOutdoor, avgPace: Infinity })).toBe(false);
     expect(isPaceEligible({ ...validOutdoor, avgPace: NaN })).toBe(false);
   });
 
-  it('inherits the volume floor (isInvalid / savedAnyway / sub-thresholds)', () => {
+  it("inherits the volume floor (isInvalid / savedAnyway / sub-thresholds)", () => {
     expect(isPaceEligible({ ...validOutdoor, isInvalid: true })).toBe(false);
     expect(isPaceEligible({ ...validOutdoor, savedAnyway: true })).toBe(false);
     expect(isPaceEligible({ ...validOutdoor, distance: 0 })).toBe(false);
@@ -111,7 +155,7 @@ describe('isPaceEligible — outdoor + finite pace', () => {
   });
 });
 
-describe('screenshot acceptance case — treadmill-only account', () => {
+describe("screenshot acceptance case — treadmill-only account", () => {
   /* The exact case from the screenshot: an account with only a
      treadmill 2km / 5:17 run should:
        - count toward total runs and total distance
@@ -125,15 +169,52 @@ describe('screenshot acceptance case — treadmill-only account', () => {
     distance: 2000,
     duration: 317,
     avgPace: 158,
-    activityType: 'treadmill' as const,
+    activityType: "treadmill" as const,
   };
 
-  it('counts as activity volume', () => {
+  it("counts as activity volume", () => {
     expect(isVolumeEligible(treadmill2k)).toBe(true);
   });
 
-  it('does NOT count toward Best Pace / Fastest-K / Longest Run', () => {
+  it("does NOT count toward Best Pace / Fastest-K / Longest Run", () => {
     expect(isPaceEligible(treadmill2k)).toBe(false);
   });
 });
 
+/* isPaceTrendEligible — the pace-TREND gate (reads avgPace off the persisted
+ * doc rather than recomputing). Same outdoor-GPS + validity contract as
+ * isPaceEligible; previously untested. */
+describe("isPaceTrendEligible", () => {
+  const valid: RunPaceTrendInput = {
+    distance: 5000,
+    avgPace: 300,
+    activityType: "easy",
+  };
+
+  it("accepts a valid outdoor GPS run", () => {
+    expect(isPaceTrendEligible(valid)).toBe(true);
+  });
+
+  it("accepts when activityType is undefined (legacy docs)", () => {
+    expect(isPaceTrendEligible({ distance: 5000, avgPace: 300 })).toBe(true);
+  });
+
+  it("rejects invalid / saved-anyway runs", () => {
+    expect(isPaceTrendEligible({ ...valid, isInvalid: true })).toBe(false);
+    expect(isPaceTrendEligible({ ...valid, savedAnyway: true })).toBe(false);
+  });
+
+  it("rejects non-positive pace or distance", () => {
+    expect(isPaceTrendEligible({ ...valid, avgPace: 0 })).toBe(false);
+    expect(isPaceTrendEligible({ ...valid, distance: 0 })).toBe(false);
+  });
+
+  it("rejects treadmill (typed distance, no GPS — same matrix as isPaceEligible)", () => {
+    expect(isPaceTrendEligible({ ...valid, activityType: "treadmill" })).toBe(
+      false
+    );
+    expect(isPaceTrendEligible({ ...valid, activityType: "manual" })).toBe(
+      false
+    );
+  });
+});

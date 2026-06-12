@@ -262,7 +262,7 @@ function FoodSuggestionsDropdown({
               <span className="text-sm font-medium text-foreground truncate min-w-0">
                 {item.name}
               </span>
-              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
                 {item.cal} kcal
               </span>
             </button>
