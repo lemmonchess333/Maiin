@@ -47,19 +47,22 @@
    in 18.0 but the fallback costs nothing. */
 .bottom-nav-frost {
   background: var(--surface-solid);
-  /* Frosted glass (Opal / Cal-AI effect): the surface at a lower opacity so
-     scrolling content reads as a soft blur BEHIND the fixed bar, held legible
-     by a strong blur + saturate. Was 94% (near-solid) — too flat to read as
-     glass. */
-  background: color-mix(in srgb, var(--surface-solid) 78%, transparent);
+  /* Frosted glass (Opal / Cal-AI effect). Anchored, not see-through: a
+     heavy blur turns whatever scrolls behind into an indistinct frosted
+     wash (so the page doesn't visibly "move around" the bar), the surface
+     stays mostly opaque so content never reads as sharp moving content,
+     and a bright top hairline gives the glass edge its sheen. */
+  background: color-mix(in srgb, var(--surface-solid) 82%, transparent);
   border-top: 1px solid var(--glass-border);
-  box-shadow: var(--ds-shadow-nav);
-  backdrop-filter: blur(24px) saturate(1.7);
-  -webkit-backdrop-filter: blur(24px) saturate(1.7);
+  box-shadow:
+    var(--ds-shadow-nav),
+    inset 0 1px 0 var(--nav-frost-highlight);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
 }
 
 .dark .bottom-nav-frost {
-  background: rgba(22, 22, 24, 0.7);
+  background: rgba(22, 22, 24, 0.78);
 }
 
 /* No backdrop-filter (older WebViews) → opaque bar, never an unreadable
