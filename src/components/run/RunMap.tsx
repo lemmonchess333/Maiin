@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Plus, Minus, LocateFixed } from "lucide-react";
+import { Plus, Minus, LocateFixed, Compass } from "lucide-react";
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "../../lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
@@ -58,6 +58,12 @@ export default function RunMap({
   // effect reads the live value without re-subscribing.
   const followingRef = useRef(true);
   const [showRecenter, setShowRecenter] = useState(false);
+  // Map orientation. headingUp rotates the map so the travel direction is up
+  // (Garmin/NRC staple); off = north-up. headingRef holds the latest travel
+  // bearing so follow easeTo and the toggle can rotate to it.
+  const headingUpRef = useRef(false);
+  const [headingUp, setHeadingUp] = useState(false);
+  const headingRef = useRef(0);
   // True when the basemap tiles can't load (offline / no signal). The route
   // line still draws on the dark canvas; we surface a plain note rather than
   // leaving a silent blank map.
@@ -308,9 +314,9 @@ export default function RunMap({
           const last = visiblePoints[visiblePoints.length - 1];
           const moved = haversineQuick(prev.lat, prev.lon, last.lat, last.lon);
           if (moved > 3) {
-            markerRef.current.setRotation(
-              bearingDeg(prev.lat, prev.lon, last.lat, last.lon)
-            );
+            const b = bearingDeg(prev.lat, prev.lon, last.lat, last.lon);
+            markerRef.current.setRotation(b);
+            headingRef.current = b;
             if (coneRef.current) coneRef.current.style.opacity = "1";
           }
         }
@@ -320,6 +326,8 @@ export default function RunMap({
         if (followingRef.current) {
           map.easeTo({
             center: [currentPoint.lon, currentPoint.lat],
+            // heading-up rotates to travel bearing; north-up pins to 0.
+            bearing: headingUpRef.current ? headingRef.current : 0,
             duration: 500,
           });
         }
@@ -421,9 +429,23 @@ export default function RunMap({
     if (map && currentPoint) {
       map.easeTo({
         center: [currentPoint.lon, currentPoint.lat],
+        bearing: headingUpRef.current ? headingRef.current : 0,
         duration: 400,
       });
     }
+  };
+
+  const toggleHeadingUp = () => {
+    const next = !headingUpRef.current;
+    headingUpRef.current = next;
+    setHeadingUp(next);
+    mapRef.current?.easeTo({
+      bearing: next ? headingRef.current : 0,
+      ...(currentPoint
+        ? { center: [currentPoint.lon, currentPoint.lat] as [number, number] }
+        : {}),
+      duration: 400,
+    });
   };
 
   return (
@@ -447,6 +469,18 @@ export default function RunMap({
             icon={<Minus />}
             onClick={() => mapRef.current?.zoomOut()}
             className="border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+          />
+          <IconButton
+            aria-label={
+              headingUp ? "Switch map to north-up" : "Switch map to heading-up"
+            }
+            icon={<Compass />}
+            onClick={toggleHeadingUp}
+            className={
+              headingUp
+                ? "bg-running text-white shadow-sm"
+                : "border border-border bg-card/85 text-foreground shadow-sm backdrop-blur"
+            }
           />
           {showRecenter && (
             <IconButton
