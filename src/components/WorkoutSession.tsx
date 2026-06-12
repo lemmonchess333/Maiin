@@ -4,6 +4,7 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { Play, RotateCcw, Check, X, Dumbbell, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -1417,13 +1418,13 @@ export default function WorkoutSession({
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">
         {isResting ? (
-          <button
-            type="button"
+          <Button
+            fullWidth
             onClick={stopRest}
-            className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+            leftIcon={<Play className="size-4" />}
           >
-            <Play className="size-4" /> Ready — Start Next Set
-          </button>
+            Ready — Start Next Set
+          </Button>
         ) : (
           (() => {
             const allSetsComplete = currentSets.every((s) => s.completed);
