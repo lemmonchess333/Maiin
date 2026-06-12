@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { Info, AlertTriangle, Navigation, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { shareRoute } from "@/lib/shareRoute";
-import { toast } from "@/lib/toast";
+import { useShareRoute } from "@/hooks/useShareRoute";
 import {
   describeRouteConfidence,
   type RouteQuality,
@@ -61,6 +60,7 @@ export default function RunDetail() {
   const { runId } = useParams<{ runId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const shareRouteWithPrivacy = useShareRoute();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [run, setRun] = useState<Record<string, any> | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -154,12 +154,12 @@ export default function RunDetail() {
     setShareOpen(true);
   };
 
-  const shareThisRoute = async () => {
+  const shareThisRoute = () => {
     const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
-    const name = `${label} · ${(run.distance / 1000).toFixed(1)} km`;
-    const result = await shareRoute(name, run.points);
-    if (result === "downloaded") toast.success("Route downloaded");
-    else if (result === "failed") toast.error("Couldn't share route");
+    shareRouteWithPrivacy(
+      `${label} · ${(run.distance / 1000).toFixed(1)} km`,
+      run.points
+    );
   };
 
   return (
