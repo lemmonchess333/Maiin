@@ -14,6 +14,16 @@ export interface ExerciseDemo {
   instructions: string[];
   images: string[];
   tip?: string;
+  /** Common form errors (D-LIFT-19) — surfaced as extra "watch out" cues. */
+  commonMistakes?: string[];
+}
+
+/** Prefix an app-relative media path with the Vite base URL; pass http(s)
+ *  URLs through unchanged. (D-LIFT-20 coach-demo assets live in /public.) */
+function resolveMediaUrl(p: string): string {
+  if (/^https?:\/\//.test(p)) return p;
+  const base = import.meta.env.BASE_URL || "/";
+  return `${base.replace(/\/$/, "")}/${p.replace(/^\//, "")}`;
 }
 
 // Mapping from free-exercise-db muscle names → react-body-highlighter IDs
@@ -213,8 +223,12 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
     primaryMuscles: mapLocal(match.muscleGroup),
     secondaryMuscles: (match.secondaryMuscles ?? []).flatMap(mapLocal),
     instructions: match.instructions ?? [],
-    images: [],
+    // D-LIFT-20: reviewed coach-demo assets (Exercise.media) take precedence
+    // over the free-exercise-db photos; left empty here when none so the
+    // resolver can borrow the remote photos (D-LIFT-18).
+    images: (match.media ?? []).map(resolveMediaUrl),
     tip: match.tip,
+    commonMistakes: match.commonMistakes,
   };
 }
 
@@ -265,7 +279,10 @@ export async function getExerciseDemo(
   const remote = matchRemote(demos, name);
 
   if (local && (local.tip || local.instructions.length >= 2)) {
-    // Authored text wins; attach remote images so the demo is visual too.
+    // Authored text wins. Prefer the reviewed coach-demo media (already on
+    // local.images via Exercise.media, D-LIFT-20); otherwise borrow the
+    // free-exercise-db photos (D-LIFT-18) so the demo is still visual.
+    if (local.images.length > 0) return local;
     return remote && remote.images.length > 0
       ? { ...local, images: remote.images }
       : local;
