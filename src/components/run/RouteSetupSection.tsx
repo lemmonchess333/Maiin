@@ -3,8 +3,8 @@ import { Trash2, Share2 } from "lucide-react";
 import type { GPSPoint } from "@/lib/gps";
 import { routeTotalDistance } from "@/lib/gps";
 import { coordsToPoints, type SavedRouteSource } from "@/lib/savedRoutes";
-import { shareRoute } from "@/lib/shareRoute";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
+import { useShareRoute } from "@/hooks/useShareRoute";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -22,13 +22,6 @@ interface RouteSetupSectionProps {
 
 function km(metres: number): string {
   return `${(metres / 1000).toFixed(1)} km`;
-}
-
-async function doShare(name: string, points: GPSPoint[]) {
-  const result = await shareRoute(name, points);
-  if (result === "downloaded") toast.success("Route downloaded");
-  else if (result === "failed") toast.error("Couldn't share route");
-  // "shared" → native sheet handled it; "cancelled" → silent
 }
 
 interface PreviewState {
@@ -52,6 +45,7 @@ export default function RouteSetupSection({
 }: RouteSetupSectionProps) {
   const { profile } = useAuth();
   const { routes, save, remove } = useSavedRoutes();
+  const shareRouteWithPrivacy = useShareRoute();
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [saveOpen, setSaveOpen] = useState(false);
   const [name, setName] = useState("");
@@ -199,7 +193,9 @@ export default function RouteSetupSection({
                   aria-label={`Share route ${r.name}`}
                   icon={<Share2 />}
                   className="text-muted-foreground"
-                  onClick={() => doShare(r.name, coordsToPoints(r.coords))}
+                  onClick={() =>
+                    shareRouteWithPrivacy(r.name, coordsToPoints(r.coords))
+                  }
                 />
                 <IconButton
                   size="sm"

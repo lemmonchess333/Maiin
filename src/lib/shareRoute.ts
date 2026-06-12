@@ -1,8 +1,24 @@
 import { logger } from "./logger";
 import { haptic } from "./haptic";
 import { toGPX, type GPSPoint } from "./gps";
+import { applyPrivacyZones, type PrivacyZone } from "./privacyZones";
 
 export type ShareRouteResult = "shared" | "downloaded" | "cancelled" | "failed";
+
+/**
+ * Privacy-trim a route for sharing: with zones set, drop the start/end points
+ * that fall inside a privacy zone (hides home/work) via applyPrivacyZones.
+ * Returns null when the whole route sits inside a zone (nothing safe to share)
+ * so callers can refuse rather than leak. No zones → the route unchanged.
+ */
+export function resolveShareRoute(
+  points: GPSPoint[],
+  zones: PrivacyZone[]
+): GPSPoint[] | null {
+  if (zones.length === 0) return points;
+  const trimmed = applyPrivacyZones(points, zones);
+  return trimmed.length >= 2 ? trimmed : null;
+}
 
 /** Filesystem-safe slug for the .gpx filename, derived from the route name. */
 export function routeSlug(name: string): string {
