@@ -263,6 +263,6 @@ export function programmePreservationNote(args: {
       ? `Week ${args.weekNumber}`
       : "Your current week";
   return args.liftDaysChanged
-    ? `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered reset to the new plan. ${week}, your history, and logged sessions are kept.`
+    ? `Changing your lift days rebuilds your weekly structure. Any exercises you've added, removed, or reordered will be reset to the new plan. ${week}, your history, and logged sessions are kept.`
     : `We'll update your plan with these settings and keep your current workouts — including any exercises you've customised. ${week}, your history, and logged sessions stay.`;
 }
