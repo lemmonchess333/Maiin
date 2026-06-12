@@ -50,8 +50,8 @@ interface FoodRowProps {
 // previous saturated #EF4444 / slate #4B5563 pair.
 const OPEN_OFFSET = -144;
 const OPEN_THRESHOLD = -88;
-const DELETE_COLOR = "#FF3B30";
-const EDIT_COLOR = "#48484A";
+const DELETE_COLOR = THEME.swipe.destructive;
+const EDIT_COLOR = THEME.swipe.neutral;
 const ACTION_WIDTH = 72;
 
 /**
@@ -163,7 +163,7 @@ export default function FoodRow({
           />
           <p className="text-sm text-foreground truncate">{group.foodName}</p>
           {group.count > 1 && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
               {quantityLabel}
             </span>
           )}
@@ -278,7 +278,7 @@ export default function FoodRow({
             />
             <p className="text-sm text-foreground truncate">{group.foodName}</p>
             {group.count > 1 && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground tabular-nums">
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
                 {quantityLabel}
               </span>
             )}

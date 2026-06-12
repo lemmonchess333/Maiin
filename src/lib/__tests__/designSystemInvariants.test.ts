@@ -139,7 +139,7 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
   // Toggle primitive (which supplies the 44px floor + focus ring + haptic). A
   // hand-rolled <button role="switch"> bypasses all three. The Toggle primitive
   // itself legitimately carries the role, so it's excluded.
-  const SWITCH_BASELINE = 3; // PrivacySection + NotificationsSection (burn down in D16)
+  const SWITCH_BASELINE = 0; // fully burned down — every toggle is now the Toggle primitive. Floor is 0: any hand-rolled role=switch fails.
   it("hand-rolled role=switch toggles do not increase (use the Toggle primitive)", () => {
     const { total, byFile } = scan((src, rel) => {
       if (rel.endsWith("components/ui/Toggle.tsx")) return 0;
@@ -166,11 +166,14 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
     // satisfied across the app. A regression that shrank the md default would
     // silently break every default CTA's touch target — pin it. (sm is
     // intentionally 36px for inline filters; not pinned here.)
-    const button = readFileSync(
-      resolve(srcRoot, "components/ui/Button.tsx"),
+    // The SIZE_CLASSES map was extracted from Button.tsx into buttonClasses.ts
+    // (so non-button controls — e.g. nav <Link> CTAs — can share the canonical
+    // look via buttonClasses()); the md floor now lives there.
+    const buttonSource = readFileSync(
+      resolve(srcRoot, "components/ui/buttonClasses.ts"),
       "utf8"
     );
-    expect(button, "Button md size must keep min-h-[44px]").toMatch(
+    expect(buttonSource, "Button md size must keep min-h-[44px]").toMatch(
       /md:\s*"min-h-\[44px\]/
     );
   });
@@ -194,7 +197,7 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
   // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
   // wrong (proportional UI) font.
-  const MONO_BASELINE = 14; // burned down from 30 (stat displays, leaderboard, HR/PI/trial counters fixed + a spurious tabular-nums removed); scanner catches cn() classNames; dev tools excluded. Keep lowering as surfaces are touched.
+  const MONO_BASELINE = 0; // fully burned down from 30 → 14 → 0 (price/macro/usage/rank/date displays given font-mono; the FoodMealSection uppercase-label tabular-nums removed as spurious). Floor is 0: any tabular-nums without font-mono now fails. Keep numbers on the Archivo numeral font.
   it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
