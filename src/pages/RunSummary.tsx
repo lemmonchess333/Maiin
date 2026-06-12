@@ -1255,6 +1255,7 @@ export default function RunSummary() {
                 points={points}
                 currentPoint={null}
                 interactive={true}
+                distanceMarkers={true}
                 height="h-56"
                 paceColored={true}
                 avgPaceSecPerKm={avgPaceSeconds}
