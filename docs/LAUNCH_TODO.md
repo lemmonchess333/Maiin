@@ -531,17 +531,18 @@ Current icon is placeholder-tier per the GPT review. Lean into
 orbit / training-trajectory / stylised T / mountain-peak concept
 with the purple-orange gradient.
 
-### 23. Tests for the 4 launch-blocker commits
+### 23. Tests for the 4 launch-blocker commits — ✅ done
 
-Status update: **3 of 4 are now covered with concrete tests**:
+All four are now covered with concrete tests:
 
 - ✅ IAP verification rejects forged/invalid JWS and blocks writes (`functions/__tests__/applePurchase.test.js`)
 - ✅ deleteMyAccount ordering invariant pinned (Auth delete is last) (`functions/__tests__/accountDeletion.test.js`)
 - ✅ Haptics platform branching pinned (web vibrate vs Capacitor native path) (`src/lib/__tests__/haptic.test.ts`)
-
-Still missing:
-
-- ⚠️ App Check init path coverage (web/native branch + failure handling)
+- ✅ App Check init path coverage (`src/lib/__tests__/appCheck.test.ts`) — covers
+  both routing branches (native CustomProvider vs web ReCaptchaV3Provider),
+  unset-key / debug-token handling, AND failure handling on BOTH paths
+  (`initializeAppCheck` throwing → returns false, stays inactive), plus
+  idempotency. The earlier "still missing" note was stale; the coverage exists.
 
 ### 24. 151 exercise copy rewrite
 
