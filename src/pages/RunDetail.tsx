@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { Info, AlertTriangle, Navigation } from "lucide-react";
+import { Info, AlertTriangle, Navigation, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { shareRoute } from "@/lib/shareRoute";
+import { toast } from "@/lib/toast";
 import {
   describeRouteConfidence,
   type RouteQuality,
@@ -150,6 +152,14 @@ export default function RunDetail() {
 
   const handleShare = () => {
     setShareOpen(true);
+  };
+
+  const shareThisRoute = async () => {
+    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const name = `${label} · ${(run.distance / 1000).toFixed(1)} km`;
+    const result = await shareRoute(name, run.points);
+    if (result === "downloaded") toast.success("Route downloaded");
+    else if (result === "failed") toast.error("Couldn't share route");
   };
 
   return (
@@ -334,20 +344,30 @@ export default function RunDetail() {
           />
         </div>
 
-        {/* Re-run this route — starts a run that follows this run's GPS line
-            (RunMap ghost line + RouteFollowChip guidance). Only when there's a
-            real trace to follow. */}
+        {/* Re-run this route (follow its GPS line) + Share route (.gpx via the
+            native share sheet). Distinct from the header "Share" which shares a
+            visual card image. Only when there's a real trace. */}
         {hasGpsTrace && (
-          <Button
-            variant="sport-tinted"
-            className="w-full"
-            onClick={() =>
-              navigate("/run", { state: { followRoute: run.points } })
-            }
-          >
-            <Navigation className="size-4" aria-hidden="true" />
-            Re-run this route
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="sport-tinted"
+              className="flex-1"
+              onClick={() =>
+                navigate("/run", { state: { followRoute: run.points } })
+              }
+            >
+              <Navigation className="size-4" aria-hidden="true" />
+              Re-run this route
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => shareThisRoute()}
+            >
+              <Share2 className="size-4" aria-hidden="true" />
+              Share route
+            </Button>
+          </div>
         )}
 
         {/* Secondary stats */}
