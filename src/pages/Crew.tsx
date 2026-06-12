@@ -640,7 +640,7 @@ export default function Crew() {
                     >
                       <span
                         className={cn(
-                          "size-6 rounded-full flex items-center justify-center text-caption font-bold tabular-nums shrink-0",
+                          "size-6 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums shrink-0",
                           entry.rank === 1
                             ? "bg-primary/15 text-primary"
                             : "text-muted-foreground"
