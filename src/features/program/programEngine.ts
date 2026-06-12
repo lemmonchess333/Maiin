@@ -11,6 +11,7 @@ import type {
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
+import { balanceWeeklyVolume, volumeLandmark } from "./volumeModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -208,6 +209,7 @@ function makeExercise(
     plateauCount: existing?.plateauCount ?? 0,
     performanceHistory: existing?.performanceHistory ?? [],
     lastPerformance: existing?.lastPerformance ?? null,
+    isAccessory: false,
   };
 }
 
@@ -235,6 +237,7 @@ function makeAccessory(
     plateauCount: 0,
     performanceHistory: [],
     lastPerformance: null,
+    isAccessory: true,
   };
 }
 
@@ -879,6 +882,10 @@ export function generateProgram(
     default:
       workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
   }
+
+  // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
+  // landmark by growing their accessories (add-only, mains untouched).
+  workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
 
   return { splitType, workouts };
 }
