@@ -3,7 +3,11 @@
 # state after a merge wave.
 #
 # Trigger: every push to main (which is every PR merge).
-# For each open PR, calls `gh pr update-branch` — GitHub creates a
+# Scope: only PRs that are trying to merge — auto-merge enabled OR the
+# `auto-update` label. Updating EVERY open PR on every merge churned
+# in-progress branches needlessly (each update re-runs CI on a new head),
+# so the loop is gated to merge-intent PRs. For each of those, calls
+# `gh pr update-branch` — GitHub creates a
 # merge commit bringing main INTO the PR branch (not a rebase, so no
 # force-push, the PR's commit history is preserved). If there's a
 # genuine conflict, the API call fails for that PR and the user gets
@@ -34,10 +38,20 @@
 #   downstream workflows by themselves (and let pull_request workflows
 #   run without the automation-approval prompt), so we DON'T also
 #   dispatch (that would double-run CI). When the PAT is absent we fall
-#   back to GITHUB_TOKEN + the explicit dispatch above. Either way the
-#   PR ends up with fresh checks on its new head; the PAT path is just
-#   tidier (one run instead of push+dispatch) — it is NOT required to
-#   avoid the manual nudge anymore.
+#   back to GITHUB_TOKEN + the explicit dispatch above.
+#
+#   IMPORTANT (ruleset gotcha — cost us PR #1322): the GITHUB_TOKEN +
+#   workflow_dispatch fallback puts fresh checks on the new head, but a
+#   `workflow_dispatch` run is NOT the pull_request/push event a branch
+#   RULESET's required status check is bound to. So on a ruleset-gated
+#   repo the dispatched checks can go GREEN WITHOUT satisfying the gate —
+#   the PR sits "blocked / Required status check <name> is expected"
+#   indefinitely even though CI passed, and neither auto-merge nor a
+#   manual merge will fire. For ruleset-gated required checks the PAT is
+#   therefore effectively REQUIRED, not merely "tidier": only a
+#   non-GITHUB_TOKEN push produces ruleset-satisfying CI. The no-PAT path
+#   emits a run-time ::warning:: so this surfaces in the Actions log
+#   rather than as a silently-stuck PR.
 #
 # This workflow is intentionally tolerant — a single PR that fails to
 # update (conflict) doesn't abort the loop.
@@ -85,40 +99,49 @@ jobs:
           else
             export GH_TOKEN="$GITHUB_TOKEN"
             USE_DISPATCH=1
-            echo "AUTO_UPDATE_PR_BRANCHES_PAT not configured — using GITHUB_TOKEN and re-dispatching"
-            echo "the required checks explicitly (workflow_dispatch anti-loop exception)."
+            echo "::warning::AUTO_UPDATE_PR_BRANCHES_PAT not configured — falling back to GITHUB_TOKEN + workflow_dispatch re-runs. These re-dispatched checks run on the new head but may NOT satisfy a branch RULESET that requires the status check via the pull_request/push event: the PR can then show green checks yet stay unmergeable ('Required status check is expected'). For ruleset-gated required checks, set AUTO_UPDATE_PR_BRANCHES_PAT (a fine-grained PAT or GitHub App token with contents + pull-requests write) — a PAT-attributed push triggers genuine PR CI that the ruleset accepts, and this workflow then skips the dispatch entirely."
           fi
 
-          # List all open PRs targeting main.
-          PR_NUMBERS=$(gh pr list --repo "$REPO" --base main --state open --json number --jq '.[].number')
+          # Only auto-update PRs that are actually trying to merge: auto-merge
+          # enabled, OR carrying the `auto-update` label (an escape hatch for
+          # PRs that want to stay current without auto-merge). Updating EVERY
+          # open PR on every main push churned in-progress PRs needlessly —
+          # each update re-runs CI on a new head, and on ruleset-gated repos
+          # the GITHUB_TOKEN-dispatched checks (below) don't satisfy the gate,
+          # so a constantly-churned PR can sit green-but-unmergeable. Gating to
+          # merge-intent PRs keeps the branches that need to be current current,
+          # and leaves everything else alone until its author opts in.
+          PR_NUMBERS=$(gh pr list --repo "$REPO" --base main --state open \
+            --json number,autoMergeRequest,labels \
+            --jq '.[] | select(.autoMergeRequest != null or any(.labels[]?; .name == "auto-update")) | .number')
           if [ -z "$PR_NUMBERS" ]; then
-            echo "No open PRs to update."
+            echo "No PRs eligible for auto-update (none have auto-merge enabled or the 'auto-update' label)."
             exit 0
           fi
-          echo "Open PRs to update: $PR_NUMBERS"
+          echo "PRs eligible for auto-update (auto-merge on or 'auto-update' label): $PR_NUMBERS"
 
           for pr in $PR_NUMBERS; do
             echo ""
             echo "→ Updating PR #$pr"
 
-            # Capture the head SHA before, so we can tell whether the
-            # update actually moved it (vs already-up-to-date). We only
-            # re-dispatch checks when the head genuinely changed, to
-            # avoid needlessly re-running CI on every open PR per merge.
-            before=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
-
+            # `gh pr update-branch` exits NON-ZERO when there's nothing to do
+            # (already up to date) or it can't (conflict); it exits 0 ONLY when
+            # it actually created a merge commit (= the head genuinely moved).
+            # So exit 0 is itself the "head changed" signal — we DON'T compare
+            # headRefOid before/after, because the PR object's cached
+            # `headRefOid` lags the ref update and read stale right after the
+            # call, making every PR look "unchanged" and suppressing the
+            # re-dispatch entirely (the bug this replaces).
             if ! gh pr update-branch "$pr" --repo "$REPO"; then
-              echo "  (PR #$pr not updated — likely a conflict or already up-to-date)"
+              echo "  (PR #$pr not updated — conflict or already up-to-date; no re-dispatch)"
               continue
             fi
+            echo "  PR #$pr branch updated"
 
-            after=$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null || echo "")
-            if [ -z "$after" ] || [ "$before" = "$after" ]; then
-              echo "  (PR #$pr head unchanged — no re-dispatch needed)"
-              continue
-            fi
-            echo "  PR #$pr head moved: ${before:0:7} → ${after:0:7}"
-
+            # The update is a GITHUB_TOKEN push, so the anti-loop policy
+            # suppressed emulator-tests / CI on the new head. Re-dispatch them
+            # explicitly (workflow_dispatch is the documented exception) on the
+            # branch ref, which IS updated by the time update-branch returns.
             if [ "$USE_DISPATCH" = "1" ]; then
               branch=$(gh pr view "$pr" --repo "$REPO" --json headRefName --jq '.headRefName')
               for wf in $CHECK_WORKFLOWS; do

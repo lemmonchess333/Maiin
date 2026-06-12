@@ -8,8 +8,10 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
+import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
@@ -30,6 +32,7 @@ import {
   ArrowDown,
   Repeat,
   Trash2,
+  Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
@@ -850,15 +853,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         !isViewingHistory &&
         !phaseLocked && (
           <div className="pt-4 pb-2">
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={handleAdvanceWeek}
               disabled={advancing}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+              leftIcon={<FastForward className="size-4" />}
             >
-              <FastForward className="size-4" />
               {advancing ? "Advancing..." : "Advance to Next Week"}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -1154,6 +1156,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                         )}
                                       </p>
                                     )}
+                                    {ex.notes && (
+                                      <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+                                        <Info className="size-3 shrink-0 mt-0.5" />
+                                        <span>{ex.notes}</span>
+                                      </p>
+                                    )}
                                   </button>
                                 </SortableExerciseRow>
                               </div>
@@ -1240,6 +1248,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           when the user has no saved entries, so users who don't use
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
+      {/* Weekly sets-per-muscle volume summary (D-LIFT-1) — read-only, for the
+          viewed week, against goal landmarks. */}
+      {activeTab === "lift" && (
+        <WeeklyVolumeCard
+          workouts={displayWorkouts}
+          primaryGoal={profile?.primaryGoal}
+        />
+      )}
+
       {activeTab === "lift" && <SavedRoutinesSection />}
 
       {/* ── Context Menu ── */}

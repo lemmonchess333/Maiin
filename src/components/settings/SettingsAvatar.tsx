@@ -16,6 +16,7 @@ import { logger } from "@/lib/logger";
 import Avatar from "@/components/Avatar";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Settings header avatar + entry point for the profile-photo upload
@@ -179,12 +180,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         dismissible={!busy}
       >
         <div className="px-5 pb-6 pt-3 space-y-4">
-          <button
-            type="button"
-            onClick={handlePick}
-            disabled={!!busy}
-            className="w-full py-3 rounded-xl bg-primary-strong text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-60 transition-transform"
-          >
+          <Button fullWidth onClick={handlePick} disabled={!!busy}>
             {busy === "uploading" ? (
               <>
                 <Spinner size="sm" variant="inverse" label="Uploading photo" />
@@ -196,7 +192,7 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
                 {hasPhoto ? "Choose a new photo" : "Choose a photo"}
               </>
             )}
-          </button>
+          </Button>
 
           {hasPhoto && (
             <button
