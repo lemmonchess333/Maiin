@@ -203,7 +203,7 @@ export function StreakFlame({
       </motion.span>
       <span
         className={cn(
-          "text-sm font-bold tabular-nums leading-none text-foreground"
+          "text-sm font-bold font-mono tabular-nums leading-none text-foreground"
         )}
       >
         {display ?? streak}
