@@ -15,6 +15,7 @@
  */
 import { useState } from "react";
 import { Trash2, RotateCcw, Utensils } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { logger } from "@/lib/logger";
@@ -134,16 +135,16 @@ export default function SettingsRecentlyDeleted() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    className="flex-1"
                     onClick={() => handleRestore(meal)}
                     disabled={isPending}
                     aria-label={`Restore ${meal.foodName || "meal"}`}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px] px-3 rounded-lg bg-primary-strong text-primary-foreground text-xs font-semibold motion-safe:active:scale-[0.98] disabled:opacity-50"
+                    leftIcon={<RotateCcw className="size-3.5" />}
                   >
-                    <RotateCcw className="size-3.5" />
                     Restore
-                  </button>
+                  </Button>
                   <button
                     type="button"
                     onClick={() => handleHardDelete(meal)}

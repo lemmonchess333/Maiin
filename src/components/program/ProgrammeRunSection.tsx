@@ -108,6 +108,7 @@ import {
 } from "@/lib/runProgrammeViewModel";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   localDateString,
@@ -729,26 +730,25 @@ export default function ProgrammeRunSection({
                 Log race now
               </button>
               <div className="flex gap-2">
-                <button
-                  type="button"
+                <Button
+                  className="flex-1"
                   onClick={() => {
                     haptic();
                     navigate("/settings/training");
                   }}
-                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
                 >
                   Set next race
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="flex-1"
                   onClick={() => {
                     haptic();
                     navigate("/settings/training");
                   }}
-                  className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
                   Manage plan
-                </button>
+                </Button>
               </div>
             </div>
           }
@@ -764,16 +764,15 @@ export default function ProgrammeRunSection({
           title="Configure your runs"
           description={`You're on ${modeLabel.toLowerCase()} mode but no run days are scheduled. Open Configure plan to add them.`}
           action={
-            <button
-              type="button"
+            <Button
+              fullWidth
               onClick={() => {
                 haptic();
                 navigate("/settings/training");
               }}
-              className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
             >
               Configure plan
-            </button>
+            </Button>
           }
         />
       )}
@@ -788,23 +787,22 @@ export default function ProgrammeRunSection({
           description="What's next?"
           action={
             <div className="flex gap-2">
-              <button
-                type="button"
+              <Button
+                className="flex-1"
                 onClick={() => {
                   haptic();
                   navigate("/settings/training");
                 }}
-                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
               >
                 Set next race
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
                 onClick={handleSkipRecoveryEarly}
-                className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
                 Switch to structured
-              </button>
+              </Button>
             </div>
           }
         />

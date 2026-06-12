@@ -1442,16 +1442,16 @@ export default function WorkoutSession({
             }
             if (allSetsComplete) {
               return (
-                <button
-                  type="button"
+                <Button
+                  fullWidth
                   onClick={() => {
                     setCurrentExIndex((prev) => prev + 1);
                     setCurrentSetIndex(0);
                   }}
-                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                  leftIcon={<Play className="size-4" />}
                 >
-                  <Play className="size-4" /> Next Exercise →
-                </button>
+                  Next Exercise →
+                </Button>
               );
             }
             return (
