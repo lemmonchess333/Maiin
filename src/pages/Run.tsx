@@ -1209,6 +1209,7 @@ export default function Run() {
               currentPoint={gps.currentPoint}
               interactive={true}
               liveControls={true}
+              distanceMarkers={true}
               height="h-full"
               className="absolute inset-0"
             />

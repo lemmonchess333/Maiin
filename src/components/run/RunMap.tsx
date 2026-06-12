@@ -24,6 +24,12 @@ interface RunMapProps {
    * Requires `interactive` to actually receive gestures.
    */
   liveControls?: boolean;
+  /**
+   * Numbered waypoints at each whole kilometre along the route (matches the
+   * km-based run stats). Append-only — new markers appear as the run passes
+   * each km. Skipped while replaying (replayIndex set). Off by default.
+   */
+  distanceMarkers?: boolean;
 }
 
 const TILE_STYLES = {
@@ -42,6 +48,7 @@ export default function RunMap({
   darkMode = true,
   replayIndex,
   liveControls = false,
+  distanceMarkers = false,
 }: RunMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -59,6 +66,9 @@ export default function RunMap({
   const coneRef = useRef<HTMLDivElement | null>(null);
   const startMarkerRef = useRef<maplibregl.Marker | null>(null);
   const endMarkerRef = useRef<maplibregl.Marker | null>(null);
+  // Numbered km waypoints, indexed by km-1 (kmMarkersRef[0] = the 1km mark).
+  // Append-only: distance only grows live, and static routes compute once.
+  const kmMarkersRef = useRef<maplibregl.Marker[]>([]);
 
   // Initialize map — once per (interactive / paceColored / darkMode), NOT per
   // GPS fix. Listing points/currentPoint as deps re-ran init on every fix,
@@ -183,6 +193,9 @@ export default function RunMap({
       coneRef.current = null;
       startMarkerRef.current = null;
       endMarkerRef.current = null;
+      // km markers belonged to the removed map; drop the refs so a re-init
+      // (theme/mode change) rebuilds them instead of touching dead markers.
+      kmMarkersRef.current = [];
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init runs once; points/currentPoint read only for the initial centre, updates handled by the route effect below
   }, [interactive, paceColored, darkMode, liveControls]);
@@ -334,6 +347,34 @@ export default function RunMap({
           .addTo(map);
       }
 
+      // Numbered km waypoints. Append-only: figure out how many whole km the
+      // route now covers and add any markers we don't have yet (positions
+      // interpolated along the polyline). Skipped during replay.
+      if (distanceMarkers && replayIndex === undefined && visiblePoints.length > 1) {
+        let total = 0;
+        for (let i = 1; i < visiblePoints.length; i++) {
+          total += haversineQuick(
+            visiblePoints[i - 1].lat,
+            visiblePoints[i - 1].lon,
+            visiblePoints[i].lat,
+            visiblePoints[i].lon
+          );
+        }
+        const desired = Math.floor(total / 1000);
+        for (let km = kmMarkersRef.current.length + 1; km <= desired; km++) {
+          const pos = positionAtDistance(visiblePoints, km * 1000);
+          if (!pos) break;
+          const el = document.createElement("div");
+          el.style.cssText =
+            "display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.75);border:1.5px solid white;color:white;font-size:10px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;";
+          el.textContent = String(km);
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([pos[0], pos[1]])
+            .addTo(map);
+          kmMarkersRef.current.push(marker);
+        }
+      }
+
       // End marker (for post-run, hidden during replay)
       if (replayIndex !== undefined && endMarkerRef.current) {
         endMarkerRef.current.remove();
@@ -364,7 +405,14 @@ export default function RunMap({
     return () => {
       map.off("load", updateRoute);
     };
-  }, [points, currentPoint, paceColored, avgPaceSecPerKm, replayIndex]);
+  }, [
+    points,
+    currentPoint,
+    paceColored,
+    avgPaceSecPerKm,
+    replayIndex,
+    distanceMarkers,
+  ]);
 
   const recenter = () => {
     followingRef.current = true;
@@ -442,6 +490,35 @@ function haversineQuick(
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Interpolate the [lon, lat] a given distance (metres) along a polyline.
+ * Returns null if the route is shorter than `target`. Used to place the
+ * numbered km waypoints exactly on the route line, not at a recorded fix.
+ */
+function positionAtDistance(
+  pts: GPSPoint[],
+  target: number
+): [number, number] | null {
+  let cum = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const seg = haversineQuick(
+      pts[i - 1].lat,
+      pts[i - 1].lon,
+      pts[i].lat,
+      pts[i].lon
+    );
+    if (cum + seg >= target) {
+      const frac = seg > 0 ? (target - cum) / seg : 0;
+      return [
+        pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * frac,
+        pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * frac,
+      ];
+    }
+    cum += seg;
+  }
+  return null;
 }
 
 /** Initial bearing from point 1 → point 2, degrees clockwise from north. */
