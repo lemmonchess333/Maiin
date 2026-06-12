@@ -50,8 +50,8 @@ interface FoodRowProps {
 // previous saturated #EF4444 / slate #4B5563 pair.
 const OPEN_OFFSET = -144;
 const OPEN_THRESHOLD = -88;
-const DELETE_COLOR = "#FF3B30";
-const EDIT_COLOR = "#48484A";
+const DELETE_COLOR = THEME.swipe.destructive;
+const EDIT_COLOR = THEME.swipe.neutral;
 const ACTION_WIDTH = 72;
 
 /**

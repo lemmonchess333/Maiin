@@ -42,9 +42,9 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 // purple, the number stays purple, and "over" is communicated by the
 // tertiary "kcal over" label + the overshoot arc in a darker purple shade.
 const COLOR_RING = THEME.brand; // brand purple
-const COLOR_RING_LIGHT = "#A8A2EF"; // lighter stop for the arc gradient
-const COLOR_RING_DEEP = "#5D55C9"; // deeper stop for the overshoot arc
-const COLOR_TRACK = "rgba(123, 114, 233, 0.10)";
+const COLOR_RING_LIGHT = THEME.calorieRing.light; // lighter arc gradient stop
+const COLOR_RING_DEEP = THEME.calorieRing.deep; // deeper overshoot arc stop
+const COLOR_TRACK = THEME.iconBg; // brand tint (rgba(123,114,233,0.10))
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
 
