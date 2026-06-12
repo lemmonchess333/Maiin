@@ -7,7 +7,12 @@
  * the bug this whole change exists to avoid.)
  */
 import { describe, it, expect } from "vitest";
-import { buildCurrentChallenges } from "../lib/challengeDefs";
+import {
+  buildCurrentChallenges,
+  seasonFor,
+  seasonStartUTC,
+  seasonEndUTC,
+} from "../lib/challengeDefs";
 
 // 2026-06-01 is a Monday (UTC); June is in the Summer season window.
 const MON_JUN_1 = new Date(Date.UTC(2026, 5, 1, 12, 0, 0));
@@ -122,5 +127,51 @@ describe("buildCurrentChallenges", () => {
     const a = buildCurrentChallenges(MON_JUN_1);
     const b = buildCurrentChallenges(MON_JUN_1);
     expect(a.map((d) => d.id)).toEqual(b.map((d) => d.id));
+  });
+});
+
+// Direct coverage of the season helpers (previously exercised only through
+// buildCurrentChallenges). The month-range and year-boundary edges are where an
+// off-by-one would silently mis-season the global challenge.
+const at = (y, m, d = 15) => new Date(Date.UTC(y, m, d, 12, 0, 0));
+
+describe("seasonFor", () => {
+  it("maps each month to its season + metric, including the range edges", () => {
+    const cases = [
+      [0, "Winter Bulk", "total_volume"], // Jan
+      [1, "Winter Bulk", "total_volume"], // Feb
+      [2, "Spring Reset", "streak_days"], // Mar (spring starts)
+      [4, "Spring Reset", "streak_days"], // May (spring ends)
+      [5, "Summer Shred", "combined_score"], // Jun (summer starts)
+      [7, "Summer Shred", "combined_score"], // Aug (summer ends)
+      [8, "Autumn Push", "hybrid_score"], // Sep (autumn starts)
+      [10, "Autumn Push", "hybrid_score"], // Nov (autumn ends)
+      [11, "Winter Bulk", "total_volume"], // Dec (winter starts)
+    ];
+    for (const [month, name, metric] of cases) {
+      const s = seasonFor(at(2026, month));
+      expect(s.name, `month ${month}`).toBe(name);
+      expect(s.metric, `month ${month}`).toBe(metric);
+    }
+  });
+});
+
+describe("seasonStartUTC / seasonEndUTC", () => {
+  it("bounds a mid-year season to its own calendar quarter", () => {
+    expect(seasonStartUTC(at(2026, 5)).getTime()).toBe(Date.UTC(2026, 5, 1)); // Jun→Jun 1
+    expect(seasonEndUTC(at(2026, 5)).getTime()).toBe(Date.UTC(2026, 8, 1)); // →Sep 1
+    expect(seasonStartUTC(at(2026, 2)).getTime()).toBe(Date.UTC(2026, 2, 1)); // Mar→Mar 1
+    expect(seasonEndUTC(at(2026, 2)).getTime()).toBe(Date.UTC(2026, 5, 1)); // →Jun 1
+  });
+
+  it("spans the year boundary for Winter in December (end is NEXT year)", () => {
+    expect(seasonStartUTC(at(2026, 11)).getTime()).toBe(Date.UTC(2026, 11, 1)); // Dec 1 2026
+    expect(seasonEndUTC(at(2026, 11)).getTime()).toBe(Date.UTC(2027, 2, 1)); // Mar 1 2027
+  });
+
+  it("spans the year boundary for Winter in January/February (start is PREVIOUS year)", () => {
+    expect(seasonStartUTC(at(2026, 0)).getTime()).toBe(Date.UTC(2025, 11, 1)); // Dec 1 2025
+    expect(seasonEndUTC(at(2026, 0)).getTime()).toBe(Date.UTC(2026, 2, 1)); // Mar 1 2026
+    expect(seasonStartUTC(at(2026, 1)).getTime()).toBe(Date.UTC(2025, 11, 1)); // Feb → still Dec 1 2025
   });
 });
