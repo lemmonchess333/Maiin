@@ -1213,7 +1213,8 @@ export function useProgram() {
       dayIndex: number,
       exerciseIndex: number,
       actualReps: number,
-      actualWeight: number
+      actualWeight: number,
+      actualRpe?: number
     ) => {
       if (!programState) return;
 
@@ -1232,7 +1233,8 @@ export function useProgram() {
           actualReps,
           actualWeight,
           programState.goal,
-          settings.microloading
+          settings.microloading,
+          actualRpe
         );
       } else {
         updatedExercise = {
