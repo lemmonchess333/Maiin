@@ -11,7 +11,11 @@ import type {
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
-import { balanceWeeklyVolume, volumeLandmark } from "./volumeModel";
+import {
+  balanceWeeklyVolume,
+  balancePushPull,
+  volumeLandmark,
+} from "./volumeModel";
 import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
@@ -888,6 +892,8 @@ export function generateProgram(
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
+  // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
+  workouts = balancePushPull(workouts);
   // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
   // (no-op without a load context, or for lifts with logged history).
   if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
