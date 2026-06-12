@@ -31,13 +31,20 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 const srcRoot = resolve(repoRoot, "src");
 
-/** Every .tsx under src (components + pages + features), tests excluded. */
+/** Every .tsx under src (components + pages + features), tests excluded.
+ *  `pages/dev/*` is excluded too — those are internal dev-only tools (e.g. the
+ *  font bake-off), not shipped product surface subject to the DS invariants. */
 function tsxFiles(dir: string): string[] {
   const out: string[] = [];
   for (const name of readdirSync(dir)) {
     const full = resolve(dir, name);
     if (statSync(full).isDirectory()) {
-      if (name === "node_modules" || name === "__tests__" || name === "test")
+      if (
+        name === "node_modules" ||
+        name === "__tests__" ||
+        name === "test" ||
+        name === "dev"
+      )
         continue;
       out.push(...tsxFiles(full));
       continue;
@@ -49,8 +56,15 @@ function tsxFiles(dir: string): string[] {
 
 const FILES = tsxFiles(srcRoot);
 
-/** Collect every className string literal/template chunk in a file (handles
- *  multi-line className={`…`} and className="…"). Returns the raw inner text. */
+/** Collect every className UNIT in a file — each unit is the resolved class
+ *  string for one element. Handles `className="…"`, `className='…'`, multi-line
+ *  `className={`…`}`, AND `className={cn(…)}` / clsx / twMerge (the dominant
+ *  pattern here — a per-element check would miss it, which is how the
+ *  StreakFlame/RestTimer mono gaps hid). For a cn() call, all string-literal
+ *  segments are concatenated into one unit so `font-mono` in one arg covers
+ *  `tabular-nums` in another (no false positive). Inline `style` objects
+ *  (`fontVariantNumeric: "tabular-nums"`) are deliberately NOT scanned — that's
+ *  a different font mechanism where `font-mono` doesn't apply. */
 function classNameChunks(src: string): string[] {
   const chunks: string[] = [];
   // className="..." and className='...'
@@ -60,6 +74,16 @@ function classNameChunks(src: string): string[] {
   // className={`...`} (template literal — capture the whole literal body)
   for (const m of src.matchAll(/className=\{`([\s\S]*?)`\}/g)) {
     chunks.push(m[1]);
+  }
+  // className={cn(...)} / clsx(...) / twMerge(...) — concat every string-literal
+  // segment in the call body into one unit (non-greedy to the first `)}`).
+  for (const m of src.matchAll(
+    /className=\{(?:cn|clsx|twMerge)\(([\s\S]*?)\)\}/g
+  )) {
+    let combined = "";
+    for (const s of m[1].matchAll(/[`"']([^`"']*)[`"']/g))
+      combined += " " + s[1];
+    chunks.push(combined);
   }
   return chunks;
 }
@@ -136,6 +160,32 @@ describe("D15 · DS invariant — touch-target primitive (44px floor)", () => {
       /size-11|min-h-\[44|h-11|h-12|h-14|min-h-11|min-h-12/.test(toggle)
     ).toBe(true);
   });
+
+  it("the Button primitive's DEFAULT (md) size keeps the 44px floor", () => {
+    // The shared Button is how the "every CTA clears 44px" invariant is actually
+    // satisfied across the app. A regression that shrank the md default would
+    // silently break every default CTA's touch target — pin it. (sm is
+    // intentionally 36px for inline filters; not pinned here.)
+    const button = readFileSync(
+      resolve(srcRoot, "components/ui/Button.tsx"),
+      "utf8"
+    );
+    expect(button, "Button md size must keep min-h-[44px]").toMatch(
+      /md:\s*"min-h-\[44px\]/
+    );
+  });
+
+  it("the IconButton primitive's DEFAULT (md) size keeps the 44px floor", () => {
+    // size-11 = 44px square. Same cascade risk as Button — header chrome / close
+    // buttons all rely on this default. (sm is intentionally size-9; not pinned.)
+    const iconButton = readFileSync(
+      resolve(srcRoot, "components/ui/IconButton.tsx"),
+      "utf8"
+    );
+    expect(iconButton, "IconButton md size must keep size-11 (44px)").toMatch(
+      /md:\s*"size-11"/
+    );
+  });
 });
 
 describe("D15 · DS invariant — numeric displays use the mono numeral font", () => {
@@ -144,7 +194,7 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
   // also carry `font-mono` (the Archivo numeral font; CLAUDE.md). `tabular-nums`
   // WITHOUT `font-mono` is the week-strip-bug shape: aligned columns in the
   // wrong (proportional UI) font.
-  const MONO_BASELINE = 30; // grandfathered; burn down when each surface is touched
+  const MONO_BASELINE = 14; // burned down from 30 (stat displays, leaderboard, HR/PI/trial counters fixed + a spurious tabular-nums removed); scanner catches cn() classNames; dev tools excluded. Keep lowering as surfaces are touched.
   it("tabular-nums classes also carry font-mono (no proportional-font numbers)", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
