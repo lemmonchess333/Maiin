@@ -97,7 +97,7 @@ export default function RestTimerRing({
                 onChangeTarget(t);
               }}
               className={cn(
-                "min-h-11 px-3 rounded text-xs font-medium tabular-nums transition-colors",
+                "min-h-11 px-3 rounded text-xs font-medium font-mono tabular-nums transition-colors",
                 restTarget === t
                   ? "text-white"
                   : "bg-muted text-muted-foreground"

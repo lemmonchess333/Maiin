@@ -1292,7 +1292,7 @@ export default function WorkoutSession({
                                 updateSetRPE(currentExIndex, setIdx, rpe);
                               }}
                               className={cn(
-                                "min-h-11 px-2.5 rounded text-xs tabular-nums transition-colors",
+                                "min-h-11 px-2.5 rounded text-xs font-mono tabular-nums transition-colors",
                                 set.rpe === rpe
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-muted text-muted-foreground hover:text-foreground"
