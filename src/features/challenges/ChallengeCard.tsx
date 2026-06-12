@@ -266,7 +266,7 @@ export function ChallengeCard({
                   <span className="flex-1 truncate text-foreground">
                     {p.displayName || "Athlete"}
                   </span>
-                  <span className="font-medium tabular-nums">
+                  <span className="font-medium font-mono tabular-nums">
                     {formatChallengeValue(challenge.metric, p.currentValue)}
                   </span>
                   {tier && (
@@ -508,7 +508,7 @@ export function ChallengeCard({
                     <span className="flex-1 truncate text-foreground">
                       {p.displayName || "Athlete"}
                     </span>
-                    <span className="font-medium tabular-nums">
+                    <span className="font-medium font-mono tabular-nums">
                       {formatChallengeValue(challenge.metric, p.currentValue)}
                     </span>
                     {tier && (
