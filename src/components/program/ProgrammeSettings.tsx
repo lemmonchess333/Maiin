@@ -52,6 +52,7 @@ import { toast } from "@/lib/toast";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
+import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { THEME } from "@/lib/theme";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
@@ -382,7 +383,7 @@ export default function ProgrammeSettings({
   const saved = useMemo(
     () => ({
       primaryGoal: (profile.primaryGoal as PrimaryGoal) ?? "hypertrophy",
-      nutritionPhase: (profile.program?.goal as Goal) ?? "recomp",
+      nutritionPhase: getNutritionPhase(profile),
       experience: (profile.experience as Experience) ?? "intermediate",
       liftDays: profile.weeklyWorkoutsTarget ?? 4,
       preferredSplit: (VALID_SPLIT_CHOICES as readonly string[]).includes(
