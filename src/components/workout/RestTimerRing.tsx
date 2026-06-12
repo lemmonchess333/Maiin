@@ -63,7 +63,7 @@ export default function RestTimerRing({
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <p
             className={cn(
-              "text-3xl font-extrabold tabular-nums tracking-tight",
+              "text-3xl font-extrabold font-mono tabular-nums tracking-tight",
               isOver ? "text-green-400" : "text-foreground"
             )}
           >
