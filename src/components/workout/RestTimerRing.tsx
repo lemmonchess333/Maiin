@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import { haptic } from "@/lib/haptic";
 
 interface RestTimerRingProps {
   restSeconds: number;
@@ -78,8 +79,11 @@ export default function RestTimerRing({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={onStop}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-muted text-foreground text-xs font-medium"
+          onClick={() => {
+            haptic("light");
+            onStop();
+          }}
+          className="flex items-center justify-center gap-1 min-h-11 px-3.5 rounded-lg bg-muted text-foreground text-xs font-medium"
         >
           <RotateCcw className="size-3" /> Skip
         </button>
@@ -88,9 +92,12 @@ export default function RestTimerRing({
             <button
               type="button"
               key={t}
-              onClick={() => onChangeTarget(t)}
+              onClick={() => {
+                haptic("light");
+                onChangeTarget(t);
+              }}
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition-colors",
+                "min-h-11 px-3 rounded text-xs font-medium font-mono tabular-nums transition-colors",
                 restTarget === t
                   ? "text-white"
                   : "bg-muted text-muted-foreground"
