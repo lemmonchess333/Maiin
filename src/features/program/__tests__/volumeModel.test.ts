@@ -3,6 +3,7 @@ import {
   weeklyVolumeByMuscle,
   volumeLandmark,
   classifyVolume,
+  balanceWeeklyVolume,
 } from "../volumeModel";
 import type { ProgramExercise, WorkoutDay } from "../programTypes";
 
@@ -95,6 +96,103 @@ describe("weeklyVolumeByMuscle", () => {
     // Chest before Shoulders before Triceps per CANONICAL_MUSCLE_ORDER
     expect(order.indexOf("Chest")).toBeLessThan(order.indexOf("Shoulders"));
     expect(order.indexOf("Shoulders")).toBeLessThan(order.indexOf("Triceps"));
+  });
+});
+
+describe("balanceWeeklyVolume (D-LIFT-1 active)", () => {
+  const hyper = volumeLandmark("hypertrophy"); // low 12, high 20
+
+  it("grows an under-dosed muscle's accessory toward the landmark (capped)", () => {
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          // main back row — untouched
+          ex({
+            exerciseId: "custom-row",
+            movementCategory: "horizontal_pull",
+            sets: 4,
+            isAccessory: false,
+          }),
+          // biceps accessory, badly under-dosed (2 sets vs low 12)
+          ex({
+            exerciseId: "custom-curl",
+            movementCategory: "arms_biceps",
+            sets: 2,
+            isAccessory: true,
+          }),
+        ]),
+      ],
+      hyper
+    );
+    const exs = out[0].exercises;
+    expect(exs[0].sets).toBe(4); // main untouched
+    expect(exs[1].sets).toBe(5); // accessory grown 2 → ACCESSORY_SET_CAP (5)
+  });
+
+  it("never touches main lifts", () => {
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          ex({
+            exerciseId: "custom-curl",
+            movementCategory: "arms_biceps",
+            sets: 3,
+            isAccessory: false, // a MAIN biceps lift
+          }),
+        ]),
+      ],
+      hyper
+    );
+    expect(out[0].exercises[0].sets).toBe(3); // unchanged despite under-dosed
+  });
+
+  it("leaves legacy exercises (no isAccessory flag) unchanged", () => {
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          ex({
+            exerciseId: "custom-curl",
+            movementCategory: "arms_biceps",
+            sets: 2,
+            // isAccessory undefined (legacy)
+          }),
+        ]),
+      ],
+      hyper
+    );
+    expect(out[0].exercises[0].sets).toBe(2);
+  });
+
+  it("does not grow a muscle already at/above the landmark low", () => {
+    const out = balanceWeeklyVolume(
+      [
+        day([
+          ex({
+            exerciseId: "custom-curl",
+            movementCategory: "arms_biceps",
+            sets: 13, // already ≥ low (12)
+            isAccessory: true,
+          }),
+        ]),
+      ],
+      hyper
+    );
+    expect(out[0].exercises[0].sets).toBe(13); // add-only; nothing to do
+  });
+
+  it("does not mutate the input workouts", () => {
+    const input = [
+      day([
+        ex({
+          exerciseId: "custom-curl",
+          movementCategory: "arms_biceps",
+          sets: 2,
+          isAccessory: true,
+        }),
+      ]),
+    ];
+    balanceWeeklyVolume(input, hyper);
+    expect(input[0].exercises[0].sets).toBe(2); // original untouched
   });
 });
 
