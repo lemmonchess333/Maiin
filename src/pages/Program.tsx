@@ -11,6 +11,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
+import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
@@ -1247,6 +1248,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           when the user has no saved entries, so users who don't use
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
+      {/* Weekly sets-per-muscle volume summary (D-LIFT-1) — read-only, for the
+          viewed week, against goal landmarks. */}
+      {activeTab === "lift" && (
+        <WeeklyVolumeCard
+          workouts={displayWorkouts}
+          primaryGoal={profile?.primaryGoal}
+        />
+      )}
+
       {activeTab === "lift" && <SavedRoutinesSection />}
 
       {/* ── Context Menu ── */}
