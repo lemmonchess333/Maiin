@@ -138,6 +138,9 @@
   --glass-bg: rgba(255, 255, 255, 0.97);
   --glass-border: rgba(0, 0, 0, 0.08);
   --surface-solid: #ffffff;
+  /* Bright specular hairline along the nav's top edge — the cue that makes
+     the frosted bar read as GLASS rather than a flat translucent strip. */
+  --nav-frost-highlight: rgba(255, 255, 255, 0.85);
   /* Semantic status colours — light mode.
      Destructive is a darker red than the legacy #e04040 because that
      value was borderline for white text on the filled surface; this
@@ -187,6 +190,8 @@
   --glass-bg: rgba(20, 20, 24, 0.97);
   --glass-border: rgba(255, 255, 255, 0.07);
   --surface-solid: #1c1c20;
+  /* Fainter sheen on dark glass. */
+  --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
