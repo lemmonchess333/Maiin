@@ -54,6 +54,7 @@ import {
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
+import { loadContextFrom } from "./startingLoads";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -74,6 +75,11 @@ export interface PlanBuilderInput {
   nutritionPhase: Goal;
 
   experience: "beginner" | "intermediate" | "advanced";
+
+  /** Bodyweight (kg) + sex — seed bodyweight-relative cold-start starting loads
+   *  (D-LIFT-5). Optional: when absent the engine keeps its hardcoded defaults. */
+  bodyweightKg?: number;
+  sex?: string;
 
   /** Number of lift days the user wants per week. */
   liftDays: number;
@@ -197,7 +203,12 @@ function buildLiftProgram(input: PlanBuilderInput): {
           input.nutritionPhase,
           input.liftDays,
           existing,
-          input.primaryGoal
+          input.primaryGoal,
+          loadContextFrom({
+            weightKg: input.bodyweightKg,
+            experience: input.experience,
+            sex: input.sex,
+          })
         );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
