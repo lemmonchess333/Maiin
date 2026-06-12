@@ -6,7 +6,8 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "secrets:check": "node scripts/check-secrets.js"
   },
   "dependencies": {
     "@apple/app-store-server-library": "^3.1.0",
