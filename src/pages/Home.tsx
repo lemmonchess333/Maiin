@@ -767,12 +767,14 @@ export default function Home() {
               "Trial ends tomorrow"
             ) : trialDaysLeft === 2 ? (
               <>
-                Last <span className="tabular-nums">2</span> days of trial
+                Last <span className="font-mono tabular-nums">2</span> days of
+                trial
               </>
             ) : (
               <>
                 Pro trial &middot;{" "}
-                <span className="tabular-nums">{trialDaysLeft}</span> days left
+                <span className="font-mono tabular-nums">{trialDaysLeft}</span>{" "}
+                days left
               </>
             )}
           </span>
