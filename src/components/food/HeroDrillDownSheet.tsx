@@ -56,7 +56,7 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
           style={{ width: `${pct}%`, background: color }}
         />
       </div>
-      <p className="text-caption text-muted-foreground tabular-nums">
+      <p className="text-caption text-muted-foreground font-mono tabular-nums">
         {remaining > 0
           ? `${formatMacro(remaining)}g left`
           : `${formatMacro(consumed - target)}g over`}
@@ -132,7 +132,7 @@ export default function HeroDrillDownSheet({
               }}
             />
           </div>
-          <p className="text-xs text-muted-foreground tabular-nums">
+          <p className="text-xs text-muted-foreground font-mono tabular-nums">
             {remaining > 0
               ? `${formatCalories(remaining)} ${CALORIE_UNIT} left`
               : `${formatCalories(-remaining)} ${CALORIE_UNIT} over target`}
