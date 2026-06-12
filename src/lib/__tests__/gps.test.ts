@@ -9,6 +9,7 @@ import {
   totalElevationGain,
   totalDistance,
   estimateRunCalories,
+  detectBestEfforts,
   KalmanFilter,
   toGPX,
   type GPSPoint,
@@ -579,5 +580,90 @@ describe("toGPX", () => {
     expect(gpx).toContain('<trkpt lat="51.5" lon="-0.1">');
     expect(gpx).toContain("<ele>10.0</ele>");
     expect(gpx).toContain("<time>1970-01-01T00:00:00.000Z</time>");
+  });
+});
+
+// ── detectBestEfforts ────────────────────────
+// Sliding-window fastest-segment detector (1K/5K/10K) used by RunSummary's PR
+// surface. Previously untested. Builds paths along a meridian (lon 0) so each
+// segment's metres come from the same haversine the function uses.
+
+/** N points stepping `latStep`° north every `dtSec` seconds (constant pace). */
+function meridianPath(n: number, latStep: number, dtSec: number): GPSPoint[] {
+  const pts: GPSPoint[] = [];
+  for (let i = 0; i < n; i++) {
+    pts.push(
+      makePoint({ lat: i * latStep, lon: 0, timestamp: i * dtSec * 1000 })
+    );
+  }
+  return pts;
+}
+
+describe("detectBestEfforts", () => {
+  it("returns nothing when the run is shorter than the smallest target", () => {
+    const pts = meridianPath(5, 0.001, 10); // ~445m
+    expect(detectBestEfforts(pts, 500)).toEqual([]);
+  });
+
+  it("returns [] for an empty track even if the param claims distance", () => {
+    expect(detectBestEfforts([], 5000)).toEqual([]);
+  });
+
+  it("detects a 1K effort on a run just past 1km, with a sane time", () => {
+    // 12 points × ~111m ≈ 1.2km at 10s/segment (constant pace), ~110s total.
+    const pts = meridianPath(12, 0.001, 10);
+    const dist = totalDistance(pts);
+    expect(dist).toBeGreaterThan(1000);
+
+    const efforts = detectBestEfforts(pts, dist);
+    expect(efforts.map((e) => e.label)).toEqual(["1K"]);
+    expect(efforts[0].distance).toBe(1000);
+    // The fastest 1000m window is ~82% of the ~110s total — comfortably in band.
+    expect(efforts[0].time).toBeGreaterThan(60);
+    expect(efforts[0].time).toBeLessThanOrEqual(110);
+  });
+
+  it("does not report a distance the param claims but the GPS track never covers", () => {
+    // Param says 6km, but the track is only ~1.2km — the inner accDist>=target
+    // gate for 5K is never met, so only 1K comes back (guards the two-gate logic).
+    const pts = meridianPath(12, 0.001, 10);
+    expect(detectBestEfforts(pts, 6000).map((e) => e.label)).toEqual(["1K"]);
+  });
+
+  it("reports 1K and 5K (not 10K) on a ~6km track", () => {
+    const pts = meridianPath(55, 0.001, 10); // ~6km
+    const dist = totalDistance(pts);
+    expect(dist).toBeGreaterThan(5000);
+    expect(dist).toBeLessThan(10000);
+
+    const labels = detectBestEfforts(pts, dist).map((e) => e.label);
+    expect(labels).toContain("1K");
+    expect(labels).toContain("5K");
+    expect(labels).not.toContain("10K");
+  });
+
+  it("picks the FASTEST 1K window, not the average (the whole point of a best effort)", () => {
+    // ~1.2km slow (20s/seg) followed by a continuous ~1.2km fast block (4s/seg).
+    // The best 1K must be drawn from the fast block, far below any slow window.
+    const slow = meridianPath(12, 0.001, 20); // i=0..11, lat 0..0.011, t 0..220s
+    const t0 = 11 * 20 * 1000;
+    const fast: GPSPoint[] = [];
+    for (let i = 1; i <= 12; i++) {
+      fast.push(
+        makePoint({
+          lat: (11 + i) * 0.001,
+          lon: 0,
+          timestamp: t0 + i * 4 * 1000,
+        })
+      );
+    }
+    const pts = [...slow, ...fast];
+
+    const oneK = detectBestEfforts(pts, totalDistance(pts)).find(
+      (e) => e.label === "1K"
+    );
+    expect(oneK).toBeDefined();
+    // Fast block ≈ 111m/4s → 1000m ≈ 36s; the slow-window 1K would be ~180s.
+    expect(oneK!.time).toBeLessThan(60);
   });
 });
