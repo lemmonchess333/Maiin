@@ -36,6 +36,92 @@ export function bearing(
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
 }
 
+export interface RouteProgress {
+  /** Perpendicular distance (m) from the position to the nearest route point. */
+  offRouteMeters: number;
+  /** Distance (m) along the route to the nearest point (how far you've got). */
+  coveredMeters: number;
+  /** Route distance (m) still ahead. */
+  remainingMeters: number;
+  /** Total route length (m). */
+  totalMeters: number;
+  /** coveredMeters / totalMeters, 0..1. */
+  fraction: number;
+}
+
+/** Total length of a route polyline in metres. */
+export function routeTotalDistance(route: GPSPoint[]): number {
+  let total = 0;
+  for (let i = 1; i < route.length; i++) {
+    total += haversine(
+      route[i - 1].lat,
+      route[i - 1].lon,
+      route[i].lat,
+      route[i].lon
+    );
+  }
+  return total;
+}
+
+/**
+ * Progress of a position against a target route: how far off the line you are,
+ * how much you've covered, and how much remains. Used by the follow-a-route
+ * guidance (off-route alert + distance remaining).
+ *
+ * Uses a local equirectangular projection (metres) anchored at the route's
+ * first point for the point-to-segment maths — accurate at running scale
+ * (sub-metre over a few km), and far cheaper than per-segment haversine.
+ * Returns null for a degenerate route (<2 points).
+ */
+export function routeProgress(
+  route: GPSPoint[],
+  lat: number,
+  lon: number
+): RouteProgress | null {
+  if (route.length < 2) return null;
+
+  const lat0 = (route[0].lat * Math.PI) / 180;
+  const mPerLat = 110540;
+  const mPerLon = 111320 * Math.cos(lat0);
+  const px = lon * mPerLon;
+  const py = lat * mPerLat;
+
+  let best = Infinity;
+  let bestCovered = 0;
+  let cum = 0;
+  for (let i = 1; i < route.length; i++) {
+    const ax = route[i - 1].lon * mPerLon;
+    const ay = route[i - 1].lat * mPerLat;
+    const bx = route[i].lon * mPerLon;
+    const by = route[i].lat * mPerLat;
+    const dx = bx - ax;
+    const dy = by - ay;
+    const segLen2 = dx * dx + dy * dy;
+    const t =
+      segLen2 > 0
+        ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / segLen2))
+        : 0;
+    const cx = ax + t * dx;
+    const cy = ay + t * dy;
+    const d = Math.hypot(px - cx, py - cy);
+    const segLen = Math.sqrt(segLen2);
+    if (d < best) {
+      best = d;
+      bestCovered = cum + t * segLen;
+    }
+    cum += segLen;
+  }
+
+  const totalMeters = cum;
+  return {
+    offRouteMeters: best,
+    coveredMeters: bestCovered,
+    remainingMeters: Math.max(0, totalMeters - bestCovered),
+    totalMeters,
+    fraction: totalMeters > 0 ? bestCovered / totalMeters : 0,
+  };
+}
+
 export class KalmanFilter {
   private lat = 0;
   private lon = 0;

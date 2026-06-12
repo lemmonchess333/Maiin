@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   haversine,
   bearing,
+  routeProgress,
+  routeTotalDistance,
   isValidReading,
   calculatePace,
   rollingPace,
@@ -97,6 +99,65 @@ describe("bearing", () => {
     const b = bearing(51.5, -0.1, 51.49, -0.11);
     expect(b).toBeGreaterThanOrEqual(0);
     expect(b).toBeLessThan(360);
+  });
+});
+
+// ── routeTotalDistance / routeProgress ───────
+
+describe("routeTotalDistance", () => {
+  it("sums segment lengths (~222m for two 0.001° lat steps)", () => {
+    const route = [
+      makePoint({ lat: 51.5, lon: -0.1 }),
+      makePoint({ lat: 51.501, lon: -0.1 }),
+      makePoint({ lat: 51.502, lon: -0.1 }),
+    ];
+    const total = routeTotalDistance(route);
+    expect(total).toBeGreaterThan(215);
+    expect(total).toBeLessThan(230);
+  });
+
+  it("is 0 for a single point", () => {
+    expect(routeTotalDistance([makePoint({ lat: 51.5, lon: -0.1 })])).toBe(0);
+  });
+});
+
+describe("routeProgress", () => {
+  const route = [
+    makePoint({ lat: 51.5, lon: -0.1 }),
+    makePoint({ lat: 51.501, lon: -0.1 }),
+    makePoint({ lat: 51.502, lon: -0.1 }),
+  ];
+
+  it("returns null for a degenerate route (<2 points)", () => {
+    expect(routeProgress([makePoint({ lat: 51.5, lon: -0.1 })], 51.5, -0.1)).toBeNull();
+  });
+
+  it("on-route start: ~0 off-route, ~0 covered, full remaining", () => {
+    const p = routeProgress(route, 51.5, -0.1)!;
+    expect(p.offRouteMeters).toBeLessThan(2);
+    expect(p.coveredMeters).toBeLessThan(2);
+    expect(p.remainingMeters).toBeCloseTo(p.totalMeters, 0);
+    expect(p.fraction).toBeLessThan(0.02);
+  });
+
+  it("on-route midpoint: ~0 off-route, ~half covered", () => {
+    const p = routeProgress(route, 51.501, -0.1)!;
+    expect(p.offRouteMeters).toBeLessThan(2);
+    expect(p.fraction).toBeGreaterThan(0.45);
+    expect(p.fraction).toBeLessThan(0.55);
+  });
+
+  it("off to the side: off-route distance reflects the lateral offset", () => {
+    // ~0.001° lon off at lat 51.5 ≈ 69m
+    const p = routeProgress(route, 51.501, -0.101)!;
+    expect(p.offRouteMeters).toBeGreaterThan(50);
+    expect(p.offRouteMeters).toBeLessThan(85);
+  });
+
+  it("past the end clamps covered to total (remaining ~0)", () => {
+    const p = routeProgress(route, 51.5021, -0.1)!;
+    expect(p.remainingMeters).toBeLessThan(20);
+    expect(p.fraction).toBeGreaterThan(0.9);
   });
 });
 
