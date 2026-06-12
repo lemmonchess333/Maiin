@@ -13,7 +13,10 @@ import {
   goalProfileFor,
   applyFatigue,
   dedupeDayExercises,
+  rotateUntrainedAccessories,
+  splitRationale,
 } from "../programEngine";
+import { exerciseBank } from "../variationBank";
 import type {
   ProgramExercise,
   ProgramState,
@@ -231,6 +234,73 @@ describe("dedupeDayExercises", () => {
       "bench-press",
       "squat",
     ]);
+  });
+});
+
+// ── Accessory rotation (D-LIFT-4) ───────────────
+
+describe("rotateUntrainedAccessories", () => {
+  const accessory = (over: Partial<ProgramExercise>): ProgramExercise =>
+    makeTestExercise({
+      exerciseId: "incline-db-press",
+      movementCategory: "horizontal_push",
+      isAccessory: true,
+      performanceHistory: [],
+      ...over,
+    });
+
+  it("rotates an untrained accessory to a different variation in its category", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [accessory({})],
+      },
+    ]);
+    const e = out[0].exercises[0];
+    expect(e.isAccessory).toBe(true);
+    expect(e.exerciseId).not.toBe("incline-db-press"); // rotated
+    // still a horizontal_push variation
+    const validIds = new Set(exerciseBank.horizontal_push.map((o) => o.id));
+    expect(validIds.has(e.exerciseId)).toBe(true);
+  });
+
+  it("never rotates a main lift", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [
+          makeTestExercise({ exerciseId: "bench-press", isAccessory: false }),
+        ],
+      },
+    ]);
+    expect(out[0].exercises[0].exerciseId).toBe("bench-press");
+  });
+
+  it("never rotates an accessory the user has trained (has history)", () => {
+    const out = rotateUntrainedAccessories([
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        exercises: [
+          accessory({
+            performanceHistory: [
+              {
+                date: "2026-01-01",
+                weight: 20,
+                repsCompleted: 10,
+                repsTarget: 10,
+              },
+            ],
+          }),
+        ],
+      },
+    ]);
+    expect(out[0].exercises[0].exerciseId).toBe("incline-db-press"); // kept
   });
 });
 
@@ -698,5 +768,26 @@ describe("applyFatigue", () => {
   it("never drops a lift below 2 working sets", () => {
     const [d] = applyFatigue([day(2)], 90);
     expect(d.exercises[0].sets).toBe(2);
+  });
+});
+
+// ── Split rationale (D-LIFT-7) ──────────────────
+
+describe("splitRationale", () => {
+  it("returns a non-empty 'why' for every day count 0..7", () => {
+    for (let d = 0; d <= 7; d++) {
+      expect(splitRationale(d).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("explains the frequency logic for the headline cases", () => {
+    expect(splitRationale(3)).toMatch(/full-body/i);
+    expect(splitRationale(3)).toMatch(/3×|3x|week/i);
+    expect(splitRationale(2)).toMatch(/upper.*lower/i);
+    expect(splitRationale(6)).toMatch(/push\/pull\/legs|twice/i);
+  });
+
+  it("clamps out-of-range day counts (7 → 6's rationale)", () => {
+    expect(splitRationale(7)).toBe(splitRationale(6));
   });
 });

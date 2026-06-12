@@ -169,6 +169,32 @@ export function splitLabel(split: SplitType): string {
   }
 }
 
+/**
+ * D-LIFT-7: the one-line "why" behind the days→split mapping, so the derived
+ * split (Pgm5 Q1: structure follows lift-days, not a user toggle) reads as a
+ * deliberate coaching choice rather than an ignored preference. Mirrors
+ * `chooseSplit`; the thread is weekly per-muscle FREQUENCY.
+ */
+export function splitRationale(weeklyLiftDays: number): string {
+  const d = Math.min(6, Math.max(0, Math.round(weeklyLiftDays)));
+  switch (d) {
+    case 0:
+      return "No lift days set — add some to build a split.";
+    case 1:
+      return "One day a week is full-body so you still train everything.";
+    case 2:
+      return "Two days splits upper / lower — each trained about twice a week.";
+    case 3:
+      return "Three days stays full-body: every muscle 3× a week beats a 3-way split at the same volume.";
+    case 4:
+      return "Four days is upper / lower twice — each muscle about twice a week.";
+    case 5:
+      return "Five days layers push/pull/legs onto upper/lower to keep most muscles near 2× a week.";
+    default:
+      return "Six days runs push/pull/legs twice — each muscle about twice a week.";
+  }
+}
+
 export function primaryGoalLabel(g?: PrimaryGoal): string {
   switch (g) {
     case "strength":
@@ -822,6 +848,35 @@ export function expectedDayCount(weeklyTarget: number): number {
  * leaves the duplicate as-is only if the category has no free alternative.
  * Pure — returns a new array.
  */
+/**
+ * D-LIFT-4: rotate UNTRAINED accessories (no logged history) to a different
+ * variation in the same movement category — periodic novelty without disturbing
+ * the user's actual training. Mains and any accessory with logged history are
+ * left untouched. Keeps the slot's `instanceId` (same row, new movement) so the
+ * reorderable list doesn't churn. Pure.
+ */
+export function rotateUntrainedAccessories(
+  workouts: WorkoutDay[]
+): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      if (!ex.isAccessory) return ex; // mains never rotate
+      if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
+      const next = pickAccessory(ex.movementCategory, ex.exerciseId);
+      if (next.id === ex.exerciseId) return ex; // no alternative available
+      return {
+        ...ex,
+        exerciseId: next.id,
+        name: next.name,
+        lastPerformance: null,
+        consecutiveFailures: 0,
+        plateauCount: 0,
+      };
+    }),
+  }));
+}
+
 export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => {
     const seen = new Set<string>();
@@ -1196,6 +1251,15 @@ export function advanceWeek(state: ProgramState): ProgramState {
   } else {
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
+  }
+
+  // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
+  // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
+  // joint health. Trained accessories (logged history) and all mains stay put —
+  // mains are the progression anchor, and a lift the user actually trains is
+  // theirs to keep. Re-deduped so a rotation can't collide within a day.
+  if (nextWeek % 4 === 1) {
+    workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
   }
 
   return {
