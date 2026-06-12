@@ -163,6 +163,10 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    match /users/{uid}/savedRoutes/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
     match /users/{uid}/workouts/{doc} {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
