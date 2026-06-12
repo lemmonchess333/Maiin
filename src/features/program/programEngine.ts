@@ -12,6 +12,7 @@ import type {
 import { generateInstanceId } from "./programTypes";
 import { pickExercise, pickAccessory } from "./variationBank";
 import { balanceWeeklyVolume, volumeLandmark } from "./volumeModel";
+import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -808,7 +809,8 @@ export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
-  primaryGoal?: PrimaryGoal
+  primaryGoal?: PrimaryGoal,
+  loadCtx?: StartingLoadContext
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -886,6 +888,9 @@ export function generateProgram(
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
+  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
+  // (no-op without a load context, or for lifts with logged history).
+  if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
   return { splitType, workouts };
 }
