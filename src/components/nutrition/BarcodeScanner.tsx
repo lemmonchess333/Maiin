@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { BrowserMultiFormatReader } from "@zxing/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScanLine, X, Plus, Minus, Check, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { Spinner } from "@/components/ui/Spinner";
 import { IconButton } from "@/components/ui/IconButton";
@@ -373,24 +374,24 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
             </div>
 
             <div className="flex gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                className="flex-1"
                 onClick={() => {
                   setProduct(null);
                   setScanning(true);
                   setServings(1);
                 }}
-                className="flex-1 py-3 rounded-xl bg-muted text-sm font-medium"
               >
                 Scan Again
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                className="flex-1"
                 onClick={handleConfirm}
-                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold flex items-center justify-center gap-1.5"
+                leftIcon={<Check className="size-4" />}
               >
-                <Check className="size-4" /> Log Food
-              </button>
+                Log Food
+              </Button>
             </div>
           </motion.div>
         )}
