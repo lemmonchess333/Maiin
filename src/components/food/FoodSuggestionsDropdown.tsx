@@ -295,7 +295,7 @@ function FoodSuggestionsDropdown({
                   · {p.servingSize}
                 </span>
               </span>
-              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
                 {Math.round(p.calories)} cal · P{Math.round(p.protein)}g · C
                 {Math.round(p.carbs)}g · F{Math.round(p.fat)}g
               </span>
@@ -319,7 +319,7 @@ function FoodSuggestionsDropdown({
                   {s.serving}
                 </span>
               </span>
-              <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+              <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
                 {s.calories} cal · P{s.protein}g · C{s.carbs}g · F{s.fat}g
               </span>
             </button>
