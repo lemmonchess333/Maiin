@@ -402,7 +402,10 @@ function createDefaultProfile(
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
-    darkMode: false,
+    // Dark is the app default — new profiles start dark unless the user
+    // later picks light in Settings (see public/init.js for the pre-React
+    // boot default that mirrors this).
+    darkMode: true,
     hideWeightNumber: false,
     timezone: null,
     onboardingComplete: false,
@@ -449,7 +452,9 @@ function hydrateProfile(
       (data.preferredWeightUnit as UserProfile["preferredWeightUnit"]) ?? "kg",
     preferredHeightUnit:
       (data.preferredHeightUnit as UserProfile["preferredHeightUnit"]) ?? "cm",
-    darkMode: (data.darkMode as boolean) ?? false,
+    // Default the theme to dark when the field is absent (legacy/partial
+    // docs). Only an explicit stored `false` keeps a user on light.
+    darkMode: (data.darkMode as boolean) ?? true,
     hideWeightNumber: (data.hideWeightNumber as boolean) ?? false,
     timezone: (data.timezone as string | null) ?? null,
     onboardingComplete: (data.onboardingComplete as boolean) ?? false,
@@ -552,9 +557,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Dark mode sync
+  // Dark mode sync — dark is the default, so a null profile (signed out /
+  // still loading) and a profile without an explicit choice both resolve dark.
   useEffect(() => {
-    syncDarkMode(profile?.darkMode ?? false);
+    syncDarkMode(profile?.darkMode ?? true);
   }, [profile?.darkMode]);
 
   useEffect(() => {
@@ -631,8 +637,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
         }
       } else {
+        // No signed-in user (Login screen) — apply the dark default.
         setProfile(null);
-        syncDarkMode(false);
+        syncDarkMode(true);
       }
 
       setLoading(false);
@@ -763,8 +770,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await firebaseSignOut(auth);
     setProfile(null);
-    // Remove dark mode preference so next user gets their own setting from Firestore
-    document.documentElement.classList.remove("dark");
+    // Reset to the DARK default so the next user starts dark unless their
+    // Firestore profile explicitly says light. (Clearing the stored key lets
+    // init.js / the next profile load own the value; the signed-out auth
+    // listener also re-applies the dark default.)
+    document.documentElement.classList.add("dark");
     localStorage.removeItem("tropos-dark-mode");
   }, []);
 
