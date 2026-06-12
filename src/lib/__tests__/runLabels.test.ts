@@ -13,6 +13,7 @@ import {
   durationLabel,
   distanceLabel,
   formatRaceDistance,
+  paceMinSec,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -125,5 +126,22 @@ describe("formatRaceDistance", () => {
 
   it("returns empty string for empty string", () => {
     expect(formatRaceDistance("")).toBe("");
+  });
+});
+
+// paceMinSec — bare M:SS pace formatter (no "/km" suffix). Run paces are integer
+// seconds; the em-dash guard covers stationary / zero-distance legs.
+describe("paceMinSec", () => {
+  it("formats whole-minute and sub-minute paces with zero-padded seconds", () => {
+    expect(paceMinSec(300)).toBe("5:00");
+    expect(paceMinSec(330)).toBe("5:30");
+    expect(paceMinSec(65)).toBe("1:05");
+    expect(paceMinSec(359)).toBe("5:59");
+  });
+
+  it("returns the em-dash placeholder for missing / non-positive pace", () => {
+    expect(paceMinSec(0)).toBe("--:--");
+    expect(paceMinSec(-5)).toBe("--:--");
+    expect(paceMinSec(NaN)).toBe("--:--");
   });
 });
