@@ -48,6 +48,7 @@ import RunBottomSheet from "../components/run/RunBottomSheet";
 import BackToStartChip from "../components/run/BackToStartChip";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
+import { useHeartRate } from "../hooks/useHeartRate";
 import { THEME } from "../lib/theme";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
@@ -239,6 +240,10 @@ export default function Run() {
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
   const wakeLock = useWakeLock();
+  // Live HR (bpm + zone) for the run sheet. No source streams yet
+  // (heartRateSource.ts is inert until the HealthKit plugin lands), so this
+  // resolves to bpm:null today and the HR readout stays hidden.
+  const hr = useHeartRate({ live: true });
   const { profile } = useAuth();
   // Phase B1: programme state drives the Run-setup prefill + context
   // strip + post-save plan reconciliation. The hook is cheap (single
@@ -1325,6 +1330,8 @@ export default function Run() {
                 ) : undefined
               }
               weightKg={profile?.weightKg || 70}
+              bpm={hr.bpm}
+              hrZone={hr.zone}
             />
           </div>
         )}
