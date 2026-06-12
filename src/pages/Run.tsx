@@ -19,7 +19,6 @@ import {
   haversine,
   paceAsNumber,
   totalElevationGain,
-  routeTotalDistance,
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
@@ -50,7 +49,8 @@ import RunBottomSheet from "../components/run/RunBottomSheet";
 import BackToStartChip from "../components/run/BackToStartChip";
 import RouteFollowChip from "../components/run/RouteFollowChip";
 import GhostDeltaChip from "../components/run/GhostDeltaChip";
-import GpxImportButton from "../components/run/GpxImportButton";
+import RouteSetupSection from "../components/run/RouteSetupSection";
+import type { SavedRouteSource } from "../lib/savedRoutes";
 import GuidedRunOverlay from "../components/run/GuidedRunOverlay";
 import { useGuidedRun } from "../hooks/useGuidedRun";
 import { useHeartRate } from "../hooks/useHeartRate";
@@ -248,6 +248,13 @@ export default function Run() {
   // null for a normal free run. Drives the RunMap ghost line + RouteFollowChip.
   const [targetRoute, setTargetRoute] = useState<GPSPoint[] | null>(
     () => (location.state as { followRoute?: GPSPoint[] } | null)?.followRoute ?? null
+  );
+  // Where targetRoute came from (for the "save route" snapshot). A route seeded
+  // via RunDetail's "Re-run this route" navigation is a past run.
+  const [routeSource, setRouteSource] = useState<SavedRouteSource | null>(() =>
+    (location.state as { followRoute?: GPSPoint[] } | null)?.followRoute
+      ? "run"
+      : null
   );
   const timer = useRunTimer();
   const gps = useGPS(timer.elapsed);
@@ -963,30 +970,23 @@ export default function Run() {
             ) : null
           ) : (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-              {/* Follow-a-route entry on the setup screen. Shows the import
-                  CTA, or a "following a route" indicator (also when arriving
-                  via RunDetail's "Re-run this route", which seeds targetRoute).
+              {/* Follow-a-route entry on the setup screen: import a GPX or pick
+                  a saved route, or (when a route is loaded — incl. arriving via
+                  RunDetail's "Re-run this route") show Following + Save/Clear.
                   The route overlays the normal run config — start as usual. */}
               <div className="px-4 pt-3">
-                {targetRoute ? (
-                  <div className="flex items-center justify-between gap-2 rounded-xl bg-running/8 px-3 py-2">
-                    <span className="text-sm font-medium text-running">
-                      Following a route ·{" "}
-                      <span className="font-mono tabular-nums">
-                        {(routeTotalDistance(targetRoute) / 1000).toFixed(1)} km
-                      </span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setTargetRoute(null)}
-                      className="min-h-[44px] px-2 text-xs text-muted-foreground underline"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                ) : (
-                  <GpxImportButton className="w-full" onRoute={setTargetRoute} />
-                )}
+                <RouteSetupSection
+                  targetRoute={targetRoute}
+                  routeSource={routeSource}
+                  onLoadRoute={(points, source) => {
+                    setTargetRoute(points);
+                    setRouteSource(source);
+                  }}
+                  onClearRoute={() => {
+                    setTargetRoute(null);
+                    setRouteSource(null);
+                  }}
+                />
               </div>
               <RunSetupModal
                 onStart={handleStart}
