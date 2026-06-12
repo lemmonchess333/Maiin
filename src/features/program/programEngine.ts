@@ -16,6 +16,7 @@ import {
   balancePushPull,
   volumeLandmark,
 } from "./volumeModel";
+import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -812,7 +813,8 @@ export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
-  primaryGoal?: PrimaryGoal
+  primaryGoal?: PrimaryGoal,
+  loadCtx?: StartingLoadContext
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -892,6 +894,9 @@ export function generateProgram(
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
   workouts = balancePushPull(workouts);
+  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
+  // (no-op without a load context, or for lifts with logged history).
+  if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
   return { splitType, workouts };
 }
