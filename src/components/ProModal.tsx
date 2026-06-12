@@ -365,7 +365,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                   </div>
                 </div>
 
-                <p className="text-base font-bold text-foreground tabular-nums">
+                <p className="text-base font-bold text-foreground font-mono tabular-nums">
                   {plan.price}
                   <span className="text-xs font-medium text-muted-foreground">
                     {plan.period}
