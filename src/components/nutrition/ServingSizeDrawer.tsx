@@ -98,7 +98,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.nutrition}1A` }}
           >
             <p
-              className="text-lg font-bold tabular-nums"
+              className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.nutrition }}
             >
               {Math.round(food.calories * servings)}
@@ -112,7 +112,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.protein}1A` }}
           >
             <p
-              className="text-lg font-bold tabular-nums"
+              className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.protein }}
             >
               {Math.round(food.protein * servings)}g
@@ -126,7 +126,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.carbs}1A` }}
           >
             <p
-              className="text-lg font-bold tabular-nums"
+              className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.carbs }}
             >
               {Math.round(food.carbs * servings)}g
@@ -140,7 +140,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             style={{ backgroundColor: `${accent.fat}1A` }}
           >
             <p
-              className="text-lg font-bold tabular-nums"
+              className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.fat }}
             >
               {Math.round(food.fat * servings)}g
