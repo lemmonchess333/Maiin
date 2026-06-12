@@ -23,6 +23,47 @@ plan-validation parity pins already landed.
 
 ---
 
+## Status ledger (2026-06-12)
+
+All sixteen items have been worked. The recurring outcome was **verification-
+first**: most audits confirmed the codebase is already disciplined (one source,
+already idempotent, already covered) and the deliverable was a _pin_ + a
+documented decision, not a large fix. The notable live bug was D1's
+`hideWeightNumber` (client write rejected by rules — fixed).
+
+| ID  | Status     | PR    | Note                                                                                                               |
+| --- | ---------- | ----- | ------------------------------------------------------------------------------------------------------------------ |
+| D1  | ✅ Done    | #1319 | profile field allow-list parity test; fixed `hideWeightNumber` live bug                                            |
+| D2  | ✅ Done    | #1313 | `getNutritionPhase` accessor + footgun guard                                                                       |
+| D3  | ✅ Done    | #1321 | single-sourced Experience/Equipment/RaceDistance vocabularies                                                      |
+| D4  | ✅ Done    | #1315 | mirror-cross-test gate                                                                                             |
+| D5  | ✅ Done    | #1317 | `programmePreservationNote` helper + pin                                                                           |
+| D6  | ✅ Done    | —     | adaptive calorie status surfacing                                                                                  |
+| D7  | ✅ Done    | #1318 | proactive recalibration check-in                                                                                   |
+| D8  | ✅ Done    | #1320 | onboarding adaptivity framing                                                                                      |
+| D9  | ✅ Done    | #1330 | cold-start payoff sweep — one laggard (History) fixed; rest PASS/locked                                            |
+| D10 | ⛔ Blocked | —     | depends on a captured onboarding "why" (not captured; adding the capture is a product decision needing user input) |
+| D11 | ✅ Done    | #1324 | `useEffectiveTargets` single-source pin (no re-derivation found)                                                   |
+| D12 | ✅ Done    | #1323 | trigger-idempotency audit + checklist (all 6 already idempotent)                                                   |
+| D13 | ✅ Done    | #1328 | streak windowing honesty (documented + lifetime-label guard)                                                       |
+| D14 | ✅ Done    | #1325 | run-state transition matrix                                                                                        |
+| D15 | ✅ Done    | #1327 | DS invariants as ratchet tests (mono-numerals, 44px)                                                               |
+| D16 | ✅ Done    | #1329 | hand-rolled toggles → `Toggle` primitive (all `role="switch"` gone)                                                |
+
+**Follow-ups left deliberately open:**
+
+- **D10** needs the onboarding "why"-capture built first (a product decision on
+  what to ask + how to surface it) — do it _with_ that, not before.
+- **D15 ratchet burn-down** — the `tabular-nums`-without-`font-mono` baseline (30)
+  and the role=switch baseline (now 0 after D16) should be lowered as surfaces are
+  touched _with screenshot review_; a blind sweep risks regressions (many are
+  inline-style `fontVariantNumeric` on the run screen / export-fixed ShareCard, or
+  tiny secondary labels where the numeral font may look worse).
+- **D3** left the widget-styling merge (`OptionCard` vs `SettingsOptionCard`) and
+  the ~4 non-onboarding lib-module `RaceDistance` copies as a follow-up.
+
+---
+
 ## A. Unification spine — kill the drift classes
 
 ### D1 · Profile field registry + allow-list parity test — **P0 · M·Low**
