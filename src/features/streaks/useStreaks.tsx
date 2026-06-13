@@ -330,6 +330,13 @@ function useStreaksInternal() {
   // check effect from firing duplicate concurrent commits for the same
   // badge before the first resolves.
   const awardInFlightRef = useRef<Set<string>>(new Set());
+  // Earned-badge ids already accounted for, so an earnedAt that NEWLY appears
+  // in a streaks/data snapshot can be detected as an EXTERNAL (server-side)
+  // award and celebrated. null until the first snapshot seeds the baseline
+  // (so historical badges don't all pop the reveal on app open). Local awards
+  // add themselves here before their own write, so the returning snapshot
+  // doesn't double-queue them.
+  const seenEarnedRef = useRef<Set<string> | null>(null);
 
   // ── Subscribe to all 4 streams ─────────────────────────────────────────
 
@@ -348,6 +355,7 @@ function useStreaksInternal() {
       setNewBadgeQueue([]);
       lastWrittenStreakRef.current = null;
       hasLoadedRef.current = false;
+      seenEarnedRef.current = null;
       return;
     }
 
@@ -421,6 +429,25 @@ function useStreaksInternal() {
             totalActiveDays: sanitizedTotal,
             badges: merged,
           });
+
+          // Celebrate badges awarded EXTERNALLY — i.e. server-side milestone
+          // awarding (onRunCreated) — that this client didn't award itself.
+          // The first snapshot seeds the baseline silently; thereafter any
+          // badge whose earnedAt newly appears (and wasn't a local award,
+          // which registers itself in seenEarnedRef before its own write) is
+          // queued for the reveal modal.
+          const earnedNow = merged.filter((b) => b.earnedAt);
+          if (seenEarnedRef.current === null) {
+            seenEarnedRef.current = new Set(earnedNow.map((b) => b.id));
+          } else {
+            const fresh = earnedNow.filter(
+              (b) => !seenEarnedRef.current!.has(b.id)
+            );
+            if (fresh.length > 0) {
+              for (const b of fresh) seenEarnedRef.current!.add(b.id);
+              setNewBadgeQueue((q) => [...q, ...fresh]);
+            }
+          }
         } else {
           setStreakData(DEFAULT_STREAKS);
         }
@@ -605,6 +632,10 @@ function useStreaksInternal() {
       // Skip if a write for this badge is already in flight.
       if (awardInFlightRef.current.has(badgeId)) return;
       awardInFlightRef.current.add(badgeId);
+      // Register the local award so the streaks/data snapshot it triggers
+      // isn't re-detected as an external award (would double-queue the modal).
+      // A silent (first-pass) award still registers, so it never pops a modal.
+      seenEarnedRef.current?.add(badgeId);
 
       const now = new Date().toISOString();
       const updated: EarnedBadge = { ...badge, earnedAt: now };
