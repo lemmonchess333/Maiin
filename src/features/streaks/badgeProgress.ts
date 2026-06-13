@@ -11,7 +11,12 @@
  * (earned ⇔ pct >= 1 for every badge that has progress here).
  */
 import type { BadgeDef } from "./badges";
-import { activeDayCounts, type BadgeEarningContext } from "./badgeEarning";
+import {
+  activeDayCounts,
+  maxConsecutiveDayRun,
+  MEAL_PREP_RUN_DAYS,
+  type BadgeEarningContext,
+} from "./badgeEarning";
 
 export interface BadgeProgress {
   /** Clamped current value (never exceeds target). */
@@ -100,7 +105,21 @@ export function badgeProgress(
     };
   }
 
-  // Not client-computable yet (milestone/lifetime/nutrition → server-side).
+  // Meal Prep Master — longest run of consecutive meal-logged days vs 14.
+  if (badge.id === "meal_prep_master") {
+    const run = maxConsecutiveDayRun(ctx.mealDates ?? []);
+    const current = Math.min(run, MEAL_PREP_RUN_DAYS);
+    return {
+      current,
+      target: MEAL_PREP_RUN_DAYS,
+      pct: clamp01(run / MEAL_PREP_RUN_DAYS),
+      label: `${current} / ${MEAL_PREP_RUN_DAYS} days logged`,
+    };
+  }
+
+  // Not client-computable yet: milestone/lifetime earn server-side, and the
+  // target-dependent nutrition badges (macro_master / protein_pro /
+  // hydration_hero) need per-day macro/water targets — a follow-up.
   return null;
 }
 

@@ -35,8 +35,43 @@ export interface BadgeEarningContext {
   currentStreak: number;
   workouts: BalancedWorkout[];
   runs: BalancedRun[];
+  /**
+   * Distinct YYYY-MM-DD dates on which the user logged at least one meal item.
+   * Threaded from the streak hook's meals subscription. Optional so existing
+   * callers/tests that predate the nutrition rules still type-check (treated as
+   * "no meals logged"). Drives `meal_prep_master`.
+   */
+  mealDates?: string[];
   /** "Now" — threaded in so the rolling-window rule is pure/testable. */
   today: Date;
+}
+
+/** "Log all meals for 14 days straight" — strict, no grace (the badge says
+ *  *straight*, unlike the grace-forgiven activity streak). */
+export const MEAL_PREP_RUN_DAYS = 14;
+
+/**
+ * The longest run of CONSECUTIVE calendar days within a set of YYYY-MM-DD keys.
+ * Pure; dedupes + sorts internally so callers can pass raw date lists. The
+ * adjacency test steps a noon-anchored Date back one calendar day (DST-safe,
+ * matching the streak walk) rather than subtracting milliseconds.
+ */
+export function maxConsecutiveDayRun(dates: Iterable<string>): number {
+  const unique = Array.from(new Set(dates)).filter(Boolean).sort();
+  if (unique.length === 0) return 0;
+  let longest = 1;
+  let run = 1;
+  for (let i = 1; i < unique.length; i++) {
+    const prevDay = new Date(unique[i] + "T12:00:00");
+    prevDay.setDate(prevDay.getDate() - 1);
+    if (format(prevDay, "yyyy-MM-dd") === unique[i - 1]) {
+      run += 1;
+      if (run > longest) longest = run;
+    } else {
+      run = 1;
+    }
+  }
+  return longest;
 }
 
 /** Unique lift-days and run-days within the inclusive `days`-day window ending
@@ -129,6 +164,18 @@ export function badgesToAward(
         7
       );
       if (liftDays >= 3 && runDays >= 3) ids.push(b.id);
+      continue;
+    }
+
+    // Meal Prep Master — a meal logged on every day of a 14-day-straight run.
+    // Recent-window (14d ≪ the 500-doc meal window), so accurate from the
+    // client's snapshots — no targets involved, just logged-or-not. The other
+    // three nutrition badges (macro_master / protein_pro / hydration_hero) need
+    // per-historical-day macro/water TARGETS and earn server-side (a follow-up).
+    if (b.id === "meal_prep_master") {
+      if (maxConsecutiveDayRun(ctx.mealDates ?? []) >= MEAL_PREP_RUN_DAYS) {
+        ids.push(b.id);
+      }
     }
   }
   return ids;
