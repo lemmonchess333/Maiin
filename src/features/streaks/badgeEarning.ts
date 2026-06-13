@@ -39,14 +39,17 @@ export interface BadgeEarningContext {
   today: Date;
 }
 
-/** ≥5 lift-days AND ≥5 run-days within the inclusive 14-day window ending today. */
-export function isBalancedEarned(
+/** Unique lift-days and run-days within the inclusive `days`-day window ending
+ *  today. Shared by the balanced (14d) + hybrid-frequency (7d) rules and by
+ *  badgeProgress, so the window logic has one home. */
+export function activeDayCounts(
   workouts: BalancedWorkout[],
   runs: BalancedRun[],
-  today: Date
-): boolean {
+  today: Date,
+  days: number
+): { liftDays: number; runDays: number } {
   const windowStart = new Date(today);
-  windowStart.setDate(windowStart.getDate() - 13); // 14 days inclusive
+  windowStart.setDate(windowStart.getDate() - (days - 1)); // inclusive
   const startKey = format(windowStart, "yyyy-MM-dd");
   const endKey = format(today, "yyyy-MM-dd");
   const inWindow = (d: string) => d >= startKey && d <= endKey;
@@ -67,7 +70,17 @@ export function isBalancedEarned(
     }
   }
 
-  return liftDays.size >= 5 && runDays.size >= 5;
+  return { liftDays: liftDays.size, runDays: runDays.size };
+}
+
+/** ≥5 lift-days AND ≥5 run-days within the inclusive 14-day window ending today. */
+export function isBalancedEarned(
+  workouts: BalancedWorkout[],
+  runs: BalancedRun[],
+  today: Date
+): boolean {
+  const { liftDays, runDays } = activeDayCounts(workouts, runs, today, 14);
+  return liftDays >= 5 && runDays >= 5;
 }
 
 /**
@@ -89,9 +102,33 @@ export function badgesToAward(
       continue;
     }
 
-    // Rolling-window balanced badge.
+    // Rolling-window balanced badge (5 lift-days + 5 run-days in 14d).
     if (b.id === "balanced") {
       if (isBalancedEarned(ctx.workouts, ctx.runs, ctx.today)) ids.push(b.id);
+      continue;
+    }
+
+    // Hybrid-frequency badges — a lift AND a run within the rolling 7-day
+    // window. Recent-window (not lifetime), so accurate from the client's
+    // windowed snapshots. These were previously unearnable (dead).
+    if (b.id === "hybrid_athlete") {
+      const { liftDays, runDays } = activeDayCounts(
+        ctx.workouts,
+        ctx.runs,
+        ctx.today,
+        7
+      );
+      if (liftDays >= 1 && runDays >= 1) ids.push(b.id);
+      continue;
+    }
+    if (b.id === "iron_runner") {
+      const { liftDays, runDays } = activeDayCounts(
+        ctx.workouts,
+        ctx.runs,
+        ctx.today,
+        7
+      );
+      if (liftDays >= 3 && runDays >= 3) ids.push(b.id);
     }
   }
   return ids;
