@@ -55,6 +55,10 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/settings/{doc}",
   "match /users/{uid}/foodFavourites/{doc}",
   "match /users/{uid}/waterLog/{doc}",
+  // Per-day macro-target snapshot backing the nutrition badges. Owner-writable
+  // (frozen mid-deletion) + swept by the executor (USER_SUBCOLLECTIONS includes
+  // "dailyNutrition"), so it's a protected path like waterLog.
+  "match /users/{uid}/dailyNutrition/{doc}",
   "match /users/{uid}/bodyweightLogs/{doc}",
   "match /users/{uid}/programState/{doc}",
   "match /users/{uid}/streaks/{doc}",
@@ -278,8 +282,10 @@ describe("Blocker E — path-count reconciliation", () => {
     // bringing it back to 27. SOCIAL S3 added the client-writable
     // /partnerBonds/{bondId} block (freeze via !isDeleting), → 28.
     // Saved-routes library added /users/{uid}/savedRoutes/{doc}, → 29.
+    // Nutrition badges added /users/{uid}/dailyNutrition/{doc} (per-day
+    // macro-target snapshot, freeze via isOwnerAndNotDeleting), → 30.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(29);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(30);
   });
 });

@@ -15,6 +15,7 @@ import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 import { StreaksProvider } from "@/features/streaks/useStreaks";
+import { DailyNutritionSnapshot } from "@/hooks/useDailyNutritionSnapshot";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
@@ -366,6 +367,9 @@ function AppRoutes() {
           from context instead of each spawning their own 4 Firestore
           subscriptions. */}
       <StreaksProvider>
+        {/* Single session-wide writer for the per-day macro-target snapshot
+            (users/{uid}/dailyNutrition/{date}) the nutrition badges read. */}
+        <DailyNutritionSnapshot />
         {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
