@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import type { EarnedBadge } from "../badges";
+
+// Deterministic full-motion path + no real haptics/audio under jsdom.
+vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => false }));
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 // framer-motion → plain elements (strip animation props)
 vi.mock("framer-motion", function () {
@@ -58,9 +62,20 @@ function makeBadge(overrides: Partial<EarnedBadge> = {}): EarnedBadge {
   };
 }
 
-describe("BadgeEarnedModal — forward streak hook (#974)", function () {
-  it("renders the forward streak-continuation hook on the First Step badge", function () {
+/** The copy (incl. the forward hook) is gated behind the tap-to-reveal
+ *  moment — fire it so the post-reveal surface mounts. */
+function reveal() {
+  fireEvent.click(screen.getByRole("button", { name: /reveal/i }));
+}
+
+describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", function () {
+  it("gates the copy behind the reveal: hidden pre-tap, shown after", function () {
     render(<BadgeEarnedModal badge={makeBadge()} onDismiss={() => {}} />);
+    // Pre-reveal: the moment leads — name/hook not yet shown.
+    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
+    expect(screen.queryByText(FORWARD_HOOK)).not.toBeInTheDocument();
+    reveal();
+    expect(screen.getByText("First Step")).toBeInTheDocument();
     expect(screen.getByText(FORWARD_HOOK)).toBeInTheDocument();
   });
 
@@ -77,13 +92,14 @@ describe("BadgeEarnedModal — forward streak hook (#974)", function () {
         onDismiss={() => {}}
       />
     );
+    reveal();
+    expect(screen.getByText("Week Warrior")).toBeInTheDocument();
     expect(screen.queryByText(FORWARD_HOOK)).not.toBeInTheDocument();
   });
 
   it("reuses the single modal (no second dialog surface mounts)", function () {
     render(<BadgeEarnedModal badge={makeBadge()} onDismiss={() => {}} />);
-    // One dialog only — the hook lives inside the existing modal, not a
-    // second celebration surface.
+    // One dialog only — the moment + hook live inside the existing modal.
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
   });
 });
