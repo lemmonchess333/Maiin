@@ -15,6 +15,8 @@ import {
   activeDayCounts,
   maxConsecutiveDayRun,
   MEAL_PREP_RUN_DAYS,
+  EARLY_BIRD_DAYS,
+  ULTIMATE_ATHLETE_COUNT,
   type BadgeEarningContext,
 } from "./badgeEarning";
 
@@ -117,9 +119,34 @@ export function badgeProgress(
     };
   }
 
+  // Early Bird — distinct days with a before-7am log vs 5.
+  if (badge.id === "early_bird") {
+    const days = ctx.earlyLogDays?.length ?? 0;
+    const current = Math.min(days, EARLY_BIRD_DAYS);
+    return {
+      current,
+      target: EARLY_BIRD_DAYS,
+      pct: clamp01(days / EARLY_BIRD_DAYS),
+      label: `${current} / ${EARLY_BIRD_DAYS} early days`,
+    };
+  }
+
+  // Ultimate Athlete — badges earned (excl. itself) vs 15.
+  if (badge.id === "ultimate_athlete") {
+    const earned = ctx.earnedBadgeCount ?? 0;
+    const current = Math.min(earned, ULTIMATE_ATHLETE_COUNT);
+    return {
+      current,
+      target: ULTIMATE_ATHLETE_COUNT,
+      pct: clamp01(earned / ULTIMATE_ATHLETE_COUNT),
+      label: `${current} / ${ULTIMATE_ATHLETE_COUNT} badges`,
+    };
+  }
+
   // Not client-computable yet: milestone/lifetime earn server-side, and the
   // target-dependent nutrition badges (macro_master / protein_pro /
-  // hydration_hero) need per-day macro/water targets — a follow-up.
+  // hydration_hero / triple_threat) need per-day macro/water targets — a
+  // follow-up.
   return null;
 }
 

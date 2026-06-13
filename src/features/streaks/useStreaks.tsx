@@ -22,7 +22,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
-import { badgesToAward } from "./badgeEarning";
+import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
@@ -82,6 +82,8 @@ const MEAL_LIMIT = 500;
 // ── Row shapes (minimal — only what the streak hook needs) ──────────────
 interface WorkoutRow {
   date: string;
+  /** Save time — carried for early_bird's before-7am check. */
+  createdAt?: Timestamp | null;
 }
 
 interface RunRow {
@@ -96,6 +98,8 @@ interface RunRow {
 interface MealRow {
   date: string;
   items: unknown[];
+  /** Log time — carried for early_bird's before-7am check. */
+  createdAt?: Timestamp | null;
 }
 
 // ── Pure helpers ─────────────────────────────────────────────────────────
@@ -466,9 +470,12 @@ function useStreaksInternal() {
       workoutsQ,
       (snap) => {
         const rows: WorkoutRow[] = snap.docs
-          .map((d) => d.data() as { date?: unknown })
+          .map((d) => d.data() as { date?: unknown; createdAt?: unknown })
           .filter((d) => typeof d.date === "string")
-          .map((d) => ({ date: d.date as string }));
+          .map((d) => ({
+            date: d.date as string,
+            createdAt: d.createdAt instanceof Timestamp ? d.createdAt : null,
+          }));
         setWorkouts(rows);
         setWorkoutsLoaded(true);
       },
@@ -521,10 +528,16 @@ function useStreaksInternal() {
       mealsQ,
       (snap) => {
         const rows: MealRow[] = snap.docs.map((d) => {
-          const raw = d.data() as { date?: unknown; items?: unknown };
+          const raw = d.data() as {
+            date?: unknown;
+            items?: unknown;
+            createdAt?: unknown;
+          };
           return {
             date: typeof raw.date === "string" ? raw.date : "",
             items: Array.isArray(raw.items) ? raw.items : [],
+            createdAt:
+              raw.createdAt instanceof Timestamp ? raw.createdAt : null,
           };
         });
         setMeals(rows);
@@ -583,6 +596,37 @@ function useStreaksInternal() {
         )
       ),
     [meals]
+  );
+
+  // Distinct dates with a log before 7am LOCAL — feeds early_bird. Uses the
+  // best per-source timestamp: run completedAt (event time), workout + meal
+  // createdAt (log time). Hour is read in the device timezone, consistent with
+  // every other date key in this hook.
+  const earlyLogDays = useMemo(() => {
+    if (!allLoaded) return [] as string[];
+    const EARLY_HOUR = 7;
+    const set = new Set<string>();
+    const addIfEarly = (ts: Timestamp | null | undefined) => {
+      if (!ts) return;
+      try {
+        const d = ts.toDate();
+        if (d.getHours() < EARLY_HOUR) set.add(format(d, "yyyy-MM-dd"));
+      } catch {
+        // unparseable timestamp — skip
+      }
+    };
+    for (const w of workouts) addIfEarly(w.createdAt);
+    for (const r of runs) addIfEarly(r.completedAt);
+    for (const m of meals) addIfEarly(m.createdAt);
+    return Array.from(set);
+  }, [allLoaded, workouts, runs, meals]);
+
+  // Earned badge count (excl. ultimate_athlete itself) — drives the
+  // ultimate_athlete progress ring; the earning pass derives the same number
+  // from the badges array via the shared helper.
+  const earnedBadgeTally = useMemo(
+    () => earnedBadgeCount(streakData.badges),
+    [streakData.badges]
   );
 
   // True if the user has any logged activity (workout / run / meal with items)
@@ -712,6 +756,7 @@ function useStreaksInternal() {
       workouts,
       runs,
       mealDates,
+      earlyLogDays,
       today: new Date(),
     });
     void (async () => {
@@ -731,6 +776,7 @@ function useStreaksInternal() {
     workouts,
     runs,
     mealDates,
+    earlyLogDays,
     badgesSignature,
     streakData.badges,
     awardBadge,
@@ -850,8 +896,16 @@ function useStreaksInternal() {
   // Inputs for badgeProgress() — same shape as the earning context, so the
   // grid's rings + "next badge" nudge are computed from exactly what awards.
   const badgeProgressCtx = useMemo(
-    () => ({ currentStreak, workouts, runs, mealDates, today: new Date() }),
-    [currentStreak, workouts, runs, mealDates]
+    () => ({
+      currentStreak,
+      workouts,
+      runs,
+      mealDates,
+      earlyLogDays,
+      earnedBadgeCount: earnedBadgeTally,
+      today: new Date(),
+    }),
+    [currentStreak, workouts, runs, mealDates, earlyLogDays, earnedBadgeTally]
   );
 
   return {
