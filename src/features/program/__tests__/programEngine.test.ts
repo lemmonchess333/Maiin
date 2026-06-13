@@ -15,6 +15,7 @@ import {
   dedupeDayExercises,
   rotateUntrainedAccessories,
   splitRationale,
+  isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
 import type {
@@ -61,6 +62,26 @@ function makeBodyweightExercise(
 }
 
 // ── Double Progression ──────────────────────────
+
+describe("isCycleEndWeek — programme_complete badge trigger", () => {
+  it("is true on deload weeks (every 4th — the mesocycle end)", () => {
+    for (const w of [4, 8, 12, 16, 52]) {
+      expect(isCycleEndWeek(w)).toBe(true);
+      // Stays in lockstep with the periodization schedule itself.
+      expect(generateWeekPrescription(w).deload).toBe(true);
+    }
+  });
+
+  it("is false on progression weeks", () => {
+    for (const w of [1, 2, 3, 5, 6, 7, 9]) {
+      expect(isCycleEndWeek(w)).toBe(false);
+    }
+  });
+
+  it("is false for a 0/invalid week (no completion to credit)", () => {
+    expect(isCycleEndWeek(0)).toBe(false);
+  });
+});
 
 describe("applyProgression — double progression", () => {
   it("does NOT increase weight when reps meet target but don't hit ceiling", () => {

@@ -989,6 +989,18 @@ function useStreaksInternal() {
     ]
   );
 
+  // Imperatively award an EVENT-based badge (first_pr, programme_complete)
+  // from feature code at the moment the event fires — these can't be derived
+  // from the windowed snapshots the badge pass reads. Idempotent (awardBadge
+  // no-ops if already earned / a write is in flight) and non-silent, so it pops
+  // the standard celebration via the same queue as every other award.
+  const awardEventBadge = useCallback(
+    (badgeId: string) => {
+      void awardBadge(badgeId, false);
+    },
+    [awardBadge]
+  );
+
   return {
     currentStreak,
     longestStreak,
@@ -1001,6 +1013,7 @@ function useStreaksInternal() {
     lockedBadges,
     allBadges,
     badgeProgressCtx,
+    awardEventBadge,
     newBadge: newBadgeQueue[0] ?? null,
     dismissNewBadge,
   };

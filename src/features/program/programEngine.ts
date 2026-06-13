@@ -105,6 +105,16 @@ export function generateWeekPrescription(week: number): WeeklyPrescription {
   };
 }
 
+/**
+ * A mesocycle ends on its deload week — completing that week means the user
+ * finished a full 4-week programme cycle (drives the `programme_complete`
+ * badge). Derives the answer from `generateWeekPrescription` so it can never
+ * drift from the periodization schedule itself (don't re-hardcode `% 4`).
+ */
+export function isCycleEndWeek(week: number): boolean {
+  return week > 0 && generateWeekPrescription(week).deload;
+}
+
 /* ================================
    GOAL ADJUSTMENTS
 ================================ */
