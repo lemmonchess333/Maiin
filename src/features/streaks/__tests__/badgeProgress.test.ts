@@ -80,9 +80,47 @@ describe("badgeProgress", () => {
     expect(p?.target).toBe(6);
   });
 
-  it("returns null for milestone badges (earned server-side)", () => {
+  it("meal_prep_master → longest consecutive meal-logged run vs 14", () => {
+    const p = badgeProgress(
+      def({ id: "meal_prep_master", category: "nutrition" }),
+      ctx({
+        mealDates: [
+          "2026-05-12",
+          "2026-05-13",
+          "2026-05-14",
+          "2026-05-15", // run of 4
+        ],
+      })
+    );
+    expect(p).toMatchObject({
+      current: 4,
+      target: 14,
+      label: "4 / 14 days logged",
+    });
+    expect(p?.pct).toBeCloseTo(4 / 14);
+  });
+
+  it("meal_prep_master caps current + pct at 14", () => {
+    const long = Array.from({ length: 20 }, (_, i) => {
+      const d = new Date(2026, 4, 1 + i, 12);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate()
+      ).padStart(2, "0")}`;
+    });
+    const p = badgeProgress(
+      def({ id: "meal_prep_master", category: "nutrition" }),
+      ctx({ mealDates: long })
+    );
+    expect(p?.current).toBe(14);
+    expect(p?.pct).toBe(1);
+  });
+
+  it("returns null for milestone + target-dependent nutrition badges", () => {
     expect(
       badgeProgress(def({ id: "first_5k", category: "running" }), ctx())
+    ).toBeNull();
+    expect(
+      badgeProgress(def({ id: "protein_pro", category: "nutrition" }), ctx())
     ).toBeNull();
   });
 });
