@@ -191,6 +191,12 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
+    // Per-day macro-target snapshot (nutrition badges read the target as it
+    // stood on each day). Owner-only, same shape as waterLog.
+    match /users/{uid}/dailyNutrition/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
     match /users/{uid}/bodyweightLogs/{doc} {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
