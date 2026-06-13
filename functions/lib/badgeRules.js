@@ -88,12 +88,89 @@ function lifetimeMilestoneBadges(kind, total) {
   return [];
 }
 
+// ── Lifting weight milestones (Plate Club) ─────────────────────────────────
+//
+// "Lift 60 / 100 / 140 kg on any compound." Plate-loading lingo — a milestone
+// is only meaningful on a multi-joint BARBELL lift (loading 140 kg on a bicep
+// curl isn't the intent), so this gates on a curated set of compound ids.
+//
+// PARITY: this set mirrors the multi-joint barbell movements in the client
+// exercise DB (src/lib/exercises.ts) — functions/ can't import the TS. The
+// membership test in functions/__tests__/badgeRules.test.js is the tripwire.
+// Rule for adding an id: a multi-joint barbell lift where 60/100/140 kg are
+// meaningful working loads. Deliberately EXCLUDES barbell isolation work
+// (curls, shrugs, upright rows, skull-crushers) so three_plate stays earned,
+// not gifted. Single-workout determinable, so awarded on onWorkoutCreated off
+// the full workout doc (idempotent downstream via earnedAt) — same reason as
+// the running distances: the client's windowed snapshots can't see an old PR.
+const COMPOUND_LIFT_IDS = new Set([
+  // Press (horizontal)
+  "bench-press",
+  "incline-bench",
+  "decline-bench",
+  "barbell-floor-press",
+  "close-grip-bench",
+  // Pull (hinge / row)
+  "deadlift",
+  "sumo-deadlift",
+  "trap-bar-deadlift",
+  "rack-pull",
+  "romanian-deadlift",
+  "barbell-row",
+  "pendlay-row",
+  "t-bar-row",
+  "meadows-row",
+  // Press (vertical)
+  "overhead-press",
+  "landmine-press",
+  // Squat / hip
+  "squat",
+  "front-squat",
+  "zercher-squat",
+  "landmine-squat",
+  "hip-thrust",
+  "barbell-step-ups",
+  // Full-body
+  "clean-and-press",
+  "thrusters",
+]);
+
+// Heaviest-set thresholds in KG, ascending.
+const LIFT_WEIGHT_MILESTONES = [
+  { id: "plate_club", minKg: 60 },
+  { id: "two_plate", minKg: 100 },
+  { id: "three_plate", minKg: 140 },
+];
+
+/**
+ * The Plate-Club badge ids a single workout qualifies for. `exercises` is the
+ * persisted workout doc's array — `{ exerciseId, sets: [{ weightKg }] }`. Only
+ * compound-lift sets count; returns the tiers cleared by the heaviest such set.
+ * Pure + side-effect-free — the caller decides which are already earned.
+ */
+function liftWeightMilestoneBadges(exercises) {
+  if (!Array.isArray(exercises)) return [];
+  let maxKg = 0;
+  for (const ex of exercises) {
+    if (!ex || !COMPOUND_LIFT_IDS.has(ex.exerciseId) || !Array.isArray(ex.sets))
+      continue;
+    for (const set of ex.sets) {
+      const w = Number(set && set.weightKg) || 0;
+      if (w > maxKg) maxKg = w;
+    }
+  }
+  return LIFT_WEIGHT_MILESTONES.filter((m) => maxKg >= m.minKg).map((m) => m.id);
+}
+
 module.exports = {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
+  liftWeightMilestoneBadges,
   RUN_DISTANCE_MILESTONES,
   SPEED_DEMON_PACE_SEC_PER_KM,
   SPEED_DEMON_MIN_METERS,
   LIFETIME_RUN_METERS_MILESTONE,
   LIFETIME_LIFT_VOLUME_KG_MILESTONE,
+  COMPOUND_LIFT_IDS,
+  LIFT_WEIGHT_MILESTONES,
 };
