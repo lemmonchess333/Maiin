@@ -70,6 +70,7 @@ import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
+import NextBadgeCard from "@/components/home/NextBadgeCard";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
@@ -1217,6 +1218,21 @@ export default function Home() {
               </SectionErrorBoundary>
             </TrackSectionView>
           )}
+        </motion.div>
+
+        {/* Next-badge nudge (goal-gradient retention). Self-hiding when no
+            badge is mid-flight; reads from the shared StreaksProvider so it
+            adds no Firestore listeners. Sits below the primary daily answers
+            (energy + quick actions) as a gentle motivational tail. */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <SectionErrorBoundary sectionName="next-badge">
+            <NextBadgeCard />
+          </SectionErrorBoundary>
         </motion.div>
 
         {showInsightStrip && perfWeek?.insight && (

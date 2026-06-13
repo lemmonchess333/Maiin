@@ -8,6 +8,7 @@ import {
   type BadgeDef,
 } from "./badges";
 import { BadgeHex } from "./BadgeHex";
+import { ProgressRing } from "./BadgeProgressRing";
 import { badgeProgress, nearestBadge } from "./badgeProgress";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,48 +38,6 @@ function ProgressBar({
         {label}
       </p>
     </div>
-  );
-}
-
-/** Circular progress ring drawn around the nearest badge in the hero. */
-function ProgressRing({
-  pct,
-  color,
-  size = 96,
-}: {
-  pct: number;
-  color: string;
-  size?: number;
-}) {
-  const r = size / 2 - 4;
-  const circ = 2 * Math.PI * r;
-  return (
-    <svg
-      width={size}
-      height={size}
-      style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}
-      aria-hidden="true"
-    >
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={`${color}26`}
-        strokeWidth="3"
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray={`${circ * Math.min(pct, 1)} ${circ}`}
-        style={{ transition: "stroke-dasharray 0.6s ease" }}
-      />
-    </svg>
   );
 }
 
