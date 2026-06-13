@@ -40,6 +40,7 @@ const { isVolumeEligibleRun } = require("./lib/runEligibility");
 const {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
+  liftWeightMilestoneBadges,
 } = require("./lib/badgeRules");
 const {
   applyPartnerActivity,
@@ -3930,6 +3931,15 @@ exports.onWorkoutCreated = functions
 
       // Auto-progress workout_count challenges (idempotent on workoutId)
       await syncChallengeProgress(uid, "workout_count", 1, workoutId);
+
+      // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
+      // heaviest compound set in THIS workout. Single-doc determinable, so
+      // awarded here off the full doc (the client's windowed snapshots can't
+      // see an old PR). Idempotent via earnedAt inside awardMilestoneBadges.
+      await awardMilestoneBadges(
+        uid,
+        liftWeightMilestoneBadges(data.exercises)
+      );
 
       // Auto-progress total_volume challenges (if volume data available)
       if (data.totalVolume) {
