@@ -115,12 +115,40 @@ describe("badgeProgress", () => {
     expect(p?.pct).toBe(1);
   });
 
+  it("early_bird → distinct early-log days vs 5", () => {
+    const p = badgeProgress(
+      def({ id: "early_bird", category: "consistency" }),
+      ctx({ earlyLogDays: ["2026-05-01", "2026-05-10", "2026-05-20"] })
+    );
+    expect(p).toMatchObject({
+      current: 3,
+      target: 5,
+      label: "3 / 5 early days",
+    });
+  });
+
+  it("ultimate_athlete → earned badge tally vs 15", () => {
+    const p = badgeProgress(
+      def({ id: "ultimate_athlete", category: "hybrid" }),
+      ctx({ earnedBadgeCount: 9 })
+    );
+    expect(p).toMatchObject({
+      current: 9,
+      target: 15,
+      label: "9 / 15 badges",
+    });
+    expect(p?.pct).toBeCloseTo(9 / 15);
+  });
+
   it("returns null for milestone + target-dependent nutrition badges", () => {
     expect(
       badgeProgress(def({ id: "first_5k", category: "running" }), ctx())
     ).toBeNull();
     expect(
       badgeProgress(def({ id: "protein_pro", category: "nutrition" }), ctx())
+    ).toBeNull();
+    expect(
+      badgeProgress(def({ id: "triple_threat", category: "hybrid" }), ctx())
     ).toBeNull();
   });
 });
