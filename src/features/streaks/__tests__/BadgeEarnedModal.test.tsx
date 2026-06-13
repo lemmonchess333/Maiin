@@ -62,10 +62,13 @@ function makeBadge(overrides: Partial<EarnedBadge> = {}): EarnedBadge {
   };
 }
 
-/** The copy (incl. the forward hook) is gated behind the tap-to-reveal
- *  moment — fire it so the post-reveal surface mounts. */
+/** The copy (incl. the forward hook) is gated behind the seal-break moment —
+ *  tap the seal the required number of times so the post-reveal surface mounts.
+ *  Full-motion path (reduced-motion mocked false) → 3 taps to break it open. */
 function reveal() {
-  fireEvent.click(screen.getByRole("button", { name: /reveal/i }));
+  for (let i = 0; i < 3; i++) {
+    fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
+  }
 }
 
 describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", function () {
@@ -101,5 +104,27 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
     render(<BadgeEarnedModal badge={makeBadge()} onDismiss={() => {}} />);
     // One dialog only — the moment + hook live inside the existing modal.
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
+  });
+
+  it("requires MULTIPLE seal taps — one or two taps do not reveal", function () {
+    render(<BadgeEarnedModal badge={makeBadge()} onDismiss={() => {}} />);
+    const tap = () =>
+      fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
+    expect(screen.getByText(/tap to break the seal/i)).toBeInTheDocument();
+    tap(); // 1
+    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
+    tap(); // 2 — still sealed
+    expect(screen.queryByText("First Step")).not.toBeInTheDocument();
+    tap(); // 3 — breaks open
+    expect(screen.getByText("First Step")).toBeInTheDocument();
+  });
+
+  it("does not dismiss until after the seal is broken", function () {
+    const onDismiss = vi.fn();
+    render(<BadgeEarnedModal badge={makeBadge()} onDismiss={onDismiss} />);
+    // First two taps weaken the seal; they must never dismiss the modal.
+    fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
+    fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
+    expect(onDismiss).not.toHaveBeenCalled();
   });
 });
