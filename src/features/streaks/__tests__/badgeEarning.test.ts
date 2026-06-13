@@ -7,7 +7,11 @@
  * already-earned skip) and the rolling-window balanced badge.
  */
 import { describe, it, expect } from "vitest";
-import { badgesToAward, isBalancedEarned } from "../badgeEarning";
+import {
+  badgesToAward,
+  isBalancedEarned,
+  maxConsecutiveDayRun,
+} from "../badgeEarning";
 import type { EarnedBadge } from "../badges";
 
 // Local-midnight anchor so date-fns `format` (local) is tz-stable in the test.
@@ -172,6 +176,116 @@ describe("badgesToAward — balanced + non-rule badges", () => {
         currentStreak: 999,
         workouts: fiveLiftDays,
         runs: fiveRunDays,
+        today: TODAY,
+      })
+    ).toEqual([]);
+  });
+});
+
+// N consecutive YYYY-MM-DD keys ending on `end` (inclusive), oldest-first.
+function consecutiveDates(end: string, n: number): string[] {
+  const out: string[] = [];
+  const cursor = new Date(end + "T12:00:00");
+  for (let i = 0; i < n; i++) {
+    out.push(
+      `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(
+        cursor.getDate()
+      ).padStart(2, "0")}`
+    );
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return out.reverse();
+}
+
+describe("maxConsecutiveDayRun", () => {
+  it("is 0 for an empty list", () => {
+    expect(maxConsecutiveDayRun([])).toBe(0);
+  });
+
+  it("counts a single day as a run of 1", () => {
+    expect(maxConsecutiveDayRun(["2026-05-20"])).toBe(1);
+  });
+
+  it("counts a clean consecutive run", () => {
+    expect(maxConsecutiveDayRun(consecutiveDates("2026-05-20", 14))).toBe(14);
+  });
+
+  it("resets on a gap and returns the LONGEST run, not the latest", () => {
+    const dates = [
+      ...consecutiveDates("2026-05-10", 5), // run of 5
+      // gap
+      ...consecutiveDates("2026-05-20", 3), // run of 3
+    ];
+    expect(maxConsecutiveDayRun(dates)).toBe(5);
+  });
+
+  it("dedupes + sorts unordered input with duplicates", () => {
+    expect(
+      maxConsecutiveDayRun([
+        "2026-05-03",
+        "2026-05-01",
+        "2026-05-02",
+        "2026-05-02",
+      ])
+    ).toBe(3);
+  });
+
+  it("survives a month boundary (calendar-day adjacency, not +1 date math)", () => {
+    expect(
+      maxConsecutiveDayRun(["2026-04-29", "2026-04-30", "2026-05-01"])
+    ).toBe(3);
+  });
+});
+
+describe("badgesToAward — meal_prep_master (14 days straight)", () => {
+  const badges = [mkBadge({ id: "meal_prep_master" })];
+
+  it("awards on a 14-day-straight meal-logging run", () => {
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
+        mealDates: consecutiveDates("2026-05-20", 14),
+        today: TODAY,
+      })
+    ).toEqual(["meal_prep_master"]);
+  });
+
+  it("does NOT award at 13 days (strict — no grace, the badge says 'straight')", () => {
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
+        mealDates: consecutiveDates("2026-05-20", 13),
+        today: TODAY,
+      })
+    ).toEqual([]);
+  });
+
+  it("does NOT award when a gap breaks the run below 14", () => {
+    const broken = [
+      ...consecutiveDates("2026-05-07", 10),
+      ...consecutiveDates("2026-05-20", 10), // gap between → max run 10
+    ];
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
+        mealDates: broken,
+        today: TODAY,
+      })
+    ).toEqual([]);
+  });
+
+  it("treats a missing mealDates as no meals (no award)", () => {
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
         today: TODAY,
       })
     ).toEqual([]);
