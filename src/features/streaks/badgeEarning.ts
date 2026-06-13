@@ -42,8 +42,37 @@ export interface BadgeEarningContext {
    * "no meals logged"). Drives `meal_prep_master`.
    */
   mealDates?: string[];
+  /**
+   * Distinct YYYY-MM-DD dates with at least one log before 07:00 local time
+   * (run completedAt / workout + meal createdAt). Precomputed in the hook so
+   * the local-tz hour extraction stays in one place. Drives `early_bird`.
+   */
+  earlyLogDays?: string[];
+  /**
+   * Count of already-earned badges, EXCLUDING `ultimate_athlete` itself (so the
+   * meta-badge can't count toward its own threshold). Precomputed in the hook
+   * for the progress ring; the earning pass derives it from the `badges` arg via
+   * `earnedBadgeCount`. Drives `ultimate_athlete` progress.
+   */
+  earnedBadgeCount?: number;
   /** "Now" — threaded in so the rolling-window rule is pure/testable. */
   today: Date;
+}
+
+/** "Log before 7am for 5 days" — cumulative (no "in a row"), so distinct days. */
+export const EARLY_BIRD_DAYS = 5;
+/** "Earn 15 badges" — the completionist capstone. */
+export const ULTIMATE_ATHLETE_COUNT = 15;
+
+/**
+ * How many badges count toward `ultimate_athlete`: earned badges minus the
+ * meta-badge itself (otherwise it could self-satisfy at 14 + itself). One home
+ * for the rule so earning and the progress ring never disagree.
+ */
+export function earnedBadgeCount(
+  badges: { id: string; earnedAt: string | null }[]
+): number {
+  return badges.filter((b) => b.earnedAt && b.id !== "ultimate_athlete").length;
 }
 
 /** "Log all meals for 14 days straight" — strict, no grace (the badge says
@@ -176,6 +205,20 @@ export function badgesToAward(
       if (maxConsecutiveDayRun(ctx.mealDates ?? []) >= MEAL_PREP_RUN_DAYS) {
         ids.push(b.id);
       }
+      continue;
+    }
+
+    // Early Bird — 5 distinct days with a log before 7am (cumulative).
+    if (b.id === "early_bird") {
+      if ((ctx.earlyLogDays?.length ?? 0) >= EARLY_BIRD_DAYS) ids.push(b.id);
+      continue;
+    }
+
+    // Ultimate Athlete — the completionist meta-badge: 15 OTHER badges earned.
+    // Derived from the `badges` arg (authoritative) so it can't drift from the
+    // progress ring, which reads the hook-precomputed ctx.earnedBadgeCount.
+    if (b.id === "ultimate_athlete") {
+      if (earnedBadgeCount(badges) >= ULTIMATE_ATHLETE_COUNT) ids.push(b.id);
     }
   }
   return ids;

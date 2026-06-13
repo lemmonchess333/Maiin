@@ -11,6 +11,7 @@ import {
   badgesToAward,
   isBalancedEarned,
   maxConsecutiveDayRun,
+  earnedBadgeCount,
 } from "../badgeEarning";
 import type { EarnedBadge } from "../badges";
 
@@ -281,6 +282,83 @@ describe("badgesToAward — meal_prep_master (14 days straight)", () => {
   });
 
   it("treats a missing mealDates as no meals (no award)", () => {
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
+        today: TODAY,
+      })
+    ).toEqual([]);
+  });
+});
+
+describe("badgesToAward — early_bird (5 days, cumulative)", () => {
+  const badges = [mkBadge({ id: "early_bird" })];
+  const base = { currentStreak: 0, workouts: [], runs: [], today: TODAY };
+
+  it("awards on 5 distinct early-log days (need not be consecutive)", () => {
+    expect(
+      badgesToAward(badges, {
+        ...base,
+        earlyLogDays: [
+          "2026-05-01",
+          "2026-05-04",
+          "2026-05-09",
+          "2026-05-15",
+          "2026-05-20",
+        ],
+      })
+    ).toEqual(["early_bird"]);
+  });
+
+  it("does NOT award at 4 early days", () => {
+    expect(
+      badgesToAward(badges, {
+        ...base,
+        earlyLogDays: ["2026-05-01", "2026-05-04", "2026-05-09", "2026-05-15"],
+      })
+    ).toEqual([]);
+  });
+
+  it("treats a missing earlyLogDays as none", () => {
+    expect(badgesToAward(badges, base)).toEqual([]);
+  });
+});
+
+describe("earnedBadgeCount + ultimate_athlete (15 badges)", () => {
+  it("counts earned badges but EXCLUDES ultimate_athlete itself", () => {
+    const badges = [
+      mkBadge({ id: "a", earnedAt: "x" }),
+      mkBadge({ id: "b", earnedAt: "x" }),
+      mkBadge({ id: "ultimate_athlete", earnedAt: "x" }),
+      mkBadge({ id: "c", earnedAt: null }),
+    ];
+    expect(earnedBadgeCount(badges)).toBe(2);
+  });
+
+  // 15 distinct earned badges + the unearned ultimate_athlete.
+  const fifteenEarned = Array.from({ length: 15 }, (_, i) =>
+    mkBadge({ id: `b${i}`, earnedAt: "2026-01-01" })
+  );
+
+  it("awards ultimate_athlete once 15 OTHER badges are earned", () => {
+    const badges = [...fifteenEarned, mkBadge({ id: "ultimate_athlete" })];
+    expect(
+      badgesToAward(badges, {
+        currentStreak: 0,
+        workouts: [],
+        runs: [],
+        today: TODAY,
+      })
+    ).toEqual(["ultimate_athlete"]);
+  });
+
+  it("does NOT award at 14 earned (the meta-badge can't self-satisfy)", () => {
+    const badges = [
+      ...fifteenEarned.slice(0, 14),
+      mkBadge({ id: "ultimate_athlete" }),
+    ];
     expect(
       badgesToAward(badges, {
         currentStreak: 0,
