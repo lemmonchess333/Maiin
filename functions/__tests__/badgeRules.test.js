@@ -6,7 +6,13 @@
  * below is the tripwire if the running milestones drift apart.
  */
 import { describe, it, expect } from "vitest";
-import { runMilestoneBadges, RUN_DISTANCE_MILESTONES } from "../lib/badgeRules";
+import {
+  runMilestoneBadges,
+  lifetimeMilestoneBadges,
+  RUN_DISTANCE_MILESTONES,
+  LIFETIME_RUN_METERS_MILESTONE,
+  LIFETIME_LIFT_VOLUME_KG_MILESTONE,
+} from "../lib/badgeRules";
 
 describe("runMilestoneBadges — distance", () => {
   it("awards nothing below 5K", () => {
@@ -67,7 +73,54 @@ describe("runMilestoneBadges — guards", () => {
   });
 });
 
-describe("PARITY — running milestone ids match the client catalogue", () => {
+describe("lifetimeMilestoneBadges — running distance (century_km)", () => {
+  it("awards nothing below 100 km", () => {
+    expect(lifetimeMilestoneBadges("run", 99999)).toEqual([]);
+  });
+
+  it("awards century_km at exactly 100 km", () => {
+    expect(
+      lifetimeMilestoneBadges("run", LIFETIME_RUN_METERS_MILESTONE)
+    ).toEqual(["century_km"]);
+  });
+
+  it("keeps awarding past the line (idempotent re-pass)", () => {
+    // The downstream award is earnedAt-idempotent, so an over-threshold total
+    // always returns the id — re-passing is a harmless no-op award.
+    expect(lifetimeMilestoneBadges("run", 250000)).toEqual(["century_km"]);
+  });
+});
+
+describe("lifetimeMilestoneBadges — lift volume (tonnage_100)", () => {
+  it("awards nothing below 100 tonnes", () => {
+    expect(lifetimeMilestoneBadges("lift", 99999)).toEqual([]);
+  });
+
+  it("awards tonnage_100 at exactly 100 tonnes (100000 kg)", () => {
+    expect(
+      lifetimeMilestoneBadges("lift", LIFETIME_LIFT_VOLUME_KG_MILESTONE)
+    ).toEqual(["tonnage_100"]);
+  });
+});
+
+describe("lifetimeMilestoneBadges — guards", () => {
+  it("returns [] for an unknown kind even over the threshold", () => {
+    expect(lifetimeMilestoneBadges("swim", 500000)).toEqual([]);
+  });
+
+  it("returns [] for non-finite / zero totals", () => {
+    expect(lifetimeMilestoneBadges("run", 0)).toEqual([]);
+    expect(lifetimeMilestoneBadges("lift", undefined)).toEqual([]);
+    expect(lifetimeMilestoneBadges("run", "nope")).toEqual([]);
+  });
+
+  it("never cross-awards (a run total can't earn the lift badge)", () => {
+    expect(lifetimeMilestoneBadges("run", 200000)).not.toContain("tonnage_100");
+    expect(lifetimeMilestoneBadges("lift", 200000)).not.toContain("century_km");
+  });
+});
+
+describe("PARITY — milestone ids match the client catalogue", () => {
   it("pins the exact distance-badge id set", () => {
     expect(RUN_DISTANCE_MILESTONES.map((m) => m.id)).toEqual([
       "first_5k",
@@ -75,5 +128,14 @@ describe("PARITY — running milestone ids match the client catalogue", () => {
       "half_marathon",
       "marathon",
     ]);
+  });
+
+  it("pins the lifetime-aggregate badge ids", () => {
+    expect(
+      lifetimeMilestoneBadges("run", LIFETIME_RUN_METERS_MILESTONE)
+    ).toEqual(["century_km"]);
+    expect(
+      lifetimeMilestoneBadges("lift", LIFETIME_LIFT_VOLUME_KG_MILESTONE)
+    ).toEqual(["tonnage_100"]);
   });
 });
