@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
+import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -38,7 +39,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { normalizeExercise } from "@/features/program/programTypes";
-import { splitLabel, primaryGoalLabel } from "@/features/program/programEngine";
+import {
+  splitLabel,
+  primaryGoalLabel,
+  isCycleEndWeek,
+} from "@/features/program/programEngine";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
@@ -117,6 +122,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     dismissFellBehindPrompt,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
+  const { awardEventBadge } = useStreaks();
   // Latest programState for deferred handlers (e.g. the delete-undo toast,
   // which fires after the removing save has already advanced state).
   const programStateRef = useRef(programState);
@@ -636,7 +642,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
 
   const handleAdvanceWeek = async () => {
     setAdvancing(true);
+    // Capture the week being COMPLETED before it advances. A deload week is
+    // the last week of a 4-week periodization mesocycle (isCycleEndWeek derives
+    // this from generateWeekPrescription, so it can't drift from the schedule),
+    // so completing it = "finished a full programme cycle". advanceToNextWeek
+    // is gated on all days done/skipped → a genuine completion, not a calendar
+    // catch-up rollover.
+    const completedWeek = programState?.weekNumber ?? 0;
     await advanceToNextWeek();
+    if (isCycleEndWeek(completedWeek)) {
+      awardEventBadge("programme_complete");
+    }
     setAdvancing(false);
   };
 
