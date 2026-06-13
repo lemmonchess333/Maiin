@@ -44,6 +44,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // owned badge state — century_km / tonnage_100). Same enumerate-not-recurse
   // reason as above: these docs orphan under a deleted user without an entry.
   "lifetime",
+  // Per-day macro-target snapshots (users/{uid}/dailyNutrition/{date}) backing
+  // the target-dependent nutrition badges. Enumerate-not-recurse, so without
+  // this entry a user's daily snapshots orphan on account deletion.
+  "dailyNutrition",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
