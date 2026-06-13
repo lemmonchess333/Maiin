@@ -798,6 +798,13 @@ function useStreaksInternal() {
   const earnedBadges = streakData.badges.filter((b) => b.earnedAt);
   const lockedBadges = streakData.badges.filter((b) => !b.earnedAt);
 
+  // Inputs for badgeProgress() — same shape as the earning context, so the
+  // grid's rings + "next badge" nudge are computed from exactly what awards.
+  const badgeProgressCtx = useMemo(
+    () => ({ currentStreak, workouts, runs, today: new Date() }),
+    [currentStreak, workouts, runs]
+  );
+
   return {
     currentStreak,
     longestStreak,
@@ -809,6 +816,7 @@ function useStreaksInternal() {
     earnedBadges,
     lockedBadges,
     allBadges,
+    badgeProgressCtx,
     newBadge: newBadgeQueue[0] ?? null,
     dismissNewBadge,
   };
