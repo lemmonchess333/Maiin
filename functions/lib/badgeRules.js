@@ -55,9 +55,45 @@ function runMilestoneBadges(distanceMeters, durationSeconds) {
   return ids;
 }
 
+// ── Lifetime-aggregate milestones ──────────────────────────────────────────
+//
+// Unlike the single-run milestones above, these depend on a CUMULATIVE total
+// the trigger can't see in one doc — so the caller (onRun/onWorkoutCreated)
+// maintains a per-user lifetime counter (idempotently, with a per-source
+// marker) and passes the resulting total here. The thresholds match the
+// client catalogue's descriptions: "Run 100 km lifetime distance" and "Move
+// 100 tonnes total volume".
+//
+// Awarding is monotonic + idempotent downstream (the badge's `earnedAt` is set
+// once), so this can simply return the id whenever the total is at/over the
+// line — re-passing an already-crossed total is a harmless no-op award. No
+// "crossed this time" detection needed here.
+const LIFETIME_RUN_METERS_MILESTONE = 100000; // 100 km
+const LIFETIME_LIFT_VOLUME_KG_MILESTONE = 100000; // 100 tonnes
+
+/**
+ * Lifetime-aggregate badge ids earned at a given running total.
+ *   kind "run"  → century_km    once total run distance ≥ 100 km (metres)
+ *   kind "lift" → tonnage_100   once total lift volume   ≥ 100 t  (kg)
+ * Returns [] for an unknown kind or a sub-threshold / non-finite total.
+ */
+function lifetimeMilestoneBadges(kind, total) {
+  const v = Number(total) || 0;
+  if (kind === "run" && v >= LIFETIME_RUN_METERS_MILESTONE) {
+    return ["century_km"];
+  }
+  if (kind === "lift" && v >= LIFETIME_LIFT_VOLUME_KG_MILESTONE) {
+    return ["tonnage_100"];
+  }
+  return [];
+}
+
 module.exports = {
   runMilestoneBadges,
+  lifetimeMilestoneBadges,
   RUN_DISTANCE_MILESTONES,
   SPEED_DEMON_PACE_SEC_PER_KM,
   SPEED_DEMON_MIN_METERS,
+  LIFETIME_RUN_METERS_MILESTONE,
+  LIFETIME_LIFT_VOLUME_KG_MILESTONE,
 };

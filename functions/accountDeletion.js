@@ -40,6 +40,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // deleted user. Sign-out deletes the current device's token, but the
   // freeze blocks that during deletion and other devices aren't covered.
   "devices",
+  // Lifetime-aggregate counters + per-source idempotency markers (server-
+  // owned badge state — century_km / tonnage_100). Same enumerate-not-recurse
+  // reason as above: these docs orphan under a deleted user without an entry.
+  "lifetime",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
