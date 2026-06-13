@@ -369,3 +369,68 @@ describe("earnedBadgeCount + ultimate_athlete (15 badges)", () => {
     ).toEqual([]);
   });
 });
+
+describe("badgesToAward — target-dependent nutrition badges", () => {
+  const base = { currentStreak: 0, workouts: [], runs: [], today: TODAY };
+
+  it("macro_master awards on ≥1 perfect-macro day", () => {
+    expect(
+      badgesToAward([mkBadge({ id: "macro_master" })], {
+        ...base,
+        macroMasterDays: ["2026-05-20"],
+      })
+    ).toEqual(["macro_master"]);
+    expect(
+      badgesToAward([mkBadge({ id: "macro_master" })], {
+        ...base,
+        macroMasterDays: [],
+      })
+    ).toEqual([]);
+  });
+
+  it("protein_pro awards on a 7-day-straight protein run, not 6", () => {
+    expect(
+      badgesToAward([mkBadge({ id: "protein_pro" })], {
+        ...base,
+        proteinHitDays: consecutiveDates("2026-05-20", 7),
+      })
+    ).toEqual(["protein_pro"]);
+    expect(
+      badgesToAward([mkBadge({ id: "protein_pro" })], {
+        ...base,
+        proteinHitDays: consecutiveDates("2026-05-20", 6),
+      })
+    ).toEqual([]);
+  });
+
+  it("hydration_hero awards on a 7-day-straight water run", () => {
+    expect(
+      badgesToAward([mkBadge({ id: "hydration_hero" })], {
+        ...base,
+        waterHitDays: consecutiveDates("2026-05-20", 7),
+      })
+    ).toEqual(["hydration_hero"]);
+  });
+
+  it("triple_threat awards only when a macro day is ALSO a lift + run day", () => {
+    const badges = [mkBadge({ id: "triple_threat" })];
+    // macro day 05-20 with a lift AND a run that same day → award
+    expect(
+      badgesToAward(badges, {
+        ...base,
+        macroMasterDays: ["2026-05-20"],
+        workouts: [liftOn("2026-05-20")],
+        runs: [runOn(2026, 4, 20)],
+      })
+    ).toEqual(["triple_threat"]);
+    // macro day with a lift but the run is a DIFFERENT day → no award
+    expect(
+      badgesToAward(badges, {
+        ...base,
+        macroMasterDays: ["2026-05-20"],
+        workouts: [liftOn("2026-05-20")],
+        runs: [runOn(2026, 4, 19)],
+      })
+    ).toEqual([]);
+  });
+});
