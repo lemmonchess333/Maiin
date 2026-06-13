@@ -57,15 +57,57 @@ export const BADGE_ICONS: Record<string, LucideIcon> = {
 };
 
 /**
- * Optional bespoke artwork per badge id. Maps a badge id → a committed image
- * asset (AI-generated via the pipeline in docs/badges/ART_BRIEF.md, optimized
- * WebP under public/badges/). EMPTY today — the seam is wired so the catalogue
- * adopts artwork incrementally: BadgeHex renders the image when present and
- * falls back to the lucide metallic hex when absent, so a half-illustrated
- * catalogue still renders cleanly. To light a badge up, drop its file in and
- * add one line here, e.g. `month_master: "/Maiin/badges/month_master.webp"`.
+ * Bespoke artwork per badge id → a committed WebP under public/badges/
+ * (AI-generated via the pipeline in docs/badges/ART_BRIEF.md). BadgeHex renders
+ * the image when present and falls back to the lucide metallic hex when absent,
+ * so the catalogue can be illustrated incrementally and still render cleanly.
+ *
+ * Paths are prefixed with `import.meta.env.BASE_URL` (NOT a hardcoded `/Maiin/`)
+ * so they resolve on BOTH the web build (`/Maiin/`) and the native Capacitor
+ * shell (`/`) — a hardcoded base would 404 the art on iOS.
+ *
+ * To add/remove a badge's art: drop its `<id>.webp` in public/badges/ and add
+ * its id to BADGE_ART_IDS below.
  */
-export const BADGE_ART: Record<string, string> = {};
+const BADGE_ART_IDS = [
+  "first_step",
+  "three_day",
+  "week_warrior",
+  "two_week",
+  "month_master",
+  "two_month",
+  "century_club",
+  "year_long",
+  "early_bird",
+  "first_pr",
+  "plate_club",
+  "two_plate",
+  "three_plate",
+  "programme_complete",
+  "tonnage_100",
+  "first_5k",
+  "10k_club",
+  "half_marathon",
+  "marathon",
+  "speed_demon",
+  "century_km",
+  "macro_master",
+  "protein_pro",
+  "hydration_hero",
+  "meal_prep_master",
+  "hybrid_athlete",
+  "balanced",
+  "iron_runner",
+  "triple_threat",
+  "ultimate_athlete",
+] as const;
+
+export const BADGE_ART: Record<string, string> = Object.fromEntries(
+  BADGE_ART_IDS.map((id) => [
+    id,
+    `${import.meta.env.BASE_URL}badges/${id}.webp`,
+  ])
+);
 
 export interface BadgeDef {
   id: string;
