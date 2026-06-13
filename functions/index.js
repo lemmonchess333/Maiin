@@ -37,6 +37,7 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
+const { runMilestoneBadges } = require("./lib/badgeRules");
 const {
   applyPartnerActivity,
   resolvePartnerActivityDay,
@@ -3543,6 +3544,80 @@ exports._maybeWriteRecoveryEntryForRun = _maybeWriteRecoveryEntryForRun;
  * stays bounded even for a long-running / perpetual challenge — no 1MB
  * doc-growth footgun.
  */
+/**
+ * Award milestone badges server-side. The catalogue's milestone badges
+ * (running distances, …) can't be computed from the client's WINDOWED streak
+ * snapshots, so the activity-create triggers award them here off the full doc.
+ *
+ * Writes the same two surfaces the client `awardBadge` does — `streaks/data`
+ * (full `badges[]`, owner-only) + the `users/{uid}/public/profile.badgeSummary`
+ * mirror — inside ONE transaction so concurrent activity triggers can't lose an
+ * award. Idempotent: an already-earned badge (`earnedAt` set) is left alone, so
+ * a trigger re-delivery (at-least-once) never re-awards. earnedAt is an ISO
+ * string to match the client (`new Date().toISOString()`); the client hydrates
+ * the rest of each badge from BADGE_DEFINITIONS by id on load.
+ *
+ * No streak doc yet ⇒ skip (don't create a partial doc); the client
+ * materialises + reconciles it on next load.
+ */
+async function awardMilestoneBadges(uid, ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  const ref = db.doc(`users/${uid}/streaks/data`);
+  const publicRef = db.doc(`users/${uid}/public/profile`);
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const stored = snap.data().badges;
+      const badges = Array.isArray(stored) ? stored.slice() : [];
+      const nowIso = new Date().toISOString();
+      let changed = false;
+
+      for (const id of ids) {
+        const idx = badges.findIndex((b) => b && b.id === id);
+        if (idx === -1) {
+          // Def absent from an older stored array — append the minimal pair;
+          // the client fills the rest from BADGE_DEFINITIONS by id.
+          badges.push({ id, earnedAt: nowIso });
+          changed = true;
+        } else if (!badges[idx].earnedAt) {
+          badges[idx] = { ...badges[idx], earnedAt: nowIso };
+          changed = true;
+        }
+        // else: already earned → idempotent no-op.
+      }
+
+      if (!changed) return;
+
+      // Recompute the public badge-summary mirror (same shape as the client).
+      const earnedMap = {};
+      for (const b of badges) {
+        if (!b || !b.earnedAt) continue;
+        earnedMap[b.id] =
+          typeof b.earnedAt === "string"
+            ? b.earnedAt
+            : b.earnedAt && typeof b.earnedAt.toDate === "function"
+              ? b.earnedAt.toDate().toISOString()
+              : nowIso;
+      }
+
+      tx.set(ref, { badges }, { merge: true });
+      tx.set(
+        publicRef,
+        {
+          badgeSummary: {
+            earnedMap,
+            count: Object.keys(earnedMap).length,
+          },
+        },
+        { merge: true }
+      );
+    });
+  } catch (err) {
+    console.error(`awardMilestoneBadges: error for ${uid}:`, err.message);
+  }
+}
+
 async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
   try {
     const challengesSnap = await db.collection("challenges").get();
@@ -3934,6 +4009,18 @@ exports.onRunCreated = functions
           data.date
         );
         await applyPartnerActivity(db, uid, runStreakDay);
+
+        // Server-side milestone badges (running distances + speed). The client
+        // can't compute these from its WINDOWED streak snapshots, so they're
+        // awarded here off the full run doc — gated by the same isCountable
+        // eligibility as challenges, idempotent + transactional inside the
+        // helper. distance is metres on the doc; fall back to distanceKm.
+        const runMeters =
+          Number(data.distance) || (Number(data.distanceKm) || 0) * 1000;
+        await awardMilestoneBadges(
+          uid,
+          runMilestoneBadges(runMeters, Number(data.duration) || 0)
+        );
 
         // Auto-progress km-based challenges
         const distanceKm =
