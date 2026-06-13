@@ -569,6 +569,22 @@ function useStreaksInternal() {
 
   const longestStreak = Math.max(currentStreak, streakData.longestStreak);
 
+  // Distinct dates with ≥1 logged meal item — feeds meal_prep_master (same
+  // "non-empty meal" rule computeActiveDateSet uses for the active-day set).
+  const mealDates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          meals
+            .filter(
+              (m) => typeof m.date === "string" && m.date && m.items.length > 0
+            )
+            .map((m) => m.date)
+        )
+      ),
+    [meals]
+  );
+
   // True if the user has any logged activity (workout / run / meal with items)
   // for today's date in the device-local timezone. Shared with useStreakReminder
   // so its "hasLoggedToday" gate stays consistent with the streak computation
@@ -695,6 +711,7 @@ function useStreaksInternal() {
       currentStreak,
       workouts,
       runs,
+      mealDates,
       today: new Date(),
     });
     void (async () => {
@@ -713,6 +730,7 @@ function useStreaksInternal() {
     currentStreak,
     workouts,
     runs,
+    mealDates,
     badgesSignature,
     streakData.badges,
     awardBadge,
@@ -832,8 +850,8 @@ function useStreaksInternal() {
   // Inputs for badgeProgress() — same shape as the earning context, so the
   // grid's rings + "next badge" nudge are computed from exactly what awards.
   const badgeProgressCtx = useMemo(
-    () => ({ currentStreak, workouts, runs, today: new Date() }),
-    [currentStreak, workouts, runs]
+    () => ({ currentStreak, workouts, runs, mealDates, today: new Date() }),
+    [currentStreak, workouts, runs, mealDates]
   );
 
   return {
