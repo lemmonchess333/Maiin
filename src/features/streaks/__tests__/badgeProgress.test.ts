@@ -140,12 +140,32 @@ describe("badgeProgress", () => {
     expect(p?.pct).toBeCloseTo(9 / 15);
   });
 
-  it("returns null for milestone + target-dependent nutrition badges", () => {
+  it("protein_pro → longest protein-hit run vs 7", () => {
+    const p = badgeProgress(
+      def({ id: "protein_pro", category: "nutrition" }),
+      ctx({
+        proteinHitDays: ["2026-05-18", "2026-05-19", "2026-05-20"], // run of 3
+      })
+    );
+    expect(p).toMatchObject({ current: 3, target: 7, label: "3 / 7 days" });
+  });
+
+  it("hydration_hero → longest water-hit run vs 7", () => {
+    const p = badgeProgress(
+      def({ id: "hydration_hero", category: "nutrition" }),
+      ctx({
+        waterHitDays: ["2026-05-17", "2026-05-18", "2026-05-19", "2026-05-20"],
+      })
+    );
+    expect(p).toMatchObject({ current: 4, target: 7 });
+  });
+
+  it("returns null for one-shot nutrition badges + milestones (no honest gradient)", () => {
     expect(
       badgeProgress(def({ id: "first_5k", category: "running" }), ctx())
     ).toBeNull();
     expect(
-      badgeProgress(def({ id: "protein_pro", category: "nutrition" }), ctx())
+      badgeProgress(def({ id: "macro_master", category: "nutrition" }), ctx())
     ).toBeNull();
     expect(
       badgeProgress(def({ id: "triple_threat", category: "hybrid" }), ctx())
