@@ -9,10 +9,18 @@ import { describe, it, expect } from "vitest";
 import {
   runMilestoneBadges,
   lifetimeMilestoneBadges,
+  liftWeightMilestoneBadges,
   RUN_DISTANCE_MILESTONES,
   LIFETIME_RUN_METERS_MILESTONE,
   LIFETIME_LIFT_VOLUME_KG_MILESTONE,
+  COMPOUND_LIFT_IDS,
+  LIFT_WEIGHT_MILESTONES,
 } from "../lib/badgeRules";
+
+const ex = (exerciseId, ...weights) => ({
+  exerciseId,
+  sets: weights.map((weightKg) => ({ weightKg })),
+});
 
 describe("runMilestoneBadges — distance", () => {
   it("awards nothing below 5K", () => {
@@ -120,6 +128,50 @@ describe("lifetimeMilestoneBadges — guards", () => {
   });
 });
 
+describe("liftWeightMilestoneBadges — Plate Club", () => {
+  it("awards nothing below 60 kg on a compound", () => {
+    expect(liftWeightMilestoneBadges([ex("bench-press", 40, 50)])).toEqual([]);
+  });
+
+  it("awards plate_club at 60 kg on a compound", () => {
+    expect(liftWeightMilestoneBadges([ex("squat", 60)])).toEqual([
+      "plate_club",
+    ]);
+  });
+
+  it("awards every tier the heaviest compound set clears", () => {
+    expect(liftWeightMilestoneBadges([ex("deadlift", 100, 140)])).toEqual([
+      "plate_club",
+      "two_plate",
+      "three_plate",
+    ]);
+  });
+
+  it("takes the max across exercises + sets", () => {
+    const ids = liftWeightMilestoneBadges([
+      ex("bench-press", 80),
+      ex("overhead-press", 50),
+      ex("squat", 105, 95),
+    ]);
+    expect(ids).toEqual(["plate_club", "two_plate"]);
+    expect(ids).not.toContain("three_plate");
+  });
+
+  it("ignores weight on a NON-compound (isolation) lift", () => {
+    // 140 kg barbell curl shouldn't gift three_plate.
+    expect(liftWeightMilestoneBadges([ex("barbell-curl", 140)])).toEqual([]);
+  });
+
+  it("handles missing / malformed input safely", () => {
+    expect(liftWeightMilestoneBadges(undefined)).toEqual([]);
+    expect(liftWeightMilestoneBadges([])).toEqual([]);
+    expect(liftWeightMilestoneBadges([{ exerciseId: "squat" }])).toEqual([]);
+    expect(
+      liftWeightMilestoneBadges([{ exerciseId: "squat", sets: [{}] }])
+    ).toEqual([]);
+  });
+});
+
 describe("PARITY — milestone ids match the client catalogue", () => {
   it("pins the exact distance-badge id set", () => {
     expect(RUN_DISTANCE_MILESTONES.map((m) => m.id)).toEqual([
@@ -137,5 +189,35 @@ describe("PARITY — milestone ids match the client catalogue", () => {
     expect(
       lifetimeMilestoneBadges("lift", LIFETIME_LIFT_VOLUME_KG_MILESTONE)
     ).toEqual(["tonnage_100"]);
+  });
+
+  it("pins the Plate-Club tier id set", () => {
+    expect(LIFT_WEIGHT_MILESTONES.map((m) => m.id)).toEqual([
+      "plate_club",
+      "two_plate",
+      "three_plate",
+    ]);
+  });
+
+  it("classifies representative compound vs isolation lifts", () => {
+    // Tripwire: the big multi-joint barbell lifts are IN…
+    for (const id of [
+      "bench-press",
+      "squat",
+      "deadlift",
+      "overhead-press",
+      "barbell-row",
+    ]) {
+      expect(COMPOUND_LIFT_IDS.has(id)).toBe(true);
+    }
+    // …and barbell isolation work is OUT.
+    for (const id of [
+      "barbell-curl",
+      "barbell-shrug",
+      "skull-crushers",
+      "barbell-upright-row",
+    ]) {
+      expect(COMPOUND_LIFT_IDS.has(id)).toBe(false);
+    }
   });
 });
