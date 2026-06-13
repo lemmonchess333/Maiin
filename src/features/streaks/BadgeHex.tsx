@@ -75,6 +75,12 @@ interface BadgeHexProps {
   earned: boolean;
   size?: number;
   className?: string;
+  /** Optional pre-rendered badge artwork (e.g. AI-generated, committed to
+   *  public/badges/<id>.webp). When set, the image IS the badge — the SVG
+   *  hex + lucide icon are the fallback for badges without bespoke art, so
+   *  the catalogue can adopt artwork incrementally. Locked badges desaturate
+   *  + dim the artwork to keep the earned/locked read. */
+  imageSrc?: string;
 }
 
 export function BadgeHex({
@@ -83,6 +89,7 @@ export function BadgeHex({
   earned,
   size = 56,
   className,
+  imageSrc,
 }: BadgeHexProps) {
   // useId so multiple BadgeHexes on the same page get unique gradient ids —
   // without this the last-rendered instance's gradient would overwrite all
@@ -90,6 +97,38 @@ export function BadgeHex({
   const id = useId().replace(/:/g, "");
   const p = earned ? TIER_PALETTES[tier] : LOCKED_PALETTE;
   const iconSize = Math.round(size * 0.42);
+
+  if (imageSrc) {
+    return (
+      <div
+        className={className}
+        style={{
+          width: size,
+          height: size,
+          opacity: earned ? 1 : 0.5,
+          filter: earned
+            ? "drop-shadow(0 2px 6px rgba(0,0,0,0.22))"
+            : "grayscale(1) drop-shadow(0 1px 2px rgba(0,0,0,0.08))",
+        }}
+        aria-hidden="true"
+      >
+        <img
+          src={imageSrc}
+          alt=""
+          width={size}
+          height={size}
+          style={{
+            width: size,
+            height: size,
+            objectFit: "contain",
+            display: "block",
+          }}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
