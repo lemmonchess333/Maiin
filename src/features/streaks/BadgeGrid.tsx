@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import {
+  BADGE_ART,
   BADGE_ICONS,
   CATEGORY_LABELS,
   TIER_COLORS,
@@ -97,6 +98,7 @@ export function BadgeGrid() {
                         tier={badge.tier}
                         earned={earned}
                         size={64}
+                        imageSrc={BADGE_ART[badge.id]}
                       />
                     </div>
 
