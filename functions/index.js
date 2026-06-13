@@ -37,7 +37,10 @@ const accountDeletionLocks = require("./lib/accountDeletionLocks");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
-const { runMilestoneBadges } = require("./lib/badgeRules");
+const {
+  runMilestoneBadges,
+  lifetimeMilestoneBadges,
+} = require("./lib/badgeRules");
 const {
   applyPartnerActivity,
   resolvePartnerActivityDay,
@@ -3618,6 +3621,66 @@ async function awardMilestoneBadges(uid, ids) {
   }
 }
 
+/**
+ * Maintain a per-user LIFETIME aggregate (total run distance / total lift
+ * volume) and award the lifetime-milestone badges it unlocks (century_km,
+ * tonnage_100). The activity-create triggers can't compute a lifetime total
+ * from one doc, and the client's streak snapshots are WINDOWED (≤400 docs), so
+ * the cumulative total is owned here.
+ *
+ * Idempotency (triggers are at-least-once + concurrent — see the project rule):
+ *   • The counter read-modify-write runs in a runTransaction.
+ *   • A per-source marker doc (`lifetime/applied_<kind>_<sourceId>`) is written
+ *     in the SAME transaction; a re-delivery of the same activity finds the
+ *     marker and skips the increment (no double-count). Markers are tiny
+ *     separate docs in a dedicated subcollection — O(activities) growth, not
+ *     the 1MB single-doc footgun the codebase warns about, and the same
+ *     per-source shape syncChallengeProgress uses.
+ *
+ * The badge award itself is delegated to awardMilestoneBadges (its own
+ * transaction, idempotent via `earnedAt`), so re-passing an already-crossed
+ * total is harmless. `kind` is "run" (metres) or "lift" (kg).
+ */
+async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
+  const inc = Number(incrementBy) || 0;
+  if (inc <= 0 || (kind !== "run" && kind !== "lift")) return;
+
+  const field = kind === "run" ? "runMeters" : "liftVolumeKg";
+  const totalsRef = db.doc(`users/${uid}/lifetime/totals`);
+  const markerRef = db.doc(`users/${uid}/lifetime/applied_${kind}_${sourceId}`);
+
+  let newTotal = 0;
+  try {
+    newTotal = await db.runTransaction(async (tx) => {
+      const [totalsSnap, markerSnap] = await Promise.all([
+        tx.get(totalsRef),
+        tx.get(markerRef),
+      ]);
+      const current = Number(
+        (totalsSnap.exists && totalsSnap.data()[field]) || 0
+      );
+      if (markerSnap.exists) {
+        // Already applied this source — return the unchanged total so the
+        // award step below is still a (no-op) idempotent re-check.
+        return current;
+      }
+      const updated = current + inc;
+      tx.set(totalsRef, { [field]: updated }, { merge: true });
+      tx.set(markerRef, {
+        kind,
+        sourceId,
+        appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return updated;
+    });
+  } catch (err) {
+    console.error(`accrueLifetimeStat: error for ${uid}/${kind}:`, err.message);
+    return;
+  }
+
+  await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
+}
+
 async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
   try {
     const challengesSnap = await db.collection("challenges").get();
@@ -3887,6 +3950,10 @@ exports.onWorkoutCreated = functions
           Math.round(data.totalVolume * 0.1),
           workoutId
         );
+        // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
+        // Maintains the cumulative volume counter idempotently (per-workout
+        // marker) and awards the badge once the lifetime total crosses 100 t.
+        await accrueLifetimeStat(uid, "lift", data.totalVolume, workoutId);
       }
 
       // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
@@ -4021,6 +4088,11 @@ exports.onRunCreated = functions
           uid,
           runMilestoneBadges(runMeters, Number(data.duration) || 0)
         );
+        // Lifetime-aggregate badge: century_km (run 100 km lifetime). Maintains
+        // the cumulative distance counter idempotently (per-run marker) and
+        // awards once the lifetime total crosses 100 km. Gated by isCountable
+        // (the enclosing block) so isInvalid / savedAnyway runs don't inflate.
+        await accrueLifetimeStat(uid, "run", runMeters, runId);
 
         // Auto-progress km-based challenges
         const distanceKm =
