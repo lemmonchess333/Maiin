@@ -26,6 +26,7 @@ import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
+import { useStreaks } from "@/features/streaks/useStreaks";
 import { toast } from "@/lib/toast";
 import {
   buildPRMap,
@@ -162,6 +163,7 @@ export default function WorkoutSession({
   onClose,
 }: Props) {
   const { user, profile } = useAuth();
+  const { awardEventBadge } = useStreaks();
   const {
     load: loadDraft,
     save: saveDraft,
@@ -877,6 +879,12 @@ export default function WorkoutSession({
     // Clear the draft only after the workout is saved. If onCompleteDay
     // throws above, the draft survives so the user can retry the finish.
     clearDraft();
+
+    // first_pr badge — a genuine PR fired this session (checkSetPR: beat a
+    // previous best after ≥3 sessions with that exercise). Event-based, so
+    // awarded here at the moment it happens; idempotent + celebration via the
+    // standard queue. firedPRs is the same signal SessionCompleteScreen counts.
+    if (firedPRs.size > 0) awardEventBadge("first_pr");
 
     // Streak-priming trigger (audit #10): completing a workout — post
     // celebration — is the ONLY moment the streak-reminder priming modal may
