@@ -55,8 +55,45 @@ export interface BadgeEarningContext {
    * `earnedBadgeCount`. Drives `ultimate_athlete` progress.
    */
   earnedBadgeCount?: number;
+  /**
+   * Per-day nutrition facts (computeNutritionBadgeDays) joining intake totals
+   * against the persisted per-day target snapshot. All three are date lists;
+   * absent ⇒ no judgeable days. Drive the target-dependent nutrition badges:
+   *  - macroMasterDays — all macros within ±5% (macro_master + triple_threat leg)
+   *  - proteinHitDays  — protein ≥ target (protein_pro, 7-in-a-row)
+   *  - waterHitDays    — glasses ≥ target (hydration_hero, 7-in-a-row)
+   */
+  macroMasterDays?: string[];
+  proteinHitDays?: string[];
+  waterHitDays?: string[];
   /** "Now" — threaded in so the rolling-window rule is pure/testable. */
   today: Date;
+}
+
+/** "Hit protein/water target 7 days in a row." */
+export const NUTRITION_STREAK_DAYS = 7;
+
+/** The YYYY-MM-DD set of days the user lifted / ran (any day, for same-day
+ *  intersections like triple_threat). Mirrors activeDayCounts' parsing without
+ *  the rolling window. */
+function liftRunDaySets(
+  workouts: BalancedWorkout[],
+  runs: BalancedRun[]
+): { liftDays: Set<string>; runDays: Set<string> } {
+  const liftDays = new Set<string>();
+  for (const w of workouts) {
+    if (typeof w.date === "string" && w.date) liftDays.add(w.date);
+  }
+  const runDays = new Set<string>();
+  for (const r of runs) {
+    if (!r.completedAt) continue;
+    try {
+      runDays.add(format(r.completedAt.toDate(), "yyyy-MM-dd"));
+    } catch {
+      // unparseable timestamp — skip
+    }
+  }
+  return { liftDays, runDays };
 }
 
 /** "Log before 7am for 5 days" — cumulative (no "in a row"), so distinct days. */
@@ -219,6 +256,47 @@ export function badgesToAward(
     // progress ring, which reads the hook-precomputed ctx.earnedBadgeCount.
     if (b.id === "ultimate_athlete") {
       if (earnedBadgeCount(badges) >= ULTIMATE_ATHLETE_COUNT) ids.push(b.id);
+      continue;
+    }
+
+    // ── Target-dependent nutrition badges (read the per-day target snapshot) ──
+
+    // Macro Master — one day with all macros within ±5% of target.
+    if (b.id === "macro_master") {
+      if ((ctx.macroMasterDays?.length ?? 0) >= 1) ids.push(b.id);
+      continue;
+    }
+
+    // Protein Pro — protein target hit 7 days in a row.
+    if (b.id === "protein_pro") {
+      if (
+        maxConsecutiveDayRun(ctx.proteinHitDays ?? []) >= NUTRITION_STREAK_DAYS
+      ) {
+        ids.push(b.id);
+      }
+      continue;
+    }
+
+    // Hydration Hero — water target hit 7 days in a row.
+    if (b.id === "hydration_hero") {
+      if (
+        maxConsecutiveDayRun(ctx.waterHitDays ?? []) >= NUTRITION_STREAK_DAYS
+      ) {
+        ids.push(b.id);
+      }
+      continue;
+    }
+
+    // Triple Threat — one day that hit the nutrition (macro) target AND has
+    // both a lift and a run. Same-day intersection of the three.
+    if (b.id === "triple_threat") {
+      const macroDays = ctx.macroMasterDays ?? [];
+      if (macroDays.length > 0) {
+        const { liftDays, runDays } = liftRunDaySets(ctx.workouts, ctx.runs);
+        if (macroDays.some((d) => liftDays.has(d) && runDays.has(d))) {
+          ids.push(b.id);
+        }
+      }
     }
   }
   return ids;

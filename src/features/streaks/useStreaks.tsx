@@ -23,6 +23,12 @@ import { useAuth } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
+import { useNutritionBadgeData } from "@/hooks/useNutritionBadgeData";
+import {
+  computeNutritionBadgeDays,
+  type DayMacros,
+} from "@/lib/nutritionBadgeDays";
+import { sumMealTotals } from "@/lib/mealTotals";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
@@ -100,6 +106,11 @@ interface MealRow {
   items: unknown[];
   /** Log time — carried for early_bird's before-7am check. */
   createdAt?: Timestamp | null;
+  /** Per-meal macro totals — summed per day for the nutrition badges. */
+  totalCalories?: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
 }
 
 // ── Pure helpers ─────────────────────────────────────────────────────────
@@ -532,12 +543,22 @@ function useStreaksInternal() {
             date?: unknown;
             items?: unknown;
             createdAt?: unknown;
+            totalCalories?: unknown;
+            totalProtein?: unknown;
+            totalCarbs?: unknown;
+            totalFat?: unknown;
           };
+          const numOrUndef = (v: unknown) =>
+            typeof v === "number" && Number.isFinite(v) ? v : undefined;
           return {
             date: typeof raw.date === "string" ? raw.date : "",
             items: Array.isArray(raw.items) ? raw.items : [],
             createdAt:
               raw.createdAt instanceof Timestamp ? raw.createdAt : null,
+            totalCalories: numOrUndef(raw.totalCalories),
+            totalProtein: numOrUndef(raw.totalProtein),
+            totalCarbs: numOrUndef(raw.totalCarbs),
+            totalFat: numOrUndef(raw.totalFat),
           };
         });
         setMeals(rows);
@@ -556,6 +577,10 @@ function useStreaksInternal() {
 
   const allLoaded =
     streaksDocLoaded && workoutsLoaded && runsLoaded && mealsLoaded;
+
+  // Per-day macro-target snapshots + water docs for the nutrition badges
+  // (its own two listeners, owned here so they're singular per session).
+  const { macroTargetsByDay, waterByDay } = useNutritionBadgeData();
 
   // ── Derived state ──────────────────────────────────────────────────────
 
@@ -628,6 +653,43 @@ function useStreaksInternal() {
     () => earnedBadgeCount(streakData.badges),
     [streakData.badges]
   );
+
+  // Target-dependent nutrition badge facts: per-day intake totals (summed from
+  // the meal window) joined against the per-day target snapshot + water doc.
+  // Yields the macroMaster / proteinHit / waterHit date lists badgesToAward
+  // consumes (macro_master / protein_pro / hydration_hero / triple_threat).
+  const { macroMasterDays, proteinHitDays, waterHitDays } = useMemo(() => {
+    if (!allLoaded) {
+      return {
+        macroMasterDays: [] as string[],
+        proteinHitDays: [] as string[],
+        waterHitDays: [] as string[],
+      };
+    }
+    // Group meals by date → daily macro totals (sumMealTotals reads the
+    // total*/legacy fields carried on each MealRow).
+    const byDay = new Map<string, MealRow[]>();
+    for (const m of meals) {
+      if (!m.date) continue;
+      const list = byDay.get(m.date);
+      if (list) list.push(m);
+      else byDay.set(m.date, [m]);
+    }
+    const mealTotalsByDay = new Map<string, DayMacros>();
+    for (const [date, list] of byDay) {
+      const totals = sumMealTotals(list);
+      mealTotalsByDay.set(date, {
+        protein: totals.protein,
+        carbs: totals.carbs,
+        fat: totals.fat,
+      });
+    }
+    return computeNutritionBadgeDays(
+      mealTotalsByDay,
+      macroTargetsByDay,
+      waterByDay
+    );
+  }, [allLoaded, meals, macroTargetsByDay, waterByDay]);
 
   // True if the user has any logged activity (workout / run / meal with items)
   // for today's date in the device-local timezone. Shared with useStreakReminder
@@ -757,6 +819,9 @@ function useStreaksInternal() {
       runs,
       mealDates,
       earlyLogDays,
+      macroMasterDays,
+      proteinHitDays,
+      waterHitDays,
       today: new Date(),
     });
     void (async () => {
@@ -777,6 +842,9 @@ function useStreaksInternal() {
     runs,
     mealDates,
     earlyLogDays,
+    macroMasterDays,
+    proteinHitDays,
+    waterHitDays,
     badgesSignature,
     streakData.badges,
     awardBadge,
@@ -903,9 +971,22 @@ function useStreaksInternal() {
       mealDates,
       earlyLogDays,
       earnedBadgeCount: earnedBadgeTally,
+      macroMasterDays,
+      proteinHitDays,
+      waterHitDays,
       today: new Date(),
     }),
-    [currentStreak, workouts, runs, mealDates, earlyLogDays, earnedBadgeTally]
+    [
+      currentStreak,
+      workouts,
+      runs,
+      mealDates,
+      earlyLogDays,
+      earnedBadgeTally,
+      macroMasterDays,
+      proteinHitDays,
+      waterHitDays,
+    ]
   );
 
   return {

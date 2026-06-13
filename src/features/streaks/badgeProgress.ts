@@ -17,6 +17,7 @@ import {
   MEAL_PREP_RUN_DAYS,
   EARLY_BIRD_DAYS,
   ULTIMATE_ATHLETE_COUNT,
+  NUTRITION_STREAK_DAYS,
   type BadgeEarningContext,
 } from "./badgeEarning";
 
@@ -143,10 +144,22 @@ export function badgeProgress(
     };
   }
 
-  // Not client-computable yet: milestone/lifetime earn server-side, and the
-  // target-dependent nutrition badges (macro_master / protein_pro /
-  // hydration_hero / triple_threat) need per-day macro/water targets — a
-  // follow-up.
+  // Protein Pro / Hydration Hero — longest run of target-hit days vs 7.
+  if (badge.id === "protein_pro" || badge.id === "hydration_hero") {
+    const days =
+      badge.id === "protein_pro" ? ctx.proteinHitDays : ctx.waterHitDays;
+    const run = maxConsecutiveDayRun(days ?? []);
+    const current = Math.min(run, NUTRITION_STREAK_DAYS);
+    return {
+      current,
+      target: NUTRITION_STREAK_DAYS,
+      pct: clamp01(run / NUTRITION_STREAK_DAYS),
+      label: `${current} / ${NUTRITION_STREAK_DAYS} days`,
+    };
+  }
+
+  // No honest gradient for the one-shot "perfect day" badges (macro_master, the
+  // nutrition leg of triple_threat) or for milestone/lifetime (server-side).
   return null;
 }
 
