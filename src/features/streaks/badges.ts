@@ -56,6 +56,17 @@ export const BADGE_ICONS: Record<string, LucideIcon> = {
   Star,
 };
 
+/**
+ * Optional bespoke artwork per badge id. Maps a badge id → a committed image
+ * asset (AI-generated via the pipeline in docs/badges/ART_BRIEF.md, optimized
+ * WebP under public/badges/). EMPTY today — the seam is wired so the catalogue
+ * adopts artwork incrementally: BadgeHex renders the image when present and
+ * falls back to the lucide metallic hex when absent, so a half-illustrated
+ * catalogue still renders cleanly. To light a badge up, drop its file in and
+ * add one line here, e.g. `month_master: "/Maiin/badges/month_master.webp"`.
+ */
+export const BADGE_ART: Record<string, string> = {};
+
 export interface BadgeDef {
   id: string;
   name: string;
