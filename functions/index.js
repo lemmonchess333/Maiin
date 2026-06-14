@@ -2941,17 +2941,18 @@ function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
  *  falls on the user's long-run weekday (long-run slots prefer the weekend, and
  *  races are usually weekends, so the race template's date equals targetDate).
  *
- *  Fallback: the week's `type: "race"` day. The generator places the race
- *  template on the long-run slot's weekday (`runScheduler.ts`), so for a race
- *  on a NON-long-run weekday the runDay's `date` is the long-run day, not the
- *  race date — exact date-match misses it and the no-show / recovery-entry
- *  reconciliation silently never fires (#1128). There is exactly one race day
+ *  Fallback: the week's `type: "race"` day. Retained for plans PERSISTED before
+ *  the RUN-M2 generator fix (#1115): the old generator placed the race template
+ *  on the long-run slot's weekday (`runScheduler.ts`), so for a race on a
+ *  NON-long-run weekday the runDay's `date` was the long-run day, not the race
+ *  date — exact date-match missed it and the no-show / recovery-entry
+ *  reconciliation silently never fired (#1128). There is exactly one race day
  *  per plan, so the fallback is unambiguous. Conservative by construction: the
  *  date match wins whenever it exists, so weekend-race behaviour is unchanged.
  *
- *  NOTE: this only fixes the SERVER lookup. The runDay's `date` is still on the
- *  long-run weekday (a UI/calendar correctness issue) until the generator is
- *  fixed to place the race day on targetDate — see #1128. */
+ *  As of RUN-M2 (#1115) the generator places the race day ON `targetDate`, so
+ *  the PRIMARY date-match is now the normal path for freshly-generated plans;
+ *  the `type:"race"` fallback only catches legacy plans generated before it. */
 function _findRaceDayRunDay(runDays, raceDate) {
   const days = runDays || [];
   return (
