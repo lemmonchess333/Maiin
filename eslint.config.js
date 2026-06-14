@@ -27,6 +27,20 @@ export default defineConfig([
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // ── React-Compiler-readiness rules (eslint-plugin-react-hooks 7.1.x) ──
+      // `set-state-in-effect` / `refs` / `purity` / `preserve-manual-memoization`
+      // are aimed at React Compiler adoption. Tropos does NOT use the Compiler,
+      // and these fire on many intentional, correct patterns here — data-fetch +
+      // subscription effects, the latest-ref pattern, refs captured on open for
+      // popover positioning, `Date.now()` in event handlers. Kept as WARN so the
+      // genuine hits (e.g. resetting state in an effect) stay visible for
+      // gradual cleanup, WITHOUT forcing ~50 scattered eslint-disable comments
+      // that would bury any future real violation. The load-bearing hooks rules
+      // (rules-of-hooks, exhaustive-deps) keep their recommended severity. #1051.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/purity": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
       // DS1 footgun guard: the bare Tailwind class `text-muted` resolves
       // to --color-muted (a SURFACE fill), NOT a text colour, so it
       // renders near-invisible text. The correct token is
