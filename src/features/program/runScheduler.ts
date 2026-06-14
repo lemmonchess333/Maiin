@@ -669,6 +669,17 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const weekStartDate = parseLocalDate(input.weekStart);
   const weeks: ScheduledRunDay[][] = [];
 
+  // RUN-M2: the race must land ON `targetDate` — the server reconciliation
+  // (_needsRaceNoShowEvaluation / _decideRecoveryEntry) finds the race runDay
+  // by `rd.date === raceGoal.targetDate`. Placing it on the long-run slot (as
+  // before) left the race dated on the wrong day-of-week, so that equality
+  // never held and the no-show / recovery deciders silently bailed. Compute the
+  // race day's index within the FINAL week from the target date itself.
+  const finalWeekStart = addLocalDays(weekStartDate, (totalWeeks - 1) * 7);
+  const raceDayIndex = Math.round(
+    (target.getTime() - finalWeekStart.getTime()) / 86400000
+  );
+
   for (let w = 0; w < totalWeeks; w++) {
     const phase = getPhaseForWeek(w, totalWeeks, input.raceGoal.distance);
     // Each week's start advances by 7 days from week 0
@@ -678,6 +689,37 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
     const remaining = runEligibleSlots.filter((d) => d !== longSlot);
 
+    // RUN-M2: race week is identical whether or not the plan is belowFloor —
+    // the race on `targetDate` (so `date === raceGoal.targetDate`) plus easy
+    // shakeouts on the user's OTHER run-eligible days. The race day is placed
+    // by date, not by the long-run slot, and is excluded from the easy set so
+    // it isn't double-booked (it need not be a scheduled run day at all — you
+    // race on race day regardless of the weekly template).
+    if (phase === "race") {
+      week.push(
+        buildRunDayV2({
+          dayIndex: raceDayIndex,
+          templateId: pickRaceTemplateId(input.raceGoal.distance),
+          type: "race",
+          weekStart,
+        })
+      );
+      runEligibleSlots
+        .filter((d) => d !== raceDayIndex)
+        .forEach((d) =>
+          week.push(
+            buildRunDayV2({
+              dayIndex: d,
+              templateId: "easy_30",
+              type: "easy",
+              weekStart,
+            })
+          )
+        );
+      weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+      continue;
+    }
+
     // Run9 phase-3 (Slice B) — finish-safely shape. Below the taper-safe
     // floor we DON'T silently compress quality into a doomed plan; we keep the
     // race date and emit an honest risk-managed week: the race day stays the
@@ -685,26 +727,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     // toward peak) + all easy, never tempo/intervals. The UI names the risk
     // via runPlan.belowFloor.
     if (belowFloor) {
-      if (phase === "race") {
-        week.push(
-          buildRunDayV2({
-            dayIndex: longSlot,
-            templateId: pickRaceTemplateId(input.raceGoal.distance),
-            type: "race",
-            weekStart,
-          })
-        );
-      } else {
-        week.push(
-          buildRunDayV2({
-            dayIndex: longSlot,
-            // Cap at baseLongKm (not peak) so the long run never jumps.
-            templateId: pickLongTemplateId(config.baseLongKm, phase),
-            type: phase === "taper" ? "easy" : "long",
-            weekStart,
-          })
-        );
-      }
+      // Race week already handled above; here phase is base/build/taper.
+      week.push(
+        buildRunDayV2({
+          dayIndex: longSlot,
+          // Cap at baseLongKm (not peak) so the long run never jumps.
+          templateId: pickLongTemplateId(config.baseLongKm, phase),
+          type: phase === "taper" ? "easy" : "long",
+          weekStart,
+        })
+      );
       remaining.forEach((d) =>
         week.push(
           buildRunDayV2({
@@ -719,26 +751,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       continue;
     }
 
-    // Long run / race day
-    if (phase === "race") {
-      week.push(
-        buildRunDayV2({
-          dayIndex: longSlot,
-          templateId: pickRaceTemplateId(input.raceGoal.distance),
-          type: "race",
-          weekStart,
-        })
-      );
-    } else {
-      week.push(
-        buildRunDayV2({
-          dayIndex: longSlot,
-          templateId: pickLongTemplateId(config.peakLongKm, phase),
-          type: phase === "taper" ? "easy" : "long",
-          weekStart,
-        })
-      );
-    }
+    // Long run (race week already handled above; phase is base/build/taper).
+    week.push(
+      buildRunDayV2({
+        dayIndex: longSlot,
+        templateId: pickLongTemplateId(config.peakLongKm, phase),
+        type: phase === "taper" ? "easy" : "long",
+        weekStart,
+      })
+    );
 
     if (remaining.length > 0) {
       // Compressed-plan rule: cap hard sessions at 1/week (vs 1
