@@ -32,7 +32,7 @@ import { sumMealTotals } from "@/lib/mealTotals";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
 import { cancelNotification } from "@/lib/notifications";
-import { STREAK_NOTIFICATION_ID } from "@/hooks/useStreakReminder";
+import { STREAK_NOTIFICATION_ID } from "@/hooks/streakNotificationId";
 
 export interface StreakData {
   currentStreak: number;
