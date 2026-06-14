@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import ShareComposerSheet from "@/components/social/ShareComposerSheet";
 import OneTimeMaintenance from "@/components/OneTimeMaintenance";
@@ -688,6 +689,7 @@ function App() {
               <ToastProvider />
               <ShareComposerSheet />
               <OneTimeMaintenance />
+              <RevenueCatIdentity />
               <AppRoutes />
             </NotificationBubbleProvider>
           </AuthProvider>
