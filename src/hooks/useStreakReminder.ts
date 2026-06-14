@@ -11,6 +11,7 @@ import {
 } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/errorReporting";
+import { STREAK_NOTIFICATION_ID } from "./streakNotificationId";
 
 /**
  * Streak-at-risk reminder — fires in the evening if the user hasn't logged
@@ -47,8 +48,6 @@ const DEFAULT_PREFS: StreakReminderPrefs = {
   time: "20:00",
   primingShown: false,
 };
-
-export const STREAK_NOTIFICATION_ID = 3001;
 
 /**
  * Given a "HH:MM" time string, return a Date for the next occurrence —
