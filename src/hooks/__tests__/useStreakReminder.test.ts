@@ -1,8 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  shouldScheduleStreakReminder,
-  STREAK_NOTIFICATION_ID,
-} from "../useStreakReminder";
+import { shouldScheduleStreakReminder } from "../useStreakReminder";
+import { STREAK_NOTIFICATION_ID } from "../streakNotificationId";
 
 /**
  * Pure-logic tests for the streak reminder's scheduling decision and for
@@ -25,37 +23,41 @@ describe("shouldScheduleStreakReminder", () => {
   });
 
   it("does not schedule while still loading", () => {
-    expect(shouldScheduleStreakReminder({ ...base, loading: true })).toBe(false);
+    expect(shouldScheduleStreakReminder({ ...base, loading: true })).toBe(
+      false
+    );
   });
 
   it("does not schedule when disabled", () => {
-    expect(shouldScheduleStreakReminder({ ...base, enabled: false })).toBe(false);
+    expect(shouldScheduleStreakReminder({ ...base, enabled: false })).toBe(
+      false
+    );
   });
 
   it("does not schedule before priming has been responded to", () => {
     expect(shouldScheduleStreakReminder({ ...base, primingShown: false })).toBe(
-      false,
+      false
     );
   });
 
   it("does not schedule when streak is below 2", () => {
     expect(shouldScheduleStreakReminder({ ...base, currentStreak: 1 })).toBe(
-      false,
+      false
     );
     expect(shouldScheduleStreakReminder({ ...base, currentStreak: 0 })).toBe(
-      false,
+      false
     );
   });
 
   it("schedules at the 2-day boundary", () => {
     expect(shouldScheduleStreakReminder({ ...base, currentStreak: 2 })).toBe(
-      true,
+      true
     );
   });
 
   it("does not schedule when already logged today", () => {
     expect(
-      shouldScheduleStreakReminder({ ...base, hasLoggedToday: true }),
+      shouldScheduleStreakReminder({ ...base, hasLoggedToday: true })
     ).toBe(false);
   });
 });
