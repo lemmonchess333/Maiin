@@ -65,7 +65,7 @@
     "react-body-highlighter": "^2.0.5",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.15.1",
-    "recharts": "^3.7.0",
+    "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "vaul": "^1.1.2"
