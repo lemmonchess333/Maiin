@@ -4,6 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 const isCapacitor = process.env.CAPACITOR_BUILD === "true";
+// Firebase Hosting serves from the domain root, AND from the same origin as the
+// Firebase auth handler (PROJECT.firebaseapp.com/__/auth/handler) — which is
+// what makes OAuth sign-in (Apple/Google popup) work on iOS Safari. GitHub
+// Pages serves under /Maiin/ on a *different* domain (…github.io), so its
+// cross-origin auth popup is severed by Safari ITP. Build with HOSTING_TARGET
+// =firebase for the root-based, same-origin Hosting bundle.
+const isFirebaseHosting = process.env.HOSTING_TARGET === "firebase";
 
 /**
  * Plugin that emits `dist/TROPOS_E2E_BUILD_DO_NOT_DEPLOY` whenever
@@ -47,7 +54,7 @@ function e2eMarkerPlugin(): Plugin {
  * the test browser context, never in the served artifact.
  */
 export default defineConfig(({ mode }) => ({
-  base: isCapacitor ? "/" : "/Maiin/",
+  base: isCapacitor || isFirebaseHosting ? "/" : "/Maiin/",
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version || "1.1.0"),
   },
