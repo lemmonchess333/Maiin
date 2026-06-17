@@ -28,7 +28,13 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const ICON = "/Maiin/icons/icon-192x192.png";
+// Derived from the SW's own URL so the one file works whether it's served at
+// /Maiin/ (GitHub Pages) or / (Firebase Hosting). Trailing slash kept.
+const BASE_PATH = self.location.pathname.replace(
+  /firebase-messaging-sw\.js$/,
+  ""
+);
+const ICON = BASE_PATH + "icons/icon-192x192.png";
 
 // We send DATA-ONLY messages (no top-level `notification` field) so this
 // handler is reliably invoked on iOS PWAs — FCM's auto-display of
@@ -52,13 +58,14 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const route =
     (event.notification.data && event.notification.data.route) || "/";
-  const target = "/Maiin" + route;
+  // BASE_PATH keeps the trailing slash; route is leading-slash, so trim one.
+  const target = BASE_PATH.replace(/\/$/, "") + route;
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((wins) => {
         for (const w of wins) {
-          if ("focus" in w && w.url.includes("/Maiin")) return w.focus();
+          if ("focus" in w && w.url.includes(BASE_PATH)) return w.focus();
         }
         if (clients.openWindow) return clients.openWindow(target);
       })

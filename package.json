@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:hosting": "tsc -b && HOSTING_TARGET=firebase vite build",
     "build:e2e": "tsc -b && vite build --mode=test",
     "build:ios": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync ios",
     "build:android": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync android",

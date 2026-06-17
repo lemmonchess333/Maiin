@@ -1,5 +1,8 @@
 const CACHE_NAME = "tropos-v13";
-const BASE_PATH = "/Maiin/";
+// Derived from the SW's own URL so the one file works whether it's served at
+// /Maiin/sw.js (GitHub Pages) or /sw.js (Firebase Hosting, served at root —
+// which is what makes OAuth same-origin with the auth handler on iOS Safari).
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, "");
 const MAX_CACHE_ENTRIES = 150;
 
 const STATIC_ASSETS = [
