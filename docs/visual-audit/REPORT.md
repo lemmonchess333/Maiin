@@ -33,11 +33,11 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 1. **Hue count: 7+ on the scrolled viewport** — pink/yellow/green macro tiles, orange pill + amber (pre-fix) selected pill, coral paywall, purple nav. The loudest screen in the app.
 2. Type: dense but on-scale.
-3. Spacing: the diary cards (BREAKFAST/LUNCH…) are uniform white cards — fine; the zone above them (Quick Add → composer → ADD TO → paywall → Log manually) stacks five different control shapes with no grouping.
+3. ~~Spacing: the diary cards (BREAKFAST/LUNCH…) are uniform white cards — fine; the zone above them (Quick Add → composer → ADD TO → paywall → Log manually) stacks five different control shapes with no grouping.~~ — **fixed** (wave2 A–D): the five-shape stack collapsed into ONE composer surface — the zone above the diary is now just the textarea (with an in-row scan icon) + "Add to" pills. Quick Add moved into the composer dropdown's empty-focus state; the standing manual-log link and full-width scan card are gone.
 4. Empty states: n/a (seeded).
 5. Dark parity: good; macro bar colours read well on dark.
 6. **Safe-area: Bug A reproduced here** — scrolled content entered the clock zone unprotected (`fixes/A-before-ring-through-statusbar.png`). Fixed.
-7. **Redundant affordances — FOUR simultaneous "add food" entry points in one viewport:** Quick Add chips, the NL composer, the scan CTA (locked → paywall), and "Log manually" — plus a fifth (per-meal "+" buttons) one scroll below. This is the single biggest simplification opportunity on the page.
+7. ~~**Redundant affordances — FOUR simultaneous "add food" entry points in one viewport:** Quick Add chips, the NL composer, the scan CTA (locked → paywall), and "Log manually" — plus a fifth (per-meal "+" buttons) one scroll below. This is the single biggest simplification opportunity on the page.~~ — **fixed** (wave2 A–D): consolidated to a single composer entry surface. Scan is an in-row camera icon (wave2 A); Quick Add lives in the composer dropdown's empty-focus state (wave2 D); "Log manually" is contextual-only — dropdown no-results row, AI-failure fallback, OFF-error toast (wave2 C); per-meal "+" routes through composer focus, not its own form. Pinned by `src/components/food/__tests__/FoodComposerCard.test.tsx` ("composer body is exactly the input surface … no extra CTA shapes").
 8. **Selected meal pill (pre-fix) amber-brown vs coral paywall adjacency** — Bug C, fixed (`fixes/C-*`).
 9. Details sheet + pantry typeahead (`02-food-details-sheet`, `02-food-typeahead`): render correctly; typeahead returns the seeded "Pizza slice".
 
@@ -106,7 +106,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 ## Ranked top-10 visual issues
 
-1. **Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes. The page's information architecture problem dwarfs any colour tweak. (`02-food-scrolled`)
+1. ~~**Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes. The page's information architecture problem dwarfs any colour tweak.~~ — **fixed** (wave2 A–D): single composer entry surface — in-row scan icon, Quick Add inside the dropdown's empty-focus state, contextual-only manual log, per-meal "+" routes through composer focus. Tested in `FoodComposerCard.test.tsx` + `FoodSuggestionsDropdown.test.tsx`. (`02-food-scrolled`)
 2. ~~Status-bar collision on scroll~~ — **fixed (A)**: compositor-layer drop + z-tie; occluder now survives scroll on every page.
 3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
 4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
