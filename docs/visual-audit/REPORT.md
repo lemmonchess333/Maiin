@@ -23,7 +23,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 1. **Hue count: ~6 on one viewport** (scrolled): brand purple (nav, day bubble), coral (run card, calendar dots), orange (Recomp chip, energy bar, Log food), pink/yellow/green (macro rings). Flagged (>4).
 2. Type: sizes look on-scale post-#1220; section labels at the 11px caption step.
 3. Spacing rhythm: WeekStrip → Performance → Today's Energy are three same-weight white cards; only the hero day-bubble breaks the rhythm.
-4. **Empty-state quality — two text-only empties on a RICH account:** the "Welcome to Tropos!" checklist card still renders for a user with 18 workouts + an active race plan, and the Performance card says "appears after your first logged session" despite seeded sessions (rollup hasn't run in the rig, but the empty itself is an undesigned grey-dash + sentence). Both are prime cold-start surfaces (CLAUDE.md: cold-start is a most-seen state).
+4. **Empty-state quality — two text-only empties on a RICH account:** the "Welcome to Tropos!" checklist card still renders for a user with 18 workouts + an active race plan, and ~~the Performance card says "appears after your first logged session" despite seeded sessions (rollup hasn't run in the rig, but the empty itself is an undesigned grey-dash + sentence)~~. Both are prime cold-start surfaces (CLAUDE.md: cold-start is a most-seen state). **Performance half fixed** (Wave3 F): the no-doc branch now renders the hexagon `EmptyState` primitive with a "Start a workout" CTA (`PerformanceHeroCard.tsx`). The "Welcome to Tropos!" stale-checklist half remains open — tracked as ranked #7.
 5. Dark parity: good. No unreadable content found.
 6. Safe areas: top occluder dims scrolled content (pre-fix capture shows partial dimming; post-fix verified in `fixes/A-*`). Bottom nav clears the 34px inset.
 7. Redundant affordances: none egregious on Home.
@@ -75,13 +75,13 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 1. Range pills (1W|1M|3M|6M|1Y) + tab pills (Analytics|PRs|Badges) + THIS MONTH rings — three stacked control rows before any content; hierarchy is flat.
 2. Hue: coral/purple/orange rings + pink charts ≈ 5; borderline.
-3. **Performance empty-state again text-only** ("will appear after your first logged session") — same undesigned pattern as Home.
+3. ~~**Performance empty-state again text-only** ("will appear after your first logged session") — same undesigned pattern as Home.~~ — **fixed** (Wave3 F): the no-doc branch renders the hexagon `EmptyState` primitive (icon + headline + "Start a workout" CTA) in `PerformanceSection.tsx`.
 4. Charts render with seeded data ✓; mono numerals ✓.
 5. Dark parity (spot-checked scrolled variant): fine.
 
 ### 08 Social — `screens/dark/08-social-top.png`
 
-1. **Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good. Feed/Crews tabs (captured in fullPage variants) are similarly text-first.
+1. ~~**Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good. Feed/Crews tabs (captured in fullPage variants) are similarly text-first.~~ — **fixed** (Soc8 solo-first + Wave3 F): the cold-start Social tab now renders the curated `SoloFirstFeed` stack (PartnerStreak hero → global hybrid challenge → share-your-training → aspirational crew row), and the Following / suggestions / crews empties use designed states (`HexEmptyState` or icon-tile rows with a CTA) rather than plain text — `src/components/social/SoloFirstFeed.tsx` + `src/pages/Social.tsx`.
 2. Hue: disciplined (purple + neutrals).
 3. Dark parity: good.
 
@@ -111,7 +111,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
 4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
 5. **Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route. (`06-run-detail-top`, `10-upgrade-top`)
-6. **Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
+6. ~~**Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base.~~ — **fixed** (Wave3 F + Soc8): all three now use the hexagon `EmptyState` primitive (or the curated `SoloFirstFeed` stack on Social) with a clear next action — Home/History Performance → "Start a workout"; Social → solo-first stack + "Create a crew" / "Find people". Covered by `EmptyState.test.tsx`, `PerformanceHeroCard.test.tsx`, `SoloFirstFeed.test.tsx`. (`01-home-top`, `07-history-top`, `08-social-top`)
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
 8. **Hue overload on Home + Food** (6–7 distinct hues per viewport vs the documented 4-ish semantic system). Macro pink/yellow/green + sport coral/purple + nutrition orange all co-present; the semantic system is intact but the _density_ of simultaneous accents is the issue. (`01-home-scrolled`, `02-food-scrolled`)
 9. ~~Webview desktop scrollbar~~ — **fixed (B)** (suppression CSS; rig cannot render the before state — see device screenshots).
