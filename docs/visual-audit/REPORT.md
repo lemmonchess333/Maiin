@@ -65,8 +65,8 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 ### 06 RunDetail — `screens/light/06-run-detail-top.png`
 
-1. **Text collision at 393px:** the "FREE RUN" label and the pace legend ("Faster / On pace / Slower") overlap; the Share pill also crowds the legend row. Genuine layout bug at this width.
-2. The offline-map toast renders **on top of the back button** (top-left) — z/placement collision in the toast position.
+1. ~~**Text collision at 393px:** the "FREE RUN" label and the pace legend ("Faster / On pace / Slower") overlap; the Share pill also crowds the legend row. Genuine layout bug at this width.~~ — **fixed**: `PaceLegend` moved out of the fixed `h-72` map container into its own normal-flow strip between the map and the header (`src/pages/RunDetail.tsx`), so the activity label + Share pill stack vertically below it — no overlap, no crowding.
+2. ~~The offline-map toast renders **on top of the back button** (top-left) — z/placement collision in the toast position.~~ — **fixed**: the toast dropped its full-width `inset-x-2 top-2` strip for a centred `top-2 left-1/2 -translate-x-1/2` with `max-w-[calc(100%-8rem)]` (`src/components/run/RunMap.tsx`), reserving the top-corner control zones so it clears the back button.
 3. Hue count: 6 (legend green/purple/coral + teal pace + orange cal + pink share tint).
 4. **Bottom-nav active state is WRONG: the Food tab is highlighted on `/run/:id`** (also wrong on `/upgrade` — see 10). The active-tab matcher appears to fall through to a default rather than reflecting the current route.
 5. Stat cards: mono numerals ✓, "0 SPLITS" shows a raw zero rather than hiding or explaining the empty splits state.
@@ -108,7 +108,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 1. **Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes. The page's information architecture problem dwarfs any colour tweak. (`02-food-scrolled`)
 2. ~~Status-bar collision on scroll~~ — **fixed (A)**: compositor-layer drop + z-tie; occluder now survives scroll on every page.
-3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
+3. ~~**RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button.~~ — **fixed**: `PaceLegend` relocated to its own strip below the map; offline-map toast centred + width-capped to clear the top-corner controls. (`06-run-detail-top`)
 4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
 5. **Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route. (`06-run-detail-top`, `10-upgrade-top`)
 6. **Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
