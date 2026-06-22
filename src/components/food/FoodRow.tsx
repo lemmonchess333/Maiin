@@ -211,6 +211,12 @@ export default function FoodRow({
       <motion.div
         className="relative overflow-hidden"
         data-food-row
+        /* Swipe-to-delete owns the horizontal gesture here. Marking the
+           row `data-swipe-card` makes useSwipeNavigation (the page-level
+           swipe-between-tabs handler in Layout) hard-block when a swipe
+           starts inside this row — without it, revealing Edit/Delete also
+           navigated to the adjacent tab ("it just switches pages"). */
+        data-swipe-card
         exit={{ height: 0, opacity: 0 }}
         transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
       >

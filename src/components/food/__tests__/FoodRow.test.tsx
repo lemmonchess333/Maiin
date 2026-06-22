@@ -42,10 +42,13 @@ vi.mock("framer-motion", function () {
 // as inline icons next to the row (rather than the swipe-revealed
 // overlay). Reduced-motion covers the same callback surface and is
 // much easier to drive via fireEvent.click.
+const reducedMotionMock = vi.fn(function () {
+  return true;
+});
 vi.mock("@/hooks/useReducedMotion", function () {
   return {
     useReducedMotion: function () {
-      return true;
+      return reducedMotionMock();
     },
   };
 });
@@ -198,5 +201,28 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
       />
     );
     expect(screen.queryByLabelText("Edited")).toBeNull();
+  });
+});
+
+describe("FoodRow — swipe branch gesture ownership", function () {
+  it("marks the row data-swipe-card so the page-swipe nav hands off to it", function () {
+    /* Regression: without data-swipe-card, useSwipeNavigation (the
+       page-level swipe-between-tabs handler in Layout) also fired when
+       the user swiped a food row to reveal Edit/Delete — navigating to
+       the adjacent tab instead of opening the row ("it just switches
+       pages"). The hook hard-blocks on [data-swipe-card] ancestors. */
+    reducedMotionMock.mockReturnValueOnce(false);
+    const { container } = render(
+      <FoodRow
+        group={baseGroup}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+        onEdit={vi.fn()}
+      />
+    );
+    const row = container.querySelector("[data-food-row]");
+    expect(row).not.toBeNull();
+    expect(row).toHaveAttribute("data-swipe-card");
   });
 });
