@@ -56,10 +56,28 @@ a generated motion clip. If quality is high, a 3rd mid-rep frame can be added.
 Run:
 
 ```bash
+# Preview the coach style on a single lift before scaling:
+GEMINI_API_KEY=… node scripts/generate-exercise-demos.mjs --only squat
+
+# Full pilot batch:
 GEMINI_API_KEY=… node scripts/generate-exercise-demos.mjs --limit 30
 # review public/exercise-demos/** by eye, delete/regen bad frames, then
 # wire the reviewed ids into exercises.ts `media` and commit.
 ```
+
+### Coach style — one character, shared with the muscle diagram
+
+`COACH_STYLE` renders the **same shirtless anatomical figure** as the app's
+muscle diagram (`react-body-highlighter` in `MuscleHeatMap.tsx`) — flat
+fitness-chart body on a neutral light-grey ground — so the form demo and the
+"muscles trained" figure read as **one coach**, not two strangers. The primary
+muscles are prompted to tint purple to echo the heat-map's accent.
+
+**That tint is cosmetic only.** The model cannot reliably or accurately light
+the correct muscles, and "a wrong demo is worse than none" applies double to
+anatomy. The real, volume-driven muscle readout stays the `MuscleHeatMap` SVG.
+A single moving body with _data-accurate_ muscle glow is the rigged-3D path
+(fallback #3 below), not something image-gen can fake honestly.
 
 ## Consumer seam (already in the app)
 
