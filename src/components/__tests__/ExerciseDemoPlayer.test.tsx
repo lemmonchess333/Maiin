@@ -1,0 +1,105 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
+
+// Overridable reduced-motion mock — defaults to "motion OK" (animated path).
+const reducedMotionMock = vi.fn(() => false);
+vi.mock("@/hooks/useReducedMotion", function () {
+  return { useReducedMotion: () => reducedMotionMock() };
+});
+
+import ExerciseDemoPlayer from "../ExerciseDemoPlayer";
+
+beforeEach(function () {
+  reducedMotionMock.mockReturnValue(false);
+});
+
+describe("ExerciseDemoPlayer", function () {
+  it("renders nothing when there are no frames", function () {
+    const { container } = render(
+      <ExerciseDemoPlayer frames={[]} name="Squat" />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders a single static image for one frame", function () {
+    render(<ExerciseDemoPlayer frames={["/a.webp"]} name="Squat" />);
+    expect(screen.getByAltText("Squat demonstration")).toBeInTheDocument();
+  });
+
+  it("exposes the animated loop as a single accessible image", function () {
+    render(<ExerciseDemoPlayer frames={["/a.webp", "/b.webp"]} name="Squat" />);
+    expect(
+      screen.getByRole("img", { name: "Squat demonstration" })
+    ).toBeInTheDocument();
+  });
+
+  it("reduced motion shows a static Start/Finish 2-up of the ROM extremes", function () {
+    reducedMotionMock.mockReturnValue(true);
+    render(
+      <ExerciseDemoPlayer
+        frames={["/a.webp", "/b.webp", "/c.webp"]}
+        name="Squat"
+      />
+    );
+    // First + last frame only, captioned Start/Finish.
+    expect(screen.getByAltText("Squat — start position")).toHaveAttribute(
+      "src",
+      "/a.webp"
+    );
+    expect(screen.getByAltText("Squat — finish position")).toHaveAttribute(
+      "src",
+      "/c.webp"
+    );
+  });
+
+  it("ping-pongs the active frame on the interval", function () {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(
+        <ExerciseDemoPlayer
+          frames={["/a.webp", "/b.webp", "/c.webp"]}
+          name="Squat"
+          intervalMs={500}
+        />
+      );
+      const activeIndex = () =>
+        container
+          .querySelector('[data-active="true"]')
+          ?.getAttribute("data-frame-index");
+
+      expect(activeIndex()).toBe("0");
+      act(() => void vi.advanceTimersByTime(500));
+      expect(activeIndex()).toBe("1");
+      act(() => void vi.advanceTimersByTime(500));
+      expect(activeIndex()).toBe("2");
+      // Reverses at the end (ping-pong) rather than jumping back to 0.
+      act(() => void vi.advanceTimersByTime(500));
+      expect(activeIndex()).toBe("1");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not run the timer when inactive (paused)", function () {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(
+        <ExerciseDemoPlayer
+          frames={["/a.webp", "/b.webp"]}
+          name="Squat"
+          active={false}
+          intervalMs={500}
+        />
+      );
+      const activeIndex = () =>
+        container
+          .querySelector('[data-active="true"]')
+          ?.getAttribute("data-frame-index");
+      expect(activeIndex()).toBe("0");
+      act(() => void vi.advanceTimersByTime(2000));
+      expect(activeIndex()).toBe("0");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
