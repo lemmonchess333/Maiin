@@ -49,11 +49,12 @@ interface FoodRowProps {
 // `OPEN_OFFSET` is the resting open position that reveals the Delete
 // panel. `FULL_SWIPE_THRESHOLD` is the iOS "swipe all the way to delete"
 // commit point — releasing past it deletes immediately (the undo toast
-// is the safety net). Colour stays iOS-HIG system red (token).
+// is the safety net). The panel uses the app's `bg-destructive` token
+// (not raw iOS red) so it matches every other destructive surface —
+// ConfirmDialog, error toasts, the destructive Button variant.
 const OPEN_OFFSET = -96;
 const OPEN_THRESHOLD = -52;
 const FULL_SWIPE_THRESHOLD = -200;
-const DELETE_COLOR = THEME.swipe.destructive;
 
 /**
  * Quantity label formatter (change #5).
@@ -266,8 +267,7 @@ export default function FoodRow({
           type="button"
           onClick={onDelete}
           aria-label={`Delete ${group.foodName}`}
-          className="absolute inset-0 flex items-center justify-end text-white active:opacity-90 transition-opacity"
-          style={{ background: DELETE_COLOR }}
+          className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:opacity-90 transition-opacity"
         >
           <span
             className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
