@@ -32,6 +32,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
   const [overflows, setOverflows] = useState(false);
+  // True once the demo player reports every frame failed to load — flips the
+  // hero back to the muscle diagram so a no-image exercise never shows a dead
+  // empty box. Reset per exercise in the load effect below.
+  const [demoFailed, setDemoFailed] = useState(false);
   const instructionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,6 +43,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     const load = async () => {
       setLoading(true);
       setShowInstructions(false);
+      setDemoFailed(false);
       const d = await getExerciseDemo(exerciseName);
       setDemo(d);
       setLoading(false);
@@ -103,6 +108,13 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     );
   }
 
+  // One body, not two: when the exercise has a usable demo it IS the hero
+  // visual and the muscle worked drops to the Primary/Secondary pills below;
+  // when there's no demo (or every frame failed) the muscle diagram is the
+  // hero instead. Avoids stacking two redundant body silhouettes. The fused
+  // end-state (muscles highlighted ON the moving body) is the 3D-model path.
+  const hasAnimation = demo.images.length > 0 && !demoFailed;
+
   return (
     <div>
       {/* Metadata tags */}
@@ -119,84 +131,93 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         )}
       </div>
 
-      {/* Auto-playing exercise demonstration. The ordered demo frames
-          (free-exercise-db start/finish today; Nano-Banana coach keyframes
-          once generated) play as a crossfade ping-pong loop — no Start/Finish
-          toggle, it just plays. Replaces the old static 2-up. Reduced-motion
-          users still get a static Start/Finish 2-up inside the player. */}
-      {demo.images.length > 0 && (
+      {/* Hero visual. When the exercise has a demo, the auto-playing
+          crossfade loop IS the single body (no Start/Finish toggle, it just
+          plays); muscles worked are conveyed by the pills below. The `key`
+          gives each exercise a fresh player. onUnavailable flips back to the
+          muscle diagram if every frame fails to load. */}
+      {hasAnimation && (
         <ExerciseDemoPlayer
+          key={demo.name}
           frames={demo.images}
           name={demo.name}
           active={active}
+          onUnavailable={() => setDemoFailed(true)}
         />
       )}
 
-      {/* Muscle diagrams */}
-      <div className="bg-muted rounded-2xl p-5 mt-4">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: showBoth ? 16 : 0,
-          }}
-        >
-          {(showFront || (!showFront && !showBack)) && (
-            <div
-              style={{
-                textAlign: "center",
-                maxWidth: showBoth ? "45%" : "60%",
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
-                <Model
-                  data={highlightData}
-                  style={{
-                    width: showBoth ? "100%" : "160px",
-                    height: showBoth ? "180px" : "220px",
-                    padding: "0",
-                    margin: "0 auto",
-                  }}
-                  svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
-                  type="anterior"
-                  highlightedColors={[THEME.liftingLight, THEME.lifting]}
-                />
+      {/* Muscle diagram — the hero only when there's no demo to show, so we
+          never stack two body silhouettes. */}
+      {!hasAnimation && (
+        <div className="bg-muted rounded-2xl p-5 mt-4">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: showBoth ? 16 : 0,
+            }}
+          >
+            {(showFront || (!showFront && !showBack)) && (
+              <div
+                style={{
+                  textAlign: "center",
+                  maxWidth: showBoth ? "45%" : "60%",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}
+                >
+                  <Model
+                    data={highlightData}
+                    style={{
+                      width: showBoth ? "100%" : "160px",
+                      height: showBoth ? "180px" : "220px",
+                      padding: "0",
+                      margin: "0 auto",
+                    }}
+                    svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                    type="anterior"
+                    highlightedColors={[THEME.liftingLight, THEME.lifting]}
+                  />
+                </div>
+                <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
+                  Front
+                </p>
               </div>
-              <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
-                Front
-              </p>
-            </div>
-          )}
-          {showBack && (
-            <div
-              style={{
-                textAlign: "center",
-                maxWidth: showBoth ? "45%" : "60%",
-                overflow: "hidden",
-              }}
-            >
-              <div style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}>
-                <Model
-                  data={highlightData}
-                  style={{
-                    width: showBoth ? "100%" : "160px",
-                    height: showBoth ? "180px" : "220px",
-                    padding: "0",
-                    margin: "0 auto",
-                  }}
-                  svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
-                  type="posterior"
-                  highlightedColors={[THEME.liftingLight, THEME.lifting]}
-                />
+            )}
+            {showBack && (
+              <div
+                style={{
+                  textAlign: "center",
+                  maxWidth: showBoth ? "45%" : "60%",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}
+                >
+                  <Model
+                    data={highlightData}
+                    style={{
+                      width: showBoth ? "100%" : "160px",
+                      height: showBoth ? "180px" : "220px",
+                      padding: "0",
+                      margin: "0 auto",
+                    }}
+                    svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                    type="posterior"
+                    highlightedColors={[THEME.liftingLight, THEME.lifting]}
+                  />
+                </div>
+                <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
+                  Back
+                </p>
               </div>
-              <p className="text-xs mt-2" style={{ color: THEME.text.muted }}>
-                Back
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Primary / Secondary muscle pills.
           Dedup secondary against primary — LOCAL_MUSCLE_MAP intentionally
