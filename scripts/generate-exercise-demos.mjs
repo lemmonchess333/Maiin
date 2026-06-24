@@ -12,6 +12,7 @@
  *
  * Usage:
  *   GEMINI_API_KEY=… node scripts/generate-exercise-demos.mjs --limit 30
+ *   GEMINI_API_KEY=… node scripts/generate-exercise-demos.mjs --only squat
  *
  * Output:
  *   public/exercise-demos/<id>/{start,finish}.<ext>  + manifest.json
@@ -55,11 +56,22 @@ const TOP_LIFTS = [
 ];
 
 // Same figure + framing every time → a consistent demo set, not 30 strangers.
+//
+// This figure is intentionally the SAME character as the app's muscle diagram
+// (react-body-highlighter in src/components/analytics/MuscleHeatMap.tsx): a flat,
+// shirtless anatomical-chart body on a neutral light-grey ground, so the form
+// demo and the "muscles trained" figure read as one coach, not two strangers.
+// NOTE: any muscle tint the model adds here is COSMETIC, not data-accurate — the
+// real, volume-driven muscle readout stays the MuscleHeatMap SVG. Don't treat a
+// generated frame as a source of truth for which muscles a lift works.
 const COACH_STYLE =
-  "Clean minimal fitness illustration of the SAME athletic male coach every " +
-  "time: short dark hair, fitted grey t-shirt and black shorts, neutral light-" +
-  "grey studio background, side three-quarter camera angle, soft flat lighting, " +
-  "full body in frame, no text or watermark. Anatomically correct joints and grip.";
+  "Clean minimal anatomical figure of the SAME athletic male every time: " +
+  "shirtless, flat fitness-chart illustration style with clearly delineated " +
+  "muscle groups (like a medical anatomy diagram), short dark hair, plain dark " +
+  "shorts, neutral light-grey background, side three-quarter camera angle, soft " +
+  "flat even lighting, full body in frame, no text or watermark. Anatomically " +
+  "correct joints, limb count and grip. The primary muscles working in this " +
+  "movement subtly tinted purple.";
 
 function exerciseInfo(id, src) {
   // Tolerant block parse: name + instructions for one entry. Operator skeleton —
@@ -102,10 +114,26 @@ async function main() {
     process.exit(1);
   }
   const limit = Number(process.argv[process.argv.indexOf("--limit") + 1]) || 30;
+  // --only squat            → just that lift
+  // --only squat,deadlift   → a comma-separated subset
+  // (handy for previewing the coach style on one lift before scaling)
+  const onlyArg = process.argv[process.argv.indexOf("--only") + 1];
+  const only =
+    process.argv.includes("--only") && onlyArg && !onlyArg.startsWith("--")
+      ? new Set(onlyArg.split(",").map((s) => s.trim()))
+      : null;
   const src = readFileSync(resolve(ROOT, "src/lib/exercises.ts"), "utf8");
   const manifest = {};
 
-  for (const id of TOP_LIFTS.slice(0, limit)) {
+  const targets = only
+    ? TOP_LIFTS.filter((id) => only.has(id))
+    : TOP_LIFTS.slice(0, limit);
+  if (only && targets.length === 0) {
+    console.error(`--only matched no ids. Known: ${TOP_LIFTS.join(", ")}`);
+    process.exit(1);
+  }
+
+  for (const id of targets) {
     const { name, instructions } = exerciseInfo(id, src);
     const cue = instructions.length ? ` Form: ${instructions.join(" ")}` : "";
     console.log(`→ ${id} (${name})`);
