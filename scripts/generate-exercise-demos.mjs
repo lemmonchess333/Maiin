@@ -139,12 +139,25 @@ async function main() {
     console.log(`→ ${id} (${name})`);
     try {
       const start = await generate(
-        `${COACH_STYLE} The coach is at the START position of a ${name}.${cue}`
+        `${COACH_STYLE} Show the coach at the TOP of the range of motion for a ` +
+          `${name} — the fully-extended / lockout position that begins and ends ` +
+          `the rep (e.g. standing tall for a squat, arms locked out for a press).` +
+          `${cue}`
       );
-      // Edit the start frame into the finish → keeps the same figure.
+      // Edit the top frame into the BOTTOM extreme → same figure, clearly
+      // different pose. A squat's start and finish are BOTH standing, so the two
+      // useful keyframes are the rep's EXTREMES (top + bottom), not start/finish.
       const finish = await generate(
-        `Keep this exact coach, style and framing. Now show the FINISH/end ` +
-          `position of a ${name}.${cue}`,
+        `Re-pose the SAME single coach from this image. Keep his exact body, ` +
+          `illustration style, purple muscle tint, colours and camera framing. ` +
+          `Show EXACTLY ONE figure — do NOT add a second person and do NOT keep ` +
+          `the standing pose. Move that one figure into the BOTTOM of the range ` +
+          `of motion for a ${name} — the deepest / most-flexed point of the rep ` +
+          `(e.g. a deep squat with hips dropped below the knees and thighs at or ` +
+          `below parallel, torso upright; or the bar lowered to the chest for a ` +
+          `press). The single figure's pose MUST be visibly, dramatically ` +
+          `different from the previous image — bent joints, lowered body. Keep ` +
+          `the PRIMARY working muscles tinted purple.${cue}`,
         start
       );
       const dir = resolve(OUT_DIR, id);
