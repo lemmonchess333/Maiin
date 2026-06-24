@@ -16,6 +16,10 @@ interface ExerciseDemoPlayerProps {
   active?: boolean;
   /** Hold per frame in ms; the crossfade overlaps the hold. */
   intervalMs?: number;
+  /** Fired when every frame 404s / fails to load (or there are none usable)
+   *  so the caller can fall back to the muscle diagram rather than leave a
+   *  dead empty box where the demo would be. */
+  onUnavailable?: () => void;
 }
 
 // Crossfade duration. Overlaps the per-frame hold so consecutive frames
@@ -36,18 +40,26 @@ const FADE_MS = 400;
  * It plays automatically (no Start/Finish toggle, no play button). Reduced-
  * motion users instead get a static 2-up of the range-of-motion extremes so
  * they keep the same reference the old Start/Finish boxes gave them.
+ *
+ * Frames that fail to load are dropped so a broken source never renders as an
+ * empty grey box; if they ALL fail, onUnavailable fires so the caller can show
+ * the muscle diagram instead. Pass a `key` (e.g. the exercise name) so a new
+ * exercise gets a fresh instance.
  */
 export default function ExerciseDemoPlayer({
   frames,
   name,
   active = true,
   intervalMs = 700,
+  onUnavailable,
 }: ExerciseDemoPlayerProps) {
   const reduce = useReducedMotion();
   const [frame, setFrame] = useState(0);
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const dirRef = useRef<1 | -1>(1);
 
-  const animated = !reduce && active && frames.length >= 2;
+  const usable = frames.filter((s) => !failed.has(s));
+  const animated = !reduce && active && usable.length >= 2;
 
   useEffect(() => {
     if (!animated) return;
@@ -55,8 +67,8 @@ export default function ExerciseDemoPlayer({
     const id = window.setInterval(() => {
       setFrame((prev) => {
         let next = prev + dirRef.current;
-        if (next >= frames.length - 1) {
-          next = frames.length - 1;
+        if (next >= usable.length - 1) {
+          next = usable.length - 1;
           dirRef.current = -1;
         } else if (next <= 0) {
           next = 0;
@@ -66,22 +78,31 @@ export default function ExerciseDemoPlayer({
       });
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [animated, frames.length, intervalMs]);
+  }, [animated, usable.length, intervalMs]);
 
-  // Clamp the displayed index so a frame-count change (switching exercises)
-  // can never point past the new array before the interval self-corrects.
-  const current = Math.min(frame, Math.max(0, frames.length - 1));
+  // Hand off to the muscle diagram when there's nothing left to show.
+  useEffect(() => {
+    if (frames.length > 0 && usable.length === 0) onUnavailable?.();
+  }, [frames.length, usable.length, onUnavailable]);
 
-  if (frames.length === 0) return null;
+  const onImgError = (src: string) =>
+    setFailed((prev) => (prev.has(src) ? prev : new Set(prev).add(src)));
+
+  if (usable.length === 0) return null;
+
+  // Clamp the displayed index so a frame dropping out mid-loop can never point
+  // past the shortened array before the interval self-corrects.
+  const current = Math.min(frame, usable.length - 1);
 
   // Single frame → static image.
-  if (frames.length === 1) {
+  if (usable.length === 1) {
     return (
       <div className="mt-4 rounded-2xl overflow-hidden bg-muted">
         <img
-          src={frames[0]}
+          src={usable[0]}
           alt={`${name} demonstration`}
           loading="lazy"
+          onError={() => onImgError(usable[0])}
           className="w-full h-auto aspect-square object-cover"
         />
       </div>
@@ -89,10 +110,9 @@ export default function ExerciseDemoPlayer({
   }
 
   // Reduced motion → static 2-up of the range-of-motion extremes (first +
-  // last). Preserves the pre-animation Start/Finish reference for users who
-  // opt out of motion, rather than collapsing to a single still.
+  // last). Preserves a Start/Finish reference for users who opt out of motion.
   if (reduce) {
-    const ends = [frames[0], frames[frames.length - 1]];
+    const ends = [usable[0], usable[usable.length - 1]];
     return (
       <div className="mt-4 grid grid-cols-2 gap-2">
         {ends.map((src, i) => (
@@ -101,6 +121,7 @@ export default function ExerciseDemoPlayer({
               src={src}
               alt={`${name} — ${i === 0 ? "start position" : "finish position"}`}
               loading="lazy"
+              onError={() => onImgError(src)}
               className="w-full h-auto aspect-square object-cover"
             />
             <figcaption className="text-caption uppercase tracking-wide text-muted-foreground text-center py-1">
@@ -119,13 +140,14 @@ export default function ExerciseDemoPlayer({
       role="img"
       aria-label={`${name} demonstration`}
     >
-      {frames.map((src, i) => (
+      {usable.map((src, i) => (
         <img
           key={src}
           src={src}
           alt=""
           aria-hidden="true"
           decoding="async"
+          onError={() => onImgError(src)}
           data-frame-index={i}
           data-active={i === current ? "true" : "false"}
           className={cn(
