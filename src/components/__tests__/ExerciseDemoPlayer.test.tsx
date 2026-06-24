@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import { render, screen, act, fireEvent } from "@testing-library/react";
 
 // Overridable reduced-motion mock — defaults to "motion OK" (animated path).
 const reducedMotionMock = vi.fn(() => false);
@@ -78,6 +78,28 @@ describe("ExerciseDemoPlayer", function () {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("drops broken frames and calls onUnavailable when all fail to load", function () {
+    const onUnavailable = vi.fn();
+    const { container } = render(
+      <ExerciseDemoPlayer
+        frames={["/a.webp", "/b.webp"]}
+        name="Squat"
+        onUnavailable={onUnavailable}
+      />
+    );
+    // Error every rendered <img> until the player has nothing usable left.
+    for (let round = 0; round < 3; round++) {
+      act(() => {
+        container
+          .querySelectorAll("img")
+          .forEach((img) => fireEvent.error(img));
+      });
+    }
+    expect(onUnavailable).toHaveBeenCalled();
+    expect(container.querySelector('[role="img"]')).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
   });
 
   it("does not run the timer when inactive (paused)", function () {
