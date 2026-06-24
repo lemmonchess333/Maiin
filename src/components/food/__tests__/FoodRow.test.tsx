@@ -24,6 +24,7 @@ vi.mock("framer-motion", function () {
               dragElastic: _de,
               onDrag: _od,
               onDragEnd: _ode,
+              onTap: _ot,
               ...rest
             } = props;
             const Tag = prop === "create" ? "div" : prop;
@@ -204,13 +205,13 @@ describe("FoodRow — inline actions (reduced-motion branch)", function () {
   });
 });
 
-describe("FoodRow — swipe branch gesture ownership", function () {
+describe("FoodRow — swipe branch (motion path)", function () {
   it("marks the row data-swipe-card so the page-swipe nav hands off to it", function () {
     /* Regression: without data-swipe-card, useSwipeNavigation (the
        page-level swipe-between-tabs handler in Layout) also fired when
-       the user swiped a food row to reveal Edit/Delete — navigating to
-       the adjacent tab instead of opening the row ("it just switches
-       pages"). The hook hard-blocks on [data-swipe-card] ancestors. */
+       the user swiped a food row to delete — navigating to the adjacent
+       tab instead of opening the row ("it just switches pages"). The
+       hook hard-blocks on [data-swipe-card] ancestors. */
     reducedMotionMock.mockReturnValueOnce(false);
     const { container } = render(
       <FoodRow
@@ -224,5 +225,43 @@ describe("FoodRow — swipe branch gesture ownership", function () {
     const row = container.querySelector("[data-food-row]");
     expect(row).not.toBeNull();
     expect(row).toHaveAttribute("data-swipe-card");
+  });
+
+  it("exposes a single Delete action with the row body as the edit target", function () {
+    /* Option A redesign: swipe reveals ONE red Delete; editing happens
+       by tapping the row body (which carries role=button + the Edit
+       aria-label). No separate in-swipe Edit button anymore. */
+    reducedMotionMock.mockReturnValueOnce(false);
+    render(
+      <FoodRow
+        group={baseGroup}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+        onEdit={vi.fn()}
+      />
+    );
+    expect(screen.getByLabelText("Delete Chicken salad")).toBeInTheDocument();
+    const editTarget = screen.getByLabelText("Edit Chicken salad");
+    expect(editTarget).toHaveAttribute("role", "button");
+    expect(editTarget).toHaveAttribute("tabindex", "0");
+  });
+
+  it("invokes onEdit when the row body receives Enter", function () {
+    reducedMotionMock.mockReturnValueOnce(false);
+    const onEdit = vi.fn();
+    render(
+      <FoodRow
+        group={baseGroup}
+        isOpen={false}
+        onOpenChange={noop}
+        onDelete={vi.fn()}
+        onEdit={onEdit}
+      />
+    );
+    fireEvent.keyDown(screen.getByLabelText("Edit Chicken salad"), {
+      key: "Enter",
+    });
+    expect(onEdit).toHaveBeenCalledTimes(1);
   });
 });
