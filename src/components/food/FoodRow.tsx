@@ -34,25 +34,26 @@ interface FoodRowProps {
   /**
    * Open a servings stepper sheet so the user can bump the count
    * up or down. Handles both "I had more" (stepper +) and exact-count
-   * edits.
+   * edits. Reached by TAPPING the row (not a swipe action) — see below.
    */
   onEdit?: () => void;
 }
 
-// Two action columns (edit + delete). Was wider when there was a
-// redundant "Copy" action; removed because Copy just added +1 serving,
-// which the Edit stepper does natively and which Quick Add / the NL
-// composer do in fewer taps anyway.
+// Single destructive swipe action (Delete only). Editing is reached by
+// TAPPING the row — it opens the edit sheet, which is the discoverable,
+// full-form surface for changes. This mirrors the dominant calorie-app
+// convention (MyFitnessPal / Lose It! / MacroFactor / Cronometer all
+// tap-to-edit, swipe-to-delete) and Apple's native Mail/Reminders swipe
+// (single trailing destructive action with full-swipe-to-commit).
 //
-// Colours are iOS-system aligned (Apple's HIG swipe-action palette):
-// system red for destructive, neutral dark-grey for the secondary
-// edit. They sit better against the warm light surfaces than the
-// previous saturated #EF4444 / slate #4B5563 pair.
-const OPEN_OFFSET = -144;
-const OPEN_THRESHOLD = -88;
+// `OPEN_OFFSET` is the resting open position that reveals the Delete
+// panel. `FULL_SWIPE_THRESHOLD` is the iOS "swipe all the way to delete"
+// commit point — releasing past it deletes immediately (the undo toast
+// is the safety net). Colour stays iOS-HIG system red (token).
+const OPEN_OFFSET = -96;
+const OPEN_THRESHOLD = -52;
+const FULL_SWIPE_THRESHOLD = -200;
 const DELETE_COLOR = THEME.swipe.destructive;
-const EDIT_COLOR = THEME.swipe.neutral;
-const ACTION_WIDTH = 72;
 
 /**
  * Quantity label formatter (change #5).
@@ -119,93 +120,127 @@ export default function FoodRow({
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
+  const hasFiredCommitRef = useRef(false);
 
   // Close the row externally (when another row opens) by resetting drag via key.
   // We use Framer Motion's animate prop to drive the x value directly.
   const targetX = isOpen ? OPEN_OFFSET : 0;
 
-  // Reset the "fired haptic" flag whenever the row closes so the next drag
+  // Reset the "fired haptic" flags whenever the row closes so the next drag
   // can fire again.
   useEffect(() => {
-    if (!isOpen) hasFiredHapticRef.current = false;
+    if (!isOpen) {
+      hasFiredHapticRef.current = false;
+      hasFiredCommitRef.current = false;
+    }
   }, [isOpen]);
 
   const handleDrag = (_e: unknown, info: PanInfo) => {
+    // Peek haptic when the Delete panel first crosses into "will open".
     if (info.offset.x < OPEN_THRESHOLD && !hasFiredHapticRef.current) {
       haptic("light");
       hasFiredHapticRef.current = true;
     }
+    // Distinct commit haptic when the gesture crosses the full-swipe line,
+    // so the finger feels the "let go now to delete" point (iOS Mail feel).
+    if (info.offset.x < FULL_SWIPE_THRESHOLD && !hasFiredCommitRef.current) {
+      haptic("medium");
+      hasFiredCommitRef.current = true;
+    } else if (info.offset.x >= FULL_SWIPE_THRESHOLD) {
+      hasFiredCommitRef.current = false;
+    }
   };
 
   const handleDragEnd = (_e: unknown, info: PanInfo) => {
-    if (info.offset.x < OPEN_THRESHOLD) {
-      onOpenChange(true);
-    } else {
-      onOpenChange(false);
+    // Full swipe → delete immediately (undo toast is the safety net).
+    if (info.offset.x < FULL_SWIPE_THRESHOLD) {
+      haptic("medium");
+      onDelete();
+      return;
     }
+    onOpenChange(info.offset.x < OPEN_THRESHOLD);
+  };
+
+  // Tap on the row body: when open, a tap closes the swipe (iOS behaviour);
+  // otherwise it opens the edit sheet. Framer suppresses onTap after a drag,
+  // so a swipe-to-open won't also fire an edit.
+  const handleTap = () => {
+    if (isOpen) {
+      onOpenChange(false);
+      return;
+    }
+    onEdit?.();
   };
 
   const quantityLabel = formatQuantityLabel(group);
   const dot = dotColorFor(group);
 
-  // ── Reduced-motion fallback: static trash icon, no drag gesture ─────────
+  // Shared inner content (macro dot, name, quantity/edited pills, kcal).
+  const rowBody = (
+    <>
+      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
+        <span
+          className="size-2 rounded-full shrink-0"
+          style={{ backgroundColor: dot }}
+          aria-hidden="true"
+        />
+        <p className="text-sm text-foreground truncate">{group.foodName}</p>
+        {group.count > 1 && (
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
+            {quantityLabel}
+          </span>
+        )}
+        {group.wasEdited && (
+          <span
+            className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+            aria-label="Edited"
+            title="Edited"
+          >
+            <Pencil className="size-2.5" aria-hidden="true" />
+            Edited
+          </span>
+        )}
+      </div>
+      <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+        {formatCalories(group.totalCal)} {CALORIE_UNIT}
+      </span>
+    </>
+  );
+
+  // ── Reduced-motion fallback: no drag gesture. The row body is a tap
+  //    target that opens the edit sheet (mirrors the swipe path's
+  //    tap-to-edit); a single trailing Delete icon button stays for the
+  //    destructive action since there's no swipe to reveal it. ─────────
   if (reduce) {
     return (
-      <div
-        className="flex items-center justify-between px-3 py-2.5"
-        data-food-row
-      >
-        <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-          <span
-            className="size-2 rounded-full shrink-0"
-            style={{ backgroundColor: dot }}
-            aria-hidden="true"
-          />
-          <p className="text-sm text-foreground truncate">{group.foodName}</p>
-          {group.count > 1 && (
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
-              {quantityLabel}
-            </span>
-          )}
-          {group.wasEdited && (
-            <span
-              className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
-              aria-label="Edited"
-              title="Edited"
-            >
-              <Pencil className="size-2.5" aria-hidden="true" />
-              Edited
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-xs font-mono tabular-nums text-muted-foreground mr-1">
-            {formatCalories(group.totalCal)} {CALORIE_UNIT}
-          </span>
-          {onEdit && (
-            <button
-              type="button"
-              onClick={onEdit}
-              aria-label={`Edit ${group.foodName}`}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors active:scale-90"
-            >
-              <Pencil aria-hidden="true" className="size-3" />
-            </button>
-          )}
+      <div className="flex items-center" data-food-row>
+        {onEdit ? (
           <button
             type="button"
-            onClick={onDelete}
-            aria-label={`Delete ${group.foodName}`}
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
+            onClick={onEdit}
+            aria-label={`Edit ${group.foodName}`}
+            className="flex items-center flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
-            <Trash2 aria-hidden="true" className="size-3" />
+            {rowBody}
           </button>
-        </div>
+        ) : (
+          <div className="flex items-center flex-1 min-w-0 px-3 py-2.5">
+            {rowBody}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={`Delete ${group.foodName}`}
+          className="p-2.5 mr-1 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-90"
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+        </button>
       </div>
     );
   }
 
-  // ── Standard swipe-to-delete row ────────────────────────────────────────
+  // ── Standard swipe row: tap to edit, swipe to delete ────────────────────
   return (
     <AnimatePresence>
       <motion.div
@@ -214,44 +249,29 @@ export default function FoodRow({
         /* Swipe-to-delete owns the horizontal gesture here. Marking the
            row `data-swipe-card` makes useSwipeNavigation (the page-level
            swipe-between-tabs handler in Layout) hard-block when a swipe
-           starts inside this row — without it, revealing Edit/Delete also
+           starts inside this row — without it, swiping to delete also
            navigated to the adjacent tab ("it just switches pages"). */
         data-swipe-card
         exit={{ height: 0, opacity: 0 }}
         transition={{ height: { duration: 0.25 }, opacity: { duration: 0.2 } }}
       >
         {/*
-          Action buttons revealed from the right: Edit (neutral) +
-          Delete (red). `onEdit` is optional — when not provided the
-          row collapses to a single wider delete button for back-
-          compat with callers that only want the original behaviour.
+          Single Delete panel revealed from the right. The button spans
+          the full width (so a full swipe floods red behind the row — the
+          iOS Mail look) while its icon+label sit in a fixed slot at the
+          right edge so they stay put as the row slides past OPEN_OFFSET.
+          Tapping the exposed strip deletes.
         */}
-        <div
-          className="absolute right-0 top-0 bottom-0 flex"
-          style={{ width: Math.abs(OPEN_OFFSET) }}
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={`Delete ${group.foodName}`}
+          className="absolute inset-0 flex items-center justify-end text-white active:opacity-90 transition-opacity"
+          style={{ background: DELETE_COLOR }}
         >
-          {onEdit && (
-            <button
-              type="button"
-              onClick={onEdit}
-              aria-label={`Edit ${group.foodName}`}
-              className="flex flex-col items-center justify-center gap-1 text-white text-caption font-medium tracking-wide active:opacity-80 transition-opacity"
-              style={{ background: EDIT_COLOR, width: ACTION_WIDTH }}
-            >
-              <Pencil
-                className="size-[18px]"
-                strokeWidth={1.75}
-                aria-hidden="true"
-              />
-              Edit
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label={`Delete ${group.foodName}`}
-            className="flex flex-col items-center justify-center gap-1 text-white text-caption font-medium tracking-wide flex-1 active:opacity-80 transition-opacity"
-            style={{ background: DELETE_COLOR }}
+          <span
+            className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
+            style={{ width: Math.abs(OPEN_OFFSET) }}
           >
             <Trash2
               className="size-[18px]"
@@ -259,51 +279,35 @@ export default function FoodRow({
               aria-hidden="true"
             />
             Delete
-          </button>
-        </div>
+          </span>
+        </button>
 
-        {/* Draggable row content sitting on top */}
+        {/* Draggable row content on top. Tapping it opens the edit sheet
+            (or closes the row when already swiped open). */}
         <motion.div
           drag="x"
           dragDirectionLock
           dragConstraints={{ left: OPEN_OFFSET, right: 0 }}
-          dragElastic={0.1}
+          dragElastic={{ left: 0.7, right: 0 }}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
+          onTap={handleTap}
           animate={{ x: targetX }}
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit ${group.foodName}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onEdit?.();
+            }
+          }}
           className={cn(
-            "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y"
+            "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y cursor-pointer select-none"
           )}
         >
-          <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-            <span
-              className="size-2 rounded-full shrink-0"
-              style={{ backgroundColor: dot }}
-              aria-hidden="true"
-            />
-            <p className="text-sm text-foreground truncate">{group.foodName}</p>
-            {group.count > 1 && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
-                {quantityLabel}
-              </span>
-            )}
-            {group.wasEdited && (
-              <span
-                className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
-                aria-label="Edited"
-                title="Edited"
-              >
-                <Pencil className="size-2.5" aria-hidden="true" />
-                Edited
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs font-mono tabular-nums text-muted-foreground">
-              {formatCalories(group.totalCal)} {CALORIE_UNIT}
-            </span>
-          </div>
+          {rowBody}
         </motion.div>
       </motion.div>
     </AnimatePresence>
