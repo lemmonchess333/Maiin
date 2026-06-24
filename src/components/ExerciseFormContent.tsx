@@ -10,6 +10,7 @@ import {
 import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
+import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
 // muscle pills, step-by-step instructions. Rendered inline by
@@ -118,38 +119,17 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         )}
       </div>
 
-      {/* Demo photos (start / finish) — free-exercise-db imagery, D-LIFT-18.
-          Fetched all along but never rendered; now surfaced as a 2-up. */}
+      {/* Auto-playing exercise demonstration. The ordered demo frames
+          (free-exercise-db start/finish today; Nano-Banana coach keyframes
+          once generated) play as a crossfade ping-pong loop — no Start/Finish
+          toggle, it just plays. Replaces the old static 2-up. Reduced-motion
+          users still get a static Start/Finish 2-up inside the player. */}
       {demo.images.length > 0 && (
-        <div
-          className={
-            demo.images.length > 1
-              ? "mt-4 grid grid-cols-2 gap-2"
-              : "mt-4 grid grid-cols-1"
-          }
-        >
-          {demo.images.slice(0, 2).map((src, i) => (
-            <figure key={src} className="rounded-2xl overflow-hidden bg-muted">
-              <img
-                src={src}
-                alt={`${demo.name} — ${
-                  demo.images.length > 1
-                    ? i === 0
-                      ? "start position"
-                      : "finish position"
-                    : "demonstration"
-                }`}
-                loading="lazy"
-                className="w-full h-auto aspect-square object-cover"
-              />
-              {demo.images.length > 1 && (
-                <figcaption className="text-caption uppercase tracking-wide text-muted-foreground text-center py-1">
-                  {i === 0 ? "Start" : "Finish"}
-                </figcaption>
-              )}
-            </figure>
-          ))}
-        </div>
+        <ExerciseDemoPlayer
+          frames={demo.images}
+          name={demo.name}
+          active={active}
+        />
       )}
 
       {/* Muscle diagrams */}
