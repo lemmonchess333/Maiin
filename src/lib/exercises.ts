@@ -1241,10 +1241,6 @@ export const EXERCISES: Exercise[] = [
     ],
     alternatives: ["front-squat", "hack-squat", "leg-press"],
     regressions: ["leg-press", "bulgarian-split"],
-    media: [
-      "exercise-demos/squat/start.png",
-      "exercise-demos/squat/finish.png",
-    ],
   },
   {
     id: "front-squat",
