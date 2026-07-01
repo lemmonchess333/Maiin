@@ -2775,3 +2775,90 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     });
   });
 });
+
+// HealthKit steps flag doc (Prompt 3). It lives at
+// users/{uid}/settings/healthKit and is covered by the generic
+// users/{uid}/settings/{doc} rule (owner read/write, denied while deleting).
+// These pin the owner-only contract so the client write can never be
+// silently rejected — the hideWeightNumber incident's failure mode.
+suite("firestore.rules — users/{uid}/settings/healthKit", () => {
+  let env: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+  });
+
+  const HEALTHKIT = ["users", OWNER_UID, "settings", "healthKit"] as const;
+
+  it("owner writes the {primingShown, connected} shape — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, ...HEALTHKIT), {
+        primingShown: true,
+        connected: true,
+      })
+    );
+  });
+
+  it("owner merges a single flag — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, ...HEALTHKIT),
+        { primingShown: true },
+        { merge: true }
+      )
+    );
+  });
+
+  it("owner reads its own healthKit flag — succeeds", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...HEALTHKIT), {
+        primingShown: true,
+        connected: false,
+      });
+    });
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(getDoc(doc(ownerDb, ...HEALTHKIT)));
+  });
+
+  it("another user cannot read the owner's healthKit flag — fails", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), ...HEALTHKIT), {
+        primingShown: true,
+        connected: true,
+      });
+    });
+    const otherDb = env.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(getDoc(doc(otherDb, ...HEALTHKIT)));
+  });
+
+  it("another user cannot write the owner's healthKit flag — fails", async () => {
+    const otherDb = env.authenticatedContext(OTHER_UID).firestore();
+    await assertFails(
+      setDoc(doc(otherDb, ...HEALTHKIT), { connected: true }, { merge: true })
+    );
+  });
+
+  it("an unauthenticated client cannot read or write — fails", async () => {
+    const anonDb = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(anonDb, ...HEALTHKIT)));
+    await assertFails(setDoc(doc(anonDb, ...HEALTHKIT), { connected: true }));
+  });
+});

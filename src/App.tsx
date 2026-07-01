@@ -74,6 +74,9 @@ const SettingsShoes = lazyRetry(() => import("@/pages/settings/SettingsShoes"));
 const SettingsNotifications = lazyRetry(
   () => import("@/pages/settings/SettingsNotifications")
 );
+const SettingsHealth = lazyRetry(
+  () => import("@/pages/settings/SettingsHealth")
+);
 const SettingsSubscription = lazyRetry(
   () => import("@/pages/settings/SettingsSubscription")
 );
@@ -585,6 +588,14 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <SettingsNotifications />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/health"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsHealth />
                           </RouteErrorBoundary>
                         }
                       />
