@@ -14,6 +14,19 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
+/**
+ * Steps tile gate — flip to true when HealthKit lands (LAUNCH_TODO #10,
+ * POST_LAUNCH.md "Steps tile" section). The tile is a designed placeholder
+ * with no behaviour yet; we don't ship a dead button to review.
+ */
+const STEPS_TILE_ENABLED = false;
+
+/* The component reads the gate through this mutable holder so the flip
+   path can be exercised in tests without editing source. Flipping
+   STEPS_TILE_ENABLED above remains the one-line change that ships. */
+// eslint-disable-next-line react-refresh/only-export-components -- test-only gate seam, not a component; fast-refresh impact is nil (module already re-renders on the default export)
+export const stepsTileGate = { enabled: STEPS_TILE_ENABLED };
+
 export default function WeightStepsTiles({
   lastWeight,
   weightUnit,
@@ -67,8 +80,13 @@ export default function WeightStepsTiles({
     : hidden
       ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
       : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
+  const stepsTileEnabled = stepsTileGate.enabled;
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div
+      className={
+        stepsTileEnabled ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"
+      }
+    >
       <button
         type="button"
         onClick={function () {
@@ -126,39 +144,46 @@ export default function WeightStepsTiles({
           aria-hidden="true"
         />
       </button>
-      <button
-        type="button"
-        onClick={function () {
-          haptic();
-          trackHomeEvent("home_card_tapped", { card: "steps" });
-        }}
-        aria-label="Steps not yet connected. Connect Apple Health to track steps."
-        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group"
-      >
-        <div className="flex items-center gap-2 mb-1.5">
-          <div
-            className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: THEME.iconBg }}
-          >
-            <Footprints
-              className="size-3.5"
-              style={{ color: THEME.semantic.positive }}
+      {stepsTileEnabled && (
+        <button
+          type="button"
+          onClick={function () {
+            haptic();
+            trackHomeEvent("home_card_tapped", { card: "steps" });
+          }}
+          aria-label="Steps not yet connected. Connect Apple Health to track steps."
+          className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group"
+        >
+          <div className="flex items-center gap-2 mb-1.5">
+            <div
+              className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: THEME.iconBg }}
+            >
+              <Footprints
+                className="size-3.5"
+                style={{ color: THEME.semantic.positive }}
+                aria-hidden="true"
+              />
+            </div>
+            <SectionLabel style={{ color: THEME.text.muted }}>
+              Steps
+            </SectionLabel>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="text-xs font-medium"
+              style={{ color: THEME.brand }}
+            >
+              Connect Health
+            </span>
+            <ArrowRight
+              className="size-3"
+              style={{ color: THEME.brand }}
               aria-hidden="true"
             />
           </div>
-          <SectionLabel style={{ color: THEME.text.muted }}>Steps</SectionLabel>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: THEME.brand }}>
-            Connect Health
-          </span>
-          <ArrowRight
-            className="size-3"
-            style={{ color: THEME.brand }}
-            aria-hidden="true"
-          />
-        </div>
-      </button>
+        </button>
+      )}
     </div>
   );
 }

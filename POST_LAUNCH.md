@@ -39,7 +39,7 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 
 ### Steps tile → HealthKit / Health Connect wiring
 
-**Status:** Deferred until native iOS / Android builds ship.
+**Status:** Deferred until native iOS / Android builds ship. The tile is now gated off via `STEPS_TILE_ENABLED` in `WeightStepsTiles.tsx` — the Home grid renders a single full-width Weight tile until the flag flips.
 
 **Context:** The Home page renders a Steps tile (`src/components/home/WeightStepsTiles.tsx:29-40`) that currently shows a static "Connect Health →" affordance with an empty `onClick`. Web browsers have no access to step data — the tile is a deliberate placeholder for the post-iOS / post-Android release.
 
@@ -47,7 +47,7 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 
 1. **iOS** — add `@capacitor-community/health` (or Capacitor's recommended HealthKit bridge), request `HKQuantityTypeIdentifierStepCount` read permission, query daily step totals via `HKStatisticsQuery` with a day-aligned anchor.
 2. **Android** — Health Connect (`androidx.health.connect.client`) via the matching Capacitor plugin. Same shape: request read permission, query today's step aggregate.
-3. Wire the result into the Steps tile: replace the static "Connect Health →" with `<steps> / <target>` and a small "↑ step-count" subtext. Keep the permission-priming pattern we built for notification reminders — a one-time modal on first foreground after native install, not nagging.
+3. Flip `STEPS_TILE_ENABLED` to true and wire the real step count into the Steps tile: replace the static "Connect Health →" with `<steps> / <target>` and a small "↑ step-count" subtext. Keep the permission-priming pattern we built for notification reminders — a one-time modal on first foreground after native install, not nagging.
 4. Persist the permission-shown flag to `users/{uid}/settings/healthKit` so the priming doesn't re-fire across devices.
 5. Add a denied-permission inline banner mirroring the one on `NotificationsSection.tsx` — same UI vocabulary.
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/haptic", function () {
@@ -11,6 +11,7 @@ vi.mock("@/lib/homeAnalytics", function () {
 });
 
 import WeightStepsTiles from "../WeightStepsTiles";
+import * as tiles from "../WeightStepsTiles";
 
 describe("WeightStepsTiles", function () {
   it("shows the raw weight number when hideNumber is off (default)", function () {
@@ -77,6 +78,52 @@ describe("WeightStepsTiles", function () {
       expect(screen.queryByText("80.0")).not.toBeInTheDocument();
       unmount();
     }
+  });
+
+  afterEach(function () {
+    vi.restoreAllMocks();
+    // Reset the gate to its shipped default after any true-path test.
+    tiles.stepsTileGate.enabled = false;
+  });
+
+  it("Steps tile gate OFF (default): no Steps button, Weight tile is full-width", function () {
+    const { container } = render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+      />
+    );
+    // Dead placeholder must not render.
+    expect(
+      screen.queryByRole("button", { name: /Steps not yet connected/i })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect Health")).not.toBeInTheDocument();
+    // Weight tile still there and grid collapses to a single column.
+    expect(
+      screen.getByRole("button", { name: /Weight 75\.4 kg/i })
+    ).toBeInTheDocument();
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain("grid-cols-1");
+    expect(wrapper.className).not.toContain("grid-cols-2");
+  });
+
+  it("Steps tile gate ON: Steps button renders with its aria-label and grid is 2-col", function () {
+    tiles.stepsTileGate.enabled = true;
+    const { container } = render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: /Steps not yet connected/i })
+    ).toBeInTheDocument();
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.className).toContain("grid-cols-2");
   });
 
   it("#984: hideNumber has no effect on the empty state (no weight logged)", function () {
