@@ -52,6 +52,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "tropos.food.calorieRingMode":
     "FoodHeroCard display preference (left vs eaten) — a device choice, not a fact about an account",
   "tropos_fcm_device_tokens": "the push token IS the device identity",
+  "tropos.run.bgGrantNoteDismissed":
+    "acknowledges THIS DEVICE's iOS location grant (While Using vs Always) — an OS per-app setting no account owns; re-nagging a second account about the same grant would be noise",
   tropos_offline_queue:
     "ONE key holding uid-TAGGED entries, filtered per-uid on flush (#820)",
   "tropos.share.queue": "same uid-tagged-entries shape (#820)",
