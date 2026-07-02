@@ -391,6 +391,47 @@ If a native sign-in throws, the button surfaces the error like any other
 auth failure (the web path is unaffected). Android mirrors this with
 `google-services.json` + the SHA-1/256 fingerprints.
 
+**STATUS 2026-07-02 — WEB OAuth fully working + verified; only the iOS Xcode
+steps remain.** The web preview now signs in end-to-end with **both Apple and
+Google** (verified live on the Firebase Hosting deploy,
+`adaptive-fitness-af8bb.firebaseapp.com`). Getting there required a stack of
+web-side fixes, all now done:
+
+- **Hosting:** the web app is served from **Firebase Hosting** so it's
+  same-origin with the auth handler. GitHub Pages (`*.github.io`) was a
+  different origin from `*.firebaseapp.com/__/auth/handler`, and iOS Safari ITP
+  severs that cross-origin popup (`auth/internal-error`). Build + deploy with
+  `npm run build:hosting && firebase deploy --only hosting`; the `.web.app`
+  base build is driven by `HOSTING_TARGET=firebase` (see `vite.config.ts`).
+  Share the **`firebaseapp.com`** URL (same origin as the authDomain).
+  `deploy-hosting.yml` automates this once a `FIREBASE_SERVICE_ACCOUNT` secret
+  is added; until then it's a manual deploy.
+- **CSP:** `index.html` now allows `apis.google.com` + `www.gstatic.com`
+  (script-src) and `apis.google.com` + `accounts.google.com` (frame/connect).
+  `signInWithPopup` loads `apis.google.com/js/api.js`; the old CSP blocked it,
+  which read as `auth/internal-error`. (PR "Allow Google auth domains in CSP".)
+- **Browser API key:** Google Cloud → Credentials → *Browser key (auto created
+  by Firebase)* → HTTP-referrer allowlist now includes
+  `adaptive-fitness-af8bb.firebaseapp.com/*` and `…web.app/*` (403 "requests
+  from referer blocked" otherwise). Because the project has Gemini enabled,
+  Google now forces an **API restriction** too — restricted to the 7 APIs the
+  web app uses (Identity Toolkit, Token Service, Firebase Installations, Cloud
+  Firestore, Cloud Storage for Firebase, Firebase Remote Config, FCM). The
+  client hits Gemini via a Cloud Function, so Gemini is intentionally excluded.
+- **Providers ENABLED (shared web+native):** **Google** enabled; **Apple**
+  enabled + configured — Services ID `com.tropos.web`, Team ID `K37FRYY8LL`,
+  Key ID `FNVLG22FKY`, `.p8` key. Apple Services ID return URL =
+  `https://adaptive-fitness-af8bb.firebaseapp.com/__/auth/handler`. App ID
+  `com.tropos.app` now has the **Sign in with Apple** capability.
+
+→ So steps **2 and 3 above — "enable the provider in the Firebase console" —
+are DONE.** What's left is purely the iOS Xcode side (steps 1–4: `cap sync`,
+`GoogleService-Info.plist`, the `REVERSED_CLIENT_ID` URL scheme, the Sign in
+with Apple capability, and on-device test). None of the web-only pieces
+(Hosting / CSP / referrer allowlist / the `com.tropos.web` Services ID) are
+needed by the native app — native uses the App ID capability + the plugin
+directly. Minor console-noise cleanup (add `data:` to `font-src`) is optional.
+
 ### 15a. Native remote push (APNs) — server-initiated push parity
 
 **iOS parity gap (audit 2026-06-04).** `src/lib/pushNotifications.ts` is
