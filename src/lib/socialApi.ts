@@ -326,6 +326,29 @@ export async function deleteComment(
   await fn({ activityId, commentId });
 }
 
+/** One-tap comment reactions (💪 = "muscle", 🔥 = "fire"). */
+export type CommentReaction = "muscle" | "fire";
+
+/**
+ * Toggle the caller's reaction on a comment. Comments are server-write-only
+ * (rules deny client writes), so this routes through
+ * `toggleCommentReactionCallable` — transactional + idempotent per
+ * (uid, reaction). Returns the new own-state + count for reconciliation
+ * after an optimistic flip.
+ */
+export async function toggleCommentReaction(
+  activityId: string,
+  commentId: string,
+  reaction: CommentReaction
+): Promise<{ reacted: boolean; count: number }> {
+  const fn = httpsCallable<
+    { activityId: string; commentId: string; reaction: CommentReaction },
+    { reacted: boolean; count: number }
+  >(getFunctions(), "toggleCommentReactionCallable");
+  const res = await fn({ activityId, commentId, reaction });
+  return res.data;
+}
+
 export async function getComments(
   activityId: string,
   limitCount = 20,
