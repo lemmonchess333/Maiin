@@ -3,14 +3,14 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import { THEME, RANK_COLORS } from "../../lib/theme";
+import { THEME } from "../../lib/theme";
 import {
   buildLeaderboard,
   type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
-import Avatar from "../Avatar";
-import BlockAwareAvatar from "./BlockAwareAvatar";
+import LeaderboardRow from "./LeaderboardRow";
+import EmptyState from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 
 interface EnrichedEntry extends LeaderboardEntry {
@@ -120,148 +120,58 @@ export default function LeaderboardCard({
         )}
 
         {!loading && entries.length === 0 && (
-          <div className="text-center py-6 space-y-2">
-            <div
-              className="size-10 rounded-xl flex items-center justify-center mx-auto"
-              style={{ background: `${THEME.brand}15` }}
-            >
-              <Zap size={20} style={{ color: THEME.brand }} />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Follow athletes to see the leaderboard
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon={Zap}
+            headline="No leaderboard yet"
+            sub="Follow athletes to compare your week."
+            accent={THEME.brand}
+          />
         )}
 
-        {!loading && entries.length > 0 && entries.length < 3 && (
+        {!loading && entries.length > 0 && (
           <>
             {top3.map((entry) => (
-              <div
+              <LeaderboardRow
                 key={entry.uid}
-                className={`flex items-center gap-2.5 p-2 rounded-lg ${
-                  entry.uid === user?.uid
-                    ? "bg-primary/5 border border-primary/15"
-                    : ""
-                }`}
-              >
-                <span
-                  className="w-5 text-xs font-bold text-center shrink-0"
-                  style={{ color: RANK_COLORS[entry.rank - 1] || undefined }}
-                >
-                  {entry.rank}
-                </span>
-                {entry.uid === user?.uid ? (
-                  <Avatar
-                    photoURL={entry.photoURL}
-                    displayName="You"
-                    fallbackInitial={
-                      profile?.displayName?.charAt(0) ||
-                      user?.displayName?.charAt(0)
-                    }
-                    size="sm"
-                  />
-                ) : (
-                  <BlockAwareAvatar
-                    uid={entry.uid}
-                    photoURL={entry.photoURL}
-                    displayName={entry.name}
-                    size="sm"
-                  />
-                )}
-
-                <span className="text-sm font-medium flex-1 truncate">
-                  {entry.uid === user?.uid ? "You" : entry.name}
-                </span>
-                <span className="text-sm font-mono tabular-nums font-bold">
-                  {entry.value.toLocaleString()}{" "}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    {unit}
-                  </span>
-                </span>
-              </div>
-            ))}
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              Follow more athletes to grow the leaderboard
-            </p>
-          </>
-        )}
-
-        {!loading && entries.length >= 3 && (
-          <>
-            {top3.map((entry) => (
-              <div
-                key={entry.uid}
-                className={`flex items-center gap-2.5 p-2 rounded-lg ${
-                  entry.uid === user?.uid
-                    ? "bg-primary/5 border border-primary/15"
-                    : ""
-                }`}
-              >
-                <span
-                  className="w-5 text-xs font-bold text-center shrink-0"
-                  style={{ color: RANK_COLORS[entry.rank - 1] }}
-                >
-                  {entry.rank}
-                </span>
-                {entry.uid === user?.uid ? (
-                  <Avatar
-                    photoURL={entry.photoURL}
-                    displayName="You"
-                    fallbackInitial={
-                      profile?.displayName?.charAt(0) ||
-                      user?.displayName?.charAt(0)
-                    }
-                    size="sm"
-                  />
-                ) : (
-                  <BlockAwareAvatar
-                    uid={entry.uid}
-                    photoURL={entry.photoURL}
-                    displayName={entry.name}
-                    size="sm"
-                  />
-                )}
-
-                <span className="text-sm font-medium flex-1 truncate">
-                  {entry.uid === user?.uid ? "You" : entry.name}
-                </span>
-                <span className="text-sm font-mono tabular-nums font-bold">
-                  {entry.value.toLocaleString()}{" "}
-                  <span className="text-xs text-muted-foreground font-normal">
-                    {unit}
-                  </span>
-                </span>
-              </div>
+                rank={entry.rank}
+                uid={entry.uid}
+                name={entry.name}
+                photoURL={entry.photoURL}
+                value={entry.value}
+                unit={unit}
+                isSelf={entry.uid === user?.uid}
+                selfInitial={
+                  profile?.displayName?.charAt(0) ||
+                  user?.displayName?.charAt(0)
+                }
+              />
             ))}
 
-            {selfEntry && !selfInTop3 && (
+            {entries.length < 3 && (
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Follow more athletes to grow the leaderboard
+              </p>
+            )}
+
+            {entries.length >= 3 && selfEntry && !selfInTop3 && (
               <>
                 <div className="flex justify-center py-0.5">
                   <span className="text-xs text-muted-foreground">···</span>
                 </div>
-                <div className="flex items-center gap-2.5 p-2 rounded-lg bg-primary/5 border border-primary/15">
-                  <span className="w-5 text-xs font-bold text-center shrink-0">
-                    {selfEntry.rank}
-                  </span>
-                  <Avatar
-                    photoURL={selfEntry.photoURL}
-                    displayName="You"
-                    fallbackInitial={
-                      profile?.displayName?.charAt(0) ||
-                      user?.displayName?.charAt(0)
-                    }
-                    size="sm"
-                  />
-                  <span className="text-sm font-medium flex-1 truncate">
-                    You
-                  </span>
-                  <span className="text-sm font-mono tabular-nums font-bold">
-                    {selfEntry.value.toLocaleString()}{" "}
-                    <span className="text-xs text-muted-foreground font-normal">
-                      {unit}
-                    </span>
-                  </span>
-                </div>
+                <LeaderboardRow
+                  rank={selfEntry.rank}
+                  uid={selfEntry.uid}
+                  name="You"
+                  photoURL={selfEntry.photoURL}
+                  value={selfEntry.value}
+                  unit={unit}
+                  isSelf
+                  selfInitial={
+                    profile?.displayName?.charAt(0) ||
+                    user?.displayName?.charAt(0)
+                  }
+                />
               </>
             )}
           </>
@@ -272,7 +182,7 @@ export default function LeaderboardCard({
         <button
           type="button"
           onClick={onViewFull}
-          className="flex items-center justify-center gap-1 w-full mt-3 pt-3 border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center justify-center gap-1 w-full mt-3 pt-3 min-h-[44px] border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >
           See Full Leaderboard
           <ChevronRight size={14} />

@@ -10,9 +10,8 @@ import {
   type ChallengeType,
 } from "../../lib/leaderboard";
 import { Skeleton } from "../LoadingSkeleton";
-import { RANK_COLORS } from "../../lib/theme";
-import Avatar from "../Avatar";
-import BlockAwareAvatar from "./BlockAwareAvatar";
+import LeaderboardRow from "./LeaderboardRow";
+import EmptyState from "@/components/ui/EmptyState";
 import { SOCIAL_GATES, shouldShowLeaderboard } from "@/lib/socialGates";
 import { topPercent } from "@/features/challenges/useChallengePercentile";
 
@@ -146,41 +145,28 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
           </>
         )}
 
+        {/* Both empty states through the EmptyState primitive (visual audit
+            W7 — these were the folder's only raw rgba(123,114,233,0.12)
+            tiles, and its sibling card tinted the SAME tile a different
+            purple). One primitive, one accent. */}
         {!loading && cohortSize === 0 && (
-          <div className="text-center py-10 space-y-2">
-            <div
-              className="size-12 rounded-2xl flex items-center justify-center mx-auto"
-              style={{ background: "rgba(123,114,233,0.12)" }}
-            >
-              <Zap size={24} style={{ color: THEME.lifting }} />
-            </div>
-            <p className="text-sm font-medium text-foreground">
-              No activity this week
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Follow athletes and start training to see rankings
-            </p>
-          </div>
+          <EmptyState
+            icon={Zap}
+            headline="No activity this week"
+            sub="Follow athletes and start training to see rankings."
+            accent={THEME.brand}
+          />
         )}
 
         {/* Sub-cohort gate: a ranked list among <20 athletes is meaningless
             and exposes individuals — show the unlock state instead. */}
         {!loading && cohortSize > 0 && !leaderboardUnlocked && (
-          <div className="text-center py-10 space-y-2">
-            <div
-              className="size-12 rounded-2xl flex items-center justify-center mx-auto"
-              style={{ background: "rgba(123,114,233,0.12)" }}
-            >
-              <Zap size={24} style={{ color: THEME.lifting }} />
-            </div>
-            <p className="text-sm font-medium text-foreground">
-              Rankings unlock at {SOCIAL_GATES.LEADERBOARD_MIN_COHORT} athletes
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {cohortSize} active this week — follow more athletes to fill the
-              board
-            </p>
-          </div>
+          <EmptyState
+            icon={Zap}
+            headline={`Rankings unlock at ${SOCIAL_GATES.LEADERBOARD_MIN_COHORT} athletes`}
+            sub={`${cohortSize} active this week — follow more athletes to fill the board.`}
+            accent={THEME.brand}
+          />
         )}
 
         {/* Percentile header — the always-on framing for an unlocked board. */}
@@ -199,51 +185,19 @@ export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
         {!loading &&
           leaderboardUnlocked &&
           visibleEntries.map((entry) => (
-            <div
+            <LeaderboardRow
               key={entry.uid}
-              className={`flex items-center gap-3 p-2.5 rounded-lg ${
-                entry.uid === user?.uid
-                  ? "bg-primary/5 border border-primary/15"
-                  : ""
-              }`}
-            >
-              <span
-                className="w-6 text-sm font-bold text-center shrink-0"
-                style={{
-                  color:
-                    entry.rank <= 3 ? RANK_COLORS[entry.rank - 1] : undefined,
-                }}
-              >
-                {entry.rank}
-              </span>
-              {entry.uid === user?.uid ? (
-                <Avatar
-                  photoURL={entry.photoURL}
-                  displayName="You"
-                  fallbackInitial={
-                    profile?.displayName?.charAt(0) ||
-                    user?.displayName?.charAt(0)
-                  }
-                  size="sm"
-                />
-              ) : (
-                <BlockAwareAvatar
-                  uid={entry.uid}
-                  photoURL={entry.photoURL}
-                  displayName={entry.name}
-                  size="sm"
-                />
-              )}
-              <span className="text-sm font-medium flex-1 truncate">
-                {entry.uid === user?.uid ? "You" : entry.name}
-              </span>
-              <span className="text-sm font-mono tabular-nums font-bold">
-                {entry.value.toLocaleString()}{" "}
-                <span className="text-xs text-muted-foreground font-normal">
-                  {currentUnit}
-                </span>
-              </span>
-            </div>
+              rank={entry.rank}
+              uid={entry.uid}
+              name={entry.name}
+              photoURL={entry.photoURL}
+              value={entry.value}
+              unit={currentUnit}
+              isSelf={entry.uid === user?.uid}
+              selfInitial={
+                profile?.displayName?.charAt(0) || user?.displayName?.charAt(0)
+              }
+            />
           ))}
       </div>
     </div>
