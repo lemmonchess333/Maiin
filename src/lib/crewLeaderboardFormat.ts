@@ -36,6 +36,30 @@ export function formatScore(metric: string, entry: CrewLeaderboardRow): string {
  * the unit in Plus Jakarta. Returns the field label too so callers
  * don't have to keep a parallel switch in JSX.
  */
+
+/**
+ * Auto weekly crew goal (v1 — computed, not creator-set). A modest
+ * per-member baseline × member count, per the crew's own metric, so every
+ * crew has a collective target from day one with zero data-model change.
+ * Only the crew CREATOR can write the crew doc (firestore.rules), so a
+ * member-editable goal needs a callable — deliberately deferred; if/when
+ * that lands, a stored `weeklyGoal` field should take precedence here.
+ */
+export function crewWeeklyGoalTarget(
+  metric: string,
+  memberCount: number
+): number {
+  const perMember =
+    metric === "total_km"
+      ? 10
+      : metric === "total_volume"
+        ? 5000
+        : metric === "workout_count"
+          ? 3
+          : 1000; // hybrid_score (≈ a solid training week per member)
+  return Math.max(1, memberCount) * perMember;
+}
+
 export function formatTotalForMetric(
   metric: string,
   total: number
