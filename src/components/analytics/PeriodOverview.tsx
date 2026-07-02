@@ -153,7 +153,9 @@ export default function PeriodOverview({
                 <p className="text-xl font-bold font-mono tabular-nums text-foreground leading-none">
                   {s.value}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">{s.sub}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 font-mono tabular-nums">
+                  {s.sub}
+                </p>
               </div>
             </div>
           );
