@@ -33,7 +33,7 @@
       http-equiv="Content-Security-Policy"
       content="
       default-src 'self';
-      script-src 'self' https://js.stripe.com https://www.googletagmanager.com;
+      script-src 'self' https://js.stripe.com https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com;
       style-src 'self' 'unsafe-inline' https://basemaps.cartocdn.com;
       font-src 'self';
       img-src 'self' data: blob: https://*.appspot.com https://*.googleapis.com https://basemaps.cartocdn.com https://*.cartocdn.com https://www.google-analytics.com https://www.googletagmanager.com;
@@ -54,8 +54,10 @@
         https://*.google-analytics.com
         https://*.analytics.google.com
         https://www.googletagmanager.com
+        https://apis.google.com
+        https://accounts.google.com
         wss://*.firebaseio.com;
-      frame-src https://js.stripe.com https://*.firebaseapp.com;
+      frame-src https://js.stripe.com https://*.firebaseapp.com https://apis.google.com https://accounts.google.com;
       worker-src 'self' blob:;
       manifest-src 'self';
       object-src 'none';
