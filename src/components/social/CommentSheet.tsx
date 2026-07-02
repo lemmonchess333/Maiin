@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { useAuth } from "../../lib/auth";
-import { getComments, addComment, deleteComment } from "../../lib/socialApi";
+import {
+  getComments,
+  addComment,
+  deleteComment,
+  toggleCommentReaction,
+  type CommentReaction,
+} from "../../lib/socialApi";
 import { containsProfanity } from "../../lib/profanityFilter";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { haptic } from "../../lib/haptic";
@@ -20,7 +26,15 @@ interface Comment {
   authorPhotoURL?: string;
   text?: string;
   createdAt?: { toDate?: () => Date };
+  /** One-tap reactions — uid arrays per key (server-written). */
+  reactions?: Partial<Record<CommentReaction, string[]>>;
 }
+
+const REACTION_EMOJI: Record<CommentReaction, string> = {
+  muscle: "💪",
+  fire: "🔥",
+};
+const REACTION_KEYS = Object.keys(REACTION_EMOJI) as CommentReaction[];
 
 interface CommentSheetProps {
   activityId: string;
@@ -120,6 +134,36 @@ export default function CommentSheet({
     setDeletingId(null);
   };
 
+  // Optimistic reaction toggle — flip locally, reconcile via the callable,
+  // revert on failure (same optimistic pattern as the feed's kudos flame).
+  const applyReaction = (
+    prev: Comment[],
+    commentId: string,
+    reaction: CommentReaction,
+    uid: string
+  ): Comment[] =>
+    prev.map((c) => {
+      if (c.id !== commentId) return c;
+      const current = c.reactions?.[reaction] ?? [];
+      const next = current.includes(uid)
+        ? current.filter((u) => u !== uid)
+        : [...current, uid];
+      return { ...c, reactions: { ...c.reactions, [reaction]: next } };
+    });
+
+  const handleReact = async (commentId: string, reaction: CommentReaction) => {
+    if (!user) return;
+    haptic("light");
+    setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
+    try {
+      await toggleCommentReaction(activityId, commentId, reaction);
+    } catch {
+      // Revert the optimistic flip (toggle is symmetric).
+      setComments((prev) => applyReaction(prev, commentId, reaction, user.uid));
+      haptic("error");
+    }
+  };
+
   return (
     // Sprint 3: vaul boilerplate (Root + Portal + Overlay + Content
     // + drag handle + Title strip) replaced with the shared
@@ -181,9 +225,47 @@ export default function CommentSheet({
                     </span>{" "}
                     <span className="text-foreground/90">{c.text}</span>
                   </p>
-                  <p className="text-caption text-muted-foreground mt-0.5">
-                    {timeAgo}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-caption text-muted-foreground">
+                      {timeAgo}
+                    </p>
+                    {/* One-tap reactions. p-2.5/-m-1.5 inflates each chip's
+                        hit area toward the 44px floor without bloating the
+                        row visually (the sibling flame's -m trick). */}
+                    {REACTION_KEYS.map((k) => {
+                      const uids = c.reactions?.[k] ?? [];
+                      const mine = !!user && uids.includes(user.uid);
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => handleReact(c.id, k)}
+                          aria-pressed={mine}
+                          aria-label={`${mine ? "Remove" : "Add"} ${
+                            k === "muscle" ? "strong" : "fire"
+                          } reaction`}
+                          className="p-2.5 -m-1.5"
+                        >
+                          <span
+                            className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
+                              mine
+                                ? "bg-primary/10 text-primary"
+                                : uids.length > 0
+                                  ? "bg-muted/70 text-foreground/80"
+                                  : "bg-muted/40 text-muted-foreground/60"
+                            }`}
+                          >
+                            {REACTION_EMOJI[k]}
+                            {uids.length > 0 && (
+                              <span className="font-mono tabular-nums font-medium">
+                                {uids.length}
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
                 {/* Always visible (W10): the old opacity-0 group-hover reveal
                     made delete unreachable on touch — this is a mobile bottom
