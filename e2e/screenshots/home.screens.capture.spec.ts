@@ -25,11 +25,46 @@ test.describe("app screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // Pre-dismiss first-use coachmarks (useCoachMarks localStorage flags) so
+    // floating tooltips don't occlude the surfaces under review — the Social
+    // invite coachmark was covering the card copy in every People-tab capture.
+    // Keys mirror src/hooks/useCoachMarks.ts (`tropos-coach-marks-dismissed`)
+    // + the Coachmark storageKeys currently in the app.
+    await page.addInitScript(() => {
+      const BASE = "tropos-coach-marks-dismissed";
+      for (const k of [
+        BASE,
+        `${BASE}:social-find-invite`,
+        `${BASE}:extras-pill-v1`,
+      ]) {
+        try {
+          window.localStorage.setItem(k, "1");
+        } catch {
+          /* storage unavailable — capture just shows the coachmark */
+        }
+      }
+    });
     await signInAsTestUser(page);
   });
 
   async function shoot(page: Page, name: string) {
     await page.screenshot({ path: `screenshots/${name}.png`, fullPage: true });
+  }
+
+  /** The rich-seeded user legitimately EARNS a badge on first open, so the
+   * BadgeEarnedModal seal fires over Home and occludes the capture. Its
+   * backdrop tap counts as a seal tap pre-reveal and dismisses post-reveal
+   * (BadgeEarnedModal.tsx), so a bounded backdrop-click loop walks the whole
+   * seal → reveal → dismiss lifecycle. Bounded so a modal redesign can't
+   * hang the capture run. */
+  async function dismissBadgeSeal(page: Page) {
+    for (let i = 0; i < 10; i++) {
+      const dialog = page.getByRole("dialog");
+      const open = await dialog.isVisible().catch(() => false);
+      if (!open) return;
+      await page.mouse.click(8, 8);
+      await page.waitForTimeout(400);
+    }
   }
 
   test("home — light + dark", async ({ page }) => {
@@ -41,6 +76,10 @@ test.describe("app screenshots", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     // let count-ups / entry animations settle
     await page.waitForTimeout(1200);
+    // Badge-earned seal fires over Home for the seeded user — tap it away
+    // so the capture shows the page, not the modal.
+    await dismissBadgeSeal(page);
+    await page.waitForTimeout(400);
 
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
@@ -167,6 +206,7 @@ test.describe("app screenshots", () => {
       .first()
       .waitFor({ state: "visible", timeout: 20000 });
     await page.waitForTimeout(800);
+    await dismissBadgeSeal(page);
     await page
       .getByRole("button", { name: /today/i })
       .first()
