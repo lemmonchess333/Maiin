@@ -312,33 +312,56 @@ function BadgeEarnedContent({
           {/* The seal — a frosted hexagon over the badge. Cracks accrue per tap,
               light builds behind the cracks, then it shatters into shards. */}
           {!revealed ? (
-            <button
+            <motion.button
               ref={sealBtnRef}
               type="button"
               onClick={tapSeal}
               aria-label={`Break the seal to reveal your new ${badge.tier} badge (tap ${stage} of ${tapsNeeded})`}
               className="relative rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
               style={{ width: 132, height: 150 }}
+              /* The tap had no press feedback at all — the single biggest
+                 "feels dead" factor. A firm compress makes each hit land. */
+              whileTap={reduce ? undefined : { scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 500, damping: 24 }}
             >
-              {/* Inner shake wrapper — keyed on taps so the jolt re-fires per
-                  crack, while the button stays mounted (keyboard focus kept). */}
+              {/* Inner jolt wrapper — keyed on taps so it re-fires per crack,
+                  while the button stays mounted (keyboard focus kept). The
+                  jolt is now an impact: recoil-compress + shake + a touch of
+                  rotation, not just a horizontal wiggle. */}
               <motion.div
                 key={`shake-${taps}`}
                 className="absolute inset-0"
-                animate={reduce ? undefined : { x: [0, -5, 5, -3, 2, 0] }}
-                transition={{ duration: 0.32 }}
+                animate={
+                  reduce
+                    ? undefined
+                    : {
+                        x: [0, -6, 6, -3, 2, 0],
+                        rotate: [0, -1.6, 1.4, -0.8, 0],
+                        scale: [1, 0.965, 1.02, 1],
+                      }
+                }
+                transition={{ duration: 0.34 }}
               >
-                {/* Light leaking from inside, growing with each crack. */}
-                <div
+                {/* Light leaking from inside, growing with each crack — and
+                    SPIKING on the tap itself (keyed flash → settle) so every
+                    hit visibly forces more light through the seal. */}
+                <motion.div
+                  key={`glow-${taps}`}
                   aria-hidden="true"
                   className="absolute pointer-events-none"
                   style={{
                     inset: -10,
-                    opacity: glow,
                     background: `radial-gradient(circle at 50% 48%, #fff 0%, ${tier} 40%, transparent 70%)`,
                     filter: "blur(4px)",
-                    transition: "opacity 0.25s ease",
                   }}
+                  initial={false}
+                  animate={{
+                    opacity:
+                      reduce || taps === 0
+                        ? glow
+                        : [Math.min(1, glow + 0.35), glow],
+                  }}
+                  transition={{ duration: 0.45, ease: "easeOut" }}
                 />
                 <svg
                   viewBox="0 0 100 114"
@@ -386,7 +409,8 @@ function BadgeEarnedContent({
                     ))}
                   </g>
                 </svg>
-                {/* Centre lock + prompt. */}
+                {/* Centre lock + prompt + tap-progress dots ("Keep tapping…"
+                    gave no sense of how close the break was — the dots do). */}
                 <span
                   className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 font-semibold pointer-events-none"
                   style={{ color: "#fff" }}
@@ -399,9 +423,29 @@ function BadgeEarnedContent({
                   <span className="text-xs" style={{ color: tier }}>
                     {stage === 0 ? "Tap to break the seal" : "Keep tapping…"}
                   </span>
+                  {tapsNeeded > 1 && (
+                    <span
+                      className="flex items-center gap-1.5"
+                      aria-hidden="true"
+                    >
+                      {Array.from({ length: tapsNeeded }, (_, i) => (
+                        <motion.span
+                          key={i}
+                          className="size-1.5 rounded-full"
+                          style={{ background: tier }}
+                          initial={false}
+                          animate={{
+                            opacity: i < stage ? 1 : 0.25,
+                            scale: i === stage - 1 ? [1.6, 1] : 1,
+                          }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      ))}
+                    </span>
+                  )}
                 </span>
               </motion.div>
-            </button>
+            </motion.button>
           ) : (
             // Shatter: the six shards fly outward + fade once on the break.
             !reduce && (
