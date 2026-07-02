@@ -15,7 +15,10 @@ import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithCredential,
+  sendPasswordResetEmail,
   type User,
   type UserCredential,
 } from "firebase/auth";
@@ -46,6 +49,31 @@ import { auth, db } from "./firebase";
 import { logger } from "./logger";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+
+/* ================================
+   OAUTH TRANSPORT (popup vs redirect)
+================================ */
+
+/** True on mobile browsers, where signInWithPopup is unreliable (iOS Safari
+ *  storage partitioning kills the popup→opener channel) so the OAuth flows
+ *  redirect instead. Desktop keeps the popup. */
+function preferAuthRedirect(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+/** A popup failure that should transparently retry as a redirect (blocked /
+ *  unsupported / SDK internal-error), NOT a deliberate user cancel
+ *  (popup-closed-by-user) which stays silent. */
+function isRecoverablePopupError(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code ?? "";
+  return (
+    code === "auth/popup-blocked" ||
+    code === "auth/cancelled-popup-request" ||
+    code === "auth/internal-error" ||
+    code === "auth/operation-not-supported-in-this-environment"
+  );
+}
 
 /* ================================
    USER PROFILE TYPE — decomposed into sub-interfaces
@@ -506,6 +534,10 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  /** Send a Firebase password-reset email. Resolves on send; the caller
+   *  shows a neutral "if an account exists…" message so this can't be used
+   *  to enumerate registered emails. */
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   /**
    * Write a partial profile patch. Returns an `UpdateProfileResult`
@@ -731,27 +763,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = useCallback(async () => {
-    /* Web uses the popup. Native (Capacitor) can't — the popup redirect
-       returns to capacitor://localhost, not a Firebase authorized domain —
-       so it drives the native Google sheet and completes with the returned
-       credential. See nativeAuth.ts. */
-    const cred = isNativePlatform()
-      ? await signInWithCredential(auth, await getGoogleCredentialNative())
-      : await signInWithPopup(auth, new GoogleAuthProvider());
-    await finishOAuthSignIn(cred, "google");
+    /* Native (Capacitor) can't use the web popup — the redirect returns to
+       capacitor://localhost, not a Firebase authorized domain — so it drives
+       the native Google sheet and completes with the returned credential. */
+    if (isNativePlatform()) {
+      const cred = await signInWithCredential(
+        auth,
+        await getGoogleCredentialNative()
+      );
+      await finishOAuthSignIn(cred, "google");
+      return;
+    }
+    const provider = new GoogleAuthProvider();
+    /* Mobile browsers block signInWithPopup — iOS Safari's storage
+       partitioning kills the popup→opener channel, so the popup throws
+       auth/internal-error (what surfaced on phones as "Sign-in is
+       temporarily unavailable"). Firebase's own guidance is redirect on
+       mobile. Since the app is served from its own authDomain
+       (…firebaseapp.com), the redirect handler is same-origin, so ITP
+       doesn't break it. Desktop keeps the popup (no full reload). The
+       redirect resolves on return via the getRedirectResult effect below. */
+    if (preferAuthRedirect()) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    try {
+      const cred = await signInWithPopup(auth, provider);
+      await finishOAuthSignIn(cred, "google");
+    } catch (err) {
+      if (isRecoverablePopupError(err)) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw err;
+    }
   }, []);
 
   const signInWithApple = useCallback(async () => {
-    let cred: UserCredential;
     if (isNativePlatform()) {
-      cred = await signInWithCredential(auth, await getAppleCredentialNative());
-    } else {
-      const provider = new OAuthProvider("apple.com");
-      provider.addScope("email");
-      provider.addScope("name");
-      cred = await signInWithPopup(auth, provider);
+      const cred = await signInWithCredential(
+        auth,
+        await getAppleCredentialNative()
+      );
+      await finishOAuthSignIn(cred, "apple");
+      return;
     }
-    await finishOAuthSignIn(cred, "apple");
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    // Same mobile-popup problem as Google — redirect on mobile web.
+    if (preferAuthRedirect()) {
+      await signInWithRedirect(auth, provider);
+      return;
+    }
+    try {
+      const cred = await signInWithPopup(auth, provider);
+      await finishOAuthSignIn(cred, "apple");
+    } catch (err) {
+      if (isRecoverablePopupError(err)) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      throw err;
+    }
+  }, []);
+
+  /* Complete a mobile-web OAuth redirect. signInWithRedirect navigates the
+     page away; on return the SDK restores the pending credential here. New
+     users get their profile doc created via finishOAuthSignIn exactly like
+     the popup path (onAuthStateChanged only READS a profile — it would set
+     null for a brand-new OAuth user whose doc doesn't exist yet). Runs once
+     on mount; a null result means there was no pending redirect. */
+  useEffect(() => {
+    let cancelled = false;
+    getRedirectResult(auth)
+      .then((result) => {
+        if (cancelled || !result) return;
+        const method =
+          result.providerId && result.providerId.includes("apple")
+            ? "apple"
+            : "google";
+        return finishOAuthSignIn(result, method);
+      })
+      .catch((err) => {
+        logger.error("[AuthProvider] OAuth redirect sign-in failed", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // finishOAuthSignIn is stable enough for a mount-only run (only closes
+    // over stable setters); intentionally [] so it fires once per app boot.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const resetPassword = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   }, []);
 
   const signOutUser = useCallback(async () => {
@@ -895,6 +1001,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signInWithGoogle,
       signInWithApple,
+      resetPassword,
       signOut: signOutUser,
       updateProfile,
       refreshProfile,
@@ -907,6 +1014,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signInWithGoogle,
       signInWithApple,
+      resetPassword,
       signOutUser,
       updateProfile,
       refreshProfile,
