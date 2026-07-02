@@ -52,7 +52,7 @@ describe("ExerciseDemoPlayer", function () {
     );
   });
 
-  it("ping-pongs the active frame on the interval", function () {
+  it("ping-pongs with a longer hold at the range-of-motion extremes", function () {
     vi.useFakeTimers();
     try {
       const { container } = render(
@@ -67,13 +67,19 @@ describe("ExerciseDemoPlayer", function () {
           .querySelector('[data-active="true"]')
           ?.getAttribute("data-frame-index");
 
+      // Extremes hold TURNAROUND_HOLD (1.8×) the mid-frame interval — a rep
+      // pauses at the top/bottom before reversing (visual audit Phase 5).
       expect(activeIndex()).toBe("0");
       act(() => void vi.advanceTimersByTime(500));
-      expect(activeIndex()).toBe("1");
+      expect(activeIndex()).toBe("0"); // still in the start hold (900ms)
+      act(() => void vi.advanceTimersByTime(400));
+      expect(activeIndex()).toBe("1"); // 900ms — leaves the extreme
+      act(() => void vi.advanceTimersByTime(500));
+      expect(activeIndex()).toBe("2"); // mid frame moves on 1× interval
+      // Far extreme holds 900ms, then reverses (ping-pong, no jump to 0).
       act(() => void vi.advanceTimersByTime(500));
       expect(activeIndex()).toBe("2");
-      // Reverses at the end (ping-pong) rather than jumping back to 0.
-      act(() => void vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(400));
       expect(activeIndex()).toBe("1");
     } finally {
       vi.useRealTimers();
