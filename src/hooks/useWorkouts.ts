@@ -75,6 +75,9 @@ export interface Workout {
   durationMinutes: number;
   notes: string;
   createdAt: Timestamp;
+  /** Total kg lifted this session — written by saveWorkout since the
+   *  tonnage rollup landed; absent on older docs (treat as 0). */
+  tonnageKg?: number;
 }
 
 export function useWorkouts() {
