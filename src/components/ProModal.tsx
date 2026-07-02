@@ -33,7 +33,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
-  PRO_PLANS,
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
@@ -44,6 +43,7 @@ import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
+import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { track } from "@/lib/paywallAnalytics";
 import { X, Sparkles, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -149,6 +149,10 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   );
   const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
   const { profile } = useAuth();
+  // Apple-localized prices on the RC build; hardcoded proPlans fallback
+  // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
+  // sheet — a mismatch is an App Review flag.
+  const plans = useProPlanPrices();
 
   // Sub1a P1 — trial offer eligibility (client-side hint; server is
   // authoritative via `hasUsedTrial` in checkoutTrial.js). Missing
@@ -314,7 +318,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           aria-label="Choose Pro billing plan"
           className="space-y-2"
         >
-          {PRO_PLANS.map((plan) => {
+          {plans.map((plan) => {
             const isSelected = selectedPlan === plan.id;
             return (
               <button
