@@ -286,7 +286,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   style={{ backgroundColor: `${accent.nutrition}1A` }}
                 >
                   <p
-                    className="text-sm font-bold"
+                    className="text-sm font-bold font-mono tabular-nums"
                     style={{ color: macroText.nutrition }}
                   >
                     {Math.round(product.calories * servings)}
@@ -298,7 +298,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   style={{ backgroundColor: `${accent.protein}1A` }}
                 >
                   <p
-                    className="text-sm font-bold"
+                    className="text-sm font-bold font-mono tabular-nums"
                     style={{ color: macroText.protein }}
                   >
                     {Math.round(product.protein * servings)}g
@@ -310,7 +310,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   style={{ backgroundColor: `${accent.carbs}1A` }}
                 >
                   <p
-                    className="text-sm font-bold"
+                    className="text-sm font-bold font-mono tabular-nums"
                     style={{ color: macroText.carbs }}
                   >
                     {Math.round(product.carbs * servings)}g
@@ -322,7 +322,7 @@ export function BarcodeScanner({ onLog, onClose }: BarcodeScannerProps) {
                   style={{ backgroundColor: `${accent.fat}1A` }}
                 >
                   <p
-                    className="text-sm font-bold"
+                    className="text-sm font-bold font-mono tabular-nums"
                     style={{ color: macroText.fat }}
                   >
                     {Math.round(product.fat * servings)}g
