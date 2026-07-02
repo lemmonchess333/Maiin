@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
+import BodyMapGlow from "@/components/BodyMapGlow";
 import { getShareTier, getFrequencyForShare } from "./muscleShare";
 
 interface MuscleData {
@@ -132,6 +133,63 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
       .sort((a, b) => b[1] - a[1]);
   }, [normalizedData]);
 
+  /* Phase-2 glow (visual audit W1/W2): the flat tier fills read static —
+     especially on OLED dark where they sit dead on the card. Volume becomes
+     light: high-share muscles emit a brighter halo that settles first,
+     mid-share a fainter one moments later (intensity stagger), and the
+     single most-trained group carries one slow ambient pulse. Implemented
+     as blurred overlay Models behind the base diagram (see BodyMapGlow) —
+     static filter, animated opacity only. */
+  const glowHigh = useMemo(
+    () => exerciseData.filter((e) => e.frequency === 3),
+    [exerciseData]
+  );
+  const glowMid = useMemo(
+    () => exerciseData.filter((e) => e.frequency === 2),
+    [exerciseData]
+  );
+  const topGroup = trainedGroups[0]?.[0];
+  const glowTop = useMemo(
+    () => exerciseData.filter((e) => e.name === topGroup),
+    [exerciseData, topGroup]
+  );
+
+  const renderView = (type: "anterior" | "posterior") => (
+    <div className="relative">
+      <BodyMapGlow
+        data={glowHigh}
+        type={type}
+        color={MID_COLOR}
+        opacity={0.55}
+        delay={0.1}
+        width={140}
+      />
+      <BodyMapGlow
+        data={glowMid}
+        type={type}
+        color={LOW_COLOR}
+        opacity={0.28}
+        delay={0.4}
+        width={140}
+      />
+      <BodyMapGlow
+        data={glowTop}
+        type={type}
+        color={THEME.liftingLight}
+        opacity={0.45}
+        pulse
+        width={140}
+      />
+      <Model
+        data={exerciseData}
+        style={{ width: 140 }}
+        highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
+        bodyColor={bodyColor}
+        type={type}
+      />
+    </div>
+  );
+
   return (
     <div className="p-4 rounded-2xl border border-border/50 bg-card">
       <h3 className="text-sm font-semibold mb-3 text-foreground">
@@ -146,22 +204,8 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
             padding: "16px 0",
           }}
         >
-          {/* Front view */}
-          <Model
-            data={exerciseData}
-            style={{ width: 140 }}
-            highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
-            bodyColor={bodyColor}
-            type="anterior"
-          />
-          {/* Back view */}
-          <Model
-            data={exerciseData}
-            style={{ width: 140 }}
-            highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
-            bodyColor={bodyColor}
-            type="posterior"
-          />
+          {renderView("anterior")}
+          {renderView("posterior")}
         </div>
 
         {/* Legend: only trained groups, sorted by sets descending */}
