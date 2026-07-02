@@ -178,6 +178,63 @@ test.describe("app screenshots", () => {
     await shootLightDark("user-profile");
   });
 
+  // Visual-improvement-audit surfaces (Prompt 8): the badge family on its
+  // real dark/light card surface, and the exercise guide (ExerciseFormContent
+  // muscle diagram + instructions) — both reachable deterministically.
+  test("audit surfaces — badges + exercise form", async ({ page }) => {
+    // Two navigations + four fullPage shots (the badges grid is very tall)
+    // overrun the default 30s — the first run lost the exercise-form shots
+    // to exactly that.
+    test.setTimeout(90_000);
+    async function shootLightDark(name: string) {
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+      await shoot(page, `${name}-light`);
+      await page.evaluate(() => document.documentElement.classList.add("dark"));
+      await page.waitForTimeout(350);
+      await shoot(page, `${name}-dark`);
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+    }
+
+    // Badge grid — History's Badges tab. The stashed-tab hook (History.tsx
+    // reads sessionStorage("history-tab") on mount) gives a deterministic
+    // route without scripting the tab UI.
+    await page.addInitScript(() => {
+      try {
+        window.sessionStorage.setItem("history-tab", "badges");
+      } catch {
+        /* fine — capture lands on Analytics instead */
+      }
+    });
+    await page.goto("history");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(1600);
+    await shootLightDark("badges-grid");
+
+    // Exercise guide — ExerciseHistory's Form tab (ExerciseFormContent:
+    // muscle diagram hero + pills + instructions + watch-out callout).
+    // The Progress/Form switch is a SegmentedControl → role="radio", NOT
+    // "button" (the first run's button locator never matched, and the
+    // swallowed click burned its full 30s action timeout per retry —
+    // that's what blew the 90s test budget). Short explicit timeout so
+    // any future miss costs 4s, not 30s.
+    await page.goto("history/exercise/Bench%20Press");
+    await page.waitForTimeout(1800);
+    await page
+      .getByRole("radio", { name: /^form$/i })
+      .click({ timeout: 4000 })
+      .catch(() => {
+        /* tab moved — capture lands on Progress, still useful */
+      });
+    await page.waitForTimeout(1400);
+    await shootLightDark("exercise-form");
+  });
+
   // Editing sheets (vaul drawers) — interaction-gated, so each trigger is
   // best-effort (try/catch) and independent: a brittle open doesn't sink the
   // other capture. Goal is to SEE/verify the sheets, not assert.
