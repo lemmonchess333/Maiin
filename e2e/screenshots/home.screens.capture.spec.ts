@@ -218,11 +218,16 @@ test.describe("app screenshots", () => {
 
     // Exercise guide — ExerciseHistory's Form tab (ExerciseFormContent:
     // muscle diagram hero + pills + instructions + watch-out callout).
+    // The Progress/Form switch is a SegmentedControl → role="radio", NOT
+    // "button" (the first run's button locator never matched, and the
+    // swallowed click burned its full 30s action timeout per retry —
+    // that's what blew the 90s test budget). Short explicit timeout so
+    // any future miss costs 4s, not 30s.
     await page.goto("history/exercise/Bench%20Press");
     await page.waitForTimeout(1800);
     await page
-      .getByRole("button", { name: /^form$/i })
-      .click()
+      .getByRole("radio", { name: /^form$/i })
+      .click({ timeout: 4000 })
       .catch(() => {
         /* tab moved — capture lands on Progress, still useful */
       });
