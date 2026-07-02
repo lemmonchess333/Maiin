@@ -321,3 +321,17 @@ describe("ProModal — close button", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("ProModal — Guideline 3.1.2 legal links", () => {
+  it("renders Terms and Privacy links to the in-app legal routes", () => {
+    renderModal({ onClose: () => {} });
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms"
+    );
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "href",
+      "/privacy"
+    );
+  });
+});

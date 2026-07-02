@@ -343,3 +343,33 @@ describe("Upgrade — Sub1 P2 cross-platform Pro guard", () => {
     expect(screen.queryByRole("button", { name: /Start Pro/ })).toBeNull();
   });
 });
+
+describe("Upgrade — Guideline 3.1.2 compliance", () => {
+  it("renders Terms and Privacy legal links", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute(
+      "href",
+      "/terms"
+    );
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute(
+      "href",
+      "/privacy"
+    );
+  });
+
+  it("shows Restore purchases on native iOS", () => {
+    isNativeIOSMock.mockReturnValue(true);
+    renderPage();
+    expect(
+      screen.getByRole("button", { name: /Restore purchases/i })
+    ).toBeTruthy();
+  });
+
+  it("does NOT show Restore purchases on web", () => {
+    isNativeIOSMock.mockReturnValue(false);
+    renderPage();
+    expect(
+      screen.queryByRole("button", { name: /Restore purchases/i })
+    ).toBeNull();
+  });
+});
