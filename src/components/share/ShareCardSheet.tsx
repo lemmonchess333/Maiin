@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { track } from "@/lib/socialAnalytics";
-import {
-  generateShareImage,
-  shareImageFile,
-} from "@/lib/shareCardGenerator";
+import { generateShareImage, shareImageFile } from "@/lib/shareCardGenerator";
 import { shareToInstagramStories } from "@/lib/shareCard/instagramShare";
 import { buildRoutePath } from "@/lib/shareCard/polyline";
 import {
@@ -67,6 +64,9 @@ export interface ShareCardSheetData {
   protein?: number;
   carbs?: number;
   fat?: number;
+  // RECAP (weekly summary — distanceKm/totalVolumeKg carry WEEK totals)
+  sessionsCount?: number;
+  streakDays?: number;
 }
 
 const STAT_LABELS: StatLabels = {
@@ -83,6 +83,8 @@ const STAT_LABELS: StatLabels = {
   totalTime: "Time",
   calories: "Calories",
   macros: "Macros",
+  sessions: "Sessions",
+  streak: "Streak",
 };
 
 /** Stats with no data for this run/session aren't offered as toggles. */
@@ -94,6 +96,8 @@ function statHasData(key: string, data: ShareCardSheetData): boolean {
       return (data.splits?.length ?? 0) > 0;
     case "prs":
       return (data.prCount ?? 0) > 0;
+    case "streak":
+      return (data.streakDays ?? 0) > 0;
     default:
       return true;
   }
@@ -180,6 +184,8 @@ export function ShareCardSheet({
     protein: data.protein,
     carbs: data.carbs,
     fat: data.fat,
+    sessionsCount: data.sessionsCount,
+    streakDays: data.streakDays,
   };
 
   const toggleKeys = TOGGLEABLE_STATS[data.template].filter((k) =>
@@ -193,7 +199,8 @@ export function ShareCardSheet({
 
   const handleToggle = (key: string) => {
     // Don't let the user hide the last visible stat (card would be empty).
-    if (!hidden.has(key) && visibleStatCount(data.template, hidden) <= 1) return;
+    if (!hidden.has(key) && visibleStatCount(data.template, hidden) <= 1)
+      return;
     haptic();
     setHidden((h) => toggleStat(h, key));
   };

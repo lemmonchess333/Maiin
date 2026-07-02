@@ -56,6 +56,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
+import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
 import { SOCIAL_GATES, shouldShowFollowingFeed } from "@/lib/socialGates";
 import { toast } from "@/lib/toast";
 import { THEME } from "../lib/theme";
@@ -691,6 +692,11 @@ export default function Social() {
                 />
 
                 {showSoloFeed && <SoloFirstFeed onNavigateTab={setTab} />}
+
+                {/* Weekly recap share entry — established users only
+                    (SoloFirstFeed carries its own share card for the
+                    cold-start stack). Renders nothing on a zero week. */}
+                {!showSoloFeed && <WeeklyRecapCard />}
 
                 {feedSubTab === "following" && !showSoloFeed && (
                   <div className="mt-4 space-y-3">
