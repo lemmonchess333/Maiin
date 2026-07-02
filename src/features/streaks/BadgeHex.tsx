@@ -3,6 +3,11 @@ import type { LucideIcon } from "lucide-react";
 import type { BadgeTier } from "./badges";
 import { THEME } from "@/lib/theme";
 
+// Tier hue for the earned-art glow. Reads THEME.tier directly (same values
+// TIER_COLORS re-exports) — a ./badges import here would be circular-ish
+// (badges.ts is a data module that many surfaces pull in).
+const TIER_GLOW: Record<BadgeTier, string> = THEME.tier;
+
 /**
  * Hex-shaped achievement badge. SVG-based so the metallic gradient + shine
  * look the same on every browser and scale cleanly at any size.
@@ -105,10 +110,19 @@ export function BadgeHex({
         style={{
           width: size,
           height: size,
-          opacity: earned ? 1 : 0.5,
+          opacity: earned ? 1 : 0.6,
+          /* Phase-4 render-site fix (visual audit):
+             — Earned art carries a tier-tinted glow ON the badge itself
+               (the old card-level box-shadow barely registered at grid
+               size). Static filter; nothing animates.
+             — Locked art keeps a TRACE of its tier metal (grayscale 0.8,
+               not 1): full greyscale made the mostly-locked grid read as
+               a wall of grey ghosts, hiding what the goal-gradient grid
+               exists to advertise. Locked still reads unambiguously off
+               (dimmed + mostly desaturated). */
           filter: earned
-            ? "drop-shadow(0 2px 6px rgba(0,0,0,0.22))"
-            : "grayscale(1) drop-shadow(0 1px 2px rgba(0,0,0,0.08))",
+            ? `drop-shadow(0 2px 6px rgba(0,0,0,0.22)) drop-shadow(0 0 ${Math.max(6, Math.round(size * 0.14))}px ${TIER_GLOW[tier]}59)`
+            : "grayscale(0.8) drop-shadow(0 1px 2px rgba(0,0,0,0.08))",
         }}
         aria-hidden="true"
       >
