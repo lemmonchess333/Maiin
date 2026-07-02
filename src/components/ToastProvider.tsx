@@ -32,6 +32,36 @@ export function ToastProvider() {
         [data-sonner-toast][data-type="error"] [data-icon] svg {
           color: var(--ds-error) !important;
         }
+        /* Title/description hierarchy — sonner's flat default made the
+           whole toast read as one undifferentiated line. */
+        [data-sonner-toast] [data-title] {
+          font-weight: 600 !important;
+        }
+        [data-sonner-toast] [data-description] {
+          color: hsl(var(--muted-foreground)) !important;
+        }
+        /* Action button — sonner's default is an unstyled near-black pill
+           that reads as a third-party artefact (the "Refresh" button on the
+           update toast). Restyle to the app's primary CTA language:
+           brand-strong fill (the AA text-on-colour step), pill radius,
+           semibold. 36px matches the Button primitive's sm size (the
+           sanctioned inline-control height). */
+        [data-sonner-toast] [data-button] {
+          background: hsl(var(--primary-strong)) !important;
+          color: hsl(var(--primary-foreground)) !important;
+          border-radius: 999px !important;
+          font-weight: 600 !important;
+          font-size: 12px !important;
+          height: 36px !important;
+          min-height: 36px !important;
+          padding: 0 14px !important;
+          flex-shrink: 0;
+        }
+        /* Cancel stays low-emphasis (ghost) next to the filled action. */
+        [data-sonner-toast] [data-button][data-cancel] {
+          background: hsl(var(--muted)) !important;
+          color: hsl(var(--foreground)) !important;
+        }
       `}</style>
       <Toaster
         // Bottom-anchored matches every modern fitness app (MyFitnessPal,
