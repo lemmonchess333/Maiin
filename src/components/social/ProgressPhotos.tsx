@@ -484,7 +484,7 @@ export default function ProgressPhotos() {
             }}
             className={`aspect-[3/4] rounded-lg overflow-hidden border-2 ${
               selected.includes(photo.id)
-                ? "border-purple-500"
+                ? "border-primary"
                 : "border-transparent"
             }`}
           >
@@ -524,7 +524,7 @@ export default function ProgressPhotos() {
           {selected.map((id) => (
             <div
               key={id}
-              className="flex-1 aspect-[3/4] rounded-xl overflow-hidden"
+              className="flex-1 aspect-[3/4] rounded-lg overflow-hidden"
             >
               {decryptedUrls[id] && (
                 <img
