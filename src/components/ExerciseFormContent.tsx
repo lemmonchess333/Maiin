@@ -11,6 +11,7 @@ import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
+import BodyMapGlow from "@/components/BodyMapGlow";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
 // muscle pills, step-by-step instructions. Rendered inline by
@@ -166,8 +167,27 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 }}
               >
                 <div
-                  style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}
+                  style={{
+                    height: showBoth ? 180 : 220,
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
                 >
+                  {/* Phase-2 glow: the target muscles emit a soft halo so the
+                      diagram reads alive in the exercise context (same
+                      WKWebView-safe overlay as the analytics heat map). */}
+                  {primaryMapped.length > 0 && (
+                    <BodyMapGlow
+                      data={[{ name: "Glow", muscles: primaryMapped }]}
+                      type="anterior"
+                      color={THEME.lifting}
+                      opacity={0.4}
+                      blur={7}
+                      width={showBoth ? "100%" : "160px"}
+                      height={showBoth ? "180px" : "220px"}
+                      svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                    />
+                  )}
                   <Model
                     data={highlightData}
                     style={{
@@ -195,8 +215,24 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 }}
               >
                 <div
-                  style={{ height: showBoth ? 180 : 220, overflow: "hidden" }}
+                  style={{
+                    height: showBoth ? 180 : 220,
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
                 >
+                  {primaryMapped.length > 0 && (
+                    <BodyMapGlow
+                      data={[{ name: "Glow", muscles: primaryMapped }]}
+                      type="posterior"
+                      color={THEME.lifting}
+                      opacity={0.4}
+                      blur={7}
+                      width={showBoth ? "100%" : "160px"}
+                      height={showBoth ? "180px" : "220px"}
+                      svgStyle={{ maxHeight: "100%", maxWidth: "100%" }}
+                    />
+                  )}
                   <Model
                     data={highlightData}
                     style={{
