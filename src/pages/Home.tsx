@@ -89,16 +89,12 @@ import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
 
-/* Home2d-pin-1: DayActionSheet + InsightStrip lazy-load on Home.
-   Both surfaces are below-the-fold (sheet is closed on mount, strip
-   is conditional on insight data). Pre-lazy they shipped in Home's
-   initial chunk; now they hydrate on demand with a Suspense
-   fallback that matches the expected dimensions to prevent layout
-   shift. Mirrors the App.tsx route-level lazy() pattern. */
+/* Home2d-pin-1: DayActionSheet lazy-loads on Home (closed on mount, so it
+   hydrates on demand instead of shipping in Home's initial chunk).
+   Mirrors the App.tsx route-level lazy() pattern. */
 const DayActionSheet = lazy(
   () => import("@/components/program/DayActionSheet")
 );
-const InsightStrip = lazy(() => import("@/components/home/InsightStrip"));
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -281,7 +277,7 @@ export default function Home() {
     [profile?.targetCalories, nutritionPhase, todayWorkoutCals, todayRunCals]
   );
 
-  // Performance data for InsightStrip
+  // Performance data for the hero card.
   // Pull up to 4 weeks: currentWeek powers the home card, the prior
   // week feeds the delta chip, and the count drives the baseline-
   // establishing copy when <4 weeks of data are available.
@@ -292,12 +288,6 @@ export default function Home() {
   } = usePerformanceWeeks(4);
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
-  const perfLoadBand = perfWeek?.labels?.loadBand || perfWeek?.loadBand || "";
-  const showInsightStrip =
-    perfWeek?.insight &&
-    (perfLoadBand === "high" ||
-      perfLoadBand === "overreach" ||
-      perfWeek?.flags?.deloadRecommended);
 
   // Nutrition insight from meal patterns
   const topNutritionInsight = useMemo(
@@ -1235,36 +1225,12 @@ export default function Home() {
           </SectionErrorBoundary>
         </motion.div>
 
-        {showInsightStrip && perfWeek?.insight && (
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-          >
-            <TrackSectionView section="insights">
-              <SectionErrorBoundary sectionName="insight-strip">
-                {/* Home2d-pin-1: Suspense fallback dimensioned at ~80pt
-                  to match InsightStrip's rendered height — prevents
-                  layout shift on first hydration. */}
-                <Suspense
-                  fallback={
-                    <div
-                      className="h-20 rounded-xl bg-muted/40 animate-pulse"
-                      aria-hidden="true"
-                    />
-                  }
-                >
-                  <InsightStrip
-                    title={perfWeek.insight.title}
-                    bullet={perfWeek.insight.bullets[0] || ""}
-                    loadBand={perfLoadBand}
-                  />
-                </Suspense>
-              </SectionErrorBoundary>
-            </TrackSectionView>
-          </motion.div>
-        )}
+        {/* One voice per screen: the InsightStrip used to repeat the load
+            verdict here during high/overreach/deload weeks — exactly when
+            the Performance hero above was already saying it ("Backing off —
+            loads high, ease this week" + "Consider a deload week" on one
+            scroll). The hero carries the verdict; the strip's richer
+            bullets live on in Analytics. */}
       </div>
 
       {/* Weight Log Bottom Sheet */}
