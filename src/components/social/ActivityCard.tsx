@@ -409,7 +409,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         <div className="flex gap-4">
           {(activity.totalVolume ?? 0) > 0 && (
             <div>
-              <p className="text-lg font-bold font-mono tabular-nums leading-none text-lifting">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
                 {Math.round(activity.totalVolume ?? 0).toLocaleString()}
               </p>
               <SectionLabel className="mt-0.5">kg volume</SectionLabel>
@@ -417,7 +417,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           )}
           {(activity.exerciseCount ?? 0) > 0 && (
             <div>
-              <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                 {activity.exerciseCount}
               </p>
               <SectionLabel className="mt-0.5">exercises</SectionLabel>
@@ -427,7 +427,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             <div>
               <div className="flex items-center gap-1">
                 <Star className="size-4 text-achievement fill-achievement" />
-                <p className="text-lg font-bold font-mono tabular-nums leading-none text-achievement">
+                <p className="text-xl font-bold font-mono tabular-nums leading-none text-achievement">
                   {prCount}
                 </p>
               </div>
@@ -436,7 +436,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
           )}
           {(activity.duration ?? 0) > 0 && (
             <div>
-              <p className="text-lg font-bold font-mono tabular-nums leading-none text-foreground">
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                 {Math.round((activity.duration ?? 0) / 60)}
               </p>
               <SectionLabel className="mt-0.5">min</SectionLabel>
@@ -686,28 +686,32 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                  row's spacing so the inflated tap zone is invisible
                  to layout. Same pattern applied to all action buttons
                  in this row. */
-              className="p-3 -m-3 transition-transform"
-              style={{
-                transform: flameAnimating ? "scale(1.3)" : "scale(1)",
-                transition: "transform 200ms ease-out",
-              }}
+              /* Class-based pop (visual audit W3): the flame was the one
+                 action styling itself via inline transform/transition while
+                 its siblings use classes — and it ignored reduced motion.
+                 motion-safe: guards the scale so the pop is opt-in. */
+              className={`p-3 -m-3 transition-transform duration-200 ease-out ${
+                flameAnimating ? "motion-safe:scale-125" : ""
+              }`}
             >
               <Flame
-                className={`size-5 ${liked ? "fill-current" : ""}`}
+                className={`size-5 ${liked ? "fill-current opacity-100" : "opacity-50"}`}
                 style={{
                   color: liked
                     ? THEME.amberLight
                     : "var(--color-muted-foreground)",
-                  opacity: liked ? 1 : 0.5,
                 }}
               />
             </button>
             {kudosCount > 0 && (
+              /* Same p-3/-m-3 hit-area pattern as the sibling actions —
+                 this was a bare text-xs button (sub-44px target) next to
+                 a correctly-floored flame (audit W2). */
               <button
                 type="button"
                 onClick={handleShowKudosList}
                 aria-label={`${kudosCount} props — show list`}
-                className="text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
+                className="p-3 -m-3 text-xs font-medium font-mono tabular-nums text-muted-foreground hover:text-foreground transition-colors"
               >
                 {kudosCount}
               </button>
