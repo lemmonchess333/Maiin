@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { useAuth } from "@/lib/auth";
-import { useWorkouts } from "@/hooks/useWorkouts";
+import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
@@ -41,7 +41,9 @@ export default function WeeklyRecapCard() {
       }
     });
     const runWeek = weeklyData.find((w) => w.week === weekKey);
-    const volume = weekWorkouts.reduce((s, w) => s + (w.tonnageKg || 0), 0);
+    // Derived from sets — saveWorkout computes tonnage for the burn formula
+    // but never persists it, so summing a stored field would read 0 forever.
+    const volume = weekWorkouts.reduce((s, w) => s + workoutTonnageKg(w), 0);
     return {
       sessions: weekWorkouts.length + (runWeek?.runCount ?? 0),
       runKm: runWeek?.totalDistance ?? 0,
