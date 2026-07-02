@@ -1369,7 +1369,7 @@ export default function RunSetupModal({
                   <div className="p-3.5 rounded-xl border border-border/50 bg-card">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Voice speed</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground font-mono tabular-nums">
                         {config.voiceRate.toFixed(1)}×
                       </span>
                     </div>

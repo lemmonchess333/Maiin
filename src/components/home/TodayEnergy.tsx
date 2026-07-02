@@ -132,7 +132,7 @@ export default function TodayEnergy({
           <span className="text-2xl font-bold font-mono tabular-nums leading-none text-foreground">
             {formatCalories(calories || 0)}
           </span>
-          <span className="text-micro text-muted-foreground">
+          <span className="text-micro text-muted-foreground font-mono tabular-nums">
             / {formatCalories(tCal)} {CALORIE_UNIT}
           </span>
         </div>
