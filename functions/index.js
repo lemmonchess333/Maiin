@@ -50,6 +50,7 @@ const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
+const commentReactions = require("./lib/commentReactions");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -5400,6 +5401,73 @@ exports.deleteCommentCallable = functions
       throw new functions.https.HttpsError(
         isAuthz ? "permission-denied" : "failed-precondition",
         (err && err.message) || "Comment delete failed."
+      );
+    }
+  });
+
+/**
+ * Comment reactions (social features pass, 2026-07) — one-tap 💪/🔥 on a
+ * comment. Comments are server-write-only (rules deny client writes), so
+ * the toggle goes through a callable like kudos/comments. Transactional +
+ * idempotent per (uid, reaction) — see lib/commentReactions.js.
+ */
+exports.toggleCommentReactionCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { activityId, commentId, reaction } = data || {};
+    if (
+      typeof activityId !== "string" ||
+      !activityId.trim() ||
+      typeof commentId !== "string" ||
+      !commentId.trim() ||
+      !commentReactions.REACTION_KEYS.includes(reaction)
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "activityId + commentId + valid reaction required."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    // Same budget as kudos — reactions are the same tap economy.
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "toggleCommentReaction",
+      30,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many reactions. Slow down."
+      );
+    }
+    try {
+      return await commentReactions.toggleCommentReaction({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        reaction,
+      });
+    } catch (err) {
+      functions.logger.warn("toggleCommentReactionCallable.error", {
+        uid: context.auth.uid,
+        activityId,
+        commentId,
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        (err && err.message) || "Reaction failed."
       );
     }
   });
