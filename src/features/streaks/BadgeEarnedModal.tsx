@@ -123,16 +123,49 @@ function BadgeEarnedContent({
   const fireReveal = useCallback(() => {
     haptic("heavy");
     playChime();
-    lazyConfetti().then((confetti) =>
+    // Reduced motion: the ceremony is already collapsed to a single tap —
+    // particle rain contradicts that intent, so the reveal is haptic +
+    // chime + bloom only. (Previously still fired 60 particles.)
+    if (reduce) return;
+    lazyConfetti().then((confetti) => {
+      // Palette tells the badge's story: the earned tier + brand purples +
+      // celebratory gold (tier token) — no off-palette green/amber.
+      const colors = [tier, THEME.brand, THEME.brandLight, THEME.tier.gold];
+      // Higher ticks + softer gravity = a slower, more graceful fall than
+      // the old single hard pop.
+      const defaults = { colors, ticks: 240, gravity: 0.85, decay: 0.92 };
+      // Centre pop from the badge itself…
       confetti({
-        particleCount: reduce ? 60 : 150,
-        spread: 95,
-        startVelocity: 45,
+        ...defaults,
+        particleCount: 110,
+        spread: 100,
+        startVelocity: 42,
+        scalar: 1.05,
         origin: { y: 0.42 },
-        colors: [tier, THEME.brand, "#fbbf24", "#34d399"],
-        scalar: 1.1,
-      })
-    );
+      });
+      // …then two angled side volleys a beat apart (award-ceremony shape),
+      // so the moment reads as a sequence rather than one flat burst.
+      setTimeout(() => {
+        confetti({
+          ...defaults,
+          particleCount: 40,
+          angle: 60,
+          spread: 55,
+          startVelocity: 52,
+          origin: { x: 0, y: 0.62 },
+        });
+      }, 160);
+      setTimeout(() => {
+        confetti({
+          ...defaults,
+          particleCount: 40,
+          angle: 120,
+          spread: 55,
+          startVelocity: 52,
+          origin: { x: 1, y: 0.62 },
+        });
+      }, 320);
+    });
   }, [reduce, tier]);
 
   // Each tap cracks the seal a little more; the last tap breaks it open and
