@@ -169,23 +169,31 @@ export default function CommentSheet({
                   displayName={c.authorName}
                   size="sm"
                 />
+                {/* Phase-6 hierarchy fix (visual audit W9): the message is
+                    the primary content — it reads at text-sm in foreground,
+                    with author (semibold) and timestamp (caption) as the
+                    supporting metadata. Previously author, body AND meta
+                    were all text-xs with the body in muted grey. */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs">
-                    <span className="font-semibold text-foreground">
+                  <p className="text-sm leading-snug">
+                    <span className="text-xs font-semibold text-foreground">
                       {c.authorName}
                     </span>{" "}
-                    <span className="text-muted-foreground">{c.text}</span>
+                    <span className="text-foreground/90">{c.text}</span>
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-caption text-muted-foreground mt-0.5">
                     {timeAgo}
                   </p>
                 </div>
+                {/* Always visible (W10): the old opacity-0 group-hover reveal
+                    made delete unreachable on touch — this is a mobile bottom
+                    sheet; there is no hover. */}
                 {isOwn && (
                   <button
                     type="button"
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="opacity-0 group-hover:opacity-100 size-11 inline-flex items-center justify-center text-muted-foreground hover:text-destructive transition-all shrink-0"
+                    className="size-11 inline-flex items-center justify-center text-muted-foreground/60 hover:text-destructive active:text-destructive transition-colors shrink-0"
                     aria-label="Delete comment"
                   >
                     <Trash2 className="size-3.5" />
