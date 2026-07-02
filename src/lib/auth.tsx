@@ -19,6 +19,7 @@ import {
   getRedirectResult,
   signInWithCredential,
   sendPasswordResetEmail,
+  fetchSignInMethodsForEmail,
   type User,
   type UserCredential,
 } from "firebase/auth";
@@ -538,6 +539,10 @@ interface AuthContextType {
    *  shows a neutral "if an account exists…" message so this can't be used
    *  to enumerate registered emails. */
   resetPassword: (email: string) => Promise<void>;
+  /** Registered sign-in methods for an email (["google.com"] / ["password"]
+   *  / …). Empty on error OR when Email-Enumeration-Protection is on — treat
+   *  empty as "unknown", not "no account". */
+  fetchSignInMethods: (email: string) => Promise<string[]>;
   signOut: () => Promise<void>;
   /**
    * Write a partial profile patch. Returns an `UpdateProfileResult`
@@ -860,6 +865,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email);
   }, []);
 
+  /* Which sign-in methods an email is registered with (e.g. ["google.com"]
+     or ["password"]). Lets the UI steer a Google/Apple-only account to the
+     right button instead of a doomed password attempt / reset. Returns []
+     on any error — and NOTE Firebase's Email-Enumeration-Protection returns
+     [] for every email when enabled, so callers must treat [] as "unknown",
+     never "no account". */
+  const fetchSignInMethods = useCallback(async (email: string) => {
+    try {
+      return await fetchSignInMethodsForEmail(auth, email.trim());
+    } catch {
+      return [];
+    }
+  }, []);
+
   const signOutUser = useCallback(async () => {
     // Push privacy invariant (#961 Q4 / PR #820 lineage): revoke this device's
     // FCM token BEFORE signing out, while we still have the uid + auth — so the
@@ -1002,6 +1021,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signInWithApple,
       resetPassword,
+      fetchSignInMethods,
       signOut: signOutUser,
       updateProfile,
       refreshProfile,
@@ -1015,6 +1035,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signInWithApple,
       resetPassword,
+      fetchSignInMethods,
       signOutUser,
       updateProfile,
       refreshProfile,
