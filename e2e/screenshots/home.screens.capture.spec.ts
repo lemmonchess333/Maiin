@@ -182,6 +182,10 @@ test.describe("app screenshots", () => {
   // real dark/light card surface, and the exercise guide (ExerciseFormContent
   // muscle diagram + instructions) — both reachable deterministically.
   test("audit surfaces — badges + exercise form", async ({ page }) => {
+    // Two navigations + four fullPage shots (the badges grid is very tall)
+    // overrun the default 30s — the first run lost the exercise-form shots
+    // to exactly that.
+    test.setTimeout(90_000);
     async function shootLightDark(name: string) {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
