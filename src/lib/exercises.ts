@@ -112,6 +112,7 @@ export const EXERCISES: Exercise[] = [
       "Press the dumbbells up until arms are straight, letting them drift slightly inward.",
       "Lower under control to a deep chest stretch with elbows at about 45°.",
     ],
+    tip: "Letting the dumbbells drift and clang together at the top. Press up and slightly in, stopping short of touching, wrists stacked over elbows the whole way.",
   },
   {
     id: "incline-db-press",
@@ -127,6 +128,7 @@ export const EXERCISES: Exercise[] = [
       "Press the dumbbells up and slightly in until they nearly touch at the top.",
       "Lower slowly to a full stretch on the upper chest.",
     ],
+    tip: "Arching hard turns the incline into a flat press. Keep your upper back on the bench and lower the bells to your upper chest.",
   },
   {
     id: "decline-db-press",
@@ -173,6 +175,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the handles down and together in front of your hips in a wide arc.",
       "Squeeze hard at the bottom, then return slowly to the stretched start.",
     ],
+    tip: "Bending the elbows more as it gets heavy turns the fly into a press. Keep a fixed soft bend and sweep the hands together like you're hugging a barrel.",
   },
   {
     id: "chest-press-machine",
@@ -203,6 +206,7 @@ export const EXERCISES: Exercise[] = [
       "Squeeze the pads together in front of your chest, pausing at the peak.",
       "Open slowly to a full stretch without letting the stack touch down.",
     ],
+    tip: "Letting the arms fly too far back under load. Stop where your chest still holds tension, and never bounce out of the stretch.",
   },
   {
     id: "machine-chest-fly",
@@ -387,6 +391,7 @@ export const EXERCISES: Exercise[] = [
       "Row the dumbbell toward your hip, driving your elbow up and back.",
       "Lower under control to a full stretch before the next rep.",
     ],
+    tip: "A rounded, twisting back under a heavy dumbbell. Keep your spine long, brace on the bench, and row the elbow to your hip without rotating.",
   },
   {
     id: "chest-supported-db-row",
@@ -402,6 +407,7 @@ export const EXERCISES: Exercise[] = [
       "Row both dumbbells toward your hips, squeezing your shoulder blades together.",
       "Lower to a full stretch without letting your chest leave the pad.",
     ],
+    tip: "Lifting your chest off the pad to heave the weight. If your chest leaves the pad, momentum is rowing — not your back.",
   },
   {
     id: "meadows-row",
@@ -448,6 +454,7 @@ export const EXERCISES: Exercise[] = [
       "Clear your chin above the bar, squeezing your biceps and lats together.",
       "Lower to a full dead hang under control before the next rep.",
     ],
+    tip: "Half reps from a bent hang. Start from a dead hang, pull your chin over the bar, and lower under control — full range beats extra reps.",
   },
   {
     id: "lat-pulldown",
@@ -463,6 +470,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the bar to your upper chest by driving your elbows down and back.",
       "Return slowly to a full overhead stretch, keeping tension on the lats.",
     ],
+    tip: "Leaning way back and heaving turns it into a row. Stay near upright, pull the bar to your collarbone, and drive the elbows down — not the hands.",
   },
   {
     id: "single-arm-lat-pulldown",
@@ -478,6 +486,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the handle down toward your side, elbow driving back behind your torso.",
       "Return slowly to a full overhead stretch and complete reps on one side.",
     ],
+    tip: "Twisting the torso to help the pull. Stay square, drive the elbow down towards your hip, and let the lat do the work.",
   },
   {
     id: "seated-row",
@@ -493,6 +502,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the handle to your lower ribs, elbows tracking close to your body.",
       "Extend your arms slowly without letting your lower back round.",
     ],
+    tip: "Rocking the torso to move the stack. Keep your chest tall and still, and pull the handle to your stomach with elbows close.",
   },
   {
     id: "t-bar-row",
@@ -508,6 +518,7 @@ export const EXERCISES: Exercise[] = [
       "Row the bar toward your chest, squeezing your mid-back at the top.",
       "Lower to a full stretch without letting your back round.",
     ],
+    tip: "Standing up and heaving with the hips. Set a strong hinge, keep it fixed, and row the handle to your chest.",
   },
   {
     id: "face-pulls",
@@ -523,6 +534,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the rope toward your face, separating the ends past your ears.",
       "Return slowly, keeping your elbows high throughout the set.",
     ],
+    tip: "Pulling low turns it into a row. Set the cable at face height, pull towards your eyes with elbows high, and finish with knuckles facing the ceiling.",
   },
   {
     id: "rack-pull",
@@ -569,6 +581,7 @@ export const EXERCISES: Exercise[] = [
       "Pull your chest to the bar, squeezing your shoulder blades together.",
       "Lower under control to a full arm extension without breaking the plank.",
     ],
+    tip: "Sagging hips turn it into an arm pull. Hold a plank line from shoulders to heels and pull your chest to the bar.",
   },
 
   // ================= SHOULDERS =================
@@ -602,6 +615,7 @@ export const EXERCISES: Exercise[] = [
       "Press the dumbbells up and slightly in until they nearly touch overhead.",
       "Lower under control to shoulder height, keeping forearms vertical.",
     ],
+    tip: "Flaring the ribs and leaning back to press bigger bells. Squeeze your glutes, brace, and press to lockout without turning it into an incline press.",
   },
   {
     id: "lateral-raise",
@@ -617,6 +631,7 @@ export const EXERCISES: Exercise[] = [
       "Raise your arms out to the sides until they reach shoulder height.",
       "Lower slowly under control — resist the urge to drop them.",
     ],
+    tip: "Swinging the weights up with momentum. Raise slowly to shoulder height with a soft elbow bend — if you have to shrug or swing, the dumbbells are too heavy.",
   },
   {
     id: "reverse-pec-deck",
@@ -632,6 +647,7 @@ export const EXERCISES: Exercise[] = [
       "Pull the handles back and out in a wide arc, squeezing your rear delts.",
       "Return slowly to a full stretch without letting the stack touch down.",
     ],
+    tip: "Shrugging as the arms sweep back. Keep the shoulders down and lead with the elbows — rear delts, not traps.",
   },
   {
     id: "cable-lateral-raise",
@@ -707,6 +723,7 @@ export const EXERCISES: Exercise[] = [
       "Press to full extension without letting the weights clash.",
       "Reverse the rotation on the way down to the starting position.",
     ],
+    tip: "Rushing the rotation and jamming the shoulders. Rotate smoothly through the middle of the press — the twist is the point, not an obstacle.",
   },
   {
     id: "shoulder-press-machine",
@@ -783,6 +800,7 @@ export const EXERCISES: Exercise[] = [
       "Squeeze your traps hard at the top, then lower slowly.",
       "Keep the motion strictly vertical — no rolling, no rocking.",
     ],
+    tip: "Rolling the shoulders in circles. Shrug straight up towards your ears, hold a beat, then straight down.",
   },
   {
     id: "cuban-press",
@@ -829,6 +847,7 @@ export const EXERCISES: Exercise[] = [
       "Press the bar up and forward until your arm is fully extended.",
       "Lower under control to your shoulder, keeping your ribs down.",
     ],
+    tip: "Standing square and forcing a strict vertical press. Stagger your stance and press up and forward along the bar's natural arc.",
   },
 
   // ================= BICEPS =================
@@ -877,6 +896,7 @@ export const EXERCISES: Exercise[] = [
       "Curl both dumbbells up to shoulder height in a smooth arc.",
       "Lower slowly with constant tension, no bouncing at the bottom.",
     ],
+    tip: "Swinging the hips to start the rep. Pin your elbows to your sides and curl strict — cheat reps just take the work away from the biceps.",
   },
   {
     id: "incline-db-curl",
@@ -907,6 +927,7 @@ export const EXERCISES: Exercise[] = [
       "Curl both dumbbells up to shoulder height, squeezing at the top.",
       "Lower slowly under control to a full stretch.",
     ],
+    tip: "Elbows drifting forward to lift the bells higher. Keep them pinned at your sides — the squeeze matters more than the height.",
   },
   {
     id: "cross-body-hammer-curl",
@@ -968,6 +989,7 @@ export const EXERCISES: Exercise[] = [
       "Curl the bar up toward your shoulders, squeezing at the top.",
       "Lower slowly, feeling constant tension on the way down.",
     ],
+    tip: "Standing so close the cable goes slack at the bottom. Step back until there's tension through the whole rep — constant pull is the point of the cable.",
   },
   {
     id: "bayesian-cable-curl",
@@ -1045,6 +1067,7 @@ export const EXERCISES: Exercise[] = [
       "Push the rope down, spreading the ends apart as your arms lock out.",
       "Return slowly to a full stretch without letting elbows drift forward.",
     ],
+    tip: "Elbows drifting forward turns it into a shove. Pin them to your sides and split the rope apart at the bottom.",
   },
   {
     id: "skull-crushers",
@@ -1076,6 +1099,7 @@ export const EXERCISES: Exercise[] = [
       "Lower the dumbbell behind your head by bending your elbows only.",
       "Extend back up to full lockout, squeezing the triceps.",
     ],
+    tip: "Elbows flaring wide takes the triceps out of it. Keep them tucked by your ears, pointing up, and move only from the elbow.",
   },
   {
     id: "overhead-cable-tricep-extension",
@@ -1214,6 +1238,7 @@ export const EXERCISES: Exercise[] = [
       "Lower your chest to your hands, elbows tracking back along your ribs.",
       "Press back up to full extension without sagging hips.",
     ],
+    tip: "Flared elbows grind the shoulders and lose the tricep focus. Keep them tracking back, body straight, and lower your chest to your hands.",
   },
 
   // ================= LEGS =================
@@ -1272,6 +1297,7 @@ export const EXERCISES: Exercise[] = [
       "Squat down between your legs, elbows tracking inside your knees.",
       "Drive up through your heels, keeping the dumbbell glued to your chest.",
     ],
+    tip: "Letting the weight tip you forward. Hold the bell tight to your chest, keep elbows inside your knees at the bottom, and stay tall through mid-foot.",
   },
   {
     id: "sissy-squat",
@@ -1318,6 +1344,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until your thighs are parallel to the platform, knees tracking over toes.",
       "Press back up through your heels without locking out hard.",
     ],
+    tip: "Heels lifting off the plate at depth. Set your feet high enough on the platform that you can sit deep with flat feet.",
   },
   {
     id: "leg-press",
@@ -1349,6 +1376,7 @@ export const EXERCISES: Exercise[] = [
       "Extend your legs smoothly until they're fully straight, squeeze the quads at the top.",
       "Lower with control — don't let the stack crash.",
     ],
+    tip: "Slamming to lockout and dropping the weight. Squeeze for a beat at the top, then lower under control.",
   },
   {
     id: "seated-leg-curl",
@@ -1364,6 +1392,7 @@ export const EXERCISES: Exercise[] = [
       "Curl your legs down and back by driving the heels toward the floor.",
       "Return slowly to the start without letting the stack touch down.",
     ],
+    tip: "Letting the stack yank your legs back up. Control the return — the slow way back is half the exercise.",
   },
   {
     id: "romanian-deadlift",
@@ -1395,6 +1424,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until you feel a strong hamstring stretch, usually mid-shin.",
       "Drive your hips forward to stand, squeezing glutes at lockout.",
     ],
+    tip: "Bending the knees turns it into a squat. Push your hips back with soft knees and stop where your hamstrings stop you — not where the floor is.",
   },
   {
     id: "nordic-hamstring-curl",
@@ -1457,6 +1487,7 @@ export const EXERCISES: Exercise[] = [
       "Stand up by pushing the floor away, finishing with shoulders stacked.",
       "Lower under control, hips back first, then knees bend.",
     ],
+    tip: "Hips shooting up first and turning it into a stiff-leg pull. Brace, push the floor away, and keep hips and shoulders rising together.",
   },
   {
     id: "lunges",
@@ -1472,6 +1503,7 @@ export const EXERCISES: Exercise[] = [
       "Lower your back knee toward the floor without crashing into it.",
       "Drive through your front heel to return to standing and alternate.",
     ],
+    tip: "A short stride drives the knee way past the toes. Step long enough that the front shin stays near vertical, and drop the back knee straight down.",
   },
   {
     id: "bodyweight-lunge",
@@ -1487,6 +1519,7 @@ export const EXERCISES: Exercise[] = [
       "Lower your back knee toward the floor with control.",
       "Drive through your front heel to return to standing and alternate.",
     ],
+    tip: "Balancing on a tightrope. Keep your feet hip-width apart like train tracks — stability comes from the base, not from waving arms.",
   },
   {
     id: "bodyweight-squat",
@@ -1502,6 +1535,7 @@ export const EXERCISES: Exercise[] = [
       "Lower until thighs are at or below parallel, torso leaning forward naturally.",
       "Drive through the whole foot to stand, squeezing glutes at the top.",
     ],
+    tip: "Heels lifting and knees caving in. Sit back and down with your weight through mid-foot, and push the knees out over the toes.",
   },
   {
     id: "walking-dumbbell-lunges",
@@ -1548,6 +1582,7 @@ export const EXERCISES: Exercise[] = [
       "Bring the trailing leg up, then step back down under control.",
       "Alternate legs or finish all reps before switching.",
     ],
+    tip: "Pushing off the floor leg turns it into a hop. Make the top leg do the work — slow drive up, quiet foot down.",
   },
   {
     id: "calf-raise",
@@ -1578,6 +1613,7 @@ export const EXERCISES: Exercise[] = [
       "Rise onto your toes as high as possible, pausing at the peak.",
       "Lower slowly to a deep stretch below the platform.",
     ],
+    tip: "Bouncing out of the bottom. Pause in the stretch, drive to full tiptoe, and lower slowly — no springs.",
   },
   {
     id: "seated-calf-raise",
@@ -1593,6 +1629,7 @@ export const EXERCISES: Exercise[] = [
       "Raise your heels as high as possible, squeezing the soleus at the top.",
       "Lower slowly to a full stretch for the next rep.",
     ],
+    tip: "Short pulses in the middle of the range. Full stretch at the bottom, full squeeze at the top — the ends do the work.",
   },
   {
     id: "donkey-calf-raise",
@@ -1639,6 +1676,7 @@ export const EXERCISES: Exercise[] = [
       "Squeeze glutes hard at the top, hips stacked in line with knees and shoulders.",
       "Lower under control to the floor for the next rep.",
     ],
+    tip: "Pushing through the toes and finishing with a back arch. Drive through your heels and end with a glute squeeze — not an arched spine.",
   },
   {
     id: "hip-abduction-machine",
@@ -1717,6 +1755,7 @@ export const EXERCISES: Exercise[] = [
       "Make one straight line from the back of your head to your heels.",
       "Squeeze glutes and abs, breathe normally, hold for time.",
     ],
+    tip: "Hips sagging or piked turn a plank into a lower-back hang. Squeeze your glutes and brace hard — one straight line from head to heels.",
   },
   {
     id: "superman-hold",
@@ -1732,6 +1771,7 @@ export const EXERCISES: Exercise[] = [
       "Hold the top briefly, reaching long through fingers and toes.",
       "Lower under control to the floor for the next rep.",
     ],
+    tip: "Cranking the neck up to look forward. Keep your gaze down, lift chest and thighs a few inches, and hold — the squeeze is the goal, not the height.",
   },
   {
     id: "side-plank",
@@ -1793,6 +1833,7 @@ export const EXERCISES: Exercise[] = [
       "Extend the opposite leg straight out without letting it touch down.",
       "Alternate sides in a smooth, controlled pedal.",
     ],
+    tip: "Yanking the neck and racing through reps. Hands support the head — they don't pull. Rotate slowly and reach the elbow to the opposite knee.",
   },
   {
     id: "decline-sit-up",
@@ -1854,6 +1895,7 @@ export const EXERCISES: Exercise[] = [
       "Rotate your torso side to side, tapping the weight just outside your hips.",
       "Keep your chest tall — no rounding the back to cheat the range.",
     ],
+    tip: "Slumping into a rounded back and whipping the hands side to side. Sit tall and rotate the shoulders from the ribs — not just the arms.",
   },
   {
     id: "mountain-climbers",
@@ -1869,6 +1911,7 @@ export const EXERCISES: Exercise[] = [
       "Quickly switch legs, alternating in a smooth running rhythm.",
       "Keep the plank tight — hips level, core braced, no bouncing.",
     ],
+    tip: "Bouncing the hips high turns it into a hop. Hold a solid plank and drive the knees in fast while the hips stay level.",
   },
   {
     id: "cable-crunch",
@@ -1884,6 +1927,7 @@ export const EXERCISES: Exercise[] = [
       "Crunch your torso down toward your thighs, elbows driving to knees.",
       "Return slowly to upright, keeping hips fixed — this is an ab crunch, not a hip pull.",
     ],
+    tip: "Pulling with your arms instead of flexing your abs. Lock your hips in place and crunch ribs to pelvis — the rope just comes along for the ride.",
   },
   {
     id: "cable-woodchopper",
@@ -1914,6 +1958,7 @@ export const EXERCISES: Exercise[] = [
       "Press the handle straight out in front of your chest, resisting the rotation.",
       "Return slowly to your chest without letting the cable twist you.",
     ],
+    tip: "The cable wants to spin you — that's the exercise. If your hips or shoulders rotate as you press out, step closer or go lighter.",
   },
   {
     id: "dead-bug",
@@ -1929,6 +1974,7 @@ export const EXERCISES: Exercise[] = [
       "Slowly extend one arm overhead and straighten the opposite leg.",
       "Return to start and alternate sides, keeping the back pinned.",
     ],
+    tip: "The lower back popping off the floor as the limbs lower. Press it flat, move slowly, and shorten the range before you let it arch.",
   },
   {
     id: "dragon-flag",
