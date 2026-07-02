@@ -14,10 +14,15 @@ import type { WorkoutDay } from "@/features/program/programTypes";
  * volume view the engine programs but never showed. Hides when there's no
  * attributable resistance volume (e.g. a run-only or all-skipped week).
  */
+/* "high" is information, not alarm — above-band volume in a hard week is a
+   normal state, and orange (the warning register) stacked across five rows
+   read as five warnings. Orange stays reserved for `low` (the actionable
+   gap); above-band gets the lifting purple: domain-consistent "plenty of
+   volume", zero alarm. */
 const STATUS_COLOR: Record<VolumeStatus, string> = {
   low: THEME.warning,
   optimal: THEME.success,
-  high: THEME.warning,
+  high: THEME.lifting,
 };
 const STATUS_LABEL: Record<VolumeStatus, string> = {
   low: "below target",
