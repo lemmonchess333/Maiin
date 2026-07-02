@@ -24,7 +24,7 @@ import type { CSSProperties, Ref } from "react";
  * (shareCardGenerator) and entry wiring live elsewhere.
  */
 
-export type ShareTemplate = "run" | "lift" | "hybrid" | "nutrition";
+export type ShareTemplate = "run" | "lift" | "hybrid" | "nutrition" | "recap";
 export type ShareFormat = "story" | "square";
 export type ShareBackground = "brand" | "dark" | "transparent" | "photo";
 
@@ -32,7 +32,8 @@ const RUN_CORAL = "#D4637A";
 const LIFT_PURPLE = "#7B72E9";
 const NUTRITION_ORANGE = "#D9884E";
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
-const JAKARTA = "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
+const JAKARTA =
+  "'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif";
 
 export interface ShareCardRenderData {
   template: ShareTemplate;
@@ -71,6 +72,11 @@ export interface ShareCardRenderData {
   protein?: number;
   carbs?: number;
   fat?: number;
+
+  // ── RECAP (weekly summary; reuses distanceKm + totalVolumeKg as WEEK
+  //    totals rather than a single session's) ──
+  sessionsCount?: number;
+  streakDays?: number;
 }
 
 const DIMS: Record<ShareFormat, { w: number; h: number }> = {
@@ -78,7 +84,10 @@ const DIMS: Record<ShareFormat, { w: number; h: number }> = {
   square: { w: 1080, h: 1080 },
 };
 
-function bgStyle(background: ShareBackground, template: ShareTemplate): CSSProperties {
+function bgStyle(
+  background: ShareBackground,
+  template: ShareTemplate
+): CSSProperties {
   switch (background) {
     case "brand":
       // Token gradient, sport-tinted by template (subtle, dark base so the
@@ -128,7 +137,13 @@ function fmtVolume(kg?: number): string {
 /** Small brand hexagon + upward-chevron, drawn inline (capture-safe). */
 function HexMark({ size, color }: { size: number; color: string }) {
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} fill="none" aria-hidden>
+    <svg
+      viewBox="0 0 100 100"
+      width={size}
+      height={size}
+      fill="none"
+      aria-hidden
+    >
       <polygon
         points="50,6 89,28 89,72 50,94 11,72 11,28"
         stroke={color}
@@ -337,6 +352,10 @@ function ShareCardRenderer({
             show={show}
           />
         )}
+        {/* RECAP */}
+        {data.template === "recap" && (
+          <RecapTemplate data={data} scale={scale} show={show} />
+        )}
 
         {/* Footer: small hexagon mark + handle + date (the ONLY branding) */}
         <div
@@ -367,6 +386,83 @@ function ShareCardRenderer({
   );
 }
 
+/** Weekly recap — the WHOOP-style "your week" card. Sessions is the hero;
+ *  the run/lift totals wear their sport colours; streak wears gold. Uses the
+ *  hybrid gradient (a week is the hybrid story by definition). */
+function RecapTemplate({
+  data,
+  scale,
+  show,
+}: {
+  data: ShareCardRenderData;
+  scale: number;
+  show: (k: string) => boolean;
+}) {
+  const GOLD = "#FFD700"; // THEME.tier.gold, duplicated capture-safe like the sport hexes
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        justifyContent: "center",
+        gap: 64 * scale,
+      }}
+    >
+      <div
+        style={{
+          alignSelf: "center",
+          fontFamily: JAKARTA,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: 6 * scale,
+          fontSize: 34 * scale,
+          backgroundImage: `linear-gradient(90deg, ${LIFT_PURPLE}, ${RUN_CORAL})`,
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+        }}
+      >
+        This week
+      </div>
+      {show("sessions") && (
+        <Hero
+          value={`${data.sessionsCount ?? 0}`}
+          label={data.sessionsCount === 1 ? "session" : "sessions"}
+          color="#ffffff"
+          scale={scale}
+        />
+      )}
+      <div style={{ display: "flex", gap: 24 * scale }}>
+        {show("runDistance") && (
+          <Stat
+            value={`${(data.distanceKm ?? 0).toFixed(1)}km`}
+            label="run"
+            scale={scale}
+            color={RUN_CORAL}
+          />
+        )}
+        {show("liftVolume") && (
+          <Stat
+            value={fmtVolume(data.totalVolumeKg)}
+            label="lifted"
+            scale={scale}
+            color={LIFT_PURPLE}
+          />
+        )}
+        {show("streak") && (data.streakDays ?? 0) > 0 && (
+          <Stat
+            value={`${data.streakDays}d`}
+            label="streak"
+            scale={scale}
+            color={GOLD}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function RunTemplate({
   data,
   accent,
@@ -379,10 +475,19 @@ function RunTemplate({
   show: (k: string) => boolean;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 48 * scale }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        gap: 48 * scale,
+      }}
+    >
       {/* Abstract route polyline (default visual; empty → omitted) */}
       {data.routePath && (
-        <div style={{ flex: data.format === "story" ? 1 : 0.6, display: "flex" }}>
+        <div
+          style={{ flex: data.format === "story" ? 1 : 0.6, display: "flex" }}
+        >
           <svg
             viewBox="0 0 1000 1000"
             preserveAspectRatio="xMidYMid meet"
@@ -400,7 +505,9 @@ function RunTemplate({
           </svg>
         </div>
       )}
-      <div style={{ display: "flex", flexDirection: "column", gap: 40 * scale }}>
+      <div
+        style={{ display: "flex", flexDirection: "column", gap: 40 * scale }}
+      >
         {show("distance") && (
           <Hero
             value={(data.distanceKm ?? 0).toFixed(2)}
@@ -410,10 +517,27 @@ function RunTemplate({
           />
         )}
         <div style={{ display: "flex", gap: 24 * scale }}>
-          {show("pace") && <Stat value={data.pace ?? "--:--"} label="/km pace" scale={scale} color={accent} />}
-          {show("duration") && <Stat value={fmtDuration(data.durationSec)} label="time" scale={scale} />}
+          {show("pace") && (
+            <Stat
+              value={data.pace ?? "--:--"}
+              label="/km pace"
+              scale={scale}
+              color={accent}
+            />
+          )}
+          {show("duration") && (
+            <Stat
+              value={fmtDuration(data.durationSec)}
+              label="time"
+              scale={scale}
+            />
+          )}
           {show("elevation") && data.elevationM != null && (
-            <Stat value={`${Math.round(data.elevationM)}m`} label="elev" scale={scale} />
+            <Stat
+              value={`${Math.round(data.elevationM)}m`}
+              label="elev"
+              scale={scale}
+            />
           )}
         </div>
         {show("splits") && data.splits && data.splits.length > 0 && (
@@ -486,13 +610,29 @@ function LiftTemplate({
         </div>
       )}
       {show("volume") && (
-        <Hero value={fmtVolume(data.totalVolumeKg)} label="total volume" color="#ffffff" scale={scale} />
+        <Hero
+          value={fmtVolume(data.totalVolumeKg)}
+          label="total volume"
+          color="#ffffff"
+          scale={scale}
+        />
       )}
       <div style={{ display: "flex", gap: 24 * scale }}>
         {show("exercises") && (
-          <Stat value={String(data.exerciseCount ?? 0)} label="exercises" scale={scale} color={accent} />
+          <Stat
+            value={String(data.exerciseCount ?? 0)}
+            label="exercises"
+            scale={scale}
+            color={accent}
+          />
         )}
-        {show("duration") && <Stat value={fmtDuration(data.durationSec)} label="time" scale={scale} />}
+        {show("duration") && (
+          <Stat
+            value={fmtDuration(data.durationSec)}
+            label="time"
+            scale={scale}
+          />
+        )}
       </div>
     </div>
   );
@@ -535,9 +675,21 @@ function HybridTemplate({
         Lift + Run
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 32 * scale }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 32 * scale,
+        }}
+      >
         {show("liftVolume") && (
-          <Hero value={fmtVolume(data.totalVolumeKg)} label="lifted" color={LIFT_PURPLE} scale={scale * 0.62} />
+          <Hero
+            value={fmtVolume(data.totalVolumeKg)}
+            label="lifted"
+            color={LIFT_PURPLE}
+            scale={scale * 0.62}
+          />
         )}
         <div
           style={{
@@ -561,7 +713,11 @@ function HybridTemplate({
 
       {show("totalTime") && (
         <div style={{ alignSelf: "center" }}>
-          <Stat value={fmtDuration(data.durationSec)} label="total time" scale={scale} />
+          <Stat
+            value={fmtDuration(data.durationSec)}
+            label="total time"
+            scale={scale}
+          />
         </div>
       )}
     </div>

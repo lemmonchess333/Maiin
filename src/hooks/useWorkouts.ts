@@ -77,6 +77,21 @@ export interface Workout {
   createdAt: Timestamp;
 }
 
+/** Total kg lifted in a session, derived from its sets. saveWorkout computes
+ *  this for the burn formula but does NOT persist it, so consumers derive it
+ *  from `exercises` (correct for every doc, old and new). */
+export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
+  return workout.exercises.reduce(
+    (t, ex) =>
+      t +
+      (ex.sets ?? []).reduce(
+        (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
+        0
+      ),
+    0
+  );
+}
+
 export function useWorkouts() {
   const { user, profile } = useAuth();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
