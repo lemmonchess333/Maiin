@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useChallenges, getTimeRemaining } from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
 import { ChallengeCard } from "./ChallengeCard";
+import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
 import { Trophy, ChevronRight } from "lucide-react";
 import { THEME, RANK_COLORS } from "@/lib/theme";
 import { useAuth } from "@/lib/auth";
@@ -26,6 +27,7 @@ export function ChallengeList({
     challenges,
     myChallenges,
     availableChallenges,
+    myEndedChallenges,
     myProgress,
     leaderboards,
     loading,
@@ -183,6 +185,18 @@ export function ChallengeList({
 
   return (
     <div className="space-y-4">
+      {/* Finale cards — challenges the user took part in that ended within
+          the last 7 days. Closure for the effort; dismiss-once per id. */}
+      {myEndedChallenges.map((ch) => (
+        <ChallengeFinaleCard
+          key={ch.id}
+          challenge={ch}
+          myProgress={myProgress[ch.id]}
+          leaderboard={leaderboards[ch.id]}
+          selfUid={user?.uid}
+        />
+      ))}
+
       {/* Weekly accountability card — action first, ranking second */}
       <div className="p-4 rounded-2xl bg-card border border-border/50 card-shadow">
         <div className="flex items-start gap-3 mb-3">

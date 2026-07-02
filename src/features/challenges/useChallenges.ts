@@ -85,6 +85,12 @@ export function getTimeRemaining(endDate: Timestamp | Date): string {
 export function useChallenges() {
   const { user } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  /* Finale window (social features pass, 2026-07): challenges that ended
+     within the last 7 days. The active list drops ended challenges, which
+     meant a challenge you fought through simply VANISHED at its end date —
+     no result, no closure. These feed the finale card in ChallengeList;
+     progress + leaderboards load for them too. */
+  const [endedChallenges, setEndedChallenges] = useState<Challenge[]>([]);
   const [myProgress, setMyProgress] = useState<
     Record<string, ChallengeParticipant>
   >({});
@@ -113,13 +119,24 @@ export function useChallenges() {
       (snap) => {
         clearTimeout(timeout);
         const now = new Date();
-        const active = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Challenge)
-          .filter((c) => {
-            const end = c.endDate?.toDate?.();
-            return end ? end > now : true;
-          });
+        const all = snap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as Challenge
+        );
+        const active = all.filter((c) => {
+          const end = c.endDate?.toDate?.();
+          return end ? end > now : true;
+        });
+        const FINALE_WINDOW_MS = 7 * 86_400_000;
+        const ended = all.filter((c) => {
+          const end = c.endDate?.toDate?.();
+          return (
+            !!end &&
+            end <= now &&
+            end.getTime() > now.getTime() - FINALE_WINDOW_MS
+          );
+        });
         setChallenges(active);
+        setEndedChallenges(ended);
         setLoading(false);
       },
       () => {
@@ -135,10 +152,11 @@ export function useChallenges() {
   }, [user]);
 
   useEffect(() => {
-    if (!user || challenges.length === 0) return;
+    const tracked = [...challenges, ...endedChallenges];
+    if (!user || tracked.length === 0) return;
     const load = async () => {
       const prog: Record<string, ChallengeParticipant> = {};
-      for (const ch of challenges) {
+      for (const ch of tracked) {
         const snap = await getDoc(
           doc(db, "challenges", ch.id, "participants", user.uid)
         );
@@ -147,13 +165,14 @@ export function useChallenges() {
       setMyProgress(prog);
     };
     load();
-  }, [user, challenges]);
+  }, [user, challenges, endedChallenges]);
 
   useEffect(() => {
-    if (challenges.length === 0) return;
+    const tracked = [...challenges, ...endedChallenges];
+    if (tracked.length === 0) return;
     const load = async () => {
       const boards: Record<string, ChallengeParticipant[]> = {};
-      for (const ch of challenges) {
+      for (const ch of tracked) {
         /* Sort direction depends on the challenge's metric semantics.
            For SUM-style metrics (workout_count / total_volume / total_km
            / hybrid_score / streak_days / combined_score) higher is
@@ -187,7 +206,7 @@ export function useChallenges() {
       setLeaderboards(boards);
     };
     load();
-  }, [challenges, myProgress]);
+  }, [challenges, endedChallenges, myProgress]);
 
   const joinChallenge = useCallback(
     async (challengeId: string) => {
@@ -291,11 +310,14 @@ export function useChallenges() {
 
   const myChallenges = challenges.filter((c) => !!myProgress[c.id]);
   const availableChallenges = challenges.filter((c) => !myProgress[c.id]);
+  // Finale candidates: ended in the last 7 days AND the user took part.
+  const myEndedChallenges = endedChallenges.filter((c) => !!myProgress[c.id]);
 
   return {
     challenges,
     myChallenges,
     availableChallenges,
+    myEndedChallenges,
     myProgress,
     leaderboards,
     loading,
