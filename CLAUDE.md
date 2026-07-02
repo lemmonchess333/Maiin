@@ -449,6 +449,41 @@ Constraints these primitives must keep:
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
 
+### Glow & motion rules (WKWebView-safe — 2026-07 visual pass)
+
+- **Glow recipe (non-negotiable):** a glow is a STATIC blurred layer whose
+  **opacity/transform** animates — never animate blur radius or any filter
+  value (filter animation stutters in WKWebView; opacity/transform composite
+  on the GPU). Reference implementation: `src/components/BodyMapGlow.tsx`
+  (blurred overlay `Model` behind the body diagrams — analytics heat map +
+  exercise guide share it).
+- **One ambient loop per surface, maximum.** On the muscle heat map, only
+  the single most-trained muscle pulses; nothing else loops. `prefers-
+reduced-motion` always gets the settled static state — no entrance, no
+  loop.
+- **Warning register:** warnings use `THEME.warning`. Orange
+  (`THEME.semantic.nutrition`) is the FOOD domain identity, never a warning
+  colour on non-food surfaces (the exercise guide's "Watch out" callout was
+  the drift case).
+- **Empty states go through the `EmptyState` primitive**
+  (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
+  hand-rolled centered-icon-tile blocks. The primitive owns the brand
+  hexagon, accent tinting, and reduced-motion handling.
+
+### Design-review capture channel (screenshots without a local rig)
+
+The agent sandbox can't run a browser; CI can. Push any branch's code to
+`claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
+and `app-screenshots.yml` builds it against the emulator, captures the key
+surfaces light+dark (`e2e/screenshots/home.screens.capture.spec.ts`), and
+commits PNGs to the `app-screenshots` branch for `git fetch` + view. Visual
+PRs cite before/after from this channel (the D15 lesson: no visual churn
+without screenshots). Gotchas: capture specs must be named
+`*.capture.spec.ts` (auth-emulator project); the Progress/Form switch and
+other SegmentedControls are `role="radio"`, not buttons; give best-effort
+clicks short explicit timeouts so a missed locator costs seconds, not its
+30s default.
+
 ### Button variants (canonical CTA mapping)
 
 Every **CTA / action button** uses the shared `Button` primitive
