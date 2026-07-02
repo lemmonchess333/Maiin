@@ -25,6 +25,7 @@ import {
   isTierAchieved,
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 
@@ -44,6 +45,20 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
   bronze: "Bronze",
   silver: "Silver",
   gold: "Gold",
+};
+
+/* Sport-coding by metric (visual polish, 2026-07). Every challenge card
+   used to wear brand purple regardless of discipline — a km challenge and
+   a volume challenge looked identical, ignoring the app's strongest visual
+   language (coral = running, purple = lifting, brand = hybrid/other).
+   The accent drives the icon tile, the progress fill pre-tier, and the
+   Join CTA variant. */
+const METRIC_ACCENT: Record<string, string> = {
+  total_km: THEME.running,
+  fastest_effort: THEME.running,
+  total_volume: THEME.lifting,
+  workout_count: THEME.lifting,
+  hybrid_score: THEME.brand,
 };
 
 /* Icon map for challenge cards. The seed definitions in
@@ -108,7 +123,7 @@ function TierMarker({
         style={achieved ? { backgroundColor: TIER_COLORS[tier] } : undefined}
       />
       <span
-        className={`text-xs mt-0.5 font-medium ${achieved ? "" : "text-muted-foreground/60"}`}
+        className={`text-xs mt-0.5 font-medium font-mono tabular-nums ${achieved ? "" : "text-muted-foreground/60"}`}
         style={achieved ? { color: TIER_COLORS[tier] } : undefined}
       >
         {value}
@@ -158,6 +173,7 @@ export function ChallengeCard({
   const maxTier = challenge.tiers.gold;
   const pct = Math.min((currentValue / maxTier) * 100, 100);
   const timeLeft = getTimeRemaining(challenge.endDate);
+  const accent = METRIC_ACCENT[challenge.metric] ?? THEME.brand;
 
   const nextTier: ChallengeTier | null = !currentTier
     ? "bronze"
@@ -179,18 +195,18 @@ export function ChallengeCard({
         <div className="flex items-start gap-3">
           <div
             className="size-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: THEME.brand + "20" }}
+            style={{ backgroundColor: accent + "20", color: accent }}
           >
             {(() => {
               const IconComp = CHALLENGE_ICON_MAP[challenge.icon];
               return IconComp ? (
-                <IconComp size={18} className="text-primary" />
+                <IconComp size={18} />
               ) : (
                 /* Unknown icon name → fall back to a Trophy so the card
                    doesn't render bare text in the slot. Adding a new
                    challenge with an unmapped icon name now degrades
                    gracefully instead of leaking the string. */
-                <Trophy size={18} className="text-primary" />
+                <Trophy size={18} />
               );
             })()}
           </div>
@@ -228,7 +244,10 @@ export function ChallengeCard({
             </span>
           )}
           {challenge.season && (
-            <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 font-medium">
+            <span
+              className="px-1.5 py-0.5 rounded font-medium"
+              style={{ background: `${THEME.brand}14`, color: THEME.brand }}
+            >
               {challenge.season}
             </span>
           )}
@@ -283,15 +302,17 @@ export function ChallengeCard({
 
         {/* Join button or progress */}
         {!joined ? (
-          <button
-            type="button"
+          /* Canonical CTA mapping: running challenges take the sport
+             (coral) variant, everything else the primary. The primitive
+             also supplies the 44px floor the old py-2.5 button missed. */
+          <Button
+            variant={accent === THEME.running ? "sport" : "primary"}
+            fullWidth
             onClick={handleJoin}
-            disabled={busy === "joining"}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: THEME.brandStrong }}
+            loading={busy === "joining"}
           >
             {busy === "joining" ? "Joining…" : "Join Challenge"}
-          </button>
+          </Button>
         ) : challenge.collectiveTarget && challenge.collectiveTarget > 0 ? (
           /* PR 5: group_goal challenge.
              Renders a single collective progress bar instead of the
@@ -318,9 +339,7 @@ export function ChallengeCard({
                       transition={{ duration: 0.6 }}
                       className="h-full rounded-full"
                       style={{
-                        backgroundColor: reached
-                          ? TIER_COLORS.gold
-                          : THEME.brand,
+                        backgroundColor: reached ? TIER_COLORS.gold : accent,
                       }}
                     />
                   </div>
@@ -381,7 +400,7 @@ export function ChallengeCard({
                   style={{
                     backgroundColor: currentTier
                       ? TIER_COLORS[currentTier]
-                      : THEME.brand,
+                      : accent,
                   }}
                 />
               </div>
@@ -428,7 +447,11 @@ export function ChallengeCard({
             <p className="text-xs text-muted-foreground text-center">
               {currentTier === "gold" ? (
                 <span>
-                  <Trophy size={14} className="inline text-yellow-500" />{" "}
+                  <Trophy
+                    size={14}
+                    className="inline"
+                    style={{ color: TIER_COLORS.gold }}
+                  />{" "}
                   <span
                     className="font-semibold"
                     style={{ color: TIER_COLORS.gold }}
@@ -463,7 +486,7 @@ export function ChallengeCard({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-muted-foreground mx-auto hover:text-foreground transition-colors"
+            className="flex items-center gap-1 min-h-[44px] text-xs text-muted-foreground mx-auto hover:text-foreground transition-colors"
           >
             {expanded ? "Hide" : "Full"} leaderboard
             {expanded ? (
@@ -537,7 +560,7 @@ export function ChallengeCard({
             type="button"
             onClick={handleLeave}
             disabled={busy === "leaving"}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-400 transition-colors mx-auto disabled:opacity-60"
+            className="flex items-center gap-1 min-h-[44px] text-xs text-muted-foreground hover:text-destructive transition-colors mx-auto disabled:opacity-60"
           >
             <LogOut className="size-3" />
             {busy === "leaving" ? "Leaving…" : "Leave Challenge"}
