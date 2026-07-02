@@ -13,22 +13,58 @@ import { IconButton } from "@/components/ui/IconButton";
 // a polish gap on a conversion-critical surface — we use a single
 // LoadingAction value here so exactly one button shows the spinner
 // and the others stay disabled.
-type LoadingAction = "email" | "google" | "apple" | null;
+type LoadingAction = "email" | "google" | "apple" | "reset" | null;
 
 export default function Login() {
-  const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithApple, resetPassword } =
+    useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  // Neutral confirmation for the password-reset flow (shown in a calm banner,
+  // not the destructive error one).
+  const [notice, setNotice] = useState("");
   const [loadingAction, setLoadingAction] = useState<LoadingAction>(null);
 
   const isLoading = loadingAction !== null;
 
+  const handleForgotPassword = async () => {
+    setError("");
+    setNotice("");
+    if (!email.trim()) {
+      setError("Enter your email above, then tap Forgot password");
+      return;
+    }
+    setLoadingAction("reset");
+    try {
+      await resetPassword(email.trim());
+    } catch (err: unknown) {
+      // Swallow user-not-found so the flow can't enumerate registered
+      // emails; any OTHER failure (network, bad email format) is worth
+      // surfacing.
+      const message = err instanceof Error ? err.message : "";
+      if (
+        !message.includes("user-not-found") &&
+        !message.includes("invalid-credential")
+      ) {
+        setError(friendlyAuthError(message));
+        setLoadingAction(null);
+        return;
+      }
+    }
+    // Same neutral message whether or not the account exists.
+    setNotice(
+      `If an account exists for ${email.trim()}, a reset link is on its way.`
+    );
+    setLoadingAction(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setNotice("");
     setLoadingAction("email");
     try {
       if (isSignUp) {
@@ -47,6 +83,7 @@ export default function Login() {
 
   const handleGoogle = async () => {
     setError("");
+    setNotice("");
     setLoadingAction("google");
     try {
       await signInWithGoogle();
@@ -64,6 +101,7 @@ export default function Login() {
 
   const handleApple = async () => {
     setError("");
+    setNotice("");
     setLoadingAction("apple");
     try {
       await signInWithApple();
@@ -122,6 +160,19 @@ export default function Login() {
             </div>
           )}
 
+          {notice && (
+            <div
+              role="status"
+              className="flex items-start gap-2.5 p-3 rounded-xl bg-primary/8 border border-primary/15 text-foreground text-sm font-medium"
+            >
+              <Mail
+                className="size-4 shrink-0 mt-0.5 text-primary"
+                aria-hidden="true"
+              />
+              <span>{notice}</span>
+            </div>
+          )}
+
           <div className="space-y-3">
             <div className="relative">
               <label htmlFor="login-email" className="sr-only">
@@ -176,6 +227,25 @@ export default function Login() {
                 icon={showPassword ? <EyeOff /> : <Eye />}
               />
             </div>
+
+            {/* Forgot password — sign-in mode only. Sends a Firebase reset
+                email to the address typed above; the auth flow shows a
+                neutral "if an account exists…" message either way so it
+                can't be used to enumerate emails. */}
+            {!isSignUp && (
+              <div className="text-right">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={isLoading}
+                  className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-primary hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+                >
+                  {loadingAction === "reset"
+                    ? "Sending reset link…"
+                    : "Forgot password?"}
+                </button>
+              </div>
+            )}
           </div>
 
           <Button
@@ -252,7 +322,10 @@ export default function Login() {
             Privacy Policy
           </Link>
           <span aria-hidden="true">·</span>
-          <Link to="/terms" className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors">
+          <Link
+            to="/terms"
+            className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
+          >
             Terms of Service
           </Link>
         </div>
