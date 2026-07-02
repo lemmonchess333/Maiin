@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { THEME } from "@/lib/theme";
 import { useStreaks } from "./useStreaks";
 import {
   BADGE_ART,
@@ -109,7 +110,10 @@ export function BadgeGrid() {
       {/* Streak summary. */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="p-3 rounded-xl bg-card border border-border/50">
-          <p className="text-3xl font-extrabold font-mono tabular-nums text-orange-500">
+          <p
+            className="text-3xl font-extrabold font-mono tabular-nums"
+            style={{ color: THEME.amberLight }}
+          >
             {currentStreak}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Current Streak</p>
@@ -168,11 +172,11 @@ export function BadgeGrid() {
                     className="relative p-3 rounded-xl bg-card border border-border/50 text-center"
                     style={{
                       transformStyle: "preserve-3d",
+                      // Earned keeps the radial tier tint; the glow itself
+                      // moved onto the badge art (BadgeHex) where it reads
+                      // at grid size — the card-level box-shadow didn't.
                       backgroundImage: earned
                         ? `radial-gradient(circle at 50% 18%, ${tierColor}1a, transparent 65%)`
-                        : undefined,
-                      boxShadow: earned
-                        ? `0 4px 14px -6px ${tierColor}55`
                         : undefined,
                     }}
                   >
