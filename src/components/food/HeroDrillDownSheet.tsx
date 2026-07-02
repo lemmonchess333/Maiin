@@ -114,7 +114,7 @@ export default function HeroDrillDownSheet({
               <span className="font-mono tabular-nums text-2xl font-extrabold text-foreground">
                 {formatCalories(dailyTotals.calories)}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground font-mono tabular-nums">
                 / {formatCalories(target)} {CALORIE_UNIT}
               </span>
             </div>

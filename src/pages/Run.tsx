@@ -140,7 +140,7 @@ function GPSIndicator({
           className={`w-1 h-3 rounded-sm ${signalQuality === "strong" ? color : "bg-white/20"}`}
         />
       </div>
-      <span className={`text-xs ${text}`}>
+      <span className={`text-xs font-mono tabular-nums ${text}`}>
         {accuracy ? `\u00B1${Math.round(accuracy)}m` : ""}
       </span>
     </div>
@@ -247,7 +247,9 @@ export default function Run() {
   // "Re-run this route". Captured once on mount (the polyline of a past run);
   // null for a normal free run. Drives the RunMap ghost line + RouteFollowChip.
   const [targetRoute, setTargetRoute] = useState<GPSPoint[] | null>(
-    () => (location.state as { followRoute?: GPSPoint[] } | null)?.followRoute ?? null
+    () =>
+      (location.state as { followRoute?: GPSPoint[] } | null)?.followRoute ??
+      null
   );
   // Where targetRoute came from (for the "save route" snapshot). A route seeded
   // via RunDetail's "Re-run this route" navigation is a past run.
