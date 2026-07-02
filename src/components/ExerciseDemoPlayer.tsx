@@ -26,6 +26,11 @@ interface ExerciseDemoPlayerProps {
 // dissolve into each other rather than hard-cutting — reads as motion from
 // discrete keyframes, and keeps the loop calm (design system: calm > flashy).
 const FADE_MS = 400;
+// Turnaround pause: the range-of-motion extremes hold this multiple of the
+// per-frame interval. A real rep decelerates into the top/bottom and pauses
+// before reversing — equal holds everywhere read mechanical (visual audit
+// Phase 5 W1).
+const TURNAROUND_HOLD = 1.8;
 
 /**
  * Auto-playing exercise demonstration.
@@ -64,7 +69,10 @@ export default function ExerciseDemoPlayer({
   useEffect(() => {
     if (!animated) return;
     dirRef.current = 1;
-    const id = window.setInterval(() => {
+    // Timeout chain instead of a fixed interval so the extremes can hold
+    // longer than mid-range frames (the turnaround pause).
+    let id = 0;
+    const tick = () => {
       setFrame((prev) => {
         let next = prev + dirRef.current;
         if (next >= usable.length - 1) {
@@ -74,10 +82,16 @@ export default function ExerciseDemoPlayer({
           next = 0;
           dirRef.current = 1;
         }
+        const atExtreme = next === 0 || next === usable.length - 1;
+        id = window.setTimeout(
+          tick,
+          atExtreme ? intervalMs * TURNAROUND_HOLD : intervalMs
+        );
         return next;
       });
-    }, intervalMs);
-    return () => window.clearInterval(id);
+    };
+    id = window.setTimeout(tick, intervalMs * TURNAROUND_HOLD);
+    return () => window.clearTimeout(id);
   }, [animated, usable.length, intervalMs]);
 
   // Hand off to the muscle diagram when there's nothing left to show.
@@ -151,7 +165,10 @@ export default function ExerciseDemoPlayer({
           data-frame-index={i}
           data-active={i === current ? "true" : "false"}
           className={cn(
-            "absolute inset-0 w-full h-full object-cover transition-opacity ease-out",
+            // ease-in-out so the incoming and outgoing frames dissolve
+            // symmetrically — ease-out faded the outgoing frame faster
+            // than the incoming one appeared (a brief brightness dip).
+            "absolute inset-0 w-full h-full object-cover transition-opacity ease-in-out",
             i === current ? "opacity-100" : "opacity-0"
           )}
           style={{ transitionDuration: `${FADE_MS}ms` }}

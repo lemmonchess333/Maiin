@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import Model, { type IExerciseData, type Muscle } from "react-body-highlighter";
 import {
   getExerciseDemo,
@@ -8,7 +8,7 @@ import {
   type ExerciseDemo,
 } from "@/lib/exerciseDemo";
 import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
-import { THEME, MACROS_TEXT_LIGHT } from "@/lib/theme";
+import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import BodyMapGlow from "@/components/BodyMapGlow";
@@ -28,16 +28,18 @@ interface Props {
   active?: boolean;
 }
 
+// Collapsed instruction preview shows this many WHOLE steps (never a
+// mid-line clip — the old 60px max-height cut step two in half).
+const COLLAPSED_STEPS = 2;
+
 function ExerciseFormContent({ exerciseName, active = true }: Props) {
   const [demo, setDemo] = useState<ExerciseDemo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
-  const [overflows, setOverflows] = useState(false);
   // True once the demo player reports every frame failed to load — flips the
   // hero back to the muscle diagram so a no-image exercise never shows a dead
   // empty box. Reset per exercise in the load effect below.
   const [demoFailed, setDemoFailed] = useState(false);
-  const instructionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!active) return;
@@ -51,12 +53,6 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     };
     load();
   }, [exerciseName, active]);
-
-  useLayoutEffect(() => {
-    if (instructionsRef.current) {
-      setOverflows(instructionsRef.current.scrollHeight > 60);
-    }
-  }, [demo]);
 
   const primaryMapped = demo
     ? (mapMuscles(demo.primaryMuscles) as Muscle[])
@@ -305,51 +301,77 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
         );
       })()}
 
-      {/* Instructions */}
+      {/* Instructions — Phase-3 reading surface (visual audit W2–W4):
+          steps collapse to WHOLE steps (the old 60px max-height cut the
+          second step mid-line behind a gradient), markers are contained
+          numbered chips instead of bare "1." text, and the Watch-out cue
+          sits OUTSIDE the collapse so the guide's highest-value line is
+          always visible. Warning register is THEME.warning — the previous
+          nutrition-orange was food-domain colour on a lifting surface. */}
       {demo.instructions.length > 0 && (
         <div className="mt-6">
           <p className="text-lg font-bold text-foreground">Instructions</p>
-          <div
-            ref={instructionsRef}
-            className={`relative overflow-hidden transition-all duration-300 ${
-              overflows && !showInstructions ? "max-h-[60px]" : "max-h-[2000px]"
-            }`}
-          >
-            <div className="flex flex-col gap-4 mt-3">
-              {demo.instructions.map((step, i) => (
-                <div key={i} className="flex gap-2">
-                  <span className="text-body font-bold shrink-0 text-lifting">
-                    {i + 1}.
-                  </span>
-                  <p className="text-body text-foreground/80 leading-relaxed">
-                    {step}
-                  </p>
-                </div>
-              ))}
-            </div>
-            {demo.tip && (
-              <div
-                className="mt-4 flex gap-3 rounded-xl p-3"
-                style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
-              >
-                <AlertTriangle
-                  className="mt-0.5 size-4 shrink-0"
-                  style={{ color: THEME.semantic.nutrition }}
-                />
-                <div>
-                  <p
-                    className="text-small font-semibold"
-                    style={{ color: MACROS_TEXT_LIGHT.nutrition }}
-                  >
-                    Watch out
-                  </p>
-                  <p className="mt-0.5 text-small leading-relaxed text-foreground/80">
-                    {demo.tip}
-                  </p>
-                </div>
+          <div className="flex flex-col gap-4 mt-3">
+            {(showInstructions
+              ? demo.instructions
+              : demo.instructions.slice(0, COLLAPSED_STEPS)
+            ).map((step, i) => (
+              <div key={i} className="flex gap-2.5">
+                <span
+                  aria-hidden="true"
+                  className="mt-0.5 size-5 shrink-0 rounded-full bg-lifting/10 text-lifting text-xs font-bold font-mono tabular-nums flex items-center justify-center"
+                >
+                  {i + 1}
+                </span>
+                <p className="text-body text-foreground/80 leading-relaxed">
+                  {step}
+                </p>
               </div>
-            )}
-            {demo.commonMistakes && demo.commonMistakes.length > 0 && (
+            ))}
+          </div>
+          {demo.instructions.length > COLLAPSED_STEPS && (
+            <button
+              type="button"
+              onClick={() => setShowInstructions(!showInstructions)}
+              className="flex items-center gap-1 mt-3 min-h-[44px] text-body font-medium text-lifting"
+            >
+              {showInstructions ? (
+                <>
+                  <ChevronUp className="size-4" /> Hide
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-4" /> All{" "}
+                  {demo.instructions.length} steps
+                </>
+              )}
+            </button>
+          )}
+          {demo.tip && (
+            <div
+              className="mt-4 flex gap-3 rounded-xl p-3"
+              style={{ backgroundColor: `${THEME.warning}14` }}
+            >
+              <AlertTriangle
+                className="mt-0.5 size-4 shrink-0"
+                style={{ color: THEME.warning }}
+              />
+              <div>
+                <p
+                  className="text-small font-semibold"
+                  style={{ color: THEME.warning }}
+                >
+                  Watch out
+                </p>
+                <p className="mt-0.5 text-small leading-relaxed text-foreground/80">
+                  {demo.tip}
+                </p>
+              </div>
+            </div>
+          )}
+          {showInstructions &&
+            demo.commonMistakes &&
+            demo.commonMistakes.length > 0 && (
               <div className="mt-4">
                 <p className="text-caption uppercase tracking-wide text-muted-foreground">
                   Common mistakes
@@ -362,7 +384,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                     >
                       <span
                         className="mt-1.5 size-1 shrink-0 rounded-full"
-                        style={{ background: THEME.semantic.nutrition }}
+                        style={{ background: THEME.warning }}
                         aria-hidden="true"
                       />
                       <span>{m}</span>
@@ -371,27 +393,6 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
                 </ul>
               </div>
             )}
-            {overflows && !showInstructions && (
-              <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />
-            )}
-          </div>
-          {overflows && (
-            <button
-              type="button"
-              onClick={() => setShowInstructions(!showInstructions)}
-              className="flex items-center gap-1 mt-2 text-body font-medium text-lifting"
-            >
-              {showInstructions ? (
-                <>
-                  <ChevronUp className="size-4" /> Hide
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="size-4" /> Show full instructions
-                </>
-              )}
-            </button>
-          )}
         </div>
       )}
     </div>
