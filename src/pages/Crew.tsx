@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/Button";
 import {
   formatScore,
   formatTotalForMetric,
+  crewWeeklyGoalTarget,
 } from "../lib/crewLeaderboardFormat";
 import { getCrewActivities } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
@@ -588,6 +589,13 @@ export default function Crew() {
                 );
                 const totalLabel = formatTotalForMetric(metric, totalScore);
                 const hasActivity = board.length > 0 && totalScore > 0;
+                const goalTarget = crewWeeklyGoalTarget(
+                  metric,
+                  crewDoc.memberCount
+                );
+                const goalLabel = formatTotalForMetric(metric, goalTarget);
+                const goalPct = Math.min((totalScore / goalTarget) * 100, 100);
+                const goalReached = totalScore >= goalTarget;
                 return (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-card card-shadow p-3">
@@ -613,6 +621,49 @@ export default function Crew() {
                           </span>
                         )}
                       </p>
+                    </div>
+
+                    {/* Crew weekly goal (social features pass, 2026-07) —
+                        a collective target gives the crew a reason to exist
+                        beyond a member list. v1 target is computed (per-
+                        member baseline × members, per the crew's metric);
+                        see crewWeeklyGoalTarget for the creator-set-goal
+                        seam. Gold fill on reach, brand while in progress. */}
+                    <div className="col-span-2 rounded-xl bg-card card-shadow p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Crew goal this week
+                        </p>
+                        <p className="text-xs font-mono tabular-nums text-muted-foreground">
+                          <span className="font-semibold text-foreground">
+                            {totalLabel.value}
+                          </span>
+                          {" / "}
+                          {goalLabel.value}
+                          {goalLabel.unit ? ` ${goalLabel.unit}` : ""}
+                        </p>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${goalPct}%` }}
+                          transition={{ duration: 0.6 }}
+                          className="h-full rounded-full"
+                          style={{
+                            background: goalReached
+                              ? THEME.tier.gold
+                              : THEME.brand,
+                          }}
+                        />
+                      </div>
+                      {goalReached && (
+                        <p
+                          className="text-caption font-semibold"
+                          style={{ color: THEME.tier.gold }}
+                        >
+                          Goal reached — strong week
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
