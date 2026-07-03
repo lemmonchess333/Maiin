@@ -138,8 +138,8 @@ describe("renderBodyDemo", () => {
     const lockout = renderBodyDemo("bench-press", 1);
     // The hand end of the arm rises well clear of the lying body.
     expect(minY(bottom) - minY(lockout)).toBeGreaterThan(20);
-    // Side view renders the piece architecture: stage-coloured seams.
-    expect(bottom.includes('stroke="#111113"')).toBe(true);
+    // Side view renders the piece architecture: stage-coloured underlays.
+    expect(bottom.includes('fill="#111113"')).toBe(true);
   });
 
   it("barbell row (side view): a real hinge — the head reaches forward", () => {

@@ -98,6 +98,11 @@ const SIDE_FORE_LEN = Math.hypot(
   SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
 );
 
+/* Push-up scene constants (final space): where the hands plant and
+ * where the tilted plank's toes rest. */
+const PUSHUP_HAND: Pt = [100, 156];
+const PUSHUP_TOE: Pt = [-61.6, 155.8];
+
 /* Muscle-aura rings — nested convex hulls at falling opacity (the
  * no-filter fake blur; see the glow block in the renderers). */
 const GLOW_RINGS: [number, number][] = [
@@ -880,6 +885,115 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
   },
+
+  "romanian-deadlift": {
+    view: "side",
+    concentricTo: 0,
+    viewBox: "-4 38 172 174",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 40,
+    tint: {
+      hamstring: "primary",
+      gluteal: "primary",
+      "lower-back": "secondary",
+    },
+    pose: (e) => {
+      /* The RDL is THE hinge: the torso rotates about the hip while the
+       * arms hang plumb and the knees stay soft — the exact motion the
+       * old posterior-compression stand-in could only fake. Same
+       * pre-hinge aiming pattern as the row, but here the hinge itself
+       * is the animation. */
+      const hinge = lerp(0, 68, e);
+      const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
+      const unhinge: Op[] = [
+        { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
+      ];
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T]);
+      const hPre = applyToPoint([S[0] + 1.5, S[1] + 52], unhinge);
+      const arm = aimArm(
+          {
+            S: SIDE_ANCHORS.shoulder,
+            E: SIDE_ANCHORS.elbow,
+            H: SIDE_ANCHORS.hand,
+          },
+          solveElbow(
+            SIDE_ANCHORS.shoulder,
+            hPre,
+            SIDE_UPPER_LEN,
+            SIDE_FORE_LEN,
+            -1
+          ),
+          hPre,
+          0
+        ),
+        soft = lerp(0, 12, e);
+      return {
+        head: [T],
+        torso: [T],
+        thighL: [{ kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip }],
+        shankL: [
+          { kind: "rotate", deg: -soft, pivot: SIDE_ANCHORS.knee },
+          { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
+        ],
+        upperArmL: [...arm.upper, T],
+        foreArmL: [...arm.fore, T],
+      };
+    },
+  },
+
+  "push-ups": {
+    view: "side",
+    concentricTo: 0,
+    viewBox: "-72 84 216 84",
+    groundY: 158.5,
+    shadowCx: 20,
+    shadowRx: 78,
+    tint: { chest: "primary", triceps: "secondary", abs: "secondary" },
+    pose: (e) => {
+      /* Prone plank (global +90, face down, head right), tilted about
+       * the planted hands so the toes meet the floor, then the whole
+       * body pivots about the TOES as the chest drops — hands stay
+       * planted, elbows IK-solved toward the feet. */
+      const G: Op = { kind: "rotate", deg: 90, pivot: [44, 100] };
+      const TILT: Op = { kind: "rotate", deg: -13, pivot: PUSHUP_HAND };
+      const beta = lerp(0, 9.5, e);
+      const B: Op = { kind: "rotate", deg: beta, pivot: PUSHUP_TOE };
+      const bodyOps: Op[] = [G, TILT, B];
+      // Map the fixed hand plant back to standing space for the aim.
+      const hPre = applyToPoint(PUSHUP_HAND, [
+        { kind: "rotate", deg: -beta, pivot: PUSHUP_TOE },
+        { kind: "rotate", deg: 13, pivot: PUSHUP_HAND },
+        { kind: "rotate", deg: -90, pivot: [44, 100] },
+      ]);
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
+        solveElbow(
+          SIDE_ANCHORS.shoulder,
+          hPre,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
+          -1
+        ),
+        hPre,
+        0
+      );
+      return {
+        head: bodyOps,
+        torso: bodyOps,
+        thighL: bodyOps,
+        shankL: bodyOps,
+        upperArmL: [...arm.upper, ...bodyOps],
+        foreArmL: [...arm.fore, ...bodyOps],
+      };
+    },
+    scene: () =>
+      `<line x1="-70" y1="158.5" x2="120" y2="158.5" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern. */
@@ -890,10 +1004,9 @@ const DEMO_ALIASES: Record<string, string> = {
   "hammer-curl": "barbell-curl",
   "ez-bar-curl": "barbell-curl",
   "cable-curl": "barbell-curl",
-  "romanian-deadlift": "deadlift",
   "sumo-deadlift": "deadlift",
   "trap-bar-deadlift": "deadlift",
-  "db-rdl": "deadlift",
+  "db-rdl": "romanian-deadlift",
   "front-squat": "squat",
   "goblet-squat": "squat",
   "bodyweight-squat": "squat",
@@ -905,6 +1018,8 @@ const DEMO_ALIASES: Record<string, string> = {
   "tricep-dips": "dips",
   "weighted-chest-dip": "dips",
   "db-bench": "bench-press",
+  "diamond-push-ups": "push-ups",
+  "weighted-push-ups": "push-ups",
   "smith-bench-press": "bench-press",
   "pendlay-row": "barbell-row",
   "db-row": "barbell-row",
@@ -1117,32 +1232,34 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const body = SIDE_PIECES.map((piece) => {
     const ops = pose[piece.group] ?? [];
     const outline = applyOps(piece.outline as Pt[], ops);
-    const tints = piece.tints
-      .map((tm) => ({
-        level: demo.tint[tm.muscle],
-        muscle: tm.muscle,
-        pts: applyOps(tm.points as Pt[], ops),
-      }))
-      .filter((tm) => tm.level);
-    for (const tm of tints)
-      if (tm.level === "primary")
-        primaryPts.set(tm.muscle, [
-          ...(primaryPts.get(tm.muscle) ?? []),
-          ...tm.pts,
+    const facets = piece.facets.map((f) => ({
+      level: demo.tint[f.muscle],
+      muscle: f.muscle,
+      pts: applyOps(f.points as Pt[], ops),
+    }));
+    for (const f of facets)
+      if (f.level === "primary")
+        primaryPts.set(f.muscle, [
+          ...(primaryPts.get(f.muscle) ?? []),
+          ...f.pts,
         ]);
+    // Underlay in the stage colour: shows through the facet gaps AS the
+    // gaps, and keeps overlapped pieces below fully occluded.
     return (
-      `<polygon points="${P(outline)}" fill="${BODY}" stroke="${STAGE}" stroke-width="1.4" stroke-linejoin="round"/>` +
-      tints
-        .map(
-          (tm) =>
-            `<polygon points="${P(tm.pts)}" fill="${tm.level === "primary" ? PRIMARY : SECONDARY}" fill-opacity="${tintOpacity(tm.level!).toFixed(3)}"/>`
-        )
-        .join("") +
-      piece.seams
-        .map(
-          (sm) =>
-            `<polyline points="${P(applyOps(sm as Pt[], ops))}" fill="none" stroke="${STAGE}" stroke-width="1.2" stroke-linecap="round"/>`
-        )
+      `<polygon points="${P(outline)}" fill="${STAGE}"/>` +
+      facets
+        .map((f) => {
+          const fill =
+            f.level === "primary"
+              ? PRIMARY
+              : f.level === "secondary"
+                ? SECONDARY
+                : BODY;
+          const op = f.level
+            ? ` fill-opacity="${tintOpacity(f.level).toFixed(3)}"`
+            : "";
+          return `<polygon points="${P(f.pts)}" fill="${fill}"${op}/>`;
+        })
         .join("")
     );
   }).join("");

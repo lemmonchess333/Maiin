@@ -16,22 +16,20 @@ const BODY = "#B6BDC3";
 function sideSvg(viewBox: string) {
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}">` +
-    SIDE_PIECES.map((piece) => {
-      const outline = piece.outline.map(([x, y]) => `${x},${y}`).join(" ");
-      return (
-        `<polygon points="${outline}" fill="${BODY}" stroke="${STAGE}" stroke-width="1.4"/>` +
-        piece.seams
+    SIDE_PIECES.map(
+      (piece) =>
+        `<polygon points="${piece.outline
+          .map(([x, y]) => `${x},${y}`)
+          .join(" ")}" fill="${STAGE}"/>` +
+        piece.facets
           .map(
-            (s) =>
-              `<polyline points="${s
+            (f) =>
+              `<polygon points="${f.points
                 .map(([x, y]) => `${x},${y}`)
-                .join(
-                  " "
-                )}" fill="none" stroke="${STAGE}" stroke-width="1.2" stroke-linecap="round"/>`
+                .join(" ")}" fill="${BODY}"/>`
           )
           .join("")
-      );
-    }).join("") +
+    ).join("") +
     `</svg>`
   );
 }
