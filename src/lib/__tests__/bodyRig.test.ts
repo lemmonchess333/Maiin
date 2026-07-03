@@ -32,21 +32,18 @@ describe("renderBodyDemo", () => {
     expect(bottom - top).toBeGreaterThan(12); // head dropped by the dive
   });
 
-  it("overhead press: the hands finish above the head", () => {
-    const svg = renderBodyDemo("overhead-press", 1);
-    // The bar line's y must sit above (smaller than) the head top (~0).
-    const barY = Number(svg.match(/<line[^>]*y1="(-?[\d.]+)"/)![1]);
-    expect(barY).toBeLessThan(6);
+  it("overhead press: the arms finish above the head", () => {
+    // At lockout the forearm polygons must reach above the head top (~0).
+    const atRest = Math.min(...polyYs(renderBodyDemo("overhead-press", 0)));
+    const lockout = Math.min(...polyYs(renderBodyDemo("overhead-press", 1)));
+    expect(lockout).toBeLessThan(-2);
+    expect(lockout).toBeLessThan(atRest - 3);
   });
 
-  it("deadlift: hinge compresses the torso and lowers the bar", () => {
-    const start = Number(
-      renderBodyDemo("deadlift", 0).match(/<line[^>]*y1="(-?[\d.]+)"/)![1]
-    );
-    const end = Number(
-      renderBodyDemo("deadlift", 1).match(/<line[^>]*y1="(-?[\d.]+)"/)![1]
-    );
-    expect(end).toBeGreaterThan(start + 8);
+  it("deadlift: the hinge visibly drops the head/shoulders", () => {
+    const start = Math.min(...polyYs(renderBodyDemo("deadlift", 0)));
+    const end = Math.min(...polyYs(renderBodyDemo("deadlift", 1)));
+    expect(end - start).toBeGreaterThan(20);
   });
 
   it("tints exactly the declared muscles (honest fill)", () => {
