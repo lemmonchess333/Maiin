@@ -14,7 +14,11 @@
  * for unknown codes.
  */
 import { describe, it, expect } from "vitest";
-import { friendlyAuthError, providerHint } from "../authErrors";
+import {
+  friendlyAuthError,
+  providerHint,
+  duplicateEmailHint,
+} from "../authErrors";
 
 /* Raw Firebase Auth error messages typically look like:
    "Firebase: Error (auth/<code>)."
@@ -204,5 +208,29 @@ describe("providerHint", () => {
 
   it("returns null on an empty list — unknown, NOT no-account (enumeration protection)", () => {
     expect(providerHint([])).toBeNull();
+  });
+});
+
+describe("duplicateEmailHint", () => {
+  it("names the password case (unlike providerHint)", () => {
+    expect(duplicateEmailHint(["password"])).toBe(
+      "This email already has a Tropos account with a password — sign in with your email and password."
+    );
+    expect(duplicateEmailHint(["password", "google.com"])).toBe(
+      "This email already has a Tropos account with a password — sign in with your email and password."
+    );
+  });
+
+  it("falls back to the provider steer for OAuth-only accounts", () => {
+    expect(duplicateEmailHint(["apple.com"])).toBe(
+      "This account uses Apple — tap Continue with Apple to sign in."
+    );
+    expect(duplicateEmailHint(["google.com"])).toBe(
+      "This account uses Google — tap Continue with Google to sign in."
+    );
+  });
+
+  it("returns null on an empty list — unknown, NOT no-account", () => {
+    expect(duplicateEmailHint([])).toBeNull();
   });
 });
