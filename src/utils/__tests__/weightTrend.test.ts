@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { calcWeightTrend, calculateEMA } from "../weightTrend";
+import {
+  calcWeightTrend,
+  calculateEMA,
+  deriveGoalWeightKg,
+  projectGoalDate,
+} from "../weightTrend";
 
 describe("calcWeightTrend", () => {
   it("returns null for empty entries", () => {
@@ -164,5 +169,98 @@ describe("calculateEMA", () => {
     }));
     const result = calculateEMA(entries);
     expect(result[29].trend).toBe(80);
+  });
+});
+
+describe("deriveGoalWeightKg (Rev1 extraction — mirrors TrendWeight)", () => {
+  it("cut → −5kg, lean bulk → +3kg, maintain → startWeight", () => {
+    expect(deriveGoalWeightKg({ startWeight: 80, goal: "cut" })).toBe(75);
+    expect(deriveGoalWeightKg({ startWeight: 80, goal: "lean bulk" })).toBe(83);
+    expect(deriveGoalWeightKg({ startWeight: 80, goal: "maintain" })).toBe(80);
+  });
+
+  it("no startWeight → undefined", () => {
+    expect(deriveGoalWeightKg({ goal: "cut" })).toBeUndefined();
+    expect(deriveGoalWeightKg(null)).toBeUndefined();
+    expect(deriveGoalWeightKg(undefined)).toBeUndefined();
+  });
+});
+
+describe("projectGoalDate (Rev1 extraction — same gates as TrendWeight)", () => {
+  const NOW = new Date("2026-06-28T10:00:00");
+  // 28 days trending 80 → ~78.1 (about −0.07/day raw; EMA lags behind).
+  const series = Array.from({ length: 28 }, (_, i) => ({
+    date: `2026-06-${String(i + 1).padStart(2, "0")}`,
+    trend: Math.round((80 - i * 0.05) * 10) / 10,
+  }));
+
+  it("projects an ETA when confident and trending toward the goal", () => {
+    const p = projectGoalDate({
+      trendSeries: series,
+      goalWeight: 75,
+      hasProjection: true,
+      now: NOW,
+    });
+    expect(p).not.toBeNull();
+    expect(p!.weeks).toBeGreaterThan(0);
+    expect(p!.date).toBeTruthy();
+  });
+
+  it("suppresses when the confidence gate failed", () => {
+    expect(
+      projectGoalDate({
+        trendSeries: series,
+        goalWeight: 75,
+        hasProjection: false,
+        now: NOW,
+      })
+    ).toBeNull();
+  });
+
+  it("suppresses on direction mismatch (trending away from goal)", () => {
+    expect(
+      projectGoalDate({
+        trendSeries: series, // trending DOWN
+        goalWeight: 85, // goal is UP
+        hasProjection: true,
+        now: NOW,
+      })
+    ).toBeNull();
+  });
+
+  it("suppresses a flat trend and ETAs beyond ~2 years", () => {
+    const flat = series.map((p) => ({ ...p, trend: 80 }));
+    expect(
+      projectGoalDate({
+        trendSeries: flat,
+        goalWeight: 75,
+        hasProjection: true,
+        now: NOW,
+      })
+    ).toBeNull();
+
+    const glacial = Array.from({ length: 28 }, (_, i) => ({
+      date: `2026-06-${String(i + 1).padStart(2, "0")}`,
+      trend: 80 - i * 0.0005,
+    }));
+    expect(
+      projectGoalDate({
+        trendSeries: glacial,
+        goalWeight: 70,
+        hasProjection: true,
+        now: NOW,
+      })
+    ).toBeNull();
+  });
+
+  it("suppresses without a goal", () => {
+    expect(
+      projectGoalDate({
+        trendSeries: series,
+        goalWeight: undefined,
+        hasProjection: true,
+        now: NOW,
+      })
+    ).toBeNull();
   });
 });

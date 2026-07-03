@@ -38,6 +38,7 @@ const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
 const Support = lazyRetry(() => import("@/pages/Support"));
+const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
@@ -406,7 +407,8 @@ function AppRoutes() {
                 <Routes>
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/support" element={<Support />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/review" element={<WeeklyReviewPage />} />
                   <Route element={<Layout />}>
                     <Route
                       path="/"
