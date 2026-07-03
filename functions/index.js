@@ -52,6 +52,7 @@ const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
 const passwordResetEmail = require("./lib/passwordResetEmail");
+const verificationEmail = require("./lib/verificationEmail");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -5551,6 +5552,69 @@ exports.sendPasswordResetLinkCallable = functions
       );
     }
     // Neutral: identical response whether or not the account existed.
+    return { ok: true };
+  });
+
+/**
+ * Email-verification sender (account table-stakes pass, 2026-07). AUTH-
+ * REQUIRED and verifies the CALLER's own email only — no enumeration
+ * surface. Same Admin-mint + Resend delivery as the password reset: the
+ * client SDK's sendEmailVerification ships Firebase's default template from
+ * noreply@<project>.firebaseapp.com (spam-prone, off-brand); this sends the
+ * branded template from the Resend sender instead. Fired on email/password
+ * signup (fire-and-forget) and from the Settings resend button.
+ */
+exports.sendVerificationEmailCallable = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign in first."
+      );
+    }
+    const email = context.auth.token.email;
+    if (!email) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This account has no email address to verify."
+      );
+    }
+    // Token already says verified → nothing to send. (The token can lag a
+    // just-completed verification; treating it as success is harmless.)
+    if (context.auth.token.email_verified) {
+      return { ok: true, alreadyVerified: true };
+    }
+    const limited = await isRateLimited(
+      `verifyemail_${context.auth.uid}`,
+      "verificationEmail",
+      3,
+      600_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many requests. Try again in a few minutes."
+      );
+    }
+    try {
+      await verificationEmail.sendVerificationEmail({
+        generateLink: (e) => admin.auth().generateEmailVerificationLink(e),
+        sendEmail: sendViaResend,
+        email,
+      });
+      functions.logger.info("sendVerificationEmailCallable", {
+        uid: context.auth.uid,
+      });
+    } catch (err) {
+      functions.logger.error("sendVerificationEmailCallable.error", {
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "internal",
+        "Couldn't send the verification email. Try again in a moment."
+      );
+    }
     return { ok: true };
   });
 

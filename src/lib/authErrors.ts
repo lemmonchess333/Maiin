@@ -34,6 +34,22 @@ export function providerHint(methods: string[]): string | null {
   return null;
 }
 
+/**
+ * Steer for `account-exists-with-different-credential` on the OAuth buttons
+ * — the duplicate-account trap: a user with an existing email/password (or
+ * other-provider) account taps the wrong button and gets a dead generic
+ * error, so they give up or create a second account. Unlike providerHint
+ * (which only steers AWAY from doomed password attempts), this also names
+ * the password case. Returns null when the methods are unknown (enumeration
+ * protection returns [] for every email — "unknown", never "no account").
+ */
+export function duplicateEmailHint(methods: string[]): string | null {
+  if (methods.includes("password")) {
+    return "This email already has a Tropos account with a password — sign in with your email and password.";
+  }
+  return providerHint(methods);
+}
+
 export function friendlyAuthError(message: string): string {
   if (
     message.includes("user-not-found") ||

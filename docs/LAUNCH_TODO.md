@@ -609,6 +609,55 @@ Already done on main via another session (branch
 
 ---
 
+### 25. Account table stakes — verification, password/email change, kill switch (2026-07-03)
+
+Shipped in one arc after the forgot-password scare prompted a "what else is
+missing?" audit. All client+server code is on main; the operator steps below
+are what remain.
+
+- **Email verification** — `sendVerificationEmailCallable` (Admin-mint +
+  Resend, branded template — same path as password reset; NOT the client
+  SDK's noreply@<project>.firebaseapp.com default). Fired on email/password
+  signup; resend + "I've verified" refresh live in Settings → Account →
+  Sign-in & security. Needs the same `RESEND_API_KEY` secret + functions
+  deploy as the reset callable — no extra provisioning.
+- **Change password / change email** — Settings → Account → Sign-in &
+  security (`SecuritySection`). Both reauth with the current password first
+  (no `requires-recent-login` dance); email changes go through
+  `verifyBeforeUpdateEmail` (link to the NEW address; auth email flips only
+  on confirm). The profile-doc `email` mirror reconciles on next boot in
+  auth.tsx. Offered to password-provider accounts; OAuth-only users are
+  pointed at forgot-password (which sets a password for any account).
+- **Duplicate-email steer on OAuth buttons** — on
+  `account-exists-with-different-credential`, Login now looks up the
+  colliding email's real methods and names the right button/password
+  (`duplicateEmailHint`) instead of the dead generic error that created a
+  duplicate account for the first tester.
+- **Min-version kill switch** — `MinVersionGate` reads
+  `config/client.minSupportedVersion` (existing world-readable kill-switch
+  collection, no rules change) and blocks below-min builds with an upgrade
+  screen. Fail-open on ANY error/malformed value (lock-out defence, same
+  philosophy as the deletion kill switch). **Operator:** to strand old
+  clients, create doc `config/client` with string field
+  `minSupportedVersion` (e.g. "1.3.0") in the Firestore console. Native
+  copy says "update in the App Store"; web offers Reload.
+- **/support page** — public static page at `<origin>/support` (mailto +
+  what-to-include + sign-in help). **Use
+  `https://adaptive-fitness-af8bb.firebaseapp.com/support` as the App Store
+  Connect Support URL** (a bare mailto doesn't qualify).
+- [ ] **Operator, at launch:** verify the `troposfit.com` domain in Resend
+  and set `RESEND_FROM` (e.g. `Tropos <no-reply@troposfit.com>`) so reset +
+  verification emails stop coming from `onboarding@resend.dev` (test domain
+  only delivers to the Resend account owner).
+- [ ] **Post-deploy spot-checks:** email signup sends the branded
+  verification email; resend respects the 3-per-10-min rate limit;
+  change-password round-trip; change-email confirm link flips the auth
+  email AND the profile doc `email` reconciles on next boot; writing
+  `config/client.minSupportedVersion` above the current version blocks the
+  app (and deleting the field unblocks it).
+
+---
+
 ## Progress log — what IS already shipped on this branch
 
 For context, the accumulated work on `claude/apple-iap-capacitor-uV0vz`

@@ -40,6 +40,7 @@ import {
   Timestamp,
   type FieldValue,
 } from "firebase/firestore";
+import { sendVerificationEmail } from "@/lib/accountSecurity";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
 import { unregisterDeviceToken } from "@/lib/pushNotifications";
@@ -665,6 +666,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 logger.warn("[AuthProvider] timezone capture failed", err)
               );
             }
+            // Email-mirror reconcile: a verifyBeforeUpdateEmail change lands
+            // OUT-OF-BAND (the user clicks the confirm link, often on another
+            // device), so the profile doc's `email` copy can't be mirrored at
+            // write time. Reconcile it on boot instead — same
+            // fire-and-forget shape as the timezone capture above.
+            if (
+              typeof data.email === "string" &&
+              firebaseUser.email &&
+              data.email !== firebaseUser.email
+            ) {
+              updateDocGuarded(doc(db, "users", firebaseUser.uid), {
+                email: firebaseUser.email,
+              }).catch((err) =>
+                logger.warn("[AuthProvider] email reconcile failed", err)
+              );
+            }
           } else {
             setProfile(null);
           }
@@ -729,6 +746,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await writeNewProfileDocs(cred.user.uid, newProfile);
     setProfile(newProfile);
     trackLifecycle("signup_completed", { method: "email" });
+    // Fire-and-forget verification email (branded, via the same Resend path
+    // as password reset). Never blocks signup — an email hiccup shouldn't
+    // stall onboarding, and Settings → Sign-in & security has a resend. A
+    // typo'd signup email is unfixable by forgot-password (the reset goes to
+    // an address the user doesn't own); verification catches it while the
+    // user still remembers their password.
+    sendVerificationEmail().catch((err) =>
+      logger.warn("[AuthProvider] signup verification email failed", err)
+    );
   }, []);
 
   /* Shared post-credential handling for the OAuth flows (Google, Apple).
