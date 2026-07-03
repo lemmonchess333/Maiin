@@ -76,6 +76,28 @@ describe("renderBodyDemo", () => {
     expect(firstOpacity(hard)).toBeGreaterThan(firstOpacity(soft));
   });
 
+  it("pull-up: the body rises toward the fixed bar", () => {
+    // Hands stay ON the bar, so the FEET are the travel signal.
+    const maxY = (svg: string) => Math.max(...polyYs(svg));
+    const hang = renderBodyDemo("pull-ups", 0);
+    const top = renderBodyDemo("pull-ups", 1);
+    expect(maxY(hang) - maxY(top)).toBeGreaterThan(15); // feet travelled up
+    // The bar itself never moves.
+    const barY = (svg: string) => svg.match(/<line[^>]*y1="(-?[\d.]+)"/)![1];
+    expect(barY(hang)).toBe(barY(top));
+  });
+
+  it("lat pulldown: the bar travels from overhead to the chest", () => {
+    // Last <line> is the moving bar (the first is the static cable).
+    const lastLineY = (svg: string) => {
+      const ys = [...svg.matchAll(/<line[^>]*y1="(-?[\d.]+)"/g)];
+      return Number(ys[ys.length - 1][1]);
+    };
+    const start = lastLineY(renderBodyDemo("lat-pulldown", 0));
+    const end = lastLineY(renderBodyDemo("lat-pulldown", 1));
+    expect(end - start).toBeGreaterThan(50);
+  });
+
   it("calf raise: body rises but the feet stay planted", () => {
     const maxY = (svg: string) => Math.max(...polyYs(svg));
     const minY = (svg: string) => Math.min(...polyYs(svg));
@@ -95,6 +117,8 @@ describe("registry", () => {
       "barbell-curl",
       "lateral-raise",
       "calf-raise",
+      "pull-ups",
+      "lat-pulldown",
     ]) {
       const d = BODY_DEMOS[id];
       expect(d, id).toBeTruthy();

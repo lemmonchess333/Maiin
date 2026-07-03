@@ -46,13 +46,30 @@ const ANT = {
 const POST = {
   shoulderL: [23, 46] as Pt,
   shoulderR: [77, 46] as Pt,
+  elbowL: [17, 78] as Pt,
+  elbowR: [83, 78] as Pt,
   handL: [9, 106] as Pt,
   handR: [91, 106] as Pt,
   hipY: 100,
-  ankleY: 200,
+  // The posterior art runs past the anterior's 203 — soleus/heel reaches
+  // y=220. Clipping at the anterior height amputated the lower legs.
+  ankleY: 220,
 };
 
 type Pt = [number, number];
+
+/* Posterior arm segment lengths + the pull-up scene constants. */
+const POST_UPPER_LEN = Math.hypot(
+  POST.elbowL[0] - POST.shoulderL[0],
+  POST.elbowL[1] - POST.shoulderL[1]
+);
+const POST_FORE_LEN = Math.hypot(
+  POST.handL[0] - POST.elbowL[0],
+  POST.handL[1] - POST.elbowL[1]
+);
+const PULLUP_BAR_Y = -12;
+const PULLUP_GRIP_L: Pt = [6, PULLUP_BAR_Y];
+const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
 
 /* ── Skeletal grouping ────────────────────────────────────────── */
 
@@ -153,6 +170,61 @@ function applyToPoint(p: Pt, ops: Op[]): Pt {
   return applyOps([p], ops)[0];
 }
 
+/* ── Two-bone IK (pull-up / pulldown arms) ────────────────────────
+ * When BOTH ends of the arm are constrained (shoulder rides the body,
+ * hand grips a bar), the elbow must be SOLVED, not choreographed. */
+
+/** Signed rotation (SVG convention) that turns vector `from` onto `to`. */
+function angleBetween(from: Pt, to: Pt): number {
+  const cross = from[0] * to[1] - from[1] * to[0];
+  const dot = from[0] * to[0] + from[1] * to[1];
+  return (Math.atan2(cross, dot) * 180) / Math.PI;
+}
+
+/** Elbow position for shoulder S → hand H with limb lengths L1/L2.
+ *  `out` picks the bend side: +1 flares the elbow toward −x (left arm),
+ *  −1 toward +x (right arm). Overlong reaches clamp to a straight arm. */
+function solveElbow(S: Pt, H: Pt, L1: number, L2: number, out: 1 | -1): Pt {
+  let dx = H[0] - S[0];
+  let dy = H[1] - S[1];
+  let d = Math.hypot(dx, dy);
+  const max = (L1 + L2) * 0.999;
+  const min = Math.abs(L1 - L2) * 1.001;
+  const clamped = Math.min(Math.max(d, min), max);
+  dx *= clamped / d;
+  dy *= clamped / d;
+  d = clamped;
+  const a = (L1 * L1 - L2 * L2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(L1 * L1 - a * a, 0));
+  const ux = dx / d;
+  const uy = dy / d;
+  return [S[0] + a * ux + out * h * uy, S[1] + a * uy - out * h * ux];
+}
+
+/** Ops that aim a rest-posed arm (S/E/H anchors) so the elbow lands on
+ *  `E` and the hand on `H`, with the body already translated by `dy`. */
+function aimArm(
+  rest: { S: Pt; E: Pt; H: Pt },
+  E: Pt,
+  H: Pt,
+  dy: number
+): { upper: Op[]; fore: Op[] } {
+  const uaRest: Pt = [rest.E[0] - rest.S[0], rest.E[1] - rest.S[1]];
+  const faRest: Pt = [rest.H[0] - rest.E[0], rest.H[1] - rest.E[1]];
+  const S: Pt = [rest.S[0], rest.S[1] + dy]; // body carries the shoulder
+  const ua = angleBetween(uaRest, [E[0] - S[0], E[1] - S[1]]);
+  const fa = angleBetween(faRest, [H[0] - E[0], H[1] - E[1]]) - ua;
+  const shift: Op = { kind: "translate", dx: 0, dy };
+  return {
+    upper: [{ kind: "rotate", deg: ua, pivot: rest.S }, shift],
+    fore: [
+      { kind: "rotate", deg: fa, pivot: rest.E },
+      { kind: "rotate", deg: ua, pivot: rest.S },
+      shift,
+    ],
+  };
+}
+
 /* The library figure has no feet (its chart crops at the calves, which
  * reads amputee-ish in a full-body demo). Two small in-style wedges,
  * grouped with the shanks so they inherit leg transforms. */
@@ -204,9 +276,14 @@ export interface BodyDemo {
   /** Weight visual: a rigid barbell needs endpoints that keep a constant
    *  width (traps/deadlift). Rotating hands (press/curl) get DUMBBELLS —
    *  one weight per hand — because a rigid front-view bar can't follow
-   *  two independent arcs without its width visibly breathing. */
-  equip?: "barbell" | "dumbbells";
+   *  two independent arcs without its width visibly breathing. A
+   *  fixed-bar is a plate-less full-width bar (pull-up); a cable-bar is
+   *  a plate-less bar across the hands with a cable up to the frame
+   *  (pulldown). */
+  equip?: "barbell" | "dumbbells" | "fixed-bar" | "cable-bar";
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
+  /** Ground line override (hanging demos float above a lower floor). */
+  groundY?: number;
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
@@ -384,6 +461,113 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     },
   },
 
+  "pull-ups": {
+    view: "posterior",
+    equip: "fixed-bar",
+    concentricTo: 1,
+    // Hanging scene: bar overhead, body travels ~25 units, floor just
+    // below the dangling heels at the dead hang.
+    viewBox: "-20 -24 140 254",
+    groundY: 226,
+    tint: {
+      "upper-back": "primary",
+      trapezius: "secondary",
+      forearm: "secondary",
+    },
+    pose: (e) => {
+      /* Both ends of each arm are constrained — hands stay ON the bar
+       * while the body rises — so the elbows are IK-solved. The solution
+       * naturally produces the real silhouette: straight-arm hang at the
+       * bottom, wide "W" flare (elbows out at ear height) at the top. */
+      const dy = lerp(1, -24, e); // dead hang → chin over the bar
+      const L = aimArm(
+        { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
+        solveElbow(
+          [POST.shoulderL[0], POST.shoulderL[1] + dy],
+          PULLUP_GRIP_L,
+          POST_UPPER_LEN,
+          POST_FORE_LEN,
+          1
+        ),
+        PULLUP_GRIP_L,
+        dy
+      );
+      const R = aimArm(
+        { S: POST.shoulderR, E: POST.elbowR, H: POST.handR },
+        solveElbow(
+          [POST.shoulderR[0], POST.shoulderR[1] + dy],
+          PULLUP_GRIP_R,
+          POST_UPPER_LEN,
+          POST_FORE_LEN,
+          -1
+        ),
+        PULLUP_GRIP_R,
+        dy
+      );
+      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
+      return {
+        head: ride,
+        torso: ride,
+        thighL: ride,
+        thighR: ride,
+        shankL: ride,
+        shankR: ride,
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: () => [
+      [-16, PULLUP_BAR_Y],
+      [116, PULLUP_BAR_Y],
+    ],
+  },
+
+  "lat-pulldown": {
+    view: "posterior",
+    equip: "cable-bar",
+    concentricTo: 1,
+    viewBox: "-20 -20 140 246",
+    tint: {
+      "upper-back": "primary",
+      "back-deltoids": "secondary",
+      forearm: "secondary",
+    },
+    pose: (e) => {
+      /* Body stays put; the bar travels from full overhead reach down to
+       * the collarbone while the elbows tuck in to the sides — the same
+       * IK machinery as the pull-up with the constraints swapped. */
+      const hl: Pt = [lerp(12.2, 6, e), lerp(-14.5, 50, e)];
+      const hr: Pt = [lerp(87.8, 94, e), lerp(-14.5, 50, e)];
+      const L = aimArm(
+        { S: POST.shoulderL, E: POST.elbowL, H: POST.handL },
+        solveElbow(POST.shoulderL, hl, POST_UPPER_LEN, POST_FORE_LEN, 1),
+        hl,
+        0
+      );
+      const R = aimArm(
+        { S: POST.shoulderR, E: POST.elbowR, H: POST.handR },
+        solveElbow(POST.shoulderR, hr, POST_UPPER_LEN, POST_FORE_LEN, -1),
+        hr,
+        0
+      );
+      return {
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    bar: (e) => {
+      const y = lerp(-14.5, 50, e);
+      return [
+        [lerp(12.2, 6, e) - 10, y],
+        [lerp(87.8, 94, e) + 10, y],
+      ];
+    },
+  },
+
   "lateral-raise": {
     view: "anterior",
     equip: "dumbbells",
@@ -468,6 +652,7 @@ const DEMO_ALIASES: Record<string, string> = {
   "smith-machine-squat": "squat",
   "cable-lateral-raise": "lateral-raise",
   "standing-calf-raise": "calf-raise",
+  "chin-ups": "pull-ups",
 };
 
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
@@ -548,6 +733,17 @@ export function renderBodyDemo(
       `<line x1="-5" y1="${y.toFixed(1)}" x2="105" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>` +
       plate(3) +
       plate(97);
+  } else if (ends && demo.equip === "fixed-bar") {
+    // Plate-less overhead bar (pull-up) — full width, behind the body.
+    barBehind = `<line x1="${ends[0][0]}" y1="${ends[0][1]}" x2="${ends[1][0]}" y2="${ends[1][1]}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>`;
+  } else if (ends && demo.equip === "cable-bar") {
+    // Cable attachment sells the machine: a thin line from the frame top
+    // down to the bar's midpoint, then the bar across the hands.
+    const midX = (ends[0][0] + ends[1][0]) / 2;
+    const y = (ends[0][1] + ends[1][1]) / 2;
+    barBehind =
+      `<line x1="${midX}" y1="-20" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.2"/>` +
+      `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>`;
   } else if (ends && demo.equip === "dumbbells") {
     const db = ([x, y]: Pt) =>
       `<line x1="${(x - 8).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + 8).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.2" stroke-linecap="round"/>` +
@@ -561,11 +757,11 @@ export function renderBodyDemo(
   // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
   const depth = demo.concentricTo === 0 ? e : 1 - e;
   const shadowRx = 26 + 6 * depth;
-  const groundY = demo.view === "anterior" ? 199 : 202;
+  const groundY = demo.groundY ?? (demo.view === "anterior" ? 199 : 222);
   const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-12 -14 124 224"}" role="img">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-12 -14 124 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
     barBehind +
     polys +
