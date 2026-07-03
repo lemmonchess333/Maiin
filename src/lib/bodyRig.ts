@@ -62,7 +62,15 @@ const POST = {
 
 type Pt = [number, number];
 
-/* Posterior arm segment lengths + the pull-up scene constants. */
+/* Arm segment lengths (per view) + the pull-up scene constants. */
+const ANT_UPPER_LEN = Math.hypot(
+  ANT.elbowL[0] - ANT.shoulderL[0],
+  ANT.elbowL[1] - ANT.shoulderL[1]
+);
+const ANT_FORE_LEN = Math.hypot(
+  ANT.handL[0] - ANT.elbowL[0],
+  ANT.handL[1] - ANT.elbowL[1]
+);
 const POST_UPPER_LEN = Math.hypot(
   POST.elbowL[0] - POST.shoulderL[0],
   POST.elbowL[1] - POST.shoulderL[1]
@@ -229,6 +237,46 @@ function aimArm(
   };
 }
 
+/* ── Glow hull (working-muscle aura) ─────────────────────────────
+ * The app's glow recipe (BodyMapGlow) is a static blurred layer whose
+ * OPACITY animates — never a filter animation. Here the same idea with
+ * zero filters at all: the convex hull of each primary muscle, drawn as
+ * nested enlarged rings at falling opacity — a deterministic fake blur
+ * that moves WITH the muscle and breathes with effort. */
+
+/** Andrew monotone-chain convex hull. */
+function convexHull(pts: Pt[]): Pt[] {
+  const p = [...pts].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (p.length < 3) return p;
+  const cross = (o: Pt, a: Pt, b: Pt) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: Pt[] = [];
+  for (const pt of p) {
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2], lower[lower.length - 1], pt) <= 0
+    )
+      lower.pop();
+    lower.push(pt);
+  }
+  const upper: Pt[] = [];
+  for (const pt of [...p].reverse()) {
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2], upper[upper.length - 1], pt) <= 0
+    )
+      upper.pop();
+    upper.push(pt);
+  }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+}
+
+function scaleAboutCentroid(pts: Pt[], k: number): Pt[] {
+  const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+  const cy = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  return pts.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
+}
+
 /* The library figure has no feet (its chart crops at the calves, which
  * reads amputee-ish in a full-body demo). Two small in-style wedges,
  * grouped with the shanks so they inherit leg transforms. */
@@ -280,7 +328,10 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar";
+  equip?: "fixed-bar" | "cable-bar" | "dip-bars";
+  /** Draw the equipment OVER the body (pushdown: the hands work in
+   *  front of the torso, so a behind-the-body bar would vanish). */
+  barInFront?: boolean;
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
   /** Ground line override (hanging demos float above a lower floor). */
   groundY?: number;
@@ -403,6 +454,97 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ],
       };
     },
+  },
+
+  "rope-tricep-pushdown": {
+    view: "anterior",
+    equip: "cable-bar",
+    barInFront: true,
+    concentricTo: 1,
+    tint: { triceps: "primary", forearm: "secondary" },
+    pose: (e) => {
+      /* Cable pushdown: elbows pinned at the sides, forearms swing from
+       * folded-up (hands at the lower chest, angled toward the viewer —
+       * hence foreshortened) down into the plane to full extension. The
+       * foreshortening simply relaxes with extension. */
+      const deg = lerp(122, -4, e); // fold at the chest → locked out
+      const k = lerp(0.6, 1, e); // toward-viewer → in-plane
+      return {
+        foreArmL: [
+          { kind: "rotate", deg: -deg, pivot: ANT.elbowL },
+          { kind: "scaleAxis", k, deg: -(17 - deg), pivot: ANT.elbowL },
+        ],
+        foreArmR: [
+          { kind: "rotate", deg, pivot: ANT.elbowR },
+          { kind: "scaleAxis", k, deg: 17 - deg, pivot: ANT.elbowR },
+        ],
+      };
+    },
+    bar: (_e, pose) => {
+      const l = applyToPoint(ANT.handL, pose.foreArmL ?? []);
+      const r = applyToPoint(ANT.handR, pose.foreArmR ?? []);
+      return [l, r];
+    },
+  },
+
+  dips: {
+    view: "anterior",
+    equip: "dip-bars",
+    concentricTo: 0,
+    // The body hangs on the bars the whole time — feet never touch the
+    // floor, so the scene extends below the figure.
+    viewBox: "-8 -14 116 240",
+    groundY: 222,
+    tint: {
+      triceps: "primary",
+      chest: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      /* Hands stay ON the grips while the body drops between them —
+       * same both-ends-constrained problem as the pull-up, IK-solved.
+       * The elbows flare outward as the body sinks. */
+      const dy = lerp(0, 13, e);
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(
+          [ANT.shoulderL[0], ANT.shoulderL[1] + dy],
+          ANT.handL,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          -1
+        ),
+        ANT.handL,
+        dy
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(
+          [ANT.shoulderR[0], ANT.shoulderR[1] + dy],
+          ANT.handR,
+          ANT_UPPER_LEN,
+          ANT_FORE_LEN,
+          1
+        ),
+        ANT.handR,
+        dy
+      );
+      const ride: Op[] = [{ kind: "translate", dx: 0, dy }];
+      return {
+        head: ride,
+        torso: ride,
+        thighL: ride,
+        thighR: ride,
+        shankL: ride,
+        shankR: ride,
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
+      };
+    },
+    // Grip anchor line for the posts (the hands never move).
+    bar: () => [ANT.handL, ANT.handR],
   },
 
   deadlift: {
@@ -620,6 +762,9 @@ const DEMO_ALIASES: Record<string, string> = {
   "cable-lateral-raise": "lateral-raise",
   "standing-calf-raise": "calf-raise",
   "chin-ups": "pull-ups",
+  "reverse-grip-cable-pushdown": "rope-tricep-pushdown",
+  "tricep-dips": "dips",
+  "weighted-chest-dip": "dips",
 };
 
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
@@ -652,11 +797,18 @@ export function renderBodyDemo(
   const tintOpacity = (level: "primary" | "secondary") =>
     level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;
 
+  // Transformed points collected per primary (muscle, side) feed the
+  // glow hulls below; the same pass emits the crisp polygons.
+  const primaryPts = new Map<string, Pt[]>();
   const polys = data
     .map((p) => {
       const ops = pose[groupOf(demo.view, p)] ?? [];
       const pts = applyOps(p.points as Pt[], ops);
       const level = demo.tint[p.muscle];
+      if (level === "primary") {
+        const key = `${p.muscle}|${p.side}`;
+        primaryPts.set(key, [...(primaryPts.get(key) ?? []), ...pts]);
+      }
       const fill =
         level === "primary"
           ? PRIMARY
@@ -672,6 +824,32 @@ export function renderBodyDemo(
     })
     .join("");
 
+  /* Working-muscle aura: nested convex-hull rings behind the figure,
+   * brightening with effort. Zero SVG filters (WKWebView glow rule) —
+   * the falloff is faked with three enlarged hulls at falling opacity. */
+  const glowStrength = 0.35 + 0.65 * effort;
+  const GLOW_RINGS: [number, number][] = [
+    [1.05, 0.2],
+    [1.12, 0.12],
+    [1.2, 0.06],
+  ];
+  const glow =
+    `<g class="glow">` +
+    [...primaryPts.values()]
+      .map((pts) => {
+        const hull = convexHull(pts);
+        return GLOW_RINGS.map(
+          ([k, o]) =>
+            `<polygon points="${scaleAboutCentroid(hull, k)
+              .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+              .join(
+                " "
+              )}" fill="${PRIMARY}" opacity="${(o * glowStrength).toFixed(3)}"/>`
+        ).join("");
+      })
+      .join("") +
+    `</g>`;
+
   const feet =
     demo.view === "anterior"
       ? ANTERIOR_FEET.map((f) => {
@@ -682,9 +860,12 @@ export function renderBodyDemo(
         }).join("")
       : "";
 
-  /* Structural equipment only (thin scene lines, always behind the
-     body). Held weights were removed — see the header. */
+  /* Structural equipment only (thin scene lines). Held weights were
+     removed — see the header. Lines default to BEHIND the body; a
+     pushdown bar draws in front (the hands work in front of the torso)
+     while its cable stays behind, naturally occluded by the figure. */
   let barBehind = "";
+  let barFront = "";
   const ends = demo.bar?.(e, pose);
   if (ends && demo.equip === "fixed-bar") {
     // Plate-less overhead bar (pull-up) — full width, behind the body.
@@ -694,9 +875,15 @@ export function renderBodyDemo(
     // down to the bar's midpoint, then the bar across the hands.
     const midX = (ends[0][0] + ends[1][0]) / 2;
     const y = (ends[0][1] + ends[1][1]) / 2;
-    barBehind =
-      `<line x1="${midX}" y1="-20" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.2"/>` +
-      `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>`;
+    barBehind = `<line x1="${midX}" y1="-20" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.2"/>`;
+    const bar = `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>`;
+    if (demo.barInFront) barFront = bar;
+    else barBehind += bar;
+  } else if (ends && demo.equip === "dip-bars") {
+    // Two vertical posts up to the (static) grip points.
+    const post = ([x, y]: Pt) =>
+      `<line x1="${x}" y1="${y}" x2="${x}" y2="${(demo.groundY ?? 220) - 2}" stroke="${GEAR}" stroke-width="2.4" stroke-linecap="round"/>`;
+    barBehind = post(ends[0]) + post(ends[1]);
   }
 
   /* Joint caps: at big rotations a white wedge opens where a limb group
@@ -744,9 +931,11 @@ export function renderBodyDemo(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? (demo.view === "anterior" ? "-8 -14 116 224" : "-12 -14 124 244")}" role="img">` +
     shadow +
     barBehind +
+    glow +
     caps +
     polys +
     feet +
+    barFront +
     `</svg>`
   );
 }

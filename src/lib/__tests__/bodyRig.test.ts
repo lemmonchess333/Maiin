@@ -23,7 +23,8 @@ describe("renderBodyDemo", () => {
     // The head's top vertex sits at the model's y≈0 when nothing moved.
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
-    expect(svg.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
+    const body = svg.replace(/<g class="glow">.*?<\/g>/, "");
+    expect(body.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
   });
 
   it("squat: the body visibly sinks at the bottom", () => {
@@ -47,11 +48,47 @@ describe("renderBodyDemo", () => {
   });
 
   it("tints exactly the declared muscles (honest fill)", () => {
-    const svg = renderBodyDemo("squat", 0);
+    // Strip the aura layer — it repeats the primary colour by design.
+    const svg = renderBodyDemo("squat", 0).replace(
+      /<g class="glow">.*?<\/g>/,
+      ""
+    );
     const purples = (svg.match(/#7B72E9/g) || []).length;
     const quadPolys = ANTERIOR.filter((p) => p.muscle === "quadriceps").length;
     expect(purples).toBe(quadPolys); // primary tint = quadriceps only
     expect(svg.includes("#B6BDC3")).toBe(true); // library body grey everywhere else
+  });
+
+  it("primary muscles carry a glow aura that breathes with effort", () => {
+    const glowOf = (svg: string) => svg.match(/<g class="glow">(.*?)<\/g>/)![1];
+    const soft = glowOf(renderBodyDemo("squat", 0.5, 0));
+    const hard = glowOf(renderBodyDemo("squat", 0.5, 1));
+    expect(hard.length).toBeGreaterThan(0);
+    const firstOpacity = (g: string) =>
+      Number(g.match(/opacity="([\d.]+)"/)![1]);
+    expect(firstOpacity(hard)).toBeGreaterThan(firstOpacity(soft));
+    // Two quads → two hulls × three rings.
+    expect((hard.match(/<polygon/g) || []).length).toBe(6);
+  });
+
+  it("dips: the body sinks while the grips stay put", () => {
+    const maxY = (svg: string) => Math.max(...polyYs(svg));
+    const up = renderBodyDemo("dips", 0);
+    const down = renderBodyDemo("dips", 1);
+    expect(maxY(down) - maxY(up)).toBeGreaterThan(9); // feet dropped
+    // Post lines are static.
+    const postY = (svg: string) => svg.match(/<line[^>]*y1="(-?[\d.]+)"/)![1];
+    expect(postY(up)).toBe(postY(down));
+  });
+
+  it("pushdown: the bar travels down to lockout", () => {
+    const lastLineY = (svg: string) => {
+      const ys = [...svg.matchAll(/<line[^>]*y1="(-?[\d.]+)"/g)];
+      return Number(ys[ys.length - 1][1]);
+    };
+    const start = lastLineY(renderBodyDemo("rope-tricep-pushdown", 0));
+    const end = lastLineY(renderBodyDemo("rope-tricep-pushdown", 1));
+    expect(end - start).toBeGreaterThan(15);
   });
 
   it("unknown exercise renders nothing", () => {
@@ -116,6 +153,8 @@ describe("registry", () => {
       "calf-raise",
       "pull-ups",
       "lat-pulldown",
+      "rope-tricep-pushdown",
+      "dips",
     ]) {
       const d = BODY_DEMOS[id];
       expect(d, id).toBeTruthy();
