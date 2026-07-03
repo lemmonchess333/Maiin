@@ -169,6 +169,57 @@ export interface WeeklyReview {
   weekAhead: WeekAheadPlan;
 }
 
+/* ── WeekPulse ("Your week so far" — Rev1 PR2) ────────────────── */
+
+export interface WeekPulse {
+  lifts: { done: number; planned: number | null } | null;
+  runs: { count: number; km: number; planned: number | null } | null;
+  /** Current streak in days; null hides the line (0-day = nothing to say). */
+  streak: number | null;
+}
+
+/**
+ * Live mid-week counterpart of the review's training section, shown on
+ * the two completion screens. Same rules as the review: eligible runs
+ * only, planned comparisons only when a plan exists (Run9a freeform →
+ * done-only), Sunday-start weeks. NO PI claims — the index recomputes
+ * async server-side after a save, so an instant delta would be a guess.
+ * Returns null when there is nothing to say (no lanes at all).
+ */
+export function buildWeekPulse(args: {
+  weekKey: string;
+  workouts: { date: string }[];
+  runs: ReviewRun[];
+  plannedLifts: number | null;
+  plannedRuns: number | null;
+  streak: number;
+}): WeekPulse | null {
+  const workouts = args.workouts.filter((w) => inWeek(w.date, args.weekKey));
+  const eligibleRuns = args.runs.filter(
+    (r) => r.eligible && inWeek(r.date, args.weekKey)
+  );
+
+  const lifts =
+    workouts.length > 0 || args.plannedLifts !== null
+      ? { done: workouts.length, planned: args.plannedLifts }
+      : null;
+  const runs =
+    eligibleRuns.length > 0 || args.plannedRuns !== null
+      ? {
+          count: eligibleRuns.length,
+          km:
+            Math.round(
+              (eligibleRuns.reduce((s, r) => s + r.distanceMeters, 0) / 1000) *
+                10
+            ) / 10,
+          planned: args.plannedRuns,
+        }
+      : null;
+
+  if (!lifts && !runs) return null;
+  return { lifts, runs, streak: args.streak > 0 ? args.streak : null };
+}
+
 /* ── Verdict templates (no AI — engine flags only) ────────────── */
 
 export function verdictFor(args: {
