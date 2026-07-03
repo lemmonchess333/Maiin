@@ -73,6 +73,7 @@ import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import NextBadgeCard from "@/components/home/NextBadgeCard";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
+import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
 import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
 import { useHybridGuidance } from "@/hooks/useHybridGuidance";
 
@@ -1222,6 +1223,20 @@ export default function Home() {
         >
           <SectionErrorBoundary sectionName="next-badge">
             <NextBadgeCard />
+          </SectionErrorBoundary>
+        </motion.div>
+
+        {/* Rev1 — transient Weekly Review entry. Self-gating (eligibility +
+            viewed state live inside the component); renders null most of
+            the week so Home's density is unchanged outside the window. */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <SectionErrorBoundary sectionName="weekly-review-entry">
+            <WeeklyReviewEntry />
           </SectionErrorBoundary>
         </motion.div>
 
