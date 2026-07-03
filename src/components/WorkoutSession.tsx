@@ -19,6 +19,8 @@ import {
   Dumbbell,
   Trophy,
   Info,
+  TrendingUp,
+  Disc,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,6 +38,11 @@ import {
   type RepBucket,
   getRepBucket,
 } from "@/lib/prTracking";
+import {
+  suggestNextLoad,
+  type ProgressionSuggestion,
+} from "@/lib/progressionSuggestion";
+import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { platesPerSide } from "@/lib/plateCalculator";
@@ -249,6 +256,13 @@ export default function WorkoutSession({
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
+  /* Double-progression nudges per exercise index (2026-07 audit). Computed
+     alongside the prefill from the SAME previous-session data; the chip
+     only renders while the exercise is untouched this session. */
+  const [suggestions, setSuggestions] = useState<
+    Record<number, ProgressionSuggestion>
+  >({});
+  const [showPlates, setShowPlates] = useState(false);
   const [sessionCounts, setSessionCounts] = useState<Record<string, number>>(
     {}
   );
@@ -284,6 +298,22 @@ export default function WorkoutSession({
           }
         );
       });
+
+      // Double-progression suggestions from the same history the prefill
+      // uses (one fetch, two consumers).
+      const nextSuggestions: Record<number, ProgressionSuggestion> = {};
+      day.exercises.forEach((ex, i) => {
+        const prevSets = prevWeights[ex.name];
+        if (!prevSets) return;
+        const suggestion = suggestNextLoad({
+          prevSets,
+          targetReps: ex.reps,
+        });
+        if (suggestion && suggestion.kind === "increase") {
+          nextSuggestions[i] = suggestion;
+        }
+      });
+      setSuggestions(nextSuggestions);
 
       setSetLogs((prev) => {
         const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
@@ -1153,6 +1183,56 @@ export default function WorkoutSession({
           )}
         </AnimatePresence>
 
+        {/* Double-progression nudge — only while this exercise is untouched
+            this session (a mid-session flip would be noise), and only the
+            "increase" case (prefill already covers "repeat"). Apply sets
+            every set's weight in one tap. */}
+        {suggestions[currentExIndex] &&
+          !currentSets.some((st) => st.completed) && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-lifting/10">
+              <TrendingUp
+                className="size-4 shrink-0 text-lifting"
+                aria-hidden="true"
+              />
+              <p className="min-w-0 flex-1 text-xs text-foreground leading-relaxed">
+                All sets hit{" "}
+                <span className="font-mono tabular-nums font-semibold">
+                  {suggestions[currentExIndex].targetReps}
+                </span>{" "}
+                reps at{" "}
+                <span className="font-mono tabular-nums font-semibold">
+                  {suggestions[currentExIndex].lastWeightKg} kg
+                </span>{" "}
+                last time — try{" "}
+                <span className="font-mono tabular-nums font-semibold">
+                  {suggestions[currentExIndex].weightKg} kg
+                </span>
+                .
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  haptic("light");
+                  const target = suggestions[currentExIndex].weightKg;
+                  setSetLogs((prev) => {
+                    const updated = prev.map((sets) =>
+                      sets.map((st) => ({ ...st }))
+                    );
+                    if (updated[currentExIndex]) {
+                      updated[currentExIndex] = updated[currentExIndex].map(
+                        (st) => ({ ...st, weight: target })
+                      );
+                    }
+                    return updated;
+                  });
+                }}
+              >
+                Apply
+              </Button>
+            </div>
+          )}
+
         {/* Set logging grid */}
         <div className="bg-card rounded-2xl">
           {(() => {
@@ -1175,7 +1255,20 @@ export default function WorkoutSession({
                 <div className="grid grid-cols-12 gap-1 px-3 py-2.5 bg-muted/50 text-caption font-semibold text-muted-foreground uppercase tracking-wider">
                   <div className="col-span-1">Set</div>
                   <div className="col-span-2">Prev</div>
-                  <div className="col-span-4">Weight (kg)</div>
+                  <div className="col-span-4 flex items-center gap-1">
+                    Weight (kg)
+                    <button
+                      type="button"
+                      aria-label="Plate calculator"
+                      onClick={() => {
+                        haptic("light");
+                        setShowPlates(true);
+                      }}
+                      className="p-1 -m-1 min-h-0 rounded text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Disc className="size-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
                   <div className="col-span-3">Reps</div>
                   <div className="col-span-2 text-center">Done</div>
                 </div>
@@ -1526,6 +1619,16 @@ export default function WorkoutSession({
           })()
         )}
       </div>
+
+      <PlateCalculatorSheet
+        open={showPlates}
+        onClose={() => setShowPlates(false)}
+        weightKg={
+          currentSets[currentSetIndex]?.weight ||
+          currentSets.find((st) => st.weight > 0)?.weight ||
+          0
+        }
+      />
 
       {currentExercise?.name && (
         <BottomSheet
