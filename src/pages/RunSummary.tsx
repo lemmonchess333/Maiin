@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import WeekPulseCard from "@/components/WeekPulseCard";
 import {
   collection,
   getDocs,
@@ -1320,6 +1321,13 @@ export default function RunSummary() {
               </p>
               <p className="text-xs text-muted-foreground">elevation gain</p>
             </div>
+          </div>
+
+          {/* Rev1 PR2 — what this run did to your week (fetches after the
+              run doc is saved, so it includes this run). Null while
+              loading; no jank. */}
+          <div className="px-4 mb-4">
+            <WeekPulseCard />
           </div>
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
