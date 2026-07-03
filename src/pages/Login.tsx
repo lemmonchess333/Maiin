@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { friendlyAuthError } from "@/lib/authErrors";
+import { friendlyAuthError, providerHint } from "@/lib/authErrors";
 import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -16,8 +16,14 @@ import { IconButton } from "@/components/ui/IconButton";
 type LoadingAction = "email" | "google" | "apple" | "reset" | null;
 
 export default function Login() {
-  const { signIn, signUp, signInWithGoogle, signInWithApple, resetPassword } =
-    useAuth();
+  const {
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signInWithApple,
+    resetPassword,
+    fetchSignInMethods,
+  } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +44,16 @@ export default function Login() {
       return;
     }
     setLoadingAction("reset");
+    // A Google/Apple-only account has no password to reset — sending one is a
+    // dead end (Firebase quietly sends nothing). Steer to the right button
+    // instead. Degrades to a normal reset when the provider is unknown
+    // (Email-Enumeration-Protection returns []).
+    const hint = providerHint(await fetchSignInMethods(email.trim()));
+    if (hint) {
+      setError(hint);
+      setLoadingAction(null);
+      return;
+    }
     try {
       await resetPassword(email.trim());
     } catch (err: unknown) {
@@ -75,6 +91,17 @@ export default function Login() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong";
+      // On a failed password sign-in, a Google/Apple-only account is the most
+      // confusing case: "Invalid email or password" implies a wrong password
+      // when really there's NO password. If the email is OAuth-only, point to
+      // the right button instead. (Skipped on sign-up — nothing to look up.)
+      if (!isSignUp && /invalid-credential|wrong-password/.test(message)) {
+        const hint = providerHint(await fetchSignInMethods(email));
+        if (hint) {
+          setError(hint);
+          return;
+        }
+      }
       setError(friendlyAuthError(message));
     } finally {
       setLoadingAction(null);
