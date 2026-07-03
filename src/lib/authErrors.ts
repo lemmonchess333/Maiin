@@ -15,6 +15,25 @@
  * thing to display, not as a discriminated union.
  */
 
+/**
+ * If an email is registered ONLY with a social provider (no password),
+ * return a message steering the user to that button — otherwise null (they
+ * have a password, or the provider is unknown because Email-Enumeration-
+ * Protection returned an empty list). This is what turns the dead-end
+ * "Invalid email or password" / silent-reset trap into an actionable hint
+ * for Google/Apple accounts.
+ */
+export function providerHint(methods: string[]): string | null {
+  if (methods.length === 0 || methods.includes("password")) return null;
+  if (methods.includes("google.com")) {
+    return "This account uses Google — tap Continue with Google to sign in.";
+  }
+  if (methods.includes("apple.com")) {
+    return "This account uses Apple — tap Continue with Apple to sign in.";
+  }
+  return null;
+}
+
 export function friendlyAuthError(message: string): string {
   if (
     message.includes("user-not-found") ||
