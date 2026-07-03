@@ -27,7 +27,7 @@ describe("renderBodyDemo", () => {
     // The head's top vertex sits at the model's y≈0 when nothing moved.
     const ys = polyYs(svg);
     expect(Math.min(...ys)).toBeLessThan(1);
-    expect(svg.match(/<polygon/g)!.length).toBe(33);
+    expect(svg.match(/<polygon/g)!.length).toBe(35); // 33 body + 2 feet
   });
 
   it("squat: the body visibly sinks at the bottom", () => {

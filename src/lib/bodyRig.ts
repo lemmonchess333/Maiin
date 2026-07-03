@@ -135,6 +135,34 @@ function applyToPoint(p: Pt, ops: Op[]): Pt {
   return applyOps([p], ops)[0];
 }
 
+/* The library figure has no feet (its chart crops at the calves, which
+ * reads amputee-ish in a full-body demo). Two small in-style wedges,
+ * grouped with the shanks so they inherit leg transforms. */
+const ANTERIOR_FEET: { group: GroupName; points: Pt[] }[] = [
+  {
+    group: "shankL",
+    points: [
+      [22, 195],
+      [30, 195],
+      [31, 199],
+      [27, 203],
+      [18, 203],
+      [19, 198],
+    ],
+  },
+  {
+    group: "shankR",
+    points: [
+      [70, 195],
+      [78, 195],
+      [81, 198],
+      [82, 203],
+      [73, 203],
+      [69, 199],
+    ],
+  },
+];
+
 /* ── Exercise definitions ─────────────────────────────────────── */
 
 const easeInOutSine = (t: number) =>
@@ -146,31 +174,31 @@ export interface BodyDemo {
   tint: Record<string, "primary" | "secondary">;
   /** Group transforms as a function of eased progress e ∈ [0,1]. */
   pose: (e: number) => Partial<Record<GroupName, Op[]>>;
-  /** Barbell endpoints (already-transformed hand anchors), if any. */
+  /** Weight visual: a rigid barbell needs endpoints that keep a constant
+   *  width (traps/deadlift). Rotating hands (press/curl) get DUMBBELLS —
+   *  one weight per hand — because a rigid front-view bar can't follow
+   *  two independent arcs without its width visibly breathing. */
+  equip?: "barbell" | "dumbbells";
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
 
-/** Rigid whole-arm rotation about the shoulder = same ops on upper+fore. */
-function wholeArm(degL: number, degR: number): Partial<Record<GroupName, Op[]>> {
-  return {
-    upperArmL: [{ kind: "rotate", deg: degL, pivot: ANT.shoulderL }],
-    foreArmL: [{ kind: "rotate", deg: degL, pivot: ANT.shoulderL }],
-    upperArmR: [{ kind: "rotate", deg: degR, pivot: ANT.shoulderR }],
-    foreArmR: [{ kind: "rotate", deg: degR, pivot: ANT.shoulderR }],
-  };
-}
-
 export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "anterior",
+    equip: "barbell",
     tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
     pose: (e) => {
-      const k = lerp(1, 0.6, e); // thigh compression about the knee line
-      const drop = (1 - k) * (ANT.kneeL[1] - ANT.hipY); // body sinks by the lost thigh height
-      const flare = lerp(0, 6, e); // knees track out
+      const k = lerp(1, 0.68, e); // thigh compression about the knee line
+      // The torso must track the moving thigh TOPS exactly (y≈92) or a
+      // waist gap opens between the obliques and the quads.
+      const drop = (1 - k) * (ANT.kneeL[1] - 92);
+      const flare = lerp(0, 5, e);
       const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
+      /* Arms ride down with the body. (A folded front-view grip was tried
+         and read as broken polygons across the chest — rigid facets can't
+         fold 150° gracefully. Hanging arms are the clean stylization.) */
       return {
         thighL: [
           { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
@@ -190,28 +218,42 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         foreArmR: dive,
       };
     },
-    // Back squat: the bar rides at the base of the neck, dropping with the body.
+    // Bar on the traps, dropping with the body.
     bar: (_e, pose) => {
-      const y = 44 + ((pose.torso?.[0] as { dy?: number } | undefined)?.dy ?? 0);
+      const y = 46 + ((pose.torso?.[0] as { dy?: number } | undefined)?.dy ?? 0);
       return [
-        [18, y],
-        [82, y],
+        [16, y],
+        [84, y],
       ];
     },
   },
 
   "overhead-press": {
     view: "anterior",
+    equip: "dumbbells",
     tint: {
       "front-deltoids": "primary",
       triceps: "secondary",
       neck: "secondary",
     },
     pose: (e) => {
-      // Rack (arms down-out) → lockout (arms overhead). In-plane rotation
-      // about the shoulders — the classic frontal press V.
-      const deg = lerp(0, 155, e);
-      return wholeArm(deg, -deg);
+      // Rack: forearms folded so the bar sits at the clavicle. Lockout:
+      // the fold opens as the whole arm rotates overhead — the bar path
+      // stays close to the body like a real press, not a front raise.
+      const lift = lerp(52, 160, e); // whole-arm rotation about the shoulder
+      const fold = lerp(92, 0, e); // elbows extend as the weights rise
+      return {
+        upperArmL: [{ kind: "rotate", deg: lift, pivot: ANT.shoulderL }],
+        foreArmL: [
+          { kind: "rotate", deg: -fold, pivot: ANT.elbowL },
+          { kind: "rotate", deg: lift, pivot: ANT.shoulderL },
+        ],
+        upperArmR: [{ kind: "rotate", deg: -lift, pivot: ANT.shoulderR }],
+        foreArmR: [
+          { kind: "rotate", deg: fold, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -lift, pivot: ANT.shoulderR },
+        ],
+      };
     },
     bar: (_e, pose) => {
       const l = applyToPoint(ANT.handL, pose.foreArmL ?? []);
@@ -222,13 +264,23 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "barbell-curl": {
     view: "anterior",
+    equip: "dumbbells",
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
       // Forearms fold up about the elbows; upper arms stay pinned.
-      const deg = lerp(0, 115, e);
+      const deg = lerp(0, 104, e);
+      const drift = lerp(0, 7, e); // elbows ease forward a touch
       return {
-        foreArmL: [{ kind: "rotate", deg, pivot: ANT.elbowL }],
-        foreArmR: [{ kind: "rotate", deg: -deg, pivot: ANT.elbowR }],
+        upperArmL: [{ kind: "rotate", deg: drift, pivot: ANT.shoulderL }],
+        foreArmL: [
+          { kind: "rotate", deg, pivot: ANT.elbowL },
+          { kind: "rotate", deg: drift, pivot: ANT.shoulderL },
+        ],
+        upperArmR: [{ kind: "rotate", deg: -drift, pivot: ANT.shoulderR }],
+        foreArmR: [
+          { kind: "rotate", deg: -deg, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -drift, pivot: ANT.shoulderR },
+        ],
       };
     },
     bar: (_e, pose) => {
@@ -240,6 +292,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   deadlift: {
     view: "posterior",
+    equip: "barbell",
     tint: {
       gluteal: "primary",
       hamstring: "primary",
@@ -272,8 +325,17 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 };
 
+/** Sibling exercises that share a demo's motion pattern. */
+const DEMO_ALIASES: Record<string, string> = {
+  "db-shoulder-press": "overhead-press",
+  "db-curl": "barbell-curl",
+  "hammer-curl": "barbell-curl",
+  "romanian-deadlift": "deadlift",
+  "front-squat": "squat",
+};
+
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
-  return BODY_DEMOS[exerciseId] ?? null;
+  return BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
 }
 
 /* ── Rendering ────────────────────────────────────────────────── */
@@ -304,20 +366,54 @@ export function renderBodyDemo(exerciseId: string, t: number): string {
     })
     .join("");
 
-  let bar = "";
+  const feet =
+    demo.view === "anterior"
+      ? ANTERIOR_FEET.map((f) => {
+          const pts = applyOps(f.points, pose[f.group] ?? []);
+          return `<polygon points="${pts
+            .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
+            .join(" ")}" fill="${BODY}"/>`;
+        }).join("")
+      : "";
+
+  /* Weights. A barbell is REAL-scale: the bar spans past the body and the
+     plates are big discs (a 45 is ~45cm across — about a head-and-a-half
+     here), drawn BEHIND the figure so a back squat reads like a bar across
+     the traps, not a line through the face. Dumbbells draw in front, one
+     per hand. */
+  let barBehind = "";
+  let weightsFront = "";
   const ends = demo.bar?.(e, pose);
-  if (ends) {
-    const [[lx, ly], [rx, ry]] = ends;
-    bar =
-      `<line x1="${(lx - 8).toFixed(1)}" y1="${ly.toFixed(1)}" x2="${(rx + 8).toFixed(1)}" y2="${ry.toFixed(1)}" stroke="${GEAR}" stroke-width="2.4" stroke-linecap="round"/>` +
-      `<circle cx="${(lx - 6).toFixed(1)}" cy="${ly.toFixed(1)}" r="4" fill="${GEAR_DARK}"/>` +
-      `<circle cx="${(rx + 6).toFixed(1)}" cy="${ry.toFixed(1)}" r="4" fill="${GEAR_DARK}"/>`;
+  if (ends && demo.equip === "barbell") {
+    const y = (ends[0][1] + ends[1][1]) / 2;
+    const plate = (cx: number) =>
+      `<circle cx="${cx}" cy="${y.toFixed(1)}" r="10.5" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${cx}" cy="${y.toFixed(1)}" r="7" fill="none" stroke="${GEAR}" stroke-width="1.4" opacity="0.8"/>` +
+      `<circle cx="${cx}" cy="${y.toFixed(1)}" r="2.4" fill="${GEAR}"/>`;
+    barBehind =
+      `<line x1="-5" y1="${y.toFixed(1)}" x2="105" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>` +
+      plate(3) +
+      plate(97);
+  } else if (ends && demo.equip === "dumbbells") {
+    const db = ([x, y]: Pt) =>
+      `<line x1="${(x - 8).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + 8).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.2" stroke-linecap="round"/>` +
+      `<circle cx="${(x - 7).toFixed(1)}" cy="${y.toFixed(1)}" r="4.6" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+      `<circle cx="${(x + 7).toFixed(1)}" cy="${y.toFixed(1)}" r="4.6" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>`;
+    weightsFront = db(ends[0]) + db(ends[1]);
   }
 
+  // Ground shadow: a weight cue that breathes with the movement depth.
+  const shadowRx = 26 + 6 * e;
+  const groundY = demo.view === "anterior" ? 199 : 202;
+  const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * e).toFixed(2)}"/>`;
+
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -4 112 210" role="img">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -14 116 224" role="img">` +
+    shadow +
+    barBehind +
     polys +
-    bar +
+    feet +
+    weightsFront +
     `</svg>`
   );
 }
