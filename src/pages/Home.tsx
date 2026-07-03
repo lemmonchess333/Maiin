@@ -78,9 +78,11 @@ import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
 import { useHybridGuidance } from "@/hooks/useHybridGuidance";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { useFreshInsight } from "@/hooks/useFreshInsight";
 import {
   analyzeNutritionPatterns,
   type MealEntry,
+  type NutritionInsight,
 } from "@/lib/nutritionInsights";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -96,6 +98,8 @@ const ProModal = lazy(() => import("@/components/ProModal"));
 const DayActionSheet = lazy(
   () => import("@/components/program/DayActionSheet")
 );
+
+const EMPTY_INSIGHTS: NutritionInsight[] = [];
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
@@ -290,8 +294,10 @@ export default function Home() {
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
 
-  // Nutrition insight from meal patterns
-  const topNutritionInsight = useMemo(
+  // Nutrition insight from meal patterns — freshness-gated (a stable-id
+  // insight used to squat the slot for weeks; useFreshInsight rotates
+  // after 2 consecutive days + 5-day cooldown, or goes silent).
+  const nutritionInsightCandidates = useMemo(
     function () {
       if (meals.length < 5) return null;
       const mapped: MealEntry[] = meals.slice(0, 100).map(function (m) {
@@ -322,9 +328,12 @@ export default function Home() {
         carbs: effectiveTargets.carbs,
         fat: effectiveTargets.fat,
       });
-      return insights.length > 0 ? insights[0] : null;
+      return insights;
     },
     [meals, effectiveTargets]
+  );
+  const topNutritionInsight = useFreshInsight(
+    nutritionInsightCandidates ?? EMPTY_INSIGHTS
   );
 
   // Meal history for conditional "Log first meal" CTA

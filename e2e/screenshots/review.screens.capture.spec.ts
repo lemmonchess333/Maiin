@@ -28,7 +28,9 @@ test.describe("weekly review screenshots", () => {
   }
 
   test("weekly review — light + dark", async ({ page }) => {
-    await page.goto("/review");
+    // Relative (no leading slash) — a leading '/' escapes the /Maiin/
+    // baseURL and lands on the server's base-path error page.
+    await page.goto("review");
     // Let the fetch-on-open assembly settle (spinner → content).
     await page
       .getByText("Weekly Review", { exact: true })

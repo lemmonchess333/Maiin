@@ -11,6 +11,7 @@ import {
   buildRaceCockpitViewModel,
   buildHybridWeekItems,
   resolveRunPlanSurface,
+  hasHybridInterference,
 } from "@/lib/runProgrammeViewModel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { UserProfile } from "@/lib/auth";
@@ -260,5 +261,28 @@ describe("buildHybridWeekItems", () => {
     expect(items[1].run?.isRace).toBe(true);
     expect(items[1].run?.shortLabel).toBe("Race");
     expect(items[1].run?.status).toBe("race_no_show");
+  });
+});
+
+describe("hasHybridInterference (scheduler's 'UI can flag it' note, wired)", () => {
+  it("flags quality runs sharing a day with a lift", () => {
+    for (const runType of ["tempo", "intervals", "long"] as const) {
+      expect(hasHybridInterference({ hasLift: true, runType })).toBe(true);
+    }
+  });
+
+  it("never flags easy runs, race day, run-only or lift-only days", () => {
+    expect(hasHybridInterference({ hasLift: true, runType: "easy" })).toBe(
+      false
+    );
+    expect(hasHybridInterference({ hasLift: true, runType: "race" })).toBe(
+      false
+    );
+    expect(hasHybridInterference({ hasLift: false, runType: "long" })).toBe(
+      false
+    );
+    expect(hasHybridInterference({ hasLift: true, runType: null })).toBe(
+      false
+    );
   });
 });
