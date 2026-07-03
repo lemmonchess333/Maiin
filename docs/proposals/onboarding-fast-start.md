@@ -1,7 +1,21 @@
 # PRD — Onboarding fast-start (13 → ~8 steps)
 
-**Status:** Draft / proposed
+**Status:** IMPLEMENTED (2026-07-04 — see status note below)
 **Date:** 2026-06-04
+
+> **STATUS 2026-07-04 — fully implemented.** An audit found the PRD's remaining
+> work had mostly shipped without this doc being updated: the 8-step machine +
+> defaults wiring landed in `Onboarding.tsx` (`TOTAL_STEPS = 8`, deferred
+> fields defaulted: name from email, experience "intermediate", split "auto",
+> goal weight → maintenance); the split type-seam shipped earlier via PR #1078;
+> and three of the four progressive-profiling nudges were live on Home
+> (`body-metrics-v1`, `goal-weight-v1` after first food log, `race-goal-v1`
+> after first run). The one missing piece — the **experience nudge after the
+> first workout** — shipped 2026-07-04 as `training-experience-v1`
+> (lanePriority 10, CTA → /settings/training, visible while
+> `profile.experience` still equals the onboarding default, dismiss-once —
+> the same default-marker heuristic as the goal-weight nudge). Nothing from
+> the PRD remains open.
 **Area:** `src/pages/Onboarding.tsx`, `src/features/program/planBuilder.ts`, `src/lib/tdee.ts`, Home progressive-profiling (`ContextualTipBanner`)
 
 > Origin: an ROI-improvements analysis proposed cutting onboarding to a 7-step
