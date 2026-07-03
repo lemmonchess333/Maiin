@@ -245,25 +245,43 @@ const SHIN: [number, number][] = [
 const CALF: [number, number][] = [
   [-3, 6], [-2, 20], [-2, 44], [0, 62], [-8, 56], [-12, 40], [-11, 22], [-8, 9],
 ];
-// Thigh, L=66: quad sweep front, hamstring back.
-const QUAD: [number, number][] = [
-  [2, 0], [10, 8], [14, 24], [14, 44], [11, 60], [4, 66], [-1, 48], [-1, 24], [0, 8],
+// Thigh, L=66: quad as upper sweep + lower teardrop; ham as belly + lower.
+const QUAD_UP: [number, number][] = [
+  [2, 30], [10, 34], [13, 46], [11, 58], [4, 66], [0, 52], [0, 38],
 ];
-const HAM: [number, number][] = [
-  [0, 8], [-1, 24], [-1, 48], [4, 66], [-8, 64], [-12, 46], [-11, 24], [-7, 8],
+const QUAD_LOW: [number, number][] = [
+  [2, 0], [9, 6], [12, 20], [13, 34], [10, 34], [2, 30], [0, 38], [-1, 20], [0, 8],
 ];
-// Torso, L=78 (hip→neck): chest/abs front, lat/erector back, obliques mid.
-const TORSO_FRONT: [number, number][] = [
-  [3, 0], [12, 6], [15, 20], [16, 40], [15, 58], [11, 72], [5, 78], [2, 60], [2, 30], [2, 10],
+const HAM_BELLY: [number, number][] = [
+  [0, 38], [0, 52], [4, 66], [-7, 63], [-11, 50], [-10, 36],
 ];
-const TORSO_ABS: [number, number][] = [
-  [3, 0], [2, 10], [2, 30], [2, 60], [5, 78], [-1, 74], [-3, 52], [-3, 26], [-2, 8],
+const HAM_LOW: [number, number][] = [
+  [0, 8], [-1, 20], [0, 38], [-10, 36], [-9, 22], [-6, 10],
 ];
-const TORSO_ERECTOR: [number, number][] = [
-  [-2, 8], [-3, 26], [-3, 52], [-1, 74], [-7, 70], [-10, 50], [-10, 26], [-8, 8],
+// Torso, L=78 (hip→neck): pec, abs stack, oblique, erector, lat sweep.
+const PEC: [number, number][] = [
+  [4, 52], [14, 55], [17, 64], [12, 74], [5, 78], [2, 68], [2, 58],
 ];
-const TORSO_LAT: [number, number][] = [
-  [-8, 8], [-10, 26], [-10, 50], [-7, 70], [-14, 62], [-17, 44], [-15, 24], [-11, 10],
+const ABS_UP: [number, number][] = [
+  [3, 28], [14, 32], [14, 44], [14, 55], [4, 52], [2, 40], [2, 32],
+];
+const ABS_LOW: [number, number][] = [
+  [3, 0], [13, 6], [15, 20], [14, 32], [3, 28], [1, 16], [1, 6],
+];
+const OBLIQUE: [number, number][] = [
+  [3, 28], [4, 52], [2, 58], [-2, 54], [-4, 36], [-2, 26],
+];
+const OBLIQUE_LOW: [number, number][] = [
+  [3, 0], [3, 28], [-2, 26], [-4, 12], [-2, 4],
+];
+const ERECTOR: [number, number][] = [
+  [-2, 4], [-4, 12], [-4, 36], [-2, 54], [-7, 52], [-9, 34], [-8, 14], [-6, 5],
+];
+const LAT_SWEEP: [number, number][] = [
+  [-2, 54], [2, 58], [2, 68], [-3, 66], [-10, 58], [-15, 46], [-9, 34], [-7, 52],
+];
+const UPPER_BACK: [number, number][] = [
+  [2, 68], [5, 78], [-4, 76], [-9, 68], [-10, 58], [-3, 66],
 ];
 // Glute: attached behind the hip, below the lat sweep.
 const GLUTE: [number, number][] = [
@@ -323,8 +341,10 @@ export function renderRigSvg(
   const off = (pt: Pt): Pt => [pt[0] - 9, pt[1] - 4];
   parts.push(shade(place(off(p.ankle), pose.shank, SHIN)));
   parts.push(shade(place(off(p.ankle), pose.shank, CALF)));
-  parts.push(shade(place(off(p.knee), pose.thigh, QUAD)));
-  parts.push(shade(place(off(p.knee), pose.thigh, HAM)));
+  parts.push(shade(place(off(p.knee), pose.thigh, QUAD_LOW)));
+  parts.push(shade(place(off(p.knee), pose.thigh, QUAD_UP)));
+  parts.push(shade(place(off(p.knee), pose.thigh, HAM_LOW)));
+  parts.push(shade(place(off(p.knee), pose.thigh, HAM_BELLY)));
   {
     const fa = off(p.ankle);
     parts.push(
@@ -347,14 +367,28 @@ export function renderRigSvg(
   }
 
   /* Torso stack: lat sweep → erectors → abs → chest, then glute. */
-  parts.push(poly(place(p.hip, pose.torso, TORSO_LAT), fillFor("lat", tint, BODY_B)));
   parts.push(
-    poly(place(p.hip, pose.torso, TORSO_ERECTOR), fillFor("erectors", tint, BODY_B))
+    poly(place(p.hip, pose.torso, LAT_SWEEP), fillFor("lat", tint, BODY_B))
   );
-  parts.push(poly(place(p.hip, pose.torso, TORSO_ABS), fillFor("abs", tint, BODY_A)));
   parts.push(
-    poly(place(p.hip, pose.torso, TORSO_FRONT), fillFor("chest", tint, BODY_A))
+    poly(place(p.hip, pose.torso, UPPER_BACK), fillFor("trap", tint, BODY_B))
   );
+  parts.push(
+    poly(place(p.hip, pose.torso, ERECTOR), fillFor("erectors", tint, BODY_B))
+  );
+  parts.push(
+    poly(place(p.hip, pose.torso, OBLIQUE_LOW), fillFor("abs", tint, BODY_B))
+  );
+  parts.push(
+    poly(place(p.hip, pose.torso, OBLIQUE), fillFor("abs", tint, BODY_B))
+  );
+  parts.push(
+    poly(place(p.hip, pose.torso, ABS_LOW), fillFor("abs", tint, BODY_A))
+  );
+  parts.push(
+    poly(place(p.hip, pose.torso, ABS_UP), fillFor("abs", tint, BODY_A))
+  );
+  parts.push(poly(place(p.hip, pose.torso, PEC), fillFor("chest", tint, BODY_A)));
   parts.push(poly(place(p.hip, pose.torso, GLUTE), fillFor("glute", tint, BODY_B)));
   parts.push(joint(p.hip, 9, BODY_B));
 
@@ -362,8 +396,18 @@ export function renderRigSvg(
   parts.push(poly(place(p.ankle, pose.shank, CALF), fillFor("calf", tint, BODY_B)));
   parts.push(poly(place(p.ankle, pose.shank, SHIN), BODY_A));
   parts.push(joint(p.knee, 8, BODY_A));
-  parts.push(poly(place(p.knee, pose.thigh, HAM), fillFor("hamstring", tint, BODY_B)));
-  parts.push(poly(place(p.knee, pose.thigh, QUAD), fillFor("quad", tint, BODY_A)));
+  parts.push(
+    poly(place(p.knee, pose.thigh, HAM_LOW), fillFor("hamstring", tint, BODY_B))
+  );
+  parts.push(
+    poly(place(p.knee, pose.thigh, HAM_BELLY), fillFor("hamstring", tint, BODY_B))
+  );
+  parts.push(
+    poly(place(p.knee, pose.thigh, QUAD_LOW), fillFor("quad", tint, BODY_A))
+  );
+  parts.push(
+    poly(place(p.knee, pose.thigh, QUAD_UP), fillFor("quad", tint, BODY_A))
+  );
   parts.push(
     poly(
       [
