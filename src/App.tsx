@@ -27,6 +27,7 @@ import { captureError } from "@/lib/errorReporting";
 /* Chunk-error-recovering lazy wrapper. Extracted to src/lib/lazyRetry
    so sub-component lazy loads (Soc5 item 10) can share it. */
 import { lazyRetry } from "@/lib/lazyRetry";
+import MinVersionGate from "@/components/MinVersionGate";
 // Shipped ambient brand glow — eager (tiny, renders on every authed page).
 import AmbientGlow from "@/components/AmbientGlow";
 
@@ -36,6 +37,7 @@ const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
 const PrivacyPolicy = lazyRetry(() => import("@/pages/PrivacyPolicy"));
 const TermsOfService = lazyRetry(() => import("@/pages/TermsOfService"));
+const Support = lazyRetry(() => import("@/pages/Support"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
@@ -343,6 +345,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/support" element={<Support />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </Suspense>
@@ -355,6 +358,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/support" element={<Support />} />
           <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>
@@ -402,6 +406,7 @@ function AppRoutes() {
                 <Routes>
                   <Route path="/privacy" element={<PrivacyPolicy />} />
                   <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/support" element={<Support />} />
                   <Route element={<Layout />}>
                     <Route
                       path="/"
@@ -684,6 +689,7 @@ function App() {
     <ErrorBoundary>
       <MotionConfig reducedMotion="user">
         <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <MinVersionGate>
           <AuthProvider>
             <NotificationBubbleProvider>
               <ToastProvider />
@@ -693,6 +699,7 @@ function App() {
               <AppRoutes />
             </NotificationBubbleProvider>
           </AuthProvider>
+          </MinVersionGate>
         </BrowserRouter>
       </MotionConfig>
     </ErrorBoundary>
