@@ -9,6 +9,7 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { getVolumeComparison } from "@/lib/funComparisons";
 import { usePostCompletionKudos } from "@/hooks/usePostCompletionKudos";
 import PostCompletionKudos from "@/components/social/PostCompletionKudos";
+import WeekPulseCard from "@/components/WeekPulseCard";
 import type { ProgramExercise } from "@/features/program/programTypes";
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
@@ -297,6 +298,10 @@ export default function SessionCompleteScreen({
         {/* Post-completion kudos (Phase 2) — social AFTER achievement, never
             before action. Renders nothing unless someone the user follows
             also trained today; once/day; fully dismissible. */}
+        {/* Rev1 PR2 — what this session did to your week. Renders null
+            until its one fetch resolves; no jank on the celebration. */}
+        <WeekPulseCard />
+
         <PostCompletionKudos
           candidate={kudos.candidate}
           sending={kudos.sending}
