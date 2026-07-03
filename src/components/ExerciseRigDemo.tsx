@@ -78,12 +78,16 @@ export default function ExerciseRigDemo({
     return () => cancelAnimationFrame(rafRef.current);
   }, [exerciseId, reducedMotion, active]);
 
+  /* The demo renders on a fixed DARK stage in both themes (like any
+   * media viewer): the figure's facet gaps read as the dark surface
+   * showing through — the exact contrast the muscle-map art was
+   * designed against. A light backing would wash the gaps out. */
   if (reducedMotion) {
     return (
       <div
         role="img"
         aria-label={`${name} demonstration — start and end positions`}
-        className="bg-muted rounded-2xl p-4 mt-4 flex justify-center gap-3"
+        className="bg-[#121214] rounded-2xl p-4 mt-4 flex justify-center gap-3"
       >
         <div
           className="w-1/2 max-w-[150px]"
@@ -101,7 +105,7 @@ export default function ExerciseRigDemo({
     <div
       role="img"
       aria-label={`${name} demonstration`}
-      className="bg-muted rounded-2xl p-4 mt-4"
+      className="bg-[#121214] rounded-2xl p-4 mt-4"
     >
       <div
         className="mx-auto max-w-[190px]"

@@ -860,29 +860,46 @@ export function renderBodyDemo(
         }).join("")
       : "";
 
-  /* Structural equipment only (thin scene lines). Held weights were
-     removed — see the header. Lines default to BEHIND the body; a
+  /* Structural equipment only. Held weights were removed — see the
+     header. A bare line reads as NOTHING ("is that a treadmill?"), so
+     every apparatus carries enough construction to be identifiable:
+     the pull-up bar hangs from ceiling stems, cable machines get a
+     pulley block feeding the cable, dip bars get base feet and a
+     tube end-cap at each grip. Lines default to BEHIND the body; a
      pushdown bar draws in front (the hands work in front of the torso)
      while its cable stays behind, naturally occluded by the figure. */
+  const viewTop = Number((demo.viewBox ?? "-8 -14 116 224").split(/\s+/)[1]);
   let barBehind = "";
   let barFront = "";
   const ends = demo.bar?.(e, pose);
   if (ends && demo.equip === "fixed-bar") {
-    // Plate-less overhead bar (pull-up) — full width, behind the body.
-    barBehind = `<line x1="${ends[0][0]}" y1="${ends[0][1]}" x2="${ends[1][0]}" y2="${ends[1][1]}" stroke="${GEAR}" stroke-width="3" stroke-linecap="round"/>`;
+    // Ceiling-mounted pull-up bar: two stems from the frame top down to
+    // the bar, then the bar itself spanning the scene.
+    const stem = (x: number) =>
+      `<line x1="${x}" y1="${viewTop}" x2="${x}" y2="${ends[0][1]}" stroke="${GEAR_DARK}" stroke-width="2.2"/>`;
+    barBehind =
+      stem(0) +
+      stem(100) +
+      `<line x1="${ends[0][0]}" y1="${ends[0][1]}" x2="${ends[1][0]}" y2="${ends[1][1]}" stroke="${GEAR}" stroke-width="3.2" stroke-linecap="round"/>`;
   } else if (ends && demo.equip === "cable-bar") {
-    // Cable attachment sells the machine: a thin line from the frame top
-    // down to the bar's midpoint, then the bar across the hands.
+    // The machine: a pulley block at the frame top feeding the cable,
+    // then the bar across the hands.
     const midX = (ends[0][0] + ends[1][0]) / 2;
     const y = (ends[0][1] + ends[1][1]) / 2;
-    barBehind = `<line x1="${midX}" y1="-20" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.2"/>`;
-    const bar = `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.6" stroke-linecap="round"/>`;
+    barBehind =
+      `<rect x="${(midX - 3.4).toFixed(1)}" y="${viewTop + 1}" width="6.8" height="6.4" rx="2" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.8"/>` +
+      `<line x1="${midX}" y1="${viewTop + 6}" x2="${midX}" y2="${y.toFixed(1)}" stroke="${GEAR_DARK}" stroke-width="1.4"/>`;
+    const bar = `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>`;
     if (demo.barInFront) barFront = bar;
     else barBehind += bar;
   } else if (ends && demo.equip === "dip-bars") {
-    // Two vertical posts up to the (static) grip points.
+    // A dip STATION, not two floating lines: each upright gets a base
+    // foot on the floor and a tube end-cap at the grip.
+    const floor = (demo.groundY ?? 220) - 1;
     const post = ([x, y]: Pt) =>
-      `<line x1="${x}" y1="${y}" x2="${x}" y2="${(demo.groundY ?? 220) - 2}" stroke="${GEAR}" stroke-width="2.4" stroke-linecap="round"/>`;
+      `<line x1="${x}" y1="${y}" x2="${x}" y2="${floor}" stroke="${GEAR}" stroke-width="2.6"/>` +
+      `<line x1="${x - 7}" y1="${floor}" x2="${x + 7}" y2="${floor}" stroke="${GEAR_DARK}" stroke-width="2.4" stroke-linecap="round"/>` +
+      `<circle cx="${x}" cy="${y}" r="2.8" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.9"/>`;
     barBehind = post(ends[0]) + post(ends[1]);
   }
 
