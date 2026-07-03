@@ -132,26 +132,31 @@ describe("renderBodyDemo", () => {
     expect(end - start).toBeGreaterThan(50);
   });
 
-  it("bench press (side view): the arm presses from the chest to lockout", () => {
-    const minY = (svg: string) => Math.min(...polyYs(svg));
-    const bottom = renderBodyDemo("bench-press", 0);
-    const lockout = renderBodyDemo("bench-press", 1);
-    // The hand end of the arm rises well clear of the lying body.
-    expect(minY(bottom) - minY(lockout)).toBeGreaterThan(20);
-    // Side view renders the piece architecture: stage-coloured underlays.
-    expect(bottom.includes('fill="#111113"')).toBe(true);
+  it("side-view demos are DORMANT: gated ids fall back to the ladder", () => {
+    // Owner call: the side figure hasn't passed the art bar, so these
+    // render nothing (the app then falls back to photos/diagram).
+    for (const id of [
+      "bench-press",
+      "barbell-row",
+      "romanian-deadlift",
+      "push-ups",
+      "db-bench",
+      "pendlay-row",
+    ]) {
+      expect(renderBodyDemo(id, 0.5), id).toBe("");
+      expect(getBodyDemo(id), id).toBeNull();
+    }
   });
 
-  it("barbell row (side view): a real hinge — the head reaches forward", () => {
-    const maxX = (svg: string) =>
-      Math.max(
-        ...[...svg.matchAll(/points="([^"]+)"/g)]
-          .flatMap((m) => m[1].trim().split(" "))
-          .map((pair) => Number(pair.split(",")[0]))
-      );
-    const svg0 = renderBodyDemo("barbell-row", 0);
-    expect(maxX(svg0)).toBeGreaterThan(120); // torso hinged toward horizontal
-    expect(svg0).not.toBe(renderBodyDemo("barbell-row", 1)); // arm rows
+  it("dormant side machinery still computes valid poses (IK sane)", () => {
+    // The rig stays healthy while gated so it can be re-enabled.
+    for (const id of ["bench-press", "barbell-row", "push-ups"]) {
+      const pose = BODY_DEMOS[id].pose(0.5);
+      expect(Object.keys(pose).length, id).toBeGreaterThan(3);
+      for (const ops of Object.values(pose))
+        for (const op of ops!)
+          if (op.kind === "rotate") expect(Number.isFinite(op.deg)).toBe(true);
+    }
   });
 
   it("calf raise: body rises but the feet stay planted", () => {

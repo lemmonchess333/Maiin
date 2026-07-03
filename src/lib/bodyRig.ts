@@ -1026,8 +1026,19 @@ const DEMO_ALIASES: Record<string, string> = {
   "t-bar-row": "barbell-row",
 };
 
+/* Side-view demos are DORMANT pending art that passes the product
+ * owner's bar. The full rig (bodySideData pieces, IK, scenes) works and
+ * is exercised by tests, but these ids fall back to the photo/diagram
+ * ladder in the app — the project doctrine is "a wrong demo is worse
+ * than no demo", and the owner judged the current side figure below the
+ * vendored front/back art. Flip SIDE_DEMOS_ENABLED when the figure (or
+ * replacement art traced from an owner-approved reference) passes. */
+export const SIDE_DEMOS_ENABLED = false;
+
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
-  return BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
+  const demo = BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
+  if (demo && demo.view === "side" && !SIDE_DEMOS_ENABLED) return null;
+  return demo;
 }
 
 /* ── Rendering ────────────────────────────────────────────────── */
