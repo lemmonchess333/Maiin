@@ -18,11 +18,11 @@ import {
   signInWithRedirect,
   getRedirectResult,
   signInWithCredential,
-  sendPasswordResetEmail,
   fetchSignInMethodsForEmail,
   type User,
   type UserCredential,
 } from "firebase/auth";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { isNativePlatform } from "@/lib/platform";
@@ -862,7 +862,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    /* Routed through the server callable, NOT the client
+       sendPasswordResetEmail: the client SDK refuses OAuth-only accounts
+       (no Firebase password to reset) and fails SILENTLY under enumeration
+       protection — the dead end a Google user hit. The callable mints the
+       link via the Admin SDK (works for any account) and emails it via
+       Resend, so a Google/Apple user can set a password. Matches Spotify /
+       MyFitnessPal. Native uses the same callable. */
+    const fn = httpsCallable<{ email: string }, { ok: boolean }>(
+      getFunctions(),
+      "sendPasswordResetLinkCallable"
+    );
+    await fn({ email: email.trim() });
   }, []);
 
   /* Which sign-in methods an email is registered with (e.g. ["google.com"]
