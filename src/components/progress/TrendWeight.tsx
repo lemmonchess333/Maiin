@@ -2,7 +2,11 @@ import { useMemo, useState, useEffect } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
-import { calculateEMA } from "@/utils/weightTrend";
+import {
+  calculateEMA,
+  deriveGoalWeightKg,
+  projectGoalDate,
+} from "@/utils/weightTrend";
 import { THEME } from "@/lib/theme";
 import {
   computeDataConfidence,
@@ -92,13 +96,9 @@ export function TrendWeight() {
 
   const startWeight = data[0].actual;
   const currentTrend = data[data.length - 1].trend;
-  const goalWeight = profile?.program?.startWeight
-    ? profile.program.goal === "cut"
-      ? profile.program.startWeight - 5
-      : profile.program.goal === "lean bulk"
-        ? profile.program.startWeight + 3
-        : profile.program.startWeight
-    : undefined;
+  // Rev1: derivation extracted to weightTrend.deriveGoalWeightKg so the
+  // Weekly Review shows the same goal this chart does.
+  const goalWeight = deriveGoalWeightKg(profile?.program);
 
   const trendDisplay = Number.isFinite(currentTrend)
     ? convert(currentTrend)
@@ -147,27 +147,14 @@ export function TrendWeight() {
   //   2. The trend is moving in the direction of the goal, and
   //   3. The projected ETA is under ~2 years (otherwise it becomes
   //      demotivating noise — "your goal is 847 days away").
-  const projectedGoal: { date: string; weeks: number } | null = (() => {
-    if (!goalWeight || !Number.isFinite(goalWeight)) return null;
-    if (!hasEnoughForProjection) return null;
-    const slope = (data[data.length - 1].trend - data[0].trend) / daysSpan; // kg/day
-    const remaining = goalWeight - currentTrend; // +ve if goal is higher, -ve if lower
-    // Directions mismatch → not on track for goal, suppress.
-    if (slope === 0) return null;
-    if (remaining > 0 !== slope > 0) return null;
-    const daysToGoal = remaining / slope;
-    if (!Number.isFinite(daysToGoal) || daysToGoal <= 0) return null;
-    if (daysToGoal > 730) return null;
-    const eta = new Date();
-    eta.setDate(eta.getDate() + Math.round(daysToGoal));
-    const dateLabel = eta.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year:
-        eta.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-    });
-    return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
-  })();
+  // Rev1: extracted to weightTrend.projectGoalDate (same gates: T3
+  // confidence, direction match, <=730-day ETA) so the Weekly Review
+  // reuses this exact projection instead of re-deriving it.
+  const projectedGoal = projectGoalDate({
+    trendSeries: data,
+    goalWeight,
+    hasProjection: hasEnoughForProjection,
+  });
 
   // #984 — qualitative header copy for the hidden-number path. Reads
   // the trend slope (start vs current smoothed value) and, when a
