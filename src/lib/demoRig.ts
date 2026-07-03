@@ -247,9 +247,6 @@ const rawPoly = (pts: Pt[], fill: string) =>
 /** Cut-paper facet: an expanded seam-tone underlay + an inset fill, so
  *  adjacent facets read as shapes separated by even dark channels — the
  *  reference figure's construction — instead of stroked outlines. */
-const poly = (pts: Pt[], fill: string) =>
-  rawPoly(pts, SEAM) + rawPoly(insetPoly(pts, 1.1), fill);
-
 /** Render a group of facets cut-paper style: one exact seam-tone underlay
  *  pass (their union forms the group silhouette with a hairline dark rim),
  *  then all fills inset — adjacent facets separate into even channels. */
