@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import {
-  renderRigSvg,
-  samplePose,
-  type RigDemo,
-} from "@/lib/demoRig";
+import { renderBodyDemo } from "@/lib/bodyRig";
 
 interface ExerciseRigDemoProps {
-  demo: RigDemo;
+  exerciseId: string;
   /** Exercise name, for the accessible label. */
   name: string;
   /** When false the loop is paused (hidden sheets shouldn't burn rAF). */
@@ -15,32 +11,25 @@ interface ExerciseRigDemoProps {
 }
 
 /* One rep = descend + hold + ascend + hold. Continuous interpolation —
- * unlike the photo flipbook there are no discrete frames to cut between,
- * so the motion is genuinely smooth. Holds at the range-of-motion extremes
- * mirror the real cadence of a controlled rep (and the photo player's
- * turnaround holds). */
+ * no discrete frames, so the motion is genuinely smooth. Holds at the
+ * extremes mirror a controlled rep's cadence. */
 const TRAVEL_MS = 1400;
 const HOLD_MS = 520;
-const FPS_INTERVAL = 1000 / 30; // 30fps is plenty for a calm demo
+const FPS_INTERVAL = 1000 / 30;
 
 /**
- * The code-built exercise demo (Rev of D-LIFT-20): the app's own faceted
- * vector figure performing the movement — same visual language as the
- * muscle map, purple fills assigned per exercise by us. Deterministic,
- * zero assets, theme-static like the reference art.
- *
- * Reduced-motion users get a static 2-up of the range-of-motion extremes
- * (same convention as ExerciseDemoPlayer's fallback).
+ * Animated exercise demo built from the REAL muscle-map figure (bodyRig):
+ * the exact react-body-highlighter polygons the Form view already renders,
+ * moved by skeletal transforms, working muscles in the same two purples.
+ * Reduced-motion users get a static two-up of the extremes.
  */
 export default function ExerciseRigDemo({
-  demo,
+  exerciseId,
   name,
   active = true,
 }: ExerciseRigDemoProps) {
   const reducedMotion = useReducedMotion();
-  const [svg, setSvg] = useState(() =>
-    renderRigSvg(samplePose(demo.keyframes, 0), demo.tint, demo.equipment)
-  );
+  const [svg, setSvg] = useState(() => renderBodyDemo(exerciseId, 0));
   const rafRef = useRef<number>(0);
   const lastDrawRef = useRef(0);
 
@@ -56,34 +45,18 @@ export default function ExerciseRigDemo({
 
       const m = (now - start) % cycle;
       let t: number;
-      if (m < TRAVEL_MS) {
-        t = m / TRAVEL_MS; // descending
-      } else if (m < TRAVEL_MS + HOLD_MS) {
-        t = 1; // bottom hold
-      } else if (m < 2 * TRAVEL_MS + HOLD_MS) {
-        t = 1 - (m - TRAVEL_MS - HOLD_MS) / TRAVEL_MS; // ascending
-      } else {
-        t = 0; // top hold
-      }
-      setSvg(
-        renderRigSvg(samplePose(demo.keyframes, t), demo.tint, demo.equipment)
-      );
+      if (m < TRAVEL_MS) t = m / TRAVEL_MS;
+      else if (m < TRAVEL_MS + HOLD_MS) t = 1;
+      else if (m < 2 * TRAVEL_MS + HOLD_MS)
+        t = 1 - (m - TRAVEL_MS - HOLD_MS) / TRAVEL_MS;
+      else t = 0;
+      setSvg(renderBodyDemo(exerciseId, t));
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [demo, reducedMotion, active]);
+  }, [exerciseId, reducedMotion, active]);
 
   if (reducedMotion) {
-    const top = renderRigSvg(
-      samplePose(demo.keyframes, 0),
-      demo.tint,
-      demo.equipment
-    );
-    const bottom = renderRigSvg(
-      samplePose(demo.keyframes, 1),
-      demo.tint,
-      demo.equipment
-    );
     return (
       <div
         role="img"
@@ -91,12 +64,12 @@ export default function ExerciseRigDemo({
         className="bg-muted rounded-2xl p-4 mt-4 flex justify-center gap-3"
       >
         <div
-          className="w-1/2 max-w-[180px]"
-          dangerouslySetInnerHTML={{ __html: top }}
+          className="w-1/2 max-w-[150px]"
+          dangerouslySetInnerHTML={{ __html: renderBodyDemo(exerciseId, 0) }}
         />
         <div
-          className="w-1/2 max-w-[180px]"
-          dangerouslySetInnerHTML={{ __html: bottom }}
+          className="w-1/2 max-w-[150px]"
+          dangerouslySetInnerHTML={{ __html: renderBodyDemo(exerciseId, 1) }}
         />
       </div>
     );
@@ -109,7 +82,7 @@ export default function ExerciseRigDemo({
       className="bg-muted rounded-2xl p-4 mt-4"
     >
       <div
-        className="mx-auto max-w-[230px]"
+        className="mx-auto max-w-[190px]"
         dangerouslySetInnerHTML={{ __html: svg }}
       />
     </div>

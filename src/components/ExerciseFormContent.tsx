@@ -12,7 +12,7 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getRigDemo } from "@/lib/demoRig";
+import { getBodyDemo } from "@/lib/bodyRig";
 import { EXERCISES } from "@/lib/exercises";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
@@ -118,7 +118,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   const exerciseId = EXERCISES.find(
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
-  const rigDemo = exerciseId ? getRigDemo(exerciseId) : null;
+  const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
   const hasAnimation = !rigDemo && demo.images.length > 0 && !demoFailed;
 
   return (
@@ -142,10 +142,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           plays); muscles worked are conveyed by the pills below. The `key`
           gives each exercise a fresh player. onUnavailable flips back to the
           muscle diagram if every frame fails to load. */}
-      {rigDemo && (
+      {rigDemo && exerciseId && (
         <ExerciseRigDemo
-          key={demo.name}
-          demo={rigDemo}
+          key={exerciseId}
+          exerciseId={exerciseId}
           name={demo.name}
           active={active}
         />
