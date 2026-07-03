@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { friendlyAuthError, providerHint } from "@/lib/authErrors";
+import {
+  friendlyAuthError,
+  providerHint,
+  duplicateEmailHint,
+} from "@/lib/authErrors";
 import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -104,6 +108,32 @@ export default function Login() {
     }
   };
 
+  /* Shared error surface for the OAuth buttons. The high-value case is
+     account-exists-with-different-credential — the duplicate-account trap
+     (a friend with an Apple account tapped Google, hit a dead generic
+     error, and created a second account). Firebase attaches the colliding
+     email to the error; look up its real sign-in methods and steer to the
+     right button by name. */
+  const surfaceOAuthError = async (err: unknown) => {
+    const message = err instanceof Error ? err.message : "Something went wrong";
+    /* popup-closed = user cancelled. Silent, no error toast. */
+    if (message.includes("popup-closed")) return;
+    if (message.includes("account-exists-with-different-credential")) {
+      const collidingEmail = (err as { customData?: { email?: string } })
+        ?.customData?.email;
+      if (collidingEmail) {
+        const hint = duplicateEmailHint(
+          await fetchSignInMethods(collidingEmail)
+        );
+        if (hint) {
+          setError(hint);
+          return;
+        }
+      }
+    }
+    setError(friendlyAuthError(message));
+  };
+
   const handleGoogle = async () => {
     setError("");
     setNotice("");
@@ -111,12 +141,7 @@ export default function Login() {
     try {
       await signInWithGoogle();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      /* popup-closed = user cancelled. Silent, no error toast. */
-      if (!message.includes("popup-closed")) {
-        setError(friendlyAuthError(message));
-      }
+      await surfaceOAuthError(err);
     } finally {
       setLoadingAction(null);
     }
@@ -129,11 +154,7 @@ export default function Login() {
     try {
       await signInWithApple();
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
-      if (!message.includes("popup-closed")) {
-        setError(friendlyAuthError(message));
-      }
+      await surfaceOAuthError(err);
     } finally {
       setLoadingAction(null);
     }

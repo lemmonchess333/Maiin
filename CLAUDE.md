@@ -199,6 +199,8 @@ Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 | `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                  |
 | `onWorkoutCreated`        | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance |
 | `onRunCreated`            | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance          |
+| `sendPasswordResetLinkCallable` | HTTPS callable (unauthed) | Forgot-password: Admin-minted set-password link emailed via Resend (works for OAuth-only accounts) |
+| `sendVerificationEmailCallable` | HTTPS callable (authed)   | Email verification: Admin-minted verify link for the caller's own email, emailed via Resend        |
 
 Helper: `syncChallengeProgress()` — auto-updates challenge participant progress (workout_count, total_volume, total_km)
 
