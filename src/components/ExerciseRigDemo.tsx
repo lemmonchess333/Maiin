@@ -87,7 +87,7 @@ export default function ExerciseRigDemo({
       <div
         role="img"
         aria-label={`${name} demonstration — start and end positions`}
-        className="bg-[#121214] rounded-2xl p-4 mt-4 flex justify-center gap-3"
+        className="bg-stage rounded-2xl p-4 mt-4 flex justify-center gap-3"
       >
         <div
           className="w-1/2 max-w-[150px]"
@@ -105,7 +105,7 @@ export default function ExerciseRigDemo({
     <div
       role="img"
       aria-label={`${name} demonstration`}
-      className="bg-[#121214] rounded-2xl p-4 mt-4"
+      className="bg-stage rounded-2xl p-4 mt-4"
     >
       <div
         className="mx-auto max-w-[190px]"
