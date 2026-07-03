@@ -132,6 +132,28 @@ describe("renderBodyDemo", () => {
     expect(end - start).toBeGreaterThan(50);
   });
 
+  it("bench press (side view): the arm presses from the chest to lockout", () => {
+    const minY = (svg: string) => Math.min(...polyYs(svg));
+    const bottom = renderBodyDemo("bench-press", 0);
+    const lockout = renderBodyDemo("bench-press", 1);
+    // The hand end of the arm rises well clear of the lying body.
+    expect(minY(bottom) - minY(lockout)).toBeGreaterThan(20);
+    // Side view renders the piece architecture: stage-coloured seams.
+    expect(bottom.includes('stroke="#111113"')).toBe(true);
+  });
+
+  it("barbell row (side view): a real hinge — the head reaches forward", () => {
+    const maxX = (svg: string) =>
+      Math.max(
+        ...[...svg.matchAll(/points="([^"]+)"/g)]
+          .flatMap((m) => m[1].trim().split(" "))
+          .map((pair) => Number(pair.split(",")[0]))
+      );
+    const svg0 = renderBodyDemo("barbell-row", 0);
+    expect(maxX(svg0)).toBeGreaterThan(120); // torso hinged toward horizontal
+    expect(svg0).not.toBe(renderBodyDemo("barbell-row", 1)); // arm rows
+  });
+
   it("calf raise: body rises but the feet stay planted", () => {
     const maxY = (svg: string) => Math.max(...polyYs(svg));
     const minY = (svg: string) => Math.min(...polyYs(svg));
@@ -155,6 +177,8 @@ describe("registry", () => {
       "lat-pulldown",
       "rope-tricep-pushdown",
       "dips",
+      "bench-press",
+      "barbell-row",
     ]) {
       const d = BODY_DEMOS[id];
       expect(d, id).toBeTruthy();

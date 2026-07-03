@@ -23,6 +23,7 @@
  */
 
 import { ANTERIOR, POSTERIOR, type BodyPoly } from "./bodyModelData";
+import { SIDE_PIECES, SIDE_ANCHORS } from "./bodySideData";
 import { THEME } from "./theme";
 
 /* ── Palette (exactly what the Form view's Model renders) ─────── */
@@ -32,6 +33,10 @@ const PRIMARY = THEME.lifting; // #7B72E9
 const SECONDARY = THEME.liftingLight; // #9590E0
 const GEAR = "#4A4B52";
 const GEAR_DARK = "#35363C";
+/** The demo stage surface (--stage, #111113). Side-view pieces use it
+ *  for their separation strokes, so the seams read as the stage showing
+ *  through — identical language to the front/back facet gaps. */
+const STAGE = "#111113";
 
 /* ── Measured joint anchors (viewBox 0 0 100 200) ─────────────── */
 
@@ -82,6 +87,24 @@ const POST_FORE_LEN = Math.hypot(
 const PULLUP_BAR_Y = -12;
 const PULLUP_GRIP_L: Pt = [6, PULLUP_BAR_Y];
 const PULLUP_GRIP_R: Pt = [94, PULLUP_BAR_Y];
+
+/* Side-view arm segment lengths. */
+const SIDE_UPPER_LEN = Math.hypot(
+  SIDE_ANCHORS.elbow[0] - SIDE_ANCHORS.shoulder[0],
+  SIDE_ANCHORS.elbow[1] - SIDE_ANCHORS.shoulder[1]
+);
+const SIDE_FORE_LEN = Math.hypot(
+  SIDE_ANCHORS.hand[0] - SIDE_ANCHORS.elbow[0],
+  SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
+);
+
+/* Muscle-aura rings — nested convex hulls at falling opacity (the
+ * no-filter fake blur; see the glow block in the renderers). */
+const GLOW_RINGS: [number, number][] = [
+  [1.05, 0.2],
+  [1.12, 0.12],
+  [1.2, 0.06],
+];
 
 /* ── Skeletal grouping ────────────────────────────────────────── */
 
@@ -311,7 +334,7 @@ const easeInOutSine = (t: number) =>
   0.5 - 0.5 * Math.cos(Math.PI * Math.min(Math.max(t, 0), 1));
 
 export interface BodyDemo {
-  view: "anterior" | "posterior";
+  view: "anterior" | "posterior" | "side";
   /** muscle name → tint level (the SAME muscle names the Form view maps). */
   tint: Record<string, "primary" | "secondary">;
   /** Which end of t is the top of the CONCENTRIC (lifting) phase. Squats
@@ -333,8 +356,15 @@ export interface BodyDemo {
    *  front of the torso, so a behind-the-body bar would vanish). */
   barInFront?: boolean;
   bar?: (_e: number, pose: Partial<Record<GroupName, Op[]>>) => [Pt, Pt] | null;
+  /** Free scene furniture (a bench, a floor line) drawn behind the
+   *  body — raw SVG in GEAR colours. Side-view demos use this. */
+  scene?: (e: number, pose: Partial<Record<GroupName, Op[]>>) => string;
   /** Ground line override (hanging demos float above a lower floor). */
   groundY?: number;
+  /** Shadow centre override (lying scenes aren't centred on x=50). */
+  shadowCx?: number;
+  /** Shadow radius override (a lying body casts a long shadow). */
+  shadowRx?: number;
 }
 
 const lerp = (a: number, b: number, e: number) => a + (b - a) * e;
@@ -741,6 +771,115 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       };
     },
   },
+
+  "bench-press": {
+    view: "side",
+    concentricTo: 1,
+    viewBox: "-64 30 186 152",
+    groundY: 172,
+    shadowCx: 40,
+    shadowRx: 68,
+    tint: {
+      chest: "primary",
+      triceps: "secondary",
+      "front-deltoids": "secondary",
+    },
+    pose: (e) => {
+      /* Side view, lying on a bench face-up (whole body rotated −90°
+       * about the hip line, head to the left). Knees bend so the feet
+       * plant on the floor; the arm presses straight up with the elbow
+       * IK-solved between the fixed shoulder and the hand's vertical
+       * bar path. */
+      const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
+      const S = SIDE_ANCHORS.shoulder;
+      const H: Pt = [S[0] + lerp(24, 51.5, e), S[1] + lerp(12, 0, e)];
+      const arm = aimArm(
+        { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
+        // out −1: the elbow tucks toward the feet/floor side, the real
+        // bench groove (+1 folded it over the face).
+        solveElbow(S, H, SIDE_UPPER_LEN, SIDE_FORE_LEN, -1),
+        H,
+        0
+      );
+      return {
+        head: [G],
+        torso: [G],
+        thighL: [{ kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip }, G],
+        shankL: [
+          { kind: "rotate", deg: 55, pivot: SIDE_ANCHORS.knee },
+          { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
+          G,
+        ],
+        upperArmL: [...arm.upper, G],
+        foreArmL: [...arm.fore, G],
+      };
+    },
+    // Bench pad + legs + floor line, drawn behind the body.
+    scene: () =>
+      `<rect x="-60" y="109" width="130" height="7" rx="2.5" fill="${GEAR}"/>` +
+      `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
+      `<line x1="-58" y1="171" x2="118" y2="171" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
+  },
+
+  "barbell-row": {
+    view: "side",
+    concentricTo: 1,
+    viewBox: "-4 38 172 174",
+    groundY: 204,
+    shadowCx: 62,
+    shadowRx: 40,
+    tint: {
+      "upper-back": "primary",
+      biceps: "secondary",
+      "lower-back": "secondary",
+    },
+    pose: (e) => {
+      /* Bent-over row: a REAL hinge (the torso rotates about the hip —
+       * the thing only a side view can show), soft knees, and the arm
+       * rowing from a dead hang to the lower ribs, elbow driving up
+       * past the back line. The arm is aimed in PRE-hinge space (rest
+       * anchors) with the hinge composed LAST — same chain pattern as
+       * the bench's global rotation. */
+      const HINGE = 62;
+      const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
+      const unhinge: Op[] = [
+        { kind: "rotate", deg: -HINGE, pivot: SIDE_ANCHORS.hip },
+      ];
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T]);
+      // Targets in FINAL space: dead hang below the hinged shoulder →
+      // hand at the lower ribs; mapped back to pre-hinge space for IK.
+      const hFinal: Pt = [lerp(S[0] + 1, 74, e), lerp(S[1] + 52.5, 97, e)];
+      const hPre = applyToPoint(hFinal, unhinge);
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
+        solveElbow(
+          SIDE_ANCHORS.shoulder,
+          hPre,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
+          -1
+        ),
+        hPre,
+        0
+      );
+      return {
+        head: [T],
+        torso: [T],
+        thighL: [{ kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip }],
+        shankL: [
+          { kind: "rotate", deg: -12, pivot: SIDE_ANCHORS.knee },
+          { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip },
+        ],
+        upperArmL: [...arm.upper, T],
+        foreArmL: [...arm.fore, T],
+      };
+    },
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern. */
@@ -765,6 +904,11 @@ const DEMO_ALIASES: Record<string, string> = {
   "reverse-grip-cable-pushdown": "rope-tricep-pushdown",
   "tricep-dips": "dips",
   "weighted-chest-dip": "dips",
+  "db-bench": "bench-press",
+  "smith-bench-press": "bench-press",
+  "pendlay-row": "barbell-row",
+  "db-row": "barbell-row",
+  "t-bar-row": "barbell-row",
 };
 
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
@@ -791,9 +935,12 @@ export function renderBodyDemo(
 ): string {
   const demo = getBodyDemo(exerciseId); // alias-aware — db-curl must render
   if (!demo) return "";
+  if (demo.view === "side") return renderSideDemo(demo, t, effort);
   const e = easeInOutSine(t);
   const pose = demo.pose(e);
-  const data = demo.view === "anterior" ? ANTERIOR : POSTERIOR;
+  // The side view returned above — narrow the view for the closures.
+  const view = demo.view === "posterior" ? "posterior" : "anterior";
+  const data = view === "anterior" ? ANTERIOR : POSTERIOR;
   const tintOpacity = (level: "primary" | "secondary") =>
     level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;
 
@@ -802,7 +949,7 @@ export function renderBodyDemo(
   const primaryPts = new Map<string, Pt[]>();
   const polys = data
     .map((p) => {
-      const ops = pose[groupOf(demo.view, p)] ?? [];
+      const ops = pose[groupOf(view, p)] ?? [];
       const pts = applyOps(p.points as Pt[], ops);
       const level = demo.tint[p.muscle];
       if (level === "primary") {
@@ -828,11 +975,6 @@ export function renderBodyDemo(
    * brightening with effort. Zero SVG filters (WKWebView glow rule) —
    * the falloff is faked with three enlarged hulls at falling opacity. */
   const glowStrength = 0.35 + 0.65 * effort;
-  const GLOW_RINGS: [number, number][] = [
-    [1.05, 0.2],
-    [1.12, 0.12],
-    [1.2, 0.06],
-  ];
   const glow =
     `<g class="glow">` +
     [...primaryPts.values()]
@@ -851,7 +993,7 @@ export function renderBodyDemo(
     `</g>`;
 
   const feet =
-    demo.view === "anterior"
+    view === "anterior"
       ? ANTERIOR_FEET.map((f) => {
           const pts = applyOps(f.points, pose[f.group] ?? []);
           return `<polygon points="${pts
@@ -953,6 +1095,82 @@ export function renderBodyDemo(
     polys +
     feet +
     barFront +
+    `</svg>`
+  );
+}
+
+/* ── Side-view renderer ──────────────────────────────────────────
+ * The profile body is solid overlapping PIECES (bodySideData.ts), not a
+ * facet mosaic: each piece paints as a filled outline with a stage-
+ * coloured separation stroke, its tint regions, then its muscle seams —
+ * so rotations never open cracks and the seams read exactly like the
+ * front/back facet gaps on the dark stage. */
+function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
+  const e = easeInOutSine(t);
+  const pose = demo.pose(e);
+  const tintOpacity = (level: "primary" | "secondary") =>
+    level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;
+  const P = (pts: Pt[]) =>
+    pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
+
+  const primaryPts = new Map<string, Pt[]>();
+  const body = SIDE_PIECES.map((piece) => {
+    const ops = pose[piece.group] ?? [];
+    const outline = applyOps(piece.outline as Pt[], ops);
+    const tints = piece.tints
+      .map((tm) => ({
+        level: demo.tint[tm.muscle],
+        muscle: tm.muscle,
+        pts: applyOps(tm.points as Pt[], ops),
+      }))
+      .filter((tm) => tm.level);
+    for (const tm of tints)
+      if (tm.level === "primary")
+        primaryPts.set(tm.muscle, [
+          ...(primaryPts.get(tm.muscle) ?? []),
+          ...tm.pts,
+        ]);
+    return (
+      `<polygon points="${P(outline)}" fill="${BODY}" stroke="${STAGE}" stroke-width="1.4" stroke-linejoin="round"/>` +
+      tints
+        .map(
+          (tm) =>
+            `<polygon points="${P(tm.pts)}" fill="${tm.level === "primary" ? PRIMARY : SECONDARY}" fill-opacity="${tintOpacity(tm.level!).toFixed(3)}"/>`
+        )
+        .join("") +
+      piece.seams
+        .map(
+          (sm) =>
+            `<polyline points="${P(applyOps(sm as Pt[], ops))}" fill="none" stroke="${STAGE}" stroke-width="1.2" stroke-linecap="round"/>`
+        )
+        .join("")
+    );
+  }).join("");
+
+  const glowStrength = 0.35 + 0.65 * effort;
+  const glow =
+    `<g class="glow">` +
+    [...primaryPts.values()]
+      .map((pts) => {
+        const hull = convexHull(pts);
+        return GLOW_RINGS.map(
+          ([k, o]) =>
+            `<polygon points="${P(scaleAboutCentroid(hull, k))}" fill="${PRIMARY}" opacity="${(o * glowStrength).toFixed(3)}"/>`
+        ).join("");
+      })
+      .join("") +
+    `</g>`;
+
+  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
+  const scene = demo.scene?.(e, pose) ?? "";
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
+    shadow +
+    scene +
+    glow +
+    body +
     `</svg>`
   );
 }
