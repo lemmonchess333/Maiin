@@ -11,14 +11,24 @@ const BG = { r: 26, g: 26, b: 31, alpha: 1 };
 
 async function main() {
   for (const id of Object.keys(BODY_DEMOS)) {
-    for (const t of [0, 0.5, 1]) {
-      const svg = renderBodyDemo(id, t);
+    // Mirror the in-app effort curve: soft at the top, loading at the
+    // bottom, full drive mid-concentric — so the preview shows the
+    // highlight breathing, not just the pose.
+    for (const [t, effort] of [
+      [0, 0.5],
+      [0.5, 1],
+      [1, 0.8],
+    ] as const) {
+      const svg = renderBodyDemo(id, t, effort);
       await sharp(Buffer.from(svg), { density: 300 })
         .resize(240, 450, { fit: "contain", background: BG })
         .flatten({ background: BG })
         .png()
         .toFile(
-          resolve(out, `${id}-${t === 0 ? "top" : t === 1 ? "bottom" : "mid"}.png`)
+          resolve(
+            out,
+            `${id}-${t === 0 ? "top" : t === 1 ? "bottom" : "mid"}.png`
+          )
         );
     }
     console.log(`rendered ${id}`);

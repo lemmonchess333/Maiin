@@ -106,6 +106,11 @@ function groupOf(view: "anterior" | "posterior", p: BodyPoly): GroupName {
 export type Op =
   | { kind: "rotate"; deg: number; pivot: Pt }
   | { kind: "scaleY"; k: number; pivotY: number }
+  /** Scale by k ALONG the axis at `deg` (same angle convention as rotate),
+   *  through `pivot` — width across the limb is preserved. This is the 2D
+   *  foreshortening cheat: a forearm flexing TOWARD the viewer shortens
+   *  along its own length without getting thinner. */
+  | { kind: "scaleAxis"; k: number; deg: number; pivot: Pt }
   | { kind: "translate"; dx: number; dy: number };
 
 function applyOps(pts: Pt[], ops: Op[]): Pt[] {
@@ -115,6 +120,19 @@ function applyOps(pts: Pt[], ops: Op[]): Pt[] {
       out = out.map(([x, y]) => [x + op.dx, y + op.dy]);
     } else if (op.kind === "scaleY") {
       out = out.map(([x, y]) => [x, op.pivotY + (y - op.pivotY) * op.k]);
+    } else if (op.kind === "scaleAxis") {
+      // R(deg) · S_y(k) · R(-deg) about the pivot.
+      const a = (op.deg * Math.PI) / 180;
+      const c = Math.cos(a);
+      const s = Math.sin(a);
+      const [px, py] = op.pivot;
+      out = out.map(([x, y]) => {
+        const dx = x - px;
+        const dy = y - py;
+        const rx = dx * c + dy * s; // rotate by -deg → axis is vertical
+        const ry = (-dx * s + dy * c) * op.k; // scale along it
+        return [px + rx * c - ry * s, py + rx * s + ry * c]; // rotate back
+      });
     } else {
       const a = (op.deg * Math.PI) / 180;
       const c = Math.cos(a);
@@ -172,6 +190,15 @@ export interface BodyDemo {
   view: "anterior" | "posterior";
   /** muscle name → tint level (the SAME muscle names the Form view maps). */
   tint: Record<string, "primary" | "secondary">;
+  /** Which end of t is the top of the CONCENTRIC (lifting) phase. Squats
+   *  and hinges descend first (concentric drives back to 0); presses,
+   *  curls and raises lift first (concentric drives to 1). The player
+   *  uses this to put the slow eccentric on the right half of the rep,
+   *  and the renderer to breathe the ground shadow with body depth. */
+  concentricTo: 0 | 1;
+  /** Movements whose envelope exceeds the body's column (e.g. a lateral
+   *  raise at full span) declare a wider canvas. */
+  viewBox?: string;
   /** Group transforms as a function of eased progress e ∈ [0,1]. */
   pose: (e: number) => Partial<Record<GroupName, Op[]>>;
   /** Weight visual: a rigid barbell needs endpoints that keep a constant
@@ -188,6 +215,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   squat: {
     view: "anterior",
     equip: "barbell",
+    concentricTo: 0,
     tint: { quadriceps: "primary", abductors: "secondary", abs: "secondary" },
     pose: (e) => {
       const k = lerp(1, 0.68, e); // thigh compression about the knee line
@@ -208,8 +236,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
           { kind: "scaleY", k, pivotY: ANT.kneeR[1] },
           { kind: "rotate", deg: flare, pivot: ANT.kneeR },
         ],
-        shankL: [{ kind: "rotate", deg: -flare * 0.5, pivot: [ANT.kneeL[0], ANT.ankleY] }],
-        shankR: [{ kind: "rotate", deg: flare * 0.5, pivot: [ANT.kneeR[0], ANT.ankleY] }],
+        shankL: [
+          {
+            kind: "rotate",
+            deg: -flare * 0.5,
+            pivot: [ANT.kneeL[0], ANT.ankleY],
+          },
+        ],
+        shankR: [
+          {
+            kind: "rotate",
+            deg: flare * 0.5,
+            pivot: [ANT.kneeR[0], ANT.ankleY],
+          },
+        ],
         torso: dive,
         head: dive,
         upperArmL: dive,
@@ -220,7 +260,8 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     },
     // Bar on the traps, dropping with the body.
     bar: (_e, pose) => {
-      const y = 46 + ((pose.torso?.[0] as { dy?: number } | undefined)?.dy ?? 0);
+      const y =
+        46 + ((pose.torso?.[0] as { dy?: number } | undefined)?.dy ?? 0);
       return [
         [16, y],
         [84, y],
@@ -231,27 +272,34 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "overhead-press": {
     view: "anterior",
     equip: "dumbbells",
+    concentricTo: 1,
     tint: {
       "front-deltoids": "primary",
       triceps: "secondary",
       neck: "secondary",
     },
     pose: (e) => {
-      // Rack: forearms folded so the bar sits at the clavicle. Lockout:
-      // the fold opens as the whole arm rotates overhead — the bar path
-      // stays close to the body like a real press, not a front raise.
-      const lift = lerp(52, 160, e); // whole-arm rotation about the shoulder
-      const fold = lerp(92, 0, e); // elbows extend as the weights rise
+      /* Goal-post press. The forearm stays WORLD-VERTICAL for the whole
+       * rep (hand directly above elbow) while the upper arm arcs about
+       * the shoulder — rack (elbows low, DBs at the shoulders) → elbows
+       * out at shoulder height → lockout overhead. Hands travel straight
+       * up, exactly how a front-view DB press reads; the earlier
+       * fold+lift version swung through a T-pose and looked like a
+       * lateral raise. Numbers: rest upper arm ≈10° outward of straight
+       * down, rest forearm ≈17–19°; forearm world angle must equal 180°
+       * (up), so fold = 163 − arm. */
+      const arm = lerp(10, 155, e); // outward whole-arm rotation
+      const fold = 163 - arm; // keeps the forearm vertical
       return {
-        upperArmL: [{ kind: "rotate", deg: lift, pivot: ANT.shoulderL }],
+        upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
         foreArmL: [
-          { kind: "rotate", deg: -fold, pivot: ANT.elbowL },
-          { kind: "rotate", deg: lift, pivot: ANT.shoulderL },
+          { kind: "rotate", deg: fold, pivot: ANT.elbowL },
+          { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
         ],
-        upperArmR: [{ kind: "rotate", deg: -lift, pivot: ANT.shoulderR }],
+        upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
         foreArmR: [
-          { kind: "rotate", deg: fold, pivot: ANT.elbowR },
-          { kind: "rotate", deg: -lift, pivot: ANT.shoulderR },
+          { kind: "rotate", deg: -fold, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
         ],
       };
     },
@@ -265,20 +313,31 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   "barbell-curl": {
     view: "anterior",
     equip: "dumbbells",
+    concentricTo: 1,
     tint: { biceps: "primary", forearm: "secondary" },
     pose: (e) => {
-      // Forearms fold up about the elbows; upper arms stay pinned.
-      const deg = lerp(0, 104, e);
-      const drift = lerp(0, 7, e); // elbows ease forward a touch
+      /* Front-view curl. The forearm rotates up about the elbow AND
+       * foreshortens along its own axis (scaleAxis) — at mid-rep a real
+       * curl points the forearm at the viewer, so in 2D it must read
+       * SHORT, not swung out sideways (the unforeshortened version was
+       * a dumbbell chicken-wing that clipped the canvas). Foreshortening
+       * peaks when the forearm crosses horizontal. */
+      const deg = lerp(0, 112, e);
+      const drift = lerp(0, 4, e); // elbows ease forward a touch
+      // Rest forearm ≈17° outside vertical; world angle from down = 17+deg.
+      const rad = ((17 + deg) * Math.PI) / 180;
+      const k = 1 - 0.45 * Math.sin(Math.min(rad, Math.PI));
       return {
         upperArmL: [{ kind: "rotate", deg: drift, pivot: ANT.shoulderL }],
         foreArmL: [
           { kind: "rotate", deg, pivot: ANT.elbowL },
+          { kind: "scaleAxis", k, deg: 17 + deg, pivot: ANT.elbowL },
           { kind: "rotate", deg: drift, pivot: ANT.shoulderL },
         ],
         upperArmR: [{ kind: "rotate", deg: -drift, pivot: ANT.shoulderR }],
         foreArmR: [
           { kind: "rotate", deg: -deg, pivot: ANT.elbowR },
+          { kind: "scaleAxis", k, deg: -(17 + deg), pivot: ANT.elbowR },
           { kind: "rotate", deg: -drift, pivot: ANT.shoulderR },
         ],
       };
@@ -293,6 +352,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   deadlift: {
     view: "posterior",
     equip: "barbell",
+    concentricTo: 0,
     tint: {
       gluteal: "primary",
       hamstring: "primary",
@@ -323,15 +383,91 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return [l, r];
     },
   },
+
+  "lateral-raise": {
+    view: "anterior",
+    equip: "dumbbells",
+    concentricTo: 1,
+    // A raise at full span is nearly two arm-lengths wide — this is the
+    // one movement whose envelope genuinely needs a wider canvas.
+    viewBox: "-46 -14 192 224",
+    tint: { "front-deltoids": "primary", neck: "secondary" },
+    pose: (e) => {
+      // Whole arm sweeps out to just below shoulder height (proper form
+      // stops at parallel); a constant soft elbow bend so the arm never
+      // reads hyper-straight, hands trailing slightly under the elbows.
+      const arm = lerp(4, 74, e);
+      return {
+        upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
+        foreArmL: [
+          { kind: "rotate", deg: -10, pivot: ANT.elbowL },
+          { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
+        ],
+        upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
+        foreArmR: [
+          { kind: "rotate", deg: 10, pivot: ANT.elbowR },
+          { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
+        ],
+      };
+    },
+    bar: (_e, pose) => {
+      const l = applyToPoint(ANT.handL, pose.foreArmL ?? []);
+      const r = applyToPoint(ANT.handR, pose.foreArmR ?? []);
+      return [l, r];
+    },
+  },
+
+  "calf-raise": {
+    view: "anterior",
+    concentricTo: 1,
+    tint: { calves: "primary" },
+    pose: (e) => {
+      /* Heels drive the body straight up — but the FEET stay planted.
+       * The shanks stretch from the ground line (tiptoe height is real:
+       * floor→knee lengthens on plantarflexion), which lifts the knees
+       * to meet the risen thighs while the foot wedges, sitting at the
+       * bottom of the same group, barely move. Translating the shanks
+       * instead floated the feet — a levitation, not a calf raise. */
+      const rise = 6.5 * e;
+      const lift: Op[] = [{ kind: "translate", dx: 0, dy: -rise }];
+      const KNEE_TO_GROUND = 55; // knee line ~148 → ground 203
+      const stretch: Op[] = [
+        { kind: "scaleY", k: 1 + rise / KNEE_TO_GROUND, pivotY: 203 },
+      ];
+      return {
+        head: lift,
+        torso: lift,
+        upperArmL: lift,
+        upperArmR: lift,
+        foreArmL: lift,
+        foreArmR: lift,
+        thighL: lift,
+        thighR: lift,
+        shankL: stretch,
+        shankR: stretch,
+      };
+    },
+  },
 };
 
 /** Sibling exercises that share a demo's motion pattern. */
 const DEMO_ALIASES: Record<string, string> = {
   "db-shoulder-press": "overhead-press",
+  "smith-shoulder-press": "overhead-press",
   "db-curl": "barbell-curl",
   "hammer-curl": "barbell-curl",
+  "ez-bar-curl": "barbell-curl",
+  "cable-curl": "barbell-curl",
   "romanian-deadlift": "deadlift",
+  "sumo-deadlift": "deadlift",
+  "trap-bar-deadlift": "deadlift",
+  "db-rdl": "deadlift",
   "front-squat": "squat",
+  "goblet-squat": "squat",
+  "bodyweight-squat": "squat",
+  "smith-machine-squat": "squat",
+  "cable-lateral-raise": "lateral-raise",
+  "standing-calf-raise": "calf-raise",
 };
 
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
@@ -344,14 +480,25 @@ export function getBodyDemo(exerciseId: string): BodyDemo | null {
  * Render the demo at progress t ∈ [0,1] (0 = start, 1 = deepest point).
  * Output matches the app's Model rendering exactly: naked polygons in the
  * library's body grey, working muscles in the Form view's two purples —
- * no strokes, natural facet gaps, viewBox 0 0 100 200.
+ * no strokes, natural facet gaps.
+ *
+ * `effort` ∈ [0,1] drives the highlight intensity — the pro-anatomy
+ * convention (Muscle & Motion et al.): working muscles BRIGHTEN through
+ * the concentric (lifting) phase and soften on the eccentric. Rendered as
+ * fill-opacity over the same two purples, so the palette never changes.
  */
-export function renderBodyDemo(exerciseId: string, t: number): string {
-  const demo = BODY_DEMOS[exerciseId];
+export function renderBodyDemo(
+  exerciseId: string,
+  t: number,
+  effort = 1
+): string {
+  const demo = getBodyDemo(exerciseId); // alias-aware — db-curl must render
   if (!demo) return "";
   const e = easeInOutSine(t);
   const pose = demo.pose(e);
   const data = demo.view === "anterior" ? ANTERIOR : POSTERIOR;
+  const tintOpacity = (level: "primary" | "secondary") =>
+    level === "primary" ? 0.72 + 0.28 * effort : 0.66 + 0.24 * effort;
 
   const polys = data
     .map((p) => {
@@ -359,10 +506,17 @@ export function renderBodyDemo(exerciseId: string, t: number): string {
       const pts = applyOps(p.points as Pt[], ops);
       const level = demo.tint[p.muscle];
       const fill =
-        level === "primary" ? PRIMARY : level === "secondary" ? SECONDARY : BODY;
+        level === "primary"
+          ? PRIMARY
+          : level === "secondary"
+            ? SECONDARY
+            : BODY;
+      const op = level
+        ? ` fill-opacity="${tintOpacity(level).toFixed(3)}"`
+        : "";
       return `<polygon points="${pts
         .map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`)
-        .join(" ")}" fill="${fill}"/>`;
+        .join(" ")}" fill="${fill}"${op}/>`;
     })
     .join("");
 
@@ -402,13 +556,16 @@ export function renderBodyDemo(exerciseId: string, t: number): string {
     weightsFront = db(ends[0]) + db(ends[1]);
   }
 
-  // Ground shadow: a weight cue that breathes with the movement depth.
-  const shadowRx = 26 + 6 * e;
+  // Ground shadow: breathes with how LOW the body sits — bigger/darker at
+  // the bottom of a squat, smaller/lighter at a press lockout or calf-
+  // raise top. Depth is e for descend-first lifts, 1−e for lift-first.
+  const depth = demo.concentricTo === 0 ? e : 1 - e;
+  const shadowRx = 26 + 6 * depth;
   const groundY = demo.view === "anterior" ? 199 : 202;
-  const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * e).toFixed(2)}"/>`;
+  const shadow = `<ellipse cx="50" cy="${groundY}" rx="${shadowRx.toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -14 116 224" role="img">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-12 -14 124 224"}" role="img">` +
     shadow +
     barBehind +
     polys +

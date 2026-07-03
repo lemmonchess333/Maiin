@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  BODY_DEMOS,
-  getBodyDemo,
-  renderBodyDemo,
-} from "../bodyRig";
+import { BODY_DEMOS, getBodyDemo, renderBodyDemo } from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
 
 function polyYs(svg: string): number[] {
@@ -65,14 +61,45 @@ describe("renderBodyDemo", () => {
     expect(renderBodyDemo("zercher-yodel", 0.5)).toBe("");
     expect(getBodyDemo("zercher-yodel")).toBeNull();
   });
+
+  it("aliased exercises render (renderBodyDemo is alias-aware)", () => {
+    // db-curl aliases barbell-curl — a direct-registry lookup would blank.
+    expect(renderBodyDemo("db-curl", 0.5)).not.toBe("");
+    expect(renderBodyDemo("goblet-squat", 0.5)).not.toBe("");
+  });
+
+  it("effort brightens the working-muscle fill", () => {
+    const soft = renderBodyDemo("squat", 0.5, 0);
+    const hard = renderBodyDemo("squat", 0.5, 1);
+    const firstOpacity = (svg: string) =>
+      Number(svg.match(/fill-opacity="([\d.]+)"/)![1]);
+    expect(firstOpacity(hard)).toBeGreaterThan(firstOpacity(soft));
+  });
+
+  it("calf raise: body rises but the feet stay planted", () => {
+    const maxY = (svg: string) => Math.max(...polyYs(svg));
+    const minY = (svg: string) => Math.min(...polyYs(svg));
+    const down = renderBodyDemo("calf-raise", 0);
+    const up = renderBodyDemo("calf-raise", 1);
+    expect(minY(down) - minY(up)).toBeGreaterThan(4); // head rose
+    expect(Math.abs(maxY(down) - maxY(up))).toBeLessThan(1); // toes didn't
+  });
 });
 
 describe("registry", () => {
-  it("all four pilot demos are defined with tints", () => {
-    for (const id of ["squat", "deadlift", "overhead-press", "barbell-curl"]) {
+  it("all demos are defined with tints and a concentric direction", () => {
+    for (const id of [
+      "squat",
+      "deadlift",
+      "overhead-press",
+      "barbell-curl",
+      "lateral-raise",
+      "calf-raise",
+    ]) {
       const d = BODY_DEMOS[id];
       expect(d, id).toBeTruthy();
       expect(Object.keys(d.tint).length, id).toBeGreaterThan(0);
+      expect([0, 1], id).toContain(d.concentricTo);
     }
   });
 });
