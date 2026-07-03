@@ -3,7 +3,15 @@
 import sharp from "sharp";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { BODY_DEMOS, renderBodyDemo } from "../src/lib/bodyRig";
+import {
+  BODY_DEMOS,
+  renderBodyDemo,
+  __unlockSideDemosForPreview,
+} from "../src/lib/bodyRig";
+
+// Contact sheets must show DORMANT side demos too — that's how they get
+// judged for re-enablement.
+__unlockSideDemosForPreview();
 
 const out = resolve(process.argv[2] ?? "/tmp/rig-preview");
 mkdirSync(out, { recursive: true });

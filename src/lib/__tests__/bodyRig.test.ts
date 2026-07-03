@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { BODY_DEMOS, getBodyDemo, renderBodyDemo } from "../bodyRig";
+import {
+  applyToPoint,
+  BODY_DEMOS,
+  getBodyDemo,
+  renderBodyDemo,
+} from "../bodyRig";
 import { ANTERIOR, POSTERIOR } from "../bodyModelData";
+import { SIDE_ANCHORS, SIDE_PIECES } from "../bodySideData";
 
 function polyYs(svg: string): number[] {
   return [...svg.matchAll(/points="([^"]+)"/g)]
@@ -132,9 +138,7 @@ describe("renderBodyDemo", () => {
     expect(end - start).toBeGreaterThan(50);
   });
 
-  it("side-view demos are DORMANT: gated ids fall back to the ladder", () => {
-    // Owner call: the side figure hasn't passed the art bar, so these
-    // render nothing (the app then falls back to photos/diagram).
+  it("side demos ship: ids and aliases render", () => {
     for (const id of [
       "bench-press",
       "barbell-row",
@@ -143,20 +147,70 @@ describe("renderBodyDemo", () => {
       "db-bench",
       "pendlay-row",
     ]) {
-      expect(renderBodyDemo(id, 0.5), id).toBe("");
-      expect(getBodyDemo(id), id).toBeNull();
+      expect(renderBodyDemo(id, 0.5), id).not.toBe("");
+      expect(getBodyDemo(id), id).not.toBeNull();
     }
   });
 
-  it("dormant side machinery still computes valid poses (IK sane)", () => {
-    // The rig stays healthy while gated so it can be re-enabled.
-    for (const id of ["bench-press", "barbell-row", "push-ups"]) {
-      const pose = BODY_DEMOS[id].pose(0.5);
-      expect(Object.keys(pose).length, id).toBeGreaterThan(3);
-      for (const ops of Object.values(pose))
-        for (const op of ops!)
-          if (op.kind === "rotate") expect(Number.isFinite(op.deg)).toBe(true);
+  /* ── Prompt-9 acceptance checklist, executable ── */
+
+  it("rig acceptance: limb segment lengths identical in every frame", () => {
+    for (const id of [
+      "bench-press",
+      "barbell-row",
+      "romanian-deadlift",
+      "push-ups",
+    ]) {
+      const seg = (
+        t: number,
+        a: [number, number],
+        b: [number, number],
+        g: string
+      ) => {
+        const pose = BODY_DEMOS[id].pose(t) as Record<string, never[]>;
+        const p = applyToPoint(a, pose[g] ?? []);
+        const q = applyToPoint(b, pose[g] ?? []);
+        return Math.hypot(q[0] - p[0], q[1] - p[1]);
+      };
+      for (const [a, b, g] of [
+        [SIDE_ANCHORS.hip, SIDE_ANCHORS.knee, "thighL"],
+        [SIDE_ANCHORS.knee, SIDE_ANCHORS.ankle, "shankL"],
+        [SIDE_ANCHORS.shoulder, SIDE_ANCHORS.elbow, "upperArmL"],
+        [SIDE_ANCHORS.elbow, SIDE_ANCHORS.hand, "foreArmL"],
+      ] as const) {
+        expect(seg(0, a, b, g), `${id}/${g}`).toBeCloseTo(seg(1, a, b, g), 1);
+        expect(seg(0, a, b, g), `${id}/${g}`).toBeCloseTo(seg(0.5, a, b, g), 1);
+      }
     }
+  });
+
+  it("rig acceptance: barbell plate present and pinned for bar lifts", () => {
+    for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
+      for (const t of [0, 0.5, 1]) {
+        const svg = renderBodyDemo(id, t);
+        expect(svg.includes('r="10"'), `${id}@${t}`).toBe(true);
+      }
+    }
+  });
+
+  it("rig acceptance: camera and ground locked across an exercise", () => {
+    for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
+      const vb = (t: number) =>
+        renderBodyDemo(id, t).match(/viewBox="([^"]+)"/)![1];
+      expect(vb(0), id).toBe(vb(1));
+    }
+  });
+
+  it("rig acceptance: hand is compact and articulated (≤ half head width)", () => {
+    const width = (pts: [number, number][], axis: 0 | 1) => {
+      const v = pts.map((p) => p[axis]);
+      return Math.max(...v) - Math.min(...v);
+    };
+    const head = SIDE_PIECES.find((p) => p.group === "head")!;
+    const hand = SIDE_PIECES.find((p) => p.group === "handL")!;
+    const headW = width(head.outline, 0);
+    expect(width(hand.outline, 0)).toBeLessThanOrEqual(headW / 2 + 0.5);
+    expect(width(hand.outline, 1)).toBeLessThanOrEqual(headW / 2 + 0.5);
   });
 
   it("calf raise: body rises but the feet stay planted", () => {

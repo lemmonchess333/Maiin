@@ -40,6 +40,8 @@ export interface SidePiece {
   outline: Pt[];
   /** Muscle facets painted over the underlay; the visible mosaic. */
   facets: { muscle: string; points: Pt[] }[];
+  /** Far-side limb: rendered first and ~12% darker so overlaps read. */
+  far?: boolean;
 }
 
 /* ── Facet construction ──────────────────────────────────────────── */
@@ -136,24 +138,33 @@ const TORSO_B: C = [
   [64, 36.4],
   [74, 37.4],
   [82, 37],
-  [90, 34.6],
-  [98, 32],
-  [104, 31.6],
-  [109.5, 33.8],
-  [112.5, 38.2],
-  [113.5, 43.8],
+  [90, 34.4],
+  [94, 32.9],
 ];
 const TORSO_F: C = [
   [31, 48.5],
   [33.5, 51],
   [38, 57.5],
   [42, 62.8],
-  [47.5, 64.8],
+  [47.5, 65.2],
   [53.5, 61.8],
   [60, 59.2],
   [70, 59.6],
-  [78, 58.8],
-  [88, 56.8],
+  [78, 58.2],
+  [88, 56.2],
+  [94, 54.6],
+];
+
+/* Pelvis segment (split from the upper torso so hinges and bridges can
+ * articulate at the waist): the glute mass + hip wedge, overlapping the
+ * upper torso at the lumbar joint (y 86-94). */
+const PELV_B: C = [
+  [86, 35.9],
+  [90, 34.4],
+  [94, 32.9],
+];
+const PELV_F: C = [
+  [86, 56.6],
   [96, 54],
   [103, 50.4],
   [109, 46.5],
@@ -232,62 +243,114 @@ const FORE_F: C = [
 /* ── Pieces ──────────────────────────────────────────────────────── */
 
 const FOOT: Pt[] = [
-  [44, 193.4],
-  [49.6, 192],
-  [57, 195.8],
-  [63.6, 199.2],
-  [62.8, 201.8],
-  [44.2, 201.8],
-  [42.8, 196.8],
+  [44.2, 192.6],
+  [49.8, 191.6],
+  [55, 194],
+  [60.2, 197.4],
+  [64.2, 199.8],
+  [63.6, 202.2],
+  [42.8, 202.4],
+  [40.9, 198.6],
+  [41.8, 194.4],
+];
+
+const SHANK_OUTLINE: Pt[] = [
+  ...silhouette(SHANK_B, SHANK_F).slice(0, 6),
+  // splice the foot into the silhouette bottom
+  [49.8, 191],
+  [55.4, 193.4],
+  [60.8, 196.8],
+  [65, 199.6],
+  [64.2, 202.8],
+  [42.2, 203],
+  [40.2, 198.4],
+  [41.4, 193.6],
+];
+const SHANK_FACETS = [
+  {
+    muscle: "calves",
+    points: band(SHANK_B, SHANK_F, 151, 177.2, 0, 0.5, { bellyR: 0.09 }),
+  },
+  {
+    muscle: "calves",
+    points: band(SHANK_B, SHANK_F, 178.8, 191, 0, 0.44),
+  },
+  {
+    muscle: "shin",
+    points: band(SHANK_B, SHANK_F, 150, 190, 0.58, 1, { bellyL: -0.04 }),
+  },
+  { muscle: "foot", points: FOOT },
+];
+const THIGH_FACETS = [
+  {
+    muscle: "quadriceps",
+    points: band(THIGH_B, THIGH_F, 97.5, 144.5, 0.52, 1, {
+      bellyL: -0.06,
+    }),
+  },
+  {
+    muscle: "hamstring",
+    points: band(THIGH_B, THIGH_F, 101, 143, 0, 0.46, { bellyR: 0.06 }),
+  },
+  {
+    muscle: "knees",
+    points: band(THIGH_B, THIGH_F, 146.2, 155, 0.3, 0.92),
+  },
 ];
 
 export const SIDE_PIECES: SidePiece[] = [
+  // Far-side leg pair: same geometry, darker, painted FIRST — hidden in
+  // symmetric stances, visible the moment a pose splits the legs.
+  {
+    group: "shankR",
+    far: true,
+    outline: SHANK_OUTLINE,
+    facets: SHANK_FACETS,
+  },
+  {
+    group: "thighR",
+    far: true,
+    outline: silhouette(THIGH_B, THIGH_F),
+    facets: THIGH_FACETS,
+  },
   {
     group: "shankL",
-    outline: [
-      ...silhouette(SHANK_B, SHANK_F).slice(0, 6),
-      // splice the foot into the silhouette bottom
-      [49.6, 191.5],
-      [57.2, 195.4],
-      [64.4, 199],
-      [63.4, 202.4],
-      [43.6, 202.4],
-      [42, 196.6],
-      [44.2, 192.6],
-    ],
-    facets: [
-      {
-        muscle: "calves",
-        points: band(SHANK_B, SHANK_F, 151, 177.2, 0, 0.5, { bellyR: 0.09 }),
-      },
-      {
-        muscle: "calves",
-        points: band(SHANK_B, SHANK_F, 178.8, 191, 0, 0.44),
-      },
-      {
-        muscle: "shin",
-        points: band(SHANK_B, SHANK_F, 150, 190, 0.58, 1, { bellyL: -0.04 }),
-      },
-      { muscle: "foot", points: FOOT },
-    ],
+    outline: SHANK_OUTLINE,
+    facets: SHANK_FACETS,
   },
   {
     group: "thighL",
     outline: silhouette(THIGH_B, THIGH_F),
+    facets: THIGH_FACETS,
+  },
+  {
+    group: "pelvis",
+    outline: silhouette(PELV_B, PELV_F),
     facets: [
       {
-        muscle: "quadriceps",
-        points: band(THIGH_B, THIGH_F, 97.5, 144.5, 0.52, 1, {
-          bellyL: -0.06,
-        }),
+        muscle: "gluteal",
+        points: [
+          [36.2, 91],
+          [43.6, 90],
+          [45.4, 94.6],
+          [44.6, 102.4],
+          [41.4, 109.8],
+          [36.4, 110.4],
+          [33.2, 105.2],
+          [32.6, 97.6],
+          [34.2, 93.4],
+        ],
       },
       {
-        muscle: "hamstring",
-        points: band(THIGH_B, THIGH_F, 101, 143, 0, 0.46, { bellyR: 0.06 }),
-      },
-      {
-        muscle: "knees",
-        points: band(THIGH_B, THIGH_F, 146.2, 155, 0.3, 0.92),
+        muscle: "pelvis",
+        points: [
+          [49.8, 89.4],
+          [55.6, 89.8],
+          [52.9, 97.8],
+          [48.6, 101.8],
+          [46.6, 96.4],
+          [47.6, 92],
+        ],
       },
     ],
   },
@@ -390,31 +453,6 @@ export const SIDE_PIECES: SidePiece[] = [
         muscle: "lower-back",
         points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.34),
       },
-      {
-        muscle: "gluteal",
-        points: [
-          [36.2, 91],
-          [43.6, 90],
-          [45.4, 94.6],
-          [44.6, 102.4],
-          [41.4, 109.8],
-          [36.4, 110.4],
-          [33.2, 105.2],
-          [32.8, 97.6],
-          [34.2, 93.4],
-        ],
-      },
-      {
-        muscle: "pelvis",
-        points: [
-          [49.8, 89.4],
-          [55.6, 89.8],
-          [52.9, 97.8],
-          [48.6, 101.8],
-          [46.6, 96.4],
-          [47.6, 92],
-        ],
-      },
     ],
   },
   {
@@ -445,11 +483,38 @@ export const SIDE_PIECES: SidePiece[] = [
       },
     ],
   },
+  {
+    // Compact mitt (≤ half head-width), articulated from the forearm at
+    // the wrist pivot. Rides the forearm chain in every pose.
+    group: "handL",
+    outline: [
+      [46.8, 99.4],
+      [52.8, 99.2],
+      [54, 103.2],
+      [52.8, 107.6],
+      [48.8, 108.6],
+      [46, 104.6],
+    ],
+    facets: [
+      {
+        muscle: "hand",
+        points: [
+          [47.4, 100],
+          [52.2, 99.8],
+          [53.4, 103.2],
+          [52.2, 107],
+          [49.2, 107.9],
+          [46.8, 104.4],
+        ],
+      },
+    ],
+  },
 ];
 
 /* Measured joint anchors for the side rig. */
 export const SIDE_ANCHORS = {
   neck: [48, 32] as Pt,
+  lumbar: [45, 90] as Pt,
   shoulder: [47.5, 45] as Pt,
   elbow: [48.6, 70.5] as Pt,
   hand: [50.3, 100] as Pt,

@@ -37,6 +37,8 @@ const GEAR_DARK = "#35363C";
  *  for their separation strokes, so the seams read as the stage showing
  *  through — identical language to the front/back facet gaps. */
 const STAGE = "#111113";
+/** Far-side limbs in the profile rig — ~12% darker so overlaps read. */
+const BODY_FAR = "#9FA6AC";
 
 /* ── Measured joint anchors (viewBox 0 0 100 200) ─────────────── */
 
@@ -116,10 +118,13 @@ const GLOW_RINGS: [number, number][] = [
 export type GroupName =
   | "head"
   | "torso"
+  | "pelvis"
   | "upperArmL"
   | "upperArmR"
   | "foreArmL"
   | "foreArmR"
+  | "handL"
+  | "handR"
   | "thighL"
   | "thighR"
   | "shankL"
@@ -205,8 +210,8 @@ function applyOps(pts: Pt[], ops: Op[]): Pt[] {
   return out;
 }
 
-/** Also run single points (bar anchors) through a group's ops. */
-function applyToPoint(p: Pt, ops: Op[]): Pt {
+/** Also run single points (bar anchors, test probes) through ops. */
+export function applyToPoint(p: Pt, ops: Op[]): Pt {
   return applyOps([p], ops)[0];
 }
 
@@ -356,7 +361,7 @@ export interface BodyDemo {
   /** STRUCTURAL equipment only (no held weights — the figure has no
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
-  equip?: "fixed-bar" | "cable-bar" | "dip-bars";
+  equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
   /** Draw the equipment OVER the body (pushdown: the hands work in
    *  front of the torso, so a behind-the-body bar would vanish). */
   barInFront?: boolean;
@@ -779,6 +784,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "bench-press": {
     view: "side",
+    equip: "plate-end",
     concentricTo: 1,
     viewBox: "-64 30 186 152",
     groundY: 172,
@@ -797,7 +803,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * bar path. */
       const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
       const S = SIDE_ANCHORS.shoulder;
-      const H: Pt = [S[0] + lerp(24, 51.5, e), S[1] + lerp(12, 0, e)];
+      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(18, 6, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -806,18 +812,31 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         H,
         0
       );
+      const leg: Op[] = [
+        { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: 55, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
+        G,
+      ];
       return {
         head: [G],
         torso: [G],
-        thighL: [{ kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip }, G],
-        shankL: [
-          { kind: "rotate", deg: 55, pivot: SIDE_ANCHORS.knee },
-          { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
-          G,
-        ],
+        pelvis: [G],
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
         upperArmL: [...arm.upper, G],
         foreArmL: [...arm.fore, G],
+        handL: [...arm.fore, G],
       };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
     },
     // Bench pad + legs + floor line, drawn behind the body.
     scene: () =>
@@ -829,6 +848,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
 
   "barbell-row": {
     view: "side",
+    equip: "plate-end",
     concentricTo: 1,
     viewBox: "-4 38 172 174",
     groundY: 204,
@@ -872,24 +892,37 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hPre,
         0
       );
+      const leg: Op[] = [{ kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip }];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -12, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip },
+      ];
       return {
         head: [T],
         torso: [T],
-        thighL: [{ kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip }],
-        shankL: [
-          { kind: "rotate", deg: -12, pivot: SIDE_ANCHORS.knee },
-          { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip },
-        ],
+        pelvis: [T],
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
         upperArmL: [...arm.upper, T],
         foreArmL: [...arm.fore, T],
+        handL: [...arm.fore, T],
       };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
     },
   },
 
   "romanian-deadlift": {
     view: "side",
+    equip: "plate-end",
     concentricTo: 0,
-    viewBox: "-4 38 172 174",
+    // Camera must fit BOTH extremes: standing (full height) and hinged
+    // (head reaching forward) — locked, so no framing jumps mid-rep.
+    viewBox: "-4 -2 172 212",
     groundY: 204,
     shadowCx: 62,
     shadowRx: 40,
@@ -928,17 +961,29 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
           0
         ),
         soft = lerp(0, 12, e);
+      const leg: Op[] = [
+        { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
+      ];
+      const shank: Op[] = [
+        { kind: "rotate", deg: -soft, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
+      ];
       return {
         head: [T],
         torso: [T],
-        thighL: [{ kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip }],
-        shankL: [
-          { kind: "rotate", deg: -soft, pivot: SIDE_ANCHORS.knee },
-          { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
-        ],
+        pelvis: [T],
+        thighL: leg,
+        thighR: leg,
+        shankL: shank,
+        shankR: shank,
         upperArmL: [...arm.upper, T],
         foreArmL: [...arm.fore, T],
+        handL: [...arm.fore, T],
       };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
     },
   },
 
@@ -985,10 +1030,14 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       return {
         head: bodyOps,
         torso: bodyOps,
+        pelvis: bodyOps,
         thighL: bodyOps,
+        thighR: bodyOps,
         shankL: bodyOps,
+        shankR: bodyOps,
         upperArmL: [...arm.upper, ...bodyOps],
         foreArmL: [...arm.fore, ...bodyOps],
+        handL: [...arm.fore, ...bodyOps],
       };
     },
     scene: () =>
@@ -1026,14 +1075,18 @@ const DEMO_ALIASES: Record<string, string> = {
   "t-bar-row": "barbell-row",
 };
 
-/* Side-view demos are DORMANT pending art that passes the product
- * owner's bar. The full rig (bodySideData pieces, IK, scenes) works and
- * is exercised by tests, but these ids fall back to the photo/diagram
- * ladder in the app — the project doctrine is "a wrong demo is worse
- * than no demo", and the owner judged the current side figure below the
- * vendored front/back art. Flip SIDE_DEMOS_ENABLED when the figure (or
- * replacement art traced from an owner-approved reference) passes. */
-export const SIDE_DEMOS_ENABLED = false;
+/* Side-view demos ship since the Prompt-9 rig rebuild (canonical master
+ * passing the D1-D5 spec, pelvis/hand/far-limb segments, poses as pure
+ * transform data, end-on barbell plates, locked per-exercise camera).
+ * Contact sheets live in docs/visual-audit/side-rig/. Flip off to fall
+ * back to the photo/diagram ladder. */
+export let SIDE_DEMOS_ENABLED = true;
+
+/** Preview/QA hook: guarantees contact-sheet tooling renders side demos
+ *  even if the flag is toggled off. Never called from app code. */
+export function __unlockSideDemosForPreview(): void {
+  SIDE_DEMOS_ENABLED = true;
+}
 
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
   const demo = BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
@@ -1160,6 +1213,15 @@ export function renderBodyDemo(
     const bar = `<line x1="${ends[0][0].toFixed(1)}" y1="${y.toFixed(1)}" x2="${ends[1][0].toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GEAR}" stroke-width="2.8" stroke-linecap="round"/>`;
     if (demo.barInFront) barFront = bar;
     else barBehind += bar;
+  } else if (ends && demo.equip === "plate-end") {
+    // Profile barbell: the bar runs toward the viewer, so you see its
+    // END — the near plate disc over the grip, a hub, and the bar tip.
+    // Pinned to the wrist pivot, so it travels with every rep.
+    const [x, y] = ends[0];
+    barFront =
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
   } else if (ends && demo.equip === "dip-bars") {
     // A dip STATION, not two floating lines: each upright gets a base
     // foot on the floor and a tube end-cap at the grip.
@@ -1265,7 +1327,9 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
               ? PRIMARY
               : f.level === "secondary"
                 ? SECONDARY
-                : BODY;
+                : piece.far
+                  ? BODY_FAR
+                  : BODY;
           const op = f.level
             ? ` fill-opacity="${tintOpacity(f.level).toFixed(3)}"`
             : "";
@@ -1293,12 +1357,25 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const shadow = `<ellipse cx="${demo.shadowCx ?? 50}" cy="${demo.groundY ?? 204}" rx="${((demo.shadowRx ?? 26) + 6 * depth).toFixed(1)}" ry="2.6" fill="#000" opacity="${(0.16 + 0.1 * depth).toFixed(2)}"/>`;
   const scene = demo.scene?.(e, pose) ?? "";
 
+  // Profile barbell: bar runs toward the viewer, so its END shows — the
+  // near plate over the grip. Pinned to the wrist, travels with the rep.
+  let plate = "";
+  const ends = demo.bar?.(e, pose);
+  if (ends && demo.equip === "plate-end") {
+    const [x, y] = ends[0];
+    plate =
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
+  }
+
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${demo.viewBox ?? "-8 -14 116 224"}" role="img">` +
     shadow +
     scene +
     glow +
     body +
+    plate +
     `</svg>`
   );
 }
