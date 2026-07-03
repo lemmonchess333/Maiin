@@ -1105,6 +1105,28 @@ export default function Home() {
           ctaHref="/settings"
         />
 
+        {/* Progressive profiling (fast-start PRD, final nudge): experience.
+          Onboarding defaults experience to "intermediate" without asking;
+          once the user has actually trained, invite them to set it so
+          programme volume is tuned to reality. Same default-marker
+          heuristic as the goal-weight nudge: visible while the value
+          still equals the onboarding default — a genuine intermediate
+          dismisses once (dismiss-once semantics), anyone else sets it
+          and the banner never returns. */}
+        <ContextualTipBanner
+          tipKey="training-experience-v1"
+          lanePriority={10}
+          title="Tune your training volume"
+          description="Tell us your training experience — your programme assumed intermediate as a starting point."
+          visible={
+            !!profile &&
+            workouts.length > 0 &&
+            (profile.experience ?? "intermediate") === "intermediate"
+          }
+          ctaLabel="Set experience"
+          ctaHref="/settings/training"
+        />
+
         {/* Progressive profiling: race-goal invitation. Fast-start runners default
           to freeform (Run9a); once they've logged a run, invite race-prep via
           the Race Goal Planner (/settings/training, Run8/Run10). Hides when
