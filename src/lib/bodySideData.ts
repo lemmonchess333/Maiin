@@ -59,32 +59,61 @@ function xAt(contour: C, y: number): number {
 /** Facet between the back/front contours from yTop..yBot, spanning the
  *  cut fractions tL..tR (0 = back contour, 1 = front contour), edges
  *  inset by GAP. Vertical edges sample the contours so facets follow
- *  the body's curves. */
+ *  the body's curves.
+ *
+ *  Straight cuts and horizontal rows read ROBOTIC (product owner), so
+ *  facets can carry organic shape:
+ *  - bellyL/bellyR bow a CUT edge outward at the muscle's mid-length
+ *    (fraction of local depth, sinusoidal — a muscle belly);
+ *  - skewT/skewB tilt the top/bottom boundary ([back-edge dy,
+ *    front-edge dy]) so joints run diagonally like real muscle lines. */
 function band(
   B: C,
   F: C,
   yTop: number,
   yBot: number,
   tL: number,
-  tR: number
+  tR: number,
+  o?: {
+    bellyL?: number;
+    bellyR?: number;
+    skewT?: [number, number];
+    skewB?: [number, number];
+  }
 ): Pt[] {
   const at = (y: number, t: number) => {
     const b = xAt(B, y);
     return b + t * (xAt(F, y) - b);
   };
-  const left = (y: number) => (tL === 0 ? xAt(B, y) : at(y, tL)) + GAP;
-  const right = (y: number) => (tR === 1 ? xAt(F, y) : at(y, tR)) - GAP;
-  const steps = Math.max(1, Math.round((yBot - yTop) / 8));
-  const pts: Pt[] = [];
-  for (let i = 0; i <= steps; i++) {
-    const y = yTop + ((yBot - yTop) * i) / steps;
-    pts.push([right(y), y]);
-  }
-  for (let i = steps; i >= 0; i--) {
-    const y = yTop + ((yBot - yTop) * i) / steps;
-    pts.push([left(y), y]);
-  }
-  return pts;
+  const edge = (
+    t: number,
+    onContour: boolean,
+    belly: number,
+    sign: 1 | -1,
+    dyT: number,
+    dyB: number
+  ) => {
+    const y0 = yTop + dyT;
+    const y1 = yBot + dyB;
+    const steps = Math.max(1, Math.round((y1 - y0) / 8));
+    const pts: Pt[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const y = y0 + ((y1 - y0) * i) / steps;
+      const u = (y - y0) / (y1 - y0);
+      const tb = t + belly * Math.sin(Math.PI * u);
+      const x =
+        (onContour ? (sign === 1 ? xAt(F, y) : xAt(B, y)) : at(y, tb)) +
+        sign * -GAP;
+      pts.push([x, y]);
+    }
+    return pts;
+  };
+  const [sTl, sTr] = o?.skewT ?? [0, 0];
+  const [sBl, sBr] = o?.skewB ?? [0, 0];
+  return [
+    ...edge(tR, tR === 1, o?.bellyR ?? 0, 1, sTr, sBr),
+    ...edge(tL, tL === 0, o?.bellyL ?? 0, -1, sTl, sBl).reverse(),
+  ];
 }
 
 /** Piece silhouette from its contours (back edge down, front edge up). */
@@ -109,10 +138,10 @@ const TORSO_B: C = [
   [82, 37],
   [90, 34.6],
   [98, 32],
-  [105, 31.2],
-  [111, 33.4],
-  [115, 38],
-  [116, 43.8],
+  [104, 31.6],
+  [109.5, 33.8],
+  [112.5, 38.2],
+  [113.5, 43.8],
 ];
 const TORSO_F: C = [
   [31, 48.5],
@@ -127,8 +156,8 @@ const TORSO_F: C = [
   [88, 56.8],
   [96, 54],
   [103, 50.4],
-  [110.5, 46],
-  [115, 44.6],
+  [109, 46.5],
+  [112.5, 44.8],
 ];
 
 /* Thigh: quad sweep peaking mid-thigh, hamstring belly behind. */
@@ -172,17 +201,18 @@ const SHANK_F: C = [
 const ARM_B: C = [
   [37.5, 42],
   [43, 40.8],
-  [49, 42.4],
-  [56, 43.6],
-  [65, 44.6],
+  [49, 42.2],
+  [56, 43.8],
+  [64, 44.4],
   [71.5, 45.4],
 ];
 const ARM_F: C = [
   [37.5, 51.5],
   [43, 52.8],
-  [49, 52.2],
-  [57, 51.8],
-  [71.5, 51.9],
+  [49, 52.4],
+  [56, 53],
+  [63, 52.6],
+  [71.5, 51.7],
 ];
 
 /* Forearm: tapers toward the wrist. */
@@ -226,12 +256,18 @@ export const SIDE_PIECES: SidePiece[] = [
       [44.2, 192.6],
     ],
     facets: [
-      { muscle: "calves", points: band(SHANK_B, SHANK_F, 151, 176.5, 0, 0.5) },
       {
         muscle: "calves",
-        points: band(SHANK_B, SHANK_F, 178.5, 191, 0, 0.44),
+        points: band(SHANK_B, SHANK_F, 151, 177.2, 0, 0.5, { bellyR: 0.09 }),
       },
-      { muscle: "shin", points: band(SHANK_B, SHANK_F, 150, 190, 0.56, 1) },
+      {
+        muscle: "calves",
+        points: band(SHANK_B, SHANK_F, 178.8, 191, 0, 0.44),
+      },
+      {
+        muscle: "shin",
+        points: band(SHANK_B, SHANK_F, 150, 190, 0.58, 1, { bellyL: -0.04 }),
+      },
       { muscle: "foot", points: FOOT },
     ],
   },
@@ -241,10 +277,18 @@ export const SIDE_PIECES: SidePiece[] = [
     facets: [
       {
         muscle: "quadriceps",
-        points: band(THIGH_B, THIGH_F, 97.5, 144.5, 0.5, 1),
+        points: band(THIGH_B, THIGH_F, 97.5, 144.5, 0.52, 1, {
+          bellyL: -0.06,
+        }),
       },
-      { muscle: "hamstring", points: band(THIGH_B, THIGH_F, 101, 143, 0, 0.5) },
-      { muscle: "knees", points: band(THIGH_B, THIGH_F, 147, 155, 0.3, 0.92) },
+      {
+        muscle: "hamstring",
+        points: band(THIGH_B, THIGH_F, 101, 143, 0, 0.46, { bellyR: 0.06 }),
+      },
+      {
+        muscle: "knees",
+        points: band(THIGH_B, THIGH_F, 146.2, 155, 0.3, 0.92),
+      },
     ],
   },
   {
@@ -256,10 +300,10 @@ export const SIDE_PIECES: SidePiece[] = [
       [61, 5.5],
       [62, 9],
       [61.2, 10.6],
-      [63.6, 13],
-      [62.4, 15.8],
-      [60, 17],
-      [60.6, 19.4],
+      [63, 13],
+      [61.6, 15.6],
+      [60.8, 17.2],
+      [60.4, 19.2],
       [56.8, 21.6],
       [50.4, 23],
       [52.8, 26],
@@ -281,23 +325,16 @@ export const SIDE_PIECES: SidePiece[] = [
           [60.2, 5.9],
           [61, 9],
           [60.2, 10.7],
-          [62.6, 13.2],
-          [61, 15.2],
-          [56.6, 15.6],
-          [50.6, 15.2],
-          [45.6, 13],
-          [44.4, 7.6],
-        ],
-      },
-      {
-        muscle: "jaw",
-        points: [
-          [48, 17],
-          [58.6, 16.6],
-          [59.6, 18.8],
-          [55.6, 20.9],
-          [49.6, 21.6],
-          [47, 19.4],
+          [62.2, 13.2],
+          [60.6, 15.4],
+          [59.9, 17],
+          [59.5, 18.8],
+          [55.8, 20.9],
+          [49.8, 21.7],
+          [46.9, 19],
+          [45.9, 15],
+          [44.6, 10],
+          [44.6, 6],
         ],
       },
       {
@@ -318,37 +355,53 @@ export const SIDE_PIECES: SidePiece[] = [
     outline: silhouette(TORSO_B, TORSO_F),
     facets: [
       { muscle: "trapezius", points: band(TORSO_B, TORSO_F, 30.5, 37, 0, 1) },
-      { muscle: "chest", points: band(TORSO_B, TORSO_F, 38.5, 56, 0.42, 1) },
+      {
+        muscle: "chest",
+        points: band(TORSO_B, TORSO_F, 38.5, 55.6, 0.42, 1, {
+          bellyL: -0.05,
+          skewB: [-1.5, 2],
+        }),
+      },
       {
         muscle: "upper-back",
-        points: band(TORSO_B, TORSO_F, 38.5, 67.5, 0, 0.4),
-      },
-      { muscle: "abs", points: band(TORSO_B, TORSO_F, 58, 75, 0.64, 1) },
-      { muscle: "abs", points: band(TORSO_B, TORSO_F, 77, 89.5, 0.64, 1) },
-      {
-        muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 58, 74, 0.34, 0.64),
+        points: band(TORSO_B, TORSO_F, 38.5, 67.2, 0, 0.4, {
+          bellyR: 0.04,
+          skewB: [2, -2],
+        }),
       },
       {
+        muscle: "abs",
+        points: band(TORSO_B, TORSO_F, 57.4, 75.4, 0.64, 1, {
+          skewT: [1.2, -0.8],
+        }),
+      },
+      { muscle: "abs", points: band(TORSO_B, TORSO_F, 76.9, 89.5, 0.64, 1) },
+      {
         muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 76, 90, 0.34, 0.64),
+        points: band(TORSO_B, TORSO_F, 58.8, 75.2, 0.34, 0.64, {
+          skewT: [1.5, -1.5],
+        }),
+      },
+      {
+        muscle: "obliques",
+        points: band(TORSO_B, TORSO_F, 76.7, 90, 0.34, 0.64),
       },
       {
         muscle: "lower-back",
-        points: band(TORSO_B, TORSO_F, 69.5, 88, 0, 0.34),
+        points: band(TORSO_B, TORSO_F, 68.8, 88.4, 0, 0.34),
       },
       {
         muscle: "gluteal",
         points: [
-          [36, 90.5],
-          [43.8, 89.6],
-          [45.6, 94.4],
-          [44.6, 104],
-          [42, 113.6],
-          [37.2, 114.6],
-          [33, 108.2],
-          [32.2, 99],
-          [33.8, 93.6],
+          [36.2, 91],
+          [43.6, 90],
+          [45.4, 94.6],
+          [44.6, 102.4],
+          [41.4, 109.8],
+          [36.4, 110.4],
+          [33.2, 105.2],
+          [32.8, 97.6],
+          [34.2, 93.4],
         ],
       },
       {
@@ -368,8 +421,14 @@ export const SIDE_PIECES: SidePiece[] = [
     group: "foreArmL",
     outline: silhouette(FORE_B, FORE_F),
     facets: [
-      { muscle: "forearm", points: band(FORE_B, FORE_F, 68.4, 81, 0, 1) },
-      { muscle: "forearm", points: band(FORE_B, FORE_F, 83, 99.8, 0, 1) },
+      {
+        muscle: "forearm",
+        points: band(FORE_B, FORE_F, 68.4, 81.6, 0, 1, { skewB: [-1.4, 1.4] }),
+      },
+      {
+        muscle: "forearm",
+        points: band(FORE_B, FORE_F, 83.2, 99.8, 0, 1, { skewT: [-1.4, 1.4] }),
+      },
     ],
   },
   {
@@ -378,10 +437,12 @@ export const SIDE_PIECES: SidePiece[] = [
     facets: [
       {
         muscle: "front-deltoids",
-        points: band(ARM_B, ARM_F, 38, 51.4, 0, 1),
+        points: band(ARM_B, ARM_F, 38, 51.8, 0, 1, { skewB: [-1.5, 1] }),
       },
-      { muscle: "triceps", points: band(ARM_B, ARM_F, 53.2, 70.8, 0, 0.47) },
-      { muscle: "biceps", points: band(ARM_B, ARM_F, 53.2, 70.8, 0.55, 1) },
+      {
+        muscle: "biceps",
+        points: band(ARM_B, ARM_F, 53.2, 70.8, 0, 1, { skewT: [-1.5, 1] }),
+      },
     ],
   },
 ];
