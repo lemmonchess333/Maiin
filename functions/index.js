@@ -51,6 +51,7 @@ const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
+const passwordResetEmail = require("./lib/passwordResetEmail");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -180,6 +181,10 @@ const TRIGGER_CAP = { maxInstances: 50 };
 //   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
 const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
 const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+// Resend API key — password-reset email delivery (sendPasswordResetLinkCallable).
+// Provision before the next functions deploy: firebase functions:secrets:set RESEND_API_KEY
+// (a deploy referencing an unprovisioned bound secret FAILS — the safety gate).
+const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 
 // Scheduled (pubsub cron) sweeps iterate EVERY active user/crew via
 // sweepActiveUsers / a crews loop. The Cloud Functions v1 default timeout is
@@ -5470,6 +5475,83 @@ exports.toggleCommentReactionCallable = functions
         (err && err.message) || "Reaction failed."
       );
     }
+  });
+
+/** Deliver one email via the Resend REST API (Node 20 global fetch — no SDK
+ *  dependency). `from` is a plain env var so the sender can move from Resend's
+ *  test domain (onboarding@resend.dev — sends only to the Resend account
+ *  owner) to a verified domain at launch without a code change. */
+async function sendViaResend({ to, subject, html }) {
+  const from = process.env.RESEND_FROM || "Tropos <onboarding@resend.dev>";
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to, subject, html }),
+  });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(
+      `Resend send failed (${resp.status}): ${body.slice(0, 200)}`
+    );
+  }
+}
+
+/**
+ * Forgot-password entry point (auth pass, 2026-07). UNAUTHENTICATED by design
+ * — the user is logged out. Mints a reset link via the Admin SDK (works for
+ * OAuth-only accounts too, unlike the client SDK) and emails it via Resend, so
+ * a Google/Apple user can set a password — matching Spotify / MyFitnessPal.
+ * Always returns { ok: true } (enumeration defence: a non-existent email
+ * looks identical). Rate-limited per email to blunt reset-bombing; App Check
+ * enforcement (roadmap) is the production hardening for the unauthed surface.
+ */
+exports.sendPasswordResetLinkCallable = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
+  .https.onCall(async (data) => {
+    const email =
+      data && typeof data.email === "string" ? data.email.trim() : "";
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "A valid email is required."
+      );
+    }
+    // Keyed on a sanitised email (no auth uid — logged out). 5 per 5 min per
+    // email caps bombing a single victim.
+    const key = `pwreset_${email.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
+    const limited = await isRateLimited(key, "passwordReset", 5, 300_000);
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many reset requests. Try again in a few minutes."
+      );
+    }
+    try {
+      const result = await passwordResetEmail.sendPasswordResetEmail({
+        generateLink: (e) => admin.auth().generatePasswordResetLink(e),
+        sendEmail: sendViaResend,
+        email,
+      });
+      functions.logger.info("sendPasswordResetLinkCallable", {
+        sent: result.sent,
+        reason: result.reason,
+      });
+    } catch (err) {
+      // A genuine failure (Admin outage, Resend down) — surface so the client
+      // can say "try again", without leaking whether the account exists.
+      functions.logger.error("sendPasswordResetLinkCallable.error", {
+        error: err && err.message,
+      });
+      throw new functions.https.HttpsError(
+        "internal",
+        "Couldn't send the reset email. Try again in a moment."
+      );
+    }
+    // Neutral: identical response whether or not the account existed.
+    return { ok: true };
   });
 
 exports.setCrewMembershipCallable = functions
