@@ -44,16 +44,12 @@ export default function Login() {
       return;
     }
     setLoadingAction("reset");
-    // A Google/Apple-only account has no password to reset — sending one is a
-    // dead end (Firebase quietly sends nothing). Steer to the right button
-    // instead. Degrades to a normal reset when the provider is unknown
-    // (Email-Enumeration-Protection returns []).
-    const hint = providerHint(await fetchSignInMethods(email.trim()));
-    if (hint) {
-      setError(hint);
-      setLoadingAction(null);
-      return;
-    }
+    // Sends a set-password link regardless of how the account was created.
+    // The server callable (sendPasswordResetLinkCallable) mints the link via
+    // the Admin SDK, which works for OAuth-only accounts too — completing it
+    // adds a password provider. This matches Spotify / MyFitnessPal: forgot-
+    // password always emails a link. (No provider steer here — the reset is
+    // no longer a dead end for Google/Apple accounts.)
     try {
       await resetPassword(email.trim());
     } catch (err: unknown) {
