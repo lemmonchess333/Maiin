@@ -33,7 +33,7 @@
 import { useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Footprints, Dumbbell, Check, X } from "lucide-react";
+import { Footprints, Dumbbell, Check, X, TriangleAlert } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -47,6 +47,7 @@ import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import { format } from "date-fns";
 import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { hasHybridInterference } from "@/lib/runProgrammeViewModel";
 import {
   getCompletionKind,
   type ClaimState,
@@ -201,6 +202,16 @@ export default function DayActionSheet({
   // `type` is the correct, id-agnostic gate (Q1 P4 / Q2 P21).
   const isRaceTemplate = selectedRunTemplate?.type === "race";
 
+  /* Hybrid interference heads-up (runScheduler's "UI can flag it" note,
+     finally wired). Quality run + lift on one day → one calm line; only
+     on the full-day sheet (the run-scoped sheet has no lift context). */
+  const interference =
+    scope === "day" &&
+    hasHybridInterference({
+      hasLift,
+      runType: selectedRunTemplate?.type ?? null,
+    });
+
   return (
     <BottomSheet
       open={open}
@@ -238,6 +249,21 @@ export default function DayActionSheet({
             {scope === "run"
               ? "No run scheduled for this day."
               : "Nothing scheduled for this day."}
+          </p>
+        )}
+
+        {/* Hybrid interference heads-up — quality run + lift share this
+            day (the scheduler avoids it when it can; when it can't, flag
+            it calmly). Warning register per the design rules, one line,
+            no action required. */}
+        {interference && (
+          <p className="flex items-start gap-2 text-xs text-warning leading-relaxed px-1">
+            <TriangleAlert
+              className="size-3.5 mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
+            Quality run and a lift share this day — if recovery's tight, go
+            easier on one of them.
           </p>
         )}
 

@@ -122,6 +122,27 @@ export function compactRunLabel(
 
 /** Compact lift label — strip the qualifier after an em/en dash or middot
  *  ("Push — Chest Focus" → "Push") and cap length so it fits a tile. */
+/**
+ * Hybrid interference (2026-07 audit quick-fix): the run scheduler already
+ * prefers non-Both slots for the hardest run, but accepts the pairing when
+ * only Both slots exist — with the explicit note "the UI can flag it"
+ * (runScheduler.ts). This is that flag: a QUALITY run (tempo / intervals /
+ * long) sharing a day with a lift is worth a heads-up. Easy runs coexist
+ * fine; race day has its own treatment and is deliberately excluded (race
+ * day is race day — nagging it would be noise).
+ */
+export function hasHybridInterference(args: {
+  hasLift: boolean;
+  runType: "easy" | "tempo" | "intervals" | "long" | "race" | null | undefined;
+}): boolean {
+  if (!args.hasLift || !args.runType) return false;
+  return (
+    args.runType === "tempo" ||
+    args.runType === "intervals" ||
+    args.runType === "long"
+  );
+}
+
 export function compactLiftLabel(dayName: string | null | undefined): string {
   if (!dayName) return "Lift";
   const head = dayName.split(/[—–·-]/)[0]?.trim() || dayName.trim();
