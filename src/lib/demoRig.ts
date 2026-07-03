@@ -491,7 +491,7 @@ export function renderRigSvg(
   const shadow = `<ellipse cx="${FOOT_X + 4}" cy="${GROUND_Y + 4}" rx="52" ry="6" fill="${SEAM}" opacity="0.25"/>`;
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 300" role="img">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -34 240 334" role="img">` +
     shadow +
     parts.join("") +
     `</svg>`
@@ -531,10 +531,10 @@ export const RIG_DEMOS: Record<string, RigDemo> = {
     keyframes: [
       // Lockout overhead: arm straight up.
       { shank: 0, thigh: 0, torso: -2, shoulder: 178, elbow: -2 },
-      // Mid press: bar at forehead height.
-      { shank: 0, thigh: 0, torso: 2, shoulder: 150, elbow: -70 },
-      // Rack: bar at the clavicle, elbows down-forward.
-      { shank: 0, thigh: 0, torso: 4, shoulder: 120, elbow: -125 },
+      // Mid press: bar just above the forehead, forearm vertical.
+      { shank: 0, thigh: 0, torso: 2, shoulder: 110, elbow: 60 },
+      // Rack: bar at the clavicle, upper arm down-forward, forearm vertical.
+      { shank: 0, thigh: 0, torso: 4, shoulder: 55, elbow: 116 },
     ],
   },
   "barbell-curl": {
