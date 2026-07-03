@@ -67,3 +67,75 @@ export function calculateEMA(
     };
   });
 }
+
+/**
+ * Goal weight implied by the programme: startWeight −5kg for a cut,
+ * +3kg for a lean bulk, startWeight itself for maintain. Extracted
+ * from TrendWeight (Rev1) so the Weekly Review derives the SAME goal
+ * the Progress chart shows — one source of truth, no drift.
+ */
+export function deriveGoalWeightKg(
+  program:
+    | { startWeight?: number | null; goal?: string | null }
+    | null
+    | undefined,
+): number | undefined {
+  if (!program?.startWeight) return undefined;
+  if (program.goal === "cut") return program.startWeight - 5;
+  if (program.goal === "lean bulk") return program.startWeight + 3;
+  return program.startWeight;
+}
+
+export interface GoalProjection {
+  /** e.g. "24 Jul" or "24 Jul 2027" when it crosses a year boundary. */
+  date: string;
+  weeks: number;
+}
+
+/**
+ * Projected goal-reach date. Linear extrapolation from the trend slope —
+ * not a prediction engine, just a motivational "at this rate, about X
+ * weeks away." Extracted verbatim from TrendWeight (Rev1) so the Weekly
+ * Review reuses the SAME projection incl. its honest self-suppression:
+ * returns null unless (1) a goal exists, (2) the caller's confidence
+ * gate passed (T3 / computeDataConfidence), (3) the trend is actually
+ * moving toward the goal, and (4) the ETA is under ~2 years (otherwise
+ * it's demotivating noise). `now` is injected for testability.
+ */
+export function projectGoalDate(args: {
+  trendSeries: { date: string; trend: number }[];
+  goalWeight: number | undefined;
+  hasProjection: boolean;
+  now?: Date;
+}): GoalProjection | null {
+  const { trendSeries, goalWeight, hasProjection } = args;
+  const now = args.now ?? new Date();
+  if (!goalWeight || !Number.isFinite(goalWeight)) return null;
+  if (!hasProjection) return null;
+  if (trendSeries.length < 2) return null;
+
+  const first = trendSeries[0];
+  const last = trendSeries[trendSeries.length - 1];
+  const daysSpan =
+    (new Date(last.date).getTime() - new Date(first.date).getTime()) /
+    (1000 * 60 * 60 * 24);
+  if (daysSpan <= 0) return null;
+
+  const slope = (last.trend - first.trend) / daysSpan; // kg/day
+  const remaining = goalWeight - last.trend; // +ve if goal is higher
+  if (slope === 0) return null;
+  // Directions mismatch → not on track for goal, suppress.
+  if (remaining > 0 !== slope > 0) return null;
+  const daysToGoal = remaining / slope;
+  if (!Number.isFinite(daysToGoal) || daysToGoal <= 0) return null;
+  if (daysToGoal > 730) return null;
+
+  const eta = new Date(now);
+  eta.setDate(eta.getDate() + Math.round(daysToGoal));
+  const dateLabel = eta.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: eta.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+  return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
+}

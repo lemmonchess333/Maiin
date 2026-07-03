@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -312,6 +313,11 @@ export default function PerformanceTab() {
           </p>
         </div>
       </div>
+
+      {/* Rev1 — Weekly Review row. Below the locked Hist6 hero, same
+          eligibility as the Home entry (hidden until the reviewed week
+          has content — no dead row for brand-new users). */}
+      <WeeklyReviewRow />
 
       {/* Trend — the canonical PI area chart, promoted out of the fold.
           Deduped: the old inline 8-week LineChart is removed; this richer
