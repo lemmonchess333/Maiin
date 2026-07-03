@@ -222,8 +222,44 @@ function limb2(a: Pt, b: Pt, wA: number, wB: number): Pt[] {
   ];
 }
 
-const poly = (pts: Pt[], fill: string, sw = 1.5) =>
-  `<polygon points="${pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ")}" fill="${fill}" stroke="${SEAM}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+/** Scale a polygon about its centroid by a signed edge offset (+shrink). */
+function insetPoly(pts: Pt[], amount: number): Pt[] {
+  let cx = 0;
+  let cy = 0;
+  for (const [x, y] of pts) {
+    cx += x;
+    cy += y;
+  }
+  cx /= pts.length;
+  cy /= pts.length;
+  return pts.map(([x, y]) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    const d = Math.hypot(dx, dy) || 1;
+    const k = Math.max(0.1, (d - amount) / d);
+    return [cx + dx * k, cy + dy * k];
+  });
+}
+
+const rawPoly = (pts: Pt[], fill: string) =>
+  `<polygon points="${pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ")}" fill="${fill}"/>`;
+
+/** Cut-paper facet: an expanded seam-tone underlay + an inset fill, so
+ *  adjacent facets read as shapes separated by even dark channels — the
+ *  reference figure's construction — instead of stroked outlines. */
+const poly = (pts: Pt[], fill: string) =>
+  rawPoly(pts, SEAM) + rawPoly(insetPoly(pts, 1.1), fill);
+
+/** Render a group of facets cut-paper style: one exact seam-tone underlay
+ *  pass (their union forms the group silhouette with a hairline dark rim),
+ *  then all fills inset — adjacent facets separate into even channels. */
+function facetGroup(facets: { pts: Pt[]; fill: string }[]): string {
+  const under = facets.map((f) => rawPoly(f.pts, SEAM)).join("");
+  const fills = facets
+    .map((f) => rawPoly(insetPoly(f.pts, 1.1), f.fill))
+    .join("");
+  return under + fills;
+}
 
 function fillFor(
   region: MuscleRegion,
@@ -333,11 +369,11 @@ export function renderRigSvg(
 
   const parts: string[] = [];
   const joint = (c: Pt, r: number, fill: string) =>
-    `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${r}" fill="${fill}" stroke="${SEAM}" stroke-width="1.5"/>`;
+    `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="${r}" fill="${fill}"/>`;
+  const bridge = (c: Pt, r: number) => joint(c, r, SEAM);
+  const shade = (pts: Pt[]) => rawPoly(pts, "var(--rig-far, #82868F)");
 
-  const shade = (pts: Pt[]) => poly(pts, "var(--rig-far, #9CA0AA)", 1.2);
-
-  /* Far leg (single-tone, offset for depth). */
+  /* Far leg + far arm: quiet single-tone silhouettes for depth. */
   const off = (pt: Pt): Pt => [pt[0] - 9, pt[1] - 4];
   parts.push(shade(place(off(p.ankle), pose.shank, SHIN)));
   parts.push(shade(place(off(p.ankle), pose.shank, CALF)));
@@ -356,8 +392,6 @@ export function renderRigSvg(
       ])
     );
   }
-
-  /* Far arm (hands-equipment only). */
   if (equipment === "barbell-hands") {
     const fe = off(elbowPt);
     const fh = off(hand);
@@ -366,124 +400,93 @@ export function renderRigSvg(
     parts.push(shade(place(fh, foreAngle + 180, FOREARM_ART)));
   }
 
-  /* Torso stack: lat sweep → erectors → abs → chest, then glute. */
-  parts.push(
-    poly(place(p.hip, pose.torso, LAT_SWEEP), fillFor("lat", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, UPPER_BACK), fillFor("trap", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, ERECTOR), fillFor("erectors", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, OBLIQUE_LOW), fillFor("abs", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, OBLIQUE), fillFor("abs", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, ABS_LOW), fillFor("abs", tint, BODY_A))
-  );
-  parts.push(
-    poly(place(p.hip, pose.torso, ABS_UP), fillFor("abs", tint, BODY_A))
-  );
-  parts.push(poly(place(p.hip, pose.torso, PEC), fillFor("chest", tint, BODY_A)));
-  parts.push(poly(place(p.hip, pose.torso, GLUTE), fillFor("glute", tint, BODY_B)));
-  parts.push(joint(p.hip, 9, BODY_B));
+  /* Bar behind the body (back squat). */
+  const drawBar = (b: Pt) => {
+    parts.push(
+      `<rect x="${(b[0] - 30).toFixed(1)}" y="${(b[1] - 2.5).toFixed(1)}" width="60" height="5" rx="2.5" fill="${GEAR}"/>`,
+      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="13.5" fill="${GEAR_DARK}"/>`,
+      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="9" fill="none" stroke="${SEAM}" stroke-width="1.4" opacity="0.7"/>`,
+      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="4" fill="${GEAR}"/>`
+    );
+  };
+  if (equipment === "barbell-back" && barCenter) drawBar(barCenter);
 
-  /* Near leg. */
-  parts.push(poly(place(p.ankle, pose.shank, CALF), fillFor("calf", tint, BODY_B)));
-  parts.push(poly(place(p.ankle, pose.shank, SHIN), BODY_A));
-  parts.push(joint(p.knee, 8, BODY_A));
-  parts.push(
-    poly(place(p.knee, pose.thigh, HAM_LOW), fillFor("hamstring", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.knee, pose.thigh, HAM_BELLY), fillFor("hamstring", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(p.knee, pose.thigh, QUAD_LOW), fillFor("quad", tint, BODY_A))
-  );
-  parts.push(
-    poly(place(p.knee, pose.thigh, QUAD_UP), fillFor("quad", tint, BODY_A))
-  );
-  parts.push(
-    poly(
-      [
+  /* Joint bridges (seam tone) — under EVERYTHING so they never poke
+     past a silhouette edge. */
+  parts.push(bridge(p.knee, 6.5), bridge(p.hip, 7), bridge(p.ankle, 4.5));
+  parts.push(bridge(elbowPt, 4));
+
+  /* Torso group (incl. glute + trap + neck). */
+  const headAngle = pose.torso * 0.35;
+  const headBase = up(p.neck, headAngle, 6);
+  const torsoGroup: { pts: Pt[]; fill: string }[] = [
+    { pts: place(p.hip, pose.torso, LAT_SWEEP), fill: fillFor("lat", tint, BODY_B) },
+    { pts: place(p.hip, pose.torso, UPPER_BACK), fill: fillFor("trap", tint, BODY_B) },
+    { pts: place(p.hip, pose.torso, ERECTOR), fill: fillFor("erectors", tint, BODY_B) },
+    { pts: place(p.hip, pose.torso, OBLIQUE_LOW), fill: fillFor("abs", tint, BODY_B) },
+    { pts: place(p.hip, pose.torso, OBLIQUE), fill: fillFor("abs", tint, BODY_B) },
+    { pts: place(p.hip, pose.torso, ABS_LOW), fill: fillFor("abs", tint, BODY_A) },
+    { pts: place(p.hip, pose.torso, ABS_UP), fill: fillFor("abs", tint, BODY_A) },
+    { pts: place(p.hip, pose.torso, PEC), fill: fillFor("chest", tint, BODY_A) },
+    { pts: place(p.hip, pose.torso, GLUTE), fill: fillFor("glute", tint, BODY_B) },
+    {
+      pts: limb2(p.neck, headBase, 6.5, 5.5),
+      fill: BODY_B,
+    },
+  ];
+  parts.push(facetGroup(torsoGroup));
+
+  /* Near leg group (bridges under). */
+  const legGroup: { pts: Pt[]; fill: string }[] = [
+    { pts: place(p.ankle, pose.shank, CALF), fill: fillFor("calf", tint, BODY_B) },
+    { pts: place(p.ankle, pose.shank, SHIN), fill: BODY_A },
+    { pts: place(p.knee, pose.thigh, HAM_LOW), fill: fillFor("hamstring", tint, BODY_B) },
+    { pts: place(p.knee, pose.thigh, HAM_BELLY), fill: fillFor("hamstring", tint, BODY_B) },
+    { pts: place(p.knee, pose.thigh, QUAD_LOW), fill: fillFor("quad", tint, BODY_A) },
+    { pts: place(p.knee, pose.thigh, QUAD_UP), fill: fillFor("quad", tint, BODY_A) },
+    {
+      pts: [
         [p.ankle[0] - 9, p.ankle[1] + 2],
         [p.ankle[0] + 23, p.ankle[1] + 5],
         [p.ankle[0] + 24, p.ankle[1] + 11],
         [p.ankle[0] - 10, p.ankle[1] + 11],
       ],
-      BODY_A
-    )
-  );
+      fill: BODY_A,
+    },
+  ];
+  parts.push(facetGroup(legGroup));
 
-  /* Neck + head (featureless, follows torso line). */
+  /* Head. */
   {
-    const tr = up(p.neck, pose.torso, 7);
-    parts.push(
-      poly(
-        [p.neck, tr, [tr[0] - 12, tr[1] + 7], [p.neck[0] - 11, p.neck[1] + 5]],
-        fillFor("trap", tint, BODY_B)
-      )
-    );
-    const headAngle = pose.torso * 0.35;
-    const headBase = up(p.neck, headAngle, 6);
     const c = up(headBase, headAngle, 12);
     const r = 14.5;
-    // Neck link (fills any gap between trap wedge and head).
-    const nl = limb2(p.neck, headBase, 6.5, 5.5);
-    parts.push(poly(nl, BODY_B));
     const hex: Pt[] = Array.from({ length: 8 }, (_, i) => {
       const a = rad(45 * i - 90 + headAngle);
       return [c[0] + Math.cos(a) * r * 0.92, c[1] + Math.sin(a) * r * 1.15];
     });
-    parts.push(poly(hex, BODY_A));
+    parts.push(facetGroup([{ pts: hex, fill: BODY_A }]));
   }
 
-  /* Bar behind the near arm (back squat). */
-  const drawBar = (b: Pt) => {
-    parts.push(
-      `<rect x="${(b[0] - 30).toFixed(1)}" y="${(b[1] - 3).toFixed(1)}" width="60" height="6" rx="3" fill="${GEAR}" stroke="${SEAM}" stroke-width="1.2"/>`,
-      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="16" fill="${GEAR_DARK}" stroke="${SEAM}" stroke-width="1.5"/>`,
-      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="10.5" fill="none" stroke="${SEAM}" stroke-width="1" opacity="0.5"/>`,
-      `<circle cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="4" fill="${GEAR}" stroke="${SEAM}" stroke-width="1.2"/>`
-    );
-  };
-  if (equipment === "barbell-back" && barCenter) drawBar(barCenter);
-
-  /* Near arm: authored from the elbow/hand up (pivot frames). */
-  parts.push(
-    poly(place(elbowPt, armAngle + 180, TRICEP), fillFor("triceps", tint, BODY_B))
-  );
-  parts.push(
-    poly(place(elbowPt, armAngle + 180, BICEP), fillFor("biceps", tint, BODY_A))
-  );
-  parts.push(joint(elbowPt, 5.5, BODY_A));
-  parts.push(
-    poly(place(hand, foreAngle + 180, FOREARM_ART), fillFor("forearm", tint, BODY_A))
-  );
-  parts.push(joint(hand, 4.5, BODY_A));
-
-  /* Delt cap over the shoulder. */
-  {
-    const sp = p.shoulderPt;
-    parts.push(
-      poly(
-        [
-          [sp[0] - 10, sp[1] - 4],
-          [sp[0] - 2, sp[1] - 11],
-          [sp[0] + 8, sp[1] - 9],
-          [sp[0] + 12, sp[1] - 1],
-          [sp[0] + 8, sp[1] + 8],
-          [sp[0] - 4, sp[1] + 9],
-        ],
-        fillFor("delt", tint, BODY_A)
-      )
-    );
-  }
+  /* Near arm group. */
+  const sp = p.shoulderPt;
+  const armGroup: { pts: Pt[]; fill: string }[] = [
+    { pts: place(elbowPt, armAngle + 180, TRICEP), fill: fillFor("triceps", tint, BODY_B) },
+    { pts: place(elbowPt, armAngle + 180, BICEP), fill: fillFor("biceps", tint, BODY_A) },
+    { pts: place(hand, foreAngle + 180, FOREARM_ART), fill: fillFor("forearm", tint, BODY_A) },
+    {
+      pts: [
+        [sp[0] - 10, sp[1] - 4],
+        [sp[0] - 2, sp[1] - 11],
+        [sp[0] + 8, sp[1] - 9],
+        [sp[0] + 12, sp[1] - 1],
+        [sp[0] + 8, sp[1] + 8],
+        [sp[0] - 4, sp[1] + 9],
+      ],
+      fill: fillFor("delt", tint, BODY_A),
+    },
+  ];
+  parts.push(facetGroup(armGroup));
+  parts.push(joint(hand, 4, BODY_A));
 
   /* Bar in front of the hands. */
   if (equipment === "barbell-hands" && barCenter) drawBar(barCenter);
