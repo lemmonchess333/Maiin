@@ -4,6 +4,7 @@ import {
   weekBounds,
   inWeek,
   verdictFor,
+  buildWeekPulse,
   type WeeklyReviewData,
 } from "../weeklyReviewViewModel";
 
@@ -307,5 +308,65 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
       })
     );
     expect(r?.body).toBeNull();
+  });
+});
+
+describe("buildWeekPulse (Rev1 PR2)", () => {
+  const CURRENT = "2026-06-28"; // Sunday-start current week
+
+  it("returns both lanes with planned comparisons when plans exist", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-29" }, { date: "2026-07-01" }],
+      runs: [{ date: "2026-06-30", distanceMeters: 8200, eligible: true }],
+      plannedLifts: 4,
+      plannedRuns: 3,
+      streak: 12,
+    });
+    expect(p).toEqual({
+      lifts: { done: 2, planned: 4 },
+      runs: { count: 1, km: 8.2, planned: 3 },
+      streak: 12,
+    });
+  });
+
+  it("freeform: run lane is done-only (planned null) and hides when empty", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-29" }],
+      runs: [],
+      plannedLifts: 3,
+      plannedRuns: null,
+      streak: 2,
+    });
+    expect(p?.lifts).toEqual({ done: 1, planned: 3 });
+    expect(p?.runs).toBeNull();
+  });
+
+  it("ineligible runs never count; out-of-week rows ignored", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-20" }], // previous week
+      runs: [
+        { date: "2026-06-29", distanceMeters: 9000, eligible: false },
+        { date: "2026-06-20", distanceMeters: 5000, eligible: true },
+      ],
+      plannedLifts: null,
+      plannedRuns: null,
+      streak: 5,
+    });
+    expect(p).toBeNull(); // nothing in-week and eligible, no plans
+  });
+
+  it("zero streak hides the streak line", () => {
+    const p = buildWeekPulse({
+      weekKey: CURRENT,
+      workouts: [{ date: "2026-06-29" }],
+      runs: [],
+      plannedLifts: null,
+      plannedRuns: null,
+      streak: 0,
+    });
+    expect(p?.streak).toBeNull();
   });
 });
