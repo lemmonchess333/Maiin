@@ -41,3 +41,4 @@ playwright/.cache/
 
 # Claude Code agent worktrees (Agent tool isolation — never committed)
 .claude/worktrees/
+public/exercise-demos/_preview.html
