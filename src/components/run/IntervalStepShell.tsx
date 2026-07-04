@@ -10,6 +10,7 @@ import {
   upNextHeadline,
 } from "@/lib/intervalSteps";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { THEME } from "@/lib/theme";
 
 /**
  * The in-run interval step shell (Runna teardown #3) — replaces the bare
@@ -21,24 +22,26 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
  *  - big countdown / distance-left, "Up next", a step-complete flash,
  *    a manual "Skip step" override, and a terminal all-steps-done state
  *
- * Colour vocabulary carries over from the old chip (and matches Runna's,
- * coincidentally): work = green, rest = blue, warmup/cooldown = amber.
- * Pinned to the always-dark active-run screen like GuidedRunOverlay —
- * deliberately NOT theme vars. Animation is opacity/width only
- * (WKWebView-safe); reduced motion gets settled states.
+ * Drawn in the TROPOS register, not Runna's: work steps carry the coral
+ * running identity (full strength), warm-up/cool-down the same coral at
+ * half voltage, rest a neutral white step — one hue family plus neutrals,
+ * no traffic-light palette. Pinned to the always-dark active-run screen
+ * like GuidedRunOverlay — deliberately NOT theme vars. Animation is
+ * opacity/width only (WKWebView-safe); reduced motion gets settled states.
  */
 
+const CORAL = THEME.running;
 const KIND_COLOR: Record<string, string> = {
-  warmup: "rgb(234,179,8)", // amber-500
-  work: "rgb(34,197,94)", // green-500
-  rest: "rgb(59,130,246)", // blue-500
-  cooldown: "rgb(234,179,8)",
+  warmup: `${CORAL}73`, // coral @45% — effort, but not the effort
+  work: CORAL,
+  rest: "rgba(255,255,255,0.35)",
+  cooldown: `${CORAL}73`,
 };
 const KIND_TEXT: Record<string, string> = {
-  warmup: "text-yellow-400",
-  work: "text-green-400",
-  rest: "text-blue-400",
-  cooldown: "text-yellow-400",
+  warmup: "text-running/80",
+  work: "text-running",
+  rest: "text-white/75",
+  cooldown: "text-running/80",
 };
 
 function countdownLabel(remainingS: number): string {
@@ -86,12 +89,14 @@ export default function IntervalStepShell({
       <div
         className="mx-4 p-4 rounded-2xl text-center"
         style={{
-          background: "rgba(34,197,94,0.12)",
-          border: "1px solid rgba(34,197,94,0.3)",
+          background: `${THEME.success}1F`,
+          border: `1px solid ${THEME.success}4D`,
         }}
       >
-        <p className="text-lg font-bold text-green-400">All steps complete</p>
-        <p className="text-xs text-green-400/70 mt-1">
+        <p className="text-lg font-bold" style={{ color: THEME.success }}>
+          All steps complete
+        </p>
+        <p className="text-xs mt-1" style={{ color: `${THEME.success}B3` }}>
           Cruise home at whatever feels good — then finish the run to save it.
         </p>
       </div>
@@ -148,31 +153,35 @@ export default function IntervalStepShell({
         ))}
       </div>
 
-      <div className="p-4 pt-3 space-y-1.5">
-        {/* Step-complete flash (transient) or the live eyebrow. */}
-        {flash ? (
-          <p className="text-[11px] font-bold tracking-wider text-green-400">
-            ✓ COMPLETED — {flash.toUpperCase()}
-          </p>
-        ) : (
-          <p className={`text-[11px] font-bold tracking-wider ${text}`}>
-            {eyebrow}
-          </p>
-        )}
-
-        <div className="flex items-end justify-between gap-3">
-          {/* The prescription IS the headline. */}
-          <p className={`text-xl font-extrabold leading-tight ${text}`}>
-            {stepHeadline(live, config, band)}
-          </p>
-          <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0">
+      <div className="p-4 pt-3 space-y-1">
+        {/* Eyebrow (or the transient step-complete flash) + the live number
+            share the top row; the prescription gets the full width below so
+            neither ever wraps against the other. */}
+        <div className="flex items-baseline justify-between gap-3">
+          {flash ? (
+            <p className="text-[11px] font-bold tracking-wider text-success min-w-0 truncate">
+              ✓ {flash.toUpperCase()} DONE
+            </p>
+          ) : (
+            <p
+              className={`text-[11px] font-bold tracking-wider ${text} opacity-80`}
+            >
+              {eyebrow}
+            </p>
+          )}
+          <p className="text-2xl font-extrabold font-mono tabular-nums text-white shrink-0 leading-none">
             {state.phase === "work" && state.isDistanceBased
               ? `${Math.max(0, Math.round(state.phaseTarget - state.phaseDistanceCovered))}m`
               : countdownLabel(state.phaseTarget - state.phaseElapsed)}
           </p>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
+        {/* The prescription IS the headline. */}
+        <p className={`text-lg font-extrabold leading-tight ${text}`}>
+          {stepHeadline(live, config, band)}
+        </p>
+
+        <div className="flex items-center justify-between gap-3 pt-0.5">
           <p className="text-xs text-white/50 min-w-0 truncate">
             {upNext ? (
               <>

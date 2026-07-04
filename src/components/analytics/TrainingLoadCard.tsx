@@ -2,7 +2,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Area,
-  Line,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,15 +15,20 @@ import EmptyState from "@/components/ui/EmptyState";
 
 /**
  * Training load — the daily fitness / fatigue / form curve (competitive
- * teardown #4). Strava's Fitness & Freshness, but spanning BOTH disciplines:
- * every eligible run AND lift feeds one curve (effort-weighted training
- * minutes → 42d/7d impulse-response, src/lib/trainingLoad.ts).
+ * teardown #4), drawn in the Tropos register rather than a Strava clone:
  *
- * Cross-sport surface → PI-family identity: fitness in brand purple,
- * fatigue in the amber data step (a metric, not a warning banner), form as
- * a signed chip (success/destructive by sign). Range-scoped like the rest
- * of the Analytics body — the hook warms the EWMAs up on pre-window
- * history, so the curve is honest at the window edge.
+ *  - ONE smooth line: fitness (brand purple, PI-chart gradient family).
+ *    Fatigue is deliberately NOT a line — a 7-day EWMA over train/rest days
+ *    sawtooths into visual noise ("the yellow squiggly"); it reads as a
+ *    NUMBER next to fitness, and its meaning ships in the Form chip.
+ *  - Daily load as short sport-coded bars along the baseline — coral run,
+ *    purple lift, stacked. That makes the run+lift span (the differentiator)
+ *    visible at a glance, and gives training days texture without a second
+ *    squiggle. Bars ride their own hidden axis scaled so they stay in the
+ *    bottom third under the fitness curve.
+ *
+ * Range-scoped like the rest of the Analytics body — the hook warms the
+ * EWMAs on pre-window history, so the curve is honest at the window edge.
  */
 
 const numberFmt = (n: number) => Math.round(n).toString();
@@ -63,6 +68,11 @@ export default function TrainingLoadCard({
     label: i % tickEvery === 0 ? p.dateKey.slice(5).replace("-", "/") : "",
   }));
 
+  // The load bars ride a separate hidden axis stretched to ~3× the peak
+  // day, pinning them to the bottom third so the fitness curve owns the
+  // card and training days read as baseline texture.
+  const maxDayLoad = Math.max(1, ...points.map((p) => p.load));
+
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -92,19 +102,24 @@ export default function TrainingLoadCard({
           Fitness {numberFmt(last.fitness)}
         </span>
         {" · "}
-        <span style={{ color: THEME.amberLight }}>
-          Fatigue {numberFmt(last.fatigue)}
-        </span>
+        <span>Fatigue {numberFmt(last.fatigue)}</span>
       </p>
 
       <ResponsiveContainer width="100%" height={150}>
         <ComposedChart
           data={data}
           margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+          barCategoryGap="25%"
         >
+          <defs>
+            <linearGradient id="load-fitness" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={THEME.brand} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={THEME.brand} stopOpacity={0} />
+            </linearGradient>
+          </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke={THEME.chartGrid}
+            stroke="hsl(var(--border))"
             vertical={false}
           />
           <XAxis
@@ -114,22 +129,33 @@ export default function TrainingLoadCard({
             axisLine={false}
             tickLine={false}
           />
-          <YAxis hide domain={[0, "auto"]} />
+          <YAxis yAxisId="fitness" hide domain={[0, "auto"]} />
+          <YAxis yAxisId="load" hide domain={[0, maxDayLoad * 3]} />
+          {/* Daily training, sport-coded: coral run + purple lift. */}
+          <Bar
+            yAxisId="load"
+            dataKey="runLoad"
+            stackId="day"
+            fill={THEME.running}
+            fillOpacity={0.55}
+            isAnimationActive={false}
+          />
+          <Bar
+            yAxisId="load"
+            dataKey="liftLoad"
+            stackId="day"
+            fill={THEME.brand}
+            fillOpacity={0.55}
+            radius={[2, 2, 0, 0]}
+            isAnimationActive={false}
+          />
           <Area
+            yAxisId="fitness"
             type="monotone"
             dataKey="fitness"
             stroke={THEME.brand}
             strokeWidth={2}
-            fill={THEME.brand}
-            fillOpacity={0.12}
-            dot={false}
-            isAnimationActive={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="fatigue"
-            stroke={THEME.amberLight}
-            strokeWidth={1.5}
+            fill="url(#load-fitness)"
             dot={false}
             isAnimationActive={false}
           />
@@ -137,9 +163,10 @@ export default function TrainingLoadCard({
       </ResponsiveContainer>
 
       <p className="text-[10px] text-muted-foreground mt-2">
-        Every run and lift feeds one curve — fitness is your 6-week training
-        base, fatigue the last 7 days. Positive form = fresh; deep negative =
-        time to ease off.
+        The purple curve is your 6-week training base; the bars are daily
+        sessions (<span style={{ color: THEME.running }}>runs</span> ·{" "}
+        <span style={{ color: THEME.brand }}>lifts</span>). Positive form =
+        fresh; deep negative = time to ease off.
       </p>
     </div>
   );
