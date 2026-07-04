@@ -25,6 +25,7 @@ import {
   computePerformanceIndex,
   getWeekKey,
 } from "../src/lib/performanceEngine";
+import { vdotFromRace } from "../src/lib/runPaces";
 import type {
   WeeklyAggregates,
   PerformanceSignals,
@@ -54,7 +55,23 @@ async function main() {
   //    profile. seed-e2e deliberately omits age/sex (drives the cold-start
   //    "Personalise your calorie targets" nag); a rich/alive user has them,
   //    so merge them in here. Keeps seed-e2e as the pure cold-start fixture. ──
-  await base.set({ age: 31, sex: "male" }, { merge: true });
+  await base.set(
+    {
+      age: 31,
+      sex: "male",
+      // Adaptive-paces benchmark matching the best seeded run below (6 km at
+      // 324 s/km) — lights up the Analytics Race Predictions card and the
+      // personalized session paces without waiting for the client-side
+      // auto-derive (which only fires on a Programme-page visit).
+      runFitness: {
+        benchmark: { distanceM: 6000, timeS: 1944 },
+        vdot: Math.round(vdotFromRace(6000, 1944) * 10) / 10,
+        source: "derived",
+        updatedAt: new Date().toISOString(),
+      },
+    },
+    { merge: true }
+  );
 
   // ── Workouts: 12 sessions over ~8 weeks, bench progressing 60→82.5kg
   //    (drives lifting volume charts + a Bench Press PR ladder). ──

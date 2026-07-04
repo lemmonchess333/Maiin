@@ -9,6 +9,7 @@ import {
   parseRaceTimeToSeconds,
   resolvePaceInsight,
   raceDistanceKeyFromKm,
+  predictedRaceTimesFromFitness,
 } from "../runPaces";
 
 describe("vdotFromRace", () => {
@@ -242,5 +243,68 @@ describe("raceDistanceKeyFromKm", () => {
     expect(raceDistanceKeyFromKm(21.1)).toBe("half");
     expect(raceDistanceKeyFromKm(42.2)).toBe("marathon");
     expect(raceDistanceKeyFromKm(undefined)).toBeUndefined();
+  });
+});
+
+describe("predictedRaceTimesFromFitness (Analytics race predictions)", () => {
+  const fitness = {
+    benchmark: { distanceM: 5000, timeS: 1500 }, // 25:00 5K
+    vdot: null,
+  };
+
+  it("returns null with no usable fitness", () => {
+    expect(predictedRaceTimesFromFitness(null)).toBeNull();
+    expect(predictedRaceTimesFromFitness(undefined)).toBeNull();
+    expect(
+      predictedRaceTimesFromFitness({ benchmark: null, vdot: null })
+    ).toBeNull();
+    expect(
+      predictedRaceTimesFromFitness({
+        benchmark: { distanceM: 0, timeS: 0 },
+        vdot: null,
+      })
+    ).toBeNull();
+  });
+
+  it("benchmark path matches predictRaceTimeS exactly (single source)", () => {
+    const times = predictedRaceTimesFromFitness(fitness)!;
+    expect(times["5k"]).toBe(1500); // identity at the benchmark distance
+    expect(times["10k"]).toBe(
+      Math.round(predictRaceTimeS(fitness.benchmark, 10000))
+    );
+    expect(times.half).toBe(
+      Math.round(predictRaceTimeS(fitness.benchmark, 21097.5))
+    );
+    expect(times.marathon).toBe(
+      Math.round(predictRaceTimeS(fitness.benchmark, 42195))
+    );
+  });
+
+  it("times increase with distance and per-km pace degrades (Riegel)", () => {
+    const t = predictedRaceTimesFromFitness(fitness)!;
+    expect(t["10k"]).toBeGreaterThan(t["5k"]);
+    expect(t.half).toBeGreaterThan(t["10k"]);
+    expect(t.marathon).toBeGreaterThan(t.half);
+    expect(t.marathon / 42.195).toBeGreaterThan(t["5k"] / 5);
+  });
+
+  it("vdot-only path synthesises an equivalent 5K (matches the paces table)", () => {
+    const vdotOnly = { benchmark: null, vdot: 50 };
+    const times = predictedRaceTimesFromFitness(vdotOnly)!;
+    // The paces table's 5k race PACE comes from the same synthesised effort —
+    // the two surfaces must agree (pace is the rounded per-km of the time).
+    const table = paceTableFromFitness(vdotOnly)!;
+    expect(Math.round(times["5k"] / 5)).toBe(table.race["5k"]);
+    // VDOT 50 5K is ~19:30–20:00 territory.
+    expect(times["5k"]).toBeGreaterThan(1100);
+    expect(times["5k"]).toBeLessThan(1250);
+  });
+
+  it("prefers the stored benchmark over the cached vdot for projections", () => {
+    const withBoth = {
+      benchmark: { distanceM: 5000, timeS: 1500 },
+      vdot: 60, // stale/fast cache — must not distort the Riegel reference
+    };
+    expect(predictedRaceTimesFromFitness(withBoth)!["5k"]).toBe(1500);
   });
 });

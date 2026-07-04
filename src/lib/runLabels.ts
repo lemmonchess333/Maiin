@@ -51,6 +51,23 @@ export function durationLabel(durationSec: number): string {
 }
 
 /**
+ * Format a race finish time (seconds) the way results are printed:
+ * `m:ss` under an hour, `h:mm:ss` over (25:00 · 1:01:01). Distinct from
+ * `durationLabel`'s "1h 05m" style — predictions/results read as clock
+ * times, not elapsed-time prose.
+ */
+export function finishTimeLabel(timeS: number): string {
+  if (!Number.isFinite(timeS) || timeS <= 0) return "--:--";
+  const t = Math.round(timeS);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  const mm = String(m).padStart(2, "0");
+  const ss = String(s).padStart(2, "0");
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+/**
  * Format a distance (metres) as `K.k km`, with the em-dash
  * placeholder for missing / zero / negative values.
  */

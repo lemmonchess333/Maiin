@@ -17,6 +17,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
+import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec } from "@/lib/runLabels";
 import { requiresManualDistance } from "@/lib/runGuards";
@@ -1194,9 +1195,15 @@ export default function History() {
                     <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
                 ) : renderRunningEmptyNote ? (
-                  <p className="text-xs text-muted-foreground italic px-1">
-                    No runs in this period
-                  </p>
+                  <>
+                    <p className="text-xs text-muted-foreground italic px-1">
+                      No runs in this period
+                    </p>
+                    {/* Predictions are a today-snapshot (see the card's
+                        carve-out footnote), so an empty WINDOW doesn't
+                        hide them — only an empty lifetime does. */}
+                    <RacePredictionsCard />
+                  </>
                 ) : runs.length === 0 ? (
                   <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Footprints className="size-5 shrink-0 text-running" />
@@ -1247,6 +1254,7 @@ export default function History() {
                       to the dedicated PRs tab (Tier 2 lifetime
                       contract). Tap the PRs tab in the top filter
                       to access them. */}
+                    <RacePredictionsCard />
                     <ShoeMileageSection />
                     <RunningHistorySection />
                   </>

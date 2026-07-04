@@ -196,10 +196,34 @@ export function trainingBands(vdot: number): Omit<PaceTable, "vdot" | "race"> {
 export function paceTableFromFitness(
   fitness: RunFitnessInput | null | undefined
 ): PaceTable | null {
+  const resolved = resolveFitnessVdot(fitness);
+  if (!resolved) return null;
+  const { vdot, benchmark } = resolved;
+
+  return {
+    vdot: Math.round(vdot * 10) / 10,
+    ...trainingBands(vdot),
+    race: racePaces(resolveRefBenchmark(benchmark, vdot)),
+  };
+}
+
+/** Shared vdot resolution: stored vdot wins, else derive from the benchmark;
+ *  null when neither is usable. `benchmark` is echoed back only when valid. */
+function resolveFitnessVdot(
+  fitness: RunFitnessInput | null | undefined
+): {
+  vdot: number;
+  benchmark: { distanceM: number; timeS: number } | null;
+} | null {
   if (!fitness) return null;
-  const benchmark = fitness.benchmark;
+  const benchmark =
+    fitness.benchmark &&
+    fitness.benchmark.distanceM > 0 &&
+    fitness.benchmark.timeS > 0
+      ? fitness.benchmark
+      : null;
   let vdot = 0;
-  if (benchmark && benchmark.distanceM > 0 && benchmark.timeS > 0) {
+  if (benchmark) {
     vdot =
       fitness.vdot && fitness.vdot > 0
         ? fitness.vdot
@@ -207,20 +231,40 @@ export function paceTableFromFitness(
   } else if (fitness.vdot && fitness.vdot > 0) {
     vdot = fitness.vdot;
   }
-  if (vdot <= 0) return null;
+  return vdot > 0 ? { vdot, benchmark } : null;
+}
 
-  // Race paces want a concrete effort. Use the real benchmark; if only a vdot
-  // is known, synthesise an equivalent 5K time so Riegel still works.
-  const refBenchmark =
-    benchmark && benchmark.distanceM > 0 && benchmark.timeS > 0
-      ? benchmark
-      : { distanceM: 5000, timeS: vdotEquivalent5kTimeS(vdot) };
+/** The concrete effort Riegel projections run off: the real benchmark when
+ *  one exists, else a 5K synthesised from the vdot. Shared by the paces table
+ *  and the Analytics race predictions so the two can never disagree. */
+function resolveRefBenchmark(
+  benchmark: { distanceM: number; timeS: number } | null,
+  vdot: number
+): { distanceM: number; timeS: number } {
+  return benchmark && benchmark.distanceM > 0 && benchmark.timeS > 0
+    ? benchmark
+    : { distanceM: 5000, timeS: vdotEquivalent5kTimeS(vdot) };
+}
 
-  return {
-    vdot: Math.round(vdot * 10) / 10,
-    ...trainingBands(vdot),
-    race: racePaces(refBenchmark),
-  };
+/**
+ * Predicted finish TIMES (seconds) per race distance from a user's
+ * `runFitness`, or `null` when there's no usable benchmark/vdot. Same
+ * reference-benchmark rules as `paceTableFromFitness` (real effort preferred,
+ * vdot-only synthesises an equivalent 5K), so the Analytics predictions and
+ * the planner's race paces always come from the same effort.
+ */
+export function predictedRaceTimesFromFitness(
+  fitness: RunFitnessInput | null | undefined
+): Record<RaceDistanceKey, number> | null {
+  const resolved = resolveFitnessVdot(fitness);
+  if (!resolved) return null;
+
+  const ref = resolveRefBenchmark(resolved.benchmark, resolved.vdot);
+  const out = {} as Record<RaceDistanceKey, number>;
+  for (const key of Object.keys(RACE_DISTANCES_M) as RaceDistanceKey[]) {
+    out[key] = Math.round(predictRaceTimeS(ref, RACE_DISTANCES_M[key]));
+  }
+  return out;
 }
 
 /** Approximate the 5K time a VDOT predicts (for race-pace synthesis when only
