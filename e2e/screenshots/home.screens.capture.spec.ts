@@ -121,6 +121,19 @@ test.describe("app screenshots", () => {
             /* still gated/loading after the wait — capture whatever's there */
           });
       }
+      // History/Analytics hydrates workouts/runs/meals subscriptions + a
+      // lazy heat-map chunk after the nav appears; the fixed 1400ms settle
+      // shot a full-page skeleton (2026-07-04 run). Wait for the lifting
+      // heat-map heading (rich-seeded data guarantees it) before shooting.
+      if (name === "history") {
+        await page
+          .getByText(/Muscle Groups Trained/i)
+          .first()
+          .waitFor({ state: "visible", timeout: 15000 })
+          .catch(() => {
+            /* still loading after the wait — capture whatever's there */
+          });
+      }
       await page.waitForTimeout(1400); // entry animations / count-ups settle
 
       await page.evaluate(() =>
