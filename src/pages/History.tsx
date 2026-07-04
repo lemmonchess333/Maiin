@@ -18,6 +18,8 @@ import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
+import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
+import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec } from "@/lib/runLabels";
 import { requiresManualDistance } from "@/lib/runGuards";
@@ -352,6 +354,9 @@ export default function History() {
     refresh: refreshRuns,
   } = useRunningStats(rangeDays);
   const { workouts, loading: workoutsLoading } = useWorkouts();
+  // Training-load curve feed — self-fetching (needs warmup history beyond
+  // the visible range, so it can't reuse the range-scoped runs above).
+  const trainingLoad = useTrainingLoadSeries(rangeDays);
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
   const { profile } = useAuth();
@@ -1172,16 +1177,29 @@ export default function History() {
             {filter === "analytics" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
-                <PeriodOverview
-                  runCount={runningTotals.runCount}
-                  runDistance={runningTotals.runDistance}
-                  liftCount={liftingData.liftCount}
-                  liftVolume={liftingData.liftVolume}
-                  avgCalories={nutrition.avgCalories}
-                  nutritionAdherence={nutrition.adherence}
-                  timeRange={timeRange}
-                  rangeDays={rangeDays}
-                />
+                <>
+                  <PeriodOverview
+                    runCount={runningTotals.runCount}
+                    runDistance={runningTotals.runDistance}
+                    liftCount={liftingData.liftCount}
+                    liftVolume={liftingData.liftVolume}
+                    avgCalories={nutrition.avgCalories}
+                    nutritionAdherence={nutrition.adherence}
+                    timeRange={timeRange}
+                    rangeDays={rangeDays}
+                  />
+                  {/* Fitness/fatigue/form spanning run+lift (teardown #4).
+                      Cross-sport, so it lives with the range-scoped overview
+                      rather than inside either sport section. */}
+                  <SectionErrorBoundary sectionName="training-load">
+                    <div className="mt-2">
+                      <TrainingLoadCard
+                        points={trainingLoad.points}
+                        loading={trainingLoad.loading}
+                      />
+                    </div>
+                  </SectionErrorBoundary>
+                </>
               )}
 
             {showRunningSection && filter === "analytics" && (
