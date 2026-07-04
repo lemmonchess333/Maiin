@@ -119,6 +119,62 @@ export function hitsFromWorkoutDocs(
   return hits;
 }
 
+export interface GroupRecovery {
+  status: RecoveryStatus;
+  /** Whole days until the group's most-loaded muscle is recovered. */
+  readyInDays: number;
+}
+
+/**
+ * The analytics MuscleHeatMap legend speaks the coarser EXERCISE_CATEGORIES
+ * group taxonomy (plus legacy aliases); map each legend group to its
+ * canonical muscles so recovery chips can sit on the existing rows. "Full
+ * Body" is deliberately absent — a single readiness state for it would be
+ * dishonest.
+ */
+const HEAT_MAP_GROUP_MUSCLES: Record<string, CanonicalMuscle[]> = {
+  Chest: ["Chest"],
+  Back: ["Back"],
+  Shoulders: ["Shoulders"],
+  Biceps: ["Biceps"],
+  Triceps: ["Triceps"],
+  Legs: ["Quads", "Hamstrings", "Glutes", "Calves"],
+  Core: ["Core"],
+  // Legacy alias rows (CATEGORY_DISPLAY translations of old workout docs).
+  "Quads & Glutes": ["Quads", "Glutes"],
+  "Hamstrings & Back": ["Hamstrings", "Back"],
+  Lats: ["Back"],
+  Calves: ["Calves"],
+  Traps: ["Back"],
+};
+
+/**
+ * Aggregate per-muscle recovery to the heat-map's legend groups, most-binding
+ * member wins (a group is only as recovered as its least-recovered muscle).
+ * Groups with no mapping (e.g. "Full Body") are omitted — the legend row
+ * simply gets no chip.
+ */
+export function recoveryForHeatMapGroups(
+  entries: MuscleRecoveryEntry[]
+): Record<string, GroupRecovery> {
+  const byMuscle = new Map(entries.map((e) => [e.muscle, e]));
+  const result: Record<string, GroupRecovery> = {};
+  for (const [group, muscles] of Object.entries(HEAT_MAP_GROUP_MUSCLES)) {
+    let fraction = 1;
+    let readyInDays = 0;
+    for (const m of muscles) {
+      const e = byMuscle.get(m);
+      if (!e) continue;
+      fraction = Math.min(fraction, e.fraction);
+      readyInDays = Math.max(readyInDays, e.readyInDays);
+    }
+    const status: RecoveryStatus =
+      fraction >= 1 ? "ready" : fraction >= 0.5 ? "nearly" : "recovering";
+    result[group] = { status, readyInDays };
+  }
+  return result;
+}
+
 /**
  * Recovery state for every canonical muscle as of `todayKey`, in
  * CANONICAL_MUSCLE_ORDER. Future-dated hits (clock skew) clamp to 0 days.

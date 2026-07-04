@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
+  recoveryForHeatMapGroups,
   RECOVERY_WINDOW_DAYS,
   type MuscleHit,
 } from "../muscleRecovery";
@@ -173,5 +174,41 @@ describe("hitsFromWorkoutDocs", () => {
     const entries = computeMuscleRecovery(hits, TODAY);
     expect(entry(entries, "Chest").status).toBe("recovering");
     expect(entry(entries, "Core").status).toBe("ready");
+  });
+});
+
+describe("recoveryForHeatMapGroups", () => {
+  it("Legs aggregates its four muscles by the most-binding member", () => {
+    // Quads trained today (recovering); calves ready → Legs must read
+    // recovering with the quads' remaining days.
+    const entries = computeMuscleRecovery(
+      [{ muscle: "Quads", date: TODAY, involvement: "primary" }],
+      TODAY
+    );
+    const groups = recoveryForHeatMapGroups(entries);
+    expect(groups.Legs.status).toBe("recovering");
+    expect(groups.Legs.readyInDays).toBe(RECOVERY_WINDOW_DAYS.Quads);
+  });
+
+  it("simple groups mirror their single muscle; untrained groups read ready", () => {
+    const entries = computeMuscleRecovery(
+      [{ muscle: "Chest", date: "2026-07-02", involvement: "primary" }],
+      TODAY
+    );
+    const groups = recoveryForHeatMapGroups(entries);
+    expect(groups.Chest.status).toBe("nearly"); // 2/3 through
+    expect(groups.Back.status).toBe("ready");
+    expect(groups.Back.readyInDays).toBe(0);
+  });
+
+  it("legacy alias rows resolve and Full Body is omitted (no honest single state)", () => {
+    const entries = computeMuscleRecovery(
+      [{ muscle: "Back", date: TODAY, involvement: "primary" }],
+      TODAY
+    );
+    const groups = recoveryForHeatMapGroups(entries);
+    expect(groups["Lats"].status).toBe("recovering");
+    expect(groups["Hamstrings & Back"].status).toBe("recovering");
+    expect(groups["Full Body"]).toBeUndefined();
   });
 });

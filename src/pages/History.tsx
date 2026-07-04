@@ -34,6 +34,12 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import { localWeekKey, localDateString } from "@/lib/dateHelpers";
+import {
+  computeMuscleRecovery,
+  hitsFromWorkoutDocs,
+  recoveryForHeatMapGroups,
+  RECOVERY_LOOKBACK_DAYS,
+} from "@/lib/muscleRecovery";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(
@@ -583,6 +589,20 @@ export default function History() {
       hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
     };
   }, [runs]);
+
+  // Per-group recovery chips for the muscle heat map (Tier-2 #6 second
+  // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
+  // regardless of the page's TimeRange (the card labels the carve-out).
+  const muscleRecovery = useMemo(() => {
+    const lookbackStart = new Date();
+    lookbackStart.setDate(lookbackStart.getDate() - RECOVERY_LOOKBACK_DAYS);
+    const lookbackKey = localDateString(lookbackStart);
+    const recent = workouts.filter((w) => w.date >= lookbackKey);
+    const hits = hitsFromWorkoutDocs(recent);
+    return recoveryForHeatMapGroups(
+      computeMuscleRecovery(hits, localDateString())
+    );
+  }, [workouts]);
 
   const liftingData = useMemo(() => {
     const since = new Date();
@@ -1307,6 +1327,7 @@ export default function History() {
                       <MuscleHeatMap
                         data={liftingData.muscleData}
                         accentColor={THEME.lifting}
+                        recovery={muscleRecovery}
                       />
                     </SectionErrorBoundary>
                     {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the

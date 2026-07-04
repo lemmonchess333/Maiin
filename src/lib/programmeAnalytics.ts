@@ -25,8 +25,7 @@ export type ProgrammeSection =
   | "session_card"
   | "deload_banner"
   | "race_goal_card"
-  | "run_plan"
-  | "muscle_recovery";
+  | "run_plan";
 
 /** Pgm3 deload banner has two terminal user actions; pin the
  *  alternatives explicitly so the event union is self-documenting. */
