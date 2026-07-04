@@ -17,6 +17,19 @@
  * runs identical fixtures through both copies across every goal and asserts the
  * scored output is byte-identical. Drift fails CI.
  *
+ * The one baseline field with a KNOWN, deliberate derivation difference is
+ * `runLongKm` (PERF-L, #1107): the client averages each prior week's longest
+ * run (`computeBaseline` — mean of weekly maxes), while the server keeps the
+ * single longest run observed across its whole baseline window
+ * (`computeBaselineFromAgg` — a max does not scale linearly with window
+ * length, so it is exempt from the 28d→7d normalisation the other fields
+ * get). The server's baseline is therefore ≥ the client's, so client previews
+ * can score `longRatio` slightly hotter than the authoritative rollup. Both
+ * are defensible readings of "typical long run"; the discrepancy only shifts
+ * 40% of one sub-score and washes out for consistent runners. If it's ever
+ * reconciled, prefer changing the CLIENT (the server copy is what users' PI
+ * is persisted from).
+ *
  * `confidence` is deliberately NOT part of the seam — the client's
  * `computeConfidence` has a `Date.now()` recency check tied to its weekly-keyed
  * model that the server's rolling-window model legitimately omits. Each copy

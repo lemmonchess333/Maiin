@@ -8,6 +8,7 @@ import {
   GOAL_CALORIE_OFFSET,
   DEFAULT_PROTEIN_MULTIPLIER,
   FAT_CALORIE_FRACTION,
+  floorTargetCalories,
 } from "./macroConstants";
 
 export type ActivityLevel =
@@ -70,13 +71,18 @@ export function calculateTDEE(
 
   // Goal-based adjustment: explicit rate-derived offset wins, else the
   // centralized per-goal default band.
-  const deficit =
+  const requestedOffset =
     explicitOffset !== undefined
       ? explicitOffset
       : (GOAL_CALORIE_OFFSET[goal] ?? 0);
   const proteinMultiplier = GOAL_PROTEIN[goal] ?? DEFAULT_PROTEIN_MULTIPLIER;
 
-  const targetCalories = tdee + deficit;
+  // NUTR-L5 safety floor: a deficit can never push the target below
+  // min(tdee, MIN_TARGET_CALORIES). The reported `deficit` is the EFFECTIVE
+  // offset after flooring, so UI that renders "±N cal" stays honest when the
+  // requested rate couldn't be applied in full.
+  const targetCalories = floorTargetCalories(tdee + requestedOffset, tdee);
+  const deficit = targetCalories - tdee;
 
   // Macro split
   const protein = Math.round(proteinMultiplier * weightKg);

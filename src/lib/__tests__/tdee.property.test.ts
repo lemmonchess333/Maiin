@@ -8,12 +8,17 @@
  *   - all outputs are non-negative for realistic inputs
  *   - more activity ⇒ more calories (sedentary ≤ … ≤ very_active)
  *   - heavier ⇒ more calories (BMR is linear in weight)
- *   - cut < recomp < lean bulk for the same body (offsets −500 < 0 < +300)
+ *   - cut ≤ recomp < lean bulk for the same body (offsets −500 < 0 < +300),
+ *     with the exact −500 gap holding whenever the NUTR-L5 floor isn't engaged
+ *   - the NUTR-L5 floor: no offset (band or rate-derived) pushes the target
+ *     below min(tdee, MIN_TARGET_CALORIES), and the reported `deficit` is the
+ *     effective offset (targetCalories − tdee)
  *
  * Deterministic (seeded PRNG).
  */
 import { describe, it, expect } from "vitest";
 import { calculateTDEE, type ActivityLevel, type FitnessGoal } from "../tdee";
+import { MIN_TARGET_CALORIES } from "../macroConstants";
 
 function mulberry32(seed: number): () => number {
   let a = seed;
@@ -150,11 +155,50 @@ describe("calculateTDEE invariants (property-based)", () => {
         "lean bulk",
         b.sex
       );
-      expect(cut.targetCalories).toBeLessThan(recomp.targetCalories);
+      // Recomp (offset 0) and bulk (+300) are never floored; cut clamps to
+      // min(tdee, MIN_TARGET_CALORIES) when tdee − 500 falls below it, so the
+      // ordering is ≤ (equality only when the floor fully absorbs the deficit).
+      expect(cut.targetCalories).toBeLessThanOrEqual(recomp.targetCalories);
       expect(recomp.targetCalories).toBeLessThan(bulk.targetCalories);
-      // The gaps reflect the exact offset band.
-      expect(recomp.targetCalories - cut.targetCalories).toBe(500);
+      // The surplus gap is never floored; the deficit gap reflects the exact
+      // band whenever the floor isn't engaged (tdee − 500 ≥ min(tdee, floor)).
       expect(bulk.targetCalories - recomp.targetCalories).toBe(300);
+      if (cut.tdee - 500 >= Math.min(cut.tdee, MIN_TARGET_CALORIES)) {
+        expect(recomp.targetCalories - cut.targetCalories).toBe(500);
+      } else {
+        expect(cut.targetCalories).toBe(
+          Math.min(cut.tdee, MIN_TARGET_CALORIES)
+        );
+      }
+    }
+  });
+
+  it("NUTR-L5 floor: no offset pushes the target below min(tdee, 1200); deficit is effective", () => {
+    const rnd = mulberry32(405);
+    for (let i = 0; i < 3000; i++) {
+      const b = genBody(rnd);
+      const act = ACTIVITY_ASC[Math.floor(rnd() * 5)];
+      // Fuzz the whole sanitizer-permitted rate range: ±2.0 kg/wk → ±2200/day.
+      // (+ 0 normalizes a rounded −0 so the toBe(offset) comparison is exact.)
+      const offset = Math.round(((rnd() - 0.5) * 4400) / 10) * 10 + 0;
+      const r = calculateTDEE(
+        b.weightKg,
+        b.heightCm,
+        b.age,
+        act,
+        "cut",
+        b.sex,
+        offset
+      );
+      expect(r.targetCalories).toBeGreaterThanOrEqual(
+        Math.min(r.tdee, MIN_TARGET_CALORIES)
+      );
+      // The reported deficit is the effective one — target and deficit can
+      // never disagree, and flooring only ever raises the requested offset.
+      expect(r.targetCalories).toBe(r.tdee + r.deficit);
+      expect(r.deficit).toBeGreaterThanOrEqual(Math.min(offset, 0));
+      // Surpluses pass through untouched.
+      if (offset >= 0) expect(r.deficit).toBe(offset);
     }
   });
 });
