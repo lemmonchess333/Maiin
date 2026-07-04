@@ -95,6 +95,11 @@ test.describe("app screenshots", () => {
   // uplift is global (token-driven), so every primary surface must be
   // reviewed, not just Home. Captures light + dark for each.
   test("main tabs — light + dark", async ({ page }) => {
+    // Capture job, not a perf gate: five tabs × (nav + hydration waits + two
+    // full-page shots) legitimately exceeds the default 30s budget — the
+    // 2026-07-04 runs timed out here on slow CI hydration ("browser has been
+    // closed" was the teardown artifact, not a crash).
+    test.setTimeout(180_000);
     const tabs: [route: string, name: string][] = [
       ["food", "food"],
       ["history", "history"],
@@ -252,6 +257,9 @@ test.describe("app screenshots", () => {
   // best-effort (try/catch) and independent: a brittle open doesn't sink the
   // other capture. Goal is to SEE/verify the sheets, not assert.
   test("editing sheets", async ({ page }) => {
+    // Same capture-budget reasoning as "main tabs": two navigations + a 20s
+    // hydration waitFor + html-to-image rendering ride the default 30s.
+    test.setTimeout(120_000);
     // ShareCardSheet — opened from Run Detail's "Share" button.
     await page.goto("run/rich-r0");
     await page.waitForTimeout(2200);
