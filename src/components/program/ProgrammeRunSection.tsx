@@ -76,7 +76,12 @@ import { formatDistanceToNowStrict, format } from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
-import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
+import {
+  paceLabel,
+  durationLabel,
+  distanceLabel,
+  sessionPaceDisplay,
+} from "@/lib/runLabels";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -519,21 +524,20 @@ export default function ProgrammeRunSection({
   );
   // Adaptive Paces: the user's personalized pace for the selected session,
   // surfaced on the command card so the "made for you" pace is visible where
-  // the run is started — not just in Settings. Null when there's no benchmark
-  // (the run then shows distance/type only, as before).
+  // the run is started — not just in Settings. Band-first via the shared
+  // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no
+  // benchmark (the run then shows distance/type only, as before).
   const selectedPaceLabel: string | null = (() => {
     if (!selectedTemplate) return null;
     const table = paceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
-    const r = resolveSessionPaces(selectedTemplate.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(
-        selectedTemplate.config.targetDistance
-      ),
-    });
-    if (r.targetPace) return `${paceLabel(r.targetPace)} /km`;
-    if (r.workPace) return `${paceLabel(r.workPace)} /km`;
-    if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
-    return null;
+    return sessionPaceDisplay(
+      resolveSessionPaces(selectedTemplate.type, table, {
+        raceDistanceKey: raceDistanceKeyFromKm(
+          selectedTemplate.config.targetDistance
+        ),
+      })
+    );
   })();
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when

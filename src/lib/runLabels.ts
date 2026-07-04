@@ -51,6 +51,33 @@ export function durationLabel(durationSec: number): string {
 }
 
 /**
+ * Format a pace band as the coaching range Runna popularised —
+ * `5:25–5:45 /km`. Bands are [fast, slow] sec/km (the runPaces contract).
+ */
+export function paceBandLabel(band: [number, number]): string {
+  return `${paceMinSec(band[0])}–${paceMinSec(band[1])} /km`;
+}
+
+/**
+ * One display rule for a session's personalized pace, shared by every
+ * surface that shows one (command card, day sheet, run setup): the BAND
+ * leads when the engine has one — a range is the honest coaching target
+ * (tempo/interval singles are just the band midpoint) — with the single
+ * target/work pace as the fallback (race paces have no band). Null when
+ * nothing applies, so callers can omit the pill entirely.
+ */
+export function sessionPaceDisplay(paces: {
+  targetPace?: number;
+  workPace?: number;
+  band?: [number, number];
+}): string | null {
+  if (paces.band) return paceBandLabel(paces.band);
+  if (paces.targetPace) return `${paceMinSec(paces.targetPace)} /km`;
+  if (paces.workPace) return `${paceMinSec(paces.workPace)} /km`;
+  return null;
+}
+
+/**
  * Format a race finish time (seconds) the way results are printed:
  * `m:ss` under an hour, `h:mm:ss` over (25:00 · 1:01:01). Distinct from
  * `durationLabel`'s "1h 05m" style — predictions/results read as clock

@@ -586,6 +586,9 @@ export default function RunSummary() {
       templateType: tmpl.type,
       actualPaceS: avgPaceSeconds,
       targetPaceS: target,
+      // Band-aware verdict (Runna teardown #2): anywhere inside the session's
+      // pace window is on-target, and the copy speaks the range.
+      targetBandS: paces.band,
     });
   })();
 
