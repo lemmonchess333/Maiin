@@ -224,3 +224,25 @@ describe("useIntervalWorkout.skip", () => {
     expect(result.current.state.phaseDistanceCovered).toBeLessThanOrEqual(20);
   });
 });
+
+/* start() idempotence — load-bearing. Run.tsx's start effect depends on the
+ * hook's per-render return object, so it re-fires on every render of an
+ * active run; before the idle guard each re-fire silently reset the machine
+ * to work rep 1 (a live interval workout could never progress). */
+describe("useIntervalWorkout.start idempotence", () => {
+  it("a second start() while live does NOT reset the machine", () => {
+    const cfg: IntervalConfig = {
+      reps: 3,
+      workDistance: 1000,
+      restDuration: 90,
+    };
+    const { result } = renderHook(() => useIntervalWorkout(cfg));
+    act(() => result.current.start());
+    act(() => result.current.skip(1000)); // → rest after rep 1
+    expect(result.current.state.phase).toBe("rest");
+
+    act(() => result.current.start()); // the re-fired effect
+    expect(result.current.state.phase).toBe("rest");
+    expect(result.current.state.currentRep).toBe(1);
+  });
+});

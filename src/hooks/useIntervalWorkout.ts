@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export type IntervalPhase =
   | "idle"
@@ -42,8 +42,25 @@ export function useIntervalWorkout(config: IntervalConfig | undefined) {
   const phaseStartDistance = useRef(0);
   const phaseStartTime = useRef(0);
 
+  // Live-phase mirror so start() can be IDEMPOTENT without joining the
+  // state in its deps (which would churn its identity every transition).
+  // Synced in an effect (not during render) to satisfy the refs rule.
+  const phaseRef = useRef<IntervalPhase>("idle");
+  useEffect(() => {
+    phaseRef.current = state.phase;
+  }, [state.phase]);
+
+  /**
+   * Begin the session — from idle ONLY. Idempotence is load-bearing: the
+   * Run page's start effect depends on this hook's (per-render) return
+   * object, so it re-fires on every render of an active run. Before this
+   * guard each re-fire silently reset the machine to work rep 1 with a
+   * fresh phase clock — a live interval workout could never progress past
+   * its first rep. Pause/resume re-fires are no-ops for the same reason.
+   */
   const start = useCallback(() => {
     if (!config) return;
+    if (phaseRef.current !== "idle") return;
     phaseStartTime.current = Date.now();
     phaseStartDistance.current = 0;
     if (config.warmupDuration) {
