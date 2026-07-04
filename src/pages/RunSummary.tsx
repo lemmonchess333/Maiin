@@ -44,6 +44,12 @@ import {
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
+import {
+  paceTableFromFitness,
+  resolveSessionPaces,
+  raceDistanceKeyFromKm,
+} from "../lib/runPaces";
+import { resolvePaceVerdict } from "../lib/paceVerdict";
 import { paceMinSec } from "../lib/runLabels";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
@@ -553,6 +559,36 @@ export default function RunSummary() {
     return "Nice run";
   })();
 
+  // Runna-style plan-vs-actual verdict (running competitive doc P0 #3): for a
+  // PLANNED session with a resolvable per-session pace target, say how the
+  // run compared — including the "keep the easy days easy" nudge when an easy
+  // session ran hot. Only planned runs are judged (custom/extra have no honest
+  // target), and intervals are excluded (session avg mixes work + rest — the
+  // same reason the primary stat swaps to the work-set summary for them).
+  const paceVerdict = (() => {
+    if (adherenceLabel !== "Planned") return null;
+    const pm = runConfig?.planMetadata;
+    const tmplId = pm?.plannedTemplateId || pm?.actualTemplateId;
+    const tmpl = tmplId ? RUN_TEMPLATES.find((t) => t.id === tmplId) : null;
+    if (!tmpl || tmpl.type === "intervals") return null;
+    if (!(avgPaceSeconds > 0) || (distance || 0) < 500) return null;
+    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    if (!table) return null;
+    const paces = resolveSessionPaces(tmpl.type, table, {
+      raceDistanceKey: raceDistanceKeyFromKm(tmpl.config.targetDistance),
+    });
+    const target =
+      paces.targetPace ??
+      paces.workPace ??
+      (paces.band ? (paces.band[0] + paces.band[1]) / 2 : undefined);
+    if (!target) return null;
+    return resolvePaceVerdict({
+      templateType: tmpl.type,
+      actualPaceS: avgPaceSeconds,
+      targetPaceS: target,
+    });
+  })();
+
   // Run8 PR3d — context-aware primary stat. Intervals get a
   // work-set summary ("N × distance @ pace") instead of the raw
   // session avg pace (which mixes work + rest and reads slow); race
@@ -1023,6 +1059,13 @@ export default function RunSummary() {
                 day: "numeric",
               })}
             </p>
+            {/* Plan-vs-actual pace verdict — coral for the running domain,
+                calm register (never shames a slow day). */}
+            {paceVerdict && (
+              <p className="mt-2 mx-auto max-w-xs text-xs leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
+                {paceVerdict.line}
+              </p>
+            )}
           </div>
 
           {/* Offline notice */}
