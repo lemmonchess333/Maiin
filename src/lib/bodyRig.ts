@@ -100,6 +100,17 @@ const SIDE_FORE_LEN = Math.hypot(
   SIDE_ANCHORS.hand[1] - SIDE_ANCHORS.elbow[1]
 );
 
+/** Balance rule (pose physics): mass stays over mid-foot, so as the
+ *  torso hinges forward the hips travel BACK — implemented as the whole
+ *  standing chain leaning back about the planted ankle, hips countering
+ *  ~0.4× the shoulders' forward travel. Every standing hinge appends
+ *  this op to every group. */
+function hipsBack(hingeDeg: number): Extract<Op, { kind: "rotate" }> {
+  const fwd = Math.sin((hingeDeg * Math.PI) / 180) * 55.5; // shoulder travel
+  const lean = (Math.asin(Math.min(0.4 * fwd, 30) / 93) * 180) / Math.PI;
+  return { kind: "rotate", deg: -lean, pivot: SIDE_ANCHORS.ankle };
+}
+
 /* Push-up scene constants (final space): where the hands plant and
  * where the tilted plank's toes rest. */
 const PUSHUP_HAND: Pt = [100, 156];
@@ -803,7 +814,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * bar path. */
       const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
       const S = SIDE_ANCHORS.shoulder;
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(18, 6, e)];
+      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(18, 0, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -840,7 +851,7 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
     },
     // Bench pad + legs + floor line, drawn behind the body.
     scene: () =>
-      `<rect x="-60" y="109" width="130" height="7" rx="2.5" fill="${GEAR}"/>` +
+      `<rect x="-64" y="109" width="136" height="7" rx="2.5" fill="${GEAR}"/>` +
       `<line x1="-50" y1="116" x2="-50" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
       `<line x1="56" y1="116" x2="56" y2="170" stroke="${GEAR_DARK}" stroke-width="3.4"/>` +
       `<line x1="-58" y1="171" x2="118" y2="171" stroke="${GEAR_DARK}" stroke-width="1.6"/>`,
@@ -866,16 +877,20 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * past the back line. The arm is aimed in PRE-hinge space (rest
        * anchors) with the hinge composed LAST — same chain pattern as
        * the bench's global rotation. */
-      const HINGE = 62;
+      const HINGE = 55; // constant torso incline, all frames
+      const KNEE = 20; // constant soft knees
+      const LEAN = hipsBack(HINGE); // balance rule: hips back
       const T: Op = { kind: "rotate", deg: HINGE, pivot: SIDE_ANCHORS.hip };
-      const unhinge: Op[] = [
+      const unpose: Op[] = [
+        { kind: "rotate", deg: -LEAN.deg, pivot: LEAN.pivot },
         { kind: "rotate", deg: -HINGE, pivot: SIDE_ANCHORS.hip },
       ];
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T]);
-      // Targets in FINAL space: dead hang below the hinged shoulder →
-      // hand at the lower ribs; mapped back to pre-hinge space for IK.
-      const hFinal: Pt = [lerp(S[0] + 1, 74, e), lerp(S[1] + 52.5, 97, e)];
-      const hPre = applyToPoint(hFinal, unhinge);
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
+      // Bar path: a straight VERTICAL line below the shoulder joint —
+      // below the knee at the bottom, lower ribs at the top with the
+      // elbow driving past the torso line (IK bends it up-back).
+      const hFinal: Pt = [S[0] + 1, lerp(S[1] + 50, S[1] + 26, e)];
+      const hPre = applyToPoint(hFinal, unpose);
       const arm = aimArm(
         {
           S: SIDE_ANCHORS.shoulder,
@@ -892,22 +907,26 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         hPre,
         0
       );
-      const leg: Op[] = [{ kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip }];
+      const leg: Op[] = [
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
+      ];
       const shank: Op[] = [
-        { kind: "rotate", deg: -12, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: 12, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
       ];
       return {
-        head: [T],
-        torso: [T],
-        pelvis: [T],
+        head: [T, LEAN],
+        torso: [T, LEAN],
+        pelvis: [T, LEAN],
         thighL: leg,
         thighR: leg,
         shankL: shank,
         shankR: shank,
-        upperArmL: [...arm.upper, T],
-        foreArmL: [...arm.fore, T],
-        handL: [...arm.fore, T],
+        upperArmL: [...arm.upper, T, LEAN],
+        foreArmL: [...arm.fore, T, LEAN],
+        handL: [...arm.fore, T, LEAN],
       };
     },
     bar: (_e, pose) => {
@@ -938,47 +957,53 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * pre-hinge aiming pattern as the row, but here the hinge itself
        * is the animation. */
       const hinge = lerp(0, 68, e);
+      const KNEE = 15; // constant in every frame — the RDL signature
+      const LEAN = hipsBack(hinge); // balance rule: hips travel back
       const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
-      const unhinge: Op[] = [
+      const unpose: Op[] = [
+        { kind: "rotate", deg: -LEAN.deg, pivot: LEAN.pivot },
         { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
       ];
-      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T]);
-      const hPre = applyToPoint([S[0] + 1.5, S[1] + 52], unhinge);
+      // Arms hang plumb from the hinged+leaned shoulder — the bar stays
+      // against the legs on the way down.
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, [T, LEAN]);
+      const hPre = applyToPoint([S[0] + 1.2, S[1] + 52], unpose);
       const arm = aimArm(
-          {
-            S: SIDE_ANCHORS.shoulder,
-            E: SIDE_ANCHORS.elbow,
-            H: SIDE_ANCHORS.hand,
-          },
-          solveElbow(
-            SIDE_ANCHORS.shoulder,
-            hPre,
-            SIDE_UPPER_LEN,
-            SIDE_FORE_LEN,
-            -1
-          ),
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
+        solveElbow(
+          SIDE_ANCHORS.shoulder,
           hPre,
-          0
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
+          -1
         ),
-        soft = lerp(0, 12, e);
+        hPre,
+        0
+      );
       const leg: Op[] = [
-        { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
       ];
       const shank: Op[] = [
-        { kind: "rotate", deg: -soft, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: soft, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: -KNEE, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: KNEE, pivot: SIDE_ANCHORS.hip },
+        LEAN,
       ];
       return {
-        head: [T],
-        torso: [T],
-        pelvis: [T],
+        head: [T, LEAN],
+        torso: [T, LEAN],
+        pelvis: [T, LEAN],
         thighL: leg,
         thighR: leg,
         shankL: shank,
         shankR: shank,
-        upperArmL: [...arm.upper, T],
-        foreArmL: [...arm.fore, T],
-        handL: [...arm.fore, T],
+        upperArmL: [...arm.upper, T, LEAN],
+        foreArmL: [...arm.fore, T, LEAN],
+        handL: [...arm.fore, T, LEAN],
       };
     },
     bar: (_e, pose) => {
@@ -1363,7 +1388,11 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const ends = demo.bar?.(e, pose);
   if (ends && demo.equip === "plate-end") {
     const [x, y] = ends[0];
+    // Collar + protruding bar stub behind the disc: reads as a barbell
+    // end, not a floating disc.
     plate =
+      `<rect x="${(x + 7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
+      `<rect x="${(x + 11.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
       `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;

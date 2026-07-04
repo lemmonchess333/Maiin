@@ -193,6 +193,29 @@ describe("renderBodyDemo", () => {
     }
   });
 
+  it("pose physics: hips travel BACK as the RDL hinges (balance rule)", () => {
+    const hipAt = (t: number) =>
+      applyToPoint(
+        SIDE_ANCHORS.hip,
+        BODY_DEMOS["romanian-deadlift"].pose(t).pelvis ?? []
+      )[0];
+    // Mass stays over mid-foot: deep hinge pushes the hip x backward.
+    expect(hipAt(1)).toBeLessThan(hipAt(0) - 5);
+  });
+
+  it("pose physics: RDL knee angle constant in every frame", () => {
+    const kneeAngle = (t: number) => {
+      const pose = BODY_DEMOS["romanian-deadlift"].pose(t);
+      const hip = applyToPoint(SIDE_ANCHORS.hip, pose.thighL ?? []);
+      const knee = applyToPoint(SIDE_ANCHORS.knee, pose.thighL ?? []);
+      const ankle = applyToPoint(SIDE_ANCHORS.ankle, pose.shankL ?? []);
+      const a = Math.atan2(hip[1] - knee[1], hip[0] - knee[0]);
+      const b = Math.atan2(ankle[1] - knee[1], ankle[0] - knee[0]);
+      return ((a - b) * 180) / Math.PI;
+    };
+    expect(Math.abs(kneeAngle(1) - kneeAngle(0))).toBeLessThan(0.5);
+  });
+
   it("rig acceptance: camera and ground locked across an exercise", () => {
     for (const id of ["bench-press", "barbell-row", "romanian-deadlift"]) {
       const vb = (t: number) =>
