@@ -22,26 +22,32 @@ import { THEME } from "@/lib/theme";
  *  - big countdown / distance-left, "Up next", a step-complete flash,
  *    a manual "Skip step" override, and a terminal all-steps-done state
  *
- * Drawn in the TROPOS register, not Runna's: work steps carry the coral
- * running identity (full strength), warm-up/cool-down the same coral at
- * half voltage, rest a neutral white step — one hue family plus neutrals,
- * no traffic-light palette. Pinned to the always-dark active-run screen
- * like GuidedRunOverlay — deliberately NOT theme vars. Animation is
- * opacity/width only (WKWebView-safe); reduced motion gets settled states.
+ * Colour: the active-run cockpit's own language, not the app-wide sport
+ * coding. This sheet's hero time, km-progress gradient, best-split and
+ * pause states are all TEAL — so the shell's accents (eyebrow, strip)
+ * join that family (work full-strength, warm-up/cool-down half voltage,
+ * rest neutral white) and the PRESCRIPTION itself is white: the most
+ * important line gets contrast, not a hue. Coral stays the running colour
+ * on every cross-sport surface outside the cockpit; in here there is only
+ * one sport, so there is nothing to code against. Pinned to the
+ * always-dark active-run screen like GuidedRunOverlay — deliberately NOT
+ * theme vars. Animation is opacity/width only (WKWebView-safe); reduced
+ * motion gets settled states.
  */
 
-const CORAL = THEME.running;
+const TEAL = THEME.teal;
 const KIND_COLOR: Record<string, string> = {
-  warmup: `${CORAL}73`, // coral @45% — effort, but not the effort
-  work: CORAL,
+  warmup: `${TEAL}73`, // teal @45% — effort, but not the effort
+  work: TEAL,
   rest: "rgba(255,255,255,0.35)",
-  cooldown: `${CORAL}73`,
+  cooldown: `${TEAL}73`,
 };
-const KIND_TEXT: Record<string, string> = {
-  warmup: "text-running/80",
-  work: "text-running",
-  rest: "text-white/75",
-  cooldown: "text-running/80",
+// Eyebrow accents only — the headline is always white (see header note).
+const KIND_EYEBROW: Record<string, string> = {
+  warmup: `${TEAL}CC`,
+  work: TEAL,
+  rest: "rgba(255,255,255,0.6)",
+  cooldown: `${TEAL}CC`,
 };
 
 function countdownLabel(remainingS: number): string {
@@ -104,7 +110,7 @@ export default function IntervalStepShell({
   }
 
   const live = steps[idx];
-  const text = KIND_TEXT[live.kind];
+  const eyebrowColor = KIND_EYEBROW[live.kind];
   const upNext = upNextHeadline(state, config, band);
   const eyebrow =
     live.kind === "work"
@@ -164,7 +170,8 @@ export default function IntervalStepShell({
             </p>
           ) : (
             <p
-              className={`text-[11px] font-bold tracking-wider ${text} opacity-80`}
+              className="text-[11px] font-bold tracking-wider"
+              style={{ color: eyebrowColor }}
             >
               {eyebrow}
             </p>
@@ -176,8 +183,8 @@ export default function IntervalStepShell({
           </p>
         </div>
 
-        {/* The prescription IS the headline. */}
-        <p className={`text-lg font-extrabold leading-tight ${text}`}>
+        {/* The prescription IS the headline — white for maximum contrast. */}
+        <p className="text-lg font-extrabold leading-tight text-white">
           {stepHeadline(live, config, band)}
         </p>
 
