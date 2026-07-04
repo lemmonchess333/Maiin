@@ -152,16 +152,24 @@ async function main() {
     ["Greek yogurt", 180, 18, 12, 5],
     ["Salmon & veg", 540, 41, 22, 28],
   ];
-  const slots = ["breakfast", "lunch", "snack", "dinner"];
+  // Field shape mirrors REAL app writes (Food.tsx performNLSave):
+  // `foodName` (the diary groups/renders on it — docs without it all
+  // collapse to one "Meal" row), `meal` with the app's valid slot
+  // values ("snacks", not the legacy "mealType: snack"), and staggered
+  // wall-clock times so the diary timeline orders like a real day.
+  const slots = ["breakfast", "lunch", "snacks", "dinner"];
+  const slotHours = [8, 13, 16, 19];
   for (let dd = 0; dd < 3; dd++) {
-    const d = day(dd);
     mealPlan.forEach((m, mi) => {
+      const at = day(dd);
+      at.setHours(slotHours[mi], 10 + mi * 7, 0, 0);
       base
         .collection("meals")
         .doc(`rich-m${dd}-${mi}`)
         .set({
-          date: ymd(d),
-          mealType: slots[mi],
+          date: ymd(at),
+          foodName: m[0],
+          meal: slots[mi],
           // Top-level total* fields are what the app sums (mealTotals.ts reads
           // `totalCalories ?? calories`, never items[].calories) — without
           // these Home's Today's Energy stays at 0 despite logged meals.
@@ -178,7 +186,7 @@ async function main() {
               fat: m[4],
             },
           ],
-          createdAt: Timestamp.fromDate(d),
+          createdAt: Timestamp.fromDate(at),
         });
     });
   }
