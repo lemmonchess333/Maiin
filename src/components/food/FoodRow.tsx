@@ -43,6 +43,13 @@ interface FoodRowProps {
    * machinery is untouched, the row just grows a second line.
    */
   subLabel?: ReactNode;
+  /**
+   * Optional captured-meal photo — renders as a hero image above the
+   * text row INSIDE the swipeable surface ("photos big, text compact"),
+   * so photo cards keep the exact same tap-to-edit / swipe-to-delete
+   * behaviour as text rows. Only AI-scanned meals carry one.
+   */
+  photoUrl?: string;
 }
 
 // Single destructive swipe action (Delete only). Editing is reached by
@@ -125,6 +132,7 @@ export default function FoodRow({
   onDelete,
   onEdit,
   subLabel,
+  photoUrl,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -223,6 +231,24 @@ export default function FoodRow({
     </>
   );
 
+  // Photo cards stack the hero image above the meta row inside the same
+  // swipeable surface. pointer-events-none keeps the browser's native
+  // image drag / long-press callout from fighting the framer x-drag.
+  const rowInner = photoUrl ? (
+    <div className="flex-1 min-w-0">
+      <img
+        src={photoUrl}
+        alt={group.foodName}
+        className="w-full h-44 object-cover rounded-lg mb-2.5 pointer-events-none select-none"
+        loading="lazy"
+        draggable={false}
+      />
+      <div className="flex items-center justify-between">{rowBody}</div>
+    </div>
+  ) : (
+    rowBody
+  );
+
   // ── Reduced-motion fallback: no drag gesture. The row body is a tap
   //    target that opens the edit sheet (mirrors the swipe path's
   //    tap-to-edit); a single trailing Delete icon button stays for the
@@ -237,11 +263,11 @@ export default function FoodRow({
             aria-label={`Edit ${group.foodName}`}
             className="flex items-center flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
-            {rowBody}
+            {rowInner}
           </button>
         ) : (
           <div className="flex items-center flex-1 min-w-0 px-3 py-2.5">
-            {rowBody}
+            {rowInner}
           </div>
         )}
         <button
@@ -322,7 +348,7 @@ export default function FoodRow({
             "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y cursor-pointer select-none"
           )}
         >
-          {rowBody}
+          {rowInner}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -157,6 +157,26 @@ async function main() {
   // collapse to one "Meal" row), `meal` with the app's valid slot
   // values ("snacks", not the legacy "mealType: snack"), and staggered
   // wall-clock times so the diary timeline orders like a real day.
+  //
+  // Two of today's meals carry a `photoUrl` so the diary timeline's
+  // photo cards ("photos big, text compact") show up in design-review
+  // captures. Production photoUrl is a Storage download URL (see
+  // src/lib/foodPhotoUpload.ts); the emulator set here has no Storage,
+  // so the seed uses a small inline-SVG plate illustration — clearly a
+  // placeholder, but exercises the exact same render path.
+  const FOOD_PHOTO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#3a2f28"/><stop offset="1" stop-color="#1d1a17"/>' +
+      "</linearGradient></defs>" +
+      '<rect width="640" height="440" fill="url(#g)"/>' +
+      '<circle cx="320" cy="230" r="150" fill="#e8e2d9"/>' +
+      '<circle cx="320" cy="230" r="132" fill="#f4efe7"/>' +
+      '<ellipse cx="290" cy="215" rx="60" ry="38" fill="#d9884e"/>' +
+      '<ellipse cx="360" cy="250" rx="52" ry="30" fill="#7da05b"/>' +
+      '<ellipse cx="340" cy="195" rx="34" ry="22" fill="#b8563e"/>' +
+      "</svg>"
+  )}`;
   const slots = ["breakfast", "lunch", "snacks", "dinner"];
   const slotHours = [8, 13, 16, 19];
   for (let dd = 0; dd < 3; dd++) {
@@ -187,6 +207,9 @@ async function main() {
             },
           ],
           createdAt: Timestamp.fromDate(at),
+          ...(dd === 0 && (mi === 1 || mi === 3)
+            ? { photoUrl: FOOD_PHOTO_DATA_URI }
+            : {}),
         });
     });
   }

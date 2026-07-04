@@ -66,6 +66,10 @@ const TOP_LEVEL_USER_KEYED_COLLECTIONS = Object.freeze([
 const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   "progress-photos/__UID__/",
   "profile-photos/__UID__/",
+  // Food diary photos (src/lib/foodPhotoUpload.ts). Meal deletion is
+  // soft (24h restore) so blobs are never deleted with the meal —
+  // this sweep is the only cleanup path, same as progress photos.
+  "food-photos/__UID__/",
 ]);
 
 function storagePrefixesFor(uid) {

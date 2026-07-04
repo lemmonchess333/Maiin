@@ -24,11 +24,11 @@ import type { Meal } from "@/hooks/useMeals";
  * the lifted openRowId, group delete, and the edit sheet's count/slot/
  * macro semantics all carry over untouched.
  *
- * Photo seam (commit 2 of the timeline arc): when meal docs gain a
- * persisted `photoUrl` (Storage upload — not stored today, the camera
- * flow discards the image), photo-backed groups render as BIG image
- * cards in this list while text logs stay compact rows ("mixed feed"
- * locked decision). The branch point is the row map below.
+ * Mixed feed ("photos big, text compact" locked decision): AI-scanned
+ * meals persist their capture via foodPhotoUpload (background, after
+ * the doc write) and render as BIG photo cards; text/barcode/manual
+ * logs stay compact rows. Both shapes share FoodRow's swipe/tap
+ * machinery — the photo is just a hero block inside the same surface.
  */
 
 /* Render-perf telemetry, throttled to once per day per user — the
@@ -182,13 +182,15 @@ export default function FoodTimeline({
             // not revisionCount — AI refinement doesn't count).
             wasEdited: group.meals.some((m) => (m.userEditCount ?? 0) > 0),
           };
-          /* Photo-card branch lands here (commit 2): a group whose docs
-             carry photoUrl renders as a big image card instead of the
-             compact row. */
+          /* Mixed feed: a group whose docs carry a captured photo
+             renders as a big photo card (image above the meta row,
+             same swipe/tap surface); text logs stay compact rows. */
+          const photoUrl = group.meals.find((m) => m.photoUrl)?.photoUrl;
           return (
             <FoodRow
               key={group.id}
               group={rowGroup}
+              photoUrl={photoUrl}
               subLabel={
                 <>
                   {MEAL_LABELS[group.slot]}
