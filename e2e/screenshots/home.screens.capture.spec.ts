@@ -140,14 +140,19 @@ test.describe("app screenshots", () => {
       // lazy heat-map chunk after the nav appears; the fixed 1400ms settle
       // shot a full-page skeleton (2026-07-04 run). Wait for the lifting
       // heat-map heading (rich-seeded data guarantees it) before shooting.
+      // 15s still lost the race on a slow runner (the 3a87dd8 run shot
+      // skeletons again) — 40s of the test's 180s budget buys certainty,
+      // and a log line makes the silent-miss visible in the CI output.
       if (name === "history") {
         await page
           .getByText(/Muscle Groups Trained/i)
           .first()
-          .waitFor({ state: "visible", timeout: 15000 })
-          .catch(() => {
-            /* still loading after the wait — capture whatever's there */
-          });
+          .waitFor({ state: "visible", timeout: 40000 })
+          .catch(() =>
+            console.log(
+              "[capture] history never hydrated within 40s — shooting the skeleton"
+            )
+          );
       }
       await page.waitForTimeout(1400); // entry animations / count-ups settle
 
