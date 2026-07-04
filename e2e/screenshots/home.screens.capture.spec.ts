@@ -43,6 +43,16 @@ test.describe("app screenshots", () => {
           /* storage unavailable — capture just shows the coachmark */
         }
       }
+      // The emulator SDK injects a fixed "Running in emulator mode" banner
+      // that overlays the bottom nav — it intercepted pointer events in past
+      // runs and is pure noise in design-review PNGs. Hide it on every
+      // document (init scripts re-run per navigation).
+      document.addEventListener("DOMContentLoaded", () => {
+        const style = document.createElement("style");
+        style.textContent =
+          ".firebase-emulator-warning{display:none !important}";
+        document.head.appendChild(style);
+      });
     });
     await signInAsTestUser(page);
   });
@@ -188,7 +198,7 @@ test.describe("app screenshots", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     await page
       .getByRole("button", { name: /view profile/i })
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {
         /* button moved/absent — capture lands on settings, still useful */
       });
@@ -266,7 +276,7 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("button", { name: /share/i })
       .first()
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {});
     await page.waitForTimeout(1400); // share-card preview renders (html-to-image)
     await shoot(page, "sheet-share-light");
@@ -288,13 +298,23 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("button", { name: /today/i })
       .first()
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {});
     await page.waitForTimeout(700);
+    // "Manage day" only renders when today has a MATCHED lift/run session
+    // (DayPeekCard PR-1 gating) — on weekends the seeded user has none, so
+    // this locator legitimately misses. A timeout-less click here retried
+    // until the test budget and failed the whole run every Sat/Sun (the
+    // 2026-07-04 failures: green Fri, red Sat, no code change involved).
+    // Short timeout + honest log: the shot degrades to the day peek.
     await page
       .getByRole("button", { name: /manage day/i })
-      .click()
-      .catch(() => {});
+      .click({ timeout: 4000 })
+      .catch(() =>
+        console.log(
+          "[capture] Manage day not available (no matched session today) — capturing the day peek instead"
+        )
+      );
     await page.waitForTimeout(1100);
     await shoot(page, "sheet-dayaction-light");
   });
