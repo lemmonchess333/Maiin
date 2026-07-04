@@ -1,4 +1,12 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
@@ -13,6 +21,11 @@ import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
+// Lazy: pulls react-body-highlighter (its own manual chunk) — keep it off
+// the Program route's critical path, same as History's MuscleHeatMap.
+const MuscleRecoveryCard = lazy(
+  () => import("@/components/program/MuscleRecoveryCard")
+);
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
@@ -1271,6 +1284,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           workouts={displayWorkouts}
           primaryGoal={profile?.primaryGoal}
         />
+      )}
+
+      {/* Per-muscle recovery on the body diagram (Tier-2 #6 second half) —
+          which groups are still loaded from the last 7 days and which are
+          ready to train. Sits with the other week-context read-only cards;
+          collapses entirely for users with no recent lifting. */}
+      {activeTab === "lift" && (
+        <TrackProgrammeSectionView section="muscle_recovery">
+          <Suspense fallback={null}>
+            <MuscleRecoveryCard />
+          </Suspense>
+        </TrackProgrammeSectionView>
       )}
 
       {activeTab === "lift" && <SavedRoutinesSection />}

@@ -25,7 +25,8 @@ export type ProgrammeSection =
   | "session_card"
   | "deload_banner"
   | "race_goal_card"
-  | "run_plan";
+  | "run_plan"
+  | "muscle_recovery";
 
 /** Pgm3 deload banner has two terminal user actions; pin the
  *  alternatives explicitly so the event union is self-documenting. */
@@ -45,7 +46,7 @@ export interface ProgrammeEventMetadata {
 
 export function track(
   event: ProgrammeEvent,
-  metadata: ProgrammeEventMetadata = {},
+  metadata: ProgrammeEventMetadata = {}
 ): void {
   emit("programme", event, metadata as Record<string, unknown>);
 }
