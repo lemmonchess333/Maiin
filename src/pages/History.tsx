@@ -17,6 +17,9 @@ import EmptyState from "@/components/ui/EmptyState";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
+import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
+import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
+import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
 import { isPaceEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec } from "@/lib/runLabels";
 import { requiresManualDistance } from "@/lib/runGuards";
@@ -34,6 +37,12 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import { localWeekKey, localDateString } from "@/lib/dateHelpers";
+import {
+  computeMuscleRecovery,
+  hitsFromWorkoutDocs,
+  recoveryForHeatMapGroups,
+  RECOVERY_LOOKBACK_DAYS,
+} from "@/lib/muscleRecovery";
 
 const VolumeChart = lazy(() => import("@/components/analytics/VolumeChart"));
 const MuscleHeatMap = lazy(
@@ -345,6 +354,9 @@ export default function History() {
     refresh: refreshRuns,
   } = useRunningStats(rangeDays);
   const { workouts, loading: workoutsLoading } = useWorkouts();
+  // Training-load curve feed — self-fetching (needs warmup history beyond
+  // the visible range, so it can't reuse the range-scoped runs above).
+  const trainingLoad = useTrainingLoadSeries(rangeDays);
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
   const { profile } = useAuth();
@@ -583,6 +595,20 @@ export default function History() {
       hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
     };
   }, [runs]);
+
+  // Per-group recovery chips for the muscle heat map (Tier-2 #6 second
+  // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
+  // regardless of the page's TimeRange (the card labels the carve-out).
+  const muscleRecovery = useMemo(() => {
+    const lookbackStart = new Date();
+    lookbackStart.setDate(lookbackStart.getDate() - RECOVERY_LOOKBACK_DAYS);
+    const lookbackKey = localDateString(lookbackStart);
+    const recent = workouts.filter((w) => w.date >= lookbackKey);
+    const hits = hitsFromWorkoutDocs(recent);
+    return recoveryForHeatMapGroups(
+      computeMuscleRecovery(hits, localDateString())
+    );
+  }, [workouts]);
 
   const liftingData = useMemo(() => {
     const since = new Date();
@@ -1151,16 +1177,29 @@ export default function History() {
             {filter === "analytics" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
-                <PeriodOverview
-                  runCount={runningTotals.runCount}
-                  runDistance={runningTotals.runDistance}
-                  liftCount={liftingData.liftCount}
-                  liftVolume={liftingData.liftVolume}
-                  avgCalories={nutrition.avgCalories}
-                  nutritionAdherence={nutrition.adherence}
-                  timeRange={timeRange}
-                  rangeDays={rangeDays}
-                />
+                <>
+                  <PeriodOverview
+                    runCount={runningTotals.runCount}
+                    runDistance={runningTotals.runDistance}
+                    liftCount={liftingData.liftCount}
+                    liftVolume={liftingData.liftVolume}
+                    avgCalories={nutrition.avgCalories}
+                    nutritionAdherence={nutrition.adherence}
+                    timeRange={timeRange}
+                    rangeDays={rangeDays}
+                  />
+                  {/* Fitness/fatigue/form spanning run+lift (teardown #4).
+                      Cross-sport, so it lives with the range-scoped overview
+                      rather than inside either sport section. */}
+                  <SectionErrorBoundary sectionName="training-load">
+                    <div className="mt-2">
+                      <TrainingLoadCard
+                        points={trainingLoad.points}
+                        loading={trainingLoad.loading}
+                      />
+                    </div>
+                  </SectionErrorBoundary>
+                </>
               )}
 
             {showRunningSection && filter === "analytics" && (
@@ -1174,9 +1213,15 @@ export default function History() {
                     <Skeleton className="h-24 w-full rounded-xl" />
                   </div>
                 ) : renderRunningEmptyNote ? (
-                  <p className="text-xs text-muted-foreground italic px-1">
-                    No runs in this period
-                  </p>
+                  <>
+                    <p className="text-xs text-muted-foreground italic px-1">
+                      No runs in this period
+                    </p>
+                    {/* Predictions are a today-snapshot (see the card's
+                        carve-out footnote), so an empty WINDOW doesn't
+                        hide them — only an empty lifetime does. */}
+                    <RacePredictionsCard />
+                  </>
                 ) : runs.length === 0 ? (
                   <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
                     <Footprints className="size-5 shrink-0 text-running" />
@@ -1227,6 +1272,7 @@ export default function History() {
                       to the dedicated PRs tab (Tier 2 lifetime
                       contract). Tap the PRs tab in the top filter
                       to access them. */}
+                    <RacePredictionsCard />
                     <ShoeMileageSection />
                     <RunningHistorySection />
                   </>
@@ -1307,6 +1353,7 @@ export default function History() {
                       <MuscleHeatMap
                         data={liftingData.muscleData}
                         accentColor={THEME.lifting}
+                        recovery={muscleRecovery}
                       />
                     </SectionErrorBoundary>
                     {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the

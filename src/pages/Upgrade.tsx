@@ -41,11 +41,13 @@ import {
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
+  weeklyPriceLabel,
   getInlinePriceSummary,
   type PlanId,
 } from "@/lib/proPlans";
 import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
+import TrialTimeline from "@/components/TrialTimeline";
 import { useAuth } from "@/lib/auth";
 import { track } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
@@ -472,12 +474,18 @@ export default function Upgrade() {
                       )}
                     </div>
                   </div>
-                  <p className="text-base font-bold text-foreground font-mono tabular-nums">
-                    {plan.price}
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {plan.period}
-                    </span>
-                  </p>
+                  <div className="text-right">
+                    <p className="text-base font-bold text-foreground font-mono tabular-nums">
+                      {plan.price}
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {plan.period}
+                      </span>
+                    </p>
+                    {/* Weekly anchoring (teardown pattern). */}
+                    <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
+                      {weeklyPriceLabel(plan.id)}
+                    </p>
+                  </div>
                 </button>
               );
             })}
@@ -494,6 +502,12 @@ export default function Upgrade() {
           ) : null}
 
           {/* Direct purchase CTA — never opens another modal. */}
+          {/* Sub1a trial transparency — what actually happens, before the ask. */}
+          {withTrial ? (
+            <div className="mb-3">
+              <TrialTimeline />
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={handleCheckout}

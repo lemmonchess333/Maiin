@@ -6,6 +6,7 @@ import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, Timestamp, collection } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { uploadFoodPhoto } from "@/lib/foodPhotoUpload";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
@@ -419,6 +420,27 @@ export default function FoodAnalyzer({
         createdAt: Timestamp.now(),
         ...(targetMealCategory ? { meal: targetMealCategory } : {}),
       });
+
+      /* Persist the captured photo for the diary timeline ("photos
+         big, text compact"). Deliberately AFTER the doc write and
+         fire-and-forget: the photo is an enhancement, never a gate —
+         the meal is already logged, and when the upload lands the
+         merge write pops the photo card in via the onSnapshot
+         listener. Any failure (offline, slow network past the 20s
+         ceiling) resolves null and the row simply stays text. A
+         merge onto a doc the user soft-deleted meanwhile is a
+         harmless field add on a hidden doc. */
+      if (capturedBase64) {
+        const photoBase64 = capturedBase64;
+        void uploadFoodPhoto(user.uid, photoBase64).then((photo) => {
+          if (!photo) return;
+          return setDocGuarded(
+            mealRef,
+            { photoUrl: photo.photoUrl, photoPath: photo.photoPath },
+            { merge: true }
+          );
+        });
+      }
 
       // Preserve favourites functionality — favourite reflects the
       // edited totals, not the original AI estimate, so a re-log via

@@ -319,6 +319,23 @@ incrementally (the type stays optional-field tolerant).
 
 ---
 
+## Status ledger (2026-07-04 — reconciled against the codebase)
+
+Verified by code evidence, not memory — a tracker-reconciliation pass found
+several items shipped without this doc being updated (same failure mode as
+issue #1107's sub-issues). Markers = `D-LIFT-N` comments in `src/`/`functions/`.
+
+| Item                | Status  | Evidence                                                                                                                                                                                |
+| ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-LIFT-1..8, 11, 12 | ✅ Done | code markers (e.g. `WeeklyVolumeCard` D-LIFT-1, RPE autoreg D-LIFT-6, `applyFatigue` D-LIFT-8)                                                                                          |
+| D-LIFT-9            | ✅ Done | `useProgram.ts` reads `programState.settings.microloading` (canonical) at the single `applyProgression` call                                                                            |
+| D-LIFT-10           | ✅ Done | note carried onto `ProgramExercise.notes` (`programTypes.ts:586`) and rendered in the plan list (`Program.tsx`)                                                                         |
+| D-LIFT-13           | ✅ Done | `removeExFromDay` shows an undo toast that re-inserts at the original index against latest state                                                                                        |
+| D-LIFT-14, 18–20    | ✅ Done | code markers (mid-workout guide, demo images/keyframes, data-model fields)                                                                                                              |
+| D-LIFT-15           | ✅ Done | named offenders (rest presets / RPE / set-type rows) already `min-h-11`; stragglers (+ Add Set, Undo) fixed 2026-07-04                                                                  |
+| D-LIFT-16           | ✅ Done | `autoRestTimer` toggle existed but was a DEAD SETTING (never read in-session) — now honored + manual "Start rest" affordance when off                                                   |
+| D-LIFT-17           | ✅ Done | right-click = desktop long-press equivalent on plan rows; rail haptics already present (stale claim). Visible kebab deliberately NOT added — owner's call if discoverability still lags |
+
 ## 6. Suggested sequencing (each a `/goal`-able unit)
 
 1. **D-LIFT-8** (dead `fatigueScore`) + **D-LIFT-10** (invisible injury warning)

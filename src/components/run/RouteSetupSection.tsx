@@ -1,5 +1,5 @@
-import { useId, useState } from "react";
-import { Trash2, Share2 } from "lucide-react";
+import { lazy, Suspense, useId, useState } from "react";
+import { Trash2, Share2, Route } from "lucide-react";
 import type { GPSPoint } from "@/lib/gps";
 import { routeTotalDistance } from "@/lib/gps";
 import { coordsToPoints, type SavedRouteSource } from "@/lib/savedRoutes";
@@ -12,6 +12,10 @@ import { Dialog } from "@/components/ui/Dialog";
 import { toast } from "@/lib/toast";
 import GpxImportButton from "./GpxImportButton";
 import RoutePreviewSheet from "./RoutePreviewSheet";
+
+// Lazy: the planner owns its own MapLibre instance — keep the maplibre chunk
+// out of the run-setup path until the user actually opens the builder.
+const RoutePlannerSheet = lazy(() => import("./RoutePlannerSheet"));
 
 interface RouteSetupSectionProps {
   targetRoute: GPSPoint[] | null;
@@ -47,6 +51,7 @@ export default function RouteSetupSection({
   const { routes, save, remove } = useSavedRoutes();
   const shareRouteWithPrivacy = useShareRoute();
   const [preview, setPreview] = useState<PreviewState | null>(null);
+  const [plannerOpen, setPlannerOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -106,7 +111,10 @@ export default function RouteSetupSection({
           size="sm"
         >
           <div className="p-5">
-            <h3 id={titleId} className="mb-3 text-base font-bold text-foreground">
+            <h3
+              id={titleId}
+              className="mb-3 text-base font-bold text-foreground"
+            >
               Save route
             </h3>
             <input
@@ -141,6 +149,18 @@ export default function RouteSetupSection({
 
   return (
     <div className="space-y-3">
+      {/* Route planner v1 (running roadmap P2): build a route on the map
+          before running — straight segments, live distance, close-the-loop —
+          saved as source "planned" and followed like any other route. */}
+      <Button
+        variant="sport-tinted"
+        fullWidth
+        leftIcon={<Route className="size-4" />}
+        onClick={() => setPlannerOpen(true)}
+      >
+        Plan a route
+      </Button>
+
       <div>
         <GpxImportButton
           className="w-full"
@@ -222,6 +242,18 @@ export default function RouteSetupSection({
           onFollow={onLoadRoute}
           onSave={(n, points, source) => save({ name: n, points, source })}
         />
+      )}
+
+      {plannerOpen && (
+        <Suspense fallback={null}>
+          <RoutePlannerSheet
+            open
+            onClose={() => setPlannerOpen(false)}
+            darkMode={!!profile?.darkMode}
+            onSave={(n, points) => save({ name: n, points, source: "planned" })}
+            onFollow={(points) => onLoadRoute(points, "planned")}
+          />
+        </Suspense>
       )}
     </div>
   );

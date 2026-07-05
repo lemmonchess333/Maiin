@@ -1016,6 +1016,10 @@ function useStreaksInternal() {
     awardEventBadge,
     newBadge: newBadgeQueue[0] ?? null,
     dismissNewBadge,
+    // Per-day target snapshots (date → calories + macros as they stood on that
+    // day). Exposed for the nutrition-insight generator (NUTR-L4) so consumers
+    // ride this provider's single listener instead of mounting their own.
+    macroTargetsByDay,
   };
 }
 

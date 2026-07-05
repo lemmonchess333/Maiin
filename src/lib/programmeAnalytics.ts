@@ -45,7 +45,7 @@ export interface ProgrammeEventMetadata {
 
 export function track(
   event: ProgrammeEvent,
-  metadata: ProgrammeEventMetadata = {},
+  metadata: ProgrammeEventMetadata = {}
 ): void {
   emit("programme", event, metadata as Record<string, unknown>);
 }

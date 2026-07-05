@@ -25,6 +25,7 @@ import {
   computePerformanceIndex,
   getWeekKey,
 } from "../src/lib/performanceEngine";
+import { vdotFromRace } from "../src/lib/runPaces";
 import type {
   WeeklyAggregates,
   PerformanceSignals,
@@ -54,7 +55,23 @@ async function main() {
   //    profile. seed-e2e deliberately omits age/sex (drives the cold-start
   //    "Personalise your calorie targets" nag); a rich/alive user has them,
   //    so merge them in here. Keeps seed-e2e as the pure cold-start fixture. ──
-  await base.set({ age: 31, sex: "male" }, { merge: true });
+  await base.set(
+    {
+      age: 31,
+      sex: "male",
+      // Adaptive-paces benchmark matching the best seeded run below (6 km at
+      // 324 s/km) — lights up the Analytics Race Predictions card and the
+      // personalized session paces without waiting for the client-side
+      // auto-derive (which only fires on a Programme-page visit).
+      runFitness: {
+        benchmark: { distanceM: 6000, timeS: 1944 },
+        vdot: Math.round(vdotFromRace(6000, 1944) * 10) / 10,
+        source: "derived",
+        updatedAt: new Date().toISOString(),
+      },
+    },
+    { merge: true }
+  );
 
   // ── Workouts: 12 sessions over ~8 weeks, bench progressing 60→82.5kg
   //    (drives lifting volume charts + a Bench Press PR ladder). ──
@@ -135,16 +152,44 @@ async function main() {
     ["Greek yogurt", 180, 18, 12, 5],
     ["Salmon & veg", 540, 41, 22, 28],
   ];
-  const slots = ["breakfast", "lunch", "snack", "dinner"];
+  // Field shape mirrors REAL app writes (Food.tsx performNLSave):
+  // `foodName` (the diary groups/renders on it — docs without it all
+  // collapse to one "Meal" row), `meal` with the app's valid slot
+  // values ("snacks", not the legacy "mealType: snack"), and staggered
+  // wall-clock times so the diary timeline orders like a real day.
+  //
+  // Two of today's meals carry a `photoUrl` so the diary timeline's
+  // photo cards ("photos big, text compact") show up in design-review
+  // captures. Production photoUrl is a Storage download URL (see
+  // src/lib/foodPhotoUpload.ts); the emulator set here has no Storage,
+  // so the seed uses a small inline-SVG plate illustration — clearly a
+  // placeholder, but exercises the exact same render path.
+  const FOOD_PHOTO_DATA_URI = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#3a2f28"/><stop offset="1" stop-color="#1d1a17"/>' +
+      "</linearGradient></defs>" +
+      '<rect width="640" height="440" fill="url(#g)"/>' +
+      '<circle cx="320" cy="230" r="150" fill="#e8e2d9"/>' +
+      '<circle cx="320" cy="230" r="132" fill="#f4efe7"/>' +
+      '<ellipse cx="290" cy="215" rx="60" ry="38" fill="#d9884e"/>' +
+      '<ellipse cx="360" cy="250" rx="52" ry="30" fill="#7da05b"/>' +
+      '<ellipse cx="340" cy="195" rx="34" ry="22" fill="#b8563e"/>' +
+      "</svg>"
+  )}`;
+  const slots = ["breakfast", "lunch", "snacks", "dinner"];
+  const slotHours = [8, 13, 16, 19];
   for (let dd = 0; dd < 3; dd++) {
-    const d = day(dd);
     mealPlan.forEach((m, mi) => {
+      const at = day(dd);
+      at.setHours(slotHours[mi], 10 + mi * 7, 0, 0);
       base
         .collection("meals")
         .doc(`rich-m${dd}-${mi}`)
         .set({
-          date: ymd(d),
-          mealType: slots[mi],
+          date: ymd(at),
+          foodName: m[0],
+          meal: slots[mi],
           // Top-level total* fields are what the app sums (mealTotals.ts reads
           // `totalCalories ?? calories`, never items[].calories) — without
           // these Home's Today's Energy stays at 0 despite logged meals.
@@ -161,7 +206,10 @@ async function main() {
               fat: m[4],
             },
           ],
-          createdAt: Timestamp.fromDate(d),
+          createdAt: Timestamp.fromDate(at),
+          ...(dd === 0 && (mi === 1 || mi === 3)
+            ? { photoUrl: FOOD_PHOTO_DATA_URI }
+            : {}),
         });
     });
   }

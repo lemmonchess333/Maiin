@@ -33,6 +33,11 @@ export interface ProPlan {
   label: string;
   /** Display price including currency symbol (e.g. "£3.99"). */
   price: string;
+  /** Numeric price in GBP — drives derived copy (weekly anchoring) so the
+   *  maths can never drift from the display string. */
+  priceValue: number;
+  /** Billing periods per year (12 monthly / 1 yearly) for derived copy. */
+  periodsPerYear: number;
   /** Long period suffix for the plan card (e.g. "/month"). */
   period: string;
   /** Short period suffix for the CTA copy (e.g. "mo" / "yr"). */
@@ -52,6 +57,8 @@ export const PRO_PLANS: ProPlan[] = [
     id: "monthly",
     label: "Monthly",
     price: "£3.99",
+    priceValue: 3.99,
+    periodsPerYear: 12,
     period: "/month",
     shortPeriod: "mo",
     billingFrequency: "monthly",
@@ -60,6 +67,8 @@ export const PRO_PLANS: ProPlan[] = [
     id: "yearly",
     label: "Yearly",
     price: "£34.99",
+    priceValue: 34.99,
+    periodsPerYear: 1,
     period: "/year",
     shortPeriod: "yr",
     billingFrequency: "annually",
@@ -123,4 +132,16 @@ export function getInlinePriceSummary(): string {
   const monthly = getPlan("monthly");
   const yearly = getPlan("yearly");
   return `${monthly.price}${monthly.period} or ${yearly.price}${yearly.period}`;
+}
+
+/**
+ * Weekly-price anchoring (Runna-teardown paywall pattern): the same plan
+ * price expressed per week — "£34.99/year" reads big, "≈ £0.67/wk" reads
+ * tiny, and showing BOTH plans per-week makes the annual saving visceral.
+ * Derived from priceValue so it can never drift from the display price.
+ */
+export function weeklyPriceLabel(id: PlanId): string {
+  const plan = getPlan(id);
+  const perWeek = (plan.priceValue * plan.periodsPerYear) / 52;
+  return `≈ £${perWeek.toFixed(2)}/wk`;
 }

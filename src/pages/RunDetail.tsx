@@ -1,9 +1,17 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { Info, AlertTriangle, Navigation, Share2 } from "lucide-react";
+import {
+  Info,
+  AlertTriangle,
+  Navigation,
+  Share2,
+  Bookmark,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useShareRoute } from "@/hooks/useShareRoute";
+import { useSavedRoutes } from "@/hooks/useSavedRoutes";
+import { toast } from "@/lib/toast";
 import {
   describeRouteConfidence,
   type RouteQuality,
@@ -61,6 +69,7 @@ export default function RunDetail() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const shareRouteWithPrivacy = useShareRoute();
+  const { save: saveRoute } = useSavedRoutes();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [run, setRun] = useState<Record<string, any> | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -159,6 +168,21 @@ export default function RunDetail() {
     shareRouteWithPrivacy(
       `${label} · ${(run.distance / 1000).toFixed(1)} km`,
       run.points
+    );
+  };
+
+  // Save this run's trace as a reusable favourite (source "run") — the
+  // "save/reuse" half of route planning v1. Same store the planner and GPX
+  // import write to; it then appears under Saved routes in run setup.
+  const saveThisRoute = async () => {
+    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const ok = await saveRoute({
+      name: `${label} · ${(run.distance / 1000).toFixed(1)} km`,
+      points: run.points,
+      source: "run",
+    });
+    toast[ok ? "success" : "error"](
+      ok ? "Route saved — find it in run setup" : "Couldn't save route"
     );
   };
 
@@ -357,7 +381,15 @@ export default function RunDetail() {
               }
             >
               <Navigation className="size-4" aria-hidden="true" />
-              Re-run this route
+              Re-run
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => void saveThisRoute()}
+            >
+              <Bookmark className="size-4" aria-hidden="true" />
+              Save route
             </Button>
             <Button
               variant="outline"
@@ -365,7 +397,7 @@ export default function RunDetail() {
               onClick={() => shareThisRoute()}
             >
               <Share2 className="size-4" aria-hidden="true" />
-              Share route
+              Share
             </Button>
           </div>
         )}
