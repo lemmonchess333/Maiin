@@ -40,21 +40,33 @@ export function registerServiceWorker() {
           });
 
           registration.addEventListener("updatefound", () => {
+            // Only a real UPDATE has a previous active worker being
+            // replaced. The old `navigator.serviceWorker.controller`
+            // check inside statechange misfired on the very first
+            // install: sw.js calls clients.claim(), which sets
+            // .controller during activation — so a brand-new visitor
+            // (or anyone who just cleared website data) got a bogus
+            // "New version available" toast seconds after first paint.
+            const isUpdate = !!registration.active;
             const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "activated" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  // New SW activated — clear old caches and prompt refresh
+                if (newWorker.state === "activated" && isUpdate) {
+                  // New SW activated — clear old caches and prompt refresh.
                   clearSWCaches();
                   toast("New version available", {
                     action: {
                       label: "Refresh",
                       onClick: () => window.location.reload(),
                     },
-                    duration: Infinity,
+                    // Finite on purpose. duration: Infinity parked this
+                    // toast over the bottom tab bar forever (pre-
+                    // mobileOffset fix it sat ON the nav and ate every
+                    // tap — "app navigation dead on iOS"). The prompt is
+                    // a convenience, not a gate: the new SW is already
+                    // active and any later cold start gets the new
+                    // bundle without it.
+                    duration: 10_000,
                   });
                 }
               });

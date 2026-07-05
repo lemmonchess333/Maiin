@@ -582,6 +582,40 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Cost & margin operator setup (unit economics)
+
+Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £1.20 (30%) or £0.60 (15% Small Business Program); combined Gemini + Firebase + storage + ORS run ~15–20p/Pro user/mo (Gemini Flash food scan ≈ ½p; only Pro users hit the AI gate). ORS routing is ~free at ~5k users (occasional route-plans, ~2–5 calls each, under the 2,500/day free tier); on quota-exceed it degrades to the existing straight-line planner (no lockout), and true scale = self-host ORS on a ~£25/mo VM (fixed, not per-request). `maxInstances` caps are already in every Cloud Function (runaway-cost guard).
+
+- [ ] **Enrol in the Apple Small Business Program** (App Store Connect → Business/Agreements). Halves Apple's commission 30% → 15% for under-$1M/yr — worth ~£0.60/user/mo, more than all infra combined. Highest-leverage single action; do before/at launch.
+- [ ] **Set a Google Cloud budget alert** (GCP Console → Billing → Budgets & alerts): email at, e.g., >£50/mo. Single smoke-detector across Gemini/Vertex, Firebase, and the future ORS proxy. Optionally set a hard Vertex/Gemini quota ceiling.
+- [ ] When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
+
+### App Store listing — public Terms/Privacy URLs (launch gate)
+
+The app's real domain is **`troposfit.com`** (owned + Cloudflare-managed;
+`tropos.app` is NOT owned — do not use it anywhere). The App Store listing
+(Description footer + the Support URL field) must point at
+`https://troposfit.com/terms`, `https://troposfit.com/privacy`, and
+`https://troposfit.com/support`, none of which **resolve yet** — there is no
+public `troposfit.com` site pages standing up those paths. The app has in-app
+`/terms` + `/privacy` routes, but Apple's reviewer clicks these from the public
+web _outside_ the app, so in-app routes alone don't satisfy the check. A dead
+legal/Support URL is a common first-submission rejection.
+
+- [ ] **Stand up public Terms + Privacy pages at `troposfit.com`.** Cheapest path:
+      point the existing GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at
+      `troposfit.com` via CNAME, or publish the two legal docs as standalone static
+      pages (a one-file host / GitHub Pages root / Notion public page all work). They
+      must open with no login.
+- [ ] **Stand up a public Support page** — `https://troposfit.com/support` does NOT
+      resolve yet either. Needs a real public page with a contact email (the privacy
+      page can double as this). Apple rejects a dead Support URL.
+- [ ] **After the pages are live, update App Store Connect** to the real URLs:
+      the two links in the **Description** footer, the **Support URL** field, and any
+      other Support/legal links on the 1.0 version page. All three of Terms, Privacy,
+      and Support must use `troposfit.com` paths — none can ship
+      as-is. Do NOT submit with placeholder links.
+
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
 Distribution decision: Tropos ships **App Store now + Google Play later; no web billing is sold**. The working Stripe backend (checkout → webhook → tier, hardened in #822) is **kept dormant, NOT torn out** — Apple takes 15–30% vs Stripe's ~3%, so web billing is the single biggest future margin lever and pre-launch is the wrong moment to foreclose it. Do NOT build `createStripeBillingPortal` (the web Manage button's never-defined callable — it never fires on iOS, where the native branch redirects to Apple's subscriptions page) and do NOT start the ~46-file teardown; revisit removal only if still App-Store-only well after real revenue. Two known costs of dormancy, accepted: functions deploys require `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` to stay provisioned (closing the Stripe account needs a code change first), and billing-adjacent PRs keep threading Stripe branches.
