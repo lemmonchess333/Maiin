@@ -592,24 +592,28 @@ Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £1
 
 ### App Store listing — public Terms/Privacy URLs (launch gate)
 
-The App Store listing (Description footer + the Support URL field) and Apple's
-reviewer both point at `https://tropos.app/terms` and `https://tropos.app/privacy`,
-which **do not resolve yet** — there is no public `tropos.app` site. The app has
-in-app `/terms` + `/privacy` routes, but Apple's reviewer clicks these from the
-public web _outside_ the app, so in-app routes alone don't satisfy the check. A
-dead legal/Support URL is a common first-submission rejection.
+The app's real domain is **`troposfit.com`** (owned + Cloudflare-managed;
+`tropos.app` is NOT owned — do not use it anywhere). The App Store listing
+(Description footer + the Support URL field) must point at
+`https://troposfit.com/terms`, `https://troposfit.com/privacy`, and
+`https://troposfit.com/support`, none of which **resolve yet** — there is no
+public `troposfit.com` site pages standing up those paths. The app has in-app
+`/terms` + `/privacy` routes, but Apple's reviewer clicks these from the public
+web _outside_ the app, so in-app routes alone don't satisfy the check. A dead
+legal/Support URL is a common first-submission rejection.
 
-- [ ] **Stand up public Terms + Privacy pages.** Cheapest path: point the existing
-      GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at a real public URL, or
-      publish the two legal docs as standalone static pages (a one-file host / GitHub
-      Pages root / Notion public page all work). They must open with no login.
-- [ ] **Stand up a public Support page** — `https://tropos.app/support` does NOT
+- [ ] **Stand up public Terms + Privacy pages at `troposfit.com`.** Cheapest path:
+      point the existing GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at
+      `troposfit.com` via CNAME, or publish the two legal docs as standalone static
+      pages (a one-file host / GitHub Pages root / Notion public page all work). They
+      must open with no login.
+- [ ] **Stand up a public Support page** — `https://troposfit.com/support` does NOT
       resolve yet either. Needs a real public page with a contact email (the privacy
       page can double as this). Apple rejects a dead Support URL.
 - [ ] **After the pages are live, update App Store Connect** to the real URLs:
       the two links in the **Description** footer, the **Support URL** field, and any
       other Support/legal links on the 1.0 version page. All three of Terms, Privacy,
-      and Support currently point at placeholder `tropos.app` paths — none can ship
+      and Support must use `troposfit.com` paths — none can ship
       as-is. Do NOT submit with placeholder links.
 
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
