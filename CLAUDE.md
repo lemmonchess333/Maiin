@@ -582,6 +582,13 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
+
+Distribution decision: Tropos ships **App Store now + Google Play later; no web billing is sold**. The working Stripe backend (checkout → webhook → tier, hardened in #822) is **kept dormant, NOT torn out** — Apple takes 15–30% vs Stripe's ~3%, so web billing is the single biggest future margin lever and pre-launch is the wrong moment to foreclose it. Do NOT build `createStripeBillingPortal` (the web Manage button's never-defined callable — it never fires on iOS, where the native branch redirects to Apple's subscriptions page) and do NOT start the ~46-file teardown; revisit removal only if still App-Store-only well after real revenue. Two known costs of dormancy, accepted: functions deploys require `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` to stay provisioned (closing the Stripe account needs a code change first), and billing-adjacent PRs keep threading Stripe branches.
+
+- [ ] **Launch gate:** add the web App-Store steer — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
+- [ ] At that point also confirm no other web surface deep-links into Stripe checkout (`useProCheckout` call sites).
+
 ### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
 
 Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). The sandbox has no Storage emulator, so the upload path itself is unverified end-to-end (display path verified via seeded photoUrl captures).
