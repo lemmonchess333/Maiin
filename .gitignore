@@ -41,3 +41,7 @@ playwright/.cache/
 
 # Claude Code agent worktrees (Agent tool isolation — never committed)
 .claude/worktrees/
+
+# Local Playwright capture-run output (CI owns the app-screenshots branch;
+# the local dir is generated noise — CI force-adds with -f)
+/screenshots/

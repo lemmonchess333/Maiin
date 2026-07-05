@@ -29,6 +29,9 @@ export interface ProgrammeSnapshot {
   weeklyRunDays: number;
   raceDistance: string;
   raceTargetDate: string;
+  /** Pgm6 tuning knobs — race-prep only, mirroring the engine's gating. */
+  runVolume: string;
+  runDifficulty: string;
 }
 
 export interface ProgrammeChange {
@@ -95,6 +98,18 @@ const RACE_DISTANCE_LABELS: Record<string, string> = {
   "10k": "10K",
   half: "Half Marathon",
   marathon: "Marathon",
+};
+
+const RUN_VOLUME_LABELS: Record<string, string> = {
+  lighter: "Lighter",
+  standard: "Standard",
+  bigger: "Bigger",
+};
+
+const RUN_DIFFICULTY_LABELS: Record<string, string> = {
+  gentler: "Gentler",
+  standard: "Standard",
+  harder: "Harder",
 };
 
 const MONTHS = [
@@ -238,6 +253,22 @@ export function computeProgrammeChanges(
         label: "Race date",
         from: formatRaceDate(saved.raceTargetDate),
         to: formatRaceDate(draft.raceTargetDate),
+      });
+    }
+    // Pgm6 tuning knobs — only shape race-prep plans, so only count there
+    // (a knob change in freeform would be a phantom rebuild).
+    if (draft.runVolume !== saved.runVolume) {
+      changes.push({
+        label: "Long-run volume",
+        from: labelFrom(RUN_VOLUME_LABELS, saved.runVolume),
+        to: labelFrom(RUN_VOLUME_LABELS, draft.runVolume),
+      });
+    }
+    if (draft.runDifficulty !== saved.runDifficulty) {
+      changes.push({
+        label: "Intensity",
+        from: labelFrom(RUN_DIFFICULTY_LABELS, saved.runDifficulty),
+        to: labelFrom(RUN_DIFFICULTY_LABELS, draft.runDifficulty),
       });
     }
   }

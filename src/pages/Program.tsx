@@ -1126,6 +1126,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                     }
                                     onTouchMove={handleLongPressCancel}
                                     onTouchEnd={handleLongPressCancel}
+                                    onContextMenu={(e) => {
+                                      // D-LIFT-17: long-press is touch-only —
+                                      // right-click is its pointer/desktop
+                                      // equivalent for the same manage menu.
+                                      e.preventDefault();
+                                      setContextMenu({
+                                        dayIndex: idx,
+                                        exIndex: i,
+                                        x: e.clientX,
+                                        y: e.clientY,
+                                      });
+                                    }}
                                   >
                                     <p className="text-sm font-semibold text-foreground truncate">
                                       {ex.name}

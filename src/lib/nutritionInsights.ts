@@ -1,5 +1,12 @@
 /**
  * Analyzes meal patterns and provides actionable nutrition insights.
+ *
+ * NUTR-L4 (#1107): a past day's target is day-type-dependent (taper weeks,
+ * adaptive-TDEE steps, target edits) and can't be faithfully re-derived later
+ * — the same principle the nutrition badges follow (dailyNutritionSnapshot.ts).
+ * `targetsByDate` carries the per-day snapshotted targets; each day is judged
+ * against the target as it stood ON that day, falling back to the flat
+ * `targets` for days with no snapshot (pre-feature history).
  */
 
 export interface MealEntry {
@@ -12,6 +19,13 @@ export interface MealEntry {
   time?: string;
 }
 
+export interface DailyTargets {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 export interface NutritionInsight {
   id: string;
   type: "positive" | "warning" | "tip";
@@ -22,9 +36,26 @@ export interface NutritionInsight {
 
 export function analyzeNutritionPatterns(
   meals: MealEntry[],
-  targets: { calories: number; protein: number; carbs: number; fat: number }
+  targets: DailyTargets,
+  /** date → the target snapshotted ON that day (users/{uid}/dailyNutrition). */
+  targetsByDate?: ReadonlyMap<string, DailyTargets>
 ): NutritionInsight[] {
   if (meals.length === 0) return [];
+
+  // Per-day target resolution: the day's snapshot when it exists and carries a
+  // usable (positive) value for the field, else the flat fallback. A snapshot
+  // with a zero field (e.g. legacy doc missing targetCalories) must not judge
+  // every intake as an automatic hit/miss.
+  const targetFor = (date: string): DailyTargets => {
+    const snap = targetsByDate?.get(date);
+    if (!snap) return targets;
+    return {
+      calories: snap.calories > 0 ? snap.calories : targets.calories,
+      protein: snap.protein > 0 ? snap.protein : targets.protein,
+      carbs: snap.carbs > 0 ? snap.carbs : targets.carbs,
+      fat: snap.fat > 0 ? snap.fat : targets.fat,
+    };
+  };
 
   const insights: NutritionInsight[] = [];
 
@@ -39,15 +70,17 @@ export function analyzeNutritionPatterns(
   const dates = Array.from(byDate.keys()).sort().slice(-7);
   if (dates.length < 3) return insights;
 
-  // Check protein consistency
+  // Check protein consistency — each day against ITS OWN target (NUTR-L4).
   const dailyProtein = dates.map((d) => {
     const dayMeals = byDate.get(d) || [];
     return dayMeals.reduce((sum, m) => sum + m.protein, 0);
   });
   const avgProtein =
     dailyProtein.reduce((a, b) => a + b, 0) / dailyProtein.length;
+  const avgProteinTarget =
+    dates.reduce((sum, d) => sum + targetFor(d).protein, 0) / dates.length;
   const proteinHitDays = dailyProtein.filter(
-    (p) => p >= targets.protein * 0.9
+    (p, i) => p >= targetFor(dates[i]).protein * 0.9
   ).length;
 
   if (proteinHitDays >= dates.length * 0.8) {
@@ -58,12 +91,12 @@ export function analyzeNutritionPatterns(
       message: `You hit your protein target ${proteinHitDays} of the last ${dates.length} days.`,
       priority: 1,
     });
-  } else if (avgProtein < targets.protein * 0.7) {
+  } else if (avgProtein < avgProteinTarget * 0.7) {
     insights.push({
       id: "protein-low",
       type: "warning",
       title: "Low protein intake",
-      message: `Averaging ${Math.round(avgProtein)}g protein vs ${targets.protein}g target. Add a protein source to each meal.`,
+      message: `Averaging ${Math.round(avgProtein)}g protein vs ${Math.round(avgProteinTarget)}g target. Add a protein source to each meal.`,
       priority: 3,
     });
   }
@@ -107,10 +140,15 @@ export function analyzeNutritionPatterns(
     });
   }
 
-  // Check if hitting overall targets
-  const onTargetDays = dailyCals.filter(
-    (c) => c >= targets.calories * 0.85 && c <= targets.calories * 1.15
-  ).length;
+  // Check if hitting overall targets — per-day calories (NUTR-L4), so a taper
+  // week's contracted target or an adaptive-TDEE step isn't judged against
+  // today's number. (The calorie-swings check above stays anchored on raw
+  // intake: it's a logging/trend-readability signal, deliberately
+  // target-agnostic.)
+  const onTargetDays = dailyCals.filter((c, i) => {
+    const dayCals = targetFor(dates[i]).calories;
+    return c >= dayCals * 0.85 && c <= dayCals * 1.15;
+  }).length;
   if (onTargetDays >= dates.length * 0.7) {
     insights.push({
       id: "calories-on-target",

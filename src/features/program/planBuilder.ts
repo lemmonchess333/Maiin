@@ -59,7 +59,12 @@ import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
 } from "./matchTemplate";
-import { generateRacePlanV2, scheduleStructuredWeekV2 } from "./runScheduler";
+import {
+  generateRacePlanV2,
+  scheduleStructuredWeekV2,
+  DEFAULT_RUN_TUNING,
+  type RunTuning,
+} from "./runScheduler";
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 
@@ -101,6 +106,13 @@ export interface PlanBuilderInput {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
   };
+
+  /** Pgm6 tuning knobs (volume preset + difficulty). Optional —
+   *  omitted means `standard`/`standard`, which is byte-identical to
+   *  the pre-Pgm6 plan shape. Persisted flat on the profile as
+   *  `runVolume` / `runDifficulty` so weekly refresh regens read the
+   *  same knobs this build used. */
+  runTuning?: RunTuning;
 
   equipment: "full_gym" | "home_gym" | "minimal";
 
@@ -146,6 +158,11 @@ export interface PlanBuilderOutput {
     equipment: PlanBuilderInput["equipment"];
     injuries: string[];
     preferredSplit: PlanBuilderInput["preferredSplit"];
+    // Pgm6: the tuning knobs persist flat so every weekly-refresh /
+    // realign regen site can rebuild the SAME plan shape the user
+    // saved (runTuningFromProfile reads these; missing → standard).
+    runVolume: RunTuning["volume"];
+    runDifficulty: RunTuning["difficulty"];
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
     // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
     // calorieBalance, …), NOT programState.goal. Emit it so a phase change in
@@ -260,6 +277,7 @@ function buildRunPlan(
       weeklyRunDays: input.weeklyRunDays,
       currentDate: input.currentDate,
       weekStart,
+      tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
     });
     return {
       runDays: racePlan.weeks[0] ?? [],
@@ -303,6 +321,8 @@ function buildProfileUpdates(
     weeklyRunDaysTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
     weeklyRunsTarget: input.runMode === "freeform" ? 0 : input.weeklyRunDays,
     runMode: input.runMode,
+    runVolume: (input.runTuning ?? DEFAULT_RUN_TUNING).volume,
+    runDifficulty: (input.runTuning ?? DEFAULT_RUN_TUNING).difficulty,
     primaryGoal: input.primaryGoal,
     experience: input.experience,
     equipment: input.equipment,

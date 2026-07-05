@@ -274,3 +274,34 @@ describe("resolveAdaptiveTarget — taper freeze", () => {
     expect(view.value).toBe(2550); // 2400 + 150 cap step
   });
 });
+
+describe("resolveAdaptiveTarget — NUTR-L5 minimum-calorie floor", () => {
+  it("the goal offset never pushes the learned target below min(maintenance, 1200)", () => {
+    // Small user: learned maintenance 1600 (flat weight), aggressive rate
+    // offset −830. Unfloored raw would be 770; the floor clamps it to 1200
+    // BEFORE the weekly cap, so the cap steps toward 1200, not toward 770.
+    const intakeByDay = Array.from({ length: 14 }, (_, i) => ({
+      dateKey: `2026-05-${String(i + 1).padStart(2, "0")}`,
+      kcal: 1600,
+    }));
+    const weighIns = [1, 3, 5, 7, 9, 11, 13, 15].map((d) => ({
+      dateKey: `2026-05-${String(d).padStart(2, "0")}`,
+      weightKg: 55,
+    }));
+    const { view } = resolveAdaptiveTarget({
+      ...baseInput,
+      formulaTarget: 1200,
+      goalOffset: -830,
+      intakeByDay,
+      weighIns,
+      // >7 days before NOW and within one cap step of the floored value, so
+      // the applied target settles exactly on the floor this call.
+      capPrev: {
+        lastApplied: 1250,
+        lastAppliedAt: "2026-05-01T00:00:00.000Z",
+      },
+    });
+    expect(view.source).toBe("learned");
+    expect(view.value).toBe(1200); // floored raw (1200), NOT 1250 − 150 = 1100
+  });
+});

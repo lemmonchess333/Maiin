@@ -19,6 +19,7 @@
  */
 
 import { estimateAdaptiveTDEE, computeWarmupProgress } from "./adaptiveTdee";
+import { floorTargetCalories } from "./macroConstants";
 
 /** Default maximum the applied target may move per rolling 7-day window. */
 export const MAX_WEEKLY_STEP_KCAL = 150;
@@ -314,10 +315,15 @@ export function resolveAdaptiveTarget(
   // learned target preserves the deficit/surplus (C-NUTRITION). The cap is
   // seeded from `formulaTarget` (which already carries the offset), so both
   // endpoints share it and the formula→learned handoff stays continuous.
+  // NUTR-L5: the same safety floor as `calculateTDEE` — the offset can never
+  // push the learned target below min(learned maintenance, MIN_TARGET_CALORIES).
   const cap =
     result.ready && result.learnedTDEE != null
       ? applyWeeklyCap({
-          rawLearned: result.learnedTDEE + goalOffset,
+          rawLearned: floorTargetCalories(
+            result.learnedTDEE + goalOffset,
+            result.learnedTDEE
+          ),
           formulaTarget,
           prev: capPrev,
           now,

@@ -3,6 +3,7 @@ import Model, { type IExerciseData } from "react-body-highlighter";
 import { THEME } from "@/lib/theme";
 import BodyMapGlow from "@/components/BodyMapGlow";
 import { getShareTier, getFrequencyForShare } from "./muscleShare";
+import type { GroupRecovery } from "@/lib/muscleRecovery";
 
 interface MuscleData {
   [group: string]: number;
@@ -11,6 +12,14 @@ interface MuscleData {
 interface MuscleHeatMapProps {
   data: MuscleData;
   accentColor?: string;
+  /**
+   * Per-group recovery state (Tier-2 #6 second half) — chips on the legend
+   * rows. NOW-state, deliberately independent of the page's TimeRange
+   * (labelled "as of today" below the legend — the Hist5c strict-range rule
+   * allows explicitly-labelled carve-outs). Omitted → card renders exactly
+   * as before.
+   */
+  recovery?: Record<string, GroupRecovery>;
 }
 
 /** Translate technical movementCategory keys to user-friendly names */
@@ -85,7 +94,15 @@ function getIsDark() {
   return document.documentElement.classList.contains("dark");
 }
 
-export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
+/** Legend recovery chip colours: still-loaded muscles stay in the lifting
+ *  register (the map's own palette); READY gets the success token. */
+function recoveryDotColor(status: GroupRecovery["status"]): string {
+  if (status === "ready") return THEME.success;
+  if (status === "nearly") return LOW_COLOR;
+  return MID_COLOR;
+}
+
+export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
   const isDark = useSyncExternalStore(
     subscribeDarkMode,
     getIsDark,
@@ -208,24 +225,61 @@ export default function MuscleHeatMap({ data }: MuscleHeatMapProps) {
           {renderView("posterior")}
         </div>
 
-        {/* Legend: only trained groups, sorted by sets descending */}
+        {/* Legend: only trained groups, sorted by sets descending. When the
+            recovery prop is present each row gains a readiness chip — a
+            NOW-state annotation (see the footnote), not range data. */}
         {trainedGroups.length > 0 && (
           <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
-            {trainedGroups.map(([group, sets]) => (
-              <div key={group} className="flex items-center gap-1.5">
-                <div
-                  className="size-2 rounded-full"
-                  style={{ background: getLegendDotColor(sets, totalSets) }}
-                />
-                <span className="text-xs text-muted-foreground font-medium">
-                  {group}
-                </span>
-                <span className="text-xs text-muted-foreground/60">
-                  {sets} sets
-                </span>
-              </div>
-            ))}
+            {trainedGroups.map(([group, sets]) => {
+              const rec = recovery?.[group];
+              return (
+                <div key={group} className="flex items-center gap-1.5">
+                  <div
+                    className="size-2 rounded-full"
+                    style={{ background: getLegendDotColor(sets, totalSets) }}
+                  />
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {group}
+                  </span>
+                  <span className="text-xs text-muted-foreground/60">
+                    {sets} sets
+                  </span>
+                  {rec && (
+                    <span
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted/60 text-[10px] text-muted-foreground"
+                      title={
+                        rec.status === "ready"
+                          ? `${group} is recovered`
+                          : `${group} ready in ~${rec.readyInDays}d`
+                      }
+                    >
+                      <span
+                        className="size-1.5 rounded-full"
+                        style={{ background: recoveryDotColor(rec.status) }}
+                        aria-hidden
+                      />
+                      {rec.status === "ready" ? (
+                        "ready"
+                      ) : (
+                        <>
+                          ~
+                          <span className="font-mono tabular-nums">
+                            {rec.readyInDays}
+                          </span>
+                          d
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
+        )}
+        {recovery && trainedGroups.length > 0 && (
+          <p className="mt-2 text-[10px] text-muted-foreground/70 text-center">
+            Recovery chips are as of today, independent of the selected range.
+          </p>
         )}
       </div>
     </div>
