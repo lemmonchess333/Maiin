@@ -71,6 +71,12 @@ export function ToastProvider() {
         // the toast doesn't visually merge with it.
         position="bottom-center"
         offset="calc(env(safe-area-inset-bottom, 0px) + 80px)"
+        // CRITICAL: sonner only applies `offset` on viewports ≥600px; phones
+        // use `mobileOffset`, which DEFAULTS TO 16px. Without this mirror,
+        // every toast on a phone rendered on top of the bottom tab bar and
+        // intercepted its taps — an infinite-duration toast (the old SW
+        // update prompt) made the whole nav permanently untappable on iOS.
+        mobileOffset="calc(env(safe-area-inset-bottom, 0px) + 80px)"
         aria-live="polite"
         // 1500ms matches the convention across the apps audited; Sonner's
         // 4000ms default reads as slow/lingering on a fitness surface
