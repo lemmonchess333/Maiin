@@ -590,6 +590,25 @@ Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £1
 - [ ] **Set a Google Cloud budget alert** (GCP Console → Billing → Budgets & alerts): email at, e.g., >£50/mo. Single smoke-detector across Gemini/Vertex, Firebase, and the future ORS proxy. Optionally set a hard Vertex/Gemini quota ceiling.
 - [ ] When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
 
+### App Store listing — public Terms/Privacy URLs (launch gate)
+
+The App Store listing (Description footer + the Support URL field) and Apple's
+reviewer both point at `https://tropos.app/terms` and `https://tropos.app/privacy`,
+which **do not resolve yet** — there is no public `tropos.app` site. The app has
+in-app `/terms` + `/privacy` routes, but Apple's reviewer clicks these from the
+public web _outside_ the app, so in-app routes alone don't satisfy the check. A
+dead legal/Support URL is a common first-submission rejection.
+
+- [ ] **Stand up public Terms + Privacy pages.** Cheapest path: point the existing
+      GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at a real public URL, or
+      publish the two legal docs as standalone static pages (a one-file host / GitHub
+      Pages root / Notion public page all work). They must open with no login.
+- [ ] **Also need a working Support URL** — a public page with a contact email
+      (the privacy page itself can double as this).
+- [ ] **After the pages are live, update App Store Connect** to the real URLs:
+      the two links in the **Description** footer, and the **Support URL** field on
+      the 1.0 version page. Do NOT submit with placeholder `tropos.app` links.
+
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
 Distribution decision: Tropos ships **App Store now + Google Play later; no web billing is sold**. The working Stripe backend (checkout → webhook → tier, hardened in #822) is **kept dormant, NOT torn out** — Apple takes 15–30% vs Stripe's ~3%, so web billing is the single biggest future margin lever and pre-launch is the wrong moment to foreclose it. Do NOT build `createStripeBillingPortal` (the web Manage button's never-defined callable — it never fires on iOS, where the native branch redirects to Apple's subscriptions page) and do NOT start the ~46-file teardown; revisit removal only if still App-Store-only well after real revenue. Two known costs of dormancy, accepted: functions deploys require `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` to stay provisioned (closing the Stripe account needs a code change first), and billing-adjacent PRs keep threading Stripe branches.
