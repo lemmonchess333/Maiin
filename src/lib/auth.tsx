@@ -260,6 +260,16 @@ export interface UserProfileRunning {
   runMode?: "freeform" | "structured" | "race_prep";
   weeklyRunDaysTarget?: number;
   weeklyRunsTarget?: number;
+  /**
+   * Pgm6 run-plan tuning knobs (locked 2026-07-04: exactly these two,
+   * no mileage-cap knob). `runVolume` sizes the long runs; `runDifficulty`
+   * sets how much tempo/interval work a race-prep week carries. Missing →
+   * `standard` (lazy default via runTuningFromProfile — no migration).
+   * Written by configurePlan alongside the plan they shaped. Must stay in
+   * sync with firestore.rules allowedUserFields() + profileSanitizer.js.
+   */
+  runVolume?: "lighter" | "standard" | "bigger";
+  runDifficulty?: "gentler" | "standard" | "harder";
   // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
   // recovery exit can CLEAR a prior race (a merge write of `undefined` is
   // stripped and would leave the old goal stranded). Readers gate on

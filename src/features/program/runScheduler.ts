@@ -492,15 +492,67 @@ function buildRunDayV2(args: {
   };
 }
 
-/** Resolve a long-run template ID by phase + race-distance peak.
- *  Centralised here so both structured + race-prep schedules pick
- *  the same way. */
+/* ─────────────────────────────────────────────
+   Pgm6 · Run-plan tuning knobs (locked 2026-07-04)
+   ───────────────────────────────────────────── */
+
+/** Long-run size preset — the "volume" knob. Deliberately NOT weekly
+ *  frequency (that's already the user's weekSchedule; duplicating it
+ *  here would create a second source of truth). */
+export type RunVolumePreset = "lighter" | "standard" | "bigger";
+
+/** Quality-work preset — the "difficulty" knob. Controls how much
+ *  tempo/interval work a week carries, never the pace targets (paces
+ *  stay VDOT-derived in runPaces). */
+export type RunDifficultyPreset = "gentler" | "standard" | "harder";
+
+export interface RunTuning {
+  volume: RunVolumePreset;
+  difficulty: RunDifficultyPreset;
+}
+
+/** `standard`/`standard` is pinned by tests to be byte-identical to
+ *  the pre-Pgm6 scheduler output — absent knobs change nothing. */
+export const DEFAULT_RUN_TUNING: RunTuning = {
+  volume: "standard",
+  difficulty: "standard",
+};
+
+/** Resolve the profile's persisted knobs (missing/foreign → standard —
+ *  lazy default, no migration). Single place every regen site derives
+ *  tuning from, so the read can't drift across the eight call sites. */
+export function runTuningFromProfile(profile: {
+  runVolume?: string;
+  runDifficulty?: string;
+}): RunTuning {
+  const volume: RunVolumePreset =
+    profile.runVolume === "lighter" || profile.runVolume === "bigger"
+      ? profile.runVolume
+      : "standard";
+  const difficulty: RunDifficultyPreset =
+    profile.runDifficulty === "gentler" || profile.runDifficulty === "harder"
+      ? profile.runDifficulty
+      : "standard";
+  return { volume, difficulty };
+}
+
+/** Resolve a long-run template ID by phase + race-distance peak,
+ *  through the volume knob:
+ *    lighter  → long runs cap at the 10K tier for every distance
+ *    standard → historical threshold (≥15km peak → long_15k)
+ *    bigger   → the 15K tier unlocks from a 10km peak (10K/half/
+ *               marathon plans long at 15K; a 5K plan stays 10K)
+ *  Centralised here so every race-prep week picks the same way. */
 function pickLongTemplateId(
   peakLongKm: number,
-  phase: "base" | "build" | "taper" | "race"
+  phase: "base" | "build" | "taper" | "race",
+  volume: RunVolumePreset
 ): string {
   if (phase === "taper" || phase === "race") return "easy_30";
-  return peakLongKm >= 15 ? "long_15k" : "long_10k";
+  const effectivePeak =
+    volume === "lighter" ? Math.min(peakLongKm, 10) : peakLongKm;
+  const threshold = volume === "bigger" ? 10 : 15;
+  return effectivePeak >= threshold ? "long_15k" : "long_10k";
 }
 
 export interface StructuredWeekV2Input {
@@ -623,6 +675,14 @@ export interface RacePlanV2Input {
   currentDate: string;
   /** Local "YYYY-MM-DD" Sunday of week 0. */
   weekStart: string;
+  /** Pgm6 knobs. Optional and defaulting to `standard`/`standard`
+   *  (byte-identical to pre-Pgm6 output) so legacy callers and
+   *  profiles without the fields change nothing — but EVERY live
+   *  regen path must thread the profile's tuning or the weekly
+   *  refresh will silently regress a tuned plan back to standard
+   *  (the tested-copy-vs-running-copy drift class). Derive via
+   *  `runTuningFromProfile(profile)`. */
+  tuning?: RunTuning;
 }
 
 export interface RacePlanV2Output {
@@ -644,6 +704,7 @@ export interface RacePlanV2Output {
  *  compressed-plan safety rules, emits v2-shaped runDays. */
 export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const config = RACE_CONFIGS[input.raceGoal.distance];
+  const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
   const now = parseLocalDate(input.currentDate);
   const target = parseLocalDate(input.raceGoal.targetDate);
   const diffMs = target.getTime() - now.getTime();
@@ -732,7 +793,14 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         buildRunDayV2({
           dayIndex: longSlot,
           // Cap at baseLongKm (not peak) so the long run never jumps.
-          templateId: pickLongTemplateId(config.baseLongKm, phase),
+          // Pgm6 safety precedence: "bigger" is IGNORED below the floor —
+          // the finish-safely shape never inflates. "lighter" (more
+          // conservative) is always honoured.
+          templateId: pickLongTemplateId(
+            config.baseLongKm,
+            phase,
+            tuning.volume === "bigger" ? "standard" : tuning.volume
+          ),
           type: phase === "taper" ? "easy" : "long",
           weekStart,
         })
@@ -755,7 +823,7 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     week.push(
       buildRunDayV2({
         dayIndex: longSlot,
-        templateId: pickLongTemplateId(config.peakLongKm, phase),
+        templateId: pickLongTemplateId(config.peakLongKm, phase, tuning.volume),
         type: phase === "taper" ? "easy" : "long",
         weekStart,
       })
@@ -765,8 +833,21 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       // Compressed-plan rule: cap hard sessions at 1/week (vs 1
       // long + 1 quality in standard plans during build). Also
       // skip intervals if heavily compressed (totalWeeks < minWeeks/2).
-      const skipIntervals = compressed && totalWeeks < config.minWeeks / 2;
-      const hardCapApplies = compressed;
+      //
+      // Pgm6 difficulty knob composes with the safety rules, never
+      // against them — caps only ever tighten:
+      //   gentler → quality every OTHER build week, tempo only (no
+      //             intervals), taper quality dropped.
+      //   harder  → a second quality session in uncompressed build
+      //             weeks with spare slots. Compressed/below-floor
+      //             plans IGNORE "harder" (safety caps win).
+      const gentler = tuning.difficulty === "gentler";
+      // Heavy compression zeroes out ALL build quality — that safety
+      // rule stays keyed on compression alone.
+      const skipQualityEntirely =
+        compressed && totalWeeks < config.minWeeks / 2;
+      const hardCapApplies = compressed || gentler;
+      const allowSecondQuality = tuning.difficulty === "harder" && !compressed;
 
       if (phase === "base") {
         // Base: all easy (compressed plans extend base proportionally
@@ -783,10 +864,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         );
       } else if (phase === "build") {
         const allowQuality = !hardCapApplies || w % 2 === 0;
-        if (allowQuality && !skipIntervals) {
+        if (allowQuality && !skipQualityEntirely) {
           // 1 quality + rest easy (or all easy if compressed and
-          // the long run already consumed the week's quality budget)
-          const qualityType = w % 2 === 0 ? "tempo" : "intervals";
+          // the long run already consumed the week's quality budget).
+          // Gentler forces the quality to tempo — no intervals.
+          const qualityType = gentler
+            ? "tempo"
+            : w % 2 === 0
+              ? "tempo"
+              : "intervals";
           const qualityId = qualityType === "tempo" ? "tempo_20" : "5x1k";
           week.push(
             buildRunDayV2({
@@ -796,7 +882,21 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               weekStart,
             })
           );
-          remaining.slice(1).forEach((d) =>
+          // Harder: a SECOND quality session (the other flavour) when
+          // the week has a spare slot and no safety cap applies.
+          const secondQualityHere = allowSecondQuality && remaining.length >= 2;
+          if (secondQualityHere) {
+            const secondType = qualityType === "tempo" ? "intervals" : "tempo";
+            week.push(
+              buildRunDayV2({
+                dayIndex: remaining[1],
+                templateId: secondType === "tempo" ? "tempo_20" : "5x1k",
+                type: secondType,
+                weekStart,
+              })
+            );
+          }
+          remaining.slice(secondQualityHere ? 2 : 1).forEach((d) =>
             week.push(
               buildRunDayV2({
                 dayIndex: d,
@@ -821,8 +921,10 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         }
       } else if (phase === "taper") {
         // Taper: 1 short quality + easy. Compressed plans skip the
-        // taper quality entirely (already low volume).
-        if (!compressed) {
+        // taper quality entirely (already low volume); gentler drops
+        // it too (freshness over sharpening). Harder does NOT add
+        // taper work — taper is about arriving fresh.
+        if (!compressed && !gentler) {
           week.push(
             buildRunDayV2({
               dayIndex: remaining[0],
