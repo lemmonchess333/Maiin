@@ -603,11 +603,14 @@ dead legal/Support URL is a common first-submission rejection.
       GitHub Pages deploy (`/Maiin/privacy`, `/Maiin/terms`) at a real public URL, or
       publish the two legal docs as standalone static pages (a one-file host / GitHub
       Pages root / Notion public page all work). They must open with no login.
-- [ ] **Also need a working Support URL** — a public page with a contact email
-      (the privacy page itself can double as this).
+- [ ] **Stand up a public Support page** — `https://tropos.app/support` does NOT
+      resolve yet either. Needs a real public page with a contact email (the privacy
+      page can double as this). Apple rejects a dead Support URL.
 - [ ] **After the pages are live, update App Store Connect** to the real URLs:
-      the two links in the **Description** footer, and the **Support URL** field on
-      the 1.0 version page. Do NOT submit with placeholder `tropos.app` links.
+      the two links in the **Description** footer, the **Support URL** field, and any
+      other Support/legal links on the 1.0 version page. All three of Terms, Privacy,
+      and Support currently point at placeholder `tropos.app` paths — none can ship
+      as-is. Do NOT submit with placeholder links.
 
 ### Stripe stays DORMANT — web storefront steer at launch (Sub4, locked 2026-07-05)
 
