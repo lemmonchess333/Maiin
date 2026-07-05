@@ -12,7 +12,7 @@ Strava, Duolingo) relies on the store's own retention mechanism for exactly this
 reason; a custom intercept isn't even possible on iOS.
 
 **Distribution:** Tropos is **App Store now, Google Play later** — there is no
-web/Stripe billing path (that infrastructure is being retired). So there is one
+web/Stripe storefront (the Stripe backend stays dormant — Sub4). So there is one
 save-offer to configure today (Apple), and a second to add when Android ships
 (Google Play). Both are store config, not code.
 
@@ -82,8 +82,9 @@ nothing to do now.
 
 - Apple Win-Back Offer: **operator config, documented here.** No app code
   required.
-- Web/Stripe retention: **N/A — the web/Stripe billing path is being retired**
-  (App Store + future Google Play only). The dormant Stripe infrastructure —
-  including the never-defined `createStripeBillingPortal` callable the web
-  "Manage subscription" button pointed at — is tracked for removal in the
-  CLAUDE.md pre-launch backlog, not built out.
+- Web/Stripe retention: **N/A — no web storefront** (App Store + future
+  Google Play only). Per the Sub4 lock the working Stripe backend stays
+  DORMANT (it's the future web-margin lever vs Apple's 15–30% cut), the web
+  Upgrade page gets an App-Store steer at launch, and the never-defined
+  `createStripeBillingPortal` is simply not built. See the CLAUDE.md
+  pre-launch backlog for the launch-gate steer task.
