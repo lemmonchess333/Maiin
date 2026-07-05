@@ -21,6 +21,7 @@ import {
   Info,
   TrendingUp,
   Disc,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -456,6 +457,12 @@ export default function WorkoutSession({
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
+  // D-LIFT-16: the Settings → "Auto-start rest timer" toggle existed but was
+  // never read here — the same dead-setting class PR E fixed for
+  // defaultRestSeconds. Default ON (unset/legacy profiles keep today's
+  // behaviour); when OFF, completing a set doesn't lock the user into a rest
+  // and the manual "Start rest" affordance below the grid takes over.
+  const autoRest = profile?.autoRestTimer !== false;
 
   // Session state
   const [sessionComplete, setSessionComplete] = useState(false);
@@ -753,12 +760,12 @@ export default function WorkoutSession({
         // Move to next exercise
         setCurrentExIndex((prev) => prev + 1);
         setCurrentSetIndex(0);
-        startRest();
+        if (autoRest) startRest();
       }
     } else {
-      // Move to next set, start rest timer
+      // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex((prev) => prev + 1);
-      startRest();
+      if (autoRest) startRest();
     }
   };
 
@@ -1183,6 +1190,22 @@ export default function WorkoutSession({
           )}
         </AnimatePresence>
 
+        {/* D-LIFT-16: with auto-start off, rests are opt-in — offer the
+            manual start where the ring appears, once there's a completed
+            set to rest from. */}
+        {!isResting && !autoRest && currentSets.some((st) => st.completed) && (
+          <button
+            type="button"
+            onClick={() => {
+              haptic("light");
+              startRest();
+            }}
+            className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
+          >
+            <Timer className="size-3.5" /> Start rest timer
+          </button>
+        )}
+
         {/* Double-progression nudge — only while this exercise is untouched
             this session (a mid-session flip would be noise), and only the
             "increase" case (prefill already covers "repeat"). Apply sets
@@ -1453,7 +1476,7 @@ export default function WorkoutSession({
           <button
             type="button"
             onClick={() => addSet(currentExIndex)}
-            className="w-full py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="w-full min-h-11 py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             + Add Set
           </button>
@@ -1520,7 +1543,7 @@ export default function WorkoutSession({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               onClick={handleUndo}
-              className="mx-auto flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium bg-warning/15 text-warning active:scale-95"
+              className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-warning/15 text-warning active:scale-95"
             >
               <RotateCcw className="size-3.5" /> Undo last set
             </motion.button>

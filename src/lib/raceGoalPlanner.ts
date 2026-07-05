@@ -26,6 +26,7 @@ import {
   getRaceFloorWeeks,
   recoveryWeeksForDistance,
   getRacePhaseLabel,
+  type RunTuning,
 } from "@/features/program/runScheduler";
 import { raceDistanceLabel } from "./runProgrammeViewModel";
 
@@ -52,6 +53,10 @@ export interface RaceGoalPlannerInput {
   currentDate: string;
   liftDays: number;
   weeklyRunDays: number;
+  /** Pgm6 knobs — the preview must run the SAME tuning the save will
+   *  commit, or the previewed week structure drifts from the plan.
+   *  Optional (absent → standard) for non-editor callers. */
+  tuning?: RunTuning;
 }
 
 export interface RaceGoalPlannerState {
@@ -151,6 +156,7 @@ export function getRaceGoalPlannerState(
     weeklyRunDays,
     currentDate,
     weekStart,
+    tuning: input.tuning,
   });
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).

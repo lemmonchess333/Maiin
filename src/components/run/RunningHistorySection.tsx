@@ -1,9 +1,5 @@
 import { Footprints } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import {
-  useRunningStats,
-  type RunSummaryItem,
-} from "../../hooks/useRunningStats";
+import { useRunningStats } from "../../hooks/useRunningStats";
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,192 +9,12 @@ import {
   CartesianGrid,
 } from "recharts";
 import { THEME } from "../../lib/theme";
-import { calculatePaceTrend } from "../../lib/paceTrends";
 import {
   isVolumeEligible,
   isPaceEligible,
 } from "../../lib/runStatsEligibility";
 import { paceMinSec } from "../../lib/runLabels";
 import { Spinner } from "@/components/ui/Spinner";
-
-/** RunningHistory needs M:SS pace (rendered alongside an inline "/km"
- *  suffix or a column header) and H:MM:SS duration (different shape
- *  from the canonical `durationLabel` which collapses to "Hh MMm" for
- *  H>0). Keeping the H:MM:SS duration formatter local; pace defers to
- *  the shared `paceMinSec` helper. */
-function formatDuration(secs: number): string {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
-  if (h > 0)
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
-  if (preview.length < 2) return <div className="size-full bg-muted rounded" />;
-  const lats = preview.map((p) => p.lat);
-  const lons = preview.map((p) => p.lon);
-  const minLat = Math.min(...lats),
-    maxLat = Math.max(...lats);
-  const minLon = Math.min(...lons),
-    maxLon = Math.max(...lons);
-  const rLat = maxLat - minLat || 0.001;
-  const rLon = maxLon - minLon || 0.001;
-  const pts = preview
-    .map(
-      (p) =>
-        `${((p.lon - minLon) / rLon) * 86 + 7},${(1 - (p.lat - minLat) / rLat) * 46 + 7}`
-    )
-    .join(" ");
-  return (
-    <svg
-      viewBox="0 0 100 60"
-      className="size-full"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      <polyline
-        fill="none"
-        stroke={THEME.running}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={pts}
-      />
-    </svg>
-  );
-}
-
-function RunCard({
-  run,
-  allRuns,
-}: {
-  run: RunSummaryItem;
-  allRuns: RunSummaryItem[];
-}) {
-  const navigate = useNavigate();
-  const activityLabel: Record<string, string> = {
-    freerun: "Free Run",
-    easy: "Easy Run",
-    tempo: "Tempo",
-    intervals: "Intervals",
-    longrun: "Long Run",
-    race: "Race",
-    treadmill: "Treadmill",
-    /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
-       locked. Labelled separately from treadmill so the history list
-       reads honestly. */
-    manual: "Manual Run",
-  };
-
-  const trend = calculatePaceTrend(
-    {
-      distance: run.distance,
-      avgPace: run.avgPace,
-      completedAt: run.completedAt,
-      activityType: run.activityType,
-      isInvalid: run.isInvalid,
-      savedAnyway: run.savedAnyway,
-    },
-    allRuns.map((r) => ({
-      distance: r.distance,
-      avgPace: r.avgPace,
-      completedAt: r.completedAt,
-      activityType: r.activityType,
-      isInvalid: r.isInvalid,
-      savedAnyway: r.savedAnyway,
-    }))
-  );
-
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(`/run/${run.id}`)}
-      className="w-full text-left p-3 rounded-xl bg-card border border-border flex gap-3 items-center active:scale-[0.98]"
-    >
-      <div className="w-16 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted/50">
-        {run.routePreview && run.routePreview.length > 1 ? (
-          <MiniRoute preview={run.routePreview} />
-        ) : (
-          <div className="size-full flex items-center justify-center">
-            <Footprints className="size-4 text-running" />
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="text-xs font-semibold text-foreground font-mono tabular-nums">
-            {(run.distance / 1000).toFixed(2)} km
-          </span>
-          <span className="text-xs text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
-            {activityLabel[run.activityType] || "Run"}
-          </span>
-          {/* Transparency badges. The record exists on the user's
-              account so it shows up here, but stat aggregations
-              (total km / total runs / Best Pace / Fastest 1K /
-              Fastest 5K / Longest Run) exclude these via the
-              eligibility helpers. Invalid + savedAnyway are usually
-              both true together (the InvalidRunReview "Save anyway"
-              path sets both); preferring the more specific
-              "Saved anyway" label when they coexist. */}
-          {run.savedAnyway ? (
-            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">
-              Saved anyway
-            </span>
-          ) : run.isInvalid ? (
-            <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-destructive/10 text-destructive">
-              Invalid
-            </span>
-          ) : null}
-          {trend.label && (
-            <span
-              className="text-xs font-bold px-1.5 py-0.5 rounded-full"
-              style={{ color: trend.color, background: trend.bgColor }}
-            >
-              {trend.label}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground font-mono tabular-nums">
-            {formatDuration(run.duration)}
-          </span>
-          <span className="text-xs text-muted-foreground font-mono tabular-nums">
-            {paceMinSec(run.avgPace)}/km
-          </span>
-          {run.elevationGain > 0 && (
-            <span className="text-xs text-muted-foreground font-mono tabular-nums">
-              ↑{run.elevationGain}m
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-shrink-0 text-right">
-        <p className="text-xs text-muted-foreground">
-          {run.completedAt.toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
-          })}
-        </p>
-        <svg
-          className="size-3.5 text-muted-foreground/40 ml-auto mt-1"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-    </button>
-  );
-}
 
 export default function RunningHistorySection() {
   const { weeklyData, runs, loading } = useRunningStats(90);
@@ -287,16 +103,11 @@ export default function RunningHistorySection() {
           );
         })()}
 
-      {runs.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs text-muted-foreground font-medium">
-            Recent Runs
-          </p>
-          {runs.slice(0, 10).map((run) => (
-            <RunCard key={run.id} run={run} allRuns={runs} />
-          ))}
-        </div>
-      )}
+      {/* The per-run "Recent Runs" list was removed (2026-07-04, product
+          call): Analytics has no per-entry list for food or lifting, so
+          runs shouldn't be the exception — the section keeps its charts
+          and aggregates only. Individual runs stay reachable from Home's
+          DayPeekCard and the programme day sheets (/run/:runId). */}
     </div>
   );
 }

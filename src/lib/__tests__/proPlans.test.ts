@@ -20,6 +20,7 @@ import {
   getRenewalDisclosure,
   getInlinePriceSummary,
   type PlanId,
+  weeklyPriceLabel,
 } from "../proPlans";
 
 describe("PRO_PLANS — shape", () => {
@@ -89,7 +90,9 @@ describe("getRenewalDisclosure", () => {
   });
 
   it("android falls through to the web disclosure shape", () => {
-    expect(getRenewalDisclosure("monthly", "android")).toContain("Cancel anytime");
+    expect(getRenewalDisclosure("monthly", "android")).toContain(
+      "Cancel anytime"
+    );
   });
 });
 
@@ -99,5 +102,22 @@ describe("getInlinePriceSummary", () => {
     expect(summary).toContain("£3.99/month");
     expect(summary).toContain("£34.99/year");
     expect(summary).toContain(" or ");
+  });
+});
+
+/* Weekly-price anchoring — derived from priceValue so the per-week copy can
+ * never drift from the display price; pins the exact strings the paywall
+ * shows and that yearly reads cheaper per week than monthly. */
+describe("weeklyPriceLabel", () => {
+  it("expresses both plans per week", () => {
+    expect(weeklyPriceLabel("monthly")).toBe("\u2248 \u00a30.92/wk");
+    expect(weeklyPriceLabel("yearly")).toBe("\u2248 \u00a30.67/wk");
+  });
+
+  it("yearly per-week undercuts monthly per-week (the anchoring point)", () => {
+    const num = (s: string) => Number(s.replace(/[^0-9.]/g, ""));
+    expect(num(weeklyPriceLabel("yearly"))).toBeLessThan(
+      num(weeklyPriceLabel("monthly"))
+    );
   });
 });

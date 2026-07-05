@@ -61,7 +61,9 @@ import {
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
   clampPlanWeek,
+  runTuningFromProfile,
   type RaceTiming,
+  type RunTuning,
 } from "./runScheduler";
 import {
   localWeekKey,
@@ -134,6 +136,7 @@ function regenerateRacePlan({
   weeklyRunDays,
   currentDate,
   weekStart,
+  tuning,
   carry,
   prior,
 }: {
@@ -145,6 +148,11 @@ function regenerateRacePlan({
   weeklyRunDays: number;
   currentDate: string;
   weekStart: string;
+  /** Pgm6 knobs — REQUIRED here (unlike the generator's optional
+   *  param) so no regen site can silently forget them and regress a
+   *  tuned plan back to standard. Derive via
+   *  `runTuningFromProfile(profile)`. */
+  tuning: RunTuning;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -181,6 +189,7 @@ function regenerateRacePlan({
     weeklyRunDays,
     currentDate,
     weekStart,
+    tuning,
   });
   let runDays = v2.weeks[0] ?? [];
   let carriedManualCompletions: Record<string, ManualCompletion> | undefined;
@@ -399,6 +408,7 @@ export function useProgram() {
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           const { runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -448,6 +458,7 @@ export function useProgram() {
           const runTarget = getWeeklyRunTarget(profile) || 3;
           const weekStart = localWeekKey();
           ({ runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -635,6 +646,7 @@ export function useProgram() {
         advanced.runPlan = { ...advRunPlan };
       } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const r = regenerateRacePlan({
+          tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -954,6 +966,7 @@ export function useProgram() {
         advanced.runPlan = { ...advRunPlan };
       } else if (profile.runMode === "race_prep" && profile.raceGoal) {
         const r = regenerateRacePlan({
+          tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1359,6 +1372,7 @@ export function useProgram() {
         const weekStart = localWeekKey();
         if (profile.runMode === "race_prep" && profile.raceGoal) {
           ({ runDays, runPlan } = regenerateRacePlan({
+            tuning: runTuningFromProfile(profile),
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
@@ -1480,6 +1494,7 @@ export function useProgram() {
         // passed) and we're re-rendering race_prep, drop phase
         // and recoveryEndDate.
         ({ runDays, runPlan } = regenerateRacePlan({
+          tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1630,6 +1645,7 @@ export function useProgram() {
     }
     const prevRunPlan = programState.runPlan;
     const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
+      tuning: runTuningFromProfile(profile),
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,

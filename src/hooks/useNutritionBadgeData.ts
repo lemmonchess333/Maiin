@@ -21,7 +21,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import type { DayMacros, DayWater } from "@/lib/nutritionBadgeDays";
+import type { DayTargetSnapshot, DayWater } from "@/lib/nutritionBadgeDays";
 
 const DAILY_NUTRITION_LIMIT = 60;
 const WATER_LIMIT = 60;
@@ -30,12 +30,12 @@ const WATER_LIMIT = 60;
 // ever REPLACED (never mutated) from snapshots, so a shared empty is safe — and
 // using a constant (not a fresh `new Map()`) keeps the reset out of the
 // set-state-in-effect lint rule, matching useStreaks' DEFAULT_STREAKS pattern.
-const EMPTY_MACRO_TARGETS: Map<string, DayMacros> = new Map();
+const EMPTY_MACRO_TARGETS: Map<string, DayTargetSnapshot> = new Map();
 const EMPTY_WATER: Map<string, DayWater> = new Map();
 
 export interface NutritionBadgeData {
-  /** date → snapshotted macro target for that day. */
-  macroTargetsByDay: Map<string, DayMacros>;
+  /** date → snapshotted target (macros + calories) for that day. */
+  macroTargetsByDay: Map<string, DayTargetSnapshot>;
   /** date → { glasses, target } for that day. */
   waterByDay: Map<string, DayWater>;
   loaded: boolean;
@@ -48,7 +48,7 @@ function num(v: unknown): number {
 export function useNutritionBadgeData(): NutritionBadgeData {
   const { user } = useAuth();
   const [macroTargetsByDay, setMacroTargets] =
-    useState<Map<string, DayMacros>>(EMPTY_MACRO_TARGETS);
+    useState<Map<string, DayTargetSnapshot>>(EMPTY_MACRO_TARGETS);
   const [waterByDay, setWater] = useState<Map<string, DayWater>>(EMPTY_WATER);
   const [targetsLoaded, setTargetsLoaded] = useState(false);
   const [waterLoaded, setWaterLoaded] = useState(false);
@@ -85,10 +85,11 @@ export function useNutritionBadgeData(): NutritionBadgeData {
     const unsubTargets = onSnapshot(
       targetsQ,
       (snap) => {
-        const map = new Map<string, DayMacros>();
+        const map = new Map<string, DayTargetSnapshot>();
         for (const d of snap.docs) {
           const raw = d.data() as {
             date?: unknown;
+            targetCalories?: unknown;
             targetProtein?: unknown;
             targetCarbs?: unknown;
             targetFat?: unknown;
@@ -96,6 +97,7 @@ export function useNutritionBadgeData(): NutritionBadgeData {
           const date = typeof raw.date === "string" ? raw.date : d.id;
           if (!date) continue;
           map.set(date, {
+            calories: num(raw.targetCalories),
             protein: num(raw.targetProtein),
             carbs: num(raw.targetCarbs),
             fat: num(raw.targetFat),

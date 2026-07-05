@@ -128,6 +128,27 @@ export function primaryCanonicalForExercise(
   return CATEGORY_TO_CANONICAL[ex.movementCategory] ?? null;
 }
 
+/**
+ * Canonical primary + secondary muscles for a DB exercise — the same
+ * attribution `weeklyVolumeByMuscle` applies internally, exposed so sibling
+ * views (muscle recovery) speak the identical muscle language as the volume
+ * card. `primary: null` means the lift is unattributable (cardio/whole-body)
+ * and should be skipped entirely, mirroring the volume tally's rule.
+ */
+export function canonicalMusclesForDbExercise(dbEx: Exercise): {
+  primary: CanonicalMuscle | null;
+  secondary: CanonicalMuscle[];
+} {
+  const primary = toCanonical(dbEx.muscleGroup);
+  if (!primary) return { primary: null, secondary: [] };
+  const secondary: CanonicalMuscle[] = [];
+  for (const sec of dbEx.secondaryMuscles ?? []) {
+    const m = toCanonical(sec);
+    if (m && m !== primary && !secondary.includes(m)) secondary.push(m);
+  }
+  return { primary, secondary };
+}
+
 export interface MuscleVolume {
   muscle: CanonicalMuscle;
   /** Weekly hard sets (primary 1.0 + secondary 0.5), rounded to 0.5. */

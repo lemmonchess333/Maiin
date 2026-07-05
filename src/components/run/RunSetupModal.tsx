@@ -38,7 +38,7 @@ import {
   getRunningTip,
   type WeatherData,
 } from "@/lib/weather";
-import { paceMinSec } from "@/lib/runLabels";
+import { paceMinSec, sessionPaceDisplay } from "@/lib/runLabels";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
@@ -446,6 +446,26 @@ export default function RunSetupModal({
         : { activityType: type };
     }
     return { activityType: type };
+  };
+
+  /**
+   * Adaptive Paces — the personalized pace BAND for a chooser row (Runna's
+   * workout-list pattern: every session type shows its range up front).
+   * Band-first via the shared sessionPaceDisplay rule; null for types with
+   * no personal pace (freerun / race-without-distance / treadmill / guided)
+   * or when there's no benchmark — the row then reads exactly as before.
+   */
+  const chooserPaceFor = (type: ActivityType): string | null => {
+    if (!paceTable) return null;
+    if (
+      type !== "easy" &&
+      type !== "tempo" &&
+      type !== "intervals" &&
+      type !== "long"
+    ) {
+      return null;
+    }
+    return sessionPaceDisplay(resolveSessionPaces(type, paceTable));
   };
 
   /* Pre-flight target validation. Catches the case where the user
@@ -1522,6 +1542,14 @@ export default function RunSetupModal({
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {at.chooserDescription}
                         </p>
+                        {(() => {
+                          const pace = chooserPaceFor(at.type);
+                          return pace ? (
+                            <p className="text-xs font-mono tabular-nums text-running mt-0.5">
+                              {pace}
+                            </p>
+                          ) : null;
+                        })()}
                       </div>
                       {isActive && (
                         <Check

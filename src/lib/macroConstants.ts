@@ -71,6 +71,29 @@ export const WEEKLY_WEIGHT_TARGET: Record<string, number> = {
 export const KCAL_PER_KG = 7700;
 
 /**
+ * Minimum daily calorie target (NUTR-L5). A user-chosen weekly rate flows
+ * straight into the target as a per-day offset (`offsetFromWeeklyRate`), and
+ * the profile sanitizer accepts rates up to ±2.0 kg/wk (±2200 kcal/day) — so
+ * without a floor a small/sedentary body plus an aggressive rate produces a
+ * starvation-level or even negative target. 1200 kcal/day is the widely-used
+ * consumer floor (MyFitnessPal et al.).
+ */
+export const MIN_TARGET_CALORIES = 1200;
+
+/**
+ * Floor a calorie target against the safety minimum, without ever forcing a
+ * SURPLUS: the floor is `min(maintenance, MIN_TARGET_CALORIES)`, so a body
+ * whose genuine maintenance is below 1200 clamps to maintenance (zero
+ * deficit), not to a number above it. Surpluses pass through untouched.
+ */
+export function floorTargetCalories(
+  target: number,
+  maintenance: number
+): number {
+  return Math.max(Math.min(maintenance, MIN_TARGET_CALORIES), target);
+}
+
+/**
  * Daily calorie offset for a desired weekly rate of weight change (kg/week).
  * Positive rate → surplus (gain), negative → deficit (loss), 0 → maintenance.
  *
