@@ -50,6 +50,15 @@ export interface Meal {
    *  "+ Breakfast" / ... targeting flow so a snack logged at 9am goes to
    *  Snacks, not Breakfast. */
   meal?: "breakfast" | "lunch" | "snacks" | "dinner";
+  /** User-captured meal photo (AI scan path) — Storage download URL
+   *  written by the post-save background upload in FoodAnalyzer
+   *  (src/lib/foodPhotoUpload.ts). Drives the diary timeline's big
+   *  photo cards; absent for text/barcode/manual logs. */
+  photoUrl?: string;
+  /** Storage path for the photo blob — cleanup pointer only (the
+   *  account-deletion executor sweeps the prefix; meal soft-delete
+   *  never deletes the blob because of the 24h restore window). */
+  photoPath?: string;
   confidence: string;
   createdAt: unknown;
   /** F5c — soft-delete sentinel. Set to a Firestore Timestamp when
@@ -137,6 +146,8 @@ function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
       raw.meal === "dinner"
         ? raw.meal
         : undefined,
+    photoUrl: typeof raw.photoUrl === "string" ? raw.photoUrl : undefined,
+    photoPath: typeof raw.photoPath === "string" ? raw.photoPath : undefined,
     confidence: typeof raw.confidence === "string" ? raw.confidence : "",
     createdAt: raw.createdAt,
     // F5c: missing field is interpreted as active (null). Restored

@@ -48,6 +48,8 @@ const base: ProgrammeSnapshot = {
   weeklyRunDays: 2,
   raceDistance: "10k",
   raceTargetDate: "",
+  runVolume: "standard",
+  runDifficulty: "standard",
 };
 
 describe("computeProgrammeChanges", () => {
@@ -118,6 +120,32 @@ describe("computeProgrammeChanges", () => {
       { label: "Running", from: "Freeform", to: "Race prep" },
       { label: "Race distance", from: "10K", to: "Marathon" },
       { label: "Race date", from: "Not set", to: "1 Sep 2026" },
+    ]);
+  });
+
+  it("ignores tuning-knob drift while freeform (Pgm6 phantom-change guard)", () => {
+    const changes = computeProgrammeChanges(base, {
+      ...base,
+      runVolume: "bigger",
+      runDifficulty: "harder",
+    });
+    expect(changes).toEqual([]);
+  });
+
+  it("reports tuning-knob changes in race_prep with readable labels (Pgm6)", () => {
+    const saved = {
+      ...base,
+      runMode: "race_prep",
+      raceTargetDate: "2026-09-01",
+    };
+    const changes = computeProgrammeChanges(saved, {
+      ...saved,
+      runVolume: "lighter",
+      runDifficulty: "gentler",
+    });
+    expect(changes).toEqual([
+      { label: "Long-run volume", from: "Standard", to: "Lighter" },
+      { label: "Intensity", from: "Standard", to: "Gentler" },
     ]);
   });
 

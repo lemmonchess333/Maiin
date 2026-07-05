@@ -40,7 +40,7 @@ import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import FoodHeroCard from "@/components/food/FoodHeroCard";
 import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
-import FoodMealSection from "@/components/food/FoodMealSection";
+import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
@@ -58,6 +58,7 @@ import {
   inferMostLikelyMealSlot,
   type MealKey,
 } from "@/components/food/mealConstants";
+import { mealSlotFor } from "@/lib/mealSlots";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 
 const DEFAULT_QUICK_MEALS = [
@@ -355,28 +356,11 @@ export default function Food() {
     return isNaN(num) || value == null ? 0 : num;
   };
 
-  const getMealCategory = (item: Meal | undefined): string => {
-    // Check explicit meal field first (used by copied items and meal targeting)
-    if (
-      item?.meal &&
-      ["breakfast", "lunch", "snacks", "dinner"].includes(item.meal)
-    )
-      return item.meal;
-    // Fall back to time-based derivation (snacks is never auto-assigned — use + button to target)
-    const createdAt = item?.createdAt;
-    /* `Meal.createdAt` is typed `unknown` because it round-trips
-       Firestore Timestamps — narrow defensively rather than trust
-       the type. */
-    if (
-      !createdAt ||
-      typeof (createdAt as { toDate?: unknown }).toDate !== "function"
-    )
-      return "lunch";
-    const hour = (createdAt as { toDate: () => Date }).toDate().getHours();
-    if (hour < 11) return "breakfast";
-    if (hour < 17) return "lunch";
-    return "dinner";
-  };
+  /* Slot derivation (explicit meal field first, else local log hour)
+     lives in `@/lib/mealSlots` since the timeline migration — the
+     timeline derives each row's slot chip from the same function, so
+     the diary display and the copy-from-yesterday segmentation below
+     can't drift. */
 
   // Visible meals = all of today's meals minus any that are pending delete.
   // Used for meal sections, hero card totals, and the food row list so the
@@ -422,7 +406,7 @@ export default function Food() {
       snacks: [],
     };
     for (const meal of visibleTodaysMeals) {
-      const cat = getMealCategory(meal);
+      const cat = mealSlotFor(meal);
       segments[cat].push(meal);
     }
     return segments;
@@ -443,7 +427,7 @@ export default function Food() {
       snacks: [],
     };
     for (const meal of yesterdayMeals) {
-      const cat = getMealCategory(meal);
+      const cat = mealSlotFor(meal);
       segments[cat].push(meal);
     }
     return segments;
@@ -1721,27 +1705,20 @@ export default function Food() {
         </Suspense>
       )}
 
-      {/* Meal sections — Food6d locks per-slot independent empty
-          states: all four slots always render so mixed states
-          (breakfast logged, lunch empty) read as intentional rather
-          than "page is half broken". The empty body in each slot is
-          a muted "+ Add to [slot]" CTA that routes through the
-          composer-focus path. Framer Motion `layout` keeps height
-          transitions smooth when entries come and go. */}
+      {/* Diary feed — one chronological timeline, newest first (the
+          2026-07 interview decision; reverses Food6d's four fixed slot
+          sections). The slot is row metadata now: auto-derived by
+          mealSlotFor, shown in each row's caption, and moved via the
+          row's edit sheet. Targeting a slot for NEW logs stays on the
+          composer pills. */}
       <motion.div variants={itemVariant} className="space-y-3">
-        {MEAL_ORDER.map((mealKey) => (
-          <FoodMealSection
-            key={mealKey}
-            mealKey={mealKey}
-            meals={mealSegmentedMeals[mealKey]}
-            targetMeal={targetMeal}
-            openRowId={openRowId}
-            setOpenRowId={setOpenRowId}
-            onTargetMeal={handleTargetMeal}
-            onDelete={handleDeleteMeal}
-            onEdit={setEditingGroup}
-          />
-        ))}
+        <FoodTimeline
+          meals={visibleTodaysMeals}
+          openRowId={openRowId}
+          setOpenRowId={setOpenRowId}
+          onDelete={handleDeleteMeal}
+          onEdit={setEditingGroup}
+        />
 
         {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
             has slots today is missing. Label is intentionally short:

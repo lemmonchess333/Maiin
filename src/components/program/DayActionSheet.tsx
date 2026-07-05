@@ -37,7 +37,7 @@ import { Footprints, Dumbbell, Check, X, TriangleAlert } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { paceLabel } from "@/lib/runLabels";
+import { sessionPaceDisplay } from "@/lib/runLabels";
 import {
   paceTableFromFitness,
   resolveSessionPaces,
@@ -161,20 +161,20 @@ export default function DayActionSheet({
       )
     : null;
   // Adaptive Paces: the user's personalized pace for this session, appended to
-  // the meta pill (e.g. "10km · 4:18 /km"). Null when there's no benchmark.
+  // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
+  // sessionPaceDisplay rule (the range is the honest coaching target; singles
+  // only for race pace). Null when there's no benchmark.
   const selectedRunPace: string | null = (() => {
     if (!selectedRunTemplate) return null;
     const table = paceTableFromFitness(profile?.runFitness ?? null);
     if (!table) return null;
-    const r = resolveSessionPaces(selectedRunTemplate.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(
-        selectedRunTemplate.config.targetDistance
-      ),
-    });
-    if (r.targetPace) return `${paceLabel(r.targetPace)} /km`;
-    if (r.workPace) return `${paceLabel(r.workPace)} /km`;
-    if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
-    return null;
+    return sessionPaceDisplay(
+      resolveSessionPaces(selectedRunTemplate.type, table, {
+        raceDistanceKey: raceDistanceKeyFromKm(
+          selectedRunTemplate.config.targetDistance
+        ),
+      })
+    );
   })();
   const selectedRunMeta = selectedRunTemplate
     ? [

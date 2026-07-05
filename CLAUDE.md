@@ -189,18 +189,18 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 
 Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 
-| Function                  | Trigger                     | Purpose                                                                              |
-| ------------------------- | --------------------------- | ------------------------------------------------------------------------------------ |
-| `completeOnboarding`      | HTTPS callable              | Onboarding profile + program setup via Admin SDK (bypasses security rules)           |
-| `analyzeFood`             | HTTPS request               | Vertex AI image-based food analysis                                                  |
-| `analyzeFoodText`         | HTTPS request               | Vertex AI text-based food analysis (Pro feature)                                     |
-| `computePerformanceWeek`  | HTTPS callable              | Manual performance rollup                                                            |
-| `weeklyPerformanceRollup` | Scheduled (Sun 23:15 UTC)   | Automated weekly rollup for active users (30-day window)                             |
-| `dailyPerformanceRefresh` | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                  |
-| `onWorkoutCreated`        | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance |
-| `onRunCreated`            | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance          |
-| `sendPasswordResetLinkCallable` | HTTPS callable (unauthed) | Forgot-password: Admin-minted set-password link emailed via Resend (works for OAuth-only accounts) |
-| `sendVerificationEmailCallable` | HTTPS callable (authed)   | Email verification: Admin-minted verify link for the caller's own email, emailed via Resend        |
+| Function                        | Trigger                     | Purpose                                                                                            |
+| ------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------- |
+| `completeOnboarding`            | HTTPS callable              | Onboarding profile + program setup via Admin SDK (bypasses security rules)                         |
+| `analyzeFood`                   | HTTPS request               | Vertex AI image-based food analysis                                                                |
+| `analyzeFoodText`               | HTTPS request               | Vertex AI text-based food analysis (Pro feature)                                                   |
+| `computePerformanceWeek`        | HTTPS callable              | Manual performance rollup                                                                          |
+| `weeklyPerformanceRollup`       | Scheduled (Sun 23:15 UTC)   | Automated weekly rollup for active users (30-day window)                                           |
+| `dailyPerformanceRefresh`       | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                                |
+| `onWorkoutCreated`              | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance               |
+| `onRunCreated`                  | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance                        |
+| `sendPasswordResetLinkCallable` | HTTPS callable (unauthed)   | Forgot-password: Admin-minted set-password link emailed via Resend (works for OAuth-only accounts) |
+| `sendVerificationEmailCallable` | HTTPS callable (authed)     | Email verification: Admin-minted verify link for the caller's own email, emailed via Resend        |
 
 Helper: `syncChallengeProgress()` — auto-updates challenge participant progress (workout_count, total_volume, total_km)
 
@@ -581,6 +581,15 @@ or touching a CTA button, route it through `Button` with the variant above.
 ## Pre-launch QA backlog
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
+
+### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
+
+Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). The sandbox has no Storage emulator, so the upload path itself is unverified end-to-end (display path verified via seeded photoUrl captures).
+
+- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px.
+- [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
+- [ ] After the next `storage.rules` deploy (deploy-storage.yml on merge), confirm a signed-out request to a food-photos URL path 403s and cross-uid read is denied.
+- [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
 

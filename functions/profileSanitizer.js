@@ -223,6 +223,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   goal: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
   runMode: (v) => cleanEnum(v, ["freeform", "structured", "race_prep"]),
+  // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
+  runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
+  runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
   raceGoal: (v) =>
     cleanObject(v, {
       distance: (d) => cleanEnum(d, ["5k", "10k", "half", "marathon"]),

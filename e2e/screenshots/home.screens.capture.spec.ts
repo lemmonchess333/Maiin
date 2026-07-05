@@ -43,6 +43,16 @@ test.describe("app screenshots", () => {
           /* storage unavailable — capture just shows the coachmark */
         }
       }
+      // The emulator SDK injects a fixed "Running in emulator mode" banner
+      // that overlays the bottom nav — it intercepted pointer events in past
+      // runs and is pure noise in design-review PNGs. Hide it on every
+      // document (init scripts re-run per navigation).
+      document.addEventListener("DOMContentLoaded", () => {
+        const style = document.createElement("style");
+        style.textContent =
+          ".firebase-emulator-warning{display:none !important}";
+        document.head.appendChild(style);
+      });
     });
     await signInAsTestUser(page);
   });
@@ -95,6 +105,11 @@ test.describe("app screenshots", () => {
   // uplift is global (token-driven), so every primary surface must be
   // reviewed, not just Home. Captures light + dark for each.
   test("main tabs — light + dark", async ({ page }) => {
+    // Capture job, not a perf gate: five tabs × (nav + hydration waits + two
+    // full-page shots) legitimately exceeds the default 30s budget — the
+    // 2026-07-04 runs timed out here on slow CI hydration ("browser has been
+    // closed" was the teardown artifact, not a crash).
+    test.setTimeout(180_000);
     const tabs: [route: string, name: string][] = [
       ["food", "food"],
       ["history", "history"],
@@ -120,6 +135,24 @@ test.describe("app screenshots", () => {
           .catch(() => {
             /* still gated/loading after the wait — capture whatever's there */
           });
+      }
+      // History/Analytics hydrates workouts/runs/meals subscriptions + a
+      // lazy heat-map chunk after the nav appears; the fixed 1400ms settle
+      // shot a full-page skeleton (2026-07-04 run). Wait for the lifting
+      // heat-map heading (rich-seeded data guarantees it) before shooting.
+      // 15s still lost the race on a slow runner (the 3a87dd8 run shot
+      // skeletons again) — 40s of the test's 180s budget buys certainty,
+      // and a log line makes the silent-miss visible in the CI output.
+      if (name === "history") {
+        await page
+          .getByText(/Muscle Groups Trained/i)
+          .first()
+          .waitFor({ state: "visible", timeout: 40000 })
+          .catch(() =>
+            console.log(
+              "[capture] history never hydrated within 40s — shooting the skeleton"
+            )
+          );
       }
       await page.waitForTimeout(1400); // entry animations / count-ups settle
 
@@ -170,7 +203,7 @@ test.describe("app screenshots", () => {
       .waitFor({ state: "visible", timeout: 20000 });
     await page
       .getByRole("button", { name: /view profile/i })
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {
         /* button moved/absent — capture lands on settings, still useful */
       });
@@ -239,13 +272,16 @@ test.describe("app screenshots", () => {
   // best-effort (try/catch) and independent: a brittle open doesn't sink the
   // other capture. Goal is to SEE/verify the sheets, not assert.
   test("editing sheets", async ({ page }) => {
+    // Same capture-budget reasoning as "main tabs": two navigations + a 20s
+    // hydration waitFor + html-to-image rendering ride the default 30s.
+    test.setTimeout(120_000);
     // ShareCardSheet — opened from Run Detail's "Share" button.
     await page.goto("run/rich-r0");
     await page.waitForTimeout(2200);
     await page
       .getByRole("button", { name: /share/i })
       .first()
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {});
     await page.waitForTimeout(1400); // share-card preview renders (html-to-image)
     await shoot(page, "sheet-share-light");
@@ -267,13 +303,23 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("button", { name: /today/i })
       .first()
-      .click()
+      .click({ timeout: 4000 })
       .catch(() => {});
     await page.waitForTimeout(700);
+    // "Manage day" only renders when today has a MATCHED lift/run session
+    // (DayPeekCard PR-1 gating) — on weekends the seeded user has none, so
+    // this locator legitimately misses. A timeout-less click here retried
+    // until the test budget and failed the whole run every Sat/Sun (the
+    // 2026-07-04 failures: green Fri, red Sat, no code change involved).
+    // Short timeout + honest log: the shot degrades to the day peek.
     await page
       .getByRole("button", { name: /manage day/i })
-      .click()
-      .catch(() => {});
+      .click({ timeout: 4000 })
+      .catch(() =>
+        console.log(
+          "[capture] Manage day not available (no matched session today) — capturing the day peek instead"
+        )
+      );
     await page.waitForTimeout(1100);
     await shoot(page, "sheet-dayaction-light");
   });

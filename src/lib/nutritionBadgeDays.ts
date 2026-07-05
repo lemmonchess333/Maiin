@@ -24,6 +24,13 @@ export interface DayMacros {
   fat: number;
 }
 
+/** A day's full snapshotted target (macros + calories). The badge rules only
+ *  need the macros; the calorie field feeds the per-day nutrition-insight
+ *  comparisons (NUTR-L4) off the same single listener. */
+export interface DayTargetSnapshot extends DayMacros {
+  calories: number;
+}
+
 export interface DayWater {
   glasses: number;
   target: number;
@@ -49,9 +56,9 @@ function withinBand(total: number, target: number, band: number): boolean {
  * @param waterByDay date → { glasses, target } (waterLog/{date})
  */
 export function computeNutritionBadgeDays(
-  mealTotalsByDay: Map<string, DayMacros>,
-  macroTargetsByDay: Map<string, DayMacros>,
-  waterByDay: Map<string, DayWater>
+  mealTotalsByDay: ReadonlyMap<string, DayMacros>,
+  macroTargetsByDay: ReadonlyMap<string, DayMacros>,
+  waterByDay: ReadonlyMap<string, DayWater>
 ): NutritionBadgeDays {
   const macroMasterDays: string[] = [];
   const proteinHitDays: string[] = [];

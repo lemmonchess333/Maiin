@@ -22,7 +22,7 @@ import {
   type GPSPoint,
 } from "../lib/gps";
 import { getDistanceTargetMeters } from "../lib/runConfigUnits";
-import { paceTableFromFitness } from "../lib/runPaces";
+import { paceTableFromFitness, resolveSessionPaces } from "../lib/runPaces";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -42,7 +42,7 @@ import {
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
 import { useIntervalWorkout } from "../hooks/useIntervalWorkout";
-import IntervalDisplay from "../components/run/IntervalDisplay";
+import IntervalStepShell from "../components/run/IntervalStepShell";
 import TreadmillMode from "../components/run/TreadmillMode";
 import PaceZoneBar from "../components/run/PaceZoneBar";
 import RunBottomSheet from "../components/run/RunBottomSheet";
@@ -379,6 +379,14 @@ export default function Run() {
     runConfig?.activityType === "intervals" ? runConfig.intervals : undefined
   );
   const intervalPhaseRef = useRef("idle");
+  // Adaptive Paces: the interval work BAND for the step shell's headline
+  // ("1K at 5:05\u20135:12 /km") — #18's band-first display rule, now in-run.
+  // undefined (no benchmark) → the shell falls back to the config workPace.
+  const intervalBand = useMemo(() => {
+    if (runConfig?.activityType !== "intervals") return undefined;
+    const table = paceTableFromFitness(profile?.runFitness ?? null);
+    return table ? resolveSessionPaces("intervals", table).band : undefined;
+  }, [runConfig?.activityType, profile?.runFitness]);
 
   // ─── Phase B1: programme prefill + context strip ─────────────────
   //
@@ -1379,8 +1387,17 @@ export default function Run() {
               }}
               isInvalid={isInvalid}
               intervalDisplay={
-                runConfig?.activityType === "intervals" ? (
-                  <IntervalDisplay state={intervals.state} />
+                runConfig?.activityType === "intervals" &&
+                runConfig.intervals ? (
+                  <IntervalStepShell
+                    state={intervals.state}
+                    config={runConfig.intervals}
+                    band={intervalBand}
+                    onSkip={() => {
+                      haptic();
+                      intervals.skip(gps.distance);
+                    }}
+                  />
                 ) : undefined
               }
               weightKg={profile?.weightKg || 70}

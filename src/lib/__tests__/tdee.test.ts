@@ -84,14 +84,60 @@ describe("calculateTDEE", () => {
   });
 
   it("stored macros reconcile to targetCalories — no 50g carb-floor overshoot (NUTR-M3)", () => {
-    // Aggressive cut with a small carb remainder: the old 50g floor inflated
-    // carbs and broke protein*4 + carbs*4 + fat*9 === targetCalories. Carbs are
-    // now the balancing macro floored at 0 (matching getAdjustedTargets).
-    const result = calculateTDEE(40, 150, 60, "sedentary", "cut", "female");
+    // Cut with a small carb remainder: the old 50g floor inflated carbs and
+    // broke protein*4 + carbs*4 + fat*9 === targetCalories. Carbs are now the
+    // balancing macro floored at 0 (matching getAdjustedTargets). The fixture
+    // is a heavy sedentary body (high protein grams crowd the remainder) so
+    // carbs stay below 50 even with the NUTR-L5 calorie floor applied.
+    const result = calculateTDEE(90, 150, 80, "sedentary", "cut", "female");
     const macroCals = result.protein * 4 + result.carbs * 4 + result.fat * 9;
     expect(Math.abs(macroCals - result.targetCalories)).toBeLessThanOrEqual(5);
     expect(result.carbs).toBeLessThan(50); // would have been floored to 50 pre-fix
     expect(result.carbs).toBeGreaterThanOrEqual(0);
+  });
+
+  it("NUTR-L5: a deficit never pushes the target below 1200 kcal", () => {
+    // Small sedentary female: tdee ≈ 1500. The UI's "Fast" rate (0.75 kg/wk →
+    // −830/day) would emit ~670 kcal without the floor.
+    const result = calculateTDEE(
+      55,
+      160,
+      40,
+      "sedentary",
+      "cut",
+      "female",
+      -830
+    );
+    expect(result.tdee).toBeGreaterThan(1200);
+    expect(result.targetCalories).toBe(1200);
+    // The reported deficit is the EFFECTIVE offset after flooring.
+    expect(result.deficit).toBe(1200 - result.tdee);
+    // Macros still reconcile to the floored target.
+    const macroCals = result.protein * 4 + result.carbs * 4 + result.fat * 9;
+    expect(Math.abs(macroCals - result.targetCalories)).toBeLessThanOrEqual(5);
+  });
+
+  it("NUTR-L5: a body whose maintenance is below 1200 clamps to maintenance, not above it", () => {
+    // Tiny/elderly sedentary body: tdee < 1200. The floor must not force a
+    // surplus — the deficit is fully absorbed and the target sits at tdee.
+    const result = calculateTDEE(40, 145, 80, "sedentary", "cut", "female");
+    expect(result.tdee).toBeLessThan(1200);
+    expect(result.targetCalories).toBe(result.tdee);
+    expect(result.deficit).toBe(0);
+  });
+
+  it("NUTR-L5: surpluses are never floored", () => {
+    const result = calculateTDEE(
+      55,
+      160,
+      40,
+      "sedentary",
+      "lean bulk",
+      "female",
+      330
+    );
+    expect(result.targetCalories).toBe(result.tdee + 330);
+    expect(result.deficit).toBe(330);
   });
 
   it("reconciles for a standard recomp profile too", () => {

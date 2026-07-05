@@ -280,9 +280,10 @@ describe("deleteAccount — failure semantics", () => {
     const prefixesCalled = stubs.calls.filter((c) =>
       c.startsWith("storage.deleteFiles")
     );
-    expect(prefixesCalled).toHaveLength(2);
+    expect(prefixesCalled).toHaveLength(3);
     expect(prefixesCalled[0]).toContain("progress-photos/");
     expect(prefixesCalled[1]).toContain("profile-photos/");
+    expect(prefixesCalled[2]).toContain("food-photos/");
   });
 
   it("swallows a missing public-profile doc delete (best-effort)", async () => {
@@ -556,10 +557,11 @@ describe("deleteAccount — P0a Stripe-subscription cancellation", () => {
 });
 
 describe("storagePrefixesFor", () => {
-  it("returns the two scoped prefixes for the uid", () => {
+  it("returns the scoped prefixes for the uid", () => {
     expect(storagePrefixesFor("alice")).toEqual([
       "progress-photos/alice/",
       "profile-photos/alice/",
+      "food-photos/alice/",
     ]);
   });
 

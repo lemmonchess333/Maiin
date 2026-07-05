@@ -25,7 +25,7 @@ import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { routeTotalDistance, type GPSPoint } from "@/lib/gps";
 
-export type SavedRouteSource = "gpx" | "run";
+export type SavedRouteSource = "gpx" | "run" | "planned";
 
 export interface SavedRoute {
   id: string;

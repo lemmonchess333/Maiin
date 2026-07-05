@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { motion, AnimatePresence, type PanInfo } from "framer-motion";
 import { Trash2, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -37,6 +37,19 @@ interface FoodRowProps {
    * edits. Reached by TAPPING the row (not a swipe action) — see below.
    */
   onEdit?: () => void;
+  /**
+   * Optional metadata caption under the food name (the timeline uses
+   * it for "Breakfast · 8:12 AM"). Pure presentation — the swipe/tap
+   * machinery is untouched, the row just grows a second line.
+   */
+  subLabel?: ReactNode;
+  /**
+   * Optional captured-meal photo — renders as a hero image above the
+   * text row INSIDE the swipeable surface ("photos big, text compact"),
+   * so photo cards keep the exact same tap-to-edit / swipe-to-delete
+   * behaviour as text rows. Only AI-scanned meals carry one.
+   */
+  photoUrl?: string;
 }
 
 // Single destructive swipe action (Delete only). Editing is reached by
@@ -118,6 +131,8 @@ export default function FoodRow({
   onOpenChange,
   onDelete,
   onEdit,
+  subLabel,
+  photoUrl,
 }: FoodRowProps) {
   const reduce = useReducedMotion() === true;
   const hasFiredHapticRef = useRef(false);
@@ -179,33 +194,59 @@ export default function FoodRow({
   // Shared inner content (macro dot, name, quantity/edited pills, kcal).
   const rowBody = (
     <>
-      <div className="flex items-center gap-2 flex-1 min-w-0 mr-2">
-        <span
-          className="size-2 rounded-full shrink-0"
-          style={{ backgroundColor: dot }}
-          aria-hidden="true"
-        />
-        <p className="text-sm text-foreground truncate">{group.foodName}</p>
-        {group.count > 1 && (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
-            {quantityLabel}
-          </span>
-        )}
-        {group.wasEdited && (
+      <div className="flex-1 min-w-0 mr-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span
-            className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
-            aria-label="Edited"
-            title="Edited"
-          >
-            <Pencil className="size-2.5" aria-hidden="true" />
-            Edited
-          </span>
+            className="size-2 rounded-full shrink-0"
+            style={{ backgroundColor: dot }}
+            aria-hidden="true"
+          />
+          <p className="text-sm text-foreground truncate">{group.foodName}</p>
+          {group.count > 1 && (
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
+              {quantityLabel}
+            </span>
+          )}
+          {group.wasEdited && (
+            <span
+              className="flex items-center gap-0.5 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-muted/70 text-muted-foreground"
+              aria-label="Edited"
+              title="Edited"
+            >
+              <Pencil className="size-2.5" aria-hidden="true" />
+              Edited
+            </span>
+          )}
+        </div>
+        {subLabel && (
+          /* pl-4 tucks the caption under the name (dot 8px + gap 8px). */
+          <p className="text-caption text-muted-foreground/80 truncate pl-4 mt-0.5">
+            {subLabel}
+          </p>
         )}
       </div>
       <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
         {formatCalories(group.totalCal)} {CALORIE_UNIT}
       </span>
     </>
+  );
+
+  // Photo cards stack the hero image above the meta row inside the same
+  // swipeable surface. pointer-events-none keeps the browser's native
+  // image drag / long-press callout from fighting the framer x-drag.
+  const rowInner = photoUrl ? (
+    <div className="flex-1 min-w-0">
+      <img
+        src={photoUrl}
+        alt={group.foodName}
+        className="w-full h-44 object-cover rounded-lg mb-2.5 pointer-events-none select-none"
+        loading="lazy"
+        draggable={false}
+      />
+      <div className="flex items-center justify-between">{rowBody}</div>
+    </div>
+  ) : (
+    rowBody
   );
 
   // ── Reduced-motion fallback: no drag gesture. The row body is a tap
@@ -222,11 +263,11 @@ export default function FoodRow({
             aria-label={`Edit ${group.foodName}`}
             className="flex items-center flex-1 min-w-0 px-3 py-2.5 text-left transition-colors active:bg-muted/40"
           >
-            {rowBody}
+            {rowInner}
           </button>
         ) : (
           <div className="flex items-center flex-1 min-w-0 px-3 py-2.5">
-            {rowBody}
+            {rowInner}
           </div>
         )}
         <button
@@ -307,7 +348,7 @@ export default function FoodRow({
             "relative bg-card flex items-center justify-between px-3 py-2.5 touch-pan-y cursor-pointer select-none"
           )}
         >
-          {rowBody}
+          {rowInner}
         </motion.div>
       </motion.div>
     </AnimatePresence>
