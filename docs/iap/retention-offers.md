@@ -1,45 +1,36 @@
 # Cancel-path save-offer (retention) setup
 
 Operator runbook for the **Sub3** cancel-path save-offer — the discount a
-subscriber is shown when they try to cancel. **Almost no app code**: both
-platforms own the cancellation UI, so the save-offer is configured as a
-platform-native retention offer, not an in-app intercept.
+subscriber is shown when they try to cancel. **No app code**: the store owns the
+cancellation UI, so the save-offer is configured as a platform-native retention
+offer, not an in-app intercept.
 
 That is deliberate and correct, not a shortcut. On iOS a subscriber cancels in
-**Settings → Apple ID → Subscriptions** and on web inside **Stripe's hosted
-billing portal** — Tropos never sees the cancel tap, so it cannot draw its own
-"wait, don't go" screen. Every reference app (Runna, Strava, Duolingo) relies on
-the platform's own retention mechanism for exactly this reason. Building a custom
-intercept would mean re-inventing a flow Apple and Stripe already run, and on iOS
-it isn't even possible.
+**Settings → Apple ID → Subscriptions** — Tropos never sees the cancel tap, so
+it cannot draw its own "wait, don't go" screen. Every reference app (Runna,
+Strava, Duolingo) relies on the store's own retention mechanism for exactly this
+reason; a custom intercept isn't even possible on iOS.
 
-Tropos bills through **two** stacks, so there are two offers to create:
-
-| Platform   | Billing stack                    | Retention mechanism                                |
-| ---------- | -------------------------------- | -------------------------------------------------- |
-| iOS/iPadOS | Apple IAP via RevenueCat         | **Win-Back Offer** (App Store Connect)             |
-| Web        | Stripe Checkout + Billing Portal | **Coupon** + Billing Portal cancellation retention |
-
-Do both. iOS is where the users are (native-first), so Part A is the priority;
-Part B covers the web-Stripe subscriber segment.
+**Distribution:** Tropos is **App Store now, Google Play later** — there is no
+web/Stripe billing path (that infrastructure is being retired). So there is one
+save-offer to configure today (Apple), and a second to add when Android ships
+(Google Play). Both are store config, not code.
 
 ---
 
 ## Recommended offer
 
-One consistent offer across both platforms so the value story doesn't diverge:
-
 - **Monthly plan → 50% off for 2 months** (≈ £1.99/mo, then back to £3.99).
 - **Yearly plan → 25% off the next renewal** (≈ £26.24, then back to £34.99).
 
-These are the operator's call — tune to taste. The only hard rule: keep the two
-platforms' offers equivalent so a user who compares them (or migrates) sees the
-same deal. The pricing they anchor against is the single source of truth in
-`src/lib/proPlans.ts` (£3.99/mo, £34.99/yr).
+The operator's call — tune to taste. The pricing they anchor against is the
+single source of truth in `src/lib/proPlans.ts` (£3.99/mo, £34.99/yr). When
+Android ships, mirror the same values on Google Play so the deal doesn't diverge
+by platform.
 
 ---
 
-## Part A — iOS: Apple Win-Back Offer
+## iOS — Apple Win-Back Offer
 
 Win-Back Offers are Apple's built-in retention discount (StoreKit 2 era). Apple
 surfaces them automatically to **lapsed and about-to-lapse** subscribers across
@@ -76,61 +67,23 @@ keep/return the `pro` entitlement (check RevenueCat's customer view).
 
 ---
 
-## Part B — Web: Stripe coupon + Billing Portal retention
+## Android (future) — Google Play win-back
 
-Stripe's hosted **Billing Portal** already owns the web cancellation UI. Its
-cancellation flow can show a **retention coupon** automatically — configured in
-the Stripe Dashboard, no code.
-
-1. **Create the coupon(s).** Stripe Dashboard → **Product catalog → Coupons →
-   New**:
-   - `save-monthly-50-2mo` — 50% off, **Duration: repeating, 2 months**.
-   - `save-yearly-25-once` — 25% off, **Duration: once**.
-     (Or a single amount-off coupon if you prefer parity by absolute value.)
-2. **Enable retention on the Billing Portal.** Stripe Dashboard →
-   **Settings → Billing → Customer portal**:
-   - Under **Cancellations**, enable **"Show a coupon before cancelling"** (the
-     retention offer) and attach the coupon(s) above.
-   - Keep **Prorations** and **"Cancel at end of period"** as they are today.
-3. That's it for the happy path — when a web subscriber opens the portal and
-   clicks cancel, Stripe offers the coupon before confirming.
-
-### ⚠️ Blocker — `createStripeBillingPortal` is missing server-side
-
-The web "Manage subscription" button (`src/pages/Upgrade.tsx` →
-`purchaseProvider.manageSubscription`) calls a Firebase callable named
-**`createStripeBillingPortal`**, but **that function is not defined in
-`functions/index.js`**. So today the web portal path fails with
-`functions/not-found` and the retention coupon in step 2 is unreachable — it
-only ever shows _inside_ the portal the button is meant to open.
-
-On iOS this never fires (the native branch redirects to
-`apps.apple.com/account/subscriptions`), which is why it hasn't surfaced
-pre-launch, but the web-Stripe segment needs it. Building it is a small,
-payments-critical Cloud Function that must mirror `createCheckoutSession`'s
-security envelope:
-
-- `runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })` (never ship a
-  Stripe function without a `maxInstances` cap).
-- `verifyAuth(..., { checkRevoked: true })` before any body read; 401 on
-  failure, 403 on uid mismatch, 405 on non-POST — same auth-ordering the
-  `createCheckoutSession` tests pin.
-- Look up `users/{uid}.stripeCustomerId`; if absent, the user has no Stripe sub
-  → return a clean error (don't create a customer here).
-- `stripe.billingPortal.sessions.create({ customer, return_url })` with
-  `return_url` built from the **same allowlist** (`_isAllowedStripeReturnUrl`)
-  checkout uses — never a client-supplied URL.
-- Optional: pass `flow_data: { type: 'subscription_cancel', ... }` to deep-link
-  straight into the retention/cancel flow.
-
-It cannot be verified in the agent sandbox (no Stripe emulator), so it's tracked
-in the CLAUDE.md pre-launch backlog rather than shipped blind here.
+When the Android build ships, Google Play's equivalent is **Cancel Survey +
+win-back / promotional offers** configured in the Play Console
+(Monetize → Subscriptions → your product → Offers). RevenueCat handles the same
+`pro` entitlement across both stores, so the app code stays platform-agnostic.
+Mirror the offer values above. This is a placeholder until Android exists —
+nothing to do now.
 
 ---
 
 ## Status
 
-- Apple Win-Back + Stripe coupon/portal-retention: **operator config, documented
-  here.** No app code required for the offers themselves.
-- `createStripeBillingPortal`: **missing — must be built + deployed before the
-  web save-offer works.** Tracked in the CLAUDE.md pre-launch QA backlog.
+- Apple Win-Back Offer: **operator config, documented here.** No app code
+  required.
+- Web/Stripe retention: **N/A — the web/Stripe billing path is being retired**
+  (App Store + future Google Play only). The dormant Stripe infrastructure —
+  including the never-defined `createStripeBillingPortal` callable the web
+  "Manage subscription" button pointed at — is tracked for removal in the
+  CLAUDE.md pre-launch backlog, not built out.

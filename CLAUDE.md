@@ -582,12 +582,11 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
-### Missing `createStripeBillingPortal` Cloud Function (web billing gap)
+### Retire Stripe / web-billing infrastructure (distribution decision 2026-07-05)
 
-`purchaseProvider.manageSubscription` (web branch) calls a callable named `createStripeBillingPortal`, but **no such function exists in `functions/index.js`** — so the web "Manage subscription" button (`src/pages/Upgrade.tsx`) fails with `functions/not-found`. Never surfaces on iOS (native branch redirects to `apps.apple.com/account/subscriptions`); only bites the web-Stripe subscriber segment, which is why it's latent pre-launch. It's the surface the Sub3 web save-offer (Stripe portal retention coupon) lives inside, so it blocks that offer too. Payments-critical and sandbox-unverifiable (no Stripe emulator).
+Decision: Tropos ships **App Store now + Google Play later, no web/Stripe billing**. The Stripe path is dormant and slated for removal — it's not a gap to fill, it's a surface to retire. Do NOT build `createStripeBillingPortal` (the web "Manage subscription" button in `src/pages/Upgrade.tsx` → `purchaseProvider.manageSubscription` points at that never-defined callable; on iOS the native branch redirects to `apps.apple.com/account/subscriptions`, so it never fires). Removal is a payments-critical, cross-cutting migration (~27 source + ~19 test files: `createCheckoutSession`/`stripeWebhook`/webhook-idempotency in `functions/index.js`, `stripeAutoCancel`/`subscriptionReconciliation`/`checkoutTrial` libs, `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` deploy secrets, `purchaseProvider` web branch, `useProCheckout`, `Upgrade.tsx` web tiles, `proPlans`/`subscription` Stripe bits) and sandbox-unverifiable — plan + verify deployed source, don't hack-and-slash.
 
-- [ ] Build `createStripeBillingPortal` mirroring `createCheckoutSession`'s security envelope: `runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })`, `verifyAuth(..., { checkRevoked: true })` with 401/403/405 ordering, `users/{uid}.stripeCustomerId` lookup, `stripe.billingPortal.sessions.create({ customer, return_url })` with the `_isAllowedStripeReturnUrl` allowlist. Runbook + rationale in `docs/iap/retention-offers.md`.
-- [ ] On a real web Stripe subscriber, confirm "Manage subscription" opens the portal (not an error toast) and the retention coupon shows in the portal's cancel flow.
+- [ ] Scope + execute the Stripe teardown as a deliberate migration (or consciously leave it dormant — it isn't harming anything if the web checkout is simply never surfaced). Keep Apple IAP / RevenueCat + `appleIAP.js`/`applePurchase.js` intact; the account-deletion `cancelStripeSubscription` step can stay as a harmless no-op or be removed with the rest.
 
 ### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
 
