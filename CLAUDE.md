@@ -582,6 +582,13 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
 
+### Missing `createStripeBillingPortal` Cloud Function (web billing gap)
+
+`purchaseProvider.manageSubscription` (web branch) calls a callable named `createStripeBillingPortal`, but **no such function exists in `functions/index.js`** — so the web "Manage subscription" button (`src/pages/Upgrade.tsx`) fails with `functions/not-found`. Never surfaces on iOS (native branch redirects to `apps.apple.com/account/subscriptions`); only bites the web-Stripe subscriber segment, which is why it's latent pre-launch. It's the surface the Sub3 web save-offer (Stripe portal retention coupon) lives inside, so it blocks that offer too. Payments-critical and sandbox-unverifiable (no Stripe emulator).
+
+- [ ] Build `createStripeBillingPortal` mirroring `createCheckoutSession`'s security envelope: `runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })`, `verifyAuth(..., { checkRevoked: true })` with 401/403/405 ordering, `users/{uid}.stripeCustomerId` lookup, `stripe.billingPortal.sessions.create({ customer, return_url })` with the `_isAllowedStripeReturnUrl` allowlist. Runbook + rationale in `docs/iap/retention-offers.md`.
+- [ ] On a real web Stripe subscriber, confirm "Manage subscription" opens the portal (not an error toast) and the retention coupon shows in the portal's cancel flow.
+
 ### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
 
 Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). The sandbox has no Storage emulator, so the upload path itself is unverified end-to-end (display path verified via seeded photoUrl captures).
