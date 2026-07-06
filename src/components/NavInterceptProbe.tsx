@@ -84,7 +84,7 @@ export default function NavInterceptProbe() {
         right: 0,
         zIndex: 99999,
         background: "rgba(0,0,0,0.92)",
-        color: "#4ade80",
+        color: "lime",
         fontSize: 11,
         lineHeight: 1.35,
         padding: "6px 8px",
