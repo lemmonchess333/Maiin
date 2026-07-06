@@ -71,6 +71,16 @@ function ringButton() {
   });
 }
 
+describe("FoodHeroCard — adjust-targets gear", () => {
+  it("deep-links to the focused nutrition editor, not the Settings list", () => {
+    renderHero();
+    const gear = screen.getByRole("link", {
+      name: /adjust nutrition targets/i,
+    });
+    expect(gear).toHaveAttribute("href", "/settings/nutrition");
+  });
+});
+
 describe("FoodHeroCard — single shared display mode", () => {
   beforeEach(() => {
     window.localStorage.clear();
