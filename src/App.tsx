@@ -53,6 +53,9 @@ const SettingsTraining = lazyRetry(
 const SettingsRunPlan = lazyRetry(
   () => import("@/pages/settings/SettingsRunPlan")
 );
+const SettingsLiftPlan = lazyRetry(
+  () => import("@/pages/settings/SettingsLiftPlan")
+);
 const SettingsNutrition = lazyRetry(
   () => import("@/pages/settings/SettingsNutrition")
 );
@@ -487,6 +490,14 @@ function AppRoutes() {
                       element={
                         <RouteErrorBoundary>
                           <SettingsRunPlan />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                    <Route
+                      path="/settings/lift-plan"
+                      element={
+                        <RouteErrorBoundary>
+                          <SettingsLiftPlan />
                         </RouteErrorBoundary>
                       }
                     />

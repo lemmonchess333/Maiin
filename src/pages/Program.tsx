@@ -34,6 +34,7 @@ import {
   Repeat,
   Trash2,
   Info,
+  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getExerciseById } from "@/lib/exercises";
@@ -1274,6 +1275,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
       {activeTab === "lift" && <SavedRoutinesSection />}
+
+      {/* Section-Split: focused "Edit lift plan" entry — mirrors the Run
+          tab's "Edit run plan ›" footer. Deep-links to the lift-only editor
+          (/settings/lift-plan) instead of the full programme form. The ⋯
+          menu's "Edit programme" still opens the everything editor. */}
+      {activeTab === "lift" && (
+        <div className="flex justify-end pt-2 border-t border-border/30">
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              navigate("/settings/lift-plan");
+            }}
+            className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
+          >
+            Edit lift plan
+            <ChevronRight className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* ── Context Menu ── */}
       <AnimatePresence>

@@ -52,12 +52,16 @@ const programState = {
   settings: { autoProgression: true, microloading: true },
 } as ProgramState;
 
-function setup(profileOverrides: Partial<UserProfile> = {}) {
+function setup(
+  profileOverrides: Partial<UserProfile> = {},
+  variant: "full" | "lift" = "full"
+) {
   const updateSettings = vi.fn();
   const regenerateProgram = vi.fn();
   const onOpenWeeklyLayout = vi.fn();
   render(
     <ProgrammeSettings
+      variant={variant}
       profile={makeProfile(profileOverrides)}
       programState={programState}
       updateSettings={updateSettings}
@@ -71,6 +75,42 @@ function setup(profileOverrides: Partial<UserProfile> = {}) {
 beforeEach(() => {
   cleanup();
   configureSpy.mockClear();
+});
+
+describe("ProgrammeSettings — lift variant (Section-Split)", () => {
+  it("shows lifting controls but hides nutrition, running and reset", () => {
+    setup({}, "lift");
+    // Lifting-shaping controls are present.
+    expect(screen.getByText("Training focus")).toBeInTheDocument();
+    expect(screen.getByText("Lift days per week")).toBeInTheDocument();
+    expect(screen.getByText("Equipment access")).toBeInTheDocument();
+    expect(screen.getByText("Injuries")).toBeInTheDocument();
+    // Out-of-scope sections are gone.
+    expect(screen.queryByText("Nutrition phase")).not.toBeInTheDocument();
+    expect(screen.queryByText("Running")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /reset programme/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("full variant still shows nutrition + running (unchanged)", () => {
+    setup({}, "full");
+    expect(screen.getByText("Nutrition phase")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+  });
+
+  it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const arg = configureSpy.mock.calls[0][0] as {
+      profileUpdates?: Record<string, unknown>;
+    };
+    // Running is preserved (threaded unchanged) — freeform, no race goal.
+    expect(arg.profileUpdates?.runMode ?? "freeform").toBe("freeform");
+  });
 });
 
 describe("ProgrammeSettings — save gating", () => {

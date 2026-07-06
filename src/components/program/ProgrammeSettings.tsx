@@ -110,6 +110,20 @@ interface ProgrammeSettingsProps {
   onOpenWeeklyLayout: () => void;
   /** Optional hook so the host can refresh after a save. */
   onSaved?: () => void;
+  /**
+   * Which slice of the programme this instance edits (Section-Split, 2026-07).
+   *   - "full" (default): the whole programme — goal, nutrition, experience,
+   *     lifting, running, equipment, injuries, engine toggles, reset. This is
+   *     the Settings → "Edit programme" destination (onboarding parity).
+   *   - "lift": ONLY the lifting-shaping controls — training focus, experience,
+   *     lift days + split, equipment, injuries, engine toggles. The nutrition
+   *     block, the Running block and the whole-programme reset are hidden.
+   *     Their DRAFT state still initialises from the profile and is threaded
+   *     unchanged through the save, so committing a lift edit preserves the
+   *     user's nutrition phase and run plan untouched. Running has its own
+   *     focused editor (RunPlanSettings) — this is its lifting counterpart.
+   */
+  variant?: "full" | "lift";
 }
 
 /* Programme-settings convenience wrapper — the page's section labels
@@ -378,7 +392,9 @@ export default function ProgrammeSettings({
   regenerateProgram,
   onOpenWeeklyLayout,
   onSaved,
+  variant = "full",
 }: ProgrammeSettingsProps) {
+  const liftOnly = variant === "lift";
   // ── Persisted values (also the dirty-check baseline) ──────────────
   const saved = useMemo(
     () => ({
@@ -593,8 +609,11 @@ export default function ProgrammeSettings({
 
   return (
     <div className="space-y-6 pb-6">
-      {/* ── Current setup anchor (read-only summary of the saved plan) ── */}
-      <CurrentProgrammeSummary lines={currentSetupLines} />
+      {/* ── Current setup anchor (read-only summary of the saved plan) ──
+          Hidden in the lift-only view: it summarises nutrition + running
+          too, which would reintroduce the "everything" feel this focused
+          screen exists to avoid. */}
+      {!liftOnly && <CurrentProgrammeSummary lines={currentSetupLines} />}
 
       {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
       <ProgrammeSettingsGroup
@@ -619,23 +638,28 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        <div>
-          <SectionLabel>Nutrition phase</SectionLabel>
-          <div className="space-y-2">
-            {NUTRITION_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={nutritionPhase === opt.id}
-                onSelect={() => setNutritionPhase(opt.id)}
-                index={i}
-                icon={<Apple size={18} style={{ color: THEME.warning }} />}
-                accent={THEME.warning}
-                label={opt.label}
-                desc={opt.desc}
-              />
-            ))}
+        {/* Nutrition phase is neither lift nor run — hidden in the
+            lift-only view (it lives in the full editor + nutrition
+            settings). Its draft threads through the save unchanged. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Nutrition phase</SectionLabel>
+            <div className="space-y-2">
+              {NUTRITION_OPTIONS.map((opt, i) => (
+                <SettingsOptionCard
+                  key={opt.id}
+                  selected={nutritionPhase === opt.id}
+                  onSelect={() => setNutritionPhase(opt.id)}
+                  index={i}
+                  icon={<Apple size={18} style={{ color: THEME.warning }} />}
+                  accent={THEME.warning}
+                  label={opt.label}
+                  desc={opt.desc}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <SectionLabel>Experience</SectionLabel>
@@ -702,71 +726,80 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        {/* ── Running (still part of the weekly plan) ── */}
-        <div>
-          <SectionLabel>Running</SectionLabel>
-          <div className="space-y-2">
-            {RUN_MODE_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={runMode === opt.id}
-                onSelect={() => setRunMode(opt.id)}
-                index={i}
-                icon={<Footprints size={18} className="text-running" />}
-                accent={THEME.running}
-                label={opt.label}
-                desc={opt.desc}
-              />
-            ))}
-          </div>
+        {/* ── Running (still part of the weekly plan) ──
+            Hidden in the lift-only view — running has its own focused
+            editor (RunPlanSettings / /settings/run-plan). The run draft
+            threads through the save unchanged so lifting edits never
+            disturb the run plan. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Running</SectionLabel>
+            <div className="space-y-2">
+              {RUN_MODE_OPTIONS.map((opt, i) => (
+                <SettingsOptionCard
+                  key={opt.id}
+                  selected={runMode === opt.id}
+                  onSelect={() => setRunMode(opt.id)}
+                  index={i}
+                  icon={<Footprints size={18} className="text-running" />}
+                  accent={THEME.running}
+                  label={opt.label}
+                  desc={opt.desc}
+                />
+              ))}
+            </div>
 
-          {runMode !== "freeform" && (
-            <div className="mt-3">
-              <label
-                htmlFor="ps-run-days"
-                className="text-xs uppercase tracking-wider text-muted-foreground"
-              >
-                Run days per week (
-                <span className="font-mono tabular-nums">{weeklyRunDays}</span>)
-              </label>
-              <input
-                id="ps-run-days"
-                type="range"
-                min={1}
-                max={7}
-                value={weeklyRunDays}
-                onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-                className="w-full mt-1 accent-running"
-              />
-              {liftDays + weeklyRunDays > 7 && (
-                <p className="text-xs mt-1 text-muted-foreground">
-                  <span className="font-mono tabular-nums">{liftDays}</span>{" "}
-                  lift +{" "}
+            {runMode !== "freeform" && (
+              <div className="mt-3">
+                <label
+                  htmlFor="ps-run-days"
+                  className="text-xs uppercase tracking-wider text-muted-foreground"
+                >
+                  Run days per week (
                   <span className="font-mono tabular-nums">
                     {weeklyRunDays}
-                  </span>{" "}
-                  run ={" "}
-                  <span className="font-mono tabular-nums">
-                    {liftDays + weeklyRunDays}
                   </span>
-                  . This creates double days — we'll combine lift and run on
-                  some days.
-                </p>
-              )}
-            </div>
-          )}
+                  )
+                </label>
+                <input
+                  id="ps-run-days"
+                  type="range"
+                  min={1}
+                  max={7}
+                  value={weeklyRunDays}
+                  onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                  className="w-full mt-1 accent-running"
+                />
+                {liftDays + weeklyRunDays > 7 && (
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    <span className="font-mono tabular-nums">{liftDays}</span>{" "}
+                    lift +{" "}
+                    <span className="font-mono tabular-nums">
+                      {weeklyRunDays}
+                    </span>{" "}
+                    run ={" "}
+                    <span className="font-mono tabular-nums">
+                      {liftDays + weeklyRunDays}
+                    </span>
+                    . This creates double days — we'll combine lift and run on
+                    some days.
+                  </p>
+                )}
+              </div>
+            )}
 
-          {runMode === "race_prep" && (
-            <RaceGoalPlanner
-              distance={raceDistance}
-              targetDate={raceTargetDate}
-              minDate={today}
-              state={plannerState}
-              onDistanceChange={setRaceDistance}
-              onTargetDateChange={setRaceTargetDate}
-            />
-          )}
-        </div>
+            {runMode === "race_prep" && (
+              <RaceGoalPlanner
+                distance={raceDistance}
+                targetDate={raceTargetDate}
+                minDate={today}
+                state={plannerState}
+                onDistanceChange={setRaceDistance}
+                onTargetDateChange={setRaceTargetDate}
+              />
+            )}
+          </div>
+        )}
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
@@ -901,20 +934,24 @@ export default function ProgrammeSettings({
         </div>
       </ProgrammeSettingsGroup>
 
-      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ── */}
-      <ProgrammeSettingsGroup
-        title="Danger zone"
-        tone="danger"
-        subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
-      >
-        <Button
-          variant="destructive-tinted"
-          fullWidth
-          onClick={() => setConfirmReset(true)}
+      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ──
+          Whole-programme reset — hidden in the lift-only view (it resets
+          running + nutrition too, so it belongs to the full editor). */}
+      {!liftOnly && (
+        <ProgrammeSettingsGroup
+          title="Danger zone"
+          tone="danger"
+          subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
         >
-          Reset Programme
-        </Button>
-      </ProgrammeSettingsGroup>
+          <Button
+            variant="destructive-tinted"
+            fullWidth
+            onClick={() => setConfirmReset(true)}
+          >
+            Reset Programme
+          </Button>
+        </ProgrammeSettingsGroup>
+      )}
 
       {/* ── Sticky save bar ── */}
       {(dirty || raceDateInvalid || saving) && (
