@@ -1811,6 +1811,16 @@ export default function Food() {
           }}
           onCancel={() => setEditingGroup(null)}
           onSave={applyServingsChange}
+          onDelete={() => {
+            // Reuse the same optimistic-hide + Undo-toast path the
+            // swipe uses, then close the sheet. Capture ids before the
+            // state clear since editingGroup is nulled synchronously.
+            handleDeleteMeal(
+              editingGroup.meals.map((m) => m.id),
+              editingGroup.foodName
+            );
+            setEditingGroup(null);
+          }}
         />
       )}
       {/* Suspicious-value override prompt for the NL parse path.
