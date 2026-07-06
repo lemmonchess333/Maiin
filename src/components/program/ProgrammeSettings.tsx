@@ -32,6 +32,7 @@
  * ScheduleLayoutSheet — this screen links to it.
  */
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target,
@@ -47,6 +48,7 @@ import {
   BicepsFlexed,
   Flame,
   Heart,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { httpsCallable } from "firebase/functions";
@@ -421,9 +423,14 @@ export default function ProgrammeSettings({
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
     saved.primaryGoal
   );
-  const [nutritionPhase, setNutritionPhase] = useState<Goal>(
-    saved.nutritionPhase
-  );
+  // Nutrition phase is NO LONGER editable here — it's DERIVED from goal
+  // weight vs current (the locked goalWeightPlan / MacroFactor model, owned
+  // by /settings/nutrition). This editor showed a direct cut/lean-bulk/recomp
+  // picker that wrote `program.goal` independently of goal weight, so the two
+  // could disagree (pick "Cut" here while goal weight said maintain → drift).
+  // We keep the current phase as a plain derived value and thread it through
+  // buildPlan unchanged; the read-only card below links out to change it.
+  const nutritionPhase: Goal = saved.nutritionPhase;
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
@@ -638,26 +645,35 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        {/* Nutrition phase is neither lift nor run — hidden in the
-            lift-only view (it lives in the full editor + nutrition
-            settings). Its draft threads through the save unchanged. */}
+        {/* Nutrition phase — READ-ONLY derived display. Direction is owned
+            by goal weight vs current (the locked goalWeightPlan model), set
+            in /settings/nutrition. Showing it here as a picker let it drift
+            from goal weight; now it's a calm summary that links out to the
+            one place that sets it. Hidden in the lift-only view. */}
         {!liftOnly && (
           <div>
             <SectionLabel>Nutrition phase</SectionLabel>
-            <div className="space-y-2">
-              {NUTRITION_OPTIONS.map((opt, i) => (
-                <SettingsOptionCard
-                  key={opt.id}
-                  selected={nutritionPhase === opt.id}
-                  onSelect={() => setNutritionPhase(opt.id)}
-                  index={i}
-                  icon={<Apple size={18} style={{ color: THEME.warning }} />}
-                  accent={THEME.warning}
-                  label={opt.label}
-                  desc={opt.desc}
-                />
-              ))}
-            </div>
+            <Link
+              to="/settings/nutrition"
+              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+                <Apple size={18} style={{ color: THEME.warning }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {NUTRITION_OPTIONS.find((o) => o.id === nutritionPhase)
+                    ?.label ?? "Recomp"}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  Set by your goal weight — tap to adjust in Nutrition
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </Link>
           </div>
         )}
 
