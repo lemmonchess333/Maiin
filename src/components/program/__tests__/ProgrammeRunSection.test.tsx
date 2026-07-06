@@ -259,7 +259,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     navigateMock.mockClear();
   });
 
-  it("clicking 'Manage Run Plan' deeplinks to /settings/training (freeform)", () => {
+  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (freeform)", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "freeform", raceGoal: undefined });
     renderWith(
@@ -271,10 +271,10 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
     expect(navigateMock).toHaveBeenCalledTimes(1);
-    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  it("clicking 'Manage Run Plan' deeplinks to /settings/training (structured)", () => {
+  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (structured)", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });
     renderWith(
@@ -287,14 +287,14 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
-  it("clicking 'Manage Run Plan' deeplinks to /settings/training (race_prep with goal)", () => {
+  it("clicking 'Manage Run Plan' deeplinks to /settings/run-plan (race_prep with goal)", () => {
     const props = commonProps();
     renderSection(props, makeProgramState([makeRunDay()]));
     fireEvent.click(screen.getByRole("button", { name: /Edit run plan/i }));
-    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
   // Run8 PR1a — footer is a single muted-gray "Manage Run Plan ›"
@@ -1001,7 +1001,7 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
     return { props, profile };
   }
 
-  it("renders the entry for a freeform user and deep-links to /settings/training", () => {
+  it("renders the entry for a freeform user and deep-links to /settings/run-plan", () => {
     const { props, profile } = freeformProps();
     renderWith(
       <ProgrammeRunSection
@@ -1012,7 +1012,7 @@ describe("ProgrammeRunSection — #975 Set a race goal entry", () => {
       />
     );
     fireEvent.click(screen.getByText(/Set a race goal/i));
-    expect(navigateMock).toHaveBeenCalledWith("/settings/training");
+    expect(navigateMock).toHaveBeenCalledWith("/settings/run-plan");
   });
 
   it("is dismissible and stays hidden after remount (localStorage persisted)", () => {

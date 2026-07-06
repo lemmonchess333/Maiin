@@ -50,6 +50,9 @@ const SettingsProfile = lazyRetry(
 const SettingsTraining = lazyRetry(
   () => import("@/pages/settings/SettingsTraining")
 );
+const SettingsRunPlan = lazyRetry(
+  () => import("@/pages/settings/SettingsRunPlan")
+);
 const SettingsNutrition = lazyRetry(
   () => import("@/pages/settings/SettingsNutrition")
 );
@@ -480,6 +483,14 @@ function AppRoutes() {
                       }
                     />
                     <Route
+                      path="/settings/run-plan"
+                      element={
+                        <RouteErrorBoundary>
+                          <SettingsRunPlan />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                    <Route
                       path="/settings/nutrition"
                       element={
                         <RouteErrorBoundary>
@@ -692,15 +703,15 @@ function App() {
       <MotionConfig reducedMotion="user">
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <MinVersionGate>
-          <AuthProvider>
-            <NotificationBubbleProvider>
-              <ToastProvider />
-              <ShareComposerSheet />
-              <OneTimeMaintenance />
-              <RevenueCatIdentity />
-              <AppRoutes />
-            </NotificationBubbleProvider>
-          </AuthProvider>
+            <AuthProvider>
+              <NotificationBubbleProvider>
+                <ToastProvider />
+                <ShareComposerSheet />
+                <OneTimeMaintenance />
+                <RevenueCatIdentity />
+                <AppRoutes />
+              </NotificationBubbleProvider>
+            </AuthProvider>
           </MinVersionGate>
         </BrowserRouter>
       </MotionConfig>

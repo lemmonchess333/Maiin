@@ -1145,7 +1145,7 @@ export default function Home() {
             !profile.raceGoal?.targetDate
           }
           ctaLabel="Set a race goal"
-          ctaHref="/settings/training"
+          ctaHref="/settings/run-plan"
         />
 
         {/* Today's Energy promoted above the CTA stack — calorie/macro tracking
@@ -1470,10 +1470,10 @@ export default function Home() {
             }
           }}
           onRaceMoved={() => {
-            // "My race moved" — clear the flag and route to the single date
-            // editor (Run9e); retired the +7d auto-shift guess.
+            // "My race moved" — clear the flag and route to the dedicated
+            // run-plan editor (Run-Split); retired the +7d auto-shift guess.
             void dismissFellBehindPrompt();
-            navigate("/settings/training");
+            navigate("/settings/run-plan");
           }}
           raceModeActive={
             profile?.runMode === "race_prep" && !!profile.raceGoal
