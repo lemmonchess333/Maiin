@@ -16,14 +16,16 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
   /* Phase B2: no-shoes affordance. Pre-B2 this returned null on an
    * empty shoe list, so users with no shoes couldn't discover that
    * shoe-mileage tracking exists. Now we render a single-line CTA
-   * that takes them to Settings (where ShoesManager lives). Light-
+   * that deep-links straight to the focused Shoes page (/settings/shoes,
+   * where ShoesManager lives) instead of the generic Settings list —
+   * same one-tap-to-the-right-place pattern as the Food gear. Light-
    * touch — same card shape as the populated state so the layout
    * doesn't shift after adding the first pair. */
   if (activeShoes.length === 0) {
     return (
       <button
         type="button"
-        onClick={() => navigate("/settings")}
+        onClick={() => navigate("/settings/shoes")}
         className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card text-left active:scale-[0.98] transition-transform"
       >
         <Footprints className="size-4 text-muted-foreground shrink-0" />

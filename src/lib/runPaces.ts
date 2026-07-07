@@ -209,9 +209,7 @@ export function paceTableFromFitness(
 
 /** Shared vdot resolution: stored vdot wins, else derive from the benchmark;
  *  null when neither is usable. `benchmark` is echoed back only when valid. */
-function resolveFitnessVdot(
-  fitness: RunFitnessInput | null | undefined
-): {
+function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
   vdot: number;
   benchmark: { distanceM: number; timeS: number } | null;
 } | null {

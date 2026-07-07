@@ -12,6 +12,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -52,18 +53,24 @@ const programState = {
   settings: { autoProgression: true, microloading: true },
 } as ProgramState;
 
-function setup(profileOverrides: Partial<UserProfile> = {}) {
+function setup(
+  profileOverrides: Partial<UserProfile> = {},
+  variant: "full" | "lift" = "full"
+) {
   const updateSettings = vi.fn();
   const regenerateProgram = vi.fn();
   const onOpenWeeklyLayout = vi.fn();
   render(
-    <ProgrammeSettings
-      profile={makeProfile(profileOverrides)}
-      programState={programState}
-      updateSettings={updateSettings}
-      regenerateProgram={regenerateProgram}
-      onOpenWeeklyLayout={onOpenWeeklyLayout}
-    />
+    <MemoryRouter>
+      <ProgrammeSettings
+        variant={variant}
+        profile={makeProfile(profileOverrides)}
+        programState={programState}
+        updateSettings={updateSettings}
+        regenerateProgram={regenerateProgram}
+        onOpenWeeklyLayout={onOpenWeeklyLayout}
+      />
+    </MemoryRouter>
   );
   return { updateSettings, regenerateProgram, onOpenWeeklyLayout };
 }
@@ -71,6 +78,42 @@ function setup(profileOverrides: Partial<UserProfile> = {}) {
 beforeEach(() => {
   cleanup();
   configureSpy.mockClear();
+});
+
+describe("ProgrammeSettings — lift variant (Section-Split)", () => {
+  it("shows lifting controls but hides nutrition, running and reset", () => {
+    setup({}, "lift");
+    // Lifting-shaping controls are present.
+    expect(screen.getByText("Training focus")).toBeInTheDocument();
+    expect(screen.getByText("Lift days per week")).toBeInTheDocument();
+    expect(screen.getByText("Equipment access")).toBeInTheDocument();
+    expect(screen.getByText("Injuries")).toBeInTheDocument();
+    // Out-of-scope sections are gone.
+    expect(screen.queryByText("Nutrition phase")).not.toBeInTheDocument();
+    expect(screen.queryByText("Running")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /reset programme/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("full variant still shows nutrition + running (unchanged)", () => {
+    setup({}, "full");
+    expect(screen.getByText("Nutrition phase")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+  });
+
+  it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
+    setup({}, "lift");
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const arg = configureSpy.mock.calls[0][0] as {
+      profileUpdates?: Record<string, unknown>;
+    };
+    // Running is preserved (threaded unchanged) — freeform, no race goal.
+    expect(arg.profileUpdates?.runMode ?? "freeform").toBe("freeform");
+  });
 });
 
 describe("ProgrammeSettings — save gating", () => {
@@ -109,9 +152,20 @@ describe("ProgrammeSettings — rebuild path", () => {
     expect(payload.profileUpdates.injuries).toEqual(["knee"]);
   });
 
-  it("changing nutrition phase persists to profile.program.goal (calorie targets follow)", async () => {
+  it("nutrition phase is READ-ONLY here — a derived link to /settings/nutrition, not a picker", () => {
     setup(); // baseline program.goal = "recomp"
-    fireEvent.click(screen.getByText("Cutting"));
+    // The current phase shows as a summary…
+    expect(screen.getByText("Recomp")).toBeInTheDocument();
+    // …that links to the one place direction is set (goal weight owns it).
+    const link = screen.getByRole("link", { name: /recomp/i });
+    expect(link).toHaveAttribute("href", "/settings/nutrition");
+    // The old direct-pick options are gone — no clickable "Cutting".
+    expect(screen.queryByText("Cutting")).not.toBeInTheDocument();
+  });
+
+  it("changing another field preserves the derived nutrition phase unchanged", async () => {
+    setup(); // program.goal = "recomp"
+    fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
@@ -119,7 +173,8 @@ describe("ProgrammeSettings — rebuild path", () => {
     const payload = configureSpy.mock.calls[0][0] as {
       profileUpdates: { program?: { goal: string } };
     };
-    expect(payload.profileUpdates.program).toEqual({ goal: "cut" });
+    // Phase threads through untouched — the lift edit didn't disturb it.
+    expect(payload.profileUpdates.program).toEqual({ goal: "recomp" });
   });
 });
 

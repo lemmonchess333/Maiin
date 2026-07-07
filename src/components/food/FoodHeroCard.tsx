@@ -267,13 +267,15 @@ export default function FoodHeroCard({
             in DOM order; a non-positioned block would render beneath it). */}
         <div className="relative">
           {/* Top row: caption (left) + adjust-targets gear (right).
-            The gear is a small Settings shortcut so users can fix
-            a wrong target without hunting through nav → Settings →
-            scroll. Subtle muted-foreground colour so it doesn't
-            compete with the ring or glance line for attention.
-            Routes to the Settings page (top); deep-linking to the
-            NutritionSection isn't supported by the route today —
-            documented limitation. */}
+            The gear deep-links straight to the focused Nutrition editor
+            (/settings/nutrition — goal weight, calorie targets, macros,
+            activity), so users fix a wrong target in one tap instead of
+            landing on the generic Settings list and hunting for it. This
+            mirrors the Train tabs' "Edit run/lift plan" pattern: each
+            tab's day-to-day surface routes to its OWN plan editor.
+            (Historically this pointed at /settings because the nutrition
+            sub-route didn't exist; it does now.) Subtle muted-foreground
+            colour so it doesn't compete with the ring for attention. */}
           <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <AnimatePresence mode="wait">
@@ -326,7 +328,7 @@ export default function FoodHeroCard({
                 </button>
               )}
               <Link
-                to="/settings"
+                to="/settings/nutrition"
                 aria-label="Adjust nutrition targets"
                 onClick={() => haptic("light")}
                 className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
