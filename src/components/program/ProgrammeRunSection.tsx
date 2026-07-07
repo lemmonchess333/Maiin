@@ -738,7 +738,7 @@ export default function ProgrammeRunSection({
                   type="button"
                   onClick={() => {
                     haptic();
-                    navigate("/settings/training");
+                    navigate("/settings/run-plan");
                   }}
                   className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
                 >
@@ -748,7 +748,7 @@ export default function ProgrammeRunSection({
                   type="button"
                   onClick={() => {
                     haptic();
-                    navigate("/settings/training");
+                    navigate("/settings/run-plan");
                   }}
                   className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
                 >
@@ -773,7 +773,7 @@ export default function ProgrammeRunSection({
               type="button"
               onClick={() => {
                 haptic();
-                navigate("/settings/training");
+                navigate("/settings/run-plan");
               }}
               className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
             >
@@ -801,7 +801,7 @@ export default function ProgrammeRunSection({
                 type="button"
                 onClick={() => {
                   haptic();
-                  navigate("/settings/training");
+                  navigate("/settings/run-plan");
                 }}
                 className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
               >
@@ -843,7 +843,7 @@ export default function ProgrammeRunSection({
                 onClick={() => {
                   haptic();
                   void dismissFellBehindPrompt();
-                  navigate("/settings/training");
+                  navigate("/settings/run-plan");
                 }}
                 className="w-full min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
@@ -1034,7 +1034,7 @@ export default function ProgrammeRunSection({
                 type="button"
                 onClick={() => {
                   haptic();
-                  navigate("/settings/training");
+                  navigate("/settings/run-plan");
                 }}
                 className="flex-1 flex items-center gap-3 text-left min-w-0"
                 style={{ minHeight: 44 }}
@@ -1316,7 +1316,7 @@ export default function ProgrammeRunSection({
                 compressed={raceCockpitVM.compressed}
                 onEdit={() => {
                   haptic();
-                  navigate("/settings/training");
+                  navigate("/settings/run-plan");
                 }}
               />
             )}
@@ -1348,7 +1348,7 @@ export default function ProgrammeRunSection({
           type="button"
           onClick={() => {
             haptic();
-            navigate("/settings/training");
+            navigate("/settings/run-plan");
           }}
           className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
         >
