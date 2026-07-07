@@ -53,7 +53,10 @@ export default function ShoeMileageSection() {
 
   return (
     <Link
-      to="/settings"
+      // Deep-link to the focused Shoes page (ShoesManager) rather than the
+      // generic Settings list — the shoe mileage card is about shoes, so
+      // tapping it should land on shoes (mirrors the Food-gear pattern).
+      to="/settings/shoes"
       className="block rounded-2xl bg-card p-4 space-y-3 active:scale-[0.98] transition-transform card-shadow"
     >
       <div className="flex items-center gap-2">
