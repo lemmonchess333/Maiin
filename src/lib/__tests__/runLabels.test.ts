@@ -14,6 +14,9 @@ import {
   distanceLabel,
   formatRaceDistance,
   paceMinSec,
+  paceBandLabel,
+  sessionPaceDisplay,
+  finishTimeLabel,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -143,5 +146,36 @@ describe("paceMinSec", () => {
     expect(paceMinSec(0)).toBe("--:--");
     expect(paceMinSec(-5)).toBe("--:--");
     expect(paceMinSec(NaN)).toBe("--:--");
+  });
+});
+
+// Band-first session pace display (Runna teardown #2) — one rule for every
+// surface that shows a personalized pace: the range leads, singles are the
+// race-pace fallback, null means "omit the pill".
+describe("paceBandLabel / sessionPaceDisplay", () => {
+  it("formats a band as fast\u2013slow with one unit", () => {
+    expect(paceBandLabel([325, 345])).toBe("5:25\u20135:45 /km");
+  });
+
+  it("band wins over singles; singles are the fallback; empty is null", () => {
+    expect(sessionPaceDisplay({ targetPace: 335, band: [325, 345] })).toBe(
+      "5:25\u20135:45 /km"
+    );
+    expect(sessionPaceDisplay({ targetPace: 335 })).toBe("5:35 /km");
+    expect(sessionPaceDisplay({ workPace: 300 })).toBe("5:00 /km");
+    expect(sessionPaceDisplay({})).toBeNull();
+  });
+});
+
+// finishTimeLabel — race-result clock style (m:ss / h:mm:ss), distinct from
+// durationLabel's "1h 05m" prose.
+describe("finishTimeLabel", () => {
+  it("formats sub-hour and over-hour times", () => {
+    expect(finishTimeLabel(1500)).toBe("25:00");
+    expect(finishTimeLabel(3661)).toBe("1:01:01");
+  });
+  it("guards non-positive input", () => {
+    expect(finishTimeLabel(0)).toBe("--:--");
+    expect(finishTimeLabel(NaN)).toBe("--:--");
   });
 });

@@ -129,6 +129,7 @@ export default function Home() {
     backfillRescueStreak,
     newBadge,
     dismissNewBadge,
+    macroTargetsByDay,
   } = useStreaks();
   const {
     glasses: waterGlasses,
@@ -322,15 +323,22 @@ export default function Home() {
           date: m.date,
         };
       });
-      const insights = analyzeNutritionPatterns(mapped, {
-        calories: effectiveTargets.finalTarget,
-        protein: effectiveTargets.protein,
-        carbs: effectiveTargets.carbs,
-        fat: effectiveTargets.fat,
-      });
+      // NUTR-L4: judge each day against the target snapshotted ON that day
+      // (taper weeks / adaptive steps / target edits), not today's number.
+      // Days without a snapshot fall back to today's effective target.
+      const insights = analyzeNutritionPatterns(
+        mapped,
+        {
+          calories: effectiveTargets.finalTarget,
+          protein: effectiveTargets.protein,
+          carbs: effectiveTargets.carbs,
+          fat: effectiveTargets.fat,
+        },
+        macroTargetsByDay
+      );
       return insights;
     },
-    [meals, effectiveTargets]
+    [meals, effectiveTargets, macroTargetsByDay]
   );
   const topNutritionInsight = useFreshInsight(
     nutritionInsightCandidates ?? EMPTY_INSIGHTS

@@ -63,6 +63,11 @@ import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
 import { buildPlan, type RunMode } from "@/features/program/planBuilder";
 import {
+  runTuningFromProfile,
+  type RunVolumePreset,
+  type RunDifficultyPreset,
+} from "@/features/program/runScheduler";
+import {
   chooseSplit,
   splitLabel,
   splitRationale,
@@ -415,6 +420,9 @@ export default function ProgrammeSettings({
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
+      // Pgm6 knobs — missing → standard (same lazy default the engine uses).
+      runVolume: runTuningFromProfile(profile).volume,
+      runDifficulty: runTuningFromProfile(profile).difficulty,
     }),
     [profile]
   );
@@ -445,6 +453,10 @@ export default function ProgrammeSettings({
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
     saved.raceTargetDate
   );
+  const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
+  const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
+    saved.runDifficulty
+  );
 
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
@@ -469,6 +481,8 @@ export default function ProgrammeSettings({
     weeklyRunDays,
     raceDistance,
     raceTargetDate,
+    runVolume,
+    runDifficulty,
   });
   const dirty = changes.length > 0;
   // Pgm5 (Q3): content edits now PRESERVE the user's workouts — only a
@@ -496,8 +510,18 @@ export default function ProgrammeSettings({
         currentDate: today,
         liftDays,
         weeklyRunDays,
+        // Pgm6: the preview runs the same knobs the save will commit.
+        tuning: { volume: runVolume, difficulty: runDifficulty },
       }),
-    [raceDistance, raceTargetDate, today, liftDays, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      today,
+      liftDays,
+      weeklyRunDays,
+      runVolume,
+      runDifficulty,
+    ]
   );
 
   // ── Derived display values (P1/P2/P3 — presentational only) ───────
@@ -571,6 +595,7 @@ export default function ProgrammeSettings({
           saved.preferredSplit === "auto" ? "full_body" : saved.preferredSplit,
         runMode,
         weeklyRunDays: effectiveRunDays,
+        runTuning: { volume: runVolume, difficulty: runDifficulty },
         ...(runMode === "race_prep" && raceTargetDate
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
@@ -813,6 +838,53 @@ export default function ProgrammeSettings({
                 onDistanceChange={setRaceDistance}
                 onTargetDateChange={setRaceTargetDate}
               />
+            )}
+
+            {/* Pgm6 — the two locked tuning knobs (volume + difficulty,
+                nothing else). Race-prep only: they shape the periodised
+                generator, and freeform has no scheduled sessions to tune.
+                Bounded presets; `standard` is byte-identical to the untuned
+                plan. */}
+            {runMode === "race_prep" && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Long-run volume
+                  </p>
+                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                    How big your long runs build — Lighter caps them at 10K.
+                  </p>
+                  <SegmentedControl
+                    options={[
+                      { value: "lighter", label: "Lighter" },
+                      { value: "standard", label: "Standard" },
+                      { value: "bigger", label: "Bigger" },
+                    ]}
+                    value={runVolume}
+                    onChange={(v) => setRunVolume(v as RunVolumePreset)}
+                    ariaLabel="Long-run volume"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Intensity
+                  </p>
+                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                    How much tempo &amp; interval work each week carries. Paces
+                    stay personalised either way.
+                  </p>
+                  <SegmentedControl
+                    options={[
+                      { value: "gentler", label: "Gentler" },
+                      { value: "standard", label: "Standard" },
+                      { value: "harder", label: "Harder" },
+                    ]}
+                    value={runDifficulty}
+                    onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
+                    ariaLabel="Plan intensity"
+                  />
+                </div>
+              </div>
             )}
           </div>
         )}

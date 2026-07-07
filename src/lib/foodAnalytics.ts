@@ -21,6 +21,7 @@ export type FoodEvent =
   | "food_composer_focused"
   | "food_initial_render_ms"
   | "food_meal_slot_perf"
+  | "food_timeline_perf"
   | "food_pantry_eviction"
   | "food_pantry_graduated"
   | "food_pantry_chip_tapped"
@@ -37,14 +38,15 @@ export interface FoodEventMetadata {
    *  render. Captures the Food page's perceived initial-render budget
    *  (target: <500ms p95 per Food6 cross-cutting performance pin). */
   durationMs?: number;
-  /** food_meal_slot_perf: number of meals in the slot at render
+  /** food_meal_slot_perf (retired with the slot sections) +
+   *  food_timeline_perf: number of grouped diary rows at render
    *  time. Drives the Food6e re-evaluation trigger T1 (P95
    *  itemCount). */
   itemCount?: number;
-  /** food_meal_slot_perf: ms to render the FoodMealSection,
-   *  measured via performance.now() captured at render-start vs
-   *  next useEffect cycle. Drives the Food6e re-evaluation
-   *  trigger T1 (P95 renderDurationMs > 100). */
+  /** food_meal_slot_perf (retired) + food_timeline_perf: ms to
+   *  render the diary list, measured via performance.now() captured
+   *  at render-start vs next useEffect cycle. Drives the Food6e
+   *  re-evaluation trigger T1 (P95 renderDurationMs > 100). */
   renderDurationMs?: number;
   /** food_pantry_*: the doc id of the favourite involved. */
   favouriteId?: string;

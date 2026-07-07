@@ -76,7 +76,12 @@ import { formatDistanceToNowStrict, format } from "date-fns";
 import { toast } from "sonner";
 import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
-import { paceLabel, durationLabel, distanceLabel } from "@/lib/runLabels";
+import {
+  paceLabel,
+  durationLabel,
+  distanceLabel,
+  sessionPaceDisplay,
+} from "@/lib/runLabels";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
@@ -136,11 +141,13 @@ interface ProgrammeRunSectionProps {
   markManualComplete: (runDayId: string) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
-  /** PR-C: atomic writer to exit the recovery phase early. Clears
-   *  `runPlan.phase` + `runPlan.recoveryEndDate` AND flips
-   *  `profile.runMode` to "structured" in a coordinated pair of
-   *  writes. The post-race card's "Skip recovery early" link calls
-   *  this when the user wants to bail out of the soft window. */
+  /** PR-C + Run9 ENG(j): atomic writer to exit the recovery phase
+   *  early. Resolves the exit via `resolveRecoveryExit` — the race is
+   *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
+   *  UNLESS a newer future race was set during the recovery window,
+   *  in which case race_prep is preserved and only the recovery phase
+   *  clears. Called from the in-recovery "Skip recovery early" link
+   *  and the recovery-complete banner's "Back to freeform" action. */
   skipRecoveryEarly: () => Promise<void>;
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today (keep the
    *  race date). Returns the timing so the in-tab Realign banner can toast the
@@ -311,8 +318,8 @@ export default function ProgrammeRunSection({
   //
   // Variants:
   //   inRecovery       → "Recovering — N days left" + Skip-recovery link
-  //   recoveryEnded    → "Recovery complete. What's next?" + Set next race / Switch to structured
-  //   noShow           → "We marked this as no-show. Log it now if you ran." + Log race now / Set next race / Switch to structured
+  //   recoveryEnded    → "Recovery complete. What's next?" + Set next race / Back to freeform
+  //   noShow           → "We marked this as no-show. Log it now if you ran." + Log race now / Set next race / Manage plan
   //
   // Outside these three: fall back to the legacy "Race day has passed"
   // banner (covers e.g. an old elapsed race where recovery already
@@ -360,7 +367,7 @@ export default function ProgrammeRunSection({
   }, [inRecovery, recoveryEndDate]);
 
   // PR-4: surface the first non-terminal runDay as a promoted
-  // "Next planned run" Start card on structured + race_prep. The
+  // "Next planned run" Start card on non-freeform modes. The
   // same `/run?template=…&scheduledRunId=…` URL pattern Home's
   // RunCTACard and trainingResolver.startUrl emit.
   const nextStartable: ScheduledRunDay | null = useMemo(() => {
@@ -517,21 +524,20 @@ export default function ProgrammeRunSection({
   );
   // Adaptive Paces: the user's personalized pace for the selected session,
   // surfaced on the command card so the "made for you" pace is visible where
-  // the run is started — not just in Settings. Null when there's no benchmark
-  // (the run then shows distance/type only, as before).
+  // the run is started — not just in Settings. Band-first via the shared
+  // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no
+  // benchmark (the run then shows distance/type only, as before).
   const selectedPaceLabel: string | null = (() => {
     if (!selectedTemplate) return null;
     const table = paceTableFromFitness(profile.runFitness ?? null);
     if (!table) return null;
-    const r = resolveSessionPaces(selectedTemplate.type, table, {
-      raceDistanceKey: raceDistanceKeyFromKm(
-        selectedTemplate.config.targetDistance
-      ),
-    });
-    if (r.targetPace) return `${paceLabel(r.targetPace)} /km`;
-    if (r.workPace) return `${paceLabel(r.workPace)} /km`;
-    if (r.band) return `${paceLabel(r.band[0])}–${paceLabel(r.band[1])} /km`;
-    return null;
+    return sessionPaceDisplay(
+      resolveSessionPaces(selectedTemplate.type, table, {
+        raceDistanceKey: raceDistanceKeyFromKm(
+          selectedTemplate.config.targetDistance
+        ),
+      })
+    );
   })();
   // Target HR zone for the selected session — the HR companion to the pace
   // (mirrors DayActionSheet). Measured max, else the age estimate; null when
@@ -620,13 +626,12 @@ export default function ProgrammeRunSection({
   // Mode + race goal writers live on TrainingSection (rendered at
   // /settings/training). See `/root/.claude/plans/gentle-giggling-creek.md`.
 
-  // PR-C: skip-recovery-early handler. Calls the dedicated
-  // useProgram writer (`skipRecoveryEarly`) which atomically
-  // clears `runPlan.phase` + `runPlan.recoveryEndDate` AND flips
-  // `runMode` to "structured" so the user immediately gets their
-  // normal training shape back. Race is past, recovery is done by
-  // user's choice — the cleanest next direction is structured
-  // training, which the user can then change via the chip row.
+  // PR-C + Run9 ENG(j): skip-recovery-early handler. Calls the
+  // dedicated useProgram writer (`skipRecoveryEarly`) which resolves
+  // the exit via `resolveRecoveryExit`: back to FREEFORM (plan +
+  // raceGoal cleared) — the race is done and recorded — unless a
+  // newer future race was set during recovery, in which case
+  // race_prep is preserved and only the recovery phase clears.
   async function handleSkipRecoveryEarly(): Promise<void> {
     try {
       await skipRecoveryEarly();
@@ -704,7 +709,7 @@ export default function ProgrammeRunSection({
           so it never competes with the actionable contextual-prompt slot. */}
 
       {/* Warning: race-day no-show. Hosts critical actions (Log race
-          now / Set next race / Switch to structured) so the banner
+          now / Set next race / Manage plan) so the banner
           itself is the affordance — not dismissible. Run9: gated by the
           single contextual-prompt slot (precedence over recovery-complete). */}
       {contextualPrompt === "no-show" && raceGoal && (
@@ -779,8 +784,12 @@ export default function ProgrammeRunSection({
       )}
 
       {/* Info: recovery complete. Hosts critical "Set next race" /
-          "Switch to structured" prompts — non-dismissible. Run9: gated by
-          the single contextual-prompt slot (yields to no-show). */}
+          "Back to freeform" prompts — non-dismissible. Run9: gated by
+          the single contextual-prompt slot (yields to no-show).
+          RUN-L1: the second action is labelled for what the writer
+          actually does post-Run9 — resolveRecoveryExit returns the
+          user to freeform (the locked two-state model has no
+          structured mode to switch to). */}
       {contextualPrompt === "recovery-complete" && (
         <Banner
           variant="info"
@@ -803,7 +812,7 @@ export default function ProgrammeRunSection({
                 onClick={handleSkipRecoveryEarly}
                 className="flex-1 min-h-[44px] inline-flex items-center justify-center py-2 rounded-lg bg-muted text-foreground text-xs font-medium"
               >
-                Switch to structured
+                Back to freeform
               </button>
             </div>
           }

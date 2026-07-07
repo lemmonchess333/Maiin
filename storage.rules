@@ -34,6 +34,18 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Food diary photos — owner-only access (same posture as progress
+    // photos: the diary is private). Blobs live for the meal doc's
+    // lifetime (meal deletion is SOFT — 24h restore — so no delete-on-
+    // delete); the account-deletion executor sweeps the whole prefix.
+    match /food-photos/{uid}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && isAllowedImageMime();
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Profile photos — owner-only write, authenticated read
     match /profile-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null;

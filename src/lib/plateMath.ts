@@ -1,9 +1,13 @@
 /**
  * Plate calculator maths (#985 — the last missing in-session logging
  * primitive vs Hevy/Strong). Standard Olympic bar + metric plate set;
- * greedy decomposition is exact for this denomination set (each plate is
- * ≥ 2× the next, so greedy can't strand remainder a different combo would
- * have covered).
+ * greedy decomposition is exact for this denomination set because every
+ * plate is a multiple of the smallest (1.25): whatever remains after the
+ * larger plates is still a multiple of 1.25 and gets finished by 1.25s,
+ * so greedy can't strand remainder a different combo would have covered.
+ * (It is NOT the "each plate ≥ 2× the next" coin property — 25 vs 20
+ * breaks that — so if the plate set ever changes, keep the smallest
+ * plate a common divisor of all the others or exactness is lost.)
  */
 
 export const DEFAULT_BAR_KG = 20;

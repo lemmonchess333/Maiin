@@ -804,7 +804,7 @@ export default function Onboarding() {
     // correctly in light AND dark mode. Pre-Sprint-2 this was locked
     // to THEME.bg = #121214 which produced a black page in light mode
     // — the single biggest first-impression bug per the audit.
-    <div className="min-h-screen flex flex-col px-5 pb-10 pt-safe bg-background text-foreground">
+    <div className="h-[100dvh] flex flex-col px-5 pb-10 pt-safe bg-background text-foreground">
       {/* ── Progress bar ── */}
       <div className="flex gap-1.5 pt-14 pb-6">
         {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
@@ -832,7 +832,7 @@ export default function Onboarding() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -24 }}
           transition={{ duration: 0.22 }}
-          className="flex-1 overflow-y-auto"
+          className="flex-1 min-h-0 overflow-y-auto"
         >
           <p className="text-xs uppercase tracking-widest mb-2 text-muted-foreground">
             Step {step + 1} of {TOTAL_STEPS}

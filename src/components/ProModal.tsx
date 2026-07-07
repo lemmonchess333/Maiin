@@ -37,11 +37,13 @@ import {
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
+  weeklyPriceLabel,
   type PlanId,
 } from "@/lib/proPlans";
 import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
 import { isNativeIOS } from "@/lib/purchaseProvider";
 import { useProCheckout } from "@/hooks/useProCheckout";
+import TrialTimeline from "@/components/TrialTimeline";
 import { track } from "@/lib/paywallAnalytics";
 import { X, Sparkles, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -365,12 +367,19 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                   </div>
                 </div>
 
-                <p className="text-base font-bold text-foreground font-mono tabular-nums">
-                  {plan.price}
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {plan.period}
-                  </span>
-                </p>
+                <div className="text-right">
+                  <p className="text-base font-bold text-foreground font-mono tabular-nums">
+                    {plan.price}
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {plan.period}
+                    </span>
+                  </p>
+                  {/* Weekly anchoring (teardown pattern): both plans in the
+                      same per-week unit makes the annual saving visceral. */}
+                  <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
+                    {weeklyPriceLabel(plan.id)}
+                  </p>
+                </div>
               </button>
             );
           })}
@@ -387,6 +396,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
             {error}
           </p>
         ) : null}
+
+        {/* Sub1a trial transparency — what actually happens, before the ask. */}
+        {withTrial ? <TrialTimeline /> : null}
 
         <button
           type="button"

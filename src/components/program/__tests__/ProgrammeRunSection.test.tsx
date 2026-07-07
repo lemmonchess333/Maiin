@@ -721,6 +721,14 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       />
     );
     expect(screen.getByText(/Recovery complete/i)).toBeInTheDocument();
+    // RUN-L1: the exit action is labelled for what skipRecoveryEarly actually
+    // does post-Run9 (resolveRecoveryExit → freeform) — the old "Switch to
+    // structured" label promised a mode the locked two-state model dropped.
+    expect(
+      screen.queryByRole("button", { name: /Switch to structured/i })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Back to freeform/i }));
+    expect(props.skipRecoveryEarly).toHaveBeenCalledTimes(1);
   });
 
   it("Run9 (f): contextual slot shows ONLY no-show when no-show + recovery-complete both qualify", () => {

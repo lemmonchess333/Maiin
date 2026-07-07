@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,13 @@ interface EditServingsSheetProps {
    *  on each existing doc). Resolves when the write completes so the
    *  sheet can close without flashing a stale state. */
   onSave: (changes: EditServingsChanges) => Promise<void> | void;
+  /** Delete the whole group. Optional — when provided, the sheet
+   *  renders a low-emphasis destructive Delete row so tapping a food
+   *  row → edit → Delete is a discoverable path that doesn't depend on
+   *  the swipe gesture. The parent owns the actual delete (optimistic
+   *  hide + Undo toast) and closes the sheet; no confirm dialog here
+   *  because that Undo window is the safety net. */
+  onDelete?: () => void;
 }
 
 /**
@@ -88,6 +96,7 @@ function EditServingsSheet({
   source,
   onCancel,
   onSave,
+  onDelete,
 }: EditServingsSheetProps) {
   // The parent mounts this sheet conditionally and keys it on the
   // group id, so each open is a fresh instance — useState's initial
@@ -457,6 +466,25 @@ function EditServingsSheet({
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
+
+        {/* Discoverable delete path — the tap-to-edit counterpart to the
+            row's swipe-to-delete (kept). Low-emphasis destructive text so
+            it never competes with Save; no confirm dialog because the
+            parent's optimistic-delete Undo toast is the safety net. */}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={() => {
+              haptic("light");
+              onDelete();
+            }}
+            disabled={saving}
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-destructive active:scale-[0.98] disabled:opacity-60"
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+            Delete
+          </button>
+        )}
       </div>
     </BottomSheet>
   );
