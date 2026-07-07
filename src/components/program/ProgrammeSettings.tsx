@@ -32,6 +32,7 @@
  * ScheduleLayoutSheet — this screen links to it.
  */
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target,
@@ -47,6 +48,7 @@ import {
   BicepsFlexed,
   Flame,
   Heart,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { httpsCallable } from "firebase/functions";
@@ -115,6 +117,20 @@ interface ProgrammeSettingsProps {
   onOpenWeeklyLayout: () => void;
   /** Optional hook so the host can refresh after a save. */
   onSaved?: () => void;
+  /**
+   * Which slice of the programme this instance edits (Section-Split, 2026-07).
+   *   - "full" (default): the whole programme — goal, nutrition, experience,
+   *     lifting, running, equipment, injuries, engine toggles, reset. This is
+   *     the Settings → "Edit programme" destination (onboarding parity).
+   *   - "lift": ONLY the lifting-shaping controls — training focus, experience,
+   *     lift days + split, equipment, injuries, engine toggles. The nutrition
+   *     block, the Running block and the whole-programme reset are hidden.
+   *     Their DRAFT state still initialises from the profile and is threaded
+   *     unchanged through the save, so committing a lift edit preserves the
+   *     user's nutrition phase and run plan untouched. Running has its own
+   *     focused editor (RunPlanSettings) — this is its lifting counterpart.
+   */
+  variant?: "full" | "lift";
 }
 
 /* Programme-settings convenience wrapper — the page's section labels
@@ -383,7 +399,9 @@ export default function ProgrammeSettings({
   regenerateProgram,
   onOpenWeeklyLayout,
   onSaved,
+  variant = "full",
 }: ProgrammeSettingsProps) {
+  const liftOnly = variant === "lift";
   // ── Persisted values (also the dirty-check baseline) ──────────────
   const saved = useMemo(
     () => ({
@@ -413,9 +431,14 @@ export default function ProgrammeSettings({
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
     saved.primaryGoal
   );
-  const [nutritionPhase, setNutritionPhase] = useState<Goal>(
-    saved.nutritionPhase
-  );
+  // Nutrition phase is NO LONGER editable here — it's DERIVED from goal
+  // weight vs current (the locked goalWeightPlan / MacroFactor model, owned
+  // by /settings/nutrition). This editor showed a direct cut/lean-bulk/recomp
+  // picker that wrote `program.goal` independently of goal weight, so the two
+  // could disagree (pick "Cut" here while goal weight said maintain → drift).
+  // We keep the current phase as a plain derived value and thread it through
+  // buildPlan unchanged; the read-only card below links out to change it.
+  const nutritionPhase: Goal = saved.nutritionPhase;
   const [experience, setExperience] = useState<Experience>(saved.experience);
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
@@ -618,8 +641,11 @@ export default function ProgrammeSettings({
 
   return (
     <div className="space-y-6 pb-6">
-      {/* ── Current setup anchor (read-only summary of the saved plan) ── */}
-      <CurrentProgrammeSummary lines={currentSetupLines} />
+      {/* ── Current setup anchor (read-only summary of the saved plan) ──
+          Hidden in the lift-only view: it summarises nutrition + running
+          too, which would reintroduce the "everything" feel this focused
+          screen exists to avoid. */}
+      {!liftOnly && <CurrentProgrammeSummary lines={currentSetupLines} />}
 
       {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
       <ProgrammeSettingsGroup
@@ -644,23 +670,37 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        <div>
-          <SectionLabel>Nutrition phase</SectionLabel>
-          <div className="space-y-2">
-            {NUTRITION_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={nutritionPhase === opt.id}
-                onSelect={() => setNutritionPhase(opt.id)}
-                index={i}
-                icon={<Apple size={18} style={{ color: THEME.warning }} />}
-                accent={THEME.warning}
-                label={opt.label}
-                desc={opt.desc}
+        {/* Nutrition phase — READ-ONLY derived display. Direction is owned
+            by goal weight vs current (the locked goalWeightPlan model), set
+            in /settings/nutrition. Showing it here as a picker let it drift
+            from goal weight; now it's a calm summary that links out to the
+            one place that sets it. Hidden in the lift-only view. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Nutrition phase</SectionLabel>
+            <Link
+              to="/settings/nutrition"
+              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+                <Apple size={18} style={{ color: THEME.warning }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {NUTRITION_OPTIONS.find((o) => o.id === nutritionPhase)
+                    ?.label ?? "Recomp"}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  Set by your goal weight — tap to adjust in Nutrition
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
               />
-            ))}
+            </Link>
           </div>
-        </div>
+        )}
 
         <div>
           <SectionLabel>Experience</SectionLabel>
@@ -727,115 +767,127 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        {/* ── Running (still part of the weekly plan) ── */}
-        <div>
-          <SectionLabel>Running</SectionLabel>
-          <div className="space-y-2">
-            {RUN_MODE_OPTIONS.map((opt, i) => (
-              <SettingsOptionCard
-                key={opt.id}
-                selected={runMode === opt.id}
-                onSelect={() => setRunMode(opt.id)}
-                index={i}
-                icon={<Footprints size={18} className="text-running" />}
-                accent={THEME.running}
-                label={opt.label}
-                desc={opt.desc}
-              />
-            ))}
-          </div>
+        {/* ── Running (still part of the weekly plan) ──
+            Hidden in the lift-only view — running has its own focused
+            editor (RunPlanSettings / /settings/run-plan). The run draft
+            threads through the save unchanged so lifting edits never
+            disturb the run plan. */}
+        {!liftOnly && (
+          <div>
+            <SectionLabel>Running</SectionLabel>
+            <div className="space-y-2">
+              {RUN_MODE_OPTIONS.map((opt, i) => (
+                <SettingsOptionCard
+                  key={opt.id}
+                  selected={runMode === opt.id}
+                  onSelect={() => setRunMode(opt.id)}
+                  index={i}
+                  icon={<Footprints size={18} className="text-running" />}
+                  accent={THEME.running}
+                  label={opt.label}
+                  desc={opt.desc}
+                />
+              ))}
+            </div>
 
-          {runMode !== "freeform" && (
-            <div className="mt-3">
-              <label
-                htmlFor="ps-run-days"
-                className="text-xs uppercase tracking-wider text-muted-foreground"
-              >
-                Run days per week (
-                <span className="font-mono tabular-nums">{weeklyRunDays}</span>)
-              </label>
-              <input
-                id="ps-run-days"
-                type="range"
-                min={1}
-                max={7}
-                value={weeklyRunDays}
-                onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-                className="w-full mt-1 accent-running"
-              />
-              {liftDays + weeklyRunDays > 7 && (
-                <p className="text-xs mt-1 text-muted-foreground">
-                  <span className="font-mono tabular-nums">{liftDays}</span>{" "}
-                  lift +{" "}
+            {runMode !== "freeform" && (
+              <div className="mt-3">
+                <label
+                  htmlFor="ps-run-days"
+                  className="text-xs uppercase tracking-wider text-muted-foreground"
+                >
+                  Run days per week (
                   <span className="font-mono tabular-nums">
                     {weeklyRunDays}
-                  </span>{" "}
-                  run ={" "}
-                  <span className="font-mono tabular-nums">
-                    {liftDays + weeklyRunDays}
                   </span>
-                  . This creates double days — we'll combine lift and run on
-                  some days.
-                </p>
-              )}
-            </div>
-          )}
-
-          {runMode === "race_prep" && (
-            <RaceGoalPlanner
-              distance={raceDistance}
-              targetDate={raceTargetDate}
-              minDate={today}
-              state={plannerState}
-              onDistanceChange={setRaceDistance}
-              onTargetDateChange={setRaceTargetDate}
-            />
-          )}
-
-          {/* Pgm6 — the two locked tuning knobs (volume + difficulty, nothing
-              else). Race-prep only: they shape the periodised generator, and
-              freeform has no scheduled sessions to tune. Bounded presets;
-              `standard` is byte-identical to the untuned plan. */}
-          {runMode === "race_prep" && (
-            <div className="space-y-3 pt-1">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  Long-run volume
-                </p>
-                <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                  How big your long runs build — Lighter caps them at 10K.
-                </p>
-                <SegmentedControl
-                  options={[
-                    { value: "lighter", label: "Lighter" },
-                    { value: "standard", label: "Standard" },
-                    { value: "bigger", label: "Bigger" },
-                  ]}
-                  value={runVolume}
-                  onChange={(v) => setRunVolume(v as RunVolumePreset)}
-                  ariaLabel="Long-run volume"
+                  )
+                </label>
+                <input
+                  id="ps-run-days"
+                  type="range"
+                  min={1}
+                  max={7}
+                  value={weeklyRunDays}
+                  onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
+                  className="w-full mt-1 accent-running"
                 />
+                {liftDays + weeklyRunDays > 7 && (
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    <span className="font-mono tabular-nums">{liftDays}</span>{" "}
+                    lift +{" "}
+                    <span className="font-mono tabular-nums">
+                      {weeklyRunDays}
+                    </span>{" "}
+                    run ={" "}
+                    <span className="font-mono tabular-nums">
+                      {liftDays + weeklyRunDays}
+                    </span>
+                    . This creates double days — we'll combine lift and run on
+                    some days.
+                  </p>
+                )}
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Intensity</p>
-                <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                  How much tempo &amp; interval work each week carries. Paces
-                  stay personalised either way.
-                </p>
-                <SegmentedControl
-                  options={[
-                    { value: "gentler", label: "Gentler" },
-                    { value: "standard", label: "Standard" },
-                    { value: "harder", label: "Harder" },
-                  ]}
-                  value={runDifficulty}
-                  onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
-                  ariaLabel="Plan intensity"
-                />
+            )}
+
+            {runMode === "race_prep" && (
+              <RaceGoalPlanner
+                distance={raceDistance}
+                targetDate={raceTargetDate}
+                minDate={today}
+                state={plannerState}
+                onDistanceChange={setRaceDistance}
+                onTargetDateChange={setRaceTargetDate}
+              />
+            )}
+
+            {/* Pgm6 — the two locked tuning knobs (volume + difficulty,
+                nothing else). Race-prep only: they shape the periodised
+                generator, and freeform has no scheduled sessions to tune.
+                Bounded presets; `standard` is byte-identical to the untuned
+                plan. */}
+            {runMode === "race_prep" && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Long-run volume
+                  </p>
+                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                    How big your long runs build — Lighter caps them at 10K.
+                  </p>
+                  <SegmentedControl
+                    options={[
+                      { value: "lighter", label: "Lighter" },
+                      { value: "standard", label: "Standard" },
+                      { value: "bigger", label: "Bigger" },
+                    ]}
+                    value={runVolume}
+                    onChange={(v) => setRunVolume(v as RunVolumePreset)}
+                    ariaLabel="Long-run volume"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Intensity
+                  </p>
+                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+                    How much tempo &amp; interval work each week carries. Paces
+                    stay personalised either way.
+                  </p>
+                  <SegmentedControl
+                    options={[
+                      { value: "gentler", label: "Gentler" },
+                      { value: "standard", label: "Standard" },
+                      { value: "harder", label: "Harder" },
+                    ]}
+                    value={runDifficulty}
+                    onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
+                    ariaLabel="Plan intensity"
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
@@ -970,20 +1022,24 @@ export default function ProgrammeSettings({
         </div>
       </ProgrammeSettingsGroup>
 
-      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ── */}
-      <ProgrammeSettingsGroup
-        title="Danger zone"
-        tone="danger"
-        subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
-      >
-        <Button
-          variant="destructive-tinted"
-          fullWidth
-          onClick={() => setConfirmReset(true)}
+      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ──
+          Whole-programme reset — hidden in the lift-only view (it resets
+          running + nutrition too, so it belongs to the full editor). */}
+      {!liftOnly && (
+        <ProgrammeSettingsGroup
+          title="Danger zone"
+          tone="danger"
+          subtitle="Resetting rebuilds your programme from scratch — you'll start at Week 1 and past week summaries clear. Logged workouts and runs stay in History."
         >
-          Reset Programme
-        </Button>
-      </ProgrammeSettingsGroup>
+          <Button
+            variant="destructive-tinted"
+            fullWidth
+            onClick={() => setConfirmReset(true)}
+          >
+            Reset Programme
+          </Button>
+        </ProgrammeSettingsGroup>
+      )}
 
       {/* ── Sticky save bar ── */}
       {(dirty || raceDateInvalid || saving) && (
