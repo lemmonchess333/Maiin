@@ -33,6 +33,11 @@
      variants) for genuinely nutrition-primary surfaces. */
   --color-nutrition: hsl(var(--nutrition));
   --color-nutrition-strong: hsl(var(--nutrition-strong));
+  /* Media stage — the FIXED dark surface exercise demos render on in
+     both themes (a video-player convention: the muscle-map art's facet
+     gaps are designed against a dark backdrop). Same value in :root and
+     .dark, like the sport identities. */
+  --color-stage: hsl(var(--stage));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -130,6 +135,8 @@
      --nutrition-strong is the AA white-text fill step. */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700, AA on white */
+  /* Media stage — fixed dark in BOTH themes (see @theme note). */
+  --stage: 240 4% 7%;
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   --muted-foreground: 240 3.8% 46.1%;
   --border: 240 6% 88%; /* DS2: a hair stronger so hairlines register on the lighter canvas */
@@ -180,6 +187,8 @@
   /* Sport-identity colours — IDENTICAL to :root (fixed sport colour). */
   --running: 348 57% 61%; /* #D4637A coral */
   --lifting: 245 73% 68%; /* #7B72E9 purple */
+  /* Media stage — IDENTICAL to :root (fixed dark surface). */
+  --stage: 240 4% 7%;
   /* Nutrition — IDENTICAL to :root (fixed domain colour). */
   --nutrition: 25 65% 58%; /* #D9884E warm orange */
   --nutrition-strong: 26 91% 37%; /* #B45309 amber-700 */

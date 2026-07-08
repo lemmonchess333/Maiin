@@ -11,6 +11,9 @@ import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
+import ExerciseRigDemo from "@/components/ExerciseRigDemo";
+import { getBodyDemo } from "@/lib/bodyRig";
+import { EXERCISES } from "@/lib/exercises";
 import BodyMapGlow from "@/components/BodyMapGlow";
 
 // Exercise "form" / demo content — muscle diagrams, primary/secondary
@@ -110,7 +113,13 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   // when there's no demo (or every frame failed) the muscle diagram is the
   // hero instead. Avoids stacking two redundant body silhouettes. The fused
   // end-state (muscles highlighted ON the moving body) is the 3D-model path.
-  const hasAnimation = demo.images.length > 0 && !demoFailed;
+  // Rig demo (code-built faceted figure) outranks photos: it's the app's
+  // own visual language, deterministic, and carries honest muscle tint.
+  const exerciseId = EXERCISES.find(
+    (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
+  )?.id;
+  const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
+  const hasAnimation = !rigDemo && demo.images.length > 0 && !demoFailed;
 
   return (
     <div>
@@ -133,6 +142,15 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           plays); muscles worked are conveyed by the pills below. The `key`
           gives each exercise a fresh player. onUnavailable flips back to the
           muscle diagram if every frame fails to load. */}
+      {rigDemo && exerciseId && (
+        <ExerciseRigDemo
+          key={exerciseId}
+          exerciseId={exerciseId}
+          name={demo.name}
+          active={active}
+        />
+      )}
+
       {hasAnimation && (
         <ExerciseDemoPlayer
           key={demo.name}
@@ -145,7 +163,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
 
       {/* Muscle diagram — the hero only when there's no demo to show, so we
           never stack two body silhouettes. */}
-      {!hasAnimation && (
+      {!rigDemo && !hasAnimation && (
         <div className="bg-muted rounded-2xl p-5 mt-4">
           <div
             style={{
