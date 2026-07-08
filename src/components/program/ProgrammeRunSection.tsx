@@ -60,9 +60,9 @@
  *     (the unified Programme Settings editor).
  */
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Footprints,
   Check,
@@ -177,8 +177,30 @@ export default function ProgrammeRunSection({
   // Defaults to today; today is always index 0 of the rolling 7-day window
   // below, so the default selection is always visible. Drives the selected-
   // day command card so the selector actually controls the content beneath it.
-  const [selectedDateKey, setSelectedDateKey] = useState<string>(() =>
-    localDateString(new Date())
+  // Mirror the selected run day into the URL (?rday=YYYY-MM-DD) — the sibling
+  // of the Lift day selector's ?day — so opening a run/plan detail and pressing
+  // back restores the day instead of snapping to today. An out-of-window value
+  // degrades gracefully (the runWindow lookup below falls back to day 0).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
+    const raw = searchParams.get("rday");
+    return raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? raw
+      : localDateString(new Date());
+  });
+  const selectRunDay = useCallback(
+    (key: string) => {
+      setSelectedDateKey(key);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("rday", key);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
   );
   // PR-4: recent-run context for the freeform hero. 30-day window
   // is bounded by the hook's `where('completedAt', '>=', ...)`
@@ -513,7 +535,7 @@ export default function ProgrammeRunSection({
     );
     if (delta !== 0) {
       haptic("light");
-      setSelectedDateKey(runWindow[selectedRunIdx + delta].dateKey);
+      selectRunDay(runWindow[selectedRunIdx + delta].dateKey);
     }
   };
   const selectedTemplate = selectedRun.template;
@@ -1223,7 +1245,7 @@ export default function ProgrammeRunSection({
             ariaLabel="Run week"
             cells={runSelectorCells}
             selectedKey={selectedDateKey}
-            onSelect={setSelectedDateKey}
+            onSelect={selectRunDay}
           />
 
           {/* The selected-day command card. Suppressed only when a race
