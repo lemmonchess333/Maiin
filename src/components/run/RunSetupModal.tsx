@@ -31,14 +31,14 @@ import { Toggle } from "@/components/ui/Toggle";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { paceTableFromFitness, resolveSessionPaces } from "@/lib/runPaces";
+import { paceTableFromFitness } from "@/lib/runPaces";
 import {
   getCurrentWeather,
   getWeatherIcon,
   getRunningTip,
   type WeatherData,
 } from "@/lib/weather";
-import { paceMinSec, sessionPaceDisplay } from "@/lib/runLabels";
+import { paceMinSec } from "@/lib/runLabels";
 import ShoeSelector from "./ShoeSelector";
 import GuidedRunPicker from "./GuidedRunPicker";
 import SessionStructureView from "./SessionStructureView";
@@ -48,15 +48,23 @@ import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
 import {
-  freeformPlanMetadata,
-  type RunPlanMetadata,
-} from "@/lib/runPlanMetadata";
+  DEFAULT_CONFIG,
+  ACTIVITY_TYPES,
+  pacePatchForType as pacePatchForTypePure,
+  chooserPaceFor as chooserPaceForPure,
+  type RunConfig,
+} from "./runConfigDefaults";
 
 /* `ActivityType` now lives in `@/types/run` so non-component modules
    (e.g. `runGuards.ts`) can import it without pulling this component
    into their dep graph. The re-export below preserves backward
    compatibility for any code that imports `ActivityType` from here. */
 export type { ActivityType };
+
+/* RunConfig moved to ./runConfigDefaults (run fast-launch arc) so the launch
+   card + tile picker share it. Re-exported here for the existing importers
+   (Run.tsx, RunSummary.tsx, runResumeStorage.ts). */
+export type { RunConfig };
 
 const ICON_MAP: Record<
   string,
@@ -93,205 +101,9 @@ const WEATHER_ICON: Record<
   "cloud-lightning": CloudLightning,
 };
 
-export interface RunConfig {
-  activityType: ActivityType;
-  autoPause: boolean;
-  audioCues: boolean;
-  audioCueFrequency: "every_km" | "every_500m" | "every_5min" | "off";
-  paceAlerts: boolean;
-  voiceRate: number;
-  displayStats: (
-    | "pace"
-    | "distance"
-    | "time"
-    | "calories"
-    | "elevation"
-    | "avgPace"
-  )[];
-  /**
-   * Activity target. `value`'s unit depends on `type` — single
-   * canonical contract used by every layer that touches a target:
-   *
-   *   - "distance": metres            (e.g. 10000 = 10km)
-   *   - "time":     seconds           (e.g. 1800  = 30min)
-   *   - "pace":     seconds/kilometre (e.g. 270   = 4:30/km)
-   *   - "none":     value omitted
-   *
-   * Source of truth: the distance + time inputs below already
-   * divide value/1000 and value/60 for display, and multiply back
-   * on write. Bridge layers (e.g. templateToPrefill in
-   * `src/lib/runPlanMetadata.ts`) MUST convert their inputs to
-   * metres / seconds / s-per-km BEFORE assigning to target.value.
-   *
-   * Audio-cue consumers in `src/pages/Run.tsx` read target.value
-   * as the unit above with no further conversion.
-   */
-  target: {
-    type: "none" | "distance" | "time" | "pace";
-    value?: number;
-  };
-  intervals?: {
-    reps: number;
-    workDistance?: number;
-    workDuration?: number;
-    workPace?: number;
-    restDuration: number;
-    warmupDuration?: number;
-    cooldownDuration?: number;
-  };
-  guidedWorkout?: GuidedRunWorkout;
-  shoeId?: string;
-  /**
-   * Plan-adherence metadata block, Phase B1.
-   * Snapshot of the programme context active at Start; persisted to
-   * the run doc so History / adherence surfaces can reason about
-   * which runs were on-plan vs off-plan without re-deriving from
-   * programState. See `src/lib/runPlanMetadata.ts` for the field
-   * semantics and computation rules.
-   *
-   * Always present (even on freeform runs — they get the freeform
-   * default shape) so downstream code never has to branch on
-   * "is this field there".
-   */
-  planMetadata: RunPlanMetadata;
-}
-
-const DEFAULT_CONFIG: RunConfig = {
-  activityType: "easy",
-  autoPause: true,
-  audioCues: true,
-  audioCueFrequency: "every_km",
-  paceAlerts: true,
-  voiceRate: 0.9,
-  displayStats: ["pace", "distance", "time", "calories"],
-  target: { type: "none" },
-  // Freeform default — Run.tsx overrides this via savedPreferences
-  // when programme prefill applies. See computePlanMetadata.
-  planMetadata: freeformPlanMetadata("freeform"),
-};
-
-/* Run-type registry. `name` is the long-form label used by the
-   selected-run card, the chooser, and the Start CTA ("Start Free
-   Run"). Two chip fields:
-     `cardChip`    — long form for the selected-run card at the top
-                     of the setup ("Outdoor GPS", "Manual distance",
-                     "Audio"). The card has horizontal room for the
-                     fuller phrasing.
-     `chooserChip` — short form for the chooser rows ("GPS",
-                     "Manual", "Audio"). The chooser packs more
-                     info per row, so the chip stays terse.
-   Both disclose the measurement source so users understand why
-   pace metrics work for outdoor types but not for treadmill.
-   `cardDescription` and `chooserDescription` allow the chooser to
-   carry slightly more detail per row (e.g. "Indoor, manual
-   distance" in the chooser vs "Indoor" on the card where the chip
-   already says "Manual distance").
-   `group` drives the chooser's Outdoor / Other section split.
-   `'manual'` is deliberately absent — that activityType is set
-   programmatically by the GPS-fallback "Track without GPS" path,
-   never picked directly by the user. */
-type ActivityTypeOption = {
-  type: ActivityType;
-  label: string;
-  name: string;
-  icon: string;
-  cardDescription: string;
-  cardChip: string;
-  chooserDescription: string;
-  chooserChip: string;
-  group: "outdoor" | "other";
-};
-
-const ACTIVITY_TYPES: ActivityTypeOption[] = [
-  {
-    type: "freerun",
-    label: "Free",
-    name: "Free Run",
-    icon: "Footprints",
-    cardDescription: "Run at your own pace",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "Run at your own pace",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "easy",
-    label: "Easy",
-    name: "Easy Run",
-    icon: "PersonStanding",
-    cardDescription: "Recovery pace",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "Recovery pace",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "tempo",
-    label: "Tempo",
-    name: "Tempo Run",
-    icon: "Zap",
-    cardDescription: "Sustained effort",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "Sustained effort",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "intervals",
-    label: "Intervals",
-    name: "Intervals",
-    icon: "RefreshCw",
-    cardDescription: "Repeats + rest",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "Repeats + rest",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "long",
-    label: "Long",
-    name: "Long Run",
-    icon: "Route",
-    cardDescription: "Distance-focused",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "Distance-focused",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "race",
-    label: "Race",
-    name: "Race",
-    icon: "Flag",
-    cardDescription: "All-out effort",
-    cardChip: "Outdoor GPS",
-    chooserDescription: "All-out effort",
-    chooserChip: "GPS",
-    group: "outdoor",
-  },
-  {
-    type: "treadmill",
-    label: "Treadmill",
-    name: "Treadmill",
-    icon: "Dumbbell",
-    cardDescription: "Indoor",
-    cardChip: "Manual distance",
-    chooserDescription: "Indoor, manual distance",
-    chooserChip: "Manual",
-    group: "other",
-  },
-  {
-    type: "guided",
-    label: "Guided",
-    name: "Guided Run",
-    icon: "Headphones",
-    cardDescription: "Coach-led workout",
-    cardChip: "Audio",
-    chooserDescription: "Coach-led workout",
-    chooserChip: "Audio",
-    group: "other",
-  },
-];
+/* RunConfig, DEFAULT_CONFIG, ActivityTypeOption and ACTIVITY_TYPES moved to
+   ./runConfigDefaults (run fast-launch arc) so RunLaunchCard + RunTilePicker
+   share one config-from-type source of truth. Imported at the top. */
 
 /**
  * Read-only programme context strip data, computed in Run.tsx from
@@ -421,52 +233,15 @@ export default function RunSetupModal({
     restDuration: 90,
   };
 
-  /**
-   * Adaptive Paces — config patch to personalize a chosen run type from the
-   * user's pace table. Tempo → a threshold target pace; Intervals → an
-   * interval work pace seeded into the interval config. Other types (easy /
-   * long / race / treadmill / guided) keep today's behaviour. Returns just the
-   * activityType when there's no benchmark.
-   */
-  const pacePatchForType = (type: ActivityType): Partial<RunConfig> => {
-    if (!paceTable) return { activityType: type };
-    if (type === "tempo") {
-      const { targetPace } = resolveSessionPaces("tempo", paceTable);
-      return targetPace
-        ? { activityType: type, target: { type: "pace", value: targetPace } }
-        : { activityType: type };
-    }
-    if (type === "intervals") {
-      const { workPace } = resolveSessionPaces("intervals", paceTable);
-      return workPace
-        ? {
-            activityType: type,
-            intervals: { ...(config.intervals ?? intervalConfig), workPace },
-          }
-        : { activityType: type };
-    }
-    return { activityType: type };
-  };
+  /* Adaptive Paces — thin wrappers over the pure helpers in
+     ./runConfigDefaults so the modal, launch card, and tile picker all derive
+     config-from-type identically. `pacePatchForType` seeds intervals from the
+     current config (falling back to the default) exactly as before. */
+  const pacePatchForType = (type: ActivityType): Partial<RunConfig> =>
+    pacePatchForTypePure(type, paceTable, config.intervals ?? intervalConfig);
 
-  /**
-   * Adaptive Paces — the personalized pace BAND for a chooser row (Runna's
-   * workout-list pattern: every session type shows its range up front).
-   * Band-first via the shared sessionPaceDisplay rule; null for types with
-   * no personal pace (freerun / race-without-distance / treadmill / guided)
-   * or when there's no benchmark — the row then reads exactly as before.
-   */
-  const chooserPaceFor = (type: ActivityType): string | null => {
-    if (!paceTable) return null;
-    if (
-      type !== "easy" &&
-      type !== "tempo" &&
-      type !== "intervals" &&
-      type !== "long"
-    ) {
-      return null;
-    }
-    return sessionPaceDisplay(resolveSessionPaces(type, paceTable));
-  };
+  const chooserPaceFor = (type: ActivityType): string | null =>
+    chooserPaceForPure(type, paceTable);
 
   /* Pre-flight target validation. Catches the case where the user
      types a sub-threshold distance / duration / pace and taps Start
