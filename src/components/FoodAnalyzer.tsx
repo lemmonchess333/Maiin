@@ -139,6 +139,12 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   };
 }
 
+/** Peak-end "Saved ✓" flash before the modal auto-closes. Trimmed from a
+ *  1200ms hold: the meal is already committed by then (the awaited setDoc),
+ *  and the favourite + photo writes are fire-and-forget, so anything past a
+ *  brief confirming flash was pure dead time (Doherty / responsiveness). */
+const SAVED_FLASH_MS = 500;
+
 export default function FoodAnalyzer({
   date,
   meal: targetMealCategory,
@@ -451,7 +457,11 @@ export default function FoodAnalyzer({
        the AI's container title ("Breakfast Ingredients") while
        the diary now reads correctly, which would have been a
        confusing inconsistency. */
-      await addFavourite({
+      // Fire-and-forget (was awaited): the favourite is a quick-log CACHE,
+      // not the commit — the meal is already saved above. addFavourite catches
+      // its own errors and returns benign, so it can't fail the save; keeping
+      // the save blocked on this cache round-trip was pure perceived latency.
+      void addFavourite({
         name: derivedFoodName,
         calories: Math.round(displayTotals.calories),
         protein: Math.round(displayTotals.protein),
@@ -469,7 +479,7 @@ export default function FoodAnalyzer({
         handleResetAll();
         setCameraOpen(false);
         onSaved?.();
-      }, 1200);
+      }, SAVED_FLASH_MS);
     } catch (err) {
       // Catch every throw on the save path — pre-fix any error
       // (offline setDoc, addFavourite quota, localStorage in
