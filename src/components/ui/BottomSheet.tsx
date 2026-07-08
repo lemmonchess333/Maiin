@@ -26,6 +26,7 @@
  */
 import { Drawer } from "vaul";
 import type { ReactNode } from "react";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { cn } from "@/lib/utils";
 
 interface BottomSheetProps {
@@ -72,6 +73,12 @@ export function BottomSheet({
   overlayClassName,
   children,
 }: BottomSheetProps) {
+  // Device/browser BACK closes the sheet instead of navigating the page away.
+  // A non-dismissible sheet still registers (with a no-op) so back is trapped,
+  // not passed through to the router. See lib/backDismiss.tsx.
+  useBackDismiss(open, () => {
+    if (dismissible) onOpenChange(false);
+  });
   return (
     <Drawer.Root
       open={open}
@@ -87,7 +94,7 @@ export function BottomSheet({
             "fixed bottom-0 left-0 right-0 z-50",
             "rounded-t-2xl flex flex-col bg-background safe-area-pb",
             maxHeight,
-            className,
+            className
           )}
         >
           {hideHeader ? (
