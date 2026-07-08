@@ -42,6 +42,7 @@ import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { cn } from "@/lib/utils";
 
 export type DialogSize = "sm" | "md" | "lg";
@@ -126,6 +127,13 @@ export function Dialog({
   const generatedDescId = useId();
   const titleId = title ? generatedTitleId : labelledBy;
   const descId = description ? generatedDescId : undefined;
+
+  // Device/browser BACK closes the dialog when Escape would (back ≈ escape);
+  // a forced-choice dialog (closeOnEscape=false) traps back instead of letting
+  // it navigate the page away. See lib/backDismiss.tsx.
+  useBackDismiss(open, () => {
+    if (closeOnEscape) onClose();
+  });
 
   const ref = useFocusTrap<HTMLDivElement>(open);
 

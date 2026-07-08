@@ -20,6 +20,7 @@ import { DailyNutritionSnapshot } from "@/hooks/useDailyNutritionSnapshot";
 import { RemindersProvider } from "@/hooks/RemindersProvider";
 import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
+import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
@@ -716,11 +717,16 @@ function App() {
           <MinVersionGate>
             <AuthProvider>
               <NotificationBubbleProvider>
-                <ToastProvider />
-                <ShareComposerSheet />
-                <OneTimeMaintenance />
-                <RevenueCatIdentity />
-                <AppRoutes />
+                {/* Global back-to-dismiss registry: device/browser BACK closes
+                    the topmost open overlay (native interceptor wired; web is a
+                    fast-follow). Wraps the root-level overlays + all routes. */}
+                <BackDismissProvider>
+                  <ToastProvider />
+                  <ShareComposerSheet />
+                  <OneTimeMaintenance />
+                  <RevenueCatIdentity />
+                  <AppRoutes />
+                </BackDismissProvider>
               </NotificationBubbleProvider>
             </AuthProvider>
           </MinVersionGate>
