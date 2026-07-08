@@ -16,7 +16,6 @@
  * See `scratchpad/spec-back-dismiss.md`.
  */
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
 import { isNativePlatform } from "./platform";
 import { logger } from "./logger";
 import { createWebBackController } from "./webBackController";
@@ -51,8 +50,13 @@ interface StackEntry {
   /** Set true when a web popstate is closing this entry, so its unregister
    *  tells the controller the sentinel was already popped by the user. */
   viaBack: boolean;
-  /** Route pathname when the overlay opened — compared at close to detect the
-   *  navigate-from-overlay case (web only). */
+  /** window.location.pathname when the overlay opened — compared at close to
+   *  detect the navigate-from-overlay case (web only). Read from window.location
+   *  (not useLocation) so the compare is SYNCHRONOUS at unregister time: React
+   *  Router's navigate() calls history.pushState synchronously, so the URL is
+   *  already the new route when the overlay's cleanup runs — a useLocation-fed
+   *  ref could still hold the old path (effect-ordering race) and mis-detect the
+   *  navigation, wrongly consuming the sentinel and undoing the nav (#6). */
   openPath: string;
 }
 
@@ -61,13 +65,6 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
   // always read the current top without re-subscribing.
   const nextId = useRef(0);
   const stack = useRef<StackEntry[]>([]);
-
-  // Latest route pathname, read synchronously in register/unregister.
-  const location = useLocation();
-  const pathRef = useRef(location.pathname);
-  useEffect(() => {
-    pathRef.current = location.pathname;
-  }, [location.pathname]);
 
   // WEB sentinel controller (null on native — native uses the backButton
   // listener, not history sentinels). Stable for the provider's lifetime.
@@ -90,7 +87,7 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
         id,
         handler,
         viaBack: false,
-        openPath: pathRef.current,
+        openPath: window.location.pathname,
       };
       stack.current.push(entry);
       webController?.onOpen();
@@ -98,7 +95,7 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
         stack.current = stack.current.filter((e) => e.id !== id);
         webController?.onClose(
           entry.viaBack,
-          pathRef.current !== entry.openPath
+          window.location.pathname !== entry.openPath
         );
       };
     },
