@@ -45,6 +45,7 @@ import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
+import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
@@ -1315,6 +1316,9 @@ export default function Food() {
   }, [favourites.length, meals, quickMeals.length]);
 
   const [quickAdding, setQuickAdding] = useState<string | null>(null);
+  // Synchronous latch closing the same-frame double-tap window that the
+  // `quickAdding` state guard alone can't (iOS ghost-click → duplicate meal).
+  const quickAddGuard = useInFlightGuard();
 
   const handleRemoveFavourite = async (favouriteId: string, name: string) => {
     /* Capture the doc BEFORE the optimistic hide so undo can
@@ -1378,7 +1382,7 @@ export default function Food() {
   };
 
   const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
-    if (!user || quickAdding) return;
+    if (!user || quickAdding || !quickAddGuard.begin()) return;
     /* Telemetry — emit BEFORE the save so we capture taps that
        fail mid-write too. favouriteId is undefined for recents /
        seeded defaults, which is meaningful — dashboards can split
@@ -1415,8 +1419,10 @@ export default function Food() {
       toast.error("Couldn't save. Please try again.", {
         id: "food-save-error",
       });
+    } finally {
+      quickAddGuard.end();
+      setQuickAdding(null);
     }
-    setQuickAdding(null);
   };
 
   /* Typeahead pantry pick. Same persisted shape as a chip tap
