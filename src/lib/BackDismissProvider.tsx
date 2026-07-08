@@ -10,6 +10,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { isNativePlatform } from "./platform";
+import { logger } from "./logger";
 import { BackDismissContext, type BackDismissApi } from "./backDismiss";
 
 /** Lazy handle to the Capacitor App plugin. Dynamic import keeps the native
@@ -52,7 +53,15 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
   const dispatchBack = useCallback(() => {
     const top = stack.current[stack.current.length - 1];
     if (!top) return false;
-    top.handler();
+    // Registering the native backButton listener suppresses Android's default
+    // back, so a throwing handler must not be allowed to brick the button
+    // (no dismiss, no navigate, no exit). Swallow + log: the overlay stays
+    // (recoverable via its on-screen close) rather than the app going dead.
+    try {
+      top.handler();
+    } catch (err) {
+      logger.error("[backDismiss] dismiss handler threw", err);
+    }
     return true;
   }, []);
 

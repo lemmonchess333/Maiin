@@ -114,6 +114,27 @@ describe("back-dismiss registry", () => {
     expect(below).not.toHaveBeenCalled();
   });
 
+  it("a throwing handler is swallowed (never bricks the back button)", () => {
+    const below = vi.fn();
+    render(
+      <BackDismissProvider>
+        <BackButton />
+        <Overlay active onBack={below} />
+        <Overlay
+          active
+          onBack={() => {
+            throw new Error("handler boom");
+          }}
+        />
+      </BackDismissProvider>
+    );
+    // Back must not throw, and must still report handled (swallowed) so the
+    // native listener doesn't fall through to navigate/exit.
+    expect(() => fireEvent.click(screen.getByTestId("back"))).not.toThrow();
+    expect(screen.getByTestId("back")).toHaveTextContent("true");
+    expect(below).not.toHaveBeenCalled();
+  });
+
   it("repeated back on the same overlay is idempotent-safe (no cascade)", () => {
     // dispatchBack doesn't pop, so a rapid double-press re-invokes the SAME
     // top handler rather than cascade-closing the overlay beneath it.
