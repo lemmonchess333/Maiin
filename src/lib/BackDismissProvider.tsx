@@ -1,16 +1,24 @@
 /**
- * BackDismissProvider — maintains a LIFO stack of overlay "dismissers" and a
- * single NATIVE (Android) back interceptor so the device back button closes the
- * topmost open overlay instead of navigating the route away.
+ * BackDismissProvider — maintains a LIFO stack of overlay "dismissers" and the
+ * back interceptors so the device/browser back affordance closes the topmost
+ * open overlay instead of navigating the route away.
  *
- * Platform scope (first arc): native only. iOS has no back affordance; the WEB
- * interceptor (history sentinel + popstate) is a deliberate fast-follow — the
- * seam is `dispatchBack()`, which a web popstate handler will call exactly as
- * the native listener does. See `scratchpad/spec-back-dismiss.md`.
+ *   - NATIVE (Android): a Capacitor `@capacitor/app` backButton listener →
+ *     dispatchBack(); if handled, swallow; else route back / exit.
+ *   - WEB: a history-sentinel + popstate scheme (the platform has no back
+ *     event). The pure accounting lives in `webBackController`; this binds it to
+ *     the real history API and supplies the router-aware `wasNavigation` signal
+ *     (compare location at open vs close) so the navigate-from-overlay case
+ *     doesn't undo a navigation.
+ *   - iOS: no back affordance (no hardware back; WKWebView swipe-back-nav off by
+ *     default) → neither interceptor fires; overlays dismiss via backdrop/X.
+ *
+ * See `scratchpad/spec-back-dismiss.md`.
  */
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { isNativePlatform } from "./platform";
 import { logger } from "./logger";
+import { createWebBackController } from "./webBackController";
 import { BackDismissContext, type BackDismissApi } from "./backDismiss";
 
 /** Lazy handle to the Capacitor App plugin. Dynamic import keeps the native
@@ -36,19 +44,63 @@ function loadCapacitorApp(): Promise<{ plugin: CapacitorAppPlugin } | null> {
   return appPluginPromise;
 }
 
-export function BackDismissProvider({ children }: { children: ReactNode }) {
-  // Monotonic id + the live LIFO stack. Refs (not state) so the interceptor
-  // always reads the current top without re-subscribing.
-  const nextId = useRef(0);
-  const stack = useRef<Array<{ id: number; handler: () => void }>>([]);
+interface StackEntry {
+  id: number;
+  handler: () => void;
+  /** Set true when a web popstate is closing this entry, so its unregister
+   *  tells the controller the sentinel was already popped by the user. */
+  viaBack: boolean;
+  /** window.location.pathname when the overlay opened — compared at close to
+   *  detect the navigate-from-overlay case (web only). Read from window.location
+   *  (not useLocation) so the compare is SYNCHRONOUS at unregister time: React
+   *  Router's navigate() calls history.pushState synchronously, so the URL is
+   *  already the new route when the overlay's cleanup runs — a useLocation-fed
+   *  ref could still hold the old path (effect-ordering race) and mis-detect the
+   *  navigation, wrongly consuming the sentinel and undoing the nav (#6). */
+  openPath: string;
+}
 
-  const register = useCallback((handler: () => void) => {
-    const id = nextId.current++;
-    stack.current.push({ id, handler });
-    return () => {
-      stack.current = stack.current.filter((e) => e.id !== id);
-    };
-  }, []);
+export function BackDismissProvider({ children }: { children: ReactNode }) {
+  // Monotonic id + the live LIFO stack. Refs (not state) so the interceptors
+  // always read the current top without re-subscribing.
+  const nextId = useRef(0);
+  const stack = useRef<StackEntry[]>([]);
+
+  // WEB sentinel controller (null on native — native uses the backButton
+  // listener, not history sentinels). Stable for the provider's lifetime.
+  const webController = useMemo(
+    () =>
+      isNativePlatform()
+        ? null
+        : createWebBackController({
+            pushSentinel: () =>
+              window.history.pushState({ __overlayDismiss: true }, ""),
+            back: () => window.history.back(),
+          }),
+    []
+  );
+
+  const register = useCallback(
+    (handler: () => void) => {
+      const id = nextId.current++;
+      const entry: StackEntry = {
+        id,
+        handler,
+        viaBack: false,
+        openPath: window.location.pathname,
+      };
+      stack.current.push(entry);
+      webController?.onOpen();
+      return () => {
+        stack.current = stack.current.filter((e) => e.id !== id);
+        webController?.onClose(
+          entry.viaBack,
+          window.location.pathname !== entry.openPath
+        );
+      };
+    },
+    [webController]
+  );
 
   const dispatchBack = useCallback(() => {
     const top = stack.current[stack.current.length - 1];
@@ -65,8 +117,7 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  // Native (Android) interceptor. iOS has no back affordance; web is the
-  // deferred fast-follow.
+  // NATIVE (Android) interceptor.
   useEffect(() => {
     if (!isNativePlatform()) return;
     let cancelled = false;
@@ -89,6 +140,28 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
       handle?.remove();
     };
   }, [dispatchBack]);
+
+  // WEB interceptor: a popstate that the controller says was a user back on a
+  // sentinel closes the topmost not-already-closing overlay.
+  useEffect(() => {
+    if (!webController) return;
+    const onPop = () => {
+      if (webController.onPop() !== "close-top") return;
+      for (let i = stack.current.length - 1; i >= 0; i--) {
+        const entry = stack.current[i];
+        if (entry.viaBack) continue; // already closing via an earlier back
+        entry.viaBack = true;
+        try {
+          entry.handler();
+        } catch (err) {
+          logger.error("[backDismiss] web dismiss handler threw", err);
+        }
+        return;
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [webController]);
 
   const api = useMemo<BackDismissApi>(
     () => ({ register, dispatchBack }),

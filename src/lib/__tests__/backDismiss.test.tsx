@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { useState } from "react";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { BackDismissProvider } from "../BackDismissProvider";
 import { useBackDismiss, useBackDismissController } from "../backDismiss";
 
@@ -34,10 +35,12 @@ describe("back-dismiss registry", () => {
   it("back invokes the single active dismisser and reports handled", () => {
     const onBack = vi.fn();
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={onBack} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={onBack} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByTestId("back"));
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -48,11 +51,13 @@ describe("back-dismiss registry", () => {
     const first = vi.fn();
     const second = vi.fn();
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={first} />
-        <Overlay active onBack={second} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={first} />
+          <Overlay active onBack={second} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByTestId("back"));
     expect(second).toHaveBeenCalledTimes(1);
@@ -63,19 +68,23 @@ describe("back-dismiss registry", () => {
     const first = vi.fn();
     const second = vi.fn();
     const { rerender } = render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={first} />
-        <Overlay active onBack={second} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={first} />
+          <Overlay active onBack={second} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     // Top (second) closes → its registration is removed.
     rerender(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={first} />
-        <Overlay active={false} onBack={second} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={first} />
+          <Overlay active={false} onBack={second} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByTestId("back"));
     expect(first).toHaveBeenCalledTimes(1);
@@ -84,10 +93,12 @@ describe("back-dismiss registry", () => {
 
   it("reports not-handled when no overlay is open", () => {
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active={false} onBack={vi.fn()} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active={false} onBack={vi.fn()} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByTestId("back"));
     expect(screen.getByTestId("back")).toHaveTextContent("false");
@@ -100,12 +111,14 @@ describe("back-dismiss registry", () => {
   it("a trapped (no-op) top overlay swallows back and shields the one below", () => {
     const below = vi.fn();
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={below} />
-        {/* Non-dismissible / forced-choice: registers a no-op → traps back. */}
-        <Overlay active onBack={() => {}} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={below} />
+          {/* Non-dismissible / forced-choice: registers a no-op → traps back. */}
+          <Overlay active onBack={() => {}} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByTestId("back"));
     // Handled (swallowed) even though nothing closed; the overlay below is NOT
@@ -117,16 +130,18 @@ describe("back-dismiss registry", () => {
   it("a throwing handler is swallowed (never bricks the back button)", () => {
     const below = vi.fn();
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={below} />
-        <Overlay
-          active
-          onBack={() => {
-            throw new Error("handler boom");
-          }}
-        />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={below} />
+          <Overlay
+            active
+            onBack={() => {
+              throw new Error("handler boom");
+            }}
+          />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     // Back must not throw, and must still report handled (swallowed) so the
     // native listener doesn't fall through to navigate/exit.
@@ -141,11 +156,13 @@ describe("back-dismiss registry", () => {
     const top = vi.fn();
     const below = vi.fn();
     render(
-      <BackDismissProvider>
-        <BackButton />
-        <Overlay active onBack={below} />
-        <Overlay active onBack={top} />
-      </BackDismissProvider>
+      <MemoryRouter>
+        <BackDismissProvider>
+          <BackButton />
+          <Overlay active onBack={below} />
+          <Overlay active onBack={top} />
+        </BackDismissProvider>
+      </MemoryRouter>
     );
     const btn = screen.getByTestId("back");
     fireEvent.click(btn);
