@@ -27,6 +27,7 @@
 import { Drawer } from "vaul";
 import type { ReactNode } from "react";
 import { useBackDismiss } from "@/lib/backDismiss";
+import { useKeyboardInset } from "@/hooks/useKeyboardInset";
 import { cn } from "@/lib/utils";
 
 interface BottomSheetProps {
@@ -79,6 +80,11 @@ export function BottomSheet({
   useBackDismiss(open, () => {
     if (dismissible) onOpenChange(false);
   });
+  // Lift the sheet's content above the on-screen keyboard: a soft keyboard
+  // covers this bottom-anchored sheet, hiding any input pinned near its foot.
+  // Reserving the keyboard's overlap as bottom padding pushes the content up.
+  // (web + Android via visualViewport; iOS-native keyboard is a follow-up.)
+  const keyboardInset = useKeyboardInset();
   return (
     <Drawer.Root
       open={open}
@@ -96,6 +102,9 @@ export function BottomSheet({
             maxHeight,
             className
           )}
+          style={
+            keyboardInset > 0 ? { paddingBottom: keyboardInset } : undefined
+          }
         >
           {hideHeader ? (
             // When the caller hides the visible header strip we
