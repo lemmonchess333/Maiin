@@ -20,6 +20,7 @@ import {
 import type { GPSPoint, Split } from "../../lib/gps";
 import { type ZoneNumber } from "../../lib/hrZones";
 import { RunControlButton } from "@/components/ui/RunControlButton";
+import HoldToFinishButton from "./HoldToFinishButton";
 import { Dialog } from "@/components/ui/Dialog";
 
 // HR zone → colour ramp (cool→hot), all THEME tokens (no hex literals).
@@ -667,8 +668,13 @@ export default function RunBottomSheet({
                   }
                 />
 
-                {/* Spacer — visual balance, not interactive. */}
-                <div className="size-14" aria-hidden="true" />
+                {/* Hold-to-finish — restores an end affordance to the active
+                    state (was Pause→Stop→confirm = 3 taps). Hold ends directly;
+                    a tap / keyboard opens the confirm dialog (Discard path). */}
+                <HoldToFinishButton
+                  onFinish={onStop}
+                  onRequestConfirm={() => setShowStopConfirm(true)}
+                />
               </div>
             ) : (
               <div className="flex items-center justify-center gap-12 flex-shrink-0">
