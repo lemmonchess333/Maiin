@@ -10,6 +10,7 @@ import {
   Keyboard,
 } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
+import { useBackDismiss } from "@/lib/backDismiss";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 
@@ -100,6 +101,10 @@ export default function FoodCameraModal({
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  // Device/browser BACK closes the camera instead of leaving the Food tab —
+  // the #1 back-trap. See lib/backDismiss.tsx.
+  useBackDismiss(open, () => onCloseRef.current());
 
   // a11y: this is a full-screen overlay (not the Dialog/BottomSheet primitive —
   // it's a full-bleed camera surface), and it already focus-traps via
