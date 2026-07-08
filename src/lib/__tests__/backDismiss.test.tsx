@@ -96,4 +96,40 @@ describe("back-dismiss registry", () => {
   it("no-ops safely when used outside a provider", () => {
     expect(() => render(<Overlay active onBack={vi.fn()} />)).not.toThrow();
   });
+
+  it("a trapped (no-op) top overlay swallows back and shields the one below", () => {
+    const below = vi.fn();
+    render(
+      <BackDismissProvider>
+        <BackButton />
+        <Overlay active onBack={below} />
+        {/* Non-dismissible / forced-choice: registers a no-op → traps back. */}
+        <Overlay active onBack={() => {}} />
+      </BackDismissProvider>
+    );
+    fireEvent.click(screen.getByTestId("back"));
+    // Handled (swallowed) even though nothing closed; the overlay below is NOT
+    // reached — back doesn't "fall through" a trap.
+    expect(screen.getByTestId("back")).toHaveTextContent("true");
+    expect(below).not.toHaveBeenCalled();
+  });
+
+  it("repeated back on the same overlay is idempotent-safe (no cascade)", () => {
+    // dispatchBack doesn't pop, so a rapid double-press re-invokes the SAME
+    // top handler rather than cascade-closing the overlay beneath it.
+    const top = vi.fn();
+    const below = vi.fn();
+    render(
+      <BackDismissProvider>
+        <BackButton />
+        <Overlay active onBack={below} />
+        <Overlay active onBack={top} />
+      </BackDismissProvider>
+    );
+    const btn = screen.getByTestId("back");
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    expect(top).toHaveBeenCalledTimes(2); // same handler, twice
+    expect(below).not.toHaveBeenCalled(); // never cascaded to the one below
+  });
 });

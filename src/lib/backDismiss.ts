@@ -31,6 +31,15 @@ export const BackDismissContext = createContext<BackDismissApi | null>(null);
  * a NO-OP `onBack` so their presence swallows the back (traps it) rather than
  * letting it navigate the page away.
  *
+ * IDEMPOTENCY CONTRACT: `dispatchBack` invokes the top handler but does NOT pop
+ * it — the entry is removed when the overlay's own close causes `active→false`.
+ * That means a rapid double back-press (two native events before React commits
+ * the close) invokes the SAME handler twice. This is deliberate — it absorbs an
+ * accidental double-press instead of cascade-closing the overlay beneath — so
+ * `onBack` MUST be idempotent (closing an already-closing overlay is a no-op,
+ * which every current wiring satisfies via `setOpen(false)`). A future
+ * non-idempotent handler (e.g. "open a Leave-run? confirm") must guard itself.
+ *
  * No-ops safely when rendered outside a BackDismissProvider (e.g. isolated
  * component tests) so overlays don't need the provider to render.
  */
