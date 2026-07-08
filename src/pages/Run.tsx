@@ -26,12 +26,19 @@ import { paceTableFromFitness, resolveSessionPaces } from "../lib/runPaces";
 import {
   getScheduledRunStatus,
   isScheduledRunStartable,
+  isScheduledRunTerminal,
 } from "../lib/scheduledRunStatus";
 import RunMap from "../components/run/RunMapLazy";
 import RunSetupModal, {
   type RunConfig,
   type ProgramContextStrip,
 } from "../components/run/RunSetupModal";
+import RunLaunchCard from "../components/run/RunLaunchCard";
+import RunTilePicker from "../components/run/RunTilePicker";
+import {
+  buildLaunchConfig,
+  buildTileConfig,
+} from "../components/run/runConfigDefaults";
 import RunSetupSkeleton from "../components/run/RunSetupSkeleton";
 import RunResumePrompt from "../components/run/RunResumePrompt";
 import {
@@ -302,6 +309,12 @@ export default function Run() {
   // (Resume / Start new / Discard) flip it back to null and either
   // rehydrate the run or proceed to the normal setup flow.
   const [resumePrompt, setResumePrompt] = useState<StoredRun | null>(null);
+  // Fast-launch arc: `forceModal` is the "Customize" / "More options" escape
+  // hatch that drops from the launch card / tile picker into the full config
+  // modal. `launchShoeId` is the shoe chosen inline on either fast surface.
+  // Both reset naturally on each /run mount.
+  const [forceModal, setForceModal] = useState(false);
+  const [launchShoeId, setLaunchShoeId] = useState<string | null>(null);
   // `startedAtRef` mirrors the timer's original-start epoch for the
   // active run so the periodic write effect can persist it without
   // racing with React state. Set on handleStart and on Resume.
@@ -507,6 +520,42 @@ export default function Run() {
   }, [isFreeformUser, programLoading]);
   const showSkeleton =
     !isFreeformUser && programLoading && skeletonThresholdElapsed;
+
+  // ─── Fast-launch surfaces (run fast-launch arc) ──────────────────
+  // A confident, NAMED planned run (a real RUN_TEMPLATE resolved →
+  // metadata.actualTemplateId !== null, i.e. computePlanMetadata branch 1
+  // valid ?template= or branch 3b today_plan) skips the full config form for a
+  // one-tap launch card. Everything else (freeform, rest/completed day, bad
+  // template, ?type=) gets the tile picker. Route import, interrupted-run
+  // resume, and Customize / More options fall back to the full modal.
+  const paceTable = useMemo(
+    () => paceTableFromFitness(profile?.runFitness ?? null),
+    [profile?.runFitness]
+  );
+  const launchWorkout = useMemo(
+    () =>
+      planDecision.metadata.actualTemplateId
+        ? (RUN_TEMPLATES.find(
+            (t) => t.id === planDecision.metadata.actualTemplateId
+          ) ?? null)
+        : null,
+    [planDecision.metadata.actualTemplateId]
+  );
+  const canFastLaunch =
+    !forceModal &&
+    (isFreeformUser || !programLoading) &&
+    launchWorkout !== null &&
+    targetRoute == null &&
+    resumePrompt == null;
+  // "Extra run" eyebrow — the pinned scheduled slot is already terminal (a
+  // bonus run of a completed / skipped day, reached because ?template= wins
+  // over the completed-day branch). Detected via the runDay the metadata pins.
+  const isExtraLaunch = useMemo(() => {
+    const id = planDecision.metadata.scheduledRunId;
+    if (!id) return false;
+    const day = programState?.runDays?.find((d) => d.id === id);
+    return day ? isScheduledRunTerminal(getScheduledRunStatus(day)) : false;
+  }, [planDecision.metadata.scheduledRunId, programState?.runDays]);
 
   const handleStart = async (config: RunConfig) => {
     audioCues.prime();
@@ -978,7 +1027,29 @@ export default function Run() {
             showSkeleton ? (
               <RunSetupSkeleton />
             ) : null
-          ) : (
+          ) : canFastLaunch && launchWorkout ? (
+            // Confident named planned run → one-tap launch card (preserves the
+            // gesture so audio primes). Customize drops to the full modal.
+            <RunLaunchCard
+              workout={launchWorkout}
+              prefill={planDecision.prefill}
+              strip={planDecision.strip}
+              isExtra={isExtraLaunch}
+              selectedShoeId={launchShoeId}
+              onSelectShoe={setLaunchShoeId}
+              onStart={() =>
+                handleStart(
+                  buildLaunchConfig(
+                    planDecision,
+                    profile?.audioCues !== false,
+                    launchShoeId
+                  )
+                )
+              }
+              onCustomize={() => setForceModal(true)}
+              onBack={() => navigate("/program")}
+            />
+          ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
               {/* Follow-a-route entry on the setup screen: import a GPX or pick
                   a saved route, or (when a route is loaded — incl. arriving via
@@ -1017,6 +1088,28 @@ export default function Run() {
                 }}
               />
             </div>
+          ) : (
+            // Freeform / rest / completed / ad-hoc → one-tap tile picker.
+            // Structured sessions (intervals/treadmill/guided/race/route) live
+            // behind "More options" → the full modal.
+            <RunTilePicker
+              paceTable={paceTable}
+              selectedShoeId={launchShoeId}
+              onSelectShoe={setLaunchShoeId}
+              onPickType={(type) =>
+                handleStart(
+                  buildTileConfig(
+                    type,
+                    paceTable,
+                    planDecision.metadata,
+                    profile?.audioCues !== false,
+                    launchShoeId
+                  )
+                )
+              }
+              onMoreOptions={() => setForceModal(true)}
+              onBack={() => navigate("/program")}
+            />
           )}
         </>
       )}
