@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useProgram } from "@/features/program/useProgram";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
@@ -100,6 +100,7 @@ function formatVolume(kg: number): string {
 
 function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     programState,
     prescription,
@@ -154,7 +155,25 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // "start a run". Defaulting to Lift because the lift swiper is the
   // most-edited surface and is where the user most often returns.
   type ProgramTab = "lift" | "run";
-  const [activeTab, setActiveTab] = useState<ProgramTab>("lift");
+  // Mirror the Lift|Run tab into the URL (?tab=run) for the same reason as the
+  // day selector: navigating into a run/exercise detail and pressing back must
+  // return to the tab the user was on, not snap back to Lift.
+  const urlTab: ProgramTab = searchParams.get("tab") === "run" ? "run" : "lift";
+  const [activeTab, setActiveTab] = useState<ProgramTab>(urlTab);
+  const selectTab = useCallback(
+    (value: ProgramTab) => {
+      setActiveTab(value);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", value);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const { workouts: recentWorkouts } = useWorkouts();
 
@@ -193,8 +212,38 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return map;
   }, [recentWorkouts]);
 
-  // Core navigation state
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  // Core navigation state. The selected training day is mirrored into the URL
+  // (?day=N) so opening an exercise detail and pressing back RESTORES the day
+  // instead of snapping to today — a fresh open (no ?day) still lands on today.
+  const urlDay = (() => {
+    const raw = searchParams.get("day");
+    if (raw == null) return null;
+    const n = Number.parseInt(raw, 10);
+    return Number.isInteger(n) && n >= 0 ? n : null;
+  })();
+  const [selectedDayIndex, setSelectedDayIndex] = useState(urlDay ?? 0);
+  const setDayInUrl = useCallback(
+    (i: number) => {
+      // replace (not push) so day taps don't stack history entries — back
+      // should leave the page, not walk back through prior day selections.
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("day", String(i));
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+  const selectDay = useCallback(
+    (i: number) => {
+      setSelectedDayIndex(i);
+      setDayInUrl(i);
+    },
+    [setDayInUrl]
+  );
   const [direction, setDirection] = useState(0);
   const isAnimating = useRef(false);
 
@@ -460,7 +509,9 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
   }, [programState, viewingHistoryIndex]);
 
-  // Auto-select on week change (not on individual completion)
+  // Auto-select on week change (not on individual completion). Skips the reset
+  // on the FIRST run when the URL pinned a day (back-navigation restore) — only
+  // a fresh open or a genuine week change snaps back to today.
   const prevWeekKeyRef = useRef("");
   useEffect(() => {
     if (!programState) return;
@@ -469,11 +520,14 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         ? `h${viewingHistoryIndex}`
         : `w${programState.weekNumber}`;
     if (prevWeekKeyRef.current !== weekKey) {
+      const isFirstRun = prevWeekKeyRef.current === "";
       prevWeekKeyRef.current = weekKey;
+      // Honour a URL-restored day on mount; otherwise land on today.
+      if (isFirstRun && urlDay !== null) return;
       const target = todayIndex >= 0 ? todayIndex : 0;
-      setSelectedDayIndex(target); // eslint-disable-line react-hooks/set-state-in-effect -- intentional: reset selection on week navigation
+      selectDay(target); // eslint-disable-line react-hooks/set-state-in-effect -- intentional: reset selection on week navigation
     }
-  }, [programState, viewingHistoryIndex, todayIndex]);
+  }, [programState, viewingHistoryIndex, todayIndex, urlDay, selectDay]);
 
   // Scroll reset on day change
   useEffect(() => {
@@ -583,7 +637,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     if (isAnimating.current || newIndex === idx) return;
     isAnimating.current = true;
     setDirection(newIndex > idx ? 1 : -1);
-    setSelectedDayIndex(newIndex);
+    selectDay(newIndex);
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
   };
 
@@ -782,7 +836,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <SegmentedControl
             ariaLabel="Train mode"
             value={activeTab}
-            onChange={(value) => setActiveTab(value)}
+            onChange={(value) => selectTab(value)}
             tone={activeTab === "run" ? "running" : "lifting"}
             className="rounded-2xl bg-muted/50 p-1.5"
             options={
