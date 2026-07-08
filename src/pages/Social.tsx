@@ -143,7 +143,30 @@ export default function Social() {
    * the thresholds (0 = solo, ≥3 = following-feed unlocked per S4), not
    * the exact number.
    */
-  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>("explore");
+  // Feed sub-tab (Following | Explore) is mirrored into the URL (?feed=) so
+  // opening a profile and pressing back RESTORES the chosen sub-tab instead of
+  // the smart-default effect below re-deriving it on remount. A fresh open
+  // (no ?feed) still gets the smart default.
+  const feedFromUrl = searchParams.get("feed");
+  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>(
+    feedFromUrl === "following" || feedFromUrl === "explore"
+      ? feedFromUrl
+      : "explore"
+  );
+  const selectFeedSubTab = useCallback(
+    (next: FeedSubTab) => {
+      setFeedSubTab(next);
+      setSearchParams(
+        (params) => {
+          const updated = new URLSearchParams(params);
+          updated.set("feed", next);
+          return updated;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
   const [followingCount, setFollowingCount] = useState<number | null>(null);
   useEffect(() => {
     if (!user || followingCount !== null) return;
@@ -152,7 +175,11 @@ export default function Social() {
       .then((n) => {
         if (cancelled) return;
         setFollowingCount(n);
-        setFeedSubTab(n > 0 ? "following" : "explore");
+        // Only auto-pick the sub-tab on a fresh open; a URL-restored ?feed
+        // (back-navigation) must win over the follows-count default.
+        if (feedFromUrl !== "following" && feedFromUrl !== "explore") {
+          setFeedSubTab(n > 0 ? "following" : "explore");
+        }
       })
       .catch(() => {
         // On error, treat as zero — safe empty state + trajectory card.
@@ -161,7 +188,7 @@ export default function Social() {
     return () => {
       cancelled = true;
     };
-  }, [user, followingCount]);
+  }, [user, followingCount, feedFromUrl]);
 
   // Soc5c smart default — only fires when there's NO URL `?tab=` AND
   // the user is genuinely brand-new (zero follows + zero crew). Once
@@ -660,7 +687,7 @@ export default function Social() {
                   ariaLabel="Feed source"
                   value={feedSubTab}
                   onChange={(st) => {
-                    setFeedSubTab(st);
+                    selectFeedSubTab(st);
                     trackSocialEvent("social_feed_subtab_changed", {
                       subTab: st,
                     });
