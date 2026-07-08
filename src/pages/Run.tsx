@@ -70,6 +70,7 @@ import {
 } from "../lib/runGuards";
 import { computeRouteQuality } from "../lib/routeQuality";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { useBackDismiss } from "../lib/backDismiss";
 import { useProgram } from "../features/program/useProgram";
 import {
   computePlanMetadata,
@@ -295,6 +296,14 @@ export default function Run() {
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  // Device/browser BACK during an active/paused run opens a "Leave run?"
+  // confirm instead of silently exiting (the run is snapshot-recoverable, but
+  // an accidental mid-run exit is jarring). Routes through the back-dismiss
+  // primitive so native back + web back both land here. See lib/backDismiss.
+  useBackDismiss(phase === "active" || phase === "paused", () =>
+    setShowLeaveConfirm(true)
+  );
   // PR H (audit P1 #9): accumulator for total time spent backgrounded
   // during the run. Summed in handleVisible from every
   // visibility-hidden window; written to the run doc via RunSummary
@@ -1547,6 +1556,18 @@ export default function Run() {
           navigate("/");
         }}
         onCancel={() => setShowDiscardConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showLeaveConfirm}
+        title="Leave this run?"
+        description="Your progress is saved — you can resume it from where you left off."
+        confirmLabel="Leave"
+        onConfirm={() => {
+          setShowLeaveConfirm(false);
+          navigate("/");
+        }}
+        onCancel={() => setShowLeaveConfirm(false)}
       />
     </div>
   );
