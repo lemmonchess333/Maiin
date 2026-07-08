@@ -155,7 +155,25 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // "start a run". Defaulting to Lift because the lift swiper is the
   // most-edited surface and is where the user most often returns.
   type ProgramTab = "lift" | "run";
-  const [activeTab, setActiveTab] = useState<ProgramTab>("lift");
+  // Mirror the Lift|Run tab into the URL (?tab=run) for the same reason as the
+  // day selector: navigating into a run/exercise detail and pressing back must
+  // return to the tab the user was on, not snap back to Lift.
+  const urlTab: ProgramTab = searchParams.get("tab") === "run" ? "run" : "lift";
+  const [activeTab, setActiveTab] = useState<ProgramTab>(urlTab);
+  const selectTab = useCallback(
+    (value: ProgramTab) => {
+      setActiveTab(value);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", value);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
 
   const { workouts: recentWorkouts } = useWorkouts();
 
@@ -818,7 +836,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           <SegmentedControl
             ariaLabel="Train mode"
             value={activeTab}
-            onChange={(value) => setActiveTab(value)}
+            onChange={(value) => selectTab(value)}
             tone={activeTab === "run" ? "running" : "lifting"}
             className="rounded-2xl bg-muted/50 p-1.5"
             options={
