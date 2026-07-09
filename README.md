@@ -34,7 +34,7 @@ Hot-reload dev server runs on http://localhost:5173/Maiin/ (note the
 - **Maps:** MapLibre GL 5
 - **Animation:** Framer Motion 12 (gated through `useReducedMotion`)
 - **PWA:** vite-plugin-pwa + Workbox
-- **Native:** Capacitor 7 (iOS + Android)
+- **Native:** Capacitor 8 (iOS + Android)
 - **Payments:** Stripe Checkout (web/Android), Apple In-App Purchase (iOS)
 - **Testing:** Vitest 4 + React Testing Library + jsdom (unit),
   Playwright (E2E), Firebase Local Emulator Suite (rules — planned)
