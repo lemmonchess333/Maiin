@@ -630,12 +630,19 @@ export default function Food() {
       setOffEmpty(false);
       return;
     }
+    // Guard against out-of-order resolution: a newer query or Retry supersedes
+    // this run. `cancelled` (set in cleanup) gates every state write, and the
+    // AbortController cancels the in-flight fetch so a stale response can't
+    // overwrite a newer one after resolving late.
+    let cancelled = false;
+    const controller = new AbortController();
     if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
     offDebounceRef.current = setTimeout(async () => {
       setOffLoading(true);
       try {
         const res = await fetch(
-          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(offSearchQuery)}&search_simple=1&action=process&json=1&page_size=4&fields=product_name,brands,nutriments,serving_size&lc=en&countries_tags_contains=en`
+          `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(offSearchQuery)}&search_simple=1&action=process&json=1&page_size=4&fields=product_name,brands,nutriments,serving_size&lc=en&countries_tags_contains=en`,
+          { signal: controller.signal }
         );
         const data = await res.json();
         const products: OFFResult[] = (data.products || [])
@@ -673,9 +680,13 @@ export default function Food() {
               unitConfidence: p.serving_size ? "high" : "low",
             })
           );
+        if (cancelled) return; // a newer query/retry superseded this run
         setOffResults(products);
         setOffEmpty(products.length === 0);
       } catch {
+        // A superseded run's fetch is aborted in cleanup; that rejection is
+        // not a user-facing failure, so drop it before touching state/toast.
+        if (cancelled) return;
         /* Pre-F1 this caught silently with no user feedback. The
            catch fires for OFF API timeouts / network errors /
            5xx — distinct from a successful query that returned
@@ -698,9 +709,11 @@ export default function Food() {
           },
         });
       }
-      setOffLoading(false);
+      if (!cancelled) setOffLoading(false);
     }, 400);
     return () => {
+      cancelled = true;
+      controller.abort();
       if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
     };
   }, [offSearchQuery, offRetryNonce]);
