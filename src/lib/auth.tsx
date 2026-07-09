@@ -4,6 +4,7 @@ import {
   useMemo,
   use,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -604,6 +605,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Guards the once-per-session boot reconciliation writes (timezone capture +
+  // email mirror) so they don't re-fire on every onAuthStateChanged emission —
+  // it fires several times per sign-in (session restore, token refresh, popup),
+  // and without this each emission re-issued the same fire-and-forget writes.
+  // Keyed by uid so an account switch on a shared device re-runs them for the
+  // new user (the debounced-boot-side-effect class, cf. OneTimeMaintenance).
+  const reconciledUidRef = useRef<string | null>(null);
 
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
@@ -665,32 +673,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             );
             setProfile(safeProfile);
             syncDarkMode(safeProfile.darkMode);
-            // #962 — capture the device timezone so the server has a non-null
-            // tz to schedule time-sensitive pushes against (and to fix
-            // scan-quota day-keying). Fire-and-forget; idempotent.
-            const deviceTz = getDeviceTimezone();
-            if (shouldUpdateTimezone(safeProfile.timezone, deviceTz)) {
-              updateDocGuarded(doc(db, "users", firebaseUser.uid), {
-                timezone: deviceTz,
-              }).catch((err) =>
-                logger.warn("[AuthProvider] timezone capture failed", err)
-              );
-            }
-            // Email-mirror reconcile: a verifyBeforeUpdateEmail change lands
-            // OUT-OF-BAND (the user clicks the confirm link, often on another
-            // device), so the profile doc's `email` copy can't be mirrored at
-            // write time. Reconcile it on boot instead — same
-            // fire-and-forget shape as the timezone capture above.
-            if (
-              typeof data.email === "string" &&
-              firebaseUser.email &&
-              data.email !== firebaseUser.email
-            ) {
-              updateDocGuarded(doc(db, "users", firebaseUser.uid), {
-                email: firebaseUser.email,
-              }).catch((err) =>
-                logger.warn("[AuthProvider] email reconcile failed", err)
-              );
+            // Boot reconciliation writes — run at most once per uid per session
+            // (onAuthStateChanged fires several times per sign-in; without the
+            // guard each emission re-issued these).
+            if (reconciledUidRef.current !== firebaseUser.uid) {
+              reconciledUidRef.current = firebaseUser.uid;
+              // #962 — capture the device timezone so the server has a non-null
+              // tz to schedule time-sensitive pushes against (and to fix
+              // scan-quota day-keying). Fire-and-forget; idempotent.
+              const deviceTz = getDeviceTimezone();
+              if (shouldUpdateTimezone(safeProfile.timezone, deviceTz)) {
+                updateDocGuarded(doc(db, "users", firebaseUser.uid), {
+                  timezone: deviceTz,
+                }).catch((err) =>
+                  logger.warn("[AuthProvider] timezone capture failed", err)
+                );
+              }
+              // Email-mirror reconcile: a verifyBeforeUpdateEmail change lands
+              // OUT-OF-BAND (the user clicks the confirm link, often on another
+              // device), so the profile doc's `email` copy can't be mirrored at
+              // write time. Reconcile it on boot instead — same
+              // fire-and-forget shape as the timezone capture above.
+              if (
+                typeof data.email === "string" &&
+                firebaseUser.email &&
+                data.email !== firebaseUser.email
+              ) {
+                updateDocGuarded(doc(db, "users", firebaseUser.uid), {
+                  email: firebaseUser.email,
+                }).catch((err) =>
+                  logger.warn("[AuthProvider] email reconcile failed", err)
+                );
+              }
             }
           } else {
             setProfile(null);
