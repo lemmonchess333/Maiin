@@ -319,21 +319,31 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
   let currentKm = 1;
 
   for (let i = 1; i < points.length; i++) {
-    accDistance += haversine(
+    const segStart = accDistance;
+    const segDist = haversine(
       points[i - 1].lat,
       points[i - 1].lon,
       points[i].lat,
       points[i].lon
     );
-    // A single GPS segment can cross multiple km thresholds (signal
-    // drop + reappear with a multi-km jump). The previous one-emit-
-    // per-iteration shape would emit km N covering the whole jump,
-    // then km N+1 emitting on the tiny tail segment with a
-    // sub-second duration — UI displays "5km in 0:01" pace. Loop
-    // until accDistance no longer crosses, distributing the segment
-    // time proportionally across each km boundary it crossed.
+    accDistance += segDist;
+    const segStartTime = points[i - 1].timestamp;
+    const segEndTime = points[i].timestamp;
+    // A single GPS segment can cross multiple km thresholds (signal drop +
+    // reappear with a multi-km jump). Distribute THIS segment's time
+    // proportionally across each km boundary it crosses — interpolate the
+    // timestamp at which each boundary was reached. The previous code credited
+    // the whole segment time to the first km and then set splitStartTime to
+    // points[i].timestamp, so the 2nd+ boundaries in the same segment computed
+    // splitTime = 0 → bogus "1km in 0:00" (0:00/km pace) splits.
     while (accDistance >= currentKm * 1000) {
-      const splitTime = (points[i].timestamp - splitStartTime) / 1000;
+      const boundary = currentKm * 1000;
+      const frac =
+        segDist > 0
+          ? Math.min(1, Math.max(0, (boundary - segStart) / segDist))
+          : 1;
+      const boundaryTime = segStartTime + frac * (segEndTime - segStartTime);
+      const splitTime = (boundaryTime - splitStartTime) / 1000;
       let elevGain = 0;
       let elevLoss = 0;
       for (let j = splitStartIdx + 1; j <= i; j++) {
@@ -351,7 +361,7 @@ export function calculateSplits(points: GPSPoint[]): Split[] {
         elevationGain: Math.round(elevGain),
         elevationLoss: Math.round(elevLoss),
       });
-      splitStartTime = points[i].timestamp;
+      splitStartTime = boundaryTime;
       splitStartIdx = i;
       currentKm++;
     }
