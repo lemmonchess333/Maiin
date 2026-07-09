@@ -38,31 +38,18 @@ import {
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 
-export type RunPlanSurfaceKind = "freeform" | "race_goal";
-
-/** The two-state surface model. The race-goal overlay carries its own
- *  sub-states (race-today, recovery, no-show) but those are resolved by
- *  the consuming component — this is the top-level branch only. */
-export type RunPlanSurfaceState =
-  | { kind: "freeform"; hasRaceGoal: false }
-  | { kind: "race_goal"; hasRaceGoal: true };
-
-/**
- * Two-state resolver. A race overlay is active when the user is in
- * race_prep mode AND a race goal is present (matches every gated read of
- * `raceGoal` in ProgrammeRunSection). Everything else — including a
- * legacy structured user mid-migration — collapses to freeform.
- */
-export function resolveRunPlanSurface(
-  profile: Pick<UserProfile, "runMode"> | null | undefined,
-  programState: ProgramState | null | undefined
-): RunPlanSurfaceState {
-  const raceGoal = programState?.runPlan?.raceGoal;
-  if (profile?.runMode === "race_prep" && raceGoal) {
-    return { kind: "race_goal", hasRaceGoal: true };
-  }
-  return { kind: "freeform", hasRaceGoal: false };
-}
+// R4: the surface resolver + its types now live in `runPlanResolver`, which
+// reconciles the profile↔programState race-goal drift. The old copy here gated
+// the overlay on `programState.runPlan.raceGoal` alone while mode came from
+// `profile.runMode`, so a transient store disagreement (profile written,
+// mirror not yet regenerated) dropped the race overlay for a race-prep user.
+// Re-exported so existing importers of `@/lib/runProgrammeViewModel` are
+// transparently upgraded to the reconciliation-aware version.
+export {
+  resolveRunPlanSurface,
+  type RunPlanSurfaceKind,
+  type RunPlanSurfaceState,
+} from "@/lib/runPlanResolver";
 
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
 
