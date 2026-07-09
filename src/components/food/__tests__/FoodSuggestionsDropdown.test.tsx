@@ -19,6 +19,7 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import FoodSuggestionsDropdown, {
   type QuickAddSection,
+  type OFFResult,
 } from "../FoodSuggestionsDropdown";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 
@@ -159,6 +160,49 @@ describe("FoodSuggestionsDropdown — pantry section (PR 4)", () => {
     const cheese = labels.findIndex((l) => l.includes("Cheese"));
     expect(apple).toBeLessThan(bread);
     expect(bread).toBeLessThan(cheese);
+  });
+});
+
+function makeOff(over: Partial<OFFResult> = {}): OFFResult {
+  return {
+    name: over.name ?? "Granola",
+    brand: over.brand ?? "",
+    calories: over.calories ?? 400,
+    protein: over.protein ?? 10,
+    carbs: over.carbs ?? 60,
+    fat: over.fat ?? 12,
+    servingSize: over.servingSize ?? "100g",
+    unitConfidence: over.unitConfidence,
+  };
+}
+
+function renderOff(offResults: OFFResult[]) {
+  render(
+    <FoodSuggestionsDropdown
+      suggestions={[]}
+      offResults={offResults}
+      pantryResults={[]}
+      offEmpty={false}
+      offSearchQuery="granola"
+      onSelectSuggestion={vi.fn()}
+      onSelectOff={vi.fn()}
+      onSelectPantry={vi.fn()}
+      onLogManually={vi.fn()}
+    />
+  );
+}
+
+describe("FoodSuggestionsDropdown — OFF serving-size hint (Eval4 slice)", () => {
+  it("shows 'serving size needed' instead of 'per …' on a low-confidence row", () => {
+    renderOff([makeOff({ unitConfidence: "low", servingSize: "100g" })]);
+    expect(screen.getByText(/serving size needed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/per 100g/i)).toBeNull();
+  });
+
+  it("shows 'per <serving>' and no hint on a high-confidence row", () => {
+    renderOff([makeOff({ unitConfidence: "high", servingSize: "40g" })]);
+    expect(screen.getByText(/per 40g/i)).toBeInTheDocument();
+    expect(screen.queryByText(/serving size needed/i)).toBeNull();
   });
 });
 
