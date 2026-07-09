@@ -251,6 +251,10 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
   // (performanceEngine.ts computeBaseline). Drives weeksUsed so a zero-activity
   // baseline window yields 0, not floor(days/7) (PERF-M).
   const activeWeeks = new Set();
+  // Per-week-index longest run (km). The baseline uses the MEAN of each active
+  // week's longest run (matching the client engine), not a single max over the
+  // whole window — so we track the max per week bucket, not just globally.
+  const weekLongKm = new Map();
   const WEEK_MS = 7 * 86400000;
 
   // ── Lifting ──
@@ -285,10 +289,12 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
       r.completedAt && r.completedAt.toDate ? r.completedAt.toDate() : null;
     if (!d || d < start || d >= end) return;
     runSessions++;
-    activeWeeks.add(Math.floor((d.getTime() - start.getTime()) / WEEK_MS));
+    const wk = Math.floor((d.getTime() - start.getTime()) / WEEK_MS);
+    activeWeeks.add(wk);
     const km = (r.distance || 0) / 1000;
     runKm += km;
     if (km > runLongKm) runLongKm = km;
+    weekLongKm.set(wk, Math.max(weekLongKm.get(wk) || 0, km));
     const at = (r.activityType || "").toLowerCase();
     if (r.intervalData || at === "tempo" || at === "interval") {
       runQualityCount++;
@@ -340,6 +346,12 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     liftSessions,
     runKm: Math.round(runKm * 10) / 10,
     runLongKm: Math.round(runLongKm * 10) / 10,
+    // Sum of each active week's longest run — the baseline divides this by
+    // activeWeeks to get the mean-of-weekly-max the client engine uses.
+    runLongKmWeeklySum:
+      Math.round(
+        Array.from(weekLongKm.values()).reduce((a, b) => a + b, 0) * 10
+      ) / 10,
     runQualityCount,
     runSessions,
     mealDaysLogged,
@@ -358,24 +370,42 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
 
 /**
  * Normalise a baseline aggregate (BASELINE_DAYS span) to a
- * "current-window equivalent" so ratios against the current
- * window aggregate are comparable. liftTonnage / hardSets / runKm
- * scale linearly; runLongKm (max over period) does NOT — keep as
- * the longest single run observed in the baseline period.
+ * "current-window equivalent" (average weekly load) so ratios against the
+ * current window aggregate are comparable.
+ *
+ * Divides totals by ACTIVE weeks (weeks with a session), matching the client
+ * engine's computeBaseline. Dividing by CALENDAR weeks (days/7) — as this did
+ * before — deflated the baseline whenever a user had gap weeks (vacation,
+ * illness, returning), inflating every ratio and making the authoritative
+ * server PI diverge from the client preview for exactly those segments.
+ * runLongKm is the MEAN of each active week's longest run (not a single max
+ * over the whole window, which was systematically larger → deflated longRatio).
  */
 function computeBaselineFromAgg(baselineAgg) {
   const days = baselineAgg.dayCount || BASELINE_DAYS;
-  const scale = WINDOW_DAYS / days; // e.g. 7/28 = 0.25
+  // Active weeks drive the per-week divisor. Manually-built aggregates (tests,
+  // legacy callers) without activeWeeks fall back to the calendar-week count so
+  // they keep their prior magnitude; min 1 avoids divide-by-zero.
+  const activeWeeks =
+    typeof baselineAgg.activeWeeks === "number"
+      ? baselineAgg.activeWeeks
+      : Math.floor(days / WINDOW_DAYS);
+  const perWeek = 1 / Math.max(1, activeWeeks);
   return {
-    liftTonnage: baselineAgg.liftTonnage * scale,
-    liftHardSets: baselineAgg.liftHardSets * scale,
-    runKm: baselineAgg.runKm * scale,
-    runLongKm: baselineAgg.runLongKm,
+    liftTonnage: baselineAgg.liftTonnage * perWeek,
+    liftHardSets: baselineAgg.liftHardSets * perWeek,
+    runKm: baselineAgg.runKm * perWeek,
+    // Mean of each active week's longest run. Lift-only active weeks contribute
+    // 0 to the sum but count in activeWeeks, exactly as on the client. Legacy
+    // aggregates without the weekly sum fall back to the single-max field.
+    runLongKm:
+      typeof baselineAgg.runLongKmWeeklySum === "number"
+        ? baselineAgg.runLongKmWeeklySum * perWeek
+        : baselineAgg.runLongKm,
     // Mirror the client's count of weeks-with-a-session, not raw calendar
     // weeks: a zero-activity baseline window must yield 0 so the deload-
     // suppression gate (weeksUsed >= 3) stays closed for a user just back from
-    // a vacation/illness gap (PERF-M). activeWeeks is set by aggregateWindow;
-    // manually-built aggregates without it fall back to the calendar count.
+    // a vacation/illness gap (PERF-M).
     weeksUsed:
       typeof baselineAgg.activeWeeks === "number"
         ? baselineAgg.activeWeeks

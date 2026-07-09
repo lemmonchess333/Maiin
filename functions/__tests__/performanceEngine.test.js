@@ -321,6 +321,43 @@ describe("computeBaselineFromAgg", () => {
       }).weeksUsed
     ).toBe(2);
   });
+
+  it("divides load by ACTIVE weeks, not calendar weeks (P2 — matches client)", () => {
+    // A returning trainer: all their baseline load lands in 2 of the 4 calendar
+    // weeks (2 gap weeks). The client averages over the 2 ACTIVE weeks; the old
+    // server divided by 4 calendar weeks, deflating the baseline and inflating
+    // the PI. Now both divide by activeWeeks.
+    const bl = computeBaselineFromAgg({
+      liftTonnage: 8000,
+      liftHardSets: 40,
+      runKm: 24,
+      runLongKm: 15,
+      runLongKmWeeklySum: 25, // weeks with long runs of 15 + 10
+      activeWeeks: 2,
+      dayCount: 28,
+    });
+    expect(bl.liftTonnage).toBe(4000); // 8000 / 2 active weeks (was 8000*7/28=2000)
+    expect(bl.liftHardSets).toBe(20); // 40 / 2
+    expect(bl.runKm).toBe(12); // 24 / 2
+    // P3: mean of weekly-longest runs, not the single max (which was 15).
+    expect(bl.runLongKm).toBe(12.5); // 25 / 2
+  });
+
+  it("fully-active baseline is unchanged from the old calendar scaling (no PI drift)", () => {
+    // activeWeeks === 4 → perWeek 1/4 === the old 7/28, so users who trained
+    // every baseline week see identical output. Only gap-week users move.
+    const bl = computeBaselineFromAgg({
+      liftTonnage: 4000,
+      liftHardSets: 40,
+      runKm: 20,
+      runLongKm: 12,
+      runLongKmWeeklySum: 40, // 4 weeks × ~10
+      activeWeeks: 4,
+      dayCount: 28,
+    });
+    expect(bl.liftTonnage).toBe(1000);
+    expect(bl.runLongKm).toBe(10); // 40 / 4
+  });
 });
 
 describe("computeLoadBand thresholds", () => {
