@@ -264,14 +264,13 @@ export default function ProgrammeRunSection({
   // Race-elapsed is a cheap render-time derivation; not memoised
   // because the comparison against "now" is impure and useMemo
   // would be flagged. Sub-microsecond cost; ran every render is
-  // fine. Uses `new Date()` (constructor, not Date.now()) to
-  // match the existing codebase pattern accepted by the
-  // react-hooks/purity rule.
-  const raceElapsedTarget = raceGoal ? new Date(raceGoal.targetDate) : null;
+  // Local date-string compare — elapsed only AFTER race day, not during it.
+  // Parsing the target as UTC midnight and comparing to now marked the race
+  // elapsed partway through race day for non-UTC users, dropping the race
+  // template to freeform on race day. Matches isRacePlanElapsed
+  // (runPlanMetadata.ts) and Run.tsx's copy.
   const raceElapsed = !!(
-    raceElapsedTarget &&
-    !Number.isNaN(raceElapsedTarget.getTime()) &&
-    raceElapsedTarget.getTime() < new Date().getTime()
+    raceGoal?.targetDate && localDateString() > raceGoal.targetDate
   );
 
   // Run9 (l): race-recent ("did you race?") dismissal. When the user taps
