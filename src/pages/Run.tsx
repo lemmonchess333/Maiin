@@ -80,6 +80,7 @@ import {
   type RunPlanMetadata,
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
+import { localDateString } from "../lib/dateHelpers";
 import {
   runSessionReducer,
   initialRunPhase,
@@ -192,8 +193,11 @@ function deriveStrip(
       (typeof runPlan.currentWeek === "number" &&
         typeof runPlan.totalWeeks === "number" &&
         runPlan.currentWeek >= runPlan.totalWeeks) ||
-      (runPlan.raceGoal?.targetDate &&
-        new Date(runPlan.raceGoal.targetDate).getTime() < Date.now());
+      // Local date-string compare: elapsed only AFTER race day, not during it
+      // (UTC-midnight parse dropped the race template to freeform on race day
+      // for non-UTC users). Matches isRacePlanElapsed in runPlanMetadata.ts.
+      (!!runPlan.raceGoal?.targetDate &&
+        localDateString() > runPlan.raceGoal.targetDate);
     if (elapsed) {
       return { kind: "race_prep_elapsed" };
     }
