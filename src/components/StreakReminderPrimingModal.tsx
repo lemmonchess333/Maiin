@@ -7,6 +7,7 @@ import { useStreakReminder } from "@/hooks/RemindersProvider";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { THEME } from "@/lib/theme";
 
 /**
  * One-time priming modal for the streak-at-risk reminder.
@@ -146,8 +147,7 @@ function PrimingDialog({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center px-6"
-      style={{ background: "rgba(0,0,0,0.55)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/55"
       // Tap-outside / backdrop click → treated as "No thanks" per the spec:
       // user saw the prompt and chose to ignore it.
       onClick={onNo}
@@ -170,11 +170,15 @@ function PrimingDialog({
           <div
             className="size-14 rounded-full flex items-center justify-center"
             style={{
-              backgroundColor: "rgba(255,120,50,0.12)",
-              border: "1.5px solid rgba(255,120,50,0.35)",
+              // D10: align the streak flame to the design-system amber
+              // token (the canonical StreakFlame uses THEME.amber) instead
+              // of a one-off #ff7832. Alpha suffixes are opacity bytes, not
+              // colour literals: 1F ≈ 12%, 59 ≈ 35%.
+              backgroundColor: `${THEME.amber}1F`,
+              border: `1.5px solid ${THEME.amber}59`,
             }}
           >
-            <Flame className="size-7" color="#ff7832" strokeWidth={2.25} />
+            <Flame className="size-7" color={THEME.amber} strokeWidth={2.25} />
           </div>
         </div>
         <div className="space-y-1">
