@@ -317,6 +317,11 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
   const bwPrev = [];
 
   bodyweightLogs.forEach((l) => {
+    // Guard against a malformed log (missing/non-numeric weight): an undefined
+    // pushed here makes avg() return NaN (not null), which computeRecoveryScore
+    // and computeConfidence both treat as a PRESENT reading (NaN != null),
+    // silently corrupting the recovery delta and inflating the confidence tier.
+    if (typeof l.weight !== "number" || !Number.isFinite(l.weight)) return;
     const d = new Date((l.date || "") + "T00:00:00Z");
     if (d >= start && d < end) bwCurrent.push(l.weight);
     else if (d >= prevStart && d < start) bwPrev.push(l.weight);
@@ -413,7 +418,7 @@ function computeSignals({
   adherenceScore,
   deloadRecommended,
   lifetimeData,
-  baselineDayCount,
+  baselineActiveWeeks,
   computeKey,
 }) {
   const bothLoadsStrong = liftLoadScore >= 70 && runLoadScore >= 70;
@@ -423,10 +428,13 @@ function computeSignals({
   const liftAheadOfBaseline = liftProgression > 1.05 ? liftProgression - 1 : 0;
   const runAheadOfBaseline = runVolume > 1.05 ? runVolume - 1 : 0;
 
-  // lifetimeWeeks: approximate via baseline coverage.
-  // A user with 28+ days of activity history has lifetimeWeeks >= 4.
-  // Below that, fall back to "weeks of perf data" via baselineDayCount.
-  const lifetimeWeeks = Math.max(0, Math.floor(baselineDayCount / WINDOW_DAYS));
+  // lifetimeWeeks: weeks of real training history in the baseline window,
+  // i.e. weeks that actually had a session (activeWeeks), NOT the fixed
+  // 28-day window SPAN. The span is constant (baselineAgg.dayCount is always
+  // ~28), so deriving from it hardcoded lifetimeWeeks to 4 for everyone —
+  // brand-new cold-start users were misclassified as established (getLine's
+  // lifetimeWeeks>=4 branch + the PerformanceHeroCard delta-chip suppression).
+  const lifetimeWeeks = Math.max(0, baselineActiveWeeks || 0);
 
   // daysSinceLastTraining: max of (today - lastWorkout, today - lastRun),
   // clamped at 0. Uses the more recent of the two.
@@ -577,7 +585,7 @@ async function computeAndWritePerformanceForUser(uid, computeKeyOverride) {
       adherenceScore,
       deloadRecommended,
       lifetimeData,
-      baselineDayCount: baselineAgg.dayCount,
+      baselineActiveWeeks: baselineAgg.activeWeeks,
       computeKey,
     });
 
