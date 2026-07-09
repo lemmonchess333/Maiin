@@ -137,6 +137,20 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 
+  it("owner writes displayName + displayNameLower (the rename mirror) — succeeds", async () => {
+    // Regression: the search case-insensitivity mirror field displayNameLower
+    // was missing from the allowlist, so every rename (committed as an atomic
+    // batch of the main user doc + this public doc) was permission-denied.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { displayName: "Myles", displayNameLower: "myles" },
+        { merge: true }
+      )
+    );
+  });
+
   it("owner writes a subset (just badgeSummary) — succeeds", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(

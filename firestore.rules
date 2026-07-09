@@ -267,6 +267,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly([
           'uid',
           'displayName',
+          'displayNameLower',
           'photoURL',
           'photoStoragePath',
           'athleteType',
@@ -907,13 +908,19 @@ service cloud.firestore {
         && request.resource.data.createdBy == request.auth.uid
         && !isDeleting(request.auth.uid);
       // 2026-05-26 audit PR 2 (finding #5) — memberCount writes are
-      // now SERVER-ONLY via setCrewMembershipCallable. Pre-PR-2 any
-      // authed user could write `memberCount` to any value as long
-      // as it was the only changed field. Now: only the creator can
-      // edit, and the field allowlist excludes memberCount.
+      // SERVER-ONLY via setCrewMembershipCallable (Admin SDK, bypasses
+      // rules). Only the creator can edit, memberCount is pinned
+      // immutable from the client, and createdBy is pinned immutable so
+      // a creator can't re-attribute the crew to another uid (the CREATE
+      // rule blocks forging createdBy; this closes the same hole on
+      // UPDATE). Pre-fix this rule had NO field constraints, so the
+      // creator could spoof memberCount and reassign createdBy at will.
       allow update: if request.auth != null
         && !isDeleting(request.auth.uid)
-        && resource.data.createdBy == request.auth.uid;
+        && resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.get('memberCount', 0)
+             == resource.data.get('memberCount', 0);
       allow delete: if request.auth != null
         && resource.data.createdBy == request.auth.uid;
     }
