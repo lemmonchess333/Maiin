@@ -4320,14 +4320,21 @@ function _isoWeekKey(date) {
 // touching.
 const _toDateKey = utcDateString;
 
-async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
+async function _computeMemberWeekTotals(uid, weekStartKey) {
   const [runsSnap, workoutsSnap] = await Promise.all([
+    // CF4: bucket runs by the local-date string `date` (persisted on every
+    // saved run since PR-L), EXACTLY as workouts are — not by the UTC
+    // `completedAt` instant. Mixing a UTC-timestamp boundary (runs) with a
+    // local-date-string boundary (workouts) meant a member's run and workout
+    // done at the same local moment near the week edge could land in different
+    // weeks for non-UTC users. Same single-field `date` index the workouts
+    // query and the PR-L reconciliation sweeps already use — no new index.
     db
       .collection("users")
       .doc(uid)
       .collection("runs")
-      .where("completedAt", ">=", weekStartTs)
-      .orderBy("completedAt")
+      .where("date", ">=", weekStartKey)
+      .orderBy("date")
       .limit(100)
       .get()
       .catch(() => ({ docs: [] })),
@@ -4408,7 +4415,6 @@ exports.crewWeeklyLeaderboardRollup = functions
 
       const now = new Date();
       const weekStart = _startOfIsoWeekUtc(now);
-      const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
       const weekStartKey = _toDateKey(weekStart);
       const weekIso = _isoWeekKey(weekStart);
 
@@ -4464,11 +4470,7 @@ exports.crewWeeklyLeaderboardRollup = functions
               continue;
             }
             try {
-              const totals = await _computeMemberWeekTotals(
-                uid,
-                weekStartTs,
-                weekStartKey
-              );
+              const totals = await _computeMemberWeekTotals(uid, weekStartKey);
               standings.push({
                 uid,
                 displayName: memberData.displayName || "Athlete",
@@ -4547,7 +4549,6 @@ exports.refreshMyCrewLeaderboard = functions
 
     const now = new Date();
     const weekStart = _startOfIsoWeekUtc(now);
-    const weekStartTs = admin.firestore.Timestamp.fromDate(weekStart);
     const weekStartKey = _toDateKey(weekStart);
     const weekIso = _isoWeekKey(weekStart);
 
@@ -4557,11 +4558,7 @@ exports.refreshMyCrewLeaderboard = functions
       const memberUid = memberDoc.id;
       const memberData = memberDoc.data();
       try {
-        const totals = await _computeMemberWeekTotals(
-          memberUid,
-          weekStartTs,
-          weekStartKey
-        );
+        const totals = await _computeMemberWeekTotals(memberUid, weekStartKey);
         standings.push({
           uid: memberUid,
           displayName: memberData.displayName || "Athlete",
