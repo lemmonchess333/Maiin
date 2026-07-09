@@ -235,6 +235,10 @@ export default function Food() {
      typed enough yet". offError fires the toast separately. */
   const [offEmpty, setOffEmpty] = useState(false);
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /* Bumped by the "Retry" action on the search-failure toast. Included in the
+     OFF search effect deps so a retry re-runs the fetch against whatever the
+     CURRENT query is (the user may have kept typing after the failure). */
+  const [offRetryNonce, setOffRetryNonce] = useState(0);
   const [manualOpen, setManualOpen] = useState(false);
   const [offDrawerFood, setOffDrawerFood] = useState<OFFResult | null>(null);
   /* Hour-of-day pinned at the moment the user opens (or switches
@@ -679,9 +683,19 @@ export default function Food() {
            fallback action so the user has somewhere to go. */
         setOffResults([]);
         setOffEmpty(false);
-        toast.error("Couldn't search foods. Try again.", {
+        toast.error("Couldn't search foods.", {
           id: "food-off-error",
-          action: { label: "Log manually", onClick: () => setManualOpen(true) },
+          // Retry re-runs the fetch (bumps the nonce in the effect deps);
+          // Log manually is the fallback. sonner allows one action + one
+          // cancel, so both recovery paths stay on the same toast.
+          action: {
+            label: "Retry",
+            onClick: () => setOffRetryNonce((n) => n + 1),
+          },
+          cancel: {
+            label: "Log manually",
+            onClick: () => setManualOpen(true),
+          },
         });
       }
       setOffLoading(false);
@@ -689,7 +703,7 @@ export default function Food() {
     return () => {
       if (offDebounceRef.current) clearTimeout(offDebounceRef.current);
     };
-  }, [offSearchQuery]);
+  }, [offSearchQuery, offRetryNonce]);
 
   const handleSuggestionSelect = (suggestion: FoodSuggestion) => {
     const parts = nlInput.split(/,/);
