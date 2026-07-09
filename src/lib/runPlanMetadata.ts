@@ -18,6 +18,7 @@
  */
 
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
+import { localDateString } from "./dateHelpers";
 import { resolveSessionPaces, type PaceTable } from "./runPaces";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
 import {
@@ -637,8 +638,12 @@ function isRacePlanElapsed(runPlan: RunPlan | undefined): boolean {
     return true;
   }
   if (runPlan.raceGoal?.targetDate) {
-    const target = new Date(runPlan.raceGoal.targetDate);
-    if (!Number.isNaN(target.getTime()) && target.getTime() < Date.now()) {
+    // Compare LOCAL date strings — the plan is elapsed only AFTER race day, not
+    // during it. `new Date("YYYY-MM-DD")` parses as UTC midnight, so comparing
+    // to Date.now() marked the plan elapsed partway through race day for
+    // non-UTC users, dropping the race template to a freeform prefill on race
+    // day itself. String compare of YYYY-MM-DD is timezone-safe.
+    if (localDateString() > runPlan.raceGoal.targetDate) {
       return true;
     }
   }
