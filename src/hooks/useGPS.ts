@@ -301,6 +301,15 @@ export function useGPS(elapsedSeconds = 0) {
     // stays our continuous fix source for the rest of the run. getCurrent
     // is the reliable path on iOS web where watch is flaky.
     watchHealthyRef.current = false;
+    // Defensive: clear any existing watch before replacing it. Current callers
+    // stop() first, but a start() without an intervening stop() (a future
+    // foreground/resume path, or a visible→visible edge) would otherwise leak a
+    // second live watchPosition — both subscriptions call handleFix, double-
+    // counting distance into distanceRef and corrupting the saved track.
+    if (watchRef.current) {
+      watchRef.current.clear();
+      watchRef.current = null;
+    }
     watchRef.current = getLocationSource().watch(
       options,
       (pos) => {

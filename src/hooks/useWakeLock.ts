@@ -2,17 +2,29 @@ import { useEffect, useRef, useCallback } from "react";
 
 export function useWakeLock() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  // Guards the async acquisition gap. request() is called from several places
+  // that can fire on the SAME visibilitychange (useWakeLock's own handler +
+  // Run.tsx's onVisible). Without this, two callers both pass the
+  // !wakeLockRef.current check while the lock is null, both await a fresh
+  // sentinel, and the second overwrites the first — orphaning a screen wake
+  // lock (never released until page close) plus its stray release listener.
+  const acquiringRef = useRef(false);
 
   const request = useCallback(async () => {
     if (!("wakeLock" in navigator)) return false;
+    if (wakeLockRef.current || acquiringRef.current) return false;
+    acquiringRef.current = true;
     try {
-      wakeLockRef.current = await navigator.wakeLock.request("screen");
-      wakeLockRef.current!.addEventListener("release", () => {
+      const sentinel = await navigator.wakeLock.request("screen");
+      wakeLockRef.current = sentinel;
+      sentinel.addEventListener("release", () => {
         wakeLockRef.current = null;
       });
       return true;
     } catch {
       return false;
+    } finally {
+      acquiringRef.current = false;
     }
   }, []);
 
