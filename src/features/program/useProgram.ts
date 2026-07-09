@@ -644,7 +644,14 @@ export function useProgram() {
           weekStart: nextWeekStart,
         });
         advanced.runPlan = { ...advRunPlan };
-      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: same elapsed guard as refreshRunSchedule — a week rolling over
+        // after an elapsed race (recovery ended, raceGoal not yet server-
+        // cleared) must go freeform, not regenerate a plan dated in the past.
+        nextWeekCurrentDate <= profile.raceGoal.targetDate
+      ) {
         const r = regenerateRacePlan({
           tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
@@ -964,7 +971,14 @@ export function useProgram() {
           weekStart: nextWeekStart,
         });
         advanced.runPlan = { ...advRunPlan };
-      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: same elapsed guard as refreshRunSchedule — a week rolling over
+        // after an elapsed race (recovery ended, raceGoal not yet server-
+        // cleared) must go freeform, not regenerate a plan dated in the past.
+        nextWeekCurrentDate <= profile.raceGoal.targetDate
+      ) {
         const r = regenerateRacePlan({
           tuning: runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
@@ -1484,7 +1498,17 @@ export function useProgram() {
       if (inRecovery) {
         runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
         runPlan = { ...programState.runPlan! };
-      } else if (profile.runMode === "race_prep" && profile.raceGoal) {
+      } else if (
+        profile.runMode === "race_prep" &&
+        profile.raceGoal &&
+        // R3: don't regenerate a race-prep plan for a race that has already
+        // passed. Recovery has ended here (else `inRecovery` is true), but the
+        // server clears profile.raceGoal only at recoveryEndDate + 7d; in that
+        // window an elapsed race must fall through to freeform, NOT spawn a
+        // fresh plan dated in the past (regenerateRacePlan with a past target
+        // produced a 2-week phantom block). Local string compare = date compare.
+        localDateString() <= profile.raceGoal.targetDate
+      ) {
         // Refresh preserves currentWeek + totalWeeks so the user's
         // race-strip position stays put across mid-week schedule
         // edits. Only `compressed` updates (V2 may flip it if the
@@ -1641,6 +1665,13 @@ export function useProgram() {
       programState.runPlan?.recoveryEndDate &&
       localDateString() < programState.runPlan.recoveryEndDate
     ) {
+      return { timing: "healthy", totalWeeks: 0 };
+    }
+    // R3: a race that has already passed (recovery ended, raceGoal not yet
+    // server-cleared at recoveryEndDate + 7d) must not be realigned —
+    // regenerating would produce a phantom plan dated in the past. Leave it for
+    // the freeform transition, same as refreshRunSchedule / the rollovers.
+    if (localDateString() > profile.raceGoal.targetDate) {
       return { timing: "healthy", totalWeeks: 0 };
     }
     const prevRunPlan = programState.runPlan;
