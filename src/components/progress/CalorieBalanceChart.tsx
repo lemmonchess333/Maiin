@@ -68,11 +68,17 @@ export default function CalorieBalanceChart({
     });
   }, [meals, maintenance]);
 
-  const rawAvg = data.length
-    ? data.reduce((s, d) => s + d.balance, 0) / data.length
+  // Aggregates cover only LOGGED days. An unlogged day has consumed=0, so its
+  // balance is a full phantom deficit (maintenance − 0 ≈ +2500); including
+  // empties made avgBalance/deficitDays/getPhaseAlignment falsely warn a
+  // sparse-logging user they were off-phase (e.g. a bulker told they're "below
+  // maintenance"). The bars still render all 14 days (empties greyed).
+  const loggedDays = data.filter((d) => d.consumed > 0);
+  const rawAvg = loggedDays.length
+    ? loggedDays.reduce((s, d) => s + d.balance, 0) / loggedDays.length
     : 0;
   const avgBalance = Number.isFinite(rawAvg) ? Math.round(rawAvg) : 0;
-  const deficitDays = data.filter((d) => d.balance > 0).length;
+  const deficitDays = loggedDays.filter((d) => d.balance > 0).length;
 
   const phaseLabel =
     goal === "cut"
