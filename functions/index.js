@@ -3272,7 +3272,9 @@ async function _runDailyRaceReconciliationForUser(uid) {
   if (payload) writes.push(programRef.set(payload, { merge: true }));
   if (profilePayload) writes.push(userRef.set(profilePayload, { merge: true }));
   await Promise.all(writes);
-  return { noShowWritten, recoveryCleared };
+  // Include noShowCleared so the sweep's observability counter increments when
+  // an L4 clear actually writes (the early no-write return above already did).
+  return { noShowWritten, recoveryCleared, noShowCleared };
 }
 
 // ── Scheduled: daily race-reconciliation sweep (04:00 UTC) ──
@@ -3776,7 +3778,8 @@ async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
 async function syncFastestEffortProgress(
   uid,
   runDistanceMeters,
-  runDurationSeconds
+  runDurationSeconds,
+  sourceId
 ) {
   try {
     if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
@@ -3804,30 +3807,56 @@ async function syncFastestEffortProgress(
         .doc(doc.id)
         .collection("participants")
         .doc(uid);
+      // Fast-path skip for non-participants (avoids opening a transaction for
+      // every fastest_effort challenge the user isn't in).
       const participantSnap = await participantRef.get();
       if (!participantSnap.exists) continue;
 
-      const existingBest = participantSnap.data().currentValue || 0;
-      // 0 = no best yet, so first qualifying run always wins.
-      // Otherwise keep the lower (faster) time.
-      const newBest =
-        existingBest === 0
-          ? Math.round(runDurationSeconds)
-          : Math.min(existingBest, Math.round(runDurationSeconds));
+      // Idempotency marker keyed by the driving run id — same scheme as
+      // syncChallengeProgress. Falls back to a deterministic key so a missing
+      // sourceId never silently disables the guard.
+      const markerRef = participantRef
+        .collection("applied")
+        .doc(sourceId || "fastest_effort_legacy_nosrc");
 
-      // For fastest_effort, tiers are time thresholds: lower is better, and a
-      // newBest of 0 means "no qualifying effort yet" (resolveTier guards >0).
       const tiers = challenge.tiers || {};
-      const tierAchieved = challengeTiers.resolveTier(
-        newBest,
-        tiers,
-        "fastest_effort"
-      );
+      const runSeconds = Math.round(runDurationSeconds);
 
-      await participantRef.set(
-        { currentValue: newBest, tierAchieved },
-        { merge: true }
-      );
+      // Read-modify-write inside a transaction, mirroring the SUM path: (a) two
+      // concurrent qualifying runs (e.g. a batch device import) otherwise read
+      // the same currentValue and the slower write clobbers the faster — a lost
+      // PR; (b) a redelivered onRunCreated re-applies. MIN is only self-safe for
+      // the SAME time, so the concurrency race is real — the transaction guards
+      // (a), the marker guards (b). Pre-fix this did a bare get + set.
+      await db.runTransaction(async (tx) => {
+        const [snap, marker] = await Promise.all([
+          tx.get(participantRef),
+          tx.get(markerRef),
+        ]);
+        if (!snap.exists) return;
+        if (marker.exists) return; // already applied this run — idempotent no-op
+        const existingBest = snap.data().currentValue || 0;
+        // 0 = no best yet, so first qualifying run always wins; else keep faster.
+        const newBest =
+          existingBest === 0 ? runSeconds : Math.min(existingBest, runSeconds);
+        // fastest_effort tiers are time thresholds: lower is better; a newBest
+        // of 0 means "no qualifying effort yet" (resolveTier guards >0).
+        const tierAchieved = challengeTiers.resolveTier(
+          newBest,
+          tiers,
+          "fastest_effort"
+        );
+        tx.set(
+          participantRef,
+          { currentValue: newBest, tierAchieved },
+          { merge: true }
+        );
+        tx.set(markerRef, {
+          metric: "fastest_effort",
+          runSeconds,
+          appliedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
     }
   } catch (err) {
     console.error(`syncFastestEffortProgress: error for ${uid}:`, err.message);
@@ -4143,7 +4172,8 @@ exports.onRunCreated = functions
           await syncFastestEffortProgress(
             uid,
             runDistanceMeters,
-            runDurationSeconds
+            runDurationSeconds,
+            runId
           );
         }
       } else {
@@ -4278,6 +4308,7 @@ async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
   ]);
 
   let km = 0;
+  let eligibleRunCount = 0;
   for (const d of runsSnap.docs) {
     // Volume-eligibility filter: crew leaderboards exclude invalid,
     // savedAnyway, and sub-threshold records. Plain JS inline
@@ -4294,6 +4325,7 @@ async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
     if (distance < 50) continue;
     if (duration < 30) continue;
     km += distance / 1000;
+    eligibleRunCount++;
   }
   let kg = 0;
   for (const d of workoutsSnap.docs) {
@@ -4308,7 +4340,10 @@ async function _computeMemberWeekTotals(uid, weekStartTs, weekStartKey) {
     km: Math.round(km * 10) / 10,
     kg: Math.round(kg),
     workoutCount: workoutsSnap.docs.length,
-    runCount: runsSnap.docs.length,
+    // Count only volume-eligible runs — the raw docs.length previously
+    // included isInvalid / savedAnyway / sub-threshold runs that km already
+    // excluded, over-counting the leaderboard runCount.
+    runCount: eligibleRunCount,
   };
 }
 
@@ -5568,10 +5603,7 @@ exports.sendVerificationEmailCallable = functions
   .runWith({ ...DEFAULT_HTTP_CAP, secrets: [RESEND_API_KEY] })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Sign in first."
-      );
+      throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
     }
     const email = context.auth.token.email;
     if (!email) {
