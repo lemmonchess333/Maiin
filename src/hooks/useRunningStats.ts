@@ -92,10 +92,14 @@ export function useRunningStats(days: number = 30) {
 
   useEffect(() => {
     if (!user) {
-      const reset = () => {
-        setLoading(false);
-      };
-      reset();
+      // Clear the previous account's data on sign-out — not just `loading`.
+      // If the component stays mounted across an account switch (shared-device
+      // sign-out → sign-in, or a transient null-user window), leaving `runs` /
+      // `weeklyData` populated leaks account A's runs into account B's view
+      // until B's load completes (the uid-scoping class hardened in PR #820).
+      setRuns([]);
+      setWeeklyData([]);
+      setLoading(false);
       return;
     }
 
