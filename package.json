@@ -11,6 +11,7 @@
     "build:ios": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync ios",
     "build:android": "CAPACITOR_BUILD=true tsc -b && CAPACITOR_BUILD=true vite build && npx cap sync android",
     "lint": "eslint .",
+    "verify": "npm run lint && npm run build && npm run test",
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "test": "vitest run",
