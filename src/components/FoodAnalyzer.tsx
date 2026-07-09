@@ -98,9 +98,6 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const brand: string = (p.brands || "").trim();
 
   const nutr = p.nutriments || {};
-  const kcal100 =
-    safeNum(nutr["energy-kcal_100g"]) || safeNum(nutr["energy-kcal"]) || 0;
-
   const pro100 = safeNum(nutr["proteins_100g"]);
   const carb100 = safeNum(nutr["carbohydrates_100g"]);
   const fat100 = safeNum(nutr["fat_100g"]);
@@ -111,10 +108,20 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
 
   const factor = portionGrams / 100;
 
-  const calories = Math.round(kcal100 * factor);
   const protein = round1(pro100 * factor);
   const carbs = round1(carb100 * factor);
   const fat = round1(fat100 * factor);
+
+  // Calories: only OFF's per-100g energy is safe to scale by portionGrams/100.
+  // The bare `energy-kcal` field is frequently per-SERVING, so scaling it as
+  // per-100g under-based the calories (~3× off) while the macros — which read
+  // only *_100g — stayed correct, leaving calories and macros disagreeing. Drop
+  // the ambiguous fallback: when _100g energy is absent, derive calories from
+  // the (already per-portion) macros via Atwater so the two always agree.
+  const kcal100 = safeNum(nutr["energy-kcal_100g"]);
+  const calories = Math.round(
+    kcal100 > 0 ? kcal100 * factor : 4 * protein + 4 * carbs + 9 * fat
+  );
 
   return {
     foodName: name,
