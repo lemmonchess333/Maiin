@@ -243,6 +243,29 @@ describe("aggregateWindow", () => {
     expect(agg.mealDaysLogged).toBe(2);
     expect(agg.avgDailyCalories).toBe(Math.round((500 + 700 + 800) / 2)); // 1000
   });
+
+  it("ignores bodyweight logs with a missing/non-numeric weight (no NaN)", () => {
+    // Regression: a malformed log (no weight) used to push undefined into the
+    // avg, yielding NaN — which != null, so it was miscounted as a present
+    // bodyweight reading. Guarded logs are dropped; a real reading still lands.
+    const bw = [
+      { date: "2026-05-14" }, // missing weight
+      { date: "2026-05-15", weight: "eighty" }, // non-numeric
+      { date: "2026-05-16", weight: 80 }, // valid
+    ];
+    const agg = aggregateWindow(start, end, [], [], [], bw);
+    expect(agg.bwCurrent7dAvg).toBe(80);
+
+    const allBad = aggregateWindow(
+      start,
+      end,
+      [],
+      [],
+      [],
+      [{ date: "2026-05-14" }]
+    );
+    expect(allBad.bwCurrent7dAvg).toBeNull(); // not NaN
+  });
 });
 
 describe("computeBaselineFromAgg", () => {
@@ -434,15 +457,20 @@ describe("computeSignals", () => {
     ).toBe(false);
   });
 
-  it("lifetimeWeeks reflects baseline day coverage", () => {
+  it("lifetimeWeeks reflects ACTIVE baseline weeks, not the fixed window span", () => {
+    // Regression: lifetimeWeeks used to derive from baselineDayCount (the
+    // 28-day window span, always 28), hardcoding it to 4 for everyone and
+    // misclassifying cold-start users as established. It now reflects
+    // activeWeeks — weeks that actually had a session.
     expect(
-      computeSignals({ ...baseInput, baselineDayCount: 28 }).lifetimeWeeks
+      computeSignals({ ...baseInput, baselineActiveWeeks: 4 }).lifetimeWeeks
     ).toBe(4);
     expect(
-      computeSignals({ ...baseInput, baselineDayCount: 14 }).lifetimeWeeks
+      computeSignals({ ...baseInput, baselineActiveWeeks: 2 }).lifetimeWeeks
     ).toBe(2);
+    // A brand-new user with no prior-window training → 0 (cold-start), NOT 4.
     expect(
-      computeSignals({ ...baseInput, baselineDayCount: 0 }).lifetimeWeeks
+      computeSignals({ ...baseInput, baselineActiveWeeks: 0 }).lifetimeWeeks
     ).toBe(0);
   });
 
