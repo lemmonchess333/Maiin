@@ -16,15 +16,22 @@ import { signInAsTestUser } from "./helpers/auth";
  * baselines live in the capture specs); these are bounding-box / overflow
  * assertions that survive copy + minor layout tweaks.
  *
- * Runs ONLY in the `auth-emulator` project (matches `*.auth.spec.ts`),
- * which requires the Firebase emulator + the seeded e2e user. RunDetail
- * additionally needs the rich seed (`npm run seed:rich`) for the
- * `run/rich-r0` fixture — same dependency the capture specs already have.
+ * Runs ONLY in the `auth-emulator` project (matches `*.auth.spec.ts`).
+ * The `emulator-tests` CI job seeds ONLY the basic cold-start user
+ * (`seed:e2e`) — it deliberately does NOT run `seed:rich`, because
+ * `coldstart.auth.spec.ts` asserts the empty-user experience and rich
+ * data would break it. So every route here must be reachable and
+ * overflow-clean for a fresh cold-start user (Home/Food render their
+ * empty states; /upgrade is data-independent).
  *
- * TreadmillMode (audit #4) is a stateful mode inside the live `/run`
- * flow, not reachable via a seeded doc, so it is intentionally not
- * covered here — its `w-full`/`min-w-0` fix is guarded by code + comment;
- * a render-level test is the better home for it than a flaky E2E.
+ * Intentionally NOT covered here (need seeded content the basic user
+ * lacks) — guarded elsewhere:
+ *  - RunDetail (`/run/:id`, audit #3): needs a seeded run. The rich-seeded
+ *    capture specs (screenshot workflow) exercise `run/rich-r0`; its
+ *    PaceLegend-placement fix is code + comment guarded.
+ *  - TreadmillMode (audit #4): a stateful mode inside the live `/run`
+ *    flow, not reachable via a seeded doc; its `w-full`/`min-w-0` fix is
+ *    better covered by a render-level test than a flaky E2E.
  */
 
 const PHONE = { width: 390, height: 844 };
@@ -60,17 +67,6 @@ test.describe("Responsive — authenticated fragile routes (390px)", () => {
   test("Food: no horizontal overflow, bottom nav present", async ({ page }) => {
     await page.goto("food", { waitUntil: "domcontentloaded" });
     await expect(page.locator("nav[data-tab-bar]")).toBeVisible();
-    await expectNoHorizontalOverflow(page);
-  });
-
-  test("RunDetail (/run/:id): no horizontal overflow", async ({ page }) => {
-    // rich-r0 seeded by `npm run seed:rich` (same fixture the capture
-    // specs use). Run pages render full-screen without the nav wrapper,
-    // so we wait for the back control as the render signal.
-    await page.goto("run/rich-r0", { waitUntil: "domcontentloaded" });
-    await expect(
-      page.getByRole("button", { name: /back/i }).first()
-    ).toBeVisible();
     await expectNoHorizontalOverflow(page);
   });
 
