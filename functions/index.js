@@ -2212,6 +2212,10 @@ async function readUserProgramContext(uid) {
     programRef,
     profile: userSnap.data() || {},
     programState: programSnap.data() || {},
+    // CF3: read-time version of the programState doc so a whole-array write
+    // built from this snapshot can be compare-and-swap guarded against a
+    // concurrent edit between the read and the write.
+    programUpdateTime: programSnap.updateTime,
   };
 }
 
@@ -3207,7 +3211,7 @@ async function _runDailyRaceReconciliationForUser(uid) {
       noShowCleared: false,
     };
   }
-  const { userRef, programRef, profile, programState } = ctx;
+  const { userRef, programRef, profile, programState, programUpdateTime } = ctx;
   const nowMs = Date.now();
 
   // Only do the bounded saved-runs query when the L1 pass would
@@ -3265,13 +3269,44 @@ async function _runDailyRaceReconciliationForUser(uid) {
     };
   }
   // Run9 3b — programState (runDays / runPlan) and the profile (materialized
-  // runMode + raceGoal) are separate docs. Write both when present. They're
-  // independent merges; a partial failure self-heals on the next daily sweep
-  // (the decision is idempotent against the post-write state).
-  const writes = [];
-  if (payload) writes.push(programRef.set(payload, { merge: true }));
-  if (profilePayload) writes.push(userRef.set(profilePayload, { merge: true }));
-  await Promise.all(writes);
+  // runMode + raceGoal) are separate docs. Write both when present.
+  //
+  // CF3: the programState payload REPLACES the whole runDays array, so a plain
+  // merge could clobber a concurrent edit made between our read and this write.
+  // maxInstances:1 makes the sweep itself non-concurrent, but a client edit or
+  // an onRunCreated recovery-entry could touch programState in between. Guard it
+  // with a compare-and-swap: re-read inside a transaction and skip the write if
+  // the doc changed since our decision snapshot — the decision is idempotent
+  // against post-write state, so the next daily sweep self-heals. `wrote`
+  // tracks whether it landed so the observability flags don't over-report a
+  // skipped write. The profile payload has no array-overwrite hazard → plain
+  // merge.
+  let programWritten = !payload;
+  if (payload) {
+    await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(programRef);
+      const changed =
+        programUpdateTime &&
+        fresh.updateTime &&
+        !fresh.updateTime.isEqual(programUpdateTime);
+      if (changed) return; // concurrent edit — skip; self-heals next sweep
+      tx.set(programRef, payload, { merge: true });
+      programWritten = true;
+    });
+  }
+  if (profilePayload) {
+    await userRef.set(profilePayload, { merge: true });
+  }
+  // If the CAS skipped the programState write, its state transitions didn't
+  // land — report not-written so the sweep log stays honest (self-heals next
+  // sweep). The concurrent edit that won is a valid newer state.
+  if (!programWritten) {
+    return {
+      noShowWritten: false,
+      recoveryCleared: false,
+      noShowCleared: false,
+    };
+  }
   // Include noShowCleared so the sweep's observability counter increments when
   // an L4 clear actually writes (the early no-write return above already did).
   return { noShowWritten, recoveryCleared, noShowCleared };
