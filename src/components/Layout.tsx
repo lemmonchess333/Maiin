@@ -18,7 +18,6 @@ import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
 import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
-import NavInterceptProbe from "./NavInterceptProbe";
 
 /** Subscribe to offline queue length — polls every 3s while offline */
 function useQueueCount(isOnline: boolean): number {
@@ -107,7 +106,6 @@ export default function Layout() {
         paddingBottom: "var(--page-bottom-pad)",
       }}
     >
-      <NavInterceptProbe />
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
           Uses the shared `.ds-safe-top-occluder` class (translucent
           background + backdrop-blur) so the ambient background gradient

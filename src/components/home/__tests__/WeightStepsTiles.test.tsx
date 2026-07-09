@@ -10,7 +10,12 @@ vi.mock("@/lib/homeAnalytics", function () {
   return { track: vi.fn() };
 });
 
+vi.mock("@/lib/platform", function () {
+  return { isNativePlatform: vi.fn(() => false) };
+});
+
 import WeightStepsTiles from "../WeightStepsTiles";
+import { isNativePlatform } from "@/lib/platform";
 
 describe("WeightStepsTiles", function () {
   it("shows the raw weight number when hideNumber is off (default)", function () {
@@ -94,6 +99,52 @@ describe("WeightStepsTiles", function () {
     expect(screen.getByText("—")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Weight not yet logged/i })
+    ).toBeInTheDocument();
+  });
+
+  /* Steps tile is a HealthKit / Health Connect placeholder — web has no
+     step data, so the "Connect Health" CTA is dead on web and is hidden
+     there (POST_LAUNCH: gate on isNativePlatform once web beta > 1wk).
+     Native keeps the placeholder until the plugin lands. */
+
+  it("hides the Steps tile (no dead 'Connect Health') on web / non-native", function () {
+    vi.mocked(isNativePlatform).mockReturnValue(false);
+    render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+      />
+    );
+    // No Steps affordance at all.
+    expect(screen.queryByText("Connect Health")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Steps not yet connected/i })
+    ).not.toBeInTheDocument();
+    // Weight still renders and stays accessible (now full-width).
+    expect(
+      screen.getByRole("button", { name: /Weight 75\.4 kg/i })
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the Steps placeholder on native", function () {
+    vi.mocked(isNativePlatform).mockReturnValue(true);
+    render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+      />
+    );
+    expect(screen.getByText("Connect Health")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Steps not yet connected/i })
+    ).toBeInTheDocument();
+    // Weight is still present alongside it.
+    expect(
+      screen.getByRole("button", { name: /Weight 75\.4 kg/i })
     ).toBeInTheDocument();
   });
 });
