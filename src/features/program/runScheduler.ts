@@ -707,9 +707,20 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
   const now = parseLocalDate(input.currentDate);
   const target = parseLocalDate(input.raceGoal.targetDate);
+  const weekStartDate = parseLocalDate(input.weekStart);
   const diffMs = target.getTime() - now.getTime();
   const naturalWeeks = Math.max(1, Math.ceil(diffMs / (7 * 86400000)));
-  const totalWeeks = Math.max(naturalWeeks, 2); // hard floor: 2 weeks
+  // R2: whole weeks from the CURRENT week's start to the race's calendar week.
+  // When the race is in the CURRENT week (offset <= 0) the plan is a single week
+  // ending on race day — a same-week race has no room for two forward weeks, and
+  // the old `Math.max(naturalWeeks, 2)` floor pushed it into a phantom FUTURE
+  // week (finalWeekStart a week past the race → a negative raceDayIndex → the
+  // race vanished from the rail). For every other race the formula is unchanged
+  // (currentDate-derived weeks, 2-week floor), so normal plans are untouched.
+  const raceWeekOffset = Math.floor(
+    (target.getTime() - weekStartDate.getTime()) / (7 * 86400000)
+  );
+  const totalWeeks = raceWeekOffset <= 0 ? 1 : Math.max(naturalWeeks, 2);
   const compressed = totalWeeks < config.minWeeks;
   // Run9 phase-3 (Slice B): below the taper-safe floor (= taperWeeks + 1),
   // compressing is no longer safe — the week content flips to "finish-safely"
@@ -727,7 +738,6 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     return { totalWeeks, compressed, belowFloor, weeks: [] };
   }
 
-  const weekStartDate = parseLocalDate(input.weekStart);
   const weeks: ScheduledRunDay[][] = [];
 
   // RUN-M2: the race must land ON `targetDate` — the server reconciliation
