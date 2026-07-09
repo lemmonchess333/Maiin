@@ -358,7 +358,17 @@ function FoodSuggestionsDropdown({
                     <span>P {food.protein}g</span>
                     <span>C {food.carbs}g</span>
                     <span>F {food.fat}g</span>
-                    <span className="text-xs">per {food.servingSize}</span>
+                    {food.unitConfidence === "low" ? (
+                      // OFF omitted a serving_size, so the macros above are
+                      // per-100g and the ServingSizeDrawer will ask on select.
+                      // Surface the reason inline so the follow-up isn't a
+                      // surprise. text-warning = "needs your input", tokenized.
+                      <span className="text-xs text-warning font-medium">
+                        serving size needed
+                      </span>
+                    ) : (
+                      <span className="text-xs">per {food.servingSize}</span>
+                    )}
                   </div>
                 </div>
                 <Plus className="size-4 text-primary shrink-0 mt-1" />
