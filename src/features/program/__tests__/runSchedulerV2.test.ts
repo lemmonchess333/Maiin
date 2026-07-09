@@ -272,12 +272,21 @@ describe("generateRacePlanV2", () => {
     expect(compressed.totalWeeks).toBe(3);
   });
 
-  it("hard floor of 2 weeks for compressed plans", () => {
-    const tooShort = generateRacePlanV2({
+  it("relaxes the 2-week floor only for a same-week race (R2)", () => {
+    // R2: a race in the CURRENT week gets a 1-week plan ending on race day —
+    // there's no room for two forward weeks before a same-week race, and the
+    // old floor pushed it into a phantom future week (negative dayIndex).
+    const sameWeek = generateRacePlanV2({
       ...standardInput,
-      raceGoal: { distance: "10k", targetDate: "2026-05-12" }, // 2 days
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" }, // 2 days, current week
     });
-    expect(tooShort.totalWeeks).toBeGreaterThanOrEqual(2);
+    expect(sameWeek.totalWeeks).toBe(1);
+    // A race that spills into next week keeps the 2-week floor.
+    const nextWeek = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "10k", targetDate: "2026-05-19" }, // next week
+    });
+    expect(nextWeek.totalWeeks).toBeGreaterThanOrEqual(2);
   });
 
   it("schedules runs on Both days when weekSchedule has them", () => {
@@ -314,6 +323,21 @@ describe("generateRacePlanV2", () => {
     const finalWeek = result.weeks[result.weeks.length - 1];
     const raceRun = finalWeek.find((rd) => rd.type === "race");
     expect(raceRun).toBeTruthy();
+  });
+
+  it("places a same-week race in the single (current) week on its target date (R2)", () => {
+    // The R2 symptom: a current-week race was bucketed into a phantom future
+    // week with a negative dayIndex and vanished from the plan. It must now
+    // appear in week 0, dated exactly on targetDate.
+    const result = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" }, // current week
+    });
+    expect(result.totalWeeks).toBe(1);
+    expect(result.weeks.length).toBe(1);
+    const raceRun = result.weeks[0].find((rd) => rd.type === "race");
+    expect(raceRun).toBeTruthy();
+    expect(raceRun?.date).toBe("2026-05-12");
   });
 
   it("returns empty weeks when no run-eligible days in weekSchedule", () => {
@@ -371,14 +395,22 @@ describe("generateRacePlanV2", () => {
     expect(fourWk.compressed).toBe(true); // < minWeeks 8
   });
 
-  it("10k/5k are never belowFloor (floor 2 vs the hard 2-week totalWeeks floor)", () => {
-    // A 10k 2 days out clamps to totalWeeks=2; floor=2 → 2 < 2 is false.
+  it("10k/5k aren't belowFloor once past the current week (floor 2 == the 2-week floor)", () => {
+    // A 10k spilling into next week clamps to totalWeeks=2; floor=2 → 2<2 false.
     const tightTenK = generateRacePlanV2({
       ...standardInput,
-      raceGoal: { distance: "10k", targetDate: "2026-05-12" },
+      raceGoal: { distance: "10k", targetDate: "2026-05-19" }, // next week
     });
     expect(tightTenK.belowFloor).toBe(false);
     expect(tightTenK.compressed).toBe(true);
+    // A SAME-week 10k is a 1-week plan — genuinely below the floor
+    // (finish-safely content), the intended R2 behaviour.
+    const sameWeek = generateRacePlanV2({
+      ...standardInput,
+      raceGoal: { distance: "10k", targetDate: "2026-05-12" },
+    });
+    expect(sameWeek.totalWeeks).toBe(1);
+    expect(sameWeek.belowFloor).toBe(true);
   });
 });
 
