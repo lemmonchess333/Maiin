@@ -64,8 +64,10 @@ describe("generateRacePlanV2 timing-flag consistency (property-based)", () => {
         weekStart: localWeekKey(parseLocalDate(CURRENT)),
       });
 
-      // Hard 2-week floor.
-      expect(plan.totalWeeks).toBeGreaterThanOrEqual(2);
+      // totalWeeks >= 1. The old hard 2-week floor was relaxed for a race in
+      // the CURRENT week (R2): a same-week race gets a 1-week plan ending on
+      // race day, since there's no room for two forward weeks before it.
+      expect(plan.totalWeeks).toBeGreaterThanOrEqual(1);
       // Documented implication.
       if (plan.belowFloor) expect(plan.compressed).toBe(true);
 
