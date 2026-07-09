@@ -310,8 +310,13 @@ export default function Run() {
   // confirm instead of silently exiting (the run is snapshot-recoverable, but
   // an accidental mid-run exit is jarring). Routes through the back-dismiss
   // primitive so native back + web back both land here. See lib/backDismiss.
-  useBackDismiss(phase === "active" || phase === "paused", () =>
-    setShowLeaveConfirm(true)
+  // sticky: the handler opens a "Leave run?" confirm and keeps the run open, so
+  // the web sentinel must re-arm — otherwise a SECOND back (after cancelling the
+  // confirm) would navigate out of the active run without asking (G4).
+  useBackDismiss(
+    phase === "active" || phase === "paused",
+    () => setShowLeaveConfirm(true),
+    { sticky: true }
   );
   // PR H (audit P1 #9): accumulator for total time spent backgrounded
   // during the run. Summed in handleVisible from every

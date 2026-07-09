@@ -50,6 +50,10 @@ interface StackEntry {
   /** Set true when a web popstate is closing this entry, so its unregister
    *  tells the controller the sentinel was already popped by the user. */
   viaBack: boolean;
+  /** Non-dismissing handler (opens a confirm, keeps the overlay open). On web
+   *  the provider re-arms the sentinel after handling so back stays trapped
+   *  instead of a second back navigating the page away. */
+  sticky: boolean;
   /** window.location.pathname when the overlay opened — compared at close to
    *  detect the navigate-from-overlay case (web only). Read from window.location
    *  (not useLocation) so the compare is SYNCHRONOUS at unregister time: React
@@ -81,12 +85,13 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    (handler: () => void) => {
+    (handler: () => void, opts?: { sticky?: boolean }) => {
       const id = nextId.current++;
       const entry: StackEntry = {
         id,
         handler,
         viaBack: false,
+        sticky: opts?.sticky ?? false,
         openPath: window.location.pathname,
       };
       stack.current.push(entry);
@@ -155,6 +160,17 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
           entry.handler();
         } catch (err) {
           logger.error("[backDismiss] web dismiss handler threw", err);
+        }
+        if (entry.sticky) {
+          // The handler intercepted back (e.g. opened a "Leave run?" confirm)
+          // but kept the overlay open — the sentinel we just consumed left this
+          // overlay unguarded. Re-arm: push a fresh sentinel and clear viaBack
+          // so a SECOND back is trapped too, not passed through to a real
+          // navigation. onClose reconciles the extra sentinel when the overlay
+          // finally closes (navigate → it rides as a middle entry; cancel →
+          // it's re-consumed by the next back).
+          entry.viaBack = false;
+          webController.onOpen();
         }
         return;
       }

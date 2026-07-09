@@ -12,8 +12,11 @@ import { createContext, useContext, useEffect, useRef } from "react";
 
 export interface BackDismissApi {
   /** Register a dismisser; returns an unregister fn. The newest registration
-   *  is the top of the stack and is invoked first on back (LIFO). */
-  register: (handler: () => void) => () => void;
+   *  is the top of the stack and is invoked first on back (LIFO).
+   *  `sticky` (web): the handler INTERCEPTS back without closing the overlay
+   *  (e.g. opens a "Leave run?" confirm); the provider re-arms the sentinel so
+   *  a second back is trapped too instead of navigating away. */
+  register: (handler: () => void, opts?: { sticky?: boolean }) => () => void;
   /** Invoke the topmost dismisser, if any. Returns true when one handled the
    *  back (so the caller must NOT also navigate). The native backButton
    *  listener calls this; the future web popstate handler will too. */
@@ -37,22 +40,33 @@ export const BackDismissContext = createContext<BackDismissApi | null>(null);
  * the close) invokes the SAME handler twice. This is deliberate — it absorbs an
  * accidental double-press instead of cascade-closing the overlay beneath — so
  * `onBack` MUST be idempotent (closing an already-closing overlay is a no-op,
- * which every current wiring satisfies via `setOpen(false)`). A future
- * non-idempotent handler (e.g. "open a Leave-run? confirm") must guard itself.
+ * which every current wiring satisfies via `setOpen(false)`).
+ *
+ * A NON-DISMISSING handler (e.g. "open a Leave-run? confirm" — it intercepts
+ * back but keeps the overlay open) must pass `{ sticky: true }`: on web the
+ * first back consumes the overlay's sentinel, so without a re-arm a SECOND back
+ * would find no sentinel and navigate the page away. `sticky` tells the
+ * provider to re-arm the sentinel after handling, so back stays trapped until
+ * the overlay actually closes.
  *
  * No-ops safely when rendered outside a BackDismissProvider (e.g. isolated
  * component tests) so overlays don't need the provider to render.
  */
-export function useBackDismiss(active: boolean, onBack: () => void) {
+export function useBackDismiss(
+  active: boolean,
+  onBack: () => void,
+  opts?: { sticky?: boolean }
+) {
   const ctx = useContext(BackDismissContext);
   const cb = useRef(onBack);
   useEffect(() => {
     cb.current = onBack;
   });
+  const sticky = opts?.sticky ?? false;
   useEffect(() => {
     if (!active || !ctx) return;
-    return ctx.register(() => cb.current());
-  }, [active, ctx]);
+    return ctx.register(() => cb.current(), { sticky });
+  }, [active, ctx, sticky]);
 }
 
 /** Exposes `dispatchBack` (what the native listener calls) — used by the
