@@ -130,7 +130,9 @@ describe("routeProgress", () => {
   ];
 
   it("returns null for a degenerate route (<2 points)", () => {
-    expect(routeProgress([makePoint({ lat: 51.5, lon: -0.1 })], 51.5, -0.1)).toBeNull();
+    expect(
+      routeProgress([makePoint({ lat: 51.5, lon: -0.1 })], 51.5, -0.1)
+    ).toBeNull();
   });
 
   it("on-route start: ~0 off-route, ~0 covered, full remaining", () => {
@@ -454,6 +456,31 @@ describe("calculateSplits", () => {
       // For 1km splits they happen to be equal via paceAsNumber, which is fine
       expect(split.paceSeconds).toBeGreaterThan(0);
     }
+  });
+
+  it("distributes time across km boundaries when one segment crosses several (no 0:00 splits)", () => {
+    // GPS dropout → reappear: a single segment jumps ~3km over 300s. Each km
+    // boundary should get its proportional share (~100s), NOT the whole time on
+    // km1 and 0:00 (0:00/km pace) on km2/km3 — the regression this fixes.
+    const baseTime = 1_700_000_000_000;
+    const points: GPSPoint[] = [
+      makePoint({ lat: 51.5, lon: -0.1, altitude: 10, timestamp: baseTime }),
+      makePoint({
+        lat: 51.5 + 0.027, // ~3000m north
+        lon: -0.1,
+        altitude: 10,
+        timestamp: baseTime + 300000, // 300s later
+      }),
+    ];
+    const splits = calculateSplits(points);
+    expect(splits.length).toBeGreaterThanOrEqual(3);
+    for (const s of splits) {
+      expect(s.time).toBeGreaterThan(0); // no zero-duration split
+      expect(s.paceSeconds).toBeGreaterThan(0);
+    }
+    // Each km ≈ 100s (300s over ~3km); generous tolerance for haversine.
+    expect(splits[0].time).toBeGreaterThan(50);
+    expect(splits[0].time).toBeLessThan(150);
   });
 });
 

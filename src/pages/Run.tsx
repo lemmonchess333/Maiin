@@ -298,6 +298,11 @@ export default function Run() {
   const [treadmillDistance, setTreadmillDistance] = useState(0);
   const [acquiringSeconds, setAcquiringSeconds] = useState(0);
   const autoPauseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Latest timer, held in a ref so the auto-pause effect can call pause/resume
+  // WITHOUT listing the (per-render-changing) timer object as a dep — otherwise
+  // the effect re-runs every second and never lets the 5s stationary timer run.
+  const timerRef = useRef(timer);
+  timerRef.current = timer;
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -797,41 +802,65 @@ export default function Run() {
   }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
 
   useEffect(() => {
-    if (
-      phase !== "active" ||
-      !runConfig?.autoPause ||
-      requiresManualDistance(runConfig.activityType)
-    )
+    const eligible =
+      phase === "active" &&
+      !!runConfig?.autoPause &&
+      !requiresManualDistance(runConfig.activityType);
+    if (!eligible) {
+      // Left the auto-pause-eligible state (paused, finished, config off) —
+      // cancel any pending pause.
+      if (autoPauseTimer.current) {
+        clearTimeout(autoPauseTimer.current);
+        autoPauseTimer.current = null;
+      }
       return;
-    const speed = gps.currentPoint?.speed;
-    if (speed !== null && speed !== undefined && speed < 0.5 && !autoPaused) {
-      autoPauseTimer.current = setTimeout(() => {
-        timer.pause();
-        setAutoPaused(true);
-      }, 5000);
-    } else if (
-      autoPaused &&
-      speed !== null &&
-      speed !== undefined &&
-      speed >= 1
-    ) {
-      const resume = () => {
-        timer.resume();
-        setAutoPaused(false);
-      };
-      resume();
     }
-    return () => {
-      if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
-    };
+    const speed = gps.currentPoint?.speed;
+    const stationary = speed !== null && speed !== undefined && speed < 0.5;
+    const moving = speed !== null && speed !== undefined && speed >= 1;
+
+    if (stationary && !autoPaused) {
+      // Arm the 5s stationary timer ONCE. This effect re-runs on every GPS fix
+      // (~1s); previously the cleanup cleared and re-armed the timeout each
+      // time, so it never reached 5 continuous seconds and auto-pause never
+      // fired. Only arm when nothing is pending; never clear-on-rerun.
+      if (!autoPauseTimer.current) {
+        autoPauseTimer.current = setTimeout(() => {
+          autoPauseTimer.current = null;
+          timerRef.current.pause();
+          setAutoPaused(true);
+        }, 5000);
+      }
+    } else {
+      // Moving again (or a brief non-stationary blip) — cancel a pending pause
+      // so a moving run isn't paused, and resume if we were auto-paused.
+      if (autoPauseTimer.current) {
+        clearTimeout(autoPauseTimer.current);
+        autoPauseTimer.current = null;
+      }
+      if (moving && autoPaused) {
+        timerRef.current.resume();
+        setAutoPaused(false);
+      }
+    }
+    // No cleanup here: React runs effect cleanup before EVERY re-run, so
+    // clearing the pending timeout in a cleanup is exactly what broke auto-pause
+    // (reset every ~1s). Teardown on unmount is handled by the effect below.
   }, [
     gps.currentPoint,
     phase,
     autoPaused,
     runConfig?.autoPause,
     runConfig?.activityType,
-    timer,
   ]);
+
+  // Unmount-only teardown for the auto-pause timer (the main effect above
+  // deliberately has no per-run cleanup).
+  useEffect(() => {
+    return () => {
+      if (autoPauseTimer.current) clearTimeout(autoPauseTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (phase === "active" && runConfig?.activityType === "intervals")
