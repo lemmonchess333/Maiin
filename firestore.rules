@@ -957,6 +957,15 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: weekly Momentum Check-ins (CHECKIN-01) — owner-only
+    // private reflections keyed by review week. Never readable by another
+    // account; any future Goal Space share is a separate summary-only event,
+    // never this doc.
+    match /users/{uid}/checkins/{weekKey} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
+
     // ========================================
     // Scan usage — food-scan quota tracker.
     // Written exclusively by Cloud Functions (analyzeFood /

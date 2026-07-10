@@ -48,6 +48,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // the target-dependent nutrition badges. Enumerate-not-recurse, so without
   // this entry a user's daily snapshots orphan on account deletion.
   "dailyNutrition",
+  // Weekly Momentum Check-ins (users/{uid}/checkins/{weekKey}, CHECKIN-01).
+  // Owner-only private reflections — enumerate-not-recurse, so without this
+  // entry a user's check-in answers orphan on account deletion.
+  "checkins",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by

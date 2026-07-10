@@ -69,6 +69,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/public/{doc}",
   "match /users/{uid}/progressPhotos/{doc}",
   "match /users/{uid}/privacyZones/{doc}",
+  "match /users/{uid}/checkins/{weekKey}",
   "match /users/{uid}/errors/{doc}",
   "match /feeds/{uid}/items/{doc}",
   "match /following/{uid}/users/{targetUid}",
@@ -273,7 +274,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 29 (saved-routes library added savedRoutes)", () => {
+  it("authoritative count is 31 (CHECKIN-01 added checkins)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -284,8 +285,10 @@ describe("Blocker E — path-count reconciliation", () => {
     // Saved-routes library added /users/{uid}/savedRoutes/{doc}, → 29.
     // Nutrition badges added /users/{uid}/dailyNutrition/{doc} (per-day
     // macro-target snapshot, freeze via isOwnerAndNotDeleting), → 30.
+    // CHECKIN-01 added /users/{uid}/checkins/{weekKey} (weekly Momentum
+    // Check-in, freeze via isOwnerAndNotDeleting), → 31.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(30);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(31);
   });
 });
