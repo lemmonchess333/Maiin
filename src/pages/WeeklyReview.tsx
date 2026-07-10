@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Minus,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useWeeklyReview, reviewViewedKey } from "@/hooks/useWeeklyReview";
@@ -36,8 +37,11 @@ function DirectionIcon({ direction }: { direction: "up" | "down" | "stable" }) {
  */
 export default function WeeklyReview() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { loading, review, weekKey } = useWeeklyReview();
+
+  // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
+  const trainingWhy = profile?.trainingWhy?.trim();
 
   // Opening the page IS the "viewed" event — it retires the Home entry.
   const { dismiss } = useDismissOnce(
@@ -95,8 +99,8 @@ export default function WeeklyReview() {
               A quiet week
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Nothing logged last week — it happens. The week ahead is a
-              fresh start.
+              Nothing logged last week — it happens. The week ahead is a fresh
+              start.
             </p>
           </div>
         )}
@@ -182,9 +186,7 @@ export default function WeeklyReview() {
                           <span className="font-sans font-normal text-muted-foreground">
                             {" "}
                             · {review.training.runs.count}{" "}
-                            {review.training.runs.count === 1
-                              ? "run"
-                              : "runs"}
+                            {review.training.runs.count === 1 ? "run" : "runs"}
                           </span>
                         )}
                       </p>
@@ -335,6 +337,28 @@ export default function WeeklyReview() {
                     {review.weekAhead.phaseNote}
                   </p>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* D16 — "Your why" reminder. Only when a review exists (so it lands
+            in the recap, not on an empty first-week state) and the user set
+            one. Calm, brand-tinted, verbatim quote of their reason. */}
+        {!loading && review && trainingWhy && (
+          <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
+            <SectionLabel as="h2">Your why</SectionLabel>
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Heart className="size-4 text-primary" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground leading-snug">
+                  &ldquo;{trainingWhy}&rdquo;
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  The reason you started — still worth it.
+                </p>
               </div>
             </div>
           </div>

@@ -61,12 +61,8 @@ import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
 import { logger } from "@/lib/logger";
-import { buildPlan, type RunMode } from "@/features/program/planBuilder";
-import {
-  runTuningFromProfile,
-  type RunVolumePreset,
-  type RunDifficultyPreset,
-} from "@/features/program/runScheduler";
+import { buildPlan } from "@/features/program/planBuilder";
+import { runTuningFromProfile } from "@/features/program/runScheduler";
 import {
   chooseSplit,
   splitLabel,
@@ -74,6 +70,7 @@ import {
 } from "@/features/program/programEngine";
 import {
   computeProgrammeChanges,
+  RACE_DISTANCE_LABELS,
   programmePreservationNote,
 } from "@/lib/programmeChanges";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -81,8 +78,6 @@ import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
 import CurrentProgrammeSummary from "./CurrentProgrammeSummary";
 import PendingChangesSummary from "./PendingChangesSummary";
-import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
-import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import type {
   PrimaryGoal,
   Goal,
@@ -377,21 +372,6 @@ const INJURY_OPTIONS: {
 ];
 
 // Run9 (3a): `structured` retired as a user-selectable mode — running is
-// freeform by default; a race goal is the only "plan". The type keeps it for
-// legacy data + migration.
-const RUN_MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
-  {
-    id: "freeform",
-    label: "Freeform",
-    desc: "Run whenever you want, no auto-scheduling",
-  },
-  {
-    id: "race_prep",
-    label: "Race prep",
-    desc: "Periodised plan for a specific race",
-  },
-];
-
 export default function ProgrammeSettings({
   profile,
   programState,
@@ -443,20 +423,12 @@ export default function ProgrammeSettings({
   const [liftDays, setLiftDays] = useState<number>(saved.liftDays);
   const [equipment, setEquipment] = useState<Equipment>(saved.equipment);
   const [injuries, setInjuries] = useState<string[]>(saved.injuries);
-  const [runMode, setRunMode] = useState<RunMode>(saved.runMode);
-  const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    saved.weeklyRunDays
-  );
-  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    saved.raceDistance
-  );
-  const [raceTargetDate, setRaceTargetDate] = useState<string>(
-    saved.raceTargetDate
-  );
-  const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
-  const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
-    saved.runDifficulty
-  );
+  // D14 dedupe: run-plan fields are NO LONGER edited here — the focused
+  // /settings/run-plan editor (RunPlanSettings) is the one place they
+  // change, with run-only save semantics (never a full rebuild). This
+  // editor reads the SAVED run values and threads them through the
+  // rebuild unchanged, and renders a read-only Running summary that
+  // links out (same treatment as the derived Nutrition phase card).
 
   const [saving, setSaving] = useState(false);
   const [confirmRebuild, setConfirmRebuild] = useState(false);
@@ -477,12 +449,14 @@ export default function ProgrammeSettings({
     preferredSplit: saved.preferredSplit,
     equipment,
     injuries,
-    runMode,
-    weeklyRunDays,
-    raceDistance,
-    raceTargetDate,
-    runVolume,
-    runDifficulty,
+    // Run fields mirror `saved` — run edits live on /settings/run-plan,
+    // so they can never appear in this editor's change recap.
+    runMode: saved.runMode,
+    weeklyRunDays: saved.weeklyRunDays,
+    raceDistance: saved.raceDistance,
+    raceTargetDate: saved.raceTargetDate,
+    runVolume: saved.runVolume,
+    runDifficulty: saved.runDifficulty,
   });
   const dirty = changes.length > 0;
   // Pgm5 (Q3): content edits now PRESERVE the user's workouts — only a
@@ -490,39 +464,8 @@ export default function ProgrammeSettings({
   // customization reset for a day-count change, and reassure otherwise.
   const liftDaysChanged = liftDays !== saved.liftDays;
 
-  // A race-prep plan needs a target date that isn't in the past.
-  const raceDateInvalid =
-    runMode === "race_prep" &&
-    (!raceTargetDate || raceTargetDate < localDateString(new Date()));
-
-  const effectiveRunDays = runMode === "freeform" ? 0 : weeklyRunDays;
-
-  // Race Goal Planner preview. Derives weeks-out / timing status / weekly
-  // structure / recovery from the SAME engine the save commits — see
-  // raceGoalPlanner.ts. `currentDate` matches the save path (buildPlan uses
-  // localDateString(new Date())) so the preview can't drift from the saved plan.
-  const today = localDateString(new Date());
-  const plannerState = useMemo(
-    () =>
-      getRaceGoalPlannerState({
-        distance: raceDistance,
-        targetDate: raceTargetDate,
-        currentDate: today,
-        liftDays,
-        weeklyRunDays,
-        // Pgm6: the preview runs the same knobs the save will commit.
-        tuning: { volume: runVolume, difficulty: runDifficulty },
-      }),
-    [
-      raceDistance,
-      raceTargetDate,
-      today,
-      liftDays,
-      weeklyRunDays,
-      runVolume,
-      runDifficulty,
-    ]
-  );
+  const effectiveRunDays =
+    saved.runMode === "freeform" ? 0 : saved.weeklyRunDays;
 
   // ── Derived display values (P1/P2/P3 — presentational only) ───────
   // "Current setup" reflects the SAVED snapshot (not the draft), so it reads
@@ -593,11 +536,19 @@ export default function ProgrammeSettings({
         // value (inert in generation, keeps profileUpdates consistent).
         preferredSplit:
           saved.preferredSplit === "auto" ? "full_body" : saved.preferredSplit,
-        runMode,
+        // D14: the run plan threads through the rebuild from the SAVED
+        // profile values — lifting edits never disturb the run plan, and
+        // run edits happen on /settings/run-plan.
+        runMode: saved.runMode,
         weeklyRunDays: effectiveRunDays,
-        runTuning: { volume: runVolume, difficulty: runDifficulty },
-        ...(runMode === "race_prep" && raceTargetDate
-          ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
+        runTuning: { volume: saved.runVolume, difficulty: saved.runDifficulty },
+        ...(saved.runMode === "race_prep" && saved.raceTargetDate
+          ? {
+              raceGoal: {
+                distance: saved.raceDistance,
+                targetDate: saved.raceTargetDate,
+              },
+            }
           : {}),
         equipment,
         injuries,
@@ -767,125 +718,41 @@ export default function ProgrammeSettings({
           </div>
         </div>
 
-        {/* ── Running (still part of the weekly plan) ──
-            Hidden in the lift-only view — running has its own focused
-            editor (RunPlanSettings / /settings/run-plan). The run draft
-            threads through the save unchanged so lifting edits never
-            disturb the run plan. */}
+        {/* ── Running — READ-ONLY summary (D14 dedupe). Run-plan fields
+            (mode, race goal, run days, Pgm6 tuning) are edited in ONE
+            place: the focused /settings/run-plan editor, whose run-only
+            writers never trigger this editor's full-programme rebuild.
+            Editing them here too gave the same fields two different save
+            models (rebuild vs run-only patch) — the same two-editors-
+            drift failure the Nutrition phase card above solved the same
+            way. Hidden in the lift-only view. */}
         {!liftOnly && (
           <div>
             <SectionLabel>Running</SectionLabel>
-            <div className="space-y-2">
-              {RUN_MODE_OPTIONS.map((opt, i) => (
-                <SettingsOptionCard
-                  key={opt.id}
-                  selected={runMode === opt.id}
-                  onSelect={() => setRunMode(opt.id)}
-                  index={i}
-                  icon={<Footprints size={18} className="text-running" />}
-                  accent={THEME.running}
-                  label={opt.label}
-                  desc={opt.desc}
-                />
-              ))}
-            </div>
-
-            {runMode !== "freeform" && (
-              <div className="mt-3">
-                <label
-                  htmlFor="ps-run-days"
-                  className="text-xs uppercase tracking-wider text-muted-foreground"
-                >
-                  Run days per week (
-                  <span className="font-mono tabular-nums">
-                    {weeklyRunDays}
-                  </span>
-                  )
-                </label>
-                <input
-                  id="ps-run-days"
-                  type="range"
-                  min={1}
-                  max={7}
-                  value={weeklyRunDays}
-                  onChange={(e) => setWeeklyRunDays(Number(e.target.value))}
-                  className="w-full mt-1 accent-running"
-                />
-                {liftDays + weeklyRunDays > 7 && (
-                  <p className="text-xs mt-1 text-muted-foreground">
-                    <span className="font-mono tabular-nums">{liftDays}</span>{" "}
-                    lift +{" "}
-                    <span className="font-mono tabular-nums">
-                      {weeklyRunDays}
-                    </span>{" "}
-                    run ={" "}
-                    <span className="font-mono tabular-nums">
-                      {liftDays + weeklyRunDays}
-                    </span>
-                    . This creates double days — we'll combine lift and run on
-                    some days.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {runMode === "race_prep" && (
-              <RaceGoalPlanner
-                distance={raceDistance}
-                targetDate={raceTargetDate}
-                minDate={today}
-                state={plannerState}
-                onDistanceChange={setRaceDistance}
-                onTargetDateChange={setRaceTargetDate}
+            <Link
+              to="/settings/run-plan"
+              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
+                <Footprints size={18} className="text-running" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body font-bold leading-tight">
+                  {saved.runMode === "race_prep"
+                    ? `Race prep · ${RACE_DISTANCE_LABELS[saved.raceDistance] ?? saved.raceDistance}`
+                    : "Freeform running"}
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                  {saved.runMode === "race_prep"
+                    ? `${saved.weeklyRunDays} run ${saved.weeklyRunDays === 1 ? "day" : "days"}/week — tap to edit in Run plan`
+                    : "Run whenever you like — tap to set a race goal"}
+                </span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
               />
-            )}
-
-            {/* Pgm6 — the two locked tuning knobs (volume + difficulty,
-                nothing else). Race-prep only: they shape the periodised
-                generator, and freeform has no scheduled sessions to tune.
-                Bounded presets; `standard` is byte-identical to the untuned
-                plan. */}
-            {runMode === "race_prep" && (
-              <div className="space-y-3 pt-1">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Long-run volume
-                  </p>
-                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                    How big your long runs build — Lighter caps them at 10K.
-                  </p>
-                  <SegmentedControl
-                    options={[
-                      { value: "lighter", label: "Lighter" },
-                      { value: "standard", label: "Standard" },
-                      { value: "bigger", label: "Bigger" },
-                    ]}
-                    value={runVolume}
-                    onChange={(v) => setRunVolume(v as RunVolumePreset)}
-                    ariaLabel="Long-run volume"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    Intensity
-                  </p>
-                  <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
-                    How much tempo &amp; interval work each week carries. Paces
-                    stay personalised either way.
-                  </p>
-                  <SegmentedControl
-                    options={[
-                      { value: "gentler", label: "Gentler" },
-                      { value: "standard", label: "Standard" },
-                      { value: "harder", label: "Harder" },
-                    ]}
-                    value={runDifficulty}
-                    onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
-                    ariaLabel="Plan intensity"
-                  />
-                </div>
-              </div>
-            )}
+            </Link>
           </div>
         )}
 
@@ -1042,35 +909,27 @@ export default function ProgrammeSettings({
       )}
 
       {/* ── Sticky save bar ── */}
-      {(dirty || raceDateInvalid || saving) && (
+      {(dirty || saving) && (
         <div
           className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
-          {!raceDateInvalid && (
-            <PendingChangesSummary
-              count={changes.length}
-              className="mb-2 text-center"
-            />
-          )}
+          <PendingChangesSummary
+            count={changes.length}
+            className="mb-2 text-center"
+          />
           <button
             type="button"
             onClick={() => setConfirmRebuild(true)}
-            disabled={!dirty || raceDateInvalid || saving}
+            disabled={!dirty || saving}
             className={cn(
               "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || raceDateInvalid || saving
+              !dirty || saving
                 ? "bg-muted text-muted-foreground opacity-60"
                 : "bg-primary text-primary-foreground"
             )}
           >
-            {saving
-              ? "Saving…"
-              : raceDateInvalid
-                ? "Fix race date"
-                : runMode === "race_prep" && plannerState.ctaLabel
-                  ? plannerState.ctaLabel
-                  : "Save changes"}
+            {saving ? "Saving…" : "Save changes"}
           </button>
         </div>
       )}
@@ -1120,22 +979,6 @@ export default function ProgrammeSettings({
                           weekNumber: programState?.weekNumber,
                         })}
                   </p>
-                  {!confirmReset &&
-                    runMode === "race_prep" &&
-                    plannerState.status === "compressed" && (
-                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                        This will be a compressed plan — fewer hard sessions to
-                        fit the shorter runway.
-                      </p>
-                    )}
-                  {!confirmReset &&
-                    runMode === "race_prep" &&
-                    plannerState.status === "below-floor" && (
-                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                        This is a finish-safely plan, not a full build — mostly
-                        easy running.
-                      </p>
-                    )}
                 </div>
               </div>
 

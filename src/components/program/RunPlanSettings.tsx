@@ -31,6 +31,7 @@ import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import { getRaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import { setRaceGoalPatch } from "@/features/program/runModeResolution";
@@ -42,12 +43,21 @@ import {
 import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { RaceDistance } from "@/features/program/programTypes";
+import {
+  runTuningFromProfile,
+  type RunTuning,
+  type RunVolumePreset,
+  type RunDifficultyPreset,
+} from "@/features/program/runScheduler";
 
 type RunMode = "freeform" | "race_prep";
 
 interface RefreshRunScheduleOverrides {
   weekSchedule?: ScheduleDay[];
   weeklyRunDaysTarget?: number;
+  /** Pgm6 knobs — threaded explicitly so the refresh never reads the
+   *  pre-save profile values from a stale closure. */
+  tuning?: RunTuning;
 }
 
 interface RunPlanSettingsProps {
@@ -91,6 +101,9 @@ export default function RunPlanSettings({
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
+      // Pgm6 knobs — missing → standard (same lazy default the engine uses).
+      runVolume: runTuningFromProfile(profile).volume,
+      runDifficulty: runTuningFromProfile(profile).difficulty,
     }),
     [profile]
   );
@@ -106,6 +119,10 @@ export default function RunPlanSettings({
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
     saved.raceTargetDate
   );
+  const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
+  const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
+    saved.runDifficulty
+  );
   const [saving, setSaving] = useState(false);
 
   const today = localDateString(new Date());
@@ -120,8 +137,18 @@ export default function RunPlanSettings({
         currentDate: today,
         liftDays,
         weeklyRunDays,
+        // Pgm6: preview with the same knobs the save will commit.
+        tuning: { volume: runVolume, difficulty: runDifficulty },
       }),
-    [raceDistance, raceTargetDate, today, liftDays, weeklyRunDays]
+    [
+      raceDistance,
+      raceTargetDate,
+      today,
+      liftDays,
+      weeklyRunDays,
+      runVolume,
+      runDifficulty,
+    ]
   );
 
   const raceDateInvalid =
@@ -132,7 +159,9 @@ export default function RunPlanSettings({
     (runMode === "race_prep" &&
       (raceDistance !== saved.raceDistance ||
         raceTargetDate !== saved.raceTargetDate ||
-        weeklyRunDays !== saved.weeklyRunDays));
+        weeklyRunDays !== saved.weeklyRunDays ||
+        runVolume !== saved.runVolume ||
+        runDifficulty !== saved.runDifficulty));
 
   // ── Save (run-only — never rebuilds lifting) ────────────────────────
   async function handleSave(): Promise<void> {
@@ -149,6 +178,10 @@ export default function RunPlanSettings({
               targetDate: raceTargetDate,
             }) as Partial<UserProfile>),
             ...runTargetWriteFields(weeklyRunDays),
+            // Pgm6 knobs persist alongside the goal so the profile copy
+            // and the regenerated plan can never disagree.
+            runVolume,
+            runDifficulty,
           },
           { throwOnError: true }
         );
@@ -156,12 +189,14 @@ export default function RunPlanSettings({
           await refreshRunSchedule({
             weekSchedule: profile.weekSchedule,
             weeklyRunDaysTarget: weeklyRunDays,
+            tuning: { volume: runVolume, difficulty: runDifficulty },
           });
         } catch (e) {
           logger.warn("[RunPlanSettings] race refresh failed once, retry", e);
           await refreshRunSchedule({
             weekSchedule: profile.weekSchedule,
             weeklyRunDaysTarget: weeklyRunDays,
+            tuning: { volume: runVolume, difficulty: runDifficulty },
           });
         }
         toast.success("Race plan saved", { id: "run-plan" });
@@ -301,6 +336,51 @@ export default function RunPlanSettings({
             >
               <Plus className="size-4" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised
+          generator; freeform has no scheduled sessions to tune). Moved here
+          from ProgrammeSettings' full variant (D14 dedupe): the focused
+          run editor is the ONE place run-plan fields are edited. Bounded
+          presets; `standard` is byte-identical to the untuned plan. */}
+      {runMode === "race_prep" && (
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Long-run volume
+            </p>
+            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+              How big your long runs build — Lighter caps them at 10K.
+            </p>
+            <SegmentedControl
+              options={[
+                { value: "lighter", label: "Lighter" },
+                { value: "standard", label: "Standard" },
+                { value: "bigger", label: "Bigger" },
+              ]}
+              value={runVolume}
+              onChange={(v) => setRunVolume(v as RunVolumePreset)}
+              ariaLabel="Long-run volume"
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Intensity</p>
+            <p className="mt-0.5 mb-2 text-xs text-muted-foreground">
+              How much tempo &amp; interval work each week carries. Paces stay
+              personalised either way.
+            </p>
+            <SegmentedControl
+              options={[
+                { value: "gentler", label: "Gentler" },
+                { value: "standard", label: "Standard" },
+                { value: "harder", label: "Harder" },
+              ]}
+              value={runDifficulty}
+              onChange={(v) => setRunDifficulty(v as RunDifficultyPreset)}
+              ariaLabel="Plan intensity"
+            />
           </div>
         </div>
       )}

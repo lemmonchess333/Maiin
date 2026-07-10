@@ -93,7 +93,7 @@ const RUN_MODE_LABELS: Record<string, string> = {
   race_prep: "Race prep",
 };
 
-const RACE_DISTANCE_LABELS: Record<string, string> = {
+export const RACE_DISTANCE_LABELS: Record<string, string> = {
   "5k": "5K",
   "10k": "10K",
   half: "Half Marathon",
