@@ -1647,6 +1647,22 @@ export default function RunSummary() {
               </button>
             )}
 
+            {canShowDone({ saveStatus }) && (
+              /* FOOD-02: post-run → Food handoff, at the moment the runner
+                 has refuel intent. Secondary and skippable — routes into
+                 the EXISTING composer flow with a narrow context param
+                 (Food renders a dismissible refuel line); no separate
+                 recovery-meal flow, no target change. Only rendered in the
+                 valid-run path (this whole stack is), post-save. */
+              <button
+                type="button"
+                onClick={() => navigate("/food?context=post-run")}
+                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+              >
+                Log recovery food
+              </button>
+            )}
+
             {(() => {
               /* Share + Export GPX gated together so the wrapping flex row
              collapses to nothing when neither is renderable (e.g. a
