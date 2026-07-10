@@ -47,7 +47,7 @@ import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { platesPerSide } from "@/lib/plateCalculator";
-import { useWorkoutDraft } from "@/hooks/useWorkoutDraft";
+import { useWorkoutDraft, computeDraftIdentity } from "@/hooks/useWorkoutDraft";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
@@ -144,6 +144,14 @@ interface SetLog {
 interface Props {
   day: WorkoutDay;
   dayIndex: number;
+  /** LIFT-01 draft-identity scope: `"programme"` (default) for
+   *  scheduled programme days, `"routine:<id>"` for saved-routine
+   *  sessions so each routine gets its own draft isolation. */
+  draftScope?: string;
+  /** LIFT-01 draft-identity epoch: the programme `weekNumber` for
+   *  programme days (invalidates a stale draft across week
+   *  advancement). Defaults to 0 for scopes without an epoch. */
+  draftEpoch?: string | number;
   onLogExercise: (
     dayIndex: number,
     exIndex: number,
@@ -166,17 +174,37 @@ interface Props {
 export default function WorkoutSession({
   day,
   dayIndex,
+  draftScope,
+  draftEpoch,
   onLogExercise,
   onCompleteDay,
   onClose,
 }: Props) {
   const { user, profile } = useAuth();
   const { awardEventBadge } = useStreaks();
+  // LIFT-01: bind the draft to this exact session — scope + epoch +
+  // day metadata + executable exercise layout. setLogs/exerciseNotes
+  // are positional over day.exercises, so a draft from a different
+  // layout must never be offered for resume here.
+  const draftIdentity = useMemo(
+    () =>
+      computeDraftIdentity({
+        scope: draftScope ?? "programme",
+        epoch: draftEpoch ?? 0,
+        dayIndex,
+        dayName: day.dayName,
+        layout: day.exercises.map((ex) => ({
+          id: ex.exerciseId || ex.name,
+          sets: ex.sets,
+        })),
+      }),
+    [draftScope, draftEpoch, dayIndex, day.dayName, day.exercises]
+  );
   const {
     load: loadDraft,
     save: saveDraft,
     clear: clearDraft,
-  } = useWorkoutDraft(user?.uid, dayIndex);
+  } = useWorkoutDraft(user?.uid, dayIndex, draftIdentity);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
   const [showResumePrompt, setShowResumePrompt] = useState(
