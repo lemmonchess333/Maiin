@@ -27,6 +27,17 @@
  * existing stable row).
  */
 
+/** One component food of a repeated meal bundle — the same item shape
+ *  meal docs persist in `items[]`. */
+export interface QuickAddBundleItem {
+  name: string;
+  portionSize: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 export interface QuickAddItem {
   /** Lowercased + trimmed food name — same key the existing
    *  frequency map already uses. Don't introduce a new
@@ -44,6 +55,46 @@ export interface QuickAddItem {
    *  non-removable because removing them has no persistent
    *  meaning (they re-derive from meal history each render). */
   favouriteId?: string;
+  /** FOOD-01: present when the chip repeats a whole historical
+   *  multi-item meal. Carries the ORIGINAL foodName + items[] so a
+   *  repeat re-logs the real composition instead of flattening the
+   *  meal into one synthetic aggregate row — and so the persisted
+   *  foodName stays the real name, not a display string like
+   *  "Fish, Fries +2" (which would pollute the frequency map).
+   *  Absent for single-food chips, favourites, and seeded defaults
+   *  (their existing one-item persist path is already faithful). */
+  bundle?: { foodName: string; items: QuickAddBundleItem[] };
+}
+
+/**
+ * FOOD-01 — the persisted shape for a quick-add tap. Pure so the
+ * 1-item / 2-item / 3+-item repeat behaviours are unit-testable
+ * without mounting the Food page:
+ *   - bundle chips re-log the original foodName + full items[]
+ *   - plain chips keep the existing single synthetic item
+ * Totals always come from the chip (the frequency map already keeps
+ * the latest version of the meal, so chip totals == bundle totals).
+ */
+export function buildQuickAddMealPayload(item: QuickAddItem): {
+  foodName: string;
+  items: QuickAddBundleItem[];
+} {
+  if (item.bundle && item.bundle.items.length > 0) {
+    return { foodName: item.bundle.foodName, items: item.bundle.items };
+  }
+  return {
+    foodName: item.name,
+    items: [
+      {
+        name: item.name,
+        portionSize: item.portionSize,
+        calories: item.cal,
+        protein: item.pro,
+        carbs: item.carb,
+        fat: item.fat,
+      },
+    ],
+  };
 }
 
 /**
@@ -61,7 +112,7 @@ export interface QuickAddItem {
 export function orderQuickAddItems(
   cachedOrder: string[],
   current: Map<string, QuickAddItem>,
-  max: number,
+  max: number
 ): QuickAddItem[] {
   const result: QuickAddItem[] = [];
   const seen = new Set<string>();

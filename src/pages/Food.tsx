@@ -25,14 +25,19 @@ import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazy(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazy(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
-import { orderQuickAddItems, type QuickAddItem } from "@/lib/quickAddOrder";
+import {
+  orderQuickAddItems,
+  buildQuickAddMealPayload,
+  type QuickAddItem,
+} from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { useSubscription } from "@/lib/subscription";
@@ -1186,15 +1191,7 @@ export default function Food() {
        to claim their stable slot). */
     const current = new Map<string, QuickAddItem>();
 
-    const push = (entry: {
-      name: string;
-      cal: number;
-      pro: number;
-      carb: number;
-      fat: number;
-      portionSize: string;
-      favouriteId?: string;
-    }) => {
+    const push = (entry: Omit<QuickAddItem, "key">) => {
       const key = entry.name.toLowerCase().trim();
       if (!key || current.has(key)) return;
       /* Legacy hygiene: filter generic / unidentifiable AI names
@@ -1289,6 +1286,26 @@ export default function Food() {
         carb: entry.meal.totalCarbs || 0,
         fat: entry.meal.totalFat || 0,
         portionSize: "1 serving",
+        /* FOOD-01: multi-item historical meals repeat as a BUNDLE — the
+           original foodName + full items[] ride on the chip so a tap
+           re-logs the real composition (and the real name) instead of
+           flattening the meal into one "Fish, Fries +2" synthetic row.
+           The smartName above stays presentation-only. Single-item
+           meals keep the existing faithful one-item path. */
+        bundle:
+          items.length > 1
+            ? {
+                foodName: entry.meal.foodName,
+                items: items.map((it) => ({
+                  name: it.name || entry.meal.foodName,
+                  portionSize: it.portionSize || "1 serving",
+                  calories: safeNum(it.calories),
+                  protein: safeNum(it.protein),
+                  carbs: safeNum(it.carbs),
+                  fat: safeNum(it.fat),
+                })),
+              }
+            : undefined,
       });
     }
 
@@ -1419,19 +1436,14 @@ export default function Food() {
     });
     setQuickAdding(meal.name);
     try {
+      // FOOD-01: bundle chips re-log the original foodName + items[]
+      // (composition preserved); plain chips keep the single synthetic
+      // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
+      const payload = buildQuickAddMealPayload(meal);
       await addDocGuarded(collection(db, "users", user.uid, "meals"), {
         date: selectedDate,
-        foodName: meal.name,
-        items: [
-          {
-            name: meal.name,
-            portionSize: meal.portionSize,
-            calories: meal.cal,
-            protein: meal.pro,
-            carbs: meal.carb,
-            fat: meal.fat,
-          },
-        ],
+        foodName: payload.foodName,
+        items: payload.items,
         totalCalories: meal.cal,
         totalProtein: meal.pro,
         totalCarbs: meal.carb,
@@ -1648,6 +1660,62 @@ export default function Food() {
         }}
         dailyTargets={dailyTargets}
       />
+
+      {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
+          RunSummary's "Log recovery food" deep link (?context=post-run),
+          today, and until dismissed — a transient contextual chip, not a
+          new structural section (Food6 IA untouched). Frames the existing
+          composer with one calm data-derived line; no separate flow, no
+          prescription, finalTarget unchanged. */}
+      {searchParams.get("context") === "post-run" && isToday && (
+        <motion.div variants={itemVariant}>
+          <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
+            <p className="flex-1 text-sm text-foreground">
+              Nice run — carbs + protein soon help recovery.
+              {(() => {
+                const proteinLeft = Math.max(
+                  0,
+                  Math.round(dailyTargets.protein - dailyTotals.protein)
+                );
+                const carbsLeft = Math.max(
+                  0,
+                  Math.round(dailyTargets.carbs - dailyTotals.carbs)
+                );
+                if (proteinLeft === 0 && carbsLeft === 0) return null;
+                return (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    You have{" "}
+                    <span className="font-mono tabular-nums font-semibold text-foreground">
+                      {proteinLeft}g
+                    </span>{" "}
+                    protein and{" "}
+                    <span className="font-mono tabular-nums font-semibold text-foreground">
+                      {carbsLeft}g
+                    </span>{" "}
+                    carbs left today.
+                  </span>
+                );
+              })()}
+            </p>
+            <IconButton
+              aria-label="Dismiss refuel reminder"
+              icon={<X className="w-4 h-4" aria-hidden="true" />}
+              size="sm"
+              onClick={() =>
+                setSearchParams(
+                  (params) => {
+                    const updated = new URLSearchParams(params);
+                    updated.delete("context");
+                    return updated;
+                  },
+                  { replace: true }
+                )
+              }
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Composer: the ONE food entry surface (wave2 D) — NL textarea
           with the scan icon, Add-to pills, and the dropdown. Quick Add
