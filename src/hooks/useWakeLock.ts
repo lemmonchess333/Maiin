@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { isNativePlatform } from "@/lib/platform";
 
 export function useWakeLock() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -11,6 +12,12 @@ export function useWakeLock() {
   const acquiringRef = useRef(false);
 
   const request = useCallback(async () => {
+    // Native-gated (RUN-01): on the native shell, background run tracking is
+    // owned by the background-geolocation foreground service — pinning the
+    // screen awake would only burn battery for no tracking benefit (the doc's
+    // "keep useWakeLock only on the web path"). Web keeps the lock so the
+    // foreground-only web watcher isn't killed by the screen sleeping.
+    if (isNativePlatform()) return false;
     if (!("wakeLock" in navigator)) return false;
     if (wakeLockRef.current || acquiringRef.current) return false;
     acquiringRef.current = true;

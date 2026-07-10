@@ -82,6 +82,7 @@ import {
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
 import { localDateString } from "../lib/dateHelpers";
+import { isNativePlatform } from "../lib/platform";
 import {
   runSessionReducer,
   initialRunPhase,
@@ -350,10 +351,18 @@ export default function Run() {
   // rendering while now < this value.
   const gapBannerSuppressUntilRef = useRef<number>(0);
 
-  // Coordinate all subsystems on background/foreground transitions
+  // Coordinate all subsystems on background/foreground transitions.
+  //
+  // PLATFORM-GATED (RUN-01, docs/run-background-gps.md Step 2): on NATIVE the
+  // location source is the background-geolocation watcher, whose entire point
+  // is surviving screen-lock/backgrounding — stopping it on hidden (or
+  // counting hidden time as a "gap") would have the app killing its own
+  // background tracking and mislabelling healthy native runs as patchy. The
+  // stop/restart/gap-accounting policy below is therefore WEB-ONLY, where
+  // backgrounding genuinely loses fixes.
   const handleHidden = useCallback(() => {
-    if (isOutdoorGpsRun(runConfig?.activityType)) {
-      gps.stop(); // Stop GPS to save battery while backgrounded
+    if (!isNativePlatform() && isOutdoorGpsRun(runConfig?.activityType)) {
+      gps.stop(); // Stop GPS to save battery while backgrounded (web only)
     }
   }, [gps, runConfig?.activityType]);
 
@@ -362,30 +371,37 @@ export default function Run() {
       // Immediately recalculate timer (Date.now() is accurate, but the setInterval was throttled)
       timer.recalcNow();
 
-      // Re-request wake lock (it drops when backgrounded)
+      // Re-request wake lock (it drops when backgrounded). No-ops on native —
+      // the OS foreground service owns background tracking there and pinning
+      // the screen would just burn battery (useWakeLock is native-gated).
       wakeLock.request();
 
-      // Restart GPS tracking if we were actively tracking
-      if (isOutdoorGpsRun(runConfig?.activityType) && phase === "active") {
-        gps.start();
-      }
+      if (!isNativePlatform()) {
+        // Restart GPS tracking if we were actively tracking (web only — the
+        // native watcher never stopped, and re-creating it would churn the
+        // foreground service).
+        if (isOutdoorGpsRun(runConfig?.activityType) && phase === "active") {
+          gps.start();
+        }
 
-      // PR H: accumulate ALL hidden time into the backgroundGapMs
-      // counter (event.hiddenDuration is in seconds). The 5s threshold
-      // below is only for the user-facing banner; we record every
-      // millisecond so short, frequent gaps still surface in the route-
-      // quality score.
-      backgroundGapMsRef.current += Math.max(0, event.hiddenDuration) * 1000;
+        // PR H: accumulate ALL hidden time into the backgroundGapMs
+        // counter (event.hiddenDuration is in seconds). The 5s threshold
+        // below is only for the user-facing banner; we record every
+        // millisecond so short, frequent gaps still surface in the route-
+        // quality score. Web only: on native the watcher records through
+        // the hidden window, so hidden time is NOT a gap.
+        backgroundGapMsRef.current += Math.max(0, event.hiddenDuration) * 1000;
 
-      // Show a brief banner if the gap was significant (> 5 seconds)
-      if (event.hiddenDuration > 5) {
-        const mins = Math.floor(event.hiddenDuration / 60);
-        const secs = Math.floor(event.hiddenDuration % 60);
-        const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-        setBgGapBanner(
-          `App was in background for ${duration} — GPS data may have gaps`
-        );
-        setTimeout(() => setBgGapBanner(null), 6000);
+        // Show a brief banner if the gap was significant (> 5 seconds)
+        if (event.hiddenDuration > 5) {
+          const mins = Math.floor(event.hiddenDuration / 60);
+          const secs = Math.floor(event.hiddenDuration % 60);
+          const duration = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+          setBgGapBanner(
+            `App was in background for ${duration} — GPS data may have gaps`
+          );
+          setTimeout(() => setBgGapBanner(null), 6000);
+        }
       }
     },
     [timer, gps, wakeLock, runConfig?.activityType, phase]
