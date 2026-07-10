@@ -147,6 +147,18 @@ test.describe("core user journeys", () => {
     await expect(begin).toBeVisible({ timeout: 20_000 });
     await begin.click();
 
+    // PROGRAM-FLEX-01: on a day whose estimate exceeds the 30-min
+    // budget, Begin Workout opens the Express chooser first — take the
+    // full session. Best-effort with a short timeout: a short seeded
+    // day starts directly and the chooser never renders.
+    try {
+      await page
+        .getByRole("button", { name: /^Full session/ })
+        .click({ timeout: 4_000 });
+    } catch {
+      /* chooser skipped — day fits the shortest budget */
+    }
+
     // In-session screen: close affordance + set rows with weight/reps
     // inputs render.
     await expect(page.getByLabel("Close workout")).toBeVisible({
