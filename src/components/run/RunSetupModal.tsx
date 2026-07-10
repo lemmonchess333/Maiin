@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   ChevronDown,
@@ -47,6 +48,20 @@ import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
+
+/* Preset chip (duration / pace / distance quick-pick groups). Tokenised —
+   the old inline rgba(0,0,0,…) styles were light-theme-only values that
+   rendered near-invisible on the DEFAULT dark theme, and py-1.5 sat well
+   under the 44px touch floor. Coral tint = running identity, per the
+   closed palette. */
+function presetChipClass(selected: boolean): string {
+  return cn(
+    "min-h-11 px-4 rounded-full text-xs font-medium border transition-colors active:scale-[0.97]",
+    selected
+      ? "bg-running/12 text-running border-running/30"
+      : "bg-muted text-muted-foreground border-border/50"
+  );
+}
 import {
   DEFAULT_CONFIG,
   ACTIVITY_TYPES,
@@ -706,20 +721,7 @@ export default function RunSetupModal({
                                   target: { type: "distance", value: m },
                                 })
                               }
-                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                              style={
-                                active
-                                  ? {
-                                      background: "rgba(212,99,122,0.12)",
-                                      color: THEME.running,
-                                      border: "1px solid rgba(212,99,122,0.30)",
-                                    }
-                                  : {
-                                      background: "rgba(0,0,0,0.04)",
-                                      color: "var(--color-muted-foreground)",
-                                      border: "1px solid rgba(0,0,0,0.08)",
-                                    }
-                              }
+                              className={presetChipClass(active)}
                             >
                               {m / 1000} km
                             </button>
@@ -733,20 +735,7 @@ export default function RunSetupModal({
                                 target: { type: "distance", value: 7500 },
                               });
                           }}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                          style={
-                            isCustom
-                              ? {
-                                  background: "rgba(212,99,122,0.12)",
-                                  color: THEME.running,
-                                  border: "1px solid rgba(212,99,122,0.30)",
-                                }
-                              : {
-                                  background: "rgba(0,0,0,0.04)",
-                                  color: "var(--color-muted-foreground)",
-                                  border: "1px solid rgba(0,0,0,0.08)",
-                                }
-                          }
+                          className={presetChipClass(isCustom)}
                         >
                           Custom
                         </button>
@@ -821,20 +810,7 @@ export default function RunSetupModal({
                                   target: { type: "time", value: s },
                                 })
                               }
-                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                              style={
-                                active
-                                  ? {
-                                      background: "rgba(212,99,122,0.12)",
-                                      color: THEME.running,
-                                      border: "1px solid rgba(212,99,122,0.30)",
-                                    }
-                                  : {
-                                      background: "rgba(0,0,0,0.04)",
-                                      color: "var(--color-muted-foreground)",
-                                      border: "1px solid rgba(0,0,0,0.08)",
-                                    }
-                              }
+                              className={presetChipClass(active)}
                             >
                               {s / 60} min
                             </button>
@@ -848,20 +824,7 @@ export default function RunSetupModal({
                                 target: { type: "time", value: 1500 },
                               });
                           }}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                          style={
-                            isCustom
-                              ? {
-                                  background: "rgba(212,99,122,0.12)",
-                                  color: THEME.running,
-                                  border: "1px solid rgba(212,99,122,0.30)",
-                                }
-                              : {
-                                  background: "rgba(0,0,0,0.04)",
-                                  color: "var(--color-muted-foreground)",
-                                  border: "1px solid rgba(0,0,0,0.08)",
-                                }
-                          }
+                          className={presetChipClass(isCustom)}
                         >
                           Custom
                         </button>
@@ -880,31 +843,49 @@ export default function RunSetupModal({
                             step="5"
                             min="1"
                             max="300"
+                            /* Truthful display: an empty field shows EMPTY.
+                               The old `value ? … : 30` fallback rendered a
+                               phantom "30" while the config actually held 0
+                               (clearing the field stored Number("")*60 = 0),
+                               so "Duration must be at least 1 minute" showed
+                               under a field reading 30 and Start was blocked
+                               — the falsy-zero display-mismatch class. */
                             value={
-                              config.target.value
+                              config.target.value && config.target.value > 0
                                 ? Math.round(config.target.value / 60)
-                                : 30
+                                : ""
                             }
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const raw = e.target.value.trim();
                               updateConfig({
                                 target: {
                                   type: "time",
-                                  value: Number(e.target.value) * 60,
+                                  // Empty mid-typing = UNSET (undefined), not
+                                  // 0 — validation stays quiet until there is
+                                  // a real value to judge.
+                                  value:
+                                    raw === "" ? undefined : Number(raw) * 60,
                                 },
-                              })
-                            }
+                              });
+                            }}
                             onBlur={(e) => {
                               const mins = Number(e.target.value);
-                              const clamped = Number.isFinite(mins)
-                                ? Math.max(1, Math.min(300, mins))
-                                : 30;
+                              if (!Number.isFinite(mins) || mins <= 0) {
+                                // Left empty/invalid → settle on the 30-min
+                                // default rather than an error state.
+                                updateConfig({
+                                  target: { type: "time", value: 1800 },
+                                });
+                                return;
+                              }
+                              const clamped = Math.max(1, Math.min(300, mins));
                               if (clamped !== mins) {
                                 updateConfig({
                                   target: { type: "time", value: clamped * 60 },
                                 });
                               }
                             }}
-                            className="w-full mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center"
+                            className="w-full min-h-11 mt-1 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-center font-mono tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                           />
                         </>
                       )}
@@ -931,20 +912,7 @@ export default function RunSetupModal({
                                   target: { type: "pace", value: s },
                                 })
                               }
-                              className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                              style={
-                                active
-                                  ? {
-                                      background: "rgba(212,99,122,0.12)",
-                                      color: THEME.running,
-                                      border: "1px solid rgba(212,99,122,0.30)",
-                                    }
-                                  : {
-                                      background: "rgba(0,0,0,0.04)",
-                                      color: "var(--color-muted-foreground)",
-                                      border: "1px solid rgba(0,0,0,0.08)",
-                                    }
-                              }
+                              className={presetChipClass(active)}
                             >
                               {paceMinSec(s)}/km
                             </button>
@@ -958,20 +926,7 @@ export default function RunSetupModal({
                                 target: { type: "pace", value: 315 },
                               });
                           }}
-                          className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                          style={
-                            isCustom
-                              ? {
-                                  background: "rgba(212,99,122,0.12)",
-                                  color: THEME.running,
-                                  border: "1px solid rgba(212,99,122,0.30)",
-                                }
-                              : {
-                                  background: "rgba(0,0,0,0.04)",
-                                  color: "var(--color-muted-foreground)",
-                                  border: "1px solid rgba(0,0,0,0.08)",
-                                }
-                          }
+                          className={presetChipClass(isCustom)}
                         >
                           Custom
                         </button>

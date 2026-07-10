@@ -34,6 +34,13 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
   const mockUserDocDelete = vi.fn().mockResolvedValue(undefined);
   const mockProfileDocDelete = vi.fn().mockResolvedValue(undefined);
 
+  // R1A Chunk 3 — in-memory accountDeletionRequests ledger doc so the
+  // deletion executor's lease acquire → verify → transition path works
+  // against this stub (deleteAccount now engages the write-freeze).
+  const ledgerStore: { doc: Record<string, unknown> | undefined } = {
+    doc: undefined,
+  };
+
   const firestore = {
     doc: vi.fn((path) => ({
       get: vi.fn().mockImplementation(() => {
@@ -47,17 +54,52 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
       }),
       delete: path === "system/config" ? vi.fn() : mockProfileDocDelete,
     })),
-    collection: vi.fn(() => ({
-      doc: vi.fn(() => ({
-        collection: vi.fn(() => ({
-          get: vi.fn().mockResolvedValue(mockEmptySnap),
+    collection: vi.fn((name?: string) => {
+      if (name === "accountDeletionRequests") {
+        return {
+          doc: vi.fn(() => ({
+            get: vi.fn().mockImplementation(() =>
+              Promise.resolve({
+                exists: ledgerStore.doc !== undefined,
+                data: () => ledgerStore.doc,
+              })
+            ),
+          })),
+        };
+      }
+      return {
+        doc: vi.fn(() => ({
+          collection: vi.fn(() => ({
+            get: vi.fn().mockResolvedValue(mockEmptySnap),
+          })),
+          delete: mockUserDocDelete,
+          get: vi
+            .fn()
+            .mockResolvedValue({ exists: false, data: () => undefined }),
         })),
-        delete: mockUserDocDelete,
-        get: vi.fn().mockResolvedValue({ exists: false, data: () => undefined }),
-      })),
-      where: vi.fn(() => ({ get: vi.fn().mockResolvedValue(mockEmptySnap) })),
-    })),
+        where: vi.fn(() => ({ get: vi.fn().mockResolvedValue(mockEmptySnap) })),
+      };
+    }),
     batch: vi.fn(() => mockBatch),
+    runTransaction: vi.fn(async (cb: (tx: unknown) => unknown) => {
+      const tx = {
+        get: async () => ({
+          exists: ledgerStore.doc !== undefined,
+          data: () => ledgerStore.doc,
+        }),
+        set: (
+          _ref: unknown,
+          data: Record<string, unknown>,
+          o?: { merge?: boolean }
+        ) => {
+          ledgerStore.doc =
+            o && o.merge
+              ? { ...(ledgerStore.doc || {}), ...data }
+              : { ...data };
+        },
+      };
+      return cb(tx);
+    }),
   };
 
   const auth = {
@@ -94,7 +136,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         storageBucket: storage,
         uid: UID,
         logger: silentLogger,
-      }),
+      })
     ).rejects.toThrow("executor-disabled");
   });
 
@@ -180,7 +222,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         storageBucket: storage,
         uid: UID,
         logger: silentLogger,
-      }),
+      })
     ).rejects.toThrow("executor-disabled");
 
     /* Pin EVERY observable side effect, not just step 7. A regression
@@ -213,7 +255,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         storageBucket: storage,
         uid: UID,
         logger: silentLogger,
-      }),
+      })
     ).rejects.toMatchObject({ code: "executor-disabled" });
   });
 
@@ -234,7 +276,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         storageBucket: storage,
         uid: UID,
         logger: silentLogger,
-      }),
+      })
     ).rejects.toMatchObject({ details: { reason: "executor-disabled" } });
   });
 
@@ -294,7 +336,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         expect(auth.deleteUser).toHaveBeenCalledWith(UID);
         expect(warn).toHaveBeenCalledWith(
           "deleteAccount.kill_switch_malformed",
-          expect.objectContaining({ uid: UID }),
+          expect.objectContaining({ uid: UID })
         );
       });
     }
@@ -320,7 +362,7 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
       expect(auth.deleteUser).toHaveBeenCalledWith(UID);
       expect(warn).not.toHaveBeenCalledWith(
         "deleteAccount.kill_switch_malformed",
-        expect.anything(),
+        expect.anything()
       );
     });
   });
@@ -343,12 +385,12 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         storageBucket: storage,
         uid: UID,
         logger,
-      }),
+      })
     ).rejects.toThrow("executor-disabled");
 
     expect(warn).toHaveBeenCalledWith(
       "deleteAccount.kill_switch_trip",
-      expect.objectContaining({ uid: UID }),
+      expect.objectContaining({ uid: UID })
     );
   });
 
@@ -369,11 +411,11 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
 
     expect(warn).toHaveBeenCalledWith(
       "deleteAccount.kill_switch_read_failed",
-      expect.objectContaining({ uid: UID, error: "firestore-unavailable" }),
+      expect.objectContaining({ uid: UID, error: "firestore-unavailable" })
     );
     expect(warn).not.toHaveBeenCalledWith(
       "deleteAccount.kill_switch_trip",
-      expect.anything(),
+      expect.anything()
     );
   });
 });

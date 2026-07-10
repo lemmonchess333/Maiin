@@ -40,7 +40,7 @@ const TEST_UID = "user-abc";
  * (e.g. to throw, or to return non-empty docs) by replacing the
  * relevant method after construction.
  */
-function makeStubs() {
+function makeStubs(opts = {}) {
   const calls = [];
 
   function makeBatchAndCollectionGraph(opts = {}) {
@@ -93,7 +93,21 @@ function makeStubs() {
       },
     });
 
+    // R1A Chunk 3 — in-memory accountDeletionRequests ledger doc (single uid
+    // per test). Shared by acquireLease → verifyLeaseGeneration →
+    // transitionStatus within one deleteAccount call, and by tx.get/tx.set
+    // inside runTransaction. Exposed as `_ledgerStore` so tests can assert the
+    // final status.
+    const ledgerStore = { doc: opts.initialLedgerDoc };
+    const ledgerRefStub = () => ({
+      get: async () => ({
+        exists: ledgerStore.doc !== undefined,
+        data: () => ledgerStore.doc,
+      }),
+    });
+
     return {
+      _ledgerStore: ledgerStore,
       collection(name) {
         if (name === "users") {
           return { doc: (uid) => usersDocStub(uid) };
@@ -109,7 +123,25 @@ function makeStubs() {
               partnerBondsQueryStub(field, op, value),
           };
         }
+        if (name === "accountDeletionRequests") {
+          return { doc: () => ledgerRefStub() };
+        }
         return { doc: (uid) => topLevelDocStub(name, uid) };
+      },
+      async runTransaction(cb) {
+        const tx = {
+          get: async () => ({
+            exists: ledgerStore.doc !== undefined,
+            data: () => ledgerStore.doc,
+          }),
+          set: (ref, data, o) => {
+            ledgerStore.doc =
+              o && o.merge
+                ? { ...(ledgerStore.doc || {}), ...data }
+                : { ...data };
+          },
+        };
+        return cb(tx);
       },
       doc(path) {
         return {
@@ -136,7 +168,7 @@ function makeStubs() {
     };
   }
 
-  const firestore = makeBatchAndCollectionGraph();
+  const firestore = makeBatchAndCollectionGraph(opts);
   const auth = {
     deleteUser: async (uid) => {
       calls.push(`auth.deleteUser(${uid})`);
@@ -147,9 +179,16 @@ function makeStubs() {
       calls.push(`storage.deleteFiles(${prefix})`);
     },
   };
-  const logger = { warn: () => {} };
+  const logger = { warn: () => {}, info: () => {}, error: () => {} };
 
-  return { firestore, auth, storageBucket, logger, calls };
+  return {
+    firestore,
+    auth,
+    storageBucket,
+    logger,
+    calls,
+    ledgerStore: firestore._ledgerStore,
+  };
 }
 
 describe("deleteAccount — call ordering", () => {
@@ -574,5 +613,121 @@ describe("storagePrefixesFor", () => {
       expect(p).toContain("alice/");
       expect(p.endsWith("alice/")).toBe(true);
     }
+  });
+});
+
+describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
+  it("engages the freeze (status='running') then completes the ledger on success", async () => {
+    const stubs = makeStubs();
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      leaseOwner: "exec-A",
+      now: 1000,
+    });
+    // Auth still deleted last.
+    expect(stubs.calls[stubs.calls.length - 1]).toBe(
+      `auth.deleteUser(${TEST_UID})`
+    );
+    // Ledger went running (freeze engaged) → completed (with TTL).
+    const doc = stubs.ledgerStore.doc;
+    expect(doc).toBeDefined();
+    expect(doc.status).toBe("completed");
+    expect(doc.leaseOwner).toBe("exec-A");
+    expect(doc.completedAt).toBe(1000);
+    expect(doc.cleanupAfter).toBe(1000 + 30 * 24 * 60 * 60 * 1000);
+  });
+
+  it("flips the ledger to failed_cleanup (freeze STAYS on) when a delete throws", async () => {
+    const stubs = makeStubs();
+    const origCollection = stubs.firestore.collection;
+    stubs.firestore.collection = function (name) {
+      const ret = origCollection.call(this, name);
+      if (name === "users") {
+        return {
+          doc: (uid) => ({
+            ...ret.doc(uid),
+            delete: async () => {
+              stubs.calls.push(`firestore.users.${uid}.delete`);
+              throw new Error("firestore boom");
+            },
+          }),
+        };
+      }
+      return ret;
+    };
+
+    await expect(
+      deleteAccount({
+        ...stubs,
+        uid: TEST_UID,
+        leaseOwner: "exec-A",
+        now: 1000,
+      })
+    ).rejects.toThrow("firestore boom");
+
+    // Auth NOT deleted (credentials intact for retry).
+    expect(stubs.calls.some((c) => c.startsWith("auth.deleteUser"))).toBe(
+      false
+    );
+    // Ledger frozen at failed_cleanup with the failing stage recorded.
+    const doc = stubs.ledgerStore.doc;
+    expect(doc.status).toBe("failed_cleanup");
+    expect(doc.failedStage).toBe("user_document");
+  });
+
+  it("refuses to run when another executor holds a live lease (no cascade)", async () => {
+    const stubs = makeStubs({
+      initialLedgerDoc: {
+        uid: TEST_UID,
+        status: "running",
+        leaseOwner: "other-exec",
+        leaseGeneration: 1,
+        leaseExpiresAt: 10_000, // not expired at now=1000
+      },
+    });
+
+    await expect(
+      deleteAccount({
+        ...stubs,
+        uid: TEST_UID,
+        leaseOwner: "exec-A",
+        now: 1000,
+      })
+    ).rejects.toThrow("deletion-in-progress");
+
+    // The cascade never ran — no auth delete, ledger untouched (other-exec owns it).
+    expect(stubs.calls.some((c) => c.startsWith("auth.deleteUser"))).toBe(
+      false
+    );
+    expect(stubs.ledgerStore.doc.leaseOwner).toBe("other-exec");
+  });
+
+  it("kill-switch trips BEFORE acquiring a lease (no ledger write)", async () => {
+    const stubs = makeStubs();
+    // system/config with the kill-switch active.
+    const origDoc = stubs.firestore.doc;
+    stubs.firestore.doc = function (path) {
+      if (path === "system/config") {
+        return {
+          get: async () => ({
+            exists: true,
+            data: () => ({ deletionExecutorEnabled: false }),
+          }),
+        };
+      }
+      return origDoc.call(this, path);
+    };
+
+    await expect(
+      deleteAccount({
+        ...stubs,
+        uid: TEST_UID,
+        leaseOwner: "exec-A",
+        now: 1000,
+      })
+    ).rejects.toMatchObject({ code: "executor-disabled" });
+    // No lease acquired → ledger untouched.
+    expect(stubs.ledgerStore.doc).toBeUndefined();
   });
 });
