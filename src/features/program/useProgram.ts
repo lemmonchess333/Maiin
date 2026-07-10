@@ -56,6 +56,11 @@ export interface CompletedSetLog {
 export interface CompletedSessionData {
   durationMinutes: number;
   setLogs: CompletedSetLog[][];
+  /** PROGRAM-FLEX-01: set when the session ran as a time-budgeted
+   *  Express Session. Recorded on the workout doc (backward-compatible
+   *  optional field) so history/analytics can distinguish a
+   *  deliberately-trimmed session from an abandoned full one. */
+  sessionVariant?: "express45" | "express30";
 }
 import {
   generateRacePlanV2,
@@ -815,6 +820,9 @@ export function useProgram() {
           notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
           createdAt: Timestamp.now(),
           source: "programme",
+          // Optional Express marker — setDocGuarded strips undefined,
+          // so full sessions keep the pre-existing doc shape exactly.
+          sessionVariant: sessionData?.sessionVariant,
         });
         // Share composer: prompt the user (or replay their saved
         // default) for visibility + caption. Returns null if they
