@@ -8,10 +8,11 @@
  *
  *   1. Log a meal — NL composer → local parseFoodText → Firestore
  *      write → success toast + diary row renders.
- *   2. Set a race goal — Settings → Training → Race Prep → distance +
- *      date → "Create race plan" → saved state, then the Programme
- *      page renders the RaceCockpitCard for that goal (cross-page
- *      proof the write materialized).
+ *   2. Set a race goal — Settings → Run plan → Race prep → distance +
+ *      date → live planner preview + an armed "Save race plan" CTA (the
+ *      focused RunPlanSettings editor is the ONE run-plan surface post
+ *      D14 dedupe; the actual save hits a callable this emulator set
+ *      lacks, so the journey stops at the armed CTA).
  *   3. Start a workout & log a set — Programme → "Begin Workout" →
  *      session screen renders set inputs → mark one set complete →
  *      progress reflects it. Deliberately scoped to ONE set: driving
