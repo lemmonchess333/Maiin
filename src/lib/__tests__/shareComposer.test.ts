@@ -23,13 +23,17 @@ const RUN_PREVIEW: ActivityPreview = {
   meta: ["5.20km", "28:14"],
 };
 
+// The always-pref is uid-scoped (audit F9). Tests use a single signed-in uid
+// unless they specifically exercise the cross-account isolation.
+const UID = "u1";
+
 beforeEach(() => {
   localStorage.clear();
 });
 
 describe("compose / resolveCompose", function () {
   it("opens the sheet (returns an unresolved promise) when no preference is stored", async function () {
-    const promise = compose(WORKOUT_PREVIEW);
+    const promise = compose(UID, WORKOUT_PREVIEW);
     let settled = false;
     void promise.then(() => {
       settled = true;
@@ -51,60 +55,82 @@ describe("compose / resolveCompose", function () {
     // when remember is true and a type is in state. Repro the contract:
     // user opens the sheet once, picks "Make public" with remember,
     // closes; the next compose() should resolve immediately.
-    const first = compose(WORKOUT_PREVIEW);
+    const first = compose(UID, WORKOUT_PREVIEW);
     resolveCompose({ visibility: "public", caption: "" }, true);
     await first;
-    const second = compose(WORKOUT_PREVIEW);
+    const second = compose(UID, WORKOUT_PREVIEW);
     await expect(second).resolves.toEqual({
       visibility: "public",
       caption: "",
     });
-    expect(getShareDefault("workout")).toBe("public");
+    expect(getShareDefault(UID, "workout")).toBe("public");
   });
 
   it("returns null without opening the sheet when 'never' is stored", async function () {
-    const first = compose(RUN_PREVIEW);
+    const first = compose(UID, RUN_PREVIEW);
     resolveCompose(null, true);
     await first;
-    expect(getShareDefault("run")).toBe("never");
-    await expect(compose(RUN_PREVIEW)).resolves.toBeNull();
+    expect(getShareDefault(UID, "run")).toBe("never");
+    await expect(compose(UID, RUN_PREVIEW)).resolves.toBeNull();
   });
 
   it("scopes preferences per type — workout default does not leak to runs", async function () {
-    const first = compose(WORKOUT_PREVIEW);
+    const first = compose(UID, WORKOUT_PREVIEW);
     resolveCompose({ visibility: "followers", caption: "" }, true);
     await first;
-    expect(getShareDefault("workout")).toBe("followers");
-    expect(getShareDefault("run")).toBeNull();
+    expect(getShareDefault(UID, "workout")).toBe("followers");
+    expect(getShareDefault(UID, "run")).toBeNull();
   });
 
   it("does not persist a preference when remember is false", async function () {
-    const first = compose(WORKOUT_PREVIEW);
+    const first = compose(UID, WORKOUT_PREVIEW);
     resolveCompose({ visibility: "followers", caption: "yo" }, false);
     await first;
-    expect(getShareDefault("workout")).toBeNull();
+    expect(getShareDefault(UID, "workout")).toBeNull();
   });
 
   it("clearShareDefault removes the saved 'always' preference", async function () {
-    const first = compose(WORKOUT_PREVIEW);
+    const first = compose(UID, WORKOUT_PREVIEW);
     resolveCompose({ visibility: "public", caption: "" }, true);
     await first;
-    clearShareDefault("workout");
-    expect(getShareDefault("workout")).toBeNull();
+    clearShareDefault(UID, "workout");
+    expect(getShareDefault(UID, "workout")).toBeNull();
   });
 
   it("supports the 'crews' visibility added in PR 3.5 — short-circuits when stored as the always-pref", async function () {
     // Composer-side 'crews' is a real persisted preference. Callers
     // (useProgram + RunSummary) map it to a followers-visibility post
     // tagged with crewId; the composer just records the user's intent.
-    const first = compose(RUN_PREVIEW);
+    const first = compose(UID, RUN_PREVIEW);
     resolveCompose({ visibility: "crews", caption: "" }, true);
     await first;
-    expect(getShareDefault("run")).toBe("crews");
-    await expect(compose(RUN_PREVIEW)).resolves.toEqual({
+    expect(getShareDefault(UID, "run")).toBe("crews");
+    await expect(compose(UID, RUN_PREVIEW)).resolves.toEqual({
       visibility: "crews",
       caption: "",
     });
+  });
+
+  it("does NOT leak the always-pref across a shared-device account switch (audit F9)", async function () {
+    // User A saves "always public" for workouts.
+    const a = compose("user-a", WORKOUT_PREVIEW);
+    resolveCompose({ visibility: "public", caption: "" }, true);
+    await a;
+    expect(getShareDefault("user-a", "workout")).toBe("public");
+
+    // User B signs in on the SAME device. B's workout must NOT inherit A's
+    // pref: getShareDefault is null for B, and compose opens the sheet
+    // (unresolved) instead of silently auto-posting under B's account.
+    expect(getShareDefault("user-b", "workout")).toBeNull();
+    const b = compose("user-b", WORKOUT_PREVIEW);
+    let settled = false;
+    void b.then(() => {
+      settled = true;
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+    resolveCompose(null, false);
+    await b;
   });
 });
 
@@ -174,7 +200,7 @@ describe("subscribeShareComposer", function () {
       states.push({ open: s.open, type: s.type })
     );
     // No stored pref (localStorage cleared in beforeEach) → compose opens + emits.
-    const p = compose(WORKOUT_PREVIEW);
+    const p = compose(UID, WORKOUT_PREVIEW);
     // Initial emit (closed) + the open emit.
     expect(states[states.length - 1]).toEqual({ open: true, type: "workout" });
     resolveCompose({ visibility: "followers", caption: "" }, false);
@@ -187,7 +213,7 @@ describe("subscribeShareComposer", function () {
     const unsub = subscribeShareComposer(() => count++);
     expect(count).toBe(1); // immediate call
     unsub();
-    const p = compose(WORKOUT_PREVIEW); // would emit if still subscribed
+    const p = compose(UID, WORKOUT_PREVIEW); // would emit if still subscribed
     expect(count).toBe(1); // no further calls
     resolveCompose(null, false);
     await p;

@@ -849,7 +849,7 @@ export default function RunSummary() {
         const km = distance / 1000;
         const mins = Math.floor(elapsed / 60);
         const secs = Math.round(elapsed % 60);
-        const decision = await compose({
+        const decision = await compose(user.uid, {
           type: "run",
           title: runName,
           meta: [
