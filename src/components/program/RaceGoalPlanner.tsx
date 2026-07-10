@@ -86,7 +86,7 @@ export default function RaceGoalPlanner({
           value={targetDate}
           onChange={(e) => onTargetDateChange(e.target.value)}
           min={minDate}
-          className="w-full mt-1 px-3 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm [color-scheme:light_dark]"
+          className="block w-full min-w-0 appearance-none mt-1 px-3 py-2.5 min-h-11 rounded-lg bg-muted border border-border/50 text-foreground text-sm [color-scheme:light_dark] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
       </div>
 

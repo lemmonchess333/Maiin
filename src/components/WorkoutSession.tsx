@@ -1120,21 +1120,21 @@ export default function WorkoutSession({
         <div
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent motion-safe:transition-opacity",
+            "pointer-events-none absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-background to-transparent motion-safe:transition-opacity",
             railAtStart ? "opacity-0" : "opacity-100"
           )}
         />
         <div
           aria-hidden="true"
           className={cn(
-            "pointer-events-none absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent motion-safe:transition-opacity",
+            "pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-background to-transparent motion-safe:transition-opacity",
             railAtEnd ? "opacity-0" : "opacity-100"
           )}
         />
       </div>
 
       {/* Exercise name + set counter — always visible above scroll */}
-      <div className="text-center px-4 pt-2 pb-1">
+      <div className="text-center px-4 pt-2 pb-2 border-b border-border/30">
         <div className="flex items-center justify-center gap-2 mb-1">
           <Dumbbell className="size-5 text-lifting" />
           <h2 className="text-lg font-bold text-foreground">
