@@ -17,9 +17,11 @@ npm run build        # tsc check + production build  — must pass before submit
 npm run lint         # ESLint (TS/TSX only; functions/ is excluded)
 npm run test         # Vitest unit tests
 npm run test:e2e     # Playwright E2E
+npm run verify       # lint + build + test in one shot — the pre-handback gate
 ```
 
-Run `npm run lint && npm run build && npm run test` before you hand work back.
+Run `npm run verify` (= `npm run lint && npm run build && npm run test`)
+before you hand work back.
 
 ## Repo conventions
 

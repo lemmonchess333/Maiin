@@ -13,7 +13,9 @@
  * race-goal overlay — no structured mode, no mode chips. The banner stack +
  * race-today / race-recent / recovery / fell-behind hero states stay as
  * top overlays, unchanged. Active plan editing deep-links to
- * /settings/training ("Edit run plan" footer). See ADR-0002 (dual scheduling
+ * /settings/run-plan (the focused run-plan editor; originally
+ * /settings/training per Run8 PR1a, superseded by the Set1.2 nested
+ * Settings IA). See ADR-0002 (dual scheduling
  * ontology), CLAUDE.md → "Training plan primitives", and
  * src/lib/runProgrammeViewModel.ts.
  *
@@ -30,8 +32,8 @@
  * `updateProfile` AND `refreshRunSchedule` atomically (PR-0d's
  * direct-write bug is not reintroduced). The chip row sits
  * directly under the section header and above per-mode hero
- * content. The footer "Change plan ›" link deep-links to the unified
- * Programme Settings editor at /settings/training (Pgm4).
+ * content. The footer "Change plan ›" link deep-links to the focused
+ * run-plan editor at /settings/run-plan (Pgm4 → Set1.2).
  *
  * Mode-change semantics by target:
  *
@@ -56,8 +58,8 @@
  *     skip-lift / template swap.
  *   - Race-elapsed + compressed-plan banners + race progress
  *     card + this-week's-runs per-day list — unchanged.
- *   - Footer "Change plan ›" deep-links to /settings/training
- *     (the unified Programme Settings editor).
+ *   - Footer "Change plan ›" deep-links to /settings/run-plan
+ *     (the focused run-plan editor).
  */
 
 import { useState, useMemo, useRef, useCallback } from "react";
@@ -216,8 +218,8 @@ export default function ProgrammeRunSection({
   const { claimMap, unclaimedByDate } = useClaimMap();
 
   // Run8 PR1a — mode pills + race-goal form removed from this
-  // surface. Mode + race goal now live on `/settings/training`
-  // (rendered by `TrainingSection`). The Programme page no longer
+  // surface. Mode + race goal now live on `/settings/run-plan`
+  // (the focused RunPlanSettings editor). The Programme page no longer
   // owns those writers; tap the section subtitle or the "Manage
   // Run Plan ›" footer link to navigate.
 
@@ -306,7 +308,7 @@ export default function ProgrammeRunSection({
   // #975: one-time "Set a race goal" nudge for freeform runners — the skip
   // path from onboarding (race_prep with no date now lands on the freeform
   // substrate, Run9a) and anyone else on freeform who hasn't set a goal.
-  // Routes to the Race Goal Planner on /settings/training (where runway
+  // Routes to the Race Goal Planner on /settings/run-plan (where runway
   // feedback lives — the bare onboarding date field gave none). Dismissible
   // via the same localStorage pattern as raceRecent; and it disappears
   // naturally once a goal IS set, because the mode flips to race_prep and
@@ -644,8 +646,9 @@ export default function ProgrammeRunSection({
         : "Freeform";
 
   // Run8 PR1a — handleModeChange + handleSaveRaceGoal removed.
-  // Mode + race goal writers live on TrainingSection (rendered at
-  // /settings/training). See `/root/.claude/plans/gentle-giggling-creek.md`.
+  // Mode + race goal writers moved to Settings (then /settings/training;
+  // today the focused /settings/run-plan editor). See
+  // `/root/.claude/plans/gentle-giggling-creek.md`.
 
   // PR-C + Run9 ENG(j): skip-recovery-early handler. Calls the
   // dedicated useProgram writer (`skipRecoveryEarly`) which resolves
@@ -1047,7 +1050,7 @@ export default function ProgrammeRunSection({
           )}
 
           {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
-              Planner (/settings/training). Dismissible; once a goal is set the
+              Planner (/settings/run-plan). Dismissible; once a goal is set the
               mode flips to race_prep and this freeform block stops rendering. */}
           {!setRaceGoalDismissed && (
             <div className="w-full rounded-xl p-4 flex items-center gap-3 bg-running/4 border border-running/15">
@@ -1093,7 +1096,7 @@ export default function ProgrammeRunSection({
       )}
 
       {/* Run8 PR1a — the "Race prep not set up yet → Set race goal"
-          inline form lives on /settings/training now. The section
+          inline form lives on /settings/run-plan now. The section
           subtitle above ("Race Prep · Set your race goal") deeplinks
           users there when their race_prep mode is missing a goal. */}
 
@@ -1359,11 +1362,11 @@ export default function ProgrammeRunSection({
       )}
 
       {/* Run8 PR1a — footer link renamed "Change plan" → "Manage Run
-          Plan ›". Points at /settings/training which now owns mode +
-          race goal + run-days / lift-days / lift split + weekly
-          layout (see TrainingSection). The section subtitle above
-          targets the same destination — both are entry points to
-          the consolidated programme-settings page. */}
+          Plan ›". Points at /settings/run-plan, the focused run-plan
+          editor that now owns mode + race goal + run days + tuning
+          (Set1.2 superseded the Run8-era /settings/training
+          destination). The section subtitle above targets the same
+          destination — both are entry points to the run-plan editor. */}
       <div className="flex justify-end pt-2 border-t border-border/30">
         <button
           type="button"
