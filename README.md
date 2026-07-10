@@ -119,6 +119,7 @@ firebase functions:config:set stripe.price_id_lifetime=price_xxxxx   # optional
 | `npm run test:e2e`    | Playwright E2E (requires `npm run preview` server)       |
 | `npm run test:e2e:ui` | Playwright interactive UI                                |
 | `npm run build`       | Production Vite build (also runs `tsc -b`)               |
+| `npm run verify`      | `lint && build && test` — the standard pre-handback gate |
 
 Functions tests are excluded from the root Vitest run by
 `vitest.config.ts:21`. Cloud Function unit tests are a separate
