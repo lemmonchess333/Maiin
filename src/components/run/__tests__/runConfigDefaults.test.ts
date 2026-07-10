@@ -109,3 +109,66 @@ describe("pacePatchForType / chooserPaceFor", () => {
     expect(chooserPaceFor("treadmill", table)).toBeNull();
   });
 });
+
+/* RUN-04 — the "Repeat <type>" decision rule. The RunFast1 lock deferred
+ * last-used-type memory; this un-deferral pins the rule: offer a repeat
+ * ONLY when the two most recent volume-eligible runs share the same
+ * DIRECT-launch type. */
+import { resolveRepeatType } from "../runConfigDefaults";
+
+describe("resolveRepeatType", () => {
+  const run = (activityType: string, over: Record<string, unknown> = {}) => ({
+    activityType,
+    distance: 5000,
+    duration: 1800,
+    ...over,
+  });
+
+  it("two most recent eligible runs share a direct type → that type", () => {
+    expect(resolveRepeatType([run("easy"), run("easy"), run("tempo")])).toBe(
+      "easy"
+    );
+  });
+
+  it("mixed recent types → null", () => {
+    expect(resolveRepeatType([run("easy"), run("tempo")])).toBeNull();
+  });
+
+  it("fewer than two eligible runs → null", () => {
+    expect(resolveRepeatType([run("easy")])).toBeNull();
+    expect(resolveRepeatType([])).toBeNull();
+  });
+
+  it("ineligible runs are skipped, not counted", () => {
+    // Newest is invalid; the two eligible ones beneath still match.
+    expect(
+      resolveRepeatType([
+        run("tempo", { isInvalid: true }),
+        run("long"),
+        run("long"),
+      ])
+    ).toBe("long");
+    // savedAnyway and sub-threshold runs are equally ineligible.
+    expect(
+      resolveRepeatType([
+        run("easy", { savedAnyway: true }),
+        run("easy", { distance: 10 }),
+        run("easy"),
+      ])
+    ).toBeNull(); // only ONE eligible run remains
+  });
+
+  it("a recurring STRUCTURED type (needs the modal) → null", () => {
+    expect(resolveRepeatType([run("intervals"), run("intervals")])).toBeNull();
+    expect(resolveRepeatType([run("treadmill"), run("treadmill")])).toBeNull();
+  });
+
+  it("missing activityType → null", () => {
+    expect(
+      resolveRepeatType([
+        { distance: 5000, duration: 1800 },
+        { distance: 5000, duration: 1800 },
+      ])
+    ).toBeNull();
+  });
+});
