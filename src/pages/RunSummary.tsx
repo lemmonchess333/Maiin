@@ -28,6 +28,7 @@ import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
+import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -438,6 +439,16 @@ export default function RunSummary() {
   });
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   const [notes, setNotes] = useState("");
+  /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
+     what you expected?"). Structured so the engine can later distinguish
+     "completed, felt easy" from "completed, too hard" — notes no longer
+     carry the whole reflection burden. Null = skipped (never required).
+     Deliberately NOT fed into the Performance Index / trainingLoad (that
+     would need the trainingLoad-standalone lock revisited); v1 is a stored
+     calibration signal only. */
+  const [relativeEffort, setRelativeEffort] = useState<
+    "easier" | "matched" | "harder" | null
+  >(null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   /* Sprint 3 Edit-distance: when the user corrects a fat-fingered
      manual / treadmill distance from InvalidRunReview, the new
@@ -752,6 +763,11 @@ export default function RunSummary() {
       // the workouts convention (saved workouts already carry both).
       date: localDateString(new Date()),
       notes: notes.trim(),
+      // RUN-03: optional structured effort signal. Null (skipped) survives
+      // stripUndefined so the field shape doesn't bifurcate — same precedent
+      // as isInvalid/invalidReason below. Backward-compatible: legacy runs
+      // simply lack the field.
+      relativeEffort,
       visibility: "followers" as const,
       type: "run",
       activityType: runConfig?.activityType || "freerun",
@@ -1558,10 +1574,36 @@ export default function RunSummary() {
           plus optional caption, so duplicating the toggle here would
           be confusing. */}
           <div className="px-4 space-y-2">
+            {/* RUN-03: optional one-tap effort check-in. Hidden for invalid
+                runs (nothing meaningful to calibrate against). Skippable —
+                null is a first-class answer, so no segment starts selected
+                and saving without touching it is fine. The notes field
+                below keeps free text but no longer owns "how did it feel". */}
+            {!isInvalid && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                  How did it feel?
+                </p>
+                <SegmentedControl
+                  options={[
+                    { value: "easier", label: "Easier" },
+                    { value: "matched", label: "About right" },
+                    { value: "harder", label: "Harder" },
+                  ]}
+                  value={relativeEffort}
+                  onChange={(v) =>
+                    // Tap the selected segment again to clear (back to skipped).
+                    setRelativeEffort((cur) => (cur === v ? null : v))
+                  }
+                  ariaLabel="How did this run feel compared to what you expected?"
+                  tone="running"
+                />
+              </div>
+            )}
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="How did it feel? Any notes about this run..."
+              placeholder="Any notes about this run..."
               aria-label="Run notes"
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground resize-none"
@@ -1602,6 +1644,22 @@ export default function RunSummary() {
               >
                 <CheckCircle size={16} aria-hidden="true" />
                 Done
+              </button>
+            )}
+
+            {canShowDone({ saveStatus }) && (
+              /* FOOD-02: post-run → Food handoff, at the moment the runner
+                 has refuel intent. Secondary and skippable — routes into
+                 the EXISTING composer flow with a narrow context param
+                 (Food renders a dismissible refuel line); no separate
+                 recovery-meal flow, no target change. Only rendered in the
+                 valid-run path (this whole stack is), post-save. */
+              <button
+                type="button"
+                onClick={() => navigate("/food?context=post-run")}
+                className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+              >
+                Log recovery food
               </button>
             )}
 
