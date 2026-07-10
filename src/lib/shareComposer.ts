@@ -59,9 +59,17 @@ interface SheetState {
   open: boolean;
   type: ShareType | null;
   preview: ActivityPreview | null;
+  /** uid of the session that opened the composer — scopes the "always" pref
+   *  so resolveCompose persists it under the same account compose() read. */
+  uid: string | null;
 }
 
-let state: SheetState = { open: false, type: null, preview: null };
+let state: SheetState = {
+  open: false,
+  type: null,
+  preview: null,
+  uid: null,
+};
 let resolveCb: ((decision: ShareDecision | null) => void) | null = null;
 const listeners = new Set<(s: SheetState) => void>();
 
@@ -82,13 +90,20 @@ export function subscribeShareComposer(listener: (s: SheetState) => void) {
 type AlwaysPref = ShareVisibility | "never" | null;
 const PREF_KEY_PREFIX = "tropos.share.always";
 
-function prefKey(type: ShareType): string {
-  return `${PREF_KEY_PREFIX}.${type}`;
+function prefKey(uid: string, type: ShareType): string {
+  // uid-scoped (money-path audit F9): a global key bled across account
+  // switches on a shared device — user A's "always share publicly" would
+  // auto-post user B's next workout under B's account.
+  return `${PREF_KEY_PREFIX}.${uid}.${type}`;
 }
 
-function readAlways(type: ShareType): AlwaysPref {
+function readAlways(uid: string, type: ShareType): AlwaysPref {
   try {
-    const raw = localStorage.getItem(prefKey(type));
+    // Purge the pre-uid-scoping global key. Never migrated: a global pref
+    // can't be safely attributed to one account (that IS the leak), so the
+    // user re-picks once after upgrade.
+    localStorage.removeItem(`${PREF_KEY_PREFIX}.${type}`);
+    const raw = localStorage.getItem(prefKey(uid, type));
     if (
       raw === "followers" ||
       raw === "crews" ||
@@ -102,35 +117,36 @@ function readAlways(type: ShareType): AlwaysPref {
   return null;
 }
 
-function writeAlways(type: ShareType, value: AlwaysPref) {
+function writeAlways(uid: string, type: ShareType, value: AlwaysPref) {
   try {
-    if (value === null) localStorage.removeItem(prefKey(type));
-    else localStorage.setItem(prefKey(type), value);
+    if (value === null) localStorage.removeItem(prefKey(uid, type));
+    else localStorage.setItem(prefKey(uid, type), value);
   } catch {
     /* ignore */
   }
 }
 
 /** Used by Settings to let the user clear their saved default. */
-export function clearShareDefault(type: ShareType): void {
-  writeAlways(type, null);
+export function clearShareDefault(uid: string, type: ShareType): void {
+  writeAlways(uid, type, null);
 }
 
-export function getShareDefault(type: ShareType): AlwaysPref {
-  return readAlways(type);
+export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
+  return readAlways(uid, type);
 }
 
 // ── compose / resolve ────────────────────────────────────────────
 
 export function compose(
+  uid: string,
   preview: ActivityPreview
 ): Promise<ShareDecision | null> {
-  const pref = readAlways(preview.type);
+  const pref = readAlways(uid, preview.type);
   if (pref === "never") return Promise.resolve(null);
   if (pref === "followers" || pref === "crews" || pref === "public") {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
-  state = { open: true, type: preview.type, preview };
+  state = { open: true, type: preview.type, preview, uid };
   emit();
   return new Promise((resolve) => {
     resolveCb = resolve;
@@ -147,15 +163,16 @@ export function resolveCompose(
   remember: boolean
 ): void {
   const type = state.type;
+  const uid = state.uid;
   if (resolveCb) {
     const cb = resolveCb;
     resolveCb = null;
     cb(decision);
   }
-  if (remember && type) {
-    writeAlways(type, decision === null ? "never" : decision.visibility);
+  if (remember && type && uid) {
+    writeAlways(uid, type, decision === null ? "never" : decision.visibility);
   }
-  state = { open: false, type: null, preview: null };
+  state = { open: false, type: null, preview: null, uid: null };
   emit();
 }
 
