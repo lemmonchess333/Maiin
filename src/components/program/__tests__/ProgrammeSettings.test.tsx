@@ -102,6 +102,51 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     expect(screen.getByText("Running")).toBeInTheDocument();
   });
 
+  it("D14: Running is a read-only summary linking to /settings/run-plan — no editable run controls", () => {
+    setup(
+      {
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      },
+      "full"
+    );
+    // Summary card links out to the focused editor…
+    const link = screen.getByRole("link", { name: /race prep/i });
+    expect(link).toHaveAttribute("href", "/settings/run-plan");
+    // …and NONE of the old editable run controls render here.
+    expect(
+      screen.queryByLabelText(/run days per week/i)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Long-run volume")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intensity")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/target date/i)).not.toBeInTheDocument();
+  });
+
+  it("D14: a rebuild threads the SAVED race plan through unchanged", async () => {
+    setup(
+      {
+        runMode: "race_prep",
+        raceGoal: { distance: "half", targetDate: "2027-03-01" },
+        weeklyRunDaysTarget: 3,
+        runVolume: "lighter",
+        runDifficulty: "harder",
+      },
+      "full"
+    );
+    fireEvent.click(screen.getByText("Get stronger"));
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /^save$/i }));
+    await vi.waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const arg = configureSpy.mock.calls[0][0] as {
+      profileUpdates?: Record<string, unknown>;
+    };
+    expect(arg.profileUpdates?.runMode).toBe("race_prep");
+    expect(arg.profileUpdates?.raceGoal).toMatchObject({
+      distance: "half",
+      targetDate: "2027-03-01",
+    });
+  });
+
   it("a lift edit still saves via configurePlan (rebuild path intact)", async () => {
     setup({}, "lift");
     fireEvent.click(screen.getByText("Get stronger"));

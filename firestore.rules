@@ -110,6 +110,10 @@ service cloud.firestore {
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
+        // D16 personal "why" — free-text motivation captured at onboarding and
+        // editable in Settings. Client-written via updateProfile + set by the
+        // onboarding CF (in profileSanitizer.js). Pinned by the D1 parity test.
+        'trainingWhy',
         // Adaptive engines — client-managed state, also in profileSanitizer.js.
         // `adaptiveCapState` (Adaptive TDEE weekly-rate smoothing) shipped +
         // was written by useAdaptiveTdee but never added here, so every
