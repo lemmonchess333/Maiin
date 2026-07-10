@@ -127,6 +127,18 @@ async function createGoalSpace({
     weekKey: null,
     createdAt: now,
   });
+  // Journey link (users/{uid}/journeys/{spaceId}) — the member's
+  // owner-only index of their Circles. Server-maintained here so the
+  // client can list its circles via the existing journeys rules with
+  // no collection-group read surface.
+  batch.set(firestore.doc(`users/${uid}/journeys/${spaceId}`), {
+    id: spaceId,
+    type: input.type,
+    title,
+    goalSpaceId: spaceId,
+    targetDate,
+    createdAt: now,
+  });
   await batch.commit();
   return { spaceId, inviteCode };
 }
@@ -183,6 +195,14 @@ async function joinGoalSpace({
       weekKey: null,
       createdAt: now,
     });
+    tx.set(firestore.doc(`users/${uid}/journeys/${spaceId}`), {
+      id: spaceId,
+      type: space.type,
+      title: space.title,
+      goalSpaceId: spaceId,
+      targetDate: space.targetDate ?? null,
+      createdAt: now,
+    });
   });
 }
 
@@ -202,6 +222,7 @@ async function leaveGoalSpace({ firestore, uid, spaceId }) {
     if (!memberSnap.exists) return; // idempotent
     const space = spaceSnap.data();
     tx.delete(memberRef);
+    tx.delete(firestore.doc(`users/${uid}/journeys/${spaceId}`));
     const update = { memberCount: Math.max(0, space.memberCount - 1) };
     if (space.ownerId === uid) update.active = false;
     tx.update(spaceRef, update);
@@ -229,6 +250,7 @@ async function removeGoalSpaceMember({ firestore, uid, spaceId, memberUid }) {
     const memberSnap = await tx.get(memberRef);
     if (!memberSnap.exists) return; // idempotent
     tx.delete(memberRef);
+    tx.delete(firestore.doc(`users/${memberUid}/journeys/${spaceId}`));
     tx.update(spaceRef, { memberCount: Math.max(0, space.memberCount - 1) });
   });
 }

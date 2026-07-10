@@ -198,6 +198,28 @@ describe("leave / remove", () => {
     await joinGoalSpace(joinArgs(firestore, spaceId, inviteCode, "friend"));
   });
 
+  it("maintains the journeys link index (create/join/leave/remove)", async () => {
+    // Server-maintained users/{uid}/journeys/{spaceId} link — the
+    // client's circle list via existing owner-only rules.
+    expect(docs.get(`users/owner/journeys/${spaceId}`).goalSpaceId).toBe(
+      spaceId
+    );
+    expect(docs.get(`users/friend/journeys/${spaceId}`).title).toBe(
+      "8-week block"
+    );
+    await leaveGoalSpace({ firestore, uid: "friend", spaceId });
+    expect(docs.has(`users/friend/journeys/${spaceId}`)).toBe(false);
+
+    await joinGoalSpace(joinArgs(firestore, spaceId, inviteCode, "friend2"));
+    await removeGoalSpaceMember({
+      firestore,
+      uid: "owner",
+      spaceId,
+      memberUid: "friend2",
+    });
+    expect(docs.has(`users/friend2/journeys/${spaceId}`)).toBe(false);
+  });
+
   it("leave decrements and removes the member doc", async () => {
     await leaveGoalSpace({ firestore, uid: "friend", spaceId });
     expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(1);
