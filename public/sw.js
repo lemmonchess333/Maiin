@@ -1,4 +1,11 @@
 const CACHE_NAME = "tropos-v13";
+// Per-deploy build stamp — scripts/stamp-sw.mjs replaces the placeholder at
+// build time so EVERY deploy changes this file's bytes. Browsers only run the
+// SW update cycle (→ the "New version available" refresh toast) when sw.js
+// changes; before this stamp, only manual CACHE_NAME bumps triggered it and
+// most deploys shipped silently to long-lived sessions.
+const BUILD_STAMP = "__TROPOS_BUILD__";
+void BUILD_STAMP;
 // Derived from the SW's own URL so the one file works whether it's served at
 // /Maiin/sw.js (GitHub Pages) or /sw.js (Firebase Hosting, served at root —
 // which is what makes OAuth same-origin with the auth handler on iOS Safari).
