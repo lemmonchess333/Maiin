@@ -222,6 +222,9 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   preferredSplit: (v) => cleanString(v, 30),
   goal: (v) => cleanString(v, 30),
   runFrequency: (v) => cleanString(v, 30),
+  // D16 personal "why" — short free-text motivation (chip-seeded or custom).
+  // Bounded to 120 chars; control chars stripped by cleanString.
+  trainingWhy: (v) => cleanString(v, 120),
   runMode: (v) => cleanEnum(v, ["freeform", "structured", "race_prep"]),
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),

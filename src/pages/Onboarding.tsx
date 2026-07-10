@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
+import { haptic } from "@/lib/haptic";
 import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
@@ -290,6 +291,18 @@ const STEP_IDS = [
   "confirm",
 ] as const;
 
+/* D16 — quick-tap motivations shown on the confirmation step. Tapping one
+   seeds the `trainingWhy` phrase (still editable in the free-text field).
+   Short, first-person, and resurfaceable verbatim ("Your why: …"). */
+const TRAINING_WHY_CHIPS = [
+  "Feel stronger",
+  "More energy",
+  "Build a habit",
+  "Look my best",
+  "Run a race",
+  "Longevity",
+] as const;
+
 /* ============================
    COMPONENT
 ============================ */
@@ -370,6 +383,11 @@ export default function Onboarding() {
 
   // ── Injuries
   const [injuries, setInjuries] = useState<string[]>([]);
+
+  // D16 — personal "why". Optional motivation captured on the confirmation
+  // step (a tap-chip seeds the phrase; the field stays editable as free
+  // text). Never gates advancing; resurfaced later (weekly review).
+  const [trainingWhy, setTrainingWhy] = useState<string>("");
 
   // ── Derived values
   const displayHeight =
@@ -533,6 +551,11 @@ export default function Onboarding() {
           ? { raceGoal: { distance: raceDistance, targetDate: raceTargetDate } }
           : {}),
         injuries: injuriesForSave,
+        // D16 — only persist a non-empty "why" (trimmed, ≤120). Omitted when
+        // the user skips it, so we never write an empty string.
+        ...(trainingWhy.trim()
+          ? { trainingWhy: trainingWhy.trim().slice(0, 120) }
+          : {}),
         onboardingComplete: true,
         // TDEE targets
         age: AGE_MIDPOINTS[ageRange],
@@ -1621,6 +1644,83 @@ export default function Onboarding() {
                 </span>{" "}
                 — sessions, runs, and weight all tune it as you go.
               </motion.p>
+
+              {/* D16 — optional personal "why". Not a step (fast-start
+                  onboarding stays 8 steps) and never gates the CTA; a tap-chip
+                  seeds the phrase, the input keeps it editable. Resurfaced
+                  later (weekly review) to reconnect the user with their reason. */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.3 }}
+                className="mt-5 rounded-2xl p-4"
+                style={{
+                  background: "hsl(var(--muted) / 0.5)",
+                  border: "1px solid hsl(var(--border))",
+                }}
+              >
+                <p className="text-sm font-semibold">
+                  What&rsquo;s driving you?{" "}
+                  <span
+                    className="font-normal"
+                    style={{ color: "hsl(var(--muted-foreground))" }}
+                  >
+                    Optional
+                  </span>
+                </p>
+                <p
+                  className="text-xs mt-0.5 leading-relaxed"
+                  style={{ color: "hsl(var(--muted-foreground))" }}
+                >
+                  We&rsquo;ll bring this back on the days it helps to remember.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {TRAINING_WHY_CHIPS.map((chip) => {
+                    const selected = trainingWhy.trim() === chip;
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => {
+                          haptic();
+                          setTrainingWhy((cur) =>
+                            cur.trim() === chip ? "" : chip
+                          );
+                        }}
+                        aria-pressed={selected}
+                        className="min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-all active:scale-[0.97]"
+                        style={
+                          selected
+                            ? {
+                                background: `${THEME.brand}1A`,
+                                color: THEME.brand,
+                                border: `1px solid ${THEME.brand}55`,
+                              }
+                            : {
+                                background: "hsl(var(--card))",
+                                color: "hsl(var(--foreground))",
+                                border: "1px solid hsl(var(--border))",
+                              }
+                        }
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
+                </div>
+                <input
+                  type="text"
+                  value={trainingWhy}
+                  onChange={(e) => setTrainingWhy(e.target.value)}
+                  maxLength={120}
+                  aria-label="Your why"
+                  placeholder="Or write your own…"
+                  className="w-full mt-3 px-3 py-2.5 rounded-xl text-sm bg-card border border-border/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2"
+                  style={
+                    { "--tw-ring-color": `${THEME.brand}55` } as CSSProperties
+                  }
+                />
+              </motion.div>
             </>
           )}
         </motion.div>

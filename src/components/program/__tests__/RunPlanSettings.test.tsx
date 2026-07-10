@@ -69,6 +69,42 @@ describe("RunPlanSettings", () => {
     expect(refreshRunSchedule).toHaveBeenCalled();
   });
 
+  it("D14: shows the Pgm6 tuning knobs in race prep and persists them on save", async () => {
+    const { updateProfile, refreshRunSchedule } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+
+    // Both knobs render (race-prep only).
+    expect(screen.getByText("Long-run volume")).toBeInTheDocument();
+    expect(screen.getByText("Intensity")).toBeInTheDocument();
+
+    // Pick a valid date + non-default knobs.
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Lighter" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Gentler" }));
+
+    const save = await screen.findByRole("button", { name: /Save .*plan/i });
+    fireEvent.click(save);
+
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    // Knobs persist alongside the goal (4-gate profile fields).
+    expect(patch.runVolume).toBe("lighter");
+    expect(patch.runDifficulty).toBe("gentler");
+    // And thread through the refresh explicitly (stale-closure guard).
+    expect(refreshRunSchedule).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tuning: { volume: "lighter", difficulty: "gentler" },
+      })
+    );
+  });
+
+  it("D14: knobs hidden in freeform (nothing scheduled to tune)", () => {
+    renderPage(baseProfile);
+    expect(screen.queryByText("Long-run volume")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intensity")).not.toBeInTheDocument();
+  });
+
   it("switching to freeform clears the race goal (runMode + null goal)", async () => {
     const raceProfile = {
       ...baseProfile,

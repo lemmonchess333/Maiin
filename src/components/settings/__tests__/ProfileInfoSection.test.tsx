@@ -90,3 +90,39 @@ describe("ProfileInfoSection — pills use SegmentedControl", () => {
     expect(checked).toHaveLength(0);
   });
 });
+
+describe("ProfileInfoSection — D16 training why", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("seeds the Your why field from profile.trainingWhy", () => {
+    renderSection(makeProfile({ trainingWhy: "Feel stronger" }));
+    const input = screen.getByLabelText("Your why") as HTMLInputElement;
+    expect(input.value).toBe("Feel stronger");
+  });
+
+  it("persists a trimmed, capped why on blur", () => {
+    const { updateProfile } = renderSection(makeProfile());
+    const input = screen.getByLabelText("Your why");
+    fireEvent.change(input, { target: { value: "  More energy  " } });
+    fireEvent.blur(input);
+    expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "More energy" });
+  });
+
+  it("does not write when the value is unchanged", () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ trainingWhy: "Longevity" })
+    );
+    fireEvent.blur(screen.getByLabelText("Your why"));
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("clearing the field writes an empty string (removes the why)", () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ trainingWhy: "Run a race" })
+    );
+    const input = screen.getByLabelText("Your why");
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.blur(input);
+    expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "" });
+  });
+});
