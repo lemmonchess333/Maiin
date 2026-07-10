@@ -966,6 +966,15 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: Training Blocks (PROGRAM-BLOCK-01) — owner-only
+    // private block layer over the programme. Never readable by another
+    // account; any future Goal Space share is a separate summary-only
+    // event, never this doc.
+    match /users/{uid}/trainingBlocks/{blockId} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
+
     // ========================================
     // Scan usage — food-scan quota tracker.
     // Written exclusively by Cloud Functions (analyzeFood /
