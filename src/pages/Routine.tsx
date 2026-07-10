@@ -188,7 +188,7 @@ export default function Routine() {
         /* Share composer: same flow as useProgram.completeWorkoutDay.
            Title uses the routine name so the social card identifies
            the workout the same way the user thinks of it. */
-        const decision = await compose({
+        const decision = await compose(user.uid, {
           type: "workout",
           title: routine.name,
           meta: [

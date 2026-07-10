@@ -150,6 +150,13 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /deletedAccounts/{uid}",
   "match /deletedBillingIdentities/{identifierHash}",
   "match /paymentEventsPostDeletion/{eventId}",
+  // Durable trial-eligibility tombstone (money-path audit F1). Admin SDK
+  // writes only (`allow read, write: if false`), written by completeOnboarding
+  // the first time a uid is granted the trial. INTENTIONALLY excluded from the
+  // deletion sweep so it survives account deletion — that durability is the
+  // whole anti-abuse point (self-delete-and-re-onboard must not re-grant the
+  // trial). uid + timestamps only, no user data on the doc.
+  "match /trialLedger/{uid}",
   // Server-only audit collection — Admin SDK writes from
   // createCheckoutSession Cloud Function; `allow read, write: if false`
   // for clients. No user-keyed data on the doc; not in scope for the

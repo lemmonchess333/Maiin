@@ -23,12 +23,18 @@ const FLAG_FAIL_OPEN = "fail-open";
 const FLAG_FAIL_CLOSED = "fail-closed";
 
 const FLAG_POLICIES = Object.freeze({
-  // geminiEnabled gates AI food analysis. Availability toggle —
-  // a Firestore blip degrading food-scan is worse UX than briefly
-  // honouring stale enable state. True emergency disable for AI
-  // (cost runaway, abuse incident) belongs on a separate
-  // `geminiKillSwitch` flag with fail-closed policy.
-  geminiEnabled: FLAG_FAIL_OPEN,
+  // geminiEnabled gates AI food analysis (real Vertex compute). It IS the
+  // operator's cost kill-switch — flipped to false in config/flags "to cut off
+  // scans instantly if costs spike" (index.js:950). It must therefore fail
+  // CLOSED: a config/flags read failure (Firestore outage, permission
+  // regression) during a cost/abuse incident must NOT silently keep spending on
+  // Vertex while the operator believes the switch is protecting them. The
+  // accepted tradeoff is that a rare read failure briefly degrades food-scan to
+  // a 503 "use manual entry" — far cheaper than unbounded AI spend.
+  // (2026-07-09 money-path audit F6 — was fail-open, which contradicted the
+  // call-site's own documented kill-switch intent. Any future flag guarding AI
+  // or billing must likewise be fail-closed.)
+  geminiEnabled: FLAG_FAIL_CLOSED,
 });
 
 /**
