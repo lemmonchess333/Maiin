@@ -1,8 +1,18 @@
 # Plan: background GPS for run tracking (native iOS/Android)
 
-**Status:** not started — needs a Mac + Xcode device build to implement/verify.
-**Priority:** high — without this, the run tracker only works with the screen
-awake and the app foregrounded.
+**Status:** Step 1 ✅ + Step 2's TypeScript half ✅ (retention-audit RUN-01) —
+`src/lib/nativeLocationSource.ts` ships behind the seam (`getLocationSource()`
+now returns it on native), the plugin dependency is installed, and Run.tsx's
+visibility policy + `useWakeLock` are platform-gated so the app no longer
+stops its own tracking (or counts hidden time as a gap) on native.
+**Remaining is operator-bound:** native project config (Info.plist usage
+strings + `UIBackgroundModes: location`, AndroidManifest
+`ACCESS_BACKGROUND_LOCATION` + foreground-service notification), `npx cap
+sync`, a Mac/Xcode device build, and the device test matrix below — including
+the "While Using"-only pass (the plugin exposes no permission-query API, so
+the Always-vs-While-Using nudge is designed on-device, not blind).
+**Priority:** high — until the native halves land, the run tracker only works
+with the screen awake and the app foregrounded.
 
 ## Problem
 

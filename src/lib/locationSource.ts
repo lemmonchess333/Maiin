@@ -16,6 +16,7 @@
  * `GeolocationPositionError` (no shape translation, nothing to re-test).
  */
 import { isNativePlatform } from "./platform";
+import { nativeLocationSource } from "./nativeLocationSource";
 
 /** Handle to an active watch; `clear()` stops it (web: clearWatch). */
 export interface LocationWatch {
@@ -68,8 +69,13 @@ export const webLocationSource: LocationSource = {
  */
 export function getLocationSource(): LocationSource {
   if (isNativePlatform()) {
-    // TODO(Step 2, docs/run-background-gps.md): return nativeLocationSource.
-    return webLocationSource;
+    // Step 2 (docs/run-background-gps.md): the background-geolocation-backed
+    // source — fixes keep flowing with the screen locked / app backgrounded.
+    // Run.tsx's visibility policy is platform-gated to match (it must NOT
+    // stop this source on hidden). The remaining work is operator-bound:
+    // Info.plist strings + UIBackgroundModes, AndroidManifest permissions,
+    // cap sync, and the device test matrix in the doc.
+    return nativeLocationSource;
   }
   return webLocationSource;
 }
