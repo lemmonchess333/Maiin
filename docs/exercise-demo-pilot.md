@@ -8,15 +8,15 @@ touching it again.
 
 ## Decision history (do not re-litigate without the product owner)
 
-| When | What | Why |
-| --- | --- | --- |
-| #1374 | free-exercise-db photos rendered in the Form view | quick win; external stock photos |
-| #1395 | Nano Banana pilot: generator script + `media` seam + doc | custom brand-consistent coach frames |
-| #1444/#1445/#1465 | Auto-playing crossfade player; demo = the hero body; turnaround holds | the PLAYER — still shipped, still good |
-| #1447 | Squat start/finish frames shipped + wired | first real custom demo |
-| #1448 | Squat frames REVERTED | agent judgement: generated style (shaded illustration, face, skin) clashed with the flat-vector muscle map |
-| #1449 | Generator script + this doc DELETED ("clean slate") | follow-on cleanup of the abandoned experiment |
-| **2026-07-04** | **Product owner overrode the revert.** Squat frames restored; generator revived + upgraded | custom demos ARE wanted — the #1448 aesthetic objection is attacked with a style anchor instead of abandonment |
+| When              | What                                                                                       | Why                                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| #1374             | free-exercise-db photos rendered in the Form view                                          | quick win; external stock photos                                                                               |
+| #1395             | Nano Banana pilot: generator script + `media` seam + doc                                   | custom brand-consistent coach frames                                                                           |
+| #1444/#1445/#1465 | Auto-playing crossfade player; demo = the hero body; turnaround holds                      | the PLAYER — still shipped, still good                                                                         |
+| #1447             | Squat start/finish frames shipped + wired                                                  | first real custom demo                                                                                         |
+| #1448             | Squat frames REVERTED                                                                      | agent judgement: generated style (shaded illustration, face, skin) clashed with the flat-vector muscle map     |
+| #1449             | Generator script + this doc DELETED ("clean slate")                                        | follow-on cleanup of the abandoned experiment                                                                  |
+| **2026-07-04**    | **Product owner overrode the revert.** Squat frames restored; generator revived + upgraded | custom demos ARE wanted — the #1448 aesthetic objection is attacked with a style anchor instead of abandonment |
 
 ## The hard constraint (unchanged)
 
@@ -31,7 +31,7 @@ diagram) when an exercise has no reviewed `media`.
 1. **Style anchor.** Every request includes
    `scripts/assets/tropos-figure-ref.png` — a crop of the app's REAL
    muscle-map figure (flat faceted grey vector, purple fills, dark ground).
-   The prompt tells Nano Banana to pose *that* figure. This is the direct
+   The prompt tells Nano Banana to pose _that_ figure. This is the direct
    answer to #1448's "different app" complaint: instead of describing the
    style and hoping, we hand the model the actual character.
 2. **N-frame sequences** (`--frames`, default 4, max 6). Frames walk the
@@ -97,3 +97,29 @@ So shipping a demo = generate → QA → set `media` → done.
 3. Rigged 3D avatar pre-rendered to WebM/Lottie — the gold standard and the
    only honest path to a single moving body with **data-accurate** muscle
    glow; heavy art effort, revisit post-launch.
+
+## STATUS 2026-07-09 — coverage reconciliation (audit follow-up)
+
+Measured against source (`npx tsx` import of `exercises.ts` + `bodyRig.ts` +
+`templates.ts`), correcting drift between this doc and the code:
+
+- **Catalogue:** 151 exercises in `src/lib/exercises.ts`.
+- **Working demos (rig path):** **40/151 (26%)** resolve via
+  `getBodyDemo()` — 14 direct `BODY_DEMOS` rigs + alias mappings.
+- **Media frames:** **0** `media:` entries exist in `exercises.ts`. The
+  2026-07-04 row above ("Squat frames restored") did not survive into
+  current source — the rig-demo path (#1485, math-posed muscle-map figure)
+  is the live demo mechanism; the media seam remains available but empty.
+- **Programme-template coverage (the metric that matters):** 57 distinct
+  exercises appear across `PROGRAM_TEMPLATES`; **26/57 (46%)** have a
+  working demo. **Top-20 by template frequency: 12/20 covered.**
+- **Highest-leverage gaps** (top-20 template exercises with NO demo, by
+  frequency): `leg-press`(10), `seated-leg-curl`(10), `incline-db-press`(9),
+  `face-pulls`(8), `bulgarian-split`(7), `seated-row`(7), `db-flyes`(6),
+  `overhead-extension`(6).
+
+Next-demo priority = the eight gaps above (what users actually see in
+generated programmes), not catalogue order. The UI already falls back to the
+muscle diagram without over-promising (ExerciseFormContent renders the rig
+demo only when `getBodyDemo()` returns one), so coverage expansion is pure
+upside, no copy changes needed.

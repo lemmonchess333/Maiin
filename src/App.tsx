@@ -43,7 +43,6 @@ const WeeklyReviewPage = lazyRetry(() => import("@/pages/WeeklyReview"));
 const Home = lazyRetry(() => import("@/pages/Home"));
 const Food = lazyRetry(() => import("@/pages/Food"));
 const History = lazyRetry(() => import("@/pages/History"));
-const Settings = lazyRetry(() => import("@/pages/Settings"));
 const SettingsIndex = lazyRetry(() => import("@/pages/SettingsIndex"));
 const SettingsProfile = lazyRetry(
   () => import("@/pages/settings/SettingsProfile")
@@ -271,7 +270,10 @@ const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
   "/food": [() => import("@/pages/Home"), () => import("@/pages/History")],
   "/program": [() => import("@/pages/Home"), () => import("@/pages/Food")],
   "/social": [() => import("@/pages/Home")],
-  "/history": [() => import("@/pages/Home"), () => import("@/pages/Settings")],
+  "/history": [
+    () => import("@/pages/Home"),
+    () => import("@/pages/SettingsIndex"),
+  ],
 };
 
 function RoutePrefetcher() {
@@ -450,10 +452,10 @@ function AppRoutes() {
                       }
                     />
                     {/* Set1.1: nested-page Settings IA. /settings is the index;
-              each section gets its own route. The legacy flat page
-              stays reachable at /settings/legacy until each section
-              has been migrated (the SettingsIndex rows route there
-              for non-migrated sections). */}
+              each section gets its own route. Every section has now
+              migrated (SettingsIndex marks all rows migrated), so the
+              legacy flat page is retired — /settings/legacy redirects
+              to the index for any stale bookmark/deep link. */}
                     <Route
                       path="/settings"
                       element={
@@ -464,11 +466,7 @@ function AppRoutes() {
                     />
                     <Route
                       path="/settings/legacy"
-                      element={
-                        <RouteErrorBoundary>
-                          <Settings />
-                        </RouteErrorBoundary>
-                      }
+                      element={<Navigate to="/settings" replace />}
                     />
                     <Route
                       path="/settings/profile"

@@ -3,15 +3,15 @@
  *
  * iOS-style nested-page IA. Renders the section list with
  * chevron-right affordances. Each section tap routes to a dedicated
- * sub-page (or to /settings/legacy for sections not yet migrated).
+ * sub-page. (Migration complete: /settings/legacy now redirects here.)
  *
  * Set1's locked decision: 14+ sub-areas don't fit a flat scrolling
  * list. Nested pages keep each surface focused and let new arcs
  * (S3/S4/S5/A2-A4/P1c/Sub1-2) slot in by adding new section pages
  * without touching the index layout.
  *
- * Migration strategy: as each section moves to its own nested route,
- * flip its row href from `/settings/legacy` to `/settings/<slug>`.
+ * Migration history: sections moved to nested routes one arc at a
+ * time; every row is now migrated and the legacy flat page is retired.
  */
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -44,9 +44,9 @@ interface SectionRow {
   label: string;
   description: string;
   icon: LucideIcon;
-  /** Set to true once the section has its own nested page; false
-   *  rows route to /settings/legacy with the section's anchor so the
-   *  user can still reach it during the migration window. */
+  /** Historical migration flag — every section is now migrated
+   *  (all true). Kept so any future un-nested section is forced to
+   *  make an explicit routing decision rather than silently 404ing. */
   migrated: boolean;
 }
 
@@ -224,9 +224,10 @@ export default function SettingsIndex() {
       >
         {SECTIONS.map((section) => {
           const Icon = section.icon;
-          const href = section.migrated
-            ? `/settings/${section.slug}`
-            : `/settings/legacy#${section.slug}`;
+          // Every section is migrated (Set1.2 complete) — the old
+          // /settings/legacy#slug fallback is retired; the route now
+          // redirects to this index.
+          const href = `/settings/${section.slug}`;
           return (
             <li key={section.slug}>
               <button
