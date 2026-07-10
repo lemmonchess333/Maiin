@@ -39,7 +39,14 @@ export function registerServiceWorker() {
             }
           });
 
-          registration.addEventListener("updatefound", () => {
+          // Wire the update toast onto an installing worker. Extracted so
+          // BOTH paths attach it: the updatefound event, and a worker whose
+          // install was already in flight when we got here — on fast
+          // networks the update check can complete before this .then()
+          // runs, so listening for updatefound alone silently missed the
+          // toast for that deploy (the register() call itself triggers the
+          // very check whose event we were racing).
+          const wireUpdateToast = (newWorker: ServiceWorker | null) => {
             // Only a real UPDATE has a previous active worker being
             // replaced. The old `navigator.serviceWorker.controller`
             // check inside statechange misfired on the very first
@@ -48,7 +55,6 @@ export function registerServiceWorker() {
             // (or anyone who just cleared website data) got a bogus
             // "New version available" toast seconds after first paint.
             const isUpdate = !!registration.active;
-            const newWorker = registration.installing;
             if (newWorker) {
               newWorker.addEventListener("statechange", () => {
                 if (newWorker.state === "activated" && isUpdate) {
@@ -71,7 +77,14 @@ export function registerServiceWorker() {
                 }
               });
             }
-          });
+          };
+
+          // Path 1: an update discovered after this point.
+          registration.addEventListener("updatefound", () =>
+            wireUpdateToast(registration.installing)
+          );
+          // Path 2: an update whose install already started (the race).
+          wireUpdateToast(registration.installing);
         })
         .catch((error) => {
           logger.log("SW registration failed:", error);
