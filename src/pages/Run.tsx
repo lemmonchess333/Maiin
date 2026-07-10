@@ -35,6 +35,7 @@ import RunSetupModal, {
 } from "../components/run/RunSetupModal";
 import RunLaunchCard from "../components/run/RunLaunchCard";
 import RunTilePicker from "../components/run/RunTilePicker";
+import { useLastRunType } from "../hooks/useLastRunType";
 import {
   buildLaunchConfig,
   buildTileConfig,
@@ -555,6 +556,9 @@ export default function Run() {
     () => paceTableFromFitness(profile?.runFitness ?? null),
     [profile?.runFitness]
   );
+  // RUN-04: the tile picker's "Repeat <type>" recognition row — non-null when
+  // the user's two most recent volume-eligible runs share a direct-launch type.
+  const repeatType = useLastRunType();
   const launchWorkout = useMemo(
     () =>
       planDecision.metadata.actualTemplateId
@@ -1143,6 +1147,7 @@ export default function Run() {
               paceTable={paceTable}
               selectedShoeId={launchShoeId}
               onSelectShoe={setLaunchShoeId}
+              repeatType={repeatType}
               onPickType={(type) =>
                 handleStart(
                   buildTileConfig(

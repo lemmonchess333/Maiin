@@ -22,6 +22,46 @@ import {
 } from "@/lib/runPlanMetadata";
 import { resolveSessionPaces, type PaceTable } from "@/lib/runPaces";
 import { sessionPaceDisplay } from "@/lib/runLabels";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
+
+/** The four one-tap direct-launch types, in tile display order. Everything
+ *  else (intervals / treadmill / guided / race / route) needs config and
+ *  lives behind "More options" → the full modal. Owned here (not in
+ *  RunTilePicker) so the repeat-last resolver below and the tile grid can't
+ *  drift on what counts as directly launchable. */
+export const DIRECT_LAUNCH_TYPES: ActivityType[] = [
+  "easy",
+  "tempo",
+  "long",
+  "freerun",
+];
+
+/**
+ * RUN-04 (RunFast1 deferred follow-up, un-deferred 2026-07-10): the repeat
+ * chip's decision rule. Returns the type to offer as "Repeat <type>" when the
+ * TWO most recent volume-eligible runs share the same DIRECT-launch type —
+ * a recurring habit signal, not a one-off. Anything else (mixed types, fewer
+ * than two eligible runs, or a structured type like intervals/treadmill/
+ * guided/race that needs the modal) returns null and the picker renders
+ * exactly as before. Pure — callers pass runs newest-first.
+ */
+export function resolveRepeatType(
+  runs: Array<{
+    activityType?: string;
+    distance?: number;
+    duration?: number;
+    isInvalid?: boolean;
+    savedAnyway?: boolean;
+  }>
+): ActivityType | null {
+  const eligible = runs.filter((r) => isVolumeEligible(r));
+  if (eligible.length < 2) return null;
+  const type = eligible[0].activityType;
+  if (!type || eligible[1].activityType !== type) return null;
+  return (DIRECT_LAUNCH_TYPES as string[]).includes(type)
+    ? (type as ActivityType)
+    : null;
+}
 
 export interface RunConfig {
   activityType: ActivityType;
