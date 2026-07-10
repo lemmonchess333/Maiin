@@ -105,6 +105,8 @@ import {
 } from "@/lib/runPaces";
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
+import AdjustWeekSheet from "./AdjustWeekSheet";
+import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
@@ -232,6 +234,8 @@ export default function ProgrammeRunSection({
   // the race is still elapsed.
   const thisWeekKeyForDismissal = useMemo(() => localWeekKey(new Date()), []);
   const raceElapsedDismissKey = `tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
+  // Run13 (RUN-02): the proactive Adjust-this-week sheet.
+  const [adjustOpen, setAdjustOpen] = useState(false);
   const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
     () => {
       if (typeof window === "undefined") return false;
@@ -1345,6 +1349,32 @@ export default function ProgrammeRunSection({
               />
             )}
 
+          {/* Run13 (RUN-02): proactive week adjustment — a standing, quiet
+              entry (NOT gated on falling behind; the whole point is acting
+              BEFORE misses accumulate). Hidden in recovery / post-race, which
+              own their own flows. Opening clears a pending fell-behind prompt
+              first (Run9c one-primary-action). */}
+          {currentMode === "race_prep" &&
+            raceGoal &&
+            !raceElapsed &&
+            !inRecovery &&
+            !recoveryEnded && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic();
+                  if (contextualPrompt === "fell-behind") {
+                    void dismissFellBehindPrompt();
+                  }
+                  trackProgram("adjust_week_opened", { source: "cockpit" });
+                  setAdjustOpen(true);
+                }}
+                className="w-full min-h-[44px] py-2 text-sm text-muted-foreground text-center active:scale-[0.97] transition-transform"
+              >
+                Adjust this week ›
+              </button>
+            )}
+
           {allRunsDone && (
             <div
               className="p-3 rounded-xl text-center text-xs flex items-center justify-center gap-1.5"
@@ -1399,6 +1429,24 @@ export default function ProgrammeRunSection({
         skipRunDay={skipRunDay}
         skipWorkoutDay={skipWorkoutDay}
       />
+
+      {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
+      {raceGoal && (
+        <AdjustWeekSheet
+          open={adjustOpen}
+          onClose={() => setAdjustOpen(false)}
+          runDays={runDays}
+          raceGoal={{
+            distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
+            targetDate: raceGoal.targetDate,
+          }}
+          overrideRunDay={overrideRunDay}
+          realignRacePlan={async () => {
+            const result = await realignRacePlan();
+            return result;
+          }}
+        />
+      )}
     </section>
   );
 }
