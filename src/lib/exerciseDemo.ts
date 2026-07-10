@@ -5,6 +5,20 @@
 
 import { EXERCISES } from "@/lib/exercises";
 
+/**
+ * Provenance of `images` (Demo1 lock) — it decides what the player may DO:
+ *   - "vetted-sequence":  human-reviewed coach frames (Exercise.media, the
+ *     D-LIFT-20 pipeline). The only kind allowed to auto-animate (the
+ *     #1444/#1465 ping-pong player).
+ *   - "reference-photos": borrowed free-exercise-db photos. Never a coherent
+ *     motion sequence — rendered as static labelled start/finish only
+ *     ("a wrong demo is worse than no demo").
+ *   - "none": no images.
+ * The rig demo is its own media kind, resolved by ExerciseFormContent via
+ * getBodyDemo (it outranks both photo kinds).
+ */
+export type DemoMediaKind = "vetted-sequence" | "reference-photos" | "none";
+
 export interface ExerciseDemo {
   name: string;
   category: string;
@@ -13,6 +27,11 @@ export interface ExerciseDemo {
   secondaryMuscles: string[];
   instructions: string[];
   images: string[];
+  /** Provenance of `images` — see DemoMediaKind. */
+  mediaKind: DemoMediaKind;
+  /** Authored rep tempo "down-pause-up" seconds (Exercise.tempo) — drives the
+   *  rig teaching-rep's phase durations via lib/exerciseTempo. */
+  tempo?: string;
   tip?: string;
   /** Common form errors (D-LIFT-19) — surfaced as extra "watch out" cues. */
   commonMistakes?: string[];
@@ -188,6 +207,9 @@ async function loadDemos(): Promise<Map<string, ExerciseDemo>> {
           images: (ex.images ?? []).map((p) =>
             p.startsWith("http") ? p : IMAGE_BASE + p
           ),
+          // Everything from free-exercise-db is borrowed reference imagery,
+          // never a vetted motion sequence (Demo1).
+          mediaKind: (ex.images ?? []).length > 0 ? "reference-photos" : "none",
         });
       }
       demoCache = map;
@@ -227,6 +249,10 @@ function buildLocalFallback(name: string): ExerciseDemo | null {
     // over the free-exercise-db photos; left empty here when none so the
     // resolver can borrow the remote photos (D-LIFT-18).
     images: (match.media ?? []).map(resolveMediaUrl),
+    // Exercise.media is the human-reviewed pipeline output — the only
+    // provenance allowed to auto-animate (Demo1).
+    mediaKind: (match.media ?? []).length > 0 ? "vetted-sequence" : "none",
+    tempo: match.tempo,
     tip: match.tip,
     commonMistakes: match.commonMistakes,
   };
@@ -284,7 +310,9 @@ export async function getExerciseDemo(
     // free-exercise-db photos (D-LIFT-18) so the demo is still visual.
     if (local.images.length > 0) return local;
     return remote && remote.images.length > 0
-      ? { ...local, images: remote.images }
+      ? // Borrowed free-exercise-db photos keep their reference-only
+        // provenance even when the text is ours (Demo1).
+        { ...local, images: remote.images, mediaKind: "reference-photos" }
       : local;
   }
 
