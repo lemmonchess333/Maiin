@@ -429,9 +429,11 @@ Constraints these primitives must keep:
   tokens. No decorative gradients.
 - 44px+ touch targets (use the `Button` / `IconButton` primitives).
 - Light + dark mode; reduced-motion respected (`motion-safe:` prefixes).
-- Active plan editing deep-links to `/settings/training` (Run8 PR1a — not
-  reversed); the entry copy reads as "Edit run plan", not a generic
-  settings jump.
+- Active plan editing deep-links to `/settings/run-plan` — the focused
+  run-plan editor (Set1.2 nested-settings IA; originally
+  `/settings/training` per Run8 PR1a, destination superseded but the
+  "deep-link out, don't edit inline" decision unchanged). The entry copy
+  reads as "Edit run plan", not a generic settings jump.
 
 ### Spacing
 
