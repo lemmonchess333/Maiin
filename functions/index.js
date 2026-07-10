@@ -48,6 +48,9 @@ const {
 } = require("./lib/partnerStreakPersist");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
+const {
+  shouldIgnoreSubscriptionDeleted,
+} = require("./lib/stripeSubscriptionDeleted");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
@@ -339,6 +342,17 @@ exports.deleteMyAccount = functions
           { reason: "executor-disabled" }
         );
       }
+      // R1A Chunk 3 — another executor holds a live deletion lease (e.g. a
+      // double-tap). Surface a typed, friendly precondition instead of a
+      // generic internal error.
+      if (err && err.code === "deletion-in-progress") {
+        functions.logger.info("deleteMyAccount.already_in_progress", { uid });
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Your account deletion is already in progress.",
+          { reason: "deletion-in-progress" }
+        );
+      }
       functions.logger.error("deleteMyAccount.error", {
         uid,
         message: err && err.message,
@@ -533,6 +547,11 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const {
+  trialLedgerRef,
+  trialExpiryIso,
+  shouldGrantTrial,
+} = require("./lib/durableTrial");
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -671,21 +690,36 @@ exports.completeOnboarding = functions
 
       const db = admin.firestore();
 
-      // Check if profile already exists (preserve trialExpiresAt, createdAt)
+      // Check if profile already exists (preserve trialExpiresAt, createdAt).
+      // Also read the DURABLE trial ledger (audit F1): trialExpiresAt was
+      // previously granted purely on the absence of users/{uid}, so a client
+      // that self-deletes its own user doc and re-onboards farmed a fresh
+      // 7-day Pro trial on the same uid — repeatable free Vertex AI. The
+      // trialLedger/{uid} marker survives user-doc deletion (client-inaccessible,
+      // not in the deletion sweep), so a uid that already spent its trial never
+      // gets another. See functions/lib/durableTrial.js.
       const userRef = db.collection("users").doc(uid);
-      const existing = await userRef.get();
+      const ledgerRef = trialLedgerRef(db, uid);
+      const [existing, ledgerSnap] = await Promise.all([
+        userRef.get(),
+        ledgerRef.get(),
+      ]);
 
+      let grantTrial = false;
       if (existing.exists) {
         // Don't overwrite protected fields on update
         delete profileData.trialExpiresAt;
         delete profileData.createdAt;
       } else {
-        // New profile: set defaults
-        if (!profileData.trialExpiresAt) {
-          const d = new Date();
-          d.setDate(d.getDate() + 7);
-          profileData.trialExpiresAt = d.toISOString();
+        // New/reset profile. Grant the trial ONLY if this uid has never had one
+        // (no durable ledger marker). A client-sent trialExpiresAt is ignored —
+        // firestore.rules already pins it null on create; strip defensively.
+        delete profileData.trialExpiresAt;
+        if (shouldGrantTrial({ userDocExists: false, ledgerExists: ledgerSnap.exists })) {
+          profileData.trialExpiresAt = trialExpiryIso(new Date());
+          grantTrial = true;
         }
+        // else: durable marker present → onboard as free, never re-grant.
         if (!profileData.createdAt) {
           profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
         }
@@ -724,6 +758,21 @@ exports.completeOnboarding = functions
         );
       }
       batch.set(programRef, onbProgram.value);
+      // Record the durable trial marker atomically with the grant (audit F1),
+      // so a granted trial is always tombstoned and can never be re-granted to
+      // this uid after a user-doc deletion. The marker is intentionally NOT
+      // swept by the account-deletion executor (anti-abuse tombstone; uid +
+      // timestamps only, no PII).
+      if (grantTrial) {
+        batch.set(
+          ledgerRef,
+          {
+            grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+            trialExpiresAt: profileData.trialExpiresAt,
+          },
+          { merge: true }
+        );
+      }
       await batch.commit();
 
       return { success: true };
@@ -2022,35 +2071,25 @@ exports.stripeWebhook = functions
 
           const userData = userDoc.data();
 
-          // PR D: out-of-order + subscription-id-match + lifetime
-          // protection. Three reasons we might want to ignore a
-          // `deleted` event:
+          // Reasons to IGNORE a `deleted` event (no downgrade):
           //   (a) lifetime entitlement — never downgraded by sub events.
-          //   (b) the stored subscription ID doesn't match — a
-          //       different subscription was deleted, ours is still
-          //       active.
-          //   (c) staleness — a newer update already happened.
-          if (userData.planKind === "lifetime") {
+          //   (b) source-ownership (audit F3) — the live entitlement is owned
+          //       by a NON-Stripe source, i.e. the user migrated to Apple and
+          //       this is the displaced Stripe sub being auto-cancelled;
+          //       downgrading would strip the freshly-purchased Apple Pro.
+          //   (c) the stored subscription ID doesn't match — a different
+          //       subscription was deleted, ours is still active.
+          //   (d) staleness — a newer update already happened.
+          // Extracted to lib/stripeSubscriptionDeleted.js so the guard set is
+          // unit-testable and the F3 fix is pinned.
+          const del = shouldIgnoreSubscriptionDeleted({
+            userData,
+            subscriptionId: subscription.id,
+            eventCreated: event.created,
+          });
+          if (del.ignore) {
             console.log(
-              `stripeWebhook: skipping subscription.deleted for ${userDoc.id} — lifetime entitlement`
-            );
-            break;
-          }
-
-          if (
-            userData.stripeSubscriptionId &&
-            userData.stripeSubscriptionId !== subscription.id
-          ) {
-            console.log(
-              `stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — sub IDs differ (stored=${userData.stripeSubscriptionId}, event=${subscription.id})`
-            );
-            break;
-          }
-
-          const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
-          if (event.created && event.created <= lastUpdate) {
-            console.log(
-              `stripeWebhook: ignoring stale subscription.deleted for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`
+              `stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — ${del.reason}`
             );
             break;
           }
