@@ -51,7 +51,7 @@ import {
 test.describe("core user journeys", () => {
   test.skip(
     !emulatorActive,
-    `Requires E2E_AUTH_EMULATOR=1 with FIREBASE_AUTH_EMULATOR_HOST=${EXPECTED_AUTH_HOST} and FIRESTORE_EMULATOR_HOST=${EXPECTED_FIRESTORE_HOST}`,
+    `Requires E2E_AUTH_EMULATOR=1 with FIREBASE_AUTH_EMULATOR_HOST=${EXPECTED_AUTH_HOST} and FIRESTORE_EMULATOR_HOST=${EXPECTED_FIRESTORE_HOST}`
   );
 
   test.beforeEach(async ({ page }) => {
@@ -97,15 +97,19 @@ test.describe("core user journeys", () => {
   test("configures a race goal and the planner previews a valid plan", async ({
     page,
   }) => {
-    await page.goto("settings/training");
-    await expect(
-      page.getByRole("heading", { name: "Programme settings" }),
-    ).toBeVisible({ timeout: 15_000 });
+    // D14 dedupe: race-goal configuration lives in the focused run-plan
+    // editor (/settings/run-plan → RunPlanSettings), the ONE run-plan
+    // surface. ProgrammeSettings (/settings/training) now renders a
+    // read-only Running summary that links here, so this journey drives
+    // the canonical editor directly.
+    await page.goto("settings/run-plan");
+    await expect(page.getByRole("heading", { name: "Run plan" })).toBeVisible({
+      timeout: 15_000,
+    });
 
-    // /settings/training renders the unified ProgrammeSettings editor.
-    // Race prep is a run-mode option CARD (not a radio); selecting it
+    // Run mode is a radiogroup (Freeform / Race prep). Selecting Race prep
     // reveals the RaceGoalPlanner.
-    await page.getByRole("button", { name: /Race prep/i }).click();
+    await page.getByRole("radio", { name: /Race prep/i }).click();
 
     // Distance picker is a SegmentedControl (role=radio options); date
     // is #ps-race-date. 70 days out → classifyRaceTiming "healthy".
@@ -128,7 +132,7 @@ test.describe("core user journeys", () => {
     await expect(
       page.getByRole("button", {
         name: /Save race plan|Save compressed plan|Save finish-safely plan/,
-      }),
+      })
     ).toBeEnabled({ timeout: 10_000 });
   });
 
