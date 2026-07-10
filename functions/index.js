@@ -533,6 +533,11 @@ const {
   sanitizeProgramState,
   programStateTooLarge,
 } = require("./lib/programStateSanitizer");
+const {
+  trialLedgerRef,
+  trialExpiryIso,
+  shouldGrantTrial,
+} = require("./lib/durableTrial");
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -671,21 +676,36 @@ exports.completeOnboarding = functions
 
       const db = admin.firestore();
 
-      // Check if profile already exists (preserve trialExpiresAt, createdAt)
+      // Check if profile already exists (preserve trialExpiresAt, createdAt).
+      // Also read the DURABLE trial ledger (audit F1): trialExpiresAt was
+      // previously granted purely on the absence of users/{uid}, so a client
+      // that self-deletes its own user doc and re-onboards farmed a fresh
+      // 7-day Pro trial on the same uid — repeatable free Vertex AI. The
+      // trialLedger/{uid} marker survives user-doc deletion (client-inaccessible,
+      // not in the deletion sweep), so a uid that already spent its trial never
+      // gets another. See functions/lib/durableTrial.js.
       const userRef = db.collection("users").doc(uid);
-      const existing = await userRef.get();
+      const ledgerRef = trialLedgerRef(db, uid);
+      const [existing, ledgerSnap] = await Promise.all([
+        userRef.get(),
+        ledgerRef.get(),
+      ]);
 
+      let grantTrial = false;
       if (existing.exists) {
         // Don't overwrite protected fields on update
         delete profileData.trialExpiresAt;
         delete profileData.createdAt;
       } else {
-        // New profile: set defaults
-        if (!profileData.trialExpiresAt) {
-          const d = new Date();
-          d.setDate(d.getDate() + 7);
-          profileData.trialExpiresAt = d.toISOString();
+        // New/reset profile. Grant the trial ONLY if this uid has never had one
+        // (no durable ledger marker). A client-sent trialExpiresAt is ignored —
+        // firestore.rules already pins it null on create; strip defensively.
+        delete profileData.trialExpiresAt;
+        if (shouldGrantTrial({ userDocExists: false, ledgerExists: ledgerSnap.exists })) {
+          profileData.trialExpiresAt = trialExpiryIso(new Date());
+          grantTrial = true;
         }
+        // else: durable marker present → onboard as free, never re-grant.
         if (!profileData.createdAt) {
           profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
         }
@@ -724,6 +744,21 @@ exports.completeOnboarding = functions
         );
       }
       batch.set(programRef, onbProgram.value);
+      // Record the durable trial marker atomically with the grant (audit F1),
+      // so a granted trial is always tombstoned and can never be re-granted to
+      // this uid after a user-doc deletion. The marker is intentionally NOT
+      // swept by the account-deletion executor (anti-abuse tombstone; uid +
+      // timestamps only, no PII).
+      if (grantTrial) {
+        batch.set(
+          ledgerRef,
+          {
+            grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+            trialExpiresAt: profileData.trialExpiresAt,
+          },
+          { merge: true }
+        );
+      }
       await batch.commit();
 
       return { success: true };
