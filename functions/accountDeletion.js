@@ -55,6 +55,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // Owner-only private reflections — enumerate-not-recurse, so without this
   // entry a user's check-in answers orphan on account deletion.
   "checkins",
+  // Training Blocks (users/{uid}/trainingBlocks/{blockId}, PROGRAM-BLOCK-01).
+  // Owner-only private block layer — enumerate-not-recurse, so without this
+  // entry a user's blocks orphan on account deletion.
+  "trainingBlocks",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
