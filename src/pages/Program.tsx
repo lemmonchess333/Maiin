@@ -16,6 +16,7 @@ import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
+import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
@@ -632,6 +633,19 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       0
     ) ?? 0;
 
+  // PROGRAM-BLOCK-01: the programme's main compounds become the new
+  // block's default anchor lifts (v1 auto-anchors — no picker yet).
+  // Plain derivation — this region sits below an early return, so no
+  // hooks; the arrays are small enough that memoisation buys nothing.
+  const blockAnchorIds = [
+    ...new Set(
+      (programState?.workouts ?? [])
+        .flatMap((w) => w.exercises)
+        .filter((ex) => ex.isAccessory === false)
+        .map((ex) => ex.exerciseId)
+    ),
+  ].slice(0, 3);
+
   function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
     const groups = exercises
       .map((ex) => getExerciseById(ex.exerciseId)?.category)
@@ -1010,6 +1024,18 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 >
                   {selectedWorkout && (
                     <div className="space-y-3">
+                      {/* PROGRAM-BLOCK-01 — compact Training Block header.
+                          Quiet by design: the SessionCommandCard below stays
+                          the tab's primary moment. */}
+                      {profile?.uid && programState && (
+                        <TrainingBlockCard
+                          uid={profile.uid}
+                          defaultWeeklyLiftTarget={programState.workouts.length}
+                          mainCompoundIds={blockAnchorIds}
+                          trainingWhy={profile?.trainingWhy?.trim() ?? ""}
+                        />
+                      )}
+
                       {/* ── Session hero — shared command-card chrome
                             (SessionCommandCard sport="lift"), mirroring the Run
                             tab so both sports get the same "what's next"
