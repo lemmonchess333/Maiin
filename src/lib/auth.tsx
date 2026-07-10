@@ -331,6 +331,15 @@ export interface UserProfileOnboarding {
    *  magnitude. Absent for pre-Tier-2 profiles → legacy per-goal offset. */
   goalWeightKg?: number;
   weeklyRateKg?: number;
+  /**
+   * D16 — the personal "why" behind training. Optional, captured on the
+   * onboarding confirmation step (a tap-chip that seeds the phrase, editable
+   * as free text) and in Settings → Profile. Purely motivational: it drives
+   * no engine, it's resurfaced back to the user (weekly review) to reconnect
+   * them with their reason. Kept ≤120 chars (profileSanitizer). Sync with
+   * firestore.rules allowedUserFields() + profileSanitizer.js + registry.
+   */
+  trainingWhy?: string;
 }
 
 /** Full UserProfile — intersection of all sub-interfaces */
