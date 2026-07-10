@@ -71,6 +71,8 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/privacyZones/{doc}",
   "match /users/{uid}/checkins/{weekKey}",
   "match /users/{uid}/trainingBlocks/{blockId}",
+  "match /users/{uid}/journeys/{journeyId}",
+  "match /goalSpaces/{spaceId}/events/{eventId}",
   "match /users/{uid}/errors/{doc}",
   "match /feeds/{uid}/items/{doc}",
   "match /following/{uid}/users/{targetUid}",
@@ -137,6 +139,8 @@ const EXPLICITLY_EXEMPT = [
  * match block.
  */
 const INFRASTRUCTURE_AND_READ_ONLY = [
+  "match /goalSpaces/{spaceId}",
+  "match /goalSpaces/{spaceId}/members/{memberUid}",
   "match /databases/{database}/documents",
   "match /{document=**}",
   "match /users/{uid}/performance/{doc}",
@@ -282,7 +286,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 32 (PROGRAM-BLOCK-01 added trainingBlocks)", () => {
+  it("authoritative count is 34 (GOALS-CORE-01 added journeys + events)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -297,8 +301,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // Check-in, freeze via isOwnerAndNotDeleting), → 31.
     // PROGRAM-BLOCK-01 added /users/{uid}/trainingBlocks/{blockId}
     // (owner-only block layer, freeze via isOwnerAndNotDeleting), → 32.
+    // GOALS-CORE-01 added /users/{uid}/journeys/{journeyId} (owner-only,
+    // freeze via isOwnerAndNotDeleting) and the member-only, allowlisted
+    // /goalSpaces/{spaceId}/events/{eventId} create path, → 34.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(32);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(34);
   });
 });
