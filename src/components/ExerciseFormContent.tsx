@@ -148,6 +148,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           exerciseId={exerciseId}
           name={demo.name}
           active={active}
+          tempo={demo.tempo}
         />
       )}
 
@@ -157,6 +158,13 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
           frames={demo.images}
           name={demo.name}
           active={active}
+          mediaKind={
+            // Demo1: provenance gates animation — borrowed free-exercise-db
+            // pairs render static; only reviewed coach frames auto-play.
+            demo.mediaKind === "reference-photos"
+              ? "reference-photos"
+              : "vetted-sequence"
+          }
           onUnavailable={() => setDemoFailed(true)}
         />
       )}
