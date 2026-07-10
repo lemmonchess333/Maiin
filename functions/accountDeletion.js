@@ -84,6 +84,29 @@ function storagePrefixesFor(uid) {
 }
 
 /**
+ * Does a `system/config.deletionExecutorEnabled` value UNAMBIGUOUSLY mean
+ * "disabled"? (money-path audit F5.)
+ *
+ * The Firebase Console stores a field as a STRING by default, so an operator
+ * pausing deletions in an incident typically writes the string "false" — which
+ * a bare `=== false` misses, silently ignoring the emergency stop while the
+ * operator sees their write land and assumes it took effect. Honour boolean
+ * `false` AND the common "disable" string tokens.
+ *
+ * Lock-out defence is preserved: anything ELSE (missing field, unreadable doc,
+ * a random string, a number) stays ENABLED (fail-open), so a typo or a
+ * transient Firestore blip can never permanently brick the deletion fleet.
+ */
+const DISABLE_TOKENS = new Set(["false", "0", "off", "no", "disabled"]);
+function readsAsDisabled(value) {
+  if (value === false) return true;
+  if (typeof value === "string") {
+    return DISABLE_TOKENS.has(value.trim().toLowerCase());
+  }
+  return false;
+}
+
+/**
  * Batched delete. Firestore write batches cap at 500 ops; we chunk
  * at 450 to keep margin for retries.
  */
@@ -164,7 +187,11 @@ async function deleteAccount({
     const configSnap = await firestore.doc("system/config").get();
     if (configSnap.exists) {
       const value = configSnap.data()?.deletionExecutorEnabled;
-      if (value === false) {
+      // F5: honour a value that unambiguously reads as "disabled" — including
+      // the string "false" the Console stores by default — so a stringified
+      // pause isn't silently ignored. Ambiguous values stay ENABLED (fail-open)
+      // and still emit the malformed warning below.
+      if (readsAsDisabled(value)) {
         killSwitchActive = true;
       } else if (value !== undefined && typeof value !== "boolean") {
         logger.warn("deleteAccount.kill_switch_malformed", {
@@ -418,5 +445,6 @@ module.exports = {
   USER_SUBCOLLECTIONS,
   TOP_LEVEL_USER_KEYED_COLLECTIONS,
   storagePrefixesFor,
+  readsAsDisabled,
   deleteAccount,
 };

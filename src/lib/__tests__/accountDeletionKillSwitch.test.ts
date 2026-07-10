@@ -302,20 +302,19 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
     expect(auth.deleteUser).toHaveBeenCalledWith(UID);
   });
 
-  /* Malformed-shape coverage — Stress 7 ultra-review gap.
-     A kill-switch that silently fails open on `"false"` (string)
-     is worse than no kill-switch, because the operator sees their
-     write land in the Console and assumes the function honoured it.
-     The impl treats non-boolean values as ENABLED (fail-open) but
-     emits a `kill_switch_malformed` warn so the operator gets a
-     log signal that their write didn't take effect. These tests
-     pin both halves — proceed AND warn. */
+  /* Malformed-shape coverage. A value that clearly reads as "disabled" (incl.
+     the string "false" the Console stores by default) is now HONOURED as the
+     emergency stop — see the F5 describe below. Any OTHER non-boolean value (an
+     unrecognised string, a number, null) is treated as ENABLED (fail-open,
+     lock-out defence) and emits a `kill_switch_malformed` warn so the operator
+     gets a log signal that their write didn't take a recognised form. These
+     tests pin that fail-open-and-warn half. */
   describe("malformed deletionExecutorEnabled values (fail-open + warn)", () => {
     const cases: Array<[string, unknown]> = [
-      ['string "false"', "false"],
       ["null", null],
       ["number 0", 0],
       ["string 'true'", "true"],
+      ["string 'banana' (unrecognised)", "banana"],
     ];
     for (const [label, value] of cases) {
       it(`proceeds and warns on malformed shape: ${label}`, async () => {
@@ -364,6 +363,67 @@ describe("deleteAccount — kill-switch (Stress 7)", () => {
         "deleteAccount.kill_switch_malformed",
         expect.anything()
       );
+    });
+  });
+
+  /* F5 — a value that unambiguously reads as "disabled" (incl. the string
+     "false" the Console stores by default) is HONOURED as the emergency stop,
+     not silently ignored + warned. */
+  describe("stringified disable values are honoured (audit F5)", () => {
+    const disableCases: Array<[string, unknown]> = [
+      ['string "false"', "false"],
+      ['string "FALSE" (case-insensitive)', "FALSE"],
+      ['string " off " (trimmed)', " off "],
+      ['string "0"', "0"],
+      ['string "no"', "no"],
+      ['string "disabled"', "disabled"],
+    ];
+    for (const [label, value] of disableCases) {
+      it(`throws executor-disabled and does NO work on ${label}`, async () => {
+        const warn = vi.fn();
+        const logger = { warn, error: () => {}, info: () => {} };
+        const { firestore, auth, storage } = buildStubs({
+          configDoc: { deletionExecutorEnabled: value },
+        });
+
+        await expect(
+          deleteAccount({
+            firestore,
+            auth,
+            storageBucket: storage,
+            uid: UID,
+            logger,
+          })
+        ).rejects.toThrow("executor-disabled");
+        expect(auth.deleteUser).not.toHaveBeenCalled();
+        // Honoured as a recognised stop — NOT flagged "malformed".
+        expect(warn).not.toHaveBeenCalledWith(
+          "deleteAccount.kill_switch_malformed",
+          expect.anything()
+        );
+      });
+    }
+  });
+
+  describe("readsAsDisabled (F5 pure helper)", () => {
+    const { readsAsDisabled } = accountDeletion;
+    it("true for boolean false and disable-token strings", () => {
+      for (const v of [
+        false,
+        "false",
+        "FALSE",
+        " off ",
+        "0",
+        "no",
+        "disabled",
+      ]) {
+        expect(readsAsDisabled(v)).toBe(true);
+      }
+    });
+    it("false (fail-open) for booleans-true, unrecognised strings, numbers, null", () => {
+      for (const v of [true, "true", "banana", 0, 1, null, undefined, {}]) {
+        expect(readsAsDisabled(v)).toBe(false);
+      }
     });
   });
 
