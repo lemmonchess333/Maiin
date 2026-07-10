@@ -49,13 +49,16 @@ must-get-right gate.
 
 - **CONFIRMED — High:** 3 (trial re-grant faucet; deletion write-freeze no-op;
   Stripe→Apple migration strips Pro).
-- **CONFIRMED — Low:** 1 (kill-switch fail-open on `"false"`-as-string — a documented
-  tradeoff, see F5).
+- **CONFIRMED — Medium:** 1 (first-claim-wins Apple restore theft — F7).
+- **CONFIRMED — Low:** 3 (kill-switch fail-open on `"false"`-string F5; stale
+  `appleSubscriptions` binding F8; un-scoped always-share preference F9).
 - **PLAUSIBLE — Low:** 1 (dropped Apple `DID_RENEW` silent lapse).
 - **PARTIALLY LIVE (prior audit):** 1 (`geminiEnabled` flag still fail-open).
-- **INVARIANT HOLDS (clean bills):** 8 — including the whole direct-self-grant surface and
-  the AI-gate bypass surface.
-- **FLAGGED — NOT VERIFIED (session-limit):** shared-device (4) + RevenueCat-design (9).
+- **INVARIANT HOLDS (clean bills):** 10 — incl. the whole direct-self-grant surface, the
+  AI-gate bypass surface, and the uid-scoped offline/share queues.
+- **RevenueCat slice-3 (9 design requirements):** adversarially verified as **not** live
+  vulnerabilities — the code is unbuilt and the invariants the future code inherits are
+  sound; captured below as a must-get-right gate.
 
 ## Findings
 
@@ -191,6 +194,70 @@ must-get-right gate.
 - **Recommendation:** set `geminiEnabled` (and any AI/payment-write flag) `FLAG_FAIL_CLOSED`;
   add a lint/test that any flag touching AI or billing must declare a fail-closed policy.
 
+### 7) First-claim-wins theft of an unclaimed Apple subscription via `restoreApplePurchases`
+
+- **Severity:** Medium · **Confidence:** CONFIRMED
+- **Area:** Apple restore / purchaser binding
+- **Evidence:** `restoreApplePurchases` (`functions/appleIAP.js:511-638`) authenticates the
+  **caller** but never proves the caller **owns** the submitted `originalTransactionId` —
+  `fetchSubscriptionStatus` (`:203-220`) signs the query with *our own* app credentials, so
+  Apple returns a valid `signedTransactionInfo` for any of our app's transactions regardless
+  of who asks. The `appleSubscriptions/{originalTransactionId}` uniqueness guard only fires
+  when the id is **already** bound (`functions/applePurchase.js:144-156`); the **first**
+  caller to bind an unclaimed transaction claims it (`:225-234`). So an attacker who learns
+  a victim's `originalTransactionId` out-of-band (a leaked receipt / support ticket / shared
+  TestFlight build — not publicly enumerable) and calls restore **before** the real purchaser
+  has claimed it (fresh install / new device) binds the sub to the attacker, and the guard
+  then locks the real owner out.
+- **Why it matters:** this is exactly the hand-rolled path's "first-caller-wins" purchaser
+  binding gap the RevenueCat migration is meant to kill (the `appAccountToken` concern,
+  ADR-0006). It requires knowing the id, so it is Medium, not High — but the binding provides
+  **no ownership proof**. *(Correction: an earlier draft of this audit speculated PR #822's
+  uniqueness binding mitigated this — it does not; the binding is first-claim-wins.)*
+- **References:** `functions/appleIAP.js:511-638,203-220`;
+  `functions/applePurchase.js:144-156,225-234`. The code's own comment
+  (`appleIAP.js:545-548`) names this as the "Chunk 4" fix.
+- **Recommendation:** deprecate the raw-`originalTransactionId` input; require a
+  StoreKit-issued `signedTransactionInfo` JWS that Apple verifies belongs to the calling
+  device's Apple ID (as `verifyApplePurchase` already does), so the caller must prove
+  ownership. RevenueCat subsumes this.
+
+### 8) Stale `appleSubscriptions` binding never cleared on account deletion
+
+- **Severity:** Low · **Confidence:** CONFIRMED
+- **Area:** Apple binding / account deletion
+- **Evidence:** `appleSubscriptions/{originalTransactionId}` is written by
+  `applySubscriptionToUser` (`functions/applePurchase.js:125-127,225-234`) and is **never
+  swept** by `functions/accountDeletion.js` (a repo-wide grep confirms the deletion executor
+  covers user subcollections, top-level user-keyed collections, activities, partnerBonds,
+  public/profile, `users/{uid}`, and three Storage prefixes — but **not** `appleSubscriptions`).
+- **Why it matters:** a user who deletes their Tropos account (same Apple ID) then re-signs-up
+  is permanently locked out of restoring their own sub ("bound to a different account"), and a
+  transaction bound to an abandoned uid is stranded forever. This is the durable half of F7
+  and ties to the F2 tombstone/cleanup gap.
+- **References:** `functions/applePurchase.js:125-127,225-234`; `functions/accountDeletion.js`
+  (sweep list, no `appleSubscriptions` cleanup).
+- **Recommendation:** in the deletion executor's Firestore-first sweep, delete (or reassign)
+  any `appleSubscriptions` doc whose `uid` === the deleting uid; and when the uniqueness guard
+  hits a mismatch, verify the bound uid still exists / is unexpired before refusing.
+
+### 9) Un-scoped "always share" preference bleeds across account switch on a shared device
+
+- **Severity:** Low · **Confidence:** CONFIRMED
+- **Area:** Cross-account privacy on a shared device
+- **Evidence:** the share-composer "Always do this" preference is stored under the
+  **un-scoped** `localStorage` key `tropos.share.always.<type>` (`src/lib/shareComposer.ts:83-121`)
+  — unlike the offline/share **queues**, which *are* uid-tagged (PR #820). `compose()`
+  short-circuits on the stored pref before any UI (`:125-138`), and the workout-save caller
+  posts under the **current** session (`useProgram.ts:830`). So: user A sets "Always share
+  publicly", signs out; user B signs in on the same device and completes a workout → it
+  auto-posts under **B's** account per A's setting, with no prompt.
+- **Why it matters:** a cross-account privacy leak — B publishes training data they never chose
+  to share. PR #820 uid-scoped the queues but missed this preference key.
+- **References:** `src/lib/shareComposer.ts:83-121,125-138`; `src/features/program/useProgram.ts:830`.
+- **Recommendation:** namespace the key by uid (`tropos.share.always.<uid>.<type>`), mirroring
+  the queue uid-tagging, so one account's preference never governs another's auto-share.
+
 ## Strengths Observed (invariants that genuinely hold — clean bills)
 
 - **Direct client self-grant of Pro is closed.** `firestore.rules` blocks all 7 billing
@@ -209,9 +276,15 @@ must-get-right gate.
   dedup is explicitly "a perf/cost optimisation, not a correctness boundary"
   (`functions/webhookIdempotency.js:19-27`), and the per-event handlers are idempotent
   read-modify-write-by-uid, so a duplicate cannot flip a tier incorrectly.
-- **Restore-purchase cross-account claim** — refuted (see Auditor Notes: the
-  `appleSubscriptions/{originalTransactionId}` uniqueness binding from PR #822 is the named
-  guard; the shared-device variant of this was not re-verified this run).
+- **Claiming an *already-bound* subscription** — refuted: the
+  `appleSubscriptions/{originalTransactionId}` uniqueness guard (`applePurchase.js:144-156`)
+  refuses a cross-uid write once a transaction is bound. (But claiming a **not-yet-bound**
+  transaction has no ownership proof — that is F7, confirmed.)
+- **The uid-scoped offline + share *queues* hold against cross-account leak** — both tag every
+  item with the originating uid and skip non-matching items on replay
+  (`src/lib/offlineQueue.ts:117-120`, `src/lib/shareComposer.ts:236-238`), dropping legacy
+  un-tagged items on read (PR #820). The gap is only the always-share *preference* key (F9),
+  not the queues.
 - **`Date.parse` locale-sensitivity as a Pro-loss vector** — refuted: `subscriptionExpiresAt`
   is only ever written server-side as ISO-8601-UTC, which `Date.parse` handles reliably.
 - **Billing-tombstone HMAC is forge-resistant** — doc IDs are HMAC-SHA256 over a server-side
@@ -225,9 +298,15 @@ must-get-right gate.
 ## RevenueCat slice-3 — must-get-right gate (design review; code does not exist yet)
 
 The RevenueCat webhook + sync-on-purchase callable are **unbuilt** (ADR-0006 slice-3;
-`src/lib/revenuecat.ts` is client-side identity scaffold only). These are *design
-requirements*, not shipped vulnerabilities — the risk is in what gets built. Each must hold
-so the swap doesn't repeat the hand-rolled Apple path's "first-caller-wins" defect:
+`src/lib/revenuecat.ts` is client-side identity scaffold only, a guarded no-op on web).
+The adversarial-verify pass confirmed each item below is a *design requirement*, **not a live
+vulnerability** — there is no reachable code path today (repo-wide grep: no RC webhook, no
+sync-on-purchase callable, no `api.revenuecat.com` call, no server-side RC secret), and the
+invariants the future code will *inherit* are sound (the 7 billing fields stay rules-locked;
+the only RC key in the tree is the public `appl_` SDK key, which is correct to ship client-side).
+Item 5 (transfer behaviour) is already **locked** in ADR-0006 decision #3, so it is not an
+"unconsidered default". Each must still hold so the swap doesn't repeat the hand-rolled Apple
+path's "first-caller-wins" defect (F7):
 
 1. **[critical]** Sync-on-purchase callable must derive tier from the RC **REST API keyed to
    `context.auth.uid`** — never from the request body / client-supplied `appUserId`.
@@ -252,8 +331,10 @@ so the swap doesn't repeat the hand-rolled Apple path's "first-caller-wins" defe
 
 - **P1:** F1 (trial faucet — biggest cost exposure) · F2 (deletion write-freeze — data
   integrity) · F3 (Stripe→Apple strips Pro — paid user loses entitlement).
-- **P2:** F6 (`geminiEnabled` fail-closed) · F4 (Apple renewal reconciliation).
-- **P3:** F5 (kill-switch string handling) · the shared-device items once re-verified.
+- **P2:** F6 (`geminiEnabled` fail-closed) · F4 (Apple renewal reconciliation) · F7
+  (restore ownership proof — or subsume via RevenueCat).
+- **P3:** F5 (kill-switch string handling) · F8 (`appleSubscriptions` cleanup on deletion —
+  bundle with F2) · F9 (uid-scope the always-share preference key).
 - **Gate (before slice-3 merges):** the 9 RevenueCat must-get-right items.
 
 ## Suggested Verification Tests After Fixes
@@ -271,26 +352,26 @@ so the swap doesn't repeat the hand-rolled Apple path's "first-caller-wins" defe
   as active.
 - **F6:** stub a `config/flags` read failure; assert `geminiEnabled` resolves disabled.
 
-## Auditor Notes — coverage gap this run
+- **F7:** call `restoreApplePurchases` with an `originalTransactionId` the caller did not
+  purchase, for a transaction not yet in `appleSubscriptions`; assert the write is refused
+  (ownership proof required) after the fix.
+- **F8:** delete an account holding an Apple sub; assert its `appleSubscriptions/{id}` doc is
+  removed and a fresh account can re-bind the same transaction.
+- **F9:** set the always-share pref as user A, sign in as B on the same device, complete a
+  workout; assert B is prompted (no auto-post) and A's pref key is uid-namespaced.
 
-The adversarial-verify pass for two goal areas **did not complete** (the subagent session
-budget was exhausted mid-run — an environmental limitation, not a repo signal). These are
-recorded as **FLAGGED — NOT VERIFIED**, distinct from the CONFIRMED/INVARIANT-HOLDS findings
-above, and must be re-verified before action:
+## Auditor Notes — coverage
 
-- **Shared-device (4, from the exploit pass, unverified):** (a) first-claim-wins theft of a
-  victim's Apple subscription via `restoreApplePurchases` on a raw `originalTransactionId`;
-  (b) stale `appleSubscriptions` binding never cleared on account deletion → self-lockout /
-  permanent theft; (c) an "always share" preference bleeding across an account switch on a
-  shared device; (d) the RC transfer-behaviour default routing entitlement to the wrong uid.
-  **Note:** PR #822 added an `appleSubscriptions/{originalTransactionId}` uniqueness binding
-  that throws "different account" — this **likely mitigates (a)** already; re-verify against
-  `functions/applePurchase.js` rather than treating (a) as open. (b) is the more likely-live
-  item (it ties to the F2 tombstone gap).
-- **RevenueCat-design (9):** captured above as the must-get-right gate; theoretical by
-  construction (the code does not exist), so "unverified" here means "design requirement, not
-  a shipped defect."
+An earlier run of this pass left two goal areas (shared-device, RevenueCat-design) unverified
+because the subagent verification budget was exhausted mid-run (an environmental limitation,
+not a repo signal). **That gap is now closed** — the verification was re-run and every finding
+in this document carries a verdict. Two outcomes worth calling out:
 
-Re-running only these two verify groups (after the session budget resets) closes the gap; the
-exploit sequences and their cited `file:line` are recorded above so the re-verification is a
-targeted read, not a re-derivation.
+- **The re-verification corrected an earlier speculation.** A first draft guessed that PR #822's
+  `appleSubscriptions` uniqueness binding mitigated the Apple restore theft. Re-tracing the code
+  showed it does **not**: the binding is first-claim-wins with no ownership proof, so F7 is
+  CONFIRMED. This is exactly why confirmed security findings are re-traced to `file:line` rather
+  than reasoned from a guard's existence.
+- **The 9 RevenueCat-design items verified as design requirements, not live defects.** Every one
+  targets unbuilt slice-3 code (no reachable path today), and the invariants the future code
+  inherits are sound — so they belong in the must-get-right gate above, not the findings list.
