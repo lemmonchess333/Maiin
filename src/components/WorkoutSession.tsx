@@ -152,6 +152,10 @@ interface Props {
    *  programme days (invalidates a stale draft across week
    *  advancement). Defaults to 0 for scopes without an epoch. */
   draftEpoch?: string | number;
+  /** PROGRAM-FLEX-01: present when the caller trimmed `day` to a time
+   *  budget (Express Session). Threaded into the completion write and
+   *  acknowledged on the complete screen. */
+  sessionVariant?: "express45" | "express30";
   onLogExercise: (
     dayIndex: number,
     exIndex: number,
@@ -166,6 +170,7 @@ interface Props {
       setLogs: Array<
         Array<{ weight: number; reps: number; completed: boolean }>
       >;
+      sessionVariant?: "express45" | "express30";
     }
   ) => Promise<void>;
   onClose: () => void;
@@ -176,6 +181,7 @@ export default function WorkoutSession({
   dayIndex,
   draftScope,
   draftEpoch,
+  sessionVariant,
   onLogExercise,
   onCompleteDay,
   onClose,
@@ -920,6 +926,7 @@ export default function WorkoutSession({
           completed: s.completed,
         }))
       ),
+      sessionVariant,
     });
 
     // Persist PR map to Firestore for history beyond 50-session window
@@ -996,6 +1003,7 @@ export default function WorkoutSession({
           setLogs={setLogs}
           firedPRs={firedPRs}
           sessionDurationMinutes={sessionDurationMinutes}
+          sessionVariant={sessionVariant}
           completing={completing}
           onFinish={handleFinish}
           onClose={onClose}

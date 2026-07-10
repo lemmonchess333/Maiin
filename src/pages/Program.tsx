@@ -19,6 +19,12 @@ import SessionCommandCard from "@/components/program/SessionCommandCard";
 import { THEME } from "@/lib/theme";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
+import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
+import {
+  buildExpressSession,
+  expressChoices,
+  type SessionVariant,
+} from "@/features/program/expressSession";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   Dumbbell,
@@ -251,6 +257,13 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   const [showOverflow, setShowOverflow] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
+  // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
+  // The chooser only opens when a budget would actually change the day
+  // (expressChoices > 1); otherwise Begin Workout stays one tap.
+  const [expressChooserDay, setExpressChooserDay] = useState<number | null>(
+    null
+  );
+  const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -1032,7 +1045,15 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           status === "today" && !selectedWorkout.completed
                             ? () => {
                                 haptic("light");
-                                setSessionDayIndex(idx);
+                                // PROGRAM-FLEX-01: offer time budgets
+                                // only when trimming would change the
+                                // session; short days start directly.
+                                if (expressChoices(selectedWorkout).length > 1)
+                                  setExpressChooserDay(idx);
+                                else {
+                                  setSessionVariant("full");
+                                  setSessionDayIndex(idx);
+                                }
                               }
                             : undefined
                         }
@@ -1468,17 +1489,99 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         }}
       />
 
+      {/* Express Session chooser (PROGRAM-FLEX-01) */}
+      <ExpressSessionSheet
+        open={expressChooserDay !== null}
+        day={
+          expressChooserDay !== null
+            ? (programState.workouts[expressChooserDay] ?? null)
+            : null
+        }
+        onClose={() => setExpressChooserDay(null)}
+        onStart={(variant) => {
+          const idx = expressChooserDay;
+          setExpressChooserDay(null);
+          if (idx === null) return;
+          setSessionVariant(variant);
+          setSessionDayIndex(idx);
+        }}
+      />
+
       {/* In-Session Workout Screen */}
-      {sessionDayIndex !== null && programState.workouts[sessionDayIndex] && (
-        <WorkoutSession
-          day={programState.workouts[sessionDayIndex]}
-          dayIndex={sessionDayIndex}
-          draftEpoch={programState.weekNumber}
-          onLogExercise={logExercise}
-          onCompleteDay={completeWorkoutDay}
-          onClose={() => setSessionDayIndex(null)}
-        />
-      )}
+      {sessionDayIndex !== null &&
+        programState.workouts[sessionDayIndex] &&
+        (() => {
+          // Express variants run a deterministically trimmed COPY of
+          // the day — the stored programme day is never mutated, and
+          // the LIFT-01 draft identity derives from the trimmed layout
+          // so a full-session draft can't restore into an express run
+          // (or vice versa). The session logs sets positionally over
+          // the TRIMMED list, while logExercise and completeWorkoutDay
+          // index into the STORED day — both callbacks realign through
+          // plan.sourceIndexes so a dropped accessory can't shift
+          // progression or the saved record onto the wrong lift.
+          const storedDay = programState.workouts[sessionDayIndex];
+          const plan =
+            sessionVariant === "full"
+              ? null
+              : buildExpressSession(storedDay, sessionVariant);
+          return (
+            <WorkoutSession
+              day={
+                plan ? { ...storedDay, exercises: plan.exercises } : storedDay
+              }
+              dayIndex={sessionDayIndex}
+              draftEpoch={programState.weekNumber}
+              sessionVariant={
+                plan ? (plan.variant as "express45" | "express30") : undefined
+              }
+              onLogExercise={
+                plan
+                  ? (di, exIdx, reps, weight, rpe) =>
+                      logExercise(
+                        di,
+                        plan.sourceIndexes[exIdx] ?? exIdx,
+                        reps,
+                        weight,
+                        rpe
+                      )
+                  : logExercise
+              }
+              onCompleteDay={
+                plan
+                  ? (di, sd) => {
+                      if (!sd) return completeWorkoutDay(di, sd);
+                      // Re-expand trimmed setLogs to stored-day
+                      // positions. Dropped exercises get [] (recorded
+                      // as zero completed sets — same as an exercise
+                      // the user skipped mid-session), NEVER undefined
+                      // (undefined falls back to planned all-completed
+                      // data, which would fake work never done).
+                      const aligned = storedDay.exercises.map(
+                        () =>
+                          [] as {
+                            weight: number;
+                            reps: number;
+                            completed: boolean;
+                          }[]
+                      );
+                      plan.sourceIndexes.forEach((srcIdx, i) => {
+                        aligned[srcIdx] = sd.setLogs[i] ?? [];
+                      });
+                      return completeWorkoutDay(di, {
+                        ...sd,
+                        setLogs: aligned,
+                      });
+                    }
+                  : completeWorkoutDay
+              }
+              onClose={() => {
+                setSessionDayIndex(null);
+                setSessionVariant("full");
+              }}
+            />
+          );
+        })()}
 
       {/* Exercise Picker — Add mode (scoped to addPickerDayIndex) */}
       <ExercisePicker
