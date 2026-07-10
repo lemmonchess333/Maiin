@@ -23,7 +23,10 @@ import { toast } from "@/lib/toast";
 /* Synthetic dayIndex used by saved-routine sessions.
    useWorkoutDraft keys drafts on dayIndex. Program days are 0-6, so
    -1 is safely out of band — a routine session's draft can't
-   overwrite or be overwritten by a scheduled day's draft. */
+   overwrite or be overwritten by a scheduled day's draft. Isolation
+   BETWEEN routines comes from the LIFT-01 draft identity: the
+   `routine:<id>` draftScope below means routine A's in-flight draft
+   is never offered for resume inside routine B. */
 const ROUTINE_DAY_INDEX = -1;
 
 function exerciseFromRoutine(ex: SavedRoutineExercise): ProgramExercise {
@@ -299,6 +302,7 @@ export default function Routine() {
     <WorkoutSession
       day={synthDay}
       dayIndex={ROUTINE_DAY_INDEX}
+      draftScope={`routine:${routineId ?? "unknown"}`}
       onLogExercise={handleLogExercise}
       onCompleteDay={handleCompleteRoutine}
       onClose={() => navigate("/program")}
