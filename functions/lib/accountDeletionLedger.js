@@ -146,30 +146,192 @@ function assertMinimisedRecord(record) {
   }
 }
 
-// ── Helper signatures (stub bodies — wired in Chunk 3) ─────────────
+// ── Chunk 3 — transactional lease + state-machine implementation ───
 //
-// Each function has a deliberate "not-implemented" throw so accidental
-// import-and-call from another module surfaces immediately. Chunk 3
-// replaces the bodies with the transactional implementations.
+// The write-freeze (firestore.rules isDeleting) engages the moment
+// accountDeletionRequests/{uid}.status enters the active set. acquireLease
+// SETs status='running' transactionally at deletion start; transitionStatus
+// moves it to a terminal (completed) or frozen-retryable (failed_cleanup)
+// state; verifyLeaseGeneration guards the irreversible steps against a
+// takeover. `now` is injected (ms) for deterministic tests.
 
-function acquireLeaseStub() {
-  throw new Error("R1A-Deletion: acquireLease() lands in Chunk 3");
+const crypto = require("crypto");
+
+/** Terminal statuses — a finished operation; a new request re-initialises. */
+const TERMINAL_STATUSES = Object.freeze([STATUS.COMPLETED, STATUS.CANCELLED]);
+
+function ledgerRef(firestore, uid) {
+  return firestore.collection(COLLECTION).doc(uid);
 }
 
-function renewLeaseStub() {
-  throw new Error("R1A-Deletion: renewLease() lands in Chunk 3");
+/**
+ * Acquire (or take over) the deletion lease for `uid` transactionally and
+ * engage the write-freeze (status='running'). Monotonic `leaseGeneration`
+ * increments on every takeover so a superseded executor can detect it and
+ * abort (split-brain protection). Returns:
+ *   { acquired: true,  generation, status }              — go
+ *   { acquired: false, reason: 'leased', generation }    — another live owner
+ */
+async function acquireLease({
+  firestore,
+  uid,
+  leaseOwner,
+  now = Date.now(),
+  leaseDurationMs = LEASE_DURATION_MS,
+  generateOperationId = () => crypto.randomUUID(),
+  generateSupportCodeFn = () => generateSupportCode(),
+}) {
+  if (!firestore) throw new Error("acquireLease: firestore handle required");
+  if (!uid) throw new Error("acquireLease: uid required");
+  if (!leaseOwner) throw new Error("acquireLease: leaseOwner required");
+  const ref = ledgerRef(firestore, uid);
+  const leaseExpiresAt = now + leaseDurationMs;
+
+  return firestore.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() || {} : null;
+
+    // Fresh operation: no doc, or a prior terminal record we overwrite.
+    if (!data || TERMINAL_STATUSES.includes(data.status)) {
+      const record = {
+        uid,
+        status: STATUS.RUNNING,
+        operationId: generateOperationId(),
+        supportCode: generateSupportCodeFn(),
+        leaseOwner,
+        leaseGeneration: 1,
+        leaseExpiresAt,
+        lastHeartbeatAt: now,
+        attemptCount: 1,
+        startedAt: now,
+        updatedAt: now,
+      };
+      assertMinimisedRecord(record);
+      tx.set(ref, record);
+      return { acquired: true, generation: 1, status: STATUS.RUNNING };
+    }
+
+    // Active operation. A non-expired lease held by a DIFFERENT owner blocks us.
+    const currentExpiry = Number(data.leaseExpiresAt) || 0;
+    if (
+      data.leaseOwner &&
+      data.leaseOwner !== leaseOwner &&
+      currentExpiry > now
+    ) {
+      return {
+        acquired: false,
+        reason: "leased",
+        generation: Number(data.leaseGeneration) || 0,
+      };
+    }
+
+    // Takeover (expired lease) or re-entrant (same owner): bump generation and
+    // re-arm the lease. Transition to running if the op had stalled in another
+    // active status (STATE_GRAPH-validated); a running→running takeover is a
+    // lease re-arm, not a status change, so it skips the transition check.
+    const nextGen = (Number(data.leaseGeneration) || 0) + 1;
+    const update = {
+      leaseOwner,
+      leaseGeneration: nextGen,
+      leaseExpiresAt,
+      lastHeartbeatAt: now,
+      updatedAt: now,
+      attemptCount: (Number(data.attemptCount) || 0) + 1,
+    };
+    if (data.status !== STATUS.RUNNING) {
+      assertValidTransition(data.status, STATUS.RUNNING);
+      update.status = STATUS.RUNNING;
+    }
+    assertMinimisedRecord(update);
+    tx.set(ref, update, { merge: true });
+    return { acquired: true, generation: nextGen, status: STATUS.RUNNING };
+  });
 }
 
-function verifyLeaseGenerationStub() {
-  throw new Error("R1A-Deletion: verifyLeaseGeneration() lands in Chunk 3");
+/**
+ * Extend our lease if we still own it at the expected generation. A no-op
+ * that returns { renewed: false } when superseded, so a long cascade can bail.
+ */
+async function renewLease({
+  firestore,
+  uid,
+  leaseOwner,
+  expectedGeneration,
+  now = Date.now(),
+  leaseDurationMs = LEASE_DURATION_MS,
+}) {
+  const ref = ledgerRef(firestore, uid);
+  return firestore.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return { renewed: false, reason: "missing" };
+    const data = snap.data() || {};
+    if (
+      data.leaseOwner !== leaseOwner ||
+      Number(data.leaseGeneration) !== Number(expectedGeneration)
+    ) {
+      return { renewed: false, reason: "superseded" };
+    }
+    const update = {
+      leaseExpiresAt: now + leaseDurationMs,
+      lastHeartbeatAt: now,
+      updatedAt: now,
+    };
+    assertMinimisedRecord(update);
+    tx.set(ref, update, { merge: true });
+    return { renewed: true, generation: Number(data.leaseGeneration) };
+  });
 }
 
-function transitionStatusStub() {
-  throw new Error("R1A-Deletion: transitionStatus() lands in Chunk 3");
+/** True iff the ledger doc still carries our expected leaseGeneration. */
+async function verifyLeaseGeneration({ firestore, uid, expectedGeneration }) {
+  const snap = await ledgerRef(firestore, uid).get();
+  if (!snap.exists) return false;
+  return Number((snap.data() || {}).leaseGeneration) === Number(expectedGeneration);
 }
 
-function getDeletionStatusStub() {
-  throw new Error("R1A-Deletion: getDeletionStatus() lands in Chunk 3");
+/**
+ * Move the operation to `toStatus`, validated by STATE_GRAPH, transactionally.
+ * A generation mismatch (a takeover happened) is a no-op returning
+ * { transitioned: false, reason: 'superseded' } — the taker owns the state.
+ */
+async function transitionStatus({
+  firestore,
+  uid,
+  toStatus,
+  expectedGeneration,
+  extraFields = {},
+  now = Date.now(),
+}) {
+  const ref = ledgerRef(firestore, uid);
+  return firestore.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      throw new Error(`transitionStatus: no deletion request for ${uid}`);
+    }
+    const data = snap.data() || {};
+    if (
+      expectedGeneration !== undefined &&
+      Number(data.leaseGeneration) !== Number(expectedGeneration)
+    ) {
+      return {
+        transitioned: false,
+        reason: "superseded",
+        generation: Number(data.leaseGeneration),
+      };
+    }
+    assertValidTransition(data.status, toStatus);
+    const update = { status: toStatus, updatedAt: now, ...extraFields };
+    assertMinimisedRecord(update);
+    tx.set(ref, update, { merge: true });
+    return { transitioned: true, generation: Number(data.leaseGeneration) };
+  });
+}
+
+/** Read the operational ledger doc (or null). */
+async function getDeletionStatus({ firestore, uid }) {
+  const snap = await ledgerRef(firestore, uid).get();
+  if (!snap.exists) return null;
+  return snap.data();
 }
 
 module.exports = {
@@ -179,13 +341,14 @@ module.exports = {
   COLLECTION,
   LEASE_DURATION_MS,
   LEDGER_RETENTION_MS,
+  TERMINAL_STATUSES,
   SUPPORT_CODE_ALPHABET,
   generateSupportCode,
   assertValidTransition,
   assertMinimisedRecord,
-  acquireLease: acquireLeaseStub,
-  renewLease: renewLeaseStub,
-  verifyLeaseGeneration: verifyLeaseGenerationStub,
-  transitionStatus: transitionStatusStub,
-  getDeletionStatus: getDeletionStatusStub,
+  acquireLease,
+  renewLease,
+  verifyLeaseGeneration,
+  transitionStatus,
+  getDeletionStatus,
 };

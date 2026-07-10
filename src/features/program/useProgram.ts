@@ -822,7 +822,7 @@ export function useProgram() {
         // see src/lib/shareComposer.ts for the preference store.
         const effectiveDurationMin =
           durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
-        const decision = await compose({
+        const decision = await compose(user.uid, {
           type: "workout",
           title: day.dayName,
           meta: [
