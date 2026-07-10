@@ -131,3 +131,41 @@ describe("ExerciseDemoPlayer", function () {
     }
   });
 });
+
+/* Demo1 — provenance gates animation. Borrowed free-exercise-db photo pairs
+ * ("reference-photos") are not a coherent motion sequence and must render as
+ * the honest static Start/Finish two-up EVEN with motion allowed; only
+ * "vetted-sequence" (human-reviewed coach frames) auto-plays. */
+describe("ExerciseDemoPlayer — mediaKind provenance (Demo1)", function () {
+  it("reference-photos render static Start/Finish, never the animated loop", function () {
+    reducedMotionMock.mockReturnValue(false); // motion allowed — still static
+    render(
+      <ExerciseDemoPlayer
+        frames={["/a.webp", "/b.webp"]}
+        name="Squat"
+        mediaKind="reference-photos"
+      />
+    );
+    expect(screen.getByText("Start")).toBeInTheDocument();
+    expect(screen.getByText("Finish")).toBeInTheDocument();
+    // The animated container (single role=img with hidden stacked frames)
+    // must NOT exist.
+    expect(
+      screen.queryByRole("img", { name: "Squat demonstration" })
+    ).toBeNull();
+  });
+
+  it("vetted-sequence keeps the shipped auto-playing loop", function () {
+    render(
+      <ExerciseDemoPlayer
+        frames={["/a.webp", "/b.webp"]}
+        name="Squat"
+        mediaKind="vetted-sequence"
+      />
+    );
+    expect(
+      screen.getByRole("img", { name: "Squat demonstration" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Start")).toBeNull();
+  });
+});

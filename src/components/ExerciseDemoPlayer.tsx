@@ -16,6 +16,13 @@ interface ExerciseDemoPlayerProps {
   active?: boolean;
   /** Hold per frame in ms; the crossfade overlaps the hold. */
   intervalMs?: number;
+  /** Demo1: provenance of `frames`. Only "vetted-sequence" (human-reviewed
+   *  coach keyframes) may auto-animate — the #1444/#1465 ping-pong player.
+   *  "reference-photos" (borrowed free-exercise-db pairs) are NOT a coherent
+   *  motion sequence and render as the static labelled start/finish two-up
+   *  instead ("a wrong demo is worse than no demo"). Defaults to
+   *  vetted-sequence for back-compat with direct callers. */
+  mediaKind?: "vetted-sequence" | "reference-photos";
   /** Fired when every frame 404s / fails to load (or there are none usable)
    *  so the caller can fall back to the muscle diagram rather than leave a
    *  dead empty box where the demo would be. */
@@ -56,6 +63,7 @@ export default function ExerciseDemoPlayer({
   name,
   active = true,
   intervalMs = 700,
+  mediaKind = "vetted-sequence",
   onUnavailable,
 }: ExerciseDemoPlayerProps) {
   const reduce = useReducedMotion();
@@ -64,7 +72,10 @@ export default function ExerciseDemoPlayer({
   const dirRef = useRef<1 | -1>(1);
 
   const usable = frames.filter((s) => !failed.has(s));
-  const animated = !reduce && active && usable.length >= 2;
+  // Demo1: reference photos never animate — same static two-up as reduced
+  // motion, because two borrowed photos aren't a motion sequence to begin with.
+  const staticOnly = reduce || mediaKind === "reference-photos";
+  const animated = !staticOnly && active && usable.length >= 2;
 
   useEffect(() => {
     if (!animated) return;
@@ -123,9 +134,10 @@ export default function ExerciseDemoPlayer({
     );
   }
 
-  // Reduced motion → static 2-up of the range-of-motion extremes (first +
-  // last). Preserves a Start/Finish reference for users who opt out of motion.
-  if (reduce) {
+  // Static 2-up of the range-of-motion extremes (first + last): reduced-motion
+  // users keep their Start/Finish reference, and reference-photos render this
+  // way ALWAYS (Demo1 — borrowed pairs are honest references, not motion).
+  if (staticOnly) {
     const ends = [usable[0], usable[usable.length - 1]];
     return (
       <div className="mt-4 grid grid-cols-2 gap-2">
