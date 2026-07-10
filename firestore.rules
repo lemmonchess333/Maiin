@@ -983,6 +983,15 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: weekly nutrition-consistency commitments
+    // (NUTR-CONSISTENCY-01) — owner-only. The commitment + derived
+    // progress stay private; a Circle only ever receives the opt-in
+    // constant status line via the goalSpaces events allowlist.
+    match /users/{uid}/nutritionCommitments/{weekKey} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
+
     // ========================================
     // Goal Spaces (GOALS-CORE-01, GsPb1 lock) — invite-only Circles.
     // Space + membership docs are SERVER-OWNED (callables via Admin
