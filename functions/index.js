@@ -48,6 +48,9 @@ const {
 } = require("./lib/partnerStreakPersist");
 const checkoutTrial = require("./lib/checkoutTrial");
 const subscriptionReconciliation = require("./lib/subscriptionReconciliation");
+const {
+  shouldIgnoreSubscriptionDeleted,
+} = require("./lib/stripeSubscriptionDeleted");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
@@ -2057,35 +2060,25 @@ exports.stripeWebhook = functions
 
           const userData = userDoc.data();
 
-          // PR D: out-of-order + subscription-id-match + lifetime
-          // protection. Three reasons we might want to ignore a
-          // `deleted` event:
+          // Reasons to IGNORE a `deleted` event (no downgrade):
           //   (a) lifetime entitlement — never downgraded by sub events.
-          //   (b) the stored subscription ID doesn't match — a
-          //       different subscription was deleted, ours is still
-          //       active.
-          //   (c) staleness — a newer update already happened.
-          if (userData.planKind === "lifetime") {
+          //   (b) source-ownership (audit F3) — the live entitlement is owned
+          //       by a NON-Stripe source, i.e. the user migrated to Apple and
+          //       this is the displaced Stripe sub being auto-cancelled;
+          //       downgrading would strip the freshly-purchased Apple Pro.
+          //   (c) the stored subscription ID doesn't match — a different
+          //       subscription was deleted, ours is still active.
+          //   (d) staleness — a newer update already happened.
+          // Extracted to lib/stripeSubscriptionDeleted.js so the guard set is
+          // unit-testable and the F3 fix is pinned.
+          const del = shouldIgnoreSubscriptionDeleted({
+            userData,
+            subscriptionId: subscription.id,
+            eventCreated: event.created,
+          });
+          if (del.ignore) {
             console.log(
-              `stripeWebhook: skipping subscription.deleted for ${userDoc.id} — lifetime entitlement`
-            );
-            break;
-          }
-
-          if (
-            userData.stripeSubscriptionId &&
-            userData.stripeSubscriptionId !== subscription.id
-          ) {
-            console.log(
-              `stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — sub IDs differ (stored=${userData.stripeSubscriptionId}, event=${subscription.id})`
-            );
-            break;
-          }
-
-          const lastUpdate = Number(userData.subscriptionUpdatedAt) || 0;
-          if (event.created && event.created <= lastUpdate) {
-            console.log(
-              `stripeWebhook: ignoring stale subscription.deleted for ${userDoc.id} (event=${event.created}, last=${lastUpdate})`
+              `stripeWebhook: ignoring subscription.deleted for ${userDoc.id} — ${del.reason}`
             );
             break;
           }
