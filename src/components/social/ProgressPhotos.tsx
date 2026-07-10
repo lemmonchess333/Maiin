@@ -9,7 +9,6 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { addDocGuarded } from "@/lib/firestoreWrite";
-import { Toggle } from "@/components/ui/Toggle";
 import { db, storage } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth";
 import { Camera, Lock, RotateCcw, X } from "lucide-react";
@@ -82,7 +81,6 @@ export default function ProgressPhotos() {
     {}
   );
   const [loading, setLoading] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
@@ -225,16 +223,16 @@ export default function ProgressPhotos() {
           throw new Error("Failed to compress image");
         }
 
-        // Step 2: Encrypt
+        // Step 2: Encrypt — fail-closed. The privacy policy promises
+        // photos are stored only in encrypted form, so an encryption
+        // failure must fail the upload loudly (retry available) rather
+        // than silently uploading the raw image. The zero-IV READ path
+        // below is kept so legacy unencrypted photos (pre-fix fallback
+        // uploads) still render for their owner.
         let encrypted: ArrayBuffer;
         let iv: Uint8Array;
         let key: CryptoKey;
-        const skipEncryption =
-          !isPrivate && typeof crypto?.subtle?.encrypt !== "function";
-        logger.log("[UPLOAD] 3. Starting encryption...", {
-          skipEncryption,
-          isPrivate,
-        });
+        logger.log("[UPLOAD] 3. Starting encryption...");
         try {
           key = await getOrDeriveKey(user.uid);
           const result = await encryptBlob(await blob.arrayBuffer(), key);
@@ -246,16 +244,16 @@ export default function ProgressPhotos() {
           );
         } catch (e) {
           logger.error("[UPLOAD] Encryption failed:", e);
-          // Fallback: upload unencrypted if encryption fails
-          logger.log("[UPLOAD] 4b. Falling back to unencrypted upload");
-          encrypted = await blob.arrayBuffer();
-          iv = new Uint8Array(12); // zero IV indicates unencrypted
-          key = null as unknown as CryptoKey;
+          throw new Error(
+            "Couldn't encrypt the photo on this device — upload cancelled to keep it private. Please try again."
+          );
         }
 
         // Step 3: Upload to Firebase Storage
         // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
-        const path = `progress-photos/${user.uid}/${Date.now()}${iv.some((b) => b !== 0) ? ".enc" : ".webp"}`;
+        // Always .enc — the write path is fail-closed on encryption
+        // (unencrypted .webp blobs only exist from the legacy fallback).
+        const path = `progress-photos/${user.uid}/${Date.now()}.enc`;
         logger.log("[UPLOAD] 5. Creating Firebase Storage reference:", path);
         try {
           await withTimeout(
@@ -280,7 +278,14 @@ export default function ProgressPhotos() {
               storagePath: path,
               iv: Array.from(iv),
               date: new Date().toISOString().split("T")[0],
-              visibility: isPrivate ? "private" : "public",
+              // Progress photos are owner-only by contract: both
+              // firestore.rules (users/{uid}/progressPhotos) and
+              // storage.rules (progress-photos/{uid}/) restrict reads
+              // to the owner, so "public" was never honoured anywhere.
+              // Every photo is recorded private — a real sharing
+              // system would be its own consent + rules + moderation
+              // project (BODY-VAULT-01).
+              visibility: "private",
               createdAt: Timestamp.now(),
             }
           );
@@ -331,7 +336,7 @@ export default function ProgressPhotos() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [user, loadPhotos, isPrivate, getOrDeriveKey]
+    [user, loadPhotos, getOrDeriveKey]
   );
 
   const handleUpload = useCallback(
@@ -391,15 +396,16 @@ export default function ProgressPhotos() {
         />
       </div>
 
-      <div className="flex items-center justify-between">
+      {/* BODY-VAULT-00: photos are owner-only by rules (firestore +
+          storage), so the old public/private toggle was a false
+          affordance — "public" changed a metadata field nothing reads.
+          State the real contract instead of offering a dead control. */}
+      <div className="flex items-center gap-2">
+        <Lock className="size-3.5 text-muted-foreground shrink-0" />
         <span className="text-xs text-muted-foreground">
-          Keep photos private
+          Private to your account — encrypted on this device before upload; only
+          you can view these photos.
         </span>
-        <Toggle
-          checked={isPrivate}
-          label={isPrivate ? "Make photos public" : "Make photos private"}
-          onChange={() => setIsPrivate((v) => !v)}
-        />
       </div>
 
       {loading && (
