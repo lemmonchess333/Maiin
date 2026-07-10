@@ -1473,6 +1473,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         <WorkoutSession
           day={programState.workouts[sessionDayIndex]}
           dayIndex={sessionDayIndex}
+          draftEpoch={programState.weekNumber}
           onLogExercise={logExercise}
           onCompleteDay={completeWorkoutDay}
           onClose={() => setSessionDayIndex(null)}
