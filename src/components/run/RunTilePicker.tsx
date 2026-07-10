@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Footprints,
   PersonStanding,
+  RotateCcw,
   Zap,
   Route,
   SlidersHorizontal,
@@ -24,7 +25,11 @@ import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
 import { haptic } from "@/lib/haptic";
-import { ACTIVITY_TYPES, chooserPaceFor } from "./runConfigDefaults";
+import {
+  ACTIVITY_TYPES,
+  DIRECT_LAUNCH_TYPES,
+  chooserPaceFor,
+} from "./runConfigDefaults";
 import type { ActivityType } from "@/types/run";
 import type { PaceTable } from "@/lib/runPaces";
 
@@ -35,10 +40,6 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Route,
 };
 
-/** The four one-tap direct-launch types, in display order. Everything else
- *  (intervals / treadmill / guided / race) needs config → behind More. */
-const DIRECT_TYPES: ActivityType[] = ["easy", "tempo", "long", "freerun"];
-
 interface RunTilePickerProps {
   /** For the personalised pace band on each tile; null when no benchmark. */
   paceTable: PaceTable | null;
@@ -47,6 +48,11 @@ interface RunTilePickerProps {
   onPickType: (type: ActivityType) => void;
   onMoreOptions: () => void;
   onBack: () => void;
+  /** RUN-04: the user's recurring launch type (two most recent eligible runs
+   *  shared it). Renders a compact "Repeat <type>" recognition row above the
+   *  grid — a visible choice through the SAME onPickType gesture path, never
+   *  an auto-start. Null/omitted → picker renders exactly as before. */
+  repeatType?: ActivityType | null;
 }
 
 export default function RunTilePicker({
@@ -56,10 +62,17 @@ export default function RunTilePicker({
   onPickType,
   onMoreOptions,
   onBack,
+  repeatType = null,
 }: RunTilePickerProps) {
-  const tiles = DIRECT_TYPES.map(
+  const tiles = DIRECT_LAUNCH_TYPES.map(
     (type) => ACTIVITY_TYPES.find((a) => a.type === type)!
   );
+  const repeatOpt = repeatType
+    ? ACTIVITY_TYPES.find((a) => a.type === repeatType)
+    : undefined;
+  const repeatBand = repeatOpt
+    ? chooserPaceFor(repeatOpt.type, paceTable)
+    : null;
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground px-4">
@@ -74,6 +87,37 @@ export default function RunTilePicker({
       </header>
 
       <div className="flex-1 flex flex-col justify-center gap-3 min-h-0">
+        {repeatOpt && (
+          /* RUN-04: recognition row for the user's recurring type. Same
+             onPickType gesture path as the tiles (audio primes, config via
+             buildTileConfig at the call site) — a visible choice, never an
+             auto-start. Slightly stronger tint than the tiles so it reads
+             as "your usual", not a fifth equal option. */
+          <button
+            type="button"
+            onClick={() => {
+              haptic();
+              onPickType(repeatOpt.type);
+            }}
+            className="flex items-center gap-3 rounded-2xl bg-running/12 px-4 py-3 min-h-[56px] text-left active:scale-[0.97] transition-transform"
+          >
+            <div className="size-9 shrink-0 rounded-lg flex items-center justify-center bg-running/9">
+              <RotateCcw className="size-5 text-running" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="block text-sm font-bold">
+                Repeat {repeatOpt.name.toLowerCase()}
+              </span>
+              <span className="text-micro text-muted-foreground">
+                {repeatBand ? (
+                  <span className="font-mono tabular-nums">{repeatBand}</span>
+                ) : (
+                  "Your last two runs"
+                )}
+              </span>
+            </div>
+          </button>
+        )}
         <div className="grid grid-cols-2 gap-2">
           {tiles.map((opt) => {
             const Icon = ICON_MAP[opt.icon] ?? Footprints;
