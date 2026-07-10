@@ -21,6 +21,9 @@
  * invariant the tests pin.
  */
 
+const crypto = require("crypto");
+const ledger = require("./lib/accountDeletionLedger");
+
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
   "workouts",
@@ -119,6 +122,10 @@ async function deleteAccount({
   uid,
   logger = console,
   cancelStripeSubscription,
+  // R1A Chunk 3 — per-invocation lease owner id + injectable clock (ms) so the
+  // lease/state-machine is deterministically testable.
+  leaseOwner,
+  now = Date.now(),
 }) {
   /* R1A Stress 7 kill-switch — operator-controlled emergency stop
      via `system/config.deletionExecutorEnabled`. Read at start; if
@@ -177,127 +184,230 @@ async function deleteAccount({
     throw killSwitchError;
   }
 
-  // 0. Sub1 R1A pin (b) — cancel active Stripe subscription BEFORE
-  // purging user data. The stripeSubscriptionId lives on the user
-  // doc, which step 5 deletes — so we must read + cancel here
-  // first. Apple IAP subs aren't handled server-side (Apple has no
-  // admin-cancellation API for standard IAP subs; that path is
-  // handled client-side in AccountSection.tsx via the warn-and-
-  // deep-link modal).
-  if (cancelStripeSubscription) {
-    try {
-      const snap = await firestore.collection("users").doc(uid).get();
-      if (snap.exists) {
-        const data = snap.data();
-        if (data && data.stripeSubscriptionId) {
-          await cancelStripeSubscription({
-            uid,
-            stripeSubscriptionId: data.stripeSubscriptionId,
-            logger,
-          });
+  // R1A Chunk 3 — acquire the deletion lease. This transactionally SETs
+  // accountDeletionRequests/{uid}.status='running', which engages the
+  // firestore.rules write-freeze (isDeleting) for the whole cascade — closing
+  // the concurrent-write orphan/resurrect window (money-path audit F2). The
+  // monotonic leaseGeneration guards the irreversible auth-delete against a
+  // takeover by a retry.
+  const leaseOwnerId = leaseOwner || crypto.randomUUID();
+  const lease = await ledger.acquireLease({
+    firestore,
+    uid,
+    leaseOwner: leaseOwnerId,
+    now,
+  });
+  if (!lease.acquired) {
+    if (lease.reason === "leased") {
+      // Another executor holds a live lease — a deletion is already running.
+      logger.warn("deleteAccount.lease_contended", { uid });
+      const contended = new Error("deletion-in-progress");
+      contended.code = "deletion-in-progress";
+      throw contended;
+    }
+    logger.info("deleteAccount.lease_not_acquired", {
+      uid,
+      reason: lease.reason,
+    });
+    return;
+  }
+  const generation = lease.generation;
+  let stage = "cascade";
+
+  try {
+    // 0. Sub1 R1A pin (b) — cancel active Stripe subscription BEFORE
+    // purging user data. The stripeSubscriptionId lives on the user
+    // doc, which step 5 deletes — so we must read + cancel here
+    // first. Apple IAP subs aren't handled server-side (Apple has no
+    // admin-cancellation API for standard IAP subs; that path is
+    // handled client-side in AccountSection.tsx via the warn-and-
+    // deep-link modal).
+    if (cancelStripeSubscription) {
+      try {
+        const snap = await firestore.collection("users").doc(uid).get();
+        if (snap.exists) {
+          const data = snap.data();
+          if (data && data.stripeSubscriptionId) {
+            await cancelStripeSubscription({
+              uid,
+              stripeSubscriptionId: data.stripeSubscriptionId,
+              logger,
+            });
+          }
         }
+      } catch (err) {
+        // Locked semantic: provider cancellation MUST NOT block
+        // deletion. Surface the failure to Cloud Logging so an
+        // operator can manually cancel via the Stripe dashboard,
+        // but proceed with the data delete regardless.
+        logger.warn("deleteAccount.subscription_cancel_failed", {
+          uid,
+          error: err && err.message,
+        });
       }
-    } catch (err) {
-      // Locked semantic: provider cancellation MUST NOT block
-      // deletion. Surface the failure to Cloud Logging so an
-      // operator can manually cancel via the Stripe dashboard,
-      // but proceed with the data delete regardless.
-      logger.warn("deleteAccount.subscription_cancel_failed", {
+    }
+
+    // 1. User's own subcollections
+    stage = "user_subcollections";
+    for (const sub of USER_SUBCOLLECTIONS) {
+      const snap = await firestore
+        .collection("users")
+        .doc(uid)
+        .collection(sub)
+        .get();
+      if (!snap.empty) {
+        await deleteRefsInBatches(
+          firestore,
+          snap.docs.map((d) => d.ref)
+        );
+      }
+    }
+
+    // 2. Top-level collections keyed by user id
+    for (const { parent, sub } of TOP_LEVEL_USER_KEYED_COLLECTIONS) {
+      const snap = await firestore
+        .collection(parent)
+        .doc(uid)
+        .collection(sub)
+        .get();
+      if (!snap.empty) {
+        await deleteRefsInBatches(
+          firestore,
+          snap.docs.map((d) => d.ref)
+        );
+      }
+    }
+
+    // 3. Activities the user posted. Deliberately NOT touching
+    // comments / kudos the user gave on others' activities — those
+    // are part of the other users' feeds and mutating them
+    // retroactively would surprise people.
+    const activitiesSnap = await firestore
+      .collection("activities")
+      .where("authorId", "==", uid)
+      .get();
+    if (!activitiesSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        activitiesSnap.docs.map((d) => d.ref)
+      );
+    }
+
+    // 3b. Partner-streak bonds the user is a member of (SOCIAL S3).
+    // Bonds are 1:1; when one member deletes their account the bond is
+    // deleted (the deletion-safe behaviour — the surviving partner's
+    // PartnerStreak surface reverts to its invite state). Query by the
+    // `members` array (array-contains), same query-delete shape as (3),
+    // and BEFORE the auth user (7) so a throw here leaves credentials
+    // intact for a retry.
+    const bondsSnap = await firestore
+      .collection("partnerBonds")
+      .where("members", "array-contains", uid)
+      .get();
+    if (!bondsSnap.empty) {
+      await deleteRefsInBatches(
+        firestore,
+        bondsSnap.docs.map((d) => d.ref)
+      );
+    }
+
+    // 4. Public profile projection — `.catch(() => {})` because a
+    // missing doc (e.g. user never finished onboarding) shouldn't
+    // block the rest of the flow.
+    await firestore
+      .doc(`users/${uid}/public/profile`)
+      .delete()
+      .catch(() => {});
+
+    // 5. The user document itself
+    stage = "user_document";
+    await firestore.collection("users").doc(uid).delete();
+
+    // 6. Storage files. Per-prefix try/catch — a missing folder or
+    // a transient Storage outage shouldn't block step 7.
+    for (const prefix of storagePrefixesFor(uid)) {
+      try {
+        await storageBucket.deleteFiles({ prefix });
+      } catch (e) {
+        logger.warn(
+          `deleteAccount: storage cleanup for ${prefix} failed`,
+          e.message
+        );
+      }
+    }
+
+    // Split-brain guard: if a retry took over our lease (generation bumped),
+    // abort BEFORE the irreversible auth delete — the taker owns it now.
+    stage = "verify_lease";
+    const stillOwner = await ledger.verifyLeaseGeneration({
+      firestore,
+      uid,
+      expectedGeneration: generation,
+    });
+    if (!stillOwner) {
+      const superseded = new Error("deletion-superseded");
+      superseded.code = "deletion-superseded";
+      throw superseded;
+    }
+
+    // 7. FINAL: delete the Auth user.
+    stage = "auth_deletion";
+    await auth.deleteUser(uid);
+
+    // Success — mark completed + set the 30-day TTL cleanup. Runs AFTER the
+    // auth delete (Admin SDK, unaffected by the user being gone); its own
+    // failure does not undo a successful deletion, so it is swallowed.
+    try {
+      await ledger.transitionStatus({
+        firestore,
         uid,
-        error: err && err.message,
+        toStatus: ledger.STATUS.COMPLETED,
+        expectedGeneration: generation,
+        extraFields: {
+          completedAt: now,
+          cleanupAfter: now + ledger.LEDGER_RETENTION_MS,
+        },
+        now,
+      });
+    } catch (completeErr) {
+      logger.error("deleteAccount.completed_write_failed", {
+        uid,
+        error: completeErr && completeErr.message,
       });
     }
-  }
-
-  // 1. User's own subcollections
-  for (const sub of USER_SUBCOLLECTIONS) {
-    const snap = await firestore
-      .collection("users")
-      .doc(uid)
-      .collection(sub)
-      .get();
-    if (!snap.empty) {
-      await deleteRefsInBatches(
-        firestore,
-        snap.docs.map((d) => d.ref)
-      );
+  } catch (err) {
+    // A takeover happened mid-cascade — the taker owns the ledger; do not
+    // overwrite its state.
+    if (err && err.code === "deletion-superseded") {
+      logger.warn("deleteAccount.superseded", { uid, generation });
+      throw err;
     }
-  }
-
-  // 2. Top-level collections keyed by user id
-  for (const { parent, sub } of TOP_LEVEL_USER_KEYED_COLLECTIONS) {
-    const snap = await firestore
-      .collection(parent)
-      .doc(uid)
-      .collection(sub)
-      .get();
-    if (!snap.empty) {
-      await deleteRefsInBatches(
-        firestore,
-        snap.docs.map((d) => d.ref)
-      );
-    }
-  }
-
-  // 3. Activities the user posted. Deliberately NOT touching
-  // comments / kudos the user gave on others' activities — those
-  // are part of the other users' feeds and mutating them
-  // retroactively would surprise people.
-  const activitiesSnap = await firestore
-    .collection("activities")
-    .where("authorId", "==", uid)
-    .get();
-  if (!activitiesSnap.empty) {
-    await deleteRefsInBatches(
-      firestore,
-      activitiesSnap.docs.map((d) => d.ref)
-    );
-  }
-
-  // 3b. Partner-streak bonds the user is a member of (SOCIAL S3).
-  // Bonds are 1:1; when one member deletes their account the bond is
-  // deleted (the deletion-safe behaviour — the surviving partner's
-  // PartnerStreak surface reverts to its invite state). Query by the
-  // `members` array (array-contains), same query-delete shape as (3),
-  // and BEFORE the auth user (7) so a throw here leaves credentials
-  // intact for a retry.
-  const bondsSnap = await firestore
-    .collection("partnerBonds")
-    .where("members", "array-contains", uid)
-    .get();
-  if (!bondsSnap.empty) {
-    await deleteRefsInBatches(
-      firestore,
-      bondsSnap.docs.map((d) => d.ref)
-    );
-  }
-
-  // 4. Public profile projection — `.catch(() => {})` because a
-  // missing doc (e.g. user never finished onboarding) shouldn't
-  // block the rest of the flow.
-  await firestore
-    .doc(`users/${uid}/public/profile`)
-    .delete()
-    .catch(() => {});
-
-  // 5. The user document itself
-  await firestore.collection("users").doc(uid).delete();
-
-  // 6. Storage files. Per-prefix try/catch — a missing folder or
-  // a transient Storage outage shouldn't block step 7.
-  for (const prefix of storagePrefixesFor(uid)) {
+    // Failure BEFORE the auth delete: the user still has valid credentials and
+    // can retry (the pre-existing "data first, auth last" rail). Flip to
+    // failed_cleanup so the write-freeze STAYS engaged (a frozen status) and a
+    // retry / operator takes over, rather than the user writing into a
+    // half-deleted account. A superseded transition is a safe no-op.
     try {
-      await storageBucket.deleteFiles({ prefix });
-    } catch (e) {
-      logger.warn(
-        `deleteAccount: storage cleanup for ${prefix} failed`,
-        e.message
-      );
+      await ledger.transitionStatus({
+        firestore,
+        uid,
+        toStatus: ledger.STATUS.FAILED_CLEANUP,
+        expectedGeneration: generation,
+        extraFields: {
+          failedStage: stage,
+          lastErrorCode: (err && err.code) || "unknown",
+          lastErrorMessage: String((err && err.message) || "").slice(0, 500),
+        },
+        now,
+      });
+    } catch (transitionErr) {
+      logger.error("deleteAccount.failed_cleanup_write_failed", {
+        uid,
+        error: transitionErr && transitionErr.message,
+      });
     }
+    throw err;
   }
-
-  // 7. FINAL: delete the Auth user.
-  await auth.deleteUser(uid);
 }
 
 module.exports = {

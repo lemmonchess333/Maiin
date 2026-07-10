@@ -339,6 +339,17 @@ exports.deleteMyAccount = functions
           { reason: "executor-disabled" }
         );
       }
+      // R1A Chunk 3 — another executor holds a live deletion lease (e.g. a
+      // double-tap). Surface a typed, friendly precondition instead of a
+      // generic internal error.
+      if (err && err.code === "deletion-in-progress") {
+        functions.logger.info("deleteMyAccount.already_in_progress", { uid });
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Your account deletion is already in progress.",
+          { reason: "deletion-in-progress" }
+        );
+      }
       functions.logger.error("deleteMyAccount.error", {
         uid,
         message: err && err.message,
