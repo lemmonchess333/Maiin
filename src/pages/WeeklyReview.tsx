@@ -20,6 +20,7 @@ import { formatWeekRange } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
+import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
 
 function DirectionIcon({ direction }: { direction: "up" | "down" | "stable" }) {
   if (direction === "down")
@@ -362,6 +363,14 @@ export default function WeeklyReview() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* CHECKIN-01 — Momentum Check-in. Renders only when a review
+            exists (never on the empty first-week state) and disappears
+            for the week once answered or dismissed. The review above
+            stays complete without it. */}
+        {!loading && review && user && (
+          <MomentumCheckinCard uid={user.uid} weekKey={weekKey} />
         )}
       </div>
     </div>
