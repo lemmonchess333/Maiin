@@ -239,6 +239,12 @@ interface RefreshRunScheduleOverrides {
   /** Confirmed weekly run target from the editor. Same staleness
    *  concern as `weekSchedule`. */
   weeklyRunDaysTarget?: number;
+  /** Confirmed Pgm6 tuning knobs from the editor. Same staleness
+   *  concern: RunPlanSettings saves runVolume/runDifficulty via
+   *  updateProfile immediately before refreshing, and
+   *  `runTuningFromProfile(profile)` here would read the closure's
+   *  pre-save values. */
+  tuning?: RunTuning;
 }
 
 export function useProgram() {
@@ -1518,7 +1524,7 @@ export function useProgram() {
         // passed) and we're re-rendering race_prep, drop phase
         // and recoveryEndDate.
         ({ runDays, runPlan } = regenerateRacePlan({
-          tuning: runTuningFromProfile(profile),
+          tuning: overrides?.tuning ?? runTuningFromProfile(profile),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,

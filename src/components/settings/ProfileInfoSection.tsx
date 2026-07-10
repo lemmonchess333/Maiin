@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { User } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
 import { haptic } from "@/lib/haptic";
@@ -48,6 +49,10 @@ export default function ProfileInfoSection({
   updateProfile,
   inline = false,
 }: ProfileInfoSectionProps) {
+  // D16 — the personal "why". Local draft persisted on blur (same pattern
+  // as displayName); clearing it writes an empty string (treated as "no
+  // why" everywhere it resurfaces).
+  const [why, setWhy] = useState(profile.trainingWhy ?? "");
   return (
     <AccordionSection
       inline={inline}
@@ -146,6 +151,32 @@ export default function ProfileInfoSection({
           }}
           options={AGE_RANGE_OPTIONS}
         />
+      </div>
+
+      <div>
+        <label htmlFor="profile-why" className="text-sm text-muted-foreground">
+          Your why
+        </label>
+        <input
+          id="profile-why"
+          type="text"
+          value={why}
+          maxLength={120}
+          onChange={(e) => setWhy(e.target.value)}
+          onBlur={async () => {
+            const prev = profile.trainingWhy ?? "";
+            const next = why.trim().slice(0, 120);
+            if (next === prev) return;
+            const result = await updateProfile({ trainingWhy: next });
+            if (!result.ok) setWhy(prev);
+            else setWhy(next);
+          }}
+          placeholder="What's driving you?"
+          className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+        />
+        <p className="text-xs text-muted-foreground/60 mt-1">
+          We resurface this in your weekly review.
+        </p>
       </div>
     </AccordionSection>
   );

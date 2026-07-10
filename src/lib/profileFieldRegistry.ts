@@ -122,6 +122,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "targetWaterGlasses", sanitized: true },
   { field: "tdeeBase", sanitized: true },
   { field: "trainingPhase", sanitized: false },
+  // D16 personal "why" — free-text motivation (onboarding + Settings).
+  { field: "trainingWhy", sanitized: true },
   { field: "trialExpiresAt", sanitized: false, serverGuarded: true },
   { field: "trialExpiryPromptShown", sanitized: false },
   { field: "uid", sanitized: false, serverGuarded: true },
