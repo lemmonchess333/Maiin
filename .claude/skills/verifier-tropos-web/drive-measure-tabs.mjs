@@ -10,9 +10,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, "out-measure");
 mkdirSync(OUT, { recursive: true });
-const BASE = "http://localhost:4173/Maiin/";
+import { BASE } from "./env.mjs";
 const EMAIL = "e2e-test@tropos.test";
-const PW = "test-password-123";
+import { PW } from "./env.mjs";
 const CHROMIUM = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const log = (...a) => console.log("[measure]", ...a);
 

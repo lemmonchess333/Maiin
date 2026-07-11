@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = join(__dirname, "out-stress");
 const SCREENS = join(OUT, "screenshots");
 mkdirSync(SCREENS, { recursive: true });
-const BASE = "http://localhost:4173/Maiin/";
+import { BASE, PW } from "./env.mjs";
 const CHROMIUM_PATH = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const log = (...a) => console.log("[stress]", ...a);
 
@@ -61,7 +61,7 @@ async function newCtx(browser, opts) {
 async function login(page) {
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await page.fill("#login-email", "e2e-test@tropos.test");
-  await page.fill("#login-password", "test-password-123");
+  await page.fill("#login-password", PW);
   await page.click('button[type="submit"]');
   await page
     .locator("nav")

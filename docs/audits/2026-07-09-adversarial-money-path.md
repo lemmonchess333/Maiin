@@ -39,7 +39,7 @@ Notes). Ranked by blast radius.
 
 ## Executive Summary
 
-**Overall:** the *core* entitlement invariant — "a client cannot self-grant Pro" — genuinely
+**Overall:** the _core_ entitlement invariant — "a client cannot self-grant Pro" — genuinely
 holds, and the AI-scan cost gate is server-authoritative and atomic. The real exposure is
 not self-grant; it is **(a) trial re-grant turning free signups into a Vertex-compute
 faucet, (b) an account-deletion write-freeze that is designed but never engaged, and (c) a
@@ -68,7 +68,7 @@ must-get-right gate.
 - **Area:** Trial grant / AI cost gate
 - **Evidence:** `completeOnboarding` mints a fresh 7-day trial purely on
   `!existing.exists` for `users/{uid}` (`functions/index.js:676-692`) with **no
-  `hasUsedTrial` consultation** — that guard exists only on the *Stripe checkout* path
+  `hasUsedTrial` consultation** — that guard exists only on the _Stripe checkout_ path
   (`__tests__/checkoutTrial.test.js`), not the onboarding trial. A future
   `trialExpiresAt` alone makes `computeEffectiveTier` return `"pro"`
   (`functions/helpers.js:48-50`), which flips `aiScanQuota` `image_ai` from `0` to `100`/day
@@ -129,13 +129,13 @@ must-get-right gate.
   staleness guards both pass — so it writes the user back to `free`, overriding the just-purchased
   Apple entitlement. The still-future `subscriptionExpiresAt` does not save them
   (`computeEffectiveTier`'s expiry fallback only runs under the `"pro"` branch).
-- **Why it matters:** a user who just *paid* via Apple is silently downgraded to free by the
+- **Why it matters:** a user who just _paid_ via Apple is silently downgraded to free by the
   cleanup of their old Stripe sub — a direct paid→lost-Pro on a real migration path.
 - **References:** `functions/index.js:1986-2074`; `functions/applePurchase.js:205-216`;
   `functions/lib/stripeAutoCancel.js:67`; `functions/helpers.js:31-47`.
 - **Recommendation:** in the `customer.subscription.deleted` handler, refuse to downgrade
   when the entitlement no longer belongs to Stripe: `if (userData.subscriptionSource &&
-  userData.subscriptionSource !== 'stripe') { log + break; }` before the free-write (mirror
+userData.subscriptionSource !== 'stripe') { log + break; }` before the free-write (mirror
   the source-aware `resolveSubscriptionUpdate` contract). Also clear `stripeSubscriptionId`
   on the Apple write so the id-match guard can't fire.
 
@@ -168,10 +168,10 @@ must-get-right gate.
   so a stored `"false"` (or `null`/`0`/read error) leaves `killSwitchActive=false`, emits at
   most a `kill_switch_malformed` warning, and deletion proceeds.
 - **Why it matters:** during an incident an operator who types `false` believes deletions are
-  paused; they are not. **Note:** CLAUDE.md documents this fail-open as *intentional*
-  (lock-out defence — a malformed value must not be able to *disable* the executor
+  paused; they are not. **Note:** CLAUDE.md documents this fail-open as _intentional_
+  (lock-out defence — a malformed value must not be able to _disable_ the executor
   permanently), so this is a calibrated tradeoff, not an oversight. The residual issue is
-  only the silent defeat of the operator's *pause* intent.
+  only the silent defeat of the operator's _pause_ intent.
 - **References:** `functions/accountDeletion.js:156-164`.
 - **Recommendation:** keep fail-open for missing/unreadable values, but treat a value that
   clearly reads as "disable" (case-insensitive `"false"`/`"0"`/`"off"`) as **active** for the
@@ -200,7 +200,7 @@ must-get-right gate.
 - **Area:** Apple restore / purchaser binding
 - **Evidence:** `restoreApplePurchases` (`functions/appleIAP.js:511-638`) authenticates the
   **caller** but never proves the caller **owns** the submitted `originalTransactionId` —
-  `fetchSubscriptionStatus` (`:203-220`) signs the query with *our own* app credentials, so
+  `fetchSubscriptionStatus` (`:203-220`) signs the query with _our own_ app credentials, so
   Apple returns a valid `signedTransactionInfo` for any of our app's transactions regardless
   of who asks. The `appleSubscriptions/{originalTransactionId}` uniqueness guard only fires
   when the id is **already** bound (`functions/applePurchase.js:144-156`); the **first**
@@ -212,8 +212,8 @@ must-get-right gate.
 - **Why it matters:** this is exactly the hand-rolled path's "first-caller-wins" purchaser
   binding gap the RevenueCat migration is meant to kill (the `appAccountToken` concern,
   ADR-0006). It requires knowing the id, so it is Medium, not High — but the binding provides
-  **no ownership proof**. *(Correction: an earlier draft of this audit speculated PR #822's
-  uniqueness binding mitigated this — it does not; the binding is first-claim-wins.)*
+  **no ownership proof**. _(Correction: an earlier draft of this audit speculated PR #822's
+  uniqueness binding mitigated this — it does not; the binding is first-claim-wins.)_
 - **References:** `functions/appleIAP.js:511-638,203-220`;
   `functions/applePurchase.js:144-156,225-234`. The code's own comment
   (`appleIAP.js:545-548`) names this as the "Chunk 4" fix.
@@ -247,7 +247,7 @@ must-get-right gate.
 - **Area:** Cross-account privacy on a shared device
 - **Evidence:** the share-composer "Always do this" preference is stored under the
   **un-scoped** `localStorage` key `tropos.share.always.<type>` (`src/lib/shareComposer.ts:83-121`)
-  — unlike the offline/share **queues**, which *are* uid-tagged (PR #820). `compose()`
+  — unlike the offline/share **queues**, which _are_ uid-tagged (PR #820). `compose()`
   short-circuits on the stored pref before any UI (`:125-138`), and the workout-save caller
   posts under the **current** session (`useProgram.ts:830`). So: user A sets "Always share
   publicly", signs out; user B signs in on the same device and completes a workout → it
@@ -264,32 +264,32 @@ must-get-right gate.
   fields: `subscriptionFieldsUnchanged()` on update (`firestore.rules:64-70`) and
   `subscriptionTier=='free'` + `billingFieldsUnsetOnCreate()` on create (`:136-151`). The
   exact attack (set a future `trialExpiresAt` → server grants Pro) was **anticipated and
-  documented** at `firestore.rules:127-135`. *(Independently re-verified.)*
+  documented** at `firestore.rules:127-135`. _(Independently re-verified.)_
 - **AI-scan cost gate is server-authoritative and atomic.** `checkDailyAiQuota` runs in a
   `runTransaction`, derives tier server-side via `computeEffectiveTier`, hard-blocks
   `image_ai` at limit `0` with no write, and **fails closed** on any error
   (`functions/lib/aiScanQuota.js:104-163`). Client `DAILY_LIMITS`/`isPro` tampering and
-  offline-queue replay cannot bypass it. *(Independently re-verified.)*
+  offline-queue replay cannot bypass it. _(Independently re-verified.)_
 - **Webhook forgery / crafted-event tier flip** — refuted: Stripe signature + Apple JWS
   verification gate the handlers; a client cannot mint a valid event.
-- **Apple webhook replay / non-transactional dedup race** — refuted at *correctness*: the
+- **Apple webhook replay / non-transactional dedup race** — refuted at _correctness_: the
   dedup is explicitly "a perf/cost optimisation, not a correctness boundary"
   (`functions/webhookIdempotency.js:19-27`), and the per-event handlers are idempotent
   read-modify-write-by-uid, so a duplicate cannot flip a tier incorrectly.
-- **Claiming an *already-bound* subscription** — refuted: the
+- **Claiming an _already-bound_ subscription** — refuted: the
   `appleSubscriptions/{originalTransactionId}` uniqueness guard (`applePurchase.js:144-156`)
   refuses a cross-uid write once a transaction is bound. (But claiming a **not-yet-bound**
   transaction has no ownership proof — that is F7, confirmed.)
-- **The uid-scoped offline + share *queues* hold against cross-account leak** — both tag every
+- **The uid-scoped offline + share _queues_ hold against cross-account leak** — both tag every
   item with the originating uid and skip non-matching items on replay
   (`src/lib/offlineQueue.ts:117-120`, `src/lib/shareComposer.ts:236-238`), dropping legacy
-  un-tagged items on read (PR #820). The gap is only the always-share *preference* key (F9),
+  un-tagged items on read (PR #820). The gap is only the always-share _preference_ key (F9),
   not the queues.
 - **`Date.parse` locale-sensitivity as a Pro-loss vector** — refuted: `subscriptionExpiresAt`
   is only ever written server-side as ISO-8601-UTC, which `Date.parse` handles reliably.
 - **Billing-tombstone HMAC is forge-resistant** — doc IDs are HMAC-SHA256 over a server-side
   secret (`functions/lib/billingIdentityHash.js:88-92`), so a full read leak can't forge one
-  (though it is currently *inert* because tombstones are never written — see F2/remediation).
+  (though it is currently _inert_ because tombstones are never written — see F2/remediation).
 - **2026-05-25 Finding 1 (staging origin in prod checkout allowlist) — REMEDIATED.**
   `getDefaultStripeReturnUrlOrigins` now branches by deploy surface and defaults **prod-only**
   for any real production deploy (`functions/helpers.js:121-160`), fail-secure on a
@@ -299,10 +299,10 @@ must-get-right gate.
 
 The RevenueCat webhook + sync-on-purchase callable are **unbuilt** (ADR-0006 slice-3;
 `src/lib/revenuecat.ts` is client-side identity scaffold only, a guarded no-op on web).
-The adversarial-verify pass confirmed each item below is a *design requirement*, **not a live
+The adversarial-verify pass confirmed each item below is a _design requirement_, **not a live
 vulnerability** — there is no reachable code path today (repo-wide grep: no RC webhook, no
 sync-on-purchase callable, no `api.revenuecat.com` call, no server-side RC secret), and the
-invariants the future code will *inherit* are sound (the 7 billing fields stay rules-locked;
+invariants the future code will _inherit_ are sound (the 7 billing fields stay rules-locked;
 the only RC key in the tree is the public `appl_` SDK key, which is correct to ship client-side).
 Item 5 (transfer behaviour) is already **locked** in ADR-0006 decision #3, so it is not an
 "unconsidered default". Each must still hold so the swap doesn't repeat the hand-rolled Apple
@@ -323,7 +323,7 @@ path's "first-caller-wins" defect (F7):
 7. **[medium]** Any new RC-introduced entitlement field must be added to the `firestore.rules`
    deny-lists, or it reopens the client self-grant hole.
 8. **[medium]** Both new functions need mandatory `maxInstances`; the callable keeps App Check
-   + auth, the webhook must **not** enforce App Check.
+   - auth, the webhook must **not** enforce App Check.
 9. **[low]** Webhook secret rotation needs an overlap window (two accepted secrets) or rotation
    drops live events.
 
@@ -375,3 +375,31 @@ in this document carries a verdict. Two outcomes worth calling out:
 - **The 9 RevenueCat-design items verified as design requirements, not live defects.** Every one
   targets unbuilt slice-3 code (no reachable path today), and the invariants the future code
   inherits are sound — so they belong in the must-get-right gate above, not the findings list.
+
+---
+
+## STATUS MATRIX — reconciled against main, 2026-07-11 (repo-audit batch 5)
+
+Append-only addendum; the findings above are the historical record and are
+not edited. "Deploy verified" distinguishes CI-green from the operator's
+Console source spot-check (the bundle-dedup gotcha in CLAUDE.md — CI green
+is necessary, not sufficient). All fix PRs below changed `.js` sources, so
+dedup should not have bitten, but the Console check remains the conclusive
+step and stays with the operator.
+
+| #   | Finding                                            | Severity        | Status 2026-07-11                 | Fix location                                                                                                                                                                              | Tests                                                       | Deploy verified                         | Residual risk                                                              |
+| --- | -------------------------------------------------- | --------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------- |
+| F1  | Trial re-grant Vertex faucet                       | High            | **REMEDIATED**                    | Durable trial ledger — PR #1526 (`ad8a140e`), `functions/index.js` completeOnboarding path                                                                                                | functions suite                                             | CI green; Console spot-check = operator | Low — ledger is per-identity, device-farming still bounded by free AI gate |
+| F2  | Deletion write-freeze never engages                | High            | **REMEDIATED**                    | R1A chunks 1–3 — `ac9e6539` (runtime wiring + writer locks + rules freeze), PR #1529 (`4ade999f`, Chunk 3)                                                                                | firestore.rules suite (freeze assertions) + functions suite | CI green; Console spot-check = operator | Low                                                                        |
+| F3  | Stripe→Apple migration strips Pro                  | High            | **REMEDIATED**                    | Source-ownership guard on `subscription.deleted` — PR #1527 (`ea072cc1`) + revocation-aware deleteMyAccount follow-up (`abdeae1e`)                                                        | functions suite                                             | CI green; Console spot-check = operator | Low                                                                        |
+| F4  | Dropped Apple `DID_RENEW` → silent lapse           | Low (plausible) | **OPEN — deliberately deferred**  | None. P2 in the audit's own plan; superseded-in-design by RevenueCat slice-3 (ADR-0006), whose webhook + reconciliation replaces this hand-rolled path                                    | —                                                           | —                                       | Low; bounded by expiresAt grace handling                                   |
+| F5  | Kill-switch fail-open on `"false"` string          | Low             | **REMEDIATED**                    | Stringified kill-switch honoured — PR #1534 (`8707a6d2`)                                                                                                                                  | functions suite                                             | CI green; Console spot-check = operator | Negligible                                                                 |
+| F6  | `geminiEnabled` fail-open (prior audit carry-over) | Low             | **REMEDIATED**                    | Fails CLOSED — PR #1531 (`67798868`)                                                                                                                                                      | functions suite                                             | CI green; Console spot-check = operator | Negligible                                                                 |
+| F7  | First-claim-wins Apple restore theft               | Medium          | **OPEN — accepted until slice-3** | None. The fix of record is RevenueCat slice-3's `appAccountToken` purchaser binding (ADR-0006 must-get-right gate); interim exposure requires an out-of-band `originalTransactionId` leak | —                                                           | —                                       | Medium-low: id not enumerable; single-user pre-launch window               |
+| F8  | Stale `appleSubscriptions` binding on deletion     | Low             | **OPEN**                          | None yet — verified 2026-07-11: `functions/accountDeletion.js` contains no `appleSubscriptions` sweep. Audit recommends bundling with the F2 executor; still correct                      | —                                                           | —                                       | Low: blocks re-purchase edge for recycled Apple IDs                        |
+| F9  | Un-scoped always-share preference                  | Low             | **REMEDIATED**                    | uid-scoped key — PR #1533 (`0ecf52b0`)                                                                                                                                                    | unit suite                                                  | web deploy (Hosting) green              | Negligible                                                                 |
+
+**Net open items: F4 (deferred to RevenueCat slice-3), F7 (accepted until
+slice-3 — its named fix), F8 (small executor sweep, still to do).** The
+RevenueCat slice-3 must-get-right gate (9 items) remains the controlling
+document for F4/F7 closure and is unchanged.
