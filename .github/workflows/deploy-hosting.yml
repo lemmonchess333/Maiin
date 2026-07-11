@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: "npm"
       - run: npm ci
       # Same secret guard as the Pages deploy — fail loudly rather than ship a
