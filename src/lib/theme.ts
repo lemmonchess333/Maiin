@@ -57,6 +57,13 @@ export const THEME = {
   textSecondary: "rgba(255,255,255,0.60)",
   textMuted: "rgba(255,255,255,0.22)",
 
+  /* Photo scrim — legibility gradient stops for text overlaid on
+     editorial photography (Social uplift v3). Theme-INDEPENDENT by
+     design: text on a photo reads white-over-dark-scrim in both
+     light and dark mode (the photo, not the theme, is the surface). */
+  scrim: "rgba(0,0,0,0.55)",
+  scrimSoft: "rgba(0,0,0,0.15)",
+
   // Light mode text helpers
   text: {
     muted: "#8E8E93", // iOS system grey

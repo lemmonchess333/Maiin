@@ -27,6 +27,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { challengeEditorialImage } from "@/lib/editorialImages";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 
@@ -195,6 +196,7 @@ export function ChallengeCard({
      unmapped icon name degrades gracefully instead of leaking the
      string. */
   const HeroIcon = CHALLENGE_ICON_MAP[challenge.icon] ?? Trophy;
+  const heroPhoto = challengeEditorialImage(challenge.metric);
 
   return (
     <motion.div
@@ -202,31 +204,73 @@ export function ChallengeCard({
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl bg-card border border-border/50 overflow-hidden"
     >
-      {/* Hero band (Social uplift v2) — same visual grammar as the
-          ActivityCard hero panels: accent-tinted gradient, the
-          challenge's own mark rendered oversized + ghosted as art,
-          name overlaid on the panel. Static everything (WKWebView
-          rule); accent is the sport-coded metric colour so a km
-          challenge reads coral and a volume challenge purple at a
-          glance. */}
+      {/* Hero band (Social uplift v2/v3) — same visual grammar as the
+          ActivityCard hero panels; static everything (WKWebView rule);
+          accent is the sport-coded metric colour so a km challenge
+          reads coral and a volume challenge purple at a glance.
+          v3: when a licensed editorial photo exists for the metric
+          (src/assets/editorial — Runna/Strava-style photography on
+          editorial surfaces), it becomes the band: photo + sport tint
+          wash + bottom scrim + white text. Without assets the v2
+          ghosted-icon band renders — the designed fallback, not a
+          degraded state. */}
       <div
-        className="relative h-24 overflow-hidden border-b border-border/50"
-        style={{
-          background: `linear-gradient(150deg, ${accent}24 0%, ${accent}0A 55%, ${accent}12 100%)`,
-        }}
+        className={`relative overflow-hidden border-b border-border/50 ${heroPhoto ? "h-28" : "h-24"}`}
+        style={
+          heroPhoto
+            ? undefined
+            : {
+                background: `linear-gradient(150deg, ${accent}24 0%, ${accent}0A 55%, ${accent}12 100%)`,
+              }
+        }
       >
-        <HeroIcon
-          size={104}
-          className="absolute -right-2 -bottom-5"
-          style={{ color: accent, opacity: 0.16, transform: "rotate(-10deg)" }}
-          aria-hidden
-        />
+        {heroPhoto ? (
+          <>
+            <img
+              src={heroPhoto}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 size-full object-cover"
+            />
+            {/* Sport duotone wash — ties mismatched stock into the
+                closed palette so the photo reads owned, not pasted. */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(150deg, ${accent}59 0%, ${accent}1F 60%, transparent 100%)`,
+              }}
+            />
+            {/* Text scrim — theme-independent (the photo is the
+                surface, so overlay text is white in both themes). */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(to top, ${THEME.scrim} 0%, ${THEME.scrimSoft} 45%, transparent 70%)`,
+              }}
+            />
+          </>
+        ) : (
+          <HeroIcon
+            size={104}
+            className="absolute -right-2 -bottom-5"
+            style={{
+              color: accent,
+              opacity: 0.16,
+              transform: "rotate(-10deg)",
+            }}
+            aria-hidden
+          />
+        )}
         <div className="absolute bottom-3 left-4 right-20 min-w-0">
-          <SectionLabel className="flex items-center gap-1">
+          <SectionLabel
+            className={`flex items-center gap-1 ${heroPhoto ? "text-white/85" : ""}`}
+          >
             <Clock className="size-3" aria-hidden />
             {timeLeft}
           </SectionLabel>
-          <p className="text-lg font-bold text-foreground leading-tight truncate mt-0.5">
+          <p
+            className={`text-lg font-bold leading-tight truncate mt-0.5 ${heroPhoto ? "text-white" : "text-foreground"}`}
+          >
             {challenge.name}
           </p>
         </div>
