@@ -69,19 +69,79 @@ export interface SaveRoutineInput {
   exercises: SavedRoutineExercise[];
 }
 
+/**
+ * Structure-only external saves (ROUTINE-EXCHANGE privacy contract).
+ *
+ * The locked share contract is "routine blueprint with personal working
+ * weights hidden by default": when a member saves ANOTHER member's workout,
+ * the copy they receive is the structure (order, sets, reps) — never the
+ * source member's working loads. The recipient's own history sets their
+ * weights from there, exactly like the curated blueprint library
+ * (`blueprintToRoutineInput` blanks `targetWeightKg`). Saving your OWN
+ * workout keeps your own loads — they're yours.
+ *
+ * `isExternalRoutineSource` is the single ownership predicate; redaction is
+ * applied BOTH at write time (`saveRoutine`) and at read time
+ * (`listSavedRoutines` / `getSavedRoutine`) so routines saved before this
+ * shipped are served structure-only too — a read adapter, not a risky
+ * background migration.
+ */
+export function isExternalRoutineSource(
+  uid: string,
+  sourceAuthorId: string | undefined
+): boolean {
+  return !!sourceAuthorId && sourceAuthorId !== uid;
+}
+
+/** Strip the weight from a summary recap. Summaries with no weight token
+ *  pass through untouched (blueprint summaries carry cues — "3×1 (45s
+ *  holds)" — that a rebuild would destroy). Weight-bearing structured
+ *  entries rebuild as "sets×reps"; legacy freeform summaries ("5×5×100kg")
+ *  have the weight token removed. */
+function redactedSummary(ex: SavedRoutineExercise): string {
+  const summary = ex.summary || "";
+  if (!/\d+(?:\.\d+)?\s*kg/i.test(summary)) return summary;
+  if (ex.setCount > 0 && ex.targetReps > 0) {
+    return `${ex.setCount}×${ex.targetReps}`;
+  }
+  return summary.replace(/×\d+(?:\.\d+)?\s*kg/gi, "").trim();
+}
+
+export function redactExternalRoutineExercises(
+  uid: string,
+  sourceAuthorId: string | undefined,
+  exercises: SavedRoutineExercise[]
+): SavedRoutineExercise[] {
+  if (!isExternalRoutineSource(uid, sourceAuthorId)) return exercises;
+  return exercises.map((ex) => ({
+    ...ex,
+    summary: redactedSummary(ex),
+    targetWeightKg: 0,
+  }));
+}
+
 export async function saveRoutine(
   uid: string,
-  input: SaveRoutineInput,
+  input: SaveRoutineInput
 ): Promise<string> {
-  const ref = await addDocGuarded(collection(db, "users", uid, "savedRoutines"), {
-    name: input.name,
-    sourceActivityId: input.sourceActivityId,
-    sourceAuthorId: input.sourceAuthorId,
-    sourceAuthorName: input.sourceAuthorName,
-    ...(input.sourceWorkoutName ? { sourceWorkoutName: input.sourceWorkoutName } : {}),
-    exercises: input.exercises,
-    createdAt: serverTimestamp(),
-  });
+  const ref = await addDocGuarded(
+    collection(db, "users", uid, "savedRoutines"),
+    {
+      name: input.name,
+      sourceActivityId: input.sourceActivityId,
+      sourceAuthorId: input.sourceAuthorId,
+      sourceAuthorName: input.sourceAuthorName,
+      ...(input.sourceWorkoutName
+        ? { sourceWorkoutName: input.sourceWorkoutName }
+        : {}),
+      exercises: redactExternalRoutineExercises(
+        uid,
+        input.sourceAuthorId,
+        input.exercises
+      ),
+      createdAt: serverTimestamp(),
+    }
+  );
   return ref.id;
 }
 
@@ -89,26 +149,46 @@ export async function listSavedRoutines(uid: string): Promise<SavedRoutine[]> {
   const snap = await getDocs(
     query(
       collection(db, "users", uid, "savedRoutines"),
-      orderBy("createdAt", "desc"),
-    ),
+      orderBy("createdAt", "desc")
+    )
   );
   return snap.docs.map((d) => {
     const data = d.data() as Omit<SavedRoutine, "id">;
-    return { id: d.id, ...data };
+    return {
+      id: d.id,
+      ...data,
+      exercises: redactExternalRoutineExercises(
+        uid,
+        data.sourceAuthorId,
+        data.exercises || []
+      ),
+    };
   });
 }
 
-export async function deleteSavedRoutine(uid: string, routineId: string): Promise<void> {
+export async function deleteSavedRoutine(
+  uid: string,
+  routineId: string
+): Promise<void> {
   await deleteDoc(doc(db, "users", uid, "savedRoutines", routineId));
 }
 
 export async function getSavedRoutine(
   uid: string,
-  routineId: string,
+  routineId: string
 ): Promise<SavedRoutine | null> {
   const snap = await getDoc(doc(db, "users", uid, "savedRoutines", routineId));
   if (!snap.exists()) return null;
-  return { id: snap.id, ...(snap.data() as Omit<SavedRoutine, "id">) };
+  const data = snap.data() as Omit<SavedRoutine, "id">;
+  return {
+    id: snap.id,
+    ...data,
+    exercises: redactExternalRoutineExercises(
+      uid,
+      data.sourceAuthorId,
+      data.exercises || []
+    ),
+  };
 }
 
 /**
@@ -121,7 +201,7 @@ export async function getSavedRoutine(
  *     differently from structured ones.
  */
 export function activityExercisesToRoutine(
-  raw: unknown,
+  raw: unknown
 ): SavedRoutineExercise[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((ex) => {
@@ -139,7 +219,8 @@ export function activityExercisesToRoutine(
       summary: e.summary || "",
       setCount: typeof e.setCount === "number" ? e.setCount : 0,
       targetReps: typeof e.targetReps === "number" ? e.targetReps : 0,
-      targetWeightKg: typeof e.targetWeightKg === "number" ? e.targetWeightKg : 0,
+      targetWeightKg:
+        typeof e.targetWeightKg === "number" ? e.targetWeightKg : 0,
     };
   });
 }
