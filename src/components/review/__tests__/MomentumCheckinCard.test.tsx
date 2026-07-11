@@ -61,7 +61,7 @@ describe("MomentumCheckinCard", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Save check-in")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "A bit much" }));
+    fireEvent.click(screen.getByRole("radio", { name: "A bit much" }));
     expect(screen.getByText("Save check-in")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Log food consistently" })
@@ -71,7 +71,7 @@ describe("MomentumCheckinCard", () => {
   it("saves a weekKey-keyed record through the guarded wrapper and reads back", async () => {
     mockDoc(null);
     renderCard();
-    fireEvent.click(await screen.findByRole("button", { name: "A bit much" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "A bit much" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Hit my planned lifts" })
     );
@@ -133,5 +133,16 @@ describe("MomentumCheckinCard", () => {
     const { container } = renderCard();
     await waitFor(() => expect(getDocMock).toHaveBeenCalled());
     await waitFor(() => expect(container.innerHTML).toBe(""));
+  });
+
+  it("a failed load hides the card — never re-asks over an unread answer", async () => {
+    getDocMock.mockRejectedValue(new Error("offline"));
+    const { container } = renderCard();
+    await waitFor(() => expect(getDocMock).toHaveBeenCalled());
+    // Stays empty: showing the blank questions here would double-nag a
+    // user whose answer we merely failed to READ, and saving would
+    // overwrite it.
+    await waitFor(() => expect(container.innerHTML).toBe(""));
+    expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
   });
 });
