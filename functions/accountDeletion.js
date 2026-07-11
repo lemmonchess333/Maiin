@@ -33,6 +33,12 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   "water",
   "bodyweight",
   "progressPhotos",
+  // Progress Vault check-ins (users/{uid}/progressCheckins, BODY-VAULT-01).
+  // Owner-only date/note groupings that REFERENCE progressPhotos ids —
+  // enumerate-not-recurse, so without this entry a user's check-in docs
+  // orphan on account deletion (the photo docs + Storage blobs are already
+  // swept via progressPhotos above and the storage prefix sweep).
+  "progressCheckins",
   "favorites",
   "preferences",
   // Saved routes (users/{uid}/savedRoutes) — follow-a-route library. Enumerated
