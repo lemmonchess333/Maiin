@@ -68,6 +68,10 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/stats/{doc}",
   "match /users/{uid}/public/{doc}",
   "match /users/{uid}/progressPhotos/{doc}",
+  // Progress Vault check-ins (BODY-VAULT-01) — owner-writable groupings
+  // over progressPhotos, frozen mid-deletion + swept by the executor
+  // (USER_SUBCOLLECTIONS includes "progressCheckins").
+  "match /users/{uid}/progressCheckins/{doc}",
   "match /users/{uid}/privacyZones/{doc}",
   "match /users/{uid}/checkins/{weekKey}",
   "match /users/{uid}/trainingBlocks/{blockId}",
@@ -307,8 +311,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // /goalSpaces/{spaceId}/events/{eventId} create path, → 34.
     // NUTR-CONSISTENCY-01 added /users/{uid}/nutritionCommitments/{weekKey}
     // (owner-only weekly logging commitment), → 35.
+    // BODY-VAULT-01 added /users/{uid}/progressCheckins/{doc} (owner-only
+    // Progress Vault check-in groupings, freeze via
+    // isOwnerAndNotDeleting), → 36.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(35);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(36);
   });
 });
