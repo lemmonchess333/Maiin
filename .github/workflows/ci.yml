@@ -38,6 +38,10 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      # Zero-cycle gate (2026-07-11 repo audit batch 3): six circular
+      # import chains were removed by relocating shared types to neutral
+      # modules; this keeps the dependency graph acyclic.
+      - run: npm run check:cycles
       - run: npm run test -- --run
       # Build (tsc -b + vite) so type / bundling errors are caught at PR
       # time too, matching deploy.yml. Same-repo PRs have access to the

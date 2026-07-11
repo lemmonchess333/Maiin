@@ -1,28 +1,17 @@
 import { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { subDays } from "date-fns";
 import { localDateString } from "@/lib/dateHelpers";
 
-export interface DailyLog {
-  id: string;
-  date: string; // YYYY-MM-DD
-  workouts: number;
-  meals: number;
-  hasPR: boolean;
-  weightKg?: number;
-  notes: string;
-  createdAt: Timestamp;
-}
+/* DailyLog's canonical home is DailyLogsProvider.tsx (the module that
+   owns the subscription) — re-exported here for existing importers.
+   Audit batch 3: the provider imported this type while this file
+   re-exports the provider's hooks, a two-file cycle. */
+import type { DailyLog } from "@/hooks/DailyLogsProvider";
+export type { DailyLog } from "@/hooks/DailyLogsProvider";
 
 // useDailyLogs, useWeeklyStats, useMonthlyStats, useWeeklyDayMap used to
 // live here — each owning its own `onSnapshot(users/{uid}/logs, ...)`.

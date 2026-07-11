@@ -126,20 +126,11 @@ const GLOW_RINGS: [number, number][] = [
 
 /* ── Skeletal grouping ────────────────────────────────────────── */
 
-export type GroupName =
-  | "head"
-  | "torso"
-  | "pelvis"
-  | "upperArmL"
-  | "upperArmR"
-  | "foreArmL"
-  | "foreArmR"
-  | "handL"
-  | "handR"
-  | "thighL"
-  | "thighR"
-  | "shankL"
-  | "shankR";
+/* GroupName lives in bodyTypes.ts (audit batch 3 cycle break with
+   bodySideData) — imported for local use and re-exported for the many
+   existing importers. */
+import type { GroupName } from "./bodyTypes";
+export type { GroupName } from "./bodyTypes";
 
 function groupOf(view: "anterior" | "posterior", p: BodyPoly): GroupName {
   const L = p.side === "left";
