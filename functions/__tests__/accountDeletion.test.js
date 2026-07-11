@@ -369,6 +369,34 @@ describe("deleteAccount — coverage of cleanup targets", () => {
     }
   });
 
+  it("runs the goal-space cleanup BEFORE the journeys sweep (GOALS-CORE-01)", async () => {
+    // The cleanup enumerates memberships from users/{uid}/journeys —
+    // the same subcollection the generic sweep deletes. If the ordering
+    // ever flips, memberships/counters silently orphan on every
+    // deletion. Two journeys gets prove both ran (cleanup first, sweep
+    // second), and both precede the user-doc delete.
+    const stubs = makeStubs();
+    await deleteAccount({ ...stubs, uid: TEST_UID });
+
+    const journeysGets = stubs.calls
+      .map((c, i) =>
+        c === `firestore.users.${TEST_UID}.journeys.get` ? i : -1
+      )
+      .filter((i) => i >= 0);
+    expect(journeysGets.length).toBeGreaterThanOrEqual(2);
+    const userDocDeleteIdx = stubs.calls.findIndex(
+      (c) => c === `firestore.users.${TEST_UID}.delete`
+    );
+    expect(journeysGets[0]).toBeLessThan(userDocDeleteIdx);
+    // The FIRST journeys read (the cleanup) precedes every OTHER
+    // subcollection sweep get — i.e. the cleanup stage ran before the
+    // sweep stage, not interleaved after it.
+    const firstSweepGet = stubs.calls.findIndex(
+      (c) => c === `firestore.users.${TEST_UID}.meals.get`
+    );
+    expect(journeysGets[0]).toBeLessThan(firstSweepGet);
+  });
+
   it("iterates every top-level user-keyed subcollection", async () => {
     const stubs = makeStubs();
     await deleteAccount({ ...stubs, uid: TEST_UID });
