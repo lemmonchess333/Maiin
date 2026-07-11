@@ -486,6 +486,13 @@ export default function ProgressPhotos() {
 
   const renderThumb = (photoId: string, label: string, sizeClass: string) => {
     const photo = photoById.get(photoId);
+    // jsx-a11y/img-redundant-alt: screen readers already announce <img>
+    // as an image, so the alt must not contain "photo" — including the
+    // legacy entries' visible "Photo" badge label.
+    const altText =
+      label.toLowerCase() === "photo"
+        ? "Progress check-in"
+        : `${label} view, progress check-in`;
     return (
       <div className={`${sizeClass} relative rounded-lg overflow-hidden`}>
         {photo && decrypting.has(photoId) ? (
@@ -496,7 +503,7 @@ export default function ProgressPhotos() {
           <img
             src={decryptedUrls[photoId]}
             className="size-full object-cover"
-            alt={`${label} progress photo`}
+            alt={altText}
             loading="lazy"
             decoding="async"
             onError={(e) => {
