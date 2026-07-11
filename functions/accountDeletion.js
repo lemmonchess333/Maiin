@@ -23,6 +23,7 @@
 
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
+const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
@@ -60,9 +61,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // entry a user's blocks orphan on account deletion.
   "trainingBlocks",
   // Private goal Journeys (users/{uid}/journeys, GOALS-CORE-01).
-  // Enumerate-not-recurse; goalSpaces membership/event cleanup is a
-  // separate server concern (needs a collectionGroup query) owned by
-  // the Goal Space callables slice.
+  // Membership/event/counter cleanup happens FIRST in the dedicated
+  // goal_spaces step (lib/goalSpaceCleanup enumerates memberships from
+  // these docs, so it must run before this sweep deletes them); this
+  // entry then catches any journey the cleanup skipped.
   "journeys",
   // Weekly nutrition-consistency commitments
   // (users/{uid}/nutritionCommitments, NUTR-CONSISTENCY-01).
@@ -290,6 +292,20 @@ async function deleteAccount({
         });
       }
     }
+
+    // 0b. Goal Spaces (GOALS-CORE-01). MUST run before step 1: it
+    // enumerates memberships from users/{uid}/journeys — the index the
+    // subcollection sweep below deletes. Per circle: authored events
+    // deleted, then the real leaveGoalSpace semantics (member + journey
+    // gone, memberCount decremented, space deactivated when the owner
+    // deletes). Per-space failures are logged and skipped inside the
+    // helper; leftover journey docs are caught by the sweep in step 1.
+    stage = "goal_spaces";
+    await goalSpaceCleanup.cleanupGoalSpacesForUser({
+      firestore,
+      uid,
+      logger,
+    });
 
     // 1. User's own subcollections
     stage = "user_subcollections";
