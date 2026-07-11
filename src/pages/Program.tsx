@@ -1086,22 +1086,28 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                         }
                       />
 
-                      {/* Secondary action: skip the cursor session — mirrors
-                          the Run card's "Start free run instead" link. */}
-                      {status === "today" && !selectedWorkout.completed && (
-                        <div className="flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSkipTargetDay(idx);
-                              setShowSkipConfirm(true);
-                            }}
-                            className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-                          >
-                            Skip Session
-                          </button>
-                        </div>
-                      )}
+                      {/* Secondary action: skip this session — mirrors the
+                          Run card's "Start free run instead" link. Offered on
+                          the cursor day AND any upcoming day of the CURRENT
+                          week (owner request 2026-07-11: "let me move to next
+                          week when I want" — skipping the remaining days is
+                          the deliberate, per-day path to the Advance button).
+                          History weeks are records, not prescriptions. */}
+                      {(status === "today" || status === "upcoming") &&
+                        !isViewingHistory && (
+                          <div className="flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSkipTargetDay(idx);
+                                setShowSkipConfirm(true);
+                              }}
+                              className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+                            >
+                              Skip Session
+                            </button>
+                          </div>
+                        )}
 
                       {/* ── Exercise Cards ── */}
                       {reorderMode ? (
