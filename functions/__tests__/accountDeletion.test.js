@@ -42,6 +42,7 @@ const TEST_UID = "user-abc";
  */
 function makeStubs(opts = {}) {
   const calls = [];
+  const tombstones = [];
 
   function makeBatchAndCollectionGraph(opts = {}) {
     const usersDocStub = (uid) => ({
@@ -108,6 +109,7 @@ function makeStubs(opts = {}) {
 
     return {
       _ledgerStore: ledgerStore,
+      _tombstones: tombstones,
       collection(name) {
         if (name === "users") {
           return { doc: (uid) => usersDocStub(uid) };
@@ -125,6 +127,39 @@ function makeStubs(opts = {}) {
         }
         if (name === "accountDeletionRequests") {
           return { doc: () => ledgerRefStub() };
+        }
+        // Audit F8 — step 3c sweep. Default empty; tests override via
+        // opts.appleSubsDocs. Tombstone writes are captured for
+        // assertion in _tombstones.
+        if (name === "appleSubscriptions") {
+          return {
+            where: (field, op, value) => ({
+              get: async () => {
+                calls.push(
+                  `firestore.appleSubscriptions.where.${field}.${op}.${value}.get`
+                );
+                const docs = (opts.appleSubsDocs || []).map((d) => ({
+                  id: d.id,
+                  ref: {
+                    delete: async () => {
+                      calls.push(`firestore.appleSubscriptions.${d.id}.delete`);
+                    },
+                  },
+                }));
+                return { empty: docs.length === 0, docs };
+              },
+            }),
+          };
+        }
+        if (name === "deletedBillingIdentities") {
+          return {
+            doc: (hash) => ({
+              set: async (payload) => {
+                calls.push(`firestore.deletedBillingIdentities.set`);
+                tombstones.push({ hash, payload });
+              },
+            }),
+          };
         }
         return { doc: (uid) => topLevelDocStub(name, uid) };
       },
@@ -757,5 +792,51 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
     ).rejects.toMatchObject({ code: "executor-disabled" });
     // No lease acquired → ledger untouched.
     expect(stubs.ledgerStore.doc).toBeUndefined();
+  });
+
+  // ── Audit F8 — appleSubscriptions sweep (step 3c) ────────────────
+  it("F8: tombstones the binding identity BEFORE deleting the binding", async () => {
+    process.env.BILLING_HMAC_SECRET = "f8-test-secret";
+    try {
+      const stubs = makeStubs({ appleSubsDocs: [{ id: "otx-123" }] });
+      await deleteAccount({ ...stubs, uid: TEST_UID });
+
+      const tombstoneIdx = stubs.calls.findIndex(
+        (c) => c === "firestore.deletedBillingIdentities.set"
+      );
+      const bindingDeleteIdx = stubs.calls.findIndex(
+        (c) => c === "firestore.appleSubscriptions.otx-123.delete"
+      );
+      expect(tombstoneIdx).toBeGreaterThanOrEqual(0);
+      expect(bindingDeleteIdx).toBeGreaterThan(tombstoneIdx);
+      // Both happen BEFORE the auth delete (Firestore-first ordering).
+      const authIdx = stubs.calls.findIndex(
+        (c) => c === `auth.deleteUser(${TEST_UID})`
+      );
+      expect(bindingDeleteIdx).toBeLessThan(authIdx);
+      // Tombstone payload never contains the raw transaction id.
+      const [tomb] = stubs.firestore._tombstones;
+      expect(tomb.hash).not.toContain("otx-123");
+      expect(JSON.stringify(tomb.payload)).not.toContain("otx-123");
+      expect(tomb.payload.provider).toBe("apple");
+    } finally {
+      delete process.env.BILLING_HMAC_SECRET;
+    }
+  });
+
+  it("F8 fail-safe: missing BILLING_HMAC_SECRET keeps the binding and does not throw", async () => {
+    delete process.env.BILLING_HMAC_SECRET;
+    const stubs = makeStubs({ appleSubsDocs: [{ id: "otx-456" }] });
+    await deleteAccount({ ...stubs, uid: TEST_UID });
+
+    // No tombstone written, binding NOT deleted — but the rest of the
+    // deletion (including the auth user) completed.
+    expect(stubs.firestore._tombstones).toHaveLength(0);
+    expect(stubs.calls).not.toContain(
+      "firestore.appleSubscriptions.otx-456.delete"
+    );
+    expect(stubs.calls[stubs.calls.length - 1]).toBe(
+      `auth.deleteUser(${TEST_UID})`
+    );
   });
 });
