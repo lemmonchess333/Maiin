@@ -63,8 +63,27 @@ describe("tokensToPrune", () => {
 
 import {
   buildStreakNudgeMessage,
+  buildFirstWeekNudgeMessage,
   buildBadgeNudgeMessage,
 } from "../lib/pushSend";
+
+describe("buildFirstWeekNudgeMessage", () => {
+  it("is DATA-ONLY with calm generic copy — no streak/loss framing, no digits (Q7)", () => {
+    const m = buildFirstWeekNudgeMessage();
+    expect(m.notification).toBeUndefined();
+    expect(m.data.type).toBe("streak");
+    expect(m.data.route).toBe("/");
+    expect(m.data.title).toBeTruthy();
+    expect(m.data.body).toBeTruthy();
+    expect(m.data.title).not.toMatch(/\d/);
+    expect(m.data.body).not.toMatch(/\d/);
+    // Calm register: the day-2 nudge must not borrow the loss-aversion
+    // "streak" language — at streak 0–1 there is nothing to lose yet.
+    expect(`${m.data.title} ${m.data.body}`.toLowerCase()).not.toMatch(
+      /streak|lose|don't break|at risk/
+    );
+  });
+});
 
 describe("buildStreakNudgeMessage", () => {
   it("is DATA-ONLY (no top-level notification — iOS PWA reliability) with generic copy (Q7)", () => {

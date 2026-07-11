@@ -12,9 +12,16 @@ import { THEME } from "@/lib/theme";
 /**
  * One-time priming modal for the streak-at-risk reminder.
  *
- * Trigger rule: shown on a foreground event when the user has
- * `currentStreak ≥ 2` and `primingShown === false`. Once shown (regardless
+ * Trigger rule: shown after a completed session when the user has
+ * `currentStreak ≥ 1` and `primingShown === false`. Once shown (regardless
  * of response) the flag flips to true and the modal never re-fires.
+ *
+ * The floor moved from ≥ 2 to ≥ 1 (D-1, frontend-design-principles-2026-07):
+ * the first completed session is the value moment — consent asked there
+ * powers the once-ever day-2 return nudge, whereas waiting for streak 2
+ * meant a brand-new user could never receive any first-week return trigger.
+ * At streak 1 the copy drops the loss-aversion "keep your streak" framing
+ * (there's nothing to lose yet) for a calm day-two offer.
  *
  * Deliberately does NOT trigger when the streak hits 2 mid-session via a
  * fresh log — that would interrupt a user who just logged something with
@@ -42,31 +49,34 @@ export function StreakReminderPrimingModal() {
   // listener always reads fresh loading / prefs / currentStreak values
   // without re-registration. Returns true once it has opened the modal so
   // the retry loop below can stop. Preserves the once-ever gate
-  // (primingShown) and the streak floor (>= 2); the SurfaceCoordinator still
-  // applies the frequency cap.
+  // (primingShown) and the streak floor (>= 1 — the first completed
+  // session); the SurfaceCoordinator still applies the frequency cap.
   const checkRef = useRef<() => boolean>(() => false);
   useEffect(() => {
     checkRef.current = () => {
       if (loading) return false;
       if (prefs.primingShown) return false;
-      if (currentStreak < 2) return false;
+      if (currentStreak < 1) return false;
       setOpen(true);
       return true;
     };
   });
 
-  // Trigger rule (audit #10): the priming modal fires ONLY after a workout is
-  // completed (post-celebration), never on app-open, foreground/
-  // visibilitychange, or any page mount — landing on the Programme page (or
-  // anywhere) must never pop it mid-task. The old seed-on-first-render +
-  // visibilitychange triggers did exactly that and were removed.
+  // Trigger rule (audit #10): the priming modal fires ONLY after a session is
+  // completed (post-celebration) — a workout or a valid saved run — never on
+  // app-open, foreground/visibilitychange, or any page mount — landing on the
+  // Programme page (or anywhere) must never pop it mid-task. The old
+  // seed-on-first-render + visibilitychange triggers did exactly that and were
+  // removed. Runs joined workouts with the ≥ 1 floor: a run-first user's
+  // first session is just as much the consent value moment (meals stay out —
+  // a modal after a routine food log would interrupt the Food flow).
   //
   // `currentStreak` settles asynchronously via the useStreaks snapshot after
-  // the workout save, so the handler re-checks on a short bounded interval
+  // the session save, so the handler re-checks on a short bounded interval
   // until the freshly-earned streak value lands (or it gives up after ~4s).
   const retryRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
-    const onWorkoutComplete = () => {
+    const onSessionComplete = () => {
       if (retryRef.current) clearInterval(retryRef.current);
       if (checkRef.current()) return;
       let tries = 0;
@@ -78,9 +88,11 @@ export function StreakReminderPrimingModal() {
         }
       }, 350);
     };
-    window.addEventListener("tropos:workout-completed", onWorkoutComplete);
+    window.addEventListener("tropos:workout-completed", onSessionComplete);
+    window.addEventListener("tropos:run-completed", onSessionComplete);
     return () => {
-      window.removeEventListener("tropos:workout-completed", onWorkoutComplete);
+      window.removeEventListener("tropos:workout-completed", onSessionComplete);
+      window.removeEventListener("tropos:run-completed", onSessionComplete);
       if (retryRef.current) clearInterval(retryRef.current);
     };
   }, []);
@@ -186,15 +198,26 @@ function PrimingDialog({
             id="streak-priming-title"
             className="text-lg font-bold text-foreground"
           >
-            Keep your streak alive
+            {currentStreak < 2
+              ? "That's day one done"
+              : "Keep your streak alive"}
           </p>
           <p
             id="streak-priming-body"
             className="text-sm text-muted-foreground leading-snug"
           >
-            We&apos;ll remind you in the evening if you haven&apos;t logged, so
-            you don&apos;t lose your {currentStreak}-day streak. You can change
-            this anytime in Settings.
+            {currentStreak < 2 ? (
+              <>
+                Want a reminder tomorrow evening so day two doesn&apos;t slip?
+                You can change this anytime in Settings.
+              </>
+            ) : (
+              <>
+                We&apos;ll remind you in the evening if you haven&apos;t logged,
+                so you don&apos;t lose your {currentStreak}-day streak. You can
+                change this anytime in Settings.
+              </>
+            )}
           </p>
         </div>
         <div className="space-y-2 pt-2">
