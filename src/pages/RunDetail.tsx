@@ -19,6 +19,11 @@ import {
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
+import { isOutdoorGpsRun } from "../lib/runGuards";
+import {
+  formatSecondsPerKm,
+  gradeAdjustedPace,
+} from "../lib/gradeAdjustedPace";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
@@ -135,6 +140,20 @@ export default function RunDetail() {
   // crossed), or GPS present but no split data recorded.
   const splitCount = run.splits?.length ?? 0;
   const hasGpsTrace = (run.points?.length ?? 0) > 1;
+
+  /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
+     with material climb (≥8 m/km, gated in the module) get one calm
+     flat-equivalent line under the stat tiles; treadmill / manual runs
+     have no real elevation signal. Legacy runs without an activityType
+     pass the outdoor guard (existing convention) but gate out on a
+     missing elevationGain. Feeds nothing — trends / PRs stay raw. */
+  const gap = isOutdoorGpsRun(run.activityType)
+    ? gradeAdjustedPace({
+        distanceMeters: run.distance ?? 0,
+        durationSeconds: run.duration ?? 0,
+        elevationGainMeters: run.elevationGain ?? 0,
+      })
+    : null;
   const splitsEmptyReason = !hasGpsTrace
     ? "No GPS route"
     : run.distance < 1000
@@ -429,6 +448,18 @@ export default function RunDetail() {
             </p>
           </div>
         </div>
+
+        {/* Grade-adjusted pace — one calm line, only when the climb was
+            material (Run13 item 4, display-only; never feeds trends/PRs). */}
+        {gap && (
+          <p className="text-center text-xs text-muted-foreground">
+            Grade-adjusted pace{" "}
+            <span className="font-mono tabular-nums font-semibold text-foreground">
+              {formatSecondsPerKm(gap.gapSecondsPerKm)}
+            </span>
+            /km — flat-equivalent for this climb
+          </p>
+        )}
 
         {/* Splits chart */}
         {run.splits?.length > 0 && (
