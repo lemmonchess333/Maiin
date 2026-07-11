@@ -16,10 +16,14 @@ import { emulatorActive } from "../helpers/emulator";
 
 // iPhone-15-ish portrait. Overrides the auth-emulator project's desktop
 // viewport while keeping its bypassCSP (needed for the emulator).
+// PW_CHROMIUM lets a local sandbox point at a pre-installed chromium
+// when its Playwright pin differs (e.g. /opt/pw-browsers/chromium in
+// the remote agent environment); CI never sets it.
 test.use({
   viewport: { width: 393, height: 852 },
-  // TEMP-LOCAL-DEBUG: sandbox chromium override — do not commit.
-  launchOptions: { executablePath: "/opt/pw-browsers/chromium" },
+  ...(process.env.PW_CHROMIUM
+    ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
+    : {}),
 });
 
 test.describe("app screenshots", () => {
@@ -29,13 +33,6 @@ test.describe("app screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
-    // TEMP-LOCAL-DEBUG: pipe interesting page console lines — do not commit.
-    page.on("console", (msg) => {
-      const text = msg.text();
-      if (/trainingBlock|nutritionConsistency|permission|denied/i.test(text)) {
-        console.log(`[page:${msg.type()}] ${text.slice(0, 300)}`);
-      }
-    });
     // Pre-dismiss first-use coachmarks (useCoachMarks localStorage flags) so
     // floating tooltips don't occlude the surfaces under review — the Social
     // invite coachmark was covering the card copy in every People-tab capture.
@@ -335,45 +332,51 @@ test.describe("app screenshots", () => {
     await shoot(page, "sheet-dayaction-light");
   });
 
-  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus) —
-  // the parallel-session merges plus the design-consistency pass over
-  // them. Same rules as the other interaction-gated captures: every
-  // trigger is best-effort with a SHORT timeout (a missed locator costs
-  // seconds, not its 30s default), and SegmentedControl options are
-  // role="radio", not buttons.
-  test("new surfaces — circles, block sheet, food focus", async ({ page }) => {
-    test.setTimeout(180_000);
-    async function shootLightDark(name: string) {
-      await page.evaluate(() =>
-        document.documentElement.classList.remove("dark")
-      );
-      await shoot(page, `${name}-light`);
-      await page.evaluate(() => document.documentElement.classList.add("dark"));
-      await page.waitForTimeout(350);
-      await shoot(page, `${name}-dark`);
-      await page.evaluate(() =>
-        document.documentElement.classList.remove("dark")
-      );
-    }
+  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus).
+  // ONE TEST PER SURFACE — do not merge these into a multi-goto test.
+  // Diagnosed 2026-07-11: rapid same-context hard navigations leave the
+  // previous page's Firestore webchannel connections draining, and the
+  // NEXT page's one-shot reads (getDoc/getDocs — exactly what gates
+  // TrainingBlockCard and FoodConsistencyCard) can starve for 15s+
+  // while that page's own listeners stream fine. A fresh context per
+  // test (Playwright default) sidesteps it entirely; the explicit
+  // row-waits below also absorb slow-CI read latency. Product surfaces
+  // are unaffected (SPA routing never hard-reloads).
+  // Other capture rules: best-effort triggers with SHORT timeouts, and
+  // SegmentedControl options are role="radio", not buttons.
+  async function shootLightDarkOn(page: Page, name: string) {
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+    await shoot(page, `${name}-light`);
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(350);
+    await shoot(page, `${name}-dark`);
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+  }
 
-    // Circles — Social's Crews sub-tab leads with the Goal Space section;
-    // the seeded user has no circles, so this captures the EmptyState
-    // hexagon cold-start (the state every launch user sees).
+  test("circles cold-start (Social → Crews)", async ({ page }) => {
+    test.setTimeout(90_000);
+    // Seeded user has no circles — this captures the EmptyState hexagon
+    // cold-start (the state every launch user sees).
     await page.goto("social?tab=crews");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
     await page.waitForTimeout(1600);
-    await shootLightDark("circles-crews");
+    await shootLightDarkOn(page, "circles-crews");
+  });
 
-    // Training Block create sheet — Program lift tab entry row opens the
-    // preset cards + the block-length SegmentedControl.
+  test("training block create sheet", async ({ page }) => {
+    test.setTimeout(90_000);
     await page.goto("program");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    // Same explicit wait: the block row renders only after the
-    // trainingBlocks read settles.
+    // The block row renders only after the trainingBlocks read settles —
+    // wait for it explicitly rather than settling blind.
     const blockRowStart = Date.now();
     await page
       .getByRole("button", { name: /start a training block/i })
@@ -393,15 +396,12 @@ test.describe("app screenshots", () => {
       .click({ timeout: 2000 })
       .catch(() => {});
     await page.waitForTimeout(900);
-    await shootLightDark("sheet-trainingblock");
-    // Close the sheet so the next navigation starts clean.
-    await page.keyboard.press("Escape").catch(() => {});
+    await shootLightDarkOn(page, "sheet-trainingblock");
+  });
 
-    // Weekly logging focus — Food's consistency card expands its picker
-    // in place (SegmentedControl + Set focus). The card renders nothing
-    // until its commitment+meals reads settle, so WAIT for it rather
-    // than settling blind — under a loaded capture run those one-shot
-    // reads can trail the page by several seconds.
+  test("food weekly logging focus picker", async ({ page }) => {
+    test.setTimeout(90_000);
+    // The card renders nothing until its commitment+meals reads settle.
     await page.goto("food");
     await page
       .getByRole("navigation", { name: /main navigation/i })
@@ -425,6 +425,6 @@ test.describe("app screenshots", () => {
       .click({ timeout: 2000 })
       .catch(() => {});
     await page.waitForTimeout(700);
-    await shootLightDark("food-focus-picker");
+    await shootLightDarkOn(page, "food-focus-picker");
   });
 });
