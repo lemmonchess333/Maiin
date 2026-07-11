@@ -190,17 +190,18 @@ In Xcode:
   enabled).
 - Build → Archive → Distribute via TestFlight.
 
-### Android
+### Android — PLANNED, not yet reproducible
 
-Requires Android Studio.
+There is **no `android/` platform directory in this repository** (iOS
+only). The Android app is planned; until `npx cap add android` output is
+committed, configured, and CI-built, treat every Android mention here as
+roadmap, not shipped capability. `npm run build:android` fails fast with
+this explanation (2026-07-11 repo audit batch 5 — release claims must be
+reproducible from the repository).
 
-```bash
-npm run build
-npx cap sync android
-npx cap open android
-```
-
-Generate a signed APK / AAB from Android Studio's Build menu.
+When Android is added for real, this section must gain: platform commit,
+signing/CI workflow, per-plugin verification (notifications, background
+geolocation, purchases, deep links), and store release docs.
 
 ### Native plugins currently used
 

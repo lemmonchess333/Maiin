@@ -67,6 +67,7 @@ export default defineConfig({
             // project must include them or that command runs zero tests
             // and passes vacuously) and script tests. All node-safe.
             "firestore.*.test.ts",
+            "storage.rules.test.ts",
             "scripts/**/*.test.{ts,tsx}",
           ],
         },
