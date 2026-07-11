@@ -274,9 +274,178 @@ async function main() {
     prevPI = doc.performanceIndex;
   }
 
+  // ── Public feed activities from a second author (Social uplift v1):
+  //    without these the seeded user's Explore feed is empty and the
+  //    social capture only ever shows the solo-first stack — the
+  //    ActivityCard hero panels (route scene / muscle figure) are
+  //    invisible to the screenshot channel. authorId needs no auth
+  //    record (admin writes bypass rules; the card renders name +
+  //    initials avatar straight off the doc). ──
+  const feedAuthor = { authorId: "rich-feed-author", authorName: "Maya Chen" };
+  const loop = (lat0: number, lon0: number, n = 36) =>
+    Array.from({ length: n + 1 }, (_, i) => {
+      // Open loop (0.15π → 1.85π) so the start ring and finish dot
+      // don't sit on top of each other in the route scene.
+      const t = 0.15 * Math.PI + (i / n) * 1.7 * Math.PI;
+      return {
+        lat: lat0 + 0.0045 * Math.sin(t) + 0.0009 * Math.sin(3 * t),
+        lon: lon0 + 0.0065 * Math.cos(t) + 0.0012 * Math.sin(2 * t),
+      };
+    });
+  const hoursAgo = (h: number) =>
+    Timestamp.fromDate(new Date(Date.now() - h * 3600e3));
+  const feedActivities: Record<string, Record<string, unknown>> = {
+    "rich-feed-run": {
+      ...feedAuthor,
+      type: "run",
+      visibility: "public",
+      activityTitle: "Morning run",
+      distance: 8240,
+      avgPace: 318,
+      duration: 2621,
+      elevationGain: 64,
+      routePreview: loop(51.5074, -0.1657),
+      kudosCount: 3,
+      commentCount: 1,
+      createdAt: hoursAgo(3),
+    },
+    "rich-feed-push": {
+      ...feedAuthor,
+      type: "workout",
+      visibility: "public",
+      activityTitle: "Push day",
+      muscleGroups: ["horizontal_push", "vertical_push", "arms_triceps"],
+      exercises: [
+        {
+          name: "Bench Press",
+          summary: "4×8 @ 65kg",
+          setCount: 4,
+          targetReps: 8,
+          targetWeightKg: 65,
+        },
+        {
+          name: "Overhead Press",
+          summary: "3×10 @ 40kg",
+          setCount: 3,
+          targetReps: 10,
+          targetWeightKg: 40,
+        },
+        {
+          name: "Tricep Pushdown",
+          summary: "3×12 @ 25kg",
+          setCount: 3,
+          targetReps: 12,
+          targetWeightKg: 25,
+        },
+      ],
+      totalVolume: 6420,
+      exerciseCount: 5,
+      prCount: 2,
+      prHit: true,
+      prExercise: "Bench Press",
+      prWeight: 65,
+      duration: 3480,
+      kudosCount: 5,
+      commentCount: 2,
+      createdAt: hoursAgo(9),
+    },
+    "rich-feed-pull": {
+      ...feedAuthor,
+      type: "workout",
+      visibility: "public",
+      activityTitle: "Pull day",
+      muscleGroups: ["vertical_pull", "horizontal_pull", "hip_dominant"],
+      exercises: [
+        {
+          name: "Pull-Up",
+          summary: "4×8 BW",
+          setCount: 4,
+          targetReps: 8,
+          targetWeightKg: 0,
+        },
+        {
+          name: "Barbell Row",
+          summary: "4×10 @ 55kg",
+          setCount: 4,
+          targetReps: 10,
+          targetWeightKg: 55,
+        },
+        {
+          name: "Romanian Deadlift",
+          summary: "3×10 @ 80kg",
+          setCount: 3,
+          targetReps: 10,
+          targetWeightKg: 80,
+        },
+      ],
+      totalVolume: 7980,
+      exerciseCount: 5,
+      prCount: 0,
+      duration: 3600,
+      kudosCount: 2,
+      commentCount: 0,
+      createdAt: hoursAgo(26),
+    },
+    "rich-feed-hybrid": {
+      ...feedAuthor,
+      type: "workout",
+      visibility: "public",
+      activityTitle: "Brick session",
+      distance: 5030,
+      avgPace: 331,
+      duration: 1665,
+      routePreview: loop(51.5312, -0.1216, 28),
+      muscleGroups: ["knee_dominant", "core"],
+      exercises: [
+        {
+          name: "Goblet Squat",
+          summary: "3×12 @ 24kg",
+          setCount: 3,
+          targetReps: 12,
+          targetWeightKg: 24,
+        },
+        {
+          name: "Plank",
+          summary: "3×60s",
+          setCount: 3,
+          targetReps: 1,
+          targetWeightKg: 0,
+        },
+      ],
+      totalVolume: 1240,
+      exerciseCount: 2,
+      kudosCount: 1,
+      commentCount: 0,
+      createdAt: hoursAgo(50),
+    },
+  };
+  for (const [id, docData] of Object.entries(feedActivities)) {
+    await db.collection("activities").doc(id).set(docData);
+  }
+  // One follow relationship: Social's solo-first gate (isNewUser =
+  // 0 follows + no crew) suppresses the activity list entirely, so
+  // without this the seeded cards above never render on any sub-tab.
+  // The rich user is by definition established — a 1-follow graph is
+  // the honest fixture (Following stays locked until 3, Explore shows
+  // the community cards).
+  const followedAt = Timestamp.now();
+  await db
+    .collection("following")
+    .doc(uid)
+    .collection("users")
+    .doc(feedAuthor.authorId)
+    .set({ followedAt });
+  await db
+    .collection("followers")
+    .doc(feedAuthor.authorId)
+    .collection("users")
+    .doc(uid)
+    .set({ followedAt });
+
   console.log(
     `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 12 meals, ` +
-      `${weekKeys.length} performance weeks written.`
+      `${weekKeys.length} performance weeks, ` +
+      `${Object.keys(feedActivities).length} public feed activities written.`
   );
 }
 

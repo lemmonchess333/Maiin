@@ -123,6 +123,10 @@ test.describe("app screenshots", () => {
       ["history", "history"],
       ["program", "program"],
       ["social", "social"],
+      // Explore feed with the seeded public activities — the ActivityCard
+      // hero panels (route scene / muscle figure) live here. Deep-linked
+      // via ?feed= because the sub-tab smart default lands on Following.
+      ["social?tab=feed&feed=explore", "social-explore"],
       ["settings", "settings"],
     ];
     for (const [route, name] of tabs) {
@@ -132,16 +136,30 @@ test.describe("app screenshots", () => {
       await page
         .getByRole("navigation", { name: /main navigation/i })
         .waitFor({ state: "visible", timeout: 20000 });
-      // Social's solo-first stack is gated behind an async followingCount
-      // read; give it room to resolve (and let the discover query settle)
+      // Social's feed content is gated behind an async followingCount
+      // read; give it room to resolve (and let the feed query settle)
       // before capturing so we don't shoot a perpetual-skeleton frame.
+      // "Your week" = WeeklyRecapCard (established user, the rich seed's
+      // state since it follows the feed author); the solo-stack strings
+      // stay as fallbacks in case the seed graph changes.
       if (name === "social") {
         await page
-          .getByText(/Crews unlock|Share your training/i)
+          .getByText(/Your week|Crews unlock|Share your training/i)
           .first()
           .waitFor({ state: "visible", timeout: 12000 })
           .catch(() => {
             /* still gated/loading after the wait — capture whatever's there */
+          });
+      }
+      // Explore feed: wait for the seeded author's first card so the
+      // hero panels are actually in the shot, not skeletons.
+      if (name === "social-explore") {
+        await page
+          .getByText("Maya Chen")
+          .first()
+          .waitFor({ state: "visible", timeout: 15000 })
+          .catch(() => {
+            /* feed empty/slow — capture whatever's there */
           });
       }
       // History/Analytics hydrates workouts/runs/meals subscriptions + a
