@@ -1,3 +1,4 @@
+// @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 /**
  * PR-0b-ii: integration tests for useProgram's writer paths.
  *
