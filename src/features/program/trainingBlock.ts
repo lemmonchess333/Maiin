@@ -104,6 +104,29 @@ export function presetLabel(preset: BlockPreset): string {
   return BLOCK_PRESETS.find((p) => p.value === preset)?.label ?? preset;
 }
 
+/**
+ * Blk1 lock (1): the explicit programme hand-off is offered ONLY where a
+ * truthful one-field prefill exists — the preset maps to a PrimaryGoal the
+ * lift-plan editor can preselect. The two habit presets return null: their
+ * point is "same programme, just show up", and a wrong prefill is worse
+ * than none. This mapping is the single source of truth for the offer.
+ */
+export function presetProgrammeGoal(
+  preset: BlockPreset
+): "strength" | "hypertrophy" | "running" | null {
+  switch (preset) {
+    case "strength_foundation":
+      return "strength";
+    case "muscle_building":
+      return "hypertrophy";
+    case "hybrid_support":
+      return "running";
+    case "consistency_reset":
+    case "return_to_training":
+      return null;
+  }
+}
+
 export function blockDocPath(uid: string, blockId: string): string {
   return `users/${uid}/trainingBlocks/${blockId}`;
 }

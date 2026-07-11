@@ -126,6 +126,13 @@ interface ProgrammeSettingsProps {
    *     focused editor (RunPlanSettings) — this is its lifting counterpart.
    */
   variant?: "full" | "lift";
+  /**
+   * Blk1 (5): initialises the training-focus DRAFT (mount only) so the
+   * block-creation hand-off lands on a prefilled form. The saved profile
+   * value is untouched until the user commits through the normal save —
+   * the per-field diff then flags the change like any manual edit.
+   */
+  prefillGoal?: PrimaryGoal;
 }
 
 /* Programme-settings convenience wrapper — the page's section labels
@@ -380,6 +387,7 @@ export default function ProgrammeSettings({
   onOpenWeeklyLayout,
   onSaved,
   variant = "full",
+  prefillGoal,
 }: ProgrammeSettingsProps) {
   const liftOnly = variant === "lift";
   // ── Persisted values (also the dirty-check baseline) ──────────────
@@ -409,7 +417,7 @@ export default function ProgrammeSettings({
 
   // ── Draft state ───────────────────────────────────────────────────
   const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
-    saved.primaryGoal
+    prefillGoal ?? saved.primaryGoal
   );
   // Nutrition phase is NO LONGER editable here — it's DERIVED from goal
   // weight vs current (the locked goalWeightPlan / MacroFactor model, owned
