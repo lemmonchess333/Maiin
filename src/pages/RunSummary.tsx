@@ -79,6 +79,10 @@ import {
   type InvalidRunReason,
   type SaveStatus,
 } from "../lib/runGuards";
+import {
+  formatSecondsPerKm,
+  gradeAdjustedPace,
+} from "../lib/gradeAdjustedPace";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -686,6 +690,20 @@ export default function RunSummary() {
     : null;
   const isInvalid = invalidReason !== null;
   const outdoorGps = activityType ? isOutdoorGpsRun(activityType) : false;
+
+  /* Run13 item 4 — grade-adjusted pace, DISPLAY-ONLY. Outdoor GPS runs
+     with material climb (≥8 m/km, gated in the module) get one calm
+     flat-equivalent line under the stat grids. Treadmill / manual runs
+     have no real elevation signal, and invalid runs have no pace worth
+     adjusting. Feeds nothing — paceTrends / PR flags stay on raw pace. */
+  const gap =
+    outdoorGps && !isInvalid
+      ? gradeAdjustedPace({
+          distanceMeters: distance,
+          durationSeconds: elapsed,
+          elevationGainMeters: elevationGain,
+        })
+      : null;
 
   /* Skip the ConfirmDialog gate when the run is already sub-threshold
      — there's nothing meaningful to lose, and adding a second
@@ -1384,6 +1402,18 @@ export default function RunSummary() {
               <p className="text-xs text-muted-foreground">elevation gain</p>
             </div>
           </div>
+
+          {/* Grade-adjusted pace — one calm line, only when the climb was
+              material (Run13 item 4, display-only). */}
+          {gap && (
+            <p className="px-4 -mt-2 mb-4 text-center text-xs text-muted-foreground">
+              Grade-adjusted pace{" "}
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {formatSecondsPerKm(gap.gapSecondsPerKm)}
+              </span>
+              /km — flat-equivalent for this climb
+            </p>
+          )}
 
           {/* Rev1 PR2 — what this run did to your week (fetches after the
               run doc is saved, so it includes this run). Null while
