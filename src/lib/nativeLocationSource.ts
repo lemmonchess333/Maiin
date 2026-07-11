@@ -35,7 +35,7 @@ import type {
   CallbackError as PluginCallbackError,
   Location as PluginLocation,
 } from "@capacitor-community/background-geolocation";
-import type { LocationSource, LocationWatch } from "./locationSource";
+import type { LocationSource, LocationWatch } from "./locationTypes";
 import { isNativePlatform } from "./platform";
 
 const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>(
