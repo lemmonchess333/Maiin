@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   BLOCK_DURATIONS,
@@ -55,13 +56,6 @@ function todayLocal(): string {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${now.getFullYear()}-${m}-${d}`;
-}
-
-function pill(selected: boolean): string {
-  return cn(
-    "min-h-[44px] px-3 rounded-xl text-xs font-semibold transition-colors active:scale-[0.97]",
-    selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-  );
 }
 
 export default function TrainingBlockCard({
@@ -247,22 +241,18 @@ export default function TrainingBlockCard({
               </button>
             ))}
           </div>
-          <div className="flex gap-2" role="group" aria-label="Block length">
-            {BLOCK_DURATIONS.map((w) => (
-              <button
-                key={w}
-                type="button"
-                aria-pressed={duration === w}
-                className={cn(pill(duration === w), "flex-1")}
-                onClick={() => {
-                  haptic("light");
-                  setDuration(w);
-                }}
-              >
-                {w} weeks
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            options={BLOCK_DURATIONS.map((w) => ({
+              value: w,
+              label: `${w} weeks`,
+            }))}
+            value={duration}
+            onChange={(w) => {
+              haptic("light");
+              setDuration(w);
+            }}
+            ariaLabel="Block length"
+          />
           <p className="text-xs text-muted-foreground">
             Starts today · target {Math.max(1, defaultWeeklyLiftTarget)}{" "}
             {Math.max(1, defaultWeeklyLiftTarget) === 1 ? "lift" : "lifts"} a
