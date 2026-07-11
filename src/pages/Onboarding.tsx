@@ -381,8 +381,11 @@ export default function Onboarding() {
   // ── Preferred split (DEFERRED — no UI step; default kept at auto)
   const preferredSplit: PreferredSplit = "auto";
 
-  // ── Injuries
-  const [injuries, setInjuries] = useState<string[]>([]);
+  // ── Injuries. Defaults to ["none"] ("No injuries" pre-selected) so the
+  // step is advanceable on entry like every other step — the fast-start
+  // flow auto-selects a sensible default everywhere; injuries was the one
+  // step that shipped requiring a manual tap before Continue lit up.
+  const [injuries, setInjuries] = useState<string[]>(["none"]);
 
   // D16 — personal "why". Optional motivation captured on the confirmation
   // step (a tap-chip seeds the phrase; the field stays editable as free
@@ -682,26 +685,46 @@ export default function Onboarding() {
       } catch (err) {
         const code = (err as { code?: string })?.code;
         const msg = (err as { message?: string })?.message || "";
-        const isColdStart =
+        // The CF has no minInstances, so the first call after idle
+        // cold-starts and can exceed the client SDK's wait window. That
+        // surfaces as `internal`, but ALSO as `deadline-exceeded` /
+        // `unavailable` depending on where the timeout bites — all three
+        // are transient cold-start signals a warm retry fixes. (The old
+        // check only caught `internal`, so a cold start that timed out as
+        // deadline-exceeded fell straight through to the error toast.)
+        const isTransient =
           code === "functions/internal" ||
           code === "internal" ||
+          code === "functions/deadline-exceeded" ||
+          code === "deadline-exceeded" ||
+          code === "functions/unavailable" ||
+          code === "unavailable" ||
           msg.toUpperCase().includes("INTERNAL");
-        if (!isColdStart) throw err;
+        if (!isTransient) throw err;
         await new Promise((r) => setTimeout(r, 1200));
         await callCF();
       }
 
-      // Data is saved server-side. Update local state to trigger router transition.
-      // Try Firestore write first; if rules block it, the CF already
-      // persisted everything — toast the user before reloading so they
-      // don't see a silent app refresh. Sprint 2: previously this
-      // called window.location.reload() with no toast which read as
-      // the app crashing.
+      // Data is saved server-side (the CF flipped onboardingComplete=true
+      // via the Admin SDK). Mirror it into local state so App.tsx switches
+      // to the authenticated route set WITHOUT a reload. If that local
+      // write fails for ANY reason, the SERVER is already authoritative —
+      // reload to pick up the completed profile instead of stranding the
+      // user on onboarding.
+      //
+      // CRITICAL: pass `throwOnError` so a failed write actually throws.
+      // Without it, updateProfile returns `{ ok: false }` (and shows its
+      // own toast), the optimistic setProfile never runs, and the old
+      // `catch` here never fired — so navigate("/") below landed straight
+      // back on Onboarding (onboardingComplete still locally false). That
+      // was the "Start my program just loads and won't progress" hang.
       try {
-        await updateProfile(
+        const res = await updateProfile(
           { onboardingComplete: true } as Partial<UserProfile>,
-          { allowProtected: true }
+          { allowProtected: true, throwOnError: true }
         );
+        if (!res.ok)
+          throw res.error ?? new Error("local-profile-update-failed");
       } catch (localUpdateErr) {
         logger.warn(
           "Onboarding: local profile update failed; reloading to pick up server state",
@@ -710,7 +733,9 @@ export default function Onboarding() {
         toast.success("Setting up your program…");
         // Brief delay so the toast renders before the reload swallows it.
         await new Promise((r) => setTimeout(r, 600));
-        window.location.reload();
+        // Reload to the app root (basename-aware) so we re-read the
+        // server's completed profile and land on Home, not back here.
+        window.location.assign(import.meta.env.BASE_URL || "/");
         return;
       }
 
