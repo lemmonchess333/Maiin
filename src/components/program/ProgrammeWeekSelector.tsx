@@ -193,18 +193,27 @@ export default function ProgrammeWeekSelector({
               className="flex items-center justify-center min-w-[44px] min-h-[44px]"
               style={{ width: 52, height: 52 }}
             >
+              {/* Colour/border props live in `style`, not `animate`
+                  (audit batch 4): Motion cannot tween "transparent" ↔
+                  hsl(var(--…)) or the implicit "medium" borderWidth ↔ a
+                  number, and warned at runtime on every state change.
+                  The discrete swap is imperceptible under the size +
+                  glow tween that remains, and CSS variables stay
+                  theme-correct in both light and dark. */}
               <motion.div
                 className="flex items-center justify-center rounded-full"
                 animate={{
                   width: diameter,
                   height: diameter,
-                  backgroundColor: fill,
-                  borderColor: bColor,
-                  borderWidth: bWidth,
                   boxShadow: glow ?? "0 0 0 0 transparent",
                 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                style={{ borderStyle: "solid" }}
+                style={{
+                  borderStyle: "solid",
+                  borderWidth: bWidth,
+                  borderColor: bColor,
+                  backgroundColor: fill,
+                }}
               >
                 {content}
               </motion.div>

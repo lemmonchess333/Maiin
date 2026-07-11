@@ -217,6 +217,7 @@ export default function DayActionSheet({
       open={open}
       onOpenChange={(o) => !o && onClose()}
       title={`Manage ${dayLabel}`}
+      description="Start, swap, or complete this day's sessions."
       hideHeader
     >
       <div className="px-5 pb-6 pt-3 space-y-4">
