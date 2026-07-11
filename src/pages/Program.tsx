@@ -12,6 +12,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
+import BlueprintLibrarySection from "@/components/program/BlueprintLibrarySection";
 import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
@@ -1388,6 +1389,11 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
       )}
 
       {activeTab === "lift" && <SavedRoutinesSection />}
+
+      {/* ROUTINE-EXCHANGE-01 — curated blueprint shelf. Read-only
+          intents; saving creates a private routine copy, never a
+          programme change. */}
+      {activeTab === "lift" && <BlueprintLibrarySection />}
 
       {/* Section-Split: focused "Edit lift plan" entry — mirrors the Run
           tab's "Edit run plan ›" footer. Deep-links to the lift-only editor
