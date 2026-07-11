@@ -400,6 +400,6 @@ step and stays with the operator.
 | F9  | Un-scoped always-share preference                  | Low             | **REMEDIATED**                    | uid-scoped key — PR #1533 (`0ecf52b0`)                                                                                                                                                    | unit suite                                                  | web deploy (Hosting) green              | Negligible                                                                 |
 
 **Net open items: F4 (deferred to RevenueCat slice-3), F7 (accepted until
-slice-3 — its named fix), F8 (small executor sweep, still to do).** The
+slice-3 — its named fix). F8 remediated 2026-07-11 (see row).** The
 RevenueCat slice-3 must-get-right gate (9 items) remains the controlling
 document for F4/F7 closure and is unchanged.

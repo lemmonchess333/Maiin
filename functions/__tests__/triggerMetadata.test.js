@@ -48,7 +48,7 @@ const EXPECTED = {
   deleteMyAccount: {
     kind: "callable",
     maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
+    secrets: ["BILLING_HMAC_SECRET", "STRIPE_SECRET_KEY"],
   },
   completeOnboarding: {
     kind: "callable",
