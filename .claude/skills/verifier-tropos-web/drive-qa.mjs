@@ -28,9 +28,9 @@ const OUT = join(__dirname, "out-qa");
 const SCREENS = join(OUT, "screenshots");
 mkdirSync(SCREENS, { recursive: true });
 
-const BASE = process.env.BASE_URL || "http://localhost:4173/Maiin/";
+import { BASE } from "./env.mjs";
 const EMAIL = process.env.TEST_EMAIL || "e2e-test@tropos.test";
-const PW = process.env.TEST_PASSWORD || "test-password-123";
+import { PW } from "./env.mjs";
 const CHROMIUM_PATH =
   process.env.CHROMIUM_PATH ||
   "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
