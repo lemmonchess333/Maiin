@@ -64,6 +64,10 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // separate server concern (needs a collectionGroup query) owned by
   // the Goal Space callables slice.
   "journeys",
+  // Weekly nutrition-consistency commitments
+  // (users/{uid}/nutritionCommitments, NUTR-CONSISTENCY-01).
+  // Enumerate-not-recurse, same as checkins.
+  "nutritionCommitments",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
