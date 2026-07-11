@@ -39,7 +39,13 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // the restricted-user marker cleanup.
 // SOCIAL S3 bumped to 42 — added partnerBondsMember entry for the
 // partner-streak bond cleanup (cross-user edge, deleteQueryInBatches).
-export const EXPECTED_INCLUDED_COUNT = 42;
+// GOALS-CORE-01 cleanup bumped to 46 — userJourneys +
+// userNutritionCommitments (both were already swept by the executor
+// but undocumented in the inventory) plus goalSpaceMemberships +
+// goalSpaceEventsAuthored (executor step goal_spaces,
+// lib/goalSpaceCleanup — the membership/counter/event cleanup the
+// foundation PR #1545 deferred).
+export const EXPECTED_INCLUDED_COUNT = 46;
 export const EXPECTED_EXCLUDED_COUNT = 7;
 
 describe("inventory counts are programmatically guarded", () => {
