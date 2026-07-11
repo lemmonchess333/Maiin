@@ -72,6 +72,7 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/checkins/{weekKey}",
   "match /users/{uid}/trainingBlocks/{blockId}",
   "match /users/{uid}/journeys/{journeyId}",
+  "match /users/{uid}/nutritionCommitments/{weekKey}",
   "match /goalSpaces/{spaceId}/events/{eventId}",
   "match /users/{uid}/errors/{doc}",
   "match /feeds/{uid}/items/{doc}",
@@ -286,7 +287,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 34 (GOALS-CORE-01 added journeys + events)", () => {
+  it("authoritative count is 35 (NUTR-CONSISTENCY-01 added nutritionCommitments)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -304,8 +305,10 @@ describe("Blocker E — path-count reconciliation", () => {
     // GOALS-CORE-01 added /users/{uid}/journeys/{journeyId} (owner-only,
     // freeze via isOwnerAndNotDeleting) and the member-only, allowlisted
     // /goalSpaces/{spaceId}/events/{eventId} create path, → 34.
+    // NUTR-CONSISTENCY-01 added /users/{uid}/nutritionCommitments/{weekKey}
+    // (owner-only weekly logging commitment), → 35.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(34);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(35);
   });
 });
