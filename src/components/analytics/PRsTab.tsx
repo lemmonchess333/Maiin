@@ -227,7 +227,7 @@ export default function PRsTab({
           <div className="flex gap-2 justify-center pt-1">
             <Link
               to="/run"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-running"
+              className="min-h-[44px] px-4 rounded-xl text-xs font-semibold text-white bg-running inline-flex items-center"
             >
               <Footprints
                 className="size-3.5 inline-block mr-1"
@@ -237,7 +237,7 @@ export default function PRsTab({
             </Link>
             <Link
               to="/program"
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-lifting"
+              className="min-h-[44px] px-4 rounded-xl text-xs font-semibold text-white bg-lifting inline-flex items-center"
             >
               Start Lift
             </Link>

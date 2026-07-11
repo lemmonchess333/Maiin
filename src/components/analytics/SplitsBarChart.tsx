@@ -8,6 +8,8 @@ import {
 } from "recharts";
 import type { Split } from "../../lib/gps";
 import { paceLabel } from "../../lib/runLabels";
+import { THEME } from "@/lib/theme";
+import { CHART_AXIS_TICK } from "./chartStyles";
 
 interface SplitsBarChartProps {
   splits: Split[];
@@ -18,7 +20,7 @@ interface SplitsBarChartProps {
 export default function SplitsBarChart({
   splits,
   avgPaceSeconds,
-  accentColor = "#00D4AA",
+  accentColor = THEME.teal,
 }: SplitsBarChartProps) {
   if (splits.length === 0) return null;
 
@@ -36,7 +38,7 @@ export default function SplitsBarChart({
     <div className="p-4 rounded-2xl bg-card">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-foreground">Splits</h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs font-mono tabular-nums text-muted-foreground">
           avg {paceLabel(avgPaceSeconds)}
         </p>
       </div>
@@ -45,7 +47,7 @@ export default function SplitsBarChart({
         <BarChart data={data} barCategoryGap="20%">
           <XAxis
             dataKey="km"
-            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.3 }}
+            tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
           />

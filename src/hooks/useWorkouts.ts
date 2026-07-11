@@ -81,7 +81,10 @@ export interface Workout {
  *  this for the burn formula but does NOT persist it, so consumers derive it
  *  from `exercises` (correct for every doc, old and new). */
 export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
-  return workout.exercises.reduce(
+  // Defensive `?? []`: legacy docs can miss `exercises` entirely; the
+  // guarded per-set multiply already tolerates missing weight/reps, so
+  // the container should tolerate a missing list the same way.
+  return (workout.exercises ?? []).reduce(
     (t, ex) =>
       t +
       (ex.sets ?? []).reduce(

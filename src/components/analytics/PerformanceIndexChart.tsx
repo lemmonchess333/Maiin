@@ -12,7 +12,11 @@ import {
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import { THEME } from "@/lib/theme";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
-import { CHART_TOOLTIP_STYLE } from "./chartStyles";
+import {
+  CHART_TOOLTIP_STYLE,
+  CHART_GRID_PROPS,
+  CHART_AXIS_TICK,
+} from "./chartStyles";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -51,7 +55,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
         <h3 className="text-sm font-semibold text-foreground">
           Performance Index
         </h3>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs font-mono tabular-nums text-muted-foreground">
           0–100 · last {data.length}w
         </span>
       </div>
@@ -89,11 +93,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             </linearGradient>
           </defs>
 
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            vertical={false}
-          />
+          <CartesianGrid {...CHART_GRID_PROPS} />
 
           {/* Zone reference lines */}
           <ReferenceLine
@@ -111,7 +111,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.3 }}
+            tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v: string | number) => {
@@ -125,7 +125,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
           <YAxis
             domain={[0, 100]}
             ticks={[0, 25, 50, 75, 100]}
-            tick={{ fontSize: 10, fill: "currentColor", opacity: 0.2 }}
+            tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
             width={28}

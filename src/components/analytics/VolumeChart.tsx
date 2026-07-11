@@ -10,7 +10,13 @@ import {
 } from "recharts";
 import { formatBinLabel, type ChartGranularity } from "@/lib/chartGranularity";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
-import { CHART_TOOLTIP_STYLE } from "./chartStyles";
+import {
+  CHART_TOOLTIP_STYLE,
+  CHART_GRID_PROPS,
+  CHART_AXIS_TICK,
+} from "./chartStyles";
+import { THEME } from "@/lib/theme";
+import { abbreviateK } from "@/utils/formatters";
 
 interface VolumeChartProps {
   data: { week: string; volume: number }[];
@@ -22,7 +28,7 @@ interface VolumeChartProps {
 
 export default function VolumeChart({
   data,
-  accentColor = "#6B74E0",
+  accentColor = THEME.lifting,
   granularity = "weekly",
 }: VolumeChartProps) {
   return (
@@ -90,28 +96,24 @@ export default function VolumeChart({
               });
             }}
           >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
-              vertical={false}
-            />
+            <CartesianGrid {...CHART_GRID_PROPS} />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 10, fill: "currentColor", opacity: 0.3 }}
+              tick={CHART_AXIS_TICK}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) => formatBinLabel(String(v), granularity)}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "currentColor", opacity: 0.2 }}
+              tick={CHART_AXIS_TICK}
               axisLine={false}
               tickLine={false}
               width={35}
-              tickFormatter={(v) =>
-                Number(v) >= 1000
-                  ? `${(Number(v) / 1000).toFixed(0)}k`
-                  : String(v)
-              }
+              /* abbreviateK keeps the axis on the SAME 1-decimal
+                 precision as the tooltip below — the old 0-decimal
+                 axis labelled a 1500 kg gridline "2k" while the
+                 tooltip said "1.5k kg" for the same value. */
+              tickFormatter={(v) => abbreviateK(Number(v))}
             />
             <Tooltip
               contentStyle={CHART_TOOLTIP_STYLE}
@@ -119,10 +121,7 @@ export default function VolumeChart({
               formatter={(value) => {
                 const n =
                   typeof value === "number" ? value : Number(value ?? 0);
-                const display =
-                  n >= 1000
-                    ? `${(n / 1000).toFixed(1)}k kg`
-                    : `${Math.round(n)} kg`;
+                const display = `${abbreviateK(n)} kg`;
                 return [display, "Volume"] as [string, string];
               }}
               cursor={{ fill: "currentColor", fillOpacity: 0.05 }}
