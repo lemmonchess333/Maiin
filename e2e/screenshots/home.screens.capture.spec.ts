@@ -16,7 +16,11 @@ import { emulatorActive } from "../helpers/emulator";
 
 // iPhone-15-ish portrait. Overrides the auth-emulator project's desktop
 // viewport while keeping its bypassCSP (needed for the emulator).
-test.use({ viewport: { width: 393, height: 852 } });
+test.use({
+  viewport: { width: 393, height: 852 },
+  // TEMP-LOCAL-DEBUG: sandbox chromium override — do not commit.
+  launchOptions: { executablePath: "/opt/pw-browsers/chromium" },
+});
 
 test.describe("app screenshots", () => {
   test.skip(
@@ -25,6 +29,13 @@ test.describe("app screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // TEMP-LOCAL-DEBUG: pipe interesting page console lines — do not commit.
+    page.on("console", (msg) => {
+      const text = msg.text();
+      if (/trainingBlock|nutritionConsistency|permission|denied/i.test(text)) {
+        console.log(`[page:${msg.type()}] ${text.slice(0, 300)}`);
+      }
+    });
     // Pre-dismiss first-use coachmarks (useCoachMarks localStorage flags) so
     // floating tooltips don't occlude the surfaces under review — the Social
     // invite coachmark was covering the card copy in every People-tab capture.
