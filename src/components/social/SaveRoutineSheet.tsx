@@ -6,7 +6,12 @@ import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
-import { saveRoutine, type SavedRoutineExercise } from "@/lib/savedRoutines";
+import {
+  saveRoutine,
+  isExternalRoutineSource,
+  redactExternalRoutineExercises,
+  type SavedRoutineExercise,
+} from "@/lib/savedRoutines";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
@@ -122,6 +127,16 @@ export default function SaveRoutineSheet({
   const navigate = useNavigate();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
+  /* Structure-only external saves: the preview must show what will
+     actually be saved. Saving ANOTHER member's workout blanks their
+     working weights (the lib redacts on write too — this keeps the sheet
+     honest); saving your own keeps your loads. */
+  const external = isExternalRoutineSource(user?.uid ?? "", sourceAuthorId);
+  const previewExercises = redactExternalRoutineExercises(
+    user?.uid ?? "",
+    sourceAuthorId,
+    exercises
+  );
   /* `saved` holds the post-success state for ~600ms so the sheet flashes
      a "Saved" affordance on the primary button before closing. Without
      it the sheet snapped shut the moment the Firestore write resolved
@@ -215,10 +230,10 @@ export default function SaveRoutineSheet({
                 "+ N more" below the visible six. */}
         <div className="space-y-1.5">
           <p className="text-xs font-medium text-muted-foreground">
-            Exercises ({exercises.length})
+            Exercises ({previewExercises.length})
           </p>
           <div className="rounded-xl bg-muted/40 p-3 space-y-1.5">
-            {exercises.slice(0, 6).map((ex, i) => (
+            {previewExercises.slice(0, 6).map((ex, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between gap-2 text-sm"
@@ -234,12 +249,17 @@ export default function SaveRoutineSheet({
                 </span>
               </div>
             ))}
-            {exercises.length > 6 && (
+            {previewExercises.length > 6 && (
               <p className="text-xs text-muted-foreground/70 pt-1">
-                + {exercises.length - 6} more
+                + {previewExercises.length - 6} more
               </p>
             )}
           </div>
+          {external && (
+            <p className="text-xs text-muted-foreground">
+              Saves the structure only — your own history sets the weights.
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2 pt-1">
