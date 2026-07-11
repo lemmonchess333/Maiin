@@ -58,6 +58,28 @@ function buildStreakNudgeMessage() {
 }
 
 /**
+ * The first-week return-nudge FCM message (D-1 day-1→day-2 fix). DATA-ONLY
+ * (see buildStreakNudgeMessage). Sent at most ONCE EVER per user, the day
+ * after their first (or an isolated) log day, below the `>= 2` streak floor.
+ * Deliberately calm — no streak framing, no loss language: at streak 0–1
+ * there is nothing to lose yet, and daily-alarm anxiety is exactly what the
+ * weekly-cadence streak philosophy avoids. Generic copy (Q7 — no counts /
+ * health data on the lock screen).
+ *
+ * @returns {{ data: { type: string, route: string, title: string, body: string } }}
+ */
+function buildFirstWeekNudgeMessage() {
+  return {
+    data: {
+      type: "streak",
+      route: "/",
+      title: "Yesterday was a good start 💪",
+      body: "A quick log today keeps it going.",
+    },
+  };
+}
+
+/**
  * The badge-earned FCM message. DATA-ONLY (see buildStreakNudgeMessage). Badge
  * NAMES are deliberately omitted — names like "Month Master" / "Week Warrior"
  * encode a streak threshold, which would leak a streak count onto the lock
@@ -120,6 +142,7 @@ module.exports = {
   tokensToPrune,
   PRUNE_ERROR_CODES,
   buildStreakNudgeMessage,
+  buildFirstWeekNudgeMessage,
   buildBadgeNudgeMessage,
   buildWeeklyRecapMessage,
   buildFellBehindRecapMessage,

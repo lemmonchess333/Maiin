@@ -3,7 +3,11 @@
  * Pure eligibility predicate for the streak-at-risk push.
  */
 import { describe, it, expect } from "vitest";
-import { shouldSendStreakNudge, localDateKeyInTz } from "../lib/streakNudge";
+import {
+  shouldSendStreakNudge,
+  shouldSendFirstWeekNudge,
+  localDateKeyInTz,
+} from "../lib/streakNudge";
 
 // 20:00 UTC on 2026-06-01 → still 2026-06-01 local in London (UTC+1) and LA (UTC-7).
 const NOW = new Date("2026-06-01T20:00:00Z");
@@ -70,6 +74,100 @@ describe("shouldSendStreakNudge", () => {
         NOW
       )
     ).toBe(true);
+  });
+});
+
+// First-week return nudge (D-1 day-1→day-2 fix). NOW is 2026-06-01 local in
+// London; "yesterday" is 2026-05-31.
+function fwBase(over = {}) {
+  return {
+    currentStreak: 1,
+    remindersOptedIn: true,
+    timezone: "Europe/London",
+    activeDateKeys: ["2026-05-31"], // logged yesterday, not today
+    lastNudgeDateKey: null,
+    firstWeekNudgeDateKey: null,
+    ...over,
+  };
+}
+
+describe("shouldSendFirstWeekNudge", () => {
+  it("day-2 base case → true (logged yesterday, not today, streak 1, never sent)", () => {
+    expect(shouldSendFirstWeekNudge(fwBase(), NOW)).toBe(true);
+  });
+
+  it("not opted in → false (consent gate is absolute)", () => {
+    expect(
+      shouldSendFirstWeekNudge(fwBase({ remindersOptedIn: false }), NOW)
+    ).toBe(false);
+  });
+
+  it("already sent once → false forever (once-EVER marker, any date)", () => {
+    expect(
+      shouldSendFirstWeekNudge(
+        fwBase({ firstWeekNudgeDateKey: "2026-01-15" }),
+        NOW
+      )
+    ).toBe(false);
+  });
+
+  it("streak at/above the regular floor → false (disjoint with shouldSendStreakNudge)", () => {
+    expect(shouldSendFirstWeekNudge(fwBase({ currentStreak: 2 }), NOW)).toBe(
+      false
+    );
+    expect(shouldSendFirstWeekNudge(fwBase({ currentStreak: 5 }), NOW)).toBe(
+      false
+    );
+  });
+
+  it("streak 0 with a yesterday log still sends (grace/rounding can zero a 1-day streak)", () => {
+    expect(shouldSendFirstWeekNudge(fwBase({ currentStreak: 0 }), NOW)).toBe(
+      true
+    );
+  });
+
+  it("timezone null/invalid → false (skip-on-null invariant)", () => {
+    expect(shouldSendFirstWeekNudge(fwBase({ timezone: null }), NOW)).toBe(
+      false
+    );
+    expect(
+      shouldSendFirstWeekNudge(fwBase({ timezone: "Not/AZone" }), NOW)
+    ).toBe(false);
+  });
+
+  it("already logged today → false (they came back on their own)", () => {
+    expect(
+      shouldSendFirstWeekNudge(
+        fwBase({ activeDateKeys: ["2026-05-31", "2026-06-01"] }),
+        NOW
+      )
+    ).toBe(false);
+  });
+
+  it("no log yesterday → false (never an acquisition ping)", () => {
+    expect(shouldSendFirstWeekNudge(fwBase({ activeDateKeys: [] }), NOW)).toBe(
+      false
+    );
+    // A log two days ago doesn't qualify either — the nudge is anchored to
+    // the morning-after, not to "some past activity".
+    expect(
+      shouldSendFirstWeekNudge(fwBase({ activeDateKeys: ["2026-05-30"] }), NOW)
+    ).toBe(false);
+  });
+
+  it("already nudged today (e.g. recap suppression marker) → false (≤1 push/day)", () => {
+    expect(
+      shouldSendFirstWeekNudge(fwBase({ lastNudgeDateKey: "2026-06-01" }), NOW)
+    ).toBe(false);
+  });
+
+  it("is disjoint with the regular nudge on the same input", () => {
+    // Below the floor: first-week may fire, regular never.
+    expect(shouldSendStreakNudge(fwBase(), NOW)).toBe(false);
+    // At/above the floor: regular may fire, first-week never.
+    const above = fwBase({ currentStreak: 2 });
+    expect(shouldSendFirstWeekNudge(above, NOW)).toBe(false);
+    expect(shouldSendStreakNudge(above, NOW)).toBe(true);
   });
 });
 

@@ -76,8 +76,68 @@ function shouldSendStreakNudge(input, nowUtc) {
   return true;
 }
 
+/**
+ * First-week return nudge (D-1, frontend-design-principles-2026-07) — the
+ * day-1 → day-2 gap fix. The regular streak nudge is floored at
+ * `currentStreak >= 2` (deliberate: loss aversion needs something to lose),
+ * which leaves a brand-new user who logs once and closes the app with NO
+ * return trigger at the exact moment the habit doesn't exist yet. This
+ * predicate fills that gap with ONE calm nudge — not a daily alarm:
+ *
+ * Send iff ALL hold:
+ *   - reminders opted in (consent gate stays absolute)
+ *   - NEVER sent before (`firstWeekNudgeDateKey` is a once-EVER marker,
+ *     not once-per-day — the anti-anxiety cadence is the point)
+ *   - currentStreak < 2 (at >= 2 the regular streak nudge owns the surface;
+ *     the two predicates are disjoint by construction)
+ *   - timezone known (same skip-on-null invariant)
+ *   - active YESTERDAY but not today — i.e. exactly the morning-after of a
+ *     first (or isolated) log day. This is what makes it a day-2 RETURN
+ *     trigger rather than an acquisition ping: a user who never logged
+ *     anything is never targeted.
+ *   - not already nudged today (≤1 push/day, shared marker with the
+ *     regular nudge + recap suppression)
+ *
+ * Hour-bucketing (~19:00 local) stays the cron's job, as with
+ * shouldSendStreakNudge.
+ */
+function shouldSendFirstWeekNudge(input, nowUtc) {
+  const {
+    currentStreak = 0,
+    remindersOptedIn = false,
+    timezone = null,
+    activeDateKeys = [],
+    lastNudgeDateKey = null,
+    firstWeekNudgeDateKey = null,
+  } = input || {};
+
+  if (!remindersOptedIn) return false;
+  if (firstWeekNudgeDateKey) return false; // once EVER
+  if (currentStreak >= STREAK_NUDGE_MIN_STREAK) return false; // regular nudge owns >= 2
+
+  const localToday = localDateKeyInTz(nowUtc, timezone);
+  if (!localToday) return false; // skip-on-null-tz invariant
+
+  if (activeDateKeys.includes(localToday)) return false; // already logged today
+  if (lastNudgeDateKey === localToday) return false; // already nudged today
+
+  // Day-2 anchor: active yesterday (their first / isolated log day). The
+  // "now - 24h formatted in tz" shape stays on the previous local calendar
+  // day across DST shifts at any daytime send hour.
+  const localYesterday = localDateKeyInTz(
+    new Date(nowUtc.getTime() - 86400000),
+    timezone
+  );
+  if (!localYesterday || !activeDateKeys.includes(localYesterday)) {
+    return false;
+  }
+
+  return true;
+}
+
 module.exports = {
   shouldSendStreakNudge,
+  shouldSendFirstWeekNudge,
   localDateKeyInTz,
   STREAK_NUDGE_MIN_STREAK,
 };
