@@ -18,25 +18,10 @@
 import { isNativePlatform } from "./platform";
 import { nativeLocationSource } from "./nativeLocationSource";
 
-/** Handle to an active watch; `clear()` stops it (web: clearWatch). */
-export interface LocationWatch {
-  clear(): void;
-}
-
-export interface LocationSource {
-  /** One-shot fix (used to pre-warm the GPS chipset before watching). */
-  getCurrent(
-    options: PositionOptions,
-    onFix: PositionCallback,
-    onError: PositionErrorCallback
-  ): void;
-  /** Continuous fixes until the returned handle is cleared. */
-  watch(
-    options: PositionOptions,
-    onFix: PositionCallback,
-    onError: PositionErrorCallback
-  ): LocationWatch;
-}
+/* Contracts live in locationTypes.ts (audit batch 3 cycle break) —
+   imported for local use, re-exported for existing importers. */
+import type { LocationSource } from "./locationTypes";
+export type { LocationSource, LocationWatch } from "./locationTypes";
 
 /**
  * Web Geolocation source — a thin pass-through over `navigator.geolocation`.

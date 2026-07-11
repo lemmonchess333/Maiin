@@ -22,7 +22,16 @@ import { useAuth } from "@/lib/auth";
 import { safeMerge } from "@/lib/offlineQueue";
 import { parseDailyLog } from "@/lib/firestoreGuards";
 import { logger } from "@/lib/logger";
-import type { DailyLog } from "@/hooks/useFirestore";
+export interface DailyLog {
+  id: string;
+  date: string; // YYYY-MM-DD
+  workouts: number;
+  meals: number;
+  hasPR: boolean;
+  weightKg?: number;
+  notes: string;
+  createdAt: Timestamp;
+}
 
 /**
  * Single authoritative subscription on `users/{uid}/logs`, last 90 days
