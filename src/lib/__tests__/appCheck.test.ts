@@ -1,3 +1,4 @@
+// @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 /**
  * Unit tests for App Check initialisation.
  *
@@ -100,7 +101,8 @@ beforeEach(() => {
   customProviderMock.mockReset();
   isNativePlatformMock.mockReset();
   // Clear the debug-token globals that one test sets.
-  delete (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN;
+  delete (self as unknown as Record<string, unknown>)
+    .FIREBASE_APPCHECK_DEBUG_TOKEN;
   // Default env: site key absent so web tests can opt-in explicitly.
   setEnv({
     VITE_RECAPTCHA_V3_SITE_KEY: undefined,
@@ -146,9 +148,8 @@ describe("initAppCheck — native routing", () => {
 
   it("does NOT construct a ReCaptchaV3Provider on the native path", async () => {
     initializeAppCheckMock.mockReturnValue({});
-    const { initAppCheck, setNativeAppCheckProvider } = await import(
-      "../appCheck"
-    );
+    const { initAppCheck, setNativeAppCheckProvider } =
+      await import("../appCheck");
     setNativeAppCheckProvider(() => ({ __kind: "custom" }) as never);
     initAppCheck(fakeApp);
     expect(reCaptchaV3ProviderMock).not.toHaveBeenCalled();
@@ -199,7 +200,9 @@ describe("initAppCheck — web routing", () => {
     const [appArg, options] = initializeAppCheckMock.mock.calls[0];
     expect(appArg).toBe(fakeApp);
     expect(options).toMatchObject({ isTokenAutoRefreshEnabled: true });
-    expect((options.provider as { __kind?: string }).__kind).toBe("recaptcha-v3");
+    expect((options.provider as { __kind?: string }).__kind).toBe(
+      "recaptcha-v3"
+    );
     expect(isAppCheckActive()).toBe(true);
   });
 
@@ -215,7 +218,7 @@ describe("initAppCheck — web routing", () => {
 
     expect(
       (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string })
-        .FIREBASE_APPCHECK_DEBUG_TOKEN,
+        .FIREBASE_APPCHECK_DEBUG_TOKEN
     ).toBe("debug-token-zzz");
   });
 
@@ -228,7 +231,7 @@ describe("initAppCheck — web routing", () => {
 
     expect(
       (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string })
-        .FIREBASE_APPCHECK_DEBUG_TOKEN,
+        .FIREBASE_APPCHECK_DEBUG_TOKEN
     ).toBeUndefined();
   });
 

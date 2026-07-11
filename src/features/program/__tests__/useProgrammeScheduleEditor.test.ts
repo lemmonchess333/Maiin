@@ -1,3 +1,4 @@
+// @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 /**
  * P0-7: pins the schedule-editor behaviour extracted from Settings.tsx.
  *
@@ -33,20 +34,23 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 const okResult: UpdateProfileResult = { ok: true } as UpdateProfileResult;
 
 function makeArgs(profileOverrides: Partial<UserProfile> = {}) {
-  const updateProfile = vi.fn<(data: Partial<UserProfile>, opts?: unknown) => Promise<UpdateProfileResult>>(
-    async () => okResult,
-  );
+  const updateProfile = vi.fn<
+    (data: Partial<UserProfile>, opts?: unknown) => Promise<UpdateProfileResult>
+  >(async () => okResult);
   // PR-0b-ii: refreshRunSchedule now accepts optional overrides.
   // Mock signature widens to match so apply-path assertions can
   // inspect the schedule arg.
   const refreshRunSchedule = vi.fn<
-    (overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }) => Promise<void>
+    (overrides?: {
+      weekSchedule?: ScheduleDay[];
+      weeklyRunDaysTarget?: number;
+    }) => Promise<void>
   >(async () => {});
   const regenerateProgram = vi.fn<
     (
       goalOverride?: string,
       weeklyTargetOverride?: number,
-      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number },
+      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
     ) => Promise<void>
   >(async () => {});
   return {
@@ -100,16 +104,24 @@ describe("useProgrammeScheduleEditor — handleDayToggle", () => {
     const dayIdx = restDay!.day;
 
     act(() => result.current.handleDayToggle(dayIdx));
-    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe("lift");
+    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe(
+      "lift"
+    );
 
     act(() => result.current.handleDayToggle(dayIdx));
-    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe("run");
+    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe(
+      "run"
+    );
 
     act(() => result.current.handleDayToggle(dayIdx));
-    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe("both");
+    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe(
+      "both"
+    );
 
     act(() => result.current.handleDayToggle(dayIdx));
-    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe("rest");
+    expect(result.current.schedule.find((d) => d.day === dayIdx)!.type).toBe(
+      "rest"
+    );
   });
 
   it("re-counts lift + run targets after every cycle", () => {
@@ -123,7 +135,11 @@ describe("useProgrammeScheduleEditor — handleDayToggle", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "rest" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 2, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 2,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     // Day 6 is rest → cycling once makes it lift; lift count → 3.
     act(() => result.current.handleDayToggle(6));
@@ -168,7 +184,11 @@ describe("useProgrammeScheduleEditor — handleApplyScheduleChanges", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "lift" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     await act(async () => {
       await result.current.handleApplyScheduleChanges();
@@ -188,7 +208,11 @@ describe("useProgrammeScheduleEditor — handleApplyScheduleChanges", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "lift" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     // Cycle day 5 (rest) → lift → lift count goes 3 → 4.
     act(() => result.current.handleDayToggle(5));
@@ -241,7 +265,11 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "lift" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     act(() => result.current.handleDayToggle(5)); // rest → lift → 4 lift days
     await act(async () => {
@@ -273,7 +301,11 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
       { day: 5, type: "rest" },
       { day: 6, type: "lift" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     act(() => result.current.handleDayToggle(5));
     await act(async () => {
@@ -323,8 +355,8 @@ describe("PR-0b-ii — apply uses the confirmed schedule, not stale profile.week
     // through rest→lift (4 lift) → restructure. So instead we
     // start with a schedule that has 0 run days and toggle a rest
     // day twice to land on run (lift count unchanged).
-    act(() => result.current.handleDayToggle(0));   // rest → lift
-    act(() => result.current.handleDayToggle(0));   // lift → run
+    act(() => result.current.handleDayToggle(0)); // rest → lift
+    act(() => result.current.handleDayToggle(0)); // lift → run
     // Now schedule has 3 lift + 1 run + 3 rest, same lift count
     // (3) → apply path, not restructure.
 
@@ -359,7 +391,11 @@ describe("PR-0b-ii — restructure no longer triggers redundant refreshRunSchedu
       { day: 5, type: "rest" },
       { day: 6, type: "lift" },
     ];
-    const args = makeArgs({ weekSchedule: ws, weeklyWorkoutsTarget: 3, weeklyRunDaysTarget: 2 });
+    const args = makeArgs({
+      weekSchedule: ws,
+      weeklyWorkoutsTarget: 3,
+      weeklyRunDaysTarget: 2,
+    });
     const { result } = renderHook(() => useProgrammeScheduleEditor(args));
     act(() => result.current.handleDayToggle(5)); // bump to 4 lift days
     await act(async () => {
@@ -399,7 +435,7 @@ describe("useProgrammeScheduleEditor — PR-2 zero-as-zero", () => {
     // asserting the new value surfaces.
     const argsA = makeArgs({ weeklyRunDaysTarget: 0, weeklyRunsTarget: 0 });
     const { result: resultA, unmount } = renderHook(() =>
-      useProgrammeScheduleEditor(argsA),
+      useProgrammeScheduleEditor(argsA)
     );
     expect(resultA.current.runsTarget).toBe(0);
     unmount();
@@ -408,7 +444,7 @@ describe("useProgrammeScheduleEditor — PR-2 zero-as-zero", () => {
     // ran a save). Next mount must reflect it.
     const argsB = makeArgs({ weeklyRunDaysTarget: 3, weeklyRunsTarget: 3 });
     const { result: resultB } = renderHook(() =>
-      useProgrammeScheduleEditor(argsB),
+      useProgrammeScheduleEditor(argsB)
     );
     expect(resultB.current.runsTarget).toBe(3);
   });
