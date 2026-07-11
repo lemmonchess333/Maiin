@@ -288,6 +288,19 @@ export default function WeeklyReview() {
                     )}
                   </div>
                 </div>
+                {/* BODY-VAULT-01 — private handoff into the Progress Vault
+                    on the owner's profile. Plain navigation: carries no
+                    number, photo, note or body value. */}
+                {user && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/user/${user.uid}`)}
+                    className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-primary"
+                  >
+                    <span>Progress Vault</span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                )}
               </div>
             )}
           </>

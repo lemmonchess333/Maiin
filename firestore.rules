@@ -951,6 +951,16 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: Progress Vault check-ins (BODY-VAULT-01) —
+    // owner-only date/note/photo-reference groupings over the owner-only
+    // progressPhotos above. Never readable by another account; no social
+    // surface reads a check-in, and any future milestone share is a
+    // separate summary-only event, never this doc.
+    match /users/{uid}/progressCheckins/{doc} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
+
     // User subcollection: GPS privacy zones — owner-only, write-frozen during deletion.
     match /users/{uid}/privacyZones/{doc} {
       allow read: if isOwner(uid);
