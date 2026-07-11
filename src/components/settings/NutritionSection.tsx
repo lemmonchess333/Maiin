@@ -443,12 +443,15 @@ export default function NutritionSection({
 
       {/* Meal logging target */}
       <div>
-        <label className="text-sm text-muted-foreground">
+        <label
+          htmlFor="weekly-meals-target"
+          className="text-sm text-muted-foreground"
+        >
           Weekly meal logging target ({mealsTarget})
         </label>
         <input
+          id="weekly-meals-target"
           type="range"
-          aria-label="Weekly meal logging target"
           min="0"
           max="20"
           value={mealsTarget}
