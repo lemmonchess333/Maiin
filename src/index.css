@@ -1,4 +1,13 @@
-@import "tailwindcss";
+/* Tailwind source scanning is scoped to `src/` (this file's directory).
+   Without source(), v4 auto-detects from the repo root and walks the
+   ~78 MB docs/ tree plus e2e/, scripts/ and functions/ on every build —
+   pure scan waste here, and a build hang on slower disks (2026-07-11
+   repo audit measured 16+ min root-scan builds on cold hardware).
+   index.html lives OUTSIDE src/ and carries real utilities (the a11y
+   skip link), so it is re-included explicitly below. If a class-bearing
+   file is ever added outside src/, it needs its own @source line. */
+@import "tailwindcss" source(".");
+@source "../index.html";
 @import "./styles/tokens.css";
 @import "./styles/components.css";
 @import "./styles/animations.css";

@@ -122,7 +122,15 @@
          worker serves index.html for deep navigations — requested
          /Maiin/user/123/init.js, got the SPA HTML fallback, and threw
          "Unexpected token '<'". The base-absolute path is route-depth
-         independent. -->
+         independent.
+
+         Vite build warning "can't be bundled without type=module" is
+         INTENTIONAL (2026-07-11 repo audit §16): this must stay a
+         classic synchronous script. `type="module"` defers execution
+         past first paint, which reintroduces the light-theme flash the
+         script exists to prevent, and bundling would break the
+         verbatim-copy CSP + service-worker path contract. Do not
+         "fix" the warning. -->
     <script src="%BASE_URL%init.js"></script>
   </head>
   <body>
