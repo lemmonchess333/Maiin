@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 // Recharts' ResponsiveContainer renders nothing at 0x0 in jsdom, and the
 // SVG primitives don't surface their text labels usefully. Mock the chart
@@ -75,7 +76,12 @@ describe("TrendWeight — #984 hide the number", function () {
       hideWeightNumber: false,
       program: { startWeight: 85, goal: "cut" },
     };
-    render(<TrendWeight />);
+    // MemoryRouter: the card now carries the BODY-VAULT-01 vault Link.
+    render(
+      <MemoryRouter>
+        <TrendWeight />
+      </MemoryRouter>
+    );
     await waitFor(function () {
       expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
     });
@@ -89,7 +95,11 @@ describe("TrendWeight — #984 hide the number", function () {
       hideWeightNumber: true,
       program: { startWeight: 85, goal: "cut" },
     };
-    const { container } = render(<TrendWeight />);
+    const { container } = render(
+      <MemoryRouter>
+        <TrendWeight />
+      </MemoryRouter>
+    );
 
     await waitFor(function () {
       // Qualitative headline (toward goal, since cut + descending).

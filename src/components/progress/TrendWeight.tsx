@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useAuth } from "@/lib/auth";
 import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
@@ -388,6 +389,18 @@ export function TrendWeight() {
             for projection
           </p>
         )}
+      {/* BODY-VAULT-01 — private handoff into the Progress Vault on the
+          owner's profile. Plain navigation: carries no number, photo,
+          note or body value, and reads the same with hideWeightNumber. */}
+      {user && (
+        <Link
+          to={`/user/${user.uid}`}
+          className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-primary"
+        >
+          <span>Progress Vault</span>
+          <span aria-hidden="true">›</span>
+        </Link>
+      )}
     </div>
   );
 }
