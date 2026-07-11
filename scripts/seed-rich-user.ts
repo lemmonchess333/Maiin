@@ -422,6 +422,55 @@ async function main() {
   for (const [id, docData] of Object.entries(feedActivities)) {
     await db.collection("activities").doc(id).set(docData);
   }
+  // ── Challenge fixtures (Social uplift v2): the Crews-tab challenge
+  //    cards were invisible to the screenshot channel (production
+  //    challenges are materialised by the rolloverChallenges cron,
+  //    which never runs against the emulator). One joined-with-
+  //    progress km challenge (coral accent + tier ladder) and one
+  //    available volume challenge (purple accent + Join CTA) cover
+  //    both card states. ──
+  const in3Weeks = Timestamp.fromDate(new Date(Date.now() + 21 * 86_400e3));
+  const weekAgo = Timestamp.fromDate(new Date(Date.now() - 7 * 86_400e3));
+  await db
+    .collection("challenges")
+    .doc("seed-monthly-km")
+    .set({
+      name: "July Distance Club",
+      description: "Run your way through the month — every eligible km counts.",
+      metric: "total_km",
+      icon: "footprints",
+      tiers: { bronze: 20, silver: 40, gold: 75 },
+      startDate: weekAgo,
+      endDate: in3Weeks,
+      participantCount: 128,
+      season: "Summer",
+    });
+  await db
+    .collection("challenges")
+    .doc("seed-monthly-km")
+    .collection("participants")
+    .doc(uid)
+    .set({
+      currentValue: 26.4,
+      tierAchieved: "bronze",
+      joinedAt: weekAgo,
+      displayName: "E2E Test",
+      uid,
+    });
+  await db
+    .collection("challenges")
+    .doc("seed-monthly-volume")
+    .set({
+      name: "Tonnage Trials",
+      description: "Stack total volume across every lift this month.",
+      metric: "total_volume",
+      icon: "trophy",
+      tiers: { bronze: 20000, silver: 45000, gold: 80000 },
+      startDate: weekAgo,
+      endDate: in3Weeks,
+      participantCount: 84,
+    });
+
   // One follow relationship: Social's solo-first gate (isNewUser =
   // 0 follows + no crew) suppresses the activity list entirely, so
   // without this the seeded cards above never render on any sub-tab.
