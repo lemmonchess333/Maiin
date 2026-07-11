@@ -131,7 +131,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
+      "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
   },
   onChallengeParticipantDeleted: {
     kind: "event",
@@ -139,7 +139,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.delete",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
+      "projects/{project}/databases/(default)/documents/challenges/{challengeId}/participants/{uid}",
   },
   onWorkoutCreated: {
     kind: "event",
@@ -147,7 +147,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/users/{uid}/workouts/{workoutId}",
+      "projects/{project}/databases/(default)/documents/users/{uid}/workouts/{workoutId}",
   },
   onRunCreated: {
     kind: "event",
@@ -155,7 +155,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/users/{uid}/runs/{runId}",
+      "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
   crewWeeklyLeaderboardRollup: {
     kind: "schedule",
@@ -179,7 +179,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/activities/{activityId}",
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
   },
   onCommentCreated: {
     kind: "event",
@@ -187,7 +187,7 @@ const EXPECTED = {
     secrets: [],
     eventType: "providers/cloud.firestore/eventTypes/document.create",
     resource:
-      "projects/tropos-unit-test/databases/(default)/documents/comments/{activityId}/items/{commentId}",
+      "projects/{project}/databases/(default)/documents/comments/{activityId}/items/{commentId}",
   },
   listPendingReports: {
     kind: "callable",
@@ -282,10 +282,16 @@ function endpointSummary(fn) {
     ...(ep.eventTrigger
       ? {
           eventType: ep.eventTrigger.eventType,
+          /* The resource path embeds the ambient GCLOUD_PROJECT (unit
+             runs use tropos-unit-test, the emulator lane demo-tropos) —
+             normalize it so the pin is project-agnostic and asserts the
+             part that matters: the document path. */
           resource:
-            (ep.eventTrigger.eventFilters &&
-              ep.eventTrigger.eventFilters.resource) ||
-            null,
+            (
+              (ep.eventTrigger.eventFilters &&
+                ep.eventTrigger.eventFilters.resource) ||
+              ""
+            ).replace(/^projects\/[^/]+\//, "projects/{project}/") || null,
         }
       : {}),
   };
