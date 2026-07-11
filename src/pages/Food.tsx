@@ -53,6 +53,7 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type {
   PantrySuggestion,
@@ -1813,6 +1814,11 @@ export default function Food() {
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
       <motion.div variants={itemVariant} className="space-y-3">
+        {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
+            commitment + derived progress; the only social affordance
+            is the opt-in constant status line once MET. */}
+        {user && <FoodConsistencyCard uid={user.uid} />}
+
         <FoodTimeline
           meals={visibleTodaysMeals}
           openRowId={openRowId}
