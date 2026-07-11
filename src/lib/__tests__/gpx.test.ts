@@ -1,3 +1,4 @@
+// @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 import { describe, it, expect } from "vitest";
 import { parseGpx, parseGpxName } from "../gpx";
 import { toGPX, type GPSPoint } from "../gps";
