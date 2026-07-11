@@ -29,6 +29,7 @@ import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { getWeekKey } from "@/lib/performanceEngine";
 import { weekBounds } from "@/lib/weeklyReviewViewModel";
 import {
@@ -40,6 +41,14 @@ import {
   type NutritionIntent,
 } from "@/lib/nutritionConsistency";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
+
+/** Compact segment labels — the card copy above carries the "logging
+ *  focus" context, so the control itself stays glanceable at 375px. */
+const INTENT_SHORT: Record<NutritionIntent, string> = {
+  log_3_days: "3 days",
+  log_5_days: "5 days",
+  log_daily: "Every day",
+};
 
 export default function FoodConsistencyCard({ uid }: { uid: string }) {
   const weekKey = getWeekKey(new Date());
@@ -76,8 +85,11 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
             .filter((d): d is string => typeof d === "string")
         );
       } catch (err) {
+        // Read failure → hide the card this session. Leaving the state
+        // `undefined` does that; `parseCommitment(null)` is null — it
+        // would have re-shown the picker and let a fresh save overwrite
+        // a commitment we simply failed to read.
         logger.error("nutritionConsistency: load failed", err);
-        if (!cancelled) setCommitment(parseCommitment(null));
       }
     })();
     return () => {
@@ -161,27 +173,18 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
         </button>
         {picking && (
           <div className="space-y-2">
-            <div className="flex gap-2" role="group" aria-label="Logging focus">
-              {INTENT_OPTIONS.map((o) => (
-                <button
-                  key={o.value}
-                  type="button"
-                  aria-pressed={intent === o.value}
-                  onClick={() => {
-                    haptic("light");
-                    setIntent(o.value);
-                  }}
-                  className={cn(
-                    "flex-1 min-h-[44px] px-2 rounded-xl text-xs font-semibold transition-colors active:scale-[0.97]",
-                    intent === o.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
-                  )}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              options={INTENT_OPTIONS.map((o) => ({
+                value: o.value,
+                label: INTENT_SHORT[o.value],
+              }))}
+              value={intent}
+              onChange={(v) => {
+                haptic("light");
+                setIntent(v);
+              }}
+              ariaLabel="Logging focus"
+            />
             <Button
               className="w-full"
               loading={saving}

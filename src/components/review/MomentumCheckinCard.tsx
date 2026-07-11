@@ -23,6 +23,7 @@ import { haptic } from "@/lib/haptic";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   FEEL_OPTIONS,
   FOCUS_OPTIONS,
@@ -69,9 +70,11 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
         setExisting(snap.exists() ? parseCheckin(snap.data()) : null);
       } catch (err) {
         // Read failure → keep the review calm: hide the card entirely
-        // rather than risk a duplicate-nag or a broken form.
+        // rather than risk a duplicate-nag or a broken form. Leaving the
+        // state `undefined` does exactly that (`parseCheckin(null)` is
+        // null — it would have re-shown the blank questions and let a
+        // resave overwrite an answer we simply failed to read).
         logger.error("momentumCheckin: load failed", err);
-        if (!cancelled) setExisting(parseCheckin(null));
       }
     })();
     return () => {
@@ -172,22 +175,15 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
         />
       </div>
 
-      <div className="flex gap-2" role="group" aria-label="Plan feel">
-        {FEEL_OPTIONS.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            aria-pressed={feel === o.value}
-            className={cn(pillClass(feel === o.value), "flex-1")}
-            onClick={() => {
-              haptic("light");
-              setFeel(o.value);
-            }}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={FEEL_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        value={feel}
+        onChange={(v) => {
+          haptic("light");
+          setFeel(v);
+        }}
+        ariaLabel="Plan feel"
+      />
 
       {feel && (
         <div className="space-y-2">

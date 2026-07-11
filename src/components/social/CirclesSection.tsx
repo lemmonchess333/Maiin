@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { getTimeAgo } from "@/lib/timeAgo";
 import {
   LAUNCH_TEMPLATES,
@@ -44,6 +45,13 @@ const EVENT_COPY: Record<GoalSpaceEvent["kind"], string> = {
 
 function inviteString(spaceId: string, code: string): string {
   return `${spaceId}.${code}`;
+}
+
+/** "YYYY-MM-DD" → "12 Sep" — same short-date idiom as the rest of the app. */
+function formatTargetDate(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 export default function CirclesSection({ uid }: { uid: string }) {
@@ -138,23 +146,13 @@ export default function CirclesSection({ uid }: { uid: string }) {
       )}
 
       {!loading && circles.length === 0 && (
-        <div className="p-4 rounded-2xl bg-card space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-              <CircleDashed
-                className="size-4 text-primary"
-                aria-hidden="true"
-              />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                A small circle around a shared goal
-              </p>
-              <p className="text-xs text-muted-foreground">
-                2–8 people, invite-only. Support, not a leaderboard.
-              </p>
-            </div>
-          </div>
+        <div className="rounded-2xl bg-card">
+          <EmptyState
+            compact
+            icon={CircleDashed}
+            headline="A small circle around a shared goal"
+            sub="2–8 people, invite-only. Support, not a leaderboard."
+          />
         </div>
       )}
 
@@ -187,7 +185,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
                 {c.space.targetDate && (
                   <span className="font-sans">
                     {" "}
-                    · until {c.space.targetDate}
+                    · until {formatTargetDate(c.space.targetDate)}
                   </span>
                 )}
               </p>
@@ -261,7 +259,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
             maxLength={60}
             placeholder="Name it — e.g. Autumn strength block"
             aria-label="Circle name"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           <Button
             className="w-full"
@@ -288,7 +286,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
             onChange={(e) => setJoinInput(e.target.value)}
             placeholder="Invite code"
             aria-label="Invite code"
-            className="w-full min-h-[44px] px-3 rounded-xl bg-muted text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
+            className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
           />
           <Button
             className="w-full"
