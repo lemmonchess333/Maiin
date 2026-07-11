@@ -9,9 +9,9 @@ const OUT_DIR = join(__dirname, "out"); // gitignored — transient run evidence
 const SCREENS = join(OUT_DIR, "screenshots");
 mkdirSync(SCREENS, { recursive: true });
 
-const BASE = "http://localhost:4173/Maiin/";
+import { BASE } from "./env.mjs";
 const EMAIL = "e2e-test@tropos.test";
-const PW = "test-password-123";
+import { PW } from "./env.mjs";
 const CHROMIUM_PATH = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const log = (...a) => console.log("[drive]", ...a);
 
