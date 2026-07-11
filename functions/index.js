@@ -191,6 +191,11 @@ const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
 // Provision before the next functions deploy: firebase functions:secrets:set RESEND_API_KEY
 // (a deploy referencing an unprovisioned bound secret FAILS — the safety gate).
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
+// Money-path audit F8: deleteMyAccount tombstones Apple billing
+// identities before sweeping their bindings; the write hash needs the
+// same BILLING_HMAC_SECRET restoreApplePurchases reads with. Already
+// provisioned (bound on restoreApplePurchases) — no new secret to set.
+const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 
 // Scheduled (pubsub cron) sweeps iterate EVERY active user/crew via
 // sweepActiveUsers / a crews loop. The Cloud Functions v1 default timeout is
@@ -234,7 +239,12 @@ const { redactVertexResponse } = require("./lib/vertexLogRedaction");
 // logged in and retryable rather than stranded.
 exports.deleteMyAccount = functions
   // STRIPE_SECRET_KEY: cancels the user's active Stripe sub before purge.
-  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })
+  // BILLING_HMAC_SECRET: tombstones Apple billing identities during the
+  // appleSubscriptions sweep (audit F8) — fail-safe if absent.
+  .runWith({
+    ...DEFAULT_HTTP_CAP,
+    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET],
+  })
   .https.onCall(async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(

@@ -377,6 +377,48 @@ async function deleteAccount({
       );
     }
 
+    // 3c. Apple subscription bindings (money-path audit F8). The
+    // binding's uid is about to dangle; deleting it alone would re-open
+    // F7 (first-claim-wins theft of a now-unclaimed transaction), so
+    // each binding's identity is tombstoned into
+    // deletedBillingIdentities FIRST — restoreApplePurchases already
+    // refuses tombstoned identities (rotation-aware lookup reads the
+    // same collection). Order is the safety property: tombstone, THEN
+    // delete the binding. Fail-safe: if BILLING_HMAC_SECRET is
+    // unprovisioned the binding is KEPT (a locked-out re-signup is
+    // recoverable via support; a theft window is not) — log and move
+    // on, never block the remaining steps.
+    const appleSubsSnap = await firestore
+      .collection("appleSubscriptions")
+      .where("uid", "==", uid)
+      .get();
+    if (!appleSubsSnap.empty) {
+      const billingIdentityHash = require("./lib/billingIdentityHash");
+      for (const bindingDoc of appleSubsSnap.docs) {
+        try {
+          const hash = billingIdentityHash.billingIdentityHash(
+            "apple",
+            bindingDoc.id
+          );
+          // Sequential by design (tombstone must commit before its
+          // binding delete); binding count per user is 1 in practice.
+          // eslint-disable-next-line no-await-in-loop
+          await firestore.collection("deletedBillingIdentities").doc(hash).set({
+            provider: "apple",
+            reason: "account-deletion",
+            createdAt: now,
+          });
+          // eslint-disable-next-line no-await-in-loop
+          await bindingDoc.ref.delete();
+        } catch (e) {
+          logger.warn(
+            `deleteAccount: appleSubscriptions binding kept for ${uid} (tombstone unavailable)`,
+            e.message
+          );
+        }
+      }
+    }
+
     // 4. Public profile projection — `.catch(() => {})` because a
     // missing doc (e.g. user never finished onboarding) shouldn't
     // block the rest of the flow.
