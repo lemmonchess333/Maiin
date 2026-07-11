@@ -975,6 +975,55 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: Journeys (GOALS-CORE-01) — the private side of a
+    // Goal Space membership (doc id == spaceId; carries the private "why").
+    // Owner-read only; writes are SERVER-ONLY (the Goal Space callables
+    // create/delete these alongside membership) so a client can't forge a
+    // membership pointer.
+    match /users/{uid}/journeys/{spaceId} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // ========================================
+    // Goal Spaces (GOALS-CORE-01) — "Circles".
+    //
+    // Invite-only social spaces (plan-file row GsPb1): max 8 members,
+    // no public discovery. Reads are MEMBER-GATED (the exists() check
+    // against the caller's own member doc — same idiom as the
+    // followers-visibility check on activities). ALL writes are
+    // server-only via the goalSpace callables: membership, the
+    // memberCount counter, events (closed kind allowlist, bounded
+    // note) and invites are enforced in functions/lib/goalSpaces.js,
+    // so `allow write: if false` everywhere here is what makes a
+    // forged membership/count/event impossible from a browser.
+    // ========================================
+    match /goalSpaces/{spaceId} {
+      allow read: if request.auth != null
+        && exists(/databases/$(database)/documents/goalSpaces/$(spaceId)/members/$(request.auth.uid));
+      allow write: if false;
+
+      match /members/{memberUid} {
+        allow read: if request.auth != null
+          && exists(/databases/$(database)/documents/goalSpaces/$(spaceId)/members/$(request.auth.uid));
+        allow write: if false;
+      }
+
+      match /events/{eventId} {
+        allow read: if request.auth != null
+          && exists(/databases/$(database)/documents/goalSpaces/$(spaceId)/members/$(request.auth.uid));
+        allow write: if false;
+      }
+    }
+
+    // Goal Space invites — server-only in BOTH directions. The join
+    // callable is the only reader (a client never needs the invite doc;
+    // it just presents the code), so leaked codes can't be enumerated
+    // or inspected from a browser.
+    match /goalSpaceInvites/{code} {
+      allow read, write: if false;
+    }
+
     // ========================================
     // Scan usage — food-scan quota tracker.
     // Written exclusively by Cloud Functions (analyzeFood /

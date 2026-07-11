@@ -147,6 +147,19 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // their own doc but cannot write. R1A cleanup is wired via the
   // accountDeletionInventory entry (key: globalRestrictedUids).
   "match /globalRestrictedUids/{uid}",
+  // GOALS-CORE-01 — Goal Spaces are server-only in every write
+  // direction (`allow write: if false`; the goalSpace callables via
+  // Admin SDK are the sole writers) so none need freeze coverage.
+  // /members and /events appear bare because they nest inside
+  // goalSpaces/{spaceId} (same parser behaviour as /participants).
+  // Deletion cleanup is wired via inventory keys userJourneys,
+  // goalSpaceMemberships, goalSpaceEventsAuthored,
+  // goalSpaceInvitesCreated (executor step goal_spaces).
+  "match /users/{uid}/journeys/{spaceId}",
+  "match /goalSpaces/{spaceId}",
+  "match /members/{memberUid}",
+  "match /events/{eventId}",
+  "match /goalSpaceInvites/{code}",
   "match /config/{doc}",
   "match /accountDeletionRequests/{uid}",
   "match /deletedAccounts/{uid}",

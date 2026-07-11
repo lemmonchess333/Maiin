@@ -55,6 +55,7 @@ import IconButton from "@/components/ui/IconButton";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
+import CirclesSection from "@/components/social/CirclesSection";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
 import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
 import { SOCIAL_GATES, shouldShowFollowingFeed } from "@/lib/socialGates";
@@ -667,7 +668,10 @@ export default function Social() {
             onChange={setTab}
             options={[
               { value: "feed", label: "Feed" },
-              { value: "crews", label: "Crews" },
+              // GOALS-CORE-01: the tab is now Circles-first (Goal Spaces
+              // lead; legacy Crews stay reachable below). The VALUE stays
+              // "crews" so /social?tab=crews deep links keep working.
+              { value: "crews", label: "Circles" },
               { value: "find", label: "People" },
             ]}
           />
@@ -971,7 +975,15 @@ export default function Social() {
           peer tab here; they moved to the user's own profile because
           they're a private/personal artifact, not social content. */}
           {tab === "crews" && (
-            <section aria-label="Crews and challenges" className="space-y-6">
+            <section
+              aria-label="Circles, crews and challenges"
+              className="space-y-6"
+            >
+              {/* GOALS-CORE-01: Circles lead the tab — small invite-only
+              goal spaces are its purpose; the legacy Crew surface and
+              challenges stay reachable below, URLs unchanged. */}
+              <CirclesSection />
+
               {/* Challenges — placed first because they're the active /
               competitive surface. Empty-state CTA jumps to Discover so
               users have a clear path to find people to challenge.

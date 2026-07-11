@@ -23,6 +23,7 @@
 
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
+const goalSpaces = require("./lib/goalSpaces");
 
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
@@ -157,6 +158,11 @@ async function deleteAccount({
   // lease/state-machine is deterministically testable.
   leaseOwner,
   now = Date.now(),
+  // GOALS-CORE-01 — FieldValue.increment for the goal-space membership
+  // decrement, injectable so tests can stub it. Defaults to the real
+  // sentinel (static — needs no initializeApp), so prod call sites don't
+  // have to thread it.
+  increment = require("firebase-admin").firestore.FieldValue.increment,
 }) {
   /* R1A Stress 7 kill-switch — operator-controlled emergency stop
      via `system/config.deletionExecutorEnabled`. Read at start; if
@@ -345,6 +351,21 @@ async function deleteAccount({
         bondsSnap.docs.map((d) => d.ref)
       );
     }
+
+    // 3c. Goal Spaces (GOALS-CORE-01). Enumerates memberships from the
+    // user's own journeys, then per space: deletes their authored
+    // events, leaves (counter decrement + owner transfer/archive),
+    // sweeps orphaned journeys, and deletes invites they created.
+    // Runs BEFORE the auth delete (7) — a throw here leaves credentials
+    // intact for a retry; per-space failures are logged and skipped
+    // inside the helper so one bad space can't wedge the deletion.
+    stage = "goal_spaces";
+    await goalSpaces.cleanupGoalSpacesForUser({
+      firestore,
+      uid,
+      increment,
+      logger,
+    });
 
     // 4. Public profile projection — `.catch(() => {})` because a
     // missing doc (e.g. user never finished onboarding) shouldn't

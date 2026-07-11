@@ -93,6 +93,18 @@ function makeStubs(opts = {}) {
       },
     });
 
+    // GOALS-CORE-01 step 3c — goal-space cleanup queries invites the user
+    // created. Same where().get() shape; empty by default (the journeys
+    // enumeration itself rides the generic users-subcollection stub).
+    const goalSpaceInvitesQueryStub = (field, op, value) => ({
+      get: async () => {
+        calls.push(
+          `firestore.goalSpaceInvites.where.${field}.${op}.${value}.get`
+        );
+        return { empty: true, size: 0, docs: [] };
+      },
+    });
+
     // R1A Chunk 3 — in-memory accountDeletionRequests ledger doc (single uid
     // per test). Shared by acquireLease → verifyLeaseGeneration →
     // transitionStatus within one deleteAccount call, and by tx.get/tx.set
@@ -121,6 +133,12 @@ function makeStubs(opts = {}) {
           return {
             where: (field, op, value) =>
               partnerBondsQueryStub(field, op, value),
+          };
+        }
+        if (name === "goalSpaceInvites") {
+          return {
+            where: (field, op, value) =>
+              goalSpaceInvitesQueryStub(field, op, value),
           };
         }
         if (name === "accountDeletionRequests") {

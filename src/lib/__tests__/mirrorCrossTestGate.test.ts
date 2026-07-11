@@ -59,6 +59,8 @@ const PINNED: Record<string, string> = {
     "src/features/challenges/__tests__/challengeTiers.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
+  "functions/lib/goalSpaces.js":
+    "src/features/goalSpaces/__tests__/goalSpaceModel.parity.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.

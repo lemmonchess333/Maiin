@@ -29,7 +29,14 @@ export type SocialEvent =
   | "share_card_opened"
   /** SOCIAL S1: a share card was exported (shared or downloaded) — the
    *  funnel's conversion event for the >10% share-rate benchmark. */
-  | "share_card_exported";
+  | "share_card_exported"
+  /** GOALS-CORE-01 Circles funnel. Feature-use signals only — never
+   *  health values, member identities or circle titles. */
+  | "circle_created"
+  | "circle_invite_shared"
+  | "circle_invite_accepted"
+  | "circle_checkin_posted"
+  | "circle_support_requested";
 
 export type SocialTab = "feed" | "crews" | "find";
 export type SocialFeedSubTab = "following" | "explore";
@@ -62,6 +69,8 @@ export interface SocialEventMetadata {
   /** share_card_exported (S2): where the card went — a direct Instagram
    *  Stories handoff, or the generic OS share sheet (incl. download). */
   destination?: "instagram" | "sheet";
+  /** circle_created: which goal type (schema enum, not free text). */
+  circleType?: string;
 }
 
 export function track(

@@ -53,6 +53,7 @@ const {
 } = require("./lib/stripeSubscriptionDeleted");
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
+const goalSpaces = require("./lib/goalSpaces");
 const commentReactions = require("./lib/commentReactions");
 const passwordResetEmail = require("./lib/passwordResetEmail");
 const verificationEmail = require("./lib/verificationEmail");
@@ -715,7 +716,12 @@ exports.completeOnboarding = functions
         // (no durable ledger marker). A client-sent trialExpiresAt is ignored —
         // firestore.rules already pins it null on create; strip defensively.
         delete profileData.trialExpiresAt;
-        if (shouldGrantTrial({ userDocExists: false, ledgerExists: ledgerSnap.exists })) {
+        if (
+          shouldGrantTrial({
+            userDocExists: false,
+            ledgerExists: ledgerSnap.exists,
+          })
+        ) {
           profileData.trialExpiresAt = trialExpiryIso(new Date());
           grantTrial = true;
         }
@@ -5783,6 +5789,280 @@ exports.setCrewMembershipCallable = functions
         "failed-precondition",
         (err && err.message) || "Crew membership update failed."
       );
+    }
+  });
+
+// ══════════════════════════════════════════════
+// Goal Spaces (GOALS-CORE-01) — "Circles"
+// ══════════════════════════════════════════════
+//
+// Server-owned membership, invites and events for the invite-only
+// Goal Space social layer (plan-file row GsPb1). firestore.rules deny
+// every direct client write to goalSpaces/*, goalSpaceInvites/* and
+// users/*/journeys/*, so these callables are the ONLY write path — a
+// client cannot forge a membership, counter, invite or event. All the
+// membership/counter choreography lives in lib/goalSpaces.js (pure,
+// injected firestore) — these wrappers add auth, the deletion
+// write-freeze, rate limits and HttpsError mapping.
+
+/** Maps lib/goalSpaces error codes onto typed HttpsErrors. */
+function goalSpaceHttpsError(err) {
+  const code = err && err.code;
+  const message = (err && err.message) || "Circle update failed.";
+  const details = { errorCode: code || "unknown" };
+  switch (code) {
+    case "invalid-type":
+    case "invalid-title":
+    case "invalid-kind":
+      return new functions.https.HttpsError(
+        "invalid-argument",
+        message,
+        details
+      );
+    case "membership-cap":
+    case "space-full":
+    case "space-inactive":
+    case "remove-self":
+      return new functions.https.HttpsError(
+        "failed-precondition",
+        message,
+        details
+      );
+    case "not-a-member":
+    case "not-owner":
+    case "blocked":
+      return new functions.https.HttpsError(
+        "permission-denied",
+        message,
+        details
+      );
+    case "invite-invalid":
+    case "space-missing":
+      return new functions.https.HttpsError("not-found", message, details);
+    default:
+      return new functions.https.HttpsError("internal", message, details);
+  }
+}
+
+/** Shared entry gates: auth → deletion freeze → rate limit. */
+async function goalSpaceGates(context, action, maxCalls, windowMs) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Sign-in required."
+    );
+  }
+  await accountDeletionLocks.assertCallableActorNotDeleting(
+    admin.firestore(),
+    context.auth.uid
+  );
+  const limited = await isRateLimited(
+    context.auth.uid,
+    action,
+    maxCalls,
+    windowMs
+  );
+  if (limited) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Too many circle actions. Slow down."
+    );
+  }
+  return context.auth.uid;
+}
+
+exports.createGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(context, "createGoalSpace", 5, 3_600_000);
+    const { type, title, why, displayName, photoURL } = data || {};
+    try {
+      return await goalSpaces.createGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        type,
+        title,
+        why,
+        displayName,
+        photoURL,
+        nowIso: new Date().toISOString(),
+      });
+    } catch (err) {
+      functions.logger.warn("createGoalSpace.error", {
+        uid,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
+    }
+  });
+
+exports.createGoalSpaceInvite = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(
+      context,
+      "createGoalSpaceInvite",
+      10,
+      3_600_000
+    );
+    const { spaceId } = data || {};
+    if (typeof spaceId !== "string" || !spaceId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId required."
+      );
+    }
+    try {
+      return await goalSpaces.createInvite({
+        firestore: admin.firestore(),
+        uid,
+        spaceId,
+        nowMs: Date.now(),
+      });
+    } catch (err) {
+      functions.logger.warn("createGoalSpaceInvite.error", {
+        uid,
+        spaceId,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
+    }
+  });
+
+exports.joinGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(context, "joinGoalSpace", 10, 3_600_000);
+    const { code, displayName, photoURL } = data || {};
+    if (typeof code !== "string" || !code.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "code required."
+      );
+    }
+    try {
+      return await goalSpaces.joinSpace({
+        firestore: admin.firestore(),
+        uid,
+        code,
+        displayName,
+        photoURL,
+        increment: admin.firestore.FieldValue.increment,
+        nowMs: Date.now(),
+        nowIso: new Date().toISOString(),
+      });
+    } catch (err) {
+      functions.logger.warn("joinGoalSpace.error", {
+        uid,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
+    }
+  });
+
+exports.leaveGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(context, "leaveGoalSpace", 10, 3_600_000);
+    const { spaceId } = data || {};
+    if (typeof spaceId !== "string" || !spaceId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId required."
+      );
+    }
+    try {
+      await goalSpaces.leaveSpace({
+        firestore: admin.firestore(),
+        uid,
+        spaceId,
+        increment: admin.firestore.FieldValue.increment,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("leaveGoalSpace.error", {
+        uid,
+        spaceId,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
+    }
+  });
+
+exports.removeGoalSpaceMember = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(
+      context,
+      "removeGoalSpaceMember",
+      10,
+      3_600_000
+    );
+    const { spaceId, memberUid } = data || {};
+    if (
+      typeof spaceId !== "string" ||
+      !spaceId.trim() ||
+      typeof memberUid !== "string" ||
+      !memberUid.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId + memberUid required."
+      );
+    }
+    try {
+      await goalSpaces.removeMember({
+        firestore: admin.firestore(),
+        actorUid: uid,
+        spaceId,
+        memberUid,
+        increment: admin.firestore.FieldValue.increment,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("removeGoalSpaceMember.error", {
+        uid,
+        spaceId,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
+    }
+  });
+
+exports.publishGoalSpaceEvent = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceGates(
+      context,
+      "publishGoalSpaceEvent",
+      30,
+      86_400_000
+    );
+    const { spaceId, kind, note, displayName } = data || {};
+    if (typeof spaceId !== "string" || !spaceId.trim()) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId required."
+      );
+    }
+    try {
+      await goalSpaces.publishEvent({
+        firestore: admin.firestore(),
+        uid,
+        spaceId,
+        kind,
+        note,
+        displayName,
+        nowIso: new Date().toISOString(),
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("publishGoalSpaceEvent.error", {
+        uid,
+        spaceId,
+        error: err && err.message,
+      });
+      throw goalSpaceHttpsError(err);
     }
   });
 
