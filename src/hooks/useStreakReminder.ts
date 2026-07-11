@@ -11,7 +11,11 @@ import {
 } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/errorReporting";
-import { STREAK_NOTIFICATION_ID } from "./streakNotificationId";
+import { format } from "date-fns";
+import {
+  STREAK_NOTIFICATION_ID,
+  FIRST_WEEK_NOTIFICATION_ID,
+} from "./streakNotificationId";
 
 /**
  * Streak-at-risk reminder — fires in the evening if the user hasn't logged
@@ -41,12 +45,20 @@ export interface StreakReminderPrefs {
   enabled: boolean;
   time: string; // HH:MM 24-hour local time
   primingShown: boolean;
+  /**
+   * Local YYYY-MM-DD the once-ever first-week (day-2) return nudge was
+   * scheduled to FIRE (D-1 fix). Presence = consumed — the nudge never
+   * schedules again for this user. The dateKey (rather than a boolean)
+   * lets cancel-on-log target exactly the pending fire day.
+   */
+  firstWeekNudgeDateKey: string | null;
 }
 
 const DEFAULT_PREFS: StreakReminderPrefs = {
   enabled: true,
   time: "20:00",
   primingShown: false,
+  firstWeekNudgeDateKey: null,
 };
 
 /**
@@ -91,6 +103,66 @@ export function shouldScheduleStreakReminder(state: {
   if (state.currentStreak < 2) return false;
   if (state.hasLoggedToday) return false;
   return true;
+}
+
+/**
+ * First-week (day-2) return nudge — pure decision (D-1,
+ * docs/frontend-design-principles-2026-07.md). The daily streak reminder
+ * above keeps its deliberate `>= 2` floor (a repeating alarm needs a streak
+ * worth protecting); this fills the day-1 → day-2 gap with ONE calm
+ * one-shot local notification, scheduled on the user's FIRST log day to
+ * fire the following evening, consumed forever once scheduled.
+ *
+ *   - "schedule": today is a log day (hasLoggedToday), the streak is
+ *     exactly at its first day (< 2, and ≥ 1 so a log actually landed),
+ *     consent has been granted (enabled + primingShown), and the nudge has
+ *     never been scheduled before → schedule the one-shot for tomorrow at
+ *     prefs.time and stamp `firstWeekNudgeDateKey`.
+ *   - "cancel": the marker exists and either the reminder was disabled, or
+ *     it's the fire day and the user already logged (they came back on
+ *     their own — the nudge's job is done, don't fire it at them).
+ *   - "none": everything else. Cancel is idempotent, so callers may act on
+ *     repeated "cancel" results safely.
+ */
+export function firstWeekNudgeAction(state: {
+  loading: boolean;
+  enabled: boolean;
+  primingShown: boolean;
+  currentStreak: number;
+  hasLoggedToday: boolean;
+  firstWeekNudgeDateKey: string | null;
+  todayKey: string;
+}): "schedule" | "cancel" | "none" {
+  if (state.loading) return "none";
+  if (state.firstWeekNudgeDateKey) {
+    if (!state.enabled) return "cancel";
+    if (state.firstWeekNudgeDateKey === state.todayKey && state.hasLoggedToday)
+      return "cancel";
+    return "none";
+  }
+  if (!state.enabled) return "none";
+  if (!state.primingShown) return "none";
+  if (state.currentStreak < 1 || state.currentStreak >= 2) return "none";
+  if (!state.hasLoggedToday) return "none";
+  return "schedule";
+}
+
+/**
+ * A Date for TOMORROW at the given "HH:MM" — the first-week nudge always
+ * fires the evening AFTER the log day, never the same evening (the user
+ * already logged today; nudging them tonight would be noise). Null on
+ * malformed input, mirroring computeNextOccurrence.
+ */
+export function computeTomorrowOccurrence(timeHHMM: string): Date | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(timeHHMM);
+  if (!match) return null;
+  const hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return null;
+  const target = new Date();
+  target.setDate(target.getDate() + 1);
+  target.setHours(hours, minutes, 0, 0);
+  return target;
 }
 
 /**
@@ -228,6 +300,84 @@ export function useStreakReminderInternal() {
     prefs.primingShown,
     currentStreak,
     hasLoggedToday,
+  ]);
+
+  // ── First-week (day-2) return nudge — one-shot, once ever ────────────
+  //
+  // Runs alongside the daily reminder effect above but manages its OWN
+  // notification id, so the two can't clobber each other. Schedule happens
+  // on the first log day (streak 1) for tomorrow evening; the marker write
+  // makes it once-ever. Cancel-on-log for the fire day is handled here too:
+  // useStreaks' snapshot flips hasLoggedToday in near-real-time while the
+  // app is open, and logging is only possible in-app, so a day-2 log always
+  // re-runs this effect before the user backgrounds.
+  //
+  // The marker is stamped only when the OS accepted the schedule — if
+  // permission lapsed at the OS level, the once-ever budget isn't consumed
+  // and a later log day (still below the `>= 2` floor) may retry.
+
+  useEffect(() => {
+    if (loading || streaksLoading) return;
+
+    const action = firstWeekNudgeAction({
+      loading: false,
+      enabled: prefs.enabled,
+      primingShown: prefs.primingShown,
+      currentStreak,
+      hasLoggedToday,
+      firstWeekNudgeDateKey: prefs.firstWeekNudgeDateKey ?? null,
+      todayKey: format(new Date(), "yyyy-MM-dd"),
+    });
+
+    if (action === "cancel") {
+      void cancelNotification(FIRST_WEEK_NOTIFICATION_ID).catch((err) => {
+        logger.warn("[FirstWeekNudge] cancel failed", err);
+      });
+      return;
+    }
+    if (action !== "schedule") return;
+
+    const fireAt = computeTomorrowOccurrence(prefs.time);
+    if (!fireAt) {
+      logger.warn("[FirstWeekNudge] malformed time", prefs.time);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      // Always-cancel-before-schedule, same platform-quirk defence as the
+      // daily reminder above.
+      await cancelNotification(FIRST_WEEK_NOTIFICATION_ID).catch((err) => {
+        logger.warn("[FirstWeekNudge] pre-schedule cancel failed", err);
+      });
+      if (cancelled) return;
+      const scheduled = await scheduleNotification({
+        id: FIRST_WEEK_NOTIFICATION_ID,
+        title: "Yesterday was a good start 💪",
+        body: "A quick log today keeps it going.",
+        scheduleAt: fireAt,
+        // One-shot by design — no repeats. A daily alarm at streak 0–1 is
+        // exactly the anxiety the weekly-cadence philosophy avoids.
+      });
+      if (cancelled || !scheduled) return;
+      await updatePrefs({
+        firstWeekNudgeDateKey: format(fireAt, "yyyy-MM-dd"),
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    loading,
+    streaksLoading,
+    prefs.enabled,
+    prefs.primingShown,
+    prefs.time,
+    prefs.firstWeekNudgeDateKey,
+    currentStreak,
+    hasLoggedToday,
+    updatePrefs,
   ]);
 
   return {

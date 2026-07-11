@@ -855,6 +855,9 @@ export default function RunSummary() {
         // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
         // "save anyway" runs are excluded — same gate as the PR toast/share.
         trackLifecycle("run_completed");
+        // Session-completed signal for the reminder priming modal (D-1):
+        // a run-first user's first session is the consent value moment too.
+        window.dispatchEvent(new CustomEvent("tropos:run-completed"));
         toast.success("Run saved", {
           action: {
             label: "View PRs",

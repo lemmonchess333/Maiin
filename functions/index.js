@@ -60,6 +60,7 @@ const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
   shouldSendStreakNudge,
+  shouldSendFirstWeekNudge,
   localDateKeyInTz,
 } = require("./lib/streakNudge");
 const {
@@ -72,6 +73,7 @@ const { activeDateKeysFromLogs } = require("./lib/activeDates");
 const {
   tokensToPrune,
   buildStreakNudgeMessage,
+  buildFirstWeekNudgeMessage,
   buildBadgeNudgeMessage,
   buildWeeklyRecapMessage,
   buildFellBehindRecapMessage,
@@ -2431,8 +2433,9 @@ exports.rolloverChallenges = functions
 // Push #961 — hourly streak-at-risk nudge sender (web)
 // ══════════════════════════════════════════════
 //
-// Composes the pure decision helpers — shouldSendStreakNudge (#964),
-// isLocalSendHour (#1001), the inlined consent check (mirrors
+// Composes the pure decision helpers — shouldSendStreakNudge (#964) plus the
+// once-ever shouldSendFirstWeekNudge below the `>= 2` floor (D-1 day-1→day-2
+// fix), isLocalSendHour (#1001), the inlined consent check (mirrors
 // src/lib/pushConsent — functions/ can't import the TS client module), and the
 // server-side active-date derivation (#activeDates / Option A) — with the FCM
 // I/O. Fires hourly; each eligible user is sent at most once/day at ~19:00
@@ -2467,8 +2470,9 @@ async function maybeSendStreakNudge(uid, now) {
   if (!mayTargetUserConsent(consentSnap.data() || null, "streak")) return false;
 
   const currentStreak = (streakSnap.data() || {}).currentStreak || 0;
-  const lastNudgeDateKey =
-    (stateSnap.data() || {}).lastStreakNudgeDateKey || null;
+  const pushState = stateSnap.data() || {};
+  const lastNudgeDateKey = pushState.lastStreakNudgeDateKey || null;
+  const firstWeekNudgeDateKey = pushState.firstWeekNudgeDateKey || null;
 
   // Active-date set (Option A): re-derive from the last few days of logs, since
   // the client-computed set is never persisted.
@@ -2499,26 +2503,32 @@ async function maybeSendStreakNudge(uid, now) {
     timezone
   );
 
-  // Eligibility (consent already checked → remindersOptedIn: true).
-  const eligible = shouldSendStreakNudge(
-    {
-      currentStreak,
-      remindersOptedIn: true,
-      timezone,
-      activeDateKeys,
-      lastNudgeDateKey,
-    },
-    now
-  );
-  if (!eligible) return false;
+  // Eligibility (consent already checked → remindersOptedIn: true). The two
+  // predicates are disjoint on the `>= 2` streak floor: the regular streak
+  // nudge above it, the once-ever first-week return nudge (D-1 day-1→day-2
+  // fix) below it.
+  const decisionInput = {
+    currentStreak,
+    remindersOptedIn: true,
+    timezone,
+    activeDateKeys,
+    lastNudgeDateKey,
+    firstWeekNudgeDateKey,
+  };
+  const eligible = shouldSendStreakNudge(decisionInput, now);
+  const firstWeek = !eligible && shouldSendFirstWeekNudge(decisionInput, now);
+  if (!eligible && !firstWeek) return false;
 
   const devicesSnap = await db.collection(`users/${uid}/devices`).get();
   const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
   if (tokens.length === 0) return false;
 
+  const message = firstWeek
+    ? buildFirstWeekNudgeMessage()
+    : buildStreakNudgeMessage();
   const batch = await admin
     .messaging()
-    .sendEachForMulticast({ tokens, ...buildStreakNudgeMessage() });
+    .sendEachForMulticast({ tokens, ...message });
 
   // Prune dead tokens (Q4 prune-on-send-error).
   const dead = tokensToPrune(batch, tokens);
@@ -2531,13 +2541,16 @@ async function maybeSendStreakNudge(uid, now) {
     )
   );
 
-  // ≤1/day idempotency marker (local day).
-  await db
-    .doc(`users/${uid}/settings/pushState`)
-    .set(
-      { lastStreakNudgeDateKey: localDateKeyInTz(now, timezone) },
-      { merge: true }
-    );
+  // ≤1/day idempotency marker (local day); the first-week nudge additionally
+  // records its once-EVER marker.
+  const sentDateKey = localDateKeyInTz(now, timezone);
+  await db.doc(`users/${uid}/settings/pushState`).set(
+    {
+      lastStreakNudgeDateKey: sentDateKey,
+      ...(firstWeek ? { firstWeekNudgeDateKey: sentDateKey } : {}),
+    },
+    { merge: true }
+  );
 
   return batch.successCount > 0;
 }
