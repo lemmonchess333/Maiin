@@ -16,7 +16,15 @@ import { emulatorActive } from "../helpers/emulator";
 
 // iPhone-15-ish portrait. Overrides the auth-emulator project's desktop
 // viewport while keeping its bypassCSP (needed for the emulator).
-test.use({ viewport: { width: 393, height: 852 } });
+// PW_CHROMIUM lets a local sandbox point at a pre-installed chromium
+// when its Playwright pin differs (e.g. /opt/pw-browsers/chromium in
+// the remote agent environment); CI never sets it.
+test.use({
+  viewport: { width: 393, height: 852 },
+  ...(process.env.PW_CHROMIUM
+    ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
+    : {}),
+});
 
 test.describe("app screenshots", () => {
   test.skip(
@@ -322,5 +330,101 @@ test.describe("app screenshots", () => {
       );
     await page.waitForTimeout(1100);
     await shoot(page, "sheet-dayaction-light");
+  });
+
+  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus).
+  // ONE TEST PER SURFACE — do not merge these into a multi-goto test.
+  // Diagnosed 2026-07-11: rapid same-context hard navigations leave the
+  // previous page's Firestore webchannel connections draining, and the
+  // NEXT page's one-shot reads (getDoc/getDocs — exactly what gates
+  // TrainingBlockCard and FoodConsistencyCard) can starve for 15s+
+  // while that page's own listeners stream fine. A fresh context per
+  // test (Playwright default) sidesteps it entirely; the explicit
+  // row-waits below also absorb slow-CI read latency. Product surfaces
+  // are unaffected (SPA routing never hard-reloads).
+  // Other capture rules: best-effort triggers with SHORT timeouts, and
+  // SegmentedControl options are role="radio", not buttons.
+  async function shootLightDarkOn(page: Page, name: string) {
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+    await shoot(page, `${name}-light`);
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(350);
+    await shoot(page, `${name}-dark`);
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+  }
+
+  test("circles cold-start (Social → Crews)", async ({ page }) => {
+    test.setTimeout(90_000);
+    // Seeded user has no circles — this captures the EmptyState hexagon
+    // cold-start (the state every launch user sees).
+    await page.goto("social?tab=crews");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(1600);
+    await shootLightDarkOn(page, "circles-crews");
+  });
+
+  test("training block create sheet", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.goto("program");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    // The block row renders only after the trainingBlocks read settles —
+    // wait for it explicitly rather than settling blind.
+    const blockRowStart = Date.now();
+    await page
+      .getByRole("button", { name: /start a training block/i })
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() =>
+        console.log(
+          `[capture] training-block row visible after ${Date.now() - blockRowStart}ms`
+        )
+      )
+      .catch(() =>
+        console.log(
+          "[capture] training-block row NEVER appeared within 15s (active block or no programme?) — capturing the tab as-is"
+        )
+      );
+    await page
+      .getByRole("button", { name: /start a training block/i })
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await page.waitForTimeout(900);
+    await shootLightDarkOn(page, "sheet-trainingblock");
+  });
+
+  test("food weekly logging focus picker", async ({ page }) => {
+    test.setTimeout(90_000);
+    // The card renders nothing until its commitment+meals reads settle.
+    await page.goto("food");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    const foodRowStart = Date.now();
+    await page
+      .getByRole("button", { name: /set a weekly logging focus/i })
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() =>
+        console.log(
+          `[capture] logging-focus row visible after ${Date.now() - foodRowStart}ms`
+        )
+      )
+      .catch(() =>
+        console.log(
+          "[capture] logging-focus row NEVER appeared within 15s — capturing the card-less state"
+        )
+      );
+    await page
+      .getByRole("button", { name: /set a weekly logging focus/i })
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await page.waitForTimeout(700);
+    await shootLightDarkOn(page, "food-focus-picker");
   });
 });
