@@ -1,3 +1,4 @@
+// @vitest-environment jsdom — needs DOM/storage APIs; the rest of this directory runs in the fast node environment (audit batch 2).
 /**
  * lazyRetry — recovery wrapper for lazy() page/chunk imports. After a deploy,
  * stale HTML/Service-Worker caches can reference chunk hashes that no longer
