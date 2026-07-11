@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { getBodyDemo, renderBodyDemo } from "@/lib/bodyRig";
-import { repTimingFor } from "@/lib/exerciseTempo";
+import {
+  repTimingFor,
+  repSampleAt,
+  repTotalMs,
+  type RepPhase,
+} from "@/lib/exerciseTempo";
 import IconButton from "@/components/ui/IconButton";
 import { haptic } from "@/lib/haptic";
 
@@ -19,15 +24,16 @@ interface ExerciseRigDemoProps {
 
 const FPS_INTERVAL = 1000 / 30;
 
-/** The rep's phase sequence, cued to the user (Demo1). Labels are generic and
- *  direction-derived — the eccentric is always "lower under control" and the
- *  concentric always the drive, whichever end of t the exercise locks out at.
- *  Per-exercise authored cues are future content work. */
-type RepPhase = "eccentric" | "pause" | "drive" | "done";
+/** Phase cues for the teaching rep. Labels are generic and direction-
+ *  derived — the eccentric is always "lower under control" and the
+ *  concentric always the drive, whichever end of t the exercise locks
+ *  out at. Per-exercise authored cues are future content work. */
 const PHASE_LABEL: Record<RepPhase, string> = {
+  set: "Set",
   eccentric: "Lower under control",
   pause: "Pause",
   drive: "Drive up",
+  lockout: "Lockout",
   done: "Rep complete",
 };
 
@@ -38,12 +44,20 @@ const PHASE_LABEL: Record<RepPhase, string> = {
  * phase — brightest through the lifting drive, softer on the way down.
  *
  * Demo1 lock: plays ONE phase-cued teaching rep
- * (start → eccentric → pause → drive → lockout), then SETTLES at the lockout
+ * (set → eccentric → pause → drive → lockout), then SETTLES at the lockout
  * frame behind a replay control — a bounded teaching rep, not ambient media
- * (and no more 30fps work after it ends). Real reps are asymmetric: the
- * eccentric is controlled and slower than the concentric drive; authored
- * tempo ("D-P-U" seconds) refines the phase durations when present.
+ * (and no more 30fps work after it ends). The phase timeline is the pure
+ * repSampleAt in lib/exerciseTempo: a short "Set" lead-in holds the lockout
+ * frame so the eye finds the figure before anything moves, the eccentric is
+ * controlled and slower than the concentric drive (authored "D-P-U" tempo
+ * refines the durations), and the post-drive beat cues "Lockout".
  * Reduced-motion users get the static two-up of the extremes, unchanged.
+ *
+ * Rendering is IMPERATIVE inside the rAF loop: frames write the figure
+ * div's innerHTML directly instead of going through setState, so the
+ * 30fps sweep costs zero React reconciliations — the difference is
+ * visible on older phones inside WKWebView. React only re-renders on
+ * PHASE changes (six per rep) for the cue line and the replay control.
  */
 export default function ExerciseRigDemo({
   exerciseId,
@@ -58,63 +72,57 @@ export default function ExerciseRigDemo({
   const liftsToOne = getBodyDemo(exerciseId)?.concentricTo === 1;
   const lockoutT = liftsToOne ? 1 : 0;
 
-  const [svg, setSvg] = useState(() =>
-    renderBodyDemo(exerciseId, lockoutT, 0.7)
+  // First paint = the lockout frame. Stable per instance (the parent keys
+  // this component by exercise), so React never rewrites the figure div
+  // after mount — the rAF loop owns its innerHTML from then on.
+  const initialSvg = useMemo(
+    () => renderBodyDemo(exerciseId, lockoutT, 0.7),
+    [exerciseId, lockoutT]
   );
-  const [phase, setPhase] = useState<RepPhase>("eccentric");
+  const figureRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<RepPhase>("set");
   // Bumped by Replay; each value plays exactly one rep.
   const [repNonce, setRepNonce] = useState(0);
   const rafRef = useRef<number>(0);
   const lastDrawRef = useRef(0);
   const effortRef = useRef(0.7);
+  const phaseRef = useRef<RepPhase>("set");
 
   useEffect(() => {
     if (reducedMotion || !active) return;
-    const { downMs, holdMs, upMs } = repTimingFor(tempo);
-    // One rep: eccentric → bottom pause → concentric drive → settle at
-    // lockout (with a brief lockout beat folded into the tail).
-    const total = downMs + holdMs + upMs + holdMs;
+    const timing = repTimingFor(tempo);
+    const total = repTotalMs(timing);
     const start = performance.now();
-    setPhase("eccentric");
+    const draw = (svg: string) => {
+      if (figureRef.current) figureRef.current.innerHTML = svg;
+    };
+    const cue = (p: RepPhase) => {
+      if (phaseRef.current === p) return;
+      phaseRef.current = p;
+      setPhase(p);
+    };
+    cue("set");
+    draw(renderBodyDemo(exerciseId, lockoutT, 0.7));
 
     const tick = (now: number) => {
       const m = now - start;
       if (m >= total) {
         // Rep over — settle on the lockout frame at a calm effort and STOP
         // (no further rAF; the replay control owns any next rep).
-        setSvg(renderBodyDemo(exerciseId, lockoutT, 0.7));
-        setPhase("done");
+        draw(renderBodyDemo(exerciseId, lockoutT, 0.7));
+        cue("done");
         return;
       }
       rafRef.current = requestAnimationFrame(tick);
       if (now - lastDrawRef.current < FPS_INTERVAL) return;
       lastDrawRef.current = now;
 
-      let ecc: number; // eccentric progress 0→1 within the slow half
-      let targetEffort: number;
-      let p: RepPhase;
-      if (m < downMs) {
-        ecc = m / downMs; // eccentric — controlled, softer highlight
-        targetEffort = 0.45;
-        p = "eccentric";
-      } else if (m < downMs + holdMs) {
-        ecc = 1; // deep turnaround — loading up
-        targetEffort = 0.8;
-        p = "pause";
-      } else if (m < downMs + holdMs + upMs) {
-        ecc = 1 - (m - downMs - holdMs) / upMs; // concentric — full drive
-        targetEffort = 1;
-        p = "drive";
-      } else {
-        ecc = 0; // lockout beat before settling
-        targetEffort = 0.55;
-        p = "drive";
-      }
-      const t = liftsToOne ? 1 - ecc : ecc;
+      const sample = repSampleAt(m, timing);
+      const t = liftsToOne ? 1 - sample.ecc : sample.ecc;
       // Low-pass the effort so phase changes glow in, never flicker.
-      effortRef.current += (targetEffort - effortRef.current) * 0.1;
-      setSvg(renderBodyDemo(exerciseId, t, effortRef.current));
-      setPhase(p);
+      effortRef.current += (sample.targetEffort - effortRef.current) * 0.1;
+      draw(renderBodyDemo(exerciseId, t, effortRef.current));
+      cue(sample.phase);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
@@ -163,8 +171,9 @@ export default function ExerciseRigDemo({
     <div className="bg-stage rounded-2xl p-4 mt-4 relative">
       <div role="img" aria-label={`${name} demonstration — one guided rep`}>
         <div
+          ref={figureRef}
           className="mx-auto max-w-[190px]"
-          dangerouslySetInnerHTML={{ __html: svg }}
+          dangerouslySetInnerHTML={{ __html: initialSvg }}
         />
       </div>
       {/* Phase cue — the teaching half of the rep. aria-live=polite reads the
