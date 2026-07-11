@@ -153,6 +153,18 @@ Audited May 2026. Re-verify when products change. Each subsection lists what the
 
 **Tropos position:** TBD as streak-related features land. When designing streak-break rules, default to: `race_no_show` does NOT break a streak (user raced, system didn't see it); `expired` does NOT break a streak (life happens); `skipped` does NOT break a streak (deliberate rest); only zero-activity days break it.
 
+### Editorial imagery — photography on editorial surfaces, user data in the feed (2026-07-11)
+
+**Reference apps:**
+
+- **Runna:** professional athlete/lifestyle photography on plan cards, challenge pages, coach profiles, onboarding. The activity feed itself is user content (maps, stats, user photos).
+- **Strava:** sponsored challenge pages carry photographic hero art; club/marketing surfaces use photography. The feed is user activities.
+- **Nike Run Club / Apple Fitness+:** heavy brand photography on guided/curated content everywhere.
+
+**Pattern:** dominant apps use licensed photography on **editorial surfaces** — challenges, plans, curated content the brand produces — and keep the **peer activity feed** user-generated.
+
+**Tropos position (locked in the Social uplift arc, PRs #1575/#1576/v3):** conform on both halves. Editorial surfaces (challenge cards first; plan/curated surfaces may follow) render licensed photography with a sport-coded tint wash + scrim (`src/lib/editorialImages.ts`, assets in `src/assets/editorial/` — build-time glob, designed no-photo fallback until assets land). Feed cards stay user-data imagery: GPS route scenes and the brand muscle figure. Stock people never appear inside the peer feed; private user photos (progress/food) never leak to social. An earlier blanket "no stock imagery anywhere" stance was overturned by the operator citing Runna/Strava — the refined line above is the durable decision.
+
 ### Motivation / "why" capture in onboarding (DEFERRED, 2026-06-12)
 
 The idea (internal label **D10**): capture an emotional _why_ during onboarding (orthogonal driver chips — event / health / energy / confidence / proving — distinct from the `primaryGoal` _what_), then resurface it sparsely (a Home milestone reflection + the recalibration check-in) to lift retention. It was specced and stress-tested before any code.
