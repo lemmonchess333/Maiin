@@ -38,11 +38,21 @@ import {
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 
+import MiniMuscleFigure, { hasMuscleFigure } from "./MiniMuscleFigure";
 import { getTimeAgo } from "../../lib/timeAgo";
 import { Spinner } from "../ui/Spinner";
 import { IconButton } from "../ui/IconButton";
 
-function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
+/**
+ * RouteScene — the run card's hero art (Social uplift v1, 2026-07-11).
+ * The old MiniRoute was a single flat 2.5px polyline on a near-invisible
+ * background. This draws the same GPS preview as layered STATIC strokes
+ * (wide soft underglow → mid bloom → crisp core; opacity layering only,
+ * never a blur filter — the WKWebView glow rule) plus start/finish
+ * markers. The trace sits in the upper band of the viewBox so the
+ * caller's overlaid distance numeral has clear ground bottom-left.
+ */
+function RouteScene({ preview }: { preview: { lat: number; lon: number }[] }) {
   const lats = preview.map((p) => p.lat);
   const lons = preview.map((p) => p.lon);
   const minLat = Math.min(...lats),
@@ -51,27 +61,55 @@ function MiniRoute({ preview }: { preview: { lat: number; lon: number }[] }) {
     maxLon = Math.max(...lons);
   const rLat = maxLat - minLat || 0.001;
   const rLon = maxLon - minLon || 0.001;
-  const pts = preview
-    .map(
-      (p) =>
-        `${((p.lon - minLon) / rLon) * 188 + 6},${(1 - (p.lat - minLat) / rLat) * 68 + 6}`
-    )
-    .join(" ");
+  const toXY = (p: { lat: number; lon: number }): [number, number] => [
+    ((p.lon - minLon) / rLon) * 180 + 10,
+    (1 - (p.lat - minLat) / rLat) * 46 + 8,
+  ];
+  const pts = preview.map((p) => toXY(p).join(",")).join(" ");
+  const [sx, sy] = toXY(preview[0]);
+  const [fx, fy] = toXY(preview[preview.length - 1]);
+  const layers: { w: number; o: number }[] = [
+    { w: 7, o: 0.16 },
+    { w: 4, o: 0.35 },
+    { w: 2, o: 1 },
+  ];
   return (
     <svg
-      viewBox="0 0 200 80"
+      viewBox="0 0 200 92"
       className="size-full"
       preserveAspectRatio="xMidYMid meet"
       role="img"
       aria-label="Run route map"
     >
-      <polyline
-        fill="none"
+      {layers.map(({ w, o }) => (
+        <polyline
+          key={w}
+          fill="none"
+          stroke={THEME.running}
+          strokeOpacity={o}
+          strokeWidth={w}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={pts}
+        />
+      ))}
+      {/* Start = hollow ring, finish = solid dot (Strava's grammar —
+          readable without a legend). */}
+      <circle
+        cx={sx}
+        cy={sy}
+        r="3.2"
+        fill="var(--color-card)"
         stroke={THEME.running}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={pts}
+        strokeWidth="1.6"
+      />
+      <circle
+        cx={fx}
+        cy={fy}
+        r="2.8"
+        fill={THEME.running}
+        stroke="var(--color-card)"
+        strokeWidth="1.2"
       />
     </svg>
   );
@@ -237,29 +275,89 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     | undefined;
   const prCount = activity?.prCount as number | undefined;
 
-  // Render run content (map + stats)
+  /* ---- Hero panels (Social uplift v1) -------------------------------
+     Runs: the GPS trace becomes a glowing scene with the distance
+     numeral overlaid ON the art (so the km cell drops out of the stats
+     strip below — no double-printing). Lifts: the brand anatomy figure
+     with this session's muscles tinted, volume numeral + PR chip
+     overlaid the same way. Hybrid cards keep the route scene only —
+     two hero panels on one card would fight. */
+  const routePreview =
+    activity?.routePreview &&
+    (activity.routePreview as { lat: number; lon: number }[]).length > 1
+      ? (activity.routePreview as { lat: number; lon: number }[])
+      : undefined;
+  const showDistanceOverlay = !!routePreview && (activity?.distance || 0) > 0;
+  const muscleCategories =
+    (activity?.muscleGroups as string[] | undefined) ?? [];
+  const showMuscleHero =
+    !isRun && !isHybrid && hasMuscleFigure(muscleCategories);
+  const showVolumeOverlay = showMuscleHero && (activity?.totalVolume ?? 0) > 0;
+  const showPrChip = showMuscleHero && (prCount ?? 0) > 0;
+
+  const renderRouteHero = (heightClass: string) => (
+    <div
+      className={`relative ${heightClass} border-b border-border/50`}
+      style={{
+        background: `linear-gradient(150deg, ${THEME.running}24 0%, ${THEME.running}0A 55%, ${THEME.running}12 100%)`,
+      }}
+    >
+      <RouteScene preview={routePreview!} />
+      {showDistanceOverlay && (
+        <div className="absolute bottom-3 left-4">
+          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-running">
+            {((activity?.distance || 0) / 1000).toFixed(2)}
+          </p>
+          <SectionLabel className="mt-0.5">km</SectionLabel>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderMuscleHero = () => (
+    <div
+      className="relative h-32 border-b border-border/50 overflow-hidden"
+      style={{
+        background: `linear-gradient(150deg, ${THEME.lifting}22 0%, ${THEME.lifting}08 55%, ${THEME.lifting}10 100%)`,
+      }}
+    >
+      <div className="absolute inset-0 flex items-center justify-center py-2">
+        <MiniMuscleFigure
+          categories={muscleCategories}
+          className="h-full w-auto"
+        />
+      </div>
+      {showVolumeOverlay && (
+        <div className="absolute bottom-3 left-4">
+          <p className="text-2xl font-extrabold font-mono tabular-nums leading-none text-lifting">
+            {Math.round(activity?.totalVolume ?? 0).toLocaleString()}
+          </p>
+          <SectionLabel className="mt-0.5">kg volume</SectionLabel>
+        </div>
+      )}
+      {showPrChip && (
+        <span className="absolute top-3 right-4 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-achievement/15 text-achievement">
+          <Star className="size-3.5 fill-achievement" />
+          {prCount} PR{prCount === 1 ? "" : "s"}
+        </span>
+      )}
+    </div>
+  );
+
+  // Render run content (route hero + stats)
   const renderRunContent = (mapHeight = "h-28") => (
     <>
-      {activity?.routePreview &&
-        (activity.routePreview as { lat: number; lon: number }[]).length >
-          1 && (
-          <div
-            className={`${mapHeight} border-b border-border/50`}
-            style={{ background: "rgba(255,255,255,0.02)" }}
-          >
-            <MiniRoute
-              preview={activity.routePreview as { lat: number; lon: number }[]}
-            />
-          </div>
-        )}
+      {routePreview && renderRouteHero(mapHeight)}
       {activity && (
         <div className="flex gap-5 p-4 pb-0">
-          <div>
-            <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-              {((activity.distance || 0) / 1000).toFixed(2)}
-            </p>
-            <SectionLabel className="mt-0.5">km</SectionLabel>
-          </div>
+          {!showDistanceOverlay && (
+            <div>
+              <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
+                {((activity.distance || 0) / 1000).toFixed(2)}
+              </p>
+              <SectionLabel className="mt-0.5">km</SectionLabel>
+            </div>
+          )}
           <div>
             <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
               {typeof activity.avgPace === "number"
@@ -405,9 +503,11 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
             );
           })()}
 
-        {/* Workout volume/duration/PR count */}
+        {/* Workout volume/duration/PR count. Cells already printed on
+            the muscle hero panel (volume numeral, PR chip) drop out
+            here — same no-double-printing rule as the run card's km. */}
         <div className="flex gap-4">
-          {(activity.totalVolume ?? 0) > 0 && (
+          {!showVolumeOverlay && (activity.totalVolume ?? 0) > 0 && (
             <div>
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-lifting">
                 {Math.round(activity.totalVolume ?? 0).toLocaleString()}
@@ -423,7 +523,7 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
               <SectionLabel className="mt-0.5">exercises</SectionLabel>
             </div>
           )}
-          {(prCount ?? 0) > 0 && (
+          {!showPrChip && (prCount ?? 0) > 0 && (
             <div>
               <div className="flex items-center gap-1">
                 <Star className="size-4 text-achievement fill-achievement" />
@@ -499,22 +599,10 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
         </>
       ) : (
         <>
-          {/* Standard run card: map on top */}
-          {isRun &&
-            activity?.routePreview &&
-            (activity.routePreview as { lat: number; lon: number }[]).length >
-              1 && (
-              <div
-                className="h-28 border-b border-border/50"
-                style={{ background: "rgba(255,255,255,0.02)" }}
-              >
-                <MiniRoute
-                  preview={
-                    activity.routePreview as { lat: number; lon: number }[]
-                  }
-                />
-              </div>
-            )}
+          {/* Standard run card: route scene on top; standard lift
+              card: muscle-figure scene on top. */}
+          {isRun && routePreview && renderRouteHero("h-36")}
+          {showMuscleHero && renderMuscleHero()}
 
           <div className="p-4">
             {/* Author row */}
@@ -585,15 +673,18 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                 </p>
               )}
 
-            {/* Run stats */}
+            {/* Run stats — km lives on the hero overlay when the route
+                scene rendered */}
             {isRun && activity && (
               <div className="flex gap-5 mb-3">
-                <div>
-                  <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
-                    {((activity.distance || 0) / 1000).toFixed(2)}
-                  </p>
-                  <SectionLabel className="mt-0.5">km</SectionLabel>
-                </div>
+                {!showDistanceOverlay && (
+                  <div>
+                    <p className="text-xl font-bold font-mono tabular-nums leading-none text-running">
+                      {((activity.distance || 0) / 1000).toFixed(2)}
+                    </p>
+                    <SectionLabel className="mt-0.5">km</SectionLabel>
+                  </div>
+                )}
                 <div>
                   <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">
                     {typeof activity.avgPace === "number"
