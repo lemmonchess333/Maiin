@@ -411,7 +411,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       const dive: Op[] = [{ kind: "translate", dx: 0, dy: drop }];
       /* Arms ride down with the body. (A folded front-view grip was tried
          and read as broken polygons across the chest — rigid facets can't
-         fold 150° gracefully. Hanging arms are the clean stylization.) */
+         fold 150° gracefully. Hanging arms are the clean stylization.)
+         2026-07-11 joint pass: hanging arms also ABDUCT a touch with
+         depth — at the bottom the compressed thighs widened into the
+         hands and the forearms clipped INTO the quads. ~10 deg of
+         outward shoulder rotation keeps the hands clear of the thighs
+         through the whole descent (mirrors how references drift the
+         arms forward/out as the hips sink). */
+      const armOut = lerp(0, 10, e);
+      const armL: Op[] = [
+        { kind: "rotate", deg: armOut, pivot: ANT.shoulderL },
+        ...dive,
+      ];
+      const armR: Op[] = [
+        { kind: "rotate", deg: -armOut, pivot: ANT.shoulderR },
+        ...dive,
+      ];
       return {
         thighL: [
           { kind: "scaleY", k, pivotY: ANT.kneeL[1] },
@@ -437,10 +452,10 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         ],
         torso: dive,
         head: dive,
-        upperArmL: dive,
-        upperArmR: dive,
-        foreArmL: dive,
-        foreArmR: dive,
+        upperArmL: armL,
+        upperArmR: armR,
+        foreArmL: armL,
+        foreArmR: armR,
       };
     },
   },
@@ -498,23 +513,41 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * a chicken-wing that clipped the canvas). Foreshortening peaks
        * when the forearm crosses horizontal; with no held weight the
        * arc can run higher and squash less. */
-      const deg = lerp(0, 118, e);
+      /* 2026-07-11 joint pass: the arc now runs INWARD-up (the same
+       * rotation sense the pushdown's probe verified brings the hand
+       * across the front of the body), not outward-up — the previous
+       * direction finished hands WIDE of the elbows, a chicken-wing no
+       * bar allows. Hands now travel up the front and finish just
+       * outside the shoulders at shoulder width, exactly the
+       * bar-constrained path. Foreshortening peaks as the forearm
+       * points at the viewer (crossing the horizontal-front plane). */
+      const deg = lerp(0, 150, e);
       const drift = lerp(0, 4, e); // elbows ease forward a touch
-      // Rest forearm ≈17° outside vertical; world angle from down = 17+deg.
-      const rad = ((17 + deg) * Math.PI) / 180;
-      const k = 1 - 0.36 * Math.sin(Math.min(rad, Math.PI));
+      // World angle measured inward from straight-down: starts -17
+      // (rest sits 17 deg OUTSIDE vertical), crosses the viewer plane
+      // at 90, ends 133 (hand up-and-in beside the shoulder).
+      const world = deg - 17;
+      /* Foreshortening keeps DEEPENING past the mid-arc: at the top of
+       * a curl the forearm points at the viewer's shoulder, so the 2D
+       * segment reads shortest at the finish (k~0.6), not relaxed —
+       * that relaxation was what splayed the old top-frames. */
+      const rise = Math.min(Math.max(world, 0), 90);
+      const k =
+        1 -
+        0.4 * Math.sin((rise * Math.PI) / 180) -
+        (world > 90 ? ((world - 90) / 43) * 0.18 : 0);
       return {
-        upperArmL: [{ kind: "rotate", deg: drift, pivot: ANT.shoulderL }],
+        upperArmL: [{ kind: "rotate", deg: -drift, pivot: ANT.shoulderL }],
         foreArmL: [
-          { kind: "rotate", deg, pivot: ANT.elbowL },
-          { kind: "scaleAxis", k, deg: 17 + deg, pivot: ANT.elbowL },
-          { kind: "rotate", deg: drift, pivot: ANT.shoulderL },
+          { kind: "rotate", deg: -deg, pivot: ANT.elbowL },
+          { kind: "scaleAxis", k, deg: -(deg - 17), pivot: ANT.elbowL },
+          { kind: "rotate", deg: -drift, pivot: ANT.shoulderL },
         ],
-        upperArmR: [{ kind: "rotate", deg: -drift, pivot: ANT.shoulderR }],
+        upperArmR: [{ kind: "rotate", deg: drift, pivot: ANT.shoulderR }],
         foreArmR: [
-          { kind: "rotate", deg: -deg, pivot: ANT.elbowR },
-          { kind: "scaleAxis", k, deg: -(17 + deg), pivot: ANT.elbowR },
-          { kind: "rotate", deg: -drift, pivot: ANT.shoulderR },
+          { kind: "rotate", deg, pivot: ANT.elbowR },
+          { kind: "scaleAxis", k, deg: deg - 17, pivot: ANT.elbowR },
+          { kind: "rotate", deg: drift, pivot: ANT.shoulderR },
         ],
       };
     },
