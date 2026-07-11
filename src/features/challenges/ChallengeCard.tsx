@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from "react";
+import { useState, type ComponentType, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -26,6 +26,7 @@ import {
 } from "./useChallenges";
 import { THEME } from "@/lib/theme";
 import { Button } from "@/components/ui/Button";
+import SectionLabel from "@/components/ui/SectionLabel";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import { useChallengePercentile } from "./useChallengePercentile";
 
@@ -68,7 +69,12 @@ const METRIC_ACCENT: Record<string, string> = {
    leakage on the Crews tab once challenges actually started seeding. */
 const CHALLENGE_ICON_MAP: Record<
   string,
-  ComponentType<{ size?: number; className?: string }>
+  ComponentType<{
+    size?: number;
+    className?: string;
+    style?: CSSProperties;
+    "aria-hidden"?: boolean;
+  }>
 > = {
   trophy: Trophy,
   footprints: Footprints,
@@ -184,56 +190,64 @@ export function ChallengeCard({
         : null;
   const nextValue = nextTier ? challenge.tiers[nextTier] : null;
 
+  /* Unknown icon name → fall back to a Trophy so the card doesn't
+     render bare text in the slot. Adding a new challenge with an
+     unmapped icon name degrades gracefully instead of leaking the
+     string. */
+  const HeroIcon = CHALLENGE_ICON_MAP[challenge.icon] ?? Trophy;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl bg-card border border-border/50 overflow-hidden"
     >
-      <div className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-start gap-3">
-          <div
-            className="size-10 rounded-xl flex items-center justify-center shrink-0"
-            style={{ backgroundColor: accent + "20", color: accent }}
-          >
-            {(() => {
-              const IconComp = CHALLENGE_ICON_MAP[challenge.icon];
-              return IconComp ? (
-                <IconComp size={18} />
-              ) : (
-                /* Unknown icon name → fall back to a Trophy so the card
-                   doesn't render bare text in the slot. Adding a new
-                   challenge with an unmapped icon name now degrades
-                   gracefully instead of leaking the string. */
-                <Trophy size={18} />
-              );
-            })()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              {challenge.name}
-            </p>
-            <p className="text-small text-muted-foreground">
-              {challenge.description}
-            </p>
-          </div>
-          {currentTier && (
-            <div
-              className="size-6 rounded-full flex items-center justify-center shrink-0"
-              style={{ backgroundColor: TIER_COLORS[currentTier] }}
-            >
-              <Trophy className="size-3.5 text-white" />
-            </div>
-          )}
-        </div>
-
-        {/* Meta row */}
-        <div className="flex items-center gap-3 text-small text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Clock className="size-3.5" />
+      {/* Hero band (Social uplift v2) — same visual grammar as the
+          ActivityCard hero panels: accent-tinted gradient, the
+          challenge's own mark rendered oversized + ghosted as art,
+          name overlaid on the panel. Static everything (WKWebView
+          rule); accent is the sport-coded metric colour so a km
+          challenge reads coral and a volume challenge purple at a
+          glance. */}
+      <div
+        className="relative h-24 overflow-hidden border-b border-border/50"
+        style={{
+          background: `linear-gradient(150deg, ${accent}24 0%, ${accent}0A 55%, ${accent}12 100%)`,
+        }}
+      >
+        <HeroIcon
+          size={104}
+          className="absolute -right-2 -bottom-5"
+          style={{ color: accent, opacity: 0.16, transform: "rotate(-10deg)" }}
+          aria-hidden
+        />
+        <div className="absolute bottom-3 left-4 right-20 min-w-0">
+          <SectionLabel className="flex items-center gap-1">
+            <Clock className="size-3" aria-hidden />
             {timeLeft}
-          </span>
+          </SectionLabel>
+          <p className="text-lg font-bold text-foreground leading-tight truncate mt-0.5">
+            {challenge.name}
+          </p>
+        </div>
+        {currentTier && (
+          <div
+            className="absolute top-3 right-3 size-6 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: TIER_COLORS[currentTier] }}
+            aria-label={`${TIER_LABELS[currentTier]} achieved`}
+            role="img"
+          >
+            <Trophy className="size-3.5 text-white" />
+          </div>
+        )}
+      </div>
+      <div className="p-4 space-y-3">
+        <p className="text-small text-muted-foreground">
+          {challenge.description}
+        </p>
+
+        {/* Meta row — timeLeft lives on the hero band now */}
+        <div className="flex items-center gap-3 text-small text-muted-foreground">
           <span className="flex items-center gap-1">
             <Users className="size-3.5" />
             {challenge.participantCount} joined
