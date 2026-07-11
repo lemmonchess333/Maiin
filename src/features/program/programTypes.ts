@@ -4,16 +4,13 @@
 
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
-export type MovementCategory =
-  | "horizontal_push"
-  | "vertical_push"
-  | "horizontal_pull"
-  | "vertical_pull"
-  | "knee_dominant"
-  | "hip_dominant"
-  | "arms_biceps"
-  | "arms_triceps"
-  | "core";
+/* MovementCategory lives in lib/exerciseMovementCategory.ts (the module
+   that also owns its inference) and is re-exported here for the many
+   existing importers. Breaking the programTypes <-> inference cycle
+   (2026-07-11 repo audit batch 3): this file imports the inference
+   function, so the inference module must not import back from here. */
+import type { MovementCategory } from "@/lib/exerciseMovementCategory";
+export type { MovementCategory } from "@/lib/exerciseMovementCategory";
 
 export type SplitType =
   | "full_body"

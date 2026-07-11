@@ -1,4 +1,16 @@
-import type { MovementCategory } from "@/features/program/programTypes";
+/* Canonical home of MovementCategory (moved from programTypes.ts, which
+   re-exports it — audit batch 3 cycle break: programTypes imports the
+   inference below, so this module must not import from programTypes). */
+export type MovementCategory =
+  | "horizontal_push"
+  | "vertical_push"
+  | "horizontal_pull"
+  | "vertical_pull"
+  | "knee_dominant"
+  | "hip_dominant"
+  | "arms_biceps"
+  | "arms_triceps"
+  | "core";
 
 /**
  * Infer a MovementCategory from an exercise name (and optional id).
@@ -29,15 +41,51 @@ const RULES: Rule[] = [
   /* Hip-dominant lifts must come before "row" patterns since some
      exercises (e.g. "Romanian Deadlift") wouldn't trigger row keywords
      but should still resolve hip-dominant cleanly. */
-  { category: "hip_dominant", keywords: ["deadlift", "rdl", "good morning", "hip thrust", "glute bridge", "kettlebell swing", "swing"] },
+  {
+    category: "hip_dominant",
+    keywords: [
+      "deadlift",
+      "rdl",
+      "good morning",
+      "hip thrust",
+      "glute bridge",
+      "kettlebell swing",
+      "swing",
+    ],
+  },
 
   /* Knee-dominant — squats, lunges, leg-press style. Includes "split"
      to catch Bulgarian Split Squat when "squat" hasn't already
      consumed the word. */
-  { category: "knee_dominant", keywords: ["squat", "lunge", "leg press", "leg extension", "step up", "split squat", "pistol", "calf raise", "leg curl"] },
+  {
+    category: "knee_dominant",
+    keywords: [
+      "squat",
+      "lunge",
+      "leg press",
+      "leg extension",
+      "step up",
+      "split squat",
+      "pistol",
+      "calf raise",
+      "leg curl",
+    ],
+  },
 
   /* Vertical pull — overhead pull patterns. */
-  { category: "vertical_pull", keywords: ["pull-up", "pull up", "pullup", "chin-up", "chin up", "chinup", "lat pulldown", "pulldown"] },
+  {
+    category: "vertical_pull",
+    keywords: [
+      "pull-up",
+      "pull up",
+      "pullup",
+      "chin-up",
+      "chin up",
+      "chinup",
+      "lat pulldown",
+      "pulldown",
+    ],
+  },
 
   /* Horizontal pull — rows. "Face pull" lives here because it's a
      horizontal scapular retraction, not a true vertical pull. */
@@ -45,24 +93,78 @@ const RULES: Rule[] = [
 
   /* Vertical push — overhead presses. Match before horizontal_push so
      "Overhead Press" doesn't fall into the generic press bucket. */
-  { category: "vertical_push", keywords: ["overhead press", "shoulder press", "military press", "push press", "ohp", "lateral raise", "front raise", "upright row"] },
+  {
+    category: "vertical_push",
+    keywords: [
+      "overhead press",
+      "shoulder press",
+      "military press",
+      "push press",
+      "ohp",
+      "lateral raise",
+      "front raise",
+      "upright row",
+    ],
+  },
 
   /* Horizontal push — bench, dips, push-ups. */
-  { category: "horizontal_push", keywords: ["bench press", "bench", "chest press", "push-up", "push up", "pushup", "dip", "fly", "flye", "incline press", "decline press"] },
+  {
+    category: "horizontal_push",
+    keywords: [
+      "bench press",
+      "bench",
+      "chest press",
+      "push-up",
+      "push up",
+      "pushup",
+      "dip",
+      "fly",
+      "flye",
+      "incline press",
+      "decline press",
+    ],
+  },
 
   /* Arm isolation. Biceps before triceps so "tricep curl" (rare
      variant) doesn't get the bicep stamp. */
-  { category: "arms_triceps", keywords: ["tricep", "skullcrusher", "skull crusher", "pushdown", "kickback", "extension"] },
+  {
+    category: "arms_triceps",
+    keywords: [
+      "tricep",
+      "skullcrusher",
+      "skull crusher",
+      "pushdown",
+      "kickback",
+      "extension",
+    ],
+  },
   { category: "arms_biceps", keywords: ["curl"] },
 
   /* Core. Catches the common patterns; everything unmatched also
      falls through to this category as the default. */
-  { category: "core", keywords: ["plank", "crunch", "sit-up", "sit up", "situp", "leg raise", "ab", "russian twist", "rollout", "hollow"] },
+  {
+    category: "core",
+    keywords: [
+      "plank",
+      "crunch",
+      "sit-up",
+      "sit up",
+      "situp",
+      "leg raise",
+      "ab",
+      "russian twist",
+      "rollout",
+      "hollow",
+    ],
+  },
 ];
 
 const FALLBACK: MovementCategory = "core";
 
-export function inferMovementCategory(name: string, exerciseId?: string): MovementCategory {
+export function inferMovementCategory(
+  name: string,
+  exerciseId?: string
+): MovementCategory {
   const haystack = `${name} ${exerciseId ?? ""}`.toLowerCase();
   for (const rule of RULES) {
     for (const kw of rule.keywords) {
@@ -93,14 +195,14 @@ export function inferMovementCategory(name: string, exerciseId?: string): Moveme
    vertical_push now collapse to the same chip. */
 const MOVEMENT_CATEGORY_LABELS: Record<MovementCategory, string> = {
   horizontal_push: "Push",
-  vertical_push:   "Push",
+  vertical_push: "Push",
   horizontal_pull: "Pull",
-  vertical_pull:   "Pull",
-  knee_dominant:   "Legs",
-  hip_dominant:    "Legs",
-  arms_biceps:     "Arms",
-  arms_triceps:    "Arms",
-  core:            "Core",
+  vertical_pull: "Pull",
+  knee_dominant: "Legs",
+  hip_dominant: "Legs",
+  arms_biceps: "Arms",
+  arms_triceps: "Arms",
+  core: "Core",
 };
 
 export function movementCategoryLabel(key: string): string {
