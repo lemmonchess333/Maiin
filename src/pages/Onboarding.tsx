@@ -1212,14 +1212,15 @@ export default function Onboarding() {
                   {runMode !== "freeform" && (
                     <div>
                       <label
+                        htmlFor="onboarding-run-days"
                         className="text-xs"
                         style={{ color: "hsl(var(--muted-foreground))" }}
                       >
                         Run days per week ({weeklyRunDays})
                       </label>
                       <input
+                        id="onboarding-run-days"
                         type="range"
-                        aria-label="Run days per week"
                         min="1"
                         max={7}
                         value={weeklyRunDays}
