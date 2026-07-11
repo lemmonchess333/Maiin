@@ -28,7 +28,7 @@
  * layers.
  */
 
-import type { GroupName } from "./bodyRig";
+import type { GroupName } from "./bodyTypes";
 
 type Pt = [number, number];
 /** Contour sample: [y, x]. */

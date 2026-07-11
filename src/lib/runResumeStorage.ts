@@ -19,7 +19,12 @@
  */
 
 import type { GPSPoint } from "./gps";
-import type { RunConfig } from "@/components/run/RunSetupModal";
+/* RunConfig's canonical home is runConfigDefaults.ts (pure module, no
+ * UI imports — RunSetupModal only re-exports it). Importing the pure
+ * module keeps storage/auth off the UI layer (2026-07-11 audit batch 3:
+ * this line was the root of the auth -> runResumeStorage ->
+ * RunSetupModal -> ShoeSelector -> useShoes -> auth cycles). */
+import type { RunConfig } from "@/components/run/runConfigDefaults";
 
 /** Schema version. Bump invalidates every stored entry on next read. */
 export const RUN_RESUME_SCHEMA_VERSION = 1 as const;
