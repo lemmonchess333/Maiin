@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -11,12 +11,26 @@ import {
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db, storage } from "../../lib/firebase";
 import { useAuth } from "../../lib/auth";
-import { Camera, Lock, RotateCcw, X } from "lucide-react";
+import { Camera, Lock, Plus, RotateCcw, X } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { toast } from "@/lib/toast";
 import { THEME } from "../../lib/theme";
 import { logger } from "../../lib/logger";
 import { EmptyState } from "../ui/EmptyState";
+import {
+  CHECKIN_NOTE_MAX,
+  CHECKIN_SLOTS,
+  SLOT_LABELS,
+  groupVaultEntries,
+  loadProgressCheckIns,
+  createProgressCheckIn,
+  updateProgressCheckIn,
+  type CheckInSlot,
+  type ProgressCheckIn,
+  type VaultEntry,
+  type VaultPhoto,
+} from "@/lib/progressVault";
 
 async function getEncryptionKey(uid: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
@@ -72,11 +86,29 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+/** Composer draft — a check-in being created or edited. */
+interface ComposerState {
+  checkInId?: string;
+  date: string;
+  note: string;
+  photoIds: Partial<Record<CheckInSlot, string>>;
+}
+
+/**
+ * Private Progress Vault (BODY-VAULT-01, extends the BODY-VAULT-00
+ * private-only contract). Photos group into dated CHECK-INS — an optional
+ * front/side/back set plus a neutral note — and comparison is between two
+ * dated check-ins rather than two arbitrary photos. Photos logged before
+ * check-ins existed render as single-photo legacy entries (read adapter in
+ * lib/progressVault — no migration of sensitive data).
+ *
+ * Everything stays owner-only and device-encrypted; nothing here posts to
+ * any social surface.
+ */
 export default function ProgressPhotos() {
   const { user } = useAuth();
-  const [photos, setPhotos] = useState<
-    { id: string; date: string; storagePath: string; iv: number[] }[]
-  >([]);
+  const [photos, setPhotos] = useState<VaultPhoto[]>([]);
+  const [checkIns, setCheckIns] = useState<ProgressCheckIn[]>([]);
   const [decryptedUrls, setDecryptedUrls] = useState<Record<string, string>>(
     {}
   );
@@ -85,9 +117,21 @@ export default function ProgressPhotos() {
   const [selected, setSelected] = useState<string[]>([]);
   const [decrypting, setDecrypting] = useState<Set<string>>(new Set());
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [composer, setComposer] = useState<ComposerState | null>(null);
+  const [savingCheckIn, setSavingCheckIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const keyRef = useRef<CryptoKey | null>(null);
   const pendingFileRef = useRef<File | null>(null);
+  const pendingSlotRef = useRef<CheckInSlot | null>(null);
+
+  const entries = useMemo(
+    () => groupVaultEntries(checkIns, photos),
+    [checkIns, photos]
+  );
+  const photoById = useMemo(
+    () => new Map(photos.map((p) => [p.id, p])),
+    [photos]
+  );
 
   // Helper to cache encryption key (#14)
   const getOrDeriveKey = useCallback(
@@ -115,22 +159,22 @@ export default function ProgressPhotos() {
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
-    setPhotos(
-      snap.docs.map(
-        (d) =>
-          ({ id: d.id, ...d.data() }) as {
-            id: string;
-            date: string;
-            storagePath: string;
-            iv: number[];
-          }
-      )
-    );
+    setPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VaultPhoto));
+  }, [user]);
+
+  const loadCheckIns = useCallback(async () => {
+    if (!user) return;
+    try {
+      setCheckIns(await loadProgressCheckIns(user.uid));
+    } catch (err) {
+      logger.error("[Vault] check-in load failed:", err);
+    }
   }, [user]);
 
   useEffect(() => {
     loadPhotos();
-  }, [loadPhotos]);
+    loadCheckIns();
+  }, [loadPhotos, loadCheckIns]);
 
   // Auto-decrypt the 6 most recent photos on mount
   useEffect(() => {
@@ -170,7 +214,7 @@ export default function ProgressPhotos() {
   }, [photos, user]);
 
   const decryptPhoto = useCallback(
-    async (photo: (typeof photos)[0]) => {
+    async (photo: VaultPhoto) => {
       if (!user || decryptedUrls[photo.id]) return;
       const key = await getOrDeriveKey(user.uid);
       const storageRef = ref(storage, photo.storagePath);
@@ -186,9 +230,11 @@ export default function ProgressPhotos() {
     [user, decryptedUrls, getOrDeriveKey]
   );
 
+  /** Compress → encrypt (fail-closed) → upload → write metadata doc.
+   *  Returns the new photo doc id, or null on failure (error surfaced). */
   const uploadFile = useCallback(
-    async (file: File) => {
-      if (!user) return;
+    async (file: File): Promise<string | null> => {
+      if (!user) return null;
       setLoading(true);
       setUploadError(null);
       try {
@@ -284,7 +330,7 @@ export default function ProgressPhotos() {
               // to the owner, so "public" was never honoured anywhere.
               // Every photo is recorded private — a real sharing
               // system would be its own consent + rules + moderation
-              // project (BODY-VAULT-01).
+              // project.
               visibility: "private",
               createdAt: Timestamp.now(),
             }
@@ -319,7 +365,7 @@ export default function ProgressPhotos() {
           );
         }
 
-        toast.success("Photo uploaded");
+        return docRef.id;
       } catch (err) {
         logger.error("[UPLOAD] Upload failed:", err);
         // Surface the actual error so the user can tell what went
@@ -331,6 +377,7 @@ export default function ProgressPhotos() {
             ? err.message
             : "Upload failed. Please try again.";
         setUploadError(message);
+        return null;
       } finally {
         setLoading(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -339,12 +386,21 @@ export default function ProgressPhotos() {
     [user, loadPhotos, getOrDeriveKey]
   );
 
+  /** File picked for a composer slot → upload → attach to the draft. */
   const handleUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       if (!user || !e.target.files?.[0]) return;
       const file = e.target.files[0];
+      const slot = pendingSlotRef.current;
       pendingFileRef.current = file;
-      await uploadFile(file);
+      const photoId = await uploadFile(file);
+      if (photoId && slot) {
+        setComposer((prev) =>
+          prev
+            ? { ...prev, photoIds: { ...prev.photoIds, [slot]: photoId } }
+            : prev
+        );
+      }
     },
     [user, uploadFile]
   );
@@ -352,7 +408,15 @@ export default function ProgressPhotos() {
   const retryUpload = useCallback(async () => {
     if (!pendingFileRef.current) return;
     setUploadError(null);
-    await uploadFile(pendingFileRef.current);
+    const slot = pendingSlotRef.current;
+    const photoId = await uploadFile(pendingFileRef.current);
+    if (photoId && slot) {
+      setComposer((prev) =>
+        prev
+          ? { ...prev, photoIds: { ...prev.photoIds, [slot]: photoId } }
+          : prev
+      );
+    }
   }, [uploadFile]);
 
   const dismissError = useCallback(() => {
@@ -360,29 +424,131 @@ export default function ProgressPhotos() {
     pendingFileRef.current = null;
   }, []);
 
+  const openNewCheckIn = useCallback(() => {
+    setComposer({
+      date: new Date().toISOString().split("T")[0],
+      note: "",
+      photoIds: {},
+    });
+  }, []);
+
+  const openEditCheckIn = useCallback(
+    (entry: VaultEntry) => {
+      if (!entry.checkInId) return;
+      const stored = checkIns.find((c) => c.id === entry.checkInId);
+      if (!stored) return;
+      setComposer({
+        checkInId: stored.id,
+        date: stored.date,
+        note: stored.note || "",
+        photoIds: { ...stored.photoIds },
+      });
+    },
+    [checkIns]
+  );
+
+  const saveCheckIn = useCallback(async () => {
+    if (!user || !composer || savingCheckIn) return;
+    setSavingCheckIn(true);
+    try {
+      const input = {
+        date: composer.date,
+        note: composer.note,
+        photoIds: composer.photoIds,
+      };
+      const ok = composer.checkInId
+        ? await updateProgressCheckIn(user.uid, composer.checkInId, input)
+        : (await createProgressCheckIn(user.uid, input)) !== null;
+      if (!ok) {
+        toast.error("Add at least one photo first");
+        return;
+      }
+      await loadCheckIns();
+      setComposer(null);
+      toast.success(composer.checkInId ? "Check-in updated" : "Check-in saved");
+    } catch (err) {
+      logger.error("[Vault] check-in save failed:", err);
+      toast.error("Couldn't save. Try again.");
+    } finally {
+      setSavingCheckIn(false);
+    }
+  }, [user, composer, savingCheckIn, loadCheckIns]);
+
+  const toggleCompareSelect = useCallback((entryKey: string) => {
+    setSelected((prev) =>
+      prev.includes(entryKey)
+        ? prev.filter((k) => k !== entryKey)
+        : prev.length < 2
+          ? [...prev, entryKey]
+          : prev
+    );
+  }, []);
+
+  const renderThumb = (photoId: string, label: string, sizeClass: string) => {
+    const photo = photoById.get(photoId);
+    // jsx-a11y/img-redundant-alt: screen readers already announce <img>
+    // as an image, so the alt must not contain "photo" — including the
+    // legacy entries' visible "Photo" badge label.
+    const altText =
+      label.toLowerCase() === "photo"
+        ? "Progress check-in"
+        : `${label} view, progress check-in`;
+    return (
+      <div className={`${sizeClass} relative rounded-lg overflow-hidden`}>
+        {photo && decrypting.has(photoId) ? (
+          <div className="size-full bg-muted flex items-center justify-center">
+            <Spinner size="sm" variant="muted" label="Decrypting photo" />
+          </div>
+        ) : decryptedUrls[photoId] ? (
+          <img
+            src={decryptedUrls[photoId]}
+            className="size-full object-cover"
+            alt={altText}
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "";
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ) : (
+          <div className="size-full bg-muted flex items-center justify-center">
+            <Lock className="size-4 text-muted-foreground" />
+          </div>
+        )}
+        <span className="absolute bottom-0 inset-x-0 bg-black/45 text-[10px] text-white text-center py-0.5 uppercase tracking-wide">
+          {label}
+        </span>
+      </div>
+    );
+  };
+
+  const selectedEntries = selected
+    .map((k) => entries.find((e) => e.key === k))
+    .filter((e): e is VaultEntry => !!e);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Progress Photos</h3>
+        <h3 className="text-sm font-semibold">Progress Vault</h3>
         <div className="flex gap-2">
-          {photos.length >= 2 && (
+          {entries.length >= 2 && (
             <button
               type="button"
               onClick={() => {
                 setCompareMode(!compareMode);
                 setSelected([]);
               }}
-              aria-label={compareMode ? "Exit compare mode" : "Compare photos"}
+              aria-label={
+                compareMode ? "Exit compare mode" : "Compare check-ins"
+              }
               className={`text-xs px-3 py-2 rounded-lg font-medium min-h-[44px] ${compareMode ? "bg-primary text-primary-foreground" : "bg-muted"}`}
             >
               Compare
             </button>
           )}
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            aria-label="Add progress photo"
-          >
-            + Add
+          <Button onClick={openNewCheckIn} aria-label="New progress check-in">
+            + Check-in
           </Button>
         </div>
         <input
@@ -408,20 +574,7 @@ export default function ProgressPhotos() {
         </span>
       </div>
 
-      {loading && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
-          <Spinner
-            size="sm"
-            variant="primary"
-            label="Encrypting and uploading photo"
-          />
-          <p className="text-xs text-foreground font-medium">
-            Encrypting & uploading your photo...
-          </p>
-        </div>
-      )}
-
-      {uploadError && !loading && (
+      {uploadError && !loading && !composer && (
         <div
           className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
           role="alert"
@@ -429,12 +582,6 @@ export default function ProgressPhotos() {
           <p className="text-xs text-destructive flex-1 leading-relaxed break-words">
             {uploadError}
           </p>
-          {/*
-            Only surface Retry when we actually have a file to retry.
-            Without this guard the button was silently no-op'ing when
-            the pendingFileRef had been cleared (e.g. after the user
-            navigated away and back).
-          */}
           {pendingFileRef.current && (
             <button
               type="button"
@@ -457,97 +604,218 @@ export default function ProgressPhotos() {
         </div>
       )}
 
-      {photos.length === 0 && (
+      {entries.length === 0 && (
         <EmptyState
           icon={Camera}
           headline="Track your transformation"
-          sub="Take a front, side, and back photo each week to see your progress over time"
+          sub="A weekly check-in — front, side and back — shows change no mirror can. Only you can ever see these."
           accent={THEME.brand}
-          action={{
-            label: "+ Add Photo",
-            onClick: () => fileInputRef.current?.click(),
-          }}
+          action={{ label: "+ First check-in", onClick: openNewCheckIn }}
         />
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        {photos.map((photo) => (
+      {/* Check-in list */}
+      <div className="space-y-2">
+        {entries.map((entry) => (
           <button
             type="button"
-            key={photo.id}
-            aria-label={`Progress photo from ${photo.date}${compareMode ? ", tap to select for comparison" : ""}`}
+            key={entry.key}
+            aria-label={`Check-in from ${entry.date}${compareMode ? ", tap to select for comparison" : entry.checkInId ? ", tap to edit" : ""}`}
             onClick={() => {
-              decryptPhoto(photo);
+              entry.slots.forEach(({ photoId }) => {
+                const p = photoById.get(photoId);
+                if (p) void decryptPhoto(p);
+              });
               if (compareMode) {
-                setSelected((prev) =>
-                  prev.includes(photo.id)
-                    ? prev.filter((id) => id !== photo.id)
-                    : prev.length < 2
-                      ? [...prev, photo.id]
-                      : prev
-                );
+                toggleCompareSelect(entry.key);
+              } else if (entry.checkInId) {
+                openEditCheckIn(entry);
               }
             }}
-            className={`aspect-[3/4] rounded-lg overflow-hidden border-2 ${
-              selected.includes(photo.id)
+            className={`w-full p-3 rounded-xl bg-card text-left border-2 transition-colors ${
+              selected.includes(entry.key)
                 ? "border-primary"
                 : "border-transparent"
             }`}
           >
-            {decrypting.has(photo.id) ? (
-              <div className="size-full bg-muted flex flex-col items-center justify-center">
-                <Spinner size="sm" variant="muted" label="Decrypting photo" />
-                <span className="text-xs text-muted-foreground mt-1">
-                  {photo.date}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-mono tabular-nums text-foreground">
+                {entry.date}
+              </span>
+              {entry.legacy && (
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Photo
                 </span>
-              </div>
-            ) : decryptedUrls[photo.id] ? (
-              <img
-                src={decryptedUrls[photo.id]}
-                className="size-full object-cover"
-                alt={`Progress from ${photo.date}`}
-                loading="lazy"
-                decoding="async"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "";
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-            ) : (
-              <div className="size-full bg-muted flex flex-col items-center justify-center">
-                <Lock className="size-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground mt-1">
-                  {photo.date}
-                </span>
-              </div>
+              )}
+            </div>
+            {entry.note && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {entry.note}
+              </p>
             )}
+            <div className="flex gap-2 mt-2">
+              {entry.slots.map(({ slot, photoId }) =>
+                renderThumb(
+                  photoId,
+                  entry.legacy ? "Photo" : SLOT_LABELS[slot],
+                  "w-20 aspect-[3/4]"
+                )
+              )}
+            </div>
           </button>
         ))}
       </div>
 
-      {compareMode && selected.length === 2 && (
+      {/* Date-based comparison — two check-ins side by side, slot rows
+          aligned so front compares against front, side against side. */}
+      {compareMode && selectedEntries.length === 2 && (
         <div className="flex gap-2 mt-4">
-          {selected.map((id) => (
-            <div
-              key={id}
-              className="flex-1 aspect-[3/4] rounded-lg overflow-hidden"
-            >
-              {decryptedUrls[id] && (
-                <img
-                  src={decryptedUrls[id]}
-                  className="size-full object-cover"
-                  alt={`Progress from ${photos.find((p) => p.id === id)?.date || "unknown date"}`}
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "";
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
+          {selectedEntries.map((entry) => (
+            <div key={entry.key} className="flex-1 space-y-2">
+              <p className="text-xs font-mono tabular-nums text-center text-muted-foreground">
+                {entry.date}
+              </p>
+              {entry.slots.map(({ slot, photoId }) =>
+                renderThumb(
+                  photoId,
+                  entry.legacy ? "Photo" : SLOT_LABELS[slot],
+                  "w-full aspect-[3/4]"
+                )
               )}
             </div>
           ))}
         </div>
       )}
+
+      {/* Check-in composer */}
+      <BottomSheet
+        open={composer !== null}
+        onOpenChange={(v) => {
+          if (!v && !savingCheckIn) setComposer(null);
+        }}
+        title={composer?.checkInId ? "Edit check-in" : "New check-in"}
+        description="Front, side and back are optional — one photo still counts. Private to your account."
+      >
+        {composer && (
+          <div className="px-5 pb-5 pt-3 space-y-4">
+            <p className="text-xs font-mono tabular-nums text-muted-foreground">
+              {composer.date}
+            </p>
+
+            <div className="grid grid-cols-3 gap-2">
+              {CHECKIN_SLOTS.map((slot) => {
+                const photoId = composer.photoIds[slot];
+                return (
+                  <button
+                    type="button"
+                    key={slot}
+                    aria-label={
+                      photoId
+                        ? `Replace ${SLOT_LABELS[slot]} photo`
+                        : `Add ${SLOT_LABELS[slot]} photo`
+                    }
+                    disabled={loading}
+                    onClick={() => {
+                      pendingSlotRef.current = slot;
+                      fileInputRef.current?.click();
+                    }}
+                    className="aspect-[3/4] rounded-xl overflow-hidden border border-dashed border-border bg-muted/40 relative disabled:opacity-60"
+                  >
+                    {photoId ? (
+                      renderThumb(photoId, SLOT_LABELS[slot], "size-full")
+                    ) : (
+                      <span className="size-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                        <Plus className="size-4" />
+                        <span className="text-[10px] uppercase tracking-wide">
+                          {SLOT_LABELS[slot]}
+                        </span>
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {loading && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <Spinner
+                  size="sm"
+                  variant="primary"
+                  label="Encrypting and uploading photo"
+                />
+                <p className="text-xs text-foreground font-medium">
+                  Encrypting &amp; uploading your photo...
+                </p>
+              </div>
+            )}
+
+            {uploadError && !loading && (
+              <div
+                className="flex items-start gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20"
+                role="alert"
+              >
+                <p className="text-xs text-destructive flex-1 leading-relaxed break-words">
+                  {uploadError}
+                </p>
+                {pendingFileRef.current && (
+                  <button
+                    type="button"
+                    onClick={retryUpload}
+                    aria-label="Retry photo upload"
+                    className="flex items-center gap-1 text-xs font-medium text-destructive shrink-0"
+                  >
+                    <RotateCcw size={12} />
+                    Retry
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={dismissError}
+                  aria-label="Dismiss error"
+                  className="p-0.5 text-destructive/70 hover:text-destructive shrink-0"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="checkin-note"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Note (optional)
+              </label>
+              <textarea
+                id="checkin-note"
+                value={composer.note}
+                onChange={(e) =>
+                  setComposer((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          note: e.target.value.slice(0, CHECKIN_NOTE_MAX),
+                        }
+                      : prev
+                  )
+                }
+                rows={2}
+                placeholder="e.g. Morning, same lighting as last week"
+                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+              />
+            </div>
+
+            <Button
+              fullWidth
+              loading={savingCheckIn}
+              disabled={Object.keys(composer.photoIds).length === 0 || loading}
+              onClick={() => void saveCheckIn()}
+            >
+              {composer.checkInId ? "Save changes" : "Save check-in"}
+            </Button>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   );
 }
