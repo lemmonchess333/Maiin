@@ -16,9 +16,23 @@ import {
   makeBlockId,
   blockDocPath,
   parseTrainingBlock,
+  presetProgrammeGoal,
 } from "../trainingBlock";
 
 const block = { startDate: "2026-07-06", durationWeeks: 8 as const };
+
+describe("presetProgrammeGoal (Blk1 hand-off mapping)", () => {
+  it("maps the three goal-flavoured presets to a truthful PrimaryGoal", () => {
+    expect(presetProgrammeGoal("strength_foundation")).toBe("strength");
+    expect(presetProgrammeGoal("muscle_building")).toBe("hypertrophy");
+    expect(presetProgrammeGoal("hybrid_support")).toBe("running");
+  });
+
+  it("offers NOTHING for the habit presets — one-tap create stays", () => {
+    expect(presetProgrammeGoal("consistency_reset")).toBeNull();
+    expect(presetProgrammeGoal("return_to_training")).toBeNull();
+  });
+});
 
 describe("locked decisions (GsPb1)", () => {
   it("ships exactly the five locked presets", () => {
