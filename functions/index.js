@@ -715,7 +715,12 @@ exports.completeOnboarding = functions
         // (no durable ledger marker). A client-sent trialExpiresAt is ignored —
         // firestore.rules already pins it null on create; strip defensively.
         delete profileData.trialExpiresAt;
-        if (shouldGrantTrial({ userDocExists: false, ledgerExists: ledgerSnap.exists })) {
+        if (
+          shouldGrantTrial({
+            userDocExists: false,
+            ledgerExists: ledgerSnap.exists,
+          })
+        ) {
           profileData.trialExpiresAt = trialExpiryIso(new Date());
           grantTrial = true;
         }
@@ -6066,3 +6071,128 @@ exports._isVolumeEligibleRun = _isVolumeEligibleRun;
 exports._fellBehindRatio = _fellBehindRatio;
 exports._decideFellBehindFlag = _decideFellBehindFlag;
 exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
+
+// ═══════════════════════════════════════════════════════════════
+// GOALS-CORE-01 (slice 3) — Goal Space membership callables.
+// Server-owned membership: the rules lock goalSpaces/{id} + members
+// to `write: if false`, so these callables are the ONLY writers.
+// Logic lives in lib/goalSpaceMembership (injected-firestore, unit-
+// tested); this wiring adds auth, the deletion actor-lock, rate
+// limits and HttpsError mapping. GsPb1 lock: invite-only, max 8,
+// free at launch (no entitlement gate).
+// ═══════════════════════════════════════════════════════════════
+const goalSpaceMembership = require("./lib/goalSpaceMembership");
+const { randomUUID: goalSpaceRandomId } = require("crypto");
+
+/** Safe display projection from the caller's own profile doc —
+ *  never trusted from client input. */
+async function goalSpaceCallerProfile(uid) {
+  const snap = await admin.firestore().doc(`users/${uid}`).get();
+  const data = snap.exists ? snap.data() : {};
+  return {
+    displayName: data.displayName || "Member",
+    photoURL: data.photoURL || null,
+  };
+}
+
+function mapGoalSpaceError(err) {
+  if (err instanceof goalSpaceMembership.GoalSpaceError) {
+    return new functions.https.HttpsError(err.code, err.message);
+  }
+  functions.logger.error("goalSpace callable failed", err);
+  return new functions.https.HttpsError("internal", "Something went wrong.");
+}
+
+async function goalSpaceCallableGate(context, action, limit) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+  }
+  const uid = context.auth.uid;
+  await accountDeletionLocks.assertCallableActorNotDeleting(
+    admin.firestore(),
+    uid
+  );
+  const limited = await isRateLimited(uid, action, limit, 600_000);
+  if (limited) {
+    throw new functions.https.HttpsError(
+      "resource-exhausted",
+      "Too many requests. Please wait."
+    );
+  }
+  return uid;
+}
+
+exports.createGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCreate", 5);
+    const profile = await goalSpaceCallerProfile(uid);
+    try {
+      return await goalSpaceMembership.createGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        displayName: profile.displayName,
+        photoURL: profile.photoURL,
+        input: data || {},
+        now: Date.now(),
+        makeId: goalSpaceRandomId,
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+exports.joinGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceJoin", 10);
+    const profile = await goalSpaceCallerProfile(uid);
+    try {
+      await goalSpaceMembership.joinGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        displayName: profile.displayName,
+        photoURL: profile.photoURL,
+        spaceId: data?.spaceId,
+        inviteCode: data?.inviteCode,
+        now: Date.now(),
+        makeId: goalSpaceRandomId,
+      });
+      return { ok: true };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+exports.leaveGoalSpace = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceLeave", 10);
+    try {
+      await goalSpaceMembership.leaveGoalSpace({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+      });
+      return { ok: true };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+exports.removeGoalSpaceMember = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceRemove", 10);
+    try {
+      await goalSpaceMembership.removeGoalSpaceMember({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        memberUid: data?.memberUid,
+      });
+      return { ok: true };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
