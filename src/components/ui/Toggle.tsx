@@ -45,18 +45,23 @@ export function Toggle({
         className
       )}
     >
+      {/* The thumb is a normal FLEX CHILD of the track, not an
+          absolutely-positioned + translated overlay. The earlier
+          transform-based thumb rendered 2× its intended travel on real
+          devices (thumb fully outside the track — reported three times),
+          so the geometry is now containment-by-construction: a flow child
+          physically cannot leave its padded container, in any engine. */}
       <span
         className={cn(
-          "w-10 h-6 rounded-full transition-colors relative block",
-          checked ? "bg-primary" : "bg-muted border border-border"
+          "w-10 h-6 rounded-full transition-colors flex items-center px-1",
+          checked
+            ? "bg-primary justify-end"
+            : "bg-muted border border-border justify-start"
         )}
       >
         <span
-          className={cn(
-            // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
-            "size-4 rounded-full bg-white absolute top-1 shadow-sm transition-transform",
-            checked ? "translate-x-5" : "translate-x-1"
-          )}
+          // eslint-disable-next-line no-restricted-syntax -- iOS-style switch thumb is white in BOTH themes; the track (bg-primary / bg-muted) carries the theme.
+          className="size-4 rounded-full bg-white shadow-sm"
         />
       </span>
     </button>
