@@ -510,7 +510,14 @@ export default function Social() {
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
   const feedLoadMoreRef = useRef(activeFeed.loadMore);
-  feedLoadMoreRef.current = activeFeed.loadMore;
+  /* Latest-ref sync moved out of the render body (audit batch 4): a
+     render-phase ref write is impure under React 19 StrictMode /
+     concurrent rendering (a discarded render would still mutate it).
+     The IntersectionObserver callback only reads .current async, after
+     effects have run, so effect-time sync is equivalent. */
+  useEffect(() => {
+    feedLoadMoreRef.current = activeFeed.loadMore;
+  }, [activeFeed.loadMore]);
   const { hasMore: feedHasMore, loading: feedLoading } = activeFeed;
 
   useEffect(() => {

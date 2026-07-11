@@ -209,12 +209,15 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               { label: "Fat", value: fat, set: setFat, unit: "g" },
             ].map((field) => (
               <div key={field.label} className="space-y-1.5">
-                <label className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1">
+                <label
+                  htmlFor={`manual-macro-${field.label.toLowerCase()}`}
+                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1"
+                >
                   {field.label} ({field.unit})
                 </label>
                 <input
+                  id={`manual-macro-${field.label.toLowerCase()}`}
                   type="number"
-                  aria-label={`${field.label} (${field.unit})`}
                   step="1"
                   min="0"
                   value={field.value}
