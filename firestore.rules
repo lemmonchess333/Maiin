@@ -975,6 +975,52 @@ service cloud.firestore {
       allow write: if isOwnerAndNotDeleting(uid);
     }
 
+    // User subcollection: Journeys (GOALS-CORE-01) — owner-only private
+    // goal intent. Kept separate from the shared goalSpaces object so a
+    // solo journey can gain a Circle later without migration.
+    match /users/{uid}/journeys/{journeyId} {
+      allow read: if isOwner(uid);
+      allow write: if isOwnerAndNotDeleting(uid);
+    }
+
+    // ========================================
+    // Goal Spaces (GOALS-CORE-01, GsPb1 lock) — invite-only Circles.
+    // Space + membership docs are SERVER-OWNED (callables via Admin
+    // SDK): a client can never forge membership, counts, or another
+    // member's status. Reads are member-only. Events are the ONE
+    // client-writable surface: strict six-kind allowlist, allowlisted
+    // fields only, bounded text, author-bound — the audit's privacy
+    // contract (no calories/weight/photos/GPS) is enforced by the
+    // field allowlist: none of those fields can be written at all.
+    // ========================================
+    function isGoalSpaceMember(spaceId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/goalSpaces/$(spaceId)/members/$(request.auth.uid));
+    }
+
+    match /goalSpaces/{spaceId} {
+      allow read: if isGoalSpaceMember(spaceId);
+      allow write: if false;
+    }
+
+    match /goalSpaces/{spaceId}/members/{memberUid} {
+      allow read: if isGoalSpaceMember(spaceId);
+      allow write: if false;
+    }
+
+    match /goalSpaces/{spaceId}/events/{eventId} {
+      allow read: if isGoalSpaceMember(spaceId);
+      allow create: if isGoalSpaceMember(spaceId)
+        && !isDeleting(request.auth.uid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.kind in ['joined', 'weekly_check_in', 'session_completed', 'milestone', 'needs_support', 'routine_shared']
+        && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
+        && (!('text' in request.resource.data)
+            || (request.resource.data.text is string
+                && request.resource.data.text.size() <= 200));
+      allow update, delete: if false;
+    }
+
     // ========================================
     // Scan usage — food-scan quota tracker.
     // Written exclusively by Cloud Functions (analyzeFood /
