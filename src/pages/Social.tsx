@@ -11,6 +11,7 @@ import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
+import CirclesSection from "../components/social/CirclesSection";
 import { searchUsers, getBoundedFollowingCount } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import LeaderboardCard from "../components/social/LeaderboardCard";
@@ -972,6 +973,10 @@ export default function Social() {
           they're a private/personal artifact, not social content. */}
           {tab === "crews" && (
             <section aria-label="Crews and challenges" className="space-y-6">
+              {/* GOALS-CORE-01: Circles render FIRST (audit IA — Goal
+                  Spaces lead, legacy Crews stay reachable below). */}
+              {user && <CirclesSection uid={user.uid} />}
+
               {/* Challenges — placed first because they're the active /
               competitive surface. Empty-state CTA jumps to Discover so
               users have a clear path to find people to challenge.
