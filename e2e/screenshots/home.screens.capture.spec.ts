@@ -323,4 +323,74 @@ test.describe("app screenshots", () => {
     await page.waitForTimeout(1100);
     await shoot(page, "sheet-dayaction-light");
   });
+
+  // GsPb1-slate surfaces (Circles / Training Blocks / logging focus) —
+  // the parallel-session merges plus the design-consistency pass over
+  // them. Same rules as the other interaction-gated captures: every
+  // trigger is best-effort with a SHORT timeout (a missed locator costs
+  // seconds, not its 30s default), and SegmentedControl options are
+  // role="radio", not buttons.
+  test("new surfaces — circles, block sheet, food focus", async ({ page }) => {
+    test.setTimeout(180_000);
+    async function shootLightDark(name: string) {
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+      await shoot(page, `${name}-light`);
+      await page.evaluate(() => document.documentElement.classList.add("dark"));
+      await page.waitForTimeout(350);
+      await shoot(page, `${name}-dark`);
+      await page.evaluate(() =>
+        document.documentElement.classList.remove("dark")
+      );
+    }
+
+    // Circles — Social's Crews sub-tab leads with the Goal Space section;
+    // the seeded user has no circles, so this captures the EmptyState
+    // hexagon cold-start (the state every launch user sees).
+    await page.goto("social?tab=crews");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(1600);
+    await shootLightDark("circles-crews");
+
+    // Training Block create sheet — Program lift tab entry row opens the
+    // preset cards + the block-length SegmentedControl.
+    await page.goto("program");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(1400);
+    await page
+      .getByRole("button", { name: /start a training block/i })
+      .click({ timeout: 4000 })
+      .catch(() =>
+        console.log(
+          "[capture] Training-block entry not visible (active block or no programme) — capturing the tab as-is"
+        )
+      );
+    await page.waitForTimeout(900);
+    await shootLightDark("sheet-trainingblock");
+    // Close the sheet so the next navigation starts clean.
+    await page.keyboard.press("Escape").catch(() => {});
+
+    // Weekly logging focus — Food's consistency card expands its picker
+    // in place (SegmentedControl + Set focus).
+    await page.goto("food");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await page.waitForTimeout(1400);
+    await page
+      .getByRole("button", { name: /set a weekly logging focus/i })
+      .click({ timeout: 4000 })
+      .catch(() =>
+        console.log(
+          "[capture] Logging-focus row not visible (commitment already set?) — capturing the card as-is"
+        )
+      );
+    await page.waitForTimeout(700);
+    await shootLightDark("food-focus-picker");
+  });
 });
