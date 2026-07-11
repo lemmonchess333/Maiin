@@ -797,34 +797,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      seed photoURL from the identity (Google CDN URLs / null for Apple — the
      Firestore rule gates which hosts it accepts); the user can override
      later via the Settings upload flow. */
-  const finishOAuthSignIn = async (
-    cred: UserCredential,
-    method: "google" | "apple"
-  ) => {
-    const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
+  /* Stable useCallback (audit batch 4): closes only over the stable
+     setProfile setter + module-level helpers, so [] deps are truthful.
+     Stability lets signInWithGoogle/Apple and the redirect effect list
+     it as a real dependency instead of suppressing the lint rule. */
+  const finishOAuthSignIn = useCallback(
+    async (cred: UserCredential, method: "google" | "apple") => {
+      const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
 
-    if (!profileDoc.exists()) {
-      const newProfile = createDefaultProfile(
-        cred.user.uid,
-        cred.user.displayName || "",
-        cred.user.email || "",
-        cred.user.photoURL || null
-      );
-      await writeNewProfileDocs(cred.user.uid, newProfile);
-      setProfile(newProfile);
-      trackLifecycle("signup_completed", { method });
-    } else {
-      const data = profileDoc.data();
-      setProfile(
-        hydrateProfile(
+      if (!profileDoc.exists()) {
+        const newProfile = createDefaultProfile(
           cred.user.uid,
-          data,
-          cred.user.displayName ?? "",
-          cred.user.email ?? ""
-        )
-      );
-    }
-  };
+          cred.user.displayName || "",
+          cred.user.email || "",
+          cred.user.photoURL || null
+        );
+        await writeNewProfileDocs(cred.user.uid, newProfile);
+        setProfile(newProfile);
+        trackLifecycle("signup_completed", { method });
+      } else {
+        const data = profileDoc.data();
+        setProfile(
+          hydrateProfile(
+            cred.user.uid,
+            data,
+            cred.user.displayName ?? "",
+            cred.user.email ?? ""
+          )
+        );
+      }
+    },
+    []
+  );
 
   const signInWithGoogle = useCallback(async () => {
     /* Native (Capacitor) can't use the web popup — the redirect returns to
@@ -861,7 +865,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw err;
     }
-  }, []);
+  }, [finishOAuthSignIn]);
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
@@ -890,7 +894,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw err;
     }
-  }, []);
+  }, [finishOAuthSignIn]);
 
   /* Complete a mobile-web OAuth redirect. signInWithRedirect navigates the
      page away; on return the SDK restores the pending credential here. New
@@ -915,10 +919,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-    // finishOAuthSignIn is stable enough for a mount-only run (only closes
-    // over stable setters); intentionally [] so it fires once per app boot.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // finishOAuthSignIn is a stable useCallback, so this still fires once
+    // per app boot — but the dependency is now declared, not suppressed.
+  }, [finishOAuthSignIn]);
 
   const resetPassword = useCallback(async (email: string) => {
     /* Routed through the server callable, NOT the client

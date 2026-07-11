@@ -96,6 +96,12 @@ export function BottomSheet({
           className={cn("fixed inset-0 bg-black/50 z-40", overlayClassName)}
         />
         <Drawer.Content
+          /* No description supplied -> explicitly declare there is no
+             describedby target (audit batch 4). This is the intentional
+             Radix/vaul pattern for suppressing the "missing Description"
+             console warning; when a description IS supplied, vaul wires
+             aria-describedby automatically and this spread adds nothing. */
+          {...(description ? {} : { "aria-describedby": undefined })}
           className={cn(
             "fixed bottom-0 left-0 right-0 z-50",
             "rounded-t-2xl flex flex-col bg-background safe-area-pb",
