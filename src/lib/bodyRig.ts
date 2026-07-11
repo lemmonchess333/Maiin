@@ -136,16 +136,32 @@ function groupOf(view: "anterior" | "posterior", p: BodyPoly): GroupName {
   const L = p.side === "left";
   if (p.muscle === "head") return "head";
   if (view === "anterior") {
-    if (p.muscle === "biceps" || p.muscle === "triceps")
+    /* Deltoids ride the UPPER ARM, not the torso (2026-07-11 joint-
+       alignment pass). Anatomically the deltoid caps the glenohumeral
+       joint and moves with the humerus — it is the press/raise prime
+       mover. Grouped with the torso it stayed welded to the ribcage
+       while the arm rotated away, so every big shoulder movement
+       (overhead press at 155°, lateral raise at 90°) showed the arm
+       DETACHING from a static shoulder cap. With the deltoid in the
+       arm group it pivots about the measured shoulder anchor —
+       which sits in the deltoid mass — so the cap keeps covering the
+       joint at every arm angle, matching the reference figures. */
+    if (
+      p.muscle === "biceps" ||
+      p.muscle === "triceps" ||
+      p.muscle === "front-deltoids"
+    )
       return L ? "upperArmL" : "upperArmR";
     if (p.muscle === "forearm") return L ? "foreArmL" : "foreArmR";
     if (p.muscle === "quadriceps" || p.muscle === "abductors")
       return L ? "thighL" : "thighR";
     if (p.muscle === "knees" || p.muscle === "calves")
       return L ? "shankL" : "shankR";
-    return "torso"; // chest, obliques, abs, neck, front-deltoids
+    return "torso"; // chest, obliques, abs, neck
   }
-  if (p.muscle === "triceps") return L ? "upperArmL" : "upperArmR";
+  // Posterior: same deltoid-rides-the-arm rule (see anterior note).
+  if (p.muscle === "triceps" || p.muscle === "back-deltoids")
+    return L ? "upperArmL" : "upperArmR";
   if (p.muscle === "forearm") return L ? "foreArmL" : "foreArmR";
   if (
     p.muscle === "gluteal" ||
@@ -447,7 +463,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * lateral raise. Numbers: rest upper arm ≈10° outward of straight
        * down, rest forearm ≈17–19°; forearm world angle must equal 180°
        * (up), so fold = 163 − arm. */
-      const arm = lerp(10, 155, e); // outward whole-arm rotation
+      /* Lockout = both segments world-vertical: rest upper arm sits
+       * ~10 deg outside straight-down, so 170 deg of rotation lands it
+       * exactly upright (10 + 170 = 180); fold = 163 - arm keeps the
+       * forearm plumb throughout and reaches ~-7 deg (arm nearly
+       * straight) at the top — the biceps-by-the-ears finish of the
+       * reference press, not the previous 15-deg-short goal post. */
+      const arm = lerp(10, 170, e); // outward whole-arm rotation
       const fold = 163 - arm; // keeps the forearm vertical
       return {
         upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
@@ -509,7 +531,13 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * folded-up (hands at the lower chest, angled toward the viewer —
        * hence foreshortened) down into the plane to full extension. The
        * foreshortening simply relaxes with extension. */
-      const deg = lerp(122, -4, e); // fold at the chest → locked out
+      /* End at +25, not the old -4 (2026-07-11 joint pass): -4 returned
+       * the hands to the REST span — full body width apart — so the
+       * attachment bar drew as a body-wide line at the thighs. +25
+       * leaves the forearms ~8 deg INSIDE vertical at lockout: hands
+       * finish under the shoulders, just in front of the thighs —
+       * the reference pushdown finish. */
+      const deg = lerp(122, 25, e); // fold at the chest → locked out
       const k = lerp(0.6, 1, e); // toward-viewer → in-plane
       return {
         foreArmL: [
@@ -1142,9 +1170,42 @@ export function renderBodyDemo(
   // Transformed points collected per primary (muscle, side) feed the
   // glow hulls below; the same pass emits the crisp polygons.
   const primaryPts = new Map<string, Pt[]>();
+  /* Scapulohumeral rhythm (2026-07-11 joint pass): the deltoid rides
+     the arm group but rotates at ~55% of the humerus angle about the
+     same shoulder pivot — the 2D read of the real ~2:1 humerus/scapula
+     rhythm every anatomy reference shows. Full-rate rotation flipped
+     the cap off its clavicle footprint; zero-rate (old torso grouping)
+     left the arm detaching from a static shoulder. Only shoulder-pivot
+     ROTATES are damped — translations (squat dive, hang shifts) pass
+     through so the deltoid always travels with the body. */
+  const DELTOID_FOLLOW = 0.4;
+  /** Cap on the cap: scapular upward rotation tops out (~60 deg of a
+   *  180-deg reach), which reads as ~38 deg of deltoid tilt in this 2D
+   *  stylization — beyond that the wedge visibly lifts off the traps. */
+  const DELTOID_MAX_DEG = 38;
+  const shoulders =
+    view === "anterior"
+      ? [ANT.shoulderL, ANT.shoulderR]
+      : [POST.shoulderL, POST.shoulderR];
+  const isShoulderPivot = (pt: Pt) =>
+    shoulders.some((sp) => sp[0] === pt[0] && sp[1] === pt[1]);
+  const deltoidOps = (ops: Op[]): Op[] =>
+    ops.map((op) =>
+      op.kind === "rotate" && isShoulderPivot(op.pivot)
+        ? {
+            ...op,
+            deg:
+              Math.sign(op.deg) *
+              Math.min(Math.abs(op.deg) * DELTOID_FOLLOW, DELTOID_MAX_DEG),
+          }
+        : op
+    );
   const polys = data
     .map((p) => {
-      const ops = pose[groupOf(view, p)] ?? [];
+      let ops = pose[groupOf(view, p)] ?? [];
+      if (p.muscle === "front-deltoids" || p.muscle === "back-deltoids") {
+        ops = deltoidOps(ops);
+      }
       const pts = applyOps(p.points as Pt[], ops);
       const level = demo.tint[p.muscle];
       if (level === "primary") {
