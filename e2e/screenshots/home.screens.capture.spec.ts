@@ -372,35 +372,58 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    await page.waitForTimeout(1400);
+    // Same explicit wait: the block row renders only after the
+    // trainingBlocks read settles.
+    const blockRowStart = Date.now();
     await page
       .getByRole("button", { name: /start a training block/i })
-      .click({ timeout: 4000 })
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() =>
+        console.log(
+          `[capture] training-block row visible after ${Date.now() - blockRowStart}ms`
+        )
+      )
       .catch(() =>
         console.log(
-          "[capture] Training-block entry not visible (active block or no programme) — capturing the tab as-is"
+          "[capture] training-block row NEVER appeared within 15s (active block or no programme?) — capturing the tab as-is"
         )
       );
+    await page
+      .getByRole("button", { name: /start a training block/i })
+      .click({ timeout: 2000 })
+      .catch(() => {});
     await page.waitForTimeout(900);
     await shootLightDark("sheet-trainingblock");
     // Close the sheet so the next navigation starts clean.
     await page.keyboard.press("Escape").catch(() => {});
 
     // Weekly logging focus — Food's consistency card expands its picker
-    // in place (SegmentedControl + Set focus).
+    // in place (SegmentedControl + Set focus). The card renders nothing
+    // until its commitment+meals reads settle, so WAIT for it rather
+    // than settling blind — under a loaded capture run those one-shot
+    // reads can trail the page by several seconds.
     await page.goto("food");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
-    await page.waitForTimeout(1400);
+    const foodRowStart = Date.now();
     await page
       .getByRole("button", { name: /set a weekly logging focus/i })
-      .click({ timeout: 4000 })
+      .waitFor({ state: "visible", timeout: 15000 })
+      .then(() =>
+        console.log(
+          `[capture] logging-focus row visible after ${Date.now() - foodRowStart}ms`
+        )
+      )
       .catch(() =>
         console.log(
-          "[capture] Logging-focus row not visible (commitment already set?) — capturing the card as-is"
+          "[capture] logging-focus row NEVER appeared within 15s — capturing the card-less state"
         )
       );
+    await page
+      .getByRole("button", { name: /set a weekly logging focus/i })
+      .click({ timeout: 2000 })
+      .catch(() => {});
     await page.waitForTimeout(700);
     await shootLightDark("food-focus-picker");
   });

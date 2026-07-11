@@ -56,12 +56,66 @@ test.describe("debug invisible cards", () => {
 
   test("food — consistency card", async ({ page }) => {
     test.setTimeout(120_000);
+
+    // Emulator ground truth (Bearer owner bypasses rules): does a
+    // nutritionCommitments doc exist by the time this test runs?
+    const base =
+      "http://127.0.0.1:8080/v1/projects/demo-tropos/databases/(default)/documents";
+    const usersRes = await fetch(`${base}/users`, {
+      headers: { Authorization: "Bearer owner" },
+    });
+    const users = (await usersRes.json()) as {
+      documents?: Array<{ name: string }>;
+    };
+    for (const u of users.documents ?? []) {
+      const uid = u.name.split("/").pop()!;
+      const commitsRes = await fetch(
+        `${base}/users/${uid}/nutritionCommitments`,
+        { headers: { Authorization: "Bearer owner" } }
+      );
+      const commits = (await commitsRes.json()) as {
+        documents?: Array<{ name: string; fields?: unknown }>;
+      };
+      console.log(
+        `[emulator] uid=${uid} commitments=${JSON.stringify(
+          (commits.documents ?? []).map((d) => d.name.split("/").pop())
+        )}`
+      );
+    }
+
+    // Firestore RPC trace — which read (if any) never gets an answer.
+    page.on("request", (req) => {
+      const url = req.url();
+      if (url.includes(":8080")) {
+        console.log(
+          `[net→] ${url.slice(url.indexOf(":8080") + 5, url.indexOf(":8080") + 95)}`
+        );
+      }
+    });
+    page.on("response", (res) => {
+      const url = res.url();
+      if (url.includes(":8080")) {
+        console.log(
+          `[net←] ${res.status()} ${url.slice(url.indexOf(":8080") + 5, url.indexOf(":8080") + 95)}`
+        );
+      }
+    });
+    page.on("requestfailed", (req) => {
+      const url = req.url();
+      if (url.includes(":8080")) {
+        console.log(
+          `[net✗] ${req.failure()?.errorText} ${url.slice(url.indexOf(":8080") + 5, url.indexOf(":8080") + 95)}`
+        );
+      }
+    });
+
     await page.goto("food");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
     await page.waitForTimeout(6000);
     await probe(page, "foodFocusRow", /set a weekly logging focus/i);
+    await probe(page, "progressState", /·\s*\d+\/\d+/);
     await probe(page, "timeline", /food log/i);
   });
 });
