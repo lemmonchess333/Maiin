@@ -1,4 +1,10 @@
-import { useState, useMemo, useEffect, type CSSProperties } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  type CSSProperties,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { haptic } from "@/lib/haptic";
 import { useAuth } from "@/lib/auth";
@@ -42,6 +48,11 @@ import {
 } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
 import { resolveOnboardingRunMode } from "@/lib/onboardingRunMode";
+import {
+  loadOnboardingDraft,
+  saveOnboardingDraft,
+  clearOnboardingDraft,
+} from "@/lib/onboardingDraft";
 import {
   ChevronRight,
   Check,
@@ -310,12 +321,21 @@ const TRAINING_WHY_CHIPS = [
 export default function Onboarding() {
   const { user, updateProfile } = useAuth();
   const navigate = useNavigate();
+  // D-2 (frontend-design-principles-2026-07): rehydrate any saved draft
+  // ONCE, before the state it seeds. A backgrounded PWA reclaim / WKWebView
+  // purge / accidental swipe-away no longer restarts the flow — the user
+  // resumes at their step with every answer intact. uid-scoped + strictly
+  // validated in lib/onboardingDraft; null → fresh start at the defaults.
+  const [draft] = useState(() =>
+    user ? loadOnboardingDraft(user.uid, TOTAL_STEPS - 1) : null
+  );
+
   // Pgm4: Onboarding is now PURELY first-run. The old "retake" mode (jump to
   // step 4 to edit programme fields) was retired — editing a programme lives
   // on the unified /settings/training screen, no app re-runs onboarding to
-  // change settings. So the flow always starts at step 0 and walks all
-  // TOTAL_STEPS.
-  const [step, setStep] = useState(0);
+  // change settings. So the flow always starts at step 0 (or the draft's
+  // resume point) and walks all TOTAL_STEPS.
+  const [step, setStep] = useState(draft?.step ?? 0);
   const [saving, setSaving] = useState(false);
 
   // Funnel: emit a step-view on mount and on each step change. Fires for
@@ -342,16 +362,22 @@ export default function Onboarding() {
   });
 
   // ── About you: Gender
-  const [gender, setGender] = useState<Gender>("unspecified");
+  const [gender, setGender] = useState<Gender>(draft?.gender ?? "unspecified");
 
   // ── About you: Age range
-  const [ageRange, setAgeRange] = useState<AgeRange>("25-34");
+  const [ageRange, setAgeRange] = useState<AgeRange>(
+    draft?.ageRange ?? "25-34"
+  );
 
   // ── About you: Body metrics
-  const [heightCm, setHeightCm] = useState(175);
-  const [weightKg, setWeightKg] = useState(75);
-  const [heightUnit, setHeightUnit] = useState<"cm" | "ft">("cm");
-  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+  const [heightCm, setHeightCm] = useState(draft?.heightCm ?? 175);
+  const [weightKg, setWeightKg] = useState(draft?.weightKg ?? 75);
+  const [heightUnit, setHeightUnit] = useState<"cm" | "ft">(
+    draft?.heightUnit ?? "cm"
+  );
+  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">(
+    draft?.weightUnit ?? "kg"
+  );
   // Goal weight (DEFERRED — the in-flow slider was removed in fast-start).
   // CRITICAL: the saved goal weight is derived as the entered current weight
   // (see handleFinish: `goalWeightKg: weightKg`, `weeklyRateKg: 0`) so the
@@ -360,23 +386,35 @@ export default function Onboarding() {
   // stale default (the old 75) would have given a non-75kg user an unintended
   // cut/bulk. The live nutrition preview below uses weightKg for both
   // current and target, which is the same maintenance result.
-  const [runFrequency, setRunFrequency] = useState<RunFrequency>("occasional");
-  const [runMode, setRunMode] = useState<RunMode>("freeform");
-  const [weeklyRunDays, setWeeklyRunDays] = useState(2);
-  const [raceDistance, setRaceDistance] = useState<RaceDistance>("10k");
-  const [raceTargetDate, setRaceTargetDate] = useState("");
+  const [runFrequency, setRunFrequency] = useState<RunFrequency>(
+    draft?.runFrequency ?? "occasional"
+  );
+  const [runMode, setRunMode] = useState<RunMode>(draft?.runMode ?? "freeform");
+  const [weeklyRunDays, setWeeklyRunDays] = useState(draft?.weeklyRunDays ?? 2);
+  const [raceDistance, setRaceDistance] = useState<RaceDistance>(
+    draft?.raceDistance ?? "10k"
+  );
+  const [raceTargetDate, setRaceTargetDate] = useState(
+    draft?.raceTargetDate ?? ""
+  );
 
   // ── Primary goal
-  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>("hypertrophy");
+  const [primaryGoal, setPrimaryGoal] = useState<PrimaryGoal>(
+    draft?.primaryGoal ?? "hypertrophy"
+  );
 
   // ── Experience (DEFERRED — no UI step; default kept at intermediate)
   const experience: Experience = "intermediate";
 
   // ── Days per week
-  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(4);
+  const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(
+    draft?.daysPerWeek ?? 4
+  );
 
   // ── Equipment
-  const [equipment, setEquipment] = useState<Equipment>("full_gym");
+  const [equipment, setEquipment] = useState<Equipment>(
+    draft?.equipment ?? "full_gym"
+  );
 
   // ── Preferred split (DEFERRED — no UI step; default kept at auto)
   const preferredSplit: PreferredSplit = "auto";
@@ -385,12 +423,67 @@ export default function Onboarding() {
   // step is advanceable on entry like every other step — the fast-start
   // flow auto-selects a sensible default everywhere; injuries was the one
   // step that shipped requiring a manual tap before Continue lit up.
-  const [injuries, setInjuries] = useState<string[]>(["none"]);
+  // A resumed draft's selection wins over the default; a draft can carry
+  // [] only from the pre-#1555 window, which restores the old tap-first
+  // behaviour for that one resume — acceptable and self-healing.
+  const [injuries, setInjuries] = useState<string[]>(
+    draft?.injuries && draft.injuries.length > 0 ? draft.injuries : ["none"]
+  );
 
   // D16 — personal "why". Optional motivation captured on the confirmation
   // step (a tap-chip seeds the phrase; the field stays editable as free
   // text). Never gates advancing; resurfaced later (weekly review).
-  const [trainingWhy, setTrainingWhy] = useState<string>("");
+  const [trainingWhy, setTrainingWhy] = useState<string>(
+    draft?.trainingWhy ?? ""
+  );
+
+  // D-2: persist the draft on every answer/step change so a kill at ANY
+  // moment resumes losslessly. Suppressed while saving (the flow is ending)
+  // and permanently once complete (completedRef) so a late effect can't
+  // resurrect the draft after clearOnboardingDraft.
+  const onboardingCompletedRef = useRef(false);
+  useEffect(() => {
+    if (!user || saving || onboardingCompletedRef.current) return;
+    saveOnboardingDraft(user.uid, {
+      step,
+      primaryGoal,
+      daysPerWeek,
+      equipment,
+      runFrequency,
+      runMode,
+      weeklyRunDays,
+      raceDistance,
+      raceTargetDate,
+      injuries,
+      gender,
+      ageRange,
+      heightCm,
+      weightKg,
+      heightUnit,
+      weightUnit,
+      trainingWhy,
+    });
+  }, [
+    user,
+    saving,
+    step,
+    primaryGoal,
+    daysPerWeek,
+    equipment,
+    runFrequency,
+    runMode,
+    weeklyRunDays,
+    raceDistance,
+    raceTargetDate,
+    injuries,
+    gender,
+    ageRange,
+    heightCm,
+    weightKg,
+    heightUnit,
+    weightUnit,
+    trainingWhy,
+  ]);
 
   // ── Derived values
   const displayHeight =
@@ -704,6 +797,13 @@ export default function Onboarding() {
         await new Promise((r) => setTimeout(r, 1200));
         await callCF();
       }
+
+      // D-2: the server has persisted everything — the draft's job is done.
+      // Clear BEFORE the local profile update so both exits below (normal
+      // navigate and the reload fallback) leave no stale draft behind, and
+      // latch completedRef so the persist effect can't resurrect it.
+      onboardingCompletedRef.current = true;
+      clearOnboardingDraft(user.uid);
 
       // Data is saved server-side (the CF flipped onboardingComplete=true
       // via the Admin SDK). Mirror it into local state so App.tsx switches
