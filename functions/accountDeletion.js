@@ -59,6 +59,11 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // Owner-only private block layer — enumerate-not-recurse, so without this
   // entry a user's blocks orphan on account deletion.
   "trainingBlocks",
+  // Private goal Journeys (users/{uid}/journeys, GOALS-CORE-01).
+  // Enumerate-not-recurse; goalSpaces membership/event cleanup is a
+  // separate server concern (needs a collectionGroup query) owned by
+  // the Goal Space callables slice.
+  "journeys",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
