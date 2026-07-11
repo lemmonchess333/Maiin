@@ -17,7 +17,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { CalendarRange, ChevronRight, Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CalendarRange, ChevronRight, Flag, Wrench } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ import {
   BLOCK_PRESETS,
   blockWeekOf,
   isBlockFinished,
+  presetProgrammeGoal,
   type BlockDurationWeeks,
   type BlockPreset,
   type TrainingBlock,
@@ -64,6 +66,7 @@ export default function TrainingBlockCard({
   mainCompoundIds,
   trainingWhy,
 }: Props) {
+  const navigate = useNavigate();
   const { loading, activeBlock, createBlock, finishBlock, loadReviewWorkouts } =
     useTrainingBlock(uid);
   const [showCreate, setShowCreate] = useState(false);
@@ -71,6 +74,10 @@ export default function TrainingBlockCard({
   const [preset, setPreset] = useState<BlockPreset>("strength_foundation");
   const [duration, setDuration] = useState<BlockDurationWeeks>(8);
   const [creating, setCreating] = useState(false);
+  /** Blk1 (2): the just-created block awaiting the explicit programme
+   *  hand-off offer. The block is ALREADY SAVED before this is set —
+   *  declining, dismissing, or a later crash can never lose it. */
+  const [tuneOffer, setTuneOffer] = useState<TrainingBlock | null>(null);
   const [review, setReview] = useState<BlockReview | null>(null);
   const [finishing, setFinishing] = useState(false);
 
@@ -91,6 +98,7 @@ export default function TrainingBlockCard({
     if (showCreate) {
       setPreset("strength_foundation");
       setDuration(8);
+      setTuneOffer(null);
     }
   }, [showCreate]);
 
@@ -105,12 +113,30 @@ export default function TrainingBlockCard({
       why: trainingWhy,
     });
     setCreating(false);
-    if (created) {
+    if (!created) {
+      toast.error("Couldn't start the block. Please try again.");
+      return;
+    }
+    // Blk1 (1)+(2): goal-flavoured presets get the in-sheet programme
+    // hand-off offer AFTER the save; habit presets stay one-tap.
+    if (presetProgrammeGoal(created.preset)) {
+      setTuneOffer(created);
+    } else {
       setShowCreate(false);
       toast.success(`${created.title} started — ${duration} weeks.`);
-    } else {
-      toast.error("Couldn't start the block. Please try again.");
     }
+  };
+
+  const openTuneEditor = (block: TrainingBlock) => {
+    haptic("light");
+    setShowCreate(false);
+    navigate("/settings/lift-plan", {
+      state: {
+        prefillGoal: presetProgrammeGoal(block.preset),
+        source: "block",
+        blockTitle: block.title,
+      },
+    });
   };
 
   const finish = async (outcome: "continue" | "repeat" | "adjust" | "new") => {
@@ -138,9 +164,10 @@ export default function TrainingBlockCard({
     } else if (outcome === "new") {
       setShowCreate(true);
     } else if (outcome === "adjust") {
-      toast.success(
-        "Block closed. Tweak your programme from the settings on this tab."
-      );
+      // Blk1 (4): "adjust my programme" ACTUALLY opens the lift-plan
+      // editor — same hand-off surface as block creation (was toast-only).
+      toast.success("Block closed.");
+      navigate("/settings/lift-plan", { state: { source: "block-review" } });
     } else {
       toast.success("Block closed. Keep rolling.");
     }
@@ -191,7 +218,11 @@ export default function TrainingBlockCard({
               {!finished && week !== null && (
                 <span className="font-mono tabular-nums font-normal text-muted-foreground">
                   {" "}
-                  · Week {week} of {activeBlock.durationWeeks}
+                  {/* "Block week" — calendar weeks since the block started;
+                      deliberately NOT the programme week counter shown just
+                      above this row (Blk1 lock (3), the two-counters
+                      confusion). */}
+                  · Block week {week} of {activeBlock.durationWeeks}
                 </span>
               )}
             </p>
@@ -209,63 +240,111 @@ export default function TrainingBlockCard({
         </div>
       )}
 
-      {/* ── Creation sheet ── */}
+      {/* ── Creation sheet (form → post-save hand-off offer, Blk1) ── */}
       <BottomSheet
         open={showCreate}
         onOpenChange={setShowCreate}
-        title="Start a training block"
-        description="A private focus for the next few weeks. Your programme doesn't change."
+        title={tuneOffer ? "Block started" : "Start a training block"}
+        description={
+          tuneOffer
+            ? undefined
+            : "A focus block over your current programme — you can tune the programme next."
+        }
       >
-        <div className="space-y-3 pb-2">
-          <div className="space-y-2" role="group" aria-label="Block focus">
-            {BLOCK_PRESETS.map((p) => (
-              <button
-                key={p.value}
-                type="button"
-                aria-pressed={preset === p.value}
+        {tuneOffer && (
+          <div className="space-y-3 pb-2">
+            <div className="flex items-start gap-3">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Wrench className="size-4 text-primary" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {tuneOffer.title} —{" "}
+                  <span className="font-mono tabular-nums font-normal">
+                    {tuneOffer.durationWeeks}
+                  </span>{" "}
+                  weeks
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Tune your programme for this focus? The lift-plan editor opens
+                  prefilled — nothing changes until you save there.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                onClick={() => openTuneEditor(tuneOffer)}
+              >
+                Tune programme
+              </Button>
+              <Button
+                variant="secondary"
+                className="w-full"
                 onClick={() => {
                   haptic("light");
-                  setPreset(p.value);
+                  setShowCreate(false);
                 }}
-                className={cn(
-                  "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
-                  preset === p.value
-                    ? "bg-primary/10 border border-primary/40"
-                    : "bg-muted border border-transparent"
-                )}
               >
-                <p className="text-sm font-semibold text-foreground">
-                  {p.label}
-                </p>
-                <p className="text-xs text-muted-foreground">{p.description}</p>
-              </button>
-            ))}
+                Keep programme as is
+              </Button>
+            </div>
           </div>
-          <SegmentedControl
-            options={BLOCK_DURATIONS.map((w) => ({
-              value: w,
-              label: `${w} weeks`,
-            }))}
-            value={duration}
-            onChange={(w) => {
-              haptic("light");
-              setDuration(w);
-            }}
-            ariaLabel="Block length"
-          />
-          <p className="text-xs text-muted-foreground">
-            Starts today · target {Math.max(1, defaultWeeklyLiftTarget)}{" "}
-            {Math.max(1, defaultWeeklyLiftTarget) === 1 ? "lift" : "lifts"} a
-            week (from your programme).
-          </p>
-          <Button
-            className="w-full"
-            loading={creating}
-            onClick={() => void create(today)}
-          >
-            Start block
-          </Button>
-        </div>
+        )}
+        {!tuneOffer && (
+          <div className="space-y-3 pb-2">
+            <div className="space-y-2" role="group" aria-label="Block focus">
+              {BLOCK_PRESETS.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  aria-pressed={preset === p.value}
+                  onClick={() => {
+                    haptic("light");
+                    setPreset(p.value);
+                  }}
+                  className={cn(
+                    "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                    preset === p.value
+                      ? "bg-primary/10 border border-primary/40"
+                      : "bg-muted border border-transparent"
+                  )}
+                >
+                  <p className="text-sm font-semibold text-foreground">
+                    {p.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <SegmentedControl
+              options={BLOCK_DURATIONS.map((w) => ({
+                value: w,
+                label: `${w} weeks`,
+              }))}
+              value={duration}
+              onChange={(w) => {
+                haptic("light");
+                setDuration(w);
+              }}
+              ariaLabel="Block length"
+            />
+            <p className="text-xs text-muted-foreground">
+              Starts today · target {Math.max(1, defaultWeeklyLiftTarget)}{" "}
+              {Math.max(1, defaultWeeklyLiftTarget) === 1 ? "lift" : "lifts"} a
+              week (from your programme).
+            </p>
+            <Button
+              className="w-full"
+              loading={creating}
+              onClick={() => void create(today)}
+            >
+              Start block
+            </Button>
+          </div>
+        )}
       </BottomSheet>
 
       {/* ── Review sheet ── */}
