@@ -883,7 +883,7 @@
       "hasNestedSubcollections": false,
       "schemaAuditNote": "Membership docs (Spc1 PR2, src/features/spaces/useSpaceMembership.ts) store joinedAt + denormalised displayName/photoURL + a mirrored uid field (rules-pinned equal to the doc id), so the collectionGroup query filters on the stored uid. Space ids are client config (spaceDefs.ts); doc id == member uid. Path filter spaces/*/members uses the segment-aware matcher and does NOT collide with goalSpaces members (first segment differs) or groups members.",
       "reason": "Community Spaces memberships (Spc1). One doc per joined space at spaces/{spaceId}/members/{uid}; deleted on account deletion so a removed user vanishes from member counts/lists. IMPLEMENTED in Spc1 PR4: the executor sweeps per KNOWN space id (functions/lib/spacesCleanup.js iterating lib/spaceIds.js — bounded config parity-pinned to the client), not a collectionGroup; strategy updated from the PR2 declaration to match the shipped implementation.",
-      "testCoverageKey": "unit::accountDeletion.spacesCleanup",
+      "testCoverageKey": "unit::accountDeletion.spacesCleanup.memberships",
       "testCoverageStatus": "implemented"
     },
     {
@@ -902,7 +902,7 @@
       "hasNestedSubcollections": false,
       "schemaAuditNote": "Post docs (src/features/spaces/SpacePostComposer.tsx) carry authorId/authorName/authorPhotoURL/title/body/activity snapshot/photoUrl/likeCount/commentCount/createdAt. authorId enables the per-space where-query.",
       "reason": "Community Space posts authored by the deleting user (Spc1 PR4). Policy: DELETED, not anonymised — posts are top-level room content with nothing threading off them yet (comments are a later slice), so removal is GDPR-cleanest with no thread-continuity cost. Executor: functions/lib/spacesCleanup.js per known space id. Photo blobs swept separately (spacePhotosStorage).",
-      "testCoverageKey": "unit::accountDeletion.spacesCleanup",
+      "testCoverageKey": "unit::accountDeletion.spacesCleanup.posts",
       "testCoverageStatus": "implemented"
     },
     {

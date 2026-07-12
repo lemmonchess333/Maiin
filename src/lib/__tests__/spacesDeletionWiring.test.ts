@@ -19,9 +19,18 @@ const executorJs = readFileSync(
 );
 
 describe("deletion executor wiring (Spc1 PR4)", () => {
-  it("accountDeletion.js wires the spaces cleanup step (unit::accountDeletion.spacesCleanup)", () => {
+  it("accountDeletion.js wires the spaces cleanup step (unit::accountDeletion.spacesCleanup.memberships)", () => {
     expect(executorJs).toMatch(/require\("\.\/lib\/spacesCleanup"\)/);
     expect(executorJs).toMatch(/cleanupSpacesForUser\(/);
+  });
+
+  it("the cleanup helper deletes authored posts per known space (unit::accountDeletion.spacesCleanup.posts)", () => {
+    const helperJs = readFileSync(
+      resolve(here, "../../../functions/lib/spacesCleanup.js"),
+      "utf8"
+    );
+    expect(helperJs).toMatch(/where\("authorId", "==", uid\)/);
+    expect(helperJs).toMatch(/members\/\$\{uid\}/);
   });
 
   it("space-photos is in the storage prefix sweep (unit::accountDeletion.storagePrefixes)", () => {
