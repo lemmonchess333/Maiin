@@ -23,7 +23,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:design-qa": "playwright test --project=auth-emulator e2e/design-qa",
-    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts'",
+    "test:rules": "firebase emulators:exec --only firestore 'vitest run firestore.rules.test.ts firestore.spaces.rules.test.ts'",
     "test:rules:storage": "firebase emulators:exec --only storage --project demo-tropos 'vitest run storage.rules.test.ts'",
     "secrets:check": "node scripts/check-required-secrets.mjs",
     "env:check:web": "node scripts/check-web-env.mjs",

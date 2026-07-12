@@ -94,6 +94,15 @@ const PROTECTED_PATHS = [
   // protected path (create+delete are client-writable). R1A executor
   // sweeps these in step 3b (inventory key: partnerBondsMember).
   "match /partnerBonds/{bondId}",
+  // Spc1 PR1 — Community Spaces. Parser sees the bare nested forms
+  // (like /participants/{uid} under challenges): semantic paths are
+  // spaces/{spaceId}/members/{uid} and spaces/{spaceId}/posts/{postId}.
+  // Both freeze CREATE via !isDeleting (member join / post create);
+  // update+delete are intentionally unfrozen (leave/cleanup stays
+  // possible; the executor sweep for spaces data lands in Spc1 PR4
+  // alongside the space-photos Storage prefix sweep).
+  "match /members/{uid}",
+  "match /posts/{postId}",
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} removed
   // from PROTECTED_PATHS — the rule is now `if false` (server-only).
   // R1A protection moved to setCrewMembershipCallable.
@@ -173,6 +182,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // for clients. No user-keyed data on the doc; not in scope for the
   // deletion freeze.
   "match /audit_checkout_sessions/{doc}",
+  // Spc1 PR1 — spaces parent doc is fully denied (`allow read, write:
+  // if false`): no parent doc exists in v1, member counts are client
+  // aggregate queries. Vacuously frozen.
+  "match /spaces/{spaceId}",
   // 2026-05-26 audit PR 2 — crew member sub-docs are now server-only.
   // Client writes denied at the rules layer (`allow create, update,
   // delete: if false`); reads are allowed for the Suggested-People
@@ -291,7 +304,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 35 (NUTR-CONSISTENCY-01 added nutritionCommitments)", () => {
+  it("authoritative count is 38 (Spc1 added spaces members + posts)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -314,8 +327,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // BODY-VAULT-01 added /users/{uid}/progressCheckins/{doc} (owner-only
     // Progress Vault check-in groupings, freeze via
     // isOwnerAndNotDeleting), → 36.
+    // Spc1 PR1 added the Community Spaces nested blocks — members/{uid}
+    // (join) and posts/{postId} (member posts), both create-frozen via
+    // !isDeleting — → 38.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(36);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });

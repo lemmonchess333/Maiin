@@ -135,6 +135,27 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     notes:
       "create freezes both members (!isDeleting on members[0] AND members[1]); update is server-only (if false); delete is member-only (executor sweeps in step 3b)",
   },
+  {
+    // Spc1 PR1 — Community Spaces membership (nested block; semantic
+    // path spaces/{spaceId}/members/{uid}). CREATE (join) freezes the
+    // actor via !isDeleting(uid) where the path uid == auth uid.
+    // DELETE (leave) is intentionally unfrozen — leaving a space is
+    // cleanup, and the Spc1 PR4 executor slice sweeps memberships.
+    pathPattern: "match /members/{uid}",
+    sides: ["actor"],
+    notes: "join create-frozen; leave unfrozen; executor sweep in Spc1 PR4",
+  },
+  {
+    // Spc1 PR1 — Community Spaces posts (nested block; semantic path
+    // spaces/{spaceId}/posts/{postId}). CREATE freezes the author via
+    // !isDeleting(request.auth.uid). Author edit/delete unfrozen
+    // (author cleanup stays possible mid-deletion window); executor
+    // sweep of authored posts lands in Spc1 PR4.
+    pathPattern: "match /posts/{postId}",
+    sides: ["actor"],
+    notes:
+      "post create-frozen; edits/deletes unfrozen; executor sweep in Spc1 PR4",
+  },
   // 2026-05-26 audit PR 2: /groups/{crewId}/members/{userId} is now
   // server-only (write `if false`). R1A protection moved to the CF
   // (`setCrewMembershipCallable` in functions/index.js) which checks
@@ -238,14 +259,15 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (29 paths — saved-routes library added savedRoutes)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (31 paths — Spc1 added spaces members + posts)", () => {
     // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
     // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
     // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
     // /groups/{crewId}/members/{userId} moved to server-only (→26);
     // push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28);
-    // saved-routes library added /users/{uid}/savedRoutes/{doc} (→29).
-    expect(PROTECTED_PATHS.length).toBe(29);
+    // saved-routes library added /users/{uid}/savedRoutes/{doc} (→29);
+    // Spc1 added the spaces members + posts nested blocks (→31).
+    expect(PROTECTED_PATHS.length).toBe(31);
   });
 });
