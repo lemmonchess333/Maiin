@@ -17,6 +17,8 @@ import {
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
 } from "./chartStyles";
+import ChartAreaGradient from "./ChartAreaGradient";
+import { formatDayMonth } from "@/utils/formatters";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -86,12 +88,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             });
           }}
         >
-          <defs>
-            <linearGradient id="pi-gradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={THEME.brand} stopOpacity={0.35} />
-              <stop offset="100%" stopColor={THEME.brand} stopOpacity={0} />
-            </linearGradient>
-          </defs>
+          <ChartAreaGradient id="pi-gradient" color={THEME.brand} />
 
           <CartesianGrid {...CHART_GRID_PROPS} />
 
@@ -137,7 +134,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
-              return `Week of ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
+              return `Week of ${formatDayMonth(d)}`;
             }}
             formatter={(value, name) => {
               const labels: Record<string, string> = {
