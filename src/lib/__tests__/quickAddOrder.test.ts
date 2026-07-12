@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { orderQuickAddItems, type QuickAddItem } from "../quickAddOrder";
+import {
+  orderQuickAddItems,
+  pickRepresentativeMeal,
+  type QuickAddItem,
+} from "../quickAddOrder";
 
 /* The stable per-date cache contract for quick-add chips. The
  * cached order pins what the user saw last time; current is the
@@ -174,5 +178,90 @@ describe("buildQuickAddMealPayload", () => {
     const out = buildQuickAddMealPayload(chip);
     expect(out.items).toHaveLength(1);
     expect(out.items[0].name).toBe("Odd Meal");
+  });
+});
+
+/* FOOD-03 — the chip's default portion is the user's MODAL version of
+ * a food, not whichever they logged most recently, so one atypical
+ * entry can't overwrite the stable default. */
+type MealLike = {
+  date: string;
+  totalCalories: number;
+  totalProtein?: number;
+  totalCarbs?: number;
+  totalFat?: number;
+};
+const meal = (date: string, totalCalories: number): MealLike => ({
+  date,
+  totalCalories,
+});
+
+describe("pickRepresentativeMeal (FOOD-03)", () => {
+  it("returns the modal version, not the most recent", () => {
+    // Ten 330-kcal logs then one 660-kcal outlier logged last.
+    const logs: MealLike[] = [
+      ...Array.from({ length: 10 }, (_, i) =>
+        meal(`2026-07-${String(i + 1).padStart(2, "0")}`, 330)
+      ),
+      meal("2026-07-20", 660),
+    ];
+    expect(pickRepresentativeMeal(logs, (m) => m.date).totalCalories).toBe(330);
+  });
+
+  it("a genuine habit change eventually wins once it out-logs the old portion", () => {
+    const logs: MealLike[] = [
+      meal("2026-06-01", 300),
+      meal("2026-06-02", 300),
+      meal("2026-07-10", 450),
+      meal("2026-07-11", 450),
+      meal("2026-07-12", 450),
+    ];
+    expect(pickRepresentativeMeal(logs, (m) => m.date).totalCalories).toBe(450);
+  });
+
+  it("breaks a frequency tie toward the more recent version", () => {
+    const logs: MealLike[] = [
+      meal("2026-06-01", 300),
+      meal("2026-06-02", 300),
+      meal("2026-07-10", 450),
+      meal("2026-07-11", 450),
+    ];
+    expect(pickRepresentativeMeal(logs, (m) => m.date).totalCalories).toBe(450);
+  });
+
+  it("rounds trivial float noise together and rejects the outlier", () => {
+    const logs: MealLike[] = [
+      { date: "2026-07-01", totalCalories: 330.2, totalProtein: 40.1 },
+      { date: "2026-07-02", totalCalories: 329.8, totalProtein: 39.9 },
+      { date: "2026-07-03", totalCalories: 330.1, totalProtein: 40.2 },
+      { date: "2026-07-10", totalCalories: 600, totalProtein: 20 },
+    ];
+    // The three ~330 logs share a rounded signature (modal); the single
+    // 600 outlier loses. Representative is the group's most recent log.
+    expect(
+      Math.round(pickRepresentativeMeal(logs, (m) => m.date).totalCalories)
+    ).toBe(330);
+  });
+
+  it("distinguishes same-calorie meals with different macro splits", () => {
+    const highProtein = {
+      date: "2026-07-05",
+      totalCalories: 400,
+      totalProtein: 50,
+      totalCarbs: 10,
+      totalFat: 10,
+    };
+    const logs: MealLike[] = [
+      { ...highProtein, date: "2026-07-01" },
+      { ...highProtein, date: "2026-07-02" },
+      {
+        date: "2026-07-09",
+        totalCalories: 400,
+        totalProtein: 10,
+        totalCarbs: 60,
+        totalFat: 10,
+      },
+    ];
+    expect(pickRepresentativeMeal(logs, (m) => m.date).totalProtein).toBe(50);
   });
 });

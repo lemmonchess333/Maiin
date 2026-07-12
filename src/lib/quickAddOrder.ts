@@ -98,6 +98,72 @@ export function buildQuickAddMealPayload(item: QuickAddItem): {
 }
 
 /**
+ * FOOD-03 — stable personal portion for a repeated food.
+ *
+ * The quick-add chip used to default to the MOST RECENTLY LOGGED
+ * version of a food ("Keep the latest version's macros"), so a single
+ * atypical entry — a mis-scan, a cheat-day double portion, a one-off
+ * restaurant plate — permanently overwrote the default the user
+ * actually eats most days.
+ *
+ * This picks the MODAL version instead: group the food's logs by a
+ * rounded macro signature, take the signature that appears most often,
+ * and represent it with that signature's MOST RECENT log (so the
+ * chip's bundle/items[] stay fresh). Ties break toward the signature
+ * whose newest log is most recent — so a genuine habit change still
+ * wins once it out-logs the old portion, but one outlier never does.
+ *
+ * Pure + generic over the meal shape (only the macro totals + a
+ * comparable date are read) so it's table-testable without the Food
+ * page. `dateOf` returns a sortable string (the app's `YYYY-MM-DD`).
+ */
+export function pickRepresentativeMeal<
+  T extends {
+    totalCalories?: number | null;
+    totalProtein?: number | null;
+    totalCarbs?: number | null;
+    totalFat?: number | null;
+  },
+>(meals: T[], dateOf: (meal: T) => string): T {
+  // Round each macro so float noise / trivial ±1 differences collapse
+  // into the same "version" the user perceives as one portion.
+  const signature = (m: T): string =>
+    [
+      Math.round(m.totalCalories ?? 0),
+      Math.round(m.totalProtein ?? 0),
+      Math.round(m.totalCarbs ?? 0),
+      Math.round(m.totalFat ?? 0),
+    ].join("|");
+
+  const groups = new Map<string, { count: number; latest: T }>();
+  for (const meal of meals) {
+    const sig = signature(meal);
+    const g = groups.get(sig);
+    if (!g) {
+      groups.set(sig, { count: 1, latest: meal });
+    } else {
+      g.count += 1;
+      if (dateOf(meal) > dateOf(g.latest)) g.latest = meal;
+    }
+  }
+
+  let best: { count: number; latest: T } | null = null;
+  for (const g of groups.values()) {
+    if (
+      !best ||
+      g.count > best.count ||
+      // tie → the signature whose newest log is more recent
+      (g.count === best.count && dateOf(g.latest) > dateOf(best.latest))
+    ) {
+      best = g;
+    }
+  }
+  // meals is never empty at the call site (a group exists because a
+  // meal was logged), but stay defensive for the generic contract.
+  return best ? best.latest : meals[0];
+}
+
+/**
  * Apply a cached order to a current set of items.
  *
  * @param cachedOrder Keys in their stable cached order
