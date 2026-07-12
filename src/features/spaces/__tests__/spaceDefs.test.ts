@@ -56,3 +56,25 @@ describe("config ↔ firestore.rules parity (isKnownSpaceId)", () => {
     expect(new Set(ruleIds)).toEqual(new Set(SPACE_IDS));
   });
 });
+
+describe("config ↔ functions parity (lib/spaceIds.js)", () => {
+  it("the deletion executor's server-side id list is set-equal to SPACE_IDS", () => {
+    /* Tested-copy rule: the executor's bounded spaces sweep iterates
+       functions/lib/spaceIds.js — the server-side mirror of this
+       config. Drift means a new space's memberships/posts silently
+       survive account deletion. */
+    const js = readFileSync(
+      resolve(__dirname, "../../../../functions/lib/spaceIds.js"),
+      "utf8"
+    );
+    const arrMatch = js.match(/SPACE_IDS = Object\.freeze\(\[([\s\S]*?)\]\)/);
+    expect(
+      arrMatch,
+      "SPACE_IDS not found in functions/lib/spaceIds.js"
+    ).toBeTruthy();
+    const serverIds = Array.from(arrMatch![1].matchAll(/"([^"]+)"/g)).map(
+      (m) => m[1]
+    );
+    expect(new Set(serverIds)).toEqual(new Set(SPACE_IDS));
+  });
+});

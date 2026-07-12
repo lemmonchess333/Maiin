@@ -75,6 +75,16 @@ function makeStubs(opts = {}) {
           calls.push(`firestore.${parent}.${uid}.${sub}.get`);
           return { empty: true, docs: [] };
         },
+        // Spc1 step 3d — spaces posts sweep queries
+        // spaces/{sid}/posts where authorId == uid. Empty by default.
+        where: (field, op, value) => ({
+          get: async () => {
+            calls.push(
+              `firestore.${parent}.${uid}.${sub}.where.${field}.${op}.${value}.get`
+            );
+            return { empty: true, docs: [] };
+          },
+        }),
       }),
     });
 
@@ -354,10 +364,11 @@ describe("deleteAccount — failure semantics", () => {
     const prefixesCalled = stubs.calls.filter((c) =>
       c.startsWith("storage.deleteFiles")
     );
-    expect(prefixesCalled).toHaveLength(3);
+    expect(prefixesCalled).toHaveLength(4);
     expect(prefixesCalled[0]).toContain("progress-photos/");
     expect(prefixesCalled[1]).toContain("profile-photos/");
     expect(prefixesCalled[2]).toContain("food-photos/");
+    expect(prefixesCalled[3]).toContain("space-photos/");
   });
 
   it("swallows a missing public-profile doc delete (best-effort)", async () => {
@@ -658,12 +669,30 @@ describe("deleteAccount — P0a Stripe-subscription cancellation", () => {
   });
 });
 
+describe("spaces cleanup (Spc1 step 3d)", () => {
+  it("sweeps membership + authored posts for every known space", async () => {
+    const stubs = makeStubs();
+    await deleteAccount({ ...stubs, uid: TEST_UID });
+    const { SPACE_IDS } = require("../lib/spaceIds");
+    expect(SPACE_IDS.length).toBeGreaterThan(0);
+    for (const sid of SPACE_IDS) {
+      expect(stubs.calls).toContain(
+        `firestore.doc(spaces/${sid}/members/${TEST_UID}).delete`
+      );
+      expect(stubs.calls).toContain(
+        `firestore.spaces.${sid}.posts.where.authorId.==.${TEST_UID}.get`
+      );
+    }
+  });
+});
+
 describe("storagePrefixesFor", () => {
   it("returns the scoped prefixes for the uid", () => {
     expect(storagePrefixesFor("alice")).toEqual([
       "progress-photos/alice/",
       "profile-photos/alice/",
       "food-photos/alice/",
+      "space-photos/alice/",
     ]);
   });
 
