@@ -22,7 +22,9 @@ const {
   isStatusActive,
   isTombstoneLive,
   makeAccountDeletingError,
+  makeAccountDeletedError,
   makeReferencedAccountDeletingError,
+  makeReferencedAccountDeletedError,
   makeTooManyReferencesError,
   makeSystemWriteBlockedError,
   isAccountDeleting,
@@ -84,11 +86,15 @@ describe("isTombstoneLive", () => {
   });
 
   it("returns true when expiresAt is in the future (numeric ms)", () => {
-    expect(isTombstoneLive({ expiresAt: fixedNow + 1000 }, fixedNow)).toBe(true);
+    expect(isTombstoneLive({ expiresAt: fixedNow + 1000 }, fixedNow)).toBe(
+      true
+    );
   });
 
   it("returns false when expiresAt is in the past (numeric ms)", () => {
-    expect(isTombstoneLive({ expiresAt: fixedNow - 1000 }, fixedNow)).toBe(false);
+    expect(isTombstoneLive({ expiresAt: fixedNow - 1000 }, fixedNow)).toBe(
+      false
+    );
   });
 
   it("returns true for a Firestore Timestamp-shaped expiresAt in future", () => {
@@ -150,7 +156,11 @@ describe("error factories carry stable error codes", () => {
 
 /* ── Firestore-reading helpers (against fake db) ──────────────────── */
 
-interface FakeDoc { exists: boolean; data: () => unknown; id: string; }
+interface FakeDoc {
+  exists: boolean;
+  data: () => unknown;
+  id: string;
+}
 type DocMap = Record<string, unknown>;
 
 /**
@@ -237,6 +247,28 @@ describe("isTombstoned against fake db", () => {
   });
 });
 
+describe("makeAccountDeletedError / makeReferencedAccountDeletedError", () => {
+  it("makeAccountDeletedError has a stable callable shape", () => {
+    const err = makeAccountDeletedError("alice");
+    expect(err.code).toBe("failed-precondition");
+    expect(err.errorCode).toBe(ERROR_CODES.ACCOUNT_DELETED);
+    expect(err.uid).toBe("alice");
+  });
+
+  it("makeReferencedAccountDeletedError has a stable callable shape", () => {
+    const err = makeReferencedAccountDeletedError("bob");
+    expect(err.code).toBe("failed-precondition");
+    expect(err.errorCode).toBe(ERROR_CODES.REFERENCED_ACCOUNT_DELETED);
+    expect(err.referencedUid).toBe("bob");
+  });
+
+  it("ACCOUNT_DELETED and ACCOUNT_DELETING are distinct stable codes", () => {
+    expect(ERROR_CODES.ACCOUNT_DELETED).toBe("account-deleted");
+    expect(ERROR_CODES.ACCOUNT_DELETING).toBe("account-deleting");
+    expect(ERROR_CODES.ACCOUNT_DELETED).not.toBe(ERROR_CODES.ACCOUNT_DELETING);
+  });
+});
+
 describe("assertAccountNotDeleting", () => {
   it("throws ACCOUNT_DELETING when uid is deleting", async () => {
     const db = makeFakeDb({
@@ -250,7 +282,51 @@ describe("assertAccountNotDeleting", () => {
 
   it("does not throw when uid is not deleting", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {} });
-    await expect(assertAccountNotDeleting(db, "alice")).resolves.toBeUndefined();
+    await expect(
+      assertAccountNotDeleting(db, "alice")
+    ).resolves.toBeUndefined();
+  });
+
+  it("throws ACCOUNT_DELETED for a live tombstone after deletion completed", async () => {
+    // The window this whole packet closes: deletion has completed
+    // (status non-active) but a live tombstone remains and an
+    // already-issued token can still authenticate.
+    const db = makeFakeDb({
+      accountDeletionRequests: { alice: { status: "completed" } },
+      deletedAccounts: {
+        alice: { uid: "alice", expiresAt: Date.now() + 86_400_000 },
+      },
+    });
+    await expect(assertAccountNotDeleting(db, "alice")).rejects.toMatchObject({
+      errorCode: ERROR_CODES.ACCOUNT_DELETED,
+      uid: "alice",
+    });
+  });
+
+  it("allows an expired tombstone (TTL has physically passed)", async () => {
+    const db = makeFakeDb({
+      accountDeletionRequests: { alice: { status: "completed" } },
+      deletedAccounts: {
+        alice: { uid: "alice", expiresAt: Date.now() - 1 },
+      },
+    });
+    await expect(
+      assertAccountNotDeleting(db, "alice")
+    ).resolves.toBeUndefined();
+  });
+
+  it("prefers ACCOUNT_DELETING over ACCOUNT_DELETED when both hold", async () => {
+    // Active deletion is checked first — an account mid-cascade that
+    // somehow also has a tombstone reports the in-progress state.
+    const db = makeFakeDb({
+      accountDeletionRequests: { alice: { status: "running" } },
+      deletedAccounts: {
+        alice: { uid: "alice", expiresAt: Date.now() + 86_400_000 },
+      },
+    });
+    await expect(assertAccountNotDeleting(db, "alice")).rejects.toMatchObject({
+      errorCode: ERROR_CODES.ACCOUNT_DELETING,
+    });
   });
 });
 
@@ -258,7 +334,7 @@ describe("assertNoReferencedAccountsDeleting", () => {
   it("does not throw when no referenced uids are deleting", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {} });
     await expect(
-      assertNoReferencedAccountsDeleting(db, ["alice", "bob"]),
+      assertNoReferencedAccountsDeleting(db, ["alice", "bob"])
     ).resolves.toBeUndefined();
   });
 
@@ -267,39 +343,80 @@ describe("assertNoReferencedAccountsDeleting", () => {
       accountDeletionRequests: { bob: { status: "running" } },
     });
     await expect(
-      assertNoReferencedAccountsDeleting(db, ["alice", "bob", "carol"]),
+      assertNoReferencedAccountsDeleting(db, ["alice", "bob", "carol"])
     ).rejects.toMatchObject({
       errorCode: ERROR_CODES.REFERENCED_ACCOUNT_DELETING,
       referencedUid: "bob",
     });
   });
 
-  it("does not throw on a deleting uid in 'completed' status", async () => {
+  it("does not throw on a completed-but-not-tombstoned referenced uid", async () => {
     const db = makeFakeDb({
       accountDeletionRequests: { bob: { status: "completed" } },
     });
     await expect(
-      assertNoReferencedAccountsDeleting(db, ["alice", "bob"]),
+      assertNoReferencedAccountsDeleting(db, ["alice", "bob"])
     ).resolves.toBeUndefined();
+  });
+
+  it("throws REFERENCED_ACCOUNT_DELETED when a referenced uid has a live tombstone", async () => {
+    const db = makeFakeDb({
+      accountDeletionRequests: { bob: { status: "completed" } },
+      deletedAccounts: {
+        bob: { uid: "bob", expiresAt: Date.now() + 86_400_000 },
+      },
+    });
+    await expect(
+      assertNoReferencedAccountsDeleting(db, ["alice", "bob", "carol"])
+    ).rejects.toMatchObject({
+      errorCode: ERROR_CODES.REFERENCED_ACCOUNT_DELETED,
+      referencedUid: "bob",
+    });
+  });
+
+  it("prefers REFERENCED_ACCOUNT_DELETING over _DELETED when both hold", async () => {
+    const db = makeFakeDb({
+      accountDeletionRequests: { bob: { status: "running" } },
+      deletedAccounts: {
+        bob: { uid: "bob", expiresAt: Date.now() + 86_400_000 },
+      },
+    });
+    await expect(
+      assertNoReferencedAccountsDeleting(db, ["alice", "bob"])
+    ).rejects.toMatchObject({
+      errorCode: ERROR_CODES.REFERENCED_ACCOUNT_DELETING,
+    });
   });
 
   it("de-duplicates input list before counting toward the cap", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {} });
     const dupes = Array(50).fill("alice");
-    await expect(assertNoReferencedAccountsDeleting(db, dupes)).resolves.toBeUndefined();
+    await expect(
+      assertNoReferencedAccountsDeleting(db, dupes)
+    ).resolves.toBeUndefined();
   });
 
   it("filters falsy/empty uids", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {} });
     await expect(
-      assertNoReferencedAccountsDeleting(db, ["alice", "", null as unknown as string, undefined as unknown as string]),
+      assertNoReferencedAccountsDeleting(db, [
+        "alice",
+        "",
+        null as unknown as string,
+        undefined as unknown as string,
+      ])
     ).resolves.toBeUndefined();
   });
 
   it("throws TOO_MANY_REFERENCES when unique uid count exceeds the cap", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {} });
-    const many = Array.from({ length: MAX_REFERENCED_UIDS_PER_CALL + 1 }, (_, i) => `uid-${i}`);
-    await expect(assertNoReferencedAccountsDeleting(db, many)).rejects.toMatchObject({
+    const many = Array.from(
+      { length: MAX_REFERENCED_UIDS_PER_CALL + 1 },
+      (_, i) => `uid-${i}`
+    );
+    await expect(
+      assertNoReferencedAccountsDeleting(db, many)
+    ).rejects.toMatchObject({
       errorCode: ERROR_CODES.TOO_MANY_REFERENCES,
     });
   });
@@ -307,7 +424,9 @@ describe("assertNoReferencedAccountsDeleting", () => {
   it("returns immediately on empty input (no Firestore reads)", async () => {
     let getAllCalls = 0;
     const db = {
-      collection: () => ({ doc: () => ({ _collectionName: "x", _docId: "y" }) }),
+      collection: () => ({
+        doc: () => ({ _collectionName: "x", _docId: "y" }),
+      }),
       getAll: async () => {
         getAllCalls += 1;
         return [];
@@ -321,7 +440,9 @@ describe("assertNoReferencedAccountsDeleting", () => {
 describe("assertUserWritableBySystem", () => {
   it("does not throw for a normal uid (no deletion, no tombstone)", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {}, deletedAccounts: {} });
-    await expect(assertUserWritableBySystem(db, "alice", "webhook")).resolves.toBeUndefined();
+    await expect(
+      assertUserWritableBySystem(db, "alice", "webhook")
+    ).resolves.toBeUndefined();
   });
 
   it("throws SYSTEM_WRITE_BLOCKED with kind=active-deletion when deletion is in progress", async () => {
@@ -329,7 +450,9 @@ describe("assertUserWritableBySystem", () => {
       accountDeletionRequests: { alice: { status: "running" } },
       deletedAccounts: {},
     });
-    await expect(assertUserWritableBySystem(db, "alice", "appleIAPWebhook")).rejects.toMatchObject({
+    await expect(
+      assertUserWritableBySystem(db, "alice", "appleIAPWebhook")
+    ).rejects.toMatchObject({
       errorCode: ERROR_CODES.SYSTEM_WRITE_BLOCKED,
       kind: "active-deletion",
       uid: "alice",
@@ -343,7 +466,9 @@ describe("assertUserWritableBySystem", () => {
       accountDeletionRequests: {},
       deletedAccounts: { alice: { uid: "alice", expiresAt: futureMs } },
     });
-    await expect(assertUserWritableBySystem(db, "alice", "stripeWebhook")).rejects.toMatchObject({
+    await expect(
+      assertUserWritableBySystem(db, "alice", "stripeWebhook")
+    ).rejects.toMatchObject({
       errorCode: ERROR_CODES.SYSTEM_WRITE_BLOCKED,
       kind: "tombstone",
       uid: "alice",
@@ -356,12 +481,18 @@ describe("assertUserWritableBySystem", () => {
       accountDeletionRequests: {},
       deletedAccounts: { alice: { uid: "alice", expiresAt: pastMs } },
     });
-    await expect(assertUserWritableBySystem(db, "alice", "performance")).resolves.toBeUndefined();
+    await expect(
+      assertUserWritableBySystem(db, "alice", "performance")
+    ).resolves.toBeUndefined();
   });
 
   it("is a no-op on empty/undefined uid (defensive)", async () => {
     const db = makeFakeDb({ accountDeletionRequests: {}, deletedAccounts: {} });
-    await expect(assertUserWritableBySystem(db, "", "x")).resolves.toBeUndefined();
-    await expect(assertUserWritableBySystem(db, undefined, "x")).resolves.toBeUndefined();
+    await expect(
+      assertUserWritableBySystem(db, "", "x")
+    ).resolves.toBeUndefined();
+    await expect(
+      assertUserWritableBySystem(db, undefined, "x")
+    ).resolves.toBeUndefined();
   });
 });
