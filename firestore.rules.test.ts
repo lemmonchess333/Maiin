@@ -1036,6 +1036,218 @@ suite("firestore.rules — R1A write-freeze (active deletion)", () => {
   });
 });
 
+/**
+ * Tombstone-freeze packet (2026-07-12) — a COMPLETED deletion is
+ * irreversible. After deleteMyAccount finishes, the accountDeletionRequests
+ * status is 'completed' (non-active, so isDeleting() is false) but a live
+ * deletedAccounts/{uid} tombstone remains. An already-issued ID token can
+ * still authenticate for up to ~1h; isWriteFrozen() must keep every
+ * client-authored write surface frozen for the tombstone's life. This
+ * suite proves the rule-layer half of that boundary.
+ */
+suite("firestore.rules — tombstone freeze (completed deletion)", () => {
+  let env: RulesTestEnvironment;
+  const ALICE = "alice-tombstoned";
+  const BOB = "bob-live";
+
+  beforeAll(async () => {
+    const [host, portStr] = (EMULATOR_HOST || "").split(":");
+    env = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host,
+        port: Number(portStr),
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await env?.cleanup();
+  });
+
+  beforeEach(async () => {
+    await env.clearFirestore();
+    // Alice's deletion COMPLETED: non-active status + a live tombstone.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "accountDeletionRequests", ALICE), {
+        uid: ALICE,
+        status: "completed",
+        operationId: "op-completed",
+      });
+      await setDoc(doc(db, "deletedAccounts", ALICE), {
+        uid: ALICE,
+        expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+      });
+      // A known space so join/post rules reach the freeze conjunct.
+      await setDoc(doc(db, "spaces", "runners", "members", BOB), {
+        joinedAt: serverTimestamp(),
+      });
+    });
+  });
+
+  const aliceDb = () => env.authenticatedContext(ALICE).firestore();
+
+  it("create users/alice FAILS (data-recreation vector)", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "users", ALICE), {
+        uid: ALICE,
+        subscriptionTier: "free",
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("create a workout under a tombstoned account FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "users", ALICE, "workouts", "w1"), {
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("delete users/alice FAILS (self-delete is never the executor)", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", ALICE), { uid: ALICE });
+    });
+    await assertFails(deleteDoc(doc(aliceDb(), "users", ALICE)));
+  });
+
+  it("create an activity authored by a tombstoned account FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "activities", "a1"), {
+        authorId: ALICE,
+        authorName: "Alice",
+        type: "run",
+        visibility: "public",
+        createdAt: serverTimestamp(),
+        kudosCount: 0,
+        commentCount: 0,
+      })
+    );
+  });
+
+  it("delete an activity authored by a tombstoned account FAILS", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "activities", "a1"), {
+        authorId: ALICE,
+        authorName: "Alice",
+        type: "run",
+        visibility: "public",
+        createdAt: serverTimestamp(),
+        kudosCount: 0,
+        commentCount: 0,
+      });
+    });
+    await assertFails(deleteDoc(doc(aliceDb(), "activities", "a1")));
+  });
+
+  it("join a challenge (participant create) FAILS", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "challenges", "weekly-x"), {
+        name: "W",
+      });
+    });
+    await assertFails(
+      setDoc(doc(aliceDb(), "challenges", "weekly-x", "participants", ALICE), {
+        currentValue: 0,
+        tierAchieved: null,
+        joinedAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("join a Community Space FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "spaces", "runners", "members", ALICE), {
+        joinedAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("create a Space post FAILS (even as an existing member — freeze is the blocker)", async () => {
+    // Seed alice's membership so the post-create rule reaches its freeze
+    // conjunct rather than failing earlier on the membership check.
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "spaces", "runners", "members", ALICE),
+        {
+          joinedAt: serverTimestamp(),
+        }
+      );
+    });
+    await assertFails(
+      setDoc(doc(aliceDb(), "spaces", "runners", "posts", "p1"), {
+        authorId: ALICE,
+        authorName: "Alice",
+        body: "hi",
+        createdAt: serverTimestamp(),
+        likeCount: 0,
+        commentCount: 0,
+      })
+    );
+  });
+
+  it("create a follow relationship FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "following", ALICE, "users", BOB), {
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("create a partner bond naming the tombstoned account FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "partnerBonds", "bond1"), {
+        members: [ALICE, BOB],
+        streak: 0,
+      })
+    );
+  });
+
+  it("create a group FAILS", async () => {
+    await assertFails(
+      setDoc(doc(aliceDb(), "groups", "crew1"), {
+        createdBy: ALICE,
+        name: "Crew",
+      })
+    );
+  });
+
+  it("cannot read its own deletedAccounts tombstone", async () => {
+    await assertFails(getDoc(doc(aliceDb(), "deletedAccounts", ALICE)));
+  });
+
+  // ── Control: a live (non-tombstoned) account is unaffected ──
+  it("a live account (bob) CAN create a workout", async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(
+          env.authenticatedContext(BOB).firestore(),
+          "users",
+          BOB,
+          "workouts",
+          "w1"
+        ),
+        {
+          createdAt: serverTimestamp(),
+        }
+      )
+    );
+  });
+
+  it("a live account (bob) CAN create their own user doc", async () => {
+    await assertSucceeds(
+      setDoc(doc(env.authenticatedContext(BOB).firestore(), "users", BOB), {
+        uid: BOB,
+        subscriptionTier: "free",
+        createdAt: serverTimestamp(),
+      })
+    );
+  });
+});
+
 suite("firestore.rules — R1A operational collections", () => {
   let env: RulesTestEnvironment;
 
