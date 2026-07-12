@@ -49,7 +49,13 @@ const ACCENT_HEX: Record<SpaceDef["accent"], string> = {
   brand: THEME.brand,
 };
 
-function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
+function SpaceCard({
+  entry,
+  compact = false,
+}: {
+  entry: SpaceDirectoryEntry;
+  compact?: boolean;
+}) {
   const { def, memberCount, joined } = entry;
   const photo = spaceEditorialImage(def.id);
   const accent = ACCENT_HEX[def.accent];
@@ -60,7 +66,9 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   return (
     <Link
       to={`/space/${def.id}`}
-      className="relative w-[236px] h-[148px] shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform"
+      className={`relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform ${
+        compact ? "w-[176px] h-[112px]" : "w-[236px] h-[148px]"
+      }`}
       style={
         photo
           ? undefined
@@ -120,7 +128,7 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
 
       <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
         <p
-          className={`text-base font-bold leading-tight truncate ${
+          className={`${compact ? "text-sm" : "text-base"} font-bold leading-tight truncate ${
             photo ? "text-white" : "text-foreground"
           }`}
         >
@@ -139,12 +147,25 @@ function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   );
 }
 
-export default function SpacesDirectory() {
+export default function SpacesDirectory({
+  compact = false,
+  excludeJoined = false,
+  title = "Spaces",
+}: {
+  /** Feed-row variant (Spc1g): smaller cards, same grammar. */
+  compact?: boolean;
+  /** Suggested mode — hide spaces the user already joined; the whole
+   *  row collapses when nothing is left to suggest. */
+  excludeJoined?: boolean;
+  title?: string;
+}) {
   const { entries } = useSpacesDirectory();
+  const shown = excludeJoined ? entries.filter((e) => !e.joined) : entries;
+  if (shown.length === 0) return null;
 
   return (
     <div className="space-y-2">
-      <SectionLabel>Spaces</SectionLabel>
+      <SectionLabel>{title}</SectionLabel>
       {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance). */}
       <div
@@ -152,9 +173,9 @@ export default function SpacesDirectory() {
         role="list"
         aria-label="Community spaces"
       >
-        {entries.map((entry) => (
+        {shown.map((entry) => (
           <div role="listitem" key={entry.def.id} className="contents">
-            <SpaceCard entry={entry} />
+            <SpaceCard entry={entry} compact={compact} />
           </div>
         ))}
       </div>

@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useChallenges } from "@/features/challenges/useChallenges";
 import { ChallengeCard } from "@/features/challenges/ChallengeCard";
 import PartnerStreakHero from "@/features/partnerStreak/PartnerStreakHero";
+import SpacesDirectory from "@/features/spaces/SpacesDirectory";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -87,6 +88,12 @@ export default function SoloFirstFeed({ onNavigateTab }: SoloFirstFeedProps) {
           onLeave={() => leaveChallenge(globalChallenge.id)}
         />
       )}
+
+      {/* Spc1 amendment to the Soc8 stack: official Spaces are the one
+          community surface a solo user can join on day one — the
+          highest-value cold-start action, so it sits right after the
+          challenge slot. Joined spaces drop out of the row. */}
+      <SpacesDirectory compact excludeJoined title="Spaces for you" />
 
       {/* Share your training */}
       <div className="rounded-2xl bg-card card-shadow p-4">
