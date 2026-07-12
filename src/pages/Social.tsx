@@ -12,6 +12,7 @@ import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import CirclesSection from "../components/social/CirclesSection";
+import SpacesDirectory from "@/features/spaces/SpacesDirectory";
 import { searchUsers, getBoundedFollowingCount } from "../lib/socialApi";
 import ActivityCard from "../components/social/ActivityCard";
 import LeaderboardCard from "../components/social/LeaderboardCard";
@@ -675,7 +676,10 @@ export default function Social() {
             onChange={setTab}
             options={[
               { value: "feed", label: "Feed" },
-              { value: "crews", label: "Crews" },
+              /* Spc1g: the middle tab is now "Community" — Spaces
+                 marquee + Challenges + Circles. Internal value stays
+                 "crews" so ?tab=crews deep links keep working. */
+              { value: "crews", label: "Community" },
               { value: "find", label: "People" },
             ]}
           />
@@ -979,17 +983,18 @@ export default function Social() {
           peer tab here; they moved to the user's own profile because
           they're a private/personal artifact, not social content. */}
           {tab === "crews" && (
-            <section aria-label="Crews and challenges" className="space-y-6">
-              {/* GOALS-CORE-01: Circles render FIRST (audit IA — Goal
-                  Spaces lead, legacy Crews stay reachable below). */}
-              {user && <CirclesSection uid={user.uid} />}
+            <section aria-label="Community" className="space-y-6">
+              {/* Spc1g order: Spaces photo-carousel leads (the marquee),
+                  then Challenges, then Circles. Supersedes the
+                  GOALS-CORE-01 Circles-first IA — the curated public
+                  layer is now the tab's front door. */}
+              <SpacesDirectory />
 
-              {/* Challenges — placed first because they're the active /
-              competitive surface. Empty-state CTA jumps to Discover so
-              users have a clear path to find people to challenge.
-              Suspense wraps the lazy chunk (Soc5 item 10); the
-              fallback is a single skeleton row so the surface
-              doesn't jump on first Crews-tab open. */}
+              {/* Challenges — the active / competitive surface. Empty-
+              state CTA jumps to Discover so users have a clear path to
+              find people to challenge. Suspense wraps the lazy chunk
+              (Soc5 item 10); the fallback is a single skeleton row so
+              the surface doesn't jump on first tab open. */}
               <Suspense
                 fallback={
                   <div
@@ -1000,6 +1005,8 @@ export default function Social() {
               >
                 <ChallengeList onFindFriends={() => setTab("find")} />
               </Suspense>
+
+              {user && <CirclesSection uid={user.uid} />}
 
               {/* Soc5d: prominent Create-Crew CTA, shown ONLY when the
               user isn't currently in any crew. Per the locked spec,
