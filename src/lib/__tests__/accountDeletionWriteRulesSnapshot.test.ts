@@ -86,6 +86,13 @@ const PROTECTED_PATHS = [
   "match /blocks/{uid}/users/{targetUid}",
   "match /reports/{reportId}",
   "match /groups/{crewId}",
+  // Tombstone-freeze packet (2026-07-12) — moved out of EXPLICITLY_EXEMPT.
+  // activities create/update/delete now carry the actor write-freeze, and
+  // challenge participant join/update/leave freeze on the participant uid.
+  // The post-deletion tombstone window turned "swept later" into a
+  // data-recreation vector, so both are fully frozen now.
+  "match /activities/{activityId}",
+  "match /participants/{uid}",
   // SOCIAL S3 — partner-streak bond. Client-writable create + delete
   // (either of the two members); Soc7 made UPDATE server-only
   // (`if false` — streak state is written by the Admin SDK persist path).
@@ -117,11 +124,6 @@ export const EXPECTED_PROTECTED_PATH_COUNT = PROTECTED_PATHS.length;
  */
 const EXPLICITLY_EXEMPT = [
   {
-    path: "match /activities/{activityId}",
-    reason:
-      "Cross-user UGC. Deleting users CAN technically create new activities mid-deletion; Chunk 3 executor sweeps activities where authorId==uid in Phase D so any mid-deletion create is cleaned. Adding a freeze here would deny legitimate post-creation kudos/comment bumps from OTHER users which is the dominant write path. Re-evaluate if Chunk 3 experiences race issues.",
-  },
-  {
     path: "match /kudos/{activityId}/users/{userId}",
     reason:
       "Cross-user write — kudos giver is request.auth.uid. Freeze would require !isDeleting(userId), but kudos creation rate is high and the Chunk 3 executor sweeps kudosByMe via collectionGroup. Same race-cleanup posture as activities.",
@@ -135,14 +137,6 @@ const EXPLICITLY_EXEMPT = [
     path: "match /challenges/{challengeId}",
     reason:
       "Global challenge metadata, not user-keyed. Client-seeded for the global challenge UI. No user data persists on the doc itself.",
-  },
-  {
-    // Parser sees this as bare `match /participants/{uid}` because it's
-    // nested inside `match /challenges/{challengeId}`. The semantic
-    // path is `challenges/{challengeId}/participants/{uid}`.
-    path: "match /participants/{uid}",
-    reason:
-      "Nested under challenges/{challengeId}. PENDING Chunk 3 — freeze should be added when challengeParticipations cleanup lands. Adding it mid-Chunk-2.C would create a deadlock with the seedChallenges initialisation flow. Tracked as Chunk 3 prerequisite.",
   },
 ];
 
@@ -304,7 +298,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 38 (Spc1 added spaces members + posts)", () => {
+  it("authoritative count is 40 (tombstone-freeze added activities + participants)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -330,8 +324,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // Spc1 PR1 added the Community Spaces nested blocks — members/{uid}
     // (join) and posts/{postId} (member posts), both create-frozen via
     // !isDeleting — → 38.
+    // Tombstone-freeze packet (2026-07-12) added /activities/{activityId}
+    // + challenge /participants/{uid} (moved out of EXPLICITLY_EXEMPT once
+    // all their write actions became frozen), → 40.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(40);
   });
 });

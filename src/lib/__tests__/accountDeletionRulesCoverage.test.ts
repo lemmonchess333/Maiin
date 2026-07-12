@@ -117,6 +117,24 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     notes: "deleting users cannot file new reports",
   },
   {
+    // Tombstone-freeze packet (2026-07-12) — activities create/update/delete
+    // now carry the full write-freeze. Previously EXPLICITLY_EXEMPT (a
+    // deleting user could create activities mid-deletion, swept later);
+    // the tombstone window made that a data-recreation vector after
+    // completion, so all three actions are frozen on the actor.
+    pathPattern: "match /activities/{activityId}",
+    sides: ["actor"],
+    notes: "create/update/delete frozen via !isWriteFrozen(request.auth.uid)",
+  },
+  {
+    // Tombstone-freeze packet — challenge participant join/update/leave now
+    // frozen. Parser sees the bare nested form `match /participants/{uid}`
+    // (nested under challenges/{challengeId}). uid == auth uid.
+    pathPattern: "match /participants/{uid}",
+    sides: ["actor"],
+    notes: "join/update/leave frozen via !isWriteFrozen(uid)",
+  },
+  {
     pathPattern: "match /groups/{crewId}",
     sides: ["actor"],
     notes: "deleting users cannot create/update crews",
@@ -202,17 +220,55 @@ describe("static rules coverage — every protected path has the write-freeze", 
       ).not.toBeNull();
       const allowedExempt = block!.includes("@r1a-no-freeze:");
       // The freeze appears as either `isOwnerAndNotDeleting(...)` (combined
-      // form) or as `!isDeleting(...)` (multi-side form). Either one
-      // counts as protection on at least one side.
+      // form) or as `!isWriteFrozen(...)` (multi-side / explicit form).
+      // Either one counts as protection on at least one side.
+      // (Tombstone-freeze packet 2026-07-12: `!isDeleting` → `!isWriteFrozen`
+      // everywhere — the freeze now covers active deletion AND the
+      // post-deletion tombstone window.)
       const hasOwnerCombinedForm = /isOwnerAndNotDeleting\s*\(/.test(block!);
-      const hasExplicitNotDeleting = /!\s*isDeleting\s*\(/.test(block!);
-      const hasAnyFreeze = hasOwnerCombinedForm || hasExplicitNotDeleting;
+      const hasExplicitWriteFreeze = /!\s*isWriteFrozen\s*\(/.test(block!);
+      const hasAnyFreeze = hasOwnerCombinedForm || hasExplicitWriteFreeze;
       if (!allowedExempt) {
         expect(
           hasAnyFreeze,
-          `${p.pathPattern} write rule must call isOwnerAndNotDeleting(...) or !isDeleting(...) — found neither`
+          `${p.pathPattern} write rule must call isOwnerAndNotDeleting(...) or !isWriteFrozen(...) — found neither`
         ).toBe(true);
       }
+    });
+
+    // Per-clause strengthening (tombstone-freeze packet): a freeze on ONE
+    // action (e.g. create) must not let an UNFROZEN update/delete slip
+    // through. Every client-writable allow clause in a protected block —
+    // not merely the block as a whole — must carry a freeze token.
+    it(`${p.pathPattern} freezes EVERY client-writable allow clause`, () => {
+      const block = extractMatchBlock(p.pathPattern);
+      expect(block).not.toBeNull();
+      if (block!.includes("@r1a-no-freeze:")) return;
+      // Split into `allow ... ;` statements. Each statement's action list
+      // is the words between `allow` and `:`.
+      const clauseRe = /allow\s+([a-z,\s]+?):\s*if\s+([^;]+);/g;
+      let m: RegExpExecArray | null;
+      const offenders: string[] = [];
+      while ((m = clauseRe.exec(block!)) !== null) {
+        const actions = m[1]
+          .split(",")
+          .map((a) => a.trim())
+          .filter(Boolean);
+        const body = m[2];
+        const isWriteClause = actions.some((a) =>
+          ["create", "update", "delete", "write"].includes(a)
+        );
+        if (!isWriteClause) continue; // read-only clause — no freeze needed
+        if (/^\s*false\s*$/.test(body)) continue; // vacuously frozen
+        const hasFreeze =
+          /!\s*isWriteFrozen\s*\(/.test(body) ||
+          /isOwnerAndNotDeleting\s*\(/.test(body);
+        if (!hasFreeze) offenders.push(`allow ${m[1].trim()}`);
+      }
+      expect(
+        offenders,
+        `${p.pathPattern} has client-writable clause(s) with no freeze: ${offenders.join("; ")}`
+      ).toEqual([]);
     });
 
     if (p.sides.includes("writer") || p.sides.includes("target")) {
@@ -225,15 +281,16 @@ describe("static rules coverage — every protected path has the write-freeze", 
         //   - `!isDeleting(...)` covers whichever uid is passed
         //     explicitly (target, writer, recipient, etc.).
         // For a 2-side rule the total of these forms must be >= 2.
-        const explicitNotDeleting = (block!.match(/!\s*isDeleting\s*\(/g) || [])
-          .length;
+        const explicitWriteFreeze = (
+          block!.match(/!\s*isWriteFrozen\s*\(/g) || []
+        ).length;
         const ownerCombined = (
           block!.match(/isOwnerAndNotDeleting\s*\(/g) || []
         ).length;
-        const totalFreezeApplications = explicitNotDeleting + ownerCombined;
+        const totalFreezeApplications = explicitWriteFreeze + ownerCombined;
         expect(
           totalFreezeApplications,
-          `${p.pathPattern} must apply freeze for each declared side (${p.sides.join(", ")}); found ${explicitNotDeleting} explicit !isDeleting + ${ownerCombined} isOwnerAndNotDeleting = ${totalFreezeApplications}`
+          `${p.pathPattern} must apply freeze for each declared side (${p.sides.join(", ")}); found ${explicitWriteFreeze} explicit !isWriteFrozen + ${ownerCombined} isOwnerAndNotDeleting = ${totalFreezeApplications}`
         ).toBeGreaterThanOrEqual(p.sides.length);
       });
     }
@@ -259,15 +316,17 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (31 paths — Spc1 added spaces members + posts)", () => {
-    // Authoritative count maintained in accountDeletionWriteRulesSnapshot.test.ts
-    // via EXPECTED_PROTECTED_PATH_COUNT. The two test files must agree —
-    // drift fails fast here, not silently in CI. Was 27 pre-PR-2;
-    // /groups/{crewId}/members/{userId} moved to server-only (→26);
-    // push #961 added /users/{uid}/devices/{token} (→27);
-    // SOCIAL S3 added /partnerBonds/{bondId} (→28);
-    // saved-routes library added /users/{uid}/savedRoutes/{doc} (→29);
-    // Spc1 added the spaces members + posts nested blocks (→31).
-    expect(PROTECTED_PATHS.length).toBe(31);
+  it("PROTECTED_PATHS list matches the canonical count (33 paths — tombstone-freeze added activities + participants)", () => {
+    // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
+    // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
+    // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
+    // added /users/{uid}/savedRoutes/{doc} (→29); Spc1 added the spaces
+    // members + posts nested blocks (→31); tombstone-freeze packet
+    // (2026-07-12) moved /activities/{activityId} + challenge
+    // /participants/{uid} out of EXPLICITLY_EXEMPT into the fully-frozen
+    // set (→33). This list is a curated freeze-verification SUBSET; the
+    // full drift inventory (with its own count) lives in
+    // accountDeletionWriteRulesSnapshot.test.ts.
+    expect(PROTECTED_PATHS.length).toBe(33);
   });
 });
