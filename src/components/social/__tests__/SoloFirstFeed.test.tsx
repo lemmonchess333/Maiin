@@ -25,6 +25,11 @@ vi.mock("@/components/share/ShareCardSheet", () => ({
     <div data-testid="share-sheet">{open ? "open" : "closed"}</div>
   ),
 }));
+/* Spc1 PR5 — the suggested-spaces row renders router Links; this suite
+   renders without a Router (same reason ChallengeCard is mocked). */
+vi.mock("@/features/spaces/SpacesDirectory", () => ({
+  default: () => <div data-testid="spaces-row" />,
+}));
 
 import SoloFirstFeed from "../SoloFirstFeed";
 
