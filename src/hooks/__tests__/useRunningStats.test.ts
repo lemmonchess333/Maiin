@@ -23,6 +23,7 @@ function run(
     elevationGain: 0,
     calories: 0,
     activityType: "freerun",
+    relativeEffort: null,
     ...args,
   };
 }
