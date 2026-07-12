@@ -352,29 +352,41 @@ body {
      transparent) is what makes the glow read as emitted LIGHT rather than
      flat translucent paint — within ONE hue family, so no #511 mud. */
   --ambient-glow-core: 248 96% 84%;
-  /* Light-mode brighten strength (mix toward white). */
-  --ambient-glow-light: 16%;
+  /* Light-mode brighten strength (mix toward white). Raised from 16% —
+     at 16% the top wash was so close to the page grey it read as nothing,
+     which is why light felt flat next to dark's bloom. 26% keeps it a soft,
+     single-hue lavender brighten (calm, not a stain) while actually
+     registering as a branded top glow. */
+  --ambient-glow-light: 26%;
 }
 
 .ambient-glow {
   position: fixed;
   inset-inline: 0;
   top: 0;
-  height: 22vh; /* light: falloff completes above the first card */
+  height: 26vh; /* light: a touch taller so the falloff reads as a soft bloom, still complete above the first card */
   z-index: -1;
   pointer-events: none;
   /* LIGHT — brighten from a top-CENTRE bloom (not a corner), NOT the #511
-     accent-over-grey method. */
+     accent-over-grey method. Single hue (brand purple); a 3-stop eased
+     falloff (was 2) so the brighter core fades gradually to clean canvas
+     rather than banding, keeping the lower half neutral. */
   background: radial-gradient(
-    125% 105% at 50% -8%,
+    120% 100% at 50% -6%,
     color-mix(in oklch, hsl(var(--primary)) var(--ambient-glow-light), white) 0%,
     color-mix(
         in oklch,
-        hsl(var(--primary)) calc(var(--ambient-glow-light) / 2),
+        hsl(var(--primary)) calc(var(--ambient-glow-light) * 0.6),
         white
       )
-      34%,
-    hsl(var(--background)) 78%
+      28%,
+    color-mix(
+        in oklch,
+        hsl(var(--primary)) calc(var(--ambient-glow-light) * 0.22),
+        white
+      )
+      52%,
+    hsl(var(--background)) 80%
   );
 }
 
