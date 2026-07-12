@@ -45,7 +45,7 @@ const inventory = JSON.parse(readFileSync(inventoryPath, "utf8"));
 // goalSpaceEventsAuthored (executor step goal_spaces,
 // lib/goalSpaceCleanup — the membership/counter/event cleanup the
 // foundation PR #1545 deferred).
-export const EXPECTED_INCLUDED_COUNT = 47;
+export const EXPECTED_INCLUDED_COUNT = 49;
 export const EXPECTED_EXCLUDED_COUNT = 7;
 
 describe("inventory counts are programmatically guarded", () => {

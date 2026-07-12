@@ -59,6 +59,10 @@ const PINNED: Record<string, string> = {
     "src/features/challenges/__tests__/challengeTiers.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
+  // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
+  // the set-equality parity pin lives in the spaceDefs config test.
+  "functions/lib/spaceIds.js":
+    "src/features/spaces/__tests__/spaceDefs.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.
