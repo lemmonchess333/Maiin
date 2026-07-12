@@ -18,7 +18,7 @@
  * Mounted by ProgrammeRunSection (cockpit entry) and SettingsRunPlan; both
  * gate on race_prep + not-recovery + not-elapsed before rendering the entry.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarClock, Feather } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
@@ -52,6 +52,11 @@ interface AdjustWeekSheetProps {
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;
   /** Existing re-anchor writer (keeps the race date). */
   realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
+  /** Run14: when the sheet is opened FROM the ease-week nudge, skip the
+   *  intent chooser and land straight on the easier-week preview (the
+   *  nudge already established the intent). Omitted for the normal
+   *  "Adjust this week" entry, which still opens on the chooser. */
+  initialIntent?: Intent;
 }
 
 const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
@@ -79,6 +84,7 @@ export default function AdjustWeekSheet({
   raceGoal,
   overrideRunDay,
   realignRacePlan,
+  initialIntent,
 }: AdjustWeekSheetProps) {
   const [step, setStep] = useState<Step>({ kind: "intent" });
   const [applying, setApplying] = useState(false);
@@ -88,6 +94,16 @@ export default function AdjustWeekSheet({
     () => planEasierWeek(runDays, todayKey),
     [runDays, todayKey]
   );
+
+  // Run14: opened from the ease-week nudge → jump past the chooser to the
+  // easier-week preview. Only the easier intents skip the chooser; a
+  // realign ("crowded") still deserves its own preview step, so it isn't
+  // pre-jumped here (the nudge never sends it).
+  useEffect(() => {
+    if (open && (initialIntent === "easier" || initialIntent === "not_100")) {
+      setStep({ kind: "preview-easier", intent: initialIntent, swaps });
+    }
+  }, [open, initialIntent, swaps]);
 
   const close = (cancelled: boolean) => {
     if (cancelled) track("adjust_week_cancelled");
