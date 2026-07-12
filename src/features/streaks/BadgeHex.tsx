@@ -61,11 +61,17 @@ const TIER_PALETTES: Record<BadgeTier, Palette> = {
   },
 };
 
+// Cool-grey "not earned yet" palette. Darkened from the original near-white
+// greys (base #cfcfcf / highlight #ebebeb) which vanished on the WHITE
+// light-mode card — a light-grey hex on white read as an empty ring (worst on
+// the Home Next-badge nudge). These mid-greys register on white while staying
+// clearly "off" on the dark card, and sitting further below earned-silver
+// (#c0c0c0) they also read as MORE distinct from an earned silver badge.
 const LOCKED_PALETTE: Palette = {
-  edge: "#9a9a9a",
-  base: "#cfcfcf",
-  highlight: "#ebebeb",
-  icon: "#8e8e93",
+  edge: "#83838a",
+  base: "#b4b4bb",
+  highlight: "#d3d3d9",
+  icon: "#6b6b72",
 };
 
 // Pointy-top hexagon fits the badge aesthetic better than flat-top. Same
@@ -110,7 +116,7 @@ export function BadgeHex({
         style={{
           width: size,
           height: size,
-          opacity: earned ? 1 : 0.6,
+          opacity: earned ? 1 : 0.68,
           /* Phase-4 render-site fix (visual audit):
              — Earned art carries a tier-tinted glow ON the badge itself
                (the old card-level box-shadow barely registered at grid
@@ -156,7 +162,7 @@ export function BadgeHex({
         // locked grey (silver in particular — silver base #c0c0c0 sits
         // right next to locked base #cfcfcf, which made earned silver
         // badges look indistinguishable from locked ones on the grid).
-        opacity: earned ? 1 : 0.55,
+        opacity: earned ? 1 : 0.65,
         filter: earned
           ? "drop-shadow(0 2px 4px rgba(0,0,0,0.18))"
           : "drop-shadow(0 1px 2px rgba(0,0,0,0.08))",

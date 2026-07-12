@@ -511,8 +511,10 @@ function BadgeEarnedContent({
               >
                 {badge.tier} badge
               </p>
-              <p className="text-xl font-bold text-white">{badge.name}</p>
-              <p className="text-sm text-white/60">{badge.description}</p>
+              <p className="text-xl font-bold text-foreground">{badge.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {badge.description}
+              </p>
               {badge.id === "first_step" && (
                 <p
                   className="text-sm font-semibold pt-2"
