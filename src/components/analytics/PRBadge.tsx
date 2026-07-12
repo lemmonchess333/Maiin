@@ -29,7 +29,7 @@ export default function PRBadge({ isNew = false }: PRBadgeProps) {
       {/* Glow on landing */}
       <motion.div
         className="absolute inset-[-2px] rounded-full"
-        style={{ backgroundColor: "#facc15" }}
+        style={{ backgroundColor: THEME.tier.gold }}
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: [0, 0.7, 0], scale: [0.5, 1.3, 1] }}
         transition={{ duration: 0.5, delay: 0.25 }}
