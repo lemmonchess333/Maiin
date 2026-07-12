@@ -502,7 +502,9 @@ async function main() {
       .doc(sid)
       .collection("members")
       .doc(uid)
-      .set({ joinedAt: Timestamp.now() });
+      // uid mirrored into the body — the deletion executor's
+      // collectionGroup sweep (inventory: spaceMemberships) filters on it.
+      .set({ joinedAt: Timestamp.now(), uid });
     await db
       .collection("spaces")
       .doc(sid)
