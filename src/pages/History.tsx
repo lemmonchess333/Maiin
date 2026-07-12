@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useRef, useCallback, lazy, Suspense } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
@@ -14,9 +14,9 @@ import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
 import EmptyState from "@/components/ui/EmptyState";
-import { buttonClasses } from "@/components/ui/buttonClasses";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
+import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
@@ -26,7 +26,12 @@ import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
-import { formatVolume, formatDistance, abbreviateK } from "@/utils/formatters";
+import {
+  formatVolume,
+  formatDistance,
+  abbreviateK,
+  formatDayMonth,
+} from "@/utils/formatters";
 import { epley1RMExact } from "@/lib/analytics";
 import {
   track as trackHistoryEvent,
@@ -538,8 +543,7 @@ export default function History() {
         r.distance >= 500
     );
 
-    const fmtDate = (d: Date) =>
-      d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const fmtDate = formatDayMonth;
 
     /* Compute best 1K / 5K / Longest from a run pool. Shared shape
        between Lifetime / Recent / Indoor buckets — only the input
@@ -1248,23 +1252,15 @@ export default function History() {
                     <RacePredictionsCard />
                   </>
                 ) : runs.length === 0 ? (
-                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
-                    <Footprints className="size-5 shrink-0 text-running" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Complete your first run to see running analytics here
-                      </p>
-                    </div>
-                    <Link
-                      to="/run"
-                      className={buttonClasses({
-                        variant: "sport",
-                        className: "shrink-0",
-                      })}
-                    >
-                      Start Run
-                    </Link>
-                  </div>
+                  <SectionEmptyCTA
+                    icon={
+                      <Footprints className="size-5 shrink-0 text-running" />
+                    }
+                    text="Complete your first run to see running analytics here"
+                    to="/run"
+                    ctaLabel="Start Run"
+                    variant="sport"
+                  />
                 ) : (
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1315,23 +1311,13 @@ export default function History() {
                     No workouts in this period
                   </p>
                 ) : liftingData.liftCount === 0 ? (
-                  <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
-                    <Trophy className="size-5 shrink-0 text-lifting" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Log a workout to see your lifting analytics here
-                      </p>
-                    </div>
-                    <Link
-                      to="/program"
-                      className={buttonClasses({
-                        variant: "primary",
-                        className: "shrink-0",
-                      })}
-                    >
-                      Start Lift
-                    </Link>
-                  </div>
+                  <SectionEmptyCTA
+                    icon={<Trophy className="size-5 shrink-0 text-lifting" />}
+                    text="Log a workout to see your lifting analytics here"
+                    to="/program"
+                    ctaLabel="Start Lift"
+                    variant="primary"
+                  />
                 ) : (
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
@@ -1419,26 +1405,18 @@ export default function History() {
                   </>
                 ) : nutrition.avgCalories === 0 ? (
                   <>
-                    <div className="p-4 rounded-2xl bg-card flex items-center gap-3 card-shadow">
-                      <UtensilsCrossed
-                        className="size-5 shrink-0"
-                        style={{ color: THEME.semantic.nutrition }}
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          Log meals to see your nutrition trends here
-                        </p>
-                      </div>
-                      <Link
-                        to="/food"
-                        className={buttonClasses({
-                          variant: "nutrition",
-                          className: "shrink-0",
-                        })}
-                      >
-                        Log Meal
-                      </Link>
-                    </div>
+                    <SectionEmptyCTA
+                      icon={
+                        <UtensilsCrossed
+                          className="size-5 shrink-0"
+                          style={{ color: THEME.semantic.nutrition }}
+                        />
+                      }
+                      text="Log meals to see your nutrition trends here"
+                      to="/food"
+                      ctaLabel="Log Meal"
+                      variant="nutrition"
+                    />
                     {/* Weight tracking is independent of meal logging, so we
                       keep TrendWeight visible even when there's no nutrition
                       data yet — a user logging weight without meals still
