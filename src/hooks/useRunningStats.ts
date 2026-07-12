@@ -53,7 +53,7 @@ export interface RunSummaryItem {
 export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
   const weeks: Record<
     string,
-    { distance: number; count: number; paceSum: number; paceCount: number }
+    { distance: number; count: number; paceKmSum: number; paceKm: number }
   > = {};
   for (const run of runs) {
     if (!isVolumeEligible(run)) continue;
@@ -62,12 +62,15 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
     // near midnight in non-UTC zones bucketed into the wrong week.
     const key = localWeekKey(new Date(run.completedAt));
     if (!weeks[key])
-      weeks[key] = { distance: 0, count: 0, paceSum: 0, paceCount: 0 };
+      weeks[key] = { distance: 0, count: 0, paceKmSum: 0, paceKm: 0 };
     weeks[key].distance += run.distance / 1000;
     weeks[key].count += 1;
     if (run.distance > 0 && run.avgPace > 0) {
-      weeks[key].paceSum += run.avgPace;
-      weeks[key].paceCount += 1;
+      // Distance-weight each run's pace. An unweighted mean of per-run
+      // paces let a 1 km recovery jog move the week's "avg pace" as much
+      // as a 20 km long run — the classic average-of-averages skew.
+      weeks[key].paceKmSum += run.avgPace * (run.distance / 1000);
+      weeks[key].paceKm += run.distance / 1000;
     }
   }
   return Object.entries(weeks)
@@ -76,7 +79,7 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
       week,
       totalDistance: Math.round(d.distance * 10) / 10,
       runCount: d.count,
-      avgPace: d.paceCount > 0 ? Math.round(d.paceSum / d.paceCount) : 0,
+      avgPace: d.paceKm > 0 ? Math.round(d.paceKmSum / d.paceKm) : 0,
     }));
 }
 

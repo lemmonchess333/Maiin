@@ -13,8 +13,24 @@ export function calcWeightTrend(
 
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   const current = sorted[sorted.length - 1].weight;
+  const latestDate = sorted[sorted.length - 1].date;
 
-  const last7 = sorted.slice(-7);
+  // CALENDAR-day windows, not entry-count slices. slice(-7) averaged the
+  // last 7 LOG ENTRIES — for a weekly logger that "7-day avg" silently
+  // spanned ~7 weeks, and the delta/direction derived from it were
+  // mislabelled. Anchor to the latest entry's local date and window by
+  // date-string comparison (entries carry local "YYYY-MM-DD" keys).
+  const dayKeyBefore = (dateKey: string, days: number): string => {
+    const d = new Date(dateKey + "T12:00:00");
+    d.setDate(d.getDate() - days);
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  };
+  const cutoff7 = dayKeyBefore(latestDate, 6); // latest day + 6 before = 7 days
+  const cutoff30 = dayKeyBefore(latestDate, 29);
+
+  const last7 = sorted.filter((e) => e.date >= cutoff7);
   const avg7d =
     Math.round(
       (last7.reduce((sum, e) => sum + e.weight, 0) / last7.length) * 10
@@ -26,7 +42,7 @@ export function calcWeightTrend(
     avg7d,
     delta,
     direction: Math.abs(delta) < 0.2 ? "stable" : delta > 0 ? "up" : "down",
-    sparkline: sorted.slice(-30).map((e) => e.weight),
+    sparkline: sorted.filter((e) => e.date >= cutoff30).map((e) => e.weight),
   };
 }
 
@@ -49,12 +65,12 @@ export function calcWeightTrend(
  */
 export function calculateEMA(
   weights: { date: string; weight: number }[],
-  factor = 0.1,
+  factor = 0.1
 ): { date: string; actual: number; trend: number }[] {
   if (weights.length === 0) return [];
 
   const sorted = [...weights].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
   let trend = sorted[0].weight;
@@ -78,7 +94,7 @@ export function deriveGoalWeightKg(
   program:
     | { startWeight?: number | null; goal?: string | null }
     | null
-    | undefined,
+    | undefined
 ): number | undefined {
   if (!program?.startWeight) return undefined;
   if (program.goal === "cut") return program.startWeight - 5;

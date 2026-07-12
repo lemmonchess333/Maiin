@@ -24,7 +24,13 @@ export function exerciseToMuscleGroup(category: string): string {
   return CATEGORY_TO_MUSCLE[category] ?? "other";
 }
 
-export const MUSCLE_GROUPS = ["chest", "back", "legs", "shoulders", "arms"] as const;
+export const MUSCLE_GROUPS = [
+  "chest",
+  "back",
+  "legs",
+  "shoulders",
+  "arms",
+] as const;
 export type MuscleGroup = (typeof MUSCLE_GROUPS)[number];
 
 /* ================================
@@ -35,6 +41,21 @@ export function epley1RM(weight: number, reps: number): number {
   if (reps <= 0 || weight <= 0) return 0;
   if (reps === 1) return weight;
   return Math.round(weight * (1 + reps / 30));
+}
+
+/**
+ * Unrounded Epley — the single source for e1rm COMPARISONS (PR scoring,
+ * best-set selection, chart series), where integer rounding could merge
+ * near-ties and flip which set counts as the best. Same guards as
+ * epley1RM: reps<=0 (a logged failed set must not score weight×1.0 as a
+ * 1RM) and the reps===1 identity (a true single IS its 1RM — the raw
+ * formula would inflate it by 3.3%). History.tsx and ExerciseHistory.tsx
+ * previously inlined the raw formula without either correction.
+ */
+export function epley1RMExact(weight: number, reps: number): number {
+  if (reps <= 0 || weight <= 0) return 0;
+  if (reps === 1) return weight;
+  return weight * (1 + reps / 30);
 }
 
 /* ================================
@@ -50,7 +71,10 @@ export interface StrengthPoint {
 export function strengthSlope(points: StrengthPoint[]): number {
   if (points.length < 2) return 0;
   const n = points.length;
-  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  let sumX = 0,
+    sumY = 0,
+    sumXY = 0,
+    sumX2 = 0;
   for (let i = 0; i < n; i++) {
     sumX += i;
     sumY += points[i].e1rm;
@@ -145,9 +169,10 @@ export function dailyAdherence(
   actual: { calories: number; protein: number },
   target: { calories: number; protein: number }
 ): AdherenceResult {
-  const calPct = target.calories > 0
-    ? Math.abs(actual.calories - target.calories) / target.calories
-    : 0;
+  const calPct =
+    target.calories > 0
+      ? Math.abs(actual.calories - target.calories) / target.calories
+      : 0;
   const proDiff = Math.abs(actual.protein - target.protein);
 
   const caloriesHit = calPct <= 0.05;
@@ -168,7 +193,9 @@ export function dailyAdherence(
 
 export function weeklyAdherenceScore(dailyScores: number[]): number {
   if (dailyScores.length === 0) return 0;
-  return Math.round(dailyScores.reduce((a, b) => a + b, 0) / dailyScores.length);
+  return Math.round(
+    dailyScores.reduce((a, b) => a + b, 0) / dailyScores.length
+  );
 }
 
 /* ================================
@@ -184,14 +211,11 @@ export function detectFatigue(
   volumeChange: number | null,
   momentumDir: MomentumDirection
 ): FatigueSignal {
-  if (
-    volumeChange !== null &&
-    volumeChange > 15 &&
-    momentumDir === "down"
-  ) {
+  if (volumeChange !== null && volumeChange > 15 && momentumDir === "down") {
     return {
       triggered: true,
-      message: "Possible accumulated fatigue — consider reducing volume this week.",
+      message:
+        "Possible accumulated fatigue — consider reducing volume this week.",
     };
   }
   return { triggered: false, message: "" };
@@ -214,16 +238,27 @@ export interface InsightData {
 }
 
 export function generateInsight(data: InsightData): string {
-  const { phase, momentumDir, fourWeekPct, weeklyAdherence, avgCalorieDiff, bodyweightTrend } = data;
+  const {
+    phase,
+    momentumDir,
+    fourWeekPct,
+    weeklyAdherence,
+    avgCalorieDiff,
+    bodyweightTrend,
+  } = data;
 
   const parts: string[] = [];
 
   // Strength momentum
   if (fourWeekPct !== null) {
     if (momentumDir === "up") {
-      parts.push(`Strength trending up ${fourWeekPct > 0 ? `+${fourWeekPct}%` : ""} over 4 weeks.`);
+      parts.push(
+        `Strength trending up ${fourWeekPct > 0 ? `+${fourWeekPct}%` : ""} over 4 weeks.`
+      );
     } else if (momentumDir === "down") {
-      parts.push(`Strength declining ${fourWeekPct !== null ? `${fourWeekPct}%` : ""} — review load management.`);
+      parts.push(
+        `Strength declining ${fourWeekPct !== null ? `${fourWeekPct}%` : ""} — review load management.`
+      );
     } else {
       parts.push("Strength stable. Push intensity on compounds to progress.");
     }
@@ -235,14 +270,18 @@ export function generateInsight(data: InsightData): string {
       if (avgCalorieDiff < 100) {
         parts.push("Surplus is low for a bulk — aim for +200-300 cal/day.");
       } else if (bodyweightTrend < 0) {
-        parts.push("Weight is dropping despite bulking intent — increase intake.");
+        parts.push(
+          "Weight is dropping despite bulking intent — increase intake."
+        );
       } else if (momentumDir === "up") {
         parts.push("Volume and strength growing — bulk is working well.");
       }
       break;
     case "cut":
       if (momentumDir === "down") {
-        parts.push("Strength loss during cut — prioritize protein and recovery.");
+        parts.push(
+          "Strength loss during cut — prioritize protein and recovery."
+        );
       } else {
         parts.push("Maintaining strength during cut — execution is solid.");
       }
