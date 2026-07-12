@@ -46,6 +46,7 @@ import {
   readStoredRun,
   writeStoredRun,
   clearStoredRun,
+  RUN_RESUME_SCHEMA_VERSION,
   type StoredRun,
 } from "../lib/runResumeStorage";
 import { useAudioCues } from "../hooks/useAudioCues";
@@ -649,7 +650,7 @@ export default function Run() {
     const uid = profile?.uid;
     if (!uid) return;
     const snapshot: StoredRun = {
-      v: 1,
+      v: RUN_RESUME_SCHEMA_VERSION,
       config: runConfig,
       startedAt: startedAtRef.current,
       accumulatedSeconds: timer.getAccumulatedSeconds(),
