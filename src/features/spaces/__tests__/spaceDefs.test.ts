@@ -57,6 +57,28 @@ describe("config ↔ firestore.rules parity (isKnownSpaceId)", () => {
   });
 });
 
+describe("deletion executor wiring (Spc1 PR4)", () => {
+  /* These two tests carry the inventory's testCoverageKey strings —
+     the R1A overclaim guard scans TS test files for them. The deep
+     behavioural coverage lives in functions/__tests__/
+     accountDeletion.test.js (spaces-sweep + prefix assertions); these
+     pin the WIRING text so a refactor that drops the step or the
+     prefix fails here too. */
+  const executorJs = readFileSync(
+    resolve(__dirname, "../../../../functions/accountDeletion.js"),
+    "utf8"
+  );
+
+  it("accountDeletion.js wires the spaces cleanup step (unit::accountDeletion.spacesCleanup)", () => {
+    expect(executorJs).toMatch(/require\("\.\/lib\/spacesCleanup"\)/);
+    expect(executorJs).toMatch(/cleanupSpacesForUser\(/);
+  });
+
+  it("space-photos is in the storage prefix sweep (unit::accountDeletion.storagePrefixes)", () => {
+    expect(executorJs).toContain("space-photos/__UID__/");
+  });
+});
+
 describe("config ↔ functions parity (lib/spaceIds.js)", () => {
   it("the deletion executor's server-side id list is set-equal to SPACE_IDS", () => {
     /* Tested-copy rule: the executor's bounded spaces sweep iterates
