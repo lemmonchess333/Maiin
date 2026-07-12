@@ -36,6 +36,7 @@ import { validateFoodEntry } from "@/lib/foodValidation";
 import {
   orderQuickAddItems,
   buildQuickAddMealPayload,
+  pickRepresentativeMeal,
   type QuickAddItem,
 } from "@/lib/quickAddOrder";
 import { isGenericAiFoodName } from "@/lib/aiFoodIdentification";
@@ -1238,26 +1239,40 @@ export default function Food() {
     //    against the (also-local) cutoff string is correct and avoids
     //    parsing every meal's date into a Date object.
     const cutoff = format(addDays(new Date(), -30), "yyyy-MM-dd");
-    const freq = new Map<
+    // Collect every log per food-name so FOOD-03 can pick the MODAL
+    // portion (below) instead of whichever version was logged last.
+    const byFood = new Map<
       string,
-      { count: number; lastLogged: string; meal: (typeof meals)[number] }
+      { count: number; lastLogged: string; logs: (typeof meals)[number][] }
     >();
     for (const meal of meals) {
       if (!meal.date || meal.date < cutoff) continue;
       const key = meal.foodName.toLowerCase().trim();
       if (!key) continue;
-      const existing = freq.get(key);
+      const existing = byFood.get(key);
       if (existing) {
         existing.count += 1;
-        // Keep the latest version's macros — they may differ if the
-        // user logged the same name with different portions.
-        if (meal.date > existing.lastLogged) {
-          existing.lastLogged = meal.date;
-          existing.meal = meal;
-        }
+        existing.logs.push(meal);
+        if (meal.date > existing.lastLogged) existing.lastLogged = meal.date;
       } else {
-        freq.set(key, { count: 1, lastLogged: meal.date, meal });
+        byFood.set(key, { count: 1, lastLogged: meal.date, logs: [meal] });
       }
+    }
+    // FOOD-03: the chip's macros come from the user's MOST FREQUENT
+    // version of the food, not the most recent — so one atypical /
+    // mis-scanned entry can't overwrite the stable default. Ranking
+    // still uses total frequency (unchanged); only which *version*
+    // represents the food changed.
+    const freq = new Map<
+      string,
+      { count: number; lastLogged: string; meal: (typeof meals)[number] }
+    >();
+    for (const [key, group] of byFood) {
+      freq.set(key, {
+        count: group.count,
+        lastLogged: group.lastLogged,
+        meal: pickRepresentativeMeal(group.logs, (m) => m.date),
+      });
     }
     const ranked = Array.from(freq.values()).sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
