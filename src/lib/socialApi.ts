@@ -784,7 +784,7 @@ export type ReportCategory =
   | "other";
 
 export interface ReportContentInput {
-  targetType: "activity" | "comment" | "user";
+  targetType: "activity" | "comment" | "user" | "space_post";
   targetId: string;
   /** Top-level category — S4b two-tier first level. */
   category: ReportCategory;
