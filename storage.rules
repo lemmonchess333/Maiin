@@ -46,6 +46,20 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Community Space post photos (Spc1 PR4) — owner-only write,
+    // AUTHENTICATED read: space posts are visible to every signed-in
+    // user (all spaces are open topic rooms), so their photos share
+    // the profile-photos read posture, not the private diary one.
+    // Blobs live for the post's lifetime; the account-deletion
+    // executor sweeps the whole prefix (spacePhotosStorage).
+    match /space-photos/{uid}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && isAllowedImageMime();
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Profile photos — owner-only write, authenticated read
     match /profile-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null;

@@ -169,6 +169,35 @@ suite("storage.rules", () => {
     });
   });
 
+  describe("space-photos/{uid} — owner write, authenticated read (Spc1 PR4)", () => {
+    const path = `space-photos/${OWNER}/1.jpg`;
+
+    it("owner can write; ANY authenticated user can read; anon cannot", async () => {
+      await assertSucceeds(
+        uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+      );
+      await assertSucceeds(getBytes(ref(authed(OTHER), path)));
+      await assertFails(getBytes(ref(anon(), path)));
+    });
+
+    it("another user cannot write or delete the owner's post photo", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await uploadBytes(ref(ctx.storage(), path), smallBytes, JPEG);
+      });
+      await assertFails(
+        uploadBytes(ref(authed(OTHER), path), smallBytes, JPEG)
+      );
+      await assertFails(deleteObject(ref(authed(OTHER), path)));
+    });
+
+    it("rejects SVG/GIF and the over-10MB size", async () => {
+      await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, SVG));
+      await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, GIF));
+      await assertFails(uploadBytes(ref(authed(OWNER), path), elevenMB, JPEG));
+      await assertSucceeds(uploadBytes(ref(authed(OWNER), path), sixMB, JPEG));
+    });
+  });
+
   describe("profile-photos/{uid} — owner write, authenticated read", () => {
     const path = `profile-photos/${OWNER}/avatar.jpg`;
 
