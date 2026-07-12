@@ -148,11 +148,11 @@ export function NotificationBubbleProvider({
                 <Icon className="size-5" style={{ color: config.color }} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
+                <p className="text-sm font-semibold text-foreground truncate">
                   {bubble.title}
                 </p>
                 {bubble.subtitle && (
-                  <p className="text-xs text-white/60 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {bubble.subtitle}
                   </p>
                 )}
