@@ -140,13 +140,53 @@ async function clearTestUserState() {
   // Wipe rate-limit entries for both callables so each test starts
   // unthrottled. configurePlan + onboarding use distinct action
   // keys, but clearing both is cheap and avoids cross-test bleed.
-  await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete().catch(() => {});
-  await db.collection("rateLimits").doc(`${TEST_UID}_onboarding`).delete().catch(() => {});
+  await db
+    .collection("rateLimits")
+    .doc(`${TEST_UID}_configurePlan`)
+    .delete()
+    .catch(() => {});
+  await db
+    .collection("rateLimits")
+    .doc(`${TEST_UID}_onboarding`)
+    .delete()
+    .catch(() => {});
   // Wipe user + programState so atomic-write assertions can
   // observe a fresh write.
   const userRef = db.collection("users").doc(TEST_UID);
-  await userRef.collection("programState").doc("current").delete().catch(() => {});
+  await userRef
+    .collection("programState")
+    .doc("current")
+    .delete()
+    .catch(() => {});
   await userRef.delete().catch(() => {});
+  // Clear any deletion ledger / tombstone the freeze tests seed.
+  await db
+    .collection("accountDeletionRequests")
+    .doc(TEST_UID)
+    .delete()
+    .catch(() => {});
+  await db
+    .collection("deletedAccounts")
+    .doc(TEST_UID)
+    .delete()
+    .catch(() => {});
+}
+
+// Seed a COMPLETED deletion (non-active status) + a live tombstone, i.e.
+// the post-deletion window the tombstone-freeze packet closes.
+async function seedCompletedDeletionTombstone(uid) {
+  await db.collection("accountDeletionRequests").doc(uid).set({
+    uid,
+    status: "completed",
+    operationId: "op-completed",
+  });
+  await db
+    .collection("deletedAccounts")
+    .doc(uid)
+    .set({
+      uid,
+      expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+    });
 }
 
 suite("configurePlan — emulator integration", () => {
@@ -164,8 +204,8 @@ suite("configurePlan — emulator integration", () => {
           programState: ps,
           weekSchedule: validWeekSchedule(),
         },
-        { auth: { uid: TEST_UID } },
-      ),
+        { auth: { uid: TEST_UID } }
+      )
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
@@ -179,18 +219,75 @@ suite("configurePlan — emulator integration", () => {
           programState: validProgramState(),
           weekSchedule: validWeekSchedule(),
         },
-        { auth: { uid: TEST_UID } },
-      ),
+        { auth: { uid: TEST_UID } }
+      )
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
   it("rejects payload missing profileUpdates entirely (invalid-argument)", async () => {
     await expect(
       configurePlan.run(
-        { programState: validProgramState(), weekSchedule: validWeekSchedule() },
-        { auth: { uid: TEST_UID } },
-      ),
+        {
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      )
     ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  it("rejects a tombstoned account with account-deleted and writes NOTHING", async () => {
+    await seedCompletedDeletionTombstone(TEST_UID);
+    await expect(
+      configurePlan.run(
+        {
+          profileUpdates: validProfileUpdates(),
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({
+      code: "failed-precondition",
+      details: { errorCode: "account-deleted", uid: TEST_UID },
+    });
+    // The guard runs before the rate-limit write AND before the Admin
+    // batch — no rate-limit, user, or programState doc should exist.
+    const rl = await db
+      .collection("rateLimits")
+      .doc(`${TEST_UID}_configurePlan`)
+      .get();
+    expect(rl.exists).toBe(false);
+    const userDoc = await db.collection("users").doc(TEST_UID).get();
+    expect(userDoc.exists).toBe(false);
+    const psDoc = await db
+      .collection("users")
+      .doc(TEST_UID)
+      .collection("programState")
+      .doc("current")
+      .get();
+    expect(psDoc.exists).toBe(false);
+  });
+
+  it("rejects an actively-deleting account with account-deleting", async () => {
+    await db.collection("accountDeletionRequests").doc(TEST_UID).set({
+      uid: TEST_UID,
+      status: "running",
+      operationId: "op-running",
+    });
+    await expect(
+      configurePlan.run(
+        {
+          profileUpdates: validProfileUpdates(),
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({
+      code: "failed-precondition",
+      details: { errorCode: "account-deleting", uid: TEST_UID },
+    });
   });
 });
 
@@ -218,8 +315,8 @@ suite("completeOnboarding — emulator integration", () => {
           programState: ps,
           weekSchedule: validWeekSchedule(),
         },
-        { auth: { uid: TEST_UID } },
-      ),
+        { auth: { uid: TEST_UID } }
+      )
     ).rejects.toMatchObject({ code: "invalid-argument" });
   });
 
@@ -243,7 +340,7 @@ suite("completeOnboarding — emulator integration", () => {
         programState: validProgramState(),
         weekSchedule: validWeekSchedule(),
       },
-      { auth: { uid: TEST_UID } },
+      { auth: { uid: TEST_UID } }
     );
     expect(result).toMatchObject({ success: true });
 
@@ -260,12 +357,49 @@ suite("completeOnboarding — emulator integration", () => {
 
     // programState doc — committed in the same batch.
     const psDoc = await getDocSettled(
-      db.collection("users").doc(TEST_UID).collection("programState").doc("current"),
+      db
+        .collection("users")
+        .doc(TEST_UID)
+        .collection("programState")
+        .doc("current")
     );
     expect(psDoc.exists).toBe(true);
     const psData = psDoc.data();
     expect(psData.programSchemaVersion).toBe(2);
     expect(Array.isArray(psData.runDays)).toBe(true);
     expect(psData.runDays[0].status).toBe("planned");
+  });
+
+  it("rejects a tombstoned account with account-deleted and recreates NOTHING", async () => {
+    await seedCompletedDeletionTombstone(TEST_UID);
+    await expect(
+      completeOnboarding.run(
+        {
+          profileData: {
+            ...validProfileUpdates(),
+            weightKg: 70,
+            heightCm: 175,
+            age: 30,
+            sex: "male",
+            activityLevel: "moderate",
+          },
+          programState: validProgramState(),
+          weekSchedule: validWeekSchedule(),
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({
+      code: "failed-precondition",
+      details: { errorCode: "account-deleted", uid: TEST_UID },
+    });
+    const userDoc = await db.collection("users").doc(TEST_UID).get();
+    expect(userDoc.exists).toBe(false);
+    const psDoc = await db
+      .collection("users")
+      .doc(TEST_UID)
+      .collection("programState")
+      .doc("current")
+      .get();
+    expect(psDoc.exists).toBe(false);
   });
 });

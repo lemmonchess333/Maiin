@@ -840,6 +840,19 @@ exports.configurePlan = functions
     }
     const uid = context.auth.uid;
 
+    // R1A-Deletion: callable-actor lock. A completed deletion can leave an
+    // already-issued ID token valid for up to ~1h, and the Admin batch
+    // below bypasses Firestore rules — so without this a deleting or
+    // tombstoned account could recreate users/{uid} + programState/current.
+    // Reject BEFORE the rate-limit write and before any Admin write, and
+    // OUTSIDE the try so the structured deletion error (account-deleting /
+    // account-deleted) reaches the client unchanged instead of being
+    // remapped to "internal" (matches completeOnboarding).
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      uid
+    );
+
     // Same rate-limit envelope as onboarding. The Configure Plan
     // wizard is a deliberate user action with a confirm step, not a
     // hot path, so 5/10min is plenty even on retake flows.

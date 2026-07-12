@@ -55,10 +55,32 @@ service cloud.firestore {
         ];
     }
 
-    // Convenience for owner-write paths: caller is the owner AND has
-    // no active deletion. Used by user-owned subcollection match blocks.
+    // A server-owned tombstone (deletedAccounts/{uid}) outlives the deleted
+    // Auth session (~90-day TTL). It exists specifically to cover the window
+    // after a deletion COMPLETES in which an already-issued ID token can
+    // still authenticate. Rules may consult a document whose own read/write
+    // rules deny clients — get()/exists() inside rule evaluation bypasses
+    // those. Existence is the contract here: a single exists() (no get())
+    // keeps the read budget low, and a delayed TTL cleanup fails CLOSED
+    // (writes stay frozen) rather than reopening writes.
+    function isTombstoned(uid) {
+      return exists(
+        /databases/$(database)/documents/deletedAccounts/$(uid)
+      );
+    }
+
+    // Full writable-account contract: an account is write-frozen while its
+    // deletion is in progress OR after it has completed (live tombstone).
+    function isWriteFrozen(uid) {
+      return isDeleting(uid) || isTombstoned(uid);
+    }
+
+    // Convenience for owner-write paths: caller is the owner AND the
+    // account is writable (not mid-deletion, not tombstoned). Legacy name
+    // retained because it's used across every owner subcollection;
+    // "NotDeleting" now means the full writable-account contract.
     function isOwnerAndNotDeleting(uid) {
-      return isOwner(uid) && !isDeleting(uid);
+      return isOwner(uid) && !isWriteFrozen(uid);
     }
 
     function subscriptionFieldsUnchanged() {
@@ -149,15 +171,18 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid)
-        && !isDeleting(uid)
+        && !isWriteFrozen(uid)
         && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free'
         && billingFieldsUnsetOnCreate();
       allow update: if isOwner(uid)
-        && !isDeleting(uid)
+        && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged();
-      allow delete: if isOwner(uid);
+      // Freeze delete too: the deletion executor uses the Admin SDK (which
+      // bypasses rules), so a client-side self-delete during the freeze /
+      // tombstone window is never the executor and should be blocked.
+      allow delete: if isOwnerAndNotDeleting(uid);
     }
 
     // User subcollections — meals, workouts, runs, weights, water, bodyweight
@@ -400,6 +425,7 @@ service cloud.firestore {
       );
 
       allow create: if request.auth != null
+        && !isWriteFrozen(request.auth.uid)
         && request.resource.data.authorId == request.auth.uid
         // Field allowlist — fail-closed; adding a field to
         // postActivity requires adding it here too.
@@ -515,10 +541,12 @@ service cloud.firestore {
       // which flip the counter and underlying kudos/comment doc in
       // one Firestore transaction.
       allow update: if request.auth != null
+        && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visibility']);
       allow delete: if request.auth != null
+        && !isWriteFrozen(request.auth.uid)
         && resource.data.authorId == request.auth.uid;
     }
 
@@ -660,6 +688,7 @@ service cloud.firestore {
 
         allow create: if request.auth != null
           && request.auth.uid == uid
+          && !isWriteFrozen(uid)
           && request.resource.data.keys().hasOnly([
             'currentValue', 'tierAchieved', 'joinedAt',
             'displayName', 'photoURL', 'uid'
@@ -694,6 +723,7 @@ service cloud.firestore {
         // server-only via the Admin SDK triggers.
         allow update: if request.auth != null
           && request.auth.uid == uid
+          && !isWriteFrozen(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['displayName', 'photoURL'])
           && (
@@ -706,7 +736,9 @@ service cloud.firestore {
             || request.resource.data.photoURL is string
           );
 
-        allow delete: if request.auth != null && request.auth.uid == uid;
+        allow delete: if request.auth != null
+          && request.auth.uid == uid
+          && !isWriteFrozen(uid);
       }
     }
 
@@ -756,7 +788,7 @@ service cloud.firestore {
         allow create: if request.auth != null
           && request.auth.uid == uid
           && isKnownSpaceId(spaceId)
-          && !isDeleting(uid)
+          && !isWriteFrozen(uid)
           && request.resource.data.keys().hasOnly([
             'joinedAt', 'displayName', 'photoURL', 'uid'
           ])
@@ -776,6 +808,7 @@ service cloud.firestore {
 
         allow update: if request.auth != null
           && request.auth.uid == uid
+          && !isWriteFrozen(uid)
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['displayName', 'photoURL'])
           && (
@@ -788,7 +821,9 @@ service cloud.firestore {
             || request.resource.data.photoURL is string
           );
 
-        allow delete: if request.auth != null && request.auth.uid == uid;
+        allow delete: if request.auth != null
+          && request.auth.uid == uid
+          && !isWriteFrozen(uid);
       }
 
       // Posts — title + body + optional attached-activity snapshot +
@@ -803,7 +838,7 @@ service cloud.firestore {
 
         allow create: if request.auth != null
           && isKnownSpaceId(spaceId)
-          && !isDeleting(request.auth.uid)
+          && !isWriteFrozen(request.auth.uid)
           && request.resource.data.authorId == request.auth.uid
           // Posting requires membership (Spc1 engineering pin).
           && exists(/databases/$(database)/documents/spaces/$(spaceId)/members/$(request.auth.uid))
@@ -859,8 +894,12 @@ service cloud.firestore {
 
         // Authors edit their own words (title/body only — counters,
         // badge, pin, and identity stay immutable to them). Officials
-        // may (un)pin any post — the curation lever.
+        // may (un)pin any post — the curation lever. The actor-freeze
+        // sits before both branches: a frozen/tombstoned actor cannot
+        // edit or moderate (an official moderating a frozen author's
+        // post is unaffected — the freeze is on the actor, not author).
         allow update: if request.auth != null
+          && !isWriteFrozen(request.auth.uid)
           && (
             (
               resource.data.authorId == request.auth.uid
@@ -886,6 +925,7 @@ service cloud.firestore {
         // Authors delete their own posts; officials moderate-delete
         // anything (the S4 report → takedown path).
         allow delete: if request.auth != null
+          && !isWriteFrozen(request.auth.uid)
           && (
             resource.data.authorId == request.auth.uid
             || isOfficialUid()
@@ -962,7 +1002,7 @@ service cloud.firestore {
       // targetUid is the user being followed/unfollowed — both must
       // be writable.
       allow create, delete: if isOwnerAndNotDeleting(uid)
-        && !isDeleting(targetUid);
+        && !isWriteFrozen(targetUid);
     }
 
     match /followers/{uid}/users/{followerUid} {
@@ -972,8 +1012,8 @@ service cloud.firestore {
       // must be writable.
       allow create, delete: if request.auth != null
         && request.auth.uid == followerUid
-        && !isDeleting(followerUid)
-        && !isDeleting(uid);
+        && !isWriteFrozen(followerUid)
+        && !isWriteFrozen(uid);
     }
 
     // ========================================
@@ -1012,11 +1052,14 @@ service cloud.firestore {
         && request.resource.data.members[0] != request.resource.data.members[1]
         && request.auth.uid in request.resource.data.members
         && request.resource.data.streak == 0
-        && !isDeleting(request.resource.data.members[0])
-        && !isDeleting(request.resource.data.members[1]);
+        && !isWriteFrozen(request.resource.data.members[0])
+        && !isWriteFrozen(request.resource.data.members[1]);
       // Soc7: streak state is server-written (Admin SDK). No client update.
       allow update: if false;
-      allow delete: if bondMember();
+      // A frozen/tombstoned member cannot dissolve the bond client-side;
+      // the account-deletion executor sweeps their bonds (Admin SDK).
+      allow delete: if bondMember()
+        && !isWriteFrozen(request.auth.uid);
     }
 
     // ========================================
@@ -1063,7 +1106,7 @@ service cloud.firestore {
       // reports during the deletion window are blocked here.
       allow create: if request.auth != null
         && request.resource.data.reporterId == request.auth.uid
-        && !isDeleting(request.auth.uid);
+        && !isWriteFrozen(request.auth.uid);
       allow read, update, delete: if false;
     }
 
@@ -1093,7 +1136,7 @@ service cloud.firestore {
       // including memberCount decrement.
       allow create: if request.auth != null
         && request.resource.data.createdBy == request.auth.uid
-        && !isDeleting(request.auth.uid);
+        && !isWriteFrozen(request.auth.uid);
       // 2026-05-26 audit PR 2 (finding #5) — memberCount writes are
       // SERVER-ONLY via setCrewMembershipCallable (Admin SDK, bypasses
       // rules). Only the creator can edit, memberCount is pinned
@@ -1103,12 +1146,13 @@ service cloud.firestore {
       // UPDATE). Pre-fix this rule had NO field constraints, so the
       // creator could spoof memberCount and reassign createdBy at will.
       allow update: if request.auth != null
-        && !isDeleting(request.auth.uid)
+        && !isWriteFrozen(request.auth.uid)
         && resource.data.createdBy == request.auth.uid
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.get('memberCount', 0)
              == resource.data.get('memberCount', 0);
       allow delete: if request.auth != null
+        && !isWriteFrozen(request.auth.uid)
         && resource.data.createdBy == request.auth.uid;
     }
 
@@ -1213,7 +1257,7 @@ service cloud.firestore {
     match /goalSpaces/{spaceId}/events/{eventId} {
       allow read: if isGoalSpaceMember(spaceId);
       allow create: if isGoalSpaceMember(spaceId)
-        && !isDeleting(request.auth.uid)
+        && !isWriteFrozen(request.auth.uid)
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['joined', 'weekly_check_in', 'session_completed', 'milestone', 'needs_support', 'routine_shared']
         && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
