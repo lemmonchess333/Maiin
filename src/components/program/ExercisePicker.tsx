@@ -11,9 +11,13 @@ import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
-import { Search, X, Plus, Check } from "lucide-react";
+import { Search, X, Plus, Check, Dumbbell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { haptic } from "@/lib/haptic";
+import { categoryFigureUri } from "@/lib/muscleFigureSvg";
+import { useWorkouts } from "@/hooks/useWorkouts";
+import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
 
@@ -63,6 +67,25 @@ export default function ExercisePicker({
   const allExercises = useMemo(() => {
     return EXERCISE_CATEGORIES.flatMap((cat) => getExercisesByCategory(cat));
   }, []);
+
+  /* Recently used — the modern-picker feature (Hevy/Strong): the six
+     most recent distinct exercises from logged workouts lead the list
+     when browsing All. workouts arrive newest-first. */
+  const { workouts } = useWorkouts();
+  const recentExercises = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Exercise[] = [];
+    for (const w of workouts) {
+      for (const ex of w.exercises) {
+        if (seen.has(ex.exerciseId)) continue;
+        seen.add(ex.exerciseId);
+        const meta = allExercises.find((e) => e.id === ex.exerciseId);
+        if (meta) out.push(meta);
+        if (out.length >= 6) return out;
+      }
+    }
+    return out;
+  }, [workouts, allExercises]);
 
   const newlySelectedCount = useMemo(() => {
     return [...selectedIds].filter((id) => !preExistingIds.has(id)).length;
@@ -230,8 +253,7 @@ export default function ExercisePicker({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search exercises..."
                   aria-label="Search exercises"
-                  className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground bg-muted"
-                  style={{ borderRadius: 10, border: "none" }}
+                  className="w-full pl-9 pr-4 h-11 text-sm text-foreground placeholder:text-muted-foreground bg-muted rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
               <AnimatePresence>
@@ -262,10 +284,10 @@ export default function ExercisePicker({
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
-                    "h-9 px-3.5 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
+                    "h-10 px-4 rounded-full text-small whitespace-nowrap transition-colors shrink-0",
                     selectedCategory === cat
                       ? "font-semibold text-white bg-primary"
-                      : "font-normal bg-transparent border-[1.5px] border-border text-foreground"
+                      : "font-medium bg-muted text-muted-foreground"
                   )}
                 >
                   {cat}
@@ -273,91 +295,43 @@ export default function ExercisePicker({
               ))}
             </div>
 
-            {/* Section label */}
-            {!searchQuery && (
-              <div
-                className="px-4 pt-1 pb-2 text-muted-foreground uppercase"
-                style={{ fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}
-              >
-                {selectedCategory === "All"
-                  ? `All · ${filteredExercises.length} exercises`
-                  : `${selectedCategory} · ${filteredExercises.length} exercises`}
+            {/* Exercise list — card rows (lift-arc redesign): anatomy
+                tile per category, tokenized lifting-tint selection,
+                Recent section first when browsing All. */}
+            <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-28">
+              {!searchQuery &&
+                selectedCategory === "All" &&
+                recentExercises.length > 0 && (
+                  <>
+                    <SectionLabel className="pt-1 pb-2">Recent</SectionLabel>
+                    <div className="space-y-1.5 mb-4">
+                      {recentExercises.map((exercise) => (
+                        <ExerciseRow
+                          key={`recent-${exercise.id}`}
+                          exercise={exercise}
+                          isSelected={selectedIds.has(exercise.id)}
+                          onToggle={toggleSelection}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+
+              <SectionLabel className="pt-1 pb-2">
+                {searchQuery
+                  ? `Results · ${filteredExercises.length}`
+                  : `${selectedCategory === "All" ? "All" : selectedCategory} · ${filteredExercises.length} exercises`}
+              </SectionLabel>
+              <div className="space-y-1.5">
+                {filteredExercises.map((exercise) => (
+                  <ExerciseRow
+                    key={exercise.id}
+                    exercise={exercise}
+                    isSelected={selectedIds.has(exercise.id)}
+                    onToggle={toggleSelection}
+                  />
+                ))}
               </div>
-            )}
-
-            {/* Exercise list */}
-            <div className="flex-1 overflow-y-auto min-h-0">
-              {filteredExercises.map((exercise, idx) => {
-                const isSelected = selectedIds.has(exercise.id);
-
-                return (
-                  <div key={exercise.id}>
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      aria-label={exercise.name}
-                      onClick={() => toggleSelection(exercise.id)}
-                      className={cn(
-                        "w-full text-left flex items-center pr-4 transition-colors duration-100 active:bg-muted cursor-pointer",
-                        isSelected && "bg-green-500/10"
-                      )}
-                      style={{
-                        paddingLeft: 16,
-                        paddingTop: 12,
-                        paddingBottom: 12,
-                        minHeight: 68,
-                      }}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className="text-foreground"
-                          style={{
-                            fontSize: 17,
-                            fontWeight: 600,
-                            lineHeight: 1.25,
-                          }}
-                        >
-                          {exercise.name}
-                        </p>
-                        <p
-                          className="text-muted-foreground"
-                          style={{ fontSize: 13, marginTop: 2 }}
-                        >
-                          {exercise.muscleGroup} · {exercise.equipment}
-                        </p>
-                      </div>
-
-                      <div className="shrink-0 ml-3">
-                        <motion.div
-                          initial={false}
-                          animate={{ scale: isSelected ? [0.9, 1] : 1 }}
-                          transition={{ duration: 0.15 }}
-                          className="size-9 rounded-full flex items-center justify-center"
-                          style={{
-                            backgroundColor: isSelected
-                              ? THEME.success
-                              : THEME.brand,
-                          }}
-                        >
-                          {isSelected ? (
-                            <Check className="size-4 text-white" />
-                          ) : (
-                            <Plus className="size-4 text-white" />
-                          )}
-                        </motion.div>
-                      </div>
-                    </button>
-                    {/* Indented divider */}
-                    {idx < filteredExercises.length - 1 && (
-                      <div
-                        className="bg-border"
-                        style={{ height: 0.5, marginLeft: 16 }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
               {filteredExercises.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 px-8">
                   <Search className="size-12 text-muted-foreground/30 mb-3" />
@@ -381,20 +355,15 @@ export default function ExercisePicker({
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
                   className="p-4 safe-area-pb border-t border-border"
                 >
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
+                  <Button
+                    variant="primary"
+                    fullWidth
                     onClick={handleAddSelected}
-                    className="w-full py-3.5 text-white font-semibold text-body flex items-center justify-center gap-2"
-                    style={{
-                      backgroundColor: THEME.lifting,
-                      borderRadius: 14,
-                      boxShadow: "0 6px 24px rgba(123,114,233,0.3)",
-                    }}
                   >
                     {newlySelectedCount} exercise
                     {newlySelectedCount !== 1 ? "s" : ""} selected — Add to
                     workout
-                  </motion.button>
+                  </Button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -403,5 +372,69 @@ export default function ExercisePicker({
       )}
     </AnimatePresence>,
     document.body
+  );
+}
+
+/** One picker row — compact card grammar: anatomy-figure tile (shared
+ *  data-URI per category, cheap in a 151-row list), name + meta, and a
+ *  lifting-tinted selection state (the old green + floating plus-circle
+ *  predates the token guardrail). */
+function ExerciseRow({
+  exercise,
+  isSelected,
+  onToggle,
+}: {
+  exercise: Exercise;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+}) {
+  const figure = categoryFigureUri(exercise.category);
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={isSelected}
+      aria-label={exercise.name}
+      onClick={() => onToggle(exercise.id)}
+      className={cn(
+        "w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors min-h-[64px]",
+        isSelected
+          ? "bg-lifting/8 border-lifting/40"
+          : "bg-card border-border/40 active:bg-muted/60"
+      )}
+    >
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 overflow-hidden"
+        style={{ background: `${THEME.lifting}0F` }}
+      >
+        {figure ? (
+          <img src={figure} alt="" aria-hidden className="h-9 w-auto" />
+        ) : (
+          <Dumbbell className="size-4" style={{ color: THEME.lifting }} />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground truncate">
+          {exercise.name}
+        </p>
+        <p className="text-caption text-muted-foreground truncate mt-0.5">
+          {exercise.muscleGroup} · {exercise.equipment}
+        </p>
+      </div>
+      <div className="shrink-0">
+        {isSelected ? (
+          <div
+            className="size-8 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: THEME.lifting }}
+          >
+            <Check className="size-4 text-white" />
+          </div>
+        ) : (
+          <div className="size-8 rounded-full border-[1.5px] border-border flex items-center justify-center">
+            <Plus className="size-4 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+    </button>
   );
 }
