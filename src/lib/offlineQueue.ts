@@ -57,20 +57,39 @@ function saveQueue(queue: QueuedWrite[]) {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch (e: unknown) {
     if (e instanceof DOMException && e.name === "QuotaExceededError") {
-      // Drop oldest half and retry
-      const trimmed = queue.slice(Math.floor(queue.length / 2));
-      logger.warn(
-        `[OfflineQueue] Quota exceeded, dropping ${queue.length - trimmed.length} oldest items`
-      );
-      try {
-        localStorage.setItem(QUEUE_KEY, JSON.stringify(trimmed));
-      } catch {
-        // Last resort: clear the queue entirely
+      // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
+      // shedding one at a time until it fits — the previous code lopped
+      // off the whole oldest HALF in one go and, on a second failure,
+      // cleared the queue ENTIRELY (silent bulk data loss). Every drop
+      // is reported so an exhausted/blocked sync is diagnosable rather
+      // than vanishing. Newest writes are kept (most likely still
+      // relevant); a dropped queued create can't duplicate because the
+      // creates are now idempotent by stable id (see queueWrite).
+      const working = [...queue];
+      while (working.length > 0) {
+        const dropped = working.shift();
         captureError(
-          new Error("OfflineQueue: quota exceeded, queue cleared entirely"),
-          "network"
+          new Error("OfflineQueue: quota exceeded, dropped one queued write"),
+          "network",
+          {
+            collectionPath: dropped?.collectionPath,
+            docId: dropped?.docId,
+            remaining: working.length,
+          }
         );
+        try {
+          localStorage.setItem(QUEUE_KEY, JSON.stringify(working));
+          return;
+        } catch {
+          // still too big — shed the next-oldest and retry
+        }
+      }
+      // Nothing fit even when empty — remove the key so a corrupt giant
+      // value can't wedge every future write.
+      try {
         localStorage.removeItem(QUEUE_KEY);
+      } catch {
+        /* best-effort */
       }
     }
   }
@@ -154,15 +173,23 @@ export async function safeSave(
   // online, fell into the catch, queued, then threw again on every
   // flush — stuck in the queue forever.
   const clean = stripUndefined(data);
+  // CORE-01: mint a stable document id CLIENT-side and setDoc it, rather
+  // than addDoc (which asks the server for a fresh random id on every
+  // attempt). An ambiguous online failure — request sent, response
+  // lost — then queues the SAME id; the flush re-sets that id, so the
+  // retry is idempotent instead of creating a duplicate record. The id
+  // rides through the queue as `docId`, so an online-then-queued round
+  // trip reuses one identity end to end.
+  const docId = doc(collection(db, collectionPath)).id;
   if (navigator.onLine) {
     try {
-      await addDoc(collection(db, collectionPath), clean);
+      await setDoc(doc(db, collectionPath, docId), clean);
       return;
     } catch (e) {
       logger.error("[OfflineQueue] safeSave failed, queuing offline", e);
     }
   }
-  queueWrite(uid, collectionPath, clean);
+  queueWrite(uid, collectionPath, clean, docId);
 }
 
 export async function safeMerge(
