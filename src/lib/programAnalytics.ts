@@ -18,7 +18,7 @@ export type ProgramEvent =
 
 export interface ProgramEventMetadata {
   /** adjust_week_intent_selected/applied: which intent chip. */
-  intent?: "not_100" | "crowded" | "easier" | "keep";
+  intent?: "not_100" | "crowded" | "easier";
   /** adjust_week_applied: which mutation ran. */
   action?: "easier_week" | "realign";
   /** adjust_week_applied (easier_week): number of days swapped. */

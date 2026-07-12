@@ -16,7 +16,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Undo2, Trash2, LocateFixed } from "lucide-react";
+import { Undo2, Trash2, LocateFixed, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
@@ -207,8 +207,14 @@ export default function RoutePlannerSheet({
   return (
     <Dialog open={open} onClose={onClose} labelledBy={titleId} size="lg">
       <div className="flex flex-col">
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <div>
+        <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+          <IconButton
+            aria-label="Close route planner"
+            icon={<X />}
+            onClick={onClose}
+            className="-ml-1.5 shrink-0 text-foreground"
+          />
+          <div className="min-w-0 flex-1">
             <h3 id={titleId} className="text-base font-bold text-foreground">
               Plan a route
             </h3>
@@ -216,7 +222,7 @@ export default function RoutePlannerSheet({
               Tap the map to drop points along your route.
             </p>
           </div>
-          <p className="font-mono text-lg font-extrabold tabular-nums text-running">
+          <p className="shrink-0 font-mono text-lg font-extrabold tabular-nums text-running">
             {km(distanceM)}
           </p>
         </div>
@@ -238,20 +244,26 @@ export default function RoutePlannerSheet({
             Point-to-point distance — segments don&apos;t follow roads.
           </p>
           <div className="flex items-center gap-2">
-            <IconButton
-              aria-label="Undo last point"
-              icon={<Undo2 />}
-              onClick={undo}
-              disabled={waypoints.length === 0}
-              className="text-foreground"
-            />
-            <IconButton
-              aria-label="Clear route"
-              icon={<Trash2 />}
-              onClick={clear}
-              disabled={waypoints.length === 0}
-              className="text-muted-foreground"
-            />
+            {/* Undo/clear act on dropped points, so they only appear once
+                there's something to act on. Shown-but-disabled at 0 points
+                read as broken navigation (users tapped them expecting a way
+                OUT of the planner) — the header's Close X is the exit. */}
+            {waypoints.length > 0 && (
+              <>
+                <IconButton
+                  aria-label="Undo last point"
+                  icon={<Undo2 />}
+                  onClick={undo}
+                  className="text-foreground"
+                />
+                <IconButton
+                  aria-label="Clear route"
+                  icon={<Trash2 />}
+                  onClick={clear}
+                  className="text-muted-foreground"
+                />
+              </>
+            )}
             {waypoints.length >= 3 && !isLoopClosed(waypoints) && (
               <Button
                 variant="sport-tinted"
