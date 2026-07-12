@@ -47,7 +47,10 @@ export default function PerformanceIndexChart({ weeks }: Props) {
       case "low":
         return THEME.teal;
       default:
-        return THEME.textMuted;
+        // "Deload" / unknown — a theme-aware neutral. THEME.textMuted is
+        // rgba(255,255,255,0.22), invisible on the light bg-card; the muted
+        // token reads on both themes.
+        return "hsl(var(--muted-foreground))";
     }
   };
 
@@ -169,9 +172,15 @@ export default function PerformanceIndexChart({ weeks }: Props) {
                   cx={cx}
                   cy={cy}
                   r={3.5}
-                  fill={bandColor(payload.band)}
-                  stroke={THEME.surface}
                   strokeWidth={1.5}
+                  // fill/stroke via `style` (not SVG attributes) so the
+                  // hsl(var(--…)) deload colour + card-coloured cutout ring
+                  // resolve. THEME.surface (#1A1A1F) as a fixed stroke drew a
+                  // dark halo on the white light-mode card.
+                  style={{
+                    fill: bandColor(payload.band),
+                    stroke: "hsl(var(--card))",
+                  }}
                 />
               );
             }}
@@ -183,7 +192,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
       {/* Zone legend */}
       <div className="flex items-center justify-center gap-4 mt-2">
         {[
-          { label: "Deload", color: THEME.textMuted },
+          { label: "Deload", color: "hsl(var(--muted-foreground))" },
           { label: "Low", color: THEME.teal },
           { label: "Moderate", color: THEME.brand },
           { label: "High", color: THEME.warning },
