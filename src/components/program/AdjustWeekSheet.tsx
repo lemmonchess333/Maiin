@@ -34,7 +34,7 @@ import {
 import { realignResultMessage } from "@/lib/realignCopy";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
-type Intent = "not_100" | "crowded" | "easier" | "keep";
+type Intent = "not_100" | "crowded" | "easier";
 type Step =
   | { kind: "intent" }
   | { kind: "preview-easier"; intent: Intent; swaps: EasySwap[] }
@@ -66,7 +66,10 @@ const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
     label: "I need easier running",
     hint: "Ease this week's runs",
   },
-  { id: "keep", label: "Keep the plan as is", hint: "No changes" },
+  // No "keep the plan as is" chip — it was a pure no-op (it just dismissed the
+  // sheet). Swiping the sheet down / tapping outside already means "no change",
+  // so a dedicated row was a control that led back to where you started. The
+  // sheet's own dismissal IS the "keep as is" path.
 ];
 
 export default function AdjustWeekSheet({
@@ -95,10 +98,6 @@ export default function AdjustWeekSheet({
 
   const pickIntent = (intent: Intent) => {
     track("adjust_week_intent_selected", { intent });
-    if (intent === "keep") {
-      close(false);
-      return;
-    }
     if (intent === "crowded") {
       // Preview the realign OUTCOME before writing anything: weeks remaining
       // from today → the same timing classification the generator will land on.
