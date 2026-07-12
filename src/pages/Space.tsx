@@ -1,22 +1,17 @@
 /**
- * Community Space page (Spc1 PR2 — lean slice).
+ * Community Space page (Spc1 PR2 shell + PR3 posting).
  *
  * Photo hero header (editorial pipeline, tinted fallback until the
- * licensed asset lands), join/leave, density-gated member count, and a
- * read-only post list (pinned Tropos Team posts first). The composer +
- * engagement kit arrive in the PR3 slice; posting is already
- * rules-live, so seeded/official posts render here today.
+ * licensed asset lands), join/leave, density-gated member count, the
+ * post list (pinned Tropos Team posts first, blocked authors filtered)
+ * and the members-only composer (title + body + attach-a-session).
+ * Post cards carry the moderation kit (author delete / report /
+ * block); the interactive like/comment kit is a later callable-backed
+ * slice.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  type Timestamp,
-} from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import {
   ArrowLeft,
   Dumbbell,
@@ -24,6 +19,7 @@ import {
   Heart,
   Medal,
   MessagesSquare,
+  PenLine,
   Plane,
   Sprout,
   Users,
@@ -33,17 +29,18 @@ import {
 import { db } from "@/lib/firebase";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
-import { getTimeAgo } from "@/lib/timeAgo";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
-import Avatar from "@/components/Avatar";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import {
   spaceDef,
   SPACE_MEMBER_COUNT_MIN_VISIBLE,
 } from "@/features/spaces/spaceDefs";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
+import SpacePostCard from "@/features/spaces/SpacePostCard";
+import SpacePostComposer from "@/features/spaces/SpacePostComposer";
 import type { SpacePostDoc } from "@/features/spaces/spaceTypes";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -70,7 +67,10 @@ export default function Space() {
   const def = spaceId ? spaceDef(spaceId) : undefined;
   const { joined, memberCount, busy, join, leave } =
     useSpaceMembership(spaceId);
+  const { blocked: blockedUsers } = useBlockedUsers();
   const [posts, setPosts] = useState<PostItem[] | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [reloadNonce, setReloadNonce] = useState(0);
 
   useEffect(() => {
     if (!def || !spaceId) return;
@@ -101,12 +101,24 @@ export default function Space() {
     return () => {
       cancelled = true;
     };
-  }, [def, spaceId]);
+  }, [def, spaceId, reloadNonce]);
 
   const photo = useMemo(
     () => (spaceId ? spaceEditorialImage(spaceId) : null),
     [spaceId]
   );
+
+  const visiblePosts = useMemo(
+    () =>
+      (posts ?? []).filter(
+        (p) => !blockedUsers || !blockedUsers.has(p.authorId)
+      ),
+    [posts, blockedUsers]
+  );
+
+  const handleRemoved = useCallback((postId: string) => {
+    setPosts((prev) => prev?.filter((p) => p.id !== postId) ?? prev);
+  }, []);
 
   if (!def) {
     return (
@@ -205,15 +217,36 @@ export default function Space() {
       <div className="px-4 pt-4 space-y-4">
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
 
-        <Button
-          variant={joined ? "secondary" : "primary"}
-          fullWidth
-          loading={busy}
-          onClick={joined ? leave : join}
-          disabled={joined === null}
-        >
-          {joined ? "Joined — tap to leave" : "Join space"}
-        </Button>
+        {joined ? (
+          <div className="space-y-2">
+            <Button
+              variant="primary"
+              fullWidth
+              leftIcon={<PenLine className="size-4" />}
+              onClick={() => setComposerOpen(true)}
+            >
+              Write a post
+            </Button>
+            <button
+              type="button"
+              onClick={leave}
+              disabled={busy}
+              className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-destructive transition-colors disabled:opacity-60"
+            >
+              Leave space
+            </button>
+          </div>
+        ) : (
+          <Button
+            variant="primary"
+            fullWidth
+            loading={busy}
+            onClick={join}
+            disabled={joined === null}
+          >
+            Join space
+          </Button>
+        )}
 
         <div className="space-y-3">
           <SectionLabel>Posts</SectionLabel>
@@ -222,74 +255,47 @@ export default function Space() {
               className="h-24 rounded-2xl bg-muted/40 animate-pulse"
               aria-hidden
             />
-          ) : posts.length === 0 ? (
+          ) : visiblePosts.length === 0 ? (
             <EmptyState
               icon={MessagesSquare}
               headline="No posts yet"
               sub={
                 joined
-                  ? "You're in — posting opens with the composer, landing next."
+                  ? "Be the first — introduce yourself or share a session."
                   : "Join the space to be part of the conversation."
               }
               accent={accent}
               compact
+              action={
+                joined
+                  ? {
+                      label: "Write a post",
+                      onClick: () => setComposerOpen(true),
+                    }
+                  : undefined
+              }
             />
           ) : (
-            posts.map((post) => (
-              <article
+            visiblePosts.map((post) => (
+              <SpacePostCard
                 key={post.id}
-                className="p-4 rounded-2xl bg-card card-shadow space-y-2"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Avatar
-                    photoURL={post.authorPhotoURL}
-                    displayName={post.authorName}
-                    size="md"
-                    fallbackBg={`${accent}20`}
-                    fallbackColor={accent}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {post.authorName}
-                      </p>
-                      {post.official && (
-                        <span
-                          className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded shrink-0"
-                          style={{
-                            background: `${THEME.success}1F`,
-                            color: THEME.success,
-                          }}
-                        >
-                          Tropos Team
-                        </span>
-                      )}
-                      {post.pinned && (
-                        <span className="text-caption text-muted-foreground shrink-0">
-                          Pinned
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-caption text-muted-foreground">
-                      {(post.createdAt as Timestamp)?.toDate
-                        ? getTimeAgo((post.createdAt as Timestamp).toDate())
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-                {post.title && (
-                  <p className="text-sm font-bold text-foreground">
-                    {post.title}
-                  </p>
-                )}
-                <p className="text-sm text-foreground/90 leading-snug whitespace-pre-wrap">
-                  {post.body}
-                </p>
-              </article>
+                spaceId={def.id}
+                postId={post.id}
+                post={post}
+                accent={accent}
+                onRemoved={handleRemoved}
+              />
             ))
           )}
         </div>
       </div>
+
+      <SpacePostComposer
+        spaceId={def.id}
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        onPosted={() => setReloadNonce((n) => n + 1)}
+      />
     </div>
   );
 }
