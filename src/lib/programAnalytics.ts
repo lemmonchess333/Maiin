@@ -14,7 +14,13 @@ export type ProgramEvent =
   | "adjust_week_opened"
   | "adjust_week_intent_selected"
   | "adjust_week_applied"
-  | "adjust_week_cancelled";
+  | "adjust_week_cancelled"
+  // Run14 ease-week nudge (RUN-05): shown (with the evidence counts),
+  // applied (CTA → AdjustWeekSheet), or dismissed. Lets us tell later
+  // whether nudges get acted on or waved away.
+  | "ease_week_nudge_shown"
+  | "ease_week_nudge_applied"
+  | "ease_week_nudge_dismissed";
 
 export interface ProgramEventMetadata {
   /** adjust_week_intent_selected/applied: which intent chip. */
@@ -25,6 +31,9 @@ export interface ProgramEventMetadata {
   swapCount?: number;
   /** adjust_week_opened: which entry point. */
   source?: "cockpit" | "settings";
+  /** ease_week_nudge_shown: the evidence surfaced in the card. */
+  harderCount?: number;
+  ratedCount?: number;
 }
 
 export function track(
