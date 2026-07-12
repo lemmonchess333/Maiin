@@ -7,12 +7,13 @@
  *
  * No React, no hooks. Pure localStorage round-trip.
  */
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   readStoredRun,
   writeStoredRun,
   clearStoredRun,
   runResumeKey,
+  runResumeChunkKey,
   LEGACY_RUN_RESUME_KEY,
   RUN_RESUME_MAX_AGE_MS,
   RUN_RESUME_SCHEMA_VERSION,
@@ -177,14 +178,16 @@ describe("readStoredRun — discard conditions", () => {
   });
 
   it("discards entries with a different schema version", () => {
-    // Hand-craft a v: 0 entry (older schema) and confirm it
-    // silently discards. Bump the SCHEMA_VERSION const next time
-    // we ship an incompatible change.
+    // Hand-craft a meta-shaped entry with the OLD v:1 (single-blob
+    // layout) and confirm it silently discards — this is the RUN-06
+    // format migration in action (no migration script needed).
     localStorage.setItem(
       RUN_RESUME_KEY,
       JSON.stringify({
         ...makeSnapshot(),
-        v: 0,
+        v: 1,
+        pointCount: 0,
+        chunkCount: 0,
       })
     );
     expect(readStoredRun(UID, Date.now())).toBeNull();
@@ -216,9 +219,118 @@ describe("readStoredRun — discard conditions", () => {
     // 'waiting' or 'finished' would be a write-side bug.
     localStorage.setItem(
       RUN_RESUME_KEY,
-      JSON.stringify({ ...makeSnapshot(), phase: "finished" })
+      JSON.stringify({
+        ...makeSnapshot(),
+        phase: "finished",
+        pointCount: 0,
+        chunkCount: 0,
+      })
     );
     expect(readStoredRun(UID, Date.now())).toBeNull();
+  });
+});
+
+// ─── RUN-06: bounded / incremental chunked persistence ───────────────
+
+/** Build `n` distinct GPS points so chunk boundaries are testable. */
+function makePoints(n: number): StoredRun["points"] {
+  return Array.from({ length: n }, (_, i) => ({
+    lat: 51.5 + i * 1e-5,
+    lon: -0.12 + i * 1e-5,
+    timestamp: 1_000_000 + i * 1000,
+    altitude: 10,
+    accuracy: 5,
+    speed: null,
+    rawLat: 51.5 + i * 1e-5,
+    rawLon: -0.12 + i * 1e-5,
+  }));
+}
+
+describe("RUN-06 chunked persistence", () => {
+  it("round-trips a trail spanning multiple chunks", () => {
+    const now = 2_000_000;
+    // 600 points > 2× CHUNK_SIZE (250) → 3 chunks.
+    const snap = makeSnapshot({ lastWriteAt: now, points: makePoints(600) });
+    expect(writeStoredRun(UID, snap)).toBe(true);
+    // Meta records the split.
+    const meta = JSON.parse(localStorage.getItem(RUN_RESUME_KEY)!);
+    expect(meta.pointCount).toBe(600);
+    expect(meta.chunkCount).toBe(3);
+    const restored = readStoredRun(UID, now);
+    expect(restored?.points).toHaveLength(600);
+    expect(restored?.points[0].timestamp).toBe(1_000_000);
+    expect(restored?.points[599].timestamp).toBe(1_000_000 + 599 * 1000);
+  });
+
+  it("an incremental append does NOT rewrite sealed chunks", () => {
+    const now = 2_000_000;
+    // First write: 300 points (chunk 0 sealed [0..249], chunk 1 partial).
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(300) })
+    );
+    const setSpy = vi.spyOn(Storage.prototype, "setItem");
+    // Second write: same run (same startedAt), 305 points.
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(305) })
+    );
+    const writtenKeys = setSpy.mock.calls.map((c) => c[0] as string);
+    setSpy.mockRestore();
+    // Chunk 0 (sealed) must NOT be rewritten; the current partial
+    // chunk 1 and the meta ARE.
+    expect(writtenKeys).not.toContain(runResumeChunkKey(UID, 0));
+    expect(writtenKeys).toContain(runResumeChunkKey(UID, 1));
+    expect(writtenKeys).toContain(RUN_RESUME_KEY);
+    // …and the append is still correct on read-back.
+    expect(readStoredRun(UID, now)?.points).toHaveLength(305);
+  });
+
+  it("a fresh run (new startedAt) wipes the previous run's chunks", () => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, startedAt: 1, points: makePoints(600) })
+    );
+    // A different run reuses the key with fewer points.
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, startedAt: 2, points: makePoints(10) })
+    );
+    // The old run's chunk 2 must be gone (new run only has chunk 0).
+    expect(localStorage.getItem(runResumeChunkKey(UID, 2))).toBeNull();
+    expect(localStorage.getItem(runResumeChunkKey(UID, 1))).toBeNull();
+    const restored = readStoredRun(UID, now);
+    expect(restored?.points).toHaveLength(10);
+    expect(restored?.startedAt).toBe(2);
+  });
+
+  it("discards the whole run when a points chunk is missing", () => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(600) })
+    );
+    // Simulate a torn / evicted chunk.
+    localStorage.removeItem(runResumeChunkKey(UID, 1));
+    expect(readStoredRun(UID, now)).toBeNull();
+    // …and the discard cleaned up meta + remaining chunks.
+    expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
+    expect(localStorage.getItem(runResumeChunkKey(UID, 0))).toBeNull();
+    expect(localStorage.getItem(runResumeChunkKey(UID, 2))).toBeNull();
+  });
+
+  it("clearStoredRun removes every chunk, not just the meta", () => {
+    const now = 2_000_000;
+    writeStoredRun(
+      UID,
+      makeSnapshot({ lastWriteAt: now, points: makePoints(600) })
+    );
+    clearStoredRun(UID);
+    expect(localStorage.getItem(RUN_RESUME_KEY)).toBeNull();
+    for (let i = 0; i < 3; i++) {
+      expect(localStorage.getItem(runResumeChunkKey(UID, i))).toBeNull();
+    }
   });
 });
 
