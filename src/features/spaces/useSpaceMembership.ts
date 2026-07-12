@@ -58,8 +58,11 @@ export function useSpaceMembership(spaceId: string | undefined) {
     try {
       await setDocGuarded(doc(db, "spaces", spaceId, "members", user.uid), {
         joinedAt: serverTimestamp(),
-        displayName: profile?.displayName,
-        photoURL: profile?.photoURL,
+        /* Include identity fields only when they're real strings — a
+           null value fails the rules' `is string` checks and denies
+           the whole join (stripUndefined strips undefined, not null). */
+        ...(profile?.displayName ? { displayName: profile.displayName } : {}),
+        ...(profile?.photoURL ? { photoURL: profile.photoURL } : {}),
         uid: user.uid,
       });
     } catch {
