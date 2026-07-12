@@ -67,6 +67,13 @@ Two axes, from the food-logging reference set:
 - **Daily target — flat vs cycled by training day:** MacroFactor, MyFitnessPal, Cronometer, Lose It! all keep a **flat daily calorie target** (none auto-cycle calories by day; weekly adjustment absorbs activity). The only apps that vary by day — RP (Renaissance Periodization), Carbon by Layne Norton — do it via **carb periodization within a budget**, which is exactly Tropos's net-neutral fat→carb shift. → Flat calories + carb periodization = MacroFactor's flat base + RP/Carbon's carb-cycling lever.
 - **Rejected for Tropos:** a net-additive planned training-day calorie bump (no mainstream food app does this) and net-neutral _calorie_ cycling as a default (a coaching-app power feature that couples to the weekly schedule).
 
+### Community Spaces (Spc1)
+
+- **Space** — a Tropos-created public topic room (`spaces/{spaceId}` namespace; taxonomy in `src/features/spaces/spaceDefs.ts`). Users join (`members/{uid}`) and post (`posts/{postId}`); nobody creates public spaces — S1's rejection of user-created public communities stands. Seven at launch; `kind: interest | race | location` is schema-ready for later sections.
+- **Tropos Team badge** — `official: true` on a post, rules-validated against `system/config.officialUids` (fails closed when unset). Officials pin posts and moderate-delete.
+- **Density gate (spaces)** — member counts below `SPACE_MEMBER_COUNT_MIN_VISIBLE` render "New space", never a shame-count (Soc8 idiom).
+- **Circles vs Spaces** — Circles stay the private 2–8-person support layer; Spaces are the public curated layer. Same tab (Community), different trust models.
+
 ### Performance Index (PI)
 
 A weekly 0–100 score of how the user's training week went, with a `loadBand` (low / deload / optimal / overreach) and a `deloadRecommended` flag. The single conceptual engine has **two physical copies**: client `src/lib/performanceEngine.ts` (drives Home/analytics previews) and server `functions/performanceEngine.js` (the authoritative copy — `weeklyPerformanceRollup` / `computePerformanceWeek` persist the PI users actually see).

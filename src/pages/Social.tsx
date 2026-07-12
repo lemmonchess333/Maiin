@@ -737,6 +737,20 @@ export default function Social() {
                     cold-start stack). Renders nothing on a zero week. */}
                 {!showSoloFeed && <WeeklyRecapCard />}
 
+                {/* Spc1g — Suggested Spaces reach people who never
+                    open the Community tab. Compact cards, joined
+                    spaces filtered out; collapses entirely once the
+                    user has joined everything. */}
+                {!showSoloFeed && (
+                  <div className="mt-4">
+                    <SpacesDirectory
+                      compact
+                      excludeJoined
+                      title="Spaces for you"
+                    />
+                  </div>
+                )}
+
                 {feedSubTab === "following" && !showSoloFeed && (
                   <div className="mt-4 space-y-3">
                     {/*

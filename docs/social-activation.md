@@ -50,3 +50,31 @@ These activate as density arrives — do not remove them:
 "Dormant" is a render decision, not a data decision: the underlying data
 keeps flowing (follows recorded, challenge progress synced server-side) so a
 surface lights up the instant its threshold is crossed, with no backfill.
+
+## Community Spaces (Spc1, 2026-07-12)
+
+The curated public layer — Tropos-created topic rooms (Runna's Spaces
+pattern), shipped across PRs #1584/#1585/#1587/#1588. Taxonomy is
+config (`src/features/spaces/spaceDefs.ts`, mirrored server-side in
+`functions/lib/spaceIds.js` — parity-pinned); users join and post,
+nobody creates public spaces.
+
+Operator runbook:
+
+- **Before the first Tropos Team post:** set
+  `system/config.officialUids = ["<your-uid>"]` in the Firebase
+  Console (array of strings). Without it, `official`/`pinned` writes
+  are rules-denied for everyone — fails closed by design.
+- **Seed each space** with 2–3 pinned Team posts (intro prompt,
+  starter question, tips) and post weekly per room until organic
+  density arrives — the Spc1c cold-start commitment. Member counts
+  stay hidden below `SPACE_MEMBER_COUNT_MIN_VISIBLE` ("New space").
+- **Space photos:** drop `space-<id>.webp` files into
+  `src/assets/editorial/` (see its README) — cards/headers switch
+  from tinted bands to photography on the next build.
+- **Moderation levers:** officials can pin and delete any post
+  (rules-backed); reports arrive with `targetType: "space_post"`;
+  the S4e restricted-uid rail applies to space writes.
+- **Adding/merging spaces:** edit `spaceDefs.ts` + the
+  `isKnownSpaceId` rules allowlist + `functions/lib/spaceIds.js` —
+  the parity tests fail CI if the three drift.
