@@ -23,6 +23,7 @@ import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -70,6 +71,8 @@ export default function TrainingBlockCard({
   const { loading, activeBlock, createBlock, finishBlock, loadReviewWorkouts } =
     useTrainingBlock(uid);
   const [showCreate, setShowCreate] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState<"switch" | "end" | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [preset, setPreset] = useState<BlockPreset>("strength_foundation");
   const [duration, setDuration] = useState<BlockDurationWeeks>(8);
@@ -173,6 +176,33 @@ export default function TrainingBlockCard({
     }
   };
 
+  /* Lift arc 2/3 — end the block from the detail sheet, mid-window.
+     "switch" closes it and reopens the create sheet; "end" just
+     closes. Both go through the same finishBlock writer the review
+     uses (outcome mapped to the closest existing value), so nothing
+     new touches the block doc shape. */
+  const endEarly = async (mode: "switch" | "end") => {
+    if (!activeBlock) return;
+    setFinishing(true);
+    const ok = await finishBlock(
+      activeBlock,
+      mode === "switch" ? "new" : "continue"
+    );
+    setFinishing(false);
+    if (!ok) {
+      toast.error("Couldn't save. Please try again.");
+      return;
+    }
+    setConfirmEnd(null);
+    setShowDetail(false);
+    haptic("light");
+    if (mode === "switch") {
+      setShowCreate(true);
+    } else {
+      toast.success("Block closed. Keep rolling.");
+    }
+  };
+
   if (loading) return null;
 
   const week = activeBlock ? blockWeekOf(activeBlock, today) : null;
@@ -208,7 +238,20 @@ export default function TrainingBlockCard({
       )}
 
       {activeBlock && (
-        <div className="p-3 rounded-xl bg-muted flex items-center gap-3">
+        /* Lift arc 2/3: the active row is TAPPABLE — the operator hit
+           this live ("you can't click on it"): after creation there was
+           no re-entry point to the block's options. In-window → the
+           detail sheet (progress + tune/switch/end); finished → the
+           review, same destination the old nested Review button had. */
+        <button
+          type="button"
+          onClick={() => {
+            haptic("light");
+            if (finished) void openReview(activeBlock);
+            else setShowDetail(true);
+          }}
+          className="w-full min-h-[44px] p-3 rounded-xl bg-muted flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
+        >
           <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
             <CalendarRange className="size-4 text-primary" aria-hidden="true" />
           </div>
@@ -228,16 +271,15 @@ export default function TrainingBlockCard({
             </p>
             <p className="text-xs text-muted-foreground">
               {finished
-                ? "Block complete — see what changed."
+                ? "Block complete — review what changed."
                 : "Show up this week; the block does the rest."}
             </p>
           </div>
-          {finished && (
-            <Button size="sm" onClick={() => void openReview(activeBlock)}>
-              Review
-            </Button>
-          )}
-        </div>
+          <ChevronRight
+            className="size-4 text-muted-foreground shrink-0"
+            aria-hidden="true"
+          />
+        </button>
       )}
 
       {/* ── Creation sheet (form → post-save hand-off offer, Blk1) ── */}
@@ -346,6 +388,91 @@ export default function TrainingBlockCard({
           </div>
         )}
       </BottomSheet>
+
+      {/* ── Block detail sheet (lift arc 2/3) — the active block's
+          command surface: progress rail + the three actions that were
+          previously unreachable after creation. ── */}
+      <BottomSheet
+        open={showDetail}
+        onOpenChange={setShowDetail}
+        title={activeBlock ? activeBlock.title : "Training block"}
+        description="Your current training block"
+      >
+        {activeBlock && (
+          <div className="space-y-4 pb-2">
+            <div className="p-3 rounded-xl bg-muted">
+              <p className="text-sm font-semibold text-foreground font-mono tabular-nums">
+                Week {week ?? 1}
+                <span className="font-sans font-normal text-muted-foreground">
+                  {" "}
+                  of {activeBlock.durationWeeks}
+                </span>
+              </p>
+              <div className="flex gap-1 mt-2" aria-hidden="true">
+                {Array.from({ length: activeBlock.durationWeeks }).map(
+                  (_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-1.5 flex-1 rounded-full",
+                        i < (week ?? 1) ? "bg-primary" : "bg-border"
+                      )}
+                    />
+                  )
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Target{" "}
+                <span className="font-mono tabular-nums">
+                  {Math.max(1, activeBlock.weeklyLiftTarget)}
+                </span>{" "}
+                {Math.max(1, activeBlock.weeklyLiftTarget) === 1
+                  ? "lift"
+                  : "lifts"}{" "}
+                a week
+                {activeBlock.why ? ` · ${activeBlock.why}` : ""}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setShowDetail(false);
+                  openTuneEditor(activeBlock);
+                }}
+              >
+                Tune programme for this block
+              </Button>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => setConfirmEnd("switch")}
+              >
+                Switch to a different block
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setConfirmEnd("end")}
+              >
+                End block early
+              </Button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
+
+      <ConfirmDialog
+        open={confirmEnd !== null}
+        title={
+          confirmEnd === "switch" ? "Switch blocks?" : "End this block early?"
+        }
+        description="This closes the current block — everything you logged stays in your history."
+        confirmLabel={confirmEnd === "switch" ? "Switch" : "End block"}
+        destructive
+        onConfirm={() => void endEarly(confirmEnd ?? "end")}
+        onCancel={() => setConfirmEnd(null)}
+      />
 
       {/* ── Review sheet ── */}
       <BottomSheet
