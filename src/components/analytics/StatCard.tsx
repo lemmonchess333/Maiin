@@ -1,4 +1,5 @@
 import { ResponsiveContainer, AreaChart, Area } from "recharts";
+import ChartAreaGradient from "./ChartAreaGradient";
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 
@@ -94,16 +95,7 @@ export default function StatCard({
               data={sparklineData!.map((v, i) => ({ v, i }))}
               margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
             >
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor={accentColor}
-                    stopOpacity={0.35}
-                  />
-                  <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
-                </linearGradient>
-              </defs>
+              <ChartAreaGradient id={gradientId} color={accentColor} />
               <Area
                 type="monotone"
                 dataKey="v"
