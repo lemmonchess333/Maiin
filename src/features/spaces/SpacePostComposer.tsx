@@ -12,15 +12,16 @@
  * Profanity check is client-side UX only, same posture as CommentSheet;
  * report/block + official moderation delete are the real teeth.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
-import { Dumbbell, Footprints, X } from "lucide-react";
+import { Camera, Dumbbell, Footprints, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { containsProfanity } from "@/lib/profanityFilter";
+import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
@@ -110,6 +111,19 @@ export default function SpacePostComposer({
   const [body, setBody] = useState("");
   const [attached, setAttached] = useState<Attachable | null>(null);
   const [busy, setBusy] = useState(false);
+  /* Photo attach (Spc1 PR4 — the operator's Runna-parity amendment).
+     Preview via object URL, revoked on remove/replace. */
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const pickPhoto = (file: File | null) => {
+    setPhotoPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    setPhotoFile(file);
+  };
 
   /* Most-recent five sessions across both disciplines — enough to
      attach "what I just did" without building a browser. */
@@ -133,6 +147,22 @@ export default function SpacePostComposer({
   const submit = async () => {
     if (!user || !canPost) return;
     setBusy(true);
+    /* Photo uploads FIRST — it's core post content (unlike the diary's
+       enhancement posture), so a failed upload keeps the sheet open
+       with the draft intact instead of posting half a post. */
+    let photoUrl: string | null = null;
+    if (photoFile) {
+      try {
+        photoUrl = await uploadSpacePostPhoto(user.uid, photoFile);
+      } catch {
+        haptic("error");
+        toast.error(
+          "Photo upload failed — try again, or remove the photo to post without it."
+        );
+        setBusy(false);
+        return;
+      }
+    }
     try {
       await addDocGuarded(collection(db, "spaces", spaceId, "posts"), {
         authorId: user.uid,
@@ -144,6 +174,7 @@ export default function SpacePostComposer({
         ...(title.trim() ? { title: title.trim() } : {}),
         body: body.trim(),
         ...(attached ? { activity: toSnapshot(attached) } : {}),
+        ...(photoUrl ? { photoUrl } : {}),
         likeCount: 0,
         commentCount: 0,
         createdAt: serverTimestamp(),
@@ -153,6 +184,7 @@ export default function SpacePostComposer({
       setTitle("");
       setBody("");
       setAttached(null);
+      pickPhoto(null);
       onOpenChange(false);
       onPosted();
     } catch {
@@ -165,7 +197,12 @@ export default function SpacePostComposer({
 
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title="New post">
-      <div className="px-4 pb-6 space-y-4">
+      {/* min-h-0 + overflow-y-auto: the sheet is flex-col capped at
+          85vh with NO internal scroll of its own — with a photo
+          preview attached this content exceeds the cap and the Post
+          button became unreachable (caught by the rig's photo-post
+          drive). This wrapper makes the composer body scroll. */}
+      <div className="px-4 pb-6 space-y-4 overflow-y-auto min-h-0">
         <input
           type="text"
           value={title}
@@ -187,6 +224,47 @@ export default function SpacePostComposer({
             Let&apos;s keep it friendly — please reword that.
           </p>
         )}
+
+        {/* Photo attach — hidden input, Button trigger, preview with
+            remove. accept="image/*" surfaces camera + library on iOS. */}
+        <div className="space-y-2">
+          <SectionLabel>Photo</SectionLabel>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            aria-hidden
+            tabIndex={-1}
+            onChange={(e) => pickPhoto(e.target.files?.[0] ?? null)}
+          />
+          {photoPreview ? (
+            <div className="relative rounded-xl overflow-hidden">
+              <img
+                src={photoPreview}
+                alt="Attachment preview"
+                className="w-full max-h-64 object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => pickPhoto(null)}
+                aria-label="Remove photo"
+                className="absolute top-2 right-2 size-9 rounded-full bg-card/90 flex items-center justify-center text-foreground active:scale-90 transition-transform"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              variant="secondary"
+              fullWidth
+              leftIcon={<Camera className="size-4" />}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Add a photo
+            </Button>
+          )}
+        </div>
 
         {/* Attach a recent session */}
         {attachables.length > 0 && (
