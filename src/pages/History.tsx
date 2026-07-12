@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useRunningStats } from "@/hooks/useRunningStats";
-import { useWorkouts } from "@/hooks/useWorkouts";
+import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
@@ -26,7 +26,8 @@ import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
-import { formatVolume, formatDistance } from "@/utils/formatters";
+import { formatVolume, formatDistance, abbreviateK } from "@/utils/formatters";
+import { epley1RMExact } from "@/lib/analytics";
 import {
   track as trackHistoryEvent,
   type HistoryRange,
@@ -446,12 +447,21 @@ export default function History() {
       (sum, week) => sum + week.totalDistance,
       0
     );
-    const paceSamples = weeklyData
-      .filter((w) => w.avgPace > 0)
-      .map((w) => w.avgPace);
-    const avgPace = paceSamples.length
-      ? Math.round(paceSamples.reduce((a, b) => a + b, 0) / paceSamples.length)
-      : 0;
+    // Distance-weighted across weeks (weekly avgPace is itself distance-
+    // weighted in aggregateWeeklyData). An unweighted mean of weekly means
+    // let a single 1 km jog week drag the headline as much as a 40 km
+    // training week — the classic average-of-averages skew.
+    const paceWeeks = weeklyData.filter(
+      (w) => w.avgPace > 0 && w.totalDistance > 0
+    );
+    const paceKm = paceWeeks.reduce((s, w) => s + w.totalDistance, 0);
+    const avgPace =
+      paceKm > 0
+        ? Math.round(
+            paceWeeks.reduce((s, w) => s + w.avgPace * w.totalDistance, 0) /
+              paceKm
+          )
+        : 0;
 
     // Zero-padded weekly distance across every Sunday-anchored week
     // in the time range. Distance is a count metric — a week with no
@@ -619,16 +629,26 @@ export default function History() {
     const prevSince = new Date(since);
     prevSince.setDate(prevSince.getDate() - rangeDays);
 
-    const filtered = workouts.filter((w) => new Date(w.date) >= since);
+    // w.date is a LOCAL "YYYY-MM-DD" string; `new Date("YYYY-MM-DD")`
+    // parses as UTC midnight and shifts the boundary day in negative-
+    // offset timezones (the same UTC/local-mixing family the sparkline
+    // axes and the 30-day PR window were already fixed for). String
+    // comparison against a local key is the in-file convention.
+    const sinceKey = localDateString(since);
+    const prevSinceKey = localDateString(prevSince);
+
+    const filtered = workouts.filter((w) => w.date >= sinceKey);
     const liftCount = filtered.length;
     let liftVolume = 0;
     const muscleData: Record<string, number> = {};
 
     filtered.forEach((w) => {
+      // Guarded tonnage via the canonical helper — the previous inline
+      // `set.weightKg * set.reps` turned one legacy set with a missing
+      // field into NaN, rendering a literal "NaN kg" stat card while the
+      // guarded Lifetime card showed a real number for the same data.
+      liftVolume += workoutTonnageKg(w);
       w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          liftVolume += set.weightKg * set.reps;
-        });
         // Look up category from the static EXERCISES list as the
         // primary source. The saved `ex.category` field is unreliable
         // — seed/test data has shipped with every exercise tagged
@@ -643,22 +663,26 @@ export default function History() {
     });
 
     // Previous-period totals for delta comparison.
-    const prevFiltered = workouts.filter((w) => {
-      const d = new Date(w.date);
-      return d >= prevSince && d < since;
-    });
-    let prevLiftVolume = 0;
-    prevFiltered.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          prevLiftVolume += set.weightKg * set.reps;
-        });
-      });
-    });
+    const prevFiltered = workouts.filter(
+      (w) => w.date >= prevSinceKey && w.date < sinceKey
+    );
+    const prevLiftVolume = prevFiltered.reduce(
+      (s, w) => s + workoutTonnageKg(w),
+      0
+    );
     const prevLiftCount = prevFiltered.length;
 
     const weekMap: Record<string, number> = {};
     const sessionWeekMap: Record<string, number> = {};
+    /* The sparklines are ALWAYS weekly (they zero-pad across Sunday-
+       anchored weeks below), while the VolumeChart bins adaptively
+       (daily/weekly/monthly with the range). They therefore need their
+       OWN weekly-keyed maps: reusing the granularity-keyed weekMap made
+       the sparkline lookups miss on every range except 3M — daily keys
+       for 1W/1M, monthly keys for 6M/1Y — flatlining both sparklines
+       to zero for a user who trains all week but never on a Sunday. */
+    const sparkVolumeMap: Record<string, number> = {};
+    const sparkSessionsMap: Record<string, number> = {};
     /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
        daily; at 3M we bin weekly (Sunday-anchored, the prior
        universal behaviour); at 6M/1Y we bin monthly. Avoids the
@@ -667,13 +691,12 @@ export default function History() {
     filtered.forEach((w) => {
       const d = new Date(w.date);
       const key = binKeyForDate(d, granularity);
-      const vol = w.exercises.reduce(
-        (sum, ex) =>
-          sum + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-        0
-      );
+      const weeklyKey = binKeyForDate(d, "weekly");
+      const vol = workoutTonnageKg(w);
       weekMap[key] = (weekMap[key] || 0) + vol;
       sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
+      sparkVolumeMap[weeklyKey] = (sparkVolumeMap[weeklyKey] || 0) + vol;
+      sparkSessionsMap[weeklyKey] = (sparkSessionsMap[weeklyKey] || 0) + 1;
     });
     const sortedWeekKeys = Object.keys(weekMap).sort((a, b) =>
       a.localeCompare(b)
@@ -695,24 +718,26 @@ export default function History() {
       const end = new Date();
       end.setDate(end.getDate() - end.getDay());
       while (cursor <= end) {
-        // weekMap is keyed by binKeyForDate(d, granularity) (UTC-Sunday
-        // for the weekly bins these sparklines step over), so the axis
-        // MUST derive its keys with the SAME helper. The prior local-
-        // cursor + cursor.toISOString() key never matched binKeyForDate's
-        // UTC-Sunday anchor in non-UTC zones, flatlining the sparkline.
+        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (UTC-
+        // Sunday), so the axis MUST derive its keys with the SAME helper.
+        // The prior local-cursor + cursor.toISOString() key never matched
+        // binKeyForDate's UTC-Sunday anchor in non-UTC zones, flatlining
+        // the sparkline.
         allWeekKeys.push(binKeyForDate(cursor, "weekly"));
         cursor.setDate(cursor.getDate() + 7);
       }
     }
-    const volumeSparkline = allWeekKeys.map((w) => weekMap[w] ?? 0);
-    const sessionsSparkline = allWeekKeys.map((w) => sessionWeekMap[w] ?? 0);
+    const volumeSparkline = allWeekKeys.map((w) => sparkVolumeMap[w] ?? 0);
+    const sessionsSparkline = allWeekKeys.map((w) => sparkSessionsMap[w] ?? 0);
 
-    // Build all-time best e1rm per exercise
+    // Build all-time best e1rm per exercise. epley1RMExact carries the
+    // reps<=0 guard (a failed set must not score weight×1.0) and the
+    // reps===1 identity the raw inline formula lacked.
     const allTimeBest: Record<string, number> = {};
     workouts.forEach((w) => {
       w.exercises?.forEach((ex) => {
         ex.sets?.forEach((set) => {
-          const e1rm = set.weightKg * (1 + set.reps / 30);
+          const e1rm = epley1RMExact(set.weightKg, set.reps);
           allTimeBest[ex.exerciseName] = Math.max(
             allTimeBest[ex.exerciseName] || 0,
             e1rm
@@ -721,12 +746,12 @@ export default function History() {
       });
     });
 
-    // Best set per exercise from the last 7 days only
+    // Best set per exercise from the last 7 days only (local-date key
+    // comparison — same convention as the range filters above).
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentWorkouts = workouts.filter(
-      (w) => new Date(w.date) >= sevenDaysAgo
-    );
+    const sevenDaysAgoKey = localDateString(sevenDaysAgo);
+    const recentWorkouts = workouts.filter((w) => w.date >= sevenDaysAgoKey);
     const prMap: Record<
       string,
       { weight: number; reps: number; date: string; isAllTimeBest: boolean }
@@ -738,12 +763,12 @@ export default function History() {
         const isBWExercise = exInfo?.equipment === "Bodyweight";
         ex.sets?.forEach((set) => {
           if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = set.weightKg * (1 + set.reps / 30);
+          const e1rm = epley1RMExact(set.weightKg, set.reps);
           const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
           const prevScore = prMap[name]
             ? isBWExercise && prMap[name].weight === 0
               ? prMap[name].reps
-              : prMap[name].weight * (1 + prMap[name].reps / 30)
+              : epley1RMExact(prMap[name].weight, prMap[name].reps)
             : -1;
           if (score > prevScore) {
             prMap[name] = {
@@ -779,7 +804,7 @@ export default function History() {
         const isBWExercise = exInfo?.equipment === "Bodyweight";
         ex.sets?.forEach((set) => {
           if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = set.weightKg * (1 + set.reps / 30);
+          const e1rm = epley1RMExact(set.weightKg, set.reps);
           const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
           const prev = lifetimeBestSet[name];
           if (!prev || score > prev.score) {
@@ -832,7 +857,7 @@ export default function History() {
           const isBWExercise = exInfo?.equipment === "Bodyweight";
           ex.sets?.forEach((set) => {
             if (!isBWExercise && set.weightKg <= 0) return;
-            const e1rm = set.weightKg * (1 + set.reps / 30);
+            const e1rm = epley1RMExact(set.weightKg, set.reps);
             const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
             const prev = recentBestSet[name];
             if (!prev || score > prev.score) {
@@ -1253,15 +1278,7 @@ export default function History() {
                       />
                       <StatCard
                         label="Avg Pace"
-                        value={
-                          runningTotals.avgPace
-                            ? Math.floor(runningTotals.avgPace / 60) +
-                              ":" +
-                              (runningTotals.avgPace % 60)
-                                .toString()
-                                .padStart(2, "0")
-                            : "--:--"
-                        }
+                        value={paceMinSec(runningTotals.avgPace)}
                         unit="/km"
                         direction="down-good"
                         sparklineData={runningTotals.paceSparkline}
@@ -1626,9 +1643,7 @@ export default function History() {
                     <div className="p-3 rounded-2xl bg-card text-center card-shadow">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {lifetimeTotals.runKm >= 1000
-                          ? (lifetimeTotals.runKm / 1000).toFixed(1) + "k"
-                          : Math.round(lifetimeTotals.runKm).toLocaleString()}
+                        {abbreviateK(lifetimeTotals.runKm)}
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
                         km · {lifetimeTotals.runCount} runs

@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
 import type { LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
@@ -117,15 +118,11 @@ export default function TrainingLoadCard({
               <stop offset="100%" stopColor={THEME.brand} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            vertical={false}
-          />
+          <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis
             dataKey="label"
             interval={0}
-            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
           />

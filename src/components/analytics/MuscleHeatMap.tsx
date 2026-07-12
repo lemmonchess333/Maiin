@@ -241,7 +241,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                   <span className="text-xs text-muted-foreground font-medium">
                     {group}
                   </span>
-                  <span className="text-xs text-muted-foreground/60">
+                  <span className="text-xs font-mono tabular-nums text-muted-foreground/60">
                     {sets} sets
                   </span>
                   {rec && (

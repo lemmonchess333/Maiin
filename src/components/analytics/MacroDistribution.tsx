@@ -3,6 +3,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import { THEME } from "@/lib/theme";
 import { CHART_TOOLTIP_STYLE } from "./chartStyles";
+import { percentagesSummingTo100 } from "@/utils/formatters";
 
 interface MacroDistributionProps {
   protein: number;
@@ -48,7 +49,12 @@ export default function MacroDistribution({
     { name: "Fat", value: fCal, color: THEME.macros.fat, grams: fat },
   ];
 
-  const pct = (v: number) => Math.round((v / total) * 100);
+  // Largest-remainder rounding so the three slices always total
+  // exactly 100 — independent Math.round per slice showed 99% or 101%
+  // for splits like 33.3/33.3/33.4.
+  const percents = percentagesSummingTo100(data.map((d) => d.value));
+  const pctByName = new Map(data.map((d, i) => [d.name, percents[i]]));
+  const pct = (name: string) => pctByName.get(name) ?? 0;
 
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
@@ -75,7 +81,7 @@ export default function MacroDistribution({
                 formatter={(_value, _name, item) => {
                   const p = item?.payload as MacroSlice | undefined;
                   if (!p) return ["", ""];
-                  return [`${pct(p.value)}% · ${p.grams}g`, p.name] as [
+                  return [`${pct(p.name)}% · ${p.grams}g`, p.name] as [
                     string,
                     string,
                   ];
@@ -102,7 +108,7 @@ export default function MacroDistribution({
                   trackHistoryEvent("history_chart_tap_attempted", {
                     chart: "macro",
                     binKey: String(e.name ?? ""),
-                    value: pct(e.value),
+                    value: pct(e.name),
                   });
                 }}
               >
@@ -133,7 +139,7 @@ export default function MacroDistribution({
                 <span className="text-foreground font-medium">{d.name}</span>
               </div>
               <span className="font-mono tabular-nums text-muted-foreground">
-                {pct(d.value)}% · {d.grams}g
+                {pct(d.name)}% · {d.grams}g
               </span>
             </div>
           ))}

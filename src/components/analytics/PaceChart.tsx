@@ -7,6 +7,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { THEME } from "@/lib/theme";
+import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
 
 interface PaceChartProps {
   data: { label: string; paceSeconds: number }[];
@@ -23,14 +24,10 @@ export default function PaceChart({ data, accentColor }: PaceChartProps) {
       <h3 className="text-sm font-semibold text-foreground mb-3">Pace Trend</h3>
       <ResponsiveContainer width="100%" height={140}>
         <LineChart data={data}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke={THEME.chartGrid}
-            vertical={false}
-          />
+          <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
           />
