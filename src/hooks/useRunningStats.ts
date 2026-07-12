@@ -28,6 +28,9 @@ export interface RunSummaryItem {
   calories: number;
   activityType: string;
   completedAt: Date;
+  /** Post-run effort check-in (#1523). null when skipped. Read by the
+   *  Run14 ease-week nudge (harder-streak trigger). */
+  relativeEffort: "easier" | "matched" | "harder" | null;
   routePreview?: { lat: number; lon: number }[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
@@ -150,6 +153,12 @@ export function useRunningStats(days: number = 30) {
           calories: data.calories || 0,
           activityType: data.activityType || "freerun",
           completedAt: date,
+          relativeEffort:
+            data.relativeEffort === "easier" ||
+            data.relativeEffort === "matched" ||
+            data.relativeEffort === "harder"
+              ? data.relativeEffort
+              : null,
           isInvalid: data.isInvalid === true,
           savedAnyway: data.savedAnyway === true,
           routePreview:

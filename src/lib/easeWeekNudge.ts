@@ -112,7 +112,12 @@ export function evaluateEaseWeekNudge(
 
   if (input.lastShownAt !== null) {
     const sinceShown = daysBetween(input.today, input.lastShownAt);
-    if (sinceShown < COOLDOWN_DAYS) return { show: false };
+    // `sinceShown === 0` is the SAME day the card is currently showing —
+    // the card records lastShownAt on mount, and the parent re-evaluates
+    // live, so treating "today" as cooled-down would make the card
+    // suppress itself the render after it appears. Only a PRIOR showing
+    // 1..13 days ago suppresses; day 14+ may show again.
+    if (sinceShown > 0 && sinceShown < COOLDOWN_DAYS) return { show: false };
   }
 
   // ── Trigger (Run14b) ──
