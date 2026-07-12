@@ -491,6 +491,51 @@ async function main() {
     .doc(uid)
     .set({ followedAt });
 
+  // ── Community Spaces fixtures (Spc1 PR2): memberships + pinned
+  //    Tropos Team intro posts so the Space pages and captures show
+  //    the designed populated state (admin writes bypass rules; in
+  //    prod the Team badge is gated on system/config.officialUids). ──
+  const teamAuthor = { authorId: "tropos-team", authorName: "Tropos Team" };
+  for (const sid of ["womens-running", "hybrid-training"]) {
+    await db
+      .collection("spaces")
+      .doc(sid)
+      .collection("members")
+      .doc(uid)
+      // uid mirrored into the body — the deletion executor's
+      // collectionGroup sweep (inventory: spaceMemberships) filters on it.
+      .set({ joinedAt: Timestamp.now(), uid });
+    await db
+      .collection("spaces")
+      .doc(sid)
+      .collection("posts")
+      .doc("seed-team-intro")
+      .set({
+        ...teamAuthor,
+        title: "Introduce yourself!",
+        body: "Welcome in — say hi, share what you're training for, and ask anything. Every athlete here started at zero.",
+        official: true,
+        pinned: true,
+        likeCount: 4,
+        commentCount: 2,
+        createdAt: hoursAgo(30),
+      });
+  }
+  await db
+    .collection("spaces")
+    .doc("womens-running")
+    .collection("posts")
+    .doc("seed-maya")
+    .set({
+      authorId: feedAuthor.authorId,
+      authorName: feedAuthor.authorName,
+      title: "6 weeks in!",
+      body: "Started with a 30-minute jog, just finished my first 10K. Honestly surprised at the progress — half marathon next?",
+      likeCount: 6,
+      commentCount: 1,
+      createdAt: hoursAgo(8),
+    });
+
   console.log(
     `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 12 meals, ` +
       `${weekKeys.length} performance weeks, ` +
