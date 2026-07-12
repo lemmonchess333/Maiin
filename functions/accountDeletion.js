@@ -24,6 +24,7 @@
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
+const spacesCleanup = require("./lib/spacesCleanup");
 
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
@@ -98,6 +99,10 @@ const STORAGE_PREFIX_TEMPLATES = Object.freeze([
   // soft (24h restore) so blobs are never deleted with the meal —
   // this sweep is the only cleanup path, same as progress photos.
   "food-photos/__UID__/",
+  // Community Space post photos (Spc1 PR4, src/lib/spacePhotoUpload.ts).
+  // The Firestore posts are deleted by the spaces cleanup step (3d);
+  // this sweep removes their blobs.
+  "space-photos/__UID__/",
 ]);
 
 function storagePrefixesFor(uid) {
@@ -376,6 +381,13 @@ async function deleteAccount({
         bondsSnap.docs.map((d) => d.ref)
       );
     }
+
+    // 3d. Community Spaces (Spc1 PR4) — memberships + authored posts,
+    // swept per KNOWN space id (lib/spacesCleanup; bounded config, no
+    // collectionGroup blast radius). Per-space failures are absorbed
+    // inside the helper so this can never wedge the flow; runs BEFORE
+    // the auth user (7) like every other data step.
+    await spacesCleanup.cleanupSpacesForUser({ firestore, uid, logger });
 
     // 3c. Apple subscription bindings (money-path audit F8). The
     // binding's uid is about to dangle; deleting it alone would re-open

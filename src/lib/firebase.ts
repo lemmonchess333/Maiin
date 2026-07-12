@@ -7,7 +7,7 @@ import {
   memoryLocalCache,
   connectFirestoreEmulator,
 } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 import { logger } from "@/lib/logger";
 import { initAppCheck } from "@/lib/appCheck";
@@ -91,4 +91,8 @@ export const functions = getFunctions(app);
 if (import.meta.env.VITE_USE_EMULATORS === "true") {
   connectAuthEmulator(auth, "http://127.0.0.1:9099");
   connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  // Storage too (Spc1 PR4) — photo uploads (space posts, food, profile)
+  // were previously unverifiable in the emulator rig because the app
+  // only wired auth + firestore.
+  connectStorageEmulator(storage, "127.0.0.1", 9199);
 }
