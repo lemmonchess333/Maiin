@@ -84,7 +84,7 @@ const CATEGORIES: CategoryDef[] = [
 ];
 
 interface Props {
-  targetType: "activity" | "comment" | "user";
+  targetType: "activity" | "comment" | "user" | "space_post";
   targetId: string;
   /** Author of the reported content. Required if Block author should
    *  do anything; UserProfile passes the same uid as targetId since
