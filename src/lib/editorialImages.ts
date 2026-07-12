@@ -47,3 +47,11 @@ const CHALLENGE_STEM: Record<string, string> = {
 export function challengeEditorialImage(metric: string): string | null {
   return byStem(CHALLENGE_STEM[metric] ?? "challenge-hybrid");
 }
+
+/** Editorial photo URL for a community space (Spc1 PR2) — stems are
+ *  `space-<spaceId>` per the spaceDefs contract, e.g.
+ *  `space-womens-running.webp`. Null until the licensed asset lands
+ *  (the directory card renders its tinted fallback band). */
+export function spaceEditorialImage(spaceId: string): string | null {
+  return byStem(`space-${spaceId}`);
+}
