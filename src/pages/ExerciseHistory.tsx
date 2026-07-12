@@ -5,6 +5,7 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
+import { formatDayMonth } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -74,7 +75,7 @@ function formatWeight(kg: number): string {
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return formatDayMonth(d);
 }
 
 export default function ExerciseHistory() {

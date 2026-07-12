@@ -10,6 +10,7 @@ import {
 import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
+import ChartAreaGradient from "./ChartAreaGradient";
 import type { LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
@@ -112,12 +113,11 @@ export default function TrainingLoadCard({
           margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
           barCategoryGap="25%"
         >
-          <defs>
-            <linearGradient id="load-fitness" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={THEME.brand} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={THEME.brand} stopOpacity={0} />
-            </linearGradient>
-          </defs>
+          <ChartAreaGradient
+            id="load-fitness"
+            color={THEME.brand}
+            topOpacity={0.3}
+          />
           <CartesianGrid {...CHART_GRID_PROPS} />
           <XAxis
             dataKey="label"

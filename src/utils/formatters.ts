@@ -54,6 +54,24 @@ export function percentagesSummingTo100(values: number[]): number[] {
   return result;
 }
 
+/**
+ * "20 Mar" — the one home for the day+month display label that was
+ * hand-rolled as toLocaleDateString("en-GB", { day, month }) in four
+ * analytics files (chart tooltips, PR dates, aria summaries).
+ */
+export function formatDayMonth(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+/** "20 Mar 2026" — the year-carrying variant (tooltip detail lines). */
+export function formatDayMonthYear(d: Date): string {
+  return d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 /** Format distance, showing "—" when zero/null */
 export function formatDistance(km: number | null | undefined): string {
   if (!km || km <= 0) return "\u2014";
