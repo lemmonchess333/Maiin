@@ -74,7 +74,9 @@ const MAX_REFERENCED_UIDS_PER_CALL = 30;
  */
 const ERROR_CODES = Object.freeze({
   ACCOUNT_DELETING: "account-deleting",
+  ACCOUNT_DELETED: "account-deleted",
   REFERENCED_ACCOUNT_DELETING: "referenced-account-deleting",
+  REFERENCED_ACCOUNT_DELETED: "referenced-account-deleted",
   TOO_MANY_REFERENCES: "too-many-references",
   SYSTEM_WRITE_BLOCKED: "system-write-blocked-tombstoned",
 });
@@ -135,6 +137,38 @@ function makeReferencedAccountDeletingError(referencedUid) {
   );
   err.code = "failed-precondition";
   err.errorCode = ERROR_CODES.REFERENCED_ACCOUNT_DELETING;
+  err.referencedUid = referencedUid;
+  return err;
+}
+
+/**
+ * Actor whose deletion has COMPLETED (a live post-deletion tombstone).
+ * Distinct client state from an in-progress deletion — the deletion is
+ * finished but an already-issued ID token can still authenticate until
+ * it expires. Kept as a separate stable errorCode so the client can
+ * render "your account was deleted" rather than "deletion in progress".
+ */
+function makeAccountDeletedError(uid) {
+  const err = new Error(
+    `Account ${uid} has been deleted. Authenticated writes are no longer allowed.`,
+  );
+  err.code = "failed-precondition";
+  err.errorCode = ERROR_CODES.ACCOUNT_DELETED;
+  err.uid = uid;
+  return err;
+}
+
+/**
+ * Referenced (cross-user) account whose deletion has COMPLETED.
+ * Counterpart to makeReferencedAccountDeletingError for the tombstone
+ * state.
+ */
+function makeReferencedAccountDeletedError(referencedUid) {
+  const err = new Error(
+    `Cannot complete write: referenced account ${referencedUid} has been deleted.`,
+  );
+  err.code = "failed-precondition";
+  err.errorCode = ERROR_CODES.REFERENCED_ACCOUNT_DELETED;
   err.referencedUid = referencedUid;
   return err;
 }
@@ -206,16 +240,33 @@ async function isTombstoned(db, uid) {
 }
 
 /**
- * Throw if the actor uid has an active deletion. Used by callable
- * functions at entry to gate user-write paths.
+ * Throw if the actor uid is not writable. Used by callable functions at
+ * entry to gate user-write paths.
+ *
+ * Two distinct non-writable states, each with its own stable errorCode:
+ *   - active deletion (executor mid-cascade)  → account-deleting
+ *   - live post-deletion tombstone (completed) → account-deleted
+ *
+ * The tombstone case is what makes a COMPLETED deletion irreversible: an
+ * already-issued ID token can still authenticate until it expires, and
+ * without this check that token could recreate user data after deletion.
+ * This brings the callable-actor guard in line with the system-writer
+ * guard (assertUserWritableBySystem), which already rejects both states.
  *
  * The deletion executor (deleteMyAccount) and the cancel callable
  * (cancelDeletionRequest) are exempt — they're the only callables
  * allowed to operate ON a deleting account.
+ *
+ * Name retained (assertAccountNotDeleting) so every existing lock wrapper
+ * keeps working; "NotDeleting" now means the full writable-account
+ * contract.
  */
 async function assertAccountNotDeleting(db, uid) {
   if (await isAccountDeleting(db, uid)) {
     throw makeAccountDeletingError(uid);
+  }
+  if (await isTombstoned(db, uid)) {
+    throw makeAccountDeletedError(uid);
   }
 }
 
@@ -247,16 +298,32 @@ async function assertNoReferencedAccountsDeleting(db, uids) {
   if (unique.length > MAX_REFERENCED_UIDS_PER_CALL) {
     throw makeTooManyReferencesError(unique.length);
   }
-  const refs = unique.map((uid) => db.collection(ledger.COLLECTION).doc(uid));
   // getAll() is the Admin SDK's batched-read primitive. It accepts a
   // splatted list of DocumentReferences and returns DocumentSnapshots in
-  // the same order.
-  const snaps = await db.getAll(...refs);
-  for (const snap of snaps) {
+  // the same order. Read both the active-deletion ledger AND the
+  // post-deletion tombstone for each referenced uid in one round-trip:
+  // a referenced account that is being deleted OR has been deleted must
+  // block the cross-user write.
+  const deletionRefs = unique.map((uid) =>
+    db.collection(ledger.COLLECTION).doc(uid),
+  );
+  const tombstoneRefs = unique.map((uid) =>
+    db.collection(tombstone.COLLECTION).doc(uid),
+  );
+  const snaps = await db.getAll(...deletionRefs, ...tombstoneRefs);
+  // First half: active-deletion status docs.
+  for (const snap of snaps.slice(0, unique.length)) {
     if (!snap.exists) continue;
     const data = snap.data();
     if (isStatusActive(data && data.status)) {
       throw makeReferencedAccountDeletingError(snap.id);
+    }
+  }
+  // Second half: post-deletion tombstones (same uid order).
+  for (const snap of snaps.slice(unique.length)) {
+    if (!snap.exists) continue;
+    if (isTombstoneLive(snap.data())) {
+      throw makeReferencedAccountDeletedError(snap.id);
     }
   }
 }
@@ -304,7 +371,9 @@ module.exports = {
   isStatusActive,
   isTombstoneLive,
   makeAccountDeletingError,
+  makeAccountDeletedError,
   makeReferencedAccountDeletingError,
+  makeReferencedAccountDeletedError,
   makeTooManyReferencesError,
   makeSystemWriteBlockedError,
   readDeletionStatusDoc,
