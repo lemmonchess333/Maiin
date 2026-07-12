@@ -62,7 +62,7 @@
  *     (the focused run-plan editor).
  */
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -106,6 +106,15 @@ import {
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import DayActionSheet from "./DayActionSheet";
 import AdjustWeekSheet from "./AdjustWeekSheet";
+import EaseWeekNudgeCard from "./EaseWeekNudgeCard";
+import { evaluateEaseWeekNudge } from "@/lib/easeWeekNudge";
+import {
+  getLastShownAt,
+  setLastShownAt,
+  getDismissedWeekKey,
+  setDismissedWeekKey,
+} from "@/lib/easeWeekNudgeMarkers";
+import { planEasierWeek } from "@/lib/adjustWeek";
 import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import SessionCommandCard from "./SessionCommandCard";
@@ -236,6 +245,14 @@ export default function ProgrammeRunSection({
   const raceElapsedDismissKey = `tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
+  // Run14: when the sheet is opened from the ease-week nudge it lands
+  // straight on the easier preview; the normal "Adjust this week" entry
+  // clears this so it still opens on the intent chooser.
+  const [adjustInitialIntent, setAdjustInitialIntent] = useState<
+    "easier" | undefined
+  >(undefined);
+  // Run14: the ease-week nudge, dismissed for the rest of this week.
+  const [easeNudgeDismissed, setEaseNudgeDismissed] = useState(false);
   const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
     () => {
       if (typeof window === "undefined") return false;
@@ -462,6 +479,69 @@ export default function ProgrammeRunSection({
       todayKeyDerivation,
     ]
   );
+
+  // ── Run14: ease-week nudge (RUN-05) ────────────────────────────────
+  // Suggest+approve: evaluate the harder-streak trigger + every
+  // suppression rule (all in the pure module), and render a quiet
+  // evidence-first card that opens AdjustWeekSheet preselected. The
+  // engine never changes anything — the user applies in the sheet.
+  const easeNudge = useMemo(
+    () =>
+      evaluateEaseWeekNudge({
+        isRacePrep: currentMode === "race_prep" && !!raceGoal && !raceElapsed,
+        runs: runs.map((r) => ({
+          date: localDateString(r.completedAt),
+          relativeEffort: r.relativeEffort,
+        })),
+        today: todayKeyDerivation,
+        // Never tell a tapering / racing / recovering runner to ease more.
+        phaseSuppressed:
+          inRecovery ||
+          recoveryEnded ||
+          raceCockpitVM?.phaseLabel === "Taper" ||
+          raceCockpitVM?.phaseLabel === "Race",
+        // Nothing left to ease this week ⇒ already eased (or no quality
+        // runs remain) — no persisted flag needed.
+        weekAlreadyEased:
+          planEasierWeek(runDays, todayKeyDerivation).length === 0,
+        fellBehindPending: contextualPrompt === "fell-behind",
+        dismissedWeekKey: getDismissedWeekKey(profile.uid),
+        lastShownAt: getLastShownAt(profile.uid),
+      }),
+    [
+      currentMode,
+      raceGoal,
+      raceElapsed,
+      runs,
+      todayKeyDerivation,
+      inRecovery,
+      recoveryEnded,
+      raceCockpitVM?.phaseLabel,
+      runDays,
+      contextualPrompt,
+      profile.uid,
+    ]
+  );
+  const easeNudgeVisible = easeNudge.show && !easeNudgeDismissed;
+  const easeNudgeHarder = easeNudge.show ? easeNudge.harderCount : 0;
+  const easeNudgeRated = easeNudge.show ? easeNudge.ratedCount : 0;
+  // Record the 14-day cooldown + fire analytics the first render the card
+  // is visible. The pure module treats "shown today" as still-showable
+  // (sinceShown === 0), so writing the marker here never self-suppresses.
+  useEffect(() => {
+    if (!easeNudgeVisible) return;
+    setLastShownAt(profile.uid, todayKeyDerivation);
+    trackProgram("ease_week_nudge_shown", {
+      harderCount: easeNudgeHarder,
+      ratedCount: easeNudgeRated,
+    });
+  }, [
+    easeNudgeVisible,
+    profile.uid,
+    todayKeyDerivation,
+    easeNudgeHarder,
+    easeNudgeRated,
+  ]);
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
   // A rolling 7-day window anchored on today, resolved through the same
@@ -1354,6 +1434,28 @@ export default function ProgrammeRunSection({
               BEFORE misses accumulate). Hidden in recovery / post-race, which
               own their own flows. Opening clears a pending fell-behind prompt
               first (Run9c one-primary-action). */}
+          {/* Run14: the ease-week nudge sits just above the standing
+              Adjust entry (same neighbourhood). It has already run all
+              its scope + suppression rules in the pure module. */}
+          {easeNudgeVisible && (
+            <EaseWeekNudgeCard
+              harderCount={easeNudgeHarder}
+              ratedCount={easeNudgeRated}
+              onEase={() => {
+                haptic();
+                trackProgram("ease_week_nudge_applied");
+                setAdjustInitialIntent("easier");
+                setAdjustOpen(true);
+              }}
+              onDismiss={() => {
+                haptic();
+                setDismissedWeekKey(profile.uid, thisWeekKeyForDismissal);
+                setEaseNudgeDismissed(true);
+                trackProgram("ease_week_nudge_dismissed");
+              }}
+            />
+          )}
+
           {currentMode === "race_prep" &&
             raceGoal &&
             !raceElapsed &&
@@ -1366,6 +1468,9 @@ export default function ProgrammeRunSection({
                   if (contextualPrompt === "fell-behind") {
                     void dismissFellBehindPrompt();
                   }
+                  // Normal entry opens on the intent chooser, not the
+                  // nudge's preselected easier preview.
+                  setAdjustInitialIntent(undefined);
                   trackProgram("adjust_week_opened", { source: "cockpit" });
                   setAdjustOpen(true);
                 }}
@@ -1435,6 +1540,7 @@ export default function ProgrammeRunSection({
         <AdjustWeekSheet
           open={adjustOpen}
           onClose={() => setAdjustOpen(false)}
+          initialIntent={adjustInitialIntent}
           runDays={runDays}
           raceGoal={{
             distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
