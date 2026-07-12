@@ -9,6 +9,7 @@ import {
 import type { GPSPoint } from "../../lib/gps";
 import { THEME } from "@/lib/theme";
 import { CHART_GRID_PROPS } from "./chartStyles";
+import ChartAreaGradient from "./ChartAreaGradient";
 
 interface ElevationProfileProps {
   points: GPSPoint[];
@@ -54,12 +55,12 @@ export default function ElevationProfile({
 
       <ResponsiveContainer width="100%" height={100}>
         <AreaChart data={data}>
-          <defs>
-            <linearGradient id="elevGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={accentColor} stopOpacity={0.4} />
-              <stop offset="100%" stopColor={accentColor} stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
+          <ChartAreaGradient
+            id="elevGrad"
+            color={accentColor}
+            topOpacity={0.4}
+            bottomOpacity={0.02}
+          />
           <CartesianGrid {...CHART_GRID_PROPS} />
           <YAxis hide domain={[minAlt - 5, maxAlt + 5]} />
           <XAxis hide />

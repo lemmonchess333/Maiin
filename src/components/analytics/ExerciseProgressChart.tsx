@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { CHART_TOOLTIP_STYLE, CHART_AXIS_TICK } from "./chartStyles";
+import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
 
 export interface ExerciseProgressPoint {
   date: string;
@@ -80,13 +81,10 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
   // this. Includes session count, range, latest value, and PR count
   // — enough to convey the trend without the visual.
   const prCount = data.filter((d) => d.isPR).length;
-  const firstDate = new Date(data[0].date + "T12:00:00").toLocaleDateString(
-    "en-GB",
-    { day: "numeric", month: "short" }
+  const firstDate = formatDayMonth(new Date(data[0].date + "T12:00:00"));
+  const lastDate = formatDayMonth(
+    new Date(data[data.length - 1].date + "T12:00:00")
   );
-  const lastDate = new Date(
-    data[data.length - 1].date + "T12:00:00"
-  ).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
   const latestValue = Math.round(data[data.length - 1].value).toLocaleString();
   const ariaLabel = `Progression chart, ${data.length} session${data.length === 1 ? "" : "s"} from ${firstDate} to ${lastDate}. Latest value: ${latestValue}. ${prCount} personal record${prCount === 1 ? "" : "s"}.`;
 
@@ -116,13 +114,9 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
             content={(props) => {
               if (!props.active || !props.payload?.length) return null;
               const point = props.payload[0].payload as ExerciseProgressPoint;
-              const label = new Date(
-                point.date + "T12:00:00"
-              ).toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              });
+              const label = formatDayMonthYear(
+                new Date(point.date + "T12:00:00")
+              );
               // Container style comes from the shared token so this
               // chart's tooltip matches the other analytics charts — it
               // had drifted into a fourth bespoke treatment (bordered,

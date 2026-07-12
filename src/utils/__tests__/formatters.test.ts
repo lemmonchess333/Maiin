@@ -7,6 +7,8 @@ import {
   macroRingState,
   abbreviateK,
   percentagesSummingTo100,
+  formatDayMonth,
+  formatDayMonthYear,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -202,5 +204,23 @@ describe("percentagesSummingTo100", () => {
   it("zero/empty totals return all zeros", () => {
     expect(percentagesSummingTo100([0, 0, 0])).toEqual([0, 0, 0]);
     expect(percentagesSummingTo100([])).toEqual([]);
+  });
+});
+
+describe("formatDayMonth / formatDayMonthYear", () => {
+  it("renders en-GB day + short month with no leading zero", () => {
+    expect(formatDayMonth(new Date("2026-03-20T12:00:00"))).toBe("20 Mar");
+    expect(formatDayMonth(new Date("2026-01-05T12:00:00"))).toBe("5 Jan");
+  });
+
+  it("year variant appends the year", () => {
+    expect(formatDayMonthYear(new Date("2026-03-20T12:00:00"))).toBe(
+      "20 Mar 2026"
+    );
+  });
+
+  it("both variants agree on the day+month prefix", () => {
+    const d = new Date("2026-12-31T12:00:00");
+    expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
   });
 });
