@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
+import { epley1RMExact } from "@/lib/analytics";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -46,23 +47,15 @@ interface SessionSummary {
   totalReps: number;
 }
 
-function epley1RM(weightKg: number, reps: number): number {
-  // Guard: zero/negative reps produce nonsense (or in the case of a
-  // logged "failed" set with reps=0, would falsely report
-  // weight × 1.0 as a 1RM). Mirrors src/lib/analytics.ts's guard.
-  if (reps <= 0 || weightKg < 0) return 0;
-  return weightKg * (1 + reps / 30);
-}
-
 function topSetOf(
   sets: { reps: number; weightKg: number }[]
 ): { reps: number; weightKg: number } | null {
   if (sets.length === 0) return null;
   // Top set = highest e1rm. Ties broken by heaviest weight.
   let best: { reps: number; weightKg: number } = sets[0];
-  let bestScore = epley1RM(best.weightKg, best.reps);
+  let bestScore = epley1RMExact(best.weightKg, best.reps);
   for (const s of sets) {
-    const score = epley1RM(s.weightKg, s.reps);
+    const score = epley1RMExact(s.weightKg, s.reps);
     if (
       score > bestScore ||
       (score === bestScore && s.weightKg > best.weightKg)
@@ -126,7 +119,7 @@ export default function ExerciseHistory() {
       let volume = 0;
       let totalReps = 0;
       for (const s of sets) {
-        e1rm = Math.max(e1rm, epley1RM(s.weightKg, s.reps));
+        e1rm = Math.max(e1rm, epley1RMExact(s.weightKg, s.reps));
         maxWeight = Math.max(maxWeight, s.weightKg);
         volume += s.weightKg * s.reps;
         totalReps += s.reps;

@@ -1,4 +1,5 @@
 import { Trophy } from "lucide-react";
+import { THEME } from "@/lib/theme";
 
 interface PR {
   label: string;
@@ -23,7 +24,7 @@ export default function PRCard({
   title,
   subtitle,
   prs,
-  accentColor = "#FFB547",
+  accentColor = THEME.tier.gold,
 }: PRCardProps) {
   if (prs.length === 0) return null;
 

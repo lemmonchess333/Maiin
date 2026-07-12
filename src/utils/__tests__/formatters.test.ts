@@ -5,6 +5,8 @@ import {
   formatDistance,
   formatStat,
   macroRingState,
+  abbreviateK,
+  percentagesSummingTo100,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -161,5 +163,44 @@ describe("macroRingState", () => {
   it("calculates correct percentage", () => {
     const { pct } = macroRingState(80, 160);
     expect(pct).toBeCloseTo(0.5);
+  });
+});
+
+describe("abbreviateK", () => {
+  it("keeps sub-1000 values whole and abbreviates past 1000 at ONE decimal", () => {
+    expect(abbreviateK(500)).toBe("500");
+    expect(abbreviateK(999)).toBe("999");
+    expect(abbreviateK(1000)).toBe("1.0k");
+    // The drift this kills: VolumeChart's axis rounded 1500 to "2k"
+    // while its own tooltip said "1.5k" for the same value.
+    expect(abbreviateK(1500)).toBe("1.5k");
+    expect(abbreviateK(12345)).toBe("12.3k");
+  });
+
+  it("rounds sub-1000 values and survives non-finite input", () => {
+    expect(abbreviateK(499.6)).toBe("500");
+    expect(abbreviateK(NaN)).toBe("0");
+    expect(abbreviateK(Infinity)).toBe("0");
+  });
+});
+
+describe("percentagesSummingTo100", () => {
+  it("always sums to exactly 100 (largest-remainder)", () => {
+    // Independent rounding gives 33+33+33 = 99 here.
+    expect(percentagesSummingTo100([33.3, 33.3, 33.4])).toEqual([33, 33, 34]);
+    // And 34+33+34 = 101 here (0.335/0.33/0.335 of the total).
+    const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+    expect(sum(percentagesSummingTo100([335, 330, 335]))).toBe(100);
+    expect(sum(percentagesSummingTo100([1, 1, 1, 1, 1, 1, 1]))).toBe(100);
+  });
+
+  it("gives the extra point to the largest fractional remainder", () => {
+    expect(percentagesSummingTo100([50, 25, 25])).toEqual([50, 25, 25]);
+    expect(percentagesSummingTo100([2, 1])).toEqual([67, 33]);
+  });
+
+  it("zero/empty totals return all zeros", () => {
+    expect(percentagesSummingTo100([0, 0, 0])).toEqual([0, 0, 0]);
+    expect(percentagesSummingTo100([])).toEqual([]);
   });
 });
