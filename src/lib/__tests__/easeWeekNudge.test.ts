@@ -177,6 +177,15 @@ describe("evaluateEaseWeekNudge — scope + suppression", () => {
     expect(pastCooldown.show).toBe(true);
   });
 
+  it("shown TODAY still shows (the current showing records its own marker)", () => {
+    // The card writes lastShownAt on mount and the parent re-evaluates
+    // live; sinceShown === 0 must not suppress or the card would vanish
+    // the render after it appears.
+    expect(
+      evaluateEaseWeekNudge(base({ lastShownAt: TODAY, runs: triggering })).show
+    ).toBe(true);
+  });
+
   it("cooldown boundary: exactly COOLDOWN_DAYS ago is allowed", () => {
     // 2026-07-12 minus 14 days = 2026-06-28.
     expect(COOLDOWN_DAYS).toBe(14);
