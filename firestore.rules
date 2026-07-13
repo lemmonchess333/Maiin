@@ -1122,23 +1122,18 @@ service cloud.firestore {
     }
 
     // ========================================
-    // Reports — any authenticated user can create, no client reads
+    // Reports — server-only (packet 14 lockdown)
     // ========================================
+    // Reports are written ONLY by the createReport callable (Admin SDK), which
+    // server-resolves the target + issues the reportAuthority marker. Direct
+    // client writes are fully denied so a client-supplied report target field
+    // can never become moderation input. (Defense-in-depth: the security
+    // cutover already landed via the authority marker in PR2 — a forged
+    // direct report was already dismiss-only. This closes the create path too.)
+    // Deploy AFTER the callable client is live; a stale bundle doing a direct
+    // write fails here (the client already routes through the callable).
     match /reports/{reportId} {
-      // R1A-Deletion: deleting users cannot file new reports. Existing
-      // reports they filed are anonymised by the executor; in-flight
-      // reports during the deletion window are blocked here.
-      //
-      // Packet 14: clients now report via the createReport callable. This
-      // direct-create rule is intentionally KEPT temporarily-compatible for
-      // stale bundles; the direct-write lockdown is a later gated step. The
-      // security cutover does NOT depend on it — resolveReport only acts on a
-      // report that has a matching server-only reportAuthority marker (below),
-      // so a forged direct-write report is dismiss-only regardless.
-      allow create: if request.auth != null
-        && request.resource.data.reporterId == request.auth.uid
-        && !isWriteFrozen(request.auth.uid);
-      allow read, update, delete: if false;
+      allow read, write: if false;
     }
 
     // Packet 14 — server-issued authority marker. Only createReport (Admin
