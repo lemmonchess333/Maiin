@@ -57,6 +57,26 @@ export type { DailyTargetsCaption };
  * Energy "burned X" tiles and the Food drill-down). They do not move the
  * target.
  */
+/**
+ * The exact training-aware macro shift for this day, versus a same-calorie
+ * REST split. Surfaced so the Food drill-down can explain WHY today's grams
+ * differ (Pro shifts fat→carbs at steady calories on training days) without
+ * re-deriving the formula. `applied` is only true when the final macros
+ * genuinely move — a free user (flat REST split) or a safety-floored Pro day
+ * reports `eligible` but not `applied`, so copy never claims an unapplied
+ * change.
+ */
+export interface TrainingFuelAdjustment {
+  intensity: DayIntensity;
+  /** A real training / race-taper context exists for this day. */
+  eligible: boolean;
+  /** The final macro split actually differs from the same-calorie REST split. */
+  applied: boolean;
+  carbDeltaG: number;
+  fatDeltaG: number;
+  proteinDeltaG: number;
+}
+
 export interface EffectiveTargets {
   /** Stored profile target (TDEE + phase modifier, or custom override). */
   baseTarget: number;
@@ -101,6 +121,8 @@ export interface EffectiveTargets {
    *  carb-load) number, and the split is recomputed off it. Drives taper /
    *  carb-load copy on the Food hero. */
   taperActive: boolean;
+  /** Exact training-aware shift versus a same-calorie REST split. */
+  trainingFuel: TrainingFuelAdjustment;
 }
 
 // ── Subscription window ──────────────────────────────────────────────────
@@ -441,6 +463,33 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       taperActive = true;
     }
 
+    // Training-aware fuel DELTA — the exact carb↔fat move the final split
+    // makes versus a SAME-CALORIE REST split. Compared at `finalTarget` (not
+    // baseTarget) so learned-TDEE / taper calorie changes don't fabricate a
+    // fake shift: this measures macro ALLOCATION at the exact final calories,
+    // nothing else. Free users compute the split as REST already, so their
+    // deltas are zero (eligible-but-not-applied). Safety-floored Pro days can
+    // also be eligible-but-not-applied (or fat→protein only).
+    const restSplit = profile
+      ? getAdjustedTargets(
+          { ...profile, targetCalories: finalTarget },
+          planned.dayType,
+          programForNutrition,
+          "REST"
+        )
+      : { protein, carbs, fat };
+    const carbDeltaG = Math.max(0, carbs - restSplit.carbs);
+    const fatDeltaG = Math.max(0, restSplit.fat - fat);
+    const proteinDeltaG = Math.max(0, protein - restSplit.protein);
+    const trainingFuel: TrainingFuelAdjustment = {
+      intensity,
+      eligible: intensity !== "REST" || taper !== null,
+      applied: carbDeltaG > 0 || fatDeltaG > 0 || proteinDeltaG > 0,
+      carbDeltaG,
+      fatDeltaG,
+      proteinDeltaG,
+    };
+
     // Descriptive day LABEL (the conversion hook) — derived from the REAL day
     // for ALL users, never from the gated macro split. NEVER asserts a macro
     // change. "" on a plain rest day so the Food hero suppresses it. Priority:
@@ -474,6 +523,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       caption: planned.caption,
       targetTooAggressive: aggressive,
       taperActive,
+      trainingFuel,
     };
   }, [
     profile,

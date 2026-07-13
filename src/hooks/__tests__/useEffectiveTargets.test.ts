@@ -185,6 +185,12 @@ describe("useEffectiveTargets — training label gating (free→Pro conversion h
     expect(free.taperActive).toBe(false);
     // Honest copy — must not assert carbs/fat moved.
     expect(free.annotation).not.toMatch(/up|down|increase|loaded/i);
+    // trainingFuel: eligible (real training day) but NOT applied for free.
+    expect(free.trainingFuel.eligible).toBe(true);
+    expect(free.trainingFuel.applied).toBe(false);
+    expect(free.trainingFuel.carbDeltaG).toBe(0);
+    expect(free.trainingFuel.fatDeltaG).toBe(0);
+    expect(free.trainingFuel.proteinDeltaG).toBe(0);
   });
 
   it("PRO on the SAME HARD day: same label AND macros shift (fat down, carbs up)", () => {
@@ -199,12 +205,38 @@ describe("useEffectiveTargets — training label gating (free→Pro conversion h
     expect(pro.annotation).toBe(free.annotation); // same descriptive label
     expect(pro.fat).toBeLessThan(free.fat); // shift applied for Pro
     expect(pro.carbs).toBeGreaterThan(free.carbs);
+    // trainingFuel reports the EXACT applied delta vs the same-calorie REST
+    // split (== the free user's split at the same finalTarget).
+    expect(pro.trainingFuel.eligible).toBe(true);
+    expect(pro.trainingFuel.applied).toBe(true);
+    expect(pro.trainingFuel.carbDeltaG).toBe(pro.carbs - free.carbs);
+    expect(pro.trainingFuel.fatDeltaG).toBe(free.fat - pro.fat);
+    expect(pro.trainingFuel.proteinDeltaG).toBe(
+      Math.max(0, pro.protein - free.protein)
+    );
     // Both still reconcile to the (flat) calorie target.
     for (const t of [free, pro]) {
       expect(
         Math.abs(t.protein * 4 + t.carbs * 4 + t.fat * 9 - t.finalTarget)
       ).toBeLessThanOrEqual(2);
     }
+  });
+
+  it("rest day: trainingFuel is not eligible and has zero deltas", () => {
+    h.profile = makeProfile({
+      subscriptionTier: "pro",
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: "rest" as const,
+      })),
+    });
+    h.program = null;
+    const rest = renderHook(() => useEffectiveTargets()).result.current;
+    expect(rest.trainingFuel.eligible).toBe(false);
+    expect(rest.trainingFuel.applied).toBe(false);
+    expect(rest.trainingFuel.carbDeltaG).toBe(0);
+    expect(rest.trainingFuel.fatDeltaG).toBe(0);
+    expect(rest.trainingFuel.proteinDeltaG).toBe(0);
   });
 
   it("rest / planless day: annotation suppressed (empty)", () => {
