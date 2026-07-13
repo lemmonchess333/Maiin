@@ -921,6 +921,38 @@
       "reason": "Community Space post photos (Spc1 PR4 — the operator's photo-post amendment). Blobs live for the post's lifetime; post deletion does not delete the blob (soft simplicity, same trade-off as food photos), so this prefix sweep is the cleanup path on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
       "testCoverageKey": "unit::accountDeletion.storagePrefixes",
       "testCoverageStatus": "implemented"
+    },
+    {
+      "key": "userFcmDevices",
+      "domain": "F_usage",
+      "type": "userSubcollection",
+      "path": "users/{uid}/devices",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "system",
+      "strategy": "deleteSubcollection",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "Server-owned FCM device registrations. Raw tokens are device capabilities linked to the uid and must be removed on deletion.",
+      "testCoverageKey": "smoke::userSubcollections::devices",
+      "testCoverageStatus": "planned"
+    },
+    {
+      "key": "fcmTokenClaims",
+      "domain": "F_usage",
+      "type": "topLevelQueryByUidField",
+      "path": "fcmTokenClaims/{tokenHash}",
+      "aliases": [],
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "system",
+      "strategy": "deleteQueryInBatches",
+      "lockNeeded": "system-writer",
+      "hasNestedSubcollections": false,
+      "reason": "Server-owned token-hash to uid ownership mapping. It contains no raw FCM token but the uid mapping remains personal data and must not survive account deletion.",
+      "testCoverageKey": "smoke::topLevelQuery::fcmTokenClaims",
+      "testCoverageStatus": "planned"
     }
   ],
   "excluded": [

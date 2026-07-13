@@ -193,6 +193,27 @@ function makeStubs(opts = {}) {
             }),
           };
         }
+        // Packet 19 — removeClaimsForDeletedUser queries
+        // fcmTokenClaims.where("uid","==",uid).limit(N).get(). Default empty;
+        // tests override via opts.fcmTokenClaimDocs.
+        if (name === "fcmTokenClaims") {
+          return {
+            where: (field, op, value) => ({
+              limit: () => ({
+                get: async () => {
+                  calls.push(
+                    `firestore.fcmTokenClaims.where.${field}.${op}.${value}.get`
+                  );
+                  const docs = (opts.fcmTokenClaimDocs || []).map((d) => ({
+                    id: d.id,
+                    ref: { path: `fcmTokenClaims/${d.id}` },
+                  }));
+                  return { empty: docs.length === 0, docs, size: docs.length };
+                },
+              }),
+            }),
+          };
+        }
         return { doc: (uid) => topLevelDocStub(name, uid) };
       },
       async runTransaction(cb) {
