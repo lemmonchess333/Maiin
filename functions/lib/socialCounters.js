@@ -24,6 +24,10 @@
  * `subscriptionReconciliation.js` pattern from prior PRs).
  */
 
+const {
+  assertCanInteractWithActivity,
+} = require("./activityAccess");
+
 /**
  * Toggle kudos: if the kudos sub-doc exists for {uid} on
  * {activityId}, delete it + decrement the activity's kudosCount.
@@ -60,22 +64,26 @@ async function toggleKudos({
     .doc(uid);
 
   return firestore.runTransaction(async (txn) => {
-    // Verify the activity exists before mutating its counter —
-    // a kudos against a non-existent activity is an integrity bug.
-    const activitySnap = await txn.get(activityRef);
-    if (!activitySnap.exists) {
-      throw new Error(`toggleKudos: activity ${activityId} not found`);
-    }
+    // Enforce the parent activity's visibility (public / owner / accepted
+    // follower) INSIDE the txn — a former follower or stranger must not kudos
+    // content they can no longer view. Also covers the non-existent-activity
+    // integrity case (throws activity-not-accessible).
+    const activity = await assertCanInteractWithActivity({
+      tx: txn,
+      firestore,
+      activityRef,
+      uid,
+    });
 
     const kudosSnap = await txn.get(kudosRef);
     if (kudosSnap.exists) {
       txn.delete(kudosRef);
       txn.update(activityRef, { kudosCount: increment(-1) });
-      return { kudosed: false };
+      return { kudosed: false, activityAuthorId: activity.authorId };
     }
     txn.set(kudosRef, { createdAt: serverTimestamp() });
     txn.update(activityRef, { kudosCount: increment(1) });
-    return { kudosed: true };
+    return { kudosed: true, activityAuthorId: activity.authorId };
   });
 }
 
@@ -130,11 +138,17 @@ async function addComment({
   // it inside the txn so the same ID applies to both writes.
   const commentRef = commentsRef.doc();
 
+  let activityAuthorId;
   await firestore.runTransaction(async (txn) => {
-    const activitySnap = await txn.get(activityRef);
-    if (!activitySnap.exists) {
-      throw new Error(`addComment: activity ${activityId} not found`);
-    }
+    // Same visibility gate as kudos — a stranger/former-follower must not be
+    // able to comment on (and notify the author of) content they can't view.
+    const activity = await assertCanInteractWithActivity({
+      tx: txn,
+      firestore,
+      activityRef,
+      uid,
+    });
+    activityAuthorId = activity.authorId;
     const data = {
       authorId: uid,
       authorName: name,
@@ -148,7 +162,7 @@ async function addComment({
     txn.update(activityRef, { commentCount: increment(1) });
   });
 
-  return { commentId: commentRef.id };
+  return { commentId: commentRef.id, activityAuthorId };
 }
 
 /**
@@ -175,6 +189,17 @@ async function deleteComment({
     .doc(commentId);
 
   await firestore.runTransaction(async (txn) => {
+    // deleteComment is also an interaction with the parent. A former follower
+    // otherwise keeps a callable path to delete their old comment (and
+    // decrement the counter) on an activity they can no longer see. Gate on
+    // parent access FIRST — all reads before any write.
+    await assertCanInteractWithActivity({
+      tx: txn,
+      firestore,
+      activityRef,
+      uid,
+    });
+
     const commentSnap = await txn.get(commentRef);
     if (!commentSnap.exists) {
       throw new Error(`deleteComment: comment ${commentId} not found`);
