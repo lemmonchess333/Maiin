@@ -10,6 +10,76 @@ void BUILD_STAMP;
 // /Maiin/sw.js (GitHub Pages) or /sw.js (Firebase Hosting, served at root —
 // which is what makes OAuth same-origin with the auth handler on iOS Safari).
 const BASE_PATH = self.location.pathname.replace(/sw\.js$/, "");
+
+// ── FCM background push (packet 17) ──────────────────────────────────────
+// This canonical worker now also handles background push, so offline caching
+// and FCM share ONE registration/scope. The notificationclick listener is
+// installed BEFORE importScripts so a tap is never dropped while the Firebase
+// Messaging library loads. Config travels in the worker URL's query string
+// (a static worker can't read import.meta.env); a build with no Firebase
+// config (or a temporarily-unreachable CDN) still installs for offline caching.
+const ICON = BASE_PATH + "icons/icon-192x192.png";
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const route =
+    (event.notification.data && event.notification.data.route) || "/";
+  const target = BASE_PATH.replace(/\/$/, "") + route;
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windows) => {
+        for (const client of windows) {
+          if ("focus" in client && client.url.includes(BASE_PATH)) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) return clients.openWindow(target);
+      })
+  );
+});
+
+const fcmParams = new URL(self.location).searchParams;
+const fcmConfig = {
+  apiKey: fcmParams.get("apiKey") || "",
+  authDomain: fcmParams.get("authDomain") || "",
+  projectId: fcmParams.get("projectId") || "",
+  storageBucket: fcmParams.get("storageBucket") || "",
+  messagingSenderId: fcmParams.get("messagingSenderId") || "",
+  appId: fcmParams.get("appId") || "",
+};
+
+if (
+  fcmConfig.apiKey &&
+  fcmConfig.projectId &&
+  fcmConfig.messagingSenderId &&
+  fcmConfig.appId
+) {
+  try {
+    importScripts(
+      "https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"
+    );
+    importScripts(
+      "https://www.gstatic.com/firebasejs/12.14.0/firebase-messaging-compat.js"
+    );
+    firebase.initializeApp(fcmConfig);
+    firebase.messaging().onBackgroundMessage((payload) => {
+      const data = payload.data || {};
+      const notification = payload.notification || {};
+      const title = data.title || notification.title || "Tropos";
+      self.registration.showNotification(title, {
+        body: data.body || notification.body || "",
+        icon: ICON,
+        badge: ICON,
+        data,
+      });
+    });
+  } catch (error) {
+    // FCM setup must not make offline caching unavailable if the CDN fails.
+    console.warn("[push] FCM worker setup skipped", error);
+  }
+}
+
 const MAX_CACHE_ENTRIES = 150;
 
 const STATIC_ASSETS = [

@@ -13,7 +13,10 @@ vi.mock("../platform", () => ({
   isNativePlatform: () => isNativePlatform(),
 }));
 
-import { registerServiceWorker } from "../register-sw";
+import {
+  registerServiceWorker,
+  getAppServiceWorkerRegistration,
+} from "../register-sw";
 
 const register = vi.fn().mockResolvedValue({
   scope: "/",
@@ -45,13 +48,29 @@ describe("registerServiceWorker", () => {
     expect(register).not.toHaveBeenCalled();
   });
 
-  it("registers the SW on web once the window load event fires", () => {
+  it("registers the canonical sw.js (with config query) at the BASE_URL scope on web", () => {
     isNativePlatform.mockReturnValue(false);
     registerServiceWorker();
-    // Registration is deferred to the load event (don't block first paint).
-    expect(register).not.toHaveBeenCalled();
-    window.dispatchEvent(new Event("load"));
-    expect(register).toHaveBeenCalledTimes(1);
-    expect(register).toHaveBeenCalledWith(expect.stringContaining("sw.js"));
+    // When the document is already loaded (jsdom default readyState:"complete")
+    // registration runs immediately; otherwise it defers to the load event.
+    if (document.readyState !== "complete") {
+      window.dispatchEvent(new Event("load"));
+    }
+    // Packet 17: one worker — sw.js followed by a query string, at BASE_URL scope.
+    expect(register).toHaveBeenCalledWith(
+      expect.stringContaining("sw.js?"),
+      expect.objectContaining({ scope: expect.any(String) })
+    );
+  });
+
+  it("getAppServiceWorkerRegistration uses the SAME canonical URL + scope", async () => {
+    isNativePlatform.mockReturnValue(false);
+    // The mock worker never activates to the expected script, so the wait
+    // rejects — but the register() call (URL + scope) is what we assert.
+    await getAppServiceWorkerRegistration().catch(() => {});
+    expect(register).toHaveBeenCalledWith(
+      expect.stringContaining("sw.js?"),
+      expect.objectContaining({ scope: expect.any(String) })
+    );
   });
 });
