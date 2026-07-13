@@ -28,13 +28,21 @@
  * Pro now gates only AI-augmented + adaptive-optimisation features.
  *
  * #977 — paywall-honesty reconcile: only advertise what's runtime-
- * gated. `ai_coaching` (not built) and `adaptive_macros` (runs free
- * for everyone — no gate) removed. The registry is now the two real,
- * enforced gates: `ai_food_logging` (AI scan quota) and `adaptive_tdee`
- * (the adaptive engine, gated for Pro/trial as of 3b / #981-#983).
+ * gated. `ai_coaching` (not built) removed. The registry is the real,
+ * enforced runtime gates: `ai_food_logging` (AI scan quota),
+ * `adaptive_tdee` (the adaptive engine, gated for Pro/trial as of
+ * 3b / #981-#983), and `adaptive_macros` (training-aware macro shift —
+ * useEffectiveTargets computes the same-calorie carb↔fat move only for
+ * Pro; free users get the flat REST split). The earlier claim that
+ * `adaptive_macros` "runs free for everyone" was stale: runtime gates
+ * it behind isPro, so omitting the key made the registry contradict
+ * runtime. Re-added so the typed registry matches what's enforced.
  */
 
-export type ProFeatureKey = "ai_food_logging" | "adaptive_tdee";
+export type ProFeatureKey =
+  | "ai_food_logging"
+  | "adaptive_tdee"
+  | "adaptive_macros";
 
 export interface ProFeatureConfig {
   key: ProFeatureKey;
@@ -62,6 +70,14 @@ export const PRO_FEATURES: Record<ProFeatureKey, ProFeatureConfig> = {
     title: "Unlock Adaptive TDEE",
     tagline: "Adjust calorie targets using your real weight and intake trends.",
     sourceLabel: "adaptive_tdee",
+  },
+  adaptive_macros: {
+    key: "adaptive_macros",
+    label: "Training-aware macros",
+    title: "Unlock training-aware macros",
+    tagline:
+      "Shift carbs and fat around your training while keeping calories steady.",
+    sourceLabel: "adaptive_macros",
   },
 };
 
