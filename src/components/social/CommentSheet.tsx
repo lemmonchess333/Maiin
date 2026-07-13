@@ -8,6 +8,7 @@ import {
   addComment,
   deleteComment,
   toggleCommentReaction,
+  isPermissionDenied,
   type CommentReaction,
 } from "../../lib/socialApi";
 import { containsProfanity } from "../../lib/profanityFilter";
@@ -64,12 +65,32 @@ export default function CommentSheet({
 
   useEffect(() => {
     if (!open) return;
-    getComments(activityId).then((result) => {
-      setComments(result.comments as Comment[]);
-      lastDocRef.current = result.lastDoc;
-      setHasMore(result.hasMore);
-    });
-  }, [activityId, open]);
+    let cancelled = false;
+    getComments(activityId)
+      .then((result) => {
+        if (cancelled) return;
+        setComments(result.comments as Comment[]);
+        lastDocRef.current = result.lastDoc;
+        setHasMore(result.hasMore);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        // Packet 13 — the activity became inaccessible after the sheet opened.
+        // Clear the stale comments, close the sheet, and show a neutral notice
+        // rather than leave now-private text on screen.
+        if (isPermissionDenied(err)) {
+          setComments([]);
+          setHasMore(false);
+          onOpenChange(false);
+          toast.error("This activity is unavailable.");
+        } else {
+          logger.error("[CommentSheet] load failed", err);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activityId, open, onOpenChange]);
 
   // Focus input when sheet opens
   useEffect(() => {
@@ -80,10 +101,21 @@ export default function CommentSheet({
 
   const handleLoadMore = async () => {
     if (!lastDocRef.current) return;
-    const result = await getComments(activityId, 20, lastDocRef.current);
-    setComments((prev) => [...prev, ...(result.comments as Comment[])]);
-    lastDocRef.current = result.lastDoc;
-    setHasMore(result.hasMore);
+    try {
+      const result = await getComments(activityId, 20, lastDocRef.current);
+      setComments((prev) => [...prev, ...(result.comments as Comment[])]);
+      lastDocRef.current = result.lastDoc;
+      setHasMore(result.hasMore);
+    } catch (err) {
+      if (isPermissionDenied(err)) {
+        setComments([]);
+        setHasMore(false);
+        onOpenChange(false);
+        toast.error("This activity is unavailable.");
+      } else {
+        logger.error("[CommentSheet] load more failed", err);
+      }
+    }
   };
 
   const handleSend = async () => {
