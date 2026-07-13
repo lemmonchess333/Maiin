@@ -1,0 +1,191 @@
+"use strict";
+
+/**
+ * Exercise catalog name mirror (packet 18) — server copy of id -> name for
+ * every row in the exercise catalog (src/lib/exercises.ts).
+ *
+ * The programme reducer's addExercises / replaceExercise commands must DERIVE
+ * an exercise's display name + movement category from the catalog rather than
+ * trust a client-supplied exercise object (the security invariant: no
+ * client-built ProgramExercise reaches state). The ~2500-line Vite/TS catalog
+ * can't be required from CommonJS Cloud Functions, so this is a minimal DATA
+ * MIRROR of just id -> name.
+ *
+ * Kept in lockstep with the catalog by a cross-test
+ * (src/features/program/__tests__/exerciseCatalog.cross.test.ts) that derives
+ * the canonical id -> name map from EXERCISES and fails CI on any drift — the
+ * sanctioned mitigation for a hand-maintained mirror. Add/rename/remove a
+ * catalog exercise and this map must change in the same commit.
+ */
+
+const EXERCISE_NAME_BY_ID = Object.freeze({
+  "ab-wheel": "Ab Wheel Rollout",
+  "arnold-press": "Arnold Press",
+  "assault-bike": "Assault Bike",
+  "barbell-curl": "Barbell Curl",
+  "barbell-floor-press": "Barbell Floor Press",
+  "barbell-row": "Barbell Row",
+  "barbell-shrug": "Barbell Shrug",
+  "barbell-step-ups": "Barbell Step-Ups",
+  "barbell-upright-row": "Barbell Upright Row",
+  "battle-ropes": "Battle Ropes",
+  "bayesian-cable-curl": "Bayesian Cable Curl",
+  "bench-dips": "Bench Dips",
+  "bench-press": "Bench Press",
+  "bicycle-crunch": "Bicycle Crunch",
+  "bike": "Stationary Bike",
+  "bodyweight-lunge": "Bodyweight Lunge",
+  "bodyweight-squat": "Bodyweight Squat",
+  "box-jumps": "Box Jumps",
+  "bulgarian-split": "Bulgarian Split Squat",
+  "burpees": "Burpees",
+  "cable-crossover": "Cable Crossover",
+  "cable-crunch": "Cable Crunch",
+  "cable-curl": "Cable Curl",
+  "cable-fly": "Cable Fly",
+  "cable-glute-kickback": "Cable Glute Kickback",
+  "cable-lateral-raise": "Cable Lateral Raise",
+  "cable-woodchopper": "Cable Woodchopper",
+  "calf-raise": "Calf Raise",
+  "chest-press-machine": "Chest Press Machine",
+  "chest-supported-db-row": "Chest-Supported Dumbbell Row",
+  "chin-ups": "Chin-Ups",
+  "clean-and-press": "Clean and Press",
+  "close-grip-bench": "Close Grip Bench Press",
+  "concentration-curl": "Concentration Curl",
+  "cross-body-hammer-curl": "Cross-Body Hammer Curl",
+  "crunches": "Crunches",
+  "cuban-press": "Cuban Press",
+  "db-bench": "Dumbbell Bench Press",
+  "db-curl": "Dumbbell Curl",
+  "db-flyes": "Dumbbell Flyes",
+  "db-rdl": "Dumbbell Romanian Deadlift",
+  "db-row": "Dumbbell Row",
+  "db-shoulder-press": "Dumbbell Shoulder Press",
+  "dead-bug": "Dead Bug",
+  "deadlift": "Deadlift",
+  "decline-bench": "Decline Bench Press",
+  "decline-db-press": "Decline Dumbbell Press",
+  "decline-sit-up": "Decline Sit-Up",
+  "diamond-push-ups": "Diamond Push-Ups",
+  "dips": "Dips",
+  "donkey-calf-raise": "Donkey Calf Raise",
+  "dragon-flag": "Dragon Flag",
+  "elliptical": "Elliptical",
+  "ez-bar-curl": "EZ Bar Curl",
+  "face-pulls": "Face Pulls",
+  "farmers-carry": "Farmer's Carry",
+  "front-raise": "Front Raise",
+  "front-squat": "Front Squat",
+  "glute-bridge": "Glute Bridge",
+  "glute-ham-raise": "Glute-Ham Raise",
+  "goblet-squat": "Goblet Squat",
+  "hack-squat": "Hack Squat",
+  "hammer-curl": "Hammer Curl",
+  "handstand-push-ups": "Handstand Push-Ups",
+  "hip-abduction-machine": "Hip Abduction Machine",
+  "hip-adduction-machine": "Hip Adduction Machine",
+  "hip-thrust": "Hip Thrust",
+  "incline-bench": "Incline Bench Press",
+  "incline-db-curl": "Incline Dumbbell Curl",
+  "incline-db-press": "Incline Dumbbell Press",
+  "incline-treadmill-walk": "Incline Treadmill Walking",
+  "inverted-row": "Inverted Row",
+  "jm-press": "JM Press",
+  "jump-rope": "Jump Rope",
+  "kettlebell-swing": "Kettlebell Swing",
+  "l-sit": "L-Sit",
+  "landmine-press": "Landmine Press",
+  "landmine-squat": "Landmine Squat",
+  "lat-pulldown": "Lat Pulldown",
+  "lateral-raise": "Lateral Raise",
+  "leg-extension": "Leg Extension",
+  "leg-press": "Leg Press",
+  "leg-raise": "Hanging Leg Raise",
+  "lu-raise": "Lu Raise",
+  "lunges": "Lunges",
+  "machine-chest-fly": "Machine Chest Fly",
+  "man-maker": "Man Maker",
+  "meadows-row": "Meadows Row",
+  "mountain-climbers": "Mountain Climbers",
+  "muscle-ups": "Muscle-Ups",
+  "nordic-hamstring-curl": "Nordic Hamstring Curl",
+  "overhead-cable-tricep-extension": "Overhead Cable Tricep Extension",
+  "overhead-extension": "Overhead Tricep Extension",
+  "overhead-press": "Overhead Press",
+  "pallof-press": "Pallof Press",
+  "pec-deck": "Pec Deck",
+  "pendlay-row": "Pendlay Row",
+  "pike-push-up": "Pike Push-Up",
+  "pistol-squat": "Pistol Squats",
+  "plank": "Plank",
+  "preacher-curl": "Preacher Curl",
+  "pull-ups": "Pull-Ups",
+  "push-ups": "Push-Ups",
+  "rack-pull": "Rack Pull",
+  "rear-delt-machine-fly": "Rear Delt Machine Fly",
+  "reverse-barbell-curl": "Reverse Barbell Curl",
+  "reverse-flyes": "Reverse Flyes",
+  "reverse-grip-cable-pushdown": "Reverse Grip Cable Pushdown",
+  "reverse-pec-deck": "Reverse Pec Deck",
+  "romanian-deadlift": "Romanian Deadlift",
+  "rope-tricep-pushdown": "Rope Tricep Pushdown",
+  "rowing-machine": "Rowing Machine",
+  "russian-twist": "Russian Twist",
+  "seated-calf-raise": "Seated Calf Raise",
+  "seated-leg-curl": "Seated Leg Curl",
+  "seated-row": "Seated Cable Row",
+  "shoulder-press-machine": "Shoulder Press Machine",
+  "shrugs": "Shrugs",
+  "side-plank": "Side Plank",
+  "single-arm-cable-pushdown": "Single-Arm Cable Pushdown",
+  "single-arm-lat-pulldown": "Single-Arm Lat Pulldown",
+  "sissy-squat": "Sissy Squat",
+  "ski-erg": "Ski Erg",
+  "skull-crushers": "Skull Crushers",
+  "sled-push-pull": "Sled Push/Pull",
+  "smith-bench-press": "Smith Machine Bench Press",
+  "smith-machine-squat": "Smith Machine Squat",
+  "smith-shoulder-press": "Smith Machine Shoulder Press",
+  "spider-db-curl": "Spider Dumbbell Curl",
+  "spin-bike": "Spin Bike",
+  "squat": "Barbell Squat",
+  "stairmaster": "Stairmaster",
+  "standing-calf-raise": "Standing Calf Raise",
+  "straight-arm-pulldown": "Straight-Arm Pulldown",
+  "sumo-deadlift": "Sumo Deadlift",
+  "superman-hold": "Superman Hold",
+  "swimming": "Swimming",
+  "t-bar-row": "T-Bar Row",
+  "thrusters": "Thrusters",
+  "toe-touches": "Toe Touches",
+  "trap-bar-deadlift": "Trap Bar Deadlift",
+  "treadmill": "Treadmill",
+  "tricep-dips": "Tricep Dips",
+  "tricep-kickback": "Tricep Kickback",
+  "turkish-get-up": "Turkish Get-Up",
+  "walking-dumbbell-lunges": "Walking Dumbbell Lunges",
+  "weighted-chest-dip": "Weighted Chest Dip",
+  "weighted-plank": "Weighted Plank",
+  "weighted-push-ups": "Weighted Push-Ups",
+  "zercher-squat": "Zercher Squat",
+  "zottman-curl": "Zottman Curl",
+});
+
+// Mirror of src/lib/exercises.ts getExerciseById(id)?.name (existence + name).
+function getExerciseName(exerciseId) {
+  if (typeof exerciseId !== "string") return undefined;
+  return Object.prototype.hasOwnProperty.call(EXERCISE_NAME_BY_ID, exerciseId)
+    ? EXERCISE_NAME_BY_ID[exerciseId]
+    : undefined;
+}
+
+function isCatalogExerciseId(exerciseId) {
+  return getExerciseName(exerciseId) !== undefined;
+}
+
+module.exports = {
+  EXERCISE_NAME_BY_ID,
+  getExerciseName,
+  isCatalogExerciseId,
+};
