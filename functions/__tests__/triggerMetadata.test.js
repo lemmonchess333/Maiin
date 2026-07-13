@@ -23,6 +23,11 @@ const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "tropos-unit-test";
 
 const EXPECTED = {
+  applyProgramCommand: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   verifyApplePurchase: {
     kind: "callable",
     maxInstances: 100,
