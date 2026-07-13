@@ -5399,24 +5399,17 @@ exports.toggleKudosCallable = functions
       // doesn't spam the recipient.
       if (result && result.kudosed) {
         try {
-          const activitySnap = await admin
-            .firestore()
-            .collection("activities")
-            .doc(activityId)
-            .get();
-          const activity = activitySnap.exists ? activitySnap.data() : null;
-          if (
-            activity &&
-            activity.authorId &&
-            activity.authorId !== context.auth.uid
-          ) {
+          // Use the author verified inside the toggle txn — no post-txn
+          // re-read (which would also re-expose a now-private activity).
+          const activityAuthorId = result && result.activityAuthorId;
+          if (activityAuthorId && activityAuthorId !== context.auth.uid) {
             const fromName =
               (data && typeof data.fromName === "string" && data.fromName) ||
               "Someone";
             await socialFanout.createNotification({
               firestore: admin.firestore(),
               fromUid: context.auth.uid,
-              toUid: activity.authorId,
+              toUid: activityAuthorId,
               data: {
                 type: "kudos",
                 fromName,
@@ -5444,9 +5437,14 @@ exports.toggleKudosCallable = functions
         activityId,
         error: err && err.message,
       });
+      // A visibility denial maps to a GENERIC permission-denied — never
+      // disclose whether the activity exists, is private, or followers-only.
+      const isAccessError = err && err.code === "activity-not-accessible";
       throw new functions.https.HttpsError(
-        "failed-precondition",
-        (err && err.message) || "Kudos toggle failed."
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This activity is unavailable."
+          : (err && err.message) || "Kudos toggle failed."
       );
     }
   });
@@ -5500,23 +5498,16 @@ exports.addCommentCallable = functions
       // now written server-side. Lookup activity author so we don't
       // trust client-supplied target uid (no impersonation surface).
       try {
-        const activitySnap = await admin
-          .firestore()
-          .collection("activities")
-          .doc(activityId)
-          .get();
-        const activity = activitySnap.exists ? activitySnap.data() : null;
-        if (
-          activity &&
-          activity.authorId &&
-          activity.authorId !== context.auth.uid
-        ) {
+        // Notify the author verified inside the addComment txn — no post-txn
+        // re-read of a possibly-now-private activity.
+        const activityAuthorId = result && result.activityAuthorId;
+        if (activityAuthorId && activityAuthorId !== context.auth.uid) {
           const fromName =
             (typeof authorName === "string" && authorName) || "Someone";
           await socialFanout.createNotification({
             firestore: admin.firestore(),
             fromUid: context.auth.uid,
-            toUid: activity.authorId,
+            toUid: activityAuthorId,
             data: {
               type: "comment",
               fromName,
@@ -5591,12 +5582,16 @@ exports.deleteCommentCallable = functions
         commentId,
         error: err && err.message,
       });
-      // "not authorized" → permission-denied; other errors →
-      // failed-precondition.
+      // "not authorized" (wrong author) AND "activity-not-accessible" (lost
+      // visibility) both → permission-denied; the access case returns a
+      // generic message that doesn't disclose the activity's state.
+      const isAccessError = err && err.code === "activity-not-accessible";
       const isAuthz = err && /not authorized/.test(err.message || "");
       throw new functions.https.HttpsError(
-        isAuthz ? "permission-denied" : "failed-precondition",
-        (err && err.message) || "Comment delete failed."
+        isAccessError || isAuthz ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This activity is unavailable."
+          : (err && err.message) || "Comment delete failed."
       );
     }
   });
@@ -5661,9 +5656,12 @@ exports.toggleCommentReactionCallable = functions
         commentId,
         error: err && err.message,
       });
+      const isAccessError = err && err.code === "activity-not-accessible";
       throw new functions.https.HttpsError(
-        "failed-precondition",
-        (err && err.message) || "Reaction failed."
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This activity is unavailable."
+          : (err && err.message) || "Reaction failed."
       );
     }
   });
