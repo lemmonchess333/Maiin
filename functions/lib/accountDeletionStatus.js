@@ -116,7 +116,11 @@ function isTombstoneLive(tombstoneDoc, nowMs) {
       : tombstoneDoc.expiresAt.toMillis
       ? tombstoneDoc.expiresAt.toMillis()
       : new Date(tombstoneDoc.expiresAt).getTime();
-  return expiresMs > now;
+  // A malformed expiry (NaN) must be treated as LIVE, not dead: `NaN > now`
+  // is false, which would silently re-open server-side writes for a still-
+  // physically-present tombstone. Fail closed to match the missing-expiry
+  // branch above and the Rules existence-only gate.
+  return !Number.isFinite(expiresMs) || expiresMs > now;
 }
 
 /* ── Error factories ──────────────────────────────────────────────── */
