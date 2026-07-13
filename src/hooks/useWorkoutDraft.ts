@@ -75,6 +75,11 @@ export interface WorkoutDraft {
    *  targets the SAME workout instead of appending a duplicate. Repaired
    *  once (and persisted) if a pre-packet-15 draft is resumed. */
   completionId: string;
+  /** Stable idempotency key for packet 18's program-command receipt. A retry
+   *  or outbox replay must reuse this so one lost callable response cannot mint
+   *  a second receipt. Defaults to `completionId` when repairing an older
+   *  draft. */
+  completionCommandId: string;
 }
 
 /**
@@ -171,15 +176,30 @@ function readDraftAt(key: string): WorkoutDraft | null {
       removeKey(key);
       return null;
     }
+    const completionId =
+      typeof parsed.completionId === "string" && parsed.completionId.length > 0
+        ? parsed.completionId
+        : createWorkoutCompletionId();
+    // Packet 18's command receipt needs a session-stable key too. Reuse the
+    // completion id when repairing an older draft so a retry after a lost
+    // callable response cannot mint a second receipt.
+    const completionCommandId =
+      typeof parsed.completionCommandId === "string" &&
+      parsed.completionCommandId.length > 0
+        ? parsed.completionCommandId
+        : completionId;
     if (
-      typeof parsed.completionId === "string" &&
-      parsed.completionId.length > 0
+      parsed.completionId === completionId &&
+      parsed.completionCommandId === completionCommandId
     ) {
       return parsed as WorkoutDraft;
     }
+    // Persist the repaired ids so a later remount doesn't mint different ones
+    // and defeat retry idempotency.
     const repaired: WorkoutDraft = {
       ...(parsed as WorkoutDraft),
-      completionId: createWorkoutCompletionId(),
+      completionId,
+      completionCommandId,
     };
     writeDraftAt(key, repaired);
     return repaired;
