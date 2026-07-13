@@ -10,9 +10,6 @@ import {
   onSnapshot,
   Timestamp,
   limit,
-  startAfter,
-  getDocs,
-  QueryDocumentSnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
@@ -95,79 +92,92 @@ export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
   );
 }
 
-export function useWorkouts() {
+/**
+ * Read coverage for the workouts subscription.
+ *  - "recent"   (default) — the newest RECENT_WORKOUT_LIMIT workouts. Correct
+ *    for Home / Programme / feed surfaces that only need latest state.
+ *  - "complete" — every workout document, newest-first. Required by the
+ *    surfaces that promise LIFETIME data (History, ExerciseHistory), which
+ *    were silently omitting the oldest once a user logged >50 workouts.
+ */
+export type WorkoutCoverage = "recent" | "complete";
+
+export interface UseWorkoutsOptions {
+  coverage?: WorkoutCoverage;
+}
+
+const RECENT_WORKOUT_LIMIT = 50;
+
+export function useWorkouts(options: UseWorkoutsOptions = {}) {
   const { user, profile } = useAuth();
+  const uid = user?.uid;
+  const coverage = options.coverage ?? "recent";
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
-
-  const PAGE_SIZE = 50;
 
   useEffect(() => {
-    if (!user) {
-      const reset = () => {
-        setWorkouts([]);
-        setLoading(false);
-      };
-      reset();
+    if (!uid) {
+      setWorkouts([]);
+      setLoading(false);
       return;
     }
 
-    const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const q = query(workoutsRef, orderBy("date", "desc"), limit(PAGE_SIZE));
+    // Never render account A's history while account B's listener is still
+    // establishing, and reset cleanly when coverage changes. The captured
+    // `uid` is the only uid these callbacks may act on.
+    let active = true;
+    setWorkouts([]);
+    setLoading(true);
+
+    const workoutsRef = collection(db, "users", uid, "workouts");
+    const q =
+      coverage === "complete"
+        ? query(workoutsRef, orderBy("date", "desc"))
+        : query(
+            workoutsRef,
+            orderBy("date", "desc"),
+            limit(RECENT_WORKOUT_LIMIT)
+          );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        if (!active) return;
         const data = snapshot.docs
           .map((d) => ({ id: d.id, ...d.data() }) as Workout)
           .filter(
             (d) => typeof d.date === "string" && Array.isArray(d.exercises)
           );
         setWorkouts(data);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMore(snapshot.docs.length >= PAGE_SIZE);
         setLoading(false);
         // Activation funnel: fire `workout_completed` once per newly-created
-        // workout across all write paths (saveWorkout / completeWorkoutDay /
-        // session). Baseline-guarded + deduped by uid.
-        noteActivitySnapshot(
-          "workout",
-          user.uid,
-          snapshot.docs.map((d) => d.id)
-        );
+        // workout across all write paths. Only the "recent" listener is the
+        // lifecycle event source — a "complete" listener can mount after a
+        // recent one and would falsely count every pre-existing workout
+        // beyond the first 50 as newly-created activity.
+        if (coverage === "recent") {
+          noteActivitySnapshot(
+            "workout",
+            uid,
+            snapshot.docs.map((d) => d.id)
+          );
+        }
       },
       // Surface the failure so the UI exits its skeleton; retain any
       // previously loaded workouts so a transient rule or network error
       // doesn't empty the history view.
       (err) => {
+        if (!active) return;
         logger.error("[useWorkouts] snapshot subscription failed", err);
         setLoading(false);
-        setHasMore(false);
       }
     );
 
-    return unsubscribe;
-  }, [user]);
-
-  const loadMore = useCallback(async () => {
-    if (!user || !lastDoc || !hasMore) return;
-    const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const q = query(
-      workoutsRef,
-      orderBy("date", "desc"),
-      startAfter(lastDoc),
-      limit(PAGE_SIZE)
-    );
-    const snapshot = await getDocs(q);
-    const newData = snapshot.docs
-      .map((d) => ({ id: d.id, ...d.data() }) as Workout)
-      .filter((d) => typeof d.date === "string" && Array.isArray(d.exercises));
-    setWorkouts((prev) => [...prev, ...newData]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setHasMore(snapshot.docs.length >= PAGE_SIZE);
-  }, [user, lastDoc, hasMore]);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [uid, coverage]);
 
   const saveWorkout = useCallback(
     async (workout: Omit<Workout, "id" | "createdAt">) => {
@@ -247,8 +257,6 @@ export function useWorkouts() {
   return {
     workouts,
     loading,
-    hasMore,
-    loadMore,
     saveWorkout,
     deleteWorkout,
     getWorkoutsForDate,

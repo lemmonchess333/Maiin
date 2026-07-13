@@ -359,7 +359,10 @@ export default function History() {
     loading: runsLoading,
     refresh: refreshRuns,
   } = useRunningStats(rangeDays);
-  const { workouts, loading: workoutsLoading } = useWorkouts();
+  // Lifetime totals below need EVERY workout, not just the newest 50.
+  const { workouts, loading: workoutsLoading } = useWorkouts({
+    coverage: "complete",
+  });
   // Training-load curve feed — self-fetching (needs warmup history beyond
   // the visible range, so it can't reuse the range-scoped runs above).
   const trainingLoad = useTrainingLoadSeries(rangeDays);

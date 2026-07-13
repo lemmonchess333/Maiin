@@ -81,7 +81,8 @@ function formatDate(dateStr: string): string {
 export default function ExerciseHistory() {
   const params = useParams<{ name: string }>();
   const decodedName = params.name ? decodeURIComponent(params.name) : "";
-  const { workouts, loading } = useWorkouts();
+  // All-range sessions / all-time PRs need EVERY workout, not just the newest 50.
+  const { workouts, loading } = useWorkouts({ coverage: "complete" });
   const navigate = useNavigate();
   const location = useLocation();
 
