@@ -136,10 +136,12 @@ export default function ReportModal({
         await blockUser(user.uid, targetAuthorUid);
       }
       if (doReport) {
-        await reportContent(user.uid, {
+        // Packet 14: callable-only; the server resolves the target author.
+        // targetAuthorUid stays a prop for the local block action, but is
+        // NEVER sent to the report — the server derives it.
+        await reportContent({
           targetType,
           targetId,
-          targetUid: targetAuthorUid,
           category,
           subReason: subReason ?? undefined,
           freeformNote: freeform.trim() || undefined,
