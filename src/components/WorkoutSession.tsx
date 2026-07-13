@@ -47,7 +47,12 @@ import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
 import { platesPerSide } from "@/lib/plateCalculator";
-import { useWorkoutDraft, computeDraftIdentity } from "@/hooks/useWorkoutDraft";
+import {
+  useWorkoutDraft,
+  computeDraftIdentity,
+  createWorkoutCompletionId,
+} from "@/hooks/useWorkoutDraft";
+import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import RestTimerRing from "@/components/workout/RestTimerRing";
@@ -165,14 +170,15 @@ interface Props {
   ) => Promise<void>;
   onCompleteDay: (
     dayIndex: number,
-    sessionData?: {
+    sessionData: {
+      completionId: string;
       durationMinutes: number;
       setLogs: Array<
         Array<{ weight: number; reps: number; completed: boolean }>
       >;
       sessionVariant?: "express45" | "express30";
     }
-  ) => Promise<void>;
+  ) => Promise<unknown>;
   onClose: () => void;
 }
 
@@ -213,6 +219,12 @@ export default function WorkoutSession({
   } = useWorkoutDraft(user?.uid, dayIndex, draftIdentity);
   // Captured once on mount — stable across renders via the stable hook callbacks.
   const initialDraft = useMemo(() => loadDraft(), [loadDraft]);
+  // One completion id per session (packet 15). Resumed from the draft when
+  // present so a retry/resume targets the SAME workout doc; persisted into
+  // every draft save below. Never regenerated per Finish click.
+  const completionIdRef = useRef(
+    initialDraft?.completionId ?? createWorkoutCompletionId()
+  );
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null
   );
@@ -457,6 +469,7 @@ export default function WorkoutSession({
       exerciseNotes,
       elapsedSeconds: elapsedSecondsRef.current,
       currentExIndex,
+      completionId: completionIdRef.current,
     });
   }, [
     setLogs,
@@ -911,65 +924,78 @@ export default function WorkoutSession({
   }, [sessionComplete, user?.uid, day.exercises]);
 
   const handleFinish = async () => {
+    if (completing) return;
     setCompleting(true);
-    // Pass the wall-clock duration + per-set logs so the saved workout
-    // record reflects actual execution instead of planned placeholders.
-    // sessionDurationMinutes is finalised in completeSession at the moment
-    // the last set is marked done (see line 404); setLogs is the source of
-    // truth for which sets were completed with what weight/reps.
-    await onCompleteDay(dayIndex, {
-      durationMinutes: sessionDurationMinutes,
-      setLogs: setLogs.map((exSets) =>
-        exSets.map((s) => ({
-          weight: s.weight,
-          reps: s.reps,
-          completed: s.completed,
-        }))
-      ),
-      sessionVariant,
-    });
+    let saved = false;
 
-    // Persist PR map to Firestore for history beyond 50-session window
-    if (user?.uid && Object.keys(prMap).length > 0) {
-      try {
-        const { doc: fbDoc } = await import("firebase/firestore");
-        const { Timestamp } = await import("firebase/firestore");
-        await setDocGuarded(
-          fbDoc(db, "users", user.uid, "stats", "prMap"),
-          {
-            map: prMap,
-            sessionCounts,
-            updatedAt: Timestamp.now(),
-          },
-          { merge: true }
-        );
-      } catch {
-        // Non-critical — map can be rebuilt from history
-      }
-    }
-
-    // Clear the draft only after the workout is saved. If onCompleteDay
-    // throws above, the draft survives so the user can retry the finish.
-    clearDraft();
-
-    // first_pr badge — a genuine PR fired this session (checkSetPR: beat a
-    // previous best after ≥3 sessions with that exercise). Event-based, so
-    // awarded here at the moment it happens; idempotent + celebration via the
-    // standard queue. firedPRs is the same signal SessionCompleteScreen counts.
-    if (firedPRs.size > 0) awardEventBadge("first_pr");
-
-    // Streak-priming trigger (audit #10): completing a workout — post
-    // celebration — is the ONLY moment the streak-reminder priming modal may
-    // surface. The global modal listens for this event; it no longer fires on
-    // app-open or page mount, so landing on the Programme page never pops it.
     try {
-      window.dispatchEvent(new CustomEvent("tropos:workout-completed"));
-    } catch {
-      // CustomEvent unsupported / SSR — priming simply won't prompt; harmless.
+      // Pass the wall-clock duration + per-set logs so the saved workout
+      // record reflects actual execution instead of planned placeholders.
+      // The stable completionId makes a retry target the SAME workout doc.
+      await onCompleteDay(dayIndex, {
+        completionId: completionIdRef.current,
+        durationMinutes: sessionDurationMinutes,
+        setLogs: setLogs.map((exSets) =>
+          exSets.map((s) => ({
+            weight: s.weight,
+            reps: s.reps,
+            completed: s.completed,
+          }))
+        ),
+        sessionVariant,
+      });
+
+      // Persist PR map to Firestore for history beyond 50-session window.
+      // Best-effort — the workout already committed above.
+      if (user?.uid && Object.keys(prMap).length > 0) {
+        try {
+          const { doc: fbDoc } = await import("firebase/firestore");
+          const { Timestamp } = await import("firebase/firestore");
+          await setDocGuarded(
+            fbDoc(db, "users", user.uid, "stats", "prMap"),
+            {
+              map: prMap,
+              sessionCounts,
+              updatedAt: Timestamp.now(),
+            },
+            { merge: true }
+          );
+        } catch {
+          // Non-critical — map can be rebuilt from history
+        }
+      }
+
+      // Clear the draft only after the workout is saved.
+      clearDraft();
+
+      // first_pr badge — a genuine PR fired this session. Event-based, so
+      // awarded here at the moment it happens; idempotent + celebration via
+      // the standard queue.
+      if (firedPRs.size > 0) awardEventBadge("first_pr");
+
+      // Streak-priming trigger (audit #10): completing a workout — post
+      // celebration — is the ONLY moment the streak-reminder priming modal may
+      // surface. The global modal listens for this event.
+      try {
+        window.dispatchEvent(new CustomEvent("tropos:workout-completed"));
+      } catch {
+        // CustomEvent unsupported / SSR — priming simply won't prompt.
+      }
+
+      saved = true;
+    } catch (error) {
+      // The core save failed. Do NOT clear the draft, reset set logs, close
+      // the session, or mint a new completion id — the user taps the (now
+      // re-enabled) Save button again and hits the exact same workout doc.
+      logger.error("[WorkoutSession] finish failed:", error);
+      toast.error(
+        "Couldn't save your workout. Your completed session is still here — try again."
+      );
+    } finally {
+      setCompleting(false);
     }
 
-    setCompleting(false);
-    onClose();
+    if (saved) onClose();
   };
 
   const handleStartFresh = () => {

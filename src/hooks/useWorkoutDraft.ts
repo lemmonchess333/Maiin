@@ -60,6 +60,31 @@ export interface WorkoutDraft {
    *  written before identity existed lack this field and are dropped
    *  on read. */
   identity: string;
+  /** Stable idempotency key for this session's completion (packet 15).
+   *  Drives the deterministic workout doc id so a retried/resumed Finish
+   *  targets the SAME workout instead of appending a duplicate. Repaired
+   *  once (and persisted) if a pre-packet-15 draft is resumed. */
+  completionId: string;
+}
+
+/**
+ * Mint a session-stable workout completion id. Used when a fresh session
+ * starts (or a legacy draft without one is resumed). crypto.randomUUID
+ * where available, with a timestamp+random fallback for older WebViews.
+ */
+export function createWorkoutCompletionId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return (
+    "fallback-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2)
+  );
 }
 
 export interface DraftIdentityParts {
@@ -166,6 +191,21 @@ export function useWorkoutDraft(
     // session (another day / week / routine) — leave it in place for
     // that surface; just don't offer it here.
     if (draft.dayIndex !== dayIndex || draft.identity !== identity) return null;
+    // Repair a pre-packet-15 draft that predates completionId: mint one and
+    // persist it, so a resumed session keeps a stable idempotency key across
+    // remounts rather than minting a new one (and a new workout) on retry.
+    if (!draft.completionId) {
+      const repaired: WorkoutDraft = {
+        ...draft,
+        completionId: createWorkoutCompletionId(),
+      };
+      try {
+        localStorage.setItem(storageKey(uid), JSON.stringify(repaired));
+      } catch {
+        // Storage unavailable — return the in-memory repaired draft anyway.
+      }
+      return repaired;
+    }
     return draft;
   }, [uid, dayIndex, identity]);
 

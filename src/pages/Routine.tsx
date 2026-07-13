@@ -115,67 +115,77 @@ export default function Routine() {
   const handleCompleteRoutine = useCallback(
     async (
       _dayIndex: number,
-      sessionData?: {
+      sessionData: {
+        completionId: string;
         durationMinutes: number;
         setLogs: Array<
           Array<{ weight: number; reps: number; completed: boolean }>
         >;
       }
     ) => {
-      if (!user || !routine || !synthDay) return;
+      // Fail CLOSED — returning silently would let WorkoutSession clear the
+      // draft + navigate as if the save succeeded.
+      if (!user || !routine || !synthDay) {
+        throw new Error(
+          "Cannot save a routine without an active user + routine."
+        );
+      }
 
-      try {
-        const today = format(new Date(), "yyyy-MM-dd");
-        const workoutId = `${today}-routine-${Date.now()}`;
-        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+      const today = format(new Date(), "yyyy-MM-dd");
+      // Deterministic id — a retried/resumed Finish overwrites the same doc.
+      const workoutId = `routine-${sessionData.completionId}`;
+      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
 
-        const exercises = synthDay.exercises.map((ex, exIndex) => {
-          const logs = sessionData?.setLogs?.[exIndex];
-          const sets = logs
-            ? logs
-                .filter((l) => l.completed)
-                .map((l, i) => ({
-                  setNumber: i + 1,
-                  reps: l.reps,
-                  weightKg: l.weight,
-                }))
-            : Array.from({ length: ex.sets }, (_, i) => ({
+      const exercises = synthDay.exercises.map((ex, exIndex) => {
+        const logs = sessionData?.setLogs?.[exIndex];
+        const sets = logs
+          ? logs
+              .filter((l) => l.completed)
+              .map((l, i) => ({
                 setNumber: i + 1,
-                reps: ex.reps,
-                weightKg: ex.weight,
-              }));
-          return {
-            exerciseId: ex.exerciseId,
-            exerciseName: ex.name,
-            category: ex.movementCategory,
-            sets,
-            caloriesBurned: 0,
-          };
-        });
+                reps: l.reps,
+                weightKg: l.weight,
+              }))
+          : Array.from({ length: ex.sets }, (_, i) => ({
+              setNumber: i + 1,
+              reps: ex.reps,
+              weightKg: ex.weight,
+            }));
+        return {
+          exerciseId: ex.exerciseId,
+          exerciseName: ex.name,
+          category: ex.movementCategory,
+          sets,
+          caloriesBurned: 0,
+        };
+      });
 
-        const tonnage = exercises.reduce(
-          (t, ex) =>
-            t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-          0
-        );
-        const completedSetCount = exercises.reduce(
-          (c, ex) => c + ex.sets.length,
-          0
-        );
-        const bodyweightKg = profile?.weightKg ?? 0;
-        const durationMinutes =
-          sessionData?.durationMinutes && sessionData.durationMinutes > 0
-            ? sessionData.durationMinutes
-            : 0;
-        const totalCalories = estimateLiftBurn({
-          durationMinutes,
-          tonnageKg: tonnage,
-          bodyweightKg,
-          completedSetCount,
-        });
-        const effectiveDurationMin =
-          durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+      const tonnage = exercises.reduce(
+        (t, ex) =>
+          t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+        0
+      );
+      const completedSetCount = exercises.reduce(
+        (c, ex) => c + ex.sets.length,
+        0
+      );
+      const bodyweightKg = profile?.weightKg ?? 0;
+      const durationMinutes =
+        sessionData?.durationMinutes && sessionData.durationMinutes > 0
+          ? sessionData.durationMinutes
+          : 0;
+      const totalCalories = estimateLiftBurn({
+        durationMinutes,
+        tonnageKg: tonnage,
+        bodyweightKg,
+        completedSetCount,
+      });
+      const effectiveDurationMin =
+        durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
 
+      // ── CORE write. Propagate a failure so WorkoutSession keeps the
+      // completed session mounted, retains the draft, and re-enables Save.
+      try {
         await setDocGuarded(workoutRef, {
           date: today,
           exercises,
@@ -184,10 +194,18 @@ export default function Routine() {
           notes: `Routine: ${routine.name} (saved from ${routine.sourceAuthorName})`,
           createdAt: Timestamp.now(),
           source: "routine",
+          completionId: sessionData.completionId,
           routineId: routine.id,
           routineName: routine.name,
         });
+      } catch (err) {
+        logger.error("[Routine] completion write failed:", err);
+        toast.error("Couldn't save workout. Try again.");
+        throw err;
+      }
 
+      // ── POST-SAVE best-effort: sharing must not invalidate a saved workout.
+      try {
         /* Share composer: same flow as useProgram.completeWorkoutDay.
            Title uses the routine name so the social card identifies
            the workout the same way the user thinks of it. */
@@ -249,24 +267,23 @@ export default function Routine() {
             }
           }
         }
-
-        /* Hist5d Stress 19 / PR 7b — return-link toast closes the
-           PRs-tab cold-start loop. Any saved workout may have set
-           a per-exercise lifetime or recent-bests PR, so we surface
-           a quick way back to the PRs tab without forcing the user
-           to remember to navigate. Sonner auto-dismisses in 4s;
-           tap "View PRs" → /history?tab=prs. */
-        toast.success("Workout saved", {
-          action: {
-            label: "View PRs",
-            onClick: () => navigate("/history?tab=prs"),
-          },
-        });
-        navigate("/program");
       } catch (err) {
-        logger.error("[Routine] complete failed:", err);
-        toast.error("Couldn't save workout. Try again.");
+        logger.warn("[Routine] post-save sharing failed:", err);
       }
+
+      /* Hist5d Stress 19 / PR 7b — return-link toast closes the
+         PRs-tab cold-start loop. Any saved workout may have set
+         a per-exercise lifetime or recent-bests PR, so we surface
+         a quick way back to the PRs tab. Sonner auto-dismisses in 4s;
+         tap "View PRs" → /history?tab=prs. No navigate("/program") here —
+         WorkoutSession's onClose handles navigation on success; a thrown
+         core-write error keeps the completed session mounted. */
+      toast.success("Workout saved", {
+        action: {
+          label: "View PRs",
+          onClick: () => navigate("/history?tab=prs"),
+        },
+      });
     },
     [user, routine, synthDay, profile, navigate]
   );
