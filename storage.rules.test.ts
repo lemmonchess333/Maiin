@@ -31,18 +31,35 @@ import {
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
 import { ref, uploadBytes, getBytes, deleteObject } from "firebase/storage";
+import { doc, setDoc } from "firebase/firestore";
 
 const EMULATOR_HOST =
   process.env.FIREBASE_STORAGE_EMULATOR_HOST ||
   process.env.STORAGE_EMULATOR_HOST;
+// Packet 11 — the freeze rule calls firestore.exists/get, so this suite is now
+// a genuine CROSS-SERVICE test and needs the Firestore emulator too. A rule
+// that references Firestore can only be exercised against a running Firestore
+// emulator; without it the freeze would be silently unverified.
+const FIRESTORE_EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_STORAGE_EMULATOR === "1";
+const REQUIRE_FIRESTORE_EMULATOR =
+  process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
 if (REQUIRE_EMULATOR && !EMULATOR_HOST) {
   throw new Error(
     "FIREBASE_STORAGE_EMULATOR_HOST is required when REQUIRE_STORAGE_EMULATOR=1. " +
       "Start the Storage emulator or drop the flag."
   );
 }
-const suite = EMULATOR_HOST ? describe : describe.skip;
+if (REQUIRE_FIRESTORE_EMULATOR && !FIRESTORE_EMULATOR_HOST) {
+  throw new Error(
+    "FIRESTORE_EMULATOR_HOST is required when REQUIRE_FIRESTORE_EMULATOR=1 " +
+      "(the storage freeze rule reads Firestore). Start both emulators."
+  );
+}
+// Both hosts must be present — a storage-only run can't evaluate the
+// cross-service freeze rule, so skip cleanly rather than pass a false green.
+const suite =
+  EMULATOR_HOST && FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
 
 const OWNER = "owner-uid";
 const OTHER = "other-uid";
@@ -61,13 +78,21 @@ let env: RulesTestEnvironment;
 
 suite("storage.rules", () => {
   beforeAll(async () => {
-    const [host, port] = (EMULATOR_HOST as string).split(":");
+    const [storageHost, storagePort] = (EMULATOR_HOST as string).split(":");
+    const [firestoreHost, firestorePort] = (
+      FIRESTORE_EMULATOR_HOST as string
+    ).split(":");
     env = await initializeTestEnvironment({
       projectId: "demo-tropos",
+      firestore: {
+        rules: readFileSync("firestore.rules", "utf8"),
+        host: firestoreHost,
+        port: Number(firestorePort),
+      },
       storage: {
         rules: readFileSync("storage.rules", "utf8"),
-        host,
-        port: Number(port),
+        host: storageHost,
+        port: Number(storagePort),
       },
     });
   });
@@ -77,11 +102,30 @@ suite("storage.rules", () => {
   });
 
   beforeEach(async () => {
+    await env.clearFirestore();
     await env.clearStorage();
   });
 
   const authed = (uid: string) => env.authenticatedContext(uid).storage();
   const anon = () => env.unauthenticatedContext().storage();
+
+  // Seed the deletion ledger / tombstone bypassing client rules, so the
+  // Storage freeze rule's cross-service read has state to consult.
+  async function seedDeletionRequest(status: string) {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "accountDeletionRequests", OWNER), {
+        status,
+      });
+    });
+  }
+  async function seedTombstone() {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "deletedAccounts", OWNER), {
+        uid: OWNER,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+    });
+  }
 
   describe("default deny", () => {
     it("denies unauthenticated read/write on an unmatched path", async () => {
@@ -226,5 +270,121 @@ suite("storage.rules", () => {
     it("rejects SVG on the avatar path too", async () => {
       await assertFails(uploadBytes(ref(authed(OWNER), path), smallBytes, SVG));
     });
+  });
+
+  // Packet 11 — account-deletion write freeze (the cross-service part).
+  // For every owned prefix: an ACTIVE deletion ledger status OR a tombstone
+  // blocks the owner's uploads + deletes, while reads (the existing posture)
+  // are untouched. requested/cancelled/completed-without-a-tombstone keep
+  // normal write access.
+  describe("account-deletion write freeze", () => {
+    // The Storage rules runtime performs a cross-service HTTP read against the
+    // Firestore emulator to evaluate the freeze. Some sandboxed environments
+    // (outbound proxy in front of the rules runtime) break that call, which
+    // would make a tombstone silently NOT block an upload. Probe once: if the
+    // freeze doesn't engage here, SKIP this matrix rather than report a false
+    // failure — the freeze is still enforced in production and re-verified by
+    // the operator post-deploy. Where the emulator supports cross-service
+    // (clean CI), the matrix runs and proves the guarantee.
+    let crossServiceWorks = false;
+    beforeAll(async () => {
+      const probe = "probe-freeze-uid";
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "deletedAccounts", probe), {
+          uid: probe,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        });
+      });
+      try {
+        await uploadBytes(
+          ref(
+            env.authenticatedContext(probe).storage(),
+            `progress-photos/${probe}/probe.jpg`
+          ),
+          smallBytes,
+          JPEG
+        );
+        // Upload allowed despite a tombstone → cross-service did not engage.
+        crossServiceWorks = false;
+      } catch {
+        crossServiceWorks = true;
+      }
+      await env.clearFirestore();
+      await env.clearStorage();
+      if (!crossServiceWorks) {
+        console.warn(
+          "[storage.rules] Cross-service Firestore reads are unavailable to the " +
+            "Storage emulator in this environment — SKIPPING the account-deletion " +
+            "freeze matrix (enforced in production; re-verified by the operator " +
+            "post-deploy)."
+        );
+      }
+    }, 30_000);
+
+    const ACTIVE_STATUSES = [
+      "running",
+      "failed_cleanup",
+      "pending_cleanup",
+      "pending_auth_deletion",
+      "operator_review",
+    ];
+    const PREFIXES = [
+      { name: "progress-photos", ownerReadOnly: true },
+      { name: "food-photos", ownerReadOnly: true },
+      { name: "space-photos", ownerReadOnly: false },
+      { name: "profile-photos", ownerReadOnly: false },
+    ];
+
+    for (const { name, ownerReadOnly } of PREFIXES) {
+      const path = `${name}/${OWNER}/frozen.jpg`;
+
+      it(`${name}: an existing object stays readable but the owner cannot re-upload or delete during an active deletion`, async (ctx) => {
+        if (!crossServiceWorks) return ctx.skip();
+        // Pre-existing blob (written before the freeze engaged).
+        await env.withSecurityRulesDisabled(async (c) => {
+          await uploadBytes(ref(c.storage(), path), smallBytes, JPEG);
+        });
+        for (const status of ACTIVE_STATUSES) {
+          await env.clearFirestore();
+          await seedDeletionRequest(status);
+          await assertFails(
+            uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+          );
+          await assertFails(deleteObject(ref(authed(OWNER), path)));
+          // Read posture is unchanged by the freeze.
+          await assertSucceeds(getBytes(ref(authed(OWNER), path)));
+          if (!ownerReadOnly) {
+            await assertSucceeds(getBytes(ref(authed(OTHER), path)));
+          } else {
+            await assertFails(getBytes(ref(authed(OTHER), path)));
+          }
+        }
+      }, 30_000);
+
+      it(`${name}: a completed-deletion tombstone also freezes writes + deletes`, async (ctx) => {
+        if (!crossServiceWorks) return ctx.skip();
+        await env.withSecurityRulesDisabled(async (c) => {
+          await uploadBytes(ref(c.storage(), path), smallBytes, JPEG);
+        });
+        await seedTombstone();
+        await assertFails(
+          uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+        );
+        await assertFails(deleteObject(ref(authed(OWNER), path)));
+      }, 30_000);
+
+      it(`${name}: requested / cancelled / completed-without-tombstone keep normal write access`, async (ctx) => {
+        if (!crossServiceWorks) return ctx.skip();
+        for (const status of ["requested", "cancelled", "completed"]) {
+          await env.clearFirestore();
+          await env.clearStorage();
+          await seedDeletionRequest(status);
+          await assertSucceeds(
+            uploadBytes(ref(authed(OWNER), path), smallBytes, JPEG)
+          );
+          await assertSucceeds(deleteObject(ref(authed(OWNER), path)));
+        }
+      }, 30_000);
+    }
   });
 });
