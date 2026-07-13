@@ -41,18 +41,26 @@ interface ReportTarget {
   activityId?: string;
   visibility?: string | null;
   flagged?: boolean;
+  title?: string | null;
+  body?: string | null;
+  spaceId?: string;
 }
 
 interface Report {
   reportId: string;
-  reporterId: string;
-  targetType: "activity" | "comment" | "user";
-  targetId: string;
-  /** S4e (PR #722) — uid of the reported user. Optional because
-   *  legacy report docs may pre-date the field; the Restrict-user
-   *  button hides when null and the CF rejects restrict-attempts
-   *  on reports missing it. */
+  reporterId: string | null;
+  /** Packet 14 — CANONICAL type, server-resolved from the authority marker.
+   *  null for a legacy / non-actionable report (see targetActionable). */
+  targetType: "activity" | "comment" | "user" | "space_post" | null;
+  targetId: string | null;
   targetUid: string | null;
+  /** True iff the server re-resolved a live target from a valid authority
+   *  marker — the ONLY reports on which hide/restrict may be applied. */
+  targetActionable: boolean;
+  /** Display-only diagnostics from the stored (untrusted) report doc. They
+   *  never select a target for an action. */
+  reportedTargetType: string | null;
+  reportedTargetId: string | null;
   reason: "spam" | "harassment" | "inappropriate" | "other";
   details: string | null;
   createdAt: number | null;
@@ -71,6 +79,8 @@ function targetPreview(report: Report): string {
   if (!t) return "(target unavailable)";
   if (report.targetType === "comment") return t.text || "(empty comment)";
   if (report.targetType === "user") return t.displayName || "(user)";
+  if (report.targetType === "space_post")
+    return t.title || t.body || "(empty post)";
   return (
     t.caption ||
     t.workoutName ||
@@ -217,7 +227,10 @@ export default function AdminModeration() {
                 <header className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                      {report.targetType} · {REASON_LABEL[report.reason]}
+                      {report.targetType ??
+                        report.reportedTargetType ??
+                        "unknown"}{" "}
+                      · {REASON_LABEL[report.reason]}
                     </p>
                     <p className="text-caption font-mono tabular-nums text-muted-foreground/70 mt-0.5">
                       {report.createdAt
@@ -259,24 +272,30 @@ export default function AdminModeration() {
                   >
                     Dismiss
                   </button>
-                  {report.targetType === "activity" && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void resolveReport(report.reportId, true)}
-                      className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
-                    >
-                      <EyeOff className="size-3.5" aria-hidden="true" />
-                      Hide content
-                    </button>
+                  {!report.targetActionable && (
+                    <p className="text-caption text-muted-foreground mt-1.5 basis-full">
+                      Target could not be revalidated. Dismiss only; no content
+                      action can be applied.
+                    </p>
                   )}
-                  {/* S4e (PR #722) — Restrict user button. Writes to
-                      globalRestrictedUids/{targetUid} atomically with
-                      the report resolution. Distinct from "Hide content"
-                      (which marks the activity flagged) — restriction
-                      gates the user from social actions on the Find tab.
-                      Both can be applied together for severe cases. */}
-                  {report.targetUid && (
+                  {report.targetActionable &&
+                    report.targetType === "activity" && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void resolveReport(report.reportId, true)
+                        }
+                        className="flex-1 min-w-[6rem] text-sm font-semibold px-3 py-2 rounded-lg bg-destructive text-destructive-foreground active:scale-95 transition-transform disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                      >
+                        <EyeOff className="size-3.5" aria-hidden="true" />
+                        Hide content
+                      </button>
+                    )}
+                  {/* Restrict user — writes globalRestrictedUids/{targetUid}
+                      atomically with resolution. Gated on targetActionable so
+                      a non-revalidated report can never restrict a user. */}
+                  {report.targetActionable && report.targetUid && (
                     <button
                       type="button"
                       disabled={busy}

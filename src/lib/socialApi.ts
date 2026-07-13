@@ -806,62 +806,36 @@ export type ReportCategory =
   | "impersonation"
   | "other";
 
+export type ReportTargetType = "activity" | "comment" | "user" | "space_post";
+
 export interface ReportContentInput {
-  targetType: "activity" | "comment" | "user" | "space_post";
+  targetType: ReportTargetType;
   targetId: string;
   /** Top-level category — S4b two-tier first level. */
   category: ReportCategory;
-  /** Sub-reason within the category (free-form string per category;
-   *  v1 picker enforces a closed set per category but the server
-   *  accepts any string to allow new sub-reasons without redeploys). */
+  /** Sub-reason within the category. */
   subReason?: string;
-  /** 500-char freeform note. Server-side profanity filter may flag
-   *  for admin review; UI redacts on the admin queue side. */
+  /** 500-char freeform note. */
   freeformNote?: string;
-  /** Optional. The author of the reported content — kept on the
-   *  report doc so the admin queue can group by target user even
-   *  when targetType is "comment" (where targetId is the comment
-   *  doc id, not the author uid). */
-  targetUid?: string;
-  /** Informational only — the report doc records whether the
-   *  reporter also hid + blocked. Doesn't trigger server actions;
-   *  the client orchestrates those calls separately. */
+  /** Informational only — recorded on the report doc; no server action. */
   hideFromFeed?: boolean;
   blockAuthor?: boolean;
-  /** Backwards-compat: a callsite that still uses the old `reason`
-   *  field overrides the derived value. Stays optional so new
-   *  callsites can drop it. */
-  reason?: ReportReason;
-  /** Backwards-compat alias for `freeformNote`. */
-  details?: string;
 }
 
-export async function reportContent(
-  reporterId: string,
-  data: ReportContentInput
-) {
-  const authedUid = getAuthUid();
-  if (reporterId !== authedUid) throw new Error("Identity mismatch");
-  // Derive `reason` from `category` for the admin queue's existing
-  // filter (which uses ReportReason, the old 4-value enum). The
-  // category enum is a superset so the mapping is straightforward.
-  const derivedReason: ReportReason =
-    data.reason ??
-    (data.category === "impersonation" ? "other" : data.category);
-  await addDocGuarded(collection(db, "reports"), {
-    reporterId,
-    targetType: data.targetType,
-    targetId: data.targetId,
-    targetUid: data.targetUid,
-    reason: derivedReason,
-    category: data.category,
-    subReason: data.subReason,
-    freeformNote: data.freeformNote ?? data.details,
-    hideFromFeed: !!data.hideFromFeed,
-    blockAuthor: !!data.blockAuthor,
-    status: "pending",
-    createdAt: serverTimestamp(),
-  });
+/**
+ * Packet 14: report creation is callable-only. The server resolves the
+ * target (author/uid) and issues an unforgeable reportAuthority marker; the
+ * client never sends targetUid/status/reason. A moderation action later
+ * re-resolves the target from that marker — a report is evidence, not
+ * authority.
+ */
+export async function reportContent(data: ReportContentInput): Promise<void> {
+  getAuthUid();
+  const createReport = httpsCallable<ReportContentInput, { reportId: string }>(
+    getFunctions(),
+    "createReport"
+  );
+  await createReport(data);
 }
 
 // ============================================

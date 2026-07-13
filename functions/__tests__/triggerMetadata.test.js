@@ -189,6 +189,11 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/comments/{activityId}/items/{commentId}",
   },
+  createReport: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   listPendingReports: {
     kind: "callable",
     maxInstances: 10,
