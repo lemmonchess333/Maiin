@@ -53,6 +53,9 @@ const {
   isCatalogExerciseId,
 } = require("./exerciseCatalog");
 const { buildProgramExercise } = require("./programExerciseBuilder");
+// Calorie-engine mirror (pinned by a parity cross-test). Used by the
+// completeWorkoutDay effect to compute the saved workout's totalCalories.
+const { estimateLiftBurn } = require("./workoutBurn");
 
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
@@ -982,10 +985,113 @@ function replaceExercise(state, command) {
   }));
 }
 
-// Generation-dependent kinds still staged for a later PR alongside the callable
-// (completeWorkoutDay requires admin Timestamp + the calorie engine for its
-// workout effect). Listed so a premature dispatch fails loudly.
-const STAGED_GENERATION_KINDS = new Set(["completeWorkoutDay"]);
+// Local calendar date for the saved workout, in the user's timezone. The
+// client uses localDateString() (device-local); the server has no device tz, so
+// it formats `now` in profile.timezone (IANA), falling back to UTC when the
+// timezone is absent/invalid. Deterministic given (now, timezone).
+function localDateInZone(now, timezone) {
+  const tz = typeof timezone === "string" && timezone ? timezone : "UTC";
+  const opts = {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  };
+  try {
+    // en-CA renders as YYYY-MM-DD.
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz, ...opts }).format(
+      new Date(now)
+    );
+  } catch (_e) {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "UTC",
+      ...opts,
+    }).format(new Date(now));
+  }
+}
+
+// completeWorkoutDay: marks the day complete + produces a server-derived
+// workout record (effects.workout) reproducing packet 15's shape. Mirrors
+// useProgram.completeWorkoutDay. The effect intentionally OMITS `createdAt` —
+// the callable injects `admin.firestore.Timestamp.now()` at write time (the
+// reducer stays pure). The callable writes it to
+// users/{uid}/workouts/programme-<completionId> in the same transaction.
+function completeWorkoutDayWithEffect(state, profile, command, now) {
+  const day = requireWorkoutDay(state, command);
+
+  // State: mark ONLY this day complete (force skipped:false); clear a matching
+  // nextWorkoutOverride. Other days untouched.
+  let nextState = mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    completed: true,
+    skipped: false,
+  }));
+  if (nextState.nextWorkoutOverride === command.dayIndex) {
+    nextState = { ...nextState };
+    delete nextState.nextWorkoutOverride;
+  }
+
+  // Workout record — built from validated setLogs, falling back to planned
+  // data per exercise (mirror of the client builder).
+  const setLogs = command.completion.setLogs;
+  const exercises = day.exercises.map((ex, exIndex) => {
+    const logs = setLogs ? setLogs[exIndex] : undefined;
+    const plannedWeight = ex.lastAttemptedWeight || ex.weight;
+    const plannedReps =
+      ex.lastPerformance && ex.lastPerformance.reps != null
+        ? ex.lastPerformance.reps
+        : ex.reps;
+    const sets = logs
+      ? logs
+          .filter((l) => l.completed)
+          .map((l, i) => ({ setNumber: i + 1, reps: l.reps, weightKg: l.weight }))
+      : Array.from({ length: ex.sets }, (_, i) => ({
+          setNumber: i + 1,
+          reps: plannedReps,
+          weightKg: plannedWeight,
+        }));
+    return {
+      exerciseId: ex.exerciseId,
+      exerciseName: ex.name,
+      category: ex.movementCategory,
+      sets,
+      caloriesBurned: 0,
+    };
+  });
+
+  const tonnage = exercises.reduce(
+    (t, ex) => t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+    0
+  );
+  const completedSetCount = exercises.reduce((c, ex) => c + ex.sets.length, 0);
+  const bodyweightKg = (profile && profile.weightKg) || 0;
+  const durationMinutes =
+    command.completion.durationMinutes && command.completion.durationMinutes > 0
+      ? command.completion.durationMinutes
+      : 0;
+  const effectiveDurationMin =
+    durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+  const totalCalories = estimateLiftBurn({
+    durationMinutes,
+    tonnageKg: tonnage,
+    bodyweightKg,
+    completedSetCount,
+  });
+
+  const workout = {
+    date: localDateInZone(now, profile && profile.timezone),
+    exercises,
+    totalCalories,
+    durationMinutes: effectiveDurationMin,
+    notes: `${day.dayName} — Programme Week ${state.weekNumber}`,
+    source: "programme",
+    completionId: command.completion.completionId,
+    ...(command.completion.sessionVariant !== undefined
+      ? { sessionVariant: command.completion.sessionVariant }
+      : {}),
+  };
+
+  return { state: nextState, effects: { workout } };
+}
 
 /**
  * Apply exactly one validated command to programme state. Pure + deterministic:
@@ -995,12 +1101,26 @@ const STAGED_GENERATION_KINDS = new Set(["completeWorkoutDay"]);
  * @returns {{ state: object, effects: object }}
  */
 function applyProgramCommand({ state, profile, command, now }) {
-  void profile; // consumed by the staged generation commands (next PR)
   if (typeof now !== "number" || !Number.isFinite(now)) {
     invalidCommand("A finite timestamp is required.");
   }
   const validated = assertClientProgramCommand(command);
   const current = normalizeForReducer(state);
+
+  // completeWorkoutDay is the only command that produces an effect (the saved
+  // workout record); handle it separately so the rest stay effect-free.
+  if (validated.kind === "completeWorkoutDay") {
+    const result = completeWorkoutDayWithEffect(
+      current,
+      profile || {},
+      validated,
+      now
+    );
+    return {
+      state: { ...result.state, updatedAt: now },
+      effects: result.effects,
+    };
+  }
 
   let next;
   switch (validated.kind) {
@@ -1044,12 +1164,6 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = overrideRunDay(current, validated);
       break;
     default:
-      if (STAGED_GENERATION_KINDS.has(validated.kind)) {
-        throw new ProgramCommandError(
-          `Command "${validated.kind}" is not available in this build stage.`,
-          "failed-precondition"
-        );
-      }
       invalidCommand(`Unsupported programme command "${validated.kind}".`);
   }
 

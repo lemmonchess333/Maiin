@@ -79,6 +79,9 @@ const PINNED: Record<string, string> = {
   // Packet 18 — CF ProgramExercise builder mirrors normalizeExercise.
   "functions/lib/programExerciseBuilder.js":
     "src/features/program/__tests__/programExerciseBuilder.cross.test.ts",
+  // Packet 18 — CF calorie engine mirrors src/lib/workoutBurn.ts.
+  "functions/lib/workoutBurn.js":
+    "src/features/program/__tests__/workoutBurn.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":
