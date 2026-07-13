@@ -28,6 +28,8 @@ import { readFileSync } from "node:fs";
 import {
   doc,
   getDoc,
+  getDocs,
+  collection,
   setDoc,
   deleteDoc,
   serverTimestamp,
@@ -2361,5 +2363,119 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
     await assertFails(
       setDoc(doc(aDb, "partnerBonds", BOND), coldBond([A_UID, B_UID]))
     );
+  });
+
+  // ── Packet 13 — kudos/comment child reads obey parent visibility ──────
+  describe("social child reads follow the parent activity's visibility", () => {
+    const AUTHOR = "activity-author";
+    const FOLLOWER = "follower-uid";
+    const STRANGER = "stranger-uid";
+    const ACT = "act-1";
+
+    async function seedActivity(visibility: string) {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "activities", ACT), {
+          authorId: AUTHOR,
+          visibility,
+        });
+        // A kudos child + a comment child to read back.
+        await setDoc(doc(db, "kudos", ACT, "users", AUTHOR), {
+          createdAt: serverTimestamp(),
+        });
+        await setDoc(doc(db, "comments", ACT, "items", "c1"), {
+          authorId: AUTHOR,
+          text: "hi",
+          createdAt: serverTimestamp(),
+        });
+      });
+    }
+    async function seedFollower(uid: string) {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "followers", AUTHOR, "users", uid), {
+          since: serverTimestamp(),
+        });
+      });
+    }
+    const kudosDoc = (uid: string) =>
+      doc(
+        env.authenticatedContext(uid).firestore(),
+        "kudos",
+        ACT,
+        "users",
+        AUTHOR
+      );
+    const kudosCol = (uid: string) =>
+      collection(
+        env.authenticatedContext(uid).firestore(),
+        "kudos",
+        ACT,
+        "users"
+      );
+    const commentDoc = (uid: string) =>
+      doc(
+        env.authenticatedContext(uid).firestore(),
+        "comments",
+        ACT,
+        "items",
+        "c1"
+      );
+    const commentCol = (uid: string) =>
+      collection(
+        env.authenticatedContext(uid).firestore(),
+        "comments",
+        ACT,
+        "items"
+      );
+
+    it("PUBLIC: any authed user can read kudos + comment children", async () => {
+      await seedActivity("public");
+      await assertSucceeds(getDoc(kudosDoc(STRANGER)));
+      await assertSucceeds(getDocs(kudosCol(STRANGER)));
+      await assertSucceeds(getDoc(commentDoc(STRANGER)));
+      await assertSucceeds(getDocs(commentCol(STRANGER)));
+    });
+
+    it("PRIVATE: owner reads children; a stranger cannot", async () => {
+      await seedActivity("private");
+      await assertSucceeds(getDoc(kudosDoc(AUTHOR)));
+      await assertSucceeds(getDocs(commentCol(AUTHOR)));
+      await assertFails(getDoc(kudosDoc(STRANGER)));
+      await assertFails(getDocs(kudosCol(STRANGER)));
+      await assertFails(getDoc(commentDoc(STRANGER)));
+      await assertFails(getDocs(commentCol(STRANGER)));
+    });
+
+    it("FOLLOWERS: a current follower reads; a former follower / stranger cannot", async () => {
+      await seedActivity("followers");
+      await seedFollower(FOLLOWER);
+      await assertSucceeds(getDoc(kudosDoc(FOLLOWER)));
+      await assertSucceeds(getDocs(commentCol(FOLLOWER)));
+      // Not a follower.
+      await assertFails(getDoc(kudosDoc(STRANGER)));
+      await assertFails(getDoc(commentDoc(STRANGER)));
+    });
+
+    it("TRANSITION: a stranger who could read a public child loses access when it turns private", async () => {
+      await seedActivity("public");
+      await assertSucceeds(getDoc(kudosDoc(STRANGER)));
+      // Owner flips the parent to private.
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "activities", ACT),
+          { authorId: AUTHOR, visibility: "private" },
+          { merge: true }
+        );
+      });
+      await assertFails(getDoc(kudosDoc(STRANGER)));
+      await assertFails(getDocs(kudosCol(STRANGER)));
+      await assertFails(getDoc(commentDoc(STRANGER)));
+    });
+
+    it("a child whose parent activity does not exist is not readable", async () => {
+      // No seedActivity — parent missing.
+      await assertFails(getDoc(kudosDoc(STRANGER)));
+      await assertFails(getDoc(commentDoc(STRANGER)));
+    });
   });
 });
