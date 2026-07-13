@@ -159,6 +159,10 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // their own doc but cannot write. R1A cleanup is wired via the
   // accountDeletionInventory entry (key: globalRestrictedUids).
   "match /globalRestrictedUids/{uid}",
+  // Packet 14 — server-issued report authority marker. Admin SDK writes only
+  // (createReport); `allow read, write: if false` for clients. No user-keyed
+  // data beyond a diagnostic targetUid; not in scope for the deletion freeze.
+  "match /reportAuthority/{reportId}",
   "match /config/{doc}",
   "match /accountDeletionRequests/{uid}",
   "match /deletedAccounts/{uid}",

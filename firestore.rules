@@ -1128,10 +1128,24 @@ service cloud.firestore {
       // R1A-Deletion: deleting users cannot file new reports. Existing
       // reports they filed are anonymised by the executor; in-flight
       // reports during the deletion window are blocked here.
+      //
+      // Packet 14: clients now report via the createReport callable. This
+      // direct-create rule is intentionally KEPT temporarily-compatible for
+      // stale bundles; the direct-write lockdown is a later gated step. The
+      // security cutover does NOT depend on it — resolveReport only acts on a
+      // report that has a matching server-only reportAuthority marker (below),
+      // so a forged direct-write report is dismiss-only regardless.
       allow create: if request.auth != null
         && request.resource.data.reporterId == request.auth.uid
         && !isWriteFrozen(request.auth.uid);
       allow read, update, delete: if false;
+    }
+
+    // Packet 14 — server-issued authority marker. Only createReport (Admin
+    // SDK) may write it; a client can never forge one, which is what makes a
+    // report's resolved target unforgeable.
+    match /reportAuthority/{reportId} {
+      allow read, write: if false;
     }
 
     // ========================================

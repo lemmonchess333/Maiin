@@ -54,6 +54,7 @@ const {
 const aiScanQuota = require("./lib/aiScanQuota");
 const socialCounters = require("./lib/socialCounters");
 const commentReactions = require("./lib/commentReactions");
+const reportTargets = require("./lib/reportTargets");
 const socialFanout = require("./lib/socialFanout");
 // Push (FCM) — epic #961. Pure decision helpers; the cron below is the I/O shell.
 const {
@@ -5117,9 +5118,123 @@ exports.onCommentCreated = functions
  * a runaway list of pending reports means we need to add
  * pagination + filtering, not return 10k docs to the client.
  */
+// Packet 14 — report creation is callable-only + target resolution is
+// server-side. A report is EVIDENCE, never authority: hide/restrict actions
+// re-resolve the target from a server-issued reportAuthority marker inside
+// the resolution transaction. Legacy / forged direct-write reports have no
+// authority marker and are dismiss-only.
+function invalidReportInput() {
+  return new functions.https.HttpsError(
+    "invalid-argument",
+    "The report request is invalid."
+  );
+}
+function unavailableReportTarget() {
+  return new functions.https.HttpsError(
+    "failed-precondition",
+    "Reported content is unavailable."
+  );
+}
+function nullableString(value) {
+  return typeof value === "string" ? value : null;
+}
+function queueReason(value) {
+  return ["spam", "harassment", "inappropriate", "other"].includes(value)
+    ? value
+    : "other";
+}
+
+exports.createReport = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+
+    const firestore = admin.firestore();
+    // Deleting users cannot file new reports (mirrors the old Rules gate).
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      firestore,
+      context.auth.uid
+    );
+
+    let input;
+    try {
+      input = reportTargets.normalizeCreateReportInput(data);
+    } catch (error) {
+      if (reportTargets.isReportTargetError(error)) throw invalidReportInput();
+      throw error;
+    }
+
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "createReport",
+      10,
+      60 * 60 * 1000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many reports. Please try again later."
+      );
+    }
+
+    let target;
+    try {
+      target = await reportTargets.resolveReportTarget({
+        firestore,
+        reporterUid: context.auth.uid,
+        targetType: input.targetType,
+        targetId: input.targetId,
+      });
+    } catch (error) {
+      if (reportTargets.isReportTargetError(error)) {
+        throw unavailableReportTarget();
+      }
+      throw error;
+    }
+
+    const reportRef = firestore.collection("reports").doc();
+    const authorityRef = firestore
+      .collection("reportAuthority")
+      .doc(reportRef.id);
+
+    // The report is user evidence; the separate, Rules-denied authority record
+    // is the server-issued proof its target was resolved at creation time.
+    // They commit together — an unmarked report is intentionally dismiss-only.
+    await firestore.runTransaction(async (transaction) => {
+      transaction.create(reportRef, {
+        reporterId: context.auth.uid,
+        targetType: target.targetType,
+        targetId: target.targetId,
+        targetUid: target.targetUid,
+        reason: input.reason,
+        category: input.category,
+        ...(input.subReason ? { subReason: input.subReason } : {}),
+        ...(input.freeformNote ? { freeformNote: input.freeformNote } : {}),
+        hideFromFeed: input.hideFromFeed,
+        blockAuthor: input.blockAuthor,
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      transaction.create(authorityRef, {
+        version: 1,
+        targetType: target.targetType,
+        targetId: target.targetId,
+        targetUid: target.targetUid,
+        issuedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    return { reportId: reportRef.id };
+  });
+
 exports.listPendingReports = functions
   .runWith(ADMIN_HTTP_CAP)
-  .https.onCall(async (data, context) => {
+  .https.onCall(async (_data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
         "unauthenticated",
@@ -5128,95 +5243,70 @@ exports.listPendingReports = functions
     }
     adminAuth.assertAdminCallable(context.auth.uid);
 
-    const reportsSnap = await admin
-      .firestore()
+    const firestore = admin.firestore();
+    const reportsSnap = await firestore
       .collection("reports")
       .where("status", "==", "pending")
       .orderBy("createdAt", "desc")
       .limit(50)
       .get();
 
-    const reports = [];
-    for (const reportDoc of reportsSnap.docs) {
-      const r = reportDoc.data();
-      let target = null;
-      try {
-        if (r.targetType === "activity" && r.targetId) {
-          const tSnap = await admin
-            .firestore()
-            .doc(`activities/${r.targetId}`)
-            .get();
-          if (tSnap.exists) {
-            const t = tSnap.data();
-            target = {
-              authorId: t.authorId,
-              authorName: t.authorName || null,
-              type: t.type,
-              caption: t.caption || null,
-              workoutName: t.workoutName || null,
-              runName: t.runName || null,
-              visibility: t.visibility || null,
-              flagged: t.flagged === true,
-            };
-          }
-        } else if (r.targetType === "comment" && r.targetId) {
-          // Comment IDs are scoped under activities; clients send
-          // them as `activityId:commentId`. If a different shape
-          // arrives the lookup silently fails and target stays
-          // null — the moderator sees the report with no target
-          // preview rather than a 500.
-          const [aId, cId] = String(r.targetId).split(":");
-          if (aId && cId) {
-            const tSnap = await admin
-              .firestore()
-              .doc(`comments/${aId}/items/${cId}`)
-              .get();
-            if (tSnap.exists) {
-              const t = tSnap.data();
-              target = {
-                authorId: t.authorId,
-                authorName: t.authorName || null,
-                text: t.text || null,
-                activityId: aId,
-              };
+    const reports = await Promise.all(
+      reportsSnap.docs.map(async (reportDoc) => {
+        const report = reportDoc.data() || {};
+        const authoritySnap = await firestore
+          .collection("reportAuthority")
+          .doc(reportDoc.id)
+          .get();
+        const authority = authoritySnap.exists
+          ? authoritySnap.data() || {}
+          : null;
+        let target = null;
+        // Never use report.targetType/targetId to select an actionable target.
+        // A missing authority is an intentionally non-actionable legacy report.
+        if (authority && authority.version === 1) {
+          try {
+            target = await reportTargets.resolveReportTarget({
+              firestore,
+              targetType: authority.targetType,
+              targetId: authority.targetId,
+            });
+          } catch (error) {
+            if (!reportTargets.isReportTargetError(error)) {
+              functions.logger.error(
+                "listPendingReports.target_lookup_failed",
+                {
+                  reportId: reportDoc.id,
+                  message: error && error.message,
+                }
+              );
             }
           }
-        } else if (r.targetType === "user" && r.targetId) {
-          const tSnap = await admin
-            .firestore()
-            .doc(`users/${r.targetId}/public/profile`)
-            .get();
-          if (tSnap.exists) {
-            const t = tSnap.data();
-            target = {
-              uid: r.targetId,
-              displayName: t.displayName || null,
-            };
-          }
         }
-      } catch (_) {
-        // Target lookup failed (rules race, deleted doc); leave
-        // target null. The report itself is still surfaced so the
-        // moderator can dismiss / annotate.
-      }
-      reports.push({
-        reportId: reportDoc.id,
-        reporterId: r.reporterId,
-        targetType: r.targetType,
-        targetId: r.targetId,
-        // S4e (PR #722): expose targetUid in the admin queue payload
-        // so the Restrict-user button can gate on its presence (the
-        // CF requires it; surfacing nullability here lets the UI hide
-        // the button rather than fail the call).
-        targetUid: r.targetUid || null,
-        reason: r.reason,
-        details: r.details || null,
-        createdAt:
-          (r.createdAt && r.createdAt.toMillis && r.createdAt.toMillis()) ||
-          null,
-        target,
-      });
-    }
+
+        return {
+          reportId: reportDoc.id,
+          reporterId: nullableString(report.reporterId),
+          // Canonical values that control the UI.
+          targetType: target ? target.targetType : null,
+          targetId: target ? target.targetId : null,
+          targetUid: target ? target.targetUid : null,
+          targetActionable: target !== null,
+          target: target ? target.preview : null,
+          // Display-only diagnostics — they never select a target.
+          reportedTargetType: nullableString(report.targetType),
+          reportedTargetId: nullableString(report.targetId),
+          reason: queueReason(report.reason),
+          details:
+            nullableString(report.freeformNote) ||
+            nullableString(report.details),
+          createdAt:
+            report.createdAt && typeof report.createdAt.toMillis === "function"
+              ? report.createdAt.toMillis()
+              : null,
+        };
+      })
+    );
 
     return { reports };
   });
@@ -5248,90 +5338,131 @@ exports.resolveReport = functions
     adminAuth.assertAdminCallable(context.auth.uid);
 
     if (!data || typeof data !== "object" || Array.isArray(data)) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Request body required."
-      );
+      throw invalidReportInput();
     }
-    const { reportId, hideActivity, restrictUser } = data;
-    if (typeof reportId !== "string" || !reportId) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "reportId required."
-      );
-    }
-
-    const reportRef = admin.firestore().doc(`reports/${reportId}`);
-    const reportSnap = await reportRef.get();
-    if (!reportSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "Report not found.");
-    }
-    const report = reportSnap.data();
-
-    // S4e: restrictUser requires a targetUid on the report. Reports
-    // about activities carry the activity author's uid as report.targetUid
-    // (set when reportContent is called by the client). Reject restrict
-    // requests if we can't identify the user to restrict.
+    const reportId = data.reportId;
+    const hideActivity =
+      data.hideActivity === undefined ? false : data.hideActivity;
+    const restrictUser =
+      data.restrictUser === undefined ? false : data.restrictUser;
     if (
-      restrictUser === true &&
-      (typeof report.targetUid !== "string" || !report.targetUid)
+      typeof reportId !== "string" ||
+      !reportId ||
+      reportId !== reportId.trim() ||
+      reportId.includes("/") ||
+      reportId === "." ||
+      reportId === ".." ||
+      typeof hideActivity !== "boolean" ||
+      typeof restrictUser !== "boolean"
     ) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Cannot restrict user: report is missing targetUid."
-      );
+      throw invalidReportInput();
     }
 
-    const batch = admin.firestore().batch();
-    batch.update(reportRef, {
-      status: "resolved",
-      resolvedBy: context.auth.uid,
-      resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
-      hideAppliedByAdmin: hideActivity === true,
-      restrictAppliedByAdmin: restrictUser === true,
+    const firestore = admin.firestore();
+    const reportRef = firestore.collection("reports").doc(reportId);
+    const authorityRef = firestore.collection("reportAuthority").doc(reportId);
+
+    await firestore.runTransaction(async (transaction) => {
+      const reportSnap = await transaction.get(reportRef);
+      if (!reportSnap.exists) {
+        throw new functions.https.HttpsError("not-found", "Report not found.");
+      }
+      const report = reportSnap.data() || {};
+      if (report.status !== "pending") {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Report is no longer pending."
+        );
+      }
+
+      const authoritySnap = await transaction.get(authorityRef);
+      const authority = authoritySnap.exists
+        ? authoritySnap.data() || {}
+        : null;
+      // Legacy / direct-write reports have no server-issued authority. They may
+      // be dismissed, but their attacker-controlled fields can never select a
+      // target for a moderation action.
+      if (!authority || authority.version !== 1) {
+        if (hideActivity || restrictUser) throw unavailableReportTarget();
+        transaction.update(reportRef, {
+          status: "resolved",
+          resolvedBy: context.auth.uid,
+          resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+          hideAppliedByAdmin: false,
+          restrictAppliedByAdmin: false,
+          targetResolution: "untrusted-legacy",
+        });
+        return;
+      }
+
+      let target;
+      try {
+        target = await reportTargets.resolveReportTarget({
+          firestore,
+          reader: transaction,
+          targetType: authority.targetType,
+          targetId: authority.targetId,
+        });
+      } catch (error) {
+        if (!reportTargets.isReportTargetError(error)) throw error;
+        // A server-issued target later deleted/malformed can be dismissed, but
+        // no content action may be taken from it.
+        if (hideActivity || restrictUser) throw unavailableReportTarget();
+        transaction.update(reportRef, {
+          status: "resolved",
+          resolvedBy: context.auth.uid,
+          resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+          hideAppliedByAdmin: false,
+          restrictAppliedByAdmin: false,
+          targetResolution: "unavailable",
+        });
+        return;
+      }
+
+      if (hideActivity && target.targetType !== "activity") {
+        throw new functions.https.HttpsError(
+          "invalid-argument",
+          "Only activity reports can be hidden."
+        );
+      }
+
+      transaction.update(reportRef, {
+        status: "resolved",
+        resolvedBy: context.auth.uid,
+        resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+        hideAppliedByAdmin: hideActivity,
+        restrictAppliedByAdmin: restrictUser,
+        targetResolution: "revalidated",
+      });
+
+      if (hideActivity) {
+        transaction.update(target.targetRef, {
+          flagged: true,
+          flaggedBy: "admin",
+          flaggedByAdminUid: context.auth.uid,
+          flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
+          visibility: "private",
+        });
+      }
+
+      if (restrictUser) {
+        const restrictionRef = firestore
+          .collection("globalRestrictedUids")
+          .doc(target.targetUid);
+        transaction.set(
+          restrictionRef,
+          {
+            uid: target.targetUid,
+            restrictedAt: admin.firestore.FieldValue.serverTimestamp(),
+            restrictionEndsAt: null,
+            strikes: null,
+            lastActionedReport: reportId,
+          },
+          { merge: true }
+        );
+      }
     });
 
-    if (
-      hideActivity === true &&
-      report.targetType === "activity" &&
-      report.targetId
-    ) {
-      const targetRef = admin.firestore().doc(`activities/${report.targetId}`);
-      batch.update(targetRef, {
-        flagged: true,
-        flaggedBy: "admin",
-        flaggedByAdminUid: context.auth.uid,
-        flaggedAt: admin.firestore.FieldValue.serverTimestamp(),
-        visibility: "private",
-      });
-    }
-
-    // S4e: atomic restriction write. set() with merge:true so calling
-    // resolveReport with restrictUser:true on an already-restricted user
-    // updates lastActionedReport + restrictedAt without resetting other
-    // fields. Atomicity preserved by being in the same batch as the
-    // report-resolution update.
-    if (restrictUser === true) {
-      const restrictionRef = admin
-        .firestore()
-        .doc(`globalRestrictedUids/${report.targetUid}`);
-      batch.set(
-        restrictionRef,
-        {
-          uid: report.targetUid,
-          restrictedAt: admin.firestore.FieldValue.serverTimestamp(),
-          // S4e-P1: null on manual restriction; future S4d-full
-          // auto-strike trigger populates restrictionEndsAt (30-day
-          // window) and strikes (count toward auto-restrict at 3).
-          restrictionEndsAt: null,
-          strikes: null,
-          lastActionedReport: reportId,
-        },
-        { merge: true }
-      );
-    }
-
-    await batch.commit();
     return { ok: true };
   });
 
