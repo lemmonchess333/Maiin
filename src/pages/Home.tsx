@@ -49,8 +49,8 @@ import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { format } from "date-fns";
-import { collection, serverTimestamp } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { doc, serverTimestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
@@ -461,12 +461,22 @@ export default function Home() {
     if (storeW < 20 || storeW > 350) return;
     setWeightSaving(true);
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
-      await addDocGuarded(collection(db, "users", user.uid, "bodyweightLogs"), {
-        date: today,
-        weight: storeW,
-        createdAt: serverTimestamp(),
-      });
+      // One canonical row per local day: date-keyed upsert (doc id = date)
+      // instead of a fresh random-id append per tap. A second same-day
+      // weigh-in overwrites the first rather than adding an independent
+      // observation the adaptive-TDEE / trend engines would double-count.
+      // (ADR 0007: doc-id=date, manual-wins, HealthKit uses source:"healthkit".)
+      const today = localDateString();
+      await setDocGuarded(
+        doc(db, "users", user.uid, "bodyweightLogs", today),
+        {
+          date: today,
+          weight: storeW,
+          source: "manual",
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
       const disp =
         weightUnit === "lbs"
           ? (storeW * 2.20462).toFixed(1)
