@@ -1,0 +1,173 @@
+"use strict";
+
+/**
+ * Progression engine (packet 18) — server mirror of applyProgression in
+ * src/features/program/programEngine.ts.
+ *
+ * The programme command reducer runs `logExercise` server-side, which must
+ * produce the IDENTICAL next prescription the client engine produces for the
+ * same input (double/linear progression, bodyweight rep-bumps, RPE hold,
+ * failure deloads, plateau counting). programEngine.ts is Vite/TS and can't be
+ * required from CommonJS Cloud Functions, so this is a hand-maintained TS↔JS
+ * equality mirror.
+ *
+ * MUST return identical output to the client applyProgression for identical
+ * input (excluding the informational performanceHistory[].date stamp, which is
+ * clock-derived on both sides). Pinned in lockstep by
+ * src/features/program/__tests__/applyProgression.cross.test.ts, which runs the
+ * client engine and this copy over a broad input matrix and asserts equality.
+ * Any change to one side must land on the other in the same commit.
+ */
+
+const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
+
+const RPE_HOLD_THRESHOLD = 9.5;
+const MAX_BODYWEIGHT_REPS = 20;
+
+function goalWeightBonus(goal) {
+  return goal === "lean bulk" ? 1.25 : 0;
+}
+
+// performanceHistory date stamp. The client uses local `new Date()`; the server
+// derives it from the command timestamp in UTC. The field is informational (not
+// week-bucketed), and the parity cross-test ignores it, so the local/UTC
+// difference is intentional and harmless.
+function dateStampUTC(now) {
+  const d = new Date(typeof now === "number" ? now : 0);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * @param {object} exercise - a ProgramExercise
+ * @param {number} actualReps
+ * @param {number} actualWeight
+ * @param {string} goal
+ * @param {boolean} microloading
+ * @param {number} [actualRpe]
+ * @param {number} [now] - ms timestamp for the history date stamp
+ * @returns {object} next ProgramExercise
+ */
+function applyProgression(
+  exercise,
+  actualReps,
+  actualWeight,
+  goal,
+  microloading,
+  actualRpe,
+  now
+) {
+  const today = dateStampUTC(now);
+  const record = {
+    date: today,
+    weight: actualWeight,
+    repsCompleted: actualReps,
+    repsTarget: exercise.reps,
+  };
+  const history = [...(exercise.performanceHistory || []), record].slice(-10);
+
+  const updated = {
+    ...exercise,
+    lastAttemptedWeight: actualWeight,
+    performanceHistory: history,
+    lastPerformance: {
+      sets: exercise.sets,
+      reps: actualReps,
+      weight: actualWeight,
+      completed: actualReps >= exercise.reps,
+    },
+  };
+
+  const completed =
+    actualReps >= exercise.reps && actualWeight >= exercise.weight;
+
+  const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
+  const isUncalibrated = !isBodyweight && exercise.weight === 0;
+  if (isUncalibrated) {
+    return {
+      ...updated,
+      lastSuccessfulWeight: actualWeight,
+      consecutiveFailures: 0,
+      plateauCount: 0,
+    };
+  }
+  const resetReps = exercise.baseReps ?? exercise.reps;
+
+  const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  const bumpBodyweightReps = () => {
+    if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
+      updated.notes =
+        "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";
+    } else {
+      updated.reps = exercise.reps + 1;
+    }
+  };
+
+  if (exercise.progressionType === "double") {
+    if (completed) {
+      if (actualReps >= exercise.reps + 2 && rpeOk) {
+        if (isBodyweight) {
+          bumpBodyweightReps();
+        } else {
+          updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+          updated.reps = resetReps;
+        }
+      }
+      updated.lastSuccessfulWeight = actualWeight;
+      updated.consecutiveFailures = 0;
+      updated.plateauCount = 0;
+    } else {
+      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+
+      if (updated.consecutiveFailures >= 3) {
+        if (isBodyweight) {
+          updated.reps = Math.max(4, exercise.reps - 1);
+        } else {
+          updated.weight = Math.round(exercise.weight * 0.95 * 2) / 2;
+        }
+        updated.consecutiveFailures = 0;
+        updated.plateauCount = (exercise.plateauCount || 0) + 1;
+      }
+    }
+  } else {
+    if (completed) {
+      if (isBodyweight) {
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
+          bumpBodyweightReps();
+        }
+      } else if (microloading && rpeOk) {
+        updated.weight = exercise.weight + 1;
+      } else {
+        if (actualReps >= exercise.reps + 2 && rpeOk) {
+          updated.weight = exercise.weight + 2.5;
+          updated.reps = resetReps;
+        }
+      }
+      updated.lastSuccessfulWeight = actualWeight;
+      updated.consecutiveFailures = 0;
+      updated.plateauCount = 0;
+    } else {
+      updated.consecutiveFailures = (exercise.consecutiveFailures || 0) + 1;
+      if (updated.consecutiveFailures >= 3) {
+        if (isBodyweight) {
+          updated.reps = Math.max(4, exercise.reps - 1);
+        } else {
+          updated.weight = Math.max(0, exercise.weight - 1);
+        }
+        updated.consecutiveFailures = 0;
+        updated.plateauCount = (exercise.plateauCount || 0) + 1;
+      }
+    }
+  }
+
+  return updated;
+}
+
+module.exports = {
+  applyProgression,
+  goalWeightBonus,
+  RPE_HOLD_THRESHOLD,
+  MAX_BODYWEIGHT_REPS,
+};
