@@ -5,7 +5,9 @@ const require = createRequire(import.meta.url);
 const {
   assertClientProgramCommand,
   assertCommandId,
+  applyProgramCommand,
   makeCommandReceipt,
+  workoutDaySignature,
   isProgramCommandError,
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,
@@ -568,5 +570,465 @@ describe("makeCommandReceipt", () => {
     expect(() =>
       makeCommandReceipt({ command: { kind: "skipWorkoutDay" }, now: NaN })
     ).toThrow(ProgramCommandError);
+  });
+});
+
+// ===========================================================================
+// Reducer (applyProgramCommand) — packet 18, PR2
+// ===========================================================================
+
+const NOW = 2_000_000;
+
+function baseState() {
+  return {
+    goal: "recomp",
+    currentPhase: "progression",
+    weekNumber: 5,
+    splitType: "upper_lower",
+    fatigueScore: 0,
+    updatedAt: 1000,
+    settings: { autoProgression: true, microloading: true },
+    weekHistory: [],
+    workouts: [
+      {
+        dayName: "Push",
+        dayType: "push",
+        completed: false,
+        skipped: false,
+        exercises: [
+          {
+            name: "Bench",
+            exerciseId: "bench",
+            instanceId: "inst-a",
+            sets: 3,
+            reps: 8,
+            weight: 100,
+          },
+          {
+            name: "Row",
+            exerciseId: "row",
+            instanceId: "inst-b",
+            sets: 3,
+            reps: 10,
+            weight: 60,
+          },
+        ],
+      },
+      {
+        dayName: "Legs",
+        dayType: "legs",
+        completed: false,
+        skipped: false,
+        exercises: [
+          {
+            name: "Squat",
+            exerciseId: "squat",
+            instanceId: "inst-c",
+            sets: 3,
+            reps: 5,
+            weight: 140,
+          },
+        ],
+      },
+    ],
+    runDays: [
+      {
+        id: "run-1",
+        dayIndex: 2,
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+        completed: false,
+      },
+      {
+        id: "run-2",
+        dayIndex: 4,
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "skipped",
+        completed: false,
+      },
+    ],
+    manualCompletions: {},
+  };
+}
+
+const PUSH_SIG = "Push|inst-a|inst-b";
+const CMD = "cmd_reducer0123456789";
+
+function dayPre(overrides) {
+  return {
+    dayIndex: 0,
+    expectedWeekNumber: 5,
+    expectedDaySignature: PUSH_SIG,
+    ...overrides,
+  };
+}
+
+function apply(command, state) {
+  return applyProgramCommand({
+    state: state || baseState(),
+    profile: {},
+    command,
+    now: NOW,
+  });
+}
+
+function expectHttps(fn, httpsCode) {
+  let thrown;
+  try {
+    fn();
+  } catch (error) {
+    thrown = error;
+  }
+  expect(thrown).toBeDefined();
+  expect(isProgramCommandError(thrown)).toBe(true);
+  expect(thrown.httpsCode).toBe(httpsCode);
+  return thrown;
+}
+
+describe("workoutDaySignature", () => {
+  it("is dayName joined with exercise instanceIds by |", () => {
+    expect(workoutDaySignature(baseState().workouts[0])).toBe(PUSH_SIG);
+    expect(workoutDaySignature(baseState().workouts[1])).toBe("Legs|inst-c");
+  });
+});
+
+describe("applyProgramCommand — envelope", () => {
+  it("rejects a non-finite now with invalid-argument", () => {
+    expectHttps(
+      () =>
+        applyProgramCommand({
+          state: baseState(),
+          command: { kind: "skipWorkoutDay", commandId: CMD, ...dayPre() },
+          now: NaN,
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("stamps updatedAt = now and returns empty effects", () => {
+    const { state, effects } = apply({
+      kind: "skipWorkoutDay",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.updatedAt).toBe(NOW);
+    expect(effects).toEqual({});
+  });
+
+  it("does not mutate the input state (immutability)", () => {
+    const input = baseState();
+    apply({ kind: "skipWorkoutDay", commandId: CMD, ...dayPre() }, input);
+    expect(input.workouts[0].skipped).toBe(false);
+  });
+});
+
+describe("WorkoutDayPrecondition enforcement", () => {
+  it("rejects a stale week number with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ expectedWeekNumber: 4 }),
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects a stale day signature with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ expectedDaySignature: "Push|inst-a" }),
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("rejects an out-of-range day index with failed-precondition", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "skipWorkoutDay",
+          commandId: CMD,
+          ...dayPre({ dayIndex: 9 }),
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("workout-day commands", () => {
+  it("skipWorkoutDay sets skipped on only the target day", () => {
+    const { state } = apply({
+      kind: "skipWorkoutDay",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.workouts[0].skipped).toBe(true);
+    expect(state.workouts[0].completed).toBe(false);
+    expect(state.workouts[1].skipped).toBe(false);
+  });
+
+  it("setNextWorkout sets nextWorkoutOverride", () => {
+    const { state } = apply({
+      kind: "setNextWorkout",
+      commandId: CMD,
+      ...dayPre(),
+    });
+    expect(state.nextWorkoutOverride).toBe(0);
+  });
+
+  it("removeExercise drops the targeted instance, preserving the other", () => {
+    const { state } = apply({
+      kind: "removeExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-b",
+    ]);
+  });
+
+  it("removeExercise rejects an unknown instance id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "removeExercise",
+          commandId: CMD,
+          ...dayPre(),
+          exerciseInstanceId: "inst-x",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("updateExercise merges only the bounded patch", () => {
+    const { state } = apply({
+      kind: "updateExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-b",
+      patch: { weight: 65 },
+    });
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-b"
+    );
+    expect(row.weight).toBe(65);
+    expect(row.reps).toBe(10); // untouched
+    expect(row.name).toBe("Row");
+  });
+
+  it("reorderExercises rearranges to the requested order", () => {
+    const { state } = apply({
+      kind: "reorderExercises",
+      commandId: CMD,
+      ...dayPre(),
+      orderedInstanceIds: ["inst-b", "inst-a"],
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-b",
+      "inst-a",
+    ]);
+  });
+
+  it("reorderExercises rejects a set that isn't the day's exact instances", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "reorderExercises",
+          commandId: CMD,
+          ...dayPre(),
+          orderedInstanceIds: ["inst-a", "inst-x"],
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("preconditionless field commands", () => {
+  it("setProgramSettings replaces settings", () => {
+    const { state } = apply({
+      kind: "setProgramSettings",
+      commandId: CMD,
+      settings: { autoProgression: false, microloading: false },
+    });
+    expect(state.settings).toEqual({
+      autoProgression: false,
+      microloading: false,
+    });
+  });
+
+  it("setProgramGoalMirror updates goal", () => {
+    const { state } = apply({
+      kind: "setProgramGoalMirror",
+      commandId: CMD,
+      goal: "cut",
+    });
+    expect(state.goal).toBe("cut");
+  });
+});
+
+describe("run-day commands", () => {
+  it("setManualRunCompletion marks a planned run complete via the map", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: true,
+    });
+    expect(state.manualCompletions["run-1"]).toEqual({ completedAt: NOW });
+    expect(state.runDays[0].status).toBe("planned");
+  });
+
+  it("setManualRunCompletion two-steps a skipped run back to planned first", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-2",
+      completed: true,
+    });
+    expect(state.runDays[1].status).toBe("planned");
+    expect(state.runDays[1].completed).toBe(false);
+    expect(state.manualCompletions["run-2"]).toEqual({ completedAt: NOW });
+  });
+
+  it("setManualRunCompletion completed:false removes an existing map key", () => {
+    const seeded = baseState();
+    seeded.manualCompletions = { "run-1": { completedAt: 1 } };
+    const { state } = apply(
+      {
+        kind: "setManualRunCompletion",
+        commandId: CMD,
+        runDayId: "run-1",
+        completed: false,
+      },
+      seeded
+    );
+    expect(state.manualCompletions["run-1"]).toBeUndefined();
+  });
+
+  it("setManualRunCompletion completed:false on an absent key is a no-op", () => {
+    const { state } = apply({
+      kind: "setManualRunCompletion",
+      commandId: CMD,
+      runDayId: "run-1",
+      completed: false,
+    });
+    expect(state.manualCompletions).toEqual({});
+  });
+
+  it("setManualRunCompletion rejects an unknown runDayId", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "setManualRunCompletion",
+          commandId: CMD,
+          runDayId: "nope",
+          completed: true,
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("transitionRunDay skips a planned run", () => {
+    const { state } = apply({
+      kind: "transitionRunDay",
+      commandId: CMD,
+      runDayId: "run-1",
+      to: "skipped",
+    });
+    expect(state.runDays[0].status).toBe("skipped");
+  });
+
+  it("transitionRunDay rejects an illegal transition (skipped -> skipped)", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "transitionRunDay",
+          commandId: CMD,
+          runDayId: "run-2",
+          to: "skipped",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("overrideRunDay swaps templateId + userOverride on an editable run", () => {
+    const { state } = apply({
+      kind: "overrideRunDay",
+      commandId: CMD,
+      runDayId: "run-1",
+      templateId: "hills_8x1",
+    });
+    expect(state.runDays[0].templateId).toBe("hills_8x1");
+    expect(state.runDays[0].userOverride).toBe("hills_8x1");
+  });
+
+  it("overrideRunDay rejects a non-editable (skipped) run", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "overrideRunDay",
+          commandId: CMD,
+          runDayId: "run-2",
+          templateId: "hills_8x1",
+        }),
+      "failed-precondition"
+    );
+  });
+});
+
+describe("staged generation commands", () => {
+  it.each([
+    "completeWorkoutDay",
+    "logExercise",
+    "addExercises",
+    "replaceExercise",
+  ])("%s is validated but not yet applied in this stage", (kind) => {
+    // Build a minimally-valid command per kind so validation passes and the
+    // reducer's staged guard (not the validator) is what rejects it.
+    const commands = {
+      completeWorkoutDay: {
+        kind,
+        commandId: CMD,
+        ...dayPre(),
+        completion: {
+          completionId: "sess_abcdef01",
+          durationMinutes: 40,
+          setLogs: [],
+        },
+      },
+      logExercise: {
+        kind,
+        commandId: CMD,
+        ...dayPre(),
+        exerciseInstanceId: "inst-a",
+        actual: { weight: 100, reps: 8, completed: true },
+      },
+      addExercises: {
+        kind,
+        commandId: CMD,
+        ...dayPre(),
+        exercises: [{ exerciseId: "bench" }],
+      },
+      replaceExercise: {
+        kind,
+        commandId: CMD,
+        ...dayPre(),
+        oldInstanceId: "inst-a",
+        replacementExerciseId: "incline",
+      },
+    };
+    const error = expectHttps(
+      () => apply(commands[kind]),
+      "failed-precondition"
+    );
+    expect(error.message).toMatch(/build stage/i);
   });
 });

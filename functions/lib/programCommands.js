@@ -587,10 +587,355 @@ function makeCommandReceipt({ command, now }) {
   };
 }
 
+// ===========================================================================
+// Reducer (packet 18, PR2)
+// ===========================================================================
+//
+// The pure, deterministic core the (future) applyProgramCommand callable runs
+// inside its Firestore transaction: `applyProgramCommand({ state, profile,
+// command, now }) -> { state, effects }`. It reads transaction-current state,
+// applies exactly one validated command, and returns the next state — so two
+// concurrent commands, each retried against the LATEST committed state, both
+// survive instead of the last client snapshot winning.
+//
+// SCOPE OF THIS PR. Ten of the fourteen command kinds are implemented here —
+// every kind that is a pure state transform. The four GENERATION-dependent
+// kinds (`completeWorkoutDay`'s workout effect, `logExercise`'s progression
+// engine, and `addExercises`/`replaceExercise`'s catalog build) are staged
+// into the next PR, where they pair with the callable that injects admin
+// `Timestamp`, the progression engine, and the exercise catalog. Until then
+// they throw a clear staged error. The reducer is INERT: nothing calls it yet.
+//
+// DETERMINISM. `normalizeForReducer` applies only value defaults + a deep-safe
+// per-slice immutable update — it NEVER invents `instanceId`s. Per the packet,
+// `ensureProgramState` persists exercise identities before any identity command
+// runs, so the reducer resolves commands against EXISTING ids and rejects
+// `failed-precondition` when a targeted id is absent. Regenerating ids here
+// would make the same command produce a different document on each retry.
+//
+// MIRRORS. The run-day transition table + status helpers below mirror the
+// client (`programTypes.ts` LEGAL_TRANSITIONS / `scheduledRunStatus.ts`). They
+// are pinned in lockstep by a parity test
+// (src/features/program/__tests__/programReducerParity.test.ts) that imports
+// both copies and asserts they agree — the sanctioned mitigation for the
+// tested-copy-vs-running-copy rule.
+
+// Mirror of programTypes.ts LEGAL_TRANSITIONS (run-day status machine).
+const LEGAL_RUN_TRANSITIONS = Object.freeze({
+  planned: ["skipped", "race_no_show"],
+  race_no_show: ["planned"],
+  skipped: ["planned"],
+  completed_exact: [],
+  completed_modified: [],
+  completed_late: [],
+});
+
+function transitionStatus(from, to) {
+  const allowed = LEGAL_RUN_TRANSITIONS[from];
+  return Array.isArray(allowed) && allowed.includes(to);
+}
+
+// Mirror of scheduledRunStatus.ts getScheduledRunStatus (legacy-completed-aware).
+function getScheduledRunStatus(rd) {
+  if (rd && rd.status) return rd.status;
+  return rd && rd.completed ? "completed_exact" : "planned";
+}
+
+// Mirror of scheduledRunStatus.ts isScheduledRunEditable — only planned edits.
+function isScheduledRunEditable(status) {
+  return status === "planned";
+}
+
+function failedPrecondition(message) {
+  throw new ProgramCommandError(message, "failed-precondition");
+}
+
+// Deterministic normalize: default settings/weekHistory + skipped flag only.
+// Mirrors the NON-identity parts of client normalizeProgramState; deliberately
+// does NOT run normalizeExercise (no instanceId / movementCategory synthesis).
+function normalizeForReducer(state) {
+  if (!isPlainObject(state)) {
+    failedPrecondition("Your programme is not ready. Refresh and try again.");
+  }
+  const workouts = Array.isArray(state.workouts) ? state.workouts : [];
+  return {
+    ...state,
+    settings: isPlainObject(state.settings)
+      ? state.settings
+      : { autoProgression: true, microloading: true },
+    weekHistory: Array.isArray(state.weekHistory) ? state.weekHistory : [],
+    workouts: workouts.map((day) => ({ ...day, skipped: day.skipped ?? false })),
+  };
+}
+
+// Signature contract shared with the client precondition: dayName joined with
+// each exercise instanceId by "|". A rollover that shifts which day an index
+// points at changes the signature, so a stale offline command is rejected.
+function workoutDaySignature(day) {
+  const exercises = day && Array.isArray(day.exercises) ? day.exercises : [];
+  return [day && day.dayName, ...exercises.map((ex) => ex && ex.instanceId)].join(
+    "|"
+  );
+}
+
+// Enforce the WorkoutDayPrecondition against transaction-current state BEFORE
+// any mutation. Current week + server-recomputed day signature must match.
+function requireWorkoutDay(state, command) {
+  if (state.weekNumber !== command.expectedWeekNumber) {
+    failedPrecondition(
+      "Your training week changed since you started. Refresh and try again."
+    );
+  }
+  const day = state.workouts[command.dayIndex];
+  if (!day) {
+    failedPrecondition("That workout day is no longer available.");
+  }
+  if (workoutDaySignature(day) !== command.expectedDaySignature) {
+    failedPrecondition(
+      "This workout changed since you started. Refresh and try again."
+    );
+  }
+  return day;
+}
+
+function mapWorkoutDay(state, dayIndex, updater) {
+  return {
+    ...state,
+    workouts: state.workouts.map((day, i) =>
+      i === dayIndex ? updater(day) : day
+    ),
+  };
+}
+
+function findRunDayIndex(state, runDayId) {
+  const runDays = Array.isArray(state.runDays) ? state.runDays : [];
+  return runDays.findIndex((rd) => rd && rd.id === runDayId);
+}
+
+function mapRunDay(state, index, updater) {
+  return {
+    ...state,
+    runDays: state.runDays.map((rd, i) => (i === index ? updater(rd) : rd)),
+  };
+}
+
+// --- individual command transforms -----------------------------------------
+
+function skipWorkoutDay(state, command) {
+  requireWorkoutDay(state, command);
+  return mapWorkoutDay(state, command.dayIndex, (day) => ({
+    ...day,
+    skipped: true,
+  }));
+}
+
+function setNextWorkout(state, command) {
+  requireWorkoutDay(state, command);
+  return { ...state, nextWorkoutOverride: command.dayIndex };
+}
+
+function removeExercise(state, command) {
+  const day = requireWorkoutDay(state, command);
+  const idx = day.exercises.findIndex(
+    (ex) => ex && ex.instanceId === command.exerciseInstanceId
+  );
+  if (idx === -1) {
+    failedPrecondition("That exercise is no longer in this workout.");
+  }
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises: d.exercises.filter((_, i) => i !== idx),
+  }));
+}
+
+function updateExercise(state, command) {
+  const day = requireWorkoutDay(state, command);
+  const idx = day.exercises.findIndex(
+    (ex) => ex && ex.instanceId === command.exerciseInstanceId
+  );
+  if (idx === -1) {
+    failedPrecondition("That exercise is no longer in this workout.");
+  }
+  // patch is already bounded to { sets?, reps?, weight? } by the validator.
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises: d.exercises.map((ex, i) =>
+      i === idx ? { ...ex, ...command.patch } : ex
+    ),
+  }));
+}
+
+function reorderExercises(state, command) {
+  const day = requireWorkoutDay(state, command);
+  const current = day.exercises;
+  const target = command.orderedInstanceIds; // already unique (validator)
+  const byId = new Map(
+    current.map((ex) => [ex && ex.instanceId, ex]).filter(([id]) => id != null)
+  );
+  if (target.length !== current.length || byId.size !== current.length) {
+    // length mismatch, or a duplicate/absent instanceId in current state
+    failedPrecondition(
+      "This workout changed since you started. Refresh and try again."
+    );
+  }
+  for (const id of target) {
+    if (!byId.has(id)) {
+      failedPrecondition(
+        "This workout changed since you started. Refresh and try again."
+      );
+    }
+  }
+  const reordered = target.map((id) => byId.get(id));
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises: reordered,
+  }));
+}
+
+function setManualRunCompletion(state, command, now) {
+  const idx = findRunDayIndex(state, command.runDayId);
+  if (idx === -1) {
+    failedPrecondition("That scheduled run is no longer available.");
+  }
+  const map = isPlainObject(state.manualCompletions)
+    ? state.manualCompletions
+    : {};
+
+  if (command.completed) {
+    let next = state;
+    // Two-step reversal: a skipped slot returns to planned first (Q2 P20),
+    // gated by the same legal-transition table.
+    if (getScheduledRunStatus(state.runDays[idx]) === "skipped") {
+      if (!transitionStatus("skipped", "planned")) {
+        failedPrecondition("That run can't be marked complete.");
+      }
+      next = mapRunDay(state, idx, (rd) => ({
+        ...rd,
+        status: "planned",
+        completed: false,
+      }));
+    }
+    return {
+      ...next,
+      manualCompletions: { ...map, [command.runDayId]: { completedAt: now } },
+    };
+  }
+
+  // Unmark: drop the map key if present; an absent key is an idempotent no-op.
+  if (!(command.runDayId in map)) {
+    return state;
+  }
+  const nextMap = { ...map };
+  delete nextMap[command.runDayId];
+  return { ...state, manualCompletions: nextMap };
+}
+
+function transitionRunDay(state, command) {
+  const idx = findRunDayIndex(state, command.runDayId);
+  if (idx === -1) {
+    failedPrecondition("That scheduled run is no longer available.");
+  }
+  const from = getScheduledRunStatus(state.runDays[idx]);
+  if (!transitionStatus(from, command.to)) {
+    failedPrecondition("That run can't be skipped from its current state.");
+  }
+  return mapRunDay(state, idx, (rd) => ({ ...rd, status: command.to }));
+}
+
+function overrideRunDay(state, command) {
+  const idx = findRunDayIndex(state, command.runDayId);
+  if (idx === -1) {
+    failedPrecondition("That scheduled run is no longer available.");
+  }
+  if (!isScheduledRunEditable(getScheduledRunStatus(state.runDays[idx]))) {
+    failedPrecondition("That run can no longer be changed.");
+  }
+  return mapRunDay(state, idx, (rd) => ({
+    ...rd,
+    templateId: command.templateId,
+    userOverride: command.templateId,
+  }));
+}
+
+// Generation-dependent kinds — implemented in the next PR alongside the
+// callable (they require the progression engine / exercise catalog / admin
+// Timestamp). Listed so a premature dispatch fails loudly rather than silently.
+const STAGED_GENERATION_KINDS = new Set([
+  "completeWorkoutDay",
+  "logExercise",
+  "addExercises",
+  "replaceExercise",
+]);
+
+/**
+ * Apply exactly one validated command to programme state. Pure + deterministic:
+ * same (state, command, now) always yields the same result.
+ *
+ * @param {{ state: object, profile?: object, command: unknown, now: number }} args
+ * @returns {{ state: object, effects: object }}
+ */
+function applyProgramCommand({ state, profile, command, now }) {
+  void profile; // consumed by the staged generation commands (next PR)
+  if (typeof now !== "number" || !Number.isFinite(now)) {
+    invalidCommand("A finite timestamp is required.");
+  }
+  const validated = assertClientProgramCommand(command);
+  const current = normalizeForReducer(state);
+
+  let next;
+  switch (validated.kind) {
+    case "skipWorkoutDay":
+      next = skipWorkoutDay(current, validated);
+      break;
+    case "setNextWorkout":
+      next = setNextWorkout(current, validated);
+      break;
+    case "removeExercise":
+      next = removeExercise(current, validated);
+      break;
+    case "updateExercise":
+      next = updateExercise(current, validated);
+      break;
+    case "reorderExercises":
+      next = reorderExercises(current, validated);
+      break;
+    case "setProgramSettings":
+      next = { ...current, settings: { ...validated.settings } };
+      break;
+    case "setProgramGoalMirror":
+      next = { ...current, goal: validated.goal };
+      break;
+    case "setManualRunCompletion":
+      next = setManualRunCompletion(current, validated, now);
+      break;
+    case "transitionRunDay":
+      next = transitionRunDay(current, validated);
+      break;
+    case "overrideRunDay":
+      next = overrideRunDay(current, validated);
+      break;
+    default:
+      if (STAGED_GENERATION_KINDS.has(validated.kind)) {
+        throw new ProgramCommandError(
+          `Command "${validated.kind}" is not available in this build stage.`,
+          "failed-precondition"
+        );
+      }
+      invalidCommand(`Unsupported programme command "${validated.kind}".`);
+  }
+
+  return { state: { ...next, updatedAt: now }, effects: {} };
+}
+
 module.exports = {
   assertClientProgramCommand,
   assertCommandId,
+  applyProgramCommand,
   makeCommandReceipt,
+  workoutDaySignature,
+  transitionStatus,
+  getScheduledRunStatus,
+  isScheduledRunEditable,
   isProgramCommandError,
   ProgramCommandError,
   PROGRAM_COMMAND_RECEIPT_RETENTION_MS,
