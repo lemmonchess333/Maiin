@@ -172,6 +172,7 @@ interface Props {
     dayIndex: number,
     sessionData: {
       completionId: string;
+      completionCommandId: string;
       durationMinutes: number;
       setLogs: Array<
         Array<{ weight: number; reps: number; completed: boolean }>
@@ -224,6 +225,11 @@ export default function WorkoutSession({
   // every draft save below. Never regenerated per Finish click.
   const completionIdRef = useRef(
     initialDraft?.completionId ?? createWorkoutCompletionId()
+  );
+  // Packet 18 program-command receipt key — session-stable, never regenerated
+  // per Finish. Defaults to the completion id for a fresh session.
+  const completionCommandIdRef = useRef(
+    initialDraft?.completionCommandId ?? completionIdRef.current
   );
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null
@@ -470,6 +476,7 @@ export default function WorkoutSession({
       elapsedSeconds: elapsedSecondsRef.current,
       currentExIndex,
       completionId: completionIdRef.current,
+      completionCommandId: completionCommandIdRef.current,
     });
   }, [
     setLogs,
@@ -934,6 +941,7 @@ export default function WorkoutSession({
       // The stable completionId makes a retry target the SAME workout doc.
       await onCompleteDay(dayIndex, {
         completionId: completionIdRef.current,
+        completionCommandId: completionCommandIdRef.current,
         durationMinutes: sessionDurationMinutes,
         setLogs: setLogs.map((exSets) =>
           exSets.map((s) => ({

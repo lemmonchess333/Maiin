@@ -61,6 +61,10 @@ export interface CompletedSessionData {
    *  SAME `users/{uid}/workouts/programme-<completionId>` doc instead of
    *  appending a second log. Persisted in the draft (useWorkoutDraft). */
   completionId: string;
+  /** Stable idempotency key for packet 18's program-command receipt. Carried
+   *  from the draft so a retried/replayed completeWorkoutDay dispatch reuses
+   *  the same receipt id. Defaults to `completionId` for older drafts. */
+  completionCommandId: string;
   durationMinutes: number;
   setLogs: CompletedSetLog[][];
   /** PROGRAM-FLEX-01: set when the session ran as a time-budgeted
