@@ -59,6 +59,11 @@ const PINNED: Record<string, string> = {
     "src/features/challenges/__tests__/challengeTiers.cross.test.ts",
   "functions/lib/partnerStreakEngine.js":
     "src/features/partnerStreak/__tests__/engineMirror.test.ts",
+  // Packet 18 — CF programme reducer mirrors the client run-day transition
+  // table + status helpers (programTypes.ts LEGAL_TRANSITIONS /
+  // scheduledRunStatus.ts). Pinned by the cross-test below.
+  "functions/lib/programCommands.js":
+    "src/features/program/__tests__/programCommands.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":
