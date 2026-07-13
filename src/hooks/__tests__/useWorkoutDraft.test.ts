@@ -27,6 +27,10 @@ import {
 
 const LEGACY_KEY = "tropos_workout_draft";
 const scopedKey = (uid: string) => `tropos_workout_draft:${uid}`;
+// Packet 15b — V2 per-session key (the hook now saves here; V1 is read only
+// for a one-time migration).
+const v2Key = (uid: string, identity: string) =>
+  `tropos_workout_draft:v2:${encodeURIComponent(uid)}:${encodeURIComponent(identity)}`;
 
 function identityParts(
   overrides: Partial<DraftIdentityParts> = {}
@@ -68,7 +72,9 @@ describe("useWorkoutDraft — uid scoping", () => {
   it("saves under a uid-scoped key, not the legacy global key", () => {
     const { result } = renderHook(() => useWorkoutDraft("user-A", 0, IDENTITY));
     act(() => result.current.save(draftFor(0)));
-    expect(window.localStorage.getItem(scopedKey("user-A"))).not.toBeNull();
+    expect(
+      window.localStorage.getItem(v2Key("user-A", IDENTITY))
+    ).not.toBeNull();
     expect(window.localStorage.getItem(LEGACY_KEY)).toBeNull();
   });
 
@@ -234,8 +240,10 @@ describe("useWorkoutDraft — LIFT-01 session identity", () => {
     );
     const day3 = renderHook(() => useWorkoutDraft("user-A", 3, otherIdentity));
     expect(day3.result.current.load()).toBeNull();
-    // The day-0 draft survives untouched.
-    expect(window.localStorage.getItem(scopedKey("user-A"))).not.toBeNull();
+    // The day-0 draft survives untouched (its own V2 key).
+    expect(
+      window.localStorage.getItem(v2Key("user-A", IDENTITY))
+    ).not.toBeNull();
     expect(day0.result.current.load()).not.toBeNull();
   });
 
@@ -255,7 +263,7 @@ describe("useWorkoutDraft — LIFT-01 session identity", () => {
     const { result } = renderHook(() => useWorkoutDraft("user-A", 0, IDENTITY));
     act(() => result.current.save(draftFor(0)));
     const stored = JSON.parse(
-      window.localStorage.getItem(scopedKey("user-A"))!
+      window.localStorage.getItem(v2Key("user-A", IDENTITY))!
     ) as WorkoutDraft;
     expect(stored.identity).toBe(IDENTITY);
   });
@@ -347,9 +355,80 @@ describe("useWorkoutDraft — completionId (packet 15)", () => {
     // (a fresh id per remount would defeat retry idempotency).
     const second = result.current.load();
     expect(second?.completionId).toBe(first?.completionId);
+    // The legacy V1 draft was migrated to its V2 key; the repaired id persists.
+    expect(localStorage.getItem(scopedKey(UID))).toBeNull();
     const stored = JSON.parse(
-      localStorage.getItem(scopedKey(UID)) as string
+      localStorage.getItem(v2Key(UID, IDENTITY)) as string
     ) as WorkoutDraft;
     expect(stored.completionId).toBe(first?.completionId);
+  });
+});
+
+describe("useWorkoutDraft — V2 per-session isolation (packet 15b)", () => {
+  const UID = "u-multi";
+  const IDENT_A = computeDraftIdentity(identityParts({ dayName: "Push" }));
+  const IDENT_B = computeDraftIdentity(
+    identityParts({ dayIndex: 3, dayName: "Pull" })
+  );
+
+  it("two concurrent sessions keep separate drafts; neither overwrites the other", () => {
+    const push = renderHook(() => useWorkoutDraft(UID, 0, IDENT_A));
+    const pull = renderHook(() => useWorkoutDraft(UID, 3, IDENT_B));
+    act(() =>
+      push.result.current.save({ ...draftFor(0), completionId: "cid-push" })
+    );
+    act(() =>
+      pull.result.current.save({ ...draftFor(3), completionId: "cid-pull" })
+    );
+    expect(push.result.current.load()?.completionId).toBe("cid-push");
+    expect(pull.result.current.load()?.completionId).toBe("cid-pull");
+  });
+
+  it("clearing session A leaves session B intact", () => {
+    const a = renderHook(() => useWorkoutDraft(UID, 0, IDENT_A));
+    const b = renderHook(() => useWorkoutDraft(UID, 3, IDENT_B));
+    act(() => a.result.current.save(draftFor(0)));
+    act(() => b.result.current.save(draftFor(3)));
+    act(() => a.result.current.clear());
+    expect(a.result.current.load()).toBeNull();
+    expect(b.result.current.load()).not.toBeNull();
+  });
+
+  it("caps at 12 drafts per user, keeping the newest", () => {
+    // 13 distinct sessions; oldest (i=0) should be pruned.
+    for (let i = 0; i < 13; i += 1) {
+      const ident = computeDraftIdentity(
+        identityParts({ dayIndex: i, dayName: `D${i}` })
+      );
+      const h = renderHook(() => useWorkoutDraft(UID, i, ident));
+      act(() =>
+        h.result.current.save({
+          ...draftFor(i),
+          completionId: `cid-${i}`,
+        })
+      );
+    }
+    const prefix = `tropos_workout_draft:v2:${encodeURIComponent(UID)}:`;
+    let count = 0;
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) count += 1;
+    }
+    expect(count).toBe(12);
+    // The very first (oldest) session was evicted.
+    const first = computeDraftIdentity(
+      identityParts({ dayIndex: 0, dayName: "D0" })
+    );
+    expect(localStorage.getItem(v2Key(UID, first))).toBeNull();
+  });
+
+  it("clearWorkoutDraft sweeps only the given uid's V2 drafts", () => {
+    const a = renderHook(() => useWorkoutDraft(UID, 0, IDENT_A));
+    const other = renderHook(() => useWorkoutDraft("u-other", 0, IDENT_A));
+    act(() => a.result.current.save(draftFor(0)));
+    act(() => other.result.current.save(draftFor(0)));
+    clearWorkoutDraft(UID);
+    expect(a.result.current.load()).toBeNull();
+    expect(other.result.current.load()).not.toBeNull();
   });
 });
