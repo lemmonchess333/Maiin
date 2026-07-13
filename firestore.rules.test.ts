@@ -2478,4 +2478,25 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
       await assertFails(getDoc(commentDoc(STRANGER)));
     });
   });
+
+  // ── Packet 14 — reportAuthority is server-only (unforgeable marker) ────
+  describe("reportAuthority is denied to all clients", () => {
+    it("an authed client cannot create or read a reportAuthority doc", async () => {
+      const db = env.authenticatedContext(OTHER_UID).firestore();
+      await assertFails(
+        setDoc(doc(db, "reportAuthority", "forged"), {
+          version: 1,
+          targetType: "activity",
+          targetId: "victim-activity",
+          targetUid: "victim",
+        })
+      );
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "reportAuthority", "real"), {
+          version: 1,
+        });
+      });
+      await assertFails(getDoc(doc(db, "reportAuthority", "real")));
+    });
+  });
 });
