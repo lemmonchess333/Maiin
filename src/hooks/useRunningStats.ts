@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   collection,
   getDocs,
@@ -8,6 +8,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { logger } from "../lib/logger";
 import { useAuth } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { localWeekKey } from "../lib/dateHelpers";
@@ -95,94 +96,125 @@ export function useRunningStats(days: number = 30) {
   // tick forces the load effect below to re-run via the dep array.
   // Public surface is the `refresh()` callback below.
   const [refreshTick, setRefreshTick] = useState(0);
+  // The UID whose data is currently rendered. Data is cleared immediately only
+  // when the UID CHANGES (an account switch), never on a same-uid refresh.
+  const loadedUidRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user) {
+    const uid = user?.uid ?? null;
+
+    if (!uid) {
       // Clear the previous account's data on sign-out — not just `loading`.
       // If the component stays mounted across an account switch (shared-device
       // sign-out → sign-in, or a transient null-user window), leaving `runs` /
       // `weeklyData` populated leaks account A's runs into account B's view
       // until B's load completes (the uid-scoping class hardened in PR #820).
+      loadedUidRef.current = null;
       setRuns([]);
       setWeeklyData([]);
       setLoading(false);
       return;
     }
 
+    let cancelled = false;
+    // A→B: clear A's rows immediately so they can't show under B. A same-uid
+    // pull-to-refresh keeps the current rows visible while loading.
+    if (loadedUidRef.current !== uid) {
+      setRuns([]);
+      setWeeklyData([]);
+    }
+    setLoading(true);
+
     const loadStats = async () => {
-      const since = new Date();
-      since.setDate(since.getDate() - days);
+      try {
+        const since = new Date();
+        since.setDate(since.getDate() - days);
 
-      const runsRef = collection(db, "users", user.uid, "runs");
-      const q = query(
-        runsRef,
-        where("completedAt", ">=", Timestamp.fromDate(since)),
-        orderBy("completedAt", "desc")
-      );
-      const snap = await getDocs(q);
+        const runsRef = collection(db, "users", uid, "runs");
+        const q = query(
+          runsRef,
+          where("completedAt", ">=", Timestamp.fromDate(since)),
+          orderBy("completedAt", "desc")
+        );
+        const snap = await getDocs(q);
 
-      const runList: RunSummaryItem[] = [];
+        const runList: RunSummaryItem[] = [];
 
-      snap.docs.forEach((d) => {
-        const data = d.data();
-        /* No source filter. `runs` is the transparent record-of-truth
+        snap.docs.forEach((d) => {
+          const data = d.data();
+          /* No source filter. `runs` is the transparent record-of-truth
            list — Recent Runs renders all of them with Invalid /
            Saved-anyway badges so the user can see entries they
            saved exist on their account. Stat aggregations apply
            `isVolumeEligible` (weekly tile, lifetime totals,
            leaderboards, streaks) or `isPaceEligible` (Best Pace,
            Fastest 1K/5K, Longest Run) downstream from this list. */
-        let date: Date | undefined;
-        if (data.completedAt instanceof Timestamp) {
-          date = data.completedAt.toDate();
-        } else if (data.completedAt instanceof Date) {
-          date = data.completedAt;
-        } else if (typeof data.completedAt === "number") {
-          date = new Date(data.completedAt);
-        } else if (data.completedAt?.toDate) {
-          date = data.completedAt.toDate();
-        }
-        if (!date) return;
+          let date: Date | undefined;
+          if (data.completedAt instanceof Timestamp) {
+            date = data.completedAt.toDate();
+          } else if (data.completedAt instanceof Date) {
+            date = data.completedAt;
+          } else if (typeof data.completedAt === "number") {
+            date = new Date(data.completedAt);
+          } else if (data.completedAt?.toDate) {
+            date = data.completedAt.toDate();
+          }
+          if (!date) return;
 
-        runList.push({
-          id: d.id,
-          distance: data.distance || 0,
-          duration: data.duration || 0,
-          avgPace: data.avgPace || 0,
-          elevationGain: data.elevationGain || 0,
-          calories: data.calories || 0,
-          activityType: data.activityType || "freerun",
-          completedAt: date,
-          relativeEffort:
-            data.relativeEffort === "easier" ||
-            data.relativeEffort === "matched" ||
-            data.relativeEffort === "harder"
-              ? data.relativeEffort
-              : null,
-          isInvalid: data.isInvalid === true,
-          savedAnyway: data.savedAnyway === true,
-          routePreview:
-            data.points?.length > 1
-              ? data.points
-                  .filter(
-                    (_: { lat: number; lon: number }, i: number) =>
-                      i % Math.ceil(data.points.length / 20) === 0
-                  )
-                  .map((p: { lat: number; lon: number }) => ({
-                    lat: p.lat,
-                    lon: p.lon,
-                  }))
-              : undefined,
+          runList.push({
+            id: d.id,
+            distance: data.distance || 0,
+            duration: data.duration || 0,
+            avgPace: data.avgPace || 0,
+            elevationGain: data.elevationGain || 0,
+            calories: data.calories || 0,
+            activityType: data.activityType || "freerun",
+            completedAt: date,
+            relativeEffort:
+              data.relativeEffort === "easier" ||
+              data.relativeEffort === "matched" ||
+              data.relativeEffort === "harder"
+                ? data.relativeEffort
+                : null,
+            isInvalid: data.isInvalid === true,
+            savedAnyway: data.savedAnyway === true,
+            routePreview:
+              data.points?.length > 1
+                ? data.points
+                    .filter(
+                      (_: { lat: number; lon: number }, i: number) =>
+                        i % Math.ceil(data.points.length / 20) === 0
+                    )
+                    .map((p: { lat: number; lon: number }) => ({
+                      lat: p.lat,
+                      lon: p.lon,
+                    }))
+                : undefined,
+          });
         });
-      });
 
-      setWeeklyData(aggregateWeeklyData(runList));
-      setRuns(runList);
-      setLoading(false);
+        if (cancelled) return;
+        loadedUidRef.current = uid;
+        setWeeklyData(aggregateWeeklyData(runList));
+        setRuns(runList);
+      } catch (error) {
+        // A failed read must settle to a retryable state, not load forever
+        // (and never leave the promise rejection unhandled).
+        if (cancelled) return;
+        loadedUidRef.current = uid;
+        setRuns([]);
+        setWeeklyData([]);
+        logger.error("[useRunningStats] Failed to load runs", error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
-    loadStats();
-  }, [user, days, refreshTick]);
+    void loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, days, refreshTick]);
 
   return {
     weeklyData,
