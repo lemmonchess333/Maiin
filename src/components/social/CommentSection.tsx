@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../lib/auth";
 import { Button } from "@/components/ui/Button";
-import { getComments, addComment } from "../../lib/socialApi";
+import {
+  getComments,
+  addComment,
+  isPermissionDenied,
+} from "../../lib/socialApi";
 import { getTimeAgo } from "../../lib/timeAgo";
 import type { DocumentSnapshot } from "firebase/firestore";
 import BlockAwareAvatar from "./BlockAwareAvatar";
@@ -33,14 +37,35 @@ export default function CommentSection({
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
 
   useEffect(() => {
-    getComments(activityId).then((result) => {
-      setComments(result.comments as Comment[]);
-      lastDocRef.current = result.lastDoc;
-      setHasMore(result.hasMore);
-    });
+    let cancelled = false;
+    setUnavailable(false);
+    getComments(activityId)
+      .then((result) => {
+        if (cancelled) return;
+        setComments(result.comments as Comment[]);
+        lastDocRef.current = result.lastDoc;
+        setHasMore(result.hasMore);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        // Packet 13 — the activity became private/followers-only after it was
+        // rendered. Clear any stale comments and show a neutral notice rather
+        // than leaking now-private text or throwing into the feed.
+        if (isPermissionDenied(err)) {
+          setComments([]);
+          setHasMore(false);
+          setUnavailable(true);
+        } else {
+          logger.error("[CommentSection] load failed", err);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [activityId]);
 
   const [prevPrefill, setPrevPrefill] = useState(prefillText);
@@ -52,10 +77,20 @@ export default function CommentSection({
 
   const handleLoadMore = async () => {
     if (!lastDocRef.current) return;
-    const result = await getComments(activityId, 20, lastDocRef.current);
-    setComments((prev) => [...prev, ...(result.comments as Comment[])]);
-    lastDocRef.current = result.lastDoc;
-    setHasMore(result.hasMore);
+    try {
+      const result = await getComments(activityId, 20, lastDocRef.current);
+      setComments((prev) => [...prev, ...(result.comments as Comment[])]);
+      lastDocRef.current = result.lastDoc;
+      setHasMore(result.hasMore);
+    } catch (err) {
+      if (isPermissionDenied(err)) {
+        setComments([]);
+        setHasMore(false);
+        setUnavailable(true);
+      } else {
+        logger.error("[CommentSection] load more failed", err);
+      }
+    }
   };
 
   const handleSend = async () => {
@@ -86,6 +121,16 @@ export default function CommentSection({
       setSending(false);
     }
   };
+
+  if (unavailable) {
+    return (
+      <div className="mt-3 pt-3 border-t border-border/50">
+        <p className="text-xs text-muted-foreground">
+          This activity is unavailable.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 pt-3 border-t border-border/50 space-y-3">

@@ -739,6 +739,20 @@ export async function fetchActivitiesByIds(
   return results;
 }
 
+/**
+ * True for a Firestore `permission-denied`. Packet 13 gated kudos/comment
+ * child reads behind the parent activity's visibility, so a feed item that
+ * became inaccessible between render and child fetch now denies the read.
+ * Callers treat that as "not accessible" rather than a hard failure.
+ */
+export function isPermissionDenied(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    (err as { code?: string }).code === "permission-denied"
+  );
+}
+
 export async function batchGetKudos(
   activityIds: string[],
   userId: string
@@ -750,13 +764,22 @@ export async function batchGetKudos(
   }
   const chunkResults = await Promise.all(
     chunks.map(async (chunk) => {
-      const snaps = await Promise.all(
-        chunk.map((id) => getDoc(doc(db, "kudos", id, "users", userId)))
+      const entries = await Promise.all(
+        chunk.map(async (id) => {
+          try {
+            const snap = await getDoc(doc(db, "kudos", id, "users", userId));
+            return [id, snap.exists()] as const;
+          } catch (err) {
+            // A now-inaccessible parent activity denies its child kudos read.
+            // Treat as not-liked and continue so one private item can't take
+            // down the whole feed batch. Any OTHER error still propagates.
+            if (isPermissionDenied(err)) return [id, false] as const;
+            throw err;
+          }
+        })
       );
       const map: Record<string, boolean> = {};
-      chunk.forEach((id, i) => {
-        map[id] = snaps[i].exists();
-      });
+      for (const [id, liked] of entries) map[id] = liked;
       return map;
     })
   );

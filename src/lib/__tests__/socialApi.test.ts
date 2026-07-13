@@ -223,6 +223,27 @@ describe("batchGetKudos", () => {
     expect(result.act1).toBe(true);
     expect(result.act2).toBe(true);
   });
+
+  it("treats a permission-denied child read as not-liked and keeps the rest (packet 13)", async () => {
+    // act2's parent activity became inaccessible → its kudos child read is
+    // denied. That must NOT fail the whole batch; only act2 becomes false.
+    mockGetDoc.mockImplementation((path: string) => {
+      if (typeof path === "string" && path.includes("/kudos/act2/")) {
+        return Promise.reject({ code: "permission-denied" });
+      }
+      return Promise.resolve({ exists: () => true });
+    });
+    const result = await batchGetKudos(["act1", "act2"], "user1");
+    expect(result.act1).toBe(true);
+    expect(result.act2).toBe(false);
+  });
+
+  it("rethrows a non-permission-denied error", async () => {
+    mockGetDoc.mockRejectedValue({ code: "unavailable" });
+    await expect(batchGetKudos(["act1"], "user1")).rejects.toMatchObject({
+      code: "unavailable",
+    });
+  });
 });
 
 describe("blockUser", () => {
