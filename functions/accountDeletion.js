@@ -25,6 +25,7 @@ const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
+const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
@@ -470,7 +471,17 @@ async function deleteAccount({
       throw superseded;
     }
 
-    // 7. FINAL: delete the Auth user.
+    // The post-deletion write freeze must exist BEFORE Auth is removed. A
+    // still-valid ID token can reach Firestore/Storage in the interval
+    // between Auth deletion and this write; committing the tombstone first
+    // closes that data-recreation hole. If this durable write fails, the
+    // executor's catch leaves Auth intact + the ledger frozen so the
+    // deletion can be retried — never best-effort.
+    stage = "account_tombstone";
+    await deletedAccountsTombstone.writeTombstone({ firestore, uid, now });
+
+    // 7. FINAL irreversible step. The tombstone is committed, so an already-
+    // issued ID token cannot recreate Firestore or Storage data.
     stage = "auth_deletion";
     await auth.deleteUser(uid);
 
