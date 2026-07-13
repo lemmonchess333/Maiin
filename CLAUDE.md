@@ -745,6 +745,19 @@ Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), 
 - [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
 - [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
 
+### Storage deletion write-freeze — cross-service approval + first deploy (packet 11, operator-in-loop)
+
+Affects: `storage.rules` (the account-deletion write freeze), `.github/workflows/deploy-storage.yml`. Code is landed and tested; **it is deliberately NOT deployed yet** — the deploy job is gated so nothing reaches production until the operator does the two steps below.
+
+Why gated: `storage.rules` now reads Firestore (`accountDeletionRequests` / `deletedAccounts`) to freeze photo uploads/deletes during and after an account deletion — the same freeze Firestore already enforces. That **cross-service** read requires a one-time interactive approval in the Firebase Console. If the rule deploys **before** that approval exists, the predicate errors → denies → **all photo uploads are blocked app-wide**. The `deploy-storage.yml` `deploy` job therefore stays skipped until the operator opts in.
+
+Rollout sequence (operator, not agent) — do these in order, ideally after packet 10's Functions deploy:
+
+- [ ] **Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)
+- [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
+- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then, storage-rules changes deploy only via the manual `firebase deploy` above / `workflow_dispatch`.
+- [ ] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`.
+
 ### App Check enforcement rollout — operator-in-loop
 
 Affects: every callable in `functions/`. NOT a code change — a Firebase Console + monitoring exercise.
