@@ -34,6 +34,11 @@ if (!admin.apps.length) {
 // functions.
 const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
+// Packet 18 — programState command boundary (applyProgramCommand callable).
+const programCommands = require("./lib/programCommands");
+const {
+  runProgramCommandTransaction,
+} = require("./lib/programCommandTransaction");
 const { utcDateString, parseUtcDate } = require("./lib/dateUtils");
 const { resolveRecoveryExit } = require("./lib/runModeResolution");
 const { isVolumeEligibleRun } = require("./lib/runEligibility");
@@ -983,6 +988,71 @@ exports.configurePlan = functions
       throw new functions.https.HttpsError(
         "internal",
         "Failed to configure plan."
+      );
+    }
+  });
+
+// ══════════════════════════════════════════════
+// PROGRAMME COMMAND BOUNDARY (packet 18)
+// One server transaction is the authority for every mutation of
+// users/{uid}/programState/current. The client sends a small, validated intent
+// (a command) — never a whole ProgramState or a generic patch. The transaction
+// reads receipt + ProgramState + profile + deletion ledger + tombstone BEFORE
+// any write, so two concurrent commands (each retried against the latest
+// committed state) both survive, and a deletion that begins mid-flight leaves
+// no partial write. commandId is the idempotency key: a durable receipt makes a
+// retried offline / timed-out command a no-op.
+// ══════════════════════════════════════════════
+
+exports.applyProgramCommand = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    const firestore = admin.firestore();
+
+    // R1A-Deletion: callable-actor lock OUTSIDE the try so its structured
+    // account-deleting / account-deleted HttpsError reaches the client intact.
+    await accountDeletionLocks.assertCallableActorNotDeleting(firestore, uid);
+
+    try {
+      // Validate the client intent up front (maps ProgramCommandError below).
+      const command = programCommands.assertClientProgramCommand(
+        data && data.command
+      );
+
+      // Computed once (not inside the transaction) so a contention retry
+      // re-applies the SAME timestamp — the receipt, updatedAt, and any
+      // date-derived workout field are identical across retries.
+      const now = Date.now();
+      const { duplicate, committedUpdatedAt } =
+        await runProgramCommandTransaction({ firestore, uid, command, now });
+
+      return {
+        commandId: command.commandId,
+        duplicate,
+        updatedAt: committedUpdatedAt,
+      };
+    } catch (error) {
+      // Preserve structured HttpsError (unauthenticated / failed-precondition /
+      // invalid-argument / account-deleting|deleted); map the pure reducer's
+      // ProgramCommandError via its own httpsCode; only then fall back to
+      // internal. Never flatten a known HttpsError.
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      if (programCommands.isProgramCommandError(error)) {
+        throw new functions.https.HttpsError(error.httpsCode, error.message);
+      }
+      functions.logger.error("applyProgramCommand error", {
+        uid,
+        message: error && error.message,
+      });
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to apply programme command."
       );
     }
   });
