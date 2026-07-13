@@ -5,8 +5,10 @@ import {
   getDocFromCache,
   Timestamp,
   deleteField,
+  writeBatch,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import { stripUndefined } from "@/lib/firestoreGuards";
 import { db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
@@ -54,6 +56,11 @@ export interface CompletedSetLog {
  * built-in zero-duration fallback.
  */
 export interface CompletedSessionData {
+  /** Stable for the lifetime of one in-progress session and its retries.
+   *  Drives the deterministic workout id so a retried Finish targets the
+   *  SAME `users/{uid}/workouts/programme-<completionId>` doc instead of
+   *  appending a second log. Persisted in the draft (useWorkoutDraft). */
+  completionId: string;
   durationMinutes: number;
   setLogs: CompletedSetLog[][];
   /** PROGRAM-FLEX-01: set when the session ran as a time-budgeted
@@ -717,11 +724,21 @@ export function useProgram() {
   // record reflects actual execution; otherwise we fall back to planned data
   // (every set assumed completed at `ex.lastAttemptedWeight || ex.weight`).
   const completeWorkoutDay = useCallback(
-    async (dayIndex: number, sessionData?: CompletedSessionData) => {
-      if (!programState || !user) return;
-
+    async (dayIndex: number, sessionData: CompletedSessionData) => {
+      // Fail CLOSED — returning silently here would let the session UI clear
+      // its draft as if the workout persisted. The caller surfaces the throw.
+      if (!programState || !user) {
+        throw new Error(
+          "Cannot complete a workout without an active programme and user."
+        );
+      }
       const day = programState.workouts[dayIndex];
-      if (!day) return;
+      if (!day) {
+        throw new Error("Cannot complete a programme day that does not exist.");
+      }
+      if (!sessionData?.completionId) {
+        throw new Error("Workout completion is missing its idempotency key.");
+      }
 
       const updated: ProgramState = {
         ...programState,
@@ -734,102 +751,130 @@ export function useProgram() {
         }),
       };
 
-      await saveProgram(updated);
+      // Local date key so the written workout is picked up by the
+      // useEffectiveTargets / useHomeData filters, which both format in
+      // the viewer's local timezone via isWorkoutOnDate.
+      const today = localDateString();
 
-      // Write to workouts collection so Home/performance engine picks it up
-      try {
-        // Local date key so the written workout is picked up by the
-        // useEffectiveTargets / useHomeData filters, which both format in
-        // the viewer's local timezone via isWorkoutOnDate.
-        const today = localDateString();
-        const workoutId = `${today}-prog-${Date.now()}`;
-        const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+      // Build exercises array — from actual setLogs when available,
+      // otherwise from planned data (every set assumed completed).
+      const exercises = day.exercises.map((ex, exIndex) => {
+        const logs = sessionData.setLogs?.[exIndex];
+        const plannedWeight = ex.lastAttemptedWeight || ex.weight;
+        const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
 
-        // Build exercises array — from actual setLogs when available,
-        // otherwise from planned data (every set assumed completed).
-        const exercises = day.exercises.map((ex, exIndex) => {
-          const logs = sessionData?.setLogs?.[exIndex];
-          const plannedWeight = ex.lastAttemptedWeight || ex.weight;
-          const plannedReps = ex.lastPerformance?.reps ?? ex.reps;
-
-          const sets = logs
-            ? logs
-                .filter((l) => l.completed)
-                .map((l, i) => ({
-                  setNumber: i + 1,
-                  reps: l.reps,
-                  weightKg: l.weight,
-                }))
-            : Array.from({ length: ex.sets }, (_, i) => ({
+        const sets = logs
+          ? logs
+              .filter((l) => l.completed)
+              .map((l, i) => ({
                 setNumber: i + 1,
-                reps: plannedReps,
-                weightKg: plannedWeight,
-              }));
+                reps: l.reps,
+                weightKg: l.weight,
+              }))
+          : Array.from({ length: ex.sets }, (_, i) => ({
+              setNumber: i + 1,
+              reps: plannedReps,
+              weightKg: plannedWeight,
+            }));
 
-          return {
-            exerciseId: ex.exerciseId,
-            exerciseName: ex.name,
-            category: ex.movementCategory,
-            sets,
-            caloriesBurned: 0,
-          };
-        });
+        return {
+          exerciseId: ex.exerciseId,
+          exerciseName: ex.name,
+          category: ex.movementCategory,
+          sets,
+          caloriesBurned: 0,
+        };
+      });
 
-        const tonnage = exercises.reduce(
-          (t, ex) =>
-            t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
-          0
+      const tonnage = exercises.reduce(
+        (t, ex) =>
+          t + ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0),
+        0
+      );
+      const completedSetCount = exercises.reduce(
+        (c, ex) => c + ex.sets.length,
+        0
+      );
+
+      // Require bodyweight to compute a sensible burn. If it's missing we
+      // save the workout anyway — the helper returns 0 — but log so the
+      // operator can notice.
+      const bodyweightKg = profile?.weightKg ?? 0;
+      if (bodyweightKg <= 0) {
+        logger.warn(
+          "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0"
         );
-        const completedSetCount = exercises.reduce(
-          (c, ex) => c + ex.sets.length,
-          0
+      }
+
+      const durationMinutes =
+        sessionData.durationMinutes && sessionData.durationMinutes > 0
+          ? sessionData.durationMinutes
+          : 0;
+      const effectiveDurationMin =
+        durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
+
+      const totalCalories = estimateLiftBurn({
+        durationMinutes,
+        tonnageKg: tonnage,
+        bodyweightKg,
+        completedSetCount,
+      });
+
+      // ── CORE persistence boundary — atomic programme + workout write.
+      // Pre-packet-15 this was saveProgram(updated) FOLLOWED BY a separate
+      // workout write inside a log-only catch: a workout-write failure left
+      // the day permanently completed with no matching workout record (a
+      // split state that broke History / calorie totals / performance). One
+      // writeBatch commits both or neither. The id is deterministic
+      // (programme-<completionId>) so a retried Finish overwrites the same
+      // doc rather than appending a second log.
+      const programRef = doc(
+        db,
+        "users",
+        user.uid,
+        "programState",
+        PROGRAM_DOC
+      );
+      const workoutId = `programme-${sessionData.completionId}`;
+      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+
+      try {
+        const batch = writeBatch(db);
+        batch.set(
+          programRef,
+          stripUndefined({ ...updated, updatedAt: Date.now() })
         );
+        batch.set(
+          workoutRef,
+          stripUndefined({
+            date: today,
+            exercises,
+            totalCalories,
+            durationMinutes: effectiveDurationMin,
+            notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
+            createdAt: Timestamp.now(),
+            source: "programme",
+            completionId: sessionData.completionId,
+            sessionVariant: sessionData.sessionVariant,
+          })
+        );
+        await batch.commit();
+        // Local programme state changes only after BOTH docs commit.
+        setProgramState(updated);
+      } catch (error) {
+        logger.error("[Program] completion batch failed:", error);
+        toast.error(
+          "Couldn't save your workout. Your session is still ready to retry."
+        );
+        throw error;
+      }
 
-        // Require bodyweight to compute a sensible burn. If it's missing we
-        // save the workout anyway — the helper returns 0 — but log so the
-        // operator can notice.
-        const bodyweightKg = profile?.weightKg ?? 0;
-        if (bodyweightKg <= 0) {
-          logger.warn(
-            "completeWorkoutDay: profile.weightKg missing — workout will save with totalCalories=0"
-          );
-        }
-
-        const durationMinutes =
-          sessionData?.durationMinutes && sessionData.durationMinutes > 0
-            ? sessionData.durationMinutes
-            : 0;
-
-        const totalCalories = estimateLiftBurn({
-          durationMinutes,
-          tonnageKg: tonnage,
-          bodyweightKg,
-          completedSetCount,
-        });
-
-        await setDocGuarded(workoutRef, {
-          date: today,
-          exercises,
-          totalCalories,
-          // Prefer the real timer value. When absent, estimateLiftBurn's
-          // completedSetCount × 3 fallback drives burn — record that same
-          // effective duration so downstream analytics see a consistent
-          // value. No more `exercises.length × 5` placeholder.
-          durationMinutes:
-            durationMinutes > 0 ? durationMinutes : completedSetCount * 3,
-          notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
-          createdAt: Timestamp.now(),
-          source: "programme",
-          // Optional Express marker — setDocGuarded strips undefined,
-          // so full sessions keep the pre-existing doc shape exactly.
-          sessionVariant: sessionData?.sessionVariant,
-        });
+      // ── POST-SAVE best-effort: sharing must NOT invalidate a saved workout.
+      try {
         // Share composer: prompt the user (or replay their saved
         // default) for visibility + caption. Returns null if they
         // declined to share. Replaces the old autoPostWorkouts flag —
         // see src/lib/shareComposer.ts for the preference store.
-        const effectiveDurationMin =
-          durationMinutes > 0 ? durationMinutes : completedSetCount * 3;
         const decision = await compose(user.uid, {
           type: "workout",
           title: day.dayName,
@@ -912,7 +957,8 @@ export function useProgram() {
           }
         }
       } catch (err) {
-        logger.warn("Failed to sync programme day to workouts:", err);
+        // Post-save sharing/social failure — the workout already committed.
+        logger.warn("[Program] post-save workout sharing failed:", err);
       }
 
       const allDone = updated.workouts.every((d) => d.completed || d.skipped);
@@ -921,8 +967,9 @@ export function useProgram() {
           "All workouts complete! Advance to next week when ready."
         );
       }
+      return { workoutId };
     },
-    [programState, user, saveProgram, profile]
+    [programState, user, profile]
   );
 
   // Skip a workout day (no stats, no social post)
