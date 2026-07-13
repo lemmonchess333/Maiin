@@ -985,50 +985,105 @@ describe("run-day commands", () => {
 });
 
 describe("staged generation commands", () => {
-  it.each([
-    "completeWorkoutDay",
-    "logExercise",
-    "addExercises",
-    "replaceExercise",
-  ])("%s is validated but not yet applied in this stage", (kind) => {
-    // Build a minimally-valid command per kind so validation passes and the
-    // reducer's staged guard (not the validator) is what rejects it.
-    const commands = {
-      completeWorkoutDay: {
-        kind,
-        commandId: CMD,
-        ...dayPre(),
-        completion: {
-          completionId: "sess_abcdef01",
-          durationMinutes: 40,
-          setLogs: [],
+  it.each(["completeWorkoutDay", "addExercises", "replaceExercise"])(
+    "%s is validated but not yet applied in this stage",
+    (kind) => {
+      // Build a minimally-valid command per kind so validation passes and the
+      // reducer's staged guard (not the validator) is what rejects it.
+      const commands = {
+        completeWorkoutDay: {
+          kind,
+          commandId: CMD,
+          ...dayPre(),
+          completion: {
+            completionId: "sess_abcdef01",
+            durationMinutes: 40,
+            setLogs: [],
+          },
         },
-      },
-      logExercise: {
-        kind,
-        commandId: CMD,
-        ...dayPre(),
-        exerciseInstanceId: "inst-a",
-        actual: { weight: 100, reps: 8, completed: true },
-      },
-      addExercises: {
-        kind,
-        commandId: CMD,
-        ...dayPre(),
-        exercises: [{ exerciseId: "bench" }],
-      },
-      replaceExercise: {
-        kind,
-        commandId: CMD,
-        ...dayPre(),
-        oldInstanceId: "inst-a",
-        replacementExerciseId: "incline",
-      },
+        addExercises: {
+          kind,
+          commandId: CMD,
+          ...dayPre(),
+          exercises: [{ exerciseId: "bench" }],
+        },
+        replaceExercise: {
+          kind,
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-a",
+          replacementExerciseId: "incline",
+        },
+      };
+      const error = expectHttps(
+        () => apply(commands[kind]),
+        "failed-precondition"
+      );
+      expect(error.message).toMatch(/build stage/i);
+    }
+  );
+});
+
+describe("logExercise (reducer wiring — progression math pinned by cross-test)", () => {
+  function logCmd(overrides) {
+    return {
+      kind: "logExercise",
+      commandId: CMD,
+      ...dayPre(),
+      exerciseInstanceId: "inst-a",
+      actual: { weight: 100, reps: 8, completed: true },
+      ...overrides,
     };
-    const error = expectHttps(
-      () => apply(commands[kind]),
+  }
+
+  it("autoProgression on: applies progression to the target exercise", () => {
+    // inst-a: linear (no progressionType), microloading on, completed set at
+    // prescription → +1kg microload (client applyProgression rule).
+    const { state } = apply(logCmd());
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    expect(row.weight).toBe(101);
+    expect(row.lastAttemptedWeight).toBe(100);
+    expect(row.performanceHistory).toHaveLength(1);
+  });
+
+  it("autoProgression off: records the attempt without changing prescription", () => {
+    const s = baseState();
+    s.settings = { autoProgression: false, microloading: true };
+    const { state } = apply(logCmd(), s);
+    const row = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-a"
+    );
+    expect(row.weight).toBe(100); // unchanged
+    expect(row.lastAttemptedWeight).toBe(100);
+    expect(row.lastPerformance).toEqual({
+      sets: 3,
+      reps: 8,
+      weight: 100,
+      completed: true,
+    });
+  });
+
+  it("only the target exercise changes; the other is untouched", () => {
+    const { state } = apply(logCmd());
+    const other = state.workouts[0].exercises.find(
+      (e) => e.instanceId === "inst-b"
+    );
+    expect(other.weight).toBe(60);
+    expect(other.lastAttemptedWeight).toBeUndefined();
+  });
+
+  it("rejects an unknown exercise instance id", () => {
+    expectHttps(
+      () => apply(logCmd({ exerciseInstanceId: "inst-x" })),
       "failed-precondition"
     );
-    expect(error.message).toMatch(/build stage/i);
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(logCmd(), input);
+    expect(input.workouts[0].exercises[0].weight).toBe(100);
   });
 });
