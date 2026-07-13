@@ -70,6 +70,15 @@ const PINNED: Record<string, string> = {
   // Packet 18 — CF bodyweight id set mirrors the catalog's Bodyweight rows.
   "functions/lib/bodyweightExerciseIds.js":
     "src/features/program/__tests__/bodyweightExerciseIds.cross.test.ts",
+  // Packet 18 — CF catalog id→name mirror (add/replace derive exercise names).
+  "functions/lib/exerciseCatalog.js":
+    "src/features/program/__tests__/exerciseCatalog.cross.test.ts",
+  // Packet 18 — CF movement-category inference mirrors the client.
+  "functions/lib/exerciseMovementCategory.js":
+    "src/features/program/__tests__/exerciseMovementCategory.cross.test.ts",
+  // Packet 18 — CF ProgramExercise builder mirrors normalizeExercise.
+  "functions/lib/programExerciseBuilder.js":
+    "src/features/program/__tests__/programExerciseBuilder.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":

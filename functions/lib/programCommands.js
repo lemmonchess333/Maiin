@@ -45,6 +45,14 @@
 // Server mirror of the client progression engine (pinned by a parity
 // cross-test). Used by the logExercise reducer.
 const { applyProgression } = require("./progressionEngine");
+// Catalog name mirror + ProgramExercise builder (both pinned by cross-tests).
+// Used by the addExercises / replaceExercise reducers to derive exercise fields
+// server-side rather than trust a client-supplied exercise object.
+const {
+  getExerciseName,
+  isCatalogExerciseId,
+} = require("./exerciseCatalog");
+const { buildProgramExercise } = require("./programExerciseBuilder");
 
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
@@ -907,14 +915,77 @@ function logExercise(state, command, now) {
   }));
 }
 
+// Build the exercise catalog lookup + validation for add/replace. Rejects an
+// unknown id as invalid-argument (the id comes from the catalog picker; an
+// unknown one is a malformed/forged command, not stale state).
+function resolveCatalogExercise(exerciseId, label) {
+  if (!isCatalogExerciseId(exerciseId)) {
+    invalidCommand(`Unknown ${label} exercise "${exerciseId}".`);
+  }
+  return getExerciseName(exerciseId);
+}
+
+function addExercises(state, command) {
+  const day = requireWorkoutDay(state, command);
+  // Deterministic instance ids derived from the commandId — a retry with the
+  // same commandId produces the same ids (and is short-circuited by the receipt
+  // anyway), so the reducer stays pure.
+  const built = command.exercises.map((input, i) =>
+    buildProgramExercise({
+      name: resolveCatalogExercise(input.exerciseId, "added"),
+      exerciseId: input.exerciseId,
+      instanceId: `cmd-${command.commandId}-${i}`,
+      // Match the client add default (3×10×0) when a field is omitted.
+      sets: input.sets ?? 3,
+      reps: input.reps ?? 10,
+      weight: input.weight ?? 0,
+    })
+  );
+
+  const exercises = day.exercises.slice();
+  const at =
+    command.insertAt == null
+      ? exercises.length
+      : Math.min(command.insertAt, exercises.length);
+  exercises.splice(at, 0, ...built);
+
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({ ...d, exercises }));
+}
+
+function replaceExercise(state, command) {
+  const day = requireWorkoutDay(state, command);
+  const idx = day.exercises.findIndex(
+    (ex) => ex && ex.instanceId === command.oldInstanceId
+  );
+  if (idx === -1) {
+    failedPrecondition("That exercise is no longer in this workout.");
+  }
+  const name = resolveCatalogExercise(
+    command.replacementExerciseId,
+    "replacement"
+  );
+  const old = day.exercises[idx];
+  // Mirror the client replaceExercise: carry the old prescription
+  // (sets/reps/weight), re-infer the category, mint a new instance.
+  const replacement = buildProgramExercise({
+    name,
+    exerciseId: command.replacementExerciseId,
+    instanceId: `cmd-${command.commandId}`,
+    sets: old.sets,
+    reps: old.reps,
+    weight: old.weight,
+  });
+
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises: d.exercises.map((ex, i) => (i === idx ? replacement : ex)),
+  }));
+}
+
 // Generation-dependent kinds still staged for a later PR alongside the callable
-// (they require the exercise catalog / admin Timestamp). Listed so a premature
-// dispatch fails loudly rather than silently.
-const STAGED_GENERATION_KINDS = new Set([
-  "completeWorkoutDay",
-  "addExercises",
-  "replaceExercise",
-]);
+// (completeWorkoutDay requires admin Timestamp + the calorie engine for its
+// workout effect). Listed so a premature dispatch fails loudly.
+const STAGED_GENERATION_KINDS = new Set(["completeWorkoutDay"]);
 
 /**
  * Apply exactly one validated command to programme state. Pure + deterministic:
@@ -950,6 +1021,12 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "logExercise":
       next = logExercise(current, validated, now);
+      break;
+    case "addExercises":
+      next = addExercises(current, validated);
+      break;
+    case "replaceExercise":
+      next = replaceExercise(current, validated);
       break;
     case "setProgramSettings":
       next = { ...current, settings: { ...validated.settings } };
