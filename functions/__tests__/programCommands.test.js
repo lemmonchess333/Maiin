@@ -984,23 +984,147 @@ describe("run-day commands", () => {
   });
 });
 
-describe("staged generation commands", () => {
-  it("completeWorkoutDay is validated but not yet applied in this stage", () => {
-    const error = expectHttps(
-      () =>
-        apply({
-          kind: "completeWorkoutDay",
-          commandId: CMD,
-          ...dayPre(),
-          completion: {
-            completionId: "sess_abcdef01",
-            durationMinutes: 40,
-            setLogs: [],
-          },
-        }),
-      "failed-precondition"
+describe("completeWorkoutDay (effect — calorie mirror pinned by cross-test)", () => {
+  // Dedicated state: Push day with categorised exercises + a run/override to
+  // prove isolation.
+  function completeState() {
+    const s = baseState();
+    s.nextWorkoutOverride = 0;
+    s.workouts[0].exercises = [
+      {
+        name: "Bench",
+        exerciseId: "bench-press",
+        instanceId: "inst-a",
+        movementCategory: "horizontal_push",
+        sets: 3,
+        reps: 8,
+        weight: 100,
+      },
+      {
+        name: "Row",
+        exerciseId: "cable-row",
+        instanceId: "inst-b",
+        movementCategory: "horizontal_pull",
+        sets: 3,
+        reps: 10,
+        weight: 60,
+      },
+    ];
+    return s;
+  }
+
+  const completion = {
+    completionId: "sess_abcdef01",
+    durationMinutes: 45,
+    setLogs: [
+      [
+        { weight: 100, reps: 8, completed: true },
+        { weight: 100, reps: 8, completed: true },
+        { weight: 100, reps: 7, completed: false },
+      ],
+      [{ weight: 60, reps: 10, completed: true }],
+    ],
+  };
+
+  function run(profile, extra) {
+    return applyProgramCommand({
+      state: completeState(),
+      profile: profile || {},
+      command: {
+        kind: "completeWorkoutDay",
+        commandId: CMD,
+        ...dayPre(),
+        completion: { ...completion, ...(extra || {}) },
+      },
+      now: Date.parse("2026-07-13T02:30:00Z"),
+    });
+  }
+
+  it("marks the day complete, forces skipped:false, clears a matching override", () => {
+    const { state } = run();
+    expect(state.workouts[0].completed).toBe(true);
+    expect(state.workouts[0].skipped).toBe(false);
+    expect(state.workouts[1].completed).toBe(false); // other day untouched
+    expect("nextWorkoutOverride" in state).toBe(false); // cleared (was 0)
+  });
+
+  it("builds the workout record from completed set logs", () => {
+    const { effects } = run({ weightKg: 80 });
+    const w = effects.workout;
+    expect(w.exercises).toHaveLength(2);
+    expect(w.exercises[0]).toEqual({
+      exerciseId: "bench-press",
+      exerciseName: "Bench",
+      category: "horizontal_push",
+      caloriesBurned: 0,
+      sets: [
+        { setNumber: 1, reps: 8, weightKg: 100 },
+        { setNumber: 2, reps: 8, weightKg: 100 },
+      ],
+    });
+    expect(w.exercises[1].sets).toEqual([
+      { setNumber: 1, reps: 10, weightKg: 60 },
+    ]);
+  });
+
+  it("computes totalCalories via the mirrored calorie engine", () => {
+    // tonnage 2200, 3 sets, 45 min, 80kg → MET 3.5 → round(45*80*3.5/60) = 210
+    const { effects } = run({ weightKg: 80 });
+    expect(effects.workout.totalCalories).toBe(210);
+    expect(effects.workout.durationMinutes).toBe(45);
+  });
+
+  it("saves 0 calories when bodyweight is missing", () => {
+    const { effects } = run({});
+    expect(effects.workout.totalCalories).toBe(0);
+  });
+
+  it("stamps the date in the user's timezone (not server UTC)", () => {
+    // 02:30 UTC on 2026-07-13 is 22:30 on 2026-07-12 in New York (EDT).
+    expect(run({ timezone: "America/New_York" }).effects.workout.date).toBe(
+      "2026-07-12"
     );
-    expect(error.message).toMatch(/build stage/i);
+    expect(run({}).effects.workout.date).toBe("2026-07-13"); // UTC fallback
+  });
+
+  it("sets notes/source/completionId and omits createdAt (callable injects it)", () => {
+    const w = run({ weightKg: 80 }).effects.workout;
+    expect(w.notes).toBe("Push — Programme Week 5");
+    expect(w.source).toBe("programme");
+    expect(w.completionId).toBe("sess_abcdef01");
+    expect("createdAt" in w).toBe(false);
+    expect("sessionVariant" in w).toBe(false);
+  });
+
+  it("carries sessionVariant when provided", () => {
+    const w = run({}, { sessionVariant: "express30" }).effects.workout;
+    expect(w.sessionVariant).toBe("express30");
+  });
+
+  it("falls back to planned data when a set log is absent", () => {
+    const w = run({}, { setLogs: [] }).effects.workout;
+    // no logs → planned: bench 3 sets @ reps 8 / weight 100
+    expect(w.exercises[0].sets).toEqual([
+      { setNumber: 1, reps: 8, weightKg: 100 },
+      { setNumber: 2, reps: 8, weightKg: 100 },
+      { setNumber: 3, reps: 8, weightKg: 100 },
+    ]);
+  });
+
+  it("does not mutate the input state", () => {
+    const input = completeState();
+    applyProgramCommand({
+      state: input,
+      profile: { weightKg: 80 },
+      command: {
+        kind: "completeWorkoutDay",
+        commandId: CMD,
+        ...dayPre(),
+        completion,
+      },
+      now: Date.parse("2026-07-13T02:30:00Z"),
+    });
+    expect(input.workouts[0].completed).toBe(false);
   });
 });
 
