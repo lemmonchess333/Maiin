@@ -84,7 +84,6 @@ const PROTECTED_PATHS = [
   "match /followers/{uid}/users/{followerUid}",
   "match /notifications/{uid}/items/{doc}",
   "match /blocks/{uid}/users/{targetUid}",
-  "match /reports/{reportId}",
   "match /groups/{crewId}",
   // Tombstone-freeze packet (2026-07-12) — moved out of EXPLICITLY_EXEMPT.
   // activities create/update/delete now carry the actor write-freeze, and
@@ -163,6 +162,11 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // (createReport); `allow read, write: if false` for clients. No user-keyed
   // data beyond a diagnostic targetUid; not in scope for the deletion freeze.
   "match /reportAuthority/{reportId}",
+  // Packet 14 lockdown — reports are now server-only (createReport callable);
+  // `allow read, write: if false` for clients. Moved here from PROTECTED_PATHS
+  // because the deletion actor-freeze no longer needs to gate a create path
+  // that clients can't reach.
+  "match /reports/{reportId}",
   "match /config/{doc}",
   "match /accountDeletionRequests/{uid}",
   "match /deletedAccounts/{uid}",
@@ -333,6 +337,6 @@ describe("Blocker E — path-count reconciliation", () => {
     // all their write actions became frozen), → 40.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(40);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
   });
 });

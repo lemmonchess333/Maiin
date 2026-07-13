@@ -111,11 +111,8 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     sides: ["owner"],
     notes: "target is NOT checked — blocking a deleting user is allowed",
   },
-  {
-    pathPattern: "match /reports/{reportId}",
-    sides: ["actor"],
-    notes: "deleting users cannot file new reports",
-  },
+  // Packet 14 lockdown — /reports is now server-only (createReport callable);
+  // clients can't write it, so there is no actor-freeze surface to cover here.
   {
     // Tombstone-freeze packet (2026-07-12) — activities create/update/delete
     // now carry the full write-freeze. Previously EXPLICITLY_EXEMPT (a
@@ -327,6 +324,6 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // set (→33). This list is a curated freeze-verification SUBSET; the
     // full drift inventory (with its own count) lives in
     // accountDeletionWriteRulesSnapshot.test.ts.
-    expect(PROTECTED_PATHS.length).toBe(33);
+    expect(PROTECTED_PATHS.length).toBe(32);
   });
 });
