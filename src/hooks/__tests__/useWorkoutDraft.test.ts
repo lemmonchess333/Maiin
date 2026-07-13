@@ -61,6 +61,7 @@ function draftFor(
     elapsedSeconds: 600,
     currentExIndex: 0,
     completionId: "cid-fixed",
+    completionCommandId: "cid-fixed",
   };
 }
 
@@ -361,6 +362,78 @@ describe("useWorkoutDraft — completionId (packet 15)", () => {
       localStorage.getItem(v2Key(UID, IDENTITY)) as string
     ) as WorkoutDraft;
     expect(stored.completionId).toBe(first?.completionId);
+  });
+});
+
+describe("useWorkoutDraft — completionCommandId bridge (packet 18)", () => {
+  const UID = "u-ccid";
+
+  it("a save round-trips a completionCommandId", () => {
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    act(() =>
+      result.current.save({
+        ...draftFor(0),
+        completionId: "cid-x",
+        completionCommandId: "ccid-x",
+      })
+    );
+    expect(result.current.load()?.completionCommandId).toBe("ccid-x");
+  });
+
+  it("repairs a draft missing completionCommandId, defaulting to completionId, and persists it once", () => {
+    const legacy = {
+      ...draftFor(0),
+      identity: IDENTITY,
+      savedAt: Date.now(),
+      completionId: "cid-keep",
+    } as Record<string, unknown>;
+    delete legacy.completionCommandId;
+    localStorage.setItem(v2Key(UID, IDENTITY), JSON.stringify(legacy));
+
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    const first = result.current.load();
+    // Missing command id defaults to the completion id.
+    expect(first?.completionCommandId).toBe("cid-keep");
+    expect(first?.completionId).toBe("cid-keep");
+
+    // Repaired ids persist — reload twice, both stay identical.
+    const second = result.current.load();
+    expect(second?.completionCommandId).toBe(first?.completionCommandId);
+    const stored = JSON.parse(
+      localStorage.getItem(v2Key(UID, IDENTITY)) as string
+    ) as WorkoutDraft;
+    expect(stored.completionCommandId).toBe("cid-keep");
+  });
+
+  it("repairs a draft missing BOTH ids: mints a completionId and mirrors it as the command id", () => {
+    const legacy = {
+      ...draftFor(0),
+      identity: IDENTITY,
+      savedAt: Date.now(),
+    } as Record<string, unknown>;
+    delete legacy.completionId;
+    delete legacy.completionCommandId;
+    localStorage.setItem(v2Key(UID, IDENTITY), JSON.stringify(legacy));
+
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    const draft = result.current.load();
+    expect(draft?.completionId).toBeTruthy();
+    expect(draft?.completionCommandId).toBe(draft?.completionId);
+  });
+
+  it("a resumed draft retains the exact completionId and completionCommandId", () => {
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    act(() =>
+      result.current.save({
+        ...draftFor(0),
+        completionId: "cid-resume",
+        completionCommandId: "ccid-resume",
+      })
+    );
+    const remount = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    const loaded = remount.result.current.load();
+    expect(loaded?.completionId).toBe("cid-resume");
+    expect(loaded?.completionCommandId).toBe("ccid-resume");
   });
 });
 
