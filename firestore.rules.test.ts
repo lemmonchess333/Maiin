@@ -2499,4 +2499,37 @@ suite("firestore.rules — partnerBonds (SOCIAL S3)", () => {
       await assertFails(getDoc(doc(db, "reportAuthority", "real")));
     });
   });
+
+  // ── Packet 14 lockdown — /reports is server-only (createReport callable) ──
+  describe("reports direct writes are denied to clients", () => {
+    it("an authed client cannot create a report", async () => {
+      const client = env.authenticatedContext(OTHER_UID).firestore();
+      await assertFails(
+        setDoc(doc(client, "reports", "client-forged-report"), {
+          reporterId: OTHER_UID,
+          targetType: "activity",
+          targetId: "activity-a",
+          targetUid: "victim-b",
+          status: "pending",
+        })
+      );
+    });
+
+    it("an authed client cannot update an existing report", async () => {
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(doc(ctx.firestore(), "reports", "existing-report"), {
+          reporterId: OTHER_UID,
+          status: "pending",
+        });
+      });
+      const client = env.authenticatedContext(OTHER_UID).firestore();
+      await assertFails(
+        setDoc(
+          doc(client, "reports", "existing-report"),
+          { targetUid: "victim-b" },
+          { merge: true }
+        )
+      );
+    });
+  });
 });
