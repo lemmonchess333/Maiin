@@ -621,6 +621,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Keyed by uid so an account switch on a shared device re-runs them for the
   // new user (the debounced-boot-side-effect class, cf. OneTimeMaintenance).
   const reconciledUidRef = useRef<string | null>(null);
+  // Account-switch isolation: onAuthStateChanged is not awaited by Firebase, so
+  // an A callback whose reads resolve AFTER a B callback must not commit A's
+  // identity-derived state. Each callback captures a monotonic epoch + the UID
+  // it owns; any setState after an await is gated on both still being current.
+  const authEpochRef = useRef(0);
+  const activeUidRef = useRef<string | null>(null);
 
   // Dark mode sync — dark is the default, so a null profile (signed out /
   // still loading) and a profile without an explicit choice both resolve dark.
@@ -633,11 +639,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!isMounted) return;
+      const uid = firebaseUser?.uid ?? null;
+
+      // A queued stale callback must not invalidate the current callback's
+      // generation. Reject it before incrementing the epoch.
+      if ((auth.currentUser?.uid ?? null) !== uid) return;
+
+      const epoch = ++authEpochRef.current;
+      const previousUid = activeUidRef.current;
+
+      // True only while THIS callback still owns the account — same epoch,
+      // same active uid, and Firebase's current user still matches. Every
+      // post-await state mutation is gated on it, so a stale A callback that
+      // resolves after a B switch returns silently.
+      const isCurrent = () =>
+        isMounted &&
+        authEpochRef.current === epoch &&
+        activeUidRef.current === uid &&
+        (auth.currentUser?.uid ?? null) === uid;
+
+      activeUidRef.current = uid;
       setUser(firebaseUser);
       // Track the current UID on errorReporting so the Firestore sink
       // writes critical errors under the correct user doc. Null clears it
       // on sign-out so orphaned errors don't leak to a stale UID.
-      setErrorReportingUid(firebaseUser?.uid ?? null);
+      setErrorReportingUid(uid);
+
+      // Never expose the previous account while the next account hydrates.
+      // Same-uid token refresh keeps the rendered profile (avoids a flicker).
+      if (previousUid !== uid) {
+        setProfile(null);
+        setLoading(true);
+      }
 
       if (firebaseUser) {
         // Cache-first paint (mirrors useProgram's programState read). A plain
@@ -652,7 +685,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const cachedDoc = await getDocFromCache(
             doc(db, "users", firebaseUser.uid)
           );
-          if (isMounted && cachedDoc.exists()) {
+          if (!isCurrent()) return;
+          if (cachedDoc.exists()) {
             const cachedProfile = hydrateProfile(
               firebaseUser.uid,
               cachedDoc.data(),
@@ -670,7 +704,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
           const profileDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (!isMounted) return;
+          if (!isCurrent()) return;
 
           if (profileDoc.exists()) {
             const data = profileDoc.data();
@@ -719,7 +753,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setProfile(null);
           }
         } catch (err) {
-          if (!isMounted) return;
+          if (!isCurrent()) return;
           logger.error("[AuthProvider] Failed to load profile", err);
           setProfile(null);
         }
@@ -729,11 +763,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncDarkMode(true);
       }
 
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     });
 
     return () => {
       isMounted = false;
+      authEpochRef.current += 1;
+      activeUidRef.current = null;
       unsubscribe();
     };
   }, []);
@@ -771,12 +807,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const newProfile = createDefaultProfile(
-      cred.user.uid,
-      "",
-      cred.user.email || ""
-    );
-    await writeNewProfileDocs(cred.user.uid, newProfile);
+    const uid = cred.user.uid;
+    const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
+    // Always finish creating the account's docs; only gate local state +
+    // analytics attribution if the credential is no longer current.
+    await writeNewProfileDocs(uid, newProfile);
+    if (auth.currentUser?.uid !== uid) return;
     setProfile(newProfile);
     trackLifecycle("signup_completed", { method: "email" });
     // Fire-and-forget verification email (branded, via the same Resend path
@@ -803,23 +839,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      it as a real dependency instead of suppressing the lint rule. */
   const finishOAuthSignIn = useCallback(
     async (cred: UserCredential, method: "google" | "apple") => {
-      const profileDoc = await getDoc(doc(db, "users", cred.user.uid));
+      const uid = cred.user.uid;
+      const profileDoc = await getDoc(doc(db, "users", uid));
 
       if (!profileDoc.exists()) {
         const newProfile = createDefaultProfile(
-          cred.user.uid,
+          uid,
           cred.user.displayName || "",
           cred.user.email || "",
           cred.user.photoURL || null
         );
-        await writeNewProfileDocs(cred.user.uid, newProfile);
+        // Finish creating the new Auth account's docs even if the UI switched,
+        // so it isn't left half-initialized; only gate local state/analytics.
+        await writeNewProfileDocs(uid, newProfile);
+        if (auth.currentUser?.uid !== uid) return;
         setProfile(newProfile);
         trackLifecycle("signup_completed", { method });
       } else {
+        if (auth.currentUser?.uid !== uid) return;
         const data = profileDoc.data();
         setProfile(
           hydrateProfile(
-            cred.user.uid,
+            uid,
             data,
             cred.user.displayName ?? "",
             cred.user.email ?? ""
@@ -982,6 +1023,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options?: { allowProtected?: boolean; throwOnError?: boolean }
     ): Promise<UpdateProfileResult> => {
       if (!user) return { ok: false, error: new Error("not-authenticated") };
+      // Capture the identity this write belongs to; a render-captured callback
+      // that's already stale (account switched) must not proceed.
+      const writeUid = user.uid;
+      if (
+        auth.currentUser?.uid !== writeUid ||
+        activeUidRef.current !== writeUid
+      ) {
+        return { ok: false, error: new Error("stale-auth-context") };
+      }
       let writeData = data;
       if (!options?.allowProtected) {
         writeData = Object.fromEntries(
@@ -1024,35 +1074,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // free; the batch path has no guarded equivalent, so apply the
           // same firestoreWrite sanitiser (stripUndefined) by hand here.
           const batch = writeBatch(db);
-          batch.set(doc(db, "users", user.uid), stripUndefined(writeData), {
+          batch.set(doc(db, "users", writeUid), stripUndefined(writeData), {
             merge: true,
           });
           batch.set(
-            doc(db, "users", user.uid, "public", "profile"),
+            doc(db, "users", writeUid, "public", "profile"),
             stripUndefined(publicPatch),
             { merge: true }
           );
           await batch.commit();
         } else {
-          await setDocGuarded(doc(db, "users", user.uid), writeData, {
+          await setDocGuarded(doc(db, "users", writeUid), writeData, {
             merge: true,
           });
         }
 
+        // The remote write for A is committed and NOT rolled back — only stale
+        // LOCAL hydration + theme mutation are suppressed if B is now current.
+        if (
+          auth.currentUser?.uid !== writeUid ||
+          activeUidRef.current !== writeUid
+        ) {
+          return { ok: true };
+        }
         setProfile((prev) => {
-          const updated = prev ? { ...prev, ...data } : null;
-          if (updated && "darkMode" in data) {
-            syncDarkMode(updated.darkMode);
-          }
+          if (!prev || prev.uid !== writeUid) return prev;
+          const updated = { ...prev, ...data };
+          if ("darkMode" in data) syncDarkMode(updated.darkMode);
           return updated;
         });
 
         return { ok: true };
       } catch (err) {
-        logger.error("[auth] updateProfile failed", err);
-        if (options?.throwOnError) {
-          throw err;
+        // Preserve throwOnError semantics. Otherwise, don't route A's failed
+        // op through B's error identity / toast once B is current.
+        if (options?.throwOnError) throw err;
+        if (
+          auth.currentUser?.uid !== writeUid ||
+          activeUidRef.current !== writeUid
+        ) {
+          return { ok: false, error: err };
         }
+        logger.error("[auth] updateProfile failed", err);
         // Stable toast ID collapses bursts (e.g. rapid Settings toggles) into
         // a single visible message.
         toast.error("Couldn't save your settings. Please try again.", {
@@ -1065,15 +1128,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshProfile = useCallback(async () => {
-    if (!auth.currentUser) return;
-    const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    // Capture identity BEFORE the await; never re-read auth.currentUser after
+    // it to stamp a snapshot fetched under a different UID. If the account
+    // switched during the read, drop A's snapshot rather than hydrate it as B.
+    const uid = currentUser.uid;
+    const snap = await getDoc(doc(db, "users", uid));
+    if (auth.currentUser?.uid !== uid) return;
     if (snap.exists()) {
       setProfile(
         hydrateProfile(
-          auth.currentUser.uid,
+          uid,
           snap.data() as Record<string, unknown>,
-          auth.currentUser.displayName ?? "",
-          auth.currentUser.email ?? ""
+          currentUser.displayName ?? "",
+          currentUser.email ?? ""
         )
       );
     }
