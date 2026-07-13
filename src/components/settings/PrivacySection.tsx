@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
@@ -74,6 +75,8 @@ export default function PrivacySection({
 }: PrivacySectionProps) {
   const [showCrewPicker, setShowCrewPicker] = useState(false);
   const [showLeaveCrewConfirm, setShowLeaveCrewConfirm] = useState(false);
+  const [pendingZoneRemoval, setPendingZoneRemoval] =
+    useState<PrivacyZone | null>(null);
   const [blockedUsersList, setBlockedUsersList] = useState<
     { uid: string; displayName: string }[]
   >([]);
@@ -307,13 +310,15 @@ export default function PrivacySection({
                   {z.radiusMeters}m radius
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => removeZone(z.id)}
-                className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+              <IconButton
+                aria-label={`Remove privacy zone ${z.name}`}
+                variant="destructive-tinted"
+                icon={<Trash2 />}
+                onClick={() => {
+                  haptic("light");
+                  setPendingZoneRemoval(z);
+                }}
+              />
             </div>
           ))}
 
@@ -478,6 +483,32 @@ export default function PrivacySection({
           toast.success("Left crew");
         }}
         onCancel={() => setShowLeaveCrewConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={pendingZoneRemoval !== null}
+        title="Remove privacy zone?"
+        description={
+          pendingZoneRemoval
+            ? `${pendingZoneRemoval.name} will stop hiding route starts and ends near this location.`
+            : undefined
+        }
+        confirmLabel="Remove zone"
+        destructive
+        onConfirm={async () => {
+          const zone = pendingZoneRemoval;
+          if (!zone) return;
+          // Close before the await so a double-tap can't submit twice; a
+          // failed write leaves the zone visible with retry feedback.
+          setPendingZoneRemoval(null);
+          try {
+            await removeZone(zone.id);
+            toast.success("Privacy zone removed");
+          } catch {
+            toast.error("Couldn't remove the privacy zone. Try again.");
+          }
+        }}
+        onCancel={() => setPendingZoneRemoval(null)}
       />
     </>
   );
