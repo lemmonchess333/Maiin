@@ -7,6 +7,10 @@ import { haptic } from "@/lib/haptic";
 
 interface Props {
   id: string;
+  /** Human name of the exercise — names BOTH the reorder handle and the
+   *  swipe-delete action for assistive tech. Required even when
+   *  showHandle={false} because it still names the delete action. */
+  label: string;
   children: React.ReactNode;
   justDropped?: boolean;
   onDelete?: () => void;
@@ -15,6 +19,7 @@ interface Props {
 
 export default function SortableExerciseRow({
   id,
+  label,
   children,
   justDropped,
   onDelete,
@@ -99,7 +104,7 @@ export default function SortableExerciseRow({
           }}
           className="absolute right-0 top-0 bottom-0 w-20 flex items-center justify-center bg-destructive"
           style={{ borderRadius: 10 }}
-          aria-label="Delete exercise"
+          aria-label={`Delete ${label}`}
         >
           <Trash2 className="size-5 text-white" />
         </button>
@@ -125,11 +130,14 @@ export default function SortableExerciseRow({
             type="button"
             {...attributes}
             {...listeners}
-            onPointerDown={() => haptic("light")}
-            className="touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center"
-            style={{ width: 28, minHeight: 44 }}
+            // Capture phase: a plain onPointerDown placed after {...listeners}
+            // overwrites dnd-kit's activation listener and breaks dragging.
+            onPointerDownCapture={() => haptic("light")}
+            aria-label={`Reorder ${label}`}
+            className="size-11 touch-none shrink-0 cursor-grab active:cursor-grabbing flex items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <div
+              aria-hidden="true"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 3px)",
