@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import WeekPulseCard from "@/components/WeekPulseCard";
 import {
@@ -34,6 +34,11 @@ import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
+import PaceInsightCard from "../components/run/PaceInsightCard";
+import {
+  usePaceInsightFromRuns,
+  type PaceInsightRun,
+} from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
 import { applyPrivacyZones } from "../lib/privacyZones";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
@@ -54,7 +59,7 @@ import { resolvePaceVerdict } from "../lib/paceVerdict";
 import { paceMinSec } from "../lib/runLabels";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
-import { isVolumeEligible } from "../lib/runStatsEligibility";
+import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
@@ -442,6 +447,10 @@ export default function RunSummary() {
     enabled: saved,
   });
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
+  // The historical run list, reused for BOTH the pace-trend badge and the
+  // Pro pace-insight card — one query, two consumers (no extra Firestore read).
+  const [paceHistory, setPaceHistory] = useState<PaceInsightRun[]>([]);
+  const [paceHistoryLoading, setPaceHistoryLoading] = useState(true);
   const [notes, setNotes] = useState("");
   /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
      what you expected?"). Structured so the engine can later distinguish
@@ -464,43 +473,119 @@ export default function RunSummary() {
     number | null
   >(null);
 
-  // Fetch past runs to compute pace trend badge
+  // Fetch past runs ONCE — feeds both the pace-trend badge and the Pro
+  // pace-insight card. Hardened with a cancelled flag + try/catch/finally so
+  // an unmount mid-flight or a failed read can't setState on a dead component
+  // or leave the insight loading forever. Depends on user?.uid (not the whole
+  // user object) so it doesn't re-query on unrelated identity changes.
+  const uid = user?.uid;
   useEffect(() => {
-    if (!user || !state) return;
+    if (!uid || !state) return;
+    let cancelled = false;
+    setPaceHistoryLoading(true);
     (async () => {
-      const snap = await getDocs(
-        query(
-          collection(db, "users", user.uid, "runs"),
-          orderBy("completedAt", "desc")
-        )
-      );
-      const allRuns = snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          distance: data.distance ?? 0,
-          avgPace: data.avgPace ?? 0,
-          completedAt: data.completedAt?.toDate?.() ?? new Date(),
-          /* Source / validity fields plumbed through so paceTrends
-             can exclude treadmill / manual / invalid / savedAnyway
-             records — a treadmill 2:38/km can't masquerade as a PR
-             against historical outdoor runs. */
-          activityType: data.activityType,
-          isInvalid: data.isInvalid,
-          savedAnyway: data.savedAnyway,
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, "users", uid, "runs"),
+            orderBy("completedAt", "desc")
+          )
+        );
+        const allRuns: PaceInsightRun[] = snap.docs.map((d) => {
+          const data = d.data();
+          const completedAt = data.completedAt?.toDate?.();
+          return {
+            id: d.id,
+            distance: data.distance ?? 0,
+            duration: data.duration ?? 0,
+            avgPace: data.avgPace ?? 0,
+            completedAt:
+              completedAt instanceof Date &&
+              Number.isFinite(completedAt.getTime())
+                ? completedAt
+                : null,
+            /* Source / validity fields plumbed through so paceTrends
+               can exclude treadmill / manual / invalid / savedAnyway
+               records — a treadmill 2:38/km can't masquerade as a PR
+               against historical outdoor runs. */
+            activityType: data.activityType,
+            isInvalid: data.isInvalid,
+            savedAnyway: data.savedAnyway,
+          };
+        });
+        if (cancelled) return;
+        setPaceHistory(allRuns);
+        const currentRun = {
+          distance: state.distance,
+          avgPace:
+            state.elapsed > 0 && state.distance > 0
+              ? (state.elapsed / state.distance) * 1000
+              : 0,
+          completedAt: new Date(),
+          activityType: state.runConfig?.activityType,
         };
-      });
-      const currentRun = {
-        distance: state.distance,
-        avgPace:
-          state.elapsed > 0 && state.distance > 0
-            ? (state.elapsed / state.distance) * 1000
-            : 0,
-        completedAt: new Date(),
-        activityType: state.runConfig?.activityType,
-      };
-      setPaceTrend(calculatePaceTrend(currentRun, allRuns));
+        setPaceTrend(
+          calculatePaceTrend(
+            currentRun,
+            allRuns.filter(
+              (run): run is PaceInsightRun & { completedAt: Date } =>
+                run.completedAt instanceof Date
+            )
+          )
+        );
+      } catch (err) {
+        if (cancelled) return;
+        logger.error("[RunSummary] pace-history load failed", err);
+        setPaceHistory([]);
+      } finally {
+        if (!cancelled) setPaceHistoryLoading(false);
+      }
     })();
-  }, [user, state]);
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, state, editedDistanceMeters]);
+
+  // Pace insight (Pro) — reuse the already-fetched history. The just-saved run
+  // is the candidate that can cross the threshold; dedupe it out of the
+  // historical copy by document id. These hooks run BEFORE the `if (!state)`
+  // early return to keep hook order stable.
+  const currentPaceCandidate = useMemo<PaceInsightRun | null>(() => {
+    if (!state || !saved || !savedRunId) return null;
+    const distance = editedDistanceMeters ?? state.distance;
+    const duration = state.elapsed;
+    return {
+      id: savedRunId,
+      distance,
+      duration,
+      completedAt: new Date(),
+      avgPace: duration > 0 && distance > 0 ? (duration / distance) * 1000 : 0,
+      activityType: state.runConfig?.activityType ?? "freerun",
+      isInvalid: false,
+      savedAnyway: false,
+    };
+  }, [state, saved, savedRunId, editedDistanceMeters]);
+
+  const paceInsightRuns = useMemo(
+    () =>
+      currentPaceCandidate
+        ? [
+            currentPaceCandidate,
+            ...paceHistory.filter((run) => run.id !== currentPaceCandidate.id),
+          ]
+        : paceHistory,
+    [currentPaceCandidate, paceHistory]
+  );
+
+  const paceInsight = usePaceInsightFromRuns(paceInsightRuns, {
+    // Only after a VALID outdoor run is saved — never the invalid/save-anyway
+    // review path.
+    enabled:
+      saved &&
+      currentPaceCandidate !== null &&
+      isPaceEligible(currentPaceCandidate),
+    loading: paceHistoryLoading,
+  });
 
   if (!state) {
     navigate("/");
@@ -1659,6 +1744,17 @@ export default function RunSummary() {
               >
                 {saveStatus === "saving" ? "Saving…" : "Save Run"}
               </button>
+            )}
+
+            {/* Pace insight (Pro) — surfaced at the post-run decision moment,
+                before navigation. Only in this valid-run post-save stack;
+                explicit approve/dismiss, never a silent benchmark change. */}
+            {saved && paceInsight.insight && (
+              <PaceInsightCard
+                insight={paceInsight.insight}
+                onAccept={paceInsight.accept}
+                onDismiss={paceInsight.dismiss}
+              />
             )}
 
             {canShowDone({ saveStatus }) && (
