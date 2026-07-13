@@ -64,6 +64,12 @@ const PINNED: Record<string, string> = {
   // scheduledRunStatus.ts). Pinned by the cross-test below.
   "functions/lib/programCommands.js":
     "src/features/program/__tests__/programCommands.cross.test.ts",
+  // Packet 18 — CF progression engine mirrors programEngine.ts applyProgression.
+  "functions/lib/progressionEngine.js":
+    "src/features/program/__tests__/applyProgression.cross.test.ts",
+  // Packet 18 — CF bodyweight id set mirrors the catalog's Bodyweight rows.
+  "functions/lib/bodyweightExerciseIds.js":
+    "src/features/program/__tests__/bodyweightExerciseIds.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":

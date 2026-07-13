@@ -42,6 +42,10 @@
  * `HttpsError("invalid-argument", …)` / `"failed-precondition"`.
  */
 
+// Server mirror of the client progression engine (pinned by a parity
+// cross-test). Used by the logExercise reducer.
+const { applyProgression } = require("./progressionEngine");
+
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
 // retried offline / timed-out command idempotent. A bounded scheduled cleanup
@@ -857,12 +861,57 @@ function overrideRunDay(state, command) {
   }));
 }
 
-// Generation-dependent kinds — implemented in the next PR alongside the
-// callable (they require the progression engine / exercise catalog / admin
-// Timestamp). Listed so a premature dispatch fails loudly rather than silently.
+function logExercise(state, command, now) {
+  const day = requireWorkoutDay(state, command);
+  const idx = day.exercises.findIndex(
+    (ex) => ex && ex.instanceId === command.exerciseInstanceId
+  );
+  if (idx === -1) {
+    failedPrecondition("That exercise is no longer in this workout.");
+  }
+  const exercise = day.exercises[idx];
+  const settings = isPlainObject(state.settings)
+    ? state.settings
+    : { autoProgression: true, microloading: true };
+
+  // Mirrors useProgram.logExercise. The client also accepts an optional RPE;
+  // the command union deliberately omits it, so the server always progresses
+  // without an RPE hold (actualRpe === undefined).
+  let updatedExercise;
+  if (settings.autoProgression) {
+    updatedExercise = applyProgression(
+      exercise,
+      command.actual.reps,
+      command.actual.weight,
+      state.goal,
+      settings.microloading,
+      undefined,
+      now
+    );
+  } else {
+    updatedExercise = {
+      ...exercise,
+      lastAttemptedWeight: command.actual.weight,
+      lastPerformance: {
+        sets: exercise.sets,
+        reps: command.actual.reps,
+        weight: command.actual.weight,
+        completed: command.actual.reps >= exercise.reps,
+      },
+    };
+  }
+
+  return mapWorkoutDay(state, command.dayIndex, (d) => ({
+    ...d,
+    exercises: d.exercises.map((ex, i) => (i === idx ? updatedExercise : ex)),
+  }));
+}
+
+// Generation-dependent kinds still staged for a later PR alongside the callable
+// (they require the exercise catalog / admin Timestamp). Listed so a premature
+// dispatch fails loudly rather than silently.
 const STAGED_GENERATION_KINDS = new Set([
   "completeWorkoutDay",
-  "logExercise",
   "addExercises",
   "replaceExercise",
 ]);
@@ -898,6 +947,9 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "reorderExercises":
       next = reorderExercises(current, validated);
+      break;
+    case "logExercise":
+      next = logExercise(current, validated, now);
       break;
     case "setProgramSettings":
       next = { ...current, settings: { ...validated.settings } };
