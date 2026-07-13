@@ -1,29 +1,41 @@
-import { db } from "./firebase"; // Import your Firestore setup
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { db } from "./firebase";
 import { logger } from "./logger";
-import { collection, query, orderBy, getDocs } from "firebase/firestore"; // Utilities for Firestore
+import {
+  collapseBodyweightLogs,
+  BODYWEIGHT_READ_LIMIT,
+  type BodyweightLog,
+} from "./bodyweightLogs";
 
-// Define the structure of bodyweight logs
-export type BodyweightLog = {
-  date: string; // Logged date (e.g., "YYYY-MM-DD")
-  weight: number; // Weight logged (e.g., 80 in kg)
-};
+export type { BodyweightLog } from "./bodyweightLogs";
 
 // Function to fetch bodyweight logs
-export async function fetchBodyweightLogs(userId: string): Promise<BodyweightLog[]> {
+export async function fetchBodyweightLogs(
+  userId: string
+): Promise<BodyweightLog[]> {
   try {
-    // Reference the bodyweightLogs subcollection
     const logsRef = collection(db, "users", userId, "bodyweightLogs");
+    const querySnap = await getDocs(
+      query(logsRef, orderBy("date", "desc"), limit(BODYWEIGHT_READ_LIMIT))
+    );
 
-    // Query the logs, order by date (most recent first)
-    const querySnap = await getDocs(query(logsRef, orderBy("date", "desc")));
-
-    // Map the Firestore data to an array of BodyweightLog objects
-    const logs: BodyweightLog[] = querySnap.docs.map(doc => ({
-      date: doc.data().date,
-      weight: doc.data().weight,
-    }));
-
-    return logs;
+    // Collapse historical duplicate same-day rows to one trustworthy
+    // observation per local day before any trend / adaptive-TDEE consumer
+    // sees them (manual over HealthKit, date-keyed over legacy auto-id,
+    // newest, stable id tie-break; malformed rows dropped).
+    return collapseBodyweightLogs(
+      querySnap.docs.map((snapshot) => {
+        const data = snapshot.data();
+        return {
+          id: snapshot.id,
+          date: data.date,
+          weight: data.weight,
+          source: data.source,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+      })
+    );
   } catch (error) {
     logger.error("Error fetching bodyweight logs:", error);
     return [];
