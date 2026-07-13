@@ -111,6 +111,13 @@ const challengeTiers = require("./lib/challengeTiers");
 // definition layer consumed by the rolloverChallenges scheduled function;
 // the client no longer seeds /challenges (create is denied by rules).
 const challengeDefs = require("./lib/challengeDefs");
+// Challenge activity-window predicate — a session credits a challenge only
+// when the SOURCE ACTIVITY DAY is inside the challenge's [start, end) range,
+// never function-execution/delivery time.
+const {
+  sourceActivityDateKey,
+  challengeContainsActivityDate,
+} = require("./lib/challengeActivityWindow");
 // Account deletion logic. Extracted so the call-ordering invariant
 // (Firestore + Storage before Auth-user delete; pre-W1f had the
 // inverse, leaving orphans) is unit-testable with stub handles —
@@ -3803,20 +3810,34 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
   await awardMilestoneBadges(uid, lifetimeMilestoneBadges(kind, newTotal));
 }
 
-async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
+async function syncChallengeProgress(
+  uid,
+  metric,
+  incrementBy,
+  sourceId,
+  activityDateKey
+) {
   try {
+    // Fail closed: without a source activity day we cannot decide which
+    // window this belongs to. Skip (and warn) rather than fall back to
+    // execution time — that fallback IS the bug this fixes.
+    if (!activityDateKey) {
+      console.warn("challenge_progress_missing_activity_date", {
+        uid,
+        metric,
+        sourceId,
+      });
+      return;
+    }
+
     const challengesSnap = await db.collection("challenges").get();
-    const now = new Date();
 
     for (const doc of challengesSnap.docs) {
       const challenge = doc.data();
-      // Only update active challenges matching this metric
-      const endDate =
-        challenge.endDate && challenge.endDate.toDate
-          ? challenge.endDate.toDate()
-          : null;
-      if (endDate && endDate < now) continue;
       if (challenge.metric !== metric) continue;
+      // Credit this challenge only if the SOURCE ACTIVITY DAY is inside its
+      // half-open [startDate, endDate) window — not delivery/execution time.
+      if (!challengeContainsActivityDate(challenge, activityDateKey)) continue;
 
       // Check if user is a participant
       const participantRef = db
@@ -3864,6 +3885,7 @@ async function syncChallengeProgress(uid, metric, incrementBy, sourceId) {
         tx.set(markerRef, {
           metric,
           incrementBy,
+          activityDateKey,
           appliedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       });
@@ -3890,24 +3912,31 @@ async function syncFastestEffortProgress(
   uid,
   runDistanceMeters,
   runDurationSeconds,
-  sourceId
+  sourceId,
+  activityDateKey
 ) {
   try {
     if (!(runDistanceMeters > 0) || !(runDurationSeconds > 0)) return;
+
+    // Fail closed on a missing source day — same rationale as the SUM path.
+    if (!activityDateKey) {
+      console.warn("challenge_progress_missing_activity_date", {
+        uid,
+        metric: "fastest_effort",
+        sourceId,
+      });
+      return;
+    }
 
     const challengesSnap = await db
       .collection("challenges")
       .where("metric", "==", "fastest_effort")
       .get();
-    const now = new Date();
 
     for (const doc of challengesSnap.docs) {
       const challenge = doc.data();
-      const endDate =
-        challenge.endDate && challenge.endDate.toDate
-          ? challenge.endDate.toDate()
-          : null;
-      if (endDate && endDate < now) continue;
+      // Same [start, end) window predicate as the SUM path.
+      if (!challengeContainsActivityDate(challenge, activityDateKey)) continue;
 
       const target = challenge.targetDistance || 0;
       if (target <= 0) continue;
@@ -3965,6 +3994,7 @@ async function syncFastestEffortProgress(
         tx.set(markerRef, {
           metric: "fastest_effort",
           runSeconds,
+          activityDateKey,
           appliedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       });
@@ -4068,6 +4098,9 @@ exports.onWorkoutCreated = functions
     }
     try {
       const data = snap.data();
+      // Which day this session belongs to — the workout's own local date,
+      // NOT trigger delivery time. Drives challenge-window attribution.
+      const activityDateKey = sourceActivityDateKey(data);
 
       await db
         .collection("users")
@@ -4078,7 +4111,13 @@ exports.onWorkoutCreated = functions
         );
 
       // Auto-progress workout_count challenges (idempotent on workoutId)
-      await syncChallengeProgress(uid, "workout_count", 1, workoutId);
+      await syncChallengeProgress(
+        uid,
+        "workout_count",
+        1,
+        workoutId,
+        activityDateKey
+      );
 
       // Plate-Club weight badges (plate_club / two_plate / three_plate) — the
       // heaviest compound set in THIS workout. Single-doc determinable, so
@@ -4095,7 +4134,8 @@ exports.onWorkoutCreated = functions
           uid,
           "total_volume",
           data.totalVolume,
-          workoutId
+          workoutId,
+          activityDateKey
         );
         // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A workout
         // contributes its volume term (kg×0.1). SUM-based, idempotent on
@@ -4106,7 +4146,8 @@ exports.onWorkoutCreated = functions
           uid,
           "hybrid_score",
           Math.round(data.totalVolume * 0.1),
-          workoutId
+          workoutId,
+          activityDateKey
         );
         // Lifetime-aggregate badge: tonnage_100 (move 100 tonnes total).
         // Maintains the cumulative volume counter idempotently (per-workout
@@ -4192,6 +4233,9 @@ exports.onRunCreated = functions
     }
     try {
       const data = snap.data();
+      // The run's own local day — drives challenge-window attribution, so a
+      // run flushed offline in a later month still credits the right window.
+      const activityDateKey = sourceActivityDateKey(data);
 
       // `lastActiveAt` keeps bumping even for isInvalid / savedAnyway
       // runs — "user interacted with the app" is a reasonable read,
@@ -4260,7 +4304,8 @@ exports.onRunCreated = functions
             uid,
             "total_km",
             Math.round(distanceKm * 100) / 100,
-            runId
+            runId,
+            activityDateKey
           );
           // SOCIAL S4 (Soc8) — hybrid_score = km×100 + kg×0.1. A run
           // contributes its distance term (km×100). SUM-based, idempotent
@@ -4270,7 +4315,8 @@ exports.onRunCreated = functions
             uid,
             "hybrid_score",
             Math.round(distanceKm * 100),
-            runId
+            runId,
+            activityDateKey
           );
         }
 
@@ -4284,7 +4330,8 @@ exports.onRunCreated = functions
             uid,
             runDistanceMeters,
             runDurationSeconds,
-            runId
+            runId,
+            activityDateKey
           );
         }
       } else {
