@@ -14,6 +14,10 @@
  * two users reacting at once must not lose each other's toggle.
  */
 
+const {
+  assertCanInteractWithActivity,
+} = require("./activityAccess");
+
 const REACTION_KEYS = ["muscle", "fire"];
 
 /**
@@ -37,6 +41,7 @@ async function toggleCommentReaction({
   if (!REACTION_KEYS.includes(reaction)) {
     throw new Error("invalid-reaction");
   }
+  const activityRef = firestore.collection("activities").doc(activityId);
   const ref = firestore
     .collection("comments")
     .doc(activityId)
@@ -44,6 +49,15 @@ async function toggleCommentReaction({
     .doc(commentId);
 
   return firestore.runTransaction(async (tx) => {
+    // Reacting is an interaction with the parent activity — enforce its
+    // visibility before touching the comment (all reads before writes).
+    await assertCanInteractWithActivity({
+      tx,
+      firestore,
+      activityRef,
+      uid,
+    });
+
     const snap = await tx.get(ref);
     if (!snap.exists) throw new Error("comment-not-found");
     const data = snap.data() || {};

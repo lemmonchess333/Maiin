@@ -67,7 +67,20 @@ function makeFirestoreStub({ initial = {}, missingActivity = false } = {}) {
           if (missingActivity && ref._path.startsWith("activities/")) {
             return { exists: false, data: () => null };
           }
-          const data = state[ref._path];
+          let data = state[ref._path];
+          // The legacy counter-atomicity seeds pre-date the visibility gate
+          // and set only the counter fields. Default such activity docs to a
+          // PUBLIC activity authored by "bob" so assertCanInteractWithActivity
+          // treats them as viewable; the visibility-specific behaviour is
+          // covered by the dedicated access tests below (which seed an
+          // explicit `visibility`, so this default never overrides them).
+          if (
+            data !== undefined &&
+            ref._path.startsWith("activities/") &&
+            data.visibility === undefined
+          ) {
+            data = { visibility: "public", authorId: "bob", ...data };
+          }
           return {
             exists: data !== undefined,
             data: () => data,
@@ -151,7 +164,7 @@ describe("toggleKudos", () => {
         increment,
         serverTimestamp,
       })
-    ).rejects.toThrow(/activity missing not found/);
+    ).rejects.toThrow(/activity-not-accessible/);
   });
 
   it("Cycle 4: required-args validation", async () => {
@@ -255,7 +268,7 @@ describe("addComment", () => {
         increment,
         serverTimestamp,
       })
-    ).rejects.toThrow(/activity missing not found/);
+    ).rejects.toThrow(/activity-not-accessible/);
   });
 
   it("Cycle 6: authorPhotoURL persisted when present", async () => {
@@ -446,5 +459,140 @@ describe("setCrewMembership", () => {
         serverTimestamp,
       })
     ).rejects.toThrow(/crew ghost not found/);
+  });
+});
+
+// Packet 13 — kudos/comment/delete must obey the parent activity's
+// visibility. The gate runs INSIDE the txn; a denied interaction records no
+// writes.
+describe("socialCounters — activity visibility gate", () => {
+  const {
+    toggleKudos,
+    addComment,
+    deleteComment,
+  } = require("../lib/socialCounters");
+
+  it("kudos: a stranger cannot kudos a PRIVATE activity (no writes)", async () => {
+    const firestore = makeFirestoreStub({
+      initial: {
+        "activities/P1": {
+          kudosCount: 0,
+          visibility: "private",
+          authorId: "bob",
+        },
+      },
+    });
+    await expect(
+      toggleKudos({
+        firestore,
+        uid: "mallory",
+        activityId: "P1",
+        increment,
+        serverTimestamp,
+      })
+    ).rejects.toThrow(/activity-not-accessible/);
+    expect(firestore._writes).toHaveLength(0);
+  });
+
+  it("kudos: the OWNER can kudos their own private activity", async () => {
+    const firestore = makeFirestoreStub({
+      initial: {
+        "activities/P1": {
+          kudosCount: 0,
+          visibility: "private",
+          authorId: "bob",
+        },
+      },
+    });
+    const result = await toggleKudos({
+      firestore,
+      uid: "bob",
+      activityId: "P1",
+      increment,
+      serverTimestamp,
+    });
+    expect(result.kudosed).toBe(true);
+    expect(result.activityAuthorId).toBe("bob");
+  });
+
+  it("kudos: a follower CAN kudos a followers-only activity; a former follower cannot", async () => {
+    const base = {
+      "activities/F1": {
+        kudosCount: 0,
+        visibility: "followers",
+        authorId: "bob",
+      },
+    };
+    const follower = makeFirestoreStub({
+      initial: { ...base, "followers/bob/users/carol": { since: 1 } },
+    });
+    const okRes = await toggleKudos({
+      firestore: follower,
+      uid: "carol",
+      activityId: "F1",
+      increment,
+      serverTimestamp,
+    });
+    expect(okRes.kudosed).toBe(true);
+    expect(okRes.activityAuthorId).toBe("bob");
+
+    const stranger = makeFirestoreStub({ initial: { ...base } });
+    await expect(
+      toggleKudos({
+        firestore: stranger,
+        uid: "dave",
+        activityId: "F1",
+        increment,
+        serverTimestamp,
+      })
+    ).rejects.toThrow(/activity-not-accessible/);
+    expect(stranger._writes).toHaveLength(0);
+  });
+
+  it("comment: returns the verified activityAuthorId for the notification", async () => {
+    const firestore = makeFirestoreStub({
+      initial: {
+        "activities/A1": {
+          commentCount: 0,
+          visibility: "public",
+          authorId: "bob",
+        },
+      },
+    });
+    const result = await addComment({
+      firestore,
+      uid: "alice",
+      activityId: "A1",
+      text: "nice",
+      authorName: "Alice",
+      increment,
+      serverTimestamp,
+    });
+    expect(result.activityAuthorId).toBe("bob");
+  });
+
+  it("deleteComment: a former follower cannot delete their comment on a now-private activity (no writes)", async () => {
+    // carol commented while it was followers-visible; bob made it private and
+    // removed her. Her author-owned delete must still be denied on access.
+    const firestore = makeFirestoreStub({
+      initial: {
+        "activities/P1": {
+          commentCount: 1,
+          visibility: "private",
+          authorId: "bob",
+        },
+        "comments/P1/items/C1": { authorId: "carol", text: "hi" },
+      },
+    });
+    await expect(
+      deleteComment({
+        firestore,
+        uid: "carol",
+        activityId: "P1",
+        commentId: "C1",
+        increment,
+      })
+    ).rejects.toThrow(/activity-not-accessible/);
+    expect(firestore._writes).toHaveLength(0);
   });
 });
