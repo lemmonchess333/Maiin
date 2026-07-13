@@ -1481,6 +1481,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
   }
   const session = (completionId: string) => ({
     completionId,
+    completionCommandId: completionId,
     durationMinutes: 30,
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
   });
