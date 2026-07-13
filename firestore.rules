@@ -962,12 +962,36 @@ service cloud.firestore {
     // Social: Kudos
     // H7: userId (doc ID) must match authenticated user
     // ========================================
+    // Packet 13 — a kudos/comment child must obey its PARENT activity's
+    // visibility. Pre-packet-13 child reads were open to any authed user, so
+    // anyone holding an activity id could read the kudos/comment lists of a
+    // private or followers-only activity. This mirrors the parent
+    // activities/{id} read relation exactly (public / owner / accepted
+    // follower). References only the parent activity + one follower doc.
+    function canReadActivityChild(activityId) {
+      let activityPath =
+        /databases/$(database)/documents/activities/$(activityId);
+
+      return request.auth != null
+        && exists(activityPath)
+        && (
+          get(activityPath).data.visibility == 'public'
+          || get(activityPath).data.authorId == request.auth.uid
+          || (
+            get(activityPath).data.visibility == 'followers'
+            && exists(
+              /databases/$(database)/documents/followers/$(get(activityPath).data.authorId)/users/$(request.auth.uid)
+            )
+          )
+        );
+    }
+
     // 2026-05-26 audit PR 2 (finding #2) — kudos doc writes are
     // server-only via toggleKudosCallable, which flips the kudos
-    // sub-doc + the activity's kudosCount atomically. Reads stay
-    // open so the "Props from" list can render.
+    // sub-doc + the activity's kudosCount atomically. Reads now obey the
+    // parent activity's visibility (packet 13).
     match /kudos/{activityId}/users/{userId} {
-      allow read: if request.auth != null;
+      allow read: if canReadActivityChild(activityId);
       allow create, delete: if false;
     }
 
@@ -987,7 +1011,7 @@ service cloud.firestore {
     // which manage the commentCount atomically with the comment doc.
     // Reads stay open.
     match /comments/{activityId}/items/{commentId} {
-      allow read: if request.auth != null;
+      allow read: if canReadActivityChild(activityId);
       allow create, delete: if false;
     }
 
