@@ -18,12 +18,17 @@ vi.mock("framer-motion", () => ({
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
-// useWorkouts — empty + loaded for both empty-state branches.
+// useWorkouts — empty + loaded for both empty-state branches. Spy so we can
+// assert ExerciseHistory opts into COMPLETE lifetime coverage (packet 16).
 const workoutsMock = vi.hoisted(() => ({
   value: { workouts: [], loading: false },
+  spy: vi.fn(),
 }));
 vi.mock("@/hooks/useWorkouts", () => ({
-  useWorkouts: () => workoutsMock.value,
+  useWorkouts: (opts?: unknown) => {
+    workoutsMock.spy(opts);
+    return workoutsMock.value;
+  },
 }));
 
 import ExerciseHistory from "../ExerciseHistory";
@@ -43,6 +48,12 @@ function renderAt(name: string) {
 describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
   beforeEach(() => {
     workoutsMock.value = { workouts: [], loading: false };
+    workoutsMock.spy.mockClear();
+  });
+
+  it("requests COMPLETE lifetime workout coverage (packet 16)", () => {
+    renderAt("Bench Press");
+    expect(workoutsMock.spy).toHaveBeenCalledWith({ coverage: "complete" });
   });
 
   it("not-found: a name absent from logs AND the DB renders the hexagon EmptyState with a Browse-exercises action", () => {
