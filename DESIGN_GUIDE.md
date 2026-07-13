@@ -6,10 +6,10 @@
 > something here, the rule here wins — or you ask first.
 >
 > **The single most important sentence:** Tropos is a _calm, warm, iOS-style
-> light-mode fitness app with two semantic sport colours and a strict
-> two-font / token-driven system._ It is **not** a dark, neon, glassy,
-> gradient-heavy "AI dashboard." Most generic UI instincts will pull you the
-> wrong direction. Resist them.
+> fitness app, dark by default with a fully supported warm light theme, two
+> semantic sport colours, and a strict two-font / token-driven system._ It is
+> **not** a neon, glassy, gradient-heavy "AI dashboard." Most generic UI
+> instincts will pull you the wrong direction. Resist them.
 
 ---
 
@@ -45,10 +45,11 @@ If you only remember ten things:
 
 ## 1. Visual identity
 
-- **Aesthetic:** Clean, warm light mode. iOS-inspired grouped background
-  (`#F2F2F7`-ish), white cards, subtle depth. Minimal and calm.
-- **Dark mode:** True dark-glass (bg `#121214`, surfaces `#1A1A1F`), warm
-  neutrals — _not_ cold blue-black. Used only when the user toggles it.
+- **Aesthetic:** Calm iOS-inspired grouped surfaces in both themes. Dark is the
+  first-run/runtime default; light remains a fully supported user choice.
+- **Dark mode:** Warm true-dark (`#121214`, surfaces `#1A1A1F`), not cold
+  blue-black. Light uses the warm grouped-background/card treatment. Every
+  visual change must be reviewed in both.
 - **Brand colour:** Purple `#7B72E9`. Used **sparingly** — active tab
   indicators, CTAs, progress bars, accents. Never as a full-page background
   (the only purple "fills" are gradient CTA buttons and the auth logo).
