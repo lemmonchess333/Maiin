@@ -20,6 +20,41 @@ service firebase.storage {
       return request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
     }
 
+    // Packet 11 — account-deletion write freeze for Storage.
+    // Firestore Rules already freeze writes while an account deletion is
+    // active (accountDeletionRequests) and after it completes
+    // (deletedAccounts tombstone). Storage did NOT consult either, so a
+    // valid-but-stale session could keep uploading/overwriting/deleting
+    // blobs until the ID token expired. This mirrors that freeze.
+    //
+    // Cross-service reads use the LITERAL Firestore database name `(default)`
+    // (Storage Rules have no `database` variable). The active-status set
+    // matches the firestore.rules isDeleting() set exactly.
+    function isDeletionWriteFrozen(uid) {
+      let requestPath =
+        /databases/(default)/documents/accountDeletionRequests/$(uid);
+      let tombstonePath =
+        /databases/(default)/documents/deletedAccounts/$(uid);
+
+      return firestore.exists(tombstonePath)
+        || (
+          firestore.exists(requestPath)
+          && firestore.get(requestPath).data.status in [
+            'running',
+            'failed_cleanup',
+            'pending_cleanup',
+            'pending_auth_deletion',
+            'operator_review'
+          ]
+        );
+    }
+
+    function isOwnerAndWritable(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && !isDeletionWriteFrozen(uid);
+    }
+
     // Default: deny all
     match /{allPaths=**} {
       allow read, write: if false;
@@ -28,10 +63,10 @@ service firebase.storage {
     // Progress photos — owner-only access
     match /progress-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow write: if isOwnerAndWritable(uid)
         && request.resource.size < 10 * 1024 * 1024
         && isAllowedImageMime();
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if isOwnerAndWritable(uid);
     }
 
     // Food diary photos — owner-only access (same posture as progress
@@ -40,10 +75,10 @@ service firebase.storage {
     // delete); the account-deletion executor sweeps the whole prefix.
     match /food-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow write: if isOwnerAndWritable(uid)
         && request.resource.size < 10 * 1024 * 1024
         && isAllowedImageMime();
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if isOwnerAndWritable(uid);
     }
 
     // Community Space post photos (Spc1 PR4) — owner-only write,
@@ -54,19 +89,19 @@ service firebase.storage {
     // executor sweeps the whole prefix (spacePhotosStorage).
     match /space-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow write: if isOwnerAndWritable(uid)
         && request.resource.size < 10 * 1024 * 1024
         && isAllowedImageMime();
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if isOwnerAndWritable(uid);
     }
 
     // Profile photos — owner-only write, authenticated read
     match /profile-photos/{uid}/{allPaths=**} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow write: if isOwnerAndWritable(uid)
         && request.resource.size < 5 * 1024 * 1024
         && isAllowedImageMime();
-      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow delete: if isOwnerAndWritable(uid);
     }
   }
 }
