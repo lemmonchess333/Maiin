@@ -1133,6 +1133,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                                   <SortableExerciseRow
                                     key={rowId(ex, idx, i)}
                                     id={rowId(ex, idx, i)}
+                                    label={ex.name}
                                     justDropped={
                                       justDroppedId === rowId(ex, idx, i)
                                     }
@@ -1217,6 +1218,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                               >
                                 <SortableExerciseRow
                                   id={rowId(ex, idx, i)}
+                                  label={ex.name}
                                   showHandle={false}
                                   onDelete={() => removeExFromDay(idx, i)}
                                 >
