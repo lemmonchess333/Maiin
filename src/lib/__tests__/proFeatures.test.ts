@@ -17,15 +17,21 @@ import {
 } from "../proFeatures";
 
 describe("PRO_FEATURES — registry shape", () => {
-  it("contains only the 2 real, runtime-gated keys (#977 reconcile)", () => {
-    const required: ProFeatureKey[] = ["ai_food_logging", "adaptive_tdee"];
+  it("contains exactly the 3 real, runtime-gated keys", () => {
+    const required: ProFeatureKey[] = [
+      "adaptive_macros",
+      "adaptive_tdee",
+      "ai_food_logging",
+    ];
     for (const key of required) {
       expect(PRO_FEATURES[key]).toBeDefined();
     }
-    // #977: ai_coaching (not built) + adaptive_macros (runs free) removed;
-    // Sub2 had already dropped performance_engine + advanced_insights. The
-    // registry now advertises only the two enforced gates.
-    expect(Object.keys(PRO_FEATURES)).toHaveLength(required.length);
+    // The registry must match runtime: ai_food_logging (AI scan quota),
+    // adaptive_tdee (adaptive engine), and adaptive_macros (training-aware
+    // fat↔carb shift — useEffectiveTargets gates it behind isPro). The
+    // earlier "adaptive_macros runs free" claim was stale and made the
+    // registry contradict runtime; re-added so the paywall is honest.
+    expect(Object.keys(PRO_FEATURES).sort()).toEqual(required);
   });
 
   it("every entry has a non-empty label, title, tagline, sourceLabel", () => {
