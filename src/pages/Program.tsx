@@ -1588,7 +1588,6 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               onCompleteDay={
                 plan
                   ? (di, sd) => {
-                      if (!sd) return completeWorkoutDay(di, sd);
                       // Re-expand trimmed setLogs to stored-day
                       // positions. Dropped exercises get [] (recorded
                       // as zero completed sets — same as an exercise
