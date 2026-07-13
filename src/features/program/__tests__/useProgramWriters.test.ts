@@ -38,13 +38,34 @@ let mockDocExists = false;
 let mockCacheData: ProgramState | null = null;
 let mockCacheExists = false;
 const setDocCalls: { ref: unknown; data: any; opts?: any }[] = [];
+// Packet 15 — completeWorkoutDay now writes via one writeBatch. Capture each
+// committed batch's set() calls; `mockBatchReject` simulates a commit failure.
+const batchCommits: { ref: any; data: any }[][] = [];
+let mockBatchReject = false;
 
 vi.mock("firebase/firestore", () => ({
-  doc: vi.fn(() => ({ __ref: true })),
+  doc: vi.fn((...args: any[]) => ({
+    __ref: true,
+    __id: args[args.length - 1],
+  })),
   getDoc: vi.fn(async () => ({
     exists: () => mockDocExists,
     data: () => mockDocData,
   })),
+  writeBatch: vi.fn(() => {
+    const sets: { ref: any; data: any }[] = [];
+    return {
+      set: (ref: any, data: any) => sets.push({ ref, data }),
+      commit: async () => {
+        batchCommits.push(sets);
+        if (mockBatchReject) throw new Error("batch commit boom");
+        for (const s of sets) {
+          mockDocData = { ...(mockDocData ?? ({} as ProgramState)), ...s.data };
+          mockDocExists = true;
+        }
+      },
+    };
+  }),
   // Mirrors the real SDK: getDocFromCache REJECTS on a cache miss rather
   // than returning a non-existent snapshot. useProgram's cache-first paint
   // relies on that (its try/catch falls through to the server read).
@@ -63,6 +84,7 @@ vi.mock("firebase/firestore", () => ({
   }),
   Timestamp: {
     fromDate: vi.fn((d: Date) => ({ seconds: d.getTime() / 1000 })),
+    now: vi.fn(() => ({ seconds: 1_700_000_000 })),
   },
   deleteField: vi.fn(() => "__deleteField__"),
 }));
@@ -167,6 +189,8 @@ import { getDoc } from "firebase/firestore";
 
 beforeEach(() => {
   setDocCalls.length = 0;
+  batchCommits.length = 0;
+  mockBatchReject = false;
   mockDocData = null;
   mockDocExists = false;
   mockCacheData = null;
@@ -1418,5 +1442,100 @@ describe("cache-first paint (cold-open latency)", () => {
     // The server path ran (initial-creation write) and produced state.
     expect(setDocCalls.length).toBeGreaterThan(0);
     expect(result.current.programState).toBeTruthy();
+  });
+});
+
+// Packet 15 — completeWorkoutDay writes programme + workout atomically.
+describe("packet 15 — completeWorkoutDay atomic batch", () => {
+  function seedProgramWithDay() {
+    mockProfile = { uid: "test-user-1", runMode: "freeform" };
+    mockDocExists = true;
+    mockDocData = {
+      goal: "recomp",
+      weekNumber: 1,
+      currentPhase: "base",
+      splitType: "ppl",
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      workouts: [
+        {
+          dayName: "Push",
+          completed: false,
+          skipped: false,
+          exercises: [
+            {
+              exerciseId: "bench",
+              name: "Bench",
+              movementCategory: "chest",
+              sets: 3,
+              reps: 5,
+              weight: 100,
+            },
+          ],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+  const session = (completionId: string) => ({
+    completionId,
+    durationMinutes: 30,
+    setLogs: [[{ weight: 100, reps: 5, completed: true }]],
+  });
+
+  it("commits ONE batch writing the programme doc + a deterministic workout id", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, session("cid-1"));
+    });
+
+    expect(batchCommits).toHaveLength(1);
+    const ids = batchCommits[0].map((s) => s.ref.__id);
+    // Programme doc (PROGRAM_DOC = "current") + deterministic workout id.
+    expect(ids).toContain("current");
+    expect(ids).toContain("programme-cid-1");
+    // Local programme state flipped the day to completed only after commit.
+    expect(result.current.programState?.workouts[0].completed).toBe(true);
+  });
+
+  it("a rejected commit throws and does NOT mark the day completed locally", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    mockBatchReject = true;
+    await expect(
+      result.current.completeWorkoutDay(0, session("cid-2"))
+    ).rejects.toThrow(/batch commit boom/);
+    // No split state: the day is still not completed in local state.
+    expect(result.current.programState?.workouts[0].completed).toBe(false);
+  });
+
+  it("a retry with the same completionId targets the same workout doc (idempotent)", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, session("cid-3"));
+      await result.current.completeWorkoutDay(0, session("cid-3"));
+    });
+    const workoutIds = batchCommits
+      .flat()
+      .map((s) => s.ref.__id)
+      .filter((id) => typeof id === "string" && id.startsWith("programme-"));
+    // Both retries used the SAME deterministic id — no Date.now() duplicate.
+    expect(new Set(workoutIds)).toEqual(new Set(["programme-cid-3"]));
   });
 });

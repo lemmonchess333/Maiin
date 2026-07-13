@@ -56,6 +56,7 @@ function draftFor(
     exerciseNotes: { 0: "felt strong" },
     elapsedSeconds: 600,
     currentExIndex: 0,
+    completionId: "cid-fixed",
   };
 }
 
@@ -316,5 +317,39 @@ describe("clearWorkoutDraft (non-hook, sign-out path)", () => {
 
   it("no-ops on a missing uid", () => {
     expect(() => clearWorkoutDraft("")).not.toThrow();
+  });
+});
+
+describe("useWorkoutDraft — completionId (packet 15)", () => {
+  const UID = "u-cid";
+
+  it("a save round-trips a completionId", () => {
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    act(() => result.current.save({ ...draftFor(0), completionId: "cid-abc" }));
+    expect(result.current.load()?.completionId).toBe("cid-abc");
+  });
+
+  it("repairs a pre-packet-15 draft with a completionId and persists it once", () => {
+    // Legacy draft written before completionId existed.
+    const legacy = {
+      ...draftFor(0),
+      identity: IDENTITY,
+      savedAt: Date.now(),
+    } as Record<string, unknown>;
+    delete legacy.completionId;
+    localStorage.setItem(scopedKey(UID), JSON.stringify(legacy));
+
+    const { result } = renderHook(() => useWorkoutDraft(UID, 0, IDENTITY));
+    const first = result.current.load();
+    expect(first?.completionId).toBeTruthy();
+
+    // The repaired id is persisted, so a second load returns the SAME id
+    // (a fresh id per remount would defeat retry idempotency).
+    const second = result.current.load();
+    expect(second?.completionId).toBe(first?.completionId);
+    const stored = JSON.parse(
+      localStorage.getItem(scopedKey(UID)) as string
+    ) as WorkoutDraft;
+    expect(stored.completionId).toBe(first?.completionId);
   });
 });
