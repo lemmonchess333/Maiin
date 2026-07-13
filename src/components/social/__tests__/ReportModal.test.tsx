@@ -22,7 +22,7 @@ const reportContentMock = vi.fn(async () => undefined);
 const blockUserMock = vi.fn(async () => undefined);
 vi.mock("../../../lib/socialApi", async () => {
   const actual = await vi.importActual<typeof import("../../../lib/socialApi")>(
-    "../../../lib/socialApi",
+    "../../../lib/socialApi"
   );
   return {
     ...actual,
@@ -66,7 +66,7 @@ describe("ReportModal — category picker", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     const group = screen.getByRole("radiogroup", { name: /Report category/i });
     expect(group).toBeInTheDocument();
@@ -80,11 +80,17 @@ describe("ReportModal — category picker", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
-    expect(screen.queryByRole("radiogroup", { name: /Sub-reason/i })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: /Harassment or bullying/i }));
-    expect(screen.getByRole("radiogroup", { name: /Sub-reason/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("radiogroup", { name: /Sub-reason/i })
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Harassment or bullying/i })
+    );
+    expect(
+      screen.getByRole("radiogroup", { name: /Sub-reason/i })
+    ).toBeInTheDocument();
   });
 
   it("'Other' category has no sub-reasons", () => {
@@ -94,10 +100,12 @@ describe("ReportModal — category picker", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    expect(screen.queryByRole("radiogroup", { name: /Sub-reason/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("radiogroup", { name: /Sub-reason/i })
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -109,27 +117,34 @@ describe("ReportModal — action checkboxes", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    expect(screen.getByRole("checkbox", { name: /Send to review team/i }).getAttribute("aria-checked"))
-      .toBe("true");
-    expect(screen.getByRole("checkbox", { name: /Hide from my feed/i }).getAttribute("aria-checked"))
-      .toBe("true");
-    expect(screen.getByRole("checkbox", { name: /Block this user/i }).getAttribute("aria-checked"))
-      .toBe("false");
+    expect(
+      screen
+        .getByRole("checkbox", { name: /Send to review team/i })
+        .getAttribute("aria-checked")
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("checkbox", { name: /Hide from my feed/i })
+        .getAttribute("aria-checked")
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("checkbox", { name: /Block this user/i })
+        .getAttribute("aria-checked")
+    ).toBe("false");
   });
 
   it("Block checkbox is hidden when targetAuthorUid is missing", () => {
     renderWith(
-      <ReportModal
-        targetType="activity"
-        targetId="act-1"
-        onClose={() => {}}
-      />,
+      <ReportModal targetType="activity" targetId="act-1" onClose={() => {}} />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    expect(screen.queryByRole("checkbox", { name: /Block this user/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Block this user/i })
+    ).not.toBeInTheDocument();
   });
 
   it("Block checkbox is hidden when targetAuthorUid is the current user (self-report)", () => {
@@ -139,10 +154,12 @@ describe("ReportModal — action checkboxes", () => {
         targetId="act-1"
         targetAuthorUid="u-self"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    expect(screen.queryByRole("checkbox", { name: /Block this user/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Block this user/i })
+    ).not.toBeInTheDocument();
   });
 
   it("Hide checkbox is hidden for user targets (only meaningful on activities)", () => {
@@ -152,10 +169,12 @@ describe("ReportModal — action checkboxes", () => {
         targetId="u-other"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    expect(screen.queryByRole("checkbox", { name: /Hide from my feed/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /Hide from my feed/i })
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -167,9 +186,11 @@ describe("ReportModal — submit gating", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
-    const submit = screen.getByRole("button", { name: /^Submit$/i }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: /^Submit$/i,
+    }) as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
   });
 
@@ -180,10 +201,12 @@ describe("ReportModal — submit gating", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /Harassment/i }));
-    const submit = screen.getByRole("button", { name: /^Submit$/i }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: /^Submit$/i,
+    }) as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
   });
 
@@ -194,14 +217,20 @@ describe("ReportModal — submit gating", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
     // Toggle off all three.
-    fireEvent.click(screen.getByRole("checkbox", { name: /Send to review team/i }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Hide from my feed/i }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Send to review team/i })
+    );
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Hide from my feed/i })
+    );
     // Block is already off by default.
-    const submit = screen.getByRole("button", { name: /^Submit$/i }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: /^Submit$/i,
+    }) as HTMLButtonElement;
     expect(submit.disabled).toBe(true);
   });
 
@@ -212,10 +241,12 @@ describe("ReportModal — submit gating", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    const submit = screen.getByRole("button", { name: /^Submit$/i }) as HTMLButtonElement;
+    const submit = screen.getByRole("button", {
+      name: /^Submit$/i,
+    }) as HTMLButtonElement;
     expect(submit.disabled).toBe(false);
   });
 });
@@ -229,7 +260,7 @@ describe("ReportModal — submit orchestration", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={onClose}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
     await act(async () => {
@@ -248,7 +279,7 @@ describe("ReportModal — submit orchestration", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Block this user/i }));
@@ -265,10 +296,12 @@ describe("ReportModal — submit orchestration", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Send to review team/i }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Send to review team/i })
+    );
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
     });
@@ -283,23 +316,31 @@ describe("ReportModal — submit orchestration", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /Harassment/i }));
-    fireEvent.click(screen.getByRole("radio", { name: /Targeted insults or threats/i }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Targeted insults or threats/i })
+    );
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /^Submit$/i }));
     });
-    expect(reportContentMock).toHaveBeenCalledWith(
-      "u-self",
+    // Packet 14: callable-only — ONE payload arg, NO reporterId, and
+    // targetUid is never sent (the server resolves the author).
+    expect(reportContentMock).toHaveBeenCalledTimes(1);
+    const call = reportContentMock.mock.calls[0] as unknown[];
+    // ONE payload arg — no reporterId (the old first arg is gone).
+    expect(call).toHaveLength(1);
+    const payload = call[0];
+    expect(payload).toEqual(
       expect.objectContaining({
         category: "harassment",
         subReason: "Targeted insults or threats",
-        targetUid: "u-other",
         hideFromFeed: true,
         blockAuthor: false,
-      }),
+      })
     );
+    expect(payload).not.toHaveProperty("targetUid");
   });
 });
 
@@ -311,10 +352,12 @@ describe("ReportModal — freeform note cap", () => {
         targetId="act-1"
         targetAuthorUid="u-other"
         onClose={() => {}}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /^Other$/i }));
-    const textarea = screen.getByLabelText(/Anything else/i) as HTMLTextAreaElement;
+    const textarea = screen.getByLabelText(
+      /Anything else/i
+    ) as HTMLTextAreaElement;
     const longText = "x".repeat(600);
     fireEvent.change(textarea, { target: { value: longText } });
     expect(textarea.value.length).toBe(500);

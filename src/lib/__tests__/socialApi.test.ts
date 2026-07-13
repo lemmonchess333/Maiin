@@ -68,6 +68,7 @@ import {
   unblockUser,
   isBlocked,
   getBlockedUsers,
+  reportContent,
 } from "../socialApi";
 
 beforeEach(() => {
@@ -243,6 +244,30 @@ describe("batchGetKudos", () => {
     await expect(batchGetKudos(["act1"], "user1")).rejects.toMatchObject({
       code: "unavailable",
     });
+  });
+});
+
+describe("reportContent (packet 14 — callable-only)", () => {
+  it("routes to the createReport callable with the safe payload and no direct write", async () => {
+    mockCallableInvoke.mockResolvedValue({ data: { reportId: "r1" } });
+    await reportContent({
+      targetType: "activity",
+      targetId: "act1",
+      category: "harassment",
+      freeformNote: "bad",
+    });
+    expect(mockHttpsCallable).toHaveBeenCalledWith(
+      "mock-functions",
+      "createReport"
+    );
+    expect(mockCallableInvoke).toHaveBeenCalledWith({
+      targetType: "activity",
+      targetId: "act1",
+      category: "harassment",
+      freeformNote: "bad",
+    });
+    // No direct Firestore write — the report goes through the callable.
+    expect(mockAddDoc).not.toHaveBeenCalled();
   });
 });
 
