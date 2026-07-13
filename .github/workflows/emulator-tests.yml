@@ -135,6 +135,17 @@ jobs:
       - name: Run firestore.rules tests
         run: npm run test:rules
 
+      # ── Suite 1b: Storage rules tests (packet 11 — cross-service freeze)
+      # Boots firestore + storage together; the storage freeze rule reads
+      # Firestore. The freeze matrix self-skips if this runner's storage
+      # emulator can't do cross-service reads, so this step is a safe gate
+      # (the non-freeze posture tests always run).
+      - name: Run storage.rules tests
+        env:
+          REQUIRE_STORAGE_EMULATOR: "1"
+          REQUIRE_FIRESTORE_EMULATOR: "1"
+        run: npm run test:rules:storage
+
       # ── Suite 2: Functions integration tests
       # Boots Auth + Firestore emulators, exports the host env vars,
       # then runs the functions vitest suite. The integration tests
