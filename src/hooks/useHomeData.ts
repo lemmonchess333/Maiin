@@ -17,6 +17,10 @@ import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { calcWeightTrend } from "@/utils/weightTrend";
+import {
+  collapseBodyweightLogs,
+  BODYWEIGHT_READ_LIMIT,
+} from "@/lib/bodyweightLogs";
 
 /** #984 direction signal for the home weight tile. Mapped from
  *  calcWeightTrend's "stable" → "flat". null = a weight exists but
@@ -115,7 +119,10 @@ export function useHomeData(
         query(
           collection(db, "users", user.uid, "bodyweightLogs"),
           orderBy("date", "desc"),
-          limit(30)
+          // Read wide, then collapse to one row/day: a duplicate-heavy day
+          // could otherwise crowd distinct history out of a 30-row window.
+          // The .slice(0, 30) below still caps trend input.
+          limit(BODYWEIGHT_READ_LIMIT)
         )
       );
 
@@ -183,14 +190,37 @@ export function useHomeData(
                 weightInfo = { weight: w, date: "From profile", rawDate: null };
               }
             } else {
-              const entries = snap.docs
-                .map(function (doc) {
-                  const d = doc.data();
-                  return { date: d.date as string, weight: d.weight as number };
+              // Collapse duplicate same-day rows to one trustworthy
+              // observation per day BEFORE the trend engine sees them — the
+              // adaptive-TDEE engine and this Home trend previously counted
+              // every duplicate as an independent point (only TrendWeight
+              // deduped, for display). Descending; capped to 30 for the trend.
+              const entries = collapseBodyweightLogs(
+                snap.docs.map(function (snapshot) {
+                  const data = snapshot.data();
+                  return {
+                    id: snapshot.id,
+                    date: data.date,
+                    weight: data.weight,
+                    source: data.source,
+                    createdAt: data.createdAt,
+                    updatedAt: data.updatedAt,
+                  };
                 })
-                .filter(function (e) {
-                  return typeof e.weight === "number";
-                });
+              ).slice(0, 30);
+              // The 400-row cap is a safety bound, not a proof arbitrarily
+              // corrupt history always yields 30 unique days. If a full page
+              // still can't surface 30 distinct days, show the trustworthy
+              // subset and log counts only (no uid/weight values).
+              if (
+                snap.docs.length === BODYWEIGHT_READ_LIMIT &&
+                entries.length < 30
+              ) {
+                logger.warn(
+                  "[useHomeData] bodyweight history saturated the read cap with duplicates",
+                  { rawRows: snap.docs.length, uniqueDays: entries.length }
+                );
+              }
               if (entries.length > 0) {
                 const sorted = [...entries].sort(function (a, b) {
                   return a.date.localeCompare(b.date);
