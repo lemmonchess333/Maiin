@@ -985,14 +985,11 @@ describe("run-day commands", () => {
 });
 
 describe("staged generation commands", () => {
-  it.each(["completeWorkoutDay", "addExercises", "replaceExercise"])(
-    "%s is validated but not yet applied in this stage",
-    (kind) => {
-      // Build a minimally-valid command per kind so validation passes and the
-      // reducer's staged guard (not the validator) is what rejects it.
-      const commands = {
-        completeWorkoutDay: {
-          kind,
+  it("completeWorkoutDay is validated but not yet applied in this stage", () => {
+    const error = expectHttps(
+      () =>
+        apply({
+          kind: "completeWorkoutDay",
           commandId: CMD,
           ...dayPre(),
           completion: {
@@ -1000,28 +997,139 @@ describe("staged generation commands", () => {
             durationMinutes: 40,
             setLogs: [],
           },
-        },
-        addExercises: {
-          kind,
+        }),
+      "failed-precondition"
+    );
+    expect(error.message).toMatch(/build stage/i);
+  });
+});
+
+describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cross-tests)", () => {
+  it("addExercises appends catalog-derived exercises at the end by default", () => {
+    const { state } = apply({
+      kind: "addExercises",
+      commandId: CMD,
+      ...dayPre(),
+      exercises: [
+        { exerciseId: "bench-press" },
+        { exerciseId: "front-squat", sets: 4, reps: 5, weight: 80 },
+      ],
+    });
+    const ex = state.workouts[0].exercises;
+    expect(ex).toHaveLength(4); // inst-a, inst-b, + 2 appended
+    // client add default (3×10×0) when fields omitted
+    expect(ex[2]).toMatchObject({
+      exerciseId: "bench-press",
+      name: "Bench Press",
+      sets: 3,
+      reps: 10,
+      weight: 0,
+      movementCategory: "horizontal_push",
+    });
+    // explicit prescription honoured
+    expect(ex[3]).toMatchObject({
+      exerciseId: "front-squat",
+      sets: 4,
+      reps: 5,
+      weight: 80,
+      movementCategory: "knee_dominant",
+    });
+    // deterministic instance ids derived from the commandId
+    expect(ex[2].instanceId).toBe(`cmd-${CMD}-0`);
+    expect(ex[3].instanceId).toBe(`cmd-${CMD}-1`);
+  });
+
+  it("addExercises honours insertAt", () => {
+    const { state } = apply({
+      kind: "addExercises",
+      commandId: CMD,
+      ...dayPre(),
+      exercises: [{ exerciseId: "bench-press" }],
+      insertAt: 1,
+    });
+    expect(state.workouts[0].exercises.map((e) => e.instanceId)).toEqual([
+      "inst-a",
+      `cmd-${CMD}-0`,
+      "inst-b",
+    ]);
+  });
+
+  it("addExercises rejects an unknown catalog id with invalid-argument", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "addExercises",
           commandId: CMD,
           ...dayPre(),
-          exercises: [{ exerciseId: "bench" }],
-        },
-        replaceExercise: {
-          kind,
+          exercises: [{ exerciseId: "not-a-real-exercise" }],
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("replaceExercise swaps the exercise, preserving the old prescription", () => {
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a", // Bench, sets 3 reps 8 weight 100
+      replacementExerciseId: "front-squat",
+    });
+    const ex = state.workouts[0].exercises;
+    expect(ex).toHaveLength(2);
+    expect(ex[0]).toMatchObject({
+      exerciseId: "front-squat",
+      name: "Front Squat",
+      sets: 3,
+      reps: 8,
+      weight: 100, // carried from the replaced exercise
+      movementCategory: "knee_dominant",
+      instanceId: `cmd-${CMD}`,
+    });
+    expect(ex[1].instanceId).toBe("inst-b"); // untouched
+  });
+
+  it("replaceExercise rejects an unknown old instance id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
+          commandId: CMD,
+          ...dayPre(),
+          oldInstanceId: "inst-x",
+          replacementExerciseId: "front-squat",
+        }),
+      "failed-precondition"
+    );
+  });
+
+  it("replaceExercise rejects an unknown replacement catalog id", () => {
+    expectHttps(
+      () =>
+        apply({
+          kind: "replaceExercise",
           commandId: CMD,
           ...dayPre(),
           oldInstanceId: "inst-a",
-          replacementExerciseId: "incline",
-        },
-      };
-      const error = expectHttps(
-        () => apply(commands[kind]),
-        "failed-precondition"
-      );
-      expect(error.message).toMatch(/build stage/i);
-    }
-  );
+          replacementExerciseId: "not-a-real-exercise",
+        }),
+      "invalid-argument"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(
+      {
+        kind: "addExercises",
+        commandId: CMD,
+        ...dayPre(),
+        exercises: [{ exerciseId: "bench-press" }],
+      },
+      input
+    );
+    expect(input.workouts[0].exercises).toHaveLength(2);
+  });
 });
 
 describe("logExercise (reducer wiring — progression math pinned by cross-test)", () => {
