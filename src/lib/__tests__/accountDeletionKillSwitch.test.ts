@@ -76,6 +76,10 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
           get: vi
             .fn()
             .mockResolvedValue({ exists: false, data: () => undefined }),
+          // R1A Chunk 3 — the executor now writes the deletedAccounts/{uid}
+          // tombstone before the auth delete; this generic doc stub must
+          // accept the .set so deleteAccount runs to completion here.
+          set: vi.fn().mockResolvedValue(undefined),
         })),
         where: vi.fn(() => ({ get: vi.fn().mockResolvedValue(mockEmptySnap) })),
       };

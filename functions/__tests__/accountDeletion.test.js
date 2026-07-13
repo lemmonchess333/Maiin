@@ -43,6 +43,11 @@ const TEST_UID = "user-abc";
 function makeStubs(opts = {}) {
   const calls = [];
   const tombstones = [];
+  // R1A Chunk 3 — the deletedAccounts tombstone store. Modelled SEPARATELY
+  // from the billing-identity `tombstones` array above: different collection,
+  // schema, and retention. Keyed by uid so a test can read back the exact
+  // record the executor wrote.
+  const deletedAccountsStore = {};
 
   function makeBatchAndCollectionGraph(opts = {}) {
     const usersDocStub = (uid) => ({
@@ -120,6 +125,7 @@ function makeStubs(opts = {}) {
     return {
       _ledgerStore: ledgerStore,
       _tombstones: tombstones,
+      _deletedAccountsStore: deletedAccountsStore,
       collection(name) {
         if (name === "users") {
           return { doc: (uid) => usersDocStub(uid) };
@@ -171,6 +177,22 @@ function makeStubs(opts = {}) {
             }),
           };
         }
+        // R1A Chunk 3 — deletedAccounts tombstone writer. Captures the record
+        // so tests can assert the minimal shape + 90d expiry, and honours
+        // opts.tombstoneWriteThrows to exercise the fail-closed abort path.
+        if (name === "deletedAccounts") {
+          return {
+            doc: (docUid) => ({
+              set: async (record) => {
+                calls.push(`firestore.deletedAccounts.set`);
+                if (opts.tombstoneWriteThrows) {
+                  throw new Error(opts.tombstoneWriteThrows);
+                }
+                deletedAccountsStore[docUid] = record;
+              },
+            }),
+          };
+        }
         return { doc: (uid) => topLevelDocStub(name, uid) };
       },
       async runTransaction(cb) {
@@ -217,6 +239,7 @@ function makeStubs(opts = {}) {
   const auth = {
     deleteUser: async (uid) => {
       calls.push(`auth.deleteUser(${uid})`);
+      if (opts.authDeleteThrows) throw new Error(opts.authDeleteThrows);
     },
   };
   const storageBucket = {
@@ -233,6 +256,7 @@ function makeStubs(opts = {}) {
     logger,
     calls,
     ledgerStore: firestore._ledgerStore,
+    deletedAccountsStore: firestore._deletedAccountsStore,
   };
 }
 
@@ -867,5 +891,118 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
     expect(stubs.calls[stubs.calls.length - 1]).toBe(
       `auth.deleteUser(${TEST_UID})`
     );
+  });
+});
+
+// ── R1A Chunk 3 — deletedAccounts tombstone write (packet 10) ────────
+// The #1602 write-freeze rules/guards consult deletedAccounts/{uid}, but
+// nothing wrote it. These pin that the executor now commits the tombstone
+// AFTER the lease re-check and BEFORE the irreversible auth delete, and
+// fails closed if that durable write can't land.
+describe("deleteAccount — deletedAccounts tombstone", () => {
+  const TOMBSTONE_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
+
+  it("writes the tombstone AFTER cleanup/lease re-check and BEFORE auth.deleteUser", async () => {
+    const stubs = makeStubs();
+    await deleteAccount({ ...stubs, uid: TEST_UID, now: 1000 });
+
+    const tombstoneIdx = stubs.calls.findIndex(
+      (c) => c === "firestore.deletedAccounts.set"
+    );
+    const authIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("auth.deleteUser")
+    );
+    const userDocIdx = stubs.calls.findIndex(
+      (c) => c === `firestore.users.${TEST_UID}.delete`
+    );
+    const storageIdx = stubs.calls.findIndex((c) =>
+      c.startsWith("storage.deleteFiles")
+    );
+
+    expect(tombstoneIdx).toBeGreaterThanOrEqual(0);
+    // After all reversible cleanup (user doc + storage sweep)...
+    expect(tombstoneIdx).toBeGreaterThan(userDocIdx);
+    expect(tombstoneIdx).toBeGreaterThan(storageIdx);
+    // ...and immediately before the irreversible auth delete.
+    expect(authIdx).toBeGreaterThan(tombstoneIdx);
+  });
+
+  it("writes exactly ONE minimal tombstone at deletedAccounts/{uid} with a 90-day expiry", async () => {
+    const stubs = makeStubs();
+    await deleteAccount({ ...stubs, uid: TEST_UID, now: 1000 });
+
+    const record = stubs.deletedAccountsStore[TEST_UID];
+    expect(record).toBeDefined();
+    // Minimal, allowlisted shape — no profile data leaks into the tombstone.
+    expect(Object.keys(record).sort()).toEqual([
+      "deletedAt",
+      "expiresAt",
+      "source",
+      "uid",
+    ]);
+    expect(record.uid).toBe(TEST_UID);
+    expect(record.source).toBe("accountDeletion");
+    expect(record.deletedAt.getTime()).toBe(1000);
+    expect(record.expiresAt.getTime()).toBe(1000 + TOMBSTONE_RETENTION_MS);
+    // And exactly one write.
+    const setCount = stubs.calls.filter(
+      (c) => c === "firestore.deletedAccounts.set"
+    ).length;
+    expect(setCount).toBe(1);
+  });
+
+  it("FAILS CLOSED: a tombstone write failure rejects and never deletes Auth", async () => {
+    const stubs = makeStubs({ tombstoneWriteThrows: "tombstone 503" });
+    await expect(
+      deleteAccount({
+        ...stubs,
+        uid: TEST_UID,
+        leaseOwner: "exec-A",
+        now: 1000,
+      })
+    ).rejects.toThrow("tombstone 503");
+
+    // Auth intact for retry; ledger frozen at the tombstone stage.
+    expect(stubs.calls.some((c) => c.startsWith("auth.deleteUser"))).toBe(
+      false
+    );
+    expect(stubs.deletedAccountsStore[TEST_UID]).toBeUndefined();
+    expect(stubs.ledgerStore.doc.status).toBe("failed_cleanup");
+    expect(stubs.ledgerStore.doc.failedStage).toBe("account_tombstone");
+  });
+
+  it("KEEPS the tombstone when Auth delete throws AFTER it committed (frozen, retryable)", async () => {
+    const stubs = makeStubs({ authDeleteThrows: "auth 500" });
+    await expect(
+      deleteAccount({
+        ...stubs,
+        uid: TEST_UID,
+        leaseOwner: "exec-A",
+        now: 1000,
+      })
+    ).rejects.toThrow("auth 500");
+
+    // The data-recreation hole stays closed: tombstone survives the ambiguous
+    // Auth failure, and the ledger is frozen retryable at the auth stage.
+    expect(stubs.deletedAccountsStore[TEST_UID]).toBeDefined();
+    expect(stubs.deletedAccountsStore[TEST_UID].uid).toBe(TEST_UID);
+    expect(stubs.ledgerStore.doc.status).toBe("failed_cleanup");
+    expect(stubs.ledgerStore.doc.failedStage).toBe("auth_deletion");
+  });
+
+  it("normal completion: tombstone THEN auth delete THEN ledger completed", async () => {
+    const stubs = makeStubs();
+    await deleteAccount({
+      ...stubs,
+      uid: TEST_UID,
+      leaseOwner: "exec-A",
+      now: 1000,
+    });
+
+    expect(stubs.deletedAccountsStore[TEST_UID]).toBeDefined();
+    expect(stubs.calls[stubs.calls.length - 1]).toBe(
+      `auth.deleteUser(${TEST_UID})`
+    );
+    expect(stubs.ledgerStore.doc.status).toBe("completed");
   });
 });
