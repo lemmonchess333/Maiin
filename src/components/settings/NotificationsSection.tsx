@@ -466,7 +466,17 @@ export default function NotificationsSection({
                 }
               } else {
                 await updatePushConsent({ enabled: false });
-                if (user) await unregisterDeviceToken(user.uid);
+                if (user) {
+                  try {
+                    await unregisterDeviceToken(user.uid);
+                  } catch {
+                    // Server consent is already off, so no sender targets the
+                    // account while the user retries device cleanup online.
+                    toast.error(
+                      "Push was turned off, but this device could not be unregistered. Toggle it on and off once you are online to retry."
+                    );
+                  }
+                }
               }
             }}
           />
