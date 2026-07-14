@@ -86,7 +86,7 @@ export const SPACE_DEFS: SpaceDef[] = [
   },
   {
     id: "travel-racecations",
-    name: "Travel & Racecations",
+    name: "Destination Races",
     tagline:
       "Where are you racing next? Trips, destination races, run-tourism.",
     kind: "interest",
