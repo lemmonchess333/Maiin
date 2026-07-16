@@ -153,4 +153,25 @@ describe("unregisterDeviceToken (packet 19 — fenced release)", () => {
     await unregisterDeviceToken("u1"); // no stored binding → fallback path
     expect(h.getReg).toHaveBeenCalled();
   });
+
+  it("callable-not-deployed (functions/not-found) does NOT block sign-out", async () => {
+    // Issue #1636: the client shipped ahead of a stranded functions
+    // deploy. A missing backend can't hold claims, so the fail-closed
+    // barrier must not wedge auth transitions behind absent infra.
+    const { registerDeviceToken, unregisterDeviceToken } = await load();
+    await registerDeviceToken("u1"); // seeds a stored binding
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("not-found"), { code: "functions/not-found" })
+    );
+    await expect(unregisterDeviceToken("u1")).resolves.toBeUndefined();
+  });
+
+  it("a real release failure still fails closed (throws)", async () => {
+    const { registerDeviceToken, unregisterDeviceToken } = await load();
+    await registerDeviceToken("u1");
+    h.releaseFn.mockRejectedValueOnce(
+      Object.assign(new Error("boom"), { code: "functions/internal" })
+    );
+    await expect(unregisterDeviceToken("u1")).rejects.toThrow("boom");
+  });
 });
