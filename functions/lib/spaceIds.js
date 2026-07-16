@@ -14,6 +14,7 @@ const SPACE_IDS = Object.freeze([
   "hybrid-training",
   "womens-running",
   "runners",
+  "trail-running",
   "lifters",
   "triathlon-multisport",
   "travel-racecations",

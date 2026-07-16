@@ -755,7 +755,7 @@ service cloud.firestore {
     function isKnownSpaceId(spaceId) {
       return spaceId in [
         'new-to-tropos', 'hybrid-training', 'womens-running',
-        'runners', 'lifters', 'triathlon-multisport',
+        'runners', 'trail-running', 'lifters', 'triathlon-multisport',
         'travel-racecations'
       ];
     }
