@@ -242,14 +242,24 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if isOwnerAndNotDeleting(uid);
     }
-    /* FCM device tokens (push arc #961) — the client writes
-       users/{uid}/devices/{token} via registerDeviceToken and deletes it
-       on sign-out (delete-on-signout privacy invariant). The server
-       senders read these via the Admin SDK, which bypasses these rules.
-       Owner-only; write-frozen during account deletion like its siblings. */
-    match /users/{uid}/devices/{token} {
-      allow read: if isOwner(uid);
-      allow write: if isOwnerAndNotDeleting(uid);
+    /* FCM device tokens — SERVER-ONLY since the packets-17+19 migration
+       (#1630, Rules lock PR-E). The client registers/revokes exclusively
+       through the claimPushDeviceToken / releasePushDeviceToken
+       callables; senders and the deletion executor use the Admin SDK,
+       which bypasses these rules. Locking the path closes the
+       token-forgery surface (a client writing another token into its own
+       device list) and makes the callable fences authoritative. */
+    match /users/{uid}/devices/{tokenHash} {
+      allow read, write: if false;
+    }
+    /* Push-token claim ledger (packets 17+19) — the server-owned
+       source of truth for token ownership (claim status, binding,
+       revocation history, send leases). Written only by the callables
+       + senders via the Admin SDK; revoked markers expire via the
+       revocationExpiresAt TTL. Never client-accessible: a readable
+       claim would leak which account owns a device token. */
+    match /fcmTokenClaims/{tokenHash} {
+      allow read, write: if false;
     }
     /* Performance data — written ONLY by Cloud Functions
        (computeAndWritePerformanceForUser in functions/index.js writes

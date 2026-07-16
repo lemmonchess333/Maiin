@@ -62,7 +62,9 @@ const PROTECTED_PATHS = [
   "match /users/{uid}/bodyweightLogs/{doc}",
   "match /users/{uid}/programState/{doc}",
   "match /users/{uid}/streaks/{doc}",
-  "match /users/{uid}/devices/{token}",
+  // Packets 17+19 Rules lock (PR-E): /users/{uid}/devices/{tokenHash}
+  // moved to INFRASTRUCTURE_AND_READ_ONLY — the rule is now `if false`
+  // (server-only via the claim/release callables).
   "match /users/{uid}/shoes/{shoeId}",
   "match /users/{uid}/logs/{date}",
   "match /users/{uid}/stats/{doc}",
@@ -167,6 +169,14 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // because the deletion actor-freeze no longer needs to gate a create path
   // that clients can't reach.
   "match /reports/{reportId}",
+  // Packets 17+19 Rules lock (PR-E) — FCM device docs are server-only
+  // (claim/release callables write them; senders + the deletion executor
+  // use the Admin SDK). Moved here from PROTECTED_PATHS.
+  "match /users/{uid}/devices/{tokenHash}",
+  // Packets 17+19 — the push-token claim ledger. Server-owned truth for
+  // token ownership; never client-accessible (a readable claim would
+  // leak which account owns a device token).
+  "match /fcmTokenClaims/{tokenHash}",
   "match /config/{doc}",
   "match /accountDeletionRequests/{uid}",
   "match /deletedAccounts/{uid}",
@@ -306,7 +316,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 40 (tombstone-freeze added activities + participants)", () => {
+  it("authoritative count is 38 (packets 17+19 locked devices server-only)", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -335,8 +345,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // Tombstone-freeze packet (2026-07-12) added /activities/{activityId}
     // + challenge /participants/{uid} (moved out of EXPLICITLY_EXEMPT once
     // all their write actions became frozen), → 40.
+    // Packets 17+19 Rules lock (PR-E, 2026-07-16) moved
+    // /users/{uid}/devices/{tokenHash} to server-only (`if false` —
+    // claim/release callables own writes), → 38.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });
