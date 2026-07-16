@@ -207,6 +207,22 @@ export async function waitForPendingPushRegistration(
   if (pending) await pending;
 }
 
+/** True when a callable failed because it is NOT DEPLOYED (the Functions
+ *  backend answered "no such function"). Our push callables never throw
+ *  not-found themselves, so this uniquely identifies absent infra — e.g.
+ *  the client shipping ahead of a stranded functions deploy (issue
+ *  #1636). An un-deployed server also cannot hold claims, so there is
+ *  nothing to release and failing CLOSED would only wedge auth
+ *  transitions behind infrastructure that isn't there. Transient errors
+ *  (unavailable, deadline-exceeded, internal) still fail closed. */
+function isCallableNotDeployed(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === "functions/not-found"
+  );
+}
+
 function removeBindingIfStillCurrent(
   uid: string,
   binding: StoredDeviceBinding,
@@ -343,6 +359,18 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
       removeBindingIfStillCurrent(uid, binding, generation);
     }
   } catch (error) {
+    if (isCallableNotDeployed(error)) {
+      // The release callable does not exist on the backend, so no server
+      // claim can exist either — there is nothing to release. Blocking
+      // sign-out/sign-in here would wedge every push-permitted user
+      // behind missing infra (issue #1636). Keep the local binding; the
+      // next same-account session re-registers once the deploy lands.
+      logger.warn(
+        "[push] release skipped — callable not deployed; nothing to release",
+        error
+      );
+      return;
+    }
     // Preserve the binding; a later same-account session can retry safely.
     logger.error("[push] unregisterDeviceToken failed", error);
     throw error;
