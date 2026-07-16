@@ -69,6 +69,15 @@ export const SPACE_DEFS: SpaceDef[] = [
     icon: "footprints",
   },
   {
+    id: "trail-running",
+    name: "Trail Running",
+    tagline:
+      "Dirt, hills and long climbs — racing the landscape, not the clock.",
+    kind: "interest",
+    accent: "running",
+    icon: "mountain",
+  },
+  {
     id: "lifters",
     name: "Lifters",
     tagline: "Programmes, PRs and plates — everything strength.",

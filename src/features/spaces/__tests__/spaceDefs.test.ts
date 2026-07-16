@@ -10,8 +10,8 @@ import { resolve } from "node:path";
 import { SPACE_DEFS, SPACE_IDS, spaceDef } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
-  it("ships the locked seven-space launch set (Spc1e)", () => {
-    expect(SPACE_DEFS).toHaveLength(7);
+  it("ships the locked launch set (Spc1e + 2026-07-16 trail-running amendment)", () => {
+    expect(SPACE_DEFS).toHaveLength(8);
   });
 
   it("ids are unique, url-safe slugs", () => {
