@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { MotionConfig } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
 import ShareComposerSheet from "@/components/social/ShareComposerSheet";
@@ -313,10 +314,14 @@ function RoutePrefetcher() {
 
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
+  const uid = user?.uid ?? null;
+  // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
+  usePushTokenRefresh();
 
   useEffect(() => {
-    if (!user) return;
-    const uid = user.uid;
+    if (!uid) return;
+    let cancelled = false;
+    let stopForegroundPush = () => {};
     const tryFlush = () => {
       if (!navigator.onLine) return;
       // Lazy-load so this only ships when the user is signed in.
@@ -332,15 +337,26 @@ function AppRoutes() {
     // Render foreground FCM pushes — when the app is open, the message goes
     // to onMessage (not the SW), so without this a push that arrives while
     // the tab is focused is silently dropped. Idempotent + guarded.
-    import("@/lib/pushNotifications").then(({ listenForForegroundPush }) => {
-      listenForForegroundPush().catch(() => {});
-    });
+    void import("@/lib/pushNotifications")
+      .then(({ listenForForegroundPush }) => listenForForegroundPush())
+      .then((stop) => {
+        if (cancelled) {
+          stop();
+          return;
+        }
+        stopForegroundPush = stop;
+      })
+      .catch(() => {});
     // Re-flush whenever the browser regains connectivity. Listener
     // captures `uid` in closure so it can never flush under a
     // different user — the cleanup removes it on auth change.
     window.addEventListener("online", tryFlush);
-    return () => window.removeEventListener("online", tryFlush);
-  }, [user]);
+    return () => {
+      cancelled = true;
+      stopForegroundPush();
+      window.removeEventListener("online", tryFlush);
+    };
+  }, [uid]);
 
   if (loading) {
     return (

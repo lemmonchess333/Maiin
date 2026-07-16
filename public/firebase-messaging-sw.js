@@ -1,15 +1,43 @@
 /**
- * FCM Web push — background message handler (push arc #961, slice 3 / #965).
+ * FCM Web push — LEGACY background message handler (push arc #961, slice 3).
+ *
+ * Retained during the packet-17 service-worker migration: old app shells may
+ * still request this script until they reload the new canonical sw.js. New
+ * client code never registers this file. Do NOT delete it in this release —
+ * removing it mid-migration would create a background-delivery gap.
  *
  * Static service worker: it CANNOT read import.meta.env, so the registering
- * client passes the (all-public) Firebase config as URL search params — see
- * src/lib/pushNotifications.ts. Uses the firebase compat SDK because a service
- * worker can't consume the modular bundle. Pinned to the firebase version in
- * package.json (12.14.0).
+ * client passes the (all-public) Firebase config as URL search params. Uses the
+ * firebase compat SDK (a service worker can't consume the modular bundle),
+ * pinned to the firebase version in package.json (12.14.0).
  *
- * Payloads carry only generic copy + data { type, route } for deep-linking —
- * no PII / health data (Q7 locked: payloads transit FCM + show on lock screens).
+ * notificationclick + BASE_PATH/ICON are declared BEFORE importScripts so a tap
+ * is never dropped while the Firebase Messaging library loads.
  */
+const BASE_PATH = self.location.pathname.replace(
+  /firebase-messaging-sw\.js$/,
+  ""
+);
+const ICON = BASE_PATH + "icons/icon-192x192.png";
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const route =
+    (event.notification.data && event.notification.data.route) || "/";
+  // BASE_PATH keeps the trailing slash; route is leading-slash, so trim one.
+  const target = BASE_PATH.replace(/\/$/, "") + route;
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((wins) => {
+        for (const w of wins) {
+          if ("focus" in w && w.url.includes(BASE_PATH)) return w.focus();
+        }
+        if (clients.openWindow) return clients.openWindow(target);
+      })
+  );
+});
+
 importScripts(
   "https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"
 );
@@ -28,19 +56,10 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-// Derived from the SW's own URL so the one file works whether it's served at
-// /Maiin/ (GitHub Pages) or / (Firebase Hosting). Trailing slash kept.
-const BASE_PATH = self.location.pathname.replace(
-  /firebase-messaging-sw\.js$/,
-  ""
-);
-const ICON = BASE_PATH + "icons/icon-192x192.png";
 
-// We send DATA-ONLY messages (no top-level `notification` field) so this
-// handler is reliably invoked on iOS PWAs — FCM's auto-display of
-// `notification` messages doesn't fire onBackgroundMessage there, so nothing
-// would show. Title/body therefore arrive in `data`. Falls back to the
-// `notification` field for any legacy/auto-display payloads.
+// DATA-ONLY messages (no top-level `notification`) so this handler is reliably
+// invoked on iOS PWAs — FCM's auto-display of `notification` messages doesn't
+// fire onBackgroundMessage there. Title/body arrive in `data`.
 messaging.onBackgroundMessage((payload) => {
   const d = payload.data || {};
   const n = payload.notification || {};
@@ -51,23 +70,4 @@ messaging.onBackgroundMessage((payload) => {
     badge: ICON,
     data: d,
   });
-});
-
-// Deep-link on tap via data.route; focus an open tab if there is one.
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const route =
-    (event.notification.data && event.notification.data.route) || "/";
-  // BASE_PATH keeps the trailing slash; route is leading-slash, so trim one.
-  const target = BASE_PATH.replace(/\/$/, "") + route;
-  event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((wins) => {
-        for (const w of wins) {
-          if ("focus" in w && w.url.includes(BASE_PATH)) return w.focus();
-        }
-        if (clients.openWindow) return clients.openWindow(target);
-      })
-  );
 });

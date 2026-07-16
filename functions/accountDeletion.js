@@ -26,6 +26,7 @@ const ledger = require("./lib/accountDeletionLedger");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
+const pushTokenOwnership = require("./lib/pushTokenOwnership");
 
 const USER_SUBCOLLECTIONS = Object.freeze([
   "meals",
@@ -318,6 +319,14 @@ async function deleteAccount({
       uid,
       logger,
     });
+
+    // 0c. FCM token claims (packet 19). Queries the top-level fcmTokenClaims by
+    // the authoritative `uid` field so a stale claim is caught even if its
+    // device doc was already pruned. Re-reads each claim in its own
+    // transaction: a token transferred from this uid to another after the query
+    // is left intact rather than erased under the new owner.
+    stage = "fcm_token_claims";
+    await pushTokenOwnership.removeClaimsForDeletedUser({ firestore, uid });
 
     // 1. User's own subcollections
     stage = "user_subcollections";
