@@ -44,7 +44,12 @@ import {
 import { sendVerificationEmail } from "@/lib/accountSecurity";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import { setDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
-import { unregisterDeviceToken } from "@/lib/pushNotifications";
+import {
+  invalidatePushTokenLifecycle,
+  stopListeningForForegroundPush,
+  unregisterDeviceToken,
+  waitForPendingPushRegistration,
+} from "@/lib/pushNotifications";
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import { stripUndefined } from "@/lib/firestoreGuards";
@@ -668,6 +673,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Never expose the previous account while the next account hydrates.
       // Same-uid token refresh keeps the rendered profile (avoids a flicker).
       if (previousUid !== uid) {
+        // Packet 17 — abort any in-flight push registration captured under the
+        // old generation so it can't write under the new account. Safe after an
+        // externally-driven transition: local invalidation only; remote release
+        // still runs before app-controlled credential replacement (below).
+        invalidatePushTokenLifecycle();
         setProfile(null);
         setLoading(true);
       }
@@ -774,9 +784,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  }, []);
+  // Packet 17/19 — revoke the outgoing account's device/push state (server
+  // release + local run/draft cleanup) BEFORE any app-controlled credential
+  // replacement, while account A is still authenticated. A failed server
+  // release throws → the credential-changing call never runs, so A stays signed
+  // in and the user can retry rather than risk handing A's device binding to B.
+  const revokeOutgoingAccountDeviceState =
+    useCallback(async (): Promise<void> => {
+      const outgoingUid = auth.currentUser?.uid;
+      if (!outgoingUid) return;
+      invalidatePushTokenLifecycle();
+      stopListeningForForegroundPush();
+      await waitForPendingPushRegistration(outgoingUid);
+      await unregisterDeviceToken(outgoingUid);
+      clearStoredRun(outgoingUid);
+      clearWorkoutDraft(outgoingUid);
+    }, []);
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      await revokeOutgoingAccountDeviceState();
+      await signInWithEmailAndPassword(auth, email, password);
+    },
+    [revokeOutgoingAccountDeviceState]
+  );
 
   // Create the main user doc AND the cross-user-readable public profile doc
   // in a single batch so a half-landed create can't leak a user with no
@@ -805,26 +836,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await batch.commit();
   };
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = cred.user.uid;
-    const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
-    // Always finish creating the account's docs; only gate local state +
-    // analytics attribution if the credential is no longer current.
-    await writeNewProfileDocs(uid, newProfile);
-    if (auth.currentUser?.uid !== uid) return;
-    setProfile(newProfile);
-    trackLifecycle("signup_completed", { method: "email" });
-    // Fire-and-forget verification email (branded, via the same Resend path
-    // as password reset). Never blocks signup — an email hiccup shouldn't
-    // stall onboarding, and Settings → Sign-in & security has a resend. A
-    // typo'd signup email is unfixable by forgot-password (the reset goes to
-    // an address the user doesn't own); verification catches it while the
-    // user still remembers their password.
-    sendVerificationEmail().catch((err) =>
-      logger.warn("[AuthProvider] signup verification email failed", err)
-    );
-  }, []);
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      await revokeOutgoingAccountDeviceState();
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = cred.user.uid;
+      const newProfile = createDefaultProfile(uid, "", cred.user.email || "");
+      // Always finish creating the account's docs; only gate local state +
+      // analytics attribution if the credential is no longer current.
+      await writeNewProfileDocs(uid, newProfile);
+      if (auth.currentUser?.uid !== uid) return;
+      setProfile(newProfile);
+      trackLifecycle("signup_completed", { method: "email" });
+      // Fire-and-forget verification email (branded, via the same Resend path
+      // as password reset). Never blocks signup — an email hiccup shouldn't
+      // stall onboarding, and Settings → Sign-in & security has a resend. A
+      // typo'd signup email is unfixable by forgot-password (the reset goes to
+      // an address the user doesn't own); verification catches it while the
+      // user still remembers their password.
+      sendVerificationEmail().catch((err) =>
+        logger.warn("[AuthProvider] signup verification email failed", err)
+      );
+    },
+    [revokeOutgoingAccountDeviceState]
+  );
 
   /* Shared post-credential handling for the OAuth flows (Google, Apple).
      Identical for new + existing accounts across providers — the only
@@ -876,14 +911,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
        capacitor://localhost, not a Firebase authorized domain — so it drives
        the native Google sheet and completes with the returned credential. */
     if (isNativePlatform()) {
-      const cred = await signInWithCredential(
-        auth,
-        await getGoogleCredentialNative()
-      );
+      const credential = await getGoogleCredentialNative();
+      await revokeOutgoingAccountDeviceState();
+      const cred = await signInWithCredential(auth, credential);
       await finishOAuthSignIn(cred, "google");
       return;
     }
     const provider = new GoogleAuthProvider();
+    await revokeOutgoingAccountDeviceState();
     /* Mobile browsers block signInWithPopup — iOS Safari's storage
        partitioning kills the popup→opener channel, so the popup throws
        auth/internal-error (what surfaced on phones as "Sign-in is
@@ -906,20 +941,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw err;
     }
-  }, [finishOAuthSignIn]);
+  }, [finishOAuthSignIn, revokeOutgoingAccountDeviceState]);
 
   const signInWithApple = useCallback(async () => {
     if (isNativePlatform()) {
-      const cred = await signInWithCredential(
-        auth,
-        await getAppleCredentialNative()
-      );
+      const credential = await getAppleCredentialNative();
+      await revokeOutgoingAccountDeviceState();
+      const cred = await signInWithCredential(auth, credential);
       await finishOAuthSignIn(cred, "apple");
       return;
     }
     const provider = new OAuthProvider("apple.com");
     provider.addScope("email");
     provider.addScope("name");
+    await revokeOutgoingAccountDeviceState();
     // Same mobile-popup problem as Google — redirect on mobile web.
     if (preferAuthRedirect()) {
       await signInWithRedirect(auth, provider);
@@ -935,7 +970,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       throw err;
     }
-  }, [finishOAuthSignIn]);
+  }, [finishOAuthSignIn, revokeOutgoingAccountDeviceState]);
 
   /* Complete a mobile-web OAuth redirect. signInWithRedirect navigates the
      page away; on return the SDK restores the pending credential here. New
@@ -994,19 +1029,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOutUser = useCallback(async () => {
-    // Push privacy invariant (#961 Q4 / PR #820 lineage): revoke this device's
-    // FCM token BEFORE signing out, while we still have the uid + auth — so the
-    // next account on this device never inherits the previous user's pushes.
-    const uid = auth.currentUser?.uid;
-    if (uid) await unregisterDeviceToken(uid).catch(() => {});
-    // Cross-account leak defence (belt-and-braces on top of uid-scoped
-    // keys): wipe THIS user's in-flight run snapshot + workout draft so
-    // the next account on a shared device starts clean even if scoping
-    // ever regresses.
-    if (uid) {
-      clearStoredRun(uid);
-      clearWorkoutDraft(uid);
-    }
+    // Push privacy invariant (packets 17/19): revoke this device's token via
+    // the server release BEFORE signing out, while account A is still
+    // authenticated. Fail-closed — a failed remote release throws and blocks
+    // sign-out, so the user stays on A and retries rather than handing A's
+    // device binding to the next account. Also wipes A's run/draft state.
+    await revokeOutgoingAccountDeviceState();
     await firebaseSignOut(auth);
     setProfile(null);
     // Reset to the DARK default so the next user starts dark unless their
@@ -1015,7 +1043,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // listener also re-applies the dark default.)
     document.documentElement.classList.add("dark");
     localStorage.removeItem("tropos-dark-mode");
-  }, []);
+  }, [revokeOutgoingAccountDeviceState]);
 
   const updateProfile = useCallback(
     async (

@@ -28,6 +28,16 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  claimPushDeviceToken: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  releasePushDeviceToken: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   verifyApplePurchase: {
     kind: "callable",
     maxInstances: 100,

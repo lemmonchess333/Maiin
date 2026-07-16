@@ -13,15 +13,10 @@ import { logger } from "@/lib/logger";
 import { initAppCheck } from "@/lib/appCheck";
 import { initAnalytics } from "@/lib/analyticsProvider";
 
-export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID ?? "",
-};
+// Firebase config now lives in the shared pure module so the service-worker
+// registration derives the same values (packet 17).
+import { firebaseConfig } from "./firebaseConfig";
+export { firebaseConfig } from "./firebaseConfig";
 
 // Loud self-report when the web build shipped without a Firebase config (the
 // VITE_FIREBASE_* secrets were unset at build time). A blank apiKey makes EVERY
