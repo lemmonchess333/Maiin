@@ -1122,14 +1122,18 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 };
 
-/** Sibling exercises that share a demo's motion pattern. */
+/** Sibling exercises that share a demo's motion pattern.
+ *
+ * Alias hygiene (Motion Rig V2 roadmap, owner-decided 2026-07-16): an
+ * alias is only legitimate when the variant genuinely shares the
+ * canonical's grip, prop, and support geometry. `db-curl`/`hammer-curl`/
+ * `ez-bar-curl`/`cable-curl` (different implement + grip semantics) and
+ * `reverse-grip-cable-pushdown` (straight bar, not a rope attachment)
+ * were removed — they fall back to the static reference until each has
+ * its own prop/grip contract. */
 const DEMO_ALIASES: Record<string, string> = {
   "db-shoulder-press": "overhead-press",
   "smith-shoulder-press": "overhead-press",
-  "db-curl": "barbell-curl",
-  "hammer-curl": "barbell-curl",
-  "ez-bar-curl": "barbell-curl",
-  "cable-curl": "barbell-curl",
   "sumo-deadlift": "deadlift",
   "trap-bar-deadlift": "deadlift",
   "db-rdl": "romanian-deadlift",
@@ -1140,7 +1144,6 @@ const DEMO_ALIASES: Record<string, string> = {
   "cable-lateral-raise": "lateral-raise",
   "standing-calf-raise": "calf-raise",
   "chin-ups": "pull-ups",
-  "reverse-grip-cable-pushdown": "rope-tricep-pushdown",
   "tricep-dips": "dips",
   "weighted-chest-dip": "dips",
   "db-bench": "bench-press",
@@ -1165,10 +1168,35 @@ export function __unlockSideDemosForPreview(): void {
   SIDE_DEMOS_ENABLED = true;
 }
 
+/** Demos whose current rendering misrepresents the named exercise
+ *  (Motion Rig V2 roadmap "open decision 2", owner-decided 2026-07-16):
+ *  `rope-tricep-pushdown` draws a straight bar contradicting its own
+ *  written rope instructions; `barbell-curl` draws no barbell and
+ *  foreshortens the forearm ~58% at lockout. Gated out of PRODUCTION
+ *  (the Form surface shows the honest static reference instead) but
+ *  still registered so preview tooling and mechanics tests can review
+ *  the repair work. Remove an id here only with an approved replacement
+ *  model per the roadmap's gates. */
+const GATED_PENDING_REPAIR: ReadonlySet<string> = new Set([
+  "barbell-curl",
+  "rope-tricep-pushdown",
+]);
+
+/** PRODUCTION lookup — what the Form surface may mount. Applies the
+ *  alias map, the side-demo flag, and the misrepresentation gate. */
 export function getBodyDemo(exerciseId: string): BodyDemo | null {
-  const demo = BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
+  const canonical = DEMO_ALIASES[exerciseId] ?? exerciseId;
+  if (GATED_PENDING_REPAIR.has(canonical)) return null;
+  const demo = BODY_DEMOS[canonical] ?? null;
   if (demo && demo.view === "side" && !SIDE_DEMOS_ENABLED) return null;
   return demo;
+}
+
+/** REVIEW lookup — alias-aware registry resolution with no production
+ *  gates, so contact sheets and mechanics tests keep rendering gated
+ *  demos while their repairs are iterated. */
+function resolveDemoForReview(exerciseId: string): BodyDemo | null {
+  return BODY_DEMOS[DEMO_ALIASES[exerciseId] ?? exerciseId] ?? null;
 }
 
 /* ── Rendering ────────────────────────────────────────────────── */
@@ -1189,7 +1217,10 @@ export function renderBodyDemo(
   t: number,
   effort = 1
 ): string {
-  const demo = getBodyDemo(exerciseId); // alias-aware — db-curl must render
+  // Review resolution, NOT the production gate: previews and mechanics
+  // tests must keep rendering gated demos (production mounting is decided
+  // upstream by getBodyDemo in ExerciseFormContent).
+  const demo = resolveDemoForReview(exerciseId);
   if (!demo) return "";
   if (demo.view === "side") return renderSideDemo(demo, t, effort);
   const e = easeInOutSine(t);
