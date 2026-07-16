@@ -90,6 +90,12 @@ export default function ExerciseRigDemo({
 
   useEffect(() => {
     if (reducedMotion || !active) return;
+    // Deterministic replay: the draw-throttle clock and the effort
+    // low-pass must start every run from the same calm state — not from
+    // wherever the previous rep left them, or a replayed rep's opening
+    // frames glow differently from the first run's.
+    lastDrawRef.current = 0;
+    effortRef.current = 0.7;
     const timing = repTimingFor(tempo);
     const total = repTotalMs(timing);
     const start = performance.now();
