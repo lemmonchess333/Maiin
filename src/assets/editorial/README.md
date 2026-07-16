@@ -11,11 +11,14 @@ imagery" and `src/lib/editorialImages.ts` for the resolution logic.
 Add files with these exact stems (any of `.webp .avif .jpg .jpeg .png`;
 prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 
-| File                    | Used for                               |
-| ----------------------- | -------------------------------------- |
-| `challenge-run.webp`    | running challenges (total_km, fastest) |
-| `challenge-lift.webp`   | lifting challenges (volume, count)     |
-| `challenge-hybrid.webp` | hybrid + any other metric              |
+| File                    | Used for                                     |
+| ----------------------- | -------------------------------------------- |
+| `challenge-run.webp`    | running challenges (total_km, fastest)       |
+| `challenge-lift.webp`   | lifting challenges (volume, count)           |
+| `challenge-hybrid.webp` | hybrid + any other metric                    |
+| `space-<spaceId>.webp`  | Community Space cards (directory + header) — |
+|                         | one per id in `spaceDefs.ts` SPACE_DEFS,     |
+|                         | e.g. `space-trail-running.webp`              |
 
 They're picked up at **build time** (`import.meta.glob`) — no code
 change needed. Until a file exists, the surface renders its designed
