@@ -81,7 +81,15 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
           // accept the .set so deleteAccount runs to completion here.
           set: vi.fn().mockResolvedValue(undefined),
         })),
-        where: vi.fn(() => ({ get: vi.fn().mockResolvedValue(mockEmptySnap) })),
+        // packet 19: removeClaimsForDeletedUser does
+        // collection("fcmTokenClaims").where("uid","==",uid).limit(N).get()
+        where: vi.fn(() => {
+          const q = {
+            limit: vi.fn(() => q),
+            get: vi.fn().mockResolvedValue({ empty: true, docs: [], size: 0 }),
+          };
+          return q;
+        }),
       };
     }),
     batch: vi.fn(() => mockBatch),

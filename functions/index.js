@@ -82,6 +82,8 @@ const {
   buildWeeklyRecapMessage,
   buildFellBehindRecapMessage,
 } = require("./lib/pushSend");
+// Packet 19 — server-owned FCM token ownership (claim/release + send leases).
+const pushTokenOwnership = require("./lib/pushTokenOwnership");
 const { pushableBadgeIds } = require("./lib/badgeNudge");
 
 const appleIAP = require("./appleIAP");
@@ -2549,6 +2551,229 @@ function mayTargetUserConsent(consent, type) {
   return consent[type] !== false;
 }
 
+// ══════════════════════════════════════════════
+// PUSH TOKEN OWNERSHIP (packet 19) — claim/release callables + sender leasing
+// The client no longer writes users/{uid}/devices directly. A callable claims
+// the token (retiring any prior owner) and a matching callable releases it.
+// Senders load only canonically-claimed registrations and hold a short send
+// lease so an ownership transfer can't race an in-flight FCM send.
+// ══════════════════════════════════════════════
+
+function pushTokenInput(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid token.");
+  }
+  if (
+    Object.keys(data).some(
+      (key) =>
+        key !== "ownerUid" &&
+        key !== "token" &&
+        key !== "platform" &&
+        key !== "bindingId"
+    )
+  ) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid token.");
+  }
+  try {
+    return {
+      ownerUid: typeof data.ownerUid === "string" ? data.ownerUid : "",
+      token: pushTokenOwnership.assertToken(data.token),
+      platform: data.platform,
+      bindingId: pushTokenOwnership.assertBindingId(data.bindingId),
+    };
+  } catch (_) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid token.");
+  }
+}
+
+function assertPushTokenOwner(context, input) {
+  if (input.ownerUid !== context.auth.uid) {
+    // `ownerUid` is an intent fence, not an authorization claim. It stops an
+    // A-originated browser continuation from executing under B's credential
+    // after Firebase Auth has switched accounts.
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Account changed."
+    );
+  }
+}
+
+function pushRevocationExpiresAt() {
+  return admin.firestore.Timestamp.fromMillis(
+    Date.now() + pushTokenOwnership.REVOCATION_WINDOW_MS
+  );
+}
+
+function rethrowPushTokenError(error) {
+  const wrapped = accountDeletionLocks.wrapAsHttpsError(error);
+  if (wrapped !== error) throw wrapped;
+  if (error instanceof pushTokenOwnership.PushTokenOwnershipError) {
+    throw new functions.https.HttpsError(
+      "aborted",
+      "Push-token operation was superseded. Retry the action.",
+      { reason: error.code }
+    );
+  }
+  throw error;
+}
+
+exports.claimPushDeviceToken = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const input = pushTokenInput(data);
+    if (input.platform !== "web") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid token."
+      );
+    }
+    assertPushTokenOwner(context, input);
+
+    const firestore = admin.firestore();
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      firestore,
+      context.auth.uid
+    );
+    if (
+      await isRateLimited(context.auth.uid, "claimPushDeviceToken", 30, 600_000)
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many device registrations."
+      );
+    }
+
+    try {
+      await pushTokenOwnership.claimToken({
+        firestore,
+        uid: context.auth.uid,
+        token: input.token,
+        platform: input.platform,
+        bindingId: input.bindingId,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error) {
+      // The helper re-reads deletion/tombstone state inside its transaction.
+      rethrowPushTokenError(error);
+    }
+    return { claimed: true };
+  });
+
+exports.releasePushDeviceToken = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const input = pushTokenInput(data);
+    if (input.platform !== "web") {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid token."
+      );
+    }
+    assertPushTokenOwner(context, input);
+    const firestore = admin.firestore();
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      firestore,
+      context.auth.uid
+    );
+    if (
+      await isRateLimited(
+        context.auth.uid,
+        "releasePushDeviceToken",
+        60,
+        600_000
+      )
+    ) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many device releases."
+      );
+    }
+    try {
+      await pushTokenOwnership.releaseTokenIfOwned({
+        firestore,
+        uid: context.auth.uid,
+        token: input.token,
+        bindingId: input.bindingId,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+        revocationExpiresAt: pushRevocationExpiresAt(),
+      });
+    } catch (error) {
+      rethrowPushTokenError(error);
+    }
+    return { released: true };
+  });
+
+// --- sender helpers: load canonical registrations, lease, release, prune ----
+
+async function loadClaimedPushRegistrations(uid) {
+  return pushTokenOwnership.loadClaimedRegistrations({ firestore: db, uid });
+}
+
+async function pruneDeadPushTokens(uid, registrations, multicastResult) {
+  const tokens = registrations.map((registration) => registration.token);
+  const dead = tokensToPrune(multicastResult, tokens);
+  const registrationByToken = new Map(
+    registrations.map((registration) => [registration.token, registration])
+  );
+  await Promise.all(
+    dead.map((token) => {
+      const registration = registrationByToken.get(token);
+      if (!registration) return Promise.resolve();
+      return pushTokenOwnership
+        .releaseTokenIfOwned({
+          firestore: db,
+          uid,
+          token,
+          bindingId: registration.bindingId,
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+          revocationExpiresAt: pushRevocationExpiresAt(),
+        })
+        .catch(() => {});
+    })
+  );
+  return dead;
+}
+
+async function leaseClaimedPushRegistrations(uid) {
+  const candidates = await loadClaimedPushRegistrations(uid);
+  const attempted = await Promise.all(
+    candidates.map(async (registration) => {
+      const lease = await pushTokenOwnership.acquireSendLease({
+        firestore: db,
+        uid,
+        tokenHash: registration.hash,
+        bindingId: registration.bindingId,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return lease ? { ...registration, leaseId: lease.leaseId } : null;
+    })
+  );
+  return attempted.filter(Boolean);
+}
+
+async function releaseClaimedPushSendLeases(uid, registrations) {
+  await Promise.all(
+    registrations.map((registration) =>
+      pushTokenOwnership
+        .releaseSendLease({
+          firestore: db,
+          uid,
+          tokenHash: registration.hash,
+          bindingId: registration.bindingId,
+          leaseId: registration.leaseId,
+          serverTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+        })
+        .catch(() => {})
+    )
+  );
+}
+
 async function maybeSendStreakNudge(uid, now) {
   const [profileSnap, streakSnap, consentSnap, stateSnap] = await Promise.all([
     db.doc(`users/${uid}`).get(),
@@ -2616,27 +2841,26 @@ async function maybeSendStreakNudge(uid, now) {
   const firstWeek = !eligible && shouldSendFirstWeekNudge(decisionInput, now);
   if (!eligible && !firstWeek) return false;
 
-  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  const registrations = await leaseClaimedPushRegistrations(uid);
+  const tokens = registrations.map((r) => r.token);
   if (tokens.length === 0) return false;
 
   const message = firstWeek
     ? buildFirstWeekNudgeMessage()
     : buildStreakNudgeMessage();
-  const batch = await admin
-    .messaging()
-    .sendEachForMulticast({ tokens, ...message });
+  let batch;
+  try {
+    batch = await admin
+      .messaging()
+      .sendEachForMulticast({ tokens, ...message });
+  } finally {
+    // Release send leases before pruning (prune uses releaseTokenIfOwned,
+    // which must not contend with an unexpired lease of its own).
+    await releaseClaimedPushSendLeases(uid, registrations);
+  }
 
-  // Prune dead tokens (Q4 prune-on-send-error).
-  const dead = tokensToPrune(batch, tokens);
-  await Promise.all(
-    dead.map((t) =>
-      db
-        .doc(`users/${uid}/devices/${t}`)
-        .delete()
-        .catch(() => {})
-    )
-  );
+  // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
+  await pruneDeadPushTokens(uid, registrations, batch);
 
   // ≤1/day idempotency marker (local day); the first-week nudge additionally
   // records its once-EVER marker.
@@ -2685,24 +2909,21 @@ async function maybeSendBadgeNudge(uid, now) {
   const fresh = pushableBadgeIds(badges, pushedBadgeIds, now);
   if (fresh.length === 0) return false;
 
-  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  const registrations = await leaseClaimedPushRegistrations(uid);
+  const tokens = registrations.map((r) => r.token);
   if (tokens.length === 0) return false;
 
-  const batch = await admin
-    .messaging()
-    .sendEachForMulticast({ tokens, ...buildBadgeNudgeMessage() });
+  let batch;
+  try {
+    batch = await admin
+      .messaging()
+      .sendEachForMulticast({ tokens, ...buildBadgeNudgeMessage() });
+  } finally {
+    await releaseClaimedPushSendLeases(uid, registrations);
+  }
 
-  // Prune dead tokens (Q4 prune-on-send-error).
-  const dead = tokensToPrune(batch, tokens);
-  await Promise.all(
-    dead.map((t) =>
-      db
-        .doc(`users/${uid}/devices/${t}`)
-        .delete()
-        .catch(() => {})
-    )
-  );
+  // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
+  await pruneDeadPushTokens(uid, registrations, batch);
 
   // Mark these badge ids pushed + today's ≤1/day marker. Union with the
   // existing set so an earlier day's pushes aren't forgotten.
@@ -2786,27 +3007,24 @@ async function maybeSendWeeklyRecap(uid, now) {
     : null;
   const behind = !!(status && status.fellBehind);
 
-  const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-  const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+  const registrations = await leaseClaimedPushRegistrations(uid);
+  const tokens = registrations.map((r) => r.token);
   if (tokens.length === 0) return false;
 
   const message = behind
     ? buildFellBehindRecapMessage()
     : buildWeeklyRecapMessage();
-  const batch = await admin
-    .messaging()
-    .sendEachForMulticast({ tokens, ...message });
+  let batch;
+  try {
+    batch = await admin
+      .messaging()
+      .sendEachForMulticast({ tokens, ...message });
+  } finally {
+    await releaseClaimedPushSendLeases(uid, registrations);
+  }
 
-  // Prune dead tokens (Q4 prune-on-send-error).
-  const dead = tokensToPrune(batch, tokens);
-  await Promise.all(
-    dead.map((t) =>
-      db
-        .doc(`users/${uid}/devices/${t}`)
-        .delete()
-        .catch(() => {})
-    )
-  );
+  // Prune dead tokens (Q4 prune-on-send-error) via server-owned release.
+  await pruneDeadPushTokens(uid, registrations, batch);
 
   // Behind → ensure the deep-link target exists. Write the fell-behind flag
   // (same shape weeklyFellBehindCheck writes) if it isn't already present for
@@ -2933,8 +3151,8 @@ exports.sendTestPush = functions
     }
     const uid = context.auth.uid;
     try {
-      const devicesSnap = await db.collection(`users/${uid}/devices`).get();
-      const tokens = devicesSnap.docs.map((d) => d.id).filter(Boolean);
+      const registrations = await leaseClaimedPushRegistrations(uid);
+      const tokens = registrations.map((r) => r.token);
       if (tokens.length === 0) {
         return { ok: false, reason: "no-registered-device", sent: 0 };
       }
@@ -2964,16 +3182,11 @@ exports.sendTestPush = functions
           detail: err.code || err.message || "unknown",
           sent: 0,
         };
+      } finally {
+        // Release send leases before pruning (prune uses releaseTokenIfOwned).
+        await releaseClaimedPushSendLeases(uid, registrations);
       }
-      const dead = tokensToPrune(batch, tokens);
-      await Promise.all(
-        dead.map((t) =>
-          db
-            .doc(`users/${uid}/devices/${t}`)
-            .delete()
-            .catch(() => {})
-        )
-      );
+      const dead = await pruneDeadPushTokens(uid, registrations, batch);
       if (batch.successCount === 0) {
         // Every token rejected — surface the first failure's FCM code so the
         // client (and we) can see WHY nothing arrived (e.g.
