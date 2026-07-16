@@ -29,11 +29,13 @@ packet's design content as the plan and its status content as void.
 
 ### Shipped from this roadmap so far
 
-| Increment                                                                                      | Where                                    | Status     |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------- | ---------- |
-| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding) | `ExerciseRigDemo.tsx` + determinism test | ✅ this PR |
-| Five-sample preview + deterministic manifest (Phase 1 item)                                    | `scripts/preview-rig.ts`                 | ✅ this PR |
-| Everything else below                                                                          | —                                        | Pending    |
+| Increment                                                                                           | Where                                       | Status     |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------- |
+| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding)      | `ExerciseRigDemo.tsx` + determinism test    | ✅ this PR |
+| Five-sample preview + deterministic manifest (Phase 1 item)                                         | `scripts/preview-rig.ts`                    | ✅ this PR |
+| Alias hygiene — 5 incompatible variants fall back (packet P0)                                       | `bodyRig.ts` `DEMO_ALIASES` + tests         | ✅ this PR |
+| Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests | ✅ this PR |
+| Everything else below                                                                               | —                                           | Pending    |
 
 ## Executive decision (unchanged from packet)
 
@@ -117,20 +119,24 @@ tests pass". Topology/art phases therefore need the operator in the
 loop (contact-sheet review via the screenshot channel) before any
 behavior change ships.
 
-## Open operator decisions
+## Operator decisions
 
-1. **Alias hygiene now vs. with props** — on main today the curl model
-   draws _no_ prop, so `db-curl`→`barbell-curl` shows generic no-prop
-   flexion (weakly misleading). Removing the five aliases (packet P0)
-   replaces animations users currently see with the static fallback.
-   Decide: remove now (honesty) or when replacement models land
-   (continuity).
-2. **Gate the misrepresenting canonicals** — `rope-tricep-pushdown`
-   renders a straight bar contradicting its own written instructions;
-   `barbell-curl` renders no barbell with ~58% forearm foreshortening.
-   Same trade-off as above, bigger visual footprint.
-3. **Reference capture** — the recommended source of truth is a
-   rights-cleared recorded performer (packet §11); operator-owned.
+1. **Alias hygiene** — DECIDED 2026-07-16 (owner: remove now, honesty
+   over continuity). The five incompatible variants (`db-curl`,
+   `hammer-curl`, `ez-bar-curl`, `cable-curl`,
+   `reverse-grip-cable-pushdown`) fall back to the static reference
+   until each has its own grip/prop contract. Shipped in this PR.
+2. **Gate the misrepresenting canonicals** — DECIDED 2026-07-16 (owner:
+   gate now). `barbell-curl` (no barbell, ~58% forearm foreshortening)
+   and `rope-tricep-pushdown` (straight bar contradicting its rope
+   instructions) are production-gated via `GATED_PENDING_REPAIR`; the
+   Form surface shows the honest static reference. The review renderer
+   (`renderBodyDemo`) still draws them so previews/mechanics tests can
+   iterate the repairs. Un-gate only with an approved replacement per
+   the roadmap gates. Shipped in this PR.
+3. **Reference capture** — OPEN, operator-owned (physical-world action):
+   record a rights-cleared performer per packet §11. Until this exists,
+   Phase-4 movement migrations cannot reach production approval.
 
 ## Test matrix, exercise contracts, licensing policy
 
