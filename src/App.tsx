@@ -118,6 +118,14 @@ const BrandBakeoff =
     ? lazyRetry(() => import("@/pages/dev/BrandBakeoff"))
     : null;
 
+// Dev-only Form Motion Lab (Motion Rig V2 Phase 1) — force-renders every
+// registered body demo, including production-gated ones, for frame-by-frame
+// visual review. Same build-time stripping as BrandBakeoff.
+const FormMotionLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/FormMotionLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) concluded: candidate A (single
 // brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
 // to avoid a double-render with the shipped layer; it's recoverable from
@@ -713,6 +721,18 @@ function AppRoutes() {
                       element={
                         <RouteErrorBoundary>
                           <BrandBakeoff />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                  )}
+                  {/* Dev/test-only Form Motion Lab — absent from production
+                      builds (FormMotionLab is null there). */}
+                  {FormMotionLab && (
+                    <Route
+                      path="/dev/form-motion-lab"
+                      element={
+                        <RouteErrorBoundary>
+                          <FormMotionLab />
                         </RouteErrorBoundary>
                       }
                     />
