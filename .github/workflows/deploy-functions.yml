@@ -12,6 +12,13 @@ on:
   # force a fresh run without pushing a no-op commit.
   workflow_dispatch:
 
+permissions:
+  contents: read
+  # The failure-alert step files/updates an issue so a broken production
+  # deploy can't fail silently for weeks (issue #1636: RESEND_API_KEY
+  # stranded every deploy from Jul 3 to Jul 16 unnoticed).
+  issues: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -87,3 +94,29 @@ jobs:
 
       - name: Deploy functions
         run: firebase deploy --only functions --project adaptive-fitness-af8bb --force
+
+      # A failed PRODUCTION deploy must be loud. CI on PRs stays green
+      # (deploys only run post-merge), so without this step a deploy
+      # failure is invisible unless someone reads the Actions tab —
+      # which is how an unprovisioned bound secret (RESEND_API_KEY,
+      # issue #1636) stranded production functions for two weeks.
+      # One rolling issue: created on first failure, commented on
+      # subsequent ones; close it once deploys are green again.
+      - name: Alert on failed production deploy
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="🚨 deploy-functions failing on main — production functions stranded"
+          printf -v BODY '%s\n\n%s' \
+            "Deploy failed for \`${GITHUB_SHA}\`: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            "Production stays on the last successful bundle until a deploy goes green. Check the run log for the first \`Error:\` line (an unprovisioned bound secret is the usual culprit — \`cd functions && npm run secrets:check\`), fix, then re-run via workflow_dispatch."
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --search "deploy-functions failing on main in:title" \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$BODY"
+          fi
