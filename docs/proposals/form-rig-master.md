@@ -29,13 +29,15 @@ packet's design content as the plan and its status content as void.
 
 ### Shipped from this roadmap so far
 
-| Increment                                                                                           | Where                                       | Status     |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------- | ---------- |
-| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding)      | `ExerciseRigDemo.tsx` + determinism test    | ✅ this PR |
-| Five-sample preview + deterministic manifest (Phase 1 item)                                         | `scripts/preview-rig.ts`                    | ✅ this PR |
-| Alias hygiene — 5 incompatible variants fall back (packet P0)                                       | `bodyRig.ts` `DEMO_ALIASES` + tests         | ✅ this PR |
-| Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests | ✅ this PR |
-| Everything else below                                                                               | —                                           | Pending    |
+| Increment                                                                                           | Where                                       | Status                      |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------- |
+| Replay determinism — reset `lastDrawRef`/`effortRef` per run (Phase 5 item, packet-20 finding)      | `ExerciseRigDemo.tsx` + determinism test    | ✅ this PR                  |
+| Five-sample preview + deterministic manifest (Phase 1 item)                                         | `scripts/preview-rig.ts`                    | ✅ this PR                  |
+| Alias hygiene — 5 incompatible variants fall back (packet P0)                                       | `bodyRig.ts` `DEMO_ALIASES` + tests         | ✅ this PR                  |
+| Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests | ✅ this PR                  |
+| Form Motion Lab — dev-only force-render review rig (Phase 1)                                        | `/dev/form-motion-lab` (#1639)              | ✅ shipped                  |
+| Gate-0 contact sheets + status ledger (operator review pending)                                     | `docs/visual-audit/form-motion-v2/`         | ✅ sheets; verdicts pending |
+| Everything else below                                                                               | —                                           | Pending                     |
 
 ## Executive decision (unchanged from packet)
 
