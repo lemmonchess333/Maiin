@@ -103,9 +103,35 @@ describe("renderBodyDemo", () => {
   });
 
   it("aliased exercises render (renderBodyDemo is alias-aware)", () => {
-    // db-curl aliases barbell-curl — a direct-registry lookup would blank.
-    expect(renderBodyDemo("db-curl", 0.5)).not.toBe("");
+    // goblet-squat aliases squat — a direct-registry lookup would blank.
     expect(renderBodyDemo("goblet-squat", 0.5)).not.toBe("");
+  });
+
+  it("removed variant aliases fall back instead of borrowing motion", () => {
+    // Different implement/grip than the canonical (roadmap alias hygiene,
+    // owner-decided 2026-07-16) — the Form surface must show the honest
+    // static reference, not a borrowed model.
+    for (const id of [
+      "db-curl",
+      "hammer-curl",
+      "ez-bar-curl",
+      "cable-curl",
+      "reverse-grip-cable-pushdown",
+    ]) {
+      expect(getBodyDemo(id), id).toBeNull();
+      expect(renderBodyDemo(id, 0.5), id).toBe("");
+    }
+  });
+
+  it("misrepresenting canonicals are production-gated but review-renderable", () => {
+    // rope-tricep-pushdown draws a straight bar; barbell-curl draws no
+    // barbell. Production (getBodyDemo → Form surface) falls back; the
+    // review renderer keeps working so previews/mechanics can iterate
+    // the repair.
+    for (const id of ["barbell-curl", "rope-tricep-pushdown"]) {
+      expect(getBodyDemo(id), id).toBeNull();
+      expect(renderBodyDemo(id, 0.5), id).not.toBe("");
+    }
   });
 
   it("effort brightens the working-muscle fill", () => {
