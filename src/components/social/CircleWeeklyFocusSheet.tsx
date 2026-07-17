@@ -113,7 +113,7 @@ export default function CircleWeeklyFocusSheet({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full"
+            className="min-h-[44px] w-full"
             disabled={busy}
             onClick={() => {
               haptic("light");

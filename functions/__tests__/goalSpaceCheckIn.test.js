@@ -161,6 +161,22 @@ describe("weeklyCheckIn", () => {
     }
   });
 
+  it("rejects non-Sunday weekKeys — the deterministic ID is one per WEEK, not one per date", async () => {
+    const { firestore, docs } = makeStore();
+    seedMember(docs, "alice");
+    // Every date in the window would otherwise mint its own
+    // ${uid}_${weekKey} doc — ~20 "weekly" check-ins per real week
+    // for a scripted client. localWeekKey always emits a Sunday.
+    for (const weekKey of ["2026-07-13", "2026-07-14", "2026-07-18"]) {
+      await expect(
+        weeklyCheckIn(checkInArgs(firestore, { weekKey }))
+      ).rejects.toMatchObject({ code: "invalid-argument" });
+    }
+    await expect(
+      weeklyCheckIn(checkInArgs(firestore, { weekKey: "2026-07-12" }))
+    ).resolves.toMatchObject({ ok: true });
+  });
+
   it("rejects a focus outside the closed enum", async () => {
     const { firestore, docs } = makeStore();
     seedMember(docs, "alice");
