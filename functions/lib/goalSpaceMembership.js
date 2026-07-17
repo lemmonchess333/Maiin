@@ -259,6 +259,7 @@ module.exports = {
   GOAL_SPACE_MAX_MEMBERS,
   GOAL_SPACE_TYPES,
   GoalSpaceError,
+  assertNoBlockedPair,
   createGoalSpace,
   joinGoalSpace,
   leaveGoalSpace,

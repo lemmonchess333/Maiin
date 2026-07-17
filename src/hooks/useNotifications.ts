@@ -30,7 +30,11 @@ export type NotificationType =
   | "kudos"
   | "comment"
   | "follow"
-  | "challenge_milestone";
+  | "challenge_milestone"
+  // SOCIAL-FOCUS-01 — a Circle member backed the recipient's weekly
+  // focus. Deliberately generic: the copy never names the backer or
+  // the focus, and the tray row doesn't deep-link to a profile.
+  | "circle_focus_backed";
 
 export interface NotificationItem {
   id: string;
@@ -54,6 +58,7 @@ const VALID_TYPES: ReadonlySet<string> = new Set<NotificationType>([
   "comment",
   "follow",
   "challenge_milestone",
+  "circle_focus_backed",
 ]);
 
 /** Pure: count items strictly newer than the last-seen instant. */

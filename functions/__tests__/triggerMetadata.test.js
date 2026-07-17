@@ -275,6 +275,16 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  goalSpaceWeeklyCheckIn: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  backGoalSpaceCheckIn: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   removeGoalSpaceMember: {
     kind: "callable",
     maxInstances: 100,
