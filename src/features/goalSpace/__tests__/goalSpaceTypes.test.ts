@@ -13,6 +13,8 @@ import {
   GOAL_SPACE_MAX_MEMBERS,
   GOAL_SPACE_TEXT_MAX,
   LAUNCH_TEMPLATES,
+  WEEKLY_FOCUS_OPTIONS,
+  WEEKLY_FOCUS_SUPPORTERS_MAX,
   checkEventPayload,
   parseGoalSpace,
   parseGoalSpaceEvent,
@@ -41,20 +43,40 @@ describe("locked constants (GsPb1)", () => {
       "nutrition_consistency",
     ]);
   });
+
+  it("weekly-focus allowlist is exactly the six locked intents (SOCIAL-FOCUS-01)", () => {
+    expect([...WEEKLY_FOCUS_OPTIONS]).toEqual([
+      "strength",
+      "running",
+      "nutrition",
+      "progress",
+      "recovery",
+      "balanced",
+    ]);
+  });
 });
 
 describe("checkEventPayload — the privacy fence", () => {
   const valid = {
     id: "e1",
     uid: "u1",
-    kind: "weekly_check_in",
-    text: "Checked in for the week",
-    weekKey: "2026-07-06",
+    kind: "needs_support",
+    text: "Would appreciate a nudge this week",
+    weekKey: null,
     createdAt: 1,
   };
 
   it("accepts a well-formed allowlisted event", () => {
     expect(checkEventPayload(valid).ok).toBe(true);
+  });
+
+  it("rejects client writes of the server-only weekly_check_in kind (SOCIAL-FOCUS-01)", () => {
+    // Check-ins go through the goalSpaceWeeklyCheckIn callable — the
+    // deterministic weekly event ID can't be bypassed with a client
+    // write, and the rules enforce the same restriction server-side.
+    expect(
+      checkEventPayload({ ...valid, kind: "weekly_check_in", text: null }).ok
+    ).toBe(false);
   });
 
   it("rejects every raw-health-data field by name", () => {
@@ -131,7 +153,11 @@ describe("parse guards", () => {
       weekKey: null,
       createdAt: 1,
     };
-    expect(parseGoalSpaceEvent(ev)).toEqual(ev);
+    expect(parseGoalSpaceEvent(ev)).toEqual({
+      ...ev,
+      weeklyFocus: null,
+      supporterIds: [],
+    });
     expect(
       parseGoalSpaceEvent({ ...ev, text: "x".repeat(500) })?.text
     ).toHaveLength(GOAL_SPACE_TEXT_MAX);
@@ -141,5 +167,61 @@ describe("parse guards", () => {
     expect(
       parseGoalSpaceEvent({ id: "e", uid: "u", kind: "chat", createdAt: 1 })
     ).toBeNull();
+  });
+
+  it("legacy check-ins (no focus fields) keep parsing — weeklyFocus null, supporterIds empty", () => {
+    const legacy = parseGoalSpaceEvent({
+      id: "e-old",
+      uid: "u1",
+      kind: "weekly_check_in",
+      text: null,
+      weekKey: null,
+      createdAt: 1,
+    });
+    expect(legacy).not.toBeNull();
+    expect(legacy?.weeklyFocus).toBeNull();
+    expect(legacy?.supporterIds).toEqual([]);
+  });
+
+  it("keeps a valid weeklyFocus, nulls anything outside the closed enum", () => {
+    const base = {
+      id: "e2",
+      uid: "u1",
+      kind: "weekly_check_in",
+      text: null,
+      weekKey: "2026-07-12",
+      createdAt: 1,
+    };
+    expect(
+      parseGoalSpaceEvent({ ...base, weeklyFocus: "running" })?.weeklyFocus
+    ).toBe("running");
+    expect(
+      parseGoalSpaceEvent({ ...base, weeklyFocus: "calories" })?.weeklyFocus
+    ).toBeNull();
+  });
+
+  it("filters and bounds supporterIds on read", () => {
+    const parsed = parseGoalSpaceEvent({
+      id: "e3",
+      uid: "u1",
+      kind: "weekly_check_in",
+      text: null,
+      weekKey: "2026-07-12",
+      weeklyFocus: "strength",
+      supporterIds: ["a", 42, null, "b"],
+      createdAt: 1,
+    });
+    expect(parsed?.supporterIds).toEqual(["a", "b"]);
+    const flood = parseGoalSpaceEvent({
+      id: "e4",
+      uid: "u1",
+      kind: "weekly_check_in",
+      text: null,
+      weekKey: "2026-07-12",
+      weeklyFocus: "strength",
+      supporterIds: Array.from({ length: 100 }, (_, i) => `s${i}`),
+      createdAt: 1,
+    });
+    expect(flood?.supporterIds).toHaveLength(WEEKLY_FOCUS_SUPPORTERS_MAX);
   });
 });

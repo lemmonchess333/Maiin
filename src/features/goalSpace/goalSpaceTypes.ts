@@ -53,6 +53,40 @@ export const GOAL_SPACE_EVENT_KINDS = [
 
 export type GoalSpaceEventKind = (typeof GOAL_SPACE_EVENT_KINDS)[number];
 
+/**
+ * SOCIAL-FOCUS-01 — the COMPLETE weekly-focus allowlist (server mirror:
+ * functions/lib/goalSpaceCheckIn.js). A focus is a themed INTENT, never
+ * data: counts, calories, loads, photos and routes structurally cannot
+ * ride along because the server writes check-in events from validated
+ * fields only. Nothing is ever auto-copied from the private Momentum
+ * Check-in (users/{uid}/checkins). A FUTURE explicit share action may
+ * prefill (never auto-share) only: planned_lifts → strength,
+ * planned_runs → running, meal_logging → nutrition,
+ * weigh_in_consistency → progress.
+ */
+export const WEEKLY_FOCUS_OPTIONS = [
+  "strength",
+  "running",
+  "nutrition",
+  "progress",
+  "recovery",
+  "balanced",
+] as const;
+
+export type WeeklyFocus = (typeof WEEKLY_FOCUS_OPTIONS)[number];
+
+/** Bound mirrored from the server (MAX_FOCUS_SUPPORTERS) — parse guard
+ *  truncation limit for supporterIds. */
+export const WEEKLY_FOCUS_SUPPORTERS_MAX = 16;
+
+/** Event kinds ONLY the server writes. The fence rejects client writes
+ *  of these; weekly check-ins go through the goalSpaceWeeklyCheckIn
+ *  callable so the deterministic ${uid}_${weekKey} event ID (one per
+ *  member per week) and the closed focus enum can't be bypassed. */
+export const SERVER_ONLY_EVENT_KINDS: ReadonlySet<GoalSpaceEventKind> = new Set(
+  ["weekly_check_in"]
+);
+
 /** Locked: circles are 2–8 people. */
 export const GOAL_SPACE_MAX_MEMBERS = 8;
 
@@ -116,6 +150,12 @@ export interface GoalSpaceEvent {
   text: string | null;
   /** Optional review-week key for weekly_check_in events. */
   weekKey: string | null;
+  /** SOCIAL-FOCUS-01 — optional closed-enum focus on weekly_check_in
+   *  events. Server-written only; null on every pre-focus event, which
+   *  must keep parsing and rendering ("checked in for the week"). */
+  weeklyFocus: WeeklyFocus | null;
+  /** Members who backed this focus — server-written, bounded. */
+  supporterIds: string[];
   createdAt: number;
 }
 
@@ -192,6 +232,11 @@ export function checkEventPayload(
   if (!GOAL_SPACE_EVENT_KINDS.includes(payload.kind as GoalSpaceEventKind)) {
     return { ok: false, reason: "unknown event kind" };
   }
+  if (SERVER_ONLY_EVENT_KINDS.has(payload.kind as GoalSpaceEventKind)) {
+    // Mirrors the rules: weekly check-ins are written by the
+    // goalSpaceWeeklyCheckIn callable only (deterministic weekly ID).
+    return { ok: false, reason: "server-written kind (use the callable)" };
+  }
   if (
     payload.text != null &&
     (typeof payload.text !== "string" ||
@@ -258,6 +303,16 @@ export function parseGoalSpaceEvent(data: unknown): GoalSpaceEvent | null {
     text:
       typeof d.text === "string" ? d.text.slice(0, GOAL_SPACE_TEXT_MAX) : null,
     weekKey: typeof d.weekKey === "string" ? d.weekKey : null,
+    // Legacy events carry neither field — both default so pre-focus
+    // check-ins keep parsing and rendering unchanged.
+    weeklyFocus: WEEKLY_FOCUS_OPTIONS.includes(d.weeklyFocus as WeeklyFocus)
+      ? (d.weeklyFocus as WeeklyFocus)
+      : null,
+    supporterIds: Array.isArray(d.supporterIds)
+      ? d.supporterIds
+          .filter((s): s is string => typeof s === "string")
+          .slice(0, WEEKLY_FOCUS_SUPPORTERS_MAX)
+      : [],
     createdAt: d.createdAt,
   };
 }
