@@ -991,10 +991,26 @@ export function useProgram() {
     [programState, user, saveProgram]
   );
 
-  // Set a specific day as the next workout (override default progression)
+  // Set a specific day as the next workout (override default progression),
+  // or null to follow programme order again. PROGRAM-SESSION-ORDER-01: a
+  // cursor change only — layout, loads, history and fatigue are untouched.
+  // The writer accepts only an in-range, unfinished day; terminal or
+  // malformed selections are ignored (the derive-time guard in Program.tsx
+  // already falls back, but a bad override must not persist either).
+  // `undefined` is stripped by the guarded write path, so a reset removes
+  // the field rather than storing a stale value.
   const setNextWorkout = useCallback(
-    async (dayIndex: number) => {
+    async (dayIndex: number | null) => {
       if (!programState) return;
+      if (dayIndex === null) {
+        if (programState.nextWorkoutOverride == null) return;
+        await saveProgram({ ...programState, nextWorkoutOverride: undefined });
+        return;
+      }
+      const day = programState.workouts[dayIndex];
+      if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
+        return;
+      }
       await saveProgram({ ...programState, nextWorkoutOverride: dayIndex });
     },
     [programState, saveProgram]
