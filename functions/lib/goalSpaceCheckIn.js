@@ -70,6 +70,15 @@ function assertValidWeekKey(weekKey, now) {
   if (Math.abs(now - parsed) > WEEK_KEY_WINDOW_MS) {
     throw new GoalSpaceError("invalid-argument", "weekKey out of window");
   }
+  // Every honest localWeekKey is a Sunday. Without this anchor, any
+  // date inside the window is a distinct valid ${uid}_${weekKey} doc
+  // ID — a scripted client could mint ~20 "weekly" check-ins per real
+  // week, which is exactly the multiplicity the deterministic ID
+  // exists to prevent. Calendar-date day-of-week is timezone-free, so
+  // UTC parsing is safe here.
+  if (new Date(parsed).getUTCDay() !== 0) {
+    throw new GoalSpaceError("invalid-argument", "weekKey must be a week start");
+  }
 }
 
 /** null/undefined → null; anything else must be in the closed enum. */
@@ -99,14 +108,16 @@ async function weeklyCheckIn({ firestore, uid, spaceId, weekKey, weeklyFocus, no
 
   const eventId = `${uid}_${weekKey}`;
   return firestore.runTransaction(async (tx) => {
-    const memberSnap = await tx.get(
-      firestore.doc(`goalSpaces/${spaceId}/members/${uid}`)
-    );
+    const eventRef = firestore.doc(`goalSpaces/${spaceId}/events/${eventId}`);
+    // Independent reads — one round trip, not two (shorter tx window,
+    // fewer contention replays).
+    const [memberSnap, eventSnap] = await Promise.all([
+      tx.get(firestore.doc(`goalSpaces/${spaceId}/members/${uid}`)),
+      tx.get(eventRef),
+    ]);
     if (!memberSnap.exists) {
       throw new GoalSpaceError("permission-denied", "not a member");
     }
-    const eventRef = firestore.doc(`goalSpaces/${spaceId}/events/${eventId}`);
-    const eventSnap = await tx.get(eventRef);
     if (!eventSnap.exists) {
       tx.set(eventRef, {
         uid,
@@ -146,14 +157,15 @@ async function backWeeklyCheckIn({ firestore, uid, spaceId, eventId }) {
   }
 
   return firestore.runTransaction(async (tx) => {
-    const callerSnap = await tx.get(
-      firestore.doc(`goalSpaces/${spaceId}/members/${uid}`)
-    );
+    const eventRef = firestore.doc(`goalSpaces/${spaceId}/events/${eventId}`);
+    // Wave 1 — caller membership + event are independent reads.
+    const [callerSnap, eventSnap] = await Promise.all([
+      tx.get(firestore.doc(`goalSpaces/${spaceId}/members/${uid}`)),
+      tx.get(eventRef),
+    ]);
     if (!callerSnap.exists) {
       throw new GoalSpaceError("permission-denied", "not a member");
     }
-    const eventRef = firestore.doc(`goalSpaces/${spaceId}/events/${eventId}`);
-    const eventSnap = await tx.get(eventRef);
     if (!eventSnap.exists || eventSnap.data().kind !== "weekly_check_in") {
       throw new GoalSpaceError("not-found", "no such check-in");
     }
@@ -168,16 +180,17 @@ async function backWeeklyCheckIn({ firestore, uid, spaceId, eventId }) {
     if (authorUid === uid) {
       throw new GoalSpaceError("invalid-argument", "cannot back your own focus");
     }
-    const authorSnap = await tx.get(
-      firestore.doc(`goalSpaces/${spaceId}/members/${authorUid}`)
-    );
+    // Wave 2 — author membership + the block pair are independent too.
+    const [authorSnap] = await Promise.all([
+      tx.get(firestore.doc(`goalSpaces/${spaceId}/members/${authorUid}`)),
+      assertNoBlockedPair({ tx, firestore, uid, memberUids: [authorUid] }),
+    ]);
     if (!authorSnap.exists) {
       // Author left the Circle (or their account was deleted, which
       // removes the membership) — the stale event stays readable but
       // is no longer a live social surface.
       throw new GoalSpaceError("failed-precondition", "author no longer a member");
     }
-    await assertNoBlockedPair({ tx, firestore, uid, memberUids: [authorUid] });
 
     const supporterIds = Array.isArray(event.supporterIds)
       ? event.supporterIds.filter((s) => typeof s === "string")
