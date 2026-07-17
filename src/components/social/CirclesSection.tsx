@@ -7,9 +7,13 @@
  * v1 scope (GsPb1 lock): invite-only via a paste code (spaceId.code —
  * shared out-of-band, no public discovery), the three launch
  * templates, member row + summary-only event feed, and three explicit
- * publish actions (check in / milestone / need a nudge). Events pass
- * the checkEventPayload privacy fence client-side AND the rules
- * allowlist server-side — raw health data structurally cannot enter.
+ * publish actions (set weekly focus / milestone / need a nudge).
+ * Milestone/nudge events pass the checkEventPayload privacy fence
+ * client-side AND the rules allowlist server-side; the weekly
+ * check-in (SOCIAL-FOCUS-01) is SERVER-owned via the
+ * goalSpaceWeeklyCheckIn callable — deterministic one-per-week event,
+ * optional closed-enum focus, "Back this focus" response loop — so
+ * raw health data structurally cannot enter either path.
  */
 
 import { useState } from "react";
@@ -23,20 +27,31 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getTimeAgo } from "@/lib/timeAgo";
+import { localWeekKey } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
   type GoalSpaceEvent,
   type GoalSpaceMember,
   type GoalSpaceType,
+  type WeeklyFocus,
 } from "@/features/goalSpace/goalSpaceTypes";
+import {
+  checkInTimelineCopy,
+  countWeeklyFocusSet,
+} from "@/features/goalSpace/weeklyFocus";
 import {
   useGoalSpaces,
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
+import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 
-const EVENT_COPY: Record<GoalSpaceEvent["kind"], string> = {
+// weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
+// changes the sentence); the static map covers every other kind.
+const EVENT_COPY: Record<
+  Exclude<GoalSpaceEvent["kind"], "weekly_check_in">,
+  string
+> = {
   joined: "joined the circle",
-  weekly_check_in: "checked in for the week",
   session_completed: "completed a session",
   milestone: "hit a milestone",
   needs_support: "would appreciate a nudge",
@@ -63,6 +78,8 @@ export default function CirclesSection({ uid }: { uid: string }) {
     leaveCircle,
     loadDetail,
     publishEvent,
+    setWeeklyFocus,
+    backCheckIn,
   } = useGoalSpaces(uid);
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
@@ -73,6 +90,19 @@ export default function CirclesSection({ uid }: { uid: string }) {
   const [title, setTitle] = useState("");
   const [joinInput, setJoinInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [focusSheetOpen, setFocusSheetOpen] = useState(false);
+  const [focusBusy, setFocusBusy] = useState(false);
+  const [backingId, setBackingId] = useState<string | null>(null);
+
+  // SOCIAL-FOCUS-01 — this LOCAL week's state, derived from the loaded
+  // events (one-shot reads; deliberately no listeners).
+  const thisWeek = localWeekKey();
+  const myCheckIn =
+    events.find(
+      (e) =>
+        e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
+    ) ?? null;
+  const focusSetCount = countWeeklyFocusSet(events, thisWeek);
 
   const openDetail = async (c: CircleSummary) => {
     haptic("light");
@@ -119,9 +149,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
     }
   };
 
-  const publish = async (
-    kind: "weekly_check_in" | "milestone" | "needs_support"
-  ) => {
+  const publish = async (kind: "milestone" | "needs_support") => {
     if (!detailOf) return;
     haptic("light");
     const ok = await publishEvent(detailOf.space.id, kind);
@@ -132,6 +160,37 @@ export default function CirclesSection({ uid }: { uid: string }) {
     } else {
       toast.error("Couldn't share. Please try again.");
     }
+  };
+
+  const submitFocus = async (focus: WeeklyFocus | null) => {
+    if (!detailOf) return;
+    setFocusBusy(true);
+    const res = await setWeeklyFocus(detailOf.space.id, focus);
+    setFocusBusy(false);
+    if (!res) {
+      toast.error("Couldn't update your focus. Please try again.");
+      return;
+    }
+    setFocusSheetOpen(false);
+    const detail = await loadDetail(detailOf.space.id);
+    setEvents(detail.events);
+    if (res.duplicate) toast.success("Already set for this week.");
+    else if (res.updated) toast.success("Focus updated.");
+    else toast.success("Shared with your circle.");
+  };
+
+  const back = async (eventId: string) => {
+    if (!detailOf) return;
+    haptic("light");
+    setBackingId(eventId);
+    const res = await backCheckIn(detailOf.space.id, eventId);
+    setBackingId(null);
+    if (!res) {
+      toast.error("Couldn't back this focus. Please try again.");
+      return;
+    }
+    const detail = await loadDetail(detailOf.space.id);
+    setEvents(detail.events);
   };
 
   return (
@@ -366,9 +425,12 @@ export default function CirclesSection({ uid }: { uid: string }) {
                   <Button
                     size="sm"
                     className="flex-1"
-                    onClick={() => void publish("weekly_check_in")}
+                    onClick={() => {
+                      haptic("light");
+                      setFocusSheetOpen(true);
+                    }}
                   >
-                    Check in
+                    {myCheckIn ? "Change weekly focus" : "Set weekly focus"}
                   </Button>
                   <Button
                     variant="secondary"
@@ -390,24 +452,63 @@ export default function CirclesSection({ uid }: { uid: string }) {
 
                 <div className="space-y-1.5">
                   <SectionLabel as="h3">Recent</SectionLabel>
+                  {/* Chosen-focus pulse — a count, never a ranking. */}
+                  {focusSetCount > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-mono tabular-nums">
+                        {focusSetCount}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-mono tabular-nums">
+                        {members.length}
+                      </span>{" "}
+                      focusing this week
+                    </p>
+                  )}
                   {events.length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      Quiet so far — a check-in gets things moving.
+                      Quiet so far — setting a weekly focus gets things moving.
                     </p>
                   )}
                   {events.map((e) => {
                     const name =
                       members.find((m) => m.uid === e.uid)?.displayName ??
                       "Someone";
+                    const copy =
+                      e.kind === "weekly_check_in"
+                        ? checkInTimelineCopy(e.weeklyFocus)
+                        : EVENT_COPY[e.kind];
+                    const backable =
+                      e.kind === "weekly_check_in" &&
+                      e.weeklyFocus !== null &&
+                      e.uid !== uid;
+                    const backed = backable && e.supporterIds.includes(uid);
                     return (
-                      <p key={e.id} className="text-sm text-foreground">
-                        <span className="font-semibold">{name}</span>{" "}
-                        <span className="text-muted-foreground">
-                          {EVENT_COPY[e.kind]}
-                          {e.text ? ` — “${e.text}”` : ""} ·{" "}
-                          {getTimeAgo(new Date(e.createdAt))}
-                        </span>
-                      </p>
+                      <div
+                        key={e.id}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <p className="min-w-0 text-sm text-foreground">
+                          <span className="font-semibold">{name}</span>{" "}
+                          <span className="text-muted-foreground">
+                            {copy}
+                            {e.text ? ` — “${e.text}”` : ""} ·{" "}
+                            {getTimeAgo(new Date(e.createdAt))}
+                          </span>
+                        </p>
+                        {backable && (
+                          <Button
+                            variant={backed ? "ghost" : "secondary"}
+                            size="sm"
+                            className="shrink-0"
+                            disabled={backed || backingId === e.id}
+                            loading={backingId === e.id}
+                            onClick={() => void back(e.id)}
+                          >
+                            {backed ? "Backed" : "Back this focus"}
+                          </Button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -432,6 +533,19 @@ export default function CirclesSection({ uid }: { uid: string }) {
           </div>
         )}
       </BottomSheet>
+
+      {/* ── Weekly focus sheet (SOCIAL-FOCUS-01) ── */}
+      {detailOf && (
+        <CircleWeeklyFocusSheet
+          open={focusSheetOpen}
+          onOpenChange={setFocusSheetOpen}
+          circleType={detailOf.space.type}
+          currentFocus={myCheckIn?.weeklyFocus ?? null}
+          hasCheckedIn={myCheckIn !== null}
+          busy={focusBusy}
+          onSubmit={(focus) => void submitFocus(focus)}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, UserPlus, Trophy, Bell } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  UserPlus,
+  Trophy,
+  Bell,
+  Users,
+} from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { THEME } from "@/lib/theme";
@@ -27,6 +34,7 @@ const TYPE_ICON: Record<
   comment: { Icon: MessageCircle, color: THEME.brand },
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
+  circle_focus_backed: { Icon: Users, color: THEME.brand },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -41,9 +49,19 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} started following you`;
     case "challenge_milestone":
       return n.message || "You hit a challenge milestone";
+    case "circle_focus_backed":
+      // Generic by design (SOCIAL-FOCUS-01): never the backer's name,
+      // never the focus.
+      return "A Circle member backed your weekly focus";
     default:
       return who;
   }
+}
+
+/** Backing is anonymous in the tray — a profile deep-link would name
+ *  the backer, so the row stays a non-navigating acknowledgement. */
+function navigatesToActor(type: NotificationType): boolean {
+  return type !== "circle_focus_backed";
 }
 
 export default function NotificationsSheet({
@@ -93,7 +111,9 @@ export default function NotificationsSheet({
                     onClick={() => {
                       haptic();
                       onOpenChange(false);
-                      if (n.fromUserId) navigate(`/user/${n.fromUserId}`);
+                      if (n.fromUserId && navigatesToActor(n.type)) {
+                        navigate(`/user/${n.fromUserId}`);
+                      }
                     }}
                     className="w-full flex items-center gap-3 py-3 text-left min-h-[44px] active:scale-[0.99] transition-transform"
                   >
