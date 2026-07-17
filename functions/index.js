@@ -6470,15 +6470,18 @@ exports.backGoalSpaceCheckIn = functions
         eventId: String(data?.eventId || ""),
       });
       if (!result.alreadyBacked) {
-        // Generic by design: the copy never carries the focus (or any
-        // check-in content), and this in-app path has no push. A
-        // notification failure is non-fatal — the back is recorded,
+        // Generic AND anonymous by design: the copy never carries the
+        // focus, and `anonymous` keeps the backer's uid out of the
+        // stored doc (the recipient can read their own notification
+        // docs — UI-only anonymity would not be anonymity). No push.
+        // A notification failure is non-fatal — the back is recorded,
         // and a retry would be alreadyBacked (no duplicate notify).
         try {
           await socialFanout.createNotification({
             firestore: admin.firestore(),
             fromUid: uid,
             toUid: result.authorUid,
+            anonymous: true,
             data: {
               type: "circle_focus_backed",
               message: "A Circle member backed your weekly focus",

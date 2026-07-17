@@ -431,6 +431,41 @@ describe("createNotification", () => {
     ).rejects.toThrow();
   });
 
+  it("anonymous: true keeps fromUserId OUT of the stored doc, self-check still applies", async () => {
+    // SOCIAL-FOCUS-01: circle_focus_backed is anonymous BY DATA — the
+    // recipient owns read on their notification docs, so anonymity
+    // that only lives in UI copy would not be anonymity.
+    const { createNotification } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub();
+
+    await createNotification({
+      firestore,
+      fromUid: "alice",
+      toUid: "bob",
+      anonymous: true,
+      data: {
+        type: "circle_focus_backed",
+        message: "A Circle member backed your weekly focus",
+      },
+      serverTimestamp,
+    });
+    expect(firestore._writes).toHaveLength(1);
+    expect(firestore._writes[0].data).not.toHaveProperty("fromUserId");
+    expect(firestore._writes[0].data.type).toBe("circle_focus_backed");
+
+    // Self-notify no-op still works with anonymous (fromUid required).
+    const self = await createNotification({
+      firestore,
+      fromUid: "bob",
+      toUid: "bob",
+      anonymous: true,
+      data: { type: "circle_focus_backed", message: "x" },
+      serverTimestamp,
+    });
+    expect(self.skipped).toBe(true);
+    expect(firestore._writes).toHaveLength(1);
+  });
+
   it("overrides client-supplied fromUserId with the authenticated fromUid", async () => {
     // Prevents the "impersonation via callable payload" attack —
     // if a hostile client sends { type, fromUserId: 'mod-account' },

@@ -164,7 +164,10 @@ export function useGoalSpaces(uid: string | undefined) {
   const loadDetail = useCallback(
     async (spaceId: string): Promise<CircleDetail> => {
       try {
-        const [membersSnap, eventsSnap] = await Promise.all([
+        const ownCheckInRef = uid
+          ? doc(db, "goalSpaces", spaceId, "events", `${uid}_${localWeekKey()}`)
+          : null;
+        const [membersSnap, eventsSnap, ownCheckInSnap] = await Promise.all([
           getDocs(collection(db, "goalSpaces", spaceId, "members")),
           getDocs(
             query(
@@ -173,6 +176,7 @@ export function useGoalSpaces(uid: string | undefined) {
               limit(30)
             )
           ),
+          ownCheckInRef ? getDoc(ownCheckInRef) : Promise.resolve(null),
         ]);
         const members = membersSnap.docs
           .map((d) => d.data() as GoalSpaceMember)
@@ -180,30 +184,46 @@ export function useGoalSpaces(uid: string | undefined) {
         const events = eventsSnap.docs
           .map((d) => parseGoalSpaceEvent({ id: d.id, ...d.data() }))
           .filter((e): e is GoalSpaceEvent => e !== null);
+        // The 30-event window can age out the member's OWN current-week
+        // check-in (focus changes deliberately preserve createdAt) —
+        // and the "Set vs Change weekly focus" state derives from it.
+        // The deterministic doc ID makes the direct read cheap.
+        if (ownCheckInSnap?.exists()) {
+          const own = parseGoalSpaceEvent({
+            id: ownCheckInSnap.id,
+            ...ownCheckInSnap.data(),
+          });
+          if (own && !events.some((e) => e.id === own.id)) {
+            events.push(own);
+            events.sort((a, b) => b.createdAt - a.createdAt);
+          }
+        }
         return { members, events };
       } catch (err) {
         logger.error("goalSpaces: detail failed", err);
         return { members: [], events: [] };
       }
     },
-    []
+    [uid]
   );
 
   /** Publish a summary-only event. The privacy fence runs CLIENT-side
-   *  too so a coding mistake fails loudly before the rules reject it. */
+   *  too so a coding mistake fails loudly before the rules reject it.
+   *  weekly_check_in is excluded at the TYPE level — a caller passing
+   *  it would compile, pass local state, then silently fail at the
+   *  fence; the callable (setWeeklyFocus) is the only check-in path. */
   const publishEvent = useCallback(
     async (
       spaceId: string,
-      kind: GoalSpaceEventKind,
-      text?: string,
-      weekKey?: string
+      kind: Exclude<GoalSpaceEventKind, "weekly_check_in">,
+      text?: string
     ): Promise<boolean> => {
       if (!uid) return false;
       const payload: Record<string, unknown> = {
         uid,
         kind,
         text: text?.trim() ? text.trim().slice(0, 200) : null,
-        weekKey: weekKey ?? null,
+        weekKey: null,
         createdAt: Date.now(),
       };
       const check = checkEventPayload(payload);
