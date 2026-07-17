@@ -117,6 +117,15 @@ describe("checkEventPayload — the privacy fence", () => {
   it("allows a null/absent text", () => {
     expect(checkEventPayload({ ...valid, text: null }).ok).toBe(true);
   });
+
+  it("accepts a string weekKey on client-writable kinds (allowlisted field)", () => {
+    // Pins the accept path for the weekKey field itself — the rules
+    // allowlist it for client-created kinds, so a future fence
+    // tightening that drops it must fail a test, not regress silently.
+    expect(checkEventPayload({ ...valid, weekKey: "2026-07-12" }).ok).toBe(
+      true
+    );
+  });
 });
 
 describe("parse guards", () => {

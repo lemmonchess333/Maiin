@@ -50,6 +50,22 @@ async function cleanupGoalSpacesForUser({ firestore, uid, logger = console }) {
       for (const eventDoc of eventsSnap.docs) {
         await eventDoc.ref.delete();
       }
+      // 1a-ii. Backs the user gave OTHERS (SOCIAL-FOCUS-01): their uid
+      // sits in other members' check-in supporterIds arrays — the one
+      // cross-user uid embedding in goalSpace event docs. Sweep it so
+      // a deleted account leaves no uid readable by remaining members.
+      const backedSnap = await firestore
+        .collection("goalSpaces")
+        .doc(spaceId)
+        .collection("events")
+        .where("supporterIds", "array-contains", uid)
+        .get();
+      for (const backedDoc of backedSnap.docs) {
+        const remaining = (backedDoc.data().supporterIds || []).filter(
+          (s) => s !== uid
+        );
+        await backedDoc.ref.update({ supporterIds: remaining });
+      }
       // 1b. Leave — deletes member + journey, decrements memberCount,
       // deactivates if owner. Idempotent for a missing member doc.
       await leaveGoalSpace({ firestore, uid, spaceId });
