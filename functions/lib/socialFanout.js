@@ -169,6 +169,10 @@ const VALID_NOTIFICATION_TYPES = [
   "comment",
   "follow",
   "challenge_milestone",
+  // SOCIAL-FOCUS-01: a Circle member backed the recipient's weekly
+  // focus. Deliberately GENERIC — the message never names the backer
+  // or the focus, and the client renders it without a profile link.
+  "circle_focus_backed",
 ];
 
 function sanitiseNotificationData(data) {
