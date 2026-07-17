@@ -8,29 +8,34 @@ docs/visual-audit/form-motion-v2`; `manifest.json` records the exact
 
 Interactive companion: `/dev/form-motion-lab` (dev builds only).
 
-## Gate-0 status ledger (operator fills in)
+## Gate-0 status ledger
 
 Per the roadmap (`docs/proposals/form-rig-master.md`), each demo gets
 marked before more work ships. `gated` = already production-gated by
 the misrepresentation gate; everything else renders in production
 today.
 
-| Demo                 | Current    | Gate-0 verdict (approved / provisional / fallback) |
-| -------------------- | ---------- | -------------------------------------------------- |
-| barbell-curl         | gated      | _pending review_                                   |
-| barbell-row          | production | _pending review_                                   |
-| bench-press          | production | _pending review_                                   |
-| calf-raise           | production | _pending review_                                   |
-| deadlift             | production | _pending review_                                   |
-| dips                 | production | _pending review_                                   |
-| lat-pulldown         | production | _pending review_                                   |
-| lateral-raise        | production | _pending review_                                   |
-| overhead-press       | production | _pending review_                                   |
-| pull-ups             | production | _pending review_                                   |
-| push-ups             | production | _pending review_                                   |
-| romanian-deadlift    | production | _pending review_                                   |
-| rope-tricep-pushdown | gated      | _pending review_                                   |
-| squat                | production | _pending review_                                   |
+**Verdicts below are AGENT-RECOMMENDED (2026-07-16, from these exact
+sheets) — pending operator confirmation.** The operator confirms or
+overrides by editing this table; only an operator-confirmed
+"approved" satisfies the roadmap's Gate-0.
+
+| Demo                 | Current    | Recommended verdict | Why                                                                                                                          |
+| -------------------- | ---------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| barbell-curl         | gated      | fallback ✓          | Sheets confirm the gate: no bar; forearms foreshorten into unreadable stubs by mid-rep.                                      |
+| barbell-row          | production | provisional         | Hinge stable, bar tracks close, back tint reads; single-arm topology gap (roadmap Phase 2).                                  |
+| bench-press          | production | provisional         | Bench/torso/press read; single visible arm + end-on plate (Phase 2/4 repairs pending).                                       |
+| calf-raise           | production | provisional         | Calf tint correct; the rise is nearly imperceptible in stills — legibility is marginal at card scale.                        |
+| deadlift             | production | provisional         | Posterior sink + glute/ham tint read, but the scaleY sink is squat-like; roadmap defers to a future side model.              |
+| dips                 | production | **approved (rec.)** | Constraint-driven (fixed bars, body lowers); coherent at small scale; no visible defects across the five frames.             |
+| lat-pulldown         | production | provisional         | Bar path overhead→shoulders reads well; missing seat/thigh pads (Phase 4 furniture); final frame bar sits close to the neck. |
+| lateral-raise        | production | provisional         | Raise-to-shoulder-height envelope correct; arm segment chains show visible gaps at the top frames.                           |
+| overhead-press       | production | provisional         | Press reads; slight elbow-seam gaps at lockout frames; shoulder root still fixed (arms-only critique stands).                |
+| pull-ups             | production | **approved (rec.)** | Strongest sheet: fixed bar, hands stay on, body travel + lat/arm tint all coherent.                                          |
+| push-ups             | production | provisional         | Plank + planted contacts read; body moves as one beam (known); triceps tint can't render (side topology).                    |
+| romanian-deadlift    | production | provisional         | Hip-hinge progression + bar proximity read; whole-body-about-ankle rotation is the known Phase-4 repair.                     |
+| rope-tricep-pushdown | gated      | fallback ✓          | Sheets confirm the gate: a straight bar is drawn where the exercise (and its own instructions) demand a rope.                |
+| squat                | production | provisional         | Sink + quad tint read cleanly; conservative scaleY projection until the side lower-body model exists.                        |
 
 Regenerate after any rig change and re-review — a stale sheet is not
 evidence.
