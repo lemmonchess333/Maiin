@@ -24,6 +24,11 @@ export type ChoiceVariant = "primary" | "secondary" | "ghost";
 export interface Choice {
   id: string;
   label: string;
+  /** Optional second line under the label — smaller, softer. Used for
+   *  a factual qualifier (e.g. "Recommended — hard run yesterday").
+   *  The knob the extraction comment anticipated: added for the
+   *  session chooser (PROGRAM-ADAPT-01). */
+  sublabel?: string;
   /** Label rendered while this choice's writer is in flight (e.g.
    *  "Shifting…"). Falls back to `label` if omitted. */
   pendingLabel?: string;
@@ -105,7 +110,7 @@ export function ChoiceSheet({
                 onClick={() => handleSelect(choice)}
                 disabled={!!pendingId}
                 className={cn(
-                  "w-full py-2.5 rounded-xl",
+                  "w-full min-h-[44px] py-2.5 rounded-xl",
                   "active:scale-[0.97] transition-transform",
                   VARIANT_CLASSES[choice.variant],
                   otherPending && "opacity-40"
@@ -114,6 +119,18 @@ export function ChoiceSheet({
                 {isPending && choice.pendingLabel
                   ? choice.pendingLabel
                   : choice.label}
+                {choice.sublabel && !isPending && (
+                  <span
+                    className={cn(
+                      "block text-xs font-normal mt-0.5",
+                      choice.variant === "primary"
+                        ? "text-primary-foreground/80"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {choice.sublabel}
+                  </span>
+                )}
               </button>
             );
           })}

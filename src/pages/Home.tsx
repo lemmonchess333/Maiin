@@ -103,7 +103,11 @@ const EMPTY_INSIGHTS: NutritionInsight[] = [];
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
-  const { workouts, getWorkoutsForDate } = useWorkouts();
+  const {
+    workouts,
+    getWorkoutsForDate,
+    loading: workoutsLoading,
+  } = useWorkouts();
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
@@ -215,7 +219,14 @@ export default function Home() {
   const todayType = resolvedToday.scheduleType;
   // Hybrid loop — cross-discipline "today" guidance (yesterday's training →
   // today's plan + fuel). Null while data loads / nothing to surface.
-  const hybridGuidance = useHybridGuidance(todayType);
+  // Threads Home's OWN workouts subscription in — the hook previously
+  // opened a duplicate onSnapshot on users/{uid}/workouts just to read
+  // yesterday (PROGRAM-ADAPT-01 reliability fix).
+  const hybridGuidance = useHybridGuidance(
+    todayType,
+    workouts,
+    workoutsLoading
+  );
   const streakDisplay = useCountUp(streak, {
     sessionKey: "streak",
     duration: 0.5,
