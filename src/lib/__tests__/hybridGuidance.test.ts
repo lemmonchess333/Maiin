@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  isHardRun,
   resolveHybridGuidance,
   fuelLineFor,
   type YesterdayTraining,
@@ -48,14 +49,21 @@ describe("resolveHybridGuidance", () => {
     expect(g.line).toMatch(/heavy under the bar/i);
   });
 
-  it("two hard sessions yesterday + both today → ease", () => {
-    const g = resolveHybridGuidance("both", {
+  it("two hard sessions yesterday → the COMBINED line, on every training day type", () => {
+    // Regression pin (PROGRAM-ADAPT-01 reliability fix): this branch
+    // used to sit below the single-discipline checks and was
+    // unreachable — the combined line could never render.
+    const both: YesterdayTraining = {
       anyLift: true,
       anyRun: true,
       hardLift: true,
       hardRun: true,
-    });
-    expect(g.readiness).toBe("ease");
+    };
+    for (const todayType of ["lift", "run", "both"] as const) {
+      const g = resolveHybridGuidance(todayType, both);
+      expect(g.readiness).toBe("ease");
+      expect(g.line).toMatch(/two hard sessions/i);
+    }
   });
 
   it("nothing yesterday → fresh", () => {
@@ -81,5 +89,25 @@ describe("resolveHybridGuidance", () => {
   it("always carries a fuel line matching the day type", () => {
     expect(resolveHybridGuidance("run", NONE).fuelLine).toMatch(/carbs/i);
     expect(resolveHybridGuidance("lift", NONE).fuelLine).toMatch(/protein/i);
+  });
+});
+
+describe("isHardRun (shared predicate)", () => {
+  it("fires on long distance, long duration, or a quality template", () => {
+    expect(isHardRun({ distance: 8000, duration: 0 })).toBe(true);
+    expect(isHardRun({ distance: 0, duration: 2700 })).toBe(true);
+    expect(
+      isHardRun({ distance: 3000, duration: 1200, activityType: "tempo" })
+    ).toBe(true);
+    expect(
+      isHardRun({ distance: 3000, duration: 1200, activityType: "intervals" })
+    ).toBe(true);
+  });
+
+  it("stays quiet on an easy short run", () => {
+    expect(
+      isHardRun({ distance: 4000, duration: 1500, activityType: "free" })
+    ).toBe(false);
+    expect(isHardRun({ distance: 4000, duration: 1500 })).toBe(false);
   });
 });

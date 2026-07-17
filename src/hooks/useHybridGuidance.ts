@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { useWorkouts } from "./useWorkouts";
+import type { Workout } from "./useWorkouts";
 import { useRunningStats } from "./useRunningStats";
 import { localDateString, addLocalDays } from "@/lib/dateHelpers";
 import {
+  isHardRun,
   resolveHybridGuidance,
   type DayType,
   type HybridGuidance,
@@ -15,20 +16,36 @@ import {
  * "hard" heuristics live here (impure data shaping); the decision is the pure
  * engine. Returns null while data loads.
  *
+ * The caller supplies the workouts result (PROGRAM-ADAPT-01 reliability fix):
+ * Home already holds a live `useWorkouts()` subscription, and this hook
+ * previously opened a SECOND `onSnapshot` on the same collection just to read
+ * yesterday — every Home mount cost a duplicate Firestore listener. Threading
+ * the existing result in keeps one subscription per surface.
+ *
  * "Hard" heuristics (gentle by design — a wrong "ease" hint is low-cost):
- *   - lift: a leg/lower session, a leg-compound movement, or a long session
- *   - run: long (≥ 8 km), long-duration (≥ 45 min), or a quality template
+ *   - lift: a knee/hip-dominant (lower-body) session, a leg-compound
+ *     movement by name, or a long session
+ *   - run: `isHardRun` (long, long-duration, or a quality template) —
+ *     shared with the Easier-today recommendation
  */
 const LEG_COMPOUND =
   /squat|deadlift|lunge|leg press|leg curl|leg extension|hip thrust|rdl|romanian|bulgarian/i;
-const QUALITY_RUN = new Set(["tempo", "intervals", "long"]);
 
-export function useHybridGuidance(todayType: DayType): HybridGuidance | null {
-  const { workouts, loading: wLoading } = useWorkouts();
+/** Saved workout docs store `category` = the exercise's movementCategory
+ *  ("knee_dominant" / "hip_dominant" for legs). The previous
+ *  `/leg|lower/i` test never matched those values — lower-body work was
+ *  only caught by the name regex fallback. */
+const LOWER_BODY_CATEGORY = /^(knee_dominant|hip_dominant)$/;
+
+export function useHybridGuidance(
+  todayType: DayType,
+  workouts: Workout[],
+  workoutsLoading: boolean
+): HybridGuidance | null {
   const { runs, loading: rLoading } = useRunningStats(7);
 
   return useMemo(() => {
-    if (wLoading || rLoading) return null;
+    if (workoutsLoading || rLoading) return null;
     const yKey = localDateString(addLocalDays(new Date(), -1));
 
     const yWorkouts = workouts.filter((w) => w.date === yKey);
@@ -38,7 +55,8 @@ export function useHybridGuidance(todayType: DayType): HybridGuidance | null {
         (w.durationMinutes ?? 0) >= 50 ||
         w.exercises.some(
           (e) =>
-            /leg|lower/i.test(e.category) || LEG_COMPOUND.test(e.exerciseName)
+            LOWER_BODY_CATEGORY.test(e.category) ||
+            LEG_COMPOUND.test(e.exerciseName)
         )
     );
 
@@ -49,14 +67,9 @@ export function useHybridGuidance(todayType: DayType): HybridGuidance | null {
         localDateString(new Date(r.completedAt)) === yKey
     );
     const anyRun = yRuns.length > 0;
-    const hardRun = yRuns.some(
-      (r) =>
-        r.distance >= 8000 ||
-        r.duration >= 2700 ||
-        QUALITY_RUN.has(r.activityType)
-    );
+    const hardRun = yRuns.some((r) => isHardRun(r));
 
     const y: YesterdayTraining = { anyLift, anyRun, hardLift, hardRun };
     return resolveHybridGuidance(todayType, y);
-  }, [workouts, runs, wLoading, rLoading, todayType]);
+  }, [workouts, runs, workoutsLoading, rLoading, todayType]);
 }
