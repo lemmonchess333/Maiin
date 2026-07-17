@@ -29,6 +29,7 @@
     "env:check:web": "node scripts/check-web-env.mjs",
     "seed:e2e": "tsx scripts/seed-e2e-user.ts",
     "seed:rich": "tsx scripts/seed-rich-user.ts",
+    "seed:circles": "tsx scripts/seed-circles-capture.ts",
     "seed:default-crews": "tsx scripts/seed-default-crews.ts",
     "backfill:streak-mirror": "tsx scripts/backfill-streak-mirror.ts",
     "prepare": "husky",
