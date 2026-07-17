@@ -194,6 +194,12 @@ function sanitiseNotificationData(data) {
  * `notifications/{toUid}/items/` collection. Server-controlled:
  *   - `fromUserId` is forced to `fromUid` (the authed caller), not
  *     anything the client supplies in `data`.
+ *   - `anonymous: true` omits `fromUserId` from the STORED doc — for
+ *     notification types whose contract is that the recipient can
+ *     never identify the actor (circle_focus_backed). The recipient
+ *     owns read on their notification docs, so anonymity that only
+ *     lives in UI copy is not anonymity; it has to be absent from the
+ *     data. `fromUid` is still required for the self-notify no-op.
  *   - `type` must be one of the closed union.
  *   - String fields are length-capped.
  *   - Self-notification is a silent no-op.
@@ -207,6 +213,7 @@ async function createNotification({
   toUid,
   data,
   serverTimestamp,
+  anonymous = false,
 }) {
   if (!firestore || !fromUid || !toUid) {
     throw new Error(
@@ -229,7 +236,7 @@ async function createNotification({
 
   const notif = {
     ...sanitiseNotificationData(data),
-    fromUserId: fromUid,
+    ...(anonymous ? {} : { fromUserId: fromUid }),
     read: false,
     createdAt: serverTimestamp(),
   };

@@ -95,14 +95,22 @@ export default function CirclesSection({ uid }: { uid: string }) {
   const [backingId, setBackingId] = useState<string | null>(null);
 
   // SOCIAL-FOCUS-01 — this LOCAL week's state, derived from the loaded
-  // events (one-shot reads; deliberately no listeners).
+  // events (one-shot reads; deliberately no listeners). Departed
+  // members' events survive leaving (only account deletion sweeps
+  // them), so the pulse count and the backable rows filter to CURRENT
+  // members — otherwise "3 of 2 focusing" and permanently-erroring
+  // Back buttons appear after a mid-week departure.
   const thisWeek = localWeekKey();
+  const memberUids = new Set((members ?? []).map((m) => m.uid));
   const myCheckIn =
     events.find(
       (e) =>
         e.kind === "weekly_check_in" && e.uid === uid && e.weekKey === thisWeek
     ) ?? null;
-  const focusSetCount = countWeeklyFocusSet(events, thisWeek);
+  const focusSetCount = countWeeklyFocusSet(
+    events.filter((e) => memberUids.has(e.uid)),
+    thisWeek
+  );
 
   const openDetail = async (c: CircleSummary) => {
     haptic("light");
@@ -162,6 +170,13 @@ export default function CirclesSection({ uid }: { uid: string }) {
     }
   };
 
+  // Mutations patch the events state LOCALLY from the callable's
+  // result instead of refetching the whole detail: the callable told
+  // us exactly what changed, a refetch costs a full members+events
+  // round trip, and — worse — loadDetail's error fallback returns
+  // empty arrays, so a transient blip after a successful write would
+  // wipe the visible timeline (and with it the "has checked in" state
+  // that guards the focus-clearing path).
   const submitFocus = async (focus: WeeklyFocus | null) => {
     if (!detailOf) return;
     setFocusBusy(true);
@@ -172,10 +187,30 @@ export default function CirclesSection({ uid }: { uid: string }) {
       return;
     }
     setFocusSheetOpen(false);
-    const detail = await loadDetail(detailOf.space.id);
-    setEvents(detail.events);
-    if (res.duplicate) toast.success("Already set for this week.");
-    else if (res.updated) toast.success("Focus updated.");
+    if (res.duplicate) {
+      toast.success("Already set for this week.");
+      return; // nothing changed server-side
+    }
+    setEvents((prev) => {
+      const existing = prev.find((e) => e.id === res.eventId);
+      if (existing) {
+        return prev.map((e) =>
+          e.id === res.eventId ? { ...e, weeklyFocus: focus } : e
+        );
+      }
+      const created: GoalSpaceEvent = {
+        id: res.eventId,
+        uid,
+        kind: "weekly_check_in",
+        text: null,
+        weekKey: thisWeek,
+        weeklyFocus: focus,
+        supporterIds: [],
+        createdAt: Date.now(),
+      };
+      return [created, ...prev];
+    });
+    if (res.updated) toast.success("Focus updated.");
     else toast.success("Shared with your circle.");
   };
 
@@ -184,13 +219,21 @@ export default function CirclesSection({ uid }: { uid: string }) {
     haptic("light");
     setBackingId(eventId);
     const res = await backCheckIn(detailOf.space.id, eventId);
-    setBackingId(null);
-    if (!res) {
+    if (res) {
+      // Patch BEFORE clearing backingId so the row flips straight to
+      // "Backed" — clearing first left a window where the button
+      // re-enabled un-backed while a refetch was in flight.
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId && !e.supporterIds.includes(uid)
+            ? { ...e, supporterIds: [...e.supporterIds, uid] }
+            : e
+        )
+      );
+    } else {
       toast.error("Couldn't back this focus. Please try again.");
-      return;
     }
-    const detail = await loadDetail(detailOf.space.id);
-    setEvents(detail.events);
+    setBackingId(null);
   };
 
   return (
@@ -481,7 +524,10 @@ export default function CirclesSection({ uid }: { uid: string }) {
                     const backable =
                       e.kind === "weekly_check_in" &&
                       e.weeklyFocus !== null &&
-                      e.uid !== uid;
+                      e.uid !== uid &&
+                      // Departed author → the server rejects the back;
+                      // don't render a button that can only error.
+                      memberUids.has(e.uid);
                     const backed = backable && e.supporterIds.includes(uid);
                     return (
                       <div
@@ -500,7 +546,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
                           <Button
                             variant={backed ? "ghost" : "secondary"}
                             size="sm"
-                            className="shrink-0"
+                            className="min-h-[44px] shrink-0"
                             disabled={backed || backingId === e.id}
                             loading={backingId === e.id}
                             onClick={() => void back(e.id)}
