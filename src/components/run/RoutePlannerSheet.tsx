@@ -1,12 +1,18 @@
 /**
- * Route Planner — build a route BEFORE running (running roadmap P2, v1).
+ * Route Planner — build a route BEFORE running (running roadmap P2 + the
+ * Run11 road-aware layer).
  *
- * Tap the map to drop waypoints; segments are straight lines (no external
- * routing service — see routePlanner.ts for the deliberate v1 contract),
- * with a live point-to-point distance readout, undo/clear, one-tap "close
- * the loop", and save-as-named-route. Saved plans land in the existing
- * savedRoutes store (source "planned") and are followed exactly like a GPX
- * import: the run map draws them as the ghost guide line.
+ * Tap the map to drop waypoints; segments start as straight lines with a
+ * live point-to-point distance readout, undo/clear, one-tap "close the
+ * loop", and save-as-named-route. When road-aware planning is enabled
+ * (Pro + VITE_ROUTE_PLANNING_ENABLED — see routePlanningApi.ts), the
+ * server-side Mapbox proxy can additionally align 2–12 tapped points to
+ * the walking network or generate a 3/5/10/15 km loop; the solid road
+ * polyline then replaces the dashed draft for display and save. Without
+ * the flag the planner keeps the deliberate straight-line v1 contract
+ * (routePlanner.ts). Saved plans land in the existing savedRoutes store
+ * (source "planned") and are followed exactly like a GPX import: the run
+ * map draws them as the ghost guide line.
  *
  * Own minimal MapLibre instance (mirrors RunMap's basemap + dark-mode
  * pattern) — RunMap is display-oriented and pulling gesture editing into it
@@ -26,6 +32,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import type { GPSPoint } from "@/lib/gps";
 import {
   closeLoop,
+  downsampleRoute,
   isLoopClosed,
   plannerDistanceM,
   waypointsToRoute,
@@ -213,10 +220,15 @@ export default function RoutePlannerSheet({
     else map.once("idle", apply);
   }, [roadRoute]);
 
-  // Closing the planner invalidates any in-flight provider response.
+  // Closing the planner discards the road state. Today's parent
+  // (RouteSetupSection) conditionally MOUNTS the sheet, so closing
+  // unmounts it and that alone discards in-flight responses — this
+  // effect exists so the invariant survives a future parent that keeps
+  // the sheet mounted across closes.
   useEffect(() => {
     if (!open) {
       requestNonce.current += 1;
+      setRoadRoute(null);
       setRouting(null);
     }
   }, [open]);
@@ -247,6 +259,10 @@ export default function RoutePlannerSheet({
     try {
       const result = await request();
       if (requestNonce.current !== nonce) return; // superseded by an edit
+      // A loop routes from the FIRST point only — collapse the draft to
+      // it so no orphaned tap markers linger over geometry they're not
+      // part of (the loop's shape comes from the server seed, not taps).
+      if (kind === "loop") setWaypoints((prev) => prev.slice(0, 1));
       setRoadRoute(result);
     } catch (error) {
       if (requestNonce.current !== nonce) return;
@@ -281,7 +297,11 @@ export default function RoutePlannerSheet({
   };
   const confirmSave = async () => {
     // A road-aligned result IS the plan; otherwise the straight draft.
-    const points = waypointsToRoute(roadRoute ? roadRoute.points : waypoints);
+    // Provider polylines are thinned before save — live following runs an
+    // O(n) sweep per GPS tick, so dense geometry is pure per-tick cost.
+    const points = waypointsToRoute(
+      roadRoute ? downsampleRoute(roadRoute.points) : waypoints
+    );
     setSaving(true);
     const ok = await onSave(name.trim() || "Planned route", points);
     setSaving(false);
@@ -351,6 +371,15 @@ export default function RoutePlannerSheet({
                   Align to roads
                 </Button>
               )}
+              {/* Over the 12-point server limit: the manual route keeps
+                  working — say WHY alignment went away instead of the
+                  button silently vanishing. */}
+              {waypoints.length > 12 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Road alignment works with up to 12 points — your manual route
+                  still saves as drawn.
+                </p>
+              )}
               {LOOP_TARGETS_KM.map((target) => (
                 <Button
                   key={target}
@@ -396,10 +425,16 @@ export default function RoutePlannerSheet({
               </Button>
             )}
             <div className="flex-1" />
+            {/* Save is a commit point: while an align/loop request is in
+                flight it stays disabled, so a late provider response can
+                never swap the geometry (and its distance-stamped default
+                name) behind an already-open save dialog. */}
             <Button
               variant="sport"
               onClick={openSave}
-              disabled={waypoints.length < 2 && !roadRoute}
+              disabled={
+                (waypoints.length < 2 && !roadRoute) || routing !== null
+              }
             >
               Save &amp; follow
             </Button>

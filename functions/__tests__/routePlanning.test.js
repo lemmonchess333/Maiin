@@ -72,6 +72,17 @@ describe("validation", () => {
   });
 });
 
+/** Great-circle distance in km — pins the seed's real segment lengths. */
+function haversineKm(a, b) {
+  const rad = (d) => (d * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLon = rad(b.lon - a.lon);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
 describe("squareLoopSeed", () => {
   it("closes at the start and spans ~perimeter/4 per side", () => {
     const seed = squareLoopSeed(LONDON, 5);
@@ -81,6 +92,17 @@ describe("squareLoopSeed", () => {
     const latSpan = Math.max(...seed.map((p) => p.lat)) - LONDON.lat;
     expect(latSpan).toBeGreaterThan(0.008);
     expect(latSpan).toBeLessThan(0.015);
+  });
+
+  it("is a true square — every segment ≈ perimeter/4, so the straight-line perimeter matches the request", () => {
+    const perimeterKm = 5;
+    const seed = squareLoopSeed(LONDON, perimeterKm);
+    const side = perimeterKm / 4;
+    for (let i = 1; i < seed.length; i++) {
+      const segment = haversineKm(seed[i - 1], seed[i]);
+      expect(segment).toBeGreaterThan(side * 0.95);
+      expect(segment).toBeLessThan(side * 1.05);
+    }
   });
 });
 
@@ -99,9 +121,10 @@ describe("alignToRoads", () => {
     expect(JSON.stringify(result)).not.toContain("tok");
   });
 
-  it("caps geometry at MAX_GEOMETRY_POINTS", async () => {
+  it("caps geometry at MAX_GEOMETRY_POINTS by downsampling — endpoints preserved, never a head-slice", async () => {
+    const total = MAX_GEOMETRY_POINTS + 500;
     const fetchImpl = vi.fn(async () =>
-      mapboxResponse({ distanceM: 5000, points: MAX_GEOMETRY_POINTS + 500 })
+      mapboxResponse({ distanceM: 5000, points: total })
     );
     const result = await alignToRoads({
       fetchImpl,
@@ -109,6 +132,14 @@ describe("alignToRoads", () => {
       waypoints: [LONDON, LONDON],
     });
     expect(result.points.length).toBeLessThanOrEqual(MAX_GEOMETRY_POINTS);
+    // The provider generates point i at base + i*0.0001 — the LAST kept
+    // point must be the provider's last coordinate, or the polyline
+    // silently stops partway while distanceM claims the full route.
+    expect(result.points[0].lat).toBeCloseTo(51.5074, 10);
+    expect(result.points[result.points.length - 1].lat).toBeCloseTo(
+      51.5074 + (total - 1) * 0.0001,
+      10
+    );
   });
 
   it("maps provider failures to bounded error codes", async () => {
@@ -131,6 +162,58 @@ describe("alignToRoads", () => {
         token: "t",
         waypoints: [LONDON, LONDON],
       })
+    ).rejects.toMatchObject({ code: "no-route" });
+  });
+
+  it("treats a dead/quota'd token (401/403/429) as provider-side, not no-route", async () => {
+    for (const status of [401, 403, 429]) {
+      const fetchImpl = vi.fn(async () => ({
+        ok: false,
+        status,
+        json: async () => ({}),
+      }));
+      await expect(
+        alignToRoads({ fetchImpl, token: "t", waypoints: [LONDON, LONDON] })
+      ).rejects.toMatchObject({ code: "provider-unavailable", status });
+    }
+    // Genuinely unroutable input stays no-route.
+    const unroutable = vi.fn(async () => ({
+      ok: false,
+      status: 422,
+      json: async () => ({}),
+    }));
+    await expect(
+      alignToRoads({
+        fetchImpl: unroutable,
+        token: "t",
+        waypoints: [LONDON, LONDON],
+      })
+    ).rejects.toMatchObject({ code: "no-route", status: 422 });
+  });
+
+  it("keeps the error taxonomy closed when the body read fails", async () => {
+    const midBodyReset = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => {
+        throw new TypeError("terminated");
+      },
+    }));
+    await expect(
+      alignToRoads({
+        fetchImpl: midBodyReset,
+        token: "t",
+        waypoints: [LONDON, LONDON],
+      })
+    ).rejects.toMatchObject({ code: "provider-unavailable" });
+  });
+
+  it("rejects a route without a finite distance instead of reporting 0 m", async () => {
+    const fetchImpl = vi.fn(async () =>
+      mapboxResponse({ distanceM: undefined })
+    );
+    await expect(
+      alignToRoads({ fetchImpl, token: "t", waypoints: [LONDON, LONDON] })
     ).rejects.toMatchObject({ code: "no-route" });
   });
 });
@@ -166,6 +249,23 @@ describe("generateLoop calibration", () => {
       MAX_LOOP_PROVIDER_CALLS
     );
     expect(result.distanceM).toBe(2000); // best (only) achievable answer
+  });
+
+  it("stops re-issuing identical requests once the clamp pins the perimeter", async () => {
+    // Sparse-network geography: whatever perimeter is seeded, the routed
+    // distance comes back 12 km against a 3 km target. Rescale drives the
+    // perimeter onto the MIN clamp after the first call; the second call
+    // re-derives the same pinned perimeter, so a third would be a
+    // byte-identical billable request — calibration must stop at 2.
+    const fetchImpl = vi.fn(async () => mapboxResponse({ distanceM: 12000 }));
+    const result = await generateLoop({
+      fetchImpl,
+      token: "t",
+      start: LONDON,
+      targetKm: 3,
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(result.distanceM).toBe(12000);
   });
 
   it("converges on the second call when the provider tracks the seed", async () => {

@@ -60,8 +60,11 @@ BEFORE merging the PR.
   Manager, so the gate is enforceable.
 - Align: 15 requests / user / 10 min. Loops: 4 / user / 10 min, each
   loop ≤4 provider calls. Deletion actor-lock applies.
-- ≤12 manual waypoints in; ≤5,000 geometry points out; loops clamp to
-  1 km–marathon.
+- ≤12 manual waypoints in; ≤5,000 geometry points out (uniform
+  downsample, endpoints preserved). The loop calibration SEED perimeter
+  clamps to 1 km–marathon — the routed distance the network returns for
+  that seed is whatever it is; calibration stops once the clamp pins
+  the perimeter (a re-request would be byte-identical).
 - The client invalidates in-flight results when the member edits the
   map or closes the planner (request nonce), so an old response cannot
   overwrite a newer draft.

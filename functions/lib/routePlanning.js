@@ -78,11 +78,12 @@ function validateLoopRequest(raw) {
 }
 
 /**
- * Square loop seed: start → 4 corners → start, with the square's
- * perimeter equal to perimeterKm. Offsets convert km to degrees at the
- * start's latitude; the routed (walking-network) result is what the
- * member actually receives — this seed only has to be in the right
- * neighbourhood for calibration to converge.
+ * Square loop seed: an axis-aligned square with the start as one corner,
+ * so each side is perimeterKm/4 and the straight-line perimeter equals
+ * perimeterKm. Offsets convert km to degrees at the start's latitude;
+ * the routed (walking-network) result is what the member actually
+ * receives — this seed only has to be in the right neighbourhood for
+ * calibration to converge.
  */
 function squareLoopSeed(start, perimeterKm) {
   const sideKm = perimeterKm / 4;
@@ -92,9 +93,9 @@ function squareLoopSeed(start, perimeterKm) {
   const dLon = sideKm / (111.32 * Math.max(Math.abs(cosLat), 0.1));
   return [
     { lat: start.lat, lon: start.lon },
-    { lat: start.lat + dLat / 2, lon: start.lon + dLon / 2 },
-    { lat: start.lat + dLat, lon: start.lon - dLon / 2 },
-    { lat: start.lat + dLat / 2, lon: start.lon - dLon },
+    { lat: start.lat + dLat, lon: start.lon },
+    { lat: start.lat + dLat, lon: start.lon + dLon },
+    { lat: start.lat, lon: start.lon + dLon },
     { lat: start.lat, lon: start.lon },
   ];
 }
@@ -118,12 +119,30 @@ async function fetchWalkingRoute({ fetchImpl, token, waypoints }) {
     throw new RoutePlanningError("provider-unavailable", "Routing failed.");
   }
   if (!response.ok) {
-    throw new RoutePlanningError(
-      response.status >= 500 ? "provider-unavailable" : "no-route",
+    // 401/403 (dead or unscoped token) and 429 (account quota/rate limit)
+    // are provider-account state, not "these points don't route" — keeping
+    // them out of no-route stops a token rotation from masquerading as
+    // user error. 404/422 stay no-route (genuinely unroutable input).
+    const providerSide =
+      response.status >= 500 ||
+      response.status === 401 ||
+      response.status === 403 ||
+      response.status === 429;
+    const err = new RoutePlanningError(
+      providerSide ? "provider-unavailable" : "no-route",
       "Routing failed."
     );
+    err.status = response.status;
+    throw err;
   }
-  const body = await response.json();
+  let body;
+  try {
+    body = await response.json();
+  } catch (_) {
+    // A reset mid-body or a non-JSON 200 (proxy error page) is still a
+    // provider failure — keep the error taxonomy closed.
+    throw new RoutePlanningError("provider-unavailable", "Routing failed.");
+  }
   const route = body && Array.isArray(body.routes) ? body.routes[0] : null;
   const coordinates =
     route && route.geometry && Array.isArray(route.geometry.coordinates)
@@ -132,8 +151,18 @@ async function fetchWalkingRoute({ fetchImpl, token, waypoints }) {
   if (!coordinates || coordinates.length < 2) {
     throw new RoutePlanningError("no-route", "No route found.");
   }
-  const points = coordinates
-    .slice(0, MAX_GEOMETRY_POINTS)
+  // Cap by uniform downsample (endpoints preserved), never a head-slice —
+  // a truncated polyline would silently stop partway while distanceM
+  // still reported the provider's full route.
+  const capped =
+    coordinates.length > MAX_GEOMETRY_POINTS
+      ? Array.from({ length: MAX_GEOMETRY_POINTS }, (_, i) =>
+          coordinates[
+            Math.round((i * (coordinates.length - 1)) / (MAX_GEOMETRY_POINTS - 1))
+          ]
+        )
+      : coordinates;
+  const points = capped
     .filter(
       (pair) =>
         Array.isArray(pair) && isFiniteNumber(pair[0]) && isFiniteNumber(pair[1])
@@ -142,9 +171,15 @@ async function fetchWalkingRoute({ fetchImpl, token, waypoints }) {
   if (points.length < 2) {
     throw new RoutePlanningError("no-route", "No route found.");
   }
+  if (!isFiniteNumber(route.distance)) {
+    // A route without a finite distance is a malformed provider response —
+    // reporting it as a 0 m route would let generateLoop capture it as
+    // "best" and hand the member a zero-distance loop.
+    throw new RoutePlanningError("no-route", "No route found.");
+  }
   return {
     points,
-    distanceM: isFiniteNumber(route.distance) ? Math.round(route.distance) : 0,
+    distanceM: Math.round(route.distance),
     durationS: isFiniteNumber(route.duration)
       ? Math.round(route.duration)
       : null,
@@ -160,9 +195,11 @@ async function alignToRoads({ fetchImpl, token, waypoints }) {
  * Generate a walking loop close to targetKm from a validated request.
  * At most MAX_LOOP_PROVIDER_CALLS provider requests: seed, then rescale
  * the square by target/actual until within tolerance; returns the
- * closest attempt if the budget runs out. Perimeter scale is clamped to
- * [MIN_LOOP_KM, MAX_LOOP_KM] so calibration can never wander outside
- * the offered envelope.
+ * closest attempt if the budget runs out. The REQUEST SEED perimeter is
+ * clamped to [MIN_LOOP_KM, MAX_LOOP_KM] so calibration can never wander
+ * outside the offered envelope (the routed distance the network returns
+ * for that seed is whatever it is); once the clamp pins the perimeter,
+ * re-requesting would be byte-identical, so calibration stops.
  */
 async function generateLoop({ fetchImpl, token, start, targetKm }) {
   let perimeterKm = targetKm;
@@ -180,10 +217,14 @@ async function generateLoop({ fetchImpl, token, start, targetKm }) {
     }
     if (error <= LOOP_TOLERANCE) break;
     if (actualKm <= 0) break;
-    perimeterKm = Math.min(
+    const next = Math.min(
       MAX_LOOP_KM,
       Math.max(MIN_LOOP_KM, perimeterKm * (targetKm / actualKm))
     );
+    // Clamp pinned the perimeter → the next request would be
+    // byte-identical to this one. Stop instead of re-billing it.
+    if (next === perimeterKm) break;
+    perimeterKm = next;
   }
 
   if (!best) throw new RoutePlanningError("no-route", "No route found.");

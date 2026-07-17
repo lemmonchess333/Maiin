@@ -6532,10 +6532,13 @@ exports.planRunningRoute = functions
       });
     } catch (error) {
       if (error instanceof routePlanning.RoutePlanningError) {
-        // No coordinates in logs — action + bounded code only.
+        // No coordinates in logs — action + bounded code + numeric HTTP
+        // status only. The status is what distinguishes a dead/quota'd
+        // token (401/403/429) from a genuinely unroutable request.
         functions.logger.warn("routePlanning.failed", {
           action,
           code: error.code,
+          status: typeof error.status === "number" ? error.status : null,
         });
         if (error.code === "invalid-request") {
           throw new functions.https.HttpsError(
