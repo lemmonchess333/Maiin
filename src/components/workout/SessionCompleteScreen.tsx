@@ -29,9 +29,9 @@ interface SessionCompleteScreenProps {
   setLogs: SetLog[][];
   firedPRs: Map<string, RepBucket[]>;
   sessionDurationMinutes: number;
-  /** PROGRAM-FLEX-01: acknowledge an Express Session positively but
-   *  without pretending it was the full plan. */
-  sessionVariant?: "express45" | "express30";
+  /** PROGRAM-FLEX-01 / PROGRAM-ADAPT-01: acknowledge a reduced
+   *  session positively but without pretending it was the full plan. */
+  sessionVariant?: "express45" | "express30" | "easier_today";
   completing: boolean;
   onFinish: () => void;
   onClose: () => void;
@@ -136,12 +136,17 @@ export default function SessionCompleteScreen({
           <p className="text-sm text-muted-foreground">
             {dayName} · {dayType}
           </p>
-          {sessionVariant && (
+          {sessionVariant === "easier_today" ? (
+            <p className="text-xs text-muted-foreground">
+              Easier today — you showed up and kept it honest. The plan stays
+              exactly on track.
+            </p>
+          ) : sessionVariant ? (
             <p className="text-xs text-muted-foreground">
               Express {sessionVariant === "express45" ? "45" : "30"} — the
               essentials, done. Better than a skipped session.
             </p>
-          )}
+          ) : null}
         </motion.div>
 
         {/* Stat Cards Row */}

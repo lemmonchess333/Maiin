@@ -67,11 +67,14 @@ export interface CompletedSessionData {
   completionCommandId: string;
   durationMinutes: number;
   setLogs: CompletedSetLog[][];
-  /** PROGRAM-FLEX-01: set when the session ran as a time-budgeted
-   *  Express Session. Recorded on the workout doc (backward-compatible
-   *  optional field) so history/analytics can distinguish a
-   *  deliberately-trimmed session from an abandoned full one. */
-  sessionVariant?: "express45" | "express30";
+  /** PROGRAM-FLEX-01 / PROGRAM-ADAPT-01: set when the session ran
+   *  reduced (a time-budgeted Express Session, or Easier today).
+   *  Recorded on the PRIVATE workout doc (backward-compatible optional
+   *  field) so history can distinguish a deliberately-reduced session
+   *  from an abandoned full one. Deliberately NOT copied into the
+   *  activity-feed payload below — the variant (and any recovery
+   *  reason behind it) never crosses a social or analytics boundary. */
+  sessionVariant?: "express45" | "express30" | "easier_today";
 }
 import {
   generateRacePlanV2,

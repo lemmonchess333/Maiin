@@ -1521,6 +1521,48 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     expect(result.current.programState?.workouts[0].completed).toBe(false);
   });
 
+  it("persists sessionVariant on the PRIVATE workout doc — easier_today saves truthfully (PROGRAM-ADAPT-01)", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-easier"),
+        sessionVariant: "easier_today",
+        // Reduced execution: only 2 of the 3 prescribed sets performed.
+        setLogs: [
+          [
+            { weight: 85, reps: 5, completed: true },
+            { weight: 85, reps: 5, completed: true },
+          ],
+        ],
+      });
+    });
+
+    const workoutWrite = batchCommits
+      .flat()
+      .find((s) => s.ref.__id === "programme-cid-easier");
+    expect(workoutWrite).toBeTruthy();
+    const doc = workoutWrite!.data as {
+      sessionVariant?: string;
+      exercises: { sets: { weightKg: number }[] }[];
+    };
+    // The variant lands on the private record…
+    expect(doc.sessionVariant).toBe("easier_today");
+    // …and only the sets ACTUALLY performed are saved (2, at the
+    // reduced load), never the planned prescription.
+    expect(doc.exercises[0].sets).toHaveLength(2);
+    expect(doc.exercises[0].sets.every((s) => s.weightKg === 85)).toBe(true);
+    // The STORED prescription is untouched by completion (sets/weight
+    // unchanged — an easier session never rewrites the plan).
+    const ex = result.current.programState?.workouts[0].exercises[0];
+    expect(ex?.sets).toBe(3);
+    expect(ex?.weight).toBe(100);
+  });
+
   it("a retry with the same completionId targets the same workout doc (idempotent)", async () => {
     seedProgramWithDay();
     const { result } = renderHook(() => useProgram());
