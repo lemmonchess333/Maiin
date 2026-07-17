@@ -114,6 +114,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     loading,
     completeWorkoutDay,
     skipWorkoutDay,
+    setNextWorkout,
     advanceToNextWeek,
     logExercise,
     regenerateProgram,
@@ -1105,6 +1106,39 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                             >
                               Skip Session
                             </button>
+
+                            {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
+                                happen in order. "Make this next" moves the
+                                startable cursor to this unfinished day — a
+                                cursor change, never a schedule rewrite; the
+                                overridden cursor day offers the way back.
+                                History weeks are records, not prescriptions
+                                (same gate as Skip above). */}
+                            {status === "upcoming" && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  haptic("light");
+                                  void setNextWorkout(idx);
+                                }}
+                                className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+                              >
+                                Make This Next
+                              </button>
+                            )}
+                            {status === "today" &&
+                              programState?.nextWorkoutOverride === idx && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    haptic("light");
+                                    void setNextWorkout(null);
+                                  }}
+                                  className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
+                                >
+                                  Follow Programme Order
+                                </button>
+                              )}
                           </div>
                         )}
 

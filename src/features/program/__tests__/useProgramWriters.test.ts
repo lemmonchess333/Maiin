@@ -1540,3 +1540,93 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     expect(new Set(workoutIds)).toEqual(new Set(["programme-cid-3"]));
   });
 });
+
+// ─── PROGRAM-SESSION-ORDER-01 — setNextWorkout cursor override ───────
+
+describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
+  const day = (
+    name: string,
+    flags: Partial<{ completed: boolean; skipped: boolean }> = {}
+  ) =>
+    ({
+      dayName: name,
+      exercises: [],
+      completed: false,
+      skipped: false,
+      ...flags,
+    }) as unknown as ProgramState["workouts"][number];
+
+  function seedLiftState(extra: Partial<ProgramState> = {}) {
+    mockProfile = structuredProfile();
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [day("Push", { completed: true }), day("Pull"), day("Legs")],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: { mode: "freeform" },
+      ...extra,
+    } as ProgramState;
+    mockDocExists = true;
+  }
+
+  async function mount() {
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+    return result;
+  }
+
+  it("sets the override for an in-range unfinished day", async () => {
+    seedLiftState();
+    const result = await mount();
+    await act(async () => {
+      await result.current.setNextWorkout(2);
+    });
+    expect(setDocCalls.length).toBeGreaterThan(0);
+    expect(setDocCalls[setDocCalls.length - 1].data.nextWorkoutOverride).toBe(
+      2
+    );
+  });
+
+  it("ignores terminal and out-of-range selections (no write)", async () => {
+    seedLiftState();
+    const result = await mount();
+    await act(async () => {
+      await result.current.setNextWorkout(0); // completed day
+      await result.current.setNextWorkout(9); // out of range
+      await result.current.setNextWorkout(1.5); // malformed
+    });
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("null resets: the persisted doc drops the field entirely", async () => {
+    seedLiftState({ nextWorkoutOverride: 2 });
+    const result = await mount();
+    await act(async () => {
+      await result.current.setNextWorkout(null);
+    });
+    expect(setDocCalls.length).toBeGreaterThan(0);
+    const saved = setDocCalls[setDocCalls.length - 1].data;
+    // The guarded write path strips undefined — a reset must REMOVE the
+    // field, not persist a stale value.
+    expect("nextWorkoutOverride" in saved).toBe(false);
+  });
+
+  it("null with no active override is a no-op (no write)", async () => {
+    seedLiftState();
+    const result = await mount();
+    await act(async () => {
+      await result.current.setNextWorkout(null);
+    });
+    expect(setDocCalls.length).toBe(0);
+  });
+});
