@@ -224,6 +224,13 @@ export default function Social() {
   // tab consumes the same instance (crews / currentCrew / crewsError /
   // refreshCrews) and the hook has no shared cache: a second instance
   // would double-fetch and desync optimistic membership updates.
+  //
+  // SOCIAL-CREW-READS-01: the legacy crew catalogue is only rendered by
+  // the Together tab (CrewsBlock) and the People overlay, so gate the
+  // unbounded `groups` read to those surfaces. A member who only opens
+  // Feed never downloads every crew doc; the first visit to Together /
+  // People loads once and the session cache serves later visits.
+  const crewsEnabled = tab === "together" || peopleOpen;
   const {
     crews,
     error: crewsError,
@@ -232,7 +239,7 @@ export default function Social() {
     leaveCrew,
     createCrew,
     refresh: refreshCrews,
-  } = useCrews();
+  } = useCrews(crewsEnabled);
 
   // Pull-to-refresh with iOS conflict fix (#9).
   // Soc5 cross-cutting pin: pull-to-refresh re-fetches the active
