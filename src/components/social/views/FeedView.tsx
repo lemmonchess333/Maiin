@@ -1,6 +1,7 @@
 import { useSocialFeed } from "@/hooks/useSocialFeed";
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
+import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useState, Suspense } from "react";
 import type { MutableRefObject } from "react";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
@@ -76,6 +77,11 @@ export default function FeedView({
   refreshRef,
   onOverlayChange,
 }: FeedViewProps) {
+  // uid scopes the per-sub-tab freshness pointers (SOCIAL-ATTENTION-01)
+  // so a shared browser doesn't leak account A's "seen" dots to B.
+  const { user } = useAuth();
+  const freshnessUid = user?.uid ?? null;
+
   // Feed hooks — discover only fetches when active (#7)
   /* Following feed is enabled only when the user is on the Feed tab
      AND the Following sub-tab. Previously it fetched on every Social
@@ -99,6 +105,7 @@ export default function FeedView({
     activeSubTab: feedSubTab,
     followingNewestCreatedAt: followingFeed.items[0]?.createdAt,
     exploreNewestCreatedAt: exploreFeed.items[0]?.createdAt,
+    uid: freshnessUid,
   });
 
   // Soc5: capture initial-render duration. renderStartRef takes its
