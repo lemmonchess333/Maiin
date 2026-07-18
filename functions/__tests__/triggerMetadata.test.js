@@ -303,6 +303,14 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  onGoalSpaceEventCreated: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.create",
+    resource:
+      "projects/{project}/databases/(default)/documents/goalSpaces/{spaceId}/events/{eventId}",
+  },
 };
 
 function endpointSummary(fn) {
