@@ -1034,3 +1034,67 @@ describe("DayActionSheet — scope (Run tab shows run only)", () => {
     expect(screen.queryByText("Push")).not.toBeInTheDocument();
   });
 });
+
+describe("DayActionSheet — RUN-RACE-GUARD-01 (race identity immutable)", () => {
+  function renderSheet(runDay: ScheduledRunDay) {
+    const profile = makeProfile(
+      Array.from({ length: 7 }, (_, i) => ({
+        day: i,
+        type: i === todayDow() ? ("run" as const) : ("rest" as const),
+      }))
+    );
+    const callbacks = commonCallbacks();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={makeProgramState([runDay])}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    return callbacks;
+  }
+
+  it("a planned race locks the template select and hides Mark as done", () => {
+    renderSheet(
+      makeRunDay({
+        id: "runday_race",
+        dayIndex: todayDow(),
+        date: todayKey(),
+        weekKey: todayWeekKey(),
+        status: "planned",
+        templateId: "marathon_race",
+        type: "race",
+      })
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(select.getAttribute("aria-label")).toMatch(/template locked/i);
+    expect(screen.getByText(/template is locked/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
+  });
+
+  it("a race overridden to an easy template STILL locks (bypass closed)", () => {
+    // The exact bypass: templateId was swapped to easy_30, but `type`
+    // stays "race" — the immutable identity keeps it locked.
+    renderSheet(
+      makeRunDay({
+        id: "runday_race_overridden",
+        dayIndex: todayDow(),
+        date: todayKey(),
+        weekKey: todayWeekKey(),
+        status: "planned",
+        templateId: "easy_30",
+        userOverride: "easy_30",
+        type: "race",
+      })
+    );
+    const select = screen.getByRole("combobox") as HTMLSelectElement;
+    expect(select.disabled).toBe(true);
+    expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
+  });
+});

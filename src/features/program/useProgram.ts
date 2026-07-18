@@ -96,6 +96,7 @@ import {
   getScheduledRunStatus,
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
+import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { toast } from "@/lib/toast";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { generateInstanceId } from "./programTypes";
@@ -1147,6 +1148,17 @@ export function useProgram() {
       }
       const targetDay = programState.runDays[targetIndex];
 
+      // RUN-RACE-GUARD-01: a race completes only via a logged run
+      // (RunSummary reconciliation), never a manual mark — otherwise a
+      // race overridden to easy + manual-completed silently erases the
+      // race. Gate on the immutable race identity.
+      if (isScheduledRaceRunDay(targetDay)) {
+        logger.warn(
+          `[markManualComplete] refusing to manually complete a scheduled race (id=${targetDay.id}); a race completes via a logged run`
+        );
+        return;
+      }
+
       // P20: skipped → planned two-step. The transition gate uses
       // the updated LEGAL_TRANSITIONS table that now permits
       // skipped → planned (Q1 P7).
@@ -1289,6 +1301,17 @@ export function useProgram() {
         );
         return;
       }
+      // RUN-RACE-GUARD-01: a scheduled race's identity is immutable.
+      // Swapping its template to an easy run (then completing it as an
+      // ordinary run) would erase the race — refuse by the immutable
+      // `type: "race"` signal, which an override never changes.
+      if (isScheduledRaceRunDay(target)) {
+        logger.warn(
+          `[overrideRunDay] refusing to swap a scheduled race (id=${target.id ?? target.dayIndex}); race identity is immutable`
+        );
+        return;
+      }
+
       // PR-0b-iii: editability gate via the central helper.
       // Only `planned` qualifies for in-place template swap.
       // race_completed_unlinked (reconciliation) is now excluded

@@ -128,6 +128,35 @@ export const RUN_TEMPLATES: RunTemplate[] = [
   },
 ];
 
+/** Canonical race-template gate. Resolves a run template id to its
+ *  type and asks "is it a race?" — the id-agnostic check the codebase
+ *  standardised on (real ids are `5k_race` … `marathon_race`, NEVER
+ *  the literal `"race"`). Several call sites inlined this; prefer this
+ *  export. */
+export function isRaceTemplateId(id: string | null | undefined): boolean {
+  if (!id) return false;
+  return RUN_TEMPLATES.find((t) => t.id === id)?.type === "race";
+}
+
+/**
+ * RUN-RACE-GUARD-01 — a scheduled run day's IMMUTABLE race identity.
+ *
+ * A race day is generated with `type: "race"`; a user template
+ * override (`overrideRunDay`) rewrites `templateId`/`userOverride` but
+ * NEVER touches `type`. So `type === "race"` survives an override to an
+ * easy template — that is what makes race identity un-erasable. The
+ * base `templateId` is a belt-and-suspenders fallback for any legacy
+ * day whose `type` string drifted. Writers (`overrideRunDay`,
+ * `markManualComplete`) and the day sheet all gate on this so a race
+ * cannot be swapped away and then completed as an ordinary run.
+ */
+export function isScheduledRaceRunDay(rd: {
+  type?: string;
+  templateId?: string;
+}): boolean {
+  return rd.type === "race" || isRaceTemplateId(rd.templateId);
+}
+
 /**
  * Predefined workout templates users can quickly load.
  */
