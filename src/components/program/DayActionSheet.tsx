@@ -21,8 +21,9 @@
  *
  * Status-aware rules (PR-0b-iii):
  *   - planned                       → template swap + Skip + Mark complete
- *   - completed_* / skipped /
- *     race_no_show                  → locked badge, no actions
+ *   - skipped / race_no_show        → locked badge + Restore action
+ *                                     (SESSION-RESTORE-01: a skip is reversible)
+ *   - completed_*                   → locked badge, no actions
  *   - race_completed_unlinked       → passive copy, no actions
  *
  * The sheet resolves the day via the shared trainingResolver
@@ -33,7 +34,14 @@
 import { useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { Footprints, Dumbbell, Check, X, TriangleAlert } from "lucide-react";
+import {
+  Footprints,
+  Dumbbell,
+  Check,
+  X,
+  TriangleAlert,
+  RotateCcw,
+} from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
@@ -86,6 +94,12 @@ interface DayActionSheetProps {
   markManualComplete: (runDayId: string) => Promise<void>;
   skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
+  /** SESSION-RESTORE-01: reverse a skip. Restores a skipped /
+   *  race_no_show run slot (restoreRunDay) or a skipped lift day
+   *  (restoreWorkoutDay) back to `planned` — a status reversal only,
+   *  never a completion. */
+  restoreRunDay: (idOrDayIndex: string | number) => Promise<void>;
+  restoreWorkoutDay: (dayIndex: number) => Promise<void>;
   /** Which blocks to surface.
    *
    *  - "day" (default) — the whole-day manager: run + lift blocks. Used by
@@ -112,6 +126,8 @@ export default function DayActionSheet({
   markManualComplete,
   skipRunDay,
   skipWorkoutDay,
+  restoreRunDay,
+  restoreWorkoutDay,
   scope = "day",
 }: DayActionSheetProps) {
   // The resolver is the single source of truth for what training
@@ -524,6 +540,28 @@ export default function DayActionSheet({
                     )}
                   </div>
                 )}
+
+              {/* SESSION-RESTORE-01: a skip (or race no-show) is a
+                  reversible decision — restore the slot to planned so
+                  the user isn't dead-ended. Pure status reversal, not a
+                  completion. Shown on exactly the terminal-but-reversible
+                  states; completed_* slots stay locked. */}
+              {(run.status === "skipped" || run.status === "race_no_show") && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await restoreRunDay(run.runDay!.id ?? run.runDay!.dayIndex);
+                    onClose();
+                  }}
+                  className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <RotateCcw
+                    className="size-4"
+                    style={{ color: THEME.brand }}
+                  />
+                  Restore to plan
+                </button>
+              )}
             </>
           </section>
         )}
@@ -578,6 +616,23 @@ export default function DayActionSheet({
                 )}
               >
                 Skip this lift
+              </button>
+            )}
+
+            {/* SESSION-RESTORE-01: reverse a skipped lift back to
+                plannable. Only on a genuinely skipped (non-completed)
+                day; the writer no-ops otherwise. */}
+            {lift.status === "skipped" && lift.index !== null && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await restoreWorkoutDay(lift.index!);
+                  onClose();
+                }}
+                className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <RotateCcw className="size-4" style={{ color: THEME.brand }} />
+                Restore to plan
               </button>
             )}
           </section>
