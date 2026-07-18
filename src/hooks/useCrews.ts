@@ -56,13 +56,28 @@ export interface Crew {
  */
 export type CrewsLoadError = "unavailable";
 
-export function useCrews() {
+/**
+ * @param enabled SOCIAL-CREW-READS-01 — gate the unbounded
+ *   `getDocs(groups orderBy memberCount)` catalogue read. Default `true`
+ *   preserves Settings / Crew-detail behaviour. Social passes `false`
+ *   on surfaces that don't render the catalogue (the Feed tab with the
+ *   People overlay closed), so a member who only opens Feed never
+ *   downloads every crew doc. The first enable loads once; later
+ *   enables reuse the session cache (no repeat read), and an explicit
+ *   `refresh` while disabled is a no-op.
+ */
+export function useCrews(enabled = true) {
   const { user, profile, updateProfile } = useAuth();
   const [crews, setCrews] = useState<Crew[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Idle (not loading) until the first enable — otherwise a
+  // disabled-at-mount consumer would sit in a permanent "loading" state.
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<CrewsLoadError | null>(null);
   const currentCrewId = profile?.crewId;
   const mutatingRef = useRef(false);
+  // Session cache marker: once the catalogue has loaded (or an explicit
+  // refresh ran), re-enabling does not re-read.
+  const hasLoadedRef = useRef(false);
 
   const fetchCrews = useCallback(async () => {
     try {
@@ -90,11 +105,21 @@ export function useCrews() {
   }, []);
 
   useEffect(() => {
-    const load = async () => {
-      await fetchCrews();
-    };
-    load();
-  }, [fetchCrews]);
+    // Load only on the FIRST enable; subsequent enables reuse the
+    // session cache (hasLoadedRef). Disabled → no read at all.
+    if (!enabled || hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+    setLoading(true);
+    void fetchCrews();
+  }, [enabled, fetchCrews]);
+
+  /** Explicit refresh — replaces the rows while enabled, no-ops while
+   *  inactive (a member on Feed can't trigger the catalogue read). */
+  const refresh = useCallback(() => {
+    if (!enabled) return Promise.resolve();
+    hasLoadedRef.current = true;
+    return fetchCrews();
+  }, [enabled, fetchCrews]);
 
   const joinCrew = useCallback(
     async (crewId: string) => {
@@ -244,6 +269,6 @@ export function useCrews() {
     joinCrew,
     leaveCrew,
     createCrew,
-    refresh: fetchCrews,
+    refresh,
   };
 }
