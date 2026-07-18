@@ -17,7 +17,10 @@
  */
 
 import { ChevronRight, Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
+import { haptic } from "@/lib/haptic";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import PhaseRail from "./PhaseRail";
@@ -25,6 +28,10 @@ import PhaseRail from "./PhaseRail";
 interface RaceCockpitCardProps {
   /** Readable distance — "Marathon", "Half Marathon", "10K", "5K". */
   distanceLabel: string;
+  /** Optional user-entered event name ("London Marathon 2026"). When
+   *  present it becomes the card heading and the distance demotes into
+   *  the meta sub-line; when absent, the distance stays the heading. */
+  eventName?: string;
   /** Local "YYYY-MM-DD" target date. */
   targetDate: string;
   daysToRace: number;
@@ -40,6 +47,7 @@ interface RaceCockpitCardProps {
 
 export default function RaceCockpitCard({
   distanceLabel,
+  eventName,
   targetDate,
   daysToRace,
   currentWeek,
@@ -49,6 +57,7 @@ export default function RaceCockpitCard({
   compressed,
   onEdit,
 }: RaceCockpitCardProps) {
+  const navigate = useNavigate();
   const hasProgress = currentWeek != null && totalWeeks != null;
   const progress = hasProgress
     ? Math.min(100, Math.max(0, ((currentWeek! + 1) / totalWeeks!) * 100))
@@ -74,9 +83,17 @@ export default function RaceCockpitCard({
             Race plan
           </div>
           <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
-            {distanceLabel}
+            {eventName || distanceLabel}
           </h3>
           <p className="text-sm text-muted-foreground">
+            {/* When the event name takes the heading, the distance demotes
+                into this meta row. */}
+            {eventName && (
+              <>
+                {distanceLabel}
+                {" · "}
+              </>
+            )}
             {dateLabel}
             {" · "}
             <span className="font-medium text-foreground">
@@ -123,6 +140,25 @@ export default function RaceCockpitCard({
           <PhaseRail activePhase={phaseLabel} />
         </div>
       )}
+
+      {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the race plan off to a
+          Circle. Running non-critical action → sport-tinted (coral).
+          Privacy fence: ONLY the space type, a readable title and the
+          race date travel — never routes, GPS, paces or plan internals. */}
+      <Button
+        variant="sport-tinted"
+        fullWidth
+        onClick={() => {
+          haptic("light");
+          navigate(
+            `/social?circleCreate=race&circleTitle=${encodeURIComponent(
+              `${distanceLabel} training`
+            )}&circleDate=${targetDate}`
+          );
+        }}
+      >
+        Train together
+      </Button>
 
       {inTaper && (
         <SectionLabel tier="section" className="text-running">

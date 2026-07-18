@@ -35,6 +35,12 @@ interface SessionCompleteScreenProps {
   completing: boolean;
   onFinish: () => void;
   onClose: () => void;
+  /** CIRCLE-SESSION-01 — optional explicit summary-only Circle share.
+   *  When present, a secondary "Share to Circle" action renders in
+   *  the action stack; the parent owns the sheet (lazily mounted so
+   *  no Circle reads fire unless the user taps it). Never auto-posts;
+   *  only the `session_completed` event ever leaves the device. */
+  onShareToCircle?: () => void;
 }
 
 export default function SessionCompleteScreen({
@@ -48,6 +54,7 @@ export default function SessionCompleteScreen({
   completing,
   onFinish,
   onClose,
+  onShareToCircle,
 }: SessionCompleteScreenProps) {
   const { profile } = useAuth();
   const kudos = usePostCompletionKudos({
@@ -344,6 +351,15 @@ export default function SessionCompleteScreen({
             <Share2 className="size-4" />
             Share Workout
           </button>
+
+          {onShareToCircle && (
+            /* CIRCLE-SESSION-01 — explicit, secondary, never blocking
+               the Finish flow. Summary-only: the sheet publishes just
+               "completed a session", never numbers. */
+            <Button variant="secondary" fullWidth onClick={onShareToCircle}>
+              Share to Circle
+            </Button>
+          )}
 
           <button
             type="button"

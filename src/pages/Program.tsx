@@ -143,6 +143,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     skipRecoveryEarly,
     realignRacePlan,
     dismissFellBehindPrompt,
+    applyDeloadWeek,
+    revertDeloadWeek,
   } = useProgram();
   const { profile, updateProfile } = useAuth();
   const { awardEventBadge } = useStreaks();
@@ -161,6 +163,38 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // weeks fetched (current + previous) since the banner only consults
   // the current.
   const { currentWeek: perfWeek } = usePerformanceWeeks(2);
+  // PROGRAM-DELOAD-01: Apply routes through the server applyDeloadWeek
+  // command; undo lives in the success toast (reversibility-over-
+  // confirmation — no dialog). The banner itself fires the 'applied'
+  // telemetry; the undo path tracks 'undo' here since the toast owns it.
+  const handleApplyDeload = useCallback(async (): Promise<boolean> => {
+    const ok = await applyDeloadWeek();
+    if (!ok) {
+      toast.error(
+        "Couldn't apply the deload. Check your connection and try again."
+      );
+      return false;
+    }
+    toast.success("Deload applied — this week's loads are eased", {
+      duration: 8000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          void revertDeloadWeek().then((reverted) => {
+            if (reverted) {
+              trackProgrammeEvent("programme_deload_banner_action", {
+                action: "undo",
+              });
+              toast.success("Deload undone — this week is back to plan");
+            } else {
+              toast.error("Couldn't undo the deload.");
+            }
+          });
+        },
+      },
+    });
+    return true;
+  }, [applyDeloadWeek, revertDeloadWeek]);
   const runsTarget = getWeeklyRunTarget(profile);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
   // closed the body unmounts and the inner useProgrammeScheduleEditor
@@ -955,6 +989,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               <DeloadBanner
                 visible={!!perfWeek?.flags?.deloadRecommended}
                 weekKey={`w${displayWeekNumber}`}
+                deloadActive={programState.currentPhase === "deload"}
+                onApply={handleApplyDeload}
               />
             </TrackProgrammeSectionView>
 

@@ -182,6 +182,22 @@ export interface WeekSnapshot {
   workouts: WorkoutDay[];
 }
 
+/**
+ * PROGRAM-DELOAD-01: pre-deload stash written by the server
+ * `applyDeloadWeek` command and consumed (removed) by
+ * `revertDeloadWeek`. Scoped to one week — the `weekNumber` guard makes
+ * a snapshot from a previous week inert after rollover, so
+ * `advanceWeek` never needs to know it exists. Optional-with-default
+ * on ProgramState: no schema version bump (readers tolerate absence).
+ */
+export interface DeloadSnapshot {
+  weekNumber: number;
+  workouts: WorkoutDay[];
+  currentPhase: string;
+  fatigueScore: number;
+  appliedAt: number;
+}
+
 /* ================================
    PROGRAM STATE
 ================================ */
@@ -347,7 +363,7 @@ export interface ScheduledRunDay {
 
 export interface RunPlan {
   mode: "structured" | "race_prep";
-  raceGoal?: { distance: string; targetDate: string };
+  raceGoal?: { distance: string; targetDate: string; eventName?: string };
   totalWeeks?: number;
   currentWeek?: number;
   /** P2-1: true when totalWeeks fell below the ideal for the race
@@ -524,6 +540,14 @@ export interface ProgramState {
    * (id/date/weekKey/status) to ScheduledRunDay.
    */
   programSchemaVersion?: number;
+  /**
+   * PROGRAM-DELOAD-01: present only between a user-applied deload and
+   * its undo (or the next week rollover, after which the weekNumber
+   * guard makes it inert). Server-written by the applyDeloadWeek
+   * command; also allow-listed in functions/programStateSanitizer.js —
+   * keep in lockstep.
+   */
+  deloadSnapshot?: DeloadSnapshot;
 }
 
 /* ================================

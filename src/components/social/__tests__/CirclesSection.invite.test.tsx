@@ -15,6 +15,10 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
+/* CirclesSection reads useSearchParams (PROGRAM-CIRCLE-01 hand-off),
+   so renders need a Router. The partial mock below keeps the real
+   MemoryRouter. */
+import { MemoryRouter } from "react-router-dom";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
 
 const navigateMock = vi.fn();
@@ -93,7 +97,11 @@ beforeEach(() => {
 describe("post-create invite hand-off", () => {
   it("creating a circle opens 'Your Circle is ready' with the returned code", async () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     // Cold-start selector → Strength Block preselects the create sheet.
     fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
@@ -133,7 +141,11 @@ describe("one-member featured circle", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c1", "Solo Circle", 1, "code-1")] })
     );
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     expect(
       screen.getByText(/Your Circle is ready — invite someone/i)
@@ -154,7 +166,11 @@ describe("one-member featured circle", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c2", "Full Circle", 3, "code-2")] })
     );
-    const { unmount } = render(<CirclesSection uid="me" />);
+    const { unmount } = render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
     expect(
       screen.getByRole("button", { name: /set weekly focus/i })
     ).toBeInTheDocument();
@@ -164,7 +180,11 @@ describe("one-member featured circle", () => {
     mockUseGoalSpaces.mockReturnValue(
       hookValue({ circles: [summary("c3", "Orphan Circle", 1, null)] })
     );
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
     expect(
       screen.queryByRole("button", { name: /invite someone/i })
     ).toBeNull();

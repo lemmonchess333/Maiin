@@ -33,6 +33,14 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // Run11 (Mapbox supersession 2026-07-17) — Pro-gated Directions proxy.
+  // The token binding is the deploy gate: provision MAPBOX_DIRECTIONS_TOKEN
+  // before merging or every functions deploy fails (the #1636 class).
+  planRunningRoute: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["MAPBOX_DIRECTIONS_TOKEN"],
+  },
   releasePushDeviceToken: {
     kind: "callable",
     maxInstances: 100,

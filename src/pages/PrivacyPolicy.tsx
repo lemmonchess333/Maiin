@@ -237,6 +237,20 @@ export default function PrivacyPolicy() {
                 <strong className="text-foreground">MapLibre:</strong> Map
                 rendering for run routes (no personal data shared)
               </li>
+              <li>
+                <strong className="text-foreground">
+                  Route Planning (Mapbox):
+                </strong>{" "}
+                If you use the optional road-aware route planner, the map points
+                you tap (or, for a generated loop, your chosen start point plus
+                a handful of nearby points we compute from it and your chosen
+                distance) are sent to Mapbox&apos;s Directions service to
+                calculate a walking route. We send only those coordinates —
+                never your name, account details, saved routes, or run history —
+                and we do not store or log the coordinates you submit. Planned
+                routes are saved privately to your account only when you choose
+                Save &amp; follow.
+              </li>
             </ul>
             <p>
               These services have their own privacy policies governing data

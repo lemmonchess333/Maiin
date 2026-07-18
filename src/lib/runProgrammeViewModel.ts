@@ -148,6 +148,10 @@ function templateForRunDay(
 export interface RaceCockpitViewModel {
   /** Readable distance — "Marathon". */
   distanceLabel: string;
+  /** Optional user-entered event name ("London Marathon 2026"); null when
+   *  the user hasn't named the race — the card falls back to the distance
+   *  heading. */
+  eventName?: string | null;
   /** Local target date "YYYY-MM-DD" (formatted by the card). */
   targetDate: string;
   daysToRace: number;
@@ -168,7 +172,10 @@ export interface RaceCockpitViewModel {
  * for a deterministic countdown.
  */
 export function buildRaceCockpitViewModel(args: {
-  raceGoal: { distance: string; targetDate: string } | null | undefined;
+  raceGoal:
+    | { distance: string; targetDate: string; eventName?: string }
+    | null
+    | undefined;
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
   compressed: boolean;
@@ -197,6 +204,7 @@ export function buildRaceCockpitViewModel(args: {
 
   return {
     distanceLabel: raceDistanceLabel(raceGoal.distance),
+    eventName: raceGoal.eventName ?? null,
     targetDate: raceGoal.targetDate,
     daysToRace,
     currentWeek: currentWeek ?? null,

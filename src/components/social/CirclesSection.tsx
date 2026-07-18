@@ -21,10 +21,17 @@
  * summary rows (no extra reads). A failed list read renders a retry
  * block; a genuinely-empty list renders the cold-start goal selector
  * instead of a static empty state.
+ *
+ * PROGRAM-CIRCLE-01 (slice 4a): the "Train together" hand-off — the
+ * Programme surfaces deep-link here with ?circleCreate/&circleTitle/
+ * &circleDate (consumed once, stripped {replace:true}). Only a
+ * GoalSpaceType, a title string and a target date ever travel; a
+ * compatible active circle offers open-existing vs start-new, else the
+ * create sheet opens prefilled.
  */
 
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Copy, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
@@ -123,6 +130,30 @@ function formatTargetDate(iso: string): string {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+/* PROGRAM-CIRCLE-01 (slice 4a) — the "Train together" hand-off. The
+   Programme surfaces (TrainingBlockCard, RaceCockpitCard) deep-link to
+   `/social?circleCreate=<type>&circleTitle=<title>&circleDate=<YYYY-MM-DD>`.
+   Privacy fence (hard rule): ONLY a GoalSpaceType, a title string and a
+   target date may travel — never exercises, loads, routes, GPS, weight,
+   calories, macros, photos, or plan internals.
+
+   circleCreate is validated against the types the create sheet can
+   actually RENDER: the three lock-pinned LAUNCH_TEMPLATES plus the
+   selector-only "hybrid" (its option renders whenever template ===
+   "hybrid"). body_composition stays schema-only (GsPb1: private-first
+   until a dedicated privacy review), so a URL can't prefill it. */
+const CREATABLE_TEMPLATE_TYPES: ReadonlySet<GoalSpaceType> =
+  new Set<GoalSpaceType>([
+    ...LAUNCH_TEMPLATES.map((t) => t.type),
+    HYBRID_TEMPLATE.type,
+  ]);
+
+interface TrainTogetherPrefill {
+  type: GoalSpaceType;
+  title: string;
+  targetDate: string | null;
+}
+
 export default function CirclesSection({ uid }: { uid: string }) {
   const {
     loading,
@@ -138,6 +169,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
     backCheckIn,
   } = useGoalSpaces(uid);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showCreate, setShowCreate] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [detailOf, setDetailOf] = useState<CircleSummary | null>(null);
@@ -145,6 +177,22 @@ export default function CirclesSection({ uid }: { uid: string }) {
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
   const [title, setTitle] = useState("");
+  /* PROGRAM-CIRCLE-01 — a hand-off target date shown in the create
+     sheet ("Runs until …") and passed to createCircle. Only ever set
+     by the Train-together prefill; cleared when the sheet closes. */
+  const [pendingTargetDate, setPendingTargetDate] = useState<string | null>(
+    null
+  );
+  /* Consumed-once URL prefill, stashed until circles finish loading —
+     the compatible-vs-create decision needs the real list. */
+  const [handoffPrefill, setHandoffPrefill] =
+    useState<TrainTogetherPrefill | null>(null);
+  /* "You already have a matching circle" chooser. Carries the prefill
+     so "Start a new circle" can still reach the prefilled sheet. */
+  const [trainTogether, setTrainTogether] = useState<{
+    existing: CircleSummary;
+    prefill: TrainTogetherPrefill;
+  } | null>(null);
   const [joinInput, setJoinInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [focusSheetOpen, setFocusSheetOpen] = useState(false);
@@ -182,6 +230,65 @@ export default function CirclesSection({ uid }: { uid: string }) {
       cancelled = true;
     };
   }, [featuredId, loadDetail]);
+
+  /* PROGRAM-CIRCLE-01 — consume the Train-together params ONCE on
+     arrival: strip them from the URL immediately ({replace:true},
+     same idiom as Social.tsx's legacy ?tab=find effect), validate,
+     and stash the prefill. Acting waits for the circle list below. */
+  useEffect(() => {
+    const rawType = searchParams.get("circleCreate");
+    if (rawType === null) return;
+    const rawTitle = searchParams.get("circleTitle");
+    const rawDate = searchParams.get("circleDate");
+    setSearchParams(
+      (params) => {
+        const updated = new URLSearchParams(params);
+        updated.delete("circleCreate");
+        updated.delete("circleTitle");
+        updated.delete("circleDate");
+        return updated;
+      },
+      { replace: true }
+    );
+    // Invalid type → ignore the whole hand-off (params already stripped).
+    if (!CREATABLE_TEMPLATE_TYPES.has(rawType as GoalSpaceType)) return;
+    setHandoffPrefill({
+      type: rawType as GoalSpaceType,
+      // Cap to the create input's maxLength.
+      title: (rawTitle ?? "").slice(0, 60),
+      // Malformed date → dropped, the rest of the prefill survives.
+      targetDate:
+        rawDate !== null && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+          ? rawDate
+          : null,
+    });
+  }, [searchParams, setSearchParams]);
+
+  /* Setter-only (all stable), so safe as an effect dependency. */
+  const openPrefilledCreate = useCallback((prefill: TrainTogetherPrefill) => {
+    setTemplate(prefill.type);
+    setTitle(prefill.title);
+    setPendingTargetDate(prefill.targetDate);
+    setShowCreate(true);
+  }, []);
+
+  /* Act once the list has settled: a COMPATIBLE circle (same type,
+     active) → chooser; otherwise (including a failed list read) →
+     the prefilled create sheet. */
+  useEffect(() => {
+    if (!handoffPrefill || loading) return;
+    const prefill = handoffPrefill;
+    setHandoffPrefill(null);
+    const compatible = loadFailed
+      ? null
+      : (circles.find((c) => c.space.active && c.space.type === prefill.type) ??
+        null);
+    if (compatible) {
+      setTrainTogether({ existing: compatible, prefill });
+    } else {
+      openPrefilledCreate(prefill);
+    }
+  }, [handoffPrefill, loading, loadFailed, circles, openPrefilledCreate]);
 
   // SOCIAL-FOCUS-01 — this LOCAL week's state, derived from the loaded
   // events (one-shot reads; deliberately no listeners). Departed
@@ -281,11 +388,17 @@ export default function CirclesSection({ uid }: { uid: string }) {
   const create = async () => {
     setBusy(true);
     const trimmed = title.trim();
-    const res = await createCircle({ type: template, title: trimmed });
+    const res = await createCircle({
+      type: template,
+      title: trimmed,
+      // PROGRAM-CIRCLE-01 — the Train-together prefill's finish line.
+      ...(pendingTargetDate ? { targetDate: pendingTargetDate } : {}),
+    });
     setBusy(false);
     if (res) {
       setShowCreate(false);
       setTitle("");
+      setPendingTargetDate(null);
       // Straight into the invite hand-off — a circle of one isn't done.
       setInviteHandoff({ title: trimmed, ...res });
     } else {
@@ -661,7 +774,12 @@ export default function CirclesSection({ uid }: { uid: string }) {
       {/* ── Create sheet ── */}
       <BottomSheet
         open={showCreate}
-        onOpenChange={setShowCreate}
+        onOpenChange={(open) => {
+          setShowCreate(open);
+          // The hand-off date belongs to ONE prefilled visit — a later
+          // manual "Start a circle" must not inherit it.
+          if (!open) setPendingTargetDate(null);
+        }}
         title="Start a circle"
         description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
       >
@@ -707,6 +825,13 @@ export default function CirclesSection({ uid }: { uid: string }) {
             aria-label="Circle name"
             className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
+          {/* PROGRAM-CIRCLE-01 — the hand-off's finish line, saved as
+              the circle's targetDate on create. */}
+          {pendingTargetDate && (
+            <p className="text-xs text-muted-foreground">
+              Runs until {formatTargetDate(pendingTargetDate)}
+            </p>
+          )}
           <Button
             className="w-full"
             loading={busy}
@@ -716,6 +841,53 @@ export default function CirclesSection({ uid }: { uid: string }) {
             Start circle
           </Button>
         </div>
+      </BottomSheet>
+
+      {/* ── Train-together chooser (PROGRAM-CIRCLE-01) — the hand-off
+          found a compatible active circle; joining forces beats
+          fragmenting into a duplicate. ── */}
+      <BottomSheet
+        open={trainTogether !== null}
+        onOpenChange={(o) => {
+          if (!o) setTrainTogether(null);
+        }}
+        title="Train together"
+        description="You already have a matching circle."
+      >
+        {trainTogether && (
+          <div className="space-y-2 pb-2">
+            <Button
+              className="w-full"
+              onClick={() => {
+                haptic("light");
+                const existing = trainTogether.existing;
+                setTrainTogether(null);
+                void openDetail(existing);
+              }}
+            >
+              Open {trainTogether.existing.space.title}
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => {
+                haptic("light");
+                const prefill = trainTogether.prefill;
+                setTrainTogether(null);
+                openPrefilledCreate(prefill);
+              }}
+            >
+              Start a new circle
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setTrainTogether(null)}
+            >
+              Not now
+            </Button>
+          </div>
+        )}
       </BottomSheet>
 
       {/* ── Join sheet ── */}
