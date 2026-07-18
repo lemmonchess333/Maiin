@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -6,6 +6,7 @@ import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
+import { Button } from "@/components/ui/Button";
 
 /** localStorage key prefix for the per-week dismissal flag. Dismissal
  *  is scoped to the active week — moving into a new week reopens the
@@ -21,6 +22,18 @@ interface DeloadBannerProps {
    *  "2026-W21"). Dismissal is keyed against this so a new week
    *  reopens the banner if the signal still applies. */
   weekKey: string;
+  /** PROGRAM-DELOAD-01: true while the active week is already a deload
+   *  week (`programState.currentPhase === "deload"` — user-applied OR
+   *  the automatic week-4 cycle). Swaps the recommendation copy + Apply
+   *  CTA for a calm "active" confirmation so the user is never offered
+   *  an Apply that the server would reject as already-deloaded. */
+  deloadActive?: boolean;
+  /** PROGRAM-DELOAD-01: applies the deload to the active week (the
+   *  server `applyDeloadWeek` command). Resolves true on success —
+   *  the banner fires the reserved `action: 'applied'` telemetry;
+   *  the caller owns the success/undo toast. Absent → the banner
+   *  stays informational (pre-wire behaviour). */
+  onApply?: () => Promise<boolean>;
 }
 
 /**
@@ -28,26 +41,33 @@ interface DeloadBannerProps {
  * level so it's visible regardless of which day the user is
  * inspecting — deload is a week-level signal, not a day-level one.
  *
- * v1 ships informational copy + a Dismiss action. The locked
- * "Apply" CTA is reserved for when the program-engine deload-apply
- * mutation lands (it'd need to reduce volume across the active
- * week's planned sessions). Until then, the user can act on the
- * banner manually by lifting lighter / running easier; the banner
- * itself is the awareness surface.
+ * PROGRAM-DELOAD-01 delivers the Apply CTA that v1 reserved: `onApply`
+ * routes through the server `applyDeloadWeek` programme command
+ * (−1 set floor 2, weight ×0.85 across the active week). While the
+ * week is already deloaded (`deloadActive`) the banner renders a calm
+ * confirmation instead of the CTA.
  *
  * Telemetry per Pgm3 lock:
  *   - programme_deload_banner_viewed: fires once per session when
  *     the banner first becomes visible (deloadRecommended flips
  *     true AND the user hasn't dismissed for this week).
  *   - programme_deload_banner_action: fires on dismiss with
- *     action: 'dismissed'. The 'applied' action is reserved.
+ *     action: 'dismissed', and on a successful apply with
+ *     action: 'applied' (the action v1 reserved). The undo action
+ *     is tracked by the caller ('undo') since undo lives in its
+ *     toast.
  *
  * Animation: framer-motion AnimatePresence slide-down + fade on
  * first appearance. Subsequent navigations between days find the
  * banner already-mounted (no re-animation — wouldn't want jitter
  * on every day-stepper tap).
  */
-export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
+export default function DeloadBanner({
+  visible,
+  weekKey,
+  deloadActive = false,
+  onApply,
+}: DeloadBannerProps) {
   const { dismissed, dismiss } = useDismissOnce(
     `${DISMISSED_STORAGE_PREFIX}:${weekKey}`
   );
@@ -57,8 +77,28 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
   // after dismissal-window expiry, the parent will remount this
   // component (key on weekKey) and the ref resets.
   const viewedFiredRef = useRef(false);
+  const [applying, setApplying] = useState(false);
 
-  const shouldRender = visible && !dismissed;
+  // An applied deload overrides a previous dismissal — the state
+  // changed materially, and the "active" confirmation is the only
+  // surface telling the user their week is eased.
+  const shouldRender = visible && (!dismissed || deloadActive);
+
+  const handleApply = async () => {
+    if (!onApply || applying) return;
+    haptic("light");
+    setApplying(true);
+    try {
+      const ok = await onApply();
+      if (ok) {
+        trackProgrammeEvent("programme_deload_banner_action", {
+          action: "applied",
+        });
+      }
+    } finally {
+      setApplying(false);
+    }
+  };
 
   useEffect(() => {
     if (!shouldRender || viewedFiredRef.current) return;
@@ -95,36 +135,63 @@ export default function DeloadBanner({ visible, weekKey }: DeloadBannerProps) {
           className="overflow-hidden"
         >
           <div
-            className="p-4 rounded-2xl flex items-start gap-3 relative"
-            style={{ background: THEME.warning + "14" }}
+            className="p-4 rounded-2xl relative"
+            style={{
+              background: (deloadActive ? THEME.success : THEME.warning) + "14",
+            }}
             role="region"
-            aria-label="Deload week recommended"
+            aria-label={
+              deloadActive ? "Deload week active" : "Deload week recommended"
+            }
           >
-            <Flame
-              className="size-5 shrink-0 mt-0.5"
-              style={{ color: THEME.warning }}
-              aria-hidden="true"
-            />
-            <div className="flex-1 min-w-0">
-              <p
-                className="text-sm font-semibold"
-                style={{ color: THEME.warning }}
-              >
-                Consider a deload week
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                Your training load has been high with signs of reduced recovery.
-                A lighter week can help you come back stronger.
-              </p>
+            <div className="flex items-start gap-3">
+              <Flame
+                className="size-5 shrink-0 mt-0.5"
+                style={{
+                  color: deloadActive ? THEME.success : THEME.warning,
+                }}
+                aria-hidden="true"
+              />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-sm font-semibold"
+                  style={{
+                    color: deloadActive ? THEME.success : THEME.warning,
+                  }}
+                >
+                  {deloadActive
+                    ? "Deload week active"
+                    : "Consider a deload week"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                  {deloadActive
+                    ? "This week's loads are eased — lighter weights, one set fewer. Push again next week."
+                    : "Your training load has been high with signs of reduced recovery. A lighter week can help you come back stronger."}
+                </p>
+              </div>
+              {!deloadActive && (
+                <button
+                  type="button"
+                  onClick={handleDismiss}
+                  aria-label="Dismiss deload banner"
+                  className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
+                >
+                  <X className="size-4" aria-hidden="true" />
+                </button>
+              )}
             </div>
-            <button
-              type="button"
-              onClick={handleDismiss}
-              aria-label="Dismiss deload banner"
-              className="size-7 -m-1 relative before:absolute before:-inset-2 before:content-[''] rounded-lg flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-black/[0.04] active:scale-90 transition-all"
-            >
-              <X className="size-4" aria-hidden="true" />
-            </button>
+            {!deloadActive && onApply && (
+              <div className="mt-3 pl-8">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={applying}
+                  onClick={() => void handleApply()}
+                >
+                  Apply deload week
+                </Button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

@@ -45,6 +45,11 @@ const PROGRAM_STATE_KEYS = new Set([
   "primaryGoal",
   "templateId",
   "programSchemaVersion",
+  // PROGRAM-DELOAD-01: pre-deload stash written by the applyDeloadWeek
+  // command reducer; consumed (and removed) by revertDeloadWeek. Without
+  // this entry the transaction's own sanitizer would strip the snapshot
+  // it just wrote and undo would always fail.
+  "deloadSnapshot",
 ]);
 
 // Generous ceiling well under Firestore's ~1 MiB document limit. A real
