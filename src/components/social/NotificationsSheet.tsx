@@ -83,11 +83,18 @@ export default function NotificationsSheet({
   onOpenChange,
   items,
   loading,
+  error = false,
+  onRetry,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   items: NotificationItem[];
   loading: boolean;
+  /** NOTIFICATION-TRUST-01: a failed read renders a truthful unavailable
+   *  state with a Try again action — never the "No notifications yet"
+   *  empty state. */
+  error?: boolean;
+  onRetry?: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -97,6 +104,31 @@ export default function NotificationsSheet({
         {loading ? (
           <div className="flex justify-center py-10">
             <Spinner />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center text-center py-10 px-6">
+            <div
+              className="size-12 rounded-2xl flex items-center justify-center mb-3"
+              style={{ backgroundColor: THEME.warning + "14" }}
+            >
+              <Bell className="size-6" style={{ color: THEME.warning }} />
+            </div>
+            <p className="text-sm font-semibold text-foreground">
+              Notifications unavailable
+            </p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              We couldn&apos;t load your notifications. Check your connection
+              and try again.
+            </p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="mt-4 min-h-[44px] px-5 rounded-xl text-sm font-semibold bg-muted text-foreground active:scale-[0.97] transition-transform"
+              >
+                Try again
+              </button>
+            )}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center text-center py-10 px-6">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   collection,
   query,
@@ -54,7 +54,16 @@ export interface NotificationItem {
   createdAt: Date | null;
 }
 
-const LAST_SEEN_KEY = "tropos-notif-last-seen";
+// NOTIFICATION-TRUST-01: last-seen is scoped BY uid. A shared browser
+// can't prove which account wrote an unscoped value, so account B must
+// not inherit account A's "seen" pointer. The old unscoped
+// `tropos-notif-last-seen` is deliberately NOT migrated — worst case a
+// user re-sees up to 50 recent rows as unread once after upgrade, the
+// intended privacy-first trade-off.
+const LAST_SEEN_KEY_PREFIX = "tropos-notif-last-seen";
+function lastSeenKey(uid: string): string {
+  return `${LAST_SEEN_KEY_PREFIX}:${uid}`;
+}
 // Bound the per-client subscription regardless of how active the user's
 // social graph is — the tray shows the most recent slice, older history
 // is not a use case worth streaming.
@@ -83,11 +92,13 @@ export function countUnread(
   }, 0);
 }
 
-function readLastSeenMs(): number {
-  if (typeof window === "undefined") return 0;
+function readLastSeenMs(uid: string | undefined): number {
+  if (typeof window === "undefined" || !uid) return 0;
   try {
-    const raw = window.localStorage.getItem(LAST_SEEN_KEY);
-    return raw ? new Date(raw).getTime() : 0;
+    const raw = window.localStorage.getItem(lastSeenKey(uid));
+    // Malformed value fails CLOSED to never-seen (0) rather than NaN.
+    const ms = raw ? new Date(raw).getTime() : 0;
+    return Number.isFinite(ms) ? ms : 0;
   } catch {
     return 0;
   }
@@ -95,24 +106,42 @@ function readLastSeenMs(): number {
 
 export function useNotifications() {
   const { user } = useAuth();
+  const uid = user?.uid;
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastSeenMs, setLastSeenMs] = useState<number>(() => readLastSeenMs());
+  // NOTIFICATION-TRUST-01: a failed read is a DISTINCT state, not an
+  // empty tray — the sheet renders "Notifications unavailable" + retry
+  // instead of "No notifications yet".
+  const [error, setError] = useState(false);
+  const [lastSeenMs, setLastSeenMs] = useState<number>(0);
+  // Bumped on account switch AND on an explicit retry; the snapshot
+  // callbacks commit only if they still own the current generation, so a
+  // late callback from a torn-down listener can never write.
+  const genRef = useRef(0);
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  // Last-seen is uid-owned; recompute when the account changes.
+  useEffect(() => {
+    setLastSeenMs(readLastSeenMs(uid));
+  }, [uid]);
 
   useEffect(() => {
-    // Mirrors useUnreadCount: bail without synchronous setState (the Social
-    // page only mounts authed; loading stays in its initial true state until
-    // the first snapshot resolves it). State is only ever set inside the
-    // async snapshot callbacks below.
-    if (!user?.uid) return;
+    if (!uid) return;
+    const myGen = ++genRef.current;
+    // Account switch / retry → expose an empty, loading generation
+    // immediately so the previous account's rows can't linger.
+    setItems([]);
+    setError(false);
+    setLoading(true);
     const q = query(
-      collection(db, "notifications", user.uid, "items"),
+      collection(db, "notifications", uid, "items"),
       orderBy("createdAt", "desc"),
       limit(NOTIF_CAP)
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
+        if (genRef.current !== myGen) return;
         const next: NotificationItem[] = [];
         snap.docs.forEach((d) => {
           const data = d.data() as Record<string, unknown>;
@@ -135,32 +164,42 @@ export function useNotifications() {
           });
         });
         setItems(next);
+        setError(false);
         setLoading(false);
       },
       () => {
-        // Permission/network error — fail closed to an empty tray rather
-        // than surfacing a broken state.
+        if (genRef.current !== myGen) return;
+        // Permission/network error → a TRUTHFUL unavailable state, not a
+        // silent empty tray. The sheet offers a retry.
         setItems([]);
+        setError(true);
         setLoading(false);
       }
     );
     return unsub;
-  }, [user?.uid]);
+  }, [uid, retryNonce]);
 
+  // An unavailable read has no countable rows — don't surface a stale
+  // unread badge over an error.
   const unreadCount = useMemo(
-    () => countUnread(items, lastSeenMs),
-    [items, lastSeenMs]
+    () => (error ? 0 : countUnread(items, lastSeenMs)),
+    [items, lastSeenMs, error]
   );
 
   const markAllSeen = useCallback(() => {
+    if (!uid) return;
     const now = new Date();
     try {
-      window.localStorage.setItem(LAST_SEEN_KEY, now.toISOString());
+      window.localStorage.setItem(lastSeenKey(uid), now.toISOString());
     } catch {
       // localStorage unavailable — in-memory state still clears the badge.
     }
     setLastSeenMs(now.getTime());
-  }, []);
+  }, [uid]);
 
-  return { items, loading, unreadCount, markAllSeen };
+  /** Re-subscribe after a failed read — bumps the generation, hides the
+   *  failed rows synchronously, and ignores the old listener's callbacks. */
+  const retry = useCallback(() => setRetryNonce((n) => n + 1), []);
+
+  return { items, loading, error, unreadCount, markAllSeen, retry };
 }

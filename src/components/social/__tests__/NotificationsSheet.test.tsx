@@ -137,3 +137,25 @@ describe("NotificationsSheet", () => {
     expect(screen.queryByText("No notifications yet")).not.toBeInTheDocument();
   });
 });
+
+describe("NotificationsSheet — NOTIFICATION-TRUST-01 error state", () => {
+  it("renders a truthful unavailable state + Try again, not the empty state", () => {
+    const onRetry = vi.fn();
+    render(
+      <MemoryRouter>
+        <NotificationsSheet
+          open
+          onOpenChange={vi.fn()}
+          items={[]}
+          loading={false}
+          error
+          onRetry={onRetry}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByText(/notifications unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no notifications yet/i)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});
