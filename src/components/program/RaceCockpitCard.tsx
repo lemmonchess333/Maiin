@@ -25,6 +25,10 @@ import PhaseRail from "./PhaseRail";
 interface RaceCockpitCardProps {
   /** Readable distance — "Marathon", "Half Marathon", "10K", "5K". */
   distanceLabel: string;
+  /** Optional user-entered event name ("London Marathon 2026"). When
+   *  present it becomes the card heading and the distance demotes into
+   *  the meta sub-line; when absent, the distance stays the heading. */
+  eventName?: string;
   /** Local "YYYY-MM-DD" target date. */
   targetDate: string;
   daysToRace: number;
@@ -40,6 +44,7 @@ interface RaceCockpitCardProps {
 
 export default function RaceCockpitCard({
   distanceLabel,
+  eventName,
   targetDate,
   daysToRace,
   currentWeek,
@@ -74,9 +79,17 @@ export default function RaceCockpitCard({
             Race plan
           </div>
           <h3 className="text-2xl font-extrabold tracking-tight text-foreground leading-tight">
-            {distanceLabel}
+            {eventName || distanceLabel}
           </h3>
           <p className="text-sm text-muted-foreground">
+            {/* When the event name takes the heading, the distance demotes
+                into this meta row. */}
+            {eventName && (
+              <>
+                {distanceLabel}
+                {" · "}
+              </>
+            )}
             {dateLabel}
             {" · "}
             <span className="font-medium text-foreground">

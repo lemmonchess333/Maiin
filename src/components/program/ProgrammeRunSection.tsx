@@ -1415,6 +1415,7 @@ export default function ProgrammeRunSection({
             raceCockpitVM && (
               <RaceCockpitCard
                 distanceLabel={raceCockpitVM.distanceLabel}
+                eventName={raceCockpitVM.eventName ?? undefined}
                 targetDate={raceCockpitVM.targetDate}
                 daysToRace={raceCockpitVM.daysToRace}
                 currentWeek={raceCockpitVM.currentWeek}

@@ -66,7 +66,33 @@ describe("RunPlanSettings", () => {
     // Run-only patch: materializes runMode + raceGoal, no plan/workouts rebuild.
     expect(patch.runMode).toBe("race_prep");
     expect(patch.raceGoal).toMatchObject({ targetDate: "2027-01-01" });
+    // Blank event name → the key is OMITTED (never undefined/empty string).
+    expect("eventName" in patch.raceGoal).toBe(false);
     expect(refreshRunSchedule).toHaveBeenCalled();
+  });
+
+  it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal patch", async () => {
+    const { updateProfile } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    const name = screen.getByLabelText(
+      /Event name \(optional\)/i
+    ) as HTMLInputElement;
+    // Trailing whitespace pins the .trim() on save.
+    fireEvent.change(name, { target: { value: "  London Marathon 2027  " } });
+
+    const save = await screen.findByRole("button", { name: /Save .*plan/i });
+    fireEvent.click(save);
+
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    expect(patch.raceGoal).toEqual({
+      distance: "10k",
+      targetDate: "2027-01-01",
+      eventName: "London Marathon 2027",
+    });
   });
 
   it("D14: shows the Pgm6 tuning knobs in race prep and persists them on save", async () => {
