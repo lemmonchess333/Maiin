@@ -17,7 +17,10 @@
  */
 
 import { ChevronRight, Flag } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
+import { haptic } from "@/lib/haptic";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import PhaseRail from "./PhaseRail";
@@ -54,6 +57,7 @@ export default function RaceCockpitCard({
   compressed,
   onEdit,
 }: RaceCockpitCardProps) {
+  const navigate = useNavigate();
   const hasProgress = currentWeek != null && totalWeeks != null;
   const progress = hasProgress
     ? Math.min(100, Math.max(0, ((currentWeek! + 1) / totalWeeks!) * 100))
@@ -136,6 +140,25 @@ export default function RaceCockpitCard({
           <PhaseRail activePhase={phaseLabel} />
         </div>
       )}
+
+      {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the race plan off to a
+          Circle. Running non-critical action → sport-tinted (coral).
+          Privacy fence: ONLY the space type, a readable title and the
+          race date travel — never routes, GPS, paces or plan internals. */}
+      <Button
+        variant="sport-tinted"
+        fullWidth
+        onClick={() => {
+          haptic("light");
+          navigate(
+            `/social?circleCreate=race&circleTitle=${encodeURIComponent(
+              `${distanceLabel} training`
+            )}&circleDate=${targetDate}`
+          );
+        }}
+      >
+        Train together
+      </Button>
 
       {inTaper && (
         <SectionLabel tier="section" className="text-running">

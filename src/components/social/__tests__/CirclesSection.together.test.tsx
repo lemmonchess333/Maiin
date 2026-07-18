@@ -17,6 +17,10 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+/* CirclesSection reads useSearchParams (PROGRAM-CIRCLE-01 hand-off),
+   so renders need a Router. The partial mock below keeps the real
+   MemoryRouter. */
+import { MemoryRouter } from "react-router-dom";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
 
 const navigateMock = vi.fn();
@@ -89,7 +93,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
   it("renders the retry block when the list read failed, and Retry calls reload", () => {
     const value = hookValue({ loadFailed: true });
     mockUseGoalSpaces.mockReturnValue(value);
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText("Couldn't load your Circles.")).toBeInTheDocument();
     // Failed ≠ empty: the cold-start selector must NOT render.
@@ -101,7 +109,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
 
   it("empty + ok renders the five-option cold-start selector", () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText("What support would help?")).toBeInTheDocument();
     for (const label of [
@@ -122,7 +134,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
   it("Private Progress navigates to /review and never creates a circle", () => {
     const value = hookValue();
     mockUseGoalSpaces.mockReturnValue(value);
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     fireEvent.click(screen.getByText("Private Progress"));
     expect(navigateMock).toHaveBeenCalledWith("/review");
@@ -131,7 +147,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
 
   it("the Hybrid option opens the create sheet with a visible, selected hybrid template", async () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     fireEvent.click(screen.getByText("Hybrid"));
     const group = await screen.findByRole("group", {
@@ -154,7 +174,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       ],
     });
     mockUseGoalSpaces.mockReturnValue(value);
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     // Featured hero card: tap target named by the circle title + the
     // single weekly-focus action.
@@ -181,7 +205,11 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       ],
     });
     mockUseGoalSpaces.mockReturnValue(value);
-    render(<CirclesSection uid="me" />);
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
 
     await waitFor(() => expect(value.loadDetail).toHaveBeenCalledWith("c2"));
     expect(value.loadDetail).toHaveBeenCalledTimes(1);
