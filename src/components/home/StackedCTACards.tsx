@@ -10,13 +10,53 @@ import WeightStepsTiles, {
 } from "@/components/home/WeightStepsTiles";
 import WelcomeBackCard from "@/components/home/WelcomeBackCard";
 
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
-const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0, 0, 0.2, 1] as const } } };
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } },
+};
+const fadeUp = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.25, ease: [0, 0, 0.2, 1] as const },
+  },
+};
 
 export type UserSegment = "new" | "active" | "returning" | "casual";
 
-export default function StackedCTACards({ nextWorkout, todayType, navigate, waterGlasses, waterTarget, onAddWater, onRemoveWater, lastWeight, weightUnit, onLogWeight, lastWeightDate, hideWeightNumber, weightTrend, todayRun, userSegment, muscleGroups, firstWorkout = false, firstRun = false, firstMeal = false }: {
-  nextWorkout: { dayName: string; dayType: string; exercises: { name: string }[] } | null;
+export default function StackedCTACards({
+  nextWorkout,
+  liftDayIndex = null,
+  liftStartable = true,
+  todayType,
+  navigate,
+  waterGlasses,
+  waterTarget,
+  onAddWater,
+  onRemoveWater,
+  lastWeight,
+  weightUnit,
+  onLogWeight,
+  lastWeightDate,
+  hideWeightNumber,
+  weightTrend,
+  todayRun,
+  userSegment,
+  muscleGroups,
+  firstWorkout = false,
+  firstRun = false,
+  firstMeal = false,
+}: {
+  nextWorkout: {
+    dayName: string;
+    dayType: string;
+    exercises: { name: string }[];
+  } | null;
+  /** HOME-ACTION-01: the resolved lift slot's day index + startability,
+   *  threaded to LiftCTACard for `?day=N` deep-linking and the Done state. */
+  liftDayIndex?: number | null;
+  liftStartable?: boolean;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
   waterGlasses: number;
@@ -37,7 +77,8 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   firstRun?: boolean;
   firstMeal?: boolean;
 }) {
-  const showLift = (todayType === "lift" || todayType === "both") && nextWorkout;
+  const showLift =
+    (todayType === "lift" || todayType === "both") && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
   // Rest-day cue. Previously neither lift nor run rendered on rest
   // days and the page looked half-empty — users couldn't distinguish
@@ -45,11 +86,19 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   // slot with an intentional message and keeps the page rhythm.
   const showRest = todayType === "rest";
 
-  const liftCard = showLift && nextWorkout ? (
-    <motion.div key="lift" variants={fadeUp}>
-      <LiftCTACard nextWorkout={nextWorkout} navigate={navigate} muscleGroups={muscleGroups} isFirst={firstWorkout} />
-    </motion.div>
-  ) : null;
+  const liftCard =
+    showLift && nextWorkout ? (
+      <motion.div key="lift" variants={fadeUp}>
+        <LiftCTACard
+          nextWorkout={nextWorkout}
+          navigate={navigate}
+          muscleGroups={muscleGroups}
+          isFirst={firstWorkout}
+          dayIndex={liftDayIndex}
+          isStartable={liftStartable}
+        />
+      </motion.div>
+    ) : null;
   const runCard = showRun ? (
     <motion.div key="run" variants={fadeUp}>
       <RunCTACard todayRun={todayRun} navigate={navigate} isFirst={firstRun} />
@@ -65,17 +114,34 @@ export default function StackedCTACards({ nextWorkout, todayType, navigate, wate
   ) : null;
   const waterCard = (
     <motion.div key="water" variants={fadeUp} className="space-y-3">
-      <WaterCard waterGlasses={waterGlasses} waterTarget={waterTarget} onAddWater={onAddWater} onRemoveWater={onRemoveWater} />
+      <WaterCard
+        waterGlasses={waterGlasses}
+        waterTarget={waterTarget}
+        onAddWater={onAddWater}
+        onRemoveWater={onRemoveWater}
+      />
     </motion.div>
   );
   const weightTiles = (
     <motion.div key="weight" variants={fadeUp}>
-      <WeightStepsTiles lastWeight={lastWeight} weightUnit={weightUnit} onLogWeight={onLogWeight} lastWeightDate={lastWeightDate} hideNumber={hideWeightNumber} weightTrend={weightTrend} />
+      <WeightStepsTiles
+        lastWeight={lastWeight}
+        weightUnit={weightUnit}
+        onLogWeight={onLogWeight}
+        lastWeightDate={lastWeightDate}
+        hideNumber={hideWeightNumber}
+        weightTrend={weightTrend}
+      />
     </motion.div>
   );
 
   return (
-    <motion.div className="space-y-3" initial="hidden" animate="visible" variants={stagger}>
+    <motion.div
+      className="space-y-3"
+      initial="hidden"
+      animate="visible"
+      variants={stagger}
+    >
       {userSegment === "returning" && (
         <motion.div variants={fadeUp}>
           <AnimatePresence>
