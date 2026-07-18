@@ -1728,3 +1728,66 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     expect(setDocCalls.length).toBe(0);
   });
 });
+
+describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () => {
+  function seedRaceDay() {
+    const targetDate = "2027-01-01";
+    mockProfile = raceProfile(targetDate);
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      // A valid V2 race run day so the load preserves it (no regen).
+      runDays: [
+        {
+          id: "race_day_1",
+          dayIndex: 3,
+          date: "2027-01-01",
+          weekKey: "2026-12-27",
+          templateId: "10k_race",
+          type: "race",
+          status: "planned",
+        } as ScheduledRunDay,
+      ],
+      runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate } },
+    } as ProgramState;
+    mockDocExists = true;
+  }
+
+  it("overrideRunDay refuses to swap a scheduled race (no write)", async () => {
+    seedRaceDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0; // capture only writes after this point
+
+    await act(async () => {
+      await result.current.overrideRunDay("race_day_1", "easy_30");
+    });
+
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("markManualComplete refuses a scheduled race (no write)", async () => {
+    seedRaceDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.markManualComplete("race_day_1");
+    });
+
+    expect(setDocCalls.length).toBe(0);
+  });
+});
