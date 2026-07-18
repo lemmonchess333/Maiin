@@ -34,7 +34,14 @@ export type NotificationType =
   // SOCIAL-FOCUS-01 — a Circle member backed the recipient's weekly
   // focus. Deliberately generic: the copy never names the backer or
   // the focus, and the tray row doesn't deep-link to a profile.
-  | "circle_focus_backed";
+  | "circle_focus_backed"
+  // CIRCLE-ACTIVITY-NOTIFICATIONS — a co-member published a high-signal
+  // Circle event. Named (the recipient already sees them in the shared
+  // timeline) and deep-links to the actor's profile.
+  | "circle_milestone"
+  | "circle_needs_support"
+  | "circle_joined"
+  | "circle_routine_shared";
 
 export interface NotificationItem {
   id: string;
@@ -59,6 +66,10 @@ const VALID_TYPES: ReadonlySet<string> = new Set<NotificationType>([
   "follow",
   "challenge_milestone",
   "circle_focus_backed",
+  "circle_milestone",
+  "circle_needs_support",
+  "circle_joined",
+  "circle_routine_shared",
 ]);
 
 /** Pure: count items strictly newer than the last-seen instant. */
