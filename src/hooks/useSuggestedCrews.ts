@@ -1,15 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { useAuth } from '@/lib/auth';
-import { getFollowingIds } from '@/lib/socialApi';
-import { db } from '@/lib/firebase';
-import { logger } from '@/lib/logger';
-import type { Crew } from './useCrews';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { useAuth } from "@/lib/auth";
+import { getFollowingIds } from "@/lib/socialApi";
+import { db } from "@/lib/firebase";
+import { logger } from "@/lib/logger";
+import {
+  socialPreferenceKey,
+  purgeLegacySocialKey,
+} from "@/lib/socialPreferenceKeys";
+import type { Crew } from "./useCrews";
 
 /** Soc5d Phase 2: localStorage array of dismissed crew suggestion IDs.
  *  Mirrors S2b's "exclude rejected suggestions" pattern. Per-device by
- *  design — cross-device sync deferred until demand emerges. */
-const DISMISSED_STORAGE_KEY = 'tropos-social-dismissed-crews';
+ *  design — cross-device sync deferred until demand emerges.
+ *  SOCIAL-ATTENTION-01: uid-scoped so account B on a shared browser
+ *  doesn't inherit account A's dismissals; the pre-scoping global key
+ *  is purged, never migrated. */
 
 /** Soc5d locked rule: friend-of-friend inference requires ≥2 connections
  *  before a crew shows as suggested. Single-overlap suggestions are too
@@ -17,21 +23,32 @@ const DISMISSED_STORAGE_KEY = 'tropos-social-dismissed-crews';
  *  this crew because one person you follow is in it"). */
 const MIN_FOLLOW_MATCHES = 2;
 
-function readDismissed(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
+function readDismissed(uid: string | undefined): Set<string> {
+  if (typeof window === "undefined" || !uid) return new Set();
   try {
-    const raw = window.localStorage.getItem(DISMISSED_STORAGE_KEY);
+    purgeLegacySocialKey("dismissed-crews");
+    const raw = window.localStorage.getItem(
+      socialPreferenceKey(uid, "dismissed-crews")
+    );
     if (!raw) return new Set();
     const arr = JSON.parse(raw) as unknown;
-    return new Set(Array.isArray(arr) ? arr.filter((x): x is string => typeof x === 'string') : []);
+    return new Set(
+      Array.isArray(arr)
+        ? arr.filter((x): x is string => typeof x === "string")
+        : []
+    );
   } catch {
     return new Set();
   }
 }
 
-function writeDismissed(ids: Set<string>) {
+function writeDismissed(uid: string | undefined, ids: Set<string>) {
+  if (!uid) return;
   try {
-    window.localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify([...ids]));
+    window.localStorage.setItem(
+      socialPreferenceKey(uid, "dismissed-crews"),
+      JSON.stringify([...ids])
+    );
   } catch {
     // private mode / quota exceeded — state still updates in memory
   }
@@ -60,10 +77,25 @@ export interface SuggestedCrew extends Crew {
  */
 export function useSuggestedCrews(active: boolean, allCrews: Crew[]) {
   const { user, profile } = useAuth();
+  const uid = user?.uid;
   const [crews, setCrews] = useState<SuggestedCrew[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => readDismissed());
+  const [dismissed, setDismissed] = useState<Set<string>>(() =>
+    readDismissed(uid)
+  );
+  // Bumped on every load() so a late resolve from account A can't
+  // setCrews after a switch to account B.
+  const genRef = useRef(0);
+
+  // Account-switch reset (adjust-state-during-render idiom): re-read
+  // the new account's dismissals and drop the previous list.
+  const [ownerUid, setOwnerUid] = useState<string | undefined>(uid);
+  if (ownerUid !== uid) {
+    setOwnerUid(uid);
+    setDismissed(readDismissed(uid));
+    setCrews([]);
+  }
 
   const ownCrewId = profile?.crewId;
 
@@ -72,6 +104,8 @@ export function useSuggestedCrews(active: boolean, allCrews: Crew[]) {
       setCrews([]);
       return;
     }
+    const myGen = ++genRef.current;
+    const isCurrent = () => genRef.current === myGen;
     setLoading(true);
     try {
       const followIds = await getFollowingIds(user.uid);
@@ -79,13 +113,13 @@ export function useSuggestedCrews(active: boolean, allCrews: Crew[]) {
       // fewer than that many people. Saves N profile reads in the
       // common new-user case.
       if (followIds.size < MIN_FOLLOW_MATCHES) {
-        setCrews([]);
+        if (isCurrent()) setCrews([]);
         return;
       }
       const profileSnaps = await Promise.all(
-        [...followIds].map((uid) =>
-          getDoc(doc(db, 'users', uid)).catch(() => null),
-        ),
+        [...followIds].map((followUid) =>
+          getDoc(doc(db, "users", followUid)).catch(() => null)
+        )
       );
       const buckets = new Map<string, number>();
       for (const snap of profileSnaps) {
@@ -106,15 +140,14 @@ export function useSuggestedCrews(active: boolean, allCrews: Crew[]) {
       // Sort: most-matched first; tie-break by crew popularity.
       result.sort(
         (a, b) =>
-          b.matchedFollows - a.matchedFollows ||
-          b.memberCount - a.memberCount,
+          b.matchedFollows - a.matchedFollows || b.memberCount - a.memberCount
       );
-      setCrews(result);
+      if (isCurrent()) setCrews(result);
     } catch (err) {
-      logger.error('[useSuggestedCrews] fetch failed', err);
-      setCrews([]);
+      logger.error("[useSuggestedCrews] fetch failed", err);
+      if (isCurrent()) setCrews([]);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }, [user, ownCrewId, allCrews, dismissed]);
 
@@ -134,15 +167,18 @@ export function useSuggestedCrews(active: boolean, allCrews: Crew[]) {
     };
   }, [active, load, refreshKey]);
 
-  const dismiss = useCallback((crewId: string) => {
-    setDismissed((prev) => {
-      const next = new Set(prev);
-      next.add(crewId);
-      writeDismissed(next);
-      return next;
-    });
-    setCrews((prev) => prev.filter((c) => c.id !== crewId));
-  }, []);
+  const dismiss = useCallback(
+    (crewId: string) => {
+      setDismissed((prev) => {
+        const next = new Set(prev);
+        next.add(crewId);
+        writeDismissed(uid, next);
+        return next;
+      });
+      setCrews((prev) => prev.filter((c) => c.id !== crewId));
+    },
+    [uid]
+  );
 
   return {
     crews,
