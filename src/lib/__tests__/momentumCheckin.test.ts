@@ -15,6 +15,7 @@ import {
   FOCUS_OPTIONS,
   nextActionForFeel,
   nextActionForFocus,
+  resolveReviewNextAction,
   checkinDocPath,
   parseCheckin,
 } from "../momentumCheckin";
@@ -38,6 +39,51 @@ describe("nextActionForFeel / nextActionForFocus", () => {
 
   it("'a bit much' steers to programme options, never a volume cut", () => {
     expect(nextActionForFeel("a_bit_much").to).toBe("/program");
+  });
+});
+
+describe("resolveReviewNextAction (REVIEW-ROUTE-01 focus-first)", () => {
+  it("a food-logging focus routes to /food regardless of feel (the bug)", () => {
+    for (const { value: feel } of FEEL_OPTIONS) {
+      expect(resolveReviewNextAction(feel, "food_logging").to).toBe("/food");
+    }
+  });
+
+  it("a weigh-in focus routes to Home regardless of feel", () => {
+    for (const { value: feel } of FEEL_OPTIONS) {
+      expect(resolveReviewNextAction(feel, "weigh_ins").to).toBe("/");
+    }
+  });
+
+  it("a Programme focus (lifts/runs) keeps the feel-refined Programme action", () => {
+    expect(resolveReviewNextAction("too_light", "lifts")).toEqual(
+      nextActionForFeel("too_light")
+    );
+    expect(resolveReviewNextAction("good_fit", "runs")).toEqual(
+      nextActionForFeel("good_fit")
+    );
+    expect(resolveReviewNextAction("too_light", "lifts").to).toBe("/program");
+  });
+
+  it("no focus falls back to the feel-based action", () => {
+    for (const { value: feel } of FEEL_OPTIONS) {
+      expect(resolveReviewNextAction(feel, null)).toEqual(
+        nextActionForFeel(feel)
+      );
+    }
+  });
+
+  it("pins all 4×3 focus/feel cells to a valid destination", () => {
+    for (const { value: focus } of FOCUS_OPTIONS) {
+      for (const { value: feel } of FEEL_OPTIONS) {
+        const action = resolveReviewNextAction(feel, focus);
+        expect(action.to.startsWith("/")).toBe(true);
+        // A food/weigh-in commitment must never land on Programme.
+        if (focus === "food_logging" || focus === "weigh_ins") {
+          expect(action.to).not.toBe("/program");
+        }
+      }
+    }
   });
 });
 
