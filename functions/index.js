@@ -6506,6 +6506,35 @@ exports.backGoalSpaceCheckIn = functions
     }
   });
 
+// ── CIRCLE-TARGET-LIFECYCLE / CONTINUATION — owner resolves a Circle
+// whose targetDate has passed (client detects "reached" from the date
+// it already loads). continue = new future targetDate; wrap =
+// active:false + endedAt. Space doc is server-only-writable, so this
+// callable is the only lifecycle-transition path.
+const goalSpaceLifecycle = require("./lib/goalSpaceLifecycle");
+
+exports.resolveGoalSpaceTarget = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(
+      context,
+      "goalSpaceResolveTarget",
+      10
+    );
+    try {
+      return await goalSpaceLifecycle.resolveTarget({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        action: data?.action,
+        newTargetDate: data?.newTargetDate,
+        now: Date.now(),
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
 // ══════════════════════════════════════════════
 // ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
 // ══════════════════════════════════════════════
