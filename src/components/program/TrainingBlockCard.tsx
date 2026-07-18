@@ -31,6 +31,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import {
   BLOCK_DURATIONS,
   BLOCK_PRESETS,
+  blockEndDate,
   blockWeekOf,
   isBlockFinished,
   presetProgrammeGoal,
@@ -442,6 +443,25 @@ export default function TrainingBlockCard({
                 }}
               >
                 Tune programme for this block
+              </Button>
+              {/* PROGRAM-CIRCLE-01 (slice 4a) — hand the block off to a
+                  Circle. Privacy fence: ONLY the space type, the block's
+                  display title and its end date travel — never
+                  exercises, loads or any plan internals. */}
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  haptic("light");
+                  setShowDetail(false);
+                  navigate(
+                    `/social?circleCreate=strength_block&circleTitle=${encodeURIComponent(
+                      activeBlock.title
+                    )}&circleDate=${blockEndDate(activeBlock)}`
+                  );
+                }}
+              >
+                Train together
               </Button>
               <Button
                 variant="secondary"
