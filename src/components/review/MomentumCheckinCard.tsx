@@ -27,7 +27,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   FEEL_OPTIONS,
   FOCUS_OPTIONS,
-  nextActionForFeel,
+  resolveReviewNextAction,
   parseCheckin,
   type MomentumCheckin,
   type MomentumFocus,
@@ -117,7 +117,10 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
 
   // Read-back state: answered this week already.
   if (existing) {
-    const action = nextActionForFeel(existing.feel);
+    // REVIEW-ROUTE-01: focus-first — a food-logging / weigh-in focus
+    // must route to its own area, not Programme. Feel refines the label
+    // within a Programme focus.
+    const action = resolveReviewNextAction(existing.feel, existing.focus);
     const feelLabel = FEEL_OPTIONS.find(
       (o) => o.value === existing.feel
     )?.label;
