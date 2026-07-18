@@ -96,4 +96,51 @@ describe("useBlockedUsers", () => {
     });
     expect(result.current.blocked.size).toBe(0);
   });
+
+  /* SOCIAL-PRIVACY-01 — `ready` distinguishes "block list loaded" from
+     "no blocks", so Feed/Find reads can defer until the exclude set is
+     known and a blocked user's content can't flash on first paint. */
+  it("is not ready until the initial fetch settles, then ready", async () => {
+    currentAuthUser = { uid: "test-ready-resolve" };
+    let resolveFetch: (ids: string[]) => void = () => {};
+    mockGetBlockedUsers.mockImplementation(
+      () => new Promise<string[]>((res) => (resolveFetch = res))
+    );
+
+    const { result } = renderHook(() => useBlockedUsers());
+    // Fetch in flight — NOT ready (empty set here means "unknown").
+    expect(result.current.ready).toBe(false);
+
+    await act(async () => {
+      resolveFetch(["blocked-1"]);
+      await Promise.resolve();
+    });
+    expect(result.current.ready).toBe(true);
+    expect(result.current.blocked.has("blocked-1")).toBe(true);
+  });
+
+  it("becomes ready (fail-open) even if the block-list fetch rejects", async () => {
+    currentAuthUser = { uid: "test-ready-reject" };
+    let rejectFetch: (e: Error) => void = () => {};
+    mockGetBlockedUsers.mockImplementation(
+      () => new Promise<string[]>((_res, rej) => (rejectFetch = rej))
+    );
+
+    const { result } = renderHook(() => useBlockedUsers());
+    expect(result.current.ready).toBe(false);
+
+    await act(async () => {
+      rejectFetch(new Error("network"));
+      await Promise.resolve();
+    });
+    // Fail-open: a transient error must not wedge the feed forever.
+    expect(result.current.ready).toBe(true);
+    expect(result.current.blocked.size).toBe(0);
+  });
+
+  it("has no user → not ready (nothing to gate)", () => {
+    currentAuthUser = null;
+    const { result } = renderHook(() => useBlockedUsers());
+    expect(result.current.ready).toBe(false);
+  });
 });
