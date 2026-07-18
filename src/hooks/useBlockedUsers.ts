@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../lib/auth';
-import { getBlockedUsers } from '../lib/socialApi';
-import { captureError } from '../lib/errorReporting';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../lib/auth";
+import { getBlockedUsers } from "../lib/socialApi";
+import { captureError } from "../lib/errorReporting";
 
 /* Module-level cache + listener registry so multiple components
  * (Social.tsx for feed filtering + ActivityCard for the block CTA)
@@ -15,6 +15,15 @@ import { captureError } from '../lib/errorReporting';
  * every subscriber so feed-hook deps re-fire and filter the user
  * out within the next loadFeed cycle. */
 const cache = new Map<string, Set<string>>();
+/* SOCIAL-PRIVACY-01 — readiness ledger, keyed by uid. A uid lands here
+ * once its initial getBlockedUsers has SETTLED (resolved or rejected).
+ * Distinct from `cache` having an empty Set: pre-fetch, `blocked` is
+ * empty because we don't KNOW the blocks yet, not because there are
+ * none. Feed/Find reads gate on `ready` so a blocked user's content
+ * can't flash before the block list is known. On fetch failure we still
+ * mark ready (fail-open) so a transient block-list error doesn't wedge
+ * the feed forever — the server visibility rules remain the hard gate. */
+const readyCache = new Set<string>();
 /* Listeners are no-arg force-render bumps. The blocked Set itself
  * lives only in `cache`; consumers read from cache during render and
  * use these listeners to know when to re-render after a mutation. */
@@ -26,6 +35,9 @@ function notify(uid: string) {
 
 export interface UseBlockedUsersReturn {
   blocked: Set<string>;
+  /** True once the initial block-list fetch for this uid has settled
+   *  (resolved OR rejected). Gate Feed/Find reads on this. */
+  ready: boolean;
   addBlocked: (uid: string) => void;
   removeBlocked: (uid: string) => void;
 }
@@ -52,17 +64,29 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
     const force = () => setTick((t) => t + 1);
     bucket.add(force);
 
-    /* Initial fetch on first call for this uid. Cache hit case
-       requires no work — the next render reads from cache directly. */
-    if (!cache.has(uid)) {
+    /* Initial fetch on first settle for this uid. Keyed on the readiness
+       ledger (not `cache`) so a pre-fetch addBlocked seed can't be
+       mistaken for a completed load — readiness must reflect the server
+       fetch settling. Already-settled uid requires no work. */
+    if (!readyCache.has(uid)) {
       getBlockedUsers(uid)
         .then((ids) => {
-          const set = new Set(ids);
-          cache.set(uid, set);
+          cache.set(uid, new Set(ids));
+          readyCache.add(uid);
           notify(uid);
         })
         .catch((e) => {
-          captureError(e instanceof Error ? e : new Error(String(e)), 'network', { hook: 'useBlockedUsers' });
+          // Fail-open but READY: don't wedge the feed on a transient
+          // block-list read error. Seed an empty set if none exists so
+          // `blocked` stays a Set; server visibility rules still gate.
+          if (!cache.has(uid)) cache.set(uid, new Set());
+          readyCache.add(uid);
+          notify(uid);
+          captureError(
+            e instanceof Error ? e : new Error(String(e)),
+            "network",
+            { hook: "useBlockedUsers" }
+          );
         });
     }
 
@@ -72,23 +96,32 @@ export function useBlockedUsers(): UseBlockedUsersReturn {
   }, [uid]);
 
   // Derived during render. Pure; uid change → empty set automatically.
-  const blocked: Set<string> = uid ? cache.get(uid) ?? new Set() : new Set();
+  const blocked: Set<string> = uid ? (cache.get(uid) ?? new Set()) : new Set();
+  // Readiness is per-uid; without a signed-in user there's nothing to
+  // gate (feeds don't load), so treat as not-ready.
+  const ready: boolean = uid ? readyCache.has(uid) : false;
 
-  const addBlocked = useCallback((uid: string) => {
-    if (!user) return;
-    const next = new Set<string>(cache.get(user.uid) ?? []);
-    next.add(uid);
-    cache.set(user.uid, next);
-    notify(user.uid);
-  }, [user]);
+  const addBlocked = useCallback(
+    (uid: string) => {
+      if (!user) return;
+      const next = new Set<string>(cache.get(user.uid) ?? []);
+      next.add(uid);
+      cache.set(user.uid, next);
+      notify(user.uid);
+    },
+    [user]
+  );
 
-  const removeBlocked = useCallback((uid: string) => {
-    if (!user) return;
-    const next = new Set<string>(cache.get(user.uid) ?? []);
-    next.delete(uid);
-    cache.set(user.uid, next);
-    notify(user.uid);
-  }, [user]);
+  const removeBlocked = useCallback(
+    (uid: string) => {
+      if (!user) return;
+      const next = new Set<string>(cache.get(user.uid) ?? []);
+      next.delete(uid);
+      cache.set(user.uid, next);
+      notify(user.uid);
+    },
+    [user]
+  );
 
-  return { blocked, addBlocked, removeBlocked };
+  return { blocked, ready, addBlocked, removeBlocked };
 }
