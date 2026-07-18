@@ -278,11 +278,14 @@ export default function Home() {
   const nutritionPhase = getNutritionPhase(profile);
   const dailyBurn = useMemo(
     function () {
-      // Base now reads profile.targetCalories directly — the stored value
-      // already includes activityLevel-aware TDEE + phase deficit from
-      // calculateTDEE. This avoids the previous double-count / underestimate
-      // where calcDailyBurn was recomputing with a fixed 1.2 NEAT.
-      const targetCalories = profile?.targetCalories ?? 2200;
+      // HOME-TARGET-01: one target everywhere. The breakdown base is the
+      // SAME `effectiveTargets.finalTarget` the header shows (it already
+      // includes activityLevel-aware TDEE + phase deficit, and any adaptive
+      // adjustment), so the breakdown can't disagree with the headline
+      // number. Falls back to the stored `targetCalories` while the
+      // effective targets resolve, then a sane default.
+      const targetCalories =
+        effectiveTargets?.finalTarget ?? profile?.targetCalories ?? 2200;
       return calcDailyBurn(
         targetCalories,
         nutritionPhase,
@@ -291,7 +294,13 @@ export default function Home() {
         0
       );
     },
-    [profile?.targetCalories, nutritionPhase, todayWorkoutCals, todayRunCals]
+    [
+      effectiveTargets?.finalTarget,
+      profile?.targetCalories,
+      nutritionPhase,
+      todayWorkoutCals,
+      todayRunCals,
+    ]
   );
 
   // Performance data for the hero card.
