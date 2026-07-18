@@ -129,12 +129,16 @@ confirmed present — you're confirming behaviour, not wiring.
 - [ ] **Solo-first feed** — fresh user (0 follows, 0 crew): the curated stack
       (PartnerStreak hero → monthly Hybrid challenge → Share-your-training →
       "Crews unlock…" row) renders top-to-bottom on Feed with no empty/skeleton
-      beneath, light + dark. **Note (decided this session):** the smart default
-      routes a new user to the **Find/People tab** (locked Soc5c), not Feed — so
-      confirm (a) that's still the intended landing, and (b) tapping Feed shows
-      the solo stack. Before the first daily rollover the challenge slot should
+      beneath, light + dark. **Note (updated 2026-07-18, SOCIAL-HOME-01):** the
+      old Soc5c smart default (new users → Find/People tab) is GONE — the
+      **Together tab is the default landing for everyone** and owns the
+      cold-start state (the goal selector); People is now a full-screen search
+      overlay from the header, not a tab. So confirm (a) a fresh user lands on
+      Together showing the goal selector, and (b) switching to Feed shows the
+      solo stack. Before the first daily rollover the challenge slot should
       collapse cleanly (no broken card). Share card shows the prompt with no
       button until something is logged, then offers "Create a share card".
+      Step-by-step walkthrough: `docs/OPERATOR_RUNBOOK.md` Part 13.4.
 
 ---
 

@@ -4,6 +4,11 @@ Everything deferred or "you'll need to do this yourself" that's
 accumulated while Claude was shipping commits. Organised roughly
 by urgency.
 
+> **Beginner-level walkthrough:** `docs/OPERATOR_RUNBOOK.md` expands
+> every item in this file into exact click-by-click steps (consoles,
+> commands, verification, rollback). If you're executing rather than
+> planning, start there.
+
 Status legend: ⚠️ blocking · 🟡 needed before submission · 🟢 V1.1 / nice-to-have
 
 ---
@@ -517,18 +522,19 @@ the same uid. Step-by-step:
 
 2. **Set the server-side allowlist:**
 
-   ```bash
-   firebase functions:config:set admin.uids="THE_UID_HERE" \
-     --project adaptive-fitness-af8bb
-   firebase deploy --only functions \
-     --project adaptive-fitness-af8bb
-   ```
+   > **STALE COMMAND — do not use (2026-07-18).** `firebase
+   > functions:config:set` was removed in the firebase-functions v7
+   > migration (it now throws; the Cloud Runtime Config API shut down
+   > 2025-12-31 — see item #2 at the top of this file). `ADMIN_UIDS` is
+   > a plain env var read from `functions/.env`, which is gitignored —
+   > so it must be written by the CI deploy job from a GitHub Actions
+   > variable, or every CI deploy wipes it. The current click-by-click
+   > procedure (GitHub variable + the deploy-functions.yml env step) is
+   > **`docs/OPERATOR_RUNBOOK.md` Part 12** — follow that instead of
+   > the old command below.
 
-   Requires `npm install -g firebase-tools` + `firebase login`
-   (use `--no-localhost` if running over SSH / Codespaces).
-
-   Multiple moderators later: comma-separate, e.g.
-   `admin.uids="uid1,uid2,uid3"`.
+   Multiple moderators later: comma-separate the variable value, e.g.
+   `ADMIN_UIDS=uid1,uid2,uid3`.
 
 3. **Set the client-side allowlist** — edit
    `.github/workflows/deploy.yml`, add to the `npm run build`
