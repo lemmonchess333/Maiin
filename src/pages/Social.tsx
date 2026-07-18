@@ -44,7 +44,7 @@ export default function Social() {
      completes. We only care about the Set here for filtering — the
      mutators are consumed by ActivityCard which calls useBlockedUsers
      itself. The module-level cache keeps the two instances in sync. */
-  const { blocked: blockedUsers } = useBlockedUsers();
+  const { blocked: blockedUsers, ready: blockedReady } = useBlockedUsers();
   // S4c: user-hidden activity IDs filter the feed alongside blocked
   // users. Local-only (localStorage) per device; spec defers cross-
   // device sync until demand emerges.
@@ -381,6 +381,7 @@ export default function Social() {
         followingFeedUnlocked={followingFeedUnlocked}
         showSoloFeed={showSoloFeed}
         blockedUsers={blockedUsers}
+        blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}
         pullRefreshing={pullRefreshing}
         refreshRef={feedRefreshRef}
@@ -428,6 +429,7 @@ export default function Social() {
               active={peopleOpen}
               chromeHidden={false}
               blockedUsers={blockedUsers}
+              blockedReady={blockedReady}
               isNewUser={isNewUser}
               openTogether={() => {
                 setPeopleOpen(false);

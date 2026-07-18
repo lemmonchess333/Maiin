@@ -64,6 +64,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof FeedView>> = {}) {
       followingFeedUnlocked
       showSoloFeed={false}
       blockedUsers={new Set()}
+      blockedReady={true}
       hiddenActivityIds={new Set()}
       openPeople={vi.fn()}
       openTogether={openTogether}
