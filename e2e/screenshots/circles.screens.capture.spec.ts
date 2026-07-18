@@ -86,7 +86,10 @@ test.describe("circle weekly focus screenshots", () => {
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
 
-    // The seeded circle row renders after the journeys+space reads settle.
+    // The seeded circle renders as the FEATURED hero card
+    // (SOCIAL-HOME-01) after the journeys+space reads settle — its
+    // card body is the tap target and its accessible name includes
+    // the circle title.
     await page
       .getByRole("button", { name: /autumn strength crew/i })
       .waitFor({ state: "visible", timeout: 15000 });
@@ -96,8 +99,11 @@ test.describe("circle weekly focus screenshots", () => {
 
     // Detail sheet ready once the primary action + the partner's focus
     // timeline row are in — that's the surface under review (pulse line,
-    // focus copy, Back this focus).
-    await page
+    // focus copy, Back this focus). The featured card carries its OWN
+    // "Set weekly focus" button, so sheet assertions are scoped to the
+    // dialog to stay unambiguous.
+    const detailSheet = page.getByRole("dialog");
+    await detailSheet
       .getByRole("button", { name: /set weekly focus/i })
       .waitFor({ state: "visible", timeout: 15000 });
     await page
@@ -113,7 +119,9 @@ test.describe("circle weekly focus screenshots", () => {
     await shootLightDark(page, "circles-detail-focus");
 
     // The weekly focus sheet — six radio options + primary action.
-    await page
+    // Same dialog scoping: the page-level locator would also match the
+    // featured card's button behind the sheet.
+    await detailSheet
       .getByRole("button", { name: /set weekly focus/i })
       .click({ timeout: 4000 });
     await page

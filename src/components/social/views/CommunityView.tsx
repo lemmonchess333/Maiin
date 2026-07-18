@@ -136,10 +136,13 @@ export default function CommunityView({
 
   return (
     <section aria-label="Community" className="space-y-6">
-      {/* Spc1g order: Spaces photo-carousel leads (the marquee),
-          then Challenges, then Circles. Supersedes the
-          GOALS-CORE-01 Circles-first IA — the curated public
-          layer is now the tab's front door. */}
+      {/* SOCIAL-HOME-01 order: Circles lead the Together tab — the
+          user's active Circle (or the cold-start goal selector) is
+          the front door, with one useful action on it. Supersedes
+          the Spc1g Spaces-first order; the Spaces marquee, then
+          Challenges, then the legacy Crews blocks sit below. */}
+      {uid && <CirclesSection uid={uid} />}
+
       <SpacesDirectory />
 
       {/* Challenges — the active / competitive surface. Empty-
@@ -157,8 +160,6 @@ export default function CommunityView({
       >
         <ChallengeList onFindFriends={openPeople} />
       </Suspense>
-
-      {uid && <CirclesSection uid={uid} />}
 
       {/* Soc5d: prominent Create-Crew CTA, shown ONLY when the
       user isn't currently in any crew. Per the locked spec,
