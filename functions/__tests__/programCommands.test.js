@@ -441,6 +441,35 @@ describe("preconditionless commands", () => {
     });
   });
 
+  it("applyDeloadWeek / revertDeloadWeek take only the week cursor (PROGRAM-DELOAD-01)", () => {
+    for (const kind of ["applyDeloadWeek", "revertDeloadWeek"]) {
+      expect(
+        assertClientProgramCommand({
+          kind,
+          commandId: CMD_ID,
+          expectedWeekNumber: 5,
+        })
+      ).toMatchObject({ kind, expectedWeekNumber: 5 });
+      // week cursor is required + bounded
+      expectRejected({ kind, commandId: CMD_ID });
+      expectRejected({ kind, commandId: CMD_ID, expectedWeekNumber: 0 });
+      expectRejected({ kind, commandId: CMD_ID, expectedWeekNumber: 5.5 });
+      // no day precondition, no extra fields
+      expectRejected({
+        kind,
+        commandId: CMD_ID,
+        expectedWeekNumber: 5,
+        dayIndex: 0,
+      });
+      expectRejected({
+        kind,
+        commandId: CMD_ID,
+        expectedWeekNumber: 5,
+        workouts: [],
+      });
+    }
+  });
+
   it("setProgramGoalMirror accepts only the allowed goal enum", () => {
     expect(
       assertClientProgramCommand({
@@ -531,6 +560,8 @@ describe("every declared client kind round-trips", () => {
         "setManualRunCompletion",
         "transitionRunDay",
         "overrideRunDay",
+        "applyDeloadWeek",
+        "revertDeloadWeek",
       ])
     );
   });
@@ -1317,5 +1348,105 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     const input = baseState();
     apply(logCmd(), input);
     expect(input.workouts[0].exercises[0].weight).toBe(100);
+  });
+});
+
+describe("deload week commands (PROGRAM-DELOAD-01)", () => {
+  const applyCmd = (overrides) => ({
+    kind: "applyDeloadWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    ...overrides,
+  });
+  const revertCmd = (overrides) => ({
+    kind: "revertDeloadWeek",
+    commandId: CMD,
+    expectedWeekNumber: 5,
+    ...overrides,
+  });
+
+  it("applies the mirrored transform: −1 set (floor 2), weight ×0.85 → nearest 2.5", () => {
+    const { state } = apply(applyCmd());
+    const [push, legs] = state.workouts;
+    // 100 ×0.85 = 85 (already on the 2.5 grid)
+    expect(push.exercises[0]).toMatchObject({ sets: 2, weight: 85 });
+    // 60 ×0.85 = 51 → 50
+    expect(push.exercises[1]).toMatchObject({ sets: 2, weight: 50 });
+    // 140 ×0.85 = 119 → 120
+    expect(legs.exercises[0]).toMatchObject({ sets: 2, weight: 120 });
+  });
+
+  it("sets currentPhase deload, clears fatigue, stamps updatedAt", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state } = apply(applyCmd(), input);
+    expect(state.currentPhase).toBe("deload");
+    expect(state.fatigueScore).toBe(0);
+    expect(state.updatedAt).toBe(NOW);
+  });
+
+  it("stashes the pre-deload snapshot for undo", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state } = apply(applyCmd(), input);
+    expect(state.deloadSnapshot).toMatchObject({
+      weekNumber: 5,
+      currentPhase: "progression",
+      fatigueScore: 7,
+      appliedAt: NOW,
+    });
+    expect(state.deloadSnapshot.workouts).toEqual(baseState().workouts);
+  });
+
+  it("rejects a second apply — no ×0.85² compounding", () => {
+    const { state } = apply(applyCmd());
+    expectHttps(() => apply(applyCmd(), state), "failed-precondition");
+  });
+
+  it("rejects a stale week cursor", () => {
+    expectHttps(
+      () => apply(applyCmd({ expectedWeekNumber: 4 })),
+      "failed-precondition"
+    );
+    expectHttps(
+      () => apply(revertCmd({ expectedWeekNumber: 4 })),
+      "failed-precondition"
+    );
+  });
+
+  it("revert restores the stash exactly and removes it", () => {
+    const input = baseState();
+    input.fatigueScore = 7;
+    const { state: deloaded } = apply(applyCmd(), input);
+    const { state: reverted } = apply(revertCmd(), deloaded);
+    expect(reverted.workouts).toEqual(baseState().workouts);
+    expect(reverted.currentPhase).toBe("progression");
+    expect(reverted.fatigueScore).toBe(7);
+    expect("deloadSnapshot" in reverted).toBe(false);
+  });
+
+  it("revert without a snapshot rejects", () => {
+    expectHttps(() => apply(revertCmd()), "failed-precondition");
+  });
+
+  it("revert with a snapshot from another week rejects (inert after rollover)", () => {
+    const { state: deloaded } = apply(applyCmd());
+    // Simulate a rollover: the cursor moved on but the stale stash remains.
+    const rolled = { ...deloaded, weekNumber: 6, currentPhase: "progression" };
+    expectHttps(
+      () => apply(revertCmd({ expectedWeekNumber: 6 }), rolled),
+      "failed-precondition"
+    );
+  });
+
+  it("does not mutate the input state", () => {
+    const input = baseState();
+    apply(applyCmd(), input);
+    expect(input.workouts[0].exercises[0]).toMatchObject({
+      sets: 3,
+      weight: 100,
+    });
+    expect(input.currentPhase).toBe("progression");
+    expect("deloadSnapshot" in input).toBe(false);
   });
 });

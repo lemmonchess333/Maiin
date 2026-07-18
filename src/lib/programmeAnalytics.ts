@@ -29,7 +29,7 @@ export type ProgrammeSection =
 
 /** Pgm3 deload banner has two terminal user actions; pin the
  *  alternatives explicitly so the event union is self-documenting. */
-export type ProgrammeDeloadAction = "applied" | "dismissed";
+export type ProgrammeDeloadAction = "applied" | "dismissed" | "undo";
 
 export interface ProgrammeEventMetadata {
   /** programme_section_viewed: which section first crossed into
