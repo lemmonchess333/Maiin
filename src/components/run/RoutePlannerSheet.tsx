@@ -1,12 +1,18 @@
 /**
- * Route Planner — build a route BEFORE running (running roadmap P2, v1).
+ * Route Planner — build a route BEFORE running (running roadmap P2 + the
+ * Run11 road-aware layer).
  *
- * Tap the map to drop waypoints; segments are straight lines (no external
- * routing service — see routePlanner.ts for the deliberate v1 contract),
- * with a live point-to-point distance readout, undo/clear, one-tap "close
- * the loop", and save-as-named-route. Saved plans land in the existing
- * savedRoutes store (source "planned") and are followed exactly like a GPX
- * import: the run map draws them as the ghost guide line.
+ * Tap the map to drop waypoints; segments start as straight lines with a
+ * live point-to-point distance readout, undo/clear, one-tap "close the
+ * loop", and save-as-named-route. When road-aware planning is enabled
+ * (Pro + VITE_ROUTE_PLANNING_ENABLED — see routePlanningApi.ts), the
+ * server-side Mapbox proxy can additionally align 2–12 tapped points to
+ * the walking network or generate a 3/5/10/15 km loop; the solid road
+ * polyline then replaces the dashed draft for display and save. Without
+ * the flag the planner keeps the deliberate straight-line v1 contract
+ * (routePlanner.ts). Saved plans land in the existing savedRoutes store
+ * (source "planned") and are followed exactly like a GPX import: the run
+ * map draws them as the ghost guide line.
  *
  * Own minimal MapLibre instance (mirrors RunMap's basemap + dark-mode
  * pattern) — RunMap is display-oriented and pulling gesture editing into it
@@ -26,11 +32,22 @@ import { IconButton } from "@/components/ui/IconButton";
 import type { GPSPoint } from "@/lib/gps";
 import {
   closeLoop,
+  downsampleRoute,
   isLoopClosed,
   plannerDistanceM,
   waypointsToRoute,
   type Waypoint,
 } from "@/lib/routePlanner";
+import {
+  alignRouteToRoads,
+  generateRouteLoop,
+  isRoutePlanningEnabled,
+  routePlanningErrorMessage,
+  LOOP_TARGETS_KM,
+  type LoopTargetKm,
+  type RoadRoute,
+} from "@/lib/routePlanningApi";
+import { useSubscription } from "@/lib/subscription";
 
 const TILE_STYLES = {
   dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
@@ -71,7 +88,25 @@ export default function RoutePlannerSheet({
   const titleId = useId();
   const nameId = useId();
 
-  const distanceM = plannerDistanceM(waypoints);
+  // Road-aware layer (Run11/Mapbox) — Pro + flag gated. `roadRoute` is
+  // the provider polyline that replaces the straight draft for display
+  // and save; any map edit or sheet close bumps the nonce so an
+  // in-flight response can never overwrite a newer draft.
+  const { isPro } = useSubscription();
+  const roadEnabled = isRoutePlanningEnabled() && isPro;
+  const [roadRoute, setRoadRoute] = useState<RoadRoute | null>(null);
+  const [routing, setRouting] = useState<"align" | "loop" | null>(null);
+  const requestNonce = useRef(0);
+
+  const invalidateRoad = () => {
+    requestNonce.current += 1;
+    setRoadRoute(null);
+    setRouting(null);
+  };
+
+  const distanceM = roadRoute
+    ? roadRoute.distanceM
+    : plannerDistanceM(waypoints);
 
   // ── Map lifecycle ────────────────────────────────────────────────────
   useEffect(() => {
@@ -116,10 +151,26 @@ export default function RoutePlannerSheet({
           "circle-stroke-color": "#ffffff",
         },
       });
+      // Road-aligned result — a SOLID line, distinct from the dashed
+      // draft, drawn beneath the tap points so markers stay visible.
+      map.addSource("road", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer(
+        {
+          id: "road-line",
+          type: "line",
+          source: "road",
+          paint: { "line-color": THEME.running, "line-width": 4 },
+        },
+        "plan-points"
+      );
     });
 
     map.on("click", (e) => {
       haptic("light");
+      invalidateRoad();
       setWaypoints((prev) => [
         ...prev,
         { lat: e.lngLat.lat, lon: e.lngLat.lng },
@@ -159,18 +210,73 @@ export default function RoutePlannerSheet({
     else map.once("idle", () => syncPlanSource(map, waypoints));
   }, [waypoints]);
 
+  // Draw / clear the solid road polyline; the dashed draft hides while a
+  // road result is showing (the road line IS the plan now).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const apply = () => syncRoadSource(map, roadRoute);
+    if (map.isStyleLoaded()) apply();
+    else map.once("idle", apply);
+  }, [roadRoute]);
+
+  // Closing the planner discards the road state. Today's parent
+  // (RouteSetupSection) conditionally MOUNTS the sheet, so closing
+  // unmounts it and that alone discards in-flight responses — this
+  // effect exists so the invariant survives a future parent that keeps
+  // the sheet mounted across closes.
+  useEffect(() => {
+    if (!open) {
+      requestNonce.current += 1;
+      setRoadRoute(null);
+      setRouting(null);
+    }
+  }, [open]);
+
   const undo = () => {
     haptic("light");
+    invalidateRoad();
     setWaypoints((prev) => prev.slice(0, -1));
   };
   const clear = () => {
     haptic("light");
+    invalidateRoad();
     setWaypoints([]);
   };
   const handleCloseLoop = () => {
     haptic("light");
+    invalidateRoad();
     setWaypoints((prev) => closeLoop(prev));
   };
+
+  const runRoadAction = async (
+    kind: "align" | "loop",
+    request: () => Promise<RoadRoute>
+  ) => {
+    haptic("light");
+    const nonce = ++requestNonce.current;
+    setRouting(kind);
+    try {
+      const result = await request();
+      if (requestNonce.current !== nonce) return; // superseded by an edit
+      // A loop routes from the FIRST point only — collapse the draft to
+      // it so no orphaned tap markers linger over geometry they're not
+      // part of (the loop's shape comes from the server seed, not taps).
+      if (kind === "loop") setWaypoints((prev) => prev.slice(0, 1));
+      setRoadRoute(result);
+    } catch (error) {
+      if (requestNonce.current !== nonce) return;
+      toast.error(routePlanningErrorMessage(error));
+    } finally {
+      if (requestNonce.current === nonce) setRouting(null);
+    }
+  };
+
+  const alignToRoadsAction = () =>
+    runRoadAction("align", () => alignRouteToRoads(waypoints));
+
+  const generateLoopAction = (targetKm: LoopTargetKm) =>
+    runRoadAction("loop", () => generateRouteLoop(waypoints[0], targetKm));
   const recenter = () => {
     if (!("geolocation" in navigator)) return;
     haptic("light");
@@ -190,7 +296,12 @@ export default function RoutePlannerSheet({
     setSaveOpen(true);
   };
   const confirmSave = async () => {
-    const points = waypointsToRoute(waypoints);
+    // A road-aligned result IS the plan; otherwise the straight draft.
+    // Provider polylines are thinned before save — live following runs an
+    // O(n) sweep per GPS tick, so dense geometry is pure per-tick cost.
+    const points = waypointsToRoute(
+      roadRoute ? downsampleRoute(roadRoute.points) : waypoints
+    );
     setSaving(true);
     const ok = await onSave(name.trim() || "Planned route", points);
     setSaving(false);
@@ -241,8 +352,48 @@ export default function RoutePlannerSheet({
 
         <div className="space-y-2 p-4">
           <p className="text-[11px] text-muted-foreground">
-            Point-to-point distance — segments don&apos;t follow roads.
+            {roadRoute
+              ? "Road route via Mapbox — distance follows the walking network. © Mapbox"
+              : "Point-to-point distance — segments don't follow roads."}
           </p>
+          {/* Road-aware actions (Run11 — Pro + flag gated; the token
+              stays server-side so the gate is enforceable). */}
+          {roadEnabled && waypoints.length >= 1 && !roadRoute && (
+            <div className="flex flex-wrap items-center gap-2">
+              {waypoints.length >= 2 && waypoints.length <= 12 && (
+                <Button
+                  variant="sport-tinted"
+                  size="sm"
+                  loading={routing === "align"}
+                  disabled={routing !== null}
+                  onClick={alignToRoadsAction}
+                >
+                  Align to roads
+                </Button>
+              )}
+              {/* Over the 12-point server limit: the manual route keeps
+                  working — say WHY alignment went away instead of the
+                  button silently vanishing. */}
+              {waypoints.length > 12 && (
+                <p className="text-[11px] text-muted-foreground">
+                  Road alignment works with up to 12 points — your manual route
+                  still saves as drawn.
+                </p>
+              )}
+              {LOOP_TARGETS_KM.map((target) => (
+                <Button
+                  key={target}
+                  variant="outline"
+                  size="sm"
+                  loading={routing === "loop"}
+                  disabled={routing !== null}
+                  onClick={() => generateLoopAction(target)}
+                >
+                  {target} km loop
+                </Button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-2">
             {/* Undo/clear act on dropped points, so they only appear once
                 there's something to act on. Shown-but-disabled at 0 points
@@ -274,10 +425,16 @@ export default function RoutePlannerSheet({
               </Button>
             )}
             <div className="flex-1" />
+            {/* Save is a commit point: while an align/loop request is in
+                flight it stays disabled, so a late provider response can
+                never swap the geometry (and its distance-stamped default
+                name) behind an already-open save dialog. */}
             <Button
               variant="sport"
               onClick={openSave}
-              disabled={waypoints.length < 2}
+              disabled={
+                (waypoints.length < 2 && !roadRoute) || routing !== null
+              }
             >
               Save &amp; follow
             </Button>
@@ -345,4 +502,29 @@ function syncPlanSource(map: maplibregl.Map, wps: Waypoint[]) {
     });
   }
   source.setData({ type: "FeatureCollection", features });
+}
+
+/** Draw the road-aligned polyline; hide the dashed draft while it shows. */
+function syncRoadSource(map: maplibregl.Map, road: RoadRoute | null) {
+  const source = map.getSource("road") as maplibregl.GeoJSONSource | undefined;
+  if (!source) return;
+  source.setData({
+    type: "FeatureCollection",
+    features:
+      road && road.points.length >= 2
+        ? [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: road.points.map((p) => [p.lon, p.lat]),
+              },
+            },
+          ]
+        : [],
+  });
+  if (map.getLayer("plan-line")) {
+    map.setLayoutProperty("plan-line", "visibility", road ? "none" : "visible");
+  }
 }
