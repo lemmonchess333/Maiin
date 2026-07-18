@@ -32,6 +32,15 @@ export interface MealTotalsInput {
   protein?: number;
   carbs?: number;
   fat?: number;
+  // HOME-MEALS-01: soft-delete marker. Deletion is SOFT (`deletedAt` +
+  // 24h restore window), so a "deleted" meal still exists as a doc.
+  // useMeals filters `!deletedAt` client-side, but useHomeData reads
+  // today's docs straight from Firestore with no such filter and fed
+  // every raw doc here — so soft-deleted meals inflated Home's totals
+  // and count while Food showed the correct numbers. Filtering at this
+  // shared boundary keeps every caller in agreement. `null` (the
+  // post-restore value) counts as active.
+  deletedAt?: unknown;
 }
 
 // Firestore payloads carry extra keys (items, confidence, createdAt, ...).
@@ -71,7 +80,7 @@ function num(v: unknown): number {
 }
 
 export function sumMealTotals(
-  meals: ReadonlyArray<MealTotalsInput>,
+  meals: ReadonlyArray<MealTotalsInput>
 ): DailyTotals {
   let calories = 0;
   let protein = 0;
@@ -80,8 +89,13 @@ export function sumMealTotals(
   let fiber = 0;
   let sugar = 0;
   let sodium = 0;
+  let mealCount = 0;
 
   for (const m of meals) {
+    // HOME-MEALS-01: skip soft-deleted meals (deletedAt truthy) so they
+    // count toward neither the totals nor the meal count. `null` (the
+    // post-restore value) and absent are active.
+    if (m.deletedAt) continue;
     calories += num(m.totalCalories ?? m.calories);
     protein += num(m.totalProtein ?? m.protein);
     carbs += num(m.totalCarbs ?? m.carbs);
@@ -89,6 +103,7 @@ export function sumMealTotals(
     fiber += num(m.totalFiber);
     sugar += num(m.totalSugar);
     sodium += num(m.totalSodium);
+    mealCount += 1;
   }
 
   return {
@@ -99,6 +114,6 @@ export function sumMealTotals(
     fiber,
     sugar,
     sodium,
-    mealCount: meals.length,
+    mealCount,
   };
 }
