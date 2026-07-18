@@ -36,7 +36,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Footprints, Dumbbell, Check, X, TriangleAlert } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import {
   paceTableFromFitness,
@@ -200,7 +200,16 @@ export default function DayActionSheet({
   // the DNF/DNS variant never rendered and manual-complete was never
   // suppressed on real race days. Resolving the template and reading its
   // `type` is the correct, id-agnostic gate (Q1 P4 / Q2 P21).
-  const isRaceTemplate = selectedRunTemplate?.type === "race";
+  //
+  // RUN-RACE-GUARD-01: prefer the day's IMMUTABLE race identity
+  // (`runDay.type === "race"`) over the currently-resolved template.
+  // Otherwise a race overridden to an easy template stops reading as a
+  // race — which re-enabled the swap and un-hid Mark complete, letting
+  // the race be silently erased. The writers refuse the same, so this
+  // is defence-in-depth that also keeps the correct race UI showing.
+  const isRaceTemplate =
+    (!!run.runDay && isScheduledRaceRunDay(run.runDay)) ||
+    selectedRunTemplate?.type === "race";
 
   /* Hybrid interference heads-up (runScheduler's "UI can flag it" note,
      finally wired). Quality run + lift on one day → one calm line; only
@@ -353,7 +362,10 @@ export default function DayActionSheet({
                 under the updated LEGAL_TRANSITIONS). No
                 intermediate status is needed. */}
             <>
-              {/* Template swap — only enabled when startable. */}
+              {/* Template swap — enabled only when startable AND not a
+                  race. RUN-RACE-GUARD-01: a race's template is locked so
+                  its identity can't be swapped away and completed as an
+                  ordinary run. */}
               <label className="block">
                 <SectionLabel as="span">Template</SectionLabel>
                 <select
@@ -364,11 +376,13 @@ export default function DayActionSheet({
                       e.target.value
                     )
                   }
-                  disabled={!run.isStartable}
+                  disabled={!run.isStartable || isRaceTemplate}
                   aria-label={
-                    run.isStartable
-                      ? "Run template"
-                      : `${run.status} — template locked`
+                    isRaceTemplate
+                      ? "Race day — template locked"
+                      : run.isStartable
+                        ? "Run template"
+                        : `${run.status} — template locked`
                   }
                   className="w-full mt-1 bg-background/80 rounded-xl px-3 py-3 text-base border border-border/60 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -378,10 +392,16 @@ export default function DayActionSheet({
                     </option>
                   ))}
                 </select>
-                {run.isStartable && (
+                {isRaceTemplate ? (
                   <span className="mt-1 block text-caption text-muted-foreground">
-                    Changes this day only.
+                    Race day — the template is locked.
                   </span>
+                ) : (
+                  run.isStartable && (
+                    <span className="mt-1 block text-caption text-muted-foreground">
+                      Changes this day only.
+                    </span>
+                  )
                 )}
               </label>
 
