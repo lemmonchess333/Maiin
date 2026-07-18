@@ -140,11 +140,20 @@ describe("parse guards", () => {
     targetDate: null,
     active: true,
     createdAt: 1,
+    // CIRCLE-TARGET-LIFECYCLE — additive; parse defaults it to null.
+    endedAt: null,
   };
 
   it("round-trips a valid space and clamps maxMembers to the cap", () => {
     expect(parseGoalSpace(space)).toEqual(space);
     expect(parseGoalSpace({ ...space, maxMembers: 50 })?.maxMembers).toBe(8);
+  });
+
+  it("defaults endedAt to null when absent and reads a numeric endedAt", () => {
+    const { endedAt: _omit, ...withoutEndedAt } = space;
+    void _omit;
+    expect(parseGoalSpace(withoutEndedAt)?.endedAt).toBeNull();
+    expect(parseGoalSpace({ ...space, endedAt: 123 })?.endedAt).toBe(123);
   });
 
   it("rejects malformed spaces", () => {
