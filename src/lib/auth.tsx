@@ -283,6 +283,8 @@ export interface UserProfileRunning {
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
+    /** Optional user-entered event name, ≤60 chars (e.g. "London Marathon 2026"). */
+    eventName?: string;
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**
