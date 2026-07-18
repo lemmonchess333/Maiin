@@ -105,6 +105,8 @@ export interface PlanBuilderInput {
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
+    /** Optional user-entered event name, ≤60 chars. */
+    eventName?: string;
   };
 
   /** Pgm6 tuning knobs (volume preset + difficulty). Optional —

@@ -347,7 +347,7 @@ export interface ScheduledRunDay {
 
 export interface RunPlan {
   mode: "structured" | "race_prep";
-  raceGoal?: { distance: string; targetDate: string };
+  raceGoal?: { distance: string; targetDate: string; eventName?: string };
   totalWeeks?: number;
   currentWeek?: number;
   /** P2-1: true when totalWeeks fell below the ideal for the race
