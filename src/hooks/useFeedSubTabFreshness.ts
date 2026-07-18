@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  socialPreferenceKey,
+  purgeLegacySocialKey,
+} from "@/lib/socialPreferenceKeys";
 
 /**
  * Soc5b pin (3) — Feed sub-tab new-content dot.
@@ -17,9 +21,12 @@ import { useEffect, useState } from "react";
  * "seen" timestamp to the newest currently-visible item, so a user
  * who stays on Following while new items stream in won't see a stale
  * dot when they later switch to Explore and back.
+ *
+ * SOCIAL-ATTENTION-01: the seen pointers are uid-scoped (via
+ * `socialPreferenceKey`), so on a shared browser account B doesn't
+ * inherit account A's "seen" instants and mistakenly hide the dot.
+ * The pre-scoping global keys are purged on mount, never migrated.
  */
-const STORAGE_KEY_FOLLOWING = "tropos-social-feed-following-last-viewed";
-const STORAGE_KEY_EXPLORE = "tropos-social-feed-explore-last-viewed";
 
 function readSeen(key: string): string {
   try {
@@ -64,27 +71,56 @@ interface FreshnessInput {
   activeSubTab: "following" | "explore";
   followingNewestCreatedAt: unknown;
   exploreNewestCreatedAt: unknown;
+  /** The signed-in user's uid — scopes the seen pointers so account B
+   *  can't inherit account A's dots on a shared browser. */
+  uid: string | null | undefined;
+}
+
+/** Purge the pre-uid-scoping global keys once (they're never migrated). */
+function purgeLegacyFreshnessKeys() {
+  purgeLegacySocialKey("feed-following-last-viewed");
+  purgeLegacySocialKey("feed-explore-last-viewed");
 }
 
 export function useFeedSubTabFreshness({
   activeSubTab,
   followingNewestCreatedAt,
   exploreNewestCreatedAt,
+  uid,
 }: FreshnessInput): {
   followingHasNew: boolean;
   exploreHasNew: boolean;
 } {
+  const followingKey = uid
+    ? socialPreferenceKey(uid, "feed-following-last-viewed")
+    : null;
+  const exploreKey = uid
+    ? socialPreferenceKey(uid, "feed-explore-last-viewed")
+    : null;
+
   /* Lazy initialisers — only touch localStorage once per mount.
      State (not refs) so the boolean comparisons below can read them
      during render without violating react-hooks/refs. The seen
      pointers update rarely (only when active sub-tab sees a newer
      item), so the extra render is cheap. */
-  const [followingSeen, setFollowingSeen] = useState<string>(() =>
-    readSeen(STORAGE_KEY_FOLLOWING),
-  );
+  const [followingSeen, setFollowingSeen] = useState<string>(() => {
+    purgeLegacyFreshnessKeys();
+    return followingKey ? readSeen(followingKey) : "0";
+  });
   const [exploreSeen, setExploreSeen] = useState<string>(() =>
-    readSeen(STORAGE_KEY_EXPLORE),
+    exploreKey ? readSeen(exploreKey) : "0"
   );
+
+  /* Account-switch reset (React "adjust state during render" idiom):
+     when the uid changes, re-read the new account's seen pointers so
+     the previous account's dots don't leak. Runs during render, before
+     the comparisons below — no effect, no set-state-in-effect. */
+  const [ownerUid, setOwnerUid] = useState<string | null | undefined>(uid);
+  if (ownerUid !== uid) {
+    setOwnerUid(uid);
+    setFollowingSeen(followingKey ? readSeen(followingKey) : "0");
+    setExploreSeen(exploreKey ? readSeen(exploreKey) : "0");
+  }
 
   const followingNewest = toIso(followingNewestCreatedAt);
   const exploreNewest = toIso(exploreNewestCreatedAt);
@@ -102,16 +138,32 @@ export function useFeedSubTabFreshness({
      external-state-sync pattern flagged in React's "you might not need
      an effect" docs as the legitimate exception. */
   useEffect(() => {
-    if (activeSubTab === "following" && followingNewest > followingSeen) {
+    if (
+      activeSubTab === "following" &&
+      followingKey &&
+      followingNewest > followingSeen
+    ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- external-state sync, guard terminates loop
       setFollowingSeen(followingNewest);
-      writeSeen(STORAGE_KEY_FOLLOWING, followingNewest);
+      writeSeen(followingKey, followingNewest);
     }
-    if (activeSubTab === "explore" && exploreNewest > exploreSeen) {
+    if (
+      activeSubTab === "explore" &&
+      exploreKey &&
+      exploreNewest > exploreSeen
+    ) {
       setExploreSeen(exploreNewest);
-      writeSeen(STORAGE_KEY_EXPLORE, exploreNewest);
+      writeSeen(exploreKey, exploreNewest);
     }
-  }, [activeSubTab, followingNewest, exploreNewest, followingSeen, exploreSeen]);
+  }, [
+    activeSubTab,
+    followingNewest,
+    exploreNewest,
+    followingSeen,
+    exploreSeen,
+    followingKey,
+    exploreKey,
+  ]);
 
   /* Inactive sub-tab gets a dot iff its newest item is newer than
      its stored seen pointer. Active sub-tab never shows a dot. */
