@@ -1791,3 +1791,174 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
     expect(setDocCalls.length).toBe(0);
   });
 });
+
+// ─── SESSION-RESTORE-01 — a skip is a reversible decision ────────────
+
+describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
+  function stateWith(
+    runDays: ScheduledRunDay[],
+    workouts: any[] = []
+  ): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays,
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+  }
+
+  // Anchor to today's week so the auto-rollover effect doesn't
+  // regenerate runDays (which would wipe the hard-coded id).
+  function skippedRunDay(status: "skipped" | "race_no_show"): ScheduledRunDay {
+    return {
+      id: "runday_restore_1",
+      dayIndex: new Date().getDay(),
+      date: localDateString(addLocalDays(new Date(), 0)),
+      weekKey: localWeekKey(),
+      templateId: "easy_30",
+      type: "easy",
+      completed: false,
+      status,
+    } as ScheduledRunDay;
+  }
+
+  it("restoreRunDay: skipped → planned, completed:false, no manual-completion key", async () => {
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = stateWith([skippedRunDay("skipped")]);
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.restoreRunDay("runday_restore_1");
+    });
+
+    expect(setDocCalls.length).toBe(1);
+    const saved = setDocCalls[0].data as ProgramState;
+    expect(saved.runDays?.[0].status).toBe("planned");
+    expect(saved.runDays?.[0].completed).toBe(false);
+    // Restore is a pure status reversal — never a manual completion.
+    expect(saved.manualCompletions?.["runday_restore_1"]).toBeUndefined();
+    // Identity preserved.
+    expect(saved.runDays?.[0].id).toBe("runday_restore_1");
+    expect(saved.runDays?.[0].templateId).toBe("easy_30");
+  });
+
+  it("restoreRunDay: race_no_show → planned", async () => {
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = stateWith([skippedRunDay("race_no_show")]);
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.restoreRunDay("runday_restore_1");
+    });
+
+    expect(setDocCalls.length).toBe(1);
+    expect((setDocCalls[0].data as ProgramState).runDays?.[0].status).toBe(
+      "planned"
+    );
+  });
+
+  it("restoreRunDay: refuses a completed slot (terminal → no write)", async () => {
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = stateWith([
+      {
+        id: "runday_restore_1",
+        dayIndex: new Date().getDay(),
+        date: localDateString(addLocalDays(new Date(), 0)),
+        weekKey: localWeekKey(),
+        templateId: "easy_30",
+        type: "easy",
+        completed: true,
+        status: "completed_exact",
+      } as ScheduledRunDay,
+    ]);
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.restoreRunDay("runday_restore_1");
+    });
+
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("restoreWorkoutDay: clears `skipped` on a non-completed lift day", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = stateWith(
+      [],
+      [
+        {
+          dayName: "Push",
+          dayType: "lift",
+          exercises: [],
+          completed: false,
+          skipped: true,
+        },
+      ]
+    );
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.restoreWorkoutDay(0);
+    });
+
+    expect(setDocCalls.length).toBe(1);
+    expect((setDocCalls[0].data as ProgramState).workouts[0].skipped).toBe(
+      false
+    );
+  });
+
+  it("restoreWorkoutDay: refuses a completed lift day (no write)", async () => {
+    mockProfile = structuredProfile();
+    mockDocData = stateWith(
+      [],
+      [
+        {
+          dayName: "Push",
+          dayType: "lift",
+          exercises: [],
+          completed: true,
+          skipped: false,
+        },
+      ]
+    );
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+
+    await act(async () => {
+      await result.current.restoreWorkoutDay(0);
+    });
+
+    expect(setDocCalls.length).toBe(0);
+  });
+});
