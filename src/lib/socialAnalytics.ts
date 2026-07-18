@@ -31,7 +31,10 @@ export type SocialEvent =
    *  funnel's conversion event for the >10% share-rate benchmark. */
   | "share_card_exported";
 
-export type SocialTab = "feed" | "crews" | "find";
+/* SOCIAL-HOME-01: "together" + "feed" are the live tabs; "crews" and
+   "find" remain as legacy values so historical events stay queryable
+   (and the People overlay still reports as "find"). */
+export type SocialTab = "together" | "feed" | "crews" | "find";
 export type SocialFeedSubTab = "following" | "explore";
 export type ShareCardTemplate =
   | "run"
