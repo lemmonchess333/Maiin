@@ -6535,6 +6535,78 @@ exports.resolveGoalSpaceTarget = functions
     }
   });
 
+// ── CIRCLE-ACTIVITY-NOTIFICATIONS — fan an in-app notification to the
+// other Circle members when a co-member publishes a high-signal event.
+// Only these four kinds notify: session_completed is too frequent (and
+// already shows in the timeline), and weekly_check_in has its own
+// SOCIAL-FOCUS-01 backing loop. NAMED (unlike circle_focus_backed): a
+// co-member can already see the author + event in the shared timeline,
+// so naming the actor is consistent, not a leak. No push (matches the
+// SOCIAL-FOCUS-01 lock). Deterministic notification id per recipient
+// (`${spaceId}_${eventId}`) makes the at-least-once trigger idempotent.
+const CIRCLE_EVENT_NOTIFICATION_TYPES = {
+  milestone: "circle_milestone",
+  needs_support: "circle_needs_support",
+  joined: "circle_joined",
+  routine_shared: "circle_routine_shared",
+};
+
+exports.onGoalSpaceEventCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("goalSpaces/{spaceId}/events/{eventId}")
+  .onCreate(async (snap, context) => {
+    const { spaceId, eventId } = context.params;
+    const event = snap.data() || {};
+    const authorUid = event.uid;
+    const notifType = CIRCLE_EVENT_NOTIFICATION_TYPES[event.kind];
+    if (!authorUid || !notifType) return null; // non-notifying kind
+
+    // R1A — if the author is mid-deletion, skip the fan-out. Do NOT
+    // delete the event (unlike onActivityCreated): it's a legitimate
+    // member-created timeline entry, and the deletion sweep
+    // (cleanupGoalSpacesForUser) removes their events separately.
+    const proceed = await accountDeletionLocks.shouldSystemWriteProceed(
+      db,
+      authorUid,
+      "onGoalSpaceEventCreated"
+    );
+    if (!proceed) return null;
+
+    try {
+      const [membersSnap, authorSnap] = await Promise.all([
+        db.collection(`goalSpaces/${spaceId}/members`).get(),
+        db.doc(`goalSpaces/${spaceId}/members/${authorUid}`).get(),
+      ]);
+      const authorName =
+        (authorSnap.exists && authorSnap.data().displayName) ||
+        "A Circle member";
+      // Member doc ids ARE member uids. Fan out to everyone but the
+      // author (createNotification also no-ops any self-notify).
+      const recipients = membersSnap.docs
+        .map((d) => d.id)
+        .filter((memberUid) => memberUid !== authorUid);
+      await Promise.all(
+        recipients.map((memberUid) =>
+          socialFanout.createNotification({
+            firestore: admin.firestore(),
+            fromUid: authorUid,
+            toUid: memberUid,
+            data: { type: notifType, fromName: authorName },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            notificationId: `${spaceId}_${eventId}`,
+          })
+        )
+      );
+    } catch (err) {
+      functions.logger.warn("onGoalSpaceEventCreated.fanout_failed", {
+        spaceId,
+        eventId,
+        message: err && err.message,
+      });
+    }
+    return null;
+  });
+
 // ══════════════════════════════════════════════
 // ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
 // ══════════════════════════════════════════════
