@@ -15,6 +15,7 @@ import ShareComposerSheet from "@/components/social/ShareComposerSheet";
 import OneTimeMaintenance from "@/components/OneTimeMaintenance";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
+import AuthSessionBoundary from "@/components/AuthSessionBoundary";
 import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
 import { StreaksProvider } from "@/features/streaks/useStreaks";
 import { DailyNutritionSnapshot } from "@/hooks/useDailyNutritionSnapshot";
@@ -401,350 +402,356 @@ function AppRoutes() {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      {/* One <StreaksProvider> per authenticated session — consumers
+    /* HOME-ACCOUNT-01: remount the entire authenticated subtree when the
+       account changes, so no provider's cached Firestore state or page-local
+       React state can cross from account A to account B on a shared browser
+       (an account switch doesn't reload the WebView on native). */
+    <AuthSessionBoundary uid={user.uid}>
+      <Suspense fallback={<PageLoader />}>
+        {/* One <StreaksProvider> per authenticated session — consumers
           (Home, BadgeGrid, useStreakReminder, priming modal) all read
           from context instead of each spawning their own 4 Firestore
           subscriptions. */}
-      <StreaksProvider>
-        {/* Single session-wide writer for the per-day macro-target snapshot
+        <StreaksProvider>
+          {/* Single session-wide writer for the per-day macro-target snapshot
             (users/{uid}/dailyNutrition/{date}) the nutrition badges read. */}
-        <DailyNutritionSnapshot />
-        {/* RemindersProvider runs the three reminder hooks once at the
+          <DailyNutritionSnapshot />
+          {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
             because useStreakReminderInternal reads useStreaks(). */}
-        <RemindersProvider>
-          {/* DailyLogsProvider owns the single `users/{uid}/logs` live
+          <RemindersProvider>
+            {/* DailyLogsProvider owns the single `users/{uid}/logs` live
             subscription — useDailyLogs / useWeeklyStats / useMonthlyStats
             / useWeeklyDayMap all read from it, collapsing four listeners
             into one. */}
-          <DailyLogsProvider>
-            {/* #995: app-global tier-4 coordinator. Wraps BOTH the global
+            <DailyLogsProvider>
+              {/* #995: app-global tier-4 coordinator. Wraps BOTH the global
                 priming modal and the routes (Home's trial/fell-behind/badge),
                 so at most one blocking surface shows per app-open. */}
-            <SurfaceCoordinatorProvider>
-              {/* #995 tier-3: ≤1 inline education card at a time. */}
-              <EducationLaneProvider>
-                <RoutePrefetcher />
-                {/* Shipped single-hue brand ambient glow. Authenticated root
+              <SurfaceCoordinatorProvider>
+                {/* #995 tier-3: ≤1 inline education card at a time. */}
+                <EducationLaneProvider>
+                  <RoutePrefetcher />
+                  {/* Shipped single-hue brand ambient glow. Authenticated root
                     only, so it sits behind every app page but the
                     unauthenticated auth-shell branch (its own ambience) is
                     untouched. Renders nothing on run/map routes and under
                     prefers-reduced-transparency. */}
-                <AmbientGlow />
-                {/* Mounted at App root (not in Settings) so the priming check runs
+                  <AmbientGlow />
+                  {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and
             primingShown === false — renders nothing on most sessions. */}
-                <StreakReminderPrimingModal />
-                <Routes>
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/review" element={<WeeklyReviewPage />} />
-                  <Route element={<Layout />}>
-                    <Route
-                      path="/"
-                      element={
-                        <RouteErrorBoundary>
-                          <Home />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/food"
-                      element={
-                        <RouteErrorBoundary>
-                          <Food />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/history"
-                      element={
-                        <RouteErrorBoundary>
-                          <History />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/history/exercise/:name"
-                      element={
-                        <RouteErrorBoundary>
-                          <ExerciseHistory />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    {/* Set1.1: nested-page Settings IA. /settings is the index;
+                  <StreakReminderPrimingModal />
+                  <Routes>
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/support" element={<Support />} />
+                    <Route path="/review" element={<WeeklyReviewPage />} />
+                    <Route element={<Layout />}>
+                      <Route
+                        path="/"
+                        element={
+                          <RouteErrorBoundary>
+                            <Home />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/food"
+                        element={
+                          <RouteErrorBoundary>
+                            <Food />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/history"
+                        element={
+                          <RouteErrorBoundary>
+                            <History />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/history/exercise/:name"
+                        element={
+                          <RouteErrorBoundary>
+                            <ExerciseHistory />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      {/* Set1.1: nested-page Settings IA. /settings is the index;
               each section gets its own route. Every section has now
               migrated (SettingsIndex marks all rows migrated), so the
               legacy flat page is retired — /settings/legacy redirects
               to the index for any stale bookmark/deep link. */}
+                      <Route
+                        path="/settings"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsIndex />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/legacy"
+                        element={<Navigate to="/settings" replace />}
+                      />
+                      <Route
+                        path="/settings/profile"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsProfile />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/training"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsTraining />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/run-plan"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsRunPlan />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/lift-plan"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsLiftPlan />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/nutrition"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsNutrition />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/workout-prefs"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsWorkoutPrefs />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/units-appearance"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsUnitsAppearance />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/privacy"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsPrivacy />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/shoes"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsShoes />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/notifications"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsNotifications />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/subscription"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsSubscription />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/support-legal"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsSupportLegal />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/account"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsAccount />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/recently-deleted-meals"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsRecentlyDeleted />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/upgrade"
+                        element={
+                          <RouteErrorBoundary>
+                            <Upgrade />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/program"
+                        element={
+                          <RouteErrorBoundary>
+                            <Program />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/social"
+                        element={
+                          <RouteErrorBoundary>
+                            <Social />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/user/:uid"
+                        element={
+                          <RouteErrorBoundary>
+                            <UserProfile />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/crew/:crewId"
+                        element={
+                          <RouteErrorBoundary>
+                            <Crew />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/routine/:routineId"
+                        element={
+                          <RouteErrorBoundary>
+                            <Routine />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/run/:runId"
+                        element={
+                          <RouteErrorBoundary>
+                            <RunDetail />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/space/:spaceId"
+                        element={
+                          <RouteErrorBoundary>
+                            <Space />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    </Route>
                     <Route
-                      path="/settings"
+                      path="/run"
                       element={
                         <RouteErrorBoundary>
-                          <SettingsIndex />
+                          <Run />
                         </RouteErrorBoundary>
                       }
                     />
                     <Route
-                      path="/settings/legacy"
-                      element={<Navigate to="/settings" replace />}
-                    />
-                    <Route
-                      path="/settings/profile"
+                      path="/run-summary"
                       element={
                         <RouteErrorBoundary>
-                          <SettingsProfile />
+                          <RunSummary />
                         </RouteErrorBoundary>
                       }
                     />
-                    <Route
-                      path="/settings/training"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsTraining />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/run-plan"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsRunPlan />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/lift-plan"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsLiftPlan />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/nutrition"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsNutrition />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/workout-prefs"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsWorkoutPrefs />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/units-appearance"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsUnitsAppearance />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/privacy"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsPrivacy />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/shoes"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsShoes />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/notifications"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsNotifications />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/subscription"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsSubscription />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/support-legal"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsSupportLegal />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/account"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsAccount />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/settings/recently-deleted-meals"
-                      element={
-                        <RouteErrorBoundary>
-                          <SettingsRecentlyDeleted />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/upgrade"
-                      element={
-                        <RouteErrorBoundary>
-                          <Upgrade />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/program"
-                      element={
-                        <RouteErrorBoundary>
-                          <Program />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/social"
-                      element={
-                        <RouteErrorBoundary>
-                          <Social />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/user/:uid"
-                      element={
-                        <RouteErrorBoundary>
-                          <UserProfile />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/crew/:crewId"
-                      element={
-                        <RouteErrorBoundary>
-                          <Crew />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/routine/:routineId"
-                      element={
-                        <RouteErrorBoundary>
-                          <Routine />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/run/:runId"
-                      element={
-                        <RouteErrorBoundary>
-                          <RunDetail />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                    <Route
-                      path="/space/:spaceId"
-                      element={
-                        <RouteErrorBoundary>
-                          <Space />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                  </Route>
-                  <Route
-                    path="/run"
-                    element={
-                      <RouteErrorBoundary>
-                        <Run />
-                      </RouteErrorBoundary>
-                    }
-                  />
-                  <Route
-                    path="/run-summary"
-                    element={
-                      <RouteErrorBoundary>
-                        <RunSummary />
-                      </RouteErrorBoundary>
-                    }
-                  />
-                  {/* Hidden operator diagnostics — not in Layout so it doesn't
+                    {/* Hidden operator diagnostics — not in Layout so it doesn't
             render the nav, full-screen surface for screenshotting. */}
-                  <Route
-                    path="/diagnostics"
-                    element={
-                      <RouteErrorBoundary>
-                        <Diagnostics />
-                      </RouteErrorBoundary>
-                    }
-                  />
-                  {/* Admin moderation queue. Client gate via VITE_ADMIN_UIDS,
+                    <Route
+                      path="/diagnostics"
+                      element={
+                        <RouteErrorBoundary>
+                          <Diagnostics />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                    {/* Admin moderation queue. Client gate via VITE_ADMIN_UIDS,
             server gate via listPendingReports callable's ADMIN_UIDS
             check — non-admin signed-in users see a 403 placeholder
             from the page itself. */}
-                  <Route
-                    path="/admin/moderation"
-                    element={
-                      <RouteErrorBoundary>
-                        <AdminModeration />
-                      </RouteErrorBoundary>
-                    }
-                  />
-                  <Route
-                    path="/log"
-                    element={<Navigate to="/food" replace />}
-                  />
-                  {/* Dev/test-only brand bake-off — absent from production
+                    <Route
+                      path="/admin/moderation"
+                      element={
+                        <RouteErrorBoundary>
+                          <AdminModeration />
+                        </RouteErrorBoundary>
+                      }
+                    />
+                    <Route
+                      path="/log"
+                      element={<Navigate to="/food" replace />}
+                    />
+                    {/* Dev/test-only brand bake-off — absent from production
                       builds (BrandBakeoff is null there). Standalone (no
                       Layout nav) for clean full-page captures. */}
-                  {BrandBakeoff && (
-                    <Route
-                      path="/dev/brand-bakeoff"
-                      element={
-                        <RouteErrorBoundary>
-                          <BrandBakeoff />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                  )}
-                  {/* Dev/test-only Form Motion Lab — absent from production
+                    {BrandBakeoff && (
+                      <Route
+                        path="/dev/brand-bakeoff"
+                        element={
+                          <RouteErrorBoundary>
+                            <BrandBakeoff />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {/* Dev/test-only Form Motion Lab — absent from production
                       builds (FormMotionLab is null there). */}
-                  {FormMotionLab && (
-                    <Route
-                      path="/dev/form-motion-lab"
-                      element={
-                        <RouteErrorBoundary>
-                          <FormMotionLab />
-                        </RouteErrorBoundary>
-                      }
-                    />
-                  )}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </EducationLaneProvider>
-            </SurfaceCoordinatorProvider>
-          </DailyLogsProvider>
-        </RemindersProvider>
-      </StreaksProvider>
-    </Suspense>
+                    {FormMotionLab && (
+                      <Route
+                        path="/dev/form-motion-lab"
+                        element={
+                          <RouteErrorBoundary>
+                            <FormMotionLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </EducationLaneProvider>
+              </SurfaceCoordinatorProvider>
+            </DailyLogsProvider>
+          </RemindersProvider>
+        </StreaksProvider>
+      </Suspense>
+    </AuthSessionBoundary>
   );
 }
 
