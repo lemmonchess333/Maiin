@@ -15,7 +15,7 @@
  * can't be bypassed.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   collection,
   doc,
@@ -74,8 +74,20 @@ export function useGoalSpaces(uid: string | undefined) {
   // latter. Cleared on any successful reload.
   const [loadFailed, setLoadFailed] = useState(false);
 
+  // CIRCLE-INDEX-TRUST-01: request-generation guard. Every reload bumps
+  // the counter and captures its own generation; a completion only
+  // commits state if it's still the current generation. This closes the
+  // account-switch and overlapping-refresh races — a late account-A read
+  // (or a superseded refresh) can no longer overwrite newer state, so
+  // account A's Circle titles can't flash while account B resolves. The
+  // effect below also clears to loading on a uid change; the two
+  // together give the "own the index by uid + generation" property.
+  const genRef = useRef(0);
+
   const reload = useCallback(async () => {
     if (!uid) return;
+    const myGen = ++genRef.current;
+    const isCurrent = () => genRef.current === myGen;
     try {
       const links = await getDocs(collection(db, "users", uid, "journeys"));
       const spaceIds = links.docs
@@ -103,6 +115,8 @@ export function useGoalSpaces(uid: string | undefined) {
           }
         })
       );
+      // Superseded by a newer reload / account switch — drop this result.
+      if (!isCurrent()) return;
       setCircles(
         spaces
           .filter((s): s is CircleSummary => s !== null)
@@ -110,6 +124,7 @@ export function useGoalSpaces(uid: string | undefined) {
       );
       setLoadFailed(false);
     } catch (err) {
+      if (!isCurrent()) return;
       logger.error("goalSpaces: list failed", err);
       setCircles([]);
       setLoadFailed(true);
