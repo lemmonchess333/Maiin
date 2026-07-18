@@ -153,6 +153,9 @@ function commonCallbacks() {
     markManualComplete: vi.fn(async () => {}),
     skipRunDay: vi.fn(async () => {}),
     skipWorkoutDay: vi.fn(async () => {}),
+    // SESSION-RESTORE-01
+    restoreRunDay: vi.fn(async () => {}),
+    restoreWorkoutDay: vi.fn(async () => {}),
   };
 }
 
@@ -424,7 +427,7 @@ describe("DayActionSheet — terminal run states locked", () => {
     expect(screen.queryByText(/Mark as done/i)).not.toBeInTheDocument();
   });
 
-  it("skipped: select disabled, no Skip / Complete buttons, 'Skipped' badge", () => {
+  it("skipped: select disabled, no Skip / Complete, 'Skipped' badge, but a Restore action (SESSION-RESTORE-01)", () => {
     const { profile, programState, callbacks } = setupWithStatus("skipped");
     render(
       <DayActionSheet
@@ -444,6 +447,47 @@ describe("DayActionSheet — terminal run states locked", () => {
     expect(screen.queryByText(/Skip this run/i)).not.toBeInTheDocument();
     // The "Skipped" badge is the run-section status indicator.
     expect(screen.getAllByText(/Skipped/i).length).toBeGreaterThan(0);
+    // SESSION-RESTORE-01: a skip is reversible — Restore is offered.
+    expect(screen.getByText(/Restore to plan/i)).toBeInTheDocument();
+  });
+
+  it("SESSION-RESTORE-01: Restore on a skipped run calls restoreRunDay with the id, not a completion", () => {
+    const { profile, programState, callbacks } = setupWithStatus("skipped");
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    fireEvent.click(screen.getByText(/Restore to plan/i));
+    expect(callbacks.restoreRunDay).toHaveBeenCalledWith("runday_terminal");
+    // Restore is a status reversal only — never a mark-complete.
+    expect(callbacks.markManualComplete).not.toHaveBeenCalled();
+  });
+
+  it("SESSION-RESTORE-01: a race_no_show run also offers Restore → restoreRunDay", () => {
+    const { profile, programState, callbacks } =
+      setupWithStatus("race_no_show");
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    fireEvent.click(screen.getByText(/Restore to plan/i));
+    expect(callbacks.restoreRunDay).toHaveBeenCalledWith("runday_terminal");
   });
 });
 

@@ -122,6 +122,8 @@ export default function Home() {
     markManualComplete,
     skipRunDay,
     skipWorkoutDay,
+    restoreRunDay,
+    restoreWorkoutDay,
     dismissFellBehindPrompt,
     realignRacePlan,
   } = useProgram();
@@ -1481,6 +1483,8 @@ export default function Home() {
           markManualComplete={markManualComplete}
           skipRunDay={skipRunDay}
           skipWorkoutDay={skipWorkoutDay}
+          restoreRunDay={restoreRunDay}
+          restoreWorkoutDay={restoreWorkoutDay}
         />
       </Suspense>
 
