@@ -86,6 +86,33 @@ export function nextActionForFocus(focus: MomentumFocus): NextAction {
   }
 }
 
+/**
+ * REVIEW-ROUTE-01 — the review's single next action, FOCUS-first.
+ *
+ * The chosen next-week focus decides the destination PRODUCT AREA: a
+ * food-logging or weigh-in commitment must never route to Programme.
+ * The plan FEEL then refines the label/copy WITHIN a Programme focus
+ * (progression vs options vs next-week) — the "fit refines the label,
+ * it does not pick the area" rule. When no focus was chosen, fall back
+ * to the feel-based action (Programme is the sensible default for a
+ * plan-fit-only review). This composition pins all 4×3 focus/feel
+ * cells to a truthful destination.
+ */
+export function resolveReviewNextAction(
+  feel: PlanFeel,
+  focus: MomentumFocus | null
+): NextAction {
+  // No focus, or a Programme focus (lifts/runs) → the feel-refined
+  // Programme action. Both live in Programme, so the feel label is the
+  // useful refinement.
+  if (focus === null || focus === "lifts" || focus === "runs") {
+    return nextActionForFeel(feel);
+  }
+  // Food-logging / weigh-in commitments route to their own area,
+  // independent of how the plan felt.
+  return nextActionForFocus(focus);
+}
+
 export function checkinDocPath(uid: string, weekKey: string): string {
   return `users/${uid}/checkins/${weekKey}`;
 }
