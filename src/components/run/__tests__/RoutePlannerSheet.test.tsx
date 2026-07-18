@@ -15,6 +15,20 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import RoutePlannerSheet from "../RoutePlannerSheet";
 
+// The road-aware layer (Run11/Mapbox) reads Pro entitlement via
+// useSubscription → useAuth, which needs AuthProvider. Mock it like the
+// other useSubscription consumers (HeroDrillDownSheet.test.tsx) — these
+// exit-affordance pins are entitlement-independent, and the road
+// actions stay hidden anyway (VITE_ROUTE_PLANNING_ENABLED is unset).
+vi.mock("@/lib/subscription", () => ({
+  useSubscription: () => ({
+    tier: "free",
+    isInTrial: false,
+    trialDaysLeft: 0,
+    isPro: false,
+  }),
+}));
+
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
 vi.mock("maplibre-gl", () => {
   class FakeMap {
