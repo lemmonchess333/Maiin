@@ -1266,6 +1266,73 @@ export function useProgram() {
     [programState, user, saveProgram]
   );
 
+  // SESSION-RESTORE-01: a skip is a reversible decision. Restore a
+  // skipped run slot (or a race_no_show) back to `planned` — a pure
+  // status reversal, NOT a completion or an implicit start. It creates
+  // no activity record, progression stimulus, streak day, share, Circle
+  // event, or manual-completion key. Template, date, stable id, override,
+  // race identity (`type`), move metadata, and the manualCompletions map
+  // are all untouched. The transition gate (`skipped → planned`,
+  // `race_no_show → planned`) is the sole legality check — any other
+  // status (planned / completed_*) is refused with a log, so a
+  // completed run can never be silently reopened.
+  const restoreRunDay = useCallback(
+    async (idOrDayIndex: string | number) => {
+      if (!programState?.runDays || !user) return;
+      const targetIndex =
+        typeof idOrDayIndex === "string"
+          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          : programState.runDays.findIndex(
+              (rd) => rd.dayIndex === idOrDayIndex
+            );
+      if (targetIndex === -1) {
+        logger.warn(
+          `[restoreRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      const targetDay = programState.runDays[targetIndex];
+      const fromStatus = getScheduledRunStatus(targetDay);
+      // Only skipped / race_no_show restore to planned; the gate refuses
+      // planned (nothing to restore) and terminal completed_* states.
+      if (!transitionStatus(fromStatus, "planned")) {
+        logger.warn(
+          `[restoreRunDay] invalid transition ${fromStatus} → planned for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
+        );
+        return;
+      }
+      const updatedDays = programState.runDays.slice();
+      updatedDays[targetIndex] = {
+        ...targetDay,
+        status: "planned" as ScheduledRunStatus,
+        completed: false,
+      };
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, saveProgram]
+  );
+
+  // SESSION-RESTORE-01 (lift half): clear `skipped` on a lift day,
+  // reversing a skip back to a plannable session. Only reverses a
+  // genuine skip on a NON-completed day — a completed day is never
+  // reopened, and a non-skipped day is a no-op. No stats, streak, or
+  // social side effect (mirrors skipWorkoutDay's write shape).
+  const restoreWorkoutDay = useCallback(
+    async (dayIndex: number) => {
+      if (!programState || !user) return;
+      const day = programState.workouts[dayIndex];
+      if (!day || !day.skipped || day.completed) return;
+      const updated: ProgramState = {
+        ...programState,
+        workouts: programState.workouts.map((d, i) =>
+          i === dayIndex ? { ...d, skipped: false } : d
+        ),
+      };
+      await saveProgram(updated);
+    },
+    [programState, user, saveProgram]
+  );
+
   // Override a run day template. Refuses to write when the target
   // runDay is already in a terminal status (completed_*, skipped,
   // race_no_show) — the UI is expected to disable the template
@@ -1903,6 +1970,8 @@ export function useProgram() {
     markManualComplete,
     unmarkManualComplete,
     skipRunDay,
+    restoreRunDay,
+    restoreWorkoutDay,
     overrideRunDay,
     refreshRunSchedule,
     skipRecoveryEarly,
