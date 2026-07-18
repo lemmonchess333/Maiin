@@ -408,6 +408,9 @@ export default function ProgrammeSettings({
       weeklyRunDays: getWeeklyRunTarget(profile) || 2,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
+      // Optional event name — carried through the rebuild so a lifting-only
+      // edit (configurePlan) can never wipe it off the stored raceGoal.
+      raceEventName: profile.raceGoal?.eventName,
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
@@ -555,6 +558,11 @@ export default function ProgrammeSettings({
               raceGoal: {
                 distance: saved.raceDistance,
                 targetDate: saved.raceTargetDate,
+                // Preserve the optional event name through the rebuild —
+                // omit the key entirely when absent (clean writes).
+                ...(saved.raceEventName
+                  ? { eventName: saved.raceEventName }
+                  : {}),
               },
             }
           : {}),

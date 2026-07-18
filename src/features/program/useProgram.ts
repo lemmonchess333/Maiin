@@ -118,6 +118,7 @@ function makeRunPlanRecord(
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
+    eventName?: string;
   },
   carry: { currentWeek?: number; totalWeeks?: number } = {}
 ): RunPlan {
@@ -162,6 +163,7 @@ function regenerateRacePlan({
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
+    eventName?: string;
   };
   weekSchedule: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   weeklyRunDays: number;

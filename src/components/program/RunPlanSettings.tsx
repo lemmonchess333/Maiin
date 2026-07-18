@@ -101,6 +101,7 @@ export default function RunPlanSettings({
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
+      raceEventName: profile.raceGoal?.eventName ?? "",
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
@@ -118,6 +119,9 @@ export default function RunPlanSettings({
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
     saved.raceTargetDate
+  );
+  const [raceEventName, setRaceEventName] = useState<string>(
+    saved.raceEventName
   );
   const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
   const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
@@ -159,6 +163,7 @@ export default function RunPlanSettings({
     (runMode === "race_prep" &&
       (raceDistance !== saved.raceDistance ||
         raceTargetDate !== saved.raceTargetDate ||
+        raceEventName.trim() !== saved.raceEventName ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty));
@@ -176,6 +181,8 @@ export default function RunPlanSettings({
             ...(setRaceGoalPatch({
               distance: raceDistance,
               targetDate: raceTargetDate,
+              // Optional free-text; blank → key omitted (never undefined).
+              eventName: raceEventName.trim() || undefined,
             }) as Partial<UserProfile>),
             ...runTargetWriteFields(weeklyRunDays),
             // Pgm6 knobs persist alongside the goal so the profile copy
@@ -285,10 +292,12 @@ export default function RunPlanSettings({
         <RaceGoalPlanner
           distance={raceDistance}
           targetDate={raceTargetDate}
+          eventName={raceEventName}
           minDate={today}
           state={plannerState}
           onDistanceChange={setRaceDistance}
           onTargetDateChange={setRaceTargetDate}
+          onEventNameChange={setRaceEventName}
         />
       )}
 
