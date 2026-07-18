@@ -17,13 +17,14 @@ import { lazyRetry } from "@/lib/lazyRetry";
 const FullLeaderboard = lazyRetry(
   () => import("@/components/social/FullLeaderboard")
 );
-import { Users, Globe } from "lucide-react";
+import { Users, Globe, ChevronDown } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
 import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
 import { SOCIAL_GATES } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { FeedSubTab } from "@/pages/Social";
@@ -131,6 +132,8 @@ export default function FeedView({
   }, [refreshRef, activeFeed.refresh]);
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
+  // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
+  const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
   /* Overlay open/close flip the local state AND mirror it to the
      shell (chrome hide) inside the same event handler, so React
      batches both updates into a single render. */
@@ -200,45 +203,93 @@ export default function FeedView({
       {active && !showFullLeaderboard && (
         <section aria-label="Activity feed">
           <div className="!mt-3">
-            {/* Feed sub-tabs: Following | Explore. Same canonical
-                SegmentedControl as the section tabs above — secondary
-                track. The Soc5b new-content dot rides inside each
-                option's label node (a relative wrapper) with an
-                sr-only "new content" hint replacing the old per-button
-                aria-label. Suppressed on the active sub-tab by the
-                freshness hook. */}
-            <SegmentedControl
-              ariaLabel="Feed source"
-              value={feedSubTab}
-              onChange={(st) => {
-                selectFeedSubTab(st);
-                trackSocialEvent("social_feed_subtab_changed", {
-                  subTab: st,
-                });
-              }}
-              options={(["following", "explore"] as FeedSubTab[]).map((st) => {
-                const hasNew =
-                  st === "following" ? followingHasNew : exploreHasNew;
-                const text = st === "following" ? "Following" : "Explore";
-                return {
-                  value: st,
-                  label: (
-                    <span className="relative inline-flex items-center">
-                      {text}
-                      {hasNew && (
-                        <>
-                          <span
-                            aria-hidden="true"
-                            className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
-                          />
-                          <span className="sr-only"> new content</span>
-                        </>
+            {/* Feed source — a compact menu (SOCIAL-HOME-01), not a
+                second stacked segmented track: one small chip names
+                the current source and opens a two-option sheet. The
+                Soc5b freshness dot rides on the chip when the OTHER
+                source has new content, and on each sheet option. */}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSourceMenuOpen(true)}
+                className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
+                aria-label={`Feed source: ${feedSubTab === "following" ? "Following" : "Explore"}`}
+              >
+                {feedSubTab === "following" ? "Following" : "Explore"}
+                <ChevronDown className="size-4" aria-hidden="true" />
+                {(feedSubTab === "following"
+                  ? exploreHasNew
+                  : followingHasNew) && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-2.5 right-0 size-1.5 rounded-full bg-primary"
+                    />
+                    <span className="sr-only"> new content elsewhere</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <BottomSheet
+              open={sourceMenuOpen}
+              onOpenChange={setSourceMenuOpen}
+              title="Feed source"
+            >
+              <div
+                className="px-5 pb-6 pt-2 space-y-2"
+                role="radiogroup"
+                aria-label="Feed source"
+              >
+                {(["following", "explore"] as FeedSubTab[]).map((st) => {
+                  const hasNew =
+                    st === "following" ? followingHasNew : exploreHasNew;
+                  const text = st === "following" ? "Following" : "Explore";
+                  const sub =
+                    st === "following"
+                      ? "Activities from people you follow"
+                      : "Public activity across Tropos";
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      role="radio"
+                      aria-checked={feedSubTab === st}
+                      onClick={() => {
+                        setSourceMenuOpen(false);
+                        if (feedSubTab === st) return;
+                        selectFeedSubTab(st);
+                        trackSocialEvent("social_feed_subtab_changed", {
+                          subTab: st,
+                        });
+                      }}
+                      className={cn(
+                        "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                        feedSubTab === st
+                          ? "bg-primary/10 border border-primary/40"
+                          : "bg-muted border border-transparent"
                       )}
-                    </span>
-                  ),
-                };
-              })}
-            />
+                    >
+                      <span className="relative inline-flex items-center text-sm font-semibold text-foreground">
+                        {text}
+                        {hasNew && (
+                          <>
+                            <span
+                              aria-hidden="true"
+                              className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
+                            />
+                            <span className="sr-only"> new content</span>
+                          </>
+                        )}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {sub}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </BottomSheet>
 
             {showSoloFeed && (
               <SoloFirstFeed
@@ -444,11 +495,20 @@ export default function FeedView({
                    themselves (which is what the Following empty
                    state implicitly does via "find people"). No
                    action CTA per the lock. */
+                    /* SOCIAL-HOME-01: the dead end routes somewhere
+                       useful — Together holds the user's Circles and
+                       the cold-start selector, which don't depend on
+                       anyone else posting. Supersedes the Soc5
+                       no-CTA lock. */
                     <HexEmptyState
                       icon={Globe}
                       headline="Tropos is quiet right now"
-                      sub="Check back later"
+                      sub="Your Circles don't need a crowd"
                       accent={THEME.brand}
+                      action={{
+                        label: "Open Together",
+                        onClick: openTogether,
+                      }}
                     />
                   ) : (
                     /* Inline prompt — sits as a supporting element under
