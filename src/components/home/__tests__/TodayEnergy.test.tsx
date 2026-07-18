@@ -161,3 +161,33 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     ).toBeInTheDocument();
   });
 });
+
+describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
+  it("phase chip shows the label WITHOUT a fabricated +300/−500 delta", () => {
+    renderAt({
+      calories: 1000,
+      burn: { ...burn, phase: "cut" },
+    });
+    expect(screen.getByText("Cut")).toBeInTheDocument();
+    expect(screen.queryByText(/−500/)).toBeNull();
+    expect(screen.queryByText(/\+300/)).toBeNull();
+  });
+
+  it("bulk phase likewise shows only the label", () => {
+    renderAt({
+      calories: 1000,
+      burn: { ...burn, phase: "lean bulk" },
+    });
+    expect(screen.getByText("Bulk")).toBeInTheDocument();
+    expect(screen.queryByText(/\+300/)).toBeNull();
+  });
+
+  it("post-lift protein nudge ties to the target, not a recovery claim", () => {
+    renderAt({
+      calories: 1200,
+      postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
+    });
+    expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
+    expect(screen.queryByText(/for recovery/i)).toBeNull();
+  });
+});
