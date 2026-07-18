@@ -56,6 +56,9 @@ const { buildProgramExercise } = require("./programExerciseBuilder");
 // Calorie-engine mirror (pinned by a parity cross-test). Used by the
 // completeWorkoutDay effect to compute the saved workout's totalCalories.
 const { estimateLiftBurn } = require("./workoutBurn");
+// Deload-transform mirror (pinned by a parity cross-test). Used by the
+// applyDeloadWeek reducer (PROGRAM-DELOAD-01).
+const { applyDeloadToWorkouts } = require("./deloadEngine");
 
 // 31-day receipt retention. Command receipts live at
 // users/{uid}/programState/current/commandReceipts/{commandId} and make a
@@ -82,6 +85,8 @@ const CLIENT_COMMAND_KINDS = Object.freeze([
   "setManualRunCompletion",
   "transitionRunDay",
   "overrideRunDay",
+  "applyDeloadWeek",
+  "revertDeloadWeek",
 ]);
 const CLIENT_COMMAND_KIND_SET = new Set(CLIENT_COMMAND_KINDS);
 
@@ -552,6 +557,40 @@ const KIND_VALIDATORS = {
     out.runDayId = assertString(command.runDayId, "runDayId", MAX_ID_LEN);
     out.templateId = assertString(command.templateId, "templateId", MAX_ID_LEN);
   },
+
+  // PROGRAM-DELOAD-01 — week-level commands. No day signature: the deload
+  // applies to (or reverts across) the WHOLE active week, so the only
+  // precondition is the week cursor itself. The reducer enforces the
+  // semantic guards (not-already-deloaded / snapshot-present).
+  applyDeloadWeek(command, out) {
+    assertKeys(
+      command,
+      "applyDeloadWeek",
+      ["kind", "commandId", "expectedWeekNumber"],
+      []
+    );
+    out.expectedWeekNumber = assertBoundedInt(
+      command.expectedWeekNumber,
+      "expectedWeekNumber",
+      1,
+      MAX_WEEK_NUMBER
+    );
+  },
+
+  revertDeloadWeek(command, out) {
+    assertKeys(
+      command,
+      "revertDeloadWeek",
+      ["kind", "commandId", "expectedWeekNumber"],
+      []
+    );
+    out.expectedWeekNumber = assertBoundedInt(
+      command.expectedWeekNumber,
+      "expectedWeekNumber",
+      1,
+      MAX_WEEK_NUMBER
+    );
+  },
 };
 
 /**
@@ -872,6 +911,74 @@ function overrideRunDay(state, command) {
   }));
 }
 
+// ---------------------------------------------------------------------------
+// PROGRAM-DELOAD-01 — user-invoked deload week (apply / revert).
+//
+// applyDeloadWeek eases the WHOLE active week via the mirrored transform
+// (−1 set floor 2, weight ×0.85 → nearest 2.5 kg), sets currentPhase
+// "deload" and clears acute fatigue — exactly what the automatic week-4
+// path (client advanceWeek) does. Semantic idempotency: a week already in
+// "deload" phase rejects, so a second Apply (new commandId) can never
+// compound to ×0.85². The pre-deload state is stashed in
+// `deloadSnapshot` for the undo path.
+//
+// revertDeloadWeek restores the stash — valid only while the week cursor
+// still matches the snapshot's, so a stale snapshot from a previous week
+// is inert (advanceWeek doesn't know about it and doesn't need to). The
+// snapshot restore rewinds the in-programState workouts wholesale; the
+// client offers Undo only in the immediate post-apply toast window, and
+// saved workout RECORDS (users/{uid}/workouts) are never touched.
+// ---------------------------------------------------------------------------
+
+function requireWeekCursor(state, command) {
+  if (state.weekNumber !== command.expectedWeekNumber) {
+    failedPrecondition(
+      "Your training week changed since you started. Refresh and try again."
+    );
+  }
+}
+
+function applyDeloadWeekCommand(state, command, now) {
+  requireWeekCursor(state, command);
+  if (state.currentPhase === "deload") {
+    failedPrecondition("This week is already a deload week.");
+  }
+  return {
+    ...state,
+    deloadSnapshot: {
+      weekNumber: state.weekNumber,
+      workouts: state.workouts,
+      currentPhase: state.currentPhase,
+      fatigueScore: state.fatigueScore,
+      appliedAt: now,
+    },
+    workouts: applyDeloadToWorkouts(state.workouts),
+    currentPhase: "deload",
+    fatigueScore: 0,
+  };
+}
+
+function revertDeloadWeekCommand(state, command) {
+  requireWeekCursor(state, command);
+  const snap = state.deloadSnapshot;
+  if (
+    !isPlainObject(snap) ||
+    snap.weekNumber !== state.weekNumber ||
+    !Array.isArray(snap.workouts)
+  ) {
+    failedPrecondition("There is no deload to undo for this week.");
+  }
+  // tx.set replaces the whole doc, so omitting the key deletes it.
+  const next = {
+    ...state,
+    workouts: snap.workouts,
+    currentPhase: snap.currentPhase,
+    fatigueScore: snap.fatigueScore,
+  };
+  delete next.deloadSnapshot;
+  return next;
+}
+
 function logExercise(state, command, now) {
   const day = requireWorkoutDay(state, command);
   const idx = day.exercises.findIndex(
@@ -1162,6 +1269,12 @@ function applyProgramCommand({ state, profile, command, now }) {
       break;
     case "overrideRunDay":
       next = overrideRunDay(current, validated);
+      break;
+    case "applyDeloadWeek":
+      next = applyDeloadWeekCommand(current, validated, now);
+      break;
+    case "revertDeloadWeek":
+      next = revertDeloadWeekCommand(current, validated);
       break;
     default:
       invalidCommand(`Unsupported programme command "${validated.kind}".`);
