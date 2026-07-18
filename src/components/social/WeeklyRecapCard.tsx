@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
-import { Share2 } from "lucide-react";
+import { Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
@@ -13,18 +13,54 @@ import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { THEME } from "@/lib/theme";
 
 /**
- * Weekly recap — the WHOOP-style "your week" share entry on the Social feed
- * (SOCIAL features pass, 2026-07). Computes THIS week's totals client-side
- * from data hooks that already live on this page's providers (no new
- * listeners): workouts (count + tonnage), runs (Sunday-anchored weekly km
- * via useRunningStats), and the current streak. One tap opens the share
- * sheet on the new `recap` card template.
+ * Weekly recap — the WHOOP-style "your week" share entry on the Social feed.
  *
- * Renders nothing until the week has at least one session — a zero-week
- * recap is an empty brag. Solo-first users don't see this (SoloFirstFeed
- * has its own share entry); Social.tsx gates accordingly.
+ * SOCIAL-RECAP-READS-01: this used to mount `useWorkouts()` (a 50-workout
+ * live listener) + `useRunningStats(14)` (a 14-day run query)
+ * UNCONDITIONALLY on every active Feed visit, purely to decide whether to
+ * render — and it rendered NOTHING on a zero-session week (an invisible
+ * entry that still paid the read cost). It now starts as a compact
+ * "Build recap" action; only an explicit tap mounts `WeeklyRecapContent`,
+ * which hydrates those existing sources. An honest zero-session result is
+ * shown (not silence), and account switches reset the built state so
+ * account B never sees account A's mounted recap.
  */
 export default function WeeklyRecapCard() {
+  const { user } = useAuth();
+  const [building, setBuilding] = useState(false);
+
+  // Reset on account switch — a mounted recap belongs to the account that
+  // opened it. React's "adjust state during render when a prop changes"
+  // idiom (no effect, no stale-frame flash) since the app doesn't remount
+  // this on a uid change yet.
+  const [ownerUid, setOwnerUid] = useState(user?.uid);
+  if (ownerUid !== user?.uid) {
+    setOwnerUid(user?.uid);
+    setBuilding(false);
+  }
+
+  if (!building) {
+    return (
+      <div className="mt-4 p-4 rounded-2xl bg-card card-shadow space-y-3">
+        <SectionLabel>Your week</SectionLabel>
+        <Button
+          variant="secondary"
+          fullWidth
+          leftIcon={<Sparkles className="size-4" />}
+          onClick={() => setBuilding(true)}
+        >
+          Build recap
+        </Button>
+      </div>
+    );
+  }
+
+  return <WeeklyRecapContent />;
+}
+
+/** The hydrating half — mounted only after the "Build recap" tap, so its
+ *  workout listener + run query never fire on a passive Feed visit. */
+function WeeklyRecapContent() {
   const { profile } = useAuth();
   const { workouts } = useWorkouts();
   const { weeklyData, runs } = useRunningStats(14);
@@ -75,9 +111,23 @@ export default function WeeklyRecapCard() {
     };
   }, [workouts, weeklyData, runs, weekKey]);
 
-  if (sessions === 0) return null;
-
   const weekStart = parseLocalDate(weekKey);
+
+  // SOCIAL-RECAP-READS-01: after an explicit "Build recap" tap, a
+  // zero-session week gets a calm instruction instead of the old silent
+  // `return null` (which read the data only to render nothing).
+  if (sessions === 0) {
+    return (
+      <div className="mt-4 p-4 rounded-2xl bg-card card-shadow space-y-2">
+        <SectionLabel>Your week</SectionLabel>
+        <p className="text-sm text-muted-foreground">
+          No sessions logged this week yet — log a workout or run and your recap
+          will be ready to share.
+        </p>
+      </div>
+    );
+  }
+
   const weekLabel = `Week of ${format(weekStart, "d MMM")}`;
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const railLabel = days
