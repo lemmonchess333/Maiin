@@ -228,14 +228,66 @@ export default function CirclesSection({ uid }: { uid: string }) {
     setEvents(detail.events);
   };
 
+  /* CIRCLE-INVITE-ACTIVATION-01 — the moment a circle exists, the ONE
+     thing that makes it useful is another member. Creation hands off
+     straight into sharing the invite; a still-solo circle leads with
+     the same action from its featured card. */
+  const [inviteHandoff, setInviteHandoff] = useState<{
+    title: string;
+    spaceId: string;
+    inviteCode: string;
+  } | null>(null);
+
+  const shareInvite = async (h: {
+    title: string;
+    spaceId: string;
+    inviteCode: string;
+  }) => {
+    const code = inviteString(h.spaceId, h.inviteCode);
+    const text = `Join my Tropos Circle "${h.title}" — invite code: ${code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join my Circle on Tropos",
+          text,
+          url: window.location.origin,
+        });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(
+          `${text} ${window.location.origin}`
+        );
+        toast.success("Invite copied.");
+      } catch {
+        toast.error("Couldn't copy — long-press the code to select it.");
+      }
+    }
+  };
+
+  const copyInviteCode = async (h: { spaceId: string; inviteCode: string }) => {
+    try {
+      await navigator.clipboard.writeText(
+        inviteString(h.spaceId, h.inviteCode)
+      );
+      toast.success("Invite code copied.");
+    } catch {
+      toast.error("Couldn't copy — long-press the code to select it.");
+    }
+  };
+
   const create = async () => {
     setBusy(true);
-    const res = await createCircle({ type: template, title: title.trim() });
+    const trimmed = title.trim();
+    const res = await createCircle({ type: template, title: trimmed });
     setBusy(false);
     if (res) {
       setShowCreate(false);
       setTitle("");
-      toast.success("Circle started — share the invite from its page.");
+      // Straight into the invite hand-off — a circle of one isn't done.
+      setInviteHandoff({ title: trimmed, ...res });
     } else {
       toast.error("Couldn't start the circle. Check the title and try again.");
     }
@@ -498,16 +550,44 @@ export default function CirclesSection({ uid }: { uid: string }) {
               </p>
             )}
           </button>
-          <Button
-            className="w-full"
-            onClick={() => {
-              haptic("light");
-              setFocusSource("featured");
-              setFocusSheetOpen(true);
-            }}
-          >
-            {featuredMyCheckIn ? "Change weekly focus" : "Set weekly focus"}
-          </Button>
+          {featured.space.memberCount === 1 && featured.inviteCode ? (
+            /* CIRCLE-INVITE-ACTIVATION-01 — a one-member circle's one
+               useful action is inviting; the weekly focus stays
+               reachable through the detail sheet. Owner-only by
+               construction (inviteCode is only present for the
+               owner's summaries). */
+            <>
+              <p className="text-xs text-muted-foreground">
+                Your Circle is ready — invite someone to make it a circle.
+              </p>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  const code = featured.inviteCode;
+                  if (!code) return; // narrowing lost across the closure
+                  haptic("light");
+                  setInviteHandoff({
+                    title: featured.space.title,
+                    spaceId: featured.space.id,
+                    inviteCode: code,
+                  });
+                }}
+              >
+                Invite someone
+              </Button>
+            </>
+          ) : (
+            <Button
+              className="w-full"
+              onClick={() => {
+                haptic("light");
+                setFocusSource("featured");
+                setFocusSheetOpen(true);
+              }}
+            >
+              {featuredMyCheckIn ? "Change weekly focus" : "Set weekly focus"}
+            </Button>
+          )}
         </div>
       )}
 
@@ -841,6 +921,44 @@ export default function CirclesSection({ uid }: { uid: string }) {
                 </Button>
               </>
             )}
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* ── Invite hand-off (CIRCLE-INVITE-ACTIVATION-01) ── */}
+      <BottomSheet
+        open={inviteHandoff !== null}
+        onOpenChange={(o) => {
+          if (!o) setInviteHandoff(null);
+        }}
+        title="Your Circle is ready"
+        description="Invite 1–7 people — the circle only ever sees check-ins, never numbers, meals or photos."
+      >
+        {inviteHandoff && (
+          <div className="space-y-3 pb-2">
+            <p className="w-full px-3 py-2.5 rounded-xl bg-muted text-sm text-foreground font-mono break-all select-all">
+              {inviteString(inviteHandoff.spaceId, inviteHandoff.inviteCode)}
+            </p>
+            <Button
+              className="w-full"
+              onClick={() => void shareInvite(inviteHandoff)}
+            >
+              Share invite
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => void copyInviteCode(inviteHandoff)}
+            >
+              Copy code
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setInviteHandoff(null)}
+            >
+              Not now
+            </Button>
           </div>
         )}
       </BottomSheet>
