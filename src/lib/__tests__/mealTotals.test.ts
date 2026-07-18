@@ -48,9 +48,7 @@ describe("sumMealTotals", () => {
   it("prefers total* over the legacy bare field when both are present", () => {
     // If a doc somehow carries both, the prefixed form is authoritative
     // because that's what the current writer emits.
-    const meals: MealTotalsInput[] = [
-      { totalCalories: 100, calories: 999 },
-    ];
+    const meals: MealTotalsInput[] = [{ totalCalories: 100, calories: 999 }];
     expect(sumMealTotals(meals).calories).toBe(100);
   });
 
@@ -101,6 +99,40 @@ describe("sumMealTotals", () => {
       calories: 150,
       protein: 12,
       mealCount: 1,
+    });
+  });
+
+  describe("HOME-MEALS-01: soft-deleted meals are excluded", () => {
+    it("skips a deletedAt meal from both totals AND the count", () => {
+      const meals: MealTotalsInput[] = [
+        { totalCalories: 500, totalProtein: 40 },
+        { totalCalories: 300, totalProtein: 20, deletedAt: 1720000000000 },
+        { totalCalories: 200, totalProtein: 10 },
+      ];
+      expect(sumMealTotals(meals)).toMatchObject({
+        calories: 700,
+        protein: 50,
+        mealCount: 2,
+      });
+    });
+
+    it("treats deletedAt null / absent as active (post-restore value)", () => {
+      const meals: MealTotalsInput[] = [
+        { totalCalories: 400, deletedAt: null },
+        { totalCalories: 100 },
+      ];
+      expect(sumMealTotals(meals)).toMatchObject({
+        calories: 500,
+        mealCount: 2,
+      });
+    });
+
+    it("all-deleted collapses to empty totals", () => {
+      const meals: MealTotalsInput[] = [
+        { totalCalories: 500, deletedAt: 1 },
+        { totalCalories: 300, deletedAt: 1 },
+      ];
+      expect(sumMealTotals(meals)).toMatchObject({ calories: 0, mealCount: 0 });
     });
   });
 });
