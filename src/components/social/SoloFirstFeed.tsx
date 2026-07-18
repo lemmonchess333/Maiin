@@ -11,11 +11,11 @@ import { useWorkouts } from "@/hooks/useWorkouts";
 import { ShareCardSheet } from "@/components/share/ShareCardSheet";
 import { THEME } from "@/lib/theme";
 
-type SocialTab = "feed" | "crews" | "find";
-
 interface SoloFirstFeedProps {
-  /** Navigate to another Social top-level tab (find / crews). */
-  onNavigateTab: (tab: SocialTab) => void;
+  /** Open the People search overlay (find a partner / people). */
+  onFindPeople: () => void;
+  /** Jump to the Together tab (circles/crews surfaces). */
+  onOpenTogether: () => void;
 }
 
 /**
@@ -30,7 +30,10 @@ interface SoloFirstFeedProps {
  * needs mutual follow), so the curated stack is the correct,
  * always-designed cold state rather than a gated fallback.
  */
-export default function SoloFirstFeed({ onNavigateTab }: SoloFirstFeedProps) {
+export default function SoloFirstFeed({
+  onFindPeople,
+  onOpenTogether,
+}: SoloFirstFeedProps) {
   const { profile } = useAuth();
   const {
     challenges,
@@ -76,7 +79,7 @@ export default function SoloFirstFeed({ onNavigateTab }: SoloFirstFeedProps) {
 
   return (
     <div className="mt-4 space-y-3">
-      <PartnerStreakHero onFindPartner={() => onNavigateTab("find")} />
+      <PartnerStreakHero onFindPartner={onFindPeople} />
 
       {globalChallenge && (
         <ChallengeCard
@@ -132,7 +135,7 @@ export default function SoloFirstFeed({ onNavigateTab }: SoloFirstFeedProps) {
         accent={THEME.brand}
         action={{
           label: "Create a crew",
-          onClick: () => onNavigateTab("crews"),
+          onClick: onOpenTogether,
         }}
       />
 

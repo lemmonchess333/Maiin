@@ -15,21 +15,21 @@ import { getBoundedFollowingCount } from "../lib/socialApi";
 import FeedView from "../components/social/views/FeedView";
 import CommunityView from "../components/social/views/CommunityView";
 import PeopleView from "../components/social/views/PeopleView";
-import { Users, X, Bell } from "lucide-react";
+import { X, Search, Bell } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { SOCIAL_GATES, shouldShowFollowingFeed } from "@/lib/socialGates";
-import { THEME } from "../lib/theme";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
-/* "discover" used to mean two different things: a top-level tab AND
-   a feed sub-tab. The top-level tab is now `find` (search + invite +
-   suggestions) and the feed sub-tab is `explore` (public activity).
-   Naming collision audited and removed. */
-export type SocialTab = "feed" | "crews" | "find";
+/* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
+   tabs — Together (Circles + Spaces + Challenges + legacy Crews) and
+   Feed. People is no longer a tab: it's a lazily-opened full-screen
+   search surface reached from the header (or the legacy ?tab=find
+   deep link). The feed sub-tab stays `explore` (public activity). */
+export type SocialTab = "together" | "feed";
 export type FeedSubTab = "following" | "explore";
 
 export default function Social() {
@@ -55,9 +55,38 @@ export default function Social() {
   // 'find' for genuine new users (zero follows + zero crew).
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  /* Legacy param compatibility (explicit contract): ?tab=crews (the
+     old Community tab — Spaces/Challenges/Circles now live on
+     Together) and ?tab=find (the old People tab — now the search
+     overlay, opened by the effect below) both keep resolving. Any
+     other/missing value lands on Together, the URL-clean default
+     (`?tab=` stripped). ?tab=feed remains the explicit Feed link. */
   const tabFromUrl = searchParams.get("tab");
-  const tab: SocialTab =
-    tabFromUrl === "crews" || tabFromUrl === "find" ? tabFromUrl : "feed";
+  const tab: SocialTab = tabFromUrl === "feed" ? "feed" : "together";
+
+  /* People overlay — a full-screen search surface, not a tab. State-
+     driven like NotificationsSheet; the legacy ?tab=find deep link
+     opens it once on arrival and normalises the URL to Together so
+     back/refresh behave predictably. */
+  const [peopleOpen, setPeopleOpen] = useState(false);
+  const legacyFindHandledRef = useRef(false);
+  useEffect(() => {
+    if (tabFromUrl !== "find" || legacyFindHandledRef.current) return;
+    legacyFindHandledRef.current = true;
+    setPeopleOpen(true);
+    setSearchParams(
+      (params) => {
+        const updated = new URLSearchParams(params);
+        updated.delete("tab");
+        return updated;
+      },
+      { replace: true }
+    );
+  }, [tabFromUrl, setSearchParams]);
+  const openPeople = useCallback(() => {
+    setPeopleOpen(true);
+    trackSocialEvent("social_tab_selected", { tab: "find" });
+  }, []);
 
   /* Soc5 item 12: deep-link `/social?tab=crews&crewId=abc123` jumps
      straight to the per-crew page. Non-members see Crew.tsx's
@@ -76,7 +105,7 @@ export default function Social() {
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
-          if (next === "feed") updated.delete("tab");
+          if (next === "together") updated.delete("tab");
           else updated.set("tab", next);
           return updated;
         },
@@ -145,26 +174,11 @@ export default function Social() {
     };
   }, [user, followingCount, feedFromUrl]);
 
-  // Soc5c smart default — only fires when there's NO URL `?tab=` AND
-  // the user is genuinely brand-new (zero follows + zero crew). Once
-  // applied, the guard ref ensures the smart default never overrides
-  // subsequent user navigation, even if the user un-follows everyone
-  // / leaves their crew during the session.
-  const smartDefaultAppliedRef = useRef(false);
+  /* The old Soc5c smart default (send brand-new users to the People
+     tab) is gone: Together is the default surface and owns the
+     cold-start state directly (the goal selector), so new users land
+     somewhere useful without a redirect. */
   const profileCrewId = profile?.crewId;
-  useEffect(() => {
-    if (smartDefaultAppliedRef.current) return;
-    if (tabFromUrl) {
-      // URL already specifies a tab → honour it; never override.
-      smartDefaultAppliedRef.current = true;
-      return;
-    }
-    if (followingCount === null) return; // await async resolution
-    smartDefaultAppliedRef.current = true;
-    if (followingCount === 0 && !profileCrewId) {
-      setTab("find");
-    }
-  }, [tabFromUrl, followingCount, profileCrewId, setTab]);
 
   // Soc5c: "new user" signal drives the first-launch coachmark on
   // the Find tab. Same definition as the smart default (zero follows
@@ -201,27 +215,6 @@ export default function Social() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifications = useNotifications();
 
-  // Crew banner dismiss state. localStorage access wrapped in
-  // try/catch — Safari private mode + strict-cookie iframes throw
-  // SecurityError synchronously, which would otherwise crash the
-  // whole Social page on mount via the useState initialiser.
-  const [crewBannerDismissed, setCrewBannerDismissed] = useState(() => {
-    try {
-      return !!localStorage.getItem("tropos_crew_banner_dismissed");
-    } catch {
-      return false;
-    }
-  });
-  const dismissCrewBanner = () => {
-    setCrewBannerDismissed(true);
-    try {
-      localStorage.setItem("tropos_crew_banner_dismissed", "1");
-    } catch {
-      // Best-effort persistence — in private mode the dismissal
-      // simply doesn't survive a reload.
-    }
-  };
-
   // Crews — stays in the shell (not CommunityView) because the People
   // tab consumes the same instance (crews / currentCrew / crewsError /
   // refreshCrews) and the hook has no shared cache: a second instance
@@ -254,10 +247,10 @@ export default function Social() {
   const performRefresh = useCallback(async () => {
     if (tab === "feed") {
       await feedRefreshRef.current?.();
-    } else if (tab === "crews") {
+    } else {
       await communityRefreshRef.current?.();
     }
-    // Find tab: search results are user-driven; no refresh action.
+    // People overlay: search results are user-driven; no refresh action.
   }, [tab]);
 
   const {
@@ -298,27 +291,38 @@ export default function Social() {
       <motion.header variants={itemVariant} className="pt-1">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-extrabold text-foreground">Social</h1>
-          <div className="relative">
+          {/* Right cluster (Home header idiom): find people + the
+              notification tray. People moved out of the tab bar
+              (SOCIAL-HOME-01) — search is a header action now. */}
+          <div className="flex items-center gap-1">
             <IconButton
-              aria-label={
-                notifications.unreadCount > 0
-                  ? `Notifications, ${notifications.unreadCount} unread`
-                  : "Notifications"
-              }
-              icon={<Bell className="size-5" />}
+              aria-label="Find people"
+              icon={<Search className="size-5" />}
               variant="ghost"
-              onClick={() => {
-                setShowNotifications(true);
-                notifications.markAllSeen();
-              }}
+              onClick={openPeople}
             />
-            {notifications.unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
-                {notifications.unreadCount > 9
-                  ? "9+"
-                  : notifications.unreadCount}
-              </span>
-            )}
+            <div className="relative">
+              <IconButton
+                aria-label={
+                  notifications.unreadCount > 0
+                    ? `Notifications, ${notifications.unreadCount} unread`
+                    : "Notifications"
+                }
+                icon={<Bell className="size-5" />}
+                variant="ghost"
+                onClick={() => {
+                  setShowNotifications(true);
+                  notifications.markAllSeen();
+                }}
+              />
+              {notifications.unreadCount > 0 && (
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums text-white pointer-events-none bg-running">
+                  {notifications.unreadCount > 9
+                    ? "9+"
+                    : notifications.unreadCount}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </motion.header>
@@ -329,48 +333,6 @@ export default function Social() {
         items={notifications.items}
         loading={notifications.loading}
       />
-
-      {/* Crew banner if no crew — dismissible */}
-      <AnimatePresence>
-        {!profile?.crewId && tab === "feed" && !crewBannerDismissed && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-purple-200 dark:border-purple-900/40"
-              style={{ background: `${THEME.brand}14` }}
-            >
-              <button
-                type="button"
-                onClick={() => setTab("crews")}
-                className="flex items-center gap-3 flex-1 text-left min-h-[44px]"
-              >
-                <Users className="size-5 text-primary shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-small font-medium text-foreground">
-                    Join a crew to connect with others
-                  </p>
-                  <p className="text-small text-muted-foreground">
-                    Browse crews
-                  </p>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={dismissCrewBanner}
-                className="size-11 -m-2 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
-                aria-label="Dismiss"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Tab bar — primary navigation on the canonical iOS "track"
           SegmentedControl (44pt floor + full radiogroup a11y handled by
@@ -384,12 +346,12 @@ export default function Social() {
           value={tab}
           onChange={setTab}
           options={[
+            /* Together leads (SOCIAL-HOME-01): the user's active
+               Circle + shared-goal surfaces. Feed is the second
+               track. Legacy ?tab=crews resolves to Together above;
+               ?tab=find opens the People overlay. */
+            { value: "together", label: "Together" },
             { value: "feed", label: "Feed" },
-            /* Spc1g: the middle tab is now "Community" — Spaces
-               marquee + Challenges + Circles. Internal value stays
-               "crews" so ?tab=crews deep links keep working. */
-            { value: "crews", label: "Community" },
-            { value: "find", label: "People" },
           ]}
         />
       )}
@@ -397,6 +359,8 @@ export default function Social() {
       {/* ========== FEED TAB ========== */}
       <FeedView
         active={tab === "feed"}
+        openPeople={openPeople}
+        openTogether={() => setTab("together")}
         feedSubTab={feedSubTab}
         selectFeedSubTab={selectFeedSubTab}
         followingCount={followingCount}
@@ -404,25 +368,21 @@ export default function Social() {
         showSoloFeed={showSoloFeed}
         blockedUsers={blockedUsers}
         hiddenActivityIds={hiddenActivityIds}
-        setTab={setTab}
         pullRefreshing={pullRefreshing}
         refreshRef={feedRefreshRef}
         onOverlayChange={setChromeHidden}
       />
 
-      {/* ========== CREWS TAB ==========
-          Crews + challenges share this tab. Long-term (PR 3) challenges
-          live inside individual crew pages and "Crews" becomes a list
-          of crew homes — for now they sit side-by-side so neither
-          feature loses an entry point. Progress photos used to be a
-          peer tab here; they moved to the user's own profile because
-          they're a private/personal artifact, not social content. */}
+      {/* ========== TOGETHER TAB ==========
+          The shared-goal surface: Circles lead, then Spaces /
+          Challenges / legacy Crews. (Formerly the Community tab —
+          the legacy ?tab=crews deep link resolves here.) */}
       <CommunityView
-        active={tab === "crews"}
+        active={tab === "together"}
+        openPeople={openPeople}
         chromeHidden={chromeHidden}
         uid={user?.uid}
         profileCrewId={profileCrewId}
-        setTab={setTab}
         refreshRef={communityRefreshRef}
         crews={crews}
         currentCrew={currentCrew}
@@ -432,22 +392,41 @@ export default function Social() {
         refreshCrews={refreshCrews}
       />
 
-      {/* ========== FIND TAB ==========
-          Holds the people-discovery affordances that aren't crews:
-          invite link, search, suggested people. Renamed from
-          "Discover" to remove the naming collision with the Feed
-          sub-tab also called Discover (now Explore). */}
-      <PeopleView
-        active={tab === "find"}
-        chromeHidden={chromeHidden}
-        blockedUsers={blockedUsers}
-        isNewUser={isNewUser}
-        setTab={setTab}
-        crews={crews}
-        currentCrew={currentCrew}
-        crewsError={crewsError}
-        refreshCrews={refreshCrews}
-      />
+      {/* ========== PEOPLE OVERLAY ==========
+          The old People tab as a lazily-opened full-screen search
+          surface (header Search icon, or the legacy ?tab=find deep
+          link). The view stays mounted (search state survives
+          close/reopen, same as the old tab switches); the overlay
+          chrome only exists while open. */}
+      {peopleOpen && (
+        <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+          <div className="max-w-lg mx-auto px-4 pt-3 pb-8 space-y-4">
+            <div className="flex items-center gap-2">
+              <IconButton
+                aria-label="Close people search"
+                icon={<X className="size-5" />}
+                variant="ghost"
+                onClick={() => setPeopleOpen(false)}
+              />
+              <h2 className="text-base font-bold text-foreground">People</h2>
+            </div>
+            <PeopleView
+              active={peopleOpen}
+              chromeHidden={false}
+              blockedUsers={blockedUsers}
+              isNewUser={isNewUser}
+              openTogether={() => {
+                setPeopleOpen(false);
+                setTab("together");
+              }}
+              crews={crews}
+              currentCrew={currentCrew}
+              crewsError={crewsError}
+              refreshCrews={refreshCrews}
+            />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

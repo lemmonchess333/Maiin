@@ -26,7 +26,7 @@ import { SOCIAL_GATES } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
-import type { FeedSubTab, SocialTab } from "@/pages/Social";
+import type { FeedSubTab } from "@/pages/Social";
 
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the
@@ -43,7 +43,10 @@ export interface FeedViewProps {
   showSoloFeed: boolean;
   blockedUsers: Set<string>;
   hiddenActivityIds: Set<string>;
-  setTab: (next: SocialTab) => void;
+  /** Open the People search overlay (was the find tab). */
+  openPeople: () => void;
+  /** Jump to the Together tab. */
+  openTogether: () => void;
   pullRefreshing: boolean;
   /** The shell's pull-to-refresh needs the ACTIVE feed's refresh; the
    *  view publishes it into this ref so refresh keeps working without
@@ -66,7 +69,8 @@ export default function FeedView({
   showSoloFeed,
   blockedUsers,
   hiddenActivityIds,
-  setTab,
+  openPeople,
+  openTogether,
   pullRefreshing,
   refreshRef,
   onOverlayChange,
@@ -236,7 +240,12 @@ export default function FeedView({
               })}
             />
 
-            {showSoloFeed && <SoloFirstFeed onNavigateTab={setTab} />}
+            {showSoloFeed && (
+              <SoloFirstFeed
+                onFindPeople={openPeople}
+                onOpenTogether={openTogether}
+              />
+            )}
 
             {/* Weekly recap share entry — established users only
                 (SoloFirstFeed carries its own share card for the
@@ -295,7 +304,7 @@ export default function FeedView({
                     </div>
                     <button
                       type="button"
-                      onClick={() => setTab("find")}
+                      onClick={openPeople}
                       className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
                     >
                       Find people
@@ -470,7 +479,7 @@ export default function FeedView({
                       </div>
                       <button
                         type="button"
-                        onClick={() => setTab("find")}
+                        onClick={openPeople}
                         className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
                       >
                         Find people

@@ -33,7 +33,6 @@ import { THEME } from "@/lib/theme";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { Crew } from "@/hooks/useCrews";
-import type { SocialTab } from "@/pages/Social";
 
 // Crew icons live in src/lib/crewIcons so the Crew page can render
 // the same glyph the list row shows.
@@ -51,7 +50,8 @@ export interface CommunityViewProps {
   chromeHidden: boolean;
   uid: string | undefined;
   profileCrewId: string | undefined;
-  setTab: (next: SocialTab) => void;
+  /** Open the People search overlay (challenge empty-state CTA). */
+  openPeople: () => void;
   /** The shell's pull-to-refresh re-fetches BOTH the crew list AND
    *  friend-of-friend suggestions; the view publishes a combined
    *  refresh fn into this ref (same pattern as FeedView). */
@@ -77,7 +77,7 @@ export default function CommunityView({
   chromeHidden,
   uid,
   profileCrewId,
-  setTab,
+  openPeople,
   refreshRef,
   crews,
   currentCrew,
@@ -155,7 +155,7 @@ export default function CommunityView({
           />
         }
       >
-        <ChallengeList onFindFriends={() => setTab("find")} />
+        <ChallengeList onFindFriends={openPeople} />
       </Suspense>
 
       {uid && <CirclesSection uid={uid} />}

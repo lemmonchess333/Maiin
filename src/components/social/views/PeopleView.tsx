@@ -15,7 +15,6 @@ import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import Coachmark from "@/components/ui/Coachmark";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 import type { Crew, CrewsLoadError } from "@/hooks/useCrews";
-import type { SocialTab } from "@/pages/Social";
 
 // Crew icons live in src/lib/crewIcons so the Crew page can render
 // the same glyph the list row shows.
@@ -34,7 +33,8 @@ export interface PeopleViewProps {
   chromeHidden: boolean;
   blockedUsers: Set<string>;
   isNewUser: boolean;
-  setTab: (next: SocialTab) => void;
+  /** Close the overlay and land on Together (crews live there). */
+  openTogether: () => void;
   /* useCrews stays in the shell — this tab consumes the same crews /
      currentCrew / crewsError instance the Community tab renders, so
      optimistic membership updates stay in sync. The People slice
@@ -50,7 +50,7 @@ export default function PeopleView({
   chromeHidden,
   blockedUsers,
   isNewUser,
-  setTab,
+  openTogether,
   crews,
   currentCrew,
   crewsError,
@@ -433,7 +433,7 @@ export default function PeopleView({
                     !profile?.crewId
                       ? {
                           label: "Browse crews",
-                          onClick: () => setTab("crews"),
+                          onClick: openTogether,
                         }
                       : undefined
                   }
