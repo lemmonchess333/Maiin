@@ -130,6 +130,43 @@ function formatTargetDate(iso: string): string {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
+/** Today's local calendar day as YYYY-MM-DD — the same string basis the
+ *  targetDate is stored in, so the comparison is a plain string compare
+ *  with no timezone drift. */
+function localTodayKey(): string {
+  const d = new Date();
+  const m = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** Tomorrow (local) as YYYY-MM-DD — the `min` for the extend date input
+ *  so the picker can't offer a date the server would reject as not in
+ *  the future. */
+function localTomorrowKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const m = `${d.getMonth() + 1}`.padStart(2, "0");
+  const day = `${d.getDate()}`.padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** CIRCLE-TARGET-LIFECYCLE — the owner of a still-active Circle whose
+ *  target date has arrived (or passed) gets the continue/wrap prompt.
+ *  Detection is purely client-side from the targetDate already loaded;
+ *  only the resolution needs the server. */
+function isTargetReached(
+  space: { ownerId: string; active: boolean; targetDate: string | null },
+  viewerUid: string
+): boolean {
+  return (
+    space.ownerId === viewerUid &&
+    space.active &&
+    space.targetDate !== null &&
+    space.targetDate <= localTodayKey()
+  );
+}
+
 /* PROGRAM-CIRCLE-01 (slice 4a) — the "Train together" hand-off. The
    Programme surfaces (TrainingBlockCard, RaceCockpitCard) deep-link to
    `/social?circleCreate=<type>&circleTitle=<title>&circleDate=<YYYY-MM-DD>`.
@@ -167,6 +204,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
     publishEvent,
     setWeeklyFocus,
     backCheckIn,
+    resolveTarget,
   } = useGoalSpaces(uid);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -204,6 +242,46 @@ export default function CirclesSection({ uid }: { uid: string }) {
   );
   const [focusBusy, setFocusBusy] = useState(false);
   const [backingId, setBackingId] = useState<string | null>(null);
+  /* CIRCLE-TARGET-LIFECYCLE — the reached-target prompt on the featured
+     hero. `extendOpen` reveals the date input; `newTargetDate` holds it;
+     `targetBusy` guards the in-flight callable (continue OR wrap). */
+  const [extendOpen, setExtendOpen] = useState(false);
+  const [newTargetDate, setNewTargetDate] = useState("");
+  const [targetBusy, setTargetBusy] = useState(false);
+
+  const handleContinueTarget = useCallback(
+    async (spaceId: string) => {
+      if (!newTargetDate || targetBusy) return;
+      setTargetBusy(true);
+      const ok = await resolveTarget(spaceId, "continue", newTargetDate);
+      setTargetBusy(false);
+      if (ok) {
+        haptic("light");
+        toast.success("Target extended — keep it going");
+        setExtendOpen(false);
+        setNewTargetDate("");
+      } else {
+        toast.error("Couldn't update the target. Try again.");
+      }
+    },
+    [newTargetDate, targetBusy, resolveTarget]
+  );
+
+  const handleWrapTarget = useCallback(
+    async (spaceId: string) => {
+      if (targetBusy) return;
+      setTargetBusy(true);
+      const ok = await resolveTarget(spaceId, "wrap");
+      setTargetBusy(false);
+      if (ok) {
+        haptic("light");
+        toast.success("Circle wrapped — nice work");
+      } else {
+        toast.error("Couldn't wrap the Circle. Try again.");
+      }
+    },
+    [targetBusy, resolveTarget]
+  );
 
   /* SOCIAL-HOME-01 — featured circle: first active summary, else the
      first. Only THIS circle gets an eager detail read; the remaining
@@ -663,7 +741,76 @@ export default function CirclesSection({ uid }: { uid: string }) {
               </p>
             )}
           </button>
-          {featured.space.memberCount === 1 && featured.inviteCode ? (
+          {isTargetReached(featured.space, uid) ? (
+            /* CIRCLE-TARGET-LIFECYCLE — the deadline arrived. The owner
+               continues (new future date) or wraps up. Takes precedence
+               over the invite/focus action: a reached target is the
+               most decision-worthy state on the card. */
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                You've reached your target date. Keep training together, or wrap
+                this Circle up.
+              </p>
+              {extendOpen ? (
+                <div className="space-y-2">
+                  <input
+                    type="date"
+                    value={newTargetDate}
+                    min={localTomorrowKey()}
+                    onChange={(e) => setNewTargetDate(e.target.value)}
+                    aria-label="New target date"
+                    className="w-full min-h-[44px] rounded-xl bg-muted border border-border/50 px-3 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      loading={targetBusy}
+                      disabled={!newTargetDate}
+                      onClick={() =>
+                        void handleContinueTarget(featured.space.id)
+                      }
+                    >
+                      Set new date
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setExtendOpen(false);
+                        setNewTargetDate("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    disabled={targetBusy}
+                    onClick={() => {
+                      haptic("light");
+                      setExtendOpen(true);
+                    }}
+                  >
+                    Continue
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="flex-1"
+                    loading={targetBusy}
+                    onClick={() => void handleWrapTarget(featured.space.id)}
+                  >
+                    Wrap up
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : featured.space.memberCount === 1 && featured.inviteCode ? (
             /* CIRCLE-INVITE-ACTIVATION-01 — a one-member circle's one
                useful action is inviting; the weekly focus stays
                reachable through the detail sheet. Owner-only by
