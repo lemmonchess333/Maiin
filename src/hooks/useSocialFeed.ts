@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { getFeed, fetchActivitiesByIds, batchGetKudos } from '../lib/socialApi';
-import { useAuth } from '../lib/auth';
-import type { DocumentSnapshot } from 'firebase/firestore';
-import { logger } from '../lib/logger';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
+import { useAuth } from "../lib/auth";
+import type { DocumentSnapshot } from "firebase/firestore";
+import { logger } from "../lib/logger";
 
 export interface ActivityData {
   authorId?: string;
@@ -41,7 +41,7 @@ export interface FeedItem {
    * denormalization) — UI falls back to initials.
    */
   authorPhotoURL?: string;
-  type: 'run' | 'workout';
+  type: "run" | "workout";
   summary: string;
   createdAt: { toDate: () => Date } | unknown;
   // Enriched at feed level — no per-card reads needed
@@ -67,7 +67,7 @@ export function useSocialFeed(
   highlightsOnly = false,
   blockedUsers?: Set<string>,
   enabled = true,
-  hiddenActivityIds?: Set<string>,
+  hiddenActivityIds?: Set<string>
 ) {
   const { user } = useAuth();
   const [items, setItems] = useState<FeedItem[]>([]);
@@ -82,89 +82,122 @@ export function useSocialFeed(
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
 
-  /* Cross-user reset is handled by loadFeed itself: when `user`
-     identity changes, loadFeed's identity changes (it depends on
-     `user`), which retriggers the post-mount effect below with
-     refresh=true. That call resets lastDocRef and overwrites items
-     with the new user's data. No separate reset effect needed —
-     and no setState-in-effect-body lint violation. */
+  /* SOCIAL-PRIVACY-01 — uid + generation ownership. The feed load is
+     async; a resolve captured under account A must never commit after a
+     switch to account B (a late `loadFeed` from A, or an in-flight fetch
+     during an account switch on a shared browser). `genRef` bumps on
+     every uid change (render-time, adjust-state idiom); each `loadFeed`
+     captures the current generation and commits only if it still owns
+     it. Complements the HOME-ACCOUNT-01 remount boundary as defence in
+     depth (and prevents a stale-account commit inside a single mount). */
+  const genRef = useRef(0);
+  const [ownerUid, setOwnerUid] = useState<string | undefined>(user?.uid);
+  if (ownerUid !== user?.uid) {
+    setOwnerUid(user?.uid);
+    genRef.current++;
+    lastDocRef.current = undefined;
+    setItems([]);
+    setHasMore(true);
+  }
 
-  const loadFeed = useCallback(async (refresh = false) => {
-    if (!user) return;
-    if (refresh) lastDocRef.current = undefined;
-    setInternalLoading(true);
-    setError(null);
-    try {
-      const result = await getFeed(user.uid, 20, refresh ? undefined : lastDocRef.current);
-      const feedItems = result.items as FeedItem[];
-
-      // Single batched read for all activities + kudos
-      const activityIds = feedItems.map(i => i.activityId);
-      const [activityMap, kudosMap] = await Promise.all([
-        fetchActivitiesByIds(activityIds),
-        batchGetKudos(activityIds, user.uid),
-      ]);
-
-      let enriched: FeedItem[] = feedItems.map(item => {
-        const act = activityMap[item.activityId] as ActivityData | undefined;
-        return {
-          ...item,
-          activity: (act || null) as ActivityData | undefined,
-          liked: kudosMap[item.activityId] || false,
-          kudosCount: (act?.kudosCount as number) || 0,
-          prHit: !!(act?.prHit || item.prHit),
-          prExercise: (act?.prExercise as string) || item.prExercise,
-          prWeight: (act?.prWeight as number) || item.prWeight,
-          badgeEarned: (act?.badgeEarned as string) || item.badgeEarned,
-          challengeMilestone: (act?.challengeMilestone as string) || item.challengeMilestone,
-        };
-      });
-
-      // Filter out blocked users
-      if (blockedUsers && blockedUsers.size > 0) {
-        enriched = enriched.filter(item => !blockedUsers.has(item.authorId));
-      }
-
-      // S4c: filter out user-hidden activity IDs (Hide-from-feed
-      // checkbox on the report modal). hiddenActivityIds is keyed
-      // by activityId not feed-item id — there can be multiple feed
-      // items for the same activity (e.g. fan-out duplicates) so
-      // hiding one hides all renderings.
-      if (hiddenActivityIds && hiddenActivityIds.size > 0) {
-        enriched = enriched.filter(item => !hiddenActivityIds.has(item.activityId));
-      }
-
-      if (highlightsOnly) {
-        enriched = enriched.filter(item =>
-          item.prHit ||
-          item.badgeEarned ||
-          item.challengeMilestone ||
-          (item.activity?.duration && Number(item.activity.duration) > 5400)
+  const loadFeed = useCallback(
+    async (refresh = false) => {
+      if (!user) return;
+      const myGen = genRef.current;
+      const isCurrent = () => genRef.current === myGen;
+      if (refresh) lastDocRef.current = undefined;
+      setInternalLoading(true);
+      setError(null);
+      try {
+        const result = await getFeed(
+          user.uid,
+          20,
+          refresh ? undefined : lastDocRef.current
         );
-      }
+        if (!isCurrent()) return;
+        const feedItems = result.items as FeedItem[];
 
-      if (refresh) {
-        setItems(enriched);
-      } else {
-        // Dedup by id when appending — a refresh + load-more race or a
-        // duplicate write across the activities + feeds collections
-        // could otherwise produce two cards for the same activity.
-        // Existing items always win on order; new items only appear
-        // if their id isn't already present.
-        setItems(prev => {
-          const seen = new Set(prev.map(i => i.id));
-          const fresh = enriched.filter(i => !seen.has(i.id));
-          return fresh.length === enriched.length ? [...prev, ...enriched] : [...prev, ...fresh];
+        // Single batched read for all activities + kudos
+        const activityIds = feedItems.map((i) => i.activityId);
+        const [activityMap, kudosMap] = await Promise.all([
+          fetchActivitiesByIds(activityIds),
+          batchGetKudos(activityIds, user.uid),
+        ]);
+
+        let enriched: FeedItem[] = feedItems.map((item) => {
+          const act = activityMap[item.activityId] as ActivityData | undefined;
+          return {
+            ...item,
+            activity: (act || null) as ActivityData | undefined,
+            liked: kudosMap[item.activityId] || false,
+            kudosCount: (act?.kudosCount as number) || 0,
+            prHit: !!(act?.prHit || item.prHit),
+            prExercise: (act?.prExercise as string) || item.prExercise,
+            prWeight: (act?.prWeight as number) || item.prWeight,
+            badgeEarned: (act?.badgeEarned as string) || item.badgeEarned,
+            challengeMilestone:
+              (act?.challengeMilestone as string) || item.challengeMilestone,
+          };
         });
+
+        // Filter out blocked users
+        if (blockedUsers && blockedUsers.size > 0) {
+          enriched = enriched.filter(
+            (item) => !blockedUsers.has(item.authorId)
+          );
+        }
+
+        // S4c: filter out user-hidden activity IDs (Hide-from-feed
+        // checkbox on the report modal). hiddenActivityIds is keyed
+        // by activityId not feed-item id — there can be multiple feed
+        // items for the same activity (e.g. fan-out duplicates) so
+        // hiding one hides all renderings.
+        if (hiddenActivityIds && hiddenActivityIds.size > 0) {
+          enriched = enriched.filter(
+            (item) => !hiddenActivityIds.has(item.activityId)
+          );
+        }
+
+        if (highlightsOnly) {
+          enriched = enriched.filter(
+            (item) =>
+              item.prHit ||
+              item.badgeEarned ||
+              item.challengeMilestone ||
+              (item.activity?.duration && Number(item.activity.duration) > 5400)
+          );
+        }
+
+        // Re-check ownership: the activities+kudos batch above is a second
+        // await, so the account could have switched while it was in flight.
+        if (!isCurrent()) return;
+        if (refresh) {
+          setItems(enriched);
+        } else {
+          // Dedup by id when appending — a refresh + load-more race or a
+          // duplicate write across the activities + feeds collections
+          // could otherwise produce two cards for the same activity.
+          // Existing items always win on order; new items only appear
+          // if their id isn't already present.
+          setItems((prev) => {
+            const seen = new Set(prev.map((i) => i.id));
+            const fresh = enriched.filter((i) => !seen.has(i.id));
+            return fresh.length === enriched.length
+              ? [...prev, ...enriched]
+              : [...prev, ...fresh];
+          });
+        }
+        lastDocRef.current = result.lastDoc;
+        setHasMore(feedItems.length >= 20);
+      } catch (e) {
+        if (!isCurrent()) return;
+        logger.error("Feed error:", e);
+        setError(e instanceof Error ? e.message : "Failed to load feed");
       }
-      lastDocRef.current = result.lastDoc;
-      setHasMore(feedItems.length >= 20);
-    } catch (e) {
-      logger.error('Feed error:', e);
-      setError(e instanceof Error ? e.message : 'Failed to load feed');
-    }
-    setInternalLoading(false);
-  }, [user, highlightsOnly, blockedUsers, hiddenActivityIds]);
+      if (isCurrent()) setInternalLoading(false);
+    },
+    [user, highlightsOnly, blockedUsers, hiddenActivityIds]
+  );
 
   useEffect(() => {
     /* When disabled, skip the network read entirely. Don't setState
@@ -173,7 +206,9 @@ export function useSocialFeed(
        effect body stays free of synchronous setState (which trips
        react-hooks/set-state-in-effect). */
     if (!enabled) return;
-    const init = async () => { await loadFeed(true); };
+    const init = async () => {
+      await loadFeed(true);
+    };
     void init();
   }, [loadFeed, enabled]);
 
@@ -182,8 +217,13 @@ export function useSocialFeed(
   const loading = enabled && internalLoading;
 
   return {
-    items, loading, hasMore, error,
+    items,
+    loading,
+    hasMore,
+    error,
     refresh: () => loadFeed(true),
-    loadMore: () => { if (hasMore && !loading) loadFeed(false); },
+    loadMore: () => {
+      if (hasMore && !loading) loadFeed(false);
+    },
   };
 }
