@@ -108,17 +108,17 @@ export default function TodayEnergy({
               Today's Energy
             </p>
             {burn.phase && (
+              // HOME-TARGET-01: the phase label only — no fabricated fixed
+              // "+300"/"−500" delta. The real adjustment already lives in
+              // `targets.finalTarget` (the number shown below); hardcoding a
+              // fixed number here claimed an adjustment the target engine
+              // does not actually apply.
               <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                 {burn.phase === "lean bulk"
                   ? "Bulk"
                   : burn.phase === "cut"
                     ? "Cut"
                     : "Recomp"}
-                {burn.phase === "lean bulk"
-                  ? " · +300"
-                  : burn.phase === "cut"
-                    ? " · −500"
-                    : ""}
               </span>
             )}
           </div>
@@ -322,7 +322,9 @@ export default function TodayEnergy({
           >
             {postWorkoutNudge.type === "run"
               ? "Post-run — refuel with carbs + protein soon"
-              : `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein for recovery`}
+              : // HOME-TARGET-01: truthful — this is grams left to the
+                // user's own protein target, not a claimed recovery effect.
+                `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein to your target`}
           </p>
         )}
         {!isColdStart && !expanded && (
