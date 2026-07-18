@@ -173,6 +173,15 @@ const VALID_NOTIFICATION_TYPES = [
   // focus. Deliberately GENERIC — the message never names the backer
   // or the focus, and the client renders it without a profile link.
   "circle_focus_backed",
+  // CIRCLE-ACTIVITY-NOTIFICATIONS: a co-member published a high-signal
+  // Circle event (fanned by the onGoalSpaceEventCreated trigger to the
+  // other members). Unlike circle_focus_backed these are NAMED — the
+  // recipient can already see the author + event in the shared Circle
+  // timeline, so naming the actor is consistent, not a leak. No push.
+  "circle_milestone",
+  "circle_needs_support",
+  "circle_joined",
+  "circle_routine_shared",
 ];
 
 function sanitiseNotificationData(data) {
@@ -214,6 +223,7 @@ async function createNotification({
   data,
   serverTimestamp,
   anonymous = false,
+  notificationId,
 }) {
   if (!firestore || !fromUid || !toUid) {
     throw new Error(
@@ -228,11 +238,18 @@ async function createNotification({
     );
   }
 
-  const itemRef = firestore
+  const items = firestore
     .collection("notifications")
     .doc(toUid)
-    .collection("items")
-    .doc();
+    .collection("items");
+  // A deterministic id makes a fan-out from an at-least-once Firestore
+  // trigger idempotent: a re-delivery overwrites the same doc instead
+  // of minting a duplicate. Auto-id (the default) stays for the
+  // callable senders where each call is a distinct notification.
+  const itemRef =
+    typeof notificationId === "string" && notificationId
+      ? items.doc(notificationId)
+      : items.doc();
 
   const notif = {
     ...sanitiseNotificationData(data),
