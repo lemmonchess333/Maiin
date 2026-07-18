@@ -6,6 +6,8 @@ import {
   Trophy,
   Bell,
   Users,
+  HeartHandshake,
+  ClipboardList,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -35,6 +37,10 @@ const TYPE_ICON: Record<
   follow: { Icon: UserPlus, color: THEME.semantic.positive },
   challenge_milestone: { Icon: Trophy, color: THEME.semantic.nutrition },
   circle_focus_backed: { Icon: Users, color: THEME.brand },
+  circle_milestone: { Icon: Trophy, color: THEME.semantic.positive },
+  circle_needs_support: { Icon: HeartHandshake, color: THEME.brand },
+  circle_joined: { Icon: UserPlus, color: THEME.brand },
+  circle_routine_shared: { Icon: ClipboardList, color: THEME.brand },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -53,6 +59,14 @@ function fallbackMessage(n: NotificationItem): string {
       // Generic by design (SOCIAL-FOCUS-01): never the backer's name,
       // never the focus.
       return "A Circle member backed your weekly focus";
+    case "circle_milestone":
+      return `${who} hit a milestone`;
+    case "circle_needs_support":
+      return `${who} could use a nudge`;
+    case "circle_joined":
+      return `${who} joined your Circle`;
+    case "circle_routine_shared":
+      return `${who} shared a routine`;
     default:
       return who;
   }

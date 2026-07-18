@@ -395,6 +395,49 @@ describe("createNotification", () => {
     ).rejects.toThrow(/type must be one of/);
   });
 
+  it("CIRCLE-ACTIVITY-NOTIFICATIONS: accepts the four named Circle types (non-anonymous)", async () => {
+    const { createNotification } = require("../lib/socialFanout");
+    for (const type of [
+      "circle_milestone",
+      "circle_needs_support",
+      "circle_joined",
+      "circle_routine_shared",
+    ]) {
+      const firestore = makeFirestoreStub();
+      await createNotification({
+        firestore,
+        fromUid: "alice",
+        toUid: "bob",
+        data: { type, fromName: "Alice" },
+        serverTimestamp,
+      });
+      const data = firestore._writes[0].data;
+      expect(data.type).toBe(type);
+      // Named — the actor rides along (recipient already sees them in
+      // the shared Circle timeline).
+      expect(data.fromUserId).toBe("alice");
+      expect(data.fromName).toBe("Alice");
+    }
+  });
+
+  it("notificationId writes to a DETERMINISTIC doc id (idempotent trigger fan-out)", async () => {
+    const { createNotification } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub();
+    await createNotification({
+      firestore,
+      fromUid: "alice",
+      toUid: "bob",
+      data: { type: "circle_milestone", fromName: "Alice" },
+      serverTimestamp,
+      notificationId: "space1_evt1",
+    });
+    // The path ends with the supplied id, not an auto-id, so a
+    // re-delivery overwrites the same doc.
+    expect(firestore._writes[0].path).toBe(
+      "notifications/bob/items/space1_evt1"
+    );
+  });
+
   it("caps string field lengths (fromName 100, message 200, activityId 64)", async () => {
     const { createNotification } = require("../lib/socialFanout");
     const firestore = makeFirestoreStub();
