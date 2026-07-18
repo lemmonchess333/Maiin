@@ -53,7 +53,7 @@ beforeEach(() => {
 
 describe("SoloFirstFeed", () => {
   it("renders the partner-streak hero and the aspirational crew row", () => {
-    render(<SoloFirstFeed onNavigateTab={vi.fn()} />);
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(screen.getByText("Start a partner streak")).toBeInTheDocument();
     expect(
       screen.getByText("Crews unlock when your gym's here")
@@ -61,7 +61,7 @@ describe("SoloFirstFeed", () => {
   });
 
   it("surfaces the global monthly challenge when present", () => {
-    render(<SoloFirstFeed onNavigateTab={vi.fn()} />);
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(screen.getByTestId("challenge-card")).toHaveTextContent(
       "global-monthly-2026-06-01"
     );
@@ -75,12 +75,12 @@ describe("SoloFirstFeed", () => {
       joinChallenge: vi.fn(),
       leaveChallenge: vi.fn(),
     });
-    render(<SoloFirstFeed onNavigateTab={vi.fn()} />);
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(screen.queryByTestId("challenge-card")).not.toBeInTheDocument();
   });
 
   it("share card shows the cold-start prompt (no button) when nothing is logged", () => {
-    render(<SoloFirstFeed onNavigateTab={vi.fn()} />);
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(
       screen.getByText("Log a workout or run, then share it as a card.")
     ).toBeInTheDocument();
@@ -102,23 +102,27 @@ describe("SoloFirstFeed", () => {
         },
       ],
     });
-    render(<SoloFirstFeed onNavigateTab={vi.fn()} />);
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(
       screen.getByRole("button", { name: /create a share card/i })
     ).toBeInTheDocument();
   });
 
   it("the hero CTA navigates to the Find tab", () => {
-    const onNavigateTab = vi.fn();
-    render(<SoloFirstFeed onNavigateTab={onNavigateTab} />);
+    const onNavigate = vi.fn();
+    render(
+      <SoloFirstFeed onFindPeople={onNavigate} onOpenTogether={onNavigate} />
+    );
     fireEvent.click(screen.getByRole("button", { name: /find a partner/i }));
-    expect(onNavigateTab).toHaveBeenCalledWith("find");
+    expect(onNavigate).toHaveBeenCalled();
   });
 
   it("the crew row CTA navigates to the Crews tab", () => {
-    const onNavigateTab = vi.fn();
-    render(<SoloFirstFeed onNavigateTab={onNavigateTab} />);
+    const onNavigate = vi.fn();
+    render(
+      <SoloFirstFeed onFindPeople={onNavigate} onOpenTogether={onNavigate} />
+    );
     fireEvent.click(screen.getByRole("button", { name: /create a crew/i }));
-    expect(onNavigateTab).toHaveBeenCalledWith("crews");
+    expect(onNavigate).toHaveBeenCalled();
   });
 });

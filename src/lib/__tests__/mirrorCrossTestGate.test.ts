@@ -86,6 +86,10 @@ const PINNED: Record<string, string> = {
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":
     "src/features/spaces/__tests__/spaceDefs.test.ts",
+  // SOCIAL-FOCUS-01 — the weekly-focus enum + supporter bound mirror
+  // the client schema contract (goalSpaceTypes.ts).
+  "functions/lib/goalSpaceCheckIn.js":
+    "src/features/goalSpace/__tests__/weeklyFocus.cross.test.ts",
 };
 
 // Flagged by the heuristic but NOT a TS↔JS equality mirror — reason each.

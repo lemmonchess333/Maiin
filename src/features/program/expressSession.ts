@@ -35,15 +35,33 @@
 
 import type { ProgramExercise, WorkoutDay } from "./programTypes";
 
-export type SessionVariant = "full" | "express45" | "express30";
+/** The time-budgeted express variants this module builds. */
+export type ExpressVariant = "express45" | "express30";
+
+/** Every way a programme day can be EXECUTED. "easier_today"
+ *  (PROGRAM-ADAPT-01) is built by easierToday.ts — same
+ *  execution-clone contract, different policy (one set less +
+ *  deload-policy loads instead of a time budget). */
+export type SessionVariant = "full" | ExpressVariant | "easier_today";
+
+/**
+ * Draft namespace for a session variant (PROGRAM-ADAPT-01 follow-up).
+ * The workout-draft identity fingerprints the exercise layout
+ * (ids × sets) but NOT loads — an easier clone whose set-floors all
+ * bind shares a layout with the full session, so without a per-variant
+ * scope a mid-session kill could restore one variant's logs into the
+ * other and complete under the wrong sessionVariant label. Scoping the
+ * namespace makes restore deterministic: a draft only ever resumes the
+ * variant that created it.
+ */
+export function draftScopeForVariant(variant: SessionVariant): string {
+  return variant === "full" ? "programme" : `programme:${variant}`;
+}
 
 /** Mirrors the `~min` estimate shown on the lift SessionCommandCard. */
 export const MINUTES_PER_SET = 2.5;
 
-export const EXPRESS_BUDGET_MINUTES: Record<
-  Exclude<SessionVariant, "full">,
-  number
-> = {
+export const EXPRESS_BUDGET_MINUTES: Record<ExpressVariant, number> = {
   express45: 45,
   express30: 30,
 };
@@ -97,7 +115,7 @@ function isAccessoryExercise(ex: ProgramExercise): boolean {
  */
 export function buildExpressSession(
   day: WorkoutDay,
-  variant: SessionVariant
+  variant: "full" | ExpressVariant
 ): ExpressPlan {
   // Fresh objects throughout — the caller feeds this straight into the
   // live session, which must never alias the stored programme state.
@@ -167,9 +185,11 @@ export function buildExpressSession(
  * entirely (the primary action stays one tap when there's nothing to
  * choose).
  */
-export function expressChoices(day: WorkoutDay): SessionVariant[] {
+export function expressChoices(
+  day: WorkoutDay
+): Array<"full" | ExpressVariant> {
   const est = estimateSessionMinutes(day.exercises);
-  const choices: SessionVariant[] = ["full"];
+  const choices: Array<"full" | ExpressVariant> = ["full"];
   if (est > EXPRESS_BUDGET_MINUTES.express45) choices.push("express45");
   if (est > EXPRESS_BUDGET_MINUTES.express30) choices.push("express30");
   return choices;

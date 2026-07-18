@@ -69,9 +69,16 @@ function makeFirestore(initialDocs = {}) {
           .filter((s) => {
             if (!constraints.where) return true;
             const [field, op, value] = constraints.where;
-            if (op !== "==") throw new Error(`stub: unsupported op ${op}`);
             const data = s.data();
-            return data && data[field] === value;
+            if (op === "==") return data && data[field] === value;
+            if (op === "array-contains") {
+              return (
+                data &&
+                Array.isArray(data[field]) &&
+                data[field].includes(value)
+              );
+            }
+            throw new Error(`stub: unsupported op ${op}`);
           });
         return { empty: rows.length === 0, size: rows.length, docs: rows };
       },
@@ -181,6 +188,33 @@ describe("cleanupGoalSpacesForUser", () => {
     const space = db.__docs.get("goalSpaces/s1");
     expect(space.memberCount).toBe(1);
     expect(space.active).toBe(true); // non-owner leaving keeps it live
+  });
+
+  it("supporter sweep: the deleted user's uid leaves OTHER members' supporterIds (SOCIAL-FOCUS-01)", async () => {
+    const db = makeFirestore({
+      ...seededCircle({ members: ["owner", "u2"] }),
+      // Owner's focus check-in that u2 (and someone else) backed —
+      // authored by the owner, so u2's deletion must NOT delete it,
+      // only pull u2's uid out of supporterIds.
+      "goalSpaces/s1/events/owner_2026-07-12": {
+        uid: "owner",
+        kind: "weekly_check_in",
+        weekKey: "2026-07-12",
+        weeklyFocus: "running",
+        supporterIds: ["u2", "u3"],
+        createdAt: 5,
+      },
+    });
+    await cleanupGoalSpacesForUser({
+      firestore: db,
+      uid: "u2",
+      logger: silent,
+    });
+
+    const event = db.__docs.get("goalSpaces/s1/events/owner_2026-07-12");
+    expect(event).toBeTruthy(); // authored by owner — survives
+    expect(event.supporterIds).toEqual(["u3"]); // u2's uid swept
+    expect(event.weeklyFocus).toBe("running"); // rest untouched
   });
 
   it("owner deletion deactivates the space (v1 policy — no transfer)", async () => {

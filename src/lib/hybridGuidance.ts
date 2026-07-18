@@ -34,6 +34,30 @@ export interface HybridGuidance {
   fuelLine: string;
 }
 
+/**
+ * Shared "demanding run" predicate — long distance, long duration, or a
+ * quality template. One definition so the Home guidance hook and the
+ * Easier-today recommendation (easierToday.ts) can never drift apart.
+ * Pure + deterministic.
+ */
+export const QUALITY_RUN_TYPES: ReadonlySet<string> = new Set([
+  "tempo",
+  "intervals",
+  "long",
+]);
+
+export function isHardRun(run: {
+  distance: number;
+  duration: number;
+  activityType?: string;
+}): boolean {
+  return (
+    run.distance >= 8000 ||
+    run.duration >= 2700 ||
+    (run.activityType !== undefined && QUALITY_RUN_TYPES.has(run.activityType))
+  );
+}
+
 /** The fuel emphasis for a day type — narration of the locked carb
  *  periodisation, not a calorie/macro change. */
 export function fuelLineFor(todayType: DayType): string {
@@ -68,6 +92,18 @@ export function resolveHybridGuidance(
     };
   }
 
+  // Combined demand FIRST: with both disciplines hard yesterday, the
+  // combined line always wins. This branch used to sit BELOW the two
+  // single-discipline checks, which together cover every non-rest
+  // todayType when both flags are true — making it unreachable dead
+  // code (the "Two hard sessions" line could never render).
+  if (y.hardLift && y.hardRun) {
+    return {
+      readiness: "ease",
+      line: "Two hard sessions yesterday — ease in or keep it short.",
+      fuelLine,
+    };
+  }
   // Cross-discipline interference: a hard session yesterday in the OTHER
   // discipline you're about to train today.
   if (y.hardLift && (todayType === "run" || todayType === "both")) {
@@ -81,13 +117,6 @@ export function resolveHybridGuidance(
     return {
       readiness: "ease",
       line: "Long run yesterday — legs may feel heavy under the bar.",
-      fuelLine,
-    };
-  }
-  if (y.hardLift && y.hardRun) {
-    return {
-      readiness: "ease",
-      line: "Two hard sessions yesterday — ease in or keep it short.",
       fuelLine,
     };
   }

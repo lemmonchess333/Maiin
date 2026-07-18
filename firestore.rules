@@ -1289,6 +1289,17 @@ service cloud.firestore {
 
     match /goalSpaces/{spaceId}/events/{eventId} {
       allow read: if isGoalSpaceMember(spaceId);
+      // SOCIAL-FOCUS-01 target state: 'weekly_check_in' becomes
+      // server-only (the goalSpaceWeeklyCheckIn callable owns the
+      // deterministic ${uid}_${weekKey} event). The kind is KEPT
+      // client-creatable here for now because rules deploy on merge
+      // (deploy-firestore.yml) while the callable ships via the
+      // separately-gated functions pipeline — tightening before the
+      // callable is verified deployed would strand stale bundles with
+      // no working check-in path. The tightening lands via the held
+      // rules-lock PR once the callable is spot-checked in the
+      // Console. weeklyFocus/supporterIds are server-written fields
+      // and stay OUT of the client field allowlist below either way.
       allow create: if isGoalSpaceMember(spaceId)
         && !isWriteFrozen(request.auth.uid)
         && request.resource.data.uid == request.auth.uid

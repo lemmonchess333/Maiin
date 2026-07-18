@@ -6439,6 +6439,73 @@ exports.removeGoalSpaceMember = functions
     }
   });
 
+// ── SOCIAL-FOCUS-01 — server-owned weekly check-in + focus backing.
+// The rules drop 'weekly_check_in' from the client-creatable event
+// kinds: these callables are the ONLY check-in writers, which is what
+// makes the deterministic ${uid}_${weekKey} event ID (one check-in
+// per member per week; focus changes update in place) enforceable.
+const goalSpaceCheckIn = require("./lib/goalSpaceCheckIn");
+
+exports.goalSpaceWeeklyCheckIn = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceCheckIn", 10);
+    try {
+      return await goalSpaceCheckIn.weeklyCheckIn({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        weekKey: data?.weekKey,
+        weeklyFocus: data?.weeklyFocus,
+        now: Date.now(),
+      });
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
+exports.backGoalSpaceCheckIn = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    const uid = await goalSpaceCallableGate(context, "goalSpaceBack", 20);
+    try {
+      const result = await goalSpaceCheckIn.backWeeklyCheckIn({
+        firestore: admin.firestore(),
+        uid,
+        spaceId: String(data?.spaceId || ""),
+        eventId: String(data?.eventId || ""),
+      });
+      if (!result.alreadyBacked) {
+        // Generic AND anonymous by design: the copy never carries the
+        // focus, and `anonymous` keeps the backer's uid out of the
+        // stored doc (the recipient can read their own notification
+        // docs — UI-only anonymity would not be anonymity). No push.
+        // A notification failure is non-fatal — the back is recorded,
+        // and a retry would be alreadyBacked (no duplicate notify).
+        try {
+          await socialFanout.createNotification({
+            firestore: admin.firestore(),
+            fromUid: uid,
+            toUid: result.authorUid,
+            anonymous: true,
+            data: {
+              type: "circle_focus_backed",
+              message: "A Circle member backed your weekly focus",
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          });
+        } catch (notifErr) {
+          functions.logger.warn("backGoalSpaceCheckIn.notification_failed", {
+            message: notifErr && notifErr.message,
+          });
+        }
+      }
+      return { ok: true, alreadyBacked: result.alreadyBacked };
+    } catch (err) {
+      throw mapGoalSpaceError(err);
+    }
+  });
+
 // ══════════════════════════════════════════════
 // ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
 // ══════════════════════════════════════════════

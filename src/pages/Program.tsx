@@ -23,9 +23,22 @@ import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
   buildExpressSession,
-  expressChoices,
+  draftScopeForVariant,
   type SessionVariant,
 } from "@/features/program/expressSession";
+import {
+  buildEasierSession,
+  easierTodayRecommendation,
+  isLowerBodyDay,
+  recoveringTargetMuscles,
+} from "@/features/program/easierToday";
+import {
+  computeMuscleRecovery,
+  hitsFromWorkoutDocs,
+} from "@/lib/muscleRecovery";
+import { isHardRun } from "@/lib/hybridGuidance";
+import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import { useRunningStats } from "@/hooks/useRunningStats";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   Dumbbell,
@@ -266,6 +279,38 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     null
   );
   const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
+
+  // PROGRAM-ADAPT-01 — inputs for the "Easier today" recommendation.
+  // All from EXISTING data sources: recentWorkouts is the page's own
+  // subscription, perfWeek already feeds the deload banner, and
+  // useRunningStats is a bounded one-shot read (2 days covers
+  // "yesterday"). The decision itself is pure (easierToday.ts) and
+  // yields ONE factual reason — never a readiness score, and never the
+  // performance recoveryScore.
+  const { runs: recentRuns } = useRunningStats(2);
+  const easierRecommendationForChooser = useMemo(() => {
+    if (expressChooserDay === null) return null;
+    const day = programState?.workouts[expressChooserDay];
+    if (!day) return null;
+    const yKey = localDateString(addLocalDays(new Date(), -1));
+    const hardRunYesterday = recentRuns.some(
+      (r) =>
+        !r.isInvalid &&
+        !r.savedAnyway &&
+        localDateString(new Date(r.completedAt)) === yKey &&
+        isHardRun(r)
+    );
+    const entries = computeMuscleRecovery(
+      hitsFromWorkoutDocs(recentWorkouts),
+      localDateString()
+    );
+    return easierTodayRecommendation({
+      hardRunYesterday,
+      lowerBodyDay: isLowerBodyDay(day),
+      recoveringMuscles: recoveringTargetMuscles(day, entries),
+      deloadRecommended: !!perfWeek?.flags?.deloadRecommended,
+    });
+  }, [expressChooserDay, programState, recentRuns, recentWorkouts, perfWeek]);
 
   // Skip confirmation
   const [showSkipConfirm, setShowSkipConfirm] = useState(false);
@@ -1072,15 +1117,12 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                           status === "today" && !selectedWorkout.completed
                             ? () => {
                                 haptic("light");
-                                // PROGRAM-FLEX-01: offer time budgets
-                                // only when trimming would change the
-                                // session; short days start directly.
-                                if (expressChoices(selectedWorkout).length > 1)
-                                  setExpressChooserDay(idx);
-                                else {
-                                  setSessionVariant("full");
-                                  setSessionDayIndex(idx);
-                                }
+                                // The chooser always opens now:
+                                // "Easier today" (PROGRAM-ADAPT-01) is
+                                // offered on every programme day, so
+                                // there is always a real choice even
+                                // when no time budget would trim.
+                                setExpressChooserDay(idx);
                               }
                             : undefined
                         }
@@ -1561,7 +1603,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
         }}
       />
 
-      {/* Express Session chooser (PROGRAM-FLEX-01) */}
+      {/* Pre-session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01) */}
       <ExpressSessionSheet
         open={expressChooserDay !== null}
         day={
@@ -1569,6 +1611,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             ? (programState.workouts[expressChooserDay] ?? null)
             : null
         }
+        easierRecommendation={easierRecommendationForChooser}
         onClose={() => setExpressChooserDay(null)}
         onStart={(variant) => {
           const idx = expressChooserDay;
@@ -1593,10 +1636,17 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
           // plan.sourceIndexes so a dropped accessory can't shift
           // progression or the saved record onto the wrong lift.
           const storedDay = programState.workouts[sessionDayIndex];
+          // Easier today (PROGRAM-ADAPT-01) is the same execution-clone
+          // contract as Express: a reduced COPY runs; the stored day is
+          // untouched. Its sourceIndexes are the identity mapping
+          // (nothing dropped), so the generic realignment below is a
+          // no-op that keeps one code path for all trimmed variants.
           const plan =
             sessionVariant === "full"
               ? null
-              : buildExpressSession(storedDay, sessionVariant);
+              : sessionVariant === "easier_today"
+                ? buildEasierSession(storedDay)
+                : buildExpressSession(storedDay, sessionVariant);
           return (
             <WorkoutSession
               day={
@@ -1604,20 +1654,42 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               }
               dayIndex={sessionDayIndex}
               draftEpoch={programState.weekNumber}
+              // Variant-scoped draft namespace (PROGRAM-ADAPT-01
+              // follow-up): the draft identity fingerprints the
+              // exercise LAYOUT (ids × sets) but not loads, so an
+              // easier clone whose set-floors all bind would share an
+              // identity with the full session and a mid-session kill
+              // could restore its logs into the other variant —
+              // completing under the wrong sessionVariant label.
+              // Scoping by variant makes restore deterministic: an
+              // easier draft only ever resumes an easier session.
+              draftScope={draftScopeForVariant(sessionVariant)}
               sessionVariant={
-                plan ? (plan.variant as "express45" | "express30") : undefined
+                plan
+                  ? (plan.variant as Exclude<SessionVariant, "full">)
+                  : undefined
               }
               onLogExercise={
-                plan
-                  ? (di, exIdx, reps, weight, rpe) =>
-                      logExercise(
-                        di,
-                        plan.sourceIndexes[exIdx] ?? exIdx,
-                        reps,
-                        weight,
-                        rpe
-                      )
-                  : logExercise
+                sessionVariant === "easier_today"
+                  ? // An easier session NEVER touches the stored
+                    // programme: no progression, no lastAttempted /
+                    // lastPerformance updates, no plateau counting.
+                    // (logExercise writes programme state even with
+                    // autoProgression off, so it is skipped entirely —
+                    // the plan the user returns to is exactly the plan
+                    // they left, and a lighter day can't feed future
+                    // load decisions.)
+                    async () => {}
+                  : plan
+                    ? (di, exIdx, reps, weight, rpe) =>
+                        logExercise(
+                          di,
+                          plan.sourceIndexes[exIdx] ?? exIdx,
+                          reps,
+                          weight,
+                          rpe
+                        )
+                    : logExercise
               }
               onCompleteDay={
                 plan

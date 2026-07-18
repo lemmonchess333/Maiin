@@ -6,9 +6,13 @@
  * client lists its Circles through the existing journeys rules with
  * no collection-group read surface. Space/member/event reads are
  * member-only (rules); membership WRITES go through the callables
- * exclusively. The one client write — publishing an event — passes
- * the checkEventPayload privacy fence before addDocGuarded, and the
- * rules enforce the same allowlist server-side.
+ * exclusively. The one client-direct write — publishing a
+ * milestone/needs-support-class event — passes the checkEventPayload
+ * privacy fence before addDocGuarded, and the rules enforce the same
+ * allowlist server-side. Weekly check-ins are SERVER-owned
+ * (SOCIAL-FOCUS-01): setWeeklyFocus/backCheckIn go through callables
+ * so the deterministic weekly event ID and the closed focus enum
+ * can't be bypassed.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -25,6 +29,7 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import { db } from "@/lib/firebase";
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
+import { localWeekKey } from "@/lib/dateHelpers";
 import {
   checkEventPayload,
   parseGoalSpace,
@@ -34,7 +39,16 @@ import {
   type GoalSpaceEventKind,
   type GoalSpaceMember,
   type GoalSpaceType,
+  type WeeklyFocus,
 } from "./goalSpaceTypes";
+
+/** goalSpaceWeeklyCheckIn's create/duplicate/update contract. */
+export interface WeeklyCheckInResult {
+  ok: boolean;
+  eventId: string;
+  duplicate: boolean;
+  updated: boolean;
+}
 
 export interface CircleSummary {
   space: GoalSpace;
@@ -54,6 +68,11 @@ function fns() {
 export function useGoalSpaces(uid: string | undefined) {
   // null = loading
   const [circles, setCircles] = useState<CircleSummary[] | null>(null);
+  // SOCIAL-HOME-01: a failed list read must be distinguishable from a
+  // genuinely empty Circle list — the Together surface renders a retry
+  // affordance for the former and the cold-start selector for the
+  // latter. Cleared on any successful reload.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const reload = useCallback(async () => {
     if (!uid) return;
@@ -89,9 +108,11 @@ export function useGoalSpaces(uid: string | undefined) {
           .filter((s): s is CircleSummary => s !== null)
           .sort((a, b) => b.space.createdAt - a.space.createdAt)
       );
+      setLoadFailed(false);
     } catch (err) {
       logger.error("goalSpaces: list failed", err);
       setCircles([]);
+      setLoadFailed(true);
     }
   }, [uid]);
 
@@ -150,7 +171,10 @@ export function useGoalSpaces(uid: string | undefined) {
   const loadDetail = useCallback(
     async (spaceId: string): Promise<CircleDetail> => {
       try {
-        const [membersSnap, eventsSnap] = await Promise.all([
+        const ownCheckInRef = uid
+          ? doc(db, "goalSpaces", spaceId, "events", `${uid}_${localWeekKey()}`)
+          : null;
+        const [membersSnap, eventsSnap, ownCheckInSnap] = await Promise.all([
           getDocs(collection(db, "goalSpaces", spaceId, "members")),
           getDocs(
             query(
@@ -159,6 +183,7 @@ export function useGoalSpaces(uid: string | undefined) {
               limit(30)
             )
           ),
+          ownCheckInRef ? getDoc(ownCheckInRef) : Promise.resolve(null),
         ]);
         const members = membersSnap.docs
           .map((d) => d.data() as GoalSpaceMember)
@@ -166,30 +191,46 @@ export function useGoalSpaces(uid: string | undefined) {
         const events = eventsSnap.docs
           .map((d) => parseGoalSpaceEvent({ id: d.id, ...d.data() }))
           .filter((e): e is GoalSpaceEvent => e !== null);
+        // The 30-event window can age out the member's OWN current-week
+        // check-in (focus changes deliberately preserve createdAt) —
+        // and the "Set vs Change weekly focus" state derives from it.
+        // The deterministic doc ID makes the direct read cheap.
+        if (ownCheckInSnap?.exists()) {
+          const own = parseGoalSpaceEvent({
+            id: ownCheckInSnap.id,
+            ...ownCheckInSnap.data(),
+          });
+          if (own && !events.some((e) => e.id === own.id)) {
+            events.push(own);
+            events.sort((a, b) => b.createdAt - a.createdAt);
+          }
+        }
         return { members, events };
       } catch (err) {
         logger.error("goalSpaces: detail failed", err);
         return { members: [], events: [] };
       }
     },
-    []
+    [uid]
   );
 
   /** Publish a summary-only event. The privacy fence runs CLIENT-side
-   *  too so a coding mistake fails loudly before the rules reject it. */
+   *  too so a coding mistake fails loudly before the rules reject it.
+   *  weekly_check_in is excluded at the TYPE level — a caller passing
+   *  it would compile, pass local state, then silently fail at the
+   *  fence; the callable (setWeeklyFocus) is the only check-in path. */
   const publishEvent = useCallback(
     async (
       spaceId: string,
-      kind: GoalSpaceEventKind,
-      text?: string,
-      weekKey?: string
+      kind: Exclude<GoalSpaceEventKind, "weekly_check_in">,
+      text?: string
     ): Promise<boolean> => {
       if (!uid) return false;
       const payload: Record<string, unknown> = {
         uid,
         kind,
         text: text?.trim() ? text.trim().slice(0, 200) : null,
-        weekKey: weekKey ?? null,
+        weekKey: null,
         createdAt: Date.now(),
       };
       const check = checkEventPayload(payload);
@@ -211,14 +252,61 @@ export function useGoalSpaces(uid: string | undefined) {
     [uid]
   );
 
+  /** SOCIAL-FOCUS-01 — set (or change) this week's check-in + focus.
+   *  Server-owned: the callable writes the deterministic
+   *  ${uid}_${weekKey} event, so re-submitting can only land on the
+   *  same doc. weekKey is the member's LOCAL week (localWeekKey) —
+   *  the server validates, never recomputes. */
+  const setWeeklyFocus = useCallback(
+    async (
+      spaceId: string,
+      weeklyFocus: WeeklyFocus | null
+    ): Promise<WeeklyCheckInResult | null> => {
+      try {
+        const call = httpsCallable(fns(), "goalSpaceWeeklyCheckIn");
+        const res = await call({
+          spaceId,
+          weekKey: localWeekKey(),
+          weeklyFocus,
+        });
+        return res.data as WeeklyCheckInResult;
+      } catch (err) {
+        logger.error("goalSpaces: weekly check-in failed", err);
+        return null;
+      }
+    },
+    []
+  );
+
+  /** Back another member's weekly focus (bounded, idempotent). */
+  const backCheckIn = useCallback(
+    async (
+      spaceId: string,
+      eventId: string
+    ): Promise<{ ok: boolean; alreadyBacked: boolean } | null> => {
+      try {
+        const call = httpsCallable(fns(), "backGoalSpaceCheckIn");
+        const res = await call({ spaceId, eventId });
+        return res.data as { ok: boolean; alreadyBacked: boolean };
+      } catch (err) {
+        logger.error("goalSpaces: back failed", err);
+        return null;
+      }
+    },
+    []
+  );
+
   return {
     loading: uid !== undefined && circles === null,
     circles: circles ?? [],
+    loadFailed,
     reload,
     createCircle,
     joinCircle,
     leaveCircle,
     loadDetail,
     publishEvent,
+    setWeeklyFocus,
+    backCheckIn,
   };
 }

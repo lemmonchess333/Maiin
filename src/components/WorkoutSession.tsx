@@ -157,10 +157,11 @@ interface Props {
    *  programme days (invalidates a stale draft across week
    *  advancement). Defaults to 0 for scopes without an epoch. */
   draftEpoch?: string | number;
-  /** PROGRAM-FLEX-01: present when the caller trimmed `day` to a time
-   *  budget (Express Session). Threaded into the completion write and
-   *  acknowledged on the complete screen. */
-  sessionVariant?: "express45" | "express30";
+  /** PROGRAM-FLEX-01 / PROGRAM-ADAPT-01: present when the caller
+   *  handed a reduced COPY of `day` (Express time budget, or Easier
+   *  today). Threaded into the completion write and acknowledged on
+   *  the complete screen. */
+  sessionVariant?: "express45" | "express30" | "easier_today";
   onLogExercise: (
     dayIndex: number,
     exIndex: number,
@@ -177,7 +178,7 @@ interface Props {
       setLogs: Array<
         Array<{ weight: number; reps: number; completed: boolean }>
       >;
-      sessionVariant?: "express45" | "express30";
+      sessionVariant?: "express45" | "express30" | "easier_today";
     }
   ) => Promise<unknown>;
   onClose: () => void;
