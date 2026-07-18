@@ -344,6 +344,8 @@ export default function Social() {
         onOpenChange={setShowNotifications}
         items={notifications.items}
         loading={notifications.loading}
+        error={notifications.error}
+        onRetry={notifications.retry}
       />
 
       {/* Tab bar — primary navigation on the canonical iOS "track"
