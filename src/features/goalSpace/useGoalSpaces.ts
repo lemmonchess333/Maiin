@@ -68,6 +68,11 @@ function fns() {
 export function useGoalSpaces(uid: string | undefined) {
   // null = loading
   const [circles, setCircles] = useState<CircleSummary[] | null>(null);
+  // SOCIAL-HOME-01: a failed list read must be distinguishable from a
+  // genuinely empty Circle list — the Together surface renders a retry
+  // affordance for the former and the cold-start selector for the
+  // latter. Cleared on any successful reload.
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const reload = useCallback(async () => {
     if (!uid) return;
@@ -103,9 +108,11 @@ export function useGoalSpaces(uid: string | undefined) {
           .filter((s): s is CircleSummary => s !== null)
           .sort((a, b) => b.space.createdAt - a.space.createdAt)
       );
+      setLoadFailed(false);
     } catch (err) {
       logger.error("goalSpaces: list failed", err);
       setCircles([]);
+      setLoadFailed(true);
     }
   }, [uid]);
 
@@ -292,6 +299,7 @@ export function useGoalSpaces(uid: string | undefined) {
   return {
     loading: uid !== undefined && circles === null,
     circles: circles ?? [],
+    loadFailed,
     reload,
     createCircle,
     joinCircle,
