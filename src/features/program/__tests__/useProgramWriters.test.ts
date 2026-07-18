@@ -104,6 +104,7 @@ type MockProfile = {
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
+    eventName?: string;
   } | null;
   primaryGoal?: string;
   program?: { goal?: string };
@@ -289,6 +290,61 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Compressed flag survives the refresh (V2 always re-derives;
     // a 3-weeks-out 10K stays compressed).
     expect(lastWrite.runPlan!.compressed).toBe(true);
+  });
+
+  it("race-prep refresh preserves raceGoal.eventName (RACE-EVENT-IDENTITY-01)", async () => {
+    // The regen path embeds profile.raceGoal whole (makeRunPlanRecord takes
+    // the object by reference), so an optional eventName must survive a
+    // schedule refresh — a regen that reconstructed the goal field-by-field
+    // would silently wipe the name.
+    const threeWeeksOut = new Date();
+    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
+    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    mockProfile = raceProfile(targetDate, {
+      raceGoal: {
+        distance: "10k",
+        targetDate,
+        eventName: "Manchester 10K 2026",
+      },
+    });
+    mockDocData = {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [], // empty so refresh writes
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: mockProfile.raceGoal!,
+        totalWeeks: 6,
+        currentWeek: 2,
+      },
+    } as ProgramState;
+    mockDocExists = true;
+
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0; // reset to capture only the refresh write
+
+    await act(async () => {
+      await result.current.refreshRunSchedule();
+    });
+
+    expect(setDocCalls.length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(lastWrite.runPlan!.raceGoal).toMatchObject({
+      distance: "10k",
+      targetDate,
+      eventName: "Manchester 10K 2026",
+    });
   });
 
   it("Run9: loading a legacy structured user WIPES the orphaned runDays + runPlan", async () => {

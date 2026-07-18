@@ -31,6 +31,8 @@ export interface RaceGoal {
   distance: string;
   /** Local "YYYY-MM-DD". */
   targetDate: string;
+  /** Optional user-entered event name, ≤60 chars. */
+  eventName?: string;
 }
 
 /**
@@ -113,9 +115,18 @@ export function newRaceSupersedesRecovery(
  * The patch for SETTING (or changing) a race goal — onboarding-retake
  * retirement, the run-tab "Train for a race" CTA, or editing the date.
  * Materializes runMode alongside. Clearing is `setRaceGoalPatch(null)`.
+ *
+ * `eventName` is optional free-text (≤60 chars): the key is INCLUDED only
+ * when a non-empty string is passed, and OMITTED when undefined/empty so
+ * the written object never carries an `undefined` value (stripUndefined /
+ * Firestore-clean writes stay clean).
  */
-export function setRaceGoalPatch(
-  next: RaceGoal | null
-): RaceGoalWritePatch {
-  return { raceGoal: next, runMode: deriveRunMode(next) };
+export function setRaceGoalPatch(next: RaceGoal | null): RaceGoalWritePatch {
+  if (!next) return { raceGoal: null, runMode: "freeform" };
+  const raceGoal: RaceGoal = {
+    distance: next.distance,
+    targetDate: next.targetDate,
+    ...(next.eventName ? { eventName: next.eventName } : {}),
+  };
+  return { raceGoal, runMode: deriveRunMode(raceGoal) };
 }
