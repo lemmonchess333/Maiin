@@ -32,6 +32,8 @@ import SegmentedControl from "../components/ui/SegmentedControl";
 import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
+import CircleShareSheet from "@/components/social/CircleShareSheet";
+import { Button } from "@/components/ui/Button";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
 import PaceInsightCard from "../components/run/PaceInsightCard";
@@ -425,6 +427,10 @@ export default function RunSummary() {
     }
   }, [savedRunId]);
   const [shareOpen, setShareOpen] = useState(false);
+  // CIRCLE-SESSION-01 — explicit summary-only Circle share, offered
+  // only after a PLANNED run is saved. The sheet mounts lazily so its
+  // Goal Space reads never fire unless the user taps the action.
+  const [circleShareOpen, setCircleShareOpen] = useState(false);
   /* Save flow state. Replaces a single `saved: boolean` so the UI can
      distinguish "still working", "succeeded", and "failed — retry".
      A toast was the only failure signal previously; on Safari PWA the
@@ -627,6 +633,17 @@ export default function RunSummary() {
   // (or null when there's no plan context). Locked vocab in
   // `.claude/plans/programme-run-followups.md` row `Run8-Vocab`.
   const adherenceLabel = getAdherenceLabel(runConfig?.planMetadata);
+
+  // CIRCLE-SESSION-01 — was this run a PLANNED session? True when it
+  // fulfilled a scheduled slot: an explicit scheduledRunId linkage, or
+  // a plan-matched template (matchedPlanExact non-null ⇒ "Planned" /
+  // "Custom" adherence). offPlan ("Extra") and freeform runs are NOT
+  // planned — the Circle share action stays hidden for them.
+  const isPlannedSession = (() => {
+    const pm = runConfig?.planMetadata;
+    if (!pm || pm.offPlan) return false;
+    return pm.scheduledRunId !== null || pm.matchedPlanExact !== null;
+  })();
 
   // Run8 PR3b — state-aware completion hero copy. When the run was
   // tied to a planned template AND was at least somewhat-sized
@@ -1792,6 +1809,20 @@ export default function RunSummary() {
               </button>
             )}
 
+            {canShowDone({ saveStatus }) && isPlannedSession && user && (
+              /* CIRCLE-SESSION-01 — explicit summary-only Circle share
+                 for PLANNED runs only. The sheet publishes just the
+                 `session_completed` event (privacy-fenced) — never
+                 distance, pace, route or any other number. */
+              <Button
+                variant="sport-tinted"
+                fullWidth
+                onClick={() => setCircleShareOpen(true)}
+              >
+                Share to Circle
+              </Button>
+            )}
+
             {(() => {
               /* Share + Export GPX gated together so the wrapping flex row
              collapses to nothing when neither is renderable (e.g. a
@@ -1839,6 +1870,16 @@ export default function RunSummary() {
             )}
           </div>
         </>
+      )}
+
+      {/* CIRCLE-SESSION-01 — lazily mounted: zero Goal Space reads
+          unless the user explicitly opens the share flow. */}
+      {user && circleShareOpen && (
+        <CircleShareSheet
+          open
+          onOpenChange={setCircleShareOpen}
+          uid={user.uid}
+        />
       )}
 
       {/* S1 share-card system — customization sheet + new renderer */}

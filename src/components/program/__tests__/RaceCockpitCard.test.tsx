@@ -1,28 +1,48 @@
 /**
  * RaceCockpitCard — cockpit identity card contract.
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+
+// PROGRAM-CIRCLE-01: the card's "Train together" action navigates —
+// mock useNavigate so tests can pin the exact hand-off URL.
+const navigateMock = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>(
+      "react-router-dom"
+    );
+  return { ...actual, useNavigate: () => navigateMock };
+});
+
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+
 import RaceCockpitCard from "../RaceCockpitCard";
 
 afterEach(cleanup);
+beforeEach(() => {
+  navigateMock.mockClear();
+});
 
 function renderCard(
   props: Partial<React.ComponentProps<typeof RaceCockpitCard>> = {}
 ) {
   return render(
-    <RaceCockpitCard
-      distanceLabel="Marathon"
-      targetDate="2026-10-17"
-      daysToRace={140}
-      currentWeek={0}
-      totalWeeks={20}
-      phaseLabel="Base"
-      inTaper={false}
-      compressed={false}
-      onEdit={() => {}}
-      {...props}
-    />
+    <MemoryRouter>
+      <RaceCockpitCard
+        distanceLabel="Marathon"
+        targetDate="2026-10-17"
+        daysToRace={140}
+        currentWeek={0}
+        totalWeeks={20}
+        phaseLabel="Base"
+        inTaper={false}
+        compressed={false}
+        onEdit={() => {}}
+        {...props}
+      />
+    </MemoryRouter>
   );
 }
 
@@ -71,5 +91,24 @@ describe("RaceCockpitCard", () => {
     renderCard({ onEdit });
     fireEvent.click(screen.getByRole("button", { name: /Edit race goal/i }));
     expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  /* PROGRAM-CIRCLE-01 (slice 4a) — the hand-off carries EXACTLY the
+     space type, a readable title and the race date. Nothing else may
+     ever travel (privacy fence). */
+  it("Train together navigates with exactly type/title/date params", () => {
+    renderCard();
+    fireEvent.click(screen.getByRole("button", { name: "Train together" }));
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith(
+      "/social?circleCreate=race&circleTitle=Marathon%20training&circleDate=2026-10-17"
+    );
+  });
+
+  it("Train together renders even without week counters", () => {
+    renderCard({ currentWeek: null, totalWeeks: null });
+    expect(
+      screen.getByRole("button", { name: "Train together" })
+    ).toBeInTheDocument();
   });
 });

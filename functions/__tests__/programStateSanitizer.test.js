@@ -62,11 +62,22 @@ describe("sanitizeProgramState", () => {
         weeklyTarget: 4,
       },
       templateId: "ppl_4day",
+      // PROGRAM-DELOAD-01: without this key in the allow-list the
+      // command transaction's own sanitizer would strip the stash it
+      // just wrote and undo would always fail.
+      deloadSnapshot: {
+        weekNumber: 5,
+        workouts: [],
+        currentPhase: "progression",
+        fatigueScore: 3,
+        appliedAt: 1000,
+      },
     };
     const { value, dropped } = sanitizeProgramState(withOptionals);
     expect(dropped).toEqual([]);
     expect(value.manualCompletions).toEqual({ "run-1": { at: 1 } });
     expect(value.templateId).toBe("ppl_4day");
+    expect(value.deloadSnapshot).toMatchObject({ weekNumber: 5 });
   });
 
   it("leaves nested values untouched (only top-level is allow-listed)", () => {
