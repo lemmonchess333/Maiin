@@ -1235,6 +1235,8 @@ export default function Home() {
               <SectionErrorBoundary sectionName="quick-actions">
                 <StackedCTACards
                   nextWorkout={nextWorkout}
+                  liftDayIndex={resolvedToday.lift.index}
+                  liftStartable={resolvedToday.lift.isStartable}
                   todayType={todayType}
                   navigate={function (p: string) {
                     closePeek();
