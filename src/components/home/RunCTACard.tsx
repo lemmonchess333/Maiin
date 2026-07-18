@@ -69,13 +69,21 @@ export default function RunCTACard({
     ? `${tmpl.config.targetDistance}km`
     : null;
 
+  // HOME-ACTION-01: startability decides BOTH the pill label AND where the
+  // tap goes. A terminal/reconciliation run ("Done") must not relaunch the
+  // run flow — the tap opens the Programme run view to review it instead.
+  // No todayRun (cold-start) is treated as startable ("Go").
+  const startable = todayRun
+    ? isScheduledRunStartable(getScheduledRunStatus(todayRun))
+    : true;
+
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
       onClick={function () {
         haptic();
         trackHomeEvent("home_card_tapped", { card: "today_run" });
-        navigate("/run" + queryString);
+        navigate(startable ? "/run" + queryString : "/program?tab=run");
       }}
       className="w-full rounded-xl bg-running/8 text-left p-4"
     >
@@ -99,25 +107,25 @@ export default function RunCTACard({
           </div>
           <p className="text-micro text-muted-foreground truncate">{runDesc}</p>
         </div>
-        <div
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
-          style={{
-            background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
-            color: "white",
-          }}
-        >
-          <Play className="size-3" fill="white" />
-          {
-            // PR-0b-iii: "Go" only when actually startable.
-            // Terminal AND reconciliation states both surface as
-            // "Done" (the user can't launch a fresh run flow).
-            todayRun && isScheduledRunStartable(getScheduledRunStatus(todayRun))
-              ? "Go"
-              : todayRun
-                ? "Done"
-                : "Go"
-          }
-        </div>
+        {/* PR-0b-iii + HOME-ACTION-01: "Go" pill only when startable;
+            terminal / reconciliation states show a calm "Done" chip with
+            no Play icon (the run can't be relaunched). */}
+        {startable ? (
+          <div
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
+            style={{
+              background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
+              color: "white",
+            }}
+          >
+            <Play className="size-3" fill="white" />
+            Go
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
+            Done
+          </div>
+        )}
       </div>
     </motion.button>
   );
