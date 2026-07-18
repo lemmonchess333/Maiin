@@ -44,6 +44,9 @@ export interface FeedViewProps {
   followingFeedUnlocked: boolean;
   showSoloFeed: boolean;
   blockedUsers: Set<string>;
+  /** SOCIAL-PRIVACY-01: true once the block list has loaded. Feed reads
+   *  are deferred until this is true so blocked content can't flash. */
+  blockedReady: boolean;
   hiddenActivityIds: Set<string>;
   /** Open the People search overlay (was the find tab). */
   openPeople: () => void;
@@ -70,6 +73,7 @@ export default function FeedView({
   followingFeedUnlocked,
   showSoloFeed,
   blockedUsers,
+  blockedReady,
   hiddenActivityIds,
   openPeople,
   openTogether,
@@ -86,14 +90,21 @@ export default function FeedView({
   /* Following feed is enabled only when the user is on the Feed tab
      AND the Following sub-tab. Previously it fetched on every Social
      mount even when the user landed straight on Discover and never
-     opened Following — wasted reads on the cold start. */
+     opened Following — wasted reads on the cold start.
+     SOCIAL-PRIVACY-01: also gate on `blockedReady` so neither feed
+     loads until the block list is known — otherwise a blocked user's
+     activity flashes on first paint before the client-side filter has
+     a set to filter against. */
   const followingFeed = useSocialFeed(
     false,
     blockedUsers,
-    active && feedSubTab === "following",
+    active && feedSubTab === "following" && blockedReady,
     hiddenActivityIds
   );
-  const exploreFeed = useDiscoverFeed(feedSubTab === "explore", blockedUsers);
+  const exploreFeed = useDiscoverFeed(
+    feedSubTab === "explore" && blockedReady,
+    blockedUsers
+  );
   const activeFeed = feedSubTab === "following" ? followingFeed : exploreFeed;
 
   /* Soc5b pin (3): subtle new-content dot on inactive Feed sub-tab.

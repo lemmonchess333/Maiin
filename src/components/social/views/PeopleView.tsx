@@ -32,6 +32,10 @@ export interface PeopleViewProps {
    *  inline `!showFullLeaderboard && <>` gate did. */
   chromeHidden: boolean;
   blockedUsers: Set<string>;
+  /** SOCIAL-PRIVACY-01: true once the block list has loaded. The
+   *  suggested-people fetch waits on this so a blocked user can't
+   *  surface as a suggestion before the exclude set is known. */
+  blockedReady: boolean;
   isNewUser: boolean;
   /** Close the overlay and land on Together (crews live there). */
   openTogether: () => void;
@@ -49,6 +53,7 @@ export default function PeopleView({
   active,
   chromeHidden,
   blockedUsers,
+  blockedReady,
   isNewUser,
   openTogether,
   crews,
@@ -59,12 +64,14 @@ export default function PeopleView({
   const { user, profile } = useAuth();
 
   // Suggested People — fetches lazily only when the Discover tab is shown.
+  // SOCIAL-PRIVACY-01: also wait for the block list so a blocked user
+  // can't appear as a suggestion in the load window.
   const {
     people: suggestedPeople,
     loading: suggestedLoading,
     refresh: refreshSuggestions,
     remove: removeSuggestion,
-  } = useSuggestedPeople(active, blockedUsers);
+  } = useSuggestedPeople(active && blockedReady, blockedUsers);
 
   /* S4e-MVP — restricted-user gate on the Find tab. Hook subscribes
      to the user's own `globalRestrictedUids/{uid}` doc; doc existence
