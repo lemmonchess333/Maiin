@@ -194,6 +194,9 @@ function commonProps() {
     markManualComplete: vi.fn(async () => {}),
     skipRunDay: vi.fn(async () => {}),
     skipWorkoutDay: vi.fn(async () => {}),
+    // SESSION-RESTORE-01
+    restoreRunDay: vi.fn(async () => {}),
+    restoreWorkoutDay: vi.fn(async () => {}),
     // PR-B: refreshRunSchedule is the composing handler's second
     // half. Tests pass an async no-op since the assertions are on
     // the chip + form behaviour, not the regenerator output.

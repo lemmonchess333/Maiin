@@ -139,6 +139,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     overrideRunDay,
     markManualComplete,
     skipRunDay,
+    restoreRunDay,
+    restoreWorkoutDay,
     refreshRunSchedule,
     skipRecoveryEarly,
     realignRacePlan,
@@ -1064,6 +1066,8 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             markManualComplete={markManualComplete}
             skipRunDay={skipRunDay}
             skipWorkoutDay={skipWorkoutDay}
+            restoreRunDay={restoreRunDay}
+            restoreWorkoutDay={restoreWorkoutDay}
             skipRecoveryEarly={skipRecoveryEarly}
             realignRacePlan={realignRacePlan}
             dismissFellBehindPrompt={dismissFellBehindPrompt}
