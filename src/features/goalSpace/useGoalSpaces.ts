@@ -278,6 +278,29 @@ export function useGoalSpaces(uid: string | undefined) {
     []
   );
 
+  /** CIRCLE-TARGET-LIFECYCLE — owner resolves a Circle whose target
+   *  date has passed. `continue` needs a future YYYY-MM-DD; `wrap`
+   *  ends the Circle. Server-owned (the space doc is rules-locked), so
+   *  on success we reload to pick up the authoritative new state. */
+  const resolveTarget = useCallback(
+    async (
+      spaceId: string,
+      action: "continue" | "wrap",
+      newTargetDate?: string
+    ): Promise<boolean> => {
+      try {
+        const call = httpsCallable(fns(), "resolveGoalSpaceTarget");
+        await call({ spaceId, action, newTargetDate });
+        await reload();
+        return true;
+      } catch (err) {
+        logger.error("goalSpaces: resolveTarget failed", err);
+        return false;
+      }
+    },
+    [reload]
+  );
+
   /** Back another member's weekly focus (bounded, idempotent). */
   const backCheckIn = useCallback(
     async (
@@ -308,5 +331,6 @@ export function useGoalSpaces(uid: string | undefined) {
     publishEvent,
     setWeeklyFocus,
     backCheckIn,
+    resolveTarget,
   };
 }

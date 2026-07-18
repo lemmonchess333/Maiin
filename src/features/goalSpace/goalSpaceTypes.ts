@@ -131,6 +131,10 @@ export interface GoalSpace {
   targetDate: string | null;
   active: boolean;
   createdAt: number;
+  /** CIRCLE-TARGET-LIFECYCLE — set when the owner wraps the Circle
+   *  (server-written alongside active:false). Optional/additive; absent
+   *  on every Circle created before the lifecycle callable shipped. */
+  endedAt?: number | null;
 }
 
 export interface GoalSpaceMember {
@@ -282,6 +286,7 @@ export function parseGoalSpace(data: unknown): GoalSpace | null {
     targetDate: typeof d.targetDate === "string" ? d.targetDate : null,
     active: d.active,
     createdAt: d.createdAt,
+    endedAt: typeof d.endedAt === "number" ? d.endedAt : null,
   };
 }
 

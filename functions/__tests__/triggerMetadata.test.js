@@ -298,6 +298,11 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  resolveGoalSpaceTarget: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
 };
 
 function endpointSummary(fn) {
