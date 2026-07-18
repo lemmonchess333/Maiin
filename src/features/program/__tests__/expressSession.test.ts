@@ -13,6 +13,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildExpressSession,
+  draftScopeForVariant,
   estimateSessionMinutes,
   expressChoices,
   summarizeTrim,
@@ -264,5 +265,21 @@ describe("summarizeTrim", () => {
     expect(summarizeTrim({ droppedExercises: [], reducedSets: [] })).toBe(
       "no changes needed"
     );
+  });
+});
+
+describe("draftScopeForVariant", () => {
+  it("gives every non-full variant its own draft namespace", () => {
+    // The draft fingerprint covers layout, not loads — an easier clone
+    // with all set-floors bound would collide with the full session
+    // without this separation (wrong sessionVariant on completion).
+    expect(draftScopeForVariant("full")).toBe("programme");
+    expect(draftScopeForVariant("express45")).toBe("programme:express45");
+    expect(draftScopeForVariant("express30")).toBe("programme:express30");
+    expect(draftScopeForVariant("easier_today")).toBe("programme:easier_today");
+    const scopes = (
+      ["full", "express45", "express30", "easier_today"] as const
+    ).map(draftScopeForVariant);
+    expect(new Set(scopes).size).toBe(scopes.length);
   });
 });

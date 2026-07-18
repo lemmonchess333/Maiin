@@ -44,6 +44,20 @@ export type ExpressVariant = "express45" | "express30";
  *  deload-policy loads instead of a time budget). */
 export type SessionVariant = "full" | ExpressVariant | "easier_today";
 
+/**
+ * Draft namespace for a session variant (PROGRAM-ADAPT-01 follow-up).
+ * The workout-draft identity fingerprints the exercise layout
+ * (ids × sets) but NOT loads — an easier clone whose set-floors all
+ * bind shares a layout with the full session, so without a per-variant
+ * scope a mid-session kill could restore one variant's logs into the
+ * other and complete under the wrong sessionVariant label. Scoping the
+ * namespace makes restore deterministic: a draft only ever resumes the
+ * variant that created it.
+ */
+export function draftScopeForVariant(variant: SessionVariant): string {
+  return variant === "full" ? "programme" : `programme:${variant}`;
+}
+
 /** Mirrors the `~min` estimate shown on the lift SessionCommandCard. */
 export const MINUTES_PER_SET = 2.5;
 
