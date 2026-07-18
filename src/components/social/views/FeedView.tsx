@@ -27,7 +27,7 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
-import type { FeedSubTab } from "@/pages/Social";
+import type { FeedSubTab } from "./socialTabs";
 
 export interface FeedViewProps {
   /** True when the Feed tab is the active top-level tab. Gates the

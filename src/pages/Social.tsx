@@ -28,9 +28,14 @@ import { track as trackSocialEvent } from "@/lib/socialAnalytics";
    tabs — Together (Circles + Spaces + Challenges + legacy Crews) and
    Feed. People is no longer a tab: it's a lazily-opened full-screen
    search surface reached from the header (or the legacy ?tab=find
-   deep link). The feed sub-tab stays `explore` (public activity). */
-export type SocialTab = "together" | "feed";
-export type FeedSubTab = "following" | "explore";
+   deep link). The feed sub-tab stays `explore` (public activity).
+   The tab types live in views/socialTabs.ts so the views can import
+   them without a page↔view module cycle. */
+import type {
+  SocialTab,
+  FeedSubTab,
+} from "../components/social/views/socialTabs";
+export type { SocialTab, FeedSubTab };
 
 export default function Social() {
   const { user, profile } = useAuth();
