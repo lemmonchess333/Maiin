@@ -82,6 +82,10 @@ const PINNED: Record<string, string> = {
   // Packet 18 — CF calorie engine mirrors src/lib/workoutBurn.ts.
   "functions/lib/workoutBurn.js":
     "src/features/program/__tests__/workoutBurn.cross.test.ts",
+  // PROGRAM-DELOAD-01 — CF deload transform mirrors programEngine.ts
+  // applyDeload (and the easierToday.deloadWeight weight rule).
+  "functions/lib/deloadEngine.js":
+    "src/features/program/__tests__/deloadEngine.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":

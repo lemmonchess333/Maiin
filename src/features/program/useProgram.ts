@@ -97,6 +97,8 @@ import {
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
 import { toast } from "@/lib/toast";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { generateInstanceId } from "./programTypes";
 
 const PROGRAM_DOC = "current";
 
@@ -1725,6 +1727,57 @@ export function useProgram() {
     await saveProgram(next);
   }, [programState, saveProgram]);
 
+  /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
+   *  `applyProgramCommand` transaction (the packet-18 command boundary;
+   *  these are its first client consumers). The server owns the
+   *  mutation — the deload transform, the not-already-deloaded /
+   *  snapshot-present preconditions, and the receipt-based idempotency
+   *  all run in one transaction — so on success we REFETCH the
+   *  authoritative doc rather than re-deriving locally (the
+   *  tested-copy-vs-running-copy rule). Requires network: unlike the
+   *  offline-queued setDocGuarded writers, a callable can't replay,
+   *  and a week-load mutation is not something to apply blind. */
+  const sendDeloadCommand = useCallback(
+    async (kind: "applyDeloadWeek" | "revertDeloadWeek"): Promise<boolean> => {
+      if (!user || !programState) return false;
+      try {
+        const call = httpsCallable(getFunctions(), "applyProgramCommand");
+        await call({
+          kind,
+          // Reuses the bounded safe-alphabet id generator (UUID with a
+          // non-crypto fallback) — both shapes satisfy the callable's
+          // COMMAND_ID_RE.
+          commandId: generateInstanceId(),
+          expectedWeekNumber: programState.weekNumber,
+        });
+        const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const normalized = normalizeProgramState(
+            snap.data() as ProgramState,
+            { primaryGoal: profile?.primaryGoal }
+          );
+          setProgramState(migrateProgramState(normalized, localWeekKey()));
+        }
+        return true;
+      } catch (err) {
+        logger.error(`[useProgram] ${kind} failed`, err);
+        return false;
+      }
+    },
+    [user, profile, programState]
+  );
+
+  const applyDeloadWeek = useCallback(
+    () => sendDeloadCommand("applyDeloadWeek"),
+    [sendDeloadCommand]
+  );
+
+  const revertDeloadWeek = useCallback(
+    () => sendDeloadCommand("revertDeloadWeek"),
+    [sendDeloadCommand]
+  );
+
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today, keeping the
    *  race date. Regenerates from today so the weeks-to-race delta (shrinking
    *  as time passes) drives the generator: a tight gap yields `compressed`,
@@ -1831,6 +1884,8 @@ export function useProgram() {
     refreshRunSchedule,
     skipRecoveryEarly,
     dismissFellBehindPrompt,
+    applyDeloadWeek,
+    revertDeloadWeek,
     realignRacePlan,
     viewWeek,
     viewingHistoryIndex,
