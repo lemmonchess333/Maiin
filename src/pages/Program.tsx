@@ -23,6 +23,7 @@ import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
 import {
   buildExpressSession,
+  draftScopeForVariant,
   type SessionVariant,
 } from "@/features/program/expressSession";
 import {
@@ -1653,6 +1654,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               }
               dayIndex={sessionDayIndex}
               draftEpoch={programState.weekNumber}
+              // Variant-scoped draft namespace (PROGRAM-ADAPT-01
+              // follow-up): the draft identity fingerprints the
+              // exercise LAYOUT (ids × sets) but not loads, so an
+              // easier clone whose set-floors all bind would share an
+              // identity with the full session and a mid-session kill
+              // could restore its logs into the other variant —
+              // completing under the wrong sessionVariant label.
+              // Scoping by variant makes restore deterministic: an
+              // easier draft only ever resumes an easier session.
+              draftScope={draftScopeForVariant(sessionVariant)}
               sessionVariant={
                 plan
                   ? (plan.variant as Exclude<SessionVariant, "full">)
