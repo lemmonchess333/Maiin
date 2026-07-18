@@ -21,11 +21,14 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 const createBlockMock = vi.fn();
+/* PROGRAM-CIRCLE-01: the hand-off tests need an ACTIVE block; the
+   holder is read lazily at render time so each test can set it. */
+const hookState: { activeBlock: TrainingBlock | null } = { activeBlock: null };
 vi.mock("@/features/program/useTrainingBlock", () => ({
   useTrainingBlock: () => ({
     loading: false,
     blocks: [],
-    activeBlock: null,
+    activeBlock: hookState.activeBlock,
     createBlock: (...args: unknown[]) => createBlockMock(...args),
     finishBlock: vi.fn(),
     loadReviewWorkouts: vi.fn(async () => []),
@@ -35,6 +38,7 @@ vi.mock("@/features/program/useTrainingBlock", () => ({
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import TrainingBlockCard from "../TrainingBlockCard";
+import { blockEndDate } from "@/features/program/trainingBlock";
 
 function makeBlock(preset: TrainingBlock["preset"]): TrainingBlock {
   return {
@@ -78,7 +82,17 @@ async function openSheetAndPick(
 beforeEach(() => {
   navigateMock.mockClear();
   createBlockMock.mockReset();
+  hookState.activeBlock = null;
 });
+
+/** Local YYYY-MM-DD "today" — keeps the active-block tests in-window
+ *  regardless of when they run. */
+function localToday(): string {
+  const now = new Date();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${m}-${d}`;
+}
 
 describe("TrainingBlockCard (Blk1)", () => {
   it("goal preset → saves the block, then shows the in-sheet offer", async () => {
@@ -124,6 +138,32 @@ describe("TrainingBlockCard (Blk1)", () => {
     await waitFor(() => expect(createBlockMock).toHaveBeenCalledTimes(1));
     expect(screen.queryByText(/tune your programme/i)).toBeNull();
     expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  /* PROGRAM-CIRCLE-01 (slice 4a) — the detail sheet's "Train together"
+     hand-off carries EXACTLY the space type, the block's display title
+     and its end date. Nothing else may ever travel (privacy fence). */
+  it("active block detail sheet: Train together navigates with exactly type/title/date params", async () => {
+    const block: TrainingBlock = {
+      ...makeBlock("muscle_building"),
+      id: `${localToday()}-muscle_building`,
+      startDate: localToday(),
+    };
+    hookState.activeBlock = block;
+    renderCard();
+
+    // The active row opens the detail sheet (in-window, not finished).
+    fireEvent.click(screen.getByRole("button", { name: /muscle building/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Train together" })
+    );
+
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledTimes(1));
+    expect(navigateMock).toHaveBeenCalledWith(
+      `/social?circleCreate=strength_block&circleTitle=${encodeURIComponent(
+        block.title
+      )}&circleDate=${blockEndDate(block)}`
+    );
   });
 
   it("declining the offer closes the sheet without navigating; the block is already saved", async () => {
