@@ -51,7 +51,11 @@ describe("NotificationsSheet", () => {
   it("renders each notification's message", () => {
     renderSheet([
       item({ id: "a", message: "Alex gave you props" }),
-      item({ id: "b", type: "comment", message: "Sam commented on your activity" }),
+      item({
+        id: "b",
+        type: "comment",
+        message: "Sam commented on your activity",
+      }),
     ]);
     expect(screen.getByText("Alex gave you props")).toBeInTheDocument();
     expect(
@@ -64,6 +68,54 @@ describe("NotificationsSheet", () => {
       item({ id: "f", type: "follow", message: undefined, fromName: "Robin" }),
     ]);
     expect(screen.getByText("Robin started following you")).toBeInTheDocument();
+  });
+
+  it("CIRCLE-ACTIVITY-NOTIFICATIONS: renders named copy for the four Circle event types", () => {
+    renderSheet([
+      item({
+        id: "m",
+        type: "circle_milestone",
+        message: undefined,
+        fromName: "Mia",
+      }),
+      item({
+        id: "n",
+        type: "circle_needs_support",
+        message: undefined,
+        fromName: "Nas",
+      }),
+      item({
+        id: "j",
+        type: "circle_joined",
+        message: undefined,
+        fromName: "Jo",
+      }),
+      item({
+        id: "r",
+        type: "circle_routine_shared",
+        message: undefined,
+        fromName: "Ravi",
+      }),
+    ]);
+    expect(screen.getByText("Mia hit a milestone")).toBeInTheDocument();
+    expect(screen.getByText("Nas could use a nudge")).toBeInTheDocument();
+    expect(screen.getByText("Jo joined your Circle")).toBeInTheDocument();
+    expect(screen.getByText("Ravi shared a routine")).toBeInTheDocument();
+  });
+
+  it("a named Circle event deep-links to the actor (unlike anonymous focus-backed)", () => {
+    const { onOpenChange } = renderSheet([
+      item({
+        id: "m",
+        type: "circle_milestone",
+        message: undefined,
+        fromName: "Mia",
+        fromUserId: "u-mia",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Mia hit a milestone"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-mia");
   });
 
   it("tapping a row deep-links to the actor's profile and closes the sheet", () => {
