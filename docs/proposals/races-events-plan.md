@@ -36,8 +36,8 @@ block + one CTA into the existing race-goal flow.**
 
 - Extend `SpaceDef` with an optional `event` block:
   `{ dateKey: "YYYY-MM-DD", distance: "5k"|"10k"|"half"|"marathon",
- city, countryFlag, elevation?: "flat"|"rolling"|"hilly",
- websiteUrl }`.
+city, countryFlag, elevation?: "flat"|"rolling"|"hilly",
+websiteUrl }`.
 - Starter UK catalogue as config, kind `"race"`: London Marathon,
   The Big Half, Great Birmingham Run, Manchester Marathon (editorial
   photos or fallback band).
@@ -135,3 +135,35 @@ corresponding "proposed" items above and refine the PR slices.
    The Feed's compact "Spaces for you" row stays interest-only — the
    calm-feed doctrine holds; promote races into the feed only if join
    data later argues for it.
+
+## Amendment — two doors to one catalogue (LOCKED 2026-07-19)
+
+Follow-up from the Runna workflow comparison (screens 4054-56): in
+Runna, race selection lives ONLY in the Plan tab (their race database
+feeds the plan — End Date = race date, Elevation Profile from the
+event), and the Community race space is a parallel social layer that
+never touches the plan. Our design already has the door Runna lacks
+(the space-page "Train for this race" CTA); this amendment adds the
+door Runna has and we lacked:
+
+- **Door 1 — Social (already locked):** Races & Events directory →
+  race space → "Train for this race" → prefilled `/settings/run-plan`.
+- **Door 2 — Plan (NEW, part of PR3):** a **"Choose an upcoming
+  race"** picker inside the race-goal editor (RaceGoalPlanner),
+  listing the same race-kind SPACE_DEFS (name, date, distance chip,
+  soonest-first, past dates hidden). Picking one prefills
+  distance + date + eventName + `eventSpaceId` — the identical write
+  path as Door 1. Manual distance/date/name entry stays for unlisted
+  races (which simply carry no `eventSpaceId`).
+
+Invariants:
+
+- **One catalogue, two entrances.** Both doors read the same
+  `spaceDefs` race entries; no duplicated event data.
+- **Join never sets the race.** Space membership is community only;
+  only the explicit CTA / picker writes `raceGoal`.
+
+Noted for later (not built): Runna feeds the event's ELEVATION into
+plan settings; our scheduler doesn't model elevation. If elevation-
+aware training ever lands, `event.elevation` is already in the config
+shape.
