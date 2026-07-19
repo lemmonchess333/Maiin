@@ -36,8 +36,8 @@ block + one CTA into the existing race-goal flow.**
 
 - Extend `SpaceDef` with an optional `event` block:
   `{ dateKey: "YYYY-MM-DD", distance: "5k"|"10k"|"half"|"marathon",
-   city, countryFlag, elevation?: "flat"|"rolling"|"hilly",
-   websiteUrl }`.
+ city, countryFlag, elevation?: "flat"|"rolling"|"hilly",
+ websiteUrl }`.
 - Starter UK catalogue as config, kind `"race"`: London Marathon,
   The Big Half, Great Birmingham Run, Manchester Marathon (editorial
   photos or fallback band).
@@ -92,3 +92,46 @@ block + one CTA into the existing race-goal flow.**
 - **Instant Workouts** — Tropos already has the equivalent
   (RunTilePicker / RunLaunchCard + distance/time targets); no action.
 - **Support/education hub** — separate concept; skip.
+
+## Grill outcomes — LOCKED 2026-07-19 (operator session)
+
+Six decisions resolved in a /grill-me pass; these supersede the
+corresponding "proposed" items above and refine the PR slices.
+
+1. **CTA mechanics (Q1 = b).** "Train for this race" deep-links to
+   `/settings/run-plan` with `distance`, `date`, `eventName`, and
+   `spaceId` as query params — the existing editor (RunPlanSettings /
+   RaceGoalPlanner) owns prefill, the replace-existing-goal decision,
+   and plan regeneration. No one-tap write, no inline modal — the
+   Set1.2 "deep-link out, don't edit inline" lock applies.
+2. **Stale dates are derived, never operated (Q2 = b).** Everything
+   keys off `event.dateKey < today`: the card drops from the directory,
+   the CTA hides, the header renders the date as passed — while join
+   and posts stay fully alive (post-race chat is the best week of a
+   race community). The only annual config duty is pasting the next
+   edition's date; forgetting degrades gracefully, never lies.
+3. **Honest facepile copy (Q3 = b).** The count is space MEMBERSHIP —
+   copy reads "N runners here", never "N training for this" (that
+   claim requires a server-side counter of matching race goals; a
+   later, optional follow-up once the goal↔space link exists).
+4. **`raceGoal.eventSpaceId` (Q4 = a), landed in PR3.** The deep-link
+   carries `spaceId`; the editor writes it alongside
+   distance/date/eventName. Follow the eventName precedent
+   (RACE-EVENT-IDENTITY-01): add to the `functions/profileSanitizer.js`
+   allow-list or the CF write silently drops it. Manually-set goals
+   simply lack the field — cross-links don't render, nothing breaks.
+   This makes PR4 an exact-id lookup and unlocks the future training
+   counter.
+5. **v1 catalogue = twelve UK races (Q5).** Marathon: London,
+   Manchester, Brighton, Edinburgh. Half: Great North Run, The Big
+   Half, Royal Parks Half, Cardiff Half. 10k: Vitality London 10,000,
+   Great Birmingham Run (10k), Great Manchester Run, Leeds 10k.
+   No 10-mile events (no matching engine distance; Great South Run
+   excluded). Fallback-band-first; editorial photos later; dates
+   verified against each race's official site at build time — never
+   guessed.
+6. **Directory placement (Q6 = b).** The Races & Events section lives
+   in the FULL SpacesDirectory only (Together tab / CommunityView).
+   The Feed's compact "Spaces for you" row stays interest-only — the
+   calm-feed doctrine holds; promote races into the feed only if join
+   data later argues for it.
