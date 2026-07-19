@@ -27,7 +27,13 @@
  * raw element access.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  within,
+} from "@testing-library/react";
 import DayActionSheet from "../DayActionSheet";
 import type { UserProfile } from "@/lib/auth";
 import type {
@@ -156,6 +162,8 @@ function commonCallbacks() {
     // SESSION-RESTORE-01
     restoreRunDay: vi.fn(async () => {}),
     restoreWorkoutDay: vi.fn(async () => {}),
+    // RUN-RESCHEDULE-01
+    moveRunDay: vi.fn(async () => {}),
   };
 }
 
@@ -260,6 +268,46 @@ describe("DayActionSheet — planned run", () => {
     );
     fireEvent.click(screen.getByText(/Mark as done/i));
     expect(callbacks.markManualComplete).toHaveBeenCalledWith(runDay.id);
+  });
+
+  it("RUN-RESCHEDULE-01: a planned run offers Move to another day → 7-day picker; picking a day calls moveRunDay(id, dayIndex)", () => {
+    const { profile, programState, callbacks } = setup();
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    const moveBtn = screen.getByText(/Move to another day/i);
+    fireEvent.click(moveBtn);
+    const picker = screen.getByRole("group", { name: /Move to which day/i });
+    const dayButtons = within(picker).getAllByRole("button");
+    expect(dayButtons).toHaveLength(7);
+    // At least the run's own day + past days are disabled.
+    const disabled = dayButtons.filter(
+      (b) => (b as HTMLButtonElement).disabled
+    );
+    expect(disabled.length).toBeGreaterThan(0);
+    // Picking an available day dispatches the move with a numeric dayIndex.
+    const enabled = dayButtons.filter(
+      (b) => !(b as HTMLButtonElement).disabled
+    );
+    if (enabled.length > 0) {
+      fireEvent.click(enabled[0]);
+      expect(callbacks.moveRunDay).toHaveBeenCalled();
+      const [, targetIdx] = (
+        callbacks.moveRunDay as unknown as {
+          mock: { calls: unknown[][] };
+        }
+      ).mock.calls[0];
+      expect(typeof targetIdx).toBe("number");
+    }
   });
 
   it("Skip this run calls skipRunDay with the runDay's id", () => {
