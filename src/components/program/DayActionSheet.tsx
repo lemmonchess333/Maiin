@@ -31,7 +31,7 @@
  * what's training for the given date.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
@@ -41,6 +41,7 @@ import {
   X,
   TriangleAlert,
   RotateCcw,
+  CalendarDays,
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -53,7 +54,12 @@ import {
 } from "@/lib/runPaces";
 import { targetZoneForRun, maxHrFromAge } from "@/lib/hrZones";
 import { format } from "date-fns";
-import { parseLocalDate, localWeekKey } from "@/lib/dateHelpers";
+import {
+  parseLocalDate,
+  localWeekKey,
+  localDateString,
+} from "@/lib/dateHelpers";
+import { resolveRunMoveOptions } from "@/lib/runReschedule";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { hasHybridInterference } from "@/lib/runProgrammeViewModel";
 import {
@@ -100,6 +106,12 @@ interface DayActionSheetProps {
    *  never a completion. */
   restoreRunDay: (idOrDayIndex: string | number) => Promise<void>;
   restoreWorkoutDay: (dayIndex: number) => Promise<void>;
+  /** RUN-RESCHEDULE-01: one-off move of a planned run to another day
+   *  within its week. Preserves identity; only date/dayIndex change. */
+  moveRunDay: (
+    idOrDayIndex: string | number,
+    targetDayIndex: number
+  ) => Promise<void>;
   /** Which blocks to surface.
    *
    *  - "day" (default) — the whole-day manager: run + lift blocks. Used by
@@ -128,8 +140,11 @@ export default function DayActionSheet({
   skipWorkoutDay,
   restoreRunDay,
   restoreWorkoutDay,
+  moveRunDay,
   scope = "day",
 }: DayActionSheetProps) {
+  // RUN-RESCHEDULE-01: reveal the destination-day picker inline.
+  const [showMovePicker, setShowMovePicker] = useState(false);
   // The resolver is the single source of truth for what training
   // exists on this date. Same call Home and Programme Today make
   // (PR-0c), so the sheet inherits the date/weekKey-aware runDay
@@ -537,6 +552,87 @@ export default function DayActionSheet({
                       >
                         Skip this run
                       </button>
+                    )}
+
+                    {/* RUN-RESCHEDULE-01: move this planned run to another
+                        day in the same week. Reveals a 7-day picker;
+                        unavailable days (past / occupied / race / after the
+                        race) are disabled, days with a coaching trade-off
+                        (hard run onto a lift day / beside another hard run)
+                        are flagged but still selectable. */}
+                    {run.isStartable && !isRaceTemplate && run.runDay && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setShowMovePicker((v) => !v)}
+                          aria-expanded={showMovePicker}
+                          className="w-full py-3 rounded-xl text-sm font-bold bg-background border border-border active:scale-[0.97] transition-transform inline-flex items-center justify-center gap-1.5 shadow-sm"
+                        >
+                          <CalendarDays
+                            className="size-4"
+                            style={{ color: THEME.brand }}
+                          />
+                          Move to another day
+                        </button>
+                        {showMovePicker && (
+                          <div
+                            className="grid grid-cols-7 gap-1.5 pt-1"
+                            role="group"
+                            aria-label="Move to which day"
+                          >
+                            {resolveRunMoveOptions({
+                              source: run.runDay,
+                              runDays: programState?.runDays ?? [],
+                              weekSchedule: profile?.weekSchedule ?? [],
+                              todayKey: localDateString(new Date()),
+                            }).map((opt) => {
+                              const label = [
+                                "Sun",
+                                "Mon",
+                                "Tue",
+                                "Wed",
+                                "Thu",
+                                "Fri",
+                                "Sat",
+                              ][opt.dayIndex].slice(0, 1);
+                              return (
+                                <button
+                                  key={opt.dayIndex}
+                                  type="button"
+                                  disabled={!opt.available}
+                                  aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][opt.dayIndex]}${opt.warning ? " — has a trade-off" : opt.available ? "" : " — unavailable"}`}
+                                  onClick={async () => {
+                                    await moveRunDay(
+                                      run.runDay!.id ?? run.runDay!.dayIndex,
+                                      opt.dayIndex
+                                    );
+                                    onClose();
+                                  }}
+                                  className={cn(
+                                    "min-h-[44px] rounded-lg text-xs font-bold flex flex-col items-center justify-center gap-0.5 transition-transform",
+                                    opt.available
+                                      ? "bg-background border border-border active:scale-[0.95]"
+                                      : "bg-muted/40 text-muted-foreground/50 cursor-not-allowed"
+                                  )}
+                                  style={
+                                    opt.warning
+                                      ? { borderColor: THEME.warning }
+                                      : undefined
+                                  }
+                                >
+                                  <span>{label}</span>
+                                  {opt.warning && (
+                                    <TriangleAlert
+                                      className="size-3"
+                                      style={{ color: THEME.warning }}
+                                    />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

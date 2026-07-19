@@ -156,6 +156,10 @@ interface ProgrammeRunSectionProps {
   skipWorkoutDay: (dayIndex: number) => Promise<void>;
   restoreRunDay: (idOrDayIndex: string | number) => Promise<void>;
   restoreWorkoutDay: (dayIndex: number) => Promise<void>;
+  moveRunDay: (
+    idOrDayIndex: string | number,
+    targetDayIndex: number
+  ) => Promise<void>;
   /** PR-C + Run9 ENG(j): atomic writer to exit the recovery phase
    *  early. Resolves the exit via `resolveRecoveryExit` — the race is
    *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
@@ -183,6 +187,7 @@ export default function ProgrammeRunSection({
   skipWorkoutDay,
   restoreRunDay,
   restoreWorkoutDay,
+  moveRunDay,
   skipRecoveryEarly,
   realignRacePlan,
   dismissFellBehindPrompt,
@@ -1540,6 +1545,7 @@ export default function ProgrammeRunSection({
         skipWorkoutDay={skipWorkoutDay}
         restoreRunDay={restoreRunDay}
         restoreWorkoutDay={restoreWorkoutDay}
+        moveRunDay={moveRunDay}
       />
 
       {/* Run13 (RUN-02): proactive week-adjustment sheet. */}
