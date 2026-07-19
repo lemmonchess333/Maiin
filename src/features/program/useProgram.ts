@@ -97,6 +97,7 @@ import {
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
+import { canRescheduleRun, computeRunMove } from "@/lib/runReschedule";
 import { toast } from "@/lib/toast";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { generateInstanceId } from "./programTypes";
@@ -1333,6 +1334,79 @@ export function useProgram() {
     [programState, user, saveProgram]
   );
 
+  // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
+  // its generated Sunday-start week. Moves the plan, not the goalposts — the
+  // stable id, template, override, status, completion truth, race identity,
+  // and manualCompletions map all survive; only `date`/`dayIndex` and the
+  // truthful clash metadata change (see runReschedule.computeRunMove).
+  // Guards mirror overrideRunDay: a race is immovable (its date is the
+  // event, RUN-RACE-GUARD-01) and only an editable/planned slot moves.
+  // `weekSchedule` isn't mutated, and the plan isn't regenerated.
+  const moveRunDay = useCallback(
+    async (idOrDayIndex: string | number, targetDayIndex: number) => {
+      if (!programState?.runDays || !user) return;
+      const target = programState.runDays.find((rd) =>
+        typeof idOrDayIndex === "string"
+          ? rd.id === idOrDayIndex
+          : rd.dayIndex === idOrDayIndex
+      );
+      if (!target) {
+        logger.warn(
+          `[moveRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
+        );
+        return;
+      }
+      if (!canRescheduleRun(target)) {
+        logger.warn(
+          `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
+        );
+        return;
+      }
+      if (targetDayIndex === target.dayIndex) return; // no-op: same day
+      // Integrity guard: never double-book a day (the UI already blocks
+      // occupied days, but two runs sharing a dayIndex corrupts the week).
+      if (
+        programState.runDays.some(
+          (rd) => rd.id !== target.id && rd.dayIndex === targetDayIndex
+        )
+      ) {
+        logger.warn(
+          `[moveRunDay] dayIndex=${targetDayIndex} already occupied; skipping`
+        );
+        return;
+      }
+      const patch = computeRunMove(
+        target,
+        targetDayIndex,
+        profile?.weekSchedule ?? []
+      );
+      if (!patch) {
+        logger.warn(
+          `[moveRunDay] could not resolve a date for dayIndex=${targetDayIndex}; skipping`
+        );
+        return;
+      }
+      const updatedDays = programState.runDays.map((rd) => {
+        if (rd.id !== target.id) return rd;
+        // Rebuild the day so a snap-back-to-origin can DROP the move markers
+        // (setting them undefined would leave stale values on the array).
+        const next: ScheduledRunDay = {
+          ...rd,
+          date: patch.date,
+          dayIndex: patch.dayIndex,
+          clashesWithLift: patch.clashesWithLift,
+        };
+        if (patch.movedFromDate) next.movedFromDate = patch.movedFromDate;
+        else delete next.movedFromDate;
+        if (patch.movedToDate) next.movedToDate = patch.movedToDate;
+        else delete next.movedToDate;
+        return next;
+      });
+      await saveProgram({ ...programState, runDays: updatedDays });
+    },
+    [programState, user, profile?.weekSchedule, saveProgram]
+  );
+
   // Override a run day template. Refuses to write when the target
   // runDay is already in a terminal status (completed_*, skipped,
   // race_no_show) — the UI is expected to disable the template
@@ -1972,6 +2046,7 @@ export function useProgram() {
     skipRunDay,
     restoreRunDay,
     restoreWorkoutDay,
+    moveRunDay,
     overrideRunDay,
     refreshRunSchedule,
     skipRecoveryEarly,
