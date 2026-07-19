@@ -300,6 +300,33 @@ body,
   display: none;
 }
 
+/* Desktop fallback (2026-07-19 field report): with the scrollbar fully
+   suppressed, a desktop user whose wheel input breaks (browser flag /
+   driver / shields quirk — reproduced in a user's Brave install while a
+   clean Chromium scrolled fine) has NO way to move the page at all.
+   Restore a thin scrollbar on the ROOT scroller only, gated to true
+   fine-pointer desktop devices, so drag-to-scroll always exists as a
+   fallback. Mobile / native WKWebView (coarse pointer) keeps the clean
+   suppressed look; inner panes (chip rails, sheets, pickers) stay
+   suppressed everywhere. */
+@media (hover: hover) and (pointer: fine) {
+  html {
+    scrollbar-width: thin; /* Firefox */
+  }
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 0;
+    display: block;
+  }
+  html::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.35);
+    border-radius: 5px;
+  }
+  html::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
 body {
   margin: 0;
   /* The app canvas is a clean neutral grey carrying a single subtle
