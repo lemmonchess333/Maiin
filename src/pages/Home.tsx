@@ -124,6 +124,7 @@ export default function Home() {
     skipWorkoutDay,
     restoreRunDay,
     restoreWorkoutDay,
+    moveRunDay,
     dismissFellBehindPrompt,
     realignRacePlan,
   } = useProgram();
@@ -1485,6 +1486,7 @@ export default function Home() {
           skipWorkoutDay={skipWorkoutDay}
           restoreRunDay={restoreRunDay}
           restoreWorkoutDay={restoreWorkoutDay}
+          moveRunDay={moveRunDay}
         />
       </Suspense>
 
