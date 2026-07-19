@@ -113,3 +113,60 @@ cluster's findings against real `main` (never the doc's status claims):
 Home+coaching, account-isolation+social, Circles+programme. Re-run the
 same "verify against main, ignore the ledger" method if the audit is
 revised.
+
+## Session outcome — 2026-07-19 (execution status)
+
+Tracks A + B were executed in full, plus the two Programme Track-C
+dead-ends. Every item shipped as its own PR (tsc + eslint + madge +
+focused tests green; device/web QA left as unchecked boxes in each PR
+body for on-device verification).
+
+**Shipped (merged to main):**
+
+- **Track A (trust/correctness):** RUN-RACE-GUARD-01, HOME-MEALS-01,
+  REVIEW-ROUTE-01, HOME-TARGET-01, HYBRID-GUIDANCE-01, HOME-ACTION-01.
+- **Track B (account-isolation):** SOCIAL-CREW-READS-01,
+  SOCIAL-RECAP-READS-01, CIRCLE-INDEX-TRUST-01, NOTIFICATION-TRUST-01,
+  SOCIAL-ATTENTION-01 (new `src/lib/socialPreferenceKeys.ts`),
+  HOME-ACCOUNT-01 (new `src/components/AuthSessionBoundary.tsx`),
+  SOCIAL-PRIVACY-01 (`useBlockedUsers.ready` + feed uid/generation
+  ownership).
+- **Track C (Programme dead-ends):** SESSION-RESTORE-01 (`restoreRunDay`
+  / `restoreWorkoutDay` + DayActionSheet "Restore to plan");
+  RUN-RESCHEDULE-01 (new `src/lib/runReschedule.ts` + `moveRunDay` +
+  DayActionSheet 7-day move picker).
+
+**Deliberately NOT built — decision locked 2026-07-19:**
+
+- **HOME-COACH-01 / TodayPlanCard** (the audit's "headline bet"). After
+  Track A/C, Home's "today" surface is already complete: the Lift/Run CTA
+  cards answer "what do I do" (terminal-aware + day-deep-linked via
+  HOME-ACTION-01, reschedule/restore in the day sheet), `TodayGuidanceCard`
+  gives the honest coaching line (HYBRID-GUIDANCE-01), `TodayEnergy` gives
+  the truthful target (HOME-TARGET-01), and MomentumCheckin + InsightStrip
+  cover "on track this week?". A new `todayDecision` engine + coach card
+  re-consolidating those same signals reads as clutter, not clarity —
+  against the "breathing room over density" / "progressive disclosure"
+  principles, and the audit ledger for it was void anyway. Do not build it
+  without an explicit, documented product reason that these existing pieces
+  don't already cover.
+
+**Genuinely open (all optional; none a new surface):**
+
+- **SESSION-DATA-01 / HOME-DATA-01 / CLAIM-MAP-01** — read-graph tidy (drop
+  a duplicate in-session query; keystone claim-map consolidation). Invisible
+  perf/plumbing, not UX. The keystone is L / high-risk; ship only if Home
+  read-cost is worth a careful refactor.
+- **PROGRESSION-TRUST-01, LIFT-EFFORT-01** — lift-session correctness (apply
+  progression once on Save; optional private post-lift effort). On the lift
+  path, not Home. Sequence them together — they touch the same
+  `WorkoutSession` completion path.
+- **PERFORMANCE-TRUST-02** — IA nudge only (move the Performance hero below
+  the daily actions; don't use PI for a "today" decision). Small reorder,
+  no engine.
+- **SESSION-RESUME-01, BLOCK-CONTINUITY-01** — session quick-wins from the
+  audit's Track-C prelude; low risk if picked up, but not blocking.
+
+Verdict: the high-value audit work (real trust bugs, shared-browser
+isolation gaps, Programme dead-ends) is done. The remainder is optional
+plumbing / lift-path correctness / IA polish.
