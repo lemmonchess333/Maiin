@@ -24,7 +24,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { generateSchedule } from "@/lib/scheduleUtils";
-import { localWeekKey, localDateString, addLocalDays } from "@/lib/dateHelpers";
+import {
+  localWeekKey,
+  localDateString,
+  addLocalDays,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 
@@ -1959,6 +1964,106 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
       await result.current.restoreWorkoutDay(0);
     });
 
+    expect(setDocCalls.length).toBe(0);
+  });
+});
+
+// ─── RUN-RESCHEDULE-01 — move the plan, not the goalposts ────────────
+
+describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
+  function stateWith(runDays: ScheduledRunDay[]): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays,
+      runPlan: { mode: "structured" },
+    } as ProgramState;
+  }
+
+  const today = new Date().getDay();
+  const target = (today + 3) % 7; // guaranteed different day, same week
+
+  function plannedToday(
+    overrides: Partial<ScheduledRunDay> = {}
+  ): ScheduledRunDay {
+    return {
+      id: "runday_move_1",
+      dayIndex: today,
+      date: localDateString(addLocalDays(new Date(), 0)),
+      weekKey: localWeekKey(),
+      templateId: "easy_30",
+      type: "easy",
+      completed: false,
+      status: "planned",
+      ...overrides,
+    } as ScheduledRunDay;
+  }
+
+  async function run(
+    runDays: ScheduledRunDay[],
+    call: (api: any) => Promise<void>
+  ) {
+    mockProfile = raceProfile("2099-09-15");
+    mockDocData = stateWith(runDays);
+    mockDocExists = true;
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    setDocCalls.length = 0;
+    await act(async () => {
+      await call(result.current);
+    });
+  }
+
+  it("moves date + dayIndex and stamps movedFromDate; preserves id/template/status", async () => {
+    await run([plannedToday()], (api) =>
+      api.moveRunDay("runday_move_1", target)
+    );
+    expect(setDocCalls.length).toBe(1);
+    const saved = setDocCalls[0].data as ProgramState;
+    const moved = saved.runDays!.find((rd) => rd.id === "runday_move_1")!;
+    expect(moved.dayIndex).toBe(target);
+    expect(moved.date).toBe(
+      localDateString(addLocalDays(parseLocalDate(localWeekKey()), target))
+    );
+    expect(moved.movedFromDate).toBe(
+      localDateString(addLocalDays(new Date(), 0))
+    );
+    expect(moved.movedToDate).toBe(moved.date);
+    // Identity + status preserved.
+    expect(moved.id).toBe("runday_move_1");
+    expect(moved.templateId).toBe("easy_30");
+    expect(moved.status).toBe("planned");
+  });
+
+  it("refuses to move a race slot (immovable identity)", async () => {
+    await run([plannedToday({ type: "race", templateId: "10k_race" })], (api) =>
+      api.moveRunDay("runday_move_1", target)
+    );
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("refuses to move a skipped (non-editable) slot", async () => {
+    await run([plannedToday({ status: "skipped" })], (api) =>
+      api.moveRunDay("runday_move_1", target)
+    );
+    expect(setDocCalls.length).toBe(0);
+  });
+
+  it("refuses to double-book an occupied day", async () => {
+    await run(
+      [plannedToday(), plannedToday({ id: "other", dayIndex: target })],
+      (api) => api.moveRunDay("runday_move_1", target)
+    );
     expect(setDocCalls.length).toBe(0);
   });
 });
