@@ -18,6 +18,12 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { SPACE_DEFS, type SpaceDef } from "./spaceDefs";
 
+/* Interest spaces only until the Races & Events directory section
+ * lands (races plan PR2): keeps the existing carousel unchanged and
+ * avoids fanning member-count reads out over the twelve race spaces
+ * on a surface that doesn't render them yet. */
+const DIRECTORY_DEFS = SPACE_DEFS.filter((d) => d.kind === "interest");
+
 export interface SpaceDirectoryEntry {
   def: SpaceDef;
   /** null while loading or when the count read failed. */
@@ -28,7 +34,7 @@ export interface SpaceDirectoryEntry {
 export function useSpacesDirectory() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<SpaceDirectoryEntry[]>(() =>
-    SPACE_DEFS.map((def) => ({ def, memberCount: null, joined: false }))
+    DIRECTORY_DEFS.map((def) => ({ def, memberCount: null, joined: false }))
   );
   const [nonce, setNonce] = useState(0);
 
@@ -37,7 +43,7 @@ export function useSpacesDirectory() {
     let cancelled = false;
     (async () => {
       const loaded = await Promise.all(
-        SPACE_DEFS.map(async (def): Promise<SpaceDirectoryEntry> => {
+        DIRECTORY_DEFS.map(async (def): Promise<SpaceDirectoryEntry> => {
           const [countRes, memberRes] = await Promise.allSettled([
             getCountFromServer(collection(db, "spaces", def.id, "members")),
             getDoc(doc(db, "spaces", def.id, "members", user.uid)),
