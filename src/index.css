@@ -355,7 +355,22 @@ body {
      text. Free crispness on modern browsers; no measurable perf cost at
      the sizes we use. */
   text-rendering: optimizeLegibility;
-  overscroll-behavior-y: contain;
+}
+
+/* Overscroll containment is TOUCH-ONLY. It exists to suppress the
+   browser's own pull-to-refresh / rubber-band on mobile (the app has
+   its own pull-to-refresh). Unconditionally on body it also BLOCKS
+   wheel scroll-chaining on desktop: `contain` propagates to the
+   viewport, so a wheel over any horizontal rail (WeekStrip, day
+   circles, chip rows — inner scroll containers) hits the rail's
+   vertical boundary and never chains to the page. Field report
+   2026-07-19 ("scrolls once, then stops" — the cursor lands on a
+   rail); reproduced 0px-over-rail vs 300px-over-content with the
+   production stylesheet, and confirmed `auto` restores chaining. */
+@media (pointer: coarse) {
+  body {
+    overscroll-behavior-y: contain;
+  }
 }
 
 /* ─── AMBIENT BRAND GLOW ──────────────────────────────────────
