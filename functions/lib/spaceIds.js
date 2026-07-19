@@ -18,6 +18,19 @@ const SPACE_IDS = Object.freeze([
   "lifters",
   "triathlon-multisport",
   "travel-racecations",
+  // Races & Events (race-kind spaces, plan locked 2026-07-19)
+  "london-marathon",
+  "manchester-marathon",
+  "brighton-marathon",
+  "edinburgh-marathon",
+  "great-north-run",
+  "the-big-half",
+  "royal-parks-half",
+  "cardiff-half",
+  "london-10000",
+  "great-birmingham-run",
+  "great-manchester-run",
+  "leeds-10k",
 ]);
 
 module.exports = { SPACE_IDS };
