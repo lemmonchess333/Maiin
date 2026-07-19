@@ -167,3 +167,69 @@ Noted for later (not built): Runna feeds the event's ELEVATION into
 plan settings; our scheduler doesn't model elevation. If elevation-
 aware training ever lands, `event.elevation` is already in the config
 shape.
+
+## Amendment — race photography (LOCKED 2026-07-19)
+
+In-depth photo grill (Q7–Q10). Supersedes the Q5 clause
+"fallback-band-first; editorial photos later": photos are now part of
+this arc, not a later follow-up.
+
+### What the codebase already settles (no decisions needed)
+
+The editorial pipeline from PR #1631 carries races with ZERO new code:
+
+- **Drop-in contract.** `src/lib/editorialImages.ts` resolves
+  `src/assets/editorial/space-<spaceId>.webp` at build time
+  (`import.meta.glob`). The moment a race space def exists, dropping
+  its photo lights up BOTH the directory card and the space-page hero
+  (one image does both jobs — Runna's card/hero pattern). Missing
+  file → the designed fallback band, so partial batches are safe.
+- **Weight is a non-issue.** ~75–170 KB WebP each; the hand-rolled
+  `public/sw.js` caches hashed assets at REQUEST time, not install
+  time — 12 photos add ~1.2 MB to dist but nothing to the
+  install/update payload, and a photo only downloads when its card
+  first renders. Constraint: the eager glob emits EVERYTHING in the
+  folder into dist — no unused spares may sit there (the #1631
+  46 MB-of-raw-JPGs lesson).
+- **Art direction rules apply unchanged** (the editorial README):
+  the renderer adds a sport-coded tint wash (coral for races) +
+  bottom scrim + white text — so moody/golden-hour tone, meaningful
+  detail in the upper two-thirds, no embedded text/logos.
+
+### Locked decisions
+
+7. **Course-landmark imagery (Q7 = a).** No official race photography
+   ever — it's rights-managed, and start-line shots are full of
+   trademarked gantries/bibs/sponsor banners. Each card is a
+   recognisable landmark from the race's ACTUAL course (Runna's
+   pattern: Big Half = Canary Wharf, NYC = Manhattan). UK freedom of
+   panorama makes public building/street photography clean; frames
+   must carry zero race furniture. The landmark map keeps the four
+   London races distinct: London Marathon → Tower Bridge · The Big
+   Half → Canary Wharf/Greenwich · Royal Parks Half → Hyde Park ·
+   Vitality London 10,000 → The Mall · Great North Run → Tyne
+   Bridge · Brighton Marathon → seafront/pier · Edinburgh Marathon →
+   Arthur's Seat/Old Town · Cardiff Half → Cardiff Bay · Great
+   Birmingham Run → city skyline · Manchester Marathon and Great
+   Manchester Run → two DISTINCT Manchester shots · Leeds 10k →
+   Leeds waterfront. (Guides, not mandates — swap a landmark if the
+   available photography is weak.)
+8. **Agent-shortlist sourcing (Q8 = a).** The agent searches Unsplash
+   for each course landmark and presents one candidate per race
+   (photo ID + preview link); the operator approves or swaps; the
+   agent fetches, converts to ≤1600 px WebP, and records provenance
+   (Unsplash photo ID + photographer) in the commit message — the
+   #1631 provenance discipline, with the operator's role compressed
+   to one review pass. Unsplash/Pexels licence or owned only; never
+   watermarked, editorial-only, or scraped.
+9. **Photos are part of the arc (Q9 = a).** The batch is sourced in
+   parallel with PR1/PR2 so the Races & Events row launches WITH
+   photography — this row is THE photo surface. The fallback band
+   remains the safety state for any photo not yet approved; it is no
+   longer the launch plan.
+10. **Real names + disclaimer (Q10 = a).** Race spaces use real event
+    names (nominative use — Runna/Strava precedent) with zero logos,
+    zero official imagery, zero brand assets; `websiteUrl` links to
+    the official site. One small line on race space pages:
+    "Community space — not affiliated with the event" (rendered once
+    in the PR3 event header for all race-kind spaces).
