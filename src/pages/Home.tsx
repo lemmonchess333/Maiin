@@ -70,24 +70,23 @@ import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
-import NextBadgeCard from "@/components/home/NextBadgeCard";
+import WaterCard from "@/components/home/WaterCard";
+import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
 import TodayGuidanceCard from "@/components/home/TodayGuidanceCard";
 import { useHybridGuidance } from "@/hooks/useHybridGuidance";
+import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { useFreshInsight } from "@/hooks/useFreshInsight";
-import {
-  analyzeNutritionPatterns,
-  type MealEntry,
-  type NutritionInsight,
-} from "@/lib/nutritionInsights";
+import { getVerbState } from "@/lib/performanceLine";
+import type { LoadBand } from "@/lib/performanceTypes";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
+import { IconButton } from "@/components/ui/IconButton";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
@@ -99,10 +98,15 @@ const DayActionSheet = lazy(
   () => import("@/components/program/DayActionSheet")
 );
 
-const EMPTY_INSIGHTS: NutritionInsight[] = [];
-
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
+  // home-declutter 6b — uid-scoped monthly snooze for the post-trial
+  // upgrade strip (shared-device rule: one account's snooze must not
+  // hide the funnel for the next).
+  const { snoozed: proStripSnoozed, snooze: snoozeProStrip } = useSnoozeDismiss(
+    `tropos-pro-strip-snooze:${user?.uid ?? "anon"}`,
+    30
+  );
   const {
     workouts,
     getWorkoutsForDate,
@@ -136,7 +140,6 @@ export default function Home() {
     backfillRescueStreak,
     newBadge,
     dismissNewBadge,
-    macroTargetsByDay,
   } = useStreaks();
   const {
     glasses: waterGlasses,
@@ -262,7 +265,6 @@ export default function Home() {
     lastWeightInfo,
     weightTrend,
     setLastWeightInfo,
-    postWorkoutNudge,
   } = useHomeData(user, profile, workouts, weightUnit);
 
   // Daily burn for Today's Energy card.
@@ -315,95 +317,31 @@ export default function Home() {
     currentWeek: perfWeek,
     loading: perfLoading,
   } = usePerformanceWeeks(4);
+
+  // home-declutter 3a — one-voice arbiter. The guidance slot yields
+  // when the Performance hero's verb is an ease-off state (recovering /
+  // backing-off): the hero already carries that message, and a second
+  // voice saying "fresh legs, carbs higher" under "Recovering" was the
+  // exact contradiction the declutter grill flagged. Same verb
+  // derivation as the hero (getVerb → getVerbState mapping).
+  const guidanceSuppressed = (() => {
+    if (!perfWeek) return false;
+    const loadBand = (perfWeek.labels?.loadBand ??
+      perfWeek.loadBand) as LoadBand;
+    const verb = getVerbState(
+      loadBand,
+      perfWeek.flags?.deloadRecommended ?? false
+    );
+    return verb === "recovering" || verb === "backing-off";
+  })();
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
 
-  // Nutrition insight from meal patterns — freshness-gated (a stable-id
-  // insight used to squat the slot for weeks; useFreshInsight rotates
-  // after 2 consecutive days + 5-day cooldown, or goes silent).
-  const nutritionInsightCandidates = useMemo(
-    function () {
-      if (meals.length < 5) return null;
-      const mapped: MealEntry[] = meals.slice(0, 100).map(function (m) {
-        let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "dinner";
-        if (
-          m.createdAt &&
-          typeof (m.createdAt as { toDate?: () => Date }).toDate === "function"
-        ) {
-          const hour = (m.createdAt as { toDate: () => Date })
-            .toDate()
-            .getHours();
-          if (hour < 10) mealType = "breakfast";
-          else if (hour < 14) mealType = "lunch";
-          else if (hour < 18) mealType = "snack";
-        }
-        return {
-          calories: m.totalCalories,
-          protein: m.totalProtein,
-          carbs: m.totalCarbs,
-          fat: m.totalFat,
-          mealType,
-          date: m.date,
-        };
-      });
-      // NUTR-L4: judge each day against the target snapshotted ON that day
-      // (taper weeks / adaptive steps / target edits), not today's number.
-      // Days without a snapshot fall back to today's effective target.
-      const insights = analyzeNutritionPatterns(
-        mapped,
-        {
-          calories: effectiveTargets.finalTarget,
-          protein: effectiveTargets.protein,
-          carbs: effectiveTargets.carbs,
-          fat: effectiveTargets.fat,
-        },
-        macroTargetsByDay
-      );
-      return insights;
-    },
-    [meals, effectiveTargets, macroTargetsByDay]
-  );
-  const topNutritionInsight = useFreshInsight(
-    nutritionInsightCandidates ?? EMPTY_INSIGHTS
-  );
-
-  // Meal history for conditional "Log first meal" CTA
+  // Meal history for the energy row's cold-start state.
+  // (home-declutter 2a/3a: the meal-pattern insight + post-workout nudge
+  // that used to pipe into TodayEnergy were dropped with the compact row —
+  // one voice per screen; that detail lives in the Food tab.)
   const totalLifetimeMeals = meals.length;
-  const [daysSinceLastMeal, setDaysSinceLastMeal] = useState(Infinity);
-  useEffect(
-    function () {
-      // Time-dependent computation — `daysSinceLastMeal` is derived
-      // from `Date.now()` vs the most recent meal's date, which the
-      // pure render path can't read without the effect. Two
-      // setState calls (the empty-meals branch + the populated
-      // branch) both legitimately need to be inside the effect; both
-      // need the disable comment placed on the line immediately
-      // preceding the setState so the eslint rule
-      // `react-hooks/set-state-in-effect` doesn't trip on the
-      // post-merge lint job.
-      if (meals.length === 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- time-dependent computation requires useEffect
-        setDaysSinceLastMeal(Infinity);
-        return;
-      }
-      const lastDate = meals[0].date;
-      setDaysSinceLastMeal(
-        Math.floor(
-          (Date.now() - new Date(lastDate + "T12:00:00").getTime()) / 86400000
-        )
-      );
-    },
-    [meals]
-  );
-  const userSegment = useMemo(
-    function () {
-      if (totalLifetimeMeals === 0) return "new" as const;
-      if (streak >= 3) return "active" as const;
-      if (streak === 0 && daysSinceLastMeal >= 3) return "returning" as const;
-      return "casual" as const;
-    },
-    [totalLifetimeMeals, streak, daysSinceLastMeal]
-  );
 
   // #972 cold-start activation framing. profile.createdAt is a Firestore
   // Timestamp once persisted (a serverTimestamp() sentinel has no toMillis,
@@ -825,25 +763,37 @@ export default function Home() {
           </span>
         </button>
       )}
-      {!isPro && !isInTrial && profile?.trialExpiresAt && (
-        <button
-          type="button"
-          onClick={function () {
-            setShowProModal(true);
-          }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"
-        >
-          <Sparkles
-            aria-hidden="true"
-            className="size-4 text-primary shrink-0"
+      {/* home-declutter 6b — the post-trial upgrade strip is snoozeable
+          (uid-scoped, 30 days) so the funnel resurfaces monthly instead of
+          living permanently at the top of every session. The TRIAL
+          countdown strip above is exempt: time-critical billing info that
+          self-expires. */}
+      {!isPro && !isInTrial && profile?.trialExpiresAt && !proStripSnoozed && (
+        <div className="flex items-center gap-1 rounded-xl bg-primary/8 hover:bg-primary/12 transition-colors">
+          <button
+            type="button"
+            onClick={function () {
+              setShowProModal(true);
+            }}
+            className="flex items-center gap-2.5 pl-3 py-2 flex-1 min-h-[44px] text-left"
+          >
+            <Sparkles
+              aria-hidden="true"
+              className="size-4 text-primary shrink-0"
+            />
+            <span className="text-xs font-medium text-foreground flex-1 text-pretty">
+              Upgrade to Pro
+            </span>
+            <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
+              See plans
+            </span>
+          </button>
+          <IconButton
+            aria-label="Hide upgrade banner for a month"
+            onClick={snoozeProStrip}
+            icon={<X aria-hidden="true" />}
           />
-          <span className="text-xs font-medium text-foreground flex-1 text-pretty">
-            Upgrade to Pro
-          </span>
-          <span className="text-caption font-semibold text-primary-foreground bg-primary rounded-full px-2.5 py-1 shrink-0">
-            See plans
-          </span>
-        </button>
+        </div>
       )}
 
       {/* First-time coach marks — routed through the education lane so it
@@ -1194,46 +1144,9 @@ export default function Home() {
           bottom of the scroll it was below the fold on first load. Now lives
           directly under the Health Score card so it's always visible in the
           first paint. */}
-        <section aria-label="Today's energy">
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-          >
-            <TrackSectionView section="today_energy">
-              <SectionErrorBoundary sectionName="today-intake">
-                <TodayEnergy
-                  calories={dailyCal}
-                  protein={dailyProt}
-                  carbs={dailyCarbs}
-                  fat={dailyFat}
-                  burn={dailyBurn}
-                  targets={effectiveTargets}
-                  totalLifetimeMeals={totalLifetimeMeals}
-                  daysSinceLastMeal={daysSinceLastMeal}
-                  mealsLoading={mealsLoading}
-                  postWorkoutNudge={postWorkoutNudge}
-                  nutritionInsight={topNutritionInsight}
-                />
-              </SectionErrorBoundary>
-            </TrackSectionView>
-          </motion.div>
-        </section>
-
-        {hybridGuidance && (
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-          >
-            <SectionErrorBoundary sectionName="today-guidance">
-              <TodayGuidanceCard guidance={hybridGuidance} />
-            </SectionErrorBoundary>
-          </motion.div>
-        )}
-
+        {/* home-declutter 4a — sessions FIRST. The page's primary action
+            (today's lift/run) leads the Today group; energy, guidance and
+            vitals follow. */}
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 12 },
@@ -1254,27 +1167,7 @@ export default function Home() {
                     closePeek();
                     navigate(p);
                   }}
-                  waterGlasses={waterGlasses}
-                  waterTarget={waterTarget}
-                  onAddWater={function () {
-                    closePeek();
-                    logWater(1);
-                  }}
-                  onRemoveWater={function () {
-                    setWaterAmount(waterGlasses - 1);
-                  }}
-                  lastWeight={lastWeightInfo?.weight || null}
-                  weightUnit={weightUnit}
-                  onLogWeight={function () {
-                    closePeek();
-                    setWeightInput(lastWeightInfo?.weight || "");
-                    setShowWeightSheet(true);
-                  }}
-                  lastWeightDate={weightRelativeTime}
-                  hideWeightNumber={profile?.hideWeightNumber}
-                  weightTrend={weightTrend}
                   todayRun={todayRun}
-                  userSegment={userSegment}
                   muscleGroups={muscleGroups}
                   firstWorkout={activationFraming.firstWorkout}
                   firstRun={activationFraming.firstRun}
@@ -1285,20 +1178,94 @@ export default function Home() {
           )}
         </motion.div>
 
-        {/* Next-badge nudge (goal-gradient retention). Self-hiding when no
-            badge is mid-flight; reads from the shared StreaksProvider so it
-            adds no Firestore listeners. Sits below the primary daily answers
-            (energy + quick actions) as a gentle motivational tail. */}
+        <section aria-label="Today's energy">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <TrackSectionView section="today_energy">
+              <SectionErrorBoundary sectionName="today-intake">
+                <TodayEnergy
+                  calories={dailyCal}
+                  protein={dailyProt}
+                  carbs={dailyCarbs}
+                  fat={dailyFat}
+                  burn={dailyBurn}
+                  targets={effectiveTargets}
+                  totalLifetimeMeals={totalLifetimeMeals}
+                  mealsLoading={mealsLoading}
+                />
+              </SectionErrorBoundary>
+            </TrackSectionView>
+          </motion.div>
+        </section>
+
+        {/* home-declutter 3a — the ONE guidance slot, arbitrated: when the
+            Performance hero above is already saying ease off (recovering /
+            backing-off verb), this slot stays empty rather than adding a
+            second, contradictory voice ("Fresh legs" under "Recovering"). */}
+        {hybridGuidance && !guidanceSuppressed && (
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 12 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+            }}
+          >
+            <SectionErrorBoundary sectionName="today-guidance">
+              <TodayGuidanceCard guidance={hybridGuidance} />
+            </SectionErrorBoundary>
+          </motion.div>
+        )}
+
+        {/* Vitals — water + weight/steps, below the day's mission (4a).
+            Rendered directly here since StackedCTACards became the session
+            stack only. */}
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 12 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
         >
-          <SectionErrorBoundary sectionName="next-badge">
-            <NextBadgeCard />
+          <SectionErrorBoundary sectionName="water">
+            <WaterCard
+              waterGlasses={waterGlasses}
+              waterTarget={waterTarget}
+              onAddWater={function () {
+                closePeek();
+                logWater(1);
+              }}
+              onRemoveWater={function () {
+                setWaterAmount(waterGlasses - 1);
+              }}
+            />
           </SectionErrorBoundary>
         </motion.div>
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <SectionErrorBoundary sectionName="weight-steps">
+            <WeightStepsTiles
+              lastWeight={lastWeightInfo?.weight || null}
+              weightUnit={weightUnit}
+              onLogWeight={function () {
+                closePeek();
+                setWeightInput(lastWeightInfo?.weight || "");
+                setShowWeightSheet(true);
+              }}
+              lastWeightDate={weightRelativeTime}
+              hideNumber={profile?.hideWeightNumber}
+              weightTrend={weightTrend}
+            />
+          </SectionErrorBoundary>
+        </motion.div>
+
+        {/* home-declutter 5a — the Next Badge card left Home: badges keep
+            the earn celebration (BadgeEarnedModal) and the History grid. */}
 
         {/* Rev1 — transient Weekly Review entry. Self-gating (eligibility +
             viewed state live inside the component); renders null most of
