@@ -63,3 +63,15 @@ Six questions grilled; five locked, one deferred.
   one tap away (Food tab, Analytics, History).
 
 STATUS 2026-07-20 — implemented in the same PR as this spec.
+
+STATUS 2026-07-20 (same day) — operator revision after living with the
+shipped page: the 2a compact row lost the card's identity ("doesn't
+look as cool as it was before with the circles"). Revised landing
+spot: TodayEnergy is a MID-SIZE card — the compact header/kcal/bar
+kept, but the three colour-coded macro rings are back, always visible
+(no expand step), tap-to-flip preserved; the muted grams line the
+rings replace is gone. Additionally the vitals now form a PYRAMID:
+energy full-width on top, water + weight as half-width tiles below
+(WaterCard gains a `compact` variant keeping the wave/fill identity;
+WeightStepsTiles stacks its tiles vertically in the right column).
+All other declutter locks unchanged.
