@@ -233,3 +233,12 @@ The editorial pipeline from PR #1631 carries races with ZERO new code:
     the official site. One small line on race space pages:
     "Community space — not affiliated with the event" (rendered once
     in the PR3 event header for all race-kind spaces).
+
+STATUS 2026-07-20 — arc fully shipped: PR1 #1689 (config+rules),
+photos #1690, PR2 #1691 (directory), PR3 #1693 (event header + two
+doors), PR4 #1694 (cross-links). Annual-duty tripwire added:
+`race-date-check.yml` runs `scripts/check-race-dates.ts` monthly and
+files/updates a GitHub issue (assigned to the operator,
+`ready-for-agent`) listing races whose `dateKey` has lapsed. The date
+LOOKUP stays agent/operator work per Q5 — automation only does the
+noticing; no scraping, no guessed dates.
