@@ -40,14 +40,12 @@ vi.mock("@/lib/haptic", function () {
   return { haptic: hapticMock };
 });
 
-// Keep the suite focused on the card contract, not ring internals
-// (MacroRing has its own test file).
+// Keep the test focused on the always-on affordance, not ring internals.
 vi.mock("@/components/home/MacroRing", function () {
-  return {
-    default: (props: any) => (
-      <div data-testid="macro-ring" data-mode={props.displayMode} />
-    ),
-  };
+  return { default: () => <div data-testid="macro-ring" /> };
+});
+vi.mock("@/components/home/BreakdownRow", function () {
+  return { default: () => <div data-testid="breakdown-row" /> };
 });
 
 import TodayEnergy from "../TodayEnergy";
@@ -83,18 +81,40 @@ function renderAt(props: any = {}) {
   );
 }
 
-describe("TodayEnergy — mid-size card (declutter 2a, rings-back revision)", function () {
-  it("the header block links to /food; no second log affordance or expansion", function () {
-    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    const link = screen.getByRole("link", {
-      name: /today's energy — open food log/i,
-    });
+describe("TodayEnergy — always-on Log affordance (#973)", function () {
+  it("renders a Log affordance routing to /food", function () {
+    renderAt();
+    const link = screen.getByRole("link", { name: "Log food" });
+    expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/food");
-    expect(screen.queryByRole("link", { name: "Log food" })).toBeNull();
-    expect(screen.queryByText("View food log →")).toBeNull();
   });
 
-  it("the three macro rings are ALWAYS visible (no expand step)", function () {
+  it("is present for the empty/new segment (no meals ever logged)", function () {
+    renderAt({ calories: 0, totalLifetimeMeals: 0 });
+    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+  });
+
+  it("is present for an active segment (meals logged today)", function () {
+    renderAt({
+      calories: 1450,
+      protein: 90,
+      carbs: 150,
+      fat: 45,
+      totalLifetimeMeals: 420,
+    });
+    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+  });
+
+  it("fires haptic feedback on tap", function () {
+    hapticMock.mockClear();
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    fireEvent.click(screen.getByRole("link", { name: "Log food" }));
+    expect(hapticMock).toHaveBeenCalled();
+  });
+});
+
+describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)", function () {
+  it("collapsed default shows the muted grams-remaining line, NOT the rings", function () {
     renderAt({
       calories: 1450,
       protein: 80,
@@ -102,39 +122,39 @@ describe("TodayEnergy — mid-size card (declutter 2a, rings-back revision)", fu
       fat: 38,
       totalLifetimeMeals: 420,
     });
-    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
-    // The muted text summary the rings replaced is gone.
-    expect(screen.queryByText(/g left$/)).toBeNull();
+    // target − consumed, clamped: P 160-80=80, C 220-56=164, F 70-38=32
+    expect(screen.getByText("P 80g · C 164g · F 32g left")).toBeInTheDocument();
+    expect(screen.queryByTestId("macro-ring")).toBeNull();
   });
 
-  it("tap-to-flip toggles all three rings between consumed and left", function () {
-    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    const flip = screen.getByRole("button", {
-      name: /macros showing consumed/i,
+  it("expanding the card reveals the three macro rings", function () {
+    renderAt({
+      calories: 1450,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      totalLifetimeMeals: 420,
     });
-    for (const ring of screen.getAllByTestId("macro-ring")) {
-      expect(ring).toHaveAttribute("data-mode", "consumed");
-    }
-    fireEvent.click(flip);
-    for (const ring of screen.getAllByTestId("macro-ring")) {
-      expect(ring).toHaveAttribute("data-mode", "left");
-    }
-    expect(
-      screen.getByRole("button", { name: /macros showing remaining/i })
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Today's Energy"));
+    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
+    // summary line hides once expanded (rings carry the detail)
+    expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
   });
 
-  it("fires haptic feedback on the food tap-through", function () {
-    hapticMock.mockClear();
-    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    fireEvent.click(
-      screen.getByRole("link", { name: /today's energy — open food log/i })
-    );
-    expect(hapticMock).toHaveBeenCalled();
+  it("grams-remaining never goes negative (clamped at 0)", function () {
+    renderAt({
+      calories: 3000,
+      protein: 200,
+      carbs: 300,
+      fat: 90,
+      totalLifetimeMeals: 420,
+    });
+    expect(screen.getByText("P 0g · C 0g · F 0g left")).toBeInTheDocument();
   });
 
-  it("cold-start (no meals ever) swaps the rings for the first-meal CTA", function () {
+  it("cold-start (no meals ever) shows neither the summary line nor the rings", function () {
     renderAt({ calories: 0, totalLifetimeMeals: 0 });
+    expect(screen.queryByText(/left$/)).toBeNull();
     expect(screen.queryByTestId("macro-ring")).toBeNull();
     expect(
       screen.getByText("Log a meal to see your daily energy")
@@ -160,5 +180,14 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     });
     expect(screen.getByText("Bulk")).toBeInTheDocument();
     expect(screen.queryByText(/\+300/)).toBeNull();
+  });
+
+  it("post-lift protein nudge ties to the target, not a recovery claim", () => {
+    renderAt({
+      calories: 1200,
+      postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
+    });
+    expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
+    expect(screen.queryByText(/for recovery/i)).toBeNull();
   });
 });
