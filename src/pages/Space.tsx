@@ -46,6 +46,10 @@ import {
   SPACE_MEMBER_COUNT_MIN_VISIBLE,
   type SpaceEventInfo,
 } from "@/features/spaces/spaceDefs";
+import {
+  resolveRaceEvent,
+  useRaceEventOverrides,
+} from "@/features/spaces/raceEventOverrides";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
@@ -246,6 +250,16 @@ export default function Space() {
     [spaceId]
   );
 
+  /* RACE-EVENTS-REMOTE: the event header renders the RESOLVED event —
+   * server overrides win over the bundled block, so a stale binary
+   * still shows the current race day (and its Train CTA deep-links
+   * carry the current date). */
+  const overrides = useRaceEventOverrides();
+  const resolvedEvent =
+    def?.kind === "race" && def.event
+      ? resolveRaceEvent(def, overrides)
+      : undefined;
+
   const visiblePosts = useMemo(
     () =>
       (posts ?? []).filter(
@@ -355,8 +369,12 @@ export default function Space() {
       <div className="px-4 pt-4 space-y-4">
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
 
-        {def.kind === "race" && def.event && (
-          <RaceEventHeader spaceId={def.id} name={def.name} event={def.event} />
+        {def.kind === "race" && resolvedEvent && (
+          <RaceEventHeader
+            spaceId={def.id}
+            name={def.name}
+            event={resolvedEvent}
+          />
         )}
 
         {joined ? (

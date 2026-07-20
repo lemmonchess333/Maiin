@@ -42,11 +42,11 @@ import {
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
+import { spaceDef, type SpaceDef } from "@/features/spaces/spaceDefs";
 import {
-  spaceDef,
-  upcomingRaceSpaceDefs,
-  type SpaceDef,
-} from "@/features/spaces/spaceDefs";
+  upcomingResolvedRaceDefs,
+  useRaceEventOverrides,
+} from "@/features/spaces/raceEventOverrides";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { RaceDistance } from "@/features/program/programTypes";
 import {
@@ -225,8 +225,14 @@ export default function RunPlanSettings({
         runDifficulty !== saved.runDifficulty));
 
   // Door 2 (races plan amendment): the same catalogue the directory
-  // reads, soonest first, past dates hidden.
-  const upcomingRaces = useMemo(() => upcomingRaceSpaceDefs(today), [today]);
+  // reads, soonest first, past dates hidden — on RESOLVED dates
+  // (RACE-EVENTS-REMOTE), so picking a race always writes the
+  // current edition's date even on a stale binary.
+  const raceEventOverrides = useRaceEventOverrides();
+  const upcomingRaces = useMemo(
+    () => upcomingResolvedRaceDefs(raceEventOverrides, today),
+    [raceEventOverrides, today]
+  );
 
   function handleDistanceChange(d: RaceDistance): void {
     setRaceDistance(d);
