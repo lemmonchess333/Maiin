@@ -131,14 +131,12 @@ describe("Train together hand-off (PROGRAM-CIRCLE-01)", () => {
     )) as HTMLInputElement;
     expect(input.value).toBe("Marathon training");
 
-    // Template preselected: the race launch template is the ONE
-    // pressed option.
-    const group = screen.getByRole("group", { name: "Circle template" });
-    const pressed = within(group)
-      .getAllByRole("button")
-      .filter((b) => b.getAttribute("aria-pressed") === "true");
-    expect(pressed).toHaveLength(1);
-    expect(pressed[0]).toHaveTextContent("Race Journey");
+    // Cal-fix: goal came from the hand-off, so the full picker is
+    // collapsed (no re-pick). The createCircle payload below proves the
+    // template travelled through as "race".
+    expect(
+      screen.queryByRole("group", { name: "Circle template" })
+    ).not.toBeInTheDocument();
 
     // The hand-off's finish line is visible…
     expect(screen.getByText(/runs until/i)).toBeInTheDocument();
@@ -159,6 +157,10 @@ describe("Train together hand-off (PROGRAM-CIRCLE-01)", () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
     renderAt("/social?circleCreate=hybrid&circleTitle=Summer%20push");
 
+    // Collapsed by default (goal pre-chosen); reveal the picker to check
+    // the appended hybrid row renders + is selected.
+    expect(await screen.findByLabelText(/circle name/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^change$/i }));
     const group = await screen.findByRole("group", {
       name: "Circle template",
     });
