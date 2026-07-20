@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, Globe, EyeOff, Trophy } from "lucide-react";
+import { Users, Globe, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
@@ -46,7 +46,7 @@ export default function ShareComposerSheet() {
   const [caption, setCaption] = useState("");
   const [remember, setRemember] = useState(false);
   const { isOnline } = useOnlineStatus();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   // Subscribe to singleton state changes.
   useEffect(() => {
@@ -84,11 +84,6 @@ export default function ShareComposerSheet() {
   if (!state.preview || !state.type) {
     return null;
   }
-
-  // "Share to my crew" is only meaningful when the user has joined a
-  // crew. Hide the row otherwise — listing a destination with no
-  // payload would be a dead button.
-  const hasCrew = !!profile?.crewId;
 
   // App Store Guideline 1.2 — block objectionable captions before
   // the post is created. The server-side onActivityCreated trigger
@@ -175,17 +170,6 @@ export default function ShareComposerSheet() {
           >
             Share to followers
           </Button>
-          {hasCrew && (
-            <button
-              type="button"
-              onClick={() => choose("crews")}
-              disabled={captionIsProfane}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-muted text-foreground active:scale-[0.98] transition-transform disabled:opacity-50 disabled:active:scale-100"
-            >
-              <Trophy className="size-4 shrink-0" aria-hidden="true" />
-              <span className="text-sm font-semibold">Share to my crew</span>
-            </button>
-          )}
           <button
             type="button"
             onClick={() => choose("public")}

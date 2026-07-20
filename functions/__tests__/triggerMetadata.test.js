@@ -180,17 +180,6 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/runs/{runId}",
   },
-  crewWeeklyLeaderboardRollup: {
-    kind: "schedule",
-    maxInstances: 1,
-    secrets: [],
-    schedule: "30 2 * * *",
-  },
-  refreshMyCrewLeaderboard: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
-  },
   backfillMyActivityCategories: {
     kind: "callable",
     maxInstances: 100,
@@ -256,11 +245,6 @@ const EXPECTED = {
     kind: "callable",
     maxInstances: 100,
     secrets: ["RESEND_API_KEY"],
-  },
-  setCrewMembershipCallable: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
   },
   weeklyFellBehindCheck: {
     kind: "schedule",
