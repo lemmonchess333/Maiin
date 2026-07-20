@@ -16,11 +16,12 @@
  * highlight always corresponds to a phase the scheduler can emit.
  */
 
-import { ChevronRight, Flag } from "lucide-react";
+import { ChevronRight, Flag, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
+import { spaceDef } from "@/features/spaces/spaceDefs";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import PhaseRail from "./PhaseRail";
@@ -42,6 +43,10 @@ interface RaceCockpitCardProps {
   phaseLabel: string | null;
   inTaper: boolean;
   compressed: boolean;
+  /** raceGoal.eventSpaceId (races plan PR4) — when it resolves to a
+   *  known race space, the card offers a quiet "Race community" link.
+   *  Manual goals lack the binding and render no row. */
+  raceSpaceId?: string;
   onEdit: () => void;
 }
 
@@ -55,9 +60,15 @@ export default function RaceCockpitCard({
   phaseLabel,
   inTaper,
   compressed,
+  raceSpaceId,
   onEdit,
 }: RaceCockpitCardProps) {
   const navigate = useNavigate();
+  // Exact-id lookup (Q4): render the community row only when the
+  // binding resolves to a real race space — a stale/unknown id (e.g.
+  // a space merged away) degrades to no row, never a broken link.
+  const raceSpace = raceSpaceId ? spaceDef(raceSpaceId) : undefined;
+  const raceSpaceLinked = raceSpace?.kind === "race";
   const hasProgress = currentWeek != null && totalWeeks != null;
   const progress = hasProgress
     ? Math.min(100, Math.max(0, ((currentWeek! + 1) / totalWeeks!) * 100))
@@ -159,6 +170,29 @@ export default function RaceCockpitCard({
       >
         Train together
       </Button>
+
+      {raceSpaceLinked && (
+        /* Races plan PR4 — cockpit → race space cross-link. Quiet row,
+           not a second CTA: the community is a place to visit, not an
+           action to take. */
+        <button
+          type="button"
+          onClick={() => {
+            haptic("light");
+            navigate(`/space/${raceSpace!.id}`);
+          }}
+          className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-xl bg-muted/60 px-3.5 text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <Users className="size-4 shrink-0 text-running" aria-hidden />
+            <span className="truncate">Race community</span>
+          </span>
+          <ChevronRight
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </button>
+      )}
 
       {inTaper && (
         <SectionLabel tier="section" className="text-running">

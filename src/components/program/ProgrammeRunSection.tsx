@@ -1432,6 +1432,10 @@ export default function ProgrammeRunSection({
                 phaseLabel={raceCockpitVM.phaseLabel}
                 inTaper={raceCockpitVM.inTaper}
                 compressed={raceCockpitVM.compressed}
+                /* PR4 cross-link — the PROFILE copy is canonical for the
+                   catalogue binding (runPlan.raceGoal is the schedule's
+                   snapshot and doesn't carry it). */
+                raceSpaceId={profile.raceGoal?.eventSpaceId}
                 onEdit={() => {
                   haptic();
                   navigate("/settings/run-plan");
