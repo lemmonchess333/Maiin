@@ -77,17 +77,18 @@ describe("computeNutritionBadgeDays — proteinHitDays", () => {
 });
 
 describe("computeNutritionBadgeDays — waterHitDays", () => {
-  const water = (glasses: number, target: number): DayWater => ({
-    glasses,
+  // Water "B" model — ml, not glasses (target 2000 ml = the old 8-glass goal).
+  const water = (ml: number, target: number): DayWater => ({
+    ml,
     target,
   });
 
-  it("includes days where glasses ≥ target (>0)", () => {
+  it("includes days where ml ≥ target (>0)", () => {
     const w = new Map([
-      ["a", water(8, 8)],
-      ["b", water(10, 8)],
-      ["c", water(5, 8)],
-      ["d", water(3, 0)], // no target → excluded
+      ["a", water(2000, 2000)],
+      ["b", water(2500, 2000)],
+      ["c", water(1250, 2000)],
+      ["d", water(750, 0)], // no target → excluded
     ]);
     const r = computeNutritionBadgeDays(new Map(), new Map(), w);
     expect(r.waterHitDays.sort()).toEqual(["a", "b"]);
