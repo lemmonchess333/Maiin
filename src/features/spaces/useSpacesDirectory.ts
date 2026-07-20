@@ -24,7 +24,11 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { localDateString } from "@/lib/dateHelpers";
-import { SPACE_DEFS, upcomingRaceSpaceDefs, type SpaceDef } from "./spaceDefs";
+import { SPACE_DEFS, type SpaceDef } from "./spaceDefs";
+import {
+  upcomingResolvedRaceDefs,
+  useRaceEventOverrides,
+} from "./raceEventOverrides";
 
 export interface SpaceDirectoryEntry {
   def: SpaceDef;
@@ -36,12 +40,20 @@ export interface SpaceDirectoryEntry {
 const INTEREST_DEFS = SPACE_DEFS.filter((d) => d.kind === "interest");
 
 export function useSpacesDirectory(includeRaces = false) {
+  /* RACE-EVENTS-REMOTE: race rows resolve their event blocks against
+   * the server overrides — bundled config renders immediately, and
+   * when the session fetch lands the list re-derives (a server-fresh
+   * date can rescue a race a stale binary thinks has passed). */
+  const overrides = useRaceEventOverrides();
   const defs = useMemo(
     () =>
       includeRaces
-        ? [...INTEREST_DEFS, ...upcomingRaceSpaceDefs(localDateString())]
+        ? [
+            ...INTEREST_DEFS,
+            ...upcomingResolvedRaceDefs(overrides, localDateString()),
+          ]
         : INTEREST_DEFS,
-    [includeRaces]
+    [includeRaces, overrides]
   );
   const { user } = useAuth();
   const [entries, setEntries] = useState<SpaceDirectoryEntry[]>(() =>
