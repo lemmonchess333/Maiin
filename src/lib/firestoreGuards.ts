@@ -30,38 +30,6 @@ export function parseDailyLog(id: string, data: DocumentData) {
 }
 
 /**
- * Validate a Group-shaped doc.
- */
-export function parseGroup(id: string, data: DocumentData) {
-  return {
-    id,
-    name: field(data, "name", ""),
-    description: field(data, "description", ""),
-    icon: field(data, "icon", ""),
-    memberCount: Math.max(0, typeof data.memberCount === "number" ? data.memberCount : 0),
-    createdAt: data.createdAt,
-    createdBy: field(data, "createdBy", ""),
-  };
-}
-
-/**
- * Validate a Crew-shaped doc.
- */
-export function parseCrew(id: string, data: DocumentData) {
-  return {
-    id,
-    name: field(data, "name", ""),
-    description: field(data, "description", ""),
-    icon: field(data, "icon", ""),
-    memberCount: Math.max(0, typeof data.memberCount === "number" ? data.memberCount : 0),
-    leaderboardMetric: field(data, "leaderboardMetric", "workout_count"),
-    type: (data.type === "default" || data.type === "custom") ? data.type : "custom" as const,
-    createdAt: data.createdAt,
-    createdBy: field(data, "createdBy", ""),
-  };
-}
-
-/**
  * Recursively strip `undefined` values from an object before passing it
  * to Firestore. Firestore's `addDoc` / `setDoc` reject any document
  * whose payload contains an explicit `undefined` (nested or top-level)
@@ -82,7 +50,9 @@ export function stripUndefined<T>(value: T): T {
   if (value === undefined) return null as unknown as T;
   if (value === null) return value;
   if (Array.isArray(value)) {
-    return value.map((v) => (v === undefined ? null : stripUndefined(v))) as unknown as T;
+    return value.map((v) =>
+      v === undefined ? null : stripUndefined(v)
+    ) as unknown as T;
   }
   if (typeof value === "object") {
     /* Pass-through for non-plain objects (Firestore Timestamp,

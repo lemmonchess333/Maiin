@@ -62,6 +62,8 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "autoPostWorkouts", sanitized: false },
   { field: "autoRestTimer", sanitized: true },
   { field: "createdAt", sanitized: false, serverGuarded: true },
+  // LEGACY: crews retired 2026-07-20 — kept so existing docs pass the
+  // allow-list; never read or written by live code.
   { field: "crewId", sanitized: false },
   { field: "currentStreak", sanitized: true },
   { field: "customCalorieTarget", sanitized: true },

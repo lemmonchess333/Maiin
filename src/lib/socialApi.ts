@@ -158,7 +158,6 @@ export async function postActivity(activity: {
   prWeight?: number;
   challengeMilestone?: string;
   badgeEarned?: string;
-  crewId?: string;
   [key: string]: unknown;
 }) {
   const authedUid = getAuthUid();
@@ -437,50 +436,6 @@ export async function getDiscoverFeed(
   };
 }
 
-/**
- * Crew-scoped activity feed. Filters the global activities collection
- * by the crewId field that's auto-attached when a member of that crew
- * posts a workout/run via the share composer.
- *
- * Visibility filter is `in ['public', 'followers']` so any non-private
- * post tagged with this crewId surfaces. Private posts stay hidden as
- * the author intended.
- *
- * Requires a Firestore composite index on (crewId asc, visibility asc,
- * createdAt desc). Firestore will surface a console warning + a
- * one-click index creation link the first time the query runs against
- * a real database without the index.
- */
-export async function getCrewActivities(
-  crewId: string,
-  limitCount = 20,
-  afterDoc?: DocumentSnapshot
-) {
-  const baseConstraints = [
-    where("crewId", "==", crewId),
-    where("visibility", "in", ["public", "followers"]),
-    orderBy("createdAt", "desc"),
-  ];
-  let q = query(
-    collection(db, "activities"),
-    ...baseConstraints,
-    limit(limitCount)
-  );
-  if (afterDoc) {
-    q = query(
-      collection(db, "activities"),
-      ...baseConstraints,
-      startAfter(afterDoc),
-      limit(limitCount)
-    );
-  }
-  const snap = await getDocs(q);
-  return {
-    items: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
-    lastDoc: snap.docs[snap.docs.length - 1],
-  };
-}
-
 // ============================================
 // User Search
 // ============================================
@@ -562,19 +517,13 @@ export interface SuggestedPerson {
   /** Uploaded avatar URL — threads through from `users/{uid}/public/profile`. */
   photoURL?: string;
   /** Short reason chip surfaced in the UI. */
-  reason: "in_your_crew" | "recent_post";
-  /** For the "in_your_crew" reason — included so UIs can label it. */
-  crewId?: string;
+  reason: "recent_post";
 }
 
 /**
- * v1 strategy: union two cheap sources, rank crew members first.
- *
- *   1. Crew members — if the user is in a crew, pull the member list
- *      (the user most cares about people they share a crew with).
- *   2. Recent public posters — anyone who posted a public activity
- *      recently is someone worth following (they're active AND they
- *      share publicly, so they'll show up on your feed).
+ * v1 strategy: recent public posters — anyone who posted a public
+ * activity recently is someone worth following (they're active AND
+ * they share publicly, so they'll show up on your feed).
  *
  * Filters: self, already-followed, blocked. No graph traversal, no
  * ML, no collaborative filtering — a v1 good enough to turn the
@@ -587,12 +536,11 @@ export interface SuggestedPerson {
 export async function getSuggestedPeople(
   uid: string,
   opts: {
-    crewId?: string;
     limitCount?: number;
     blockedUsers?: Set<string>;
   } = {}
 ): Promise<SuggestedPerson[]> {
-  const { crewId, limitCount = 10, blockedUsers = new Set<string>() } = opts;
+  const { limitCount = 10, blockedUsers = new Set<string>() } = opts;
   const excludeIds = new Set<string>([uid, ...blockedUsers]);
 
   // Exclude people we already follow — one-time read scoped to when
@@ -611,31 +559,7 @@ export async function getSuggestedPeople(
   // Build an ordered list of candidate UIDs with their reason.
   const candidates = new Map<string, SuggestedPerson>();
 
-  // 1. Crew members first.
-  if (crewId) {
-    try {
-      const memberSnap = await getDocs(
-        collection(db, "groups", crewId, "members")
-      );
-      for (const m of memberSnap.docs) {
-        const memberUid = m.id;
-        if (excludeIds.has(memberUid)) continue;
-        if (candidates.has(memberUid)) continue;
-        candidates.set(memberUid, {
-          uid: memberUid,
-          displayName: "Athlete",
-          reason: "in_your_crew",
-          crewId,
-        });
-      }
-    } catch (e) {
-      captureError(e instanceof Error ? e : new Error(String(e)), "error", {
-        fn: "getSuggestedPeople.crewMembers",
-      });
-    }
-  }
-
-  // 2. Recent public posters — dedupe by authorId, keep the most recent.
+  // Recent public posters — dedupe by authorId, keep the most recent.
   if (candidates.size < limitCount) {
     try {
       const recent = await getDocs(

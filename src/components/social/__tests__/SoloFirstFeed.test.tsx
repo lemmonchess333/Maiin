@@ -52,12 +52,10 @@ beforeEach(() => {
 });
 
 describe("SoloFirstFeed", () => {
-  it("renders the partner-streak hero and the aspirational crew row", () => {
+  it("renders the partner-streak hero and the aspirational gym-space row", () => {
     render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
     expect(screen.getByText("Start a partner streak")).toBeInTheDocument();
-    expect(
-      screen.getByText("Crews unlock when your gym's here")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Your gym's space is coming")).toBeInTheDocument();
   });
 
   it("surfaces the global monthly challenge when present", () => {
@@ -117,12 +115,12 @@ describe("SoloFirstFeed", () => {
     expect(onNavigate).toHaveBeenCalled();
   });
 
-  it("the crew row CTA navigates to the Crews tab", () => {
+  it("the gym-space row CTA navigates to the Together tab", () => {
     const onNavigate = vi.fn();
     render(
       <SoloFirstFeed onFindPeople={onNavigate} onOpenTogether={onNavigate} />
     );
-    fireEvent.click(screen.getByRole("button", { name: /create a crew/i }));
+    fireEvent.click(screen.getByRole("button", { name: /browse spaces/i }));
     expect(onNavigate).toHaveBeenCalled();
   });
 });

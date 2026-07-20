@@ -84,7 +84,8 @@ const PROTECTED_PATHS = [
   "match /followers/{uid}/users/{followerUid}",
   "match /notifications/{uid}/items/{doc}",
   "match /blocks/{uid}/users/{targetUid}",
-  "match /groups/{crewId}",
+  // Crews retirement (2026-07-20): /groups/{crewId} moved to the
+  // fully-denied set below — the whole collection is client-locked.
   // Tombstone-freeze packet (2026-07-12) — moved out of EXPLICITLY_EXEMPT.
   // activities create/update/delete now carry the actor write-freeze, and
   // challenge participant join/update/leave freeze on the participant uid.
@@ -188,11 +189,11 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // if false`): no parent doc exists in v1, member counts are client
   // aggregate queries. Vacuously frozen.
   "match /spaces/{spaceId}",
-  // 2026-05-26 audit PR 2 — crew member sub-docs are now server-only.
-  // Client writes denied at the rules layer (`allow create, update,
-  // delete: if false`); reads are allowed for the Suggested-People
-  // crew-member lookup. R1A protection lives in
-  // `setCrewMembershipCallable` via `assertCallableActorNotDeleting`.
+  // Crews retirement (2026-07-20) — both crew blocks are fully
+  // client-denied (`allow read, write: if false`); legacy membership
+  // docs are swept by the executor's crewMemberships collectionGroup
+  // entry (Admin SDK, no client rules involved).
+  "match /groups/{crewId}",
   "match /groups/{crewId}/members/{userId}",
 ];
 
@@ -306,7 +307,7 @@ describe("write-rules snapshot — drift detection", () => {
 });
 
 describe("Blocker E — path-count reconciliation", () => {
-  it("authoritative count is 40 (tombstone-freeze added activities + participants)", () => {
+  it("authoritative count is 38 (crews retirement removed /groups/{crewId})", () => {
     // History: Chunk 2 prose said "22"; Chunk 2.C reconciled to 27.
     // 2026-05-26 audit PR 2 moved /groups/{crewId}/members/{userId}
     // to server-only (write `if false`), dropping the count to 26.
@@ -334,9 +335,11 @@ describe("Blocker E — path-count reconciliation", () => {
     // !isDeleting — → 38.
     // Tombstone-freeze packet (2026-07-12) added /activities/{activityId}
     // + challenge /participants/{uid} (moved out of EXPLICITLY_EXEMPT once
-    // all their write actions became frozen), → 40.
+    // all their write actions became frozen), → 40 (prose; actual 39).
+    // Crews retirement (2026-07-20) client-locked /groups/{crewId}
+    // entirely, removing its client-writable rules, → 38.
     // Counting methodology unchanged: one `match /PATH {` block with
     // at least one client-write rule.
-    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(39);
+    expect(EXPECTED_PROTECTED_PATH_COUNT).toBe(38);
   });
 });
