@@ -865,14 +865,41 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   };
 
   // ── Render ──
+  // Option A sport-tint: the active mode's colour bleeds through the whole
+  // header zone (title + subtitle + toggle) so the Lift/Run switch reads as
+  // the page changing mode, not a lone coloured pill floating on grey. Purple
+  // = lift, coral = run (design-system sport-coding); the tint cross-fades on
+  // tab change via a colour transition (opacity/colour composite, not filter).
+  const sportTint = activeTab === "run" ? THEME.running : THEME.lifting;
+  const SportIcon = activeTab === "run" ? Footprints : Dumbbell;
   return (
     <div>
       {/* ── Header Zone ── */}
-      <div>
+      <div
+        className="rounded-2xl px-3 pt-1.5 pb-2.5 transition-colors duration-300"
+        style={{ backgroundColor: `${sportTint}0F` }}
+      >
         <header>
-          <div className="flex items-center justify-between pt-1 pb-1">
-            <div>
-              <h1 className="text-xl font-extrabold text-foreground">Train</h1>
+          <div className="flex items-start justify-between pt-1 pb-1">
+            <div className="min-w-0 flex-1">
+              {/* Sport accent tile makes "Train" answer to the active mode —
+                  previously the big title stayed neutral and only the tiny
+                  subtitle changed on switch. */}
+              <div className="flex items-center gap-2">
+                <div
+                  className="size-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300"
+                  style={{ backgroundColor: `${sportTint}24` }}
+                >
+                  <SportIcon
+                    className="size-4"
+                    style={{ color: sportTint }}
+                    aria-hidden="true"
+                  />
+                </div>
+                <h1 className="text-xl font-extrabold text-foreground">
+                  Train
+                </h1>
+              </div>
               {/* Subtitle is tab-aware so the Run tab no longer reads as a
                   secondary add-on under a lifting-only header.
 
@@ -883,7 +910,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   is one; without the reserve the whole page shifted up ~12px
                   when toggling Lift↔Run. line-clamp-2 caps longer lines so it
                   can't grow to three and re-introduce the jump. */}
-              <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
+              <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem] mt-1">
                 {activeTab === "run" ? programRunHeaderLine : programHeaderLine}
               </p>
             </div>
@@ -891,7 +918,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
               unlabelled Footprints "start a run" icon was removed: ambiguous
               beside the utility controls, and the Run tab now owns clearly
               labelled Start-run CTAs. */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {/* PR-2: reorder toggle only renders where it works —
                 Lift tab AND the user actually has lift workouts in
                 their programState. Pre-PR-2 the button lived
