@@ -23,6 +23,7 @@
  * handlers — same setRaceGoalPatch + refreshRunSchedule pattern.
  */
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Footprints, Minus, Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "@/lib/toast";
@@ -41,6 +42,11 @@ import {
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  spaceDef,
+  upcomingRaceSpaceDefs,
+  type SpaceDef,
+} from "@/features/spaces/spaceDefs";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { RaceDistance } from "@/features/program/programTypes";
 import {
@@ -51,6 +57,40 @@ import {
 } from "@/features/program/runScheduler";
 
 type RunMode = "freeform" | "race_prep";
+
+const RACE_DISTANCES: RaceDistance[] = ["5k", "10k", "half", "marathon"];
+
+interface RaceDeepLink {
+  distance: RaceDistance;
+  date: string;
+  eventName: string;
+  /** Known race-space id, or "" when absent/unknown. */
+  spaceId: string;
+}
+
+/**
+ * Door 1 (races plan Q1): the race space page's "Train for this race"
+ * deep-links here with `?distance&date&eventName&spaceId`. Parsed ONCE
+ * on mount into the draft — the editor still owns prefill review, the
+ * replace-existing-goal decision, and the explicit Save. Invalid or
+ * past params are ignored wholesale (no half-seeded drafts); an
+ * unknown spaceId degrades to a normal manual goal.
+ */
+function parseRaceDeepLink(params: URLSearchParams): RaceDeepLink | null {
+  const distance = params.get("distance") as RaceDistance | null;
+  const date = params.get("date") ?? "";
+  if (!distance || !RACE_DISTANCES.includes(distance)) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < localDateString())
+    return null;
+  const spaceIdRaw = params.get("spaceId") ?? "";
+  const spaceId = spaceDef(spaceIdRaw)?.kind === "race" ? spaceIdRaw : "";
+  return {
+    distance,
+    date,
+    eventName: (params.get("eventName") ?? "").slice(0, 60),
+    spaceId,
+  };
+}
 
 interface RefreshRunScheduleOverrides {
   weekSchedule?: ScheduleDay[];
@@ -102,6 +142,7 @@ export default function RunPlanSettings({
       raceDistance: (profile.raceGoal?.distance as RaceDistance) ?? "10k",
       raceTargetDate: profile.raceGoal?.targetDate ?? "",
       raceEventName: profile.raceGoal?.eventName ?? "",
+      raceEventSpaceId: profile.raceGoal?.eventSpaceId ?? "",
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
@@ -109,19 +150,33 @@ export default function RunPlanSettings({
     [profile]
   );
 
+  // Door 1 deep-link — read once on mount (URLSearchParams identity
+  // churns; the draft must not reseed on re-render).
+  const [searchParams] = useSearchParams();
+  const [deepLink] = useState<RaceDeepLink | null>(() =>
+    parseRaceDeepLink(searchParams)
+  );
+
   // ── Draft state ─────────────────────────────────────────────────────
-  const [runMode, setRunMode] = useState<RunMode>(saved.runMode);
+  const [runMode, setRunMode] = useState<RunMode>(
+    deepLink ? "race_prep" : saved.runMode
+  );
   const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
     saved.weeklyRunDays
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    saved.raceDistance
+    deepLink?.distance ?? saved.raceDistance
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
-    saved.raceTargetDate
+    deepLink?.date ?? saved.raceTargetDate
   );
   const [raceEventName, setRaceEventName] = useState<string>(
-    saved.raceEventName
+    deepLink?.eventName ?? saved.raceEventName
+  );
+  /** The catalogue binding (Q4). Cleared by any manual distance/date
+   *  edit — the goal is then no longer that event. */
+  const [raceEventSpaceId, setRaceEventSpaceId] = useState<string>(
+    deepLink ? deepLink.spaceId : saved.raceEventSpaceId
   );
   const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
   const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
@@ -164,9 +219,32 @@ export default function RunPlanSettings({
       (raceDistance !== saved.raceDistance ||
         raceTargetDate !== saved.raceTargetDate ||
         raceEventName.trim() !== saved.raceEventName ||
+        raceEventSpaceId !== saved.raceEventSpaceId ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty));
+
+  // Door 2 (races plan amendment): the same catalogue the directory
+  // reads, soonest first, past dates hidden.
+  const upcomingRaces = useMemo(() => upcomingRaceSpaceDefs(today), [today]);
+
+  function handleDistanceChange(d: RaceDistance): void {
+    setRaceDistance(d);
+    setRaceEventSpaceId("");
+  }
+
+  function handleTargetDateChange(v: string): void {
+    setRaceTargetDate(v);
+    setRaceEventSpaceId("");
+  }
+
+  function handlePickRace(def: SpaceDef): void {
+    if (!def.event) return;
+    setRaceDistance(def.event.distance);
+    setRaceTargetDate(def.event.dateKey);
+    setRaceEventName(def.name);
+    setRaceEventSpaceId(def.id);
+  }
 
   // ── Save (run-only — never rebuilds lifting) ────────────────────────
   async function handleSave(): Promise<void> {
@@ -183,6 +261,9 @@ export default function RunPlanSettings({
               targetDate: raceTargetDate,
               // Optional free-text; blank → key omitted (never undefined).
               eventName: raceEventName.trim() || undefined,
+              // Catalogue binding (Q4) — only present when the goal came
+              // from a race space / the picker.
+              eventSpaceId: raceEventSpaceId || undefined,
             }) as Partial<UserProfile>),
             ...runTargetWriteFields(weeklyRunDays),
             // Pgm6 knobs persist alongside the goal so the profile copy
@@ -295,9 +376,12 @@ export default function RunPlanSettings({
           eventName={raceEventName}
           minDate={today}
           state={plannerState}
-          onDistanceChange={setRaceDistance}
-          onTargetDateChange={setRaceTargetDate}
+          onDistanceChange={handleDistanceChange}
+          onTargetDateChange={handleTargetDateChange}
           onEventNameChange={setRaceEventName}
+          upcomingRaces={upcomingRaces}
+          selectedEventSpaceId={raceEventSpaceId}
+          onPickRace={handlePickRace}
         />
       )}
 
