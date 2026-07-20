@@ -27,6 +27,14 @@ export type RaceEventDistance = "5k" | "10k" | "half" | "marathon";
  * downstream derives from `dateKey < today` (card hidden from the
  * directory, CTA hidden, header shows the date as passed) — a stale
  * date degrades gracefully, never lies.
+ *
+ * RACE-EVENTS-REMOTE (locked 2026-07-20): merging a change to this
+ * file mirrors the event blocks into the Firestore doc
+ * `config/raceEvents` (sync-race-events.yml), so date updates reach
+ * every platform — including stale native binaries — without an app
+ * release. Clients render server values over these bundled ones
+ * (raceEventOverrides.ts); this config stays the source of truth and
+ * the offline fallback.
  */
 export interface SpaceEventInfo {
   /** Race day, local date "YYYY-MM-DD". Verified against the official
