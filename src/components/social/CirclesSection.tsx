@@ -214,6 +214,12 @@ export default function CirclesSection({ uid }: { uid: string }) {
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
   const [events, setEvents] = useState<GoalSpaceEvent[]>([]);
   const [template, setTemplate] = useState<GoalSpaceType>("strength_block");
+  // When the create sheet is opened with a goal already chosen (cold-start
+  // tap or a race-plan hand-off), the full goal picker is redundant — the
+  // user just picked. Collapse it to a compact "chosen goal + Change" header
+  // and go straight to naming. False for the manual "Start a circle" button,
+  // where the user still needs to pick.
+  const [goalPrechosen, setGoalPrechosen] = useState(false);
   const [title, setTitle] = useState("");
   /* PROGRAM-CIRCLE-01 — a hand-off target date shown in the create
      sheet ("Runs until …") and passed to createCircle. Only ever set
@@ -347,6 +353,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
     setTemplate(prefill.type);
     setTitle(prefill.title);
     setPendingTargetDate(prefill.targetDate);
+    setGoalPrechosen(true); // goal (+ name) came from the hand-off
     setShowCreate(true);
   }, []);
 
@@ -657,6 +664,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
                 onClick={() => {
                   haptic("light");
                   setTemplate(t.type);
+                  setGoalPrechosen(true); // goal chosen here — skip the re-pick
                   setShowCreate(true);
                 }}
                 className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
@@ -899,6 +907,7 @@ export default function CirclesSection({ uid }: { uid: string }) {
             className="flex-1"
             onClick={() => {
               haptic("light");
+              setGoalPrechosen(false); // manual entry — user still picks a goal
               setShowCreate(true);
             }}
           >
@@ -925,44 +934,87 @@ export default function CirclesSection({ uid }: { uid: string }) {
           setShowCreate(open);
           // The hand-off date belongs to ONE prefilled visit — a later
           // manual "Start a circle" must not inherit it.
-          if (!open) setPendingTargetDate(null);
+          if (!open) {
+            setPendingTargetDate(null);
+            setGoalPrechosen(false);
+          }
         }}
         title="Start a circle"
         description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
       >
         <div className="space-y-3 pb-2">
-          <div className="space-y-2" role="group" aria-label="Circle template">
-            {/* SOCIAL-HOME-01: "hybrid" is only reachable via the
-                cold-start selector — append it to the RENDERED list
-                while selected so the choice stays visible and
-                re-selectable. LAUNCH_TEMPLATES itself is lock-pinned
-                to three entries and must not change. */}
-            {(template === "hybrid"
-              ? [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE]
-              : LAUNCH_TEMPLATES
-            ).map((t) => (
-              <button
-                key={t.type}
-                type="button"
-                aria-pressed={template === t.type}
-                onClick={() => {
-                  haptic("light");
-                  setTemplate(t.type);
-                }}
-                className={cn(
-                  "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
-                  template === t.type
-                    ? "bg-primary/10 border border-primary/40"
-                    : "bg-muted border border-transparent"
-                )}
-              >
-                <p className="text-sm font-semibold text-foreground">
-                  {t.label}
-                </p>
-                <p className="text-xs text-muted-foreground">{t.description}</p>
-              </button>
-            ))}
-          </div>
+          {goalPrechosen ? (
+            /* Goal already chosen (cold-start / hand-off) — show it as a
+               compact confirmed header instead of re-showing the full
+               picker, and let the user name it straight away. "Change"
+               reveals the full list without leaving the sheet. */
+            (() => {
+              const chosen = [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE].find(
+                (t) => t.type === template
+              );
+              return (
+                <div className="flex items-start justify-between gap-2 p-3 rounded-xl bg-primary/10 border border-primary/40">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {chosen?.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {chosen?.description}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      haptic("light");
+                      setGoalPrechosen(false);
+                    }}
+                    className="shrink-0 min-h-[44px] flex items-center px-1 text-xs font-medium text-primary"
+                  >
+                    Change
+                  </button>
+                </div>
+              );
+            })()
+          ) : (
+            <div
+              className="space-y-2"
+              role="group"
+              aria-label="Circle template"
+            >
+              {/* SOCIAL-HOME-01: "hybrid" is only reachable via the
+                  cold-start selector — append it to the RENDERED list
+                  while selected so the choice stays visible and
+                  re-selectable. LAUNCH_TEMPLATES itself is lock-pinned
+                  to three entries and must not change. */}
+              {(template === "hybrid"
+                ? [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE]
+                : LAUNCH_TEMPLATES
+              ).map((t) => (
+                <button
+                  key={t.type}
+                  type="button"
+                  aria-pressed={template === t.type}
+                  onClick={() => {
+                    haptic("light");
+                    setTemplate(t.type);
+                  }}
+                  className={cn(
+                    "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                    template === t.type
+                      ? "bg-primary/10 border border-primary/40"
+                      : "bg-muted border border-transparent"
+                  )}
+                >
+                  <p className="text-sm font-semibold text-foreground">
+                    {t.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
           <input
             type="text"
             value={title}
