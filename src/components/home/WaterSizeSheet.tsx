@@ -16,9 +16,9 @@ import {
 
 // Glyph scales up with the container so the visual reinforces volume.
 const PRESET_ICON_SIZE: Record<string, number> = {
-  glass: 24,
-  bottle: 30,
-  large: 36,
+  glass: 32,
+  bottle: 40,
+  large: 46,
 };
 
 /**
@@ -105,13 +105,13 @@ export default function WaterSizeSheet({
               key={preset.id}
               type="button"
               onClick={() => log(preset.ml)}
-              className="flex flex-col items-center justify-center gap-1.5 min-h-[92px] rounded-xl border active:scale-[0.97] transition-transform"
+              className="flex flex-col items-center justify-center gap-1.5 min-h-[104px] rounded-xl border active:scale-[0.97] transition-transform"
               style={{
                 backgroundColor: THEME.semantic.hydration + "12",
                 borderColor: THEME.semantic.hydration + "26",
               }}
             >
-              <span className="flex h-9 items-end justify-center">
+              <span className="flex h-12 items-end justify-center">
                 <WaterContainerIcon
                   type={preset.id as WaterContainerType}
                   size={PRESET_ICON_SIZE[preset.id] ?? 26}
