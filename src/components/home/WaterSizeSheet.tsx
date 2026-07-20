@@ -4,12 +4,22 @@ import { Droplets } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
+import WaterContainerIcon, {
+  type WaterContainerType,
+} from "@/components/home/WaterContainerIcon";
 import {
   WATER_PRESETS,
   MAX_SINGLE_LOG_ML,
   clampMl,
   formatVolume,
 } from "@/lib/waterUnits";
+
+// Glyph scales up with the container so the visual reinforces volume.
+const PRESET_ICON_SIZE: Record<string, number> = {
+  glass: 24,
+  bottle: 30,
+  large: 36,
+};
 
 /**
  * Water size picker (Water "B" model) — tap a container to log its
@@ -95,16 +105,18 @@ export default function WaterSizeSheet({
               key={preset.id}
               type="button"
               onClick={() => log(preset.ml)}
-              className="flex flex-col items-center justify-center gap-1 min-h-[76px] rounded-xl border active:scale-[0.97] transition-transform"
+              className="flex flex-col items-center justify-center gap-1.5 min-h-[92px] rounded-xl border active:scale-[0.97] transition-transform"
               style={{
                 backgroundColor: THEME.semantic.hydration + "12",
                 borderColor: THEME.semantic.hydration + "26",
               }}
             >
-              <Droplets
-                className="size-5"
-                style={{ color: THEME.semantic.hydration }}
-              />
+              <span className="flex h-9 items-end justify-center">
+                <WaterContainerIcon
+                  type={preset.id as WaterContainerType}
+                  size={PRESET_ICON_SIZE[preset.id] ?? 26}
+                />
+              </span>
               <span className="text-sm font-semibold text-foreground">
                 {preset.label}
               </span>
