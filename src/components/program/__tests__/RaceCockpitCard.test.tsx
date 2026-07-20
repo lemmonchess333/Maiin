@@ -111,4 +111,29 @@ describe("RaceCockpitCard", () => {
       screen.getByRole("button", { name: "Train together" })
     ).toBeInTheDocument();
   });
+
+  /* Races plan PR4 — cockpit → race space cross-link, exact-id (Q4). */
+  it("Race community links to the space when the binding resolves", () => {
+    renderCard({ raceSpaceId: "london-marathon" });
+    fireEvent.click(screen.getByRole("button", { name: /Race community/i }));
+    expect(navigateMock).toHaveBeenCalledWith("/space/london-marathon");
+  });
+
+  it("no community row without a binding or with an unknown/non-race id", () => {
+    renderCard();
+    expect(
+      screen.queryByRole("button", { name: /Race community/i })
+    ).not.toBeInTheDocument();
+    cleanup();
+    renderCard({ raceSpaceId: "not-a-real-space" });
+    expect(
+      screen.queryByRole("button", { name: /Race community/i })
+    ).not.toBeInTheDocument();
+    cleanup();
+    // An interest space id must never render as a race community.
+    renderCard({ raceSpaceId: "runners" });
+    expect(
+      screen.queryByRole("button", { name: /Race community/i })
+    ).not.toBeInTheDocument();
+  });
 });
