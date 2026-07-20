@@ -11,6 +11,7 @@ import {
 import { addDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
+import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import { usePostCompletionKudos } from "../hooks/usePostCompletionKudos";
@@ -1822,6 +1823,31 @@ export default function RunSummary() {
                 Share to Circle
               </Button>
             )}
+
+            {(() => {
+              /* Races plan PR4 — post-race share into the race's
+                 community space. Offered ONLY for a saved race-type
+                 run when the user's goal carries a catalogue binding
+                 that resolves to a real race space. Navigation only
+                 (?compose=1 opens the space composer once membership
+                 allows) — nothing is posted without an explicit
+                 write in the space. */
+              if (!canShowDone({ saveStatus }) || activityType !== "race")
+                return null;
+              const raceSpace = profile?.raceGoal?.eventSpaceId
+                ? spaceDef(profile.raceGoal.eventSpaceId)
+                : undefined;
+              if (raceSpace?.kind !== "race") return null;
+              return (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/space/${raceSpace.id}?compose=1`)}
+                  className="w-full py-3 rounded-xl bg-card text-sm font-medium text-foreground active:scale-[0.97] transition-transform"
+                >
+                  Post in {raceSpace.name} community
+                </button>
+              );
+            })()}
 
             {(() => {
               /* Share + Export GPX gated together so the wrapping flex row
