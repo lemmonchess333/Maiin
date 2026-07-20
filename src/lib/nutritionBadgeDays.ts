@@ -32,7 +32,9 @@ export interface DayTargetSnapshot extends DayMacros {
 }
 
 export interface DayWater {
-  glasses: number;
+  /** Consumed millilitres for the day (Water "B" model). */
+  ml: number;
+  /** Daily target in millilitres. */
   target: number;
 }
 
@@ -53,7 +55,7 @@ function withinBand(total: number, target: number, band: number): boolean {
 /**
  * @param mealTotalsByDay date → intake macro totals (from the meals window)
  * @param macroTargetsByDay date → target macros (the per-day snapshot)
- * @param waterByDay date → { glasses, target } (waterLog/{date})
+ * @param waterByDay date → { ml, target } in millilitres (waterLog/{date})
  */
 export function computeNutritionBadgeDays(
   mealTotalsByDay: ReadonlyMap<string, DayMacros>,
@@ -84,7 +86,7 @@ export function computeNutritionBadgeDays(
 
   const waterHitDays: string[] = [];
   for (const [date, w] of waterByDay) {
-    if (w.target > 0 && w.glasses >= w.target) waterHitDays.push(date);
+    if (w.target > 0 && w.ml >= w.target) waterHitDays.push(date);
   }
 
   return { macroMasterDays, proteinHitDays, waterHitDays };

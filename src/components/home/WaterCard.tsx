@@ -7,105 +7,142 @@ import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
+import WaterSizeSheet from "@/components/home/WaterSizeSheet";
+import {
+  GLASS_ML,
+  formatLitresValue,
+  formatVolume,
+  waterProgress,
+} from "@/lib/waterUnits";
 
+/**
+ * Water card (Water "B" millilitre model). Quick − / + step one 250 ml
+ * glass for repeat-logging; tapping the card body opens the size sheet
+ * to log a real container (Glass / Bottle / Large / custom). The wave
+ * fill + ripple identity is unchanged — only the underlying unit moved
+ * from whole glasses to millilitres.
+ */
 export default function WaterCard({
-  waterGlasses,
-  waterTarget,
-  onAddWater,
-  onRemoveWater,
+  ml,
+  targetMl,
+  onLog,
   compact = false,
 }: {
-  waterGlasses: number;
-  waterTarget: number;
-  onAddWater: () => void;
-  onRemoveWater: () => void;
-  /** Pyramid tile variant (home-declutter revision): half-width cell
-   *  beside the weight tile — vertical layout, same wave/fill/ripple
-   *  identity, both ± buttons at the 44px floor. */
+  /** Consumed millilitres today. */
+  ml: number;
+  /** Daily target in millilitres. */
+  targetMl: number;
+  /** Add (or remove, with a negative delta) millilitres. The hook
+   *  clamps the running total at ≥ 0. */
+  onLog: (deltaMl: number) => void;
+  /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const fillPercent = waterProgress(ml, targetMl) * 100;
+  const hasWater = ml > 0;
+
+  function quickAdd() {
+    haptic();
+    trackHomeEvent("home_card_tapped", { card: "water" });
+    onLog(GLASS_ML);
+    setRippleKey((k) => k + 1);
+  }
+  function quickRemove() {
+    haptic();
+    trackHomeEvent("home_card_tapped", { card: "water" });
+    onLog(-GLASS_ML);
+  }
+  function openSheet() {
+    haptic();
+    trackHomeEvent("home_card_tapped", { card: "water" });
+    setSheetOpen(true);
+  }
+
+  const sheet = (
+    <WaterSizeSheet
+      open={sheetOpen}
+      onClose={() => setSheetOpen(false)}
+      onLog={(v) => {
+        onLog(v);
+        setRippleKey((k) => k + 1);
+      }}
+      consumedMl={ml}
+      targetMl={targetMl}
+    />
+  );
+
+  const iconBoxShadow = hasWater
+    ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
+    : "var(--ds-shadow-card)";
+  const fillBg = hasWater
+    ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
+    : "transparent";
 
   if (compact) {
     return (
       <div
         className="relative overflow-hidden p-3 rounded-xl bg-card h-full"
-        style={{
-          boxShadow:
-            waterGlasses > 0
-              ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
-              : "var(--ds-shadow-card)",
-        }}
+        style={{ boxShadow: iconBoxShadow }}
       >
         <motion.div
           className="absolute inset-x-0 bottom-0 pointer-events-none rounded-xl"
-          style={{
-            background:
-              waterGlasses > 0
-                ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
-                : "transparent",
-          }}
+          style={{ background: fillBg }}
           initial={{ height: 0 }}
-          animate={{
-            height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%",
-          }}
+          animate={{ height: fillPercent + "%" }}
           transition={{ type: "spring", stiffness: 120, damping: 14 }}
         >
-          {waterGlasses > 0 && (
-            <WaterWave
-              fillPercent={Math.min((waterGlasses / waterTarget) * 100, 100)}
-              splash={rippleKey}
-            />
+          {hasWater && (
+            <WaterWave fillPercent={fillPercent} splash={rippleKey} />
           )}
         </motion.div>
-        {waterGlasses > 2 && <WaterBubbles />}
+        {ml > 2 * GLASS_ML && <WaterBubbles />}
         <div className="relative z-10 flex flex-col h-full">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div
-              className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
-            >
-              <Droplets
-                className="size-3.5"
-                style={{ color: THEME.semantic.hydration }}
-              />
-            </div>
-            <p
-              className="text-xs font-medium"
-              style={{ color: THEME.text.muted }}
-            >
-              Water
-            </p>
-          </div>
-          <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
-            {waterGlasses}
-            <span
-              className="text-xs font-normal mx-1"
-              style={{ color: THEME.text.muted }}
-            >
-              / {waterTarget}
-            </span>
-          </p>
-          <p
-            className="text-micro font-normal font-mono tabular-nums mt-0.5"
-            style={{ color: THEME.text.muted }}
+          {/* Card body opens the size sheet (choose a container). */}
+          <button
+            type="button"
+            onClick={openSheet}
+            aria-label="Add water — choose a container size"
+            className="text-left active:scale-[0.99] transition-transform"
           >
-            {((waterGlasses * 250) / 1000).toFixed(2).replace(/\.?0+$/, "")} L
-          </p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div
+                className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
+              >
+                <Droplets
+                  className="size-3.5"
+                  style={{ color: THEME.semantic.hydration }}
+                />
+              </div>
+              <p
+                className="text-xs font-medium"
+                style={{ color: THEME.text.muted }}
+              >
+                Water
+              </p>
+            </div>
+            <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
+              {formatLitresValue(ml)}
+              <span
+                className="text-xs font-normal mx-1"
+                style={{ color: THEME.text.muted }}
+              >
+                / {formatVolume(targetMl)}
+              </span>
+            </p>
+          </button>
           <div className="flex items-center justify-end gap-1.5 mt-auto pt-2">
             <button
               type="button"
-              onClick={function (e) {
-                e.stopPropagation();
-                haptic();
-                trackHomeEvent("home_card_tapped", { card: "water" });
-                onRemoveWater();
-              }}
-              aria-label="Remove water"
-              disabled={waterGlasses <= 0}
+              onClick={quickRemove}
+              aria-label="Remove a glass (250 ml)"
+              disabled={!hasWater}
               className={cn(
                 "size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
-                waterGlasses <= 0 && "opacity-30"
+                !hasWater && "opacity-30"
               )}
               style={{
                 backgroundColor: THEME.iconBg,
@@ -119,21 +156,9 @@ export default function WaterCard({
             </button>
             <button
               type="button"
-              onClick={function (e) {
-                e.stopPropagation();
-                haptic();
-                trackHomeEvent("home_card_tapped", { card: "water" });
-                onAddWater();
-                setRippleKey(function (k) {
-                  return k + 1;
-                });
-              }}
-              aria-label="Add water"
-              disabled={waterGlasses >= waterTarget}
-              className={cn(
-                "size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0",
-                waterGlasses >= waterTarget && "opacity-30"
-              )}
+              onClick={quickAdd}
+              aria-label="Add a glass (250 ml)"
+              className="size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
               style={{
                 backgroundColor: THEME.semantic.hydration + "26",
                 borderColor: "transparent",
@@ -146,6 +171,7 @@ export default function WaterCard({
             </button>
           </div>
         </div>
+        {sheet}
       </div>
     );
   }
@@ -153,96 +179,62 @@ export default function WaterCard({
   return (
     <div
       className="relative overflow-hidden p-4 rounded-2xl bg-card"
-      style={{
-        boxShadow:
-          waterGlasses > 0
-            ? "var(--ds-shadow-card), inset 0 -4px 12px rgba(82, 163, 189, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.4)"
-            : "var(--ds-shadow-card)",
-      }}
+      style={{ boxShadow: iconBoxShadow }}
     >
       <motion.div
         className="absolute inset-x-0 bottom-0 pointer-events-none rounded-2xl"
-        style={{
-          background:
-            waterGlasses > 0
-              ? "linear-gradient(0deg, rgba(30, 120, 155, 0.25) 0%, rgba(58, 153, 186, 0.15) 40%, rgba(82, 163, 189, 0.08) 100%)"
-              : "transparent",
-        }}
+        style={{ background: fillBg }}
         initial={{ height: 0 }}
-        animate={{
-          height: Math.min((waterGlasses / waterTarget) * 100, 100) + "%",
-        }}
+        animate={{ height: fillPercent + "%" }}
         transition={{ type: "spring", stiffness: 120, damping: 14 }}
       >
-        {waterGlasses > 0 && (
-          <WaterWave
-            fillPercent={Math.min((waterGlasses / waterTarget) * 100, 100)}
-            splash={rippleKey}
-          />
-        )}
+        {hasWater && <WaterWave fillPercent={fillPercent} splash={rippleKey} />}
       </motion.div>
-      {/* Previously a second radial-gradient overlay scaled 0.5 → 1.5
-          from the bottom-centre on every add-water tap, which looked
-          like a teal blob swelling outward and felt unrelated to the
-          actual water level changing. Deleted. The splash is still
-          surfaced via WaterWave's `splash={rippleKey}` prop which
-          briefly boosts the wave amplitude — that's the intended
-          feedback, and it's bound to the water surface where the
-          action is happening. */}
-      {waterGlasses > 2 && <WaterBubbles />}
+      {ml > 2 * GLASS_ML && <WaterBubbles />}
       <div className="relative z-10 flex items-center gap-4">
-        <div
-          className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
+        {/* Left cluster (icon + reading) opens the size sheet. */}
+        <button
+          type="button"
+          onClick={openSheet}
+          aria-label="Add water — choose a container size"
+          className="flex items-center gap-4 flex-1 min-w-0 text-left active:scale-[0.99] transition-transform"
         >
-          <Droplets
-            className="size-5"
-            style={{ color: THEME.semantic.hydration }}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p
-            className="text-xs font-medium"
-            style={{ color: THEME.text.muted }}
+          <div
+            className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: "rgba(82, 163, 189, 0.10)" }}
           >
-            Water
-          </p>
-          <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-            {waterGlasses}
-            <span
-              className="text-sm font-normal mx-1"
+            <Droplets
+              className="size-5"
+              style={{ color: THEME.semantic.hydration }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-xs font-medium"
               style={{ color: THEME.text.muted }}
             >
-              /
-            </span>
-            <span
-              className="text-sm font-normal"
-              style={{ color: THEME.text.muted }}
-            >
-              {waterTarget}
-            </span>
-          </p>
-          <p
-            className="text-micro font-normal font-mono tabular-nums mt-0.5"
-            style={{ color: THEME.text.muted }}
-          >
-            {((waterGlasses * 250) / 1000).toFixed(2).replace(/\.?0+$/, "")} L
-          </p>
-        </div>
+              Water
+            </p>
+            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+              {formatLitresValue(ml)}
+              <span
+                className="text-sm font-normal mx-1"
+                style={{ color: THEME.text.muted }}
+              >
+                / {formatVolume(targetMl)}
+              </span>
+            </p>
+          </div>
+        </button>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={function (e) {
-              e.stopPropagation();
-              haptic();
-              trackHomeEvent("home_card_tapped", { card: "water" });
-              onRemoveWater();
-            }}
-            aria-label="Remove water"
-            disabled={waterGlasses <= 0}
+            onClick={quickRemove}
+            aria-label="Remove a glass (250 ml)"
+            disabled={!hasWater}
             className={cn(
               "size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
-              waterGlasses <= 0 && "opacity-30"
+              !hasWater && "opacity-30"
             )}
             style={{
               backgroundColor: THEME.iconBg,
@@ -256,21 +248,9 @@ export default function WaterCard({
           </button>
           <button
             type="button"
-            onClick={function (e) {
-              e.stopPropagation();
-              haptic();
-              trackHomeEvent("home_card_tapped", { card: "water" });
-              onAddWater();
-              setRippleKey(function (k) {
-                return k + 1;
-              });
-            }}
-            aria-label="Add water"
-            disabled={waterGlasses >= waterTarget}
-            className={cn(
-              "size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0",
-              waterGlasses >= waterTarget && "opacity-30"
-            )}
+            onClick={quickAdd}
+            aria-label="Add a glass (250 ml)"
+            className="size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
             style={{
               backgroundColor: THEME.semantic.hydration + "26",
               borderColor: "transparent",
@@ -283,6 +263,7 @@ export default function WaterCard({
           </button>
         </div>
       </div>
+      {sheet}
     </div>
   );
 }
