@@ -91,7 +91,7 @@ const SECTIONS: SectionRow[] = [
   {
     slug: "privacy",
     label: "Social & Privacy",
-    description: "Visibility, crew, GPS zones",
+    description: "Visibility, auto-post, GPS zones",
     icon: Lock,
     migrated: true,
   },

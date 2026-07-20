@@ -5,11 +5,11 @@
  * (`src/features/challenges/useChallenges.ts` → `seedChallenges()`), which
  * meant every authenticated browser could create global `/challenges/{id}`
  * docs. That is app-owned product metadata, not user content — the same
- * lesson the repo already learned for default crews
- * (`src/lib/defaultCrews.ts`): system-owned records belong to the privileged
+ * lesson the repo already learned for the (since-retired) default
+ * crews: system-owned records belong to the privileged
  * Admin SDK, not the client.
  *
- * Crews are STATIC (a fixed set, seeded once). Challenges are NOT: the IDs are
+ * Crews were STATIC (a fixed set, seeded once). Challenges are NOT: the IDs are
  * time-windowed (`weekly-YYYY-MM-DD`, `monthly-…`, `seasonal-…`, `fastest-5k-…`,
  * `group-goal-…`) and roll every week / month / season. A one-time seed script
  * would therefore seed only the period it ran in and the weekly challenge would

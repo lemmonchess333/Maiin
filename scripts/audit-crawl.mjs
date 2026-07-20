@@ -246,7 +246,6 @@ const routes = [
   ["terms", "/terms", false],
   ["user_self", `/user/${uid}`, false],
   ["exercise_history", "/history/exercise/Bench%20Press", false],
-  ["crew_missing", "/crew/nonexistent", false],
   ["routine_missing", "/routine/nonexistent", false],
   ["run_detail_missing", "/run/nonexistent", false],
   ["unknown_route", "/this-route-does-not-exist", false],

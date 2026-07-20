@@ -238,7 +238,7 @@ const run = async () => {
   await go("/history?tab=badges");
   await shoot(page, "07-history-badges");
 
-  // ── 8. Social + Crew ──
+  // ── 8. Social ──
   await go("/social");
   await shoot(page, "08-social");
   await scrollShot(page, "08-social");

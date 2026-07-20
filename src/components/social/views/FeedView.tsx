@@ -446,15 +446,7 @@ export default function FeedView({
             {showActivityList && (
               <div className="space-y-3">
                 {activeFeed.items.map((item) => (
-                  /* feedSource lets ActivityCard render the "From your
-                 crew" trust chip on Explore only — Following posts
-                 are by definition from people the user already
-                 chose, so the chip would be redundant noise there. */
-                  <ActivityCard
-                    key={item.id}
-                    feedItem={item}
-                    feedSource={feedSubTab}
-                  />
+                  <ActivityCard key={item.id} feedItem={item} />
                 ))}
               </div>
             )}
@@ -536,7 +528,7 @@ export default function FeedView({
                    card above it (two heroes stacked). Compressed to
                    one row with a text-link CTA so the trajectory card
                    stays the hero of the surface. Same compact pattern
-                   as ChallengeList's empty state on the Crews tab. */
+                   as ChallengeList's empty state on Together. */
                     <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
                       <div className="flex items-center gap-3 min-w-0">
                         <div
@@ -545,13 +537,12 @@ export default function FeedView({
                         >
                           <Users size={16} style={{ color: THEME.brand }} />
                         </div>
-                        {/* Soc5 locked Following empty-state copy. The
-                        "or join crews" addition is the key delta vs
-                        the prior copy — surfaces both growth paths
-                        (1:1 follow OR group membership) rather than
-                        only following. */}
+                        {/* Following empty-state copy — surfaces both
+                        growth paths (1:1 follow OR space membership)
+                        rather than only following. (Was "join crews"
+                        until the crews retirement, 2026-07-20.) */}
                         <p className="text-small text-muted-foreground leading-snug">
-                          Your feed is empty · Follow people or join crews to
+                          Your feed is empty · Follow people or join a space to
                           see their activities
                         </p>
                       </div>

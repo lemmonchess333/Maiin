@@ -1,7 +1,7 @@
 /**
  * 2026-05-26 audit PR 2 — counter mutations via Cloud Functions.
  *
- * Closes findings #2 (activity counters forgeable) + #5 (crew
+ * Closes findings #2 (activity counters forgeable) + #5 (legacy crew
  * memberCount forgeable). Pre-PR-2, Firestore rules used
  * `affectedKeys().hasOnly([...])` which restricts WHICH fields
  * change but NOT the values. Any authed user could write
@@ -213,63 +213,8 @@ async function deleteComment({
   });
 }
 
-/**
- * Join or leave a crew. Atomically writes the membership doc and
- * adjusts memberCount.
- *
- * Args:
- *   - action: "join" | "leave"
- *   - displayName: denormalised display name on the member doc (join only)
- */
-async function setCrewMembership({
-  firestore,
-  uid,
-  crewId,
-  action,
-  displayName,
-  increment,
-  serverTimestamp,
-}) {
-  if (!firestore || !uid || !crewId) {
-    throw new Error("setCrewMembership: firestore, uid, crewId required");
-  }
-  if (action !== "join" && action !== "leave") {
-    throw new Error("setCrewMembership: action must be 'join' or 'leave'");
-  }
-  const crewRef = firestore.collection("groups").doc(crewId);
-  const memberRef = crewRef.collection("members").doc(uid);
-
-  await firestore.runTransaction(async (txn) => {
-    const crewSnap = await txn.get(crewRef);
-    if (!crewSnap.exists) {
-      throw new Error(`setCrewMembership: crew ${crewId} not found`);
-    }
-    const memberSnap = await txn.get(memberRef);
-    if (action === "join") {
-      // Idempotent — already a member is a no-op. Counter stays
-      // accurate (the FIRST join was the one that incremented).
-      if (memberSnap.exists) return;
-      const name =
-        typeof displayName === "string" && displayName.trim().length > 0
-          ? displayName.trim().slice(0, 100)
-          : "Athlete";
-      txn.set(memberRef, {
-        joinedAt: serverTimestamp(),
-        displayName: name,
-      });
-      txn.update(crewRef, { memberCount: increment(1) });
-    } else {
-      // leave: idempotent — already absent is a no-op.
-      if (!memberSnap.exists) return;
-      txn.delete(memberRef);
-      txn.update(crewRef, { memberCount: increment(-1) });
-    }
-  });
-}
-
 module.exports = {
   toggleKudos,
   addComment,
   deleteComment,
-  setCrewMembership,
 };

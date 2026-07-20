@@ -1,13 +1,12 @@
 /**
  * Audit PR 2 — socialCounters helper tests.
  *
- * Pins counter-mutation atomicity for kudos, comments, and crew
- * membership. Each operation must:
+ * Pins counter-mutation atomicity for kudos and comments. Each
+ * operation must:
  *   - Run inside a Firestore transaction (so contention re-runs are
  *     safe and counter delta + sub-doc state agree).
  *   - Validate the parent doc exists before mutating its counter.
- *   - Be idempotent under re-tap (toggleKudos flips; join/leave
- *     no-op when already in/out).
+ *   - Be idempotent under re-tap (toggleKudos flips).
  */
 import { describe, it, expect, vi } from "vitest";
 import { createRequire } from "node:module";
@@ -349,122 +348,6 @@ describe("deleteComment", () => {
   });
 });
 
-describe("setCrewMembership", () => {
-  it("Cycle 1 (tracer): join creates member doc + increments memberCount", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({
-      initial: { "groups/crew-a": { memberCount: 10 } },
-    });
-    await setCrewMembership({
-      firestore,
-      uid: "alice",
-      crewId: "crew-a",
-      action: "join",
-      displayName: "Alice",
-      increment,
-      serverTimestamp,
-    });
-    const setOp = firestore._writes.find((w) => w.op === "set");
-    const updateOp = firestore._writes.find((w) => w.op === "update");
-    expect(setOp.path).toBe("groups/crew-a/members/alice");
-    expect(setOp.data.displayName).toBe("Alice");
-    expect(updateOp.data.memberCount).toEqual({ tag: INC_TAG, by: 1 });
-  });
-
-  it("Cycle 2: join is idempotent (already-member → no counter change)", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({
-      initial: {
-        "groups/crew-a": { memberCount: 10 },
-        "groups/crew-a/members/alice": { joinedAt: 12345 },
-      },
-    });
-    await setCrewMembership({
-      firestore,
-      uid: "alice",
-      crewId: "crew-a",
-      action: "join",
-      displayName: "Alice",
-      increment,
-      serverTimestamp,
-    });
-    expect(firestore._writes).toHaveLength(0);
-  });
-
-  it("Cycle 3: leave deletes member doc + decrements memberCount", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({
-      initial: {
-        "groups/crew-a": { memberCount: 10 },
-        "groups/crew-a/members/alice": { joinedAt: 12345 },
-      },
-    });
-    await setCrewMembership({
-      firestore,
-      uid: "alice",
-      crewId: "crew-a",
-      action: "leave",
-      increment,
-      serverTimestamp,
-    });
-    const deleteOp = firestore._writes.find((w) => w.op === "delete");
-    const updateOp = firestore._writes.find((w) => w.op === "update");
-    expect(deleteOp.path).toBe("groups/crew-a/members/alice");
-    expect(updateOp.data.memberCount).toEqual({ tag: INC_TAG, by: -1 });
-  });
-
-  it("Cycle 4: leave is idempotent (already-not-member → no counter change)", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({
-      initial: { "groups/crew-a": { memberCount: 10 } },
-    });
-    await setCrewMembership({
-      firestore,
-      uid: "alice",
-      crewId: "crew-a",
-      action: "leave",
-      increment,
-      serverTimestamp,
-    });
-    expect(firestore._writes).toHaveLength(0);
-  });
-
-  it("Cycle 5: invalid action throws", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({
-      initial: { "groups/crew-a": { memberCount: 10 } },
-    });
-    await expect(
-      setCrewMembership({
-        firestore,
-        uid: "alice",
-        crewId: "crew-a",
-        action: "bounce",
-        increment,
-        serverTimestamp,
-      })
-    ).rejects.toThrow(/action must be 'join' or 'leave'/);
-  });
-
-  it("Cycle 6: missing crew → throws", async () => {
-    const { setCrewMembership } = require("../lib/socialCounters");
-    const firestore = makeFirestoreStub({ initial: {} });
-    await expect(
-      setCrewMembership({
-        firestore,
-        uid: "alice",
-        crewId: "ghost",
-        action: "join",
-        increment,
-        serverTimestamp,
-      })
-    ).rejects.toThrow(/crew ghost not found/);
-  });
-});
-
-// Packet 13 — kudos/comment/delete must obey the parent activity's
-// visibility. The gate runs INSIDE the txn; a denied interaction records no
-// writes.
 describe("socialCounters — activity visibility gate", () => {
   const {
     toggleKudos,
