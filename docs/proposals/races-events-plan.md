@@ -242,3 +242,38 @@ files/updates a GitHub issue (assigned to the operator,
 `ready-for-agent`) listing races whose `dateKey` has lapsed. The date
 LOOKUP stays agent/operator work per Q5 — automation only does the
 noticing; no scraping, no guessed dates.
+
+## Amendment — RACE-EVENTS-REMOTE (LOCKED 2026-07-20)
+
+Operator-raised gap: event dates shipped only in the app bundle, so a
+native binary that isn't updated watches races vanish one by one as
+bundled dates pass, and every annual date-paste secretly required an
+App Store release. Grilled and locked (all recommended options):
+
+1. **CI auto-sync, git stays the source of truth (Q1 = a).** On merge
+   to main, when `spaceDefs.ts` changed, `sync-race-events.yml` runs
+   `scripts/sync-race-events.ts` (Admin credentials — the same
+   `FIREBASE_SERVICE_ACCOUNT` the deploy workflows use) to mirror the
+   race event blocks into the Firestore doc `config/raceEvents`.
+   Rules deny ALL client writes (the existing `config/{doc}` block:
+   authed read, write false — zero rules changes); nothing but CI
+   ever writes it, so config↔doc drift is structurally impossible.
+   Date changes keep their PR review trail and the tripwire keeps
+   watching the config copy.
+2. **Whole event block is overridable (Q2 = a).** dateKey,
+   websiteUrl, elevation, city, countryFlag — under CI sync the doc
+   just mirrors validated config, so the wider surface costs nothing.
+   The client validates every field on the way in (dateKey shape,
+   https URLs, enum elevation, bounded strings; unknown ids dropped)
+   so a corrupt doc can only ever lose to the bundled value.
+3. **Lazy fetch, once per session (Q3 = a).** The first race surface
+   a session touches kicks one cached `getDoc`; users who never open
+   race surfaces never pay the read. Bundled config renders
+   immediately; surfaces re-derive together when the fetch lands
+   (`useSyncExternalStore`). Offline/failure → bundled values, and
+   the Firestore SDK cache serves the last-known doc for free.
+4. **Adding a race still rides an app release (Q4 = a).** New races
+   need a name, photo, and rules-allowlist entry anyway; the remote
+   path exists so EXISTING races never rot on stale binaries.
+   Consumers on resolved events: directory row, space event header
+   (and therefore Door 1 deep-links), Door 2 picker.
