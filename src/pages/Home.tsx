@@ -1219,17 +1219,20 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* Vitals — water + weight/steps, below the day's mission (4a).
-            Rendered directly here since StackedCTACards became the session
-            stack only. */}
+        {/* Vitals pyramid (home-declutter revision, operator call):
+            the energy card sits full-width above; water + weight share
+            the row below — 1-over-2, the design system's compact-tile
+            grid. items-stretch keeps the duo equal-height. */}
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 12 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
+          className="grid grid-cols-2 gap-2 items-stretch"
         >
           <SectionErrorBoundary sectionName="water">
             <WaterCard
+              compact
               waterGlasses={waterGlasses}
               waterTarget={waterTarget}
               onAddWater={function () {
@@ -1241,13 +1244,6 @@ export default function Home() {
               }}
             />
           </SectionErrorBoundary>
-        </motion.div>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
           <SectionErrorBoundary sectionName="weight-steps">
             <WeightStepsTiles
               lastWeight={lastWeightInfo?.weight || null}
