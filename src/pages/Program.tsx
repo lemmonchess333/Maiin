@@ -1003,59 +1003,65 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             }
           />
         </div>
+      </div>
+      {/* ── End header bubble. The sport-tint wraps ONLY the identity +
+            mode switch (title · subtitle · Lift/Run toggle) — the week/day
+            selector below is plan CONTENT and renders on the plain page
+            surface, identically on both tabs. Keeping the calendar out of
+            the tinted chrome keeps the bubble compact and stops the active
+            day circle sitting on a same-hue tint. */}
 
-        {/* ── LIFT tab — WeekPhaseRow + ProgrammeWeekSelector (split-ordered
-              rotation cursor) + Session content. Wrapped in a conditional so
-              the lift surface only renders when the user switches to it. */}
-        {activeTab === "lift" && (
-          <>
-            {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
+      {/* ── LIFT tab — WeekPhaseRow + ProgrammeWeekSelector (split-ordered
+            rotation cursor) + Session content. Wrapped in a conditional so
+            the lift surface only renders when the user switches to it. */}
+      {activeTab === "lift" && (
+        <>
+          {/* Pgm3: deload banner. Sits ABOVE the week-phase row so
                 it's visible regardless of which day the user is
                 inspecting — deload is a week-level signal. Per-week
                 dismissal lives in localStorage; the banner stays
                 shown across day navigation within the same week, and
                 reopens on a new week if the signal still applies. */}
-            <TrackProgrammeSectionView section="deload_banner">
-              <DeloadBanner
-                visible={!!perfWeek?.flags?.deloadRecommended}
-                weekKey={`w${displayWeekNumber}`}
-                deloadActive={programState.currentPhase === "deload"}
-                onApply={handleApplyDeload}
+          <TrackProgrammeSectionView section="deload_banner">
+            <DeloadBanner
+              visible={!!perfWeek?.flags?.deloadRecommended}
+              weekKey={`w${displayWeekNumber}`}
+              deloadActive={programState.currentPhase === "deload"}
+              onApply={handleApplyDeload}
+            />
+          </TrackProgrammeSectionView>
+
+          <TrackProgrammeSectionView section="week_phase_row">
+            <div>
+              <WeekPhaseRow
+                weekNumber={displayWeekNumber}
+                phaseName={goalLabel(programState.goal)}
+                onPrevWeek={goBack}
+                onNextWeek={goForward}
+                canGoPrev={canGoBack}
+                canGoNext={canGoForward}
               />
-            </TrackProgrammeSectionView>
+            </div>
+          </TrackProgrammeSectionView>
 
-            <TrackProgrammeSectionView section="week_phase_row">
-              <div>
-                <WeekPhaseRow
-                  weekNumber={displayWeekNumber}
-                  phaseName={goalLabel(programState.goal)}
-                  onPrevWeek={goBack}
-                  onNextWeek={goForward}
-                  canGoPrev={canGoBack}
-                  canGoNext={canGoForward}
-                />
-              </div>
-            </TrackProgrammeSectionView>
-
-            {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
+          {/* Single Lift day-selector (ADR-0002 split-ordered rotation).
                 The duplicate "this week" HybridWeekRail that used to sit
                 above this was removed — one selector per tab, in the same
                 vertical position as the Run tab's selector, and it drives
                 the session content below. */}
-            <TrackProgrammeSectionView section="day_stepper">
-              <div>
-                <ProgrammeWeekSelector
-                  sport="lift"
-                  ariaLabel="Lift sessions"
-                  cells={liftSelectorCells}
-                  selectedKey={String(idx)}
-                  onSelect={(key) => handleSelect(Number(key))}
-                />
-              </div>
-            </TrackProgrammeSectionView>
-          </>
-        )}
-      </div>
+          <TrackProgrammeSectionView section="day_stepper">
+            <div>
+              <ProgrammeWeekSelector
+                sport="lift"
+                ariaLabel="Lift sessions"
+                cells={liftSelectorCells}
+                selectedKey={String(idx)}
+                onSelect={(key) => handleSelect(Number(key))}
+              />
+            </div>
+          </TrackProgrammeSectionView>
+        </>
+      )}
 
       {/* ── Advance Week (all complete, current week) — lift tab only. */}
       {activeTab === "lift" &&
