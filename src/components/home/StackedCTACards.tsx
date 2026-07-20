@@ -1,14 +1,9 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
 import FirstMealCard from "@/components/home/FirstMealCard";
-import WaterCard from "@/components/home/WaterCard";
-import WeightStepsTiles, {
-  type WeightTrendDirection,
-} from "@/components/home/WeightStepsTiles";
-import WelcomeBackCard from "@/components/home/WelcomeBackCard";
 
 const stagger = {
   hidden: {},
@@ -23,26 +18,21 @@ const fadeUp = {
   },
 };
 
-export type UserSegment = "new" | "active" | "returning" | "casual";
-
+/**
+ * Today's session stack (home-declutter 4a, locked 2026-07-20):
+ * lift / run / rest cards ONLY — the page's primary action, rendered
+ * first in the Today group. Water and weight/steps moved out to Home
+ * below the energy row (they're vitals, not the day's mission), and
+ * the WelcomeBackCard was deleted outright (returned daily, carried
+ * no action — one voice per screen).
+ */
 export default function StackedCTACards({
   nextWorkout,
   liftDayIndex = null,
   liftStartable = true,
   todayType,
   navigate,
-  waterGlasses,
-  waterTarget,
-  onAddWater,
-  onRemoveWater,
-  lastWeight,
-  weightUnit,
-  onLogWeight,
-  lastWeightDate,
-  hideWeightNumber,
-  weightTrend,
   todayRun,
-  userSegment,
   muscleGroups,
   firstWorkout = false,
   firstRun = false,
@@ -59,18 +49,7 @@ export default function StackedCTACards({
   liftStartable?: boolean;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
-  waterGlasses: number;
-  waterTarget: number;
-  onAddWater: () => void;
-  onRemoveWater: () => void;
-  lastWeight: string | null;
-  weightUnit: string;
-  onLogWeight: () => void;
-  lastWeightDate: string;
-  hideWeightNumber?: boolean;
-  weightTrend?: WeightTrendDirection;
   todayRun: ScheduledRunDay | null;
-  userSegment: UserSegment;
   muscleGroups?: string;
   // #972 cold-start framing flags (day-type-aware, per-domain, 14-day window).
   firstWorkout?: boolean;
@@ -86,55 +65,6 @@ export default function StackedCTACards({
   // slot with an intentional message and keeps the page rhythm.
   const showRest = todayType === "rest";
 
-  const liftCard =
-    showLift && nextWorkout ? (
-      <motion.div key="lift" variants={fadeUp}>
-        <LiftCTACard
-          nextWorkout={nextWorkout}
-          navigate={navigate}
-          muscleGroups={muscleGroups}
-          isFirst={firstWorkout}
-          dayIndex={liftDayIndex}
-          isStartable={liftStartable}
-        />
-      </motion.div>
-    ) : null;
-  const runCard = showRun ? (
-    <motion.div key="run" variants={fadeUp}>
-      <RunCTACard todayRun={todayRun} navigate={navigate} isFirst={firstRun} />
-    </motion.div>
-  ) : null;
-  // #972: on a rest day a new user has no workout to frame, so drive the
-  // first meal instead (per-domain: gated on meals === 0 within the window).
-  // The first-meal card replaces the passive RestDayCard for that cohort.
-  const restCard = showRest ? (
-    <motion.div key="rest" variants={fadeUp}>
-      {firstMeal ? <FirstMealCard navigate={navigate} /> : <RestDayCard />}
-    </motion.div>
-  ) : null;
-  const waterCard = (
-    <motion.div key="water" variants={fadeUp} className="space-y-3">
-      <WaterCard
-        waterGlasses={waterGlasses}
-        waterTarget={waterTarget}
-        onAddWater={onAddWater}
-        onRemoveWater={onRemoveWater}
-      />
-    </motion.div>
-  );
-  const weightTiles = (
-    <motion.div key="weight" variants={fadeUp}>
-      <WeightStepsTiles
-        lastWeight={lastWeight}
-        weightUnit={weightUnit}
-        onLogWeight={onLogWeight}
-        lastWeightDate={lastWeightDate}
-        hideNumber={hideWeightNumber}
-        weightTrend={weightTrend}
-      />
-    </motion.div>
-  );
-
   return (
     <motion.div
       className="space-y-3"
@@ -142,18 +72,35 @@ export default function StackedCTACards({
       animate="visible"
       variants={stagger}
     >
-      {userSegment === "returning" && (
-        <motion.div variants={fadeUp}>
-          <AnimatePresence>
-            <WelcomeBackCard />
-          </AnimatePresence>
+      {showLift && nextWorkout && (
+        <motion.div key="lift" variants={fadeUp}>
+          <LiftCTACard
+            nextWorkout={nextWorkout}
+            navigate={navigate}
+            muscleGroups={muscleGroups}
+            isFirst={firstWorkout}
+            dayIndex={liftDayIndex}
+            isStartable={liftStartable}
+          />
         </motion.div>
       )}
-      {liftCard}
-      {runCard}
-      {restCard}
-      {waterCard}
-      {weightTiles}
+      {showRun && (
+        <motion.div key="run" variants={fadeUp}>
+          <RunCTACard
+            todayRun={todayRun}
+            navigate={navigate}
+            isFirst={firstRun}
+          />
+        </motion.div>
+      )}
+      {showRest && (
+        <motion.div key="rest" variants={fadeUp}>
+          {/* #972: on a rest day a new user has no workout to frame, so
+              drive the first meal instead (per-domain: gated on meals === 0
+              within the window). */}
+          {firstMeal ? <FirstMealCard navigate={navigate} /> : <RestDayCard />}
+        </motion.div>
+      )}
     </motion.div>
   );
 }
