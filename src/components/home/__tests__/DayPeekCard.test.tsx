@@ -169,7 +169,8 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Run scheduled")).toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
   });
 
@@ -243,7 +244,9 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Run completed")).toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.queryByText(/manual/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("Run completed")).not.toBeInTheDocument();
   });
 
   it("renders 'Marked complete' when the claim map carries a manual completion (B2 writer + B3k visual)", () => {
@@ -288,8 +291,9 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Marked complete")).toBeInTheDocument();
-    expect(screen.queryByText("Run completed")).not.toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.getByText(/manual/i)).toBeInTheDocument();
+    expect(screen.queryByText("Marked complete")).not.toBeInTheDocument();
   });
 
   it("renders 'Run skipped' for a skipped runDay", () => {
@@ -327,7 +331,8 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Run skipped")).toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.getByText(/skipped/)).toBeInTheDocument();
   });
 
   it("stacks the run row alongside workout + meal lines when all are present", () => {
@@ -365,7 +370,8 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
       />
     );
 
-    expect(screen.getByText("Run scheduled")).toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.getByText(/1 session/)).toBeInTheDocument();
     expect(screen.getByText(/1,800 cal/)).toBeInTheDocument();
   });
@@ -630,7 +636,8 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
         onClose={vi.fn()}
       />
     );
-    expect(screen.getByText("Run scheduled")).toBeInTheDocument();
+    expect(screen.getByText("Easy 30")).toBeInTheDocument();
+    expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Extra run: 3km easy/i })
     ).toBeInTheDocument();
