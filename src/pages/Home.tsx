@@ -898,23 +898,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Nutr1 one-time explainer (expenditure-inclusive model). Dismiss-once
-          via ContextualTipBanner's versioned localStorage key (the locked
-          spec named a profile flag; reusing the established dismiss-once
-          banner is lower-risk and per-device re-show is acceptable for a
-          one-time migration aid). Surfaces the deficit×big-session tension
-          the #976 lock required ("a deliberate deficit on your biggest
-          days"). Shown once to any onboarded user. */}
-      <ContextualTipBanner
-        tipKey="nutrition-expenditure-inclusive-v1"
-        lanePriority={10}
-        title="Your activity is already in your target"
-        description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
-        visible={!!profile}
-        ctaLabel="How targets work"
-        ctaHref="/settings"
-      />
-
       {/* No pre-emptive streak at-risk signal. The Streak1 lock permits only
           gentle AFTER-the-fact reassurance (the grace card just below) —
           "NEVER a pre-emptive threat". The old orange "streak at risk" banner
@@ -1091,25 +1074,28 @@ export default function Home() {
           ) : null;
         })()}
 
-        {/* Progressive profiling (fast-start #1087 deferred goal weight).
-          Onboarding now saves goalWeightKg == weightKg (a maintenance default,
-          no direction expressed), so once the user has logged food, invite them
-          to set a real target for a precise calorie offset. Hides once a goal
-          weight diverges from current weight (a direction is set) or on
-          dismiss. Lower priority than the age/sex gap (which breaks TDEE
-          outright) but above the generic nutrition explainer. */}
+        {/* Goal-weight nudge REMOVED from Home (2026-07-20 Home2 pass):
+          it's an optional refinement — the app runs fine on the
+          maintenance default — so it doesn't earn an interrupting
+          full-width banner. Goal weight stays fully settable in
+          Settings and the weight-log flow. (Contrast the age/sex nudge
+          above, which is KEPT because a missing value there corrupts
+          the TDEE math outright.) */}
+
+        {/* Nutr1 one-time explainer (expenditure-inclusive model),
+          relocated into the Today group (2026-07-20) so the education
+          lane always renders below the week strip in one consistent
+          spot — previously it lived above the groups and, whenever it
+          won the lane, jumped to the very top of the page above the
+          week strip. Dismiss-once via the versioned tipKey. Surfaces
+          the deficit×big-session tension the #976 lock required. */}
         <ContextualTipBanner
-          tipKey="goal-weight-v1"
-          lanePriority={15}
-          title="Set a goal weight"
-          description="Add a target weight so we can dial in your calories — right now you're on a maintenance default."
-          visible={
-            !!profile &&
-            totalLifetimeMeals > 0 &&
-            (profile.goalWeightKg == null ||
-              profile.goalWeightKg === profile.weightKg)
-          }
-          ctaLabel="Set a goal weight"
+          tipKey="nutrition-expenditure-inclusive-v1"
+          lanePriority={10}
+          title="Your activity is already in your target"
+          description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
+          visible={!!profile}
+          ctaLabel="How targets work"
           ctaHref="/settings"
         />
 
