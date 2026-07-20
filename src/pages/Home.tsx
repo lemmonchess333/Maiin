@@ -556,16 +556,28 @@ export default function Home() {
       return true;
     }
   });
+  // Cal-A: scroll target for the today-tap shortcut (the session cards).
+  const sessionsRef = useRef<HTMLDivElement>(null);
   const handleDayTap = useCallback(function (dk: string) {
-    setPeekDate(function (p) {
-      return p === dk ? null : dk;
-    });
     try {
       localStorage.setItem("home-day-tap-seen", "1");
     } catch {
       /* private mode — hint will re-show, minor */
     }
     setShowDayTapHint(false);
+    // Cal-A: tapping TODAY is redundant with the live session cards
+    // right below — scroll to them instead of re-printing a peek copy.
+    if (dk === localDateString()) {
+      setPeekDate(null);
+      sessionsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
+    setPeekDate(function (p) {
+      return p === dk ? null : dk;
+    });
   }, []);
   const closePeek = useCallback(function () {
     setPeekDate(null);
@@ -948,12 +960,33 @@ export default function Home() {
               selectedDate={peekDate}
               onDayTap={handleDayTap}
             />
-            {/* One-shot discoverability hint. Latches off on first day-tap
-              so users who already know don't keep seeing it. */}
-            {showDayTapHint && !peekDate && (
-              <p className="text-caption text-muted-foreground/70 text-center -mt-1">
-                Tap a day to see details
-              </p>
+            {/* Cal-A: legend so the day dots are decodable (purple ● =
+                lift, coral ◆ = run). Hidden while a peek is open to keep
+                the expanded card clean. */}
+            {!peekDate && (
+              <div className="flex items-center justify-center gap-3 -mt-1">
+                <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
+                  <span
+                    className="size-1.5 rounded-full"
+                    style={{ backgroundColor: THEME.lifting }}
+                  />
+                  Lift
+                </span>
+                <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
+                  <span
+                    className="size-1.5 rotate-45"
+                    style={{ backgroundColor: THEME.running }}
+                  />
+                  Run
+                </span>
+                {/* One-shot tap affordance — latches off after the first
+                    day-tap ever. */}
+                {showDayTapHint && (
+                  <span className="text-caption text-muted-foreground/70">
+                    · Tap a day for details
+                  </span>
+                )}
+              </div>
             )}
             <AnimatePresence>
               {peekDate && (
@@ -1129,6 +1162,7 @@ export default function Home() {
             (today's lift/run) leads the Today group; energy, guidance and
             vitals follow. */}
         <motion.div
+          ref={sessionsRef}
           variants={{
             hidden: { opacity: 0, y: 12 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
