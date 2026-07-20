@@ -131,11 +131,11 @@ const PROTECTED_PATHS: ProtectedPath[] = [
     sides: ["actor"],
     notes: "join/update/leave frozen via !isWriteFrozen(uid)",
   },
-  {
-    pathPattern: "match /groups/{crewId}",
-    sides: ["actor"],
-    notes: "deleting users cannot create/update crews",
-  },
+  // Crews retirement (2026-07-20): /groups/{crewId} is now fully
+  // client-locked (`allow read, write: if false`) — no client-writable
+  // rule remains for R1A to guard, so it leaves PROTECTED_PATHS. The
+  // executor's crewMemberships collectionGroup sweep is unaffected
+  // (Admin SDK).
   {
     // SOCIAL S3 — partner-streak bond. Symmetric 1:1 doc naming two
     // members. Create is a cross-user write (you name another user in
@@ -313,7 +313,7 @@ describe("static rules coverage — every protected path has the write-freeze", 
     expect(block).toMatch(/allow read,\s*write:\s*if\s+false/);
   });
 
-  it("PROTECTED_PATHS list matches the canonical count (33 paths — tombstone-freeze added activities + participants)", () => {
+  it("PROTECTED_PATHS list matches the canonical count (31 paths — crews retirement removed /groups/{crewId})", () => {
     // Was 27 pre-PR-2; /groups/{crewId}/members/{userId} moved to
     // server-only (→26); push #961 added /users/{uid}/devices/{token} (→27);
     // SOCIAL S3 added /partnerBonds/{bondId} (→28); saved-routes library
@@ -321,9 +321,11 @@ describe("static rules coverage — every protected path has the write-freeze", 
     // members + posts nested blocks (→31); tombstone-freeze packet
     // (2026-07-12) moved /activities/{activityId} + challenge
     // /participants/{uid} out of EXPLICITLY_EXEMPT into the fully-frozen
-    // set (→33). This list is a curated freeze-verification SUBSET; the
+    // set; crews retirement (2026-07-20) removed /groups/{crewId}
+    // (client-locked, no freeze surface remains) (→31). This list is a
+    // curated freeze-verification SUBSET; the
     // full drift inventory (with its own count) lives in
     // accountDeletionWriteRulesSnapshot.test.ts.
-    expect(PROTECTED_PATHS.length).toBe(32);
+    expect(PROTECTED_PATHS.length).toBe(31);
   });
 });

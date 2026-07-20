@@ -23,7 +23,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
  * decoration on a populated surface.
  *
  * Distinct from the older `src/components/EmptyState.tsx` (a square-icon
- * variant still used by Crew / ExerciseHistory); this is the canonical
+ * variant still used by ExerciseHistory); this is the canonical
  * hexagon primitive. Those surfaces can migrate post-launch.
  */
 

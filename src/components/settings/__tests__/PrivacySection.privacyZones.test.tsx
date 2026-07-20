@@ -58,10 +58,6 @@ function renderSection(removeZone: (id: string) => Promise<void>) {
       setNewZoneName={vi.fn()}
       newZoneRadius={200}
       setNewZoneRadius={vi.fn()}
-      defaultCrews={[]}
-      currentCrew={null}
-      joinCrew={vi.fn().mockResolvedValue(undefined)}
-      leaveCrew={vi.fn().mockResolvedValue(undefined)}
     />
   );
 }

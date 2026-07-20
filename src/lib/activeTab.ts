@@ -25,14 +25,9 @@ export function activeTabForPath(pathname: string): TabPath | null {
   if (p === "/program" || p.startsWith("/program/")) return "/program";
   // Analytics owns History + the per-exercise history drill-down.
   if (p === "/history" || p.startsWith("/history/")) return "/history";
-  // Social owns the feed/crews/people surface plus the destinations reached
-  // from it: other users' profiles (/user/:uid) and crews (/crew/:crewId).
-  if (
-    p === "/social" ||
-    p.startsWith("/social/") ||
-    p.startsWith("/user/") ||
-    p.startsWith("/crew/")
-  )
+  // Social owns the feed/people surface plus the destinations reached
+  // from it: other users' profiles (/user/:uid).
+  if (p === "/social" || p.startsWith("/social/") || p.startsWith("/user/"))
     return "/social";
 
   // Everything else has no tab home — settings/*, /upgrade, /run, /run/:id,
