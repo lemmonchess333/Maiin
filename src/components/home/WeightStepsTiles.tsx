@@ -4,7 +4,6 @@ import {
   Scale,
   Footprints,
   ArrowRight,
-  ChevronRight,
   ArrowDown,
   ArrowUp,
   Minus,
@@ -92,7 +91,7 @@ export default function WeightStepsTiles({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted relative h-full"
+        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted h-full flex flex-col"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
@@ -109,37 +108,41 @@ export default function WeightStepsTiles({
             Weight
           </SectionLabel>
         </div>
-        {hidden ? (
-          <div className="flex items-center gap-1.5">
-            <TrendIcon
-              className="size-4 flex-shrink-0"
-              style={{ color: THEME.semantic.activity }}
-              aria-hidden="true"
-            />
-            <p className="text-base font-bold leading-none text-foreground">
-              {trendPhrase}
-            </p>
-          </div>
-        ) : (
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl font-bold leading-none text-foreground font-mono tabular-nums">
-              {lastWeight ? lastWeight : "\u2014"}
-            </p>
-            {lastWeight && (
-              <span className="text-xs" style={{ color: THEME.text.muted }}>
-                {weightUnitDisplay}
-              </span>
-            )}
-          </div>
-        )}
-        <p className="text-micro mt-1" style={{ color: THEME.text.muted }}>
-          {lastWeightDate}
-        </p>
-        <ChevronRight
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3"
-          style={{ color: THEME.text.muted }}
-          aria-hidden="true"
-        />
+        {/* Value centred in the tile's remaining height so the number
+            fills the (water-matched) tile instead of clustering at the
+            top. No chevron \u2014 the whole tile taps to log, same as the
+            water card. */}
+        <div className="flex-1 flex flex-col justify-center min-h-0">
+          {hidden ? (
+            <div className="flex items-center gap-1.5">
+              <TrendIcon
+                className="size-4 flex-shrink-0"
+                style={{ color: THEME.semantic.activity }}
+                aria-hidden="true"
+              />
+              <p className="text-lg font-bold leading-none text-foreground">
+                {trendPhrase}
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-1">
+              <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+                {lastWeight ? lastWeight : "\u2014"}
+              </p>
+              {lastWeight && (
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: THEME.text.muted }}
+                >
+                  {weightUnitDisplay}
+                </span>
+              )}
+            </div>
+          )}
+          <p className="text-micro mt-1" style={{ color: THEME.text.muted }}>
+            {lastWeightDate}
+          </p>
+        </div>
       </button>
       {showSteps && (
         <button
