@@ -16,8 +16,16 @@
  * chips (Run9a). Coral (running) accent only, calm copy, no medical warnings or
  * performance promises.
  */
+import { useState } from "react";
+import { format } from "date-fns";
+import { Check, ChevronDown, Flag } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { THEME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/haptic";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import type { SpaceDef } from "@/features/spaces/spaceDefs";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
 
@@ -27,6 +35,13 @@ const DISTANCE_OPTIONS: { value: RaceDistance; label: string }[] = [
   { value: "half", label: "Half" },
   { value: "marathon", label: "Full" },
 ];
+
+const DISTANCE_CHIP: Record<string, string> = {
+  "5k": "5K",
+  "10k": "10K",
+  half: "Half",
+  marathon: "Full",
+};
 
 interface RaceGoalPlannerProps {
   distance: RaceDistance;
@@ -39,6 +54,119 @@ interface RaceGoalPlannerProps {
   onDistanceChange: (d: RaceDistance) => void;
   onTargetDateChange: (date: string) => void;
   onEventNameChange: (v: string) => void;
+  /** Door 2 (races plan): the same race catalogue the Social directory
+   *  reads — soonest first, past dates already filtered out. Empty
+   *  array collapses the picker entirely. */
+  upcomingRaces: SpaceDef[];
+  /** The draft's catalogue binding, "" when the goal is manual. */
+  selectedEventSpaceId: string;
+  onPickRace: (def: SpaceDef) => void;
+}
+
+/**
+ * "Choose an upcoming race" — a collapsed disclosure listing the
+ * race-kind catalogue. Picking one prefills distance + date + event
+ * name + the eventSpaceId binding through the SAME draft the manual
+ * fields edit (one catalogue, two entrances; the write path is
+ * identical either way). Manual entry stays for unlisted races.
+ */
+function UpcomingRacePicker({
+  races,
+  selectedId,
+  onPick,
+}: {
+  races: SpaceDef[];
+  selectedId: string;
+  onPick: (def: SpaceDef) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = races.find((r) => r.id === selectedId);
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => {
+          haptic();
+          setOpen((o) => !o);
+        }}
+        className="w-full min-h-[44px] flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2.5 text-left"
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <Flag className="size-4 shrink-0 text-running" aria-hidden />
+          <span className="text-sm font-medium text-foreground truncate">
+            {selected ? selected.name : "Choose an upcoming race"}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Upcoming races"
+          className="mt-1.5 space-y-1"
+        >
+          {races.map((race) => {
+            const isSelected = race.id === selectedId;
+            return (
+              <button
+                key={race.id}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  haptic();
+                  onPick(race);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full min-h-[44px] flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left border transition-colors",
+                  isSelected ? "border-transparent" : "border-border/50"
+                )}
+                style={
+                  isSelected ? { background: `${THEME.running}14` } : undefined
+                }
+              >
+                <span className="min-w-0 flex items-center gap-1.5">
+                  {isSelected && (
+                    <Check
+                      className="size-3.5 shrink-0 text-running"
+                      aria-hidden
+                    />
+                  )}
+                  <span className="text-sm font-medium text-foreground truncate">
+                    {race.name}
+                  </span>
+                </span>
+                <span className="shrink-0 flex items-center gap-2">
+                  <span className="text-caption text-muted-foreground font-mono tabular-nums">
+                    {format(parseLocalDate(race.event!.dateKey), "d MMM yyyy")}
+                  </span>
+                  <span
+                    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                    style={{
+                      background: `${THEME.running}1F`,
+                      color: THEME.running,
+                    }}
+                  >
+                    {DISTANCE_CHIP[race.event!.distance]}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function outLabel(state: RaceGoalPlannerState): string {
@@ -57,6 +185,9 @@ export default function RaceGoalPlanner({
   onDistanceChange,
   onTargetDateChange,
   onEventNameChange,
+  upcomingRaces,
+  selectedEventSpaceId,
+  onPickRace,
 }: RaceGoalPlannerProps) {
   const showPreview =
     state.status === "healthy" ||
@@ -65,6 +196,15 @@ export default function RaceGoalPlanner({
 
   return (
     <div className="mt-3 space-y-3 p-3 rounded-xl bg-card card-shadow">
+      {/* Door 2 — catalogue picker (collapses when nothing upcoming) */}
+      {upcomingRaces.length > 0 && (
+        <UpcomingRacePicker
+          races={upcomingRaces}
+          selectedId={selectedEventSpaceId}
+          onPick={onPickRace}
+        />
+      )}
+
       {/* Distance */}
       <div>
         <SectionLabel className="mb-1.5">Distance</SectionLabel>
