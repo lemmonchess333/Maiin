@@ -22,6 +22,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import type { DayTargetSnapshot, DayWater } from "@/lib/nutritionBadgeDays";
+import { resolveConsumedMl, resolveTargetMl } from "@/lib/waterUnits";
 
 const DAILY_NUTRITION_LIMIT = 60;
 const WATER_LIMIT = 60;
@@ -120,13 +121,17 @@ export function useNutritionBadgeData(): NutritionBadgeData {
         const map = new Map<string, DayWater>();
         for (const d of snap.docs) {
           const raw = d.data() as {
+            ml?: unknown;
+            targetMl?: unknown;
             glasses?: unknown;
             targetGlasses?: unknown;
           };
           // waterLog docs are keyed by the YYYY-MM-DD date (useWaterLog).
+          // Water "B" model — prefer ml; legacy glasses-only days migrate
+          // forward (× 250) so historical hydration streaks still count.
           map.set(d.id, {
-            glasses: num(raw.glasses),
-            target: num(raw.targetGlasses),
+            ml: resolveConsumedMl(raw),
+            target: resolveTargetMl(raw),
           });
         }
         setWater(map);
