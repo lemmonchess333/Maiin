@@ -205,8 +205,12 @@ function CardRow({
     <div className="space-y-2">
       <SectionLabel>{label}</SectionLabel>
       {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
-          peeking next card invites the swipe (the Runna affordance). */}
+          peeking next card invites the swipe (the Runna affordance).
+          data-no-page-swipe: a horizontal swipe to scroll this carousel
+          must NOT be hijacked by the page/tab swipe-navigation gesture
+          (useSwipeNavigation hard-blocks from inside this scroller). */}
       <div
+        data-no-page-swipe
         className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="list"
         aria-label={label}
