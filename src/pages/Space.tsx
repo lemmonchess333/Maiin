@@ -10,7 +10,7 @@
  * slice.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { format } from "date-fns";
 import {
@@ -194,6 +194,21 @@ export default function Space() {
   const [posts, setPosts] = useState<PostItem[] | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
+
+  /* Races plan PR4 — `?compose=1` (the post-race share hand-off from
+   * RunSummary) opens the composer as soon as membership allows. For a
+   * non-member the param survives until they tap Join, then the
+   * composer opens — the intended "join, then post" flow. Consumed
+   * once (replace) so back/refresh doesn't re-open it. */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const composeRequested = searchParams.get("compose") === "1";
+  useEffect(() => {
+    if (!composeRequested || joined !== true) return;
+    setComposerOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("compose");
+    setSearchParams(next, { replace: true });
+  }, [composeRequested, joined, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!def || !spaceId) return;
