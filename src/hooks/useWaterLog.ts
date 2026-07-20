@@ -4,27 +4,41 @@ import { setDocGuarded } from "@/lib/firestoreWrite";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  clampMl,
+  resolveConsumedMl,
+  resolveTargetMl,
+  waterProgress,
+} from "@/lib/waterUnits";
 
 export interface WaterLog {
-  glasses: number;
-  targetGlasses: number;
+  /** Consumed millilitres today (Water "B" model). */
+  ml: number;
+  /** Daily target in millilitres. */
+  targetMl: number;
   updatedAt: Timestamp;
 }
 
 export function useWaterLog() {
   const { user, profile } = useAuth();
-  const [glasses, setGlasses] = useState(0);
+  const [ml, setMl] = useState(0);
   const [loading, setLoading] = useState(true);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(undefined);
   const skipNextSnapshot = useRef(false);
 
   const today = useMemo(() => localDateString(), []);
-  const target = profile?.targetWaterGlasses || 8;
+  // Target stays derived from the legacy glasses field (× 250) until an
+  // editable ml target ships — default 2 L. resolveTargetMl handles the
+  // fallback chain (targetMl → targetWaterGlasses → default).
+  const target = useMemo(
+    () => resolveTargetMl({ targetWaterGlasses: profile?.targetWaterGlasses }),
+    [profile?.targetWaterGlasses]
+  );
 
   useEffect(() => {
     if (!user) {
       const reset = () => {
-        setGlasses(0);
+        setMl(0);
         setLoading(false);
       };
       reset();
@@ -38,11 +52,9 @@ export function useWaterLog() {
         setLoading(false);
         return;
       }
-      if (snap.exists()) {
-        setGlasses(snap.data().glasses || 0);
-      } else {
-        setGlasses(0);
-      }
+      // resolveConsumedMl migrates legacy `glasses`-only docs forward
+      // (× 250) so pre-migration days still render.
+      setMl(snap.exists() ? resolveConsumedMl(snap.data()) : 0);
       setLoading(false);
     });
 
@@ -54,15 +66,15 @@ export function useWaterLog() {
   }, [user, today]);
 
   const debouncedSave = useCallback(
-    (newGlasses: number) => {
+    (newMl: number) => {
       if (!user) return;
       clearTimeout(saveTimeout.current);
       saveTimeout.current = setTimeout(() => {
         const ref = doc(db, "users", user.uid, "waterLog", today);
         skipNextSnapshot.current = true;
         setDocGuarded(ref, {
-          glasses: newGlasses,
-          targetGlasses: target,
+          ml: newMl,
+          targetMl: target,
           updatedAt: Timestamp.now(),
         }).catch(() => {
           skipNextSnapshot.current = false;
@@ -72,32 +84,35 @@ export function useWaterLog() {
     [user, today, target]
   );
 
+  /** Add (or, with a negative delta, remove) millilitres. Result is
+   *  clamped at 0 so the − button can't drive the total negative. */
   const logWater = useCallback(
-    (amount = 1) => {
+    (deltaMl: number) => {
       if (!user) return;
-      const newGlasses = glasses + amount;
-      setGlasses(newGlasses);
-      debouncedSave(newGlasses);
+      const newMl = clampMl(ml + deltaMl);
+      setMl(newMl);
+      debouncedSave(newMl);
     },
-    [user, glasses, debouncedSave]
+    [user, ml, debouncedSave]
   );
 
-  const setWaterAmount = useCallback(
-    (amount: number) => {
+  /** Set the absolute consumed millilitres (clamped ≥ 0). */
+  const setWater = useCallback(
+    (amountMl: number) => {
       if (!user) return;
-      const newGlasses = Math.max(0, amount);
-      setGlasses(newGlasses);
-      debouncedSave(newGlasses);
+      const newMl = clampMl(amountMl);
+      setMl(newMl);
+      debouncedSave(newMl);
     },
     [user, debouncedSave]
   );
 
   return {
-    glasses,
+    ml,
     target,
     loading,
     logWater,
-    setWaterAmount,
-    progress: target > 0 ? Math.min(glasses / target, 1) : 0,
+    setWater,
+    progress: waterProgress(ml, target),
   };
 }
