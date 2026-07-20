@@ -27,7 +27,9 @@ describe("isSameRace", () => {
     expect(isSameRace(MARATHON, { ...MARATHON })).toBe(true);
   });
   it("differs on date or distance", () => {
-    expect(isSameRace(MARATHON, { ...MARATHON, targetDate: "2026-04-08" })).toBe(false);
+    expect(
+      isSameRace(MARATHON, { ...MARATHON, targetDate: "2026-04-08" })
+    ).toBe(false);
     expect(isSameRace(MARATHON, { ...MARATHON, distance: "half" })).toBe(false);
   });
   it("is false when either is missing", () => {
@@ -69,10 +71,16 @@ describe("resolveRecoveryExit — R3-cycle + R3-backtoback", () => {
 describe("raceGoalIsCompletedRace", () => {
   it("true only when current === completed", () => {
     expect(
-      raceGoalIsCompletedRace({ currentRaceGoal: MARATHON, completedRaceGoal: MARATHON })
+      raceGoalIsCompletedRace({
+        currentRaceGoal: MARATHON,
+        completedRaceGoal: MARATHON,
+      })
     ).toBe(true);
     expect(
-      raceGoalIsCompletedRace({ currentRaceGoal: HALF_FUTURE, completedRaceGoal: MARATHON })
+      raceGoalIsCompletedRace({
+        currentRaceGoal: HALF_FUTURE,
+        completedRaceGoal: MARATHON,
+      })
     ).toBe(false);
   });
 });
@@ -128,6 +136,26 @@ describe("setRaceGoalPatch — co-writes materialized runMode", () => {
     });
   });
   it("clearing writes null + freeform", () => {
-    expect(setRaceGoalPatch(null)).toEqual({ raceGoal: null, runMode: "freeform" });
+    expect(setRaceGoalPatch(null)).toEqual({
+      raceGoal: null,
+      runMode: "freeform",
+    });
+  });
+  it("races plan Q4: eventSpaceId is included when present, omitted when absent", () => {
+    const withSpace = setRaceGoalPatch({
+      ...HALF_FUTURE,
+      eventSpaceId: "the-big-half",
+    });
+    expect(withSpace.raceGoal).toEqual({
+      ...HALF_FUTURE,
+      eventSpaceId: "the-big-half",
+    });
+    // Manual goals never carry the key (not even as undefined — the
+    // written object must stay Firestore-clean).
+    const manual = setRaceGoalPatch(HALF_FUTURE);
+    expect(manual.raceGoal && "eventSpaceId" in manual.raceGoal).toBe(false);
+    // Empty string reads as "no binding", same as absent.
+    const blank = setRaceGoalPatch({ ...HALF_FUTURE, eventSpaceId: "" });
+    expect(blank.raceGoal && "eventSpaceId" in blank.raceGoal).toBe(false);
   });
 });

@@ -12,9 +12,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { format } from "date-fns";
 import {
   ArrowLeft,
+  Check,
   Dumbbell,
+  ExternalLink,
+  Flag,
   Footprints,
   Heart,
   Medal,
@@ -28,8 +32,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -38,6 +44,7 @@ import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import {
   spaceDef,
   SPACE_MEMBER_COUNT_MIN_VISIBLE,
+  type SpaceEventInfo,
 } from "@/features/spaces/spaceDefs";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
@@ -53,7 +60,121 @@ const ICON_MAP: Record<string, LucideIcon> = {
   dumbbell: Dumbbell,
   medal: Medal,
   plane: Plane,
+  flag: Flag,
 };
+
+const DISTANCE_LABEL: Record<SpaceEventInfo["distance"], string> = {
+  "5k": "5K",
+  "10k": "10K",
+  half: "Half Marathon",
+  marathon: "Marathon",
+};
+
+const ELEVATION_LABEL: Record<
+  NonNullable<SpaceEventInfo["elevation"]>,
+  string
+> = {
+  flat: "Flat course",
+  rolling: "Rolling course",
+  hilly: "Hilly course",
+};
+
+/**
+ * Race event header (races plan PR3) — the event-metadata block for
+ * kind === "race" spaces: distance/elevation chips, race day, city,
+ * the "Train for this race" CTA (Door 1 — deep-links to the run-plan
+ * editor prefilled; Q1's no-inline-edit lock), the official-site
+ * link, and the Q10 not-affiliated line. Join stays a separate action
+ * below — joining never sets the race.
+ */
+function RaceEventHeader({
+  spaceId,
+  name,
+  event,
+}: {
+  spaceId: string;
+  name: string;
+  event: SpaceEventInfo;
+}) {
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const todayKey = localDateString();
+  const past = event.dateKey < todayKey;
+  const isYourRace = profile?.raceGoal?.eventSpaceId === spaceId;
+  const raceDay = format(parseLocalDate(event.dateKey), "EEEE d MMMM yyyy");
+  const shortDay = format(parseLocalDate(event.dateKey), "d MMM yyyy");
+
+  return (
+    <div className="rounded-2xl bg-card card-shadow p-4 space-y-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span
+          className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold"
+          style={{ background: `${THEME.running}1F`, color: THEME.running }}
+        >
+          {DISTANCE_LABEL[event.distance]}
+        </span>
+        {event.elevation && (
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold bg-muted text-muted-foreground">
+            {ELEVATION_LABEL[event.elevation]}
+          </span>
+        )}
+      </div>
+
+      <div>
+        <p className="text-base font-bold font-mono tabular-nums text-foreground">
+          {raceDay}
+        </p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {event.city} {event.countryFlag}
+          {past && " · Date passed — next edition coming"}
+        </p>
+      </div>
+
+      {isYourRace ? (
+        <div
+          className="flex items-center gap-2 rounded-xl px-3.5 py-3"
+          style={{ background: `${THEME.running}14` }}
+        >
+          <Check className="size-4 shrink-0 text-running" aria-hidden />
+          <p className="text-sm font-semibold text-foreground">
+            Your race ·{" "}
+            <span className="font-mono tabular-nums">{shortDay}</span>
+          </p>
+        </div>
+      ) : (
+        !past && (
+          <Button
+            variant="sport"
+            fullWidth
+            onClick={() =>
+              navigate(
+                `/settings/run-plan?distance=${event.distance}&date=${
+                  event.dateKey
+                }&eventName=${encodeURIComponent(name)}&spaceId=${spaceId}`
+              )
+            }
+          >
+            Train for this race
+          </Button>
+        )
+      )}
+
+      <a
+        href={event.websiteUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between gap-2 min-h-[44px] rounded-xl bg-muted/50 px-3.5 text-sm font-medium text-foreground active:scale-[0.98] transition-transform"
+      >
+        Visit official website
+        <ExternalLink className="size-4 text-muted-foreground" aria-hidden />
+      </a>
+
+      <p className="text-micro text-muted-foreground">
+        Community space — not affiliated with the event.
+      </p>
+    </div>
+  );
+}
 
 const ACCENT_HEX: Record<"running" | "lifting" | "brand", string> = {
   running: THEME.running,
@@ -218,6 +339,10 @@ export default function Space() {
 
       <div className="px-4 pt-4 space-y-4">
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
+
+        {def.kind === "race" && def.event && (
+          <RaceEventHeader spaceId={def.id} name={def.name} event={def.event} />
+        )}
 
         {joined ? (
           <div className="space-y-2">

@@ -33,6 +33,11 @@ export interface RaceGoal {
   targetDate: string;
   /** Optional user-entered event name, ≤60 chars. */
   eventName?: string;
+  /** Optional link to the race's community space (races plan Q4):
+   *  set when the goal came from the catalogue (either door);
+   *  manually-entered goals simply lack it. Cross-links and the
+   *  future training counter key off this exact id. */
+  eventSpaceId?: string;
 }
 
 /**
@@ -127,6 +132,7 @@ export function setRaceGoalPatch(next: RaceGoal | null): RaceGoalWritePatch {
     distance: next.distance,
     targetDate: next.targetDate,
     ...(next.eventName ? { eventName: next.eventName } : {}),
+    ...(next.eventSpaceId ? { eventSpaceId: next.eventSpaceId } : {}),
   };
   return { raceGoal, runMode: deriveRunMode(raceGoal) };
 }

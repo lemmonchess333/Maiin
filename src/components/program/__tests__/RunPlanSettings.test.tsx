@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
+import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
+import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 
 /**
@@ -8,6 +11,10 @@ import type { UserProfile } from "@/lib/auth";
  * A commit must go through the run writers (updateProfile with a
  * raceGoal/runMode patch + refreshRunSchedule) and must NOT invoke any
  * whole-programme rebuild — that's the whole point of splitting it out.
+ *
+ * Races plan PR3 adds the two doors: the ?distance&date&eventName&spaceId
+ * deep-link (Door 1) and the catalogue picker (Door 2), both writing the
+ * same raceGoal + eventSpaceId patch.
  */
 
 const baseProfile = {
@@ -16,19 +23,29 @@ const baseProfile = {
   weekSchedule: [],
 } as unknown as UserProfile;
 
-function renderPage(profile: UserProfile) {
+function renderPage(profile: UserProfile, path = "/settings/run-plan") {
   const updateProfile = vi.fn().mockResolvedValue({ ok: true });
   const refreshRunSchedule = vi.fn().mockResolvedValue(undefined);
   const onOpenFullSettings = vi.fn();
   render(
-    <RunPlanSettings
-      profile={profile}
-      updateProfile={updateProfile}
-      refreshRunSchedule={refreshRunSchedule}
-      onOpenFullSettings={onOpenFullSettings}
-    />
+    <MemoryRouter initialEntries={[path]}>
+      <RunPlanSettings
+        profile={profile}
+        updateProfile={updateProfile}
+        refreshRunSchedule={refreshRunSchedule}
+        onOpenFullSettings={onOpenFullSettings}
+      />
+    </MemoryRouter>
   );
   return { updateProfile, refreshRunSchedule, onOpenFullSettings };
+}
+
+/** First upcoming catalogue race — read from config so the test never
+ *  goes stale as dateKeys are pasted forward each edition. */
+function firstUpcomingRace() {
+  const races = upcomingRaceSpaceDefs(localDateString());
+  expect(races.length).toBeGreaterThan(0);
+  return races[0];
 }
 
 describe("RunPlanSettings", () => {
@@ -144,5 +161,103 @@ describe("RunPlanSettings", () => {
     const patch = updateProfile.mock.calls[0][0];
     expect(patch.runMode).toBe("freeform");
     expect(patch.raceGoal).toBeNull();
+  });
+
+  it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {
+    const race = firstUpcomingRace();
+    const { updateProfile } = renderPage(
+      baseProfile,
+      `/settings/run-plan?distance=${race.event!.distance}&date=${
+        race.event!.dateKey
+      }&eventName=${encodeURIComponent(race.name)}&spaceId=${race.id}`
+    );
+
+    // Draft is seeded: race prep active, fields prefilled, save offered.
+    expect(screen.getByRole("radio", { name: /Race prep/i })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+    expect(
+      (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
+    ).toBe(race.event!.dateKey);
+    expect(
+      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+    ).toBe(race.name);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    expect(patch.raceGoal).toEqual({
+      distance: race.event!.distance,
+      targetDate: race.event!.dateKey,
+      eventName: race.name,
+      eventSpaceId: race.id,
+    });
+  });
+
+  it("Door 1: a past-dated deep-link is ignored wholesale", () => {
+    renderPage(
+      baseProfile,
+      "/settings/run-plan?distance=half&date=2020-01-01&spaceId=the-big-half"
+    );
+    // Still the saved freeform baseline — no half-seeded draft.
+    expect(screen.getByRole("radio", { name: /Freeform/i })).toHaveAttribute(
+      "aria-checked",
+      "true"
+    );
+  });
+
+  it("Door 2: picking a catalogue race prefills the draft and saves the binding", async () => {
+    const race = firstUpcomingRace();
+    const { updateProfile } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Choose an upcoming race/i })
+    );
+    fireEvent.click(
+      screen.getByRole("option", { name: new RegExp(race.name) })
+    );
+
+    expect(
+      (screen.getByLabelText(/Target date/i) as HTMLInputElement).value
+    ).toBe(race.event!.dateKey);
+    expect(
+      (screen.getByLabelText(/Event name/i) as HTMLInputElement).value
+    ).toBe(race.name);
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    expect(patch.raceGoal.eventSpaceId).toBe(race.id);
+    expect(patch.raceGoal.targetDate).toBe(race.event!.dateKey);
+  });
+
+  it("a manual date edit after picking clears the eventSpaceId binding", async () => {
+    const race = firstUpcomingRace();
+    const { updateProfile } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Choose an upcoming race/i })
+    );
+    fireEvent.click(
+      screen.getByRole("option", { name: new RegExp(race.name) })
+    );
+
+    // The goal is no longer that event once the date moves.
+    const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
+    fireEvent.change(date, { target: { value: "2028-01-01" } });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(updateProfile).toHaveBeenCalledTimes(1));
+    const patch = updateProfile.mock.calls[0][0];
+    expect("eventSpaceId" in patch.raceGoal).toBe(false);
+    expect(patch.raceGoal.targetDate).toBe("2028-01-01");
   });
 });
