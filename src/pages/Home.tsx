@@ -141,12 +141,7 @@ export default function Home() {
     newBadge,
     dismissNewBadge,
   } = useStreaks();
-  const {
-    glasses: waterGlasses,
-    target: waterTarget,
-    logWater,
-    setWaterAmount,
-  } = useWaterLog();
+  const { ml: waterMl, target: waterTargetMl, logWater } = useWaterLog();
 
   // Home2 perf telemetry. renderStartRef takes its timestamp from
   // the post-mount effect (rather than lazy useState — that would
@@ -1219,14 +1214,11 @@ export default function Home() {
           <SectionErrorBoundary sectionName="water">
             <WaterCard
               compact
-              waterGlasses={waterGlasses}
-              waterTarget={waterTarget}
-              onAddWater={function () {
+              ml={waterMl}
+              targetMl={waterTargetMl}
+              onLog={function (deltaMl) {
                 closePeek();
-                logWater(1);
-              }}
-              onRemoveWater={function () {
-                setWaterAmount(waterGlasses - 1);
+                logWater(deltaMl);
               }}
             />
           </SectionErrorBoundary>
