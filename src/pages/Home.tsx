@@ -62,14 +62,12 @@ import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
-import SectionLabel from "@/components/ui/SectionLabel";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
-import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
 import WaterCard from "@/components/home/WaterCard";
 import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
@@ -80,7 +78,7 @@ import { useHybridGuidance } from "@/hooks/useHybridGuidance";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { getVerbState } from "@/lib/performanceLine";
+import { getVerbState, getVerb } from "@/lib/performanceLine";
 import type { LoadBand } from "@/lib/performanceTypes";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { getNutritionPhase } from "@/lib/nutritionPhase";
@@ -336,6 +334,24 @@ export default function Home() {
   })();
   const perfPrevWeek =
     perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
+
+  // Home2 Q1 (mockup) — the Performance hero is demoted to a tiny
+  // verb+delta chip in the header subline. The raw 0-100 PI is an
+  // unanchored internal composite, so the chip carries the legible
+  // half (the verb) + the week-over-week delta; the full ring/score
+  // lives one tap away in Analytics (/history#performance). Null when
+  // there's no week yet (cold-start) — the subline stays "Week N ·
+  // phase" alone.
+  const perfChip = (() => {
+    if (perfLoading || !perfWeek) return null;
+    const loadBand = (perfWeek.labels?.loadBand ??
+      perfWeek.loadBand) as LoadBand;
+    const verb = getVerb(loadBand, perfWeek.flags?.deloadRecommended ?? false);
+    const delta = perfPrevWeek
+      ? (perfWeek.performanceIndex ?? 0) - (perfPrevWeek.performanceIndex ?? 0)
+      : null;
+    return { label: verb.label, delta };
+  })();
 
   // Meal history for the energy row's cold-start state.
   // (home-declutter 2a/3a: the meal-pattern insight + post-workout nudge
@@ -663,13 +679,44 @@ export default function Home() {
               TROPOS
             </h1>
             {programState && (
-              <span className="text-xs font-medium text-muted-foreground mt-0.5">
-                {"Week " +
-                  programState.weekNumber +
-                  " · " +
-                  programState.currentPhase +
-                  " phase"}
-              </span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {"Week " +
+                    programState.weekNumber +
+                    " · " +
+                    programState.currentPhase +
+                    " phase"}
+                </span>
+                {/* Home2 Q1 (mockup): Performance demoted to this chip.
+                    Tap → the full ring/score in Analytics. */}
+                {perfChip && (
+                  <Link
+                    to="/history#performance"
+                    aria-label={`Performance: ${perfChip.label}${
+                      perfChip.delta
+                        ? `, ${perfChip.delta > 0 ? "up" : "down"} ${Math.abs(perfChip.delta)}`
+                        : ""
+                    } — open Analytics`}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-caption font-semibold text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    <span>{perfChip.label}</span>
+                    {perfChip.delta !== null && perfChip.delta !== 0 && (
+                      <span
+                        className="font-mono tabular-nums"
+                        style={{
+                          color:
+                            perfChip.delta > 0
+                              ? THEME.semantic.positive
+                              : THEME.semantic.vitals,
+                        }}
+                      >
+                        {perfChip.delta > 0 ? "↗" : "↘"}
+                        {Math.abs(perfChip.delta)}
+                      </span>
+                    )}
+                  </Link>
+                )}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -941,13 +988,12 @@ export default function Home() {
         </motion.button>
       )}
 
-      {/* Home2-hierarchy: grouped sections (This week / Performance /
-          Today) replace the prior flat equal-altitude stack — tight
-          within a group, airy between, via SectionLabel headers. */}
+      {/* Home2 mockup (Q1): the uppercase section labels (This week /
+          Performance / Today) are gone — self-titling cards don't need
+          captions — and the Performance hero is demoted to the header
+          chip. Space-y between groups carries the rhythm the labels
+          used to. */}
       <div className="space-y-2.5">
-        <SectionLabel tier="section" className="px-1">
-          This week
-        </SectionLabel>
         <motion.div
           ref={weekStripRef}
           variants={{
@@ -1000,45 +1046,16 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* PI1 + PI4: consolidated Performance hero. Replaces the
-          earlier HealthScoreCard (daily 0-100 composite) + the
-          PerformanceCard compact tile. Single ring + verb + line +
-          delta chip driven by the weekly PI doc. Tap →
-          /history#performance per the canonical deep-link target.
-          Sits in HealthScoreCard's original slot (PI4 drop-in);
-          the PerformanceCard slot below it was removed.
-          Home2-hierarchy: kept in place (between This week and Today)
-          per the chosen arrangement. */}
-      <div className="space-y-2.5">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <TrackSectionView section="hero">
-            <SectionErrorBoundary sectionName="performance-hero">
-              <PerformanceHeroCard
-                currentWeek={perfWeek ?? null}
-                previousWeek={perfPrevWeek}
-                weeksAvailable={perfWeeks.length}
-                loading={perfLoading}
-              />
-            </SectionErrorBoundary>
-          </TrackSectionView>
-        </motion.div>
-      </div>
+      {/* Home2 mockup (Q1): the full Performance hero section is
+          removed from Home — the weekly PI now lives as the header
+          chip (verb + delta), and the full ring/score is one tap away
+          in Analytics (/history#performance). usePerformanceWeeks
+          stays mounted above so the 3a one-voice arbiter still reads
+          perfWeek. */}
 
       {/* Home2-hierarchy: Today group — contextual nudges + energy +
-          quick actions + insight, clustered under one "Today" header. */}
+          quick actions + insight. */}
       <div className="space-y-2.5">
-        <SectionLabel tier="section" className="px-1">
-          Today
-        </SectionLabel>
-
         {/* A1 contextual tip: nudge the user to add age + sex if
           either is missing. These two fields drive TDEE precision
           (calculateTDEE consumes both); without them the user gets
