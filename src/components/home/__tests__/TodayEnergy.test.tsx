@@ -40,14 +40,6 @@ vi.mock("@/lib/haptic", function () {
   return { haptic: hapticMock };
 });
 
-// Keep the test focused on the always-on affordance, not ring internals.
-vi.mock("@/components/home/MacroRing", function () {
-  return { default: () => <div data-testid="macro-ring" /> };
-});
-vi.mock("@/components/home/BreakdownRow", function () {
-  return { default: () => <div data-testid="breakdown-row" /> };
-});
-
 import TodayEnergy from "../TodayEnergy";
 
 const burn: any = {
@@ -81,40 +73,28 @@ function renderAt(props: any = {}) {
   );
 }
 
-describe("TodayEnergy — always-on Log affordance (#973)", function () {
-  it("renders a Log affordance routing to /food", function () {
-    renderAt();
-    const link = screen.getByRole("link", { name: "Log food" });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "/food");
-  });
-
-  it("is present for the empty/new segment (no meals ever logged)", function () {
-    renderAt({ calories: 0, totalLifetimeMeals: 0 });
-    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
-  });
-
-  it("is present for an active segment (meals logged today)", function () {
-    renderAt({
-      calories: 1450,
-      protein: 90,
-      carbs: 150,
-      fat: 45,
-      totalLifetimeMeals: 420,
+describe("TodayEnergy — compact row (home-declutter 2a)", function () {
+  it("the WHOLE card is one link to /food (the Food tab is the expansion)", function () {
+    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
+    const link = screen.getByRole("link", {
+      name: /today's energy — open food log/i,
     });
-    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/food");
+    // No second log affordance and no in-place expansion remain.
+    expect(screen.queryByRole("link", { name: "Log food" })).toBeNull();
+    expect(screen.queryByText("View food log →")).toBeNull();
   });
 
   it("fires haptic feedback on tap", function () {
     hapticMock.mockClear();
     renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    fireEvent.click(screen.getByRole("link", { name: "Log food" }));
+    fireEvent.click(
+      screen.getByRole("link", { name: /today's energy — open food log/i })
+    );
     expect(hapticMock).toHaveBeenCalled();
   });
-});
 
-describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)", function () {
-  it("collapsed default shows the muted grams-remaining line, NOT the rings", function () {
+  it("shows the muted grams-remaining subline (target − consumed, clamped)", function () {
     renderAt({
       calories: 1450,
       protein: 80,
@@ -122,23 +102,8 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
       fat: 38,
       totalLifetimeMeals: 420,
     });
-    // target − consumed, clamped: P 160-80=80, C 220-56=164, F 70-38=32
+    // P 160-80=80, C 220-56=164, F 70-38=32
     expect(screen.getByText("P 80g · C 164g · F 32g left")).toBeInTheDocument();
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
-  });
-
-  it("expanding the card reveals the three macro rings", function () {
-    renderAt({
-      calories: 1450,
-      protein: 80,
-      carbs: 56,
-      fat: 38,
-      totalLifetimeMeals: 420,
-    });
-    fireEvent.click(screen.getByText("Today's Energy"));
-    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
-    // summary line hides once expanded (rings carry the detail)
-    expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
   });
 
   it("grams-remaining never goes negative (clamped at 0)", function () {
@@ -152,10 +117,9 @@ describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)",
     expect(screen.getByText("P 0g · C 0g · F 0g left")).toBeInTheDocument();
   });
 
-  it("cold-start (no meals ever) shows neither the summary line nor the rings", function () {
+  it("cold-start (no meals ever) swaps the subline for the first-meal CTA", function () {
     renderAt({ calories: 0, totalLifetimeMeals: 0 });
-    expect(screen.queryByText(/left$/)).toBeNull();
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
+    expect(screen.queryByText(/g left$/)).toBeNull();
     expect(
       screen.getByText("Log a meal to see your daily energy")
     ).toBeInTheDocument();
@@ -180,14 +144,5 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     });
     expect(screen.getByText("Bulk")).toBeInTheDocument();
     expect(screen.queryByText(/\+300/)).toBeNull();
-  });
-
-  it("post-lift protein nudge ties to the target, not a recovery claim", () => {
-    renderAt({
-      calories: 1200,
-      postWorkoutNudge: { type: "lift", proteinRemaining: 40 },
-    });
-    expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
-    expect(screen.queryByText(/for recovery/i)).toBeNull();
   });
 });
