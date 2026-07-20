@@ -78,11 +78,12 @@ export default function WeightStepsTiles({
   const showSteps = isNativePlatform();
 
   return (
-    <div
-      className={
-        showSteps ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"
-      }
-    >
+    /* home-declutter pyramid: this component now lives in the RIGHT
+       column of the water/weight duo, so the tiles stack vertically
+       (weight above steps on native) instead of going 2-up — 2-up
+       inside a half-width cell would cramp both. h-full lets the
+       weight tile stretch to match the water tile beside it. */
+    <div className="grid grid-cols-1 gap-2 h-full">
       <button
         type="button"
         onClick={function () {
@@ -91,7 +92,7 @@ export default function WeightStepsTiles({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted relative"
+        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted relative h-full"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
