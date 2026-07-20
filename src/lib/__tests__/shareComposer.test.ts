@@ -98,16 +98,14 @@ describe("compose / resolveCompose", function () {
     expect(getShareDefault(UID, "workout")).toBeNull();
   });
 
-  it("supports the 'crews' visibility added in PR 3.5 — short-circuits when stored as the always-pref", async function () {
-    // Composer-side 'crews' is a real persisted preference. Callers
-    // (useProgram + RunSummary) map it to a followers-visibility post
-    // tagged with crewId; the composer just records the user's intent.
-    const first = compose(UID, RUN_PREVIEW);
-    resolveCompose({ visibility: "crews", caption: "" }, true);
-    await first;
-    expect(getShareDefault(UID, "run")).toBe("crews");
+  it("migrates a stored legacy 'crews' always-pref to 'followers' (crews retirement)", async function () {
+    // The retired 'crews' audience was the followers fan-out plus a
+    // crewId tag; a persisted pref falls back to its underlying
+    // fan-out rather than silently clearing.
+    localStorage.setItem(`tropos.share.always.${UID}.run`, "crews");
+    expect(getShareDefault(UID, "run")).toBe("followers");
     await expect(compose(UID, RUN_PREVIEW)).resolves.toEqual({
-      visibility: "crews",
+      visibility: "followers",
       caption: "",
     });
   });

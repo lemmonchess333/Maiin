@@ -3,8 +3,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
-import { Users, Check, MapPin, Trash2, Plus, Shield } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Users, MapPin, Trash2, Plus, Shield } from "lucide-react";
 import { Toggle } from "@/components/ui/Toggle";
 import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
@@ -15,7 +14,6 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { PrivacyZone } from "@/lib/privacyZones";
 import type { User } from "firebase/auth";
-import type { Crew } from "@/hooks/useCrews";
 
 interface PrivacySectionProps {
   user: User | null;
@@ -43,10 +41,6 @@ interface PrivacySectionProps {
   setNewZoneName: (v: string) => void;
   newZoneRadius: number;
   setNewZoneRadius: (v: number) => void;
-  defaultCrews: Crew[];
-  currentCrew: Crew | null;
-  joinCrew: (crewId: string) => Promise<void>;
-  leaveCrew: () => Promise<void>;
   inline?: boolean;
 }
 
@@ -67,14 +61,8 @@ export default function PrivacySection({
   setNewZoneName,
   newZoneRadius,
   setNewZoneRadius,
-  defaultCrews,
-  currentCrew,
-  joinCrew,
-  leaveCrew,
   inline = false,
 }: PrivacySectionProps) {
-  const [showCrewPicker, setShowCrewPicker] = useState(false);
-  const [showLeaveCrewConfirm, setShowLeaveCrewConfirm] = useState(false);
   const [pendingZoneRemoval, setPendingZoneRemoval] =
     useState<PrivacyZone | null>(null);
   const [blockedUsersList, setBlockedUsersList] = useState<
@@ -89,66 +77,8 @@ export default function PrivacySection({
         inline={inline}
         icon={<Users className="size-5 text-primary" />}
         title="Social & Privacy"
-        subtitle="Crew, visibility, auto-post"
+        subtitle="Visibility, auto-post, GPS zones"
       >
-        {/* Crew switcher */}
-        <div className="p-4 rounded-lg bg-muted space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-foreground">Your crew</p>
-              <p className="text-xs text-muted-foreground">
-                {currentCrew
-                  ? `${currentCrew.icon} ${currentCrew.name}`
-                  : "Not in a crew"}
-              </p>
-            </div>
-            <Button onClick={() => setShowCrewPicker(!showCrewPicker)}>
-              {currentCrew ? "Switch" : "Join"}
-            </Button>
-          </div>
-          {showCrewPicker && (
-            <div className="space-y-2 pt-2 border-t border-border/50">
-              {defaultCrews.map((crew) => (
-                <button
-                  type="button"
-                  key={crew.id}
-                  onClick={async () => {
-                    await joinCrew(crew.id);
-                    setShowCrewPicker(false);
-                    toast.success(`Joined ${crew.name}`);
-                  }}
-                  className={cn(
-                    "w-full flex items-center gap-2 p-2.5 rounded-lg text-left text-xs transition-colors",
-                    currentCrew?.id === crew.id
-                      ? "bg-primary/10 border border-primary/30"
-                      : "bg-background hover:bg-muted"
-                  )}
-                >
-                  <span className="text-lg">{crew.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-medium">{crew.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {crew.description}
-                    </p>
-                  </div>
-                  {currentCrew?.id === crew.id && (
-                    <Check className="size-3.5 text-primary" />
-                  )}
-                </button>
-              ))}
-              {currentCrew && (
-                <button
-                  type="button"
-                  onClick={() => setShowLeaveCrewConfirm(true)}
-                  className="w-full text-center text-xs text-muted-foreground hover:text-destructive py-1"
-                >
-                  Leave crew
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div>
             <p className="text-sm text-foreground">Default visibility</p>
@@ -469,21 +399,6 @@ export default function PrivacySection({
             ))}
         </div>
       </AccordionSection>
-
-      <ConfirmDialog
-        open={showLeaveCrewConfirm}
-        title="Leave crew?"
-        description="You can rejoin this crew later."
-        confirmLabel="Leave"
-        destructive
-        onConfirm={async () => {
-          setShowLeaveCrewConfirm(false);
-          await leaveCrew();
-          setShowCrewPicker(false);
-          toast.success("Left crew");
-        }}
-        onCancel={() => setShowLeaveCrewConfirm(false)}
-      />
 
       <ConfirmDialog
         open={pendingZoneRemoval !== null}

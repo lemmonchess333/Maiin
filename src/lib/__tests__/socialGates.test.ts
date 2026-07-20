@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   SOCIAL_GATES,
   shouldShowFollowingFeed,
-  shouldShowCrewSurface,
   shouldShowLeaderboard,
   shouldShowChallengePercentile,
   isSoloUser,
@@ -11,7 +10,6 @@ import {
 describe("SOCIAL_GATES thresholds (pinned to the researched values)", () => {
   it("matches the spec", () => {
     expect(SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS).toBe(3);
-    expect(SOCIAL_GATES.CREW_ACTIVATION_MIN_MEMBERS).toBe(3);
     expect(SOCIAL_GATES.LEADERBOARD_MIN_COHORT).toBe(20);
     expect(SOCIAL_GATES.CHALLENGE_PERCENTILE_MIN_PARTICIPANTS).toBe(50);
   });
@@ -23,15 +21,6 @@ describe("shouldShowFollowingFeed", () => {
     expect(shouldShowFollowingFeed(2)).toBe(false);
     expect(shouldShowFollowingFeed(3)).toBe(true);
     expect(shouldShowFollowingFeed(10)).toBe(true);
-  });
-});
-
-describe("shouldShowCrewSurface", () => {
-  it("aspirational below 3 members, real surface at/above", () => {
-    expect(shouldShowCrewSurface(0)).toBe(false);
-    expect(shouldShowCrewSurface(1)).toBe(false); // just the user
-    expect(shouldShowCrewSurface(2)).toBe(false);
-    expect(shouldShowCrewSurface(3)).toBe(true);
   });
 });
 
@@ -52,21 +41,12 @@ describe("shouldShowChallengePercentile", () => {
 });
 
 describe("isSoloUser", () => {
-  it("solo when no partners and no activated crew", () => {
-    expect(isSoloUser({ partnerCount: 0, crewMemberCount: 0 })).toBe(true);
-    expect(isSoloUser({ partnerCount: 0, crewMemberCount: 1 })).toBe(true);
-    expect(isSoloUser({ partnerCount: 0, crewMemberCount: 2 })).toBe(true);
+  it("solo when no partner bonds exist", () => {
+    expect(isSoloUser({ partnerCount: 0 })).toBe(true);
   });
 
   it("not solo once a partner bond exists", () => {
-    expect(isSoloUser({ partnerCount: 1, crewMemberCount: 0 })).toBe(false);
-  });
-
-  it("not solo once the crew is activated (≥3 members)", () => {
-    expect(isSoloUser({ partnerCount: 0, crewMemberCount: 3 })).toBe(false);
-  });
-
-  it("not solo with both a partner and an activated crew", () => {
-    expect(isSoloUser({ partnerCount: 2, crewMemberCount: 5 })).toBe(false);
+    expect(isSoloUser({ partnerCount: 1 })).toBe(false);
+    expect(isSoloUser({ partnerCount: 2 })).toBe(false);
   });
 });

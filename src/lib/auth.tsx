@@ -253,6 +253,10 @@ export interface UserProfileSocial {
   autoPostRuns?: boolean;
   autoPostWorkouts?: boolean;
   autoPostBadges?: boolean;
+  /** LEGACY (crews retired 2026-07-20): no longer read or written, but
+   *  kept in the type + field registry so existing docs carrying it
+   *  still pass the profile allow-list. A future registry sweep can
+   *  drop it once prod data is confirmed clean. */
   crewId?: string;
   /** Shared-run route privacy. When unset or true (the DEFAULT), the route
    *  preview on shared run activities is clipped ~200m off each end so the

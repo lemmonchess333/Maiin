@@ -972,7 +972,7 @@ export default function RunSummary() {
       /* Skip the share-composer for invalid runs. The user chose
          "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
          we keep the record on their account but a 0km run has no
-         business prompting a "Share with followers / crew / public"
+         business prompting a "Share with followers / public"
          decision. Surfaced in QA: the composer was auto-firing on
          every Save anyway, even though the InvalidRunReview saved-
          state UI deliberately hides Share / GPX / map. */
@@ -999,14 +999,6 @@ export default function RunSummary() {
           ].filter(Boolean),
         });
         if (decision) {
-          // See useProgram.ts for visibility-mapping rationale; same rules
-          // apply here so workouts and runs follow identical share semantics.
-          const apiVisibility =
-            decision.visibility === "crews" ? "followers" : decision.visibility;
-          const includeCrewId =
-            (decision.visibility === "crews" ||
-              decision.visibility === "public") &&
-            !!profile?.crewId;
           // Shared-route privacy default. The public activity routePreview is
           // rendered as a REAL map on the feed, so a user who hasn't set
           // explicit privacy zones would otherwise broadcast their home/start
@@ -1025,7 +1017,7 @@ export default function RunSummary() {
             authorName: profile?.displayName || "Athlete",
             ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
             type: "run" as const,
-            visibility: apiVisibility,
+            visibility: decision.visibility,
             ...(decision.caption ? { caption: decision.caption } : {}),
             runName,
             activityTitle: runName,
@@ -1034,7 +1026,6 @@ export default function RunSummary() {
             avgPace,
             elevationGain,
             calories,
-            ...(includeCrewId ? { crewId: profile?.crewId } : {}),
             routePreview:
               sharedRoutePoints.length > 20
                 ? sharedRoutePoints
