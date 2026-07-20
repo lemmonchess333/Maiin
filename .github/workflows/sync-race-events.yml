@@ -1,0 +1,39 @@
+name: Sync race events to Firestore
+
+# RACE-EVENTS-REMOTE (locked 2026-07-20): on merge to main, mirror the
+# race event blocks from spaceDefs.ts into `config/raceEvents` so date
+# updates reach every platform — including native binaries that
+# haven't updated — without an app release. Git stays the source of
+# truth; this workflow is the ONLY writer of the doc (rules deny all
+# client writes), so drift is structurally impossible.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/features/spaces/spaceDefs.ts"
+  # Manual trigger for the first backfill run / re-sync on demand.
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Write config/raceEvents from spaceDefs
+        run: npx tsx scripts/sync-race-events.ts
