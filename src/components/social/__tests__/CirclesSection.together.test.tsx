@@ -154,10 +154,17 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     );
 
     fireEvent.click(screen.getByText("Hybrid"));
+    // Cal-fix: the goal is already chosen, so the sheet opens straight to
+    // naming with a compact chosen-goal header — NOT the full re-pick list.
+    expect(await screen.findByLabelText(/circle name/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: "Circle template" })
+    ).not.toBeInTheDocument();
+    // "Change" reveals the full picker (hybrid row appended + selected).
+    fireEvent.click(screen.getByRole("button", { name: /^change$/i }));
     const group = await screen.findByRole("group", {
       name: "Circle template",
     });
-    // The three lock-pinned LAUNCH_TEMPLATES + the appended hybrid row.
     expect(within(group).getAllByRole("button")).toHaveLength(4);
     const pressed = within(group)
       .getAllByRole("button")
