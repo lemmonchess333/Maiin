@@ -7,14 +7,22 @@
  * designed fallback band (accent gradient + ghosted icon — the same
  * grammar as the challenge hero).
  *
+ * Races & Events (races plan PR2): the FULL directory adds a second
+ * row of race-kind spaces — RACE chip, race date + city under the
+ * name (Runna's card anatomy), soonest first, past dates hidden
+ * (Q2: derived from dateKey, never operated). The compact Feed row
+ * stays interest-only (Q6 — the calm-feed doctrine).
+ *
  * Density gate (Spc1c): member counts below
  * SPACE_MEMBER_COUNT_MIN_VISIBLE render as a "New space" chip, never a
  * shame-count. Static everything — no filters, no loops (WKWebView).
  */
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import {
   Check,
   Dumbbell,
+  Flag,
   Footprints,
   Heart,
   Medal,
@@ -28,6 +36,7 @@ import {
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
+import { parseLocalDate } from "@/lib/dateHelpers";
 import { SPACE_MEMBER_COUNT_MIN_VISIBLE, type SpaceDef } from "./spaceDefs";
 import {
   useSpacesDirectory,
@@ -43,6 +52,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   dumbbell: Dumbbell,
   medal: Medal,
   plane: Plane,
+  flag: Flag,
 };
 
 const ACCENT_HEX: Record<SpaceDef["accent"], string> = {
@@ -64,6 +74,7 @@ function SpaceCard({
   const Icon = ICON_MAP[def.icon] ?? Users;
   const showCount =
     memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;
+  const event = def.kind === "race" ? def.event : undefined;
 
   return (
     <Link
@@ -110,13 +121,29 @@ function SpaceCard({
         />
       )}
 
+      {event && (
+        <span
+          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+            photo ? "bg-white/90" : ""
+          }`}
+          /* Same chip grammar as Joined: on a photo, a white pill with
+             the accent as ink — the photo, not the theme, is the
+             surface. */
+          style={
+            photo
+              ? { color: accent }
+              : { background: `${accent}1F`, color: accent }
+          }
+        >
+          Race
+        </span>
+      )}
+
       {joined && (
         <span
           className={`absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
             photo ? "bg-white/90" : ""
           }`}
-          /* On a photo the chip is a white pill with the accent as ink —
-             theme-independent (the photo, not the theme, is the surface). */
           style={
             photo
               ? { color: accent }
@@ -141,11 +168,56 @@ function SpaceCard({
             photo ? "text-white/85" : "text-muted-foreground"
           }`}
         >
-          <Users className="size-3" aria-hidden />
-          {showCount ? `${memberCount.toLocaleString()} members` : "New space"}
+          {event ? (
+            /* Runna's race-card anatomy: race day + city, not a member
+               count (membership lives on the space page header). */
+            <span className="truncate">
+              <span className="font-mono tabular-nums">
+                {format(parseLocalDate(event.dateKey), "d MMM yyyy")}
+              </span>
+              {" · "}
+              {event.city} {event.countryFlag}
+            </span>
+          ) : (
+            <>
+              <Users className="size-3" aria-hidden />
+              {showCount
+                ? `${memberCount.toLocaleString()} members`
+                : "New space"}
+            </>
+          )}
         </p>
       </div>
     </Link>
+  );
+}
+
+function CardRow({
+  label,
+  entries,
+  compact,
+}: {
+  label: string;
+  entries: SpaceDirectoryEntry[];
+  compact: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      <SectionLabel>{label}</SectionLabel>
+      {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
+          peeking next card invites the swipe (the Runna affordance). */}
+      <div
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="list"
+        aria-label={label}
+      >
+        {entries.map((entry) => (
+          <div role="listitem" key={entry.def.id} className="contents">
+            <SpaceCard entry={entry} compact={compact} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -161,26 +233,22 @@ export default function SpacesDirectory({
   excludeJoined?: boolean;
   title?: string;
 }) {
-  const { entries } = useSpacesDirectory();
+  /* Q6 lock: race rows exist ONLY in the full directory — the compact
+     Feed row never requests them (and never pays their reads). */
+  const { entries } = useSpacesDirectory(!compact);
   const shown = excludeJoined ? entries.filter((e) => !e.joined) : entries;
+  const interest = shown.filter((e) => e.def.kind !== "race");
+  const races = shown.filter((e) => e.def.kind === "race");
   if (shown.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <SectionLabel>{title}</SectionLabel>
-      {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
-          peeking next card invites the swipe (the Runna affordance). */}
-      <div
-        className="flex gap-3 overflow-x-auto snap-x snap-mandatory -mx-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="list"
-        aria-label="Community spaces"
-      >
-        {shown.map((entry) => (
-          <div role="listitem" key={entry.def.id} className="contents">
-            <SpaceCard entry={entry} compact={compact} />
-          </div>
-        ))}
-      </div>
+    <div className="space-y-4">
+      {interest.length > 0 && (
+        <CardRow label={title} entries={interest} compact={compact} />
+      )}
+      {races.length > 0 && (
+        <CardRow label="Races & Events" entries={races} compact={compact} />
+      )}
     </div>
   );
 }

@@ -340,6 +340,19 @@ export function raceSpaceDefs(): SpaceDef[] {
   );
 }
 
+/**
+ * Upcoming races only (Q2 lock: everything derives from
+ * `dateKey < today`). Race DAY itself still shows — it's the
+ * community's biggest day; the card drops out the day after. A race
+ * whose next-edition date hasn't been pasted forward simply
+ * disappears from browse surfaces while its space stays fully alive.
+ * `todayKey` is a local "YYYY-MM-DD" (dateHelpers.localDateString) —
+ * lexicographic compare is date order for this shape.
+ */
+export function upcomingRaceSpaceDefs(todayKey: string): SpaceDef[] {
+  return raceSpaceDefs().filter((d) => (d.event?.dateKey ?? "") >= todayKey);
+}
+
 /** Density gate (Spc1c, Soc8 idiom): member counts below this render
  *  as "New space" instead of a shame-count. */
 export const SPACE_MEMBER_COUNT_MIN_VISIBLE = 5;
