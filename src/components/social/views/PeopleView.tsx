@@ -14,11 +14,6 @@ import { THEME } from "@/lib/theme";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import Coachmark from "@/components/ui/Coachmark";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
-import type { Crew, CrewsLoadError } from "@/hooks/useCrews";
-
-// Crew icons live in src/lib/crewIcons so the Crew page can render
-// the same glyph the list row shows.
-import { CREW_ICON_MAP as ICON_MAP } from "@/lib/crewIcons";
 
 export interface PeopleViewProps {
   /** True when the People (find) tab is the active top-level tab.
@@ -37,16 +32,8 @@ export interface PeopleViewProps {
    *  surface as a suggestion before the exclude set is known. */
   blockedReady: boolean;
   isNewUser: boolean;
-  /** Close the overlay and land on Together (crews live there). */
+  /** Close the overlay and land on Together. */
   openTogether: () => void;
-  /* useCrews stays in the shell — this tab consumes the same crews /
-     currentCrew / crewsError instance the Community tab renders, so
-     optimistic membership updates stay in sync. The People slice
-     threads through here. */
-  crews: Crew[];
-  currentCrew: Crew | null;
-  crewsError: CrewsLoadError | null;
-  refreshCrews: () => Promise<void>;
 }
 
 export default function PeopleView({
@@ -56,12 +43,8 @@ export default function PeopleView({
   blockedReady,
   isNewUser,
   openTogether,
-  crews,
-  currentCrew,
-  crewsError,
-  refreshCrews,
 }: PeopleViewProps) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   // Suggested People — fetches lazily only when the Discover tab is shown.
   // SOCIAL-PRIVACY-01: also wait for the block list so a blocked user
@@ -100,7 +83,7 @@ export default function PeopleView({
   // Find tab state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<
-    { uid: string; displayName?: string; photoURL?: string; crewId?: string }[]
+    { uid: string; displayName?: string; photoURL?: string }[]
   >([]);
   const [searching, setSearching] = useState(false);
   /* Distinct error state lets the empty-results UI distinguish "no
@@ -219,7 +202,7 @@ export default function PeopleView({
         )}
         {/* Section order rebuilt per audit: search-first because
       that's the highest-intent task on this surface. Suggested
-      people next (most relevant social action). Popular crews
+      people next (most relevant social action). Invite
       third — always shown so the page never dead-ends when
       suggestions are empty (the previous IA left a mostly-
       blank page on cold-start users). Invite is the last
@@ -317,11 +300,6 @@ export default function PeopleView({
                         </p>
                         <FollowsYouBadge uid={u.uid} />
                       </div>
-                      {u.crewId && (
-                        <p className="text-sm text-muted-foreground">
-                          Crew member
-                        </p>
-                      )}
                     </div>
                   </Link>
                   <FollowButton targetUid={u.uid} disabled={isRestricted} />
@@ -394,59 +372,23 @@ export default function PeopleView({
               />
             </div>
           ) : suggestedPeople.length === 0 ? (
-            /* Empty state with a real next step rather than a
-         dead-end caption. Falls through to the always-shown
-         Popular crews section below, but adds an explicit
-         jump to Crews so users on this surface understand
-         where the suggestion engine pulls from.
-
-         Issue #846: when the crews load itself failed
-         (PERMISSION_DENIED, network drop) the user sees the
-         same empty state as "no crews to join" — which
-         reads as "feature is empty by design". Distinguish
-         the two so the unavailable case gets honest copy +
-         a Retry affordance instead of nudging users toward
-         a Browse path that will fail again. */
-            crewsError === "unavailable" ? (
-              <div className="p-4 rounded-xl bg-card border border-border/50 text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Crews are unavailable right now. Try again, or contact support
-                  if it keeps happening.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => refreshCrews()}
-                  className="text-sm font-medium text-primary hover:text-primary/80"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : (
-              /* Wave3 F — designed hexagon empty state, complementing
-                 (not replacing) the "Invite a training partner" card
-                 lower on this tab. Action routes into the follow flow
-                 (browse crews) for users not yet in a crew. */
-              <div className="rounded-xl bg-card border border-border/50">
-                <HexEmptyState
-                  icon={Users}
-                  accent={THEME.brand}
-                  headline="No suggestions yet"
-                  sub={
-                    profile?.crewId && currentCrew
-                      ? "Suggestions show up as people in your crew get active."
-                      : "Join a crew or follow people to start seeing suggestions."
-                  }
-                  action={
-                    !profile?.crewId
-                      ? {
-                          label: "Browse crews",
-                          onClick: openTogether,
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-            )
+            /* Wave3 F — designed hexagon empty state, complementing
+               (not replacing) the "Invite a training partner" card
+               lower on this tab. Action routes to Together, where
+               Circles and Spaces are the joinable groups (crews
+               retired 2026-07-20). */
+            <div className="rounded-xl bg-card border border-border/50">
+              <HexEmptyState
+                icon={Users}
+                accent={THEME.brand}
+                headline="No suggestions yet"
+                sub="Follow people or join a space to start seeing suggestions."
+                action={{
+                  label: "Browse spaces",
+                  onClick: openTogether,
+                }}
+              />
+            </div>
           ) : (
             <div className="space-y-2">
               {suggestedPeople.map((p) => (
@@ -467,11 +409,7 @@ export default function PeopleView({
                       </p>
                       <FollowsYouBadge uid={p.uid} />
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {p.reason === "in_your_crew"
-                        ? "In your crew"
-                        : "Recent post"}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Recent post</p>
                   </div>
                   <FollowButton
                     targetUid={p.uid}
@@ -487,56 +425,6 @@ export default function PeopleView({
             </div>
           )}
         </div>
-
-        {/* Popular crews — fallback discovery when suggestions are
-      empty AND a permanent surface for users to find groups
-      they could join. Sorted by memberCount desc, excluding
-      crews the user is already a member of. Limit 3 so the
-      section stays compact. Hidden entirely if every crew
-      is one the user already belongs to. */}
-        {(() => {
-          const otherCrews = crews
-            .filter((c) => c.id !== currentCrew?.id)
-            .slice(0, 3);
-          if (otherCrews.length === 0) return null;
-          return (
-            <div className="space-y-2">
-              <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-                Popular crews
-              </p>
-              <div className="space-y-2">
-                {otherCrews.map((crew) => {
-                  const IconComp = ICON_MAP[crew.icon];
-                  return (
-                    <Link
-                      key={crew.id}
-                      to={`/crew/${crew.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-card"
-                    >
-                      {IconComp ? (
-                        <IconComp
-                          size={24}
-                          className="text-muted-foreground shrink-0"
-                        />
-                      ) : (
-                        <span className="text-2xl shrink-0">{crew.icon}</span>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {crew.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {crew.description?.trim() ||
-                            `${crew.memberCount} member${crew.memberCount === 1 ? "" : "s"}`}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* Bring a friend — moved to bottom. Still the primary growth
       path but no longer the dominant element on the page; the

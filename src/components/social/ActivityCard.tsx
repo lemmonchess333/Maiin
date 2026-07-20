@@ -56,13 +56,9 @@ const LIFT_CHIPS = ["Great lift!", "Solid session!", "Strong work!"];
 interface ActivityCardProps {
   feedItem: FeedItem;
   onShare?: (item: FeedItem) => void;
-  /** Which feed surfaced this card. Drives the "From your crew" trust
-   *  chip — only shown on Explore (Following posts are by definition
-   *  from people the user already chose, so the chip would be noise). */
-  feedSource?: "following" | "explore";
 }
 
-function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
+function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
   const { user, profile } = useAuth();
   const { addBlocked } = useBlockedUsers();
   const [liked, setLiked] = useState(feedItem.liked ?? false);
@@ -85,23 +81,6 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
     targetWeightKg: number;
   } | null>(null);
   const activity = feedItem.activity;
-
-  /* "From your crew" trust chip.
-     The audit asked for ranking-driven "Why this post" chips on
-     Explore (e.g. "From your crew" / "Similar workout type" / "Popular
-     near you"). Without a real ranking signal those become decorative
-     lies, so this ships only the one variant where the data is
-     unambiguous: the activity was posted by a member of the same crew
-     the current user is in. activity.crewId is set at post time by
-     the share chain when the author was in a crew (socialApi.postActivity).
-     Following posts are by definition chosen by the user — the chip
-     would be redundant — so it's gated to feedSource === 'explore'. */
-  const fromYourCrew =
-    feedSource === "explore" &&
-    !!profile?.crewId &&
-    !!activity?.crewId &&
-    activity.crewId === profile.crewId &&
-    feedItem.authorId !== user?.uid;
 
   /* "Save as routine" gate.
      - Only workout activities (runs aren't routines).
@@ -501,17 +480,6 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                     <p className="text-sm font-semibold truncate text-foreground">
                       {feedItem.authorName}
                     </p>
-                    {fromYourCrew && (
-                      <span
-                        className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded shrink-0"
-                        style={{
-                          background: `${THEME.brand}14`,
-                          color: THEME.brand,
-                        }}
-                      >
-                        From your crew
-                      </span>
-                    )}
                   </div>
                   <p className="text-small text-muted-foreground">{timeAgo}</p>
                 </div>
@@ -552,17 +520,6 @@ function ActivityCard({ feedItem, onShare, feedSource }: ActivityCardProps) {
                     <p className="text-sm font-semibold truncate text-foreground">
                       {feedItem.authorName}
                     </p>
-                    {fromYourCrew && (
-                      <span
-                        className="inline-flex items-center text-caption font-medium px-1.5 py-0.5 rounded shrink-0"
-                        style={{
-                          background: `${THEME.brand}14`,
-                          color: THEME.brand,
-                        }}
-                      >
-                        From your crew
-                      </span>
-                    )}
                   </div>
                   <div className="flex items-center gap-1 text-muted-foreground">
                     {isRun ? (

@@ -5,7 +5,7 @@
  * also duplicated inline inside `onRunCreated`'s challenge/PR sync
  * branch. Mirror of `src/lib/runStatsEligibility.ts:isVolumeEligible`
  * — the client-side source-of-truth that History filtering, PR
- * computation, weekly stats, and the crew leaderboards all share.
+ * computation and weekly stats share.
  *
  * Defends against:
  *   - `isInvalid` runs that the user explicitly flagged as broken

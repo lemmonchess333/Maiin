@@ -14,15 +14,15 @@ import { THEME } from "@/lib/theme";
 interface SoloFirstFeedProps {
   /** Open the People search overlay (find a partner / people). */
   onFindPeople: () => void;
-  /** Jump to the Together tab (circles/crews surfaces). */
+  /** Jump to the Together tab (circles/spaces surfaces). */
   onOpenTogether: () => void;
 }
 
 /**
  * Solo-first Social feed (SOCIAL S4) — the curated stack a user with no
- * partners and no crew sees INSTEAD of an empty feed. Composition is
+ * partners sees INSTEAD of an empty feed. Composition is
  * locked by Soc8: PartnerStreak invite hero → "This month on Tropos"
- * global hybrid challenge → share-your-training → aspirational crew row.
+ * global hybrid challenge → share-your-training → aspirational gym row.
  * Every piece is an existing primitive; this only composes them.
  *
  * Gating lives in the parent (`Social.tsx`) on the cheap cold-start
@@ -125,16 +125,17 @@ export default function SoloFirstFeed({
         </div>
       </div>
 
-      {/* Aspirational crew row — the dormant crew surface (Soc8 keep-
-          dormant-don't-delete). Activates into real crew surfaces at
-          ≥3 members (PR4 wiring). */}
+      {/* Aspirational gym row — the gym-community promise (crews
+          retired 2026-07-20; gyms arrive later as location-kind
+          Spaces, which have been schema-ready since Spc1). Until
+          then this routes to Together where Spaces live. */}
       <HexEmptyState
         icon={Users}
-        headline="Crews unlock when your gym's here"
-        sub="Create a crew and invite friends to train together"
+        headline="Your gym's space is coming"
+        sub="Join a community space and train with people like you"
         accent={THEME.brand}
         action={{
-          label: "Create a crew",
+          label: "Browse spaces",
           onClick: onOpenTogether,
         }}
       />

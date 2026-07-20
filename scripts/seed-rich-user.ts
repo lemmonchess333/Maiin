@@ -422,7 +422,7 @@ async function main() {
   for (const [id, docData] of Object.entries(feedActivities)) {
     await db.collection("activities").doc(id).set(docData);
   }
-  // ── Challenge fixtures (Social uplift v2): the Crews-tab challenge
+  // ── Challenge fixtures (Social uplift v2): the Together-tab challenge
   //    cards were invisible to the screenshot channel (production
   //    challenges are materialised by the rolloverChallenges cron,
   //    which never runs against the emulator). One joined-with-
@@ -472,7 +472,7 @@ async function main() {
     });
 
   // One follow relationship: Social's solo-first gate (isNewUser =
-  // 0 follows + no crew) suppresses the activity list entirely, so
+  // 0 follows) suppresses the activity list entirely, so
   // without this the seeded cards above never render on any sub-tab.
   // The rich user is by definition established — a 1-follow graph is
   // the honest fixture (Following stays locked until 3, Explore shows

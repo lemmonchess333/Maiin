@@ -15,8 +15,8 @@ describe("socialPreferenceKey", () => {
   });
 
   it("is stable for a given (uid, family)", () => {
-    expect(socialPreferenceKey("me", "dismissed-crews")).toBe(
-      socialPreferenceKey("me", "dismissed-crews")
+    expect(socialPreferenceKey("me", "unread-last-seen")).toBe(
+      socialPreferenceKey("me", "unread-last-seen")
     );
   });
 
@@ -26,9 +26,8 @@ describe("socialPreferenceKey", () => {
       socialPreferenceKey(uid, "unread-last-seen"),
       socialPreferenceKey(uid, "feed-following-last-viewed"),
       socialPreferenceKey(uid, "feed-explore-last-viewed"),
-      socialPreferenceKey(uid, "dismissed-crews"),
     ]);
-    expect(keys.size).toBe(4);
+    expect(keys.size).toBe(3);
   });
 });
 
@@ -49,18 +48,13 @@ describe("purgeLegacySocialKey", () => {
       "x"
     );
     window.localStorage.setItem("tropos-social-feed-explore-last-viewed", "x");
-    window.localStorage.setItem("tropos-social-dismissed-crews", "x");
     purgeLegacySocialKey("feed-following-last-viewed");
     purgeLegacySocialKey("feed-explore-last-viewed");
-    purgeLegacySocialKey("dismissed-crews");
     expect(
       window.localStorage.getItem("tropos-social-feed-following-last-viewed")
     ).toBeNull();
     expect(
       window.localStorage.getItem("tropos-social-feed-explore-last-viewed")
-    ).toBeNull();
-    expect(
-      window.localStorage.getItem("tropos-social-dismissed-crews")
     ).toBeNull();
   });
 });

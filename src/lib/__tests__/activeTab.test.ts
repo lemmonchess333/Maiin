@@ -15,13 +15,14 @@ describe("activeTabForPath", () => {
       "/history"
     );
     expect(activeTabForPath("/user/abc123")).toBe("/social");
-    expect(activeTabForPath("/crew/xyz")).toBe("/social");
   });
 
   it("returns NO tab for routes outside every subtree (the bug)", () => {
     // The exact routes the audit flagged with a false Food highlight.
     expect(activeTabForPath("/upgrade")).toBeNull();
     expect(activeTabForPath("/run/abc123")).toBeNull();
+    // /crew/* retired with crews (2026-07-20) — no longer a Social route.
+    expect(activeTabForPath("/crew/xyz")).toBeNull();
     // …and the rest of the no-tab surfaces.
     expect(activeTabForPath("/run")).toBeNull();
     expect(activeTabForPath("/run-summary")).toBeNull();
