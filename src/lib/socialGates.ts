@@ -8,7 +8,7 @@
  * tunable without hunting call sites and pinned by unit tests.
  *
  * The functions are pure predicates over counts — the CALLER decides what a
- * count means (e.g. "active follows", "crew members", "leaderboard cohort").
+ * count means (e.g. "active follows", "leaderboard cohort").
  * Keeping the meaning at the call site keeps this module dependency-free and
  * trivially testable.
  */
@@ -21,9 +21,6 @@ export const SOCIAL_GATES = {
   /** Following feed needs ≥3 active accounts before it's worth rendering —
    *  below that it's a near-empty list that reads as broken. */
   FOLLOWING_FEED_MIN_FOLLOWS: 3,
-  /** A crew surface (member list, crew feed, crew leaderboard) activates at
-   *  ≥3 members; below that the user sees the aspirational invite row. */
-  CREW_ACTIVATION_MIN_MEMBERS: 3,
   /** A vs-others leaderboard only renders for a cohort of ≥20 — small
    *  cohorts make rank meaningless and expose individuals. */
   LEADERBOARD_MIN_COHORT: 20,
@@ -35,15 +32,6 @@ export const SOCIAL_GATES = {
 /** Following feed is worth rendering once the user follows ≥3 active accounts. */
 export function shouldShowFollowingFeed(activeFollowCount: number): boolean {
   return activeFollowCount >= SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS;
-}
-
-/**
- * True once the user's crew has enough members to show real crew surfaces;
- * false means render the single aspirational invite row instead.
- * `crewMemberCount` is the member count of the user's crew (0 when not in one).
- */
-export function shouldShowCrewSurface(crewMemberCount: number): boolean {
-  return crewMemberCount >= SOCIAL_GATES.CREW_ACTIVATION_MIN_MEMBERS;
 }
 
 /**
@@ -67,22 +55,15 @@ export function shouldShowChallengePercentile(
 
 /**
  * A "solo" user gets the solo-first curated layout (PartnerStreak hero →
- * global challenge → share-your-training → aspirational crew row) instead of
- * any empty network feed.
+ * global challenge → share-your-training → spaces row) instead of any
+ * empty network feed.
  *
- * Solo = no active partner bonds AND no ACTIVATED crew. The spec's "0 crew
- * members" maps to "crew not activated" because a sub-threshold crew (<3
- * members) only ever shows the aspirational row anyway — there is no rich
- * crew surface to fall back to, so such a user is still solo for layout
- * purposes. Follows do NOT factor in here: a user who follows people but has
- * no partners/crew still gets the curated layout (their following feed
- * activates separately via `shouldShowFollowingFeed`).
+ * Solo = no active partner bonds. (The crew half of this predicate
+ * retired with crews, 2026-07-20 — Spaces have no per-user membership
+ * threshold.) Follows do NOT factor in here: a user who follows people
+ * but has no partners still gets the curated layout (their following
+ * feed activates separately via `shouldShowFollowingFeed`).
  */
-export function isSoloUser(params: {
-  partnerCount: number;
-  crewMemberCount: number;
-}): boolean {
-  return (
-    params.partnerCount === 0 && !shouldShowCrewSurface(params.crewMemberCount)
-  );
+export function isSoloUser(params: { partnerCount: number }): boolean {
+  return params.partnerCount === 0;
 }

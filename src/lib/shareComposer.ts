@@ -28,19 +28,13 @@ export type ShareType = "workout" | "run";
 /** Visibility options surfaced in the composer.
  *
  *  - `followers`: classic feed share. Goes to the user's followers'
- *    feeds. Does NOT surface on any crew page.
- *  - `crews`: same fan-out as `followers` (the underlying postActivity
- *    API only writes to followers' feeds), plus the activity is tagged
- *    with the user's primary crewId so it appears on that crew's page.
- *    Only offered when the user has a crewId.
- *  - `public`: discoverable via the Discover sub-tab and tagged with
- *    crewId so crew members see it too.
+ *    feeds.
+ *  - `public`: also discoverable via the Discover sub-tab.
  *
- *  The "crews" value is composer-side only. socialApi.postActivity
- *  still takes the underlying `'public' | 'followers' | 'private'`
- *  union — callers map `'crews'` → `{ visibility: 'followers',
- *  crewId }` before calling postActivity. */
-export type ShareVisibility = "followers" | "crews" | "public";
+ *  (A third `crews` option existed until the crews retirement,
+ *  2026-07-20 — it was the followers fan-out plus a crewId tag. A
+ *  stored "crews" always-pref migrates to "followers" on read.) */
+export type ShareVisibility = "followers" | "public";
 
 export interface ActivityPreview {
   type: ShareType;
@@ -104,13 +98,10 @@ function readAlways(uid: string, type: ShareType): AlwaysPref {
     // user re-picks once after upgrade.
     localStorage.removeItem(`${PREF_KEY_PREFIX}.${type}`);
     const raw = localStorage.getItem(prefKey(uid, type));
-    if (
-      raw === "followers" ||
-      raw === "crews" ||
-      raw === "public" ||
-      raw === "never"
-    )
-      return raw;
+    if (raw === "followers" || raw === "public" || raw === "never") return raw;
+    // Crews retirement migration: the retired audience falls back to
+    // its underlying fan-out rather than silently clearing the pref.
+    if (raw === "crews") return "followers";
   } catch {
     /* localStorage unavailable (private mode, etc.) */
   }
@@ -143,7 +134,7 @@ export function compose(
 ): Promise<ShareDecision | null> {
   const pref = readAlways(uid, preview.type);
   if (pref === "never") return Promise.resolve(null);
-  if (pref === "followers" || pref === "crews" || pref === "public") {
+  if (pref === "followers" || pref === "public") {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
   state = { open: true, type: preview.type, preview, uid };

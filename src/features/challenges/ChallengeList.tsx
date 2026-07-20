@@ -119,8 +119,8 @@ export function ChallengeList({
 
   // No friends at all → compact inline prompt.
   // Previously rendered as a full centered EmptyState. After PR 2's
-  // tab collapse, ChallengeList sits at the top of the Crews tab —
-  // a giant centered card pushed the actual crews list below the
+  // tab collapse, ChallengeList sat at the top of the Crews tab —
+  // a giant centered card pushed the rest of the tab below the
   // fold. Inline single-line prompt keeps the entry point without
   // dominating the surface.
   if (

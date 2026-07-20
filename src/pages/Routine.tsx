@@ -221,25 +221,18 @@ export default function Routine() {
           ].filter(Boolean),
         });
         if (decision) {
-          const apiVisibility =
-            decision.visibility === "crews" ? "followers" : decision.visibility;
-          const includeCrewId =
-            (decision.visibility === "crews" ||
-              decision.visibility === "public") &&
-            !!profile?.crewId;
           const payload = {
             authorId: user.uid,
             authorName: profile?.displayName || "Athlete",
             ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
             type: "workout" as const,
-            visibility: apiVisibility,
+            visibility: decision.visibility,
             ...(decision.caption ? { caption: decision.caption } : {}),
             workoutName: routine.name,
             activityTitle: routine.name,
             exerciseCount: synthDay.exercises.length,
             totalVolume: tonnage,
             duration: effectiveDurationMin * 60,
-            ...(includeCrewId ? { crewId: profile?.crewId } : {}),
             exercises: synthDay.exercises.map((ex) => {
               const setCount = ex.sets;
               const targetReps = ex.reps;

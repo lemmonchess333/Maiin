@@ -18,7 +18,6 @@ export type SocialEvent =
   | "social_tab_selected"
   | "social_feed_subtab_changed"
   | "social_coachmark_dismissed"
-  | "social_create_crew_tapped"
   | "social_initial_render_ms"
   /** S4e-P13: Fires when the Find tab renders with the restricted-
    *  user gate visible (search input disabled + restriction banner
@@ -31,10 +30,10 @@ export type SocialEvent =
    *  funnel's conversion event for the >10% share-rate benchmark. */
   | "share_card_exported";
 
-/* SOCIAL-HOME-01: "together" + "feed" are the live tabs; "crews" and
-   "find" remain as legacy values so historical events stay queryable
-   (and the People overlay still reports as "find"). */
-export type SocialTab = "together" | "feed" | "crews" | "find";
+/* SOCIAL-HOME-01: "together" + "feed" are the live tabs; "find"
+   remains as a legacy value so historical events stay queryable
+   (the People overlay still reports as "find"). */
+export type SocialTab = "together" | "feed" | "find";
 export type SocialFeedSubTab = "following" | "explore";
 export type ShareCardTemplate =
   | "run"

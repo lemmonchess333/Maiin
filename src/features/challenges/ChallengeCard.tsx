@@ -67,7 +67,7 @@ const METRIC_ACCENT: Record<string, string> = {
    useChallenges.ts store lucide icon names as strings ("footprints",
    "trophy", etc.) — the previous render just printed those strings
    as text inside the icon container, producing visible "ootprints"
-   leakage on the Crews tab once challenges actually started seeding. */
+   leakage on the Together tab once challenges actually started seeding. */
 const CHALLENGE_ICON_MAP: Record<
   string,
   ComponentType<{

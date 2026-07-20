@@ -1,9 +1,8 @@
 import { useHiddenActivities } from "@/hooks/useHiddenActivities";
-import { useCrews } from "../hooks/useCrews";
 import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { getBoundedFollowingCount } from "../lib/socialApi";
 /* SOCIAL-HOME-01 Stage A: the three tab sections are extracted into
@@ -25,7 +24,7 @@ import { motion } from "framer-motion";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 /* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
-   tabs — Together (Circles + Spaces + Challenges + legacy Crews) and
+   tabs — Together (Circles + Spaces + Challenges) and
    Feed. People is no longer a tab: it's a lazily-opened full-screen
    search surface reached from the header (or the legacy ?tab=find
    deep link). The feed sub-tab stays `explore` (public activity).
@@ -38,7 +37,7 @@ import type {
 export type { SocialTab, FeedSubTab };
 
 export default function Social() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   /* useBlockedUsers now returns { blocked, addBlocked, removeBlocked }
      so ActivityCard can mutate the shared set after a block write
      completes. We only care about the Set here for filtering — the
@@ -57,9 +56,8 @@ export default function Social() {
   // so each tab tap doesn't accumulate browser history entries.
   // Default 'feed' is the URL-clean state (`?tab=` is stripped when
   // on feed). The Soc5c smart-default below may rewrite the URL to
-  // 'find' for genuine new users (zero follows + zero crew).
+  // 'find' for genuine new users (zero follows).
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   /* Legacy param compatibility (explicit contract): ?tab=crews (the
      old Community tab — Spaces/Challenges/Circles now live on
      Together) and ?tab=find (the old People tab — now the search
@@ -93,18 +91,6 @@ export default function Social() {
     trackSocialEvent("social_tab_selected", { tab: "find" });
   }, []);
 
-  /* Soc5 item 12: deep-link `/social?tab=crews&crewId=abc123` jumps
-     straight to the per-crew page. Non-members see Crew.tsx's
-     existing Join CTA — same path as tapping a crew row in the
-     list, just one fewer hop for users following an invite link.
-     replace:true so the transient Social URL doesn't show up in
-     browser history (back-button returns to whatever launched the
-     link, not to the redirect surface). */
-  const crewIdFromUrl = searchParams.get("crewId");
-  useEffect(() => {
-    if (!crewIdFromUrl) return;
-    navigate(`/crew/${crewIdFromUrl}`, { replace: true });
-  }, [crewIdFromUrl, navigate]);
   const setTab = useCallback(
     (next: SocialTab) => {
       setSearchParams(
@@ -183,14 +169,13 @@ export default function Social() {
      tab) is gone: Together is the default surface and owns the
      cold-start state directly (the goal selector), so new users land
      somewhere useful without a redirect. */
-  const profileCrewId = profile?.crewId;
-
   // Soc5c: "new user" signal drives the first-launch coachmark on
-  // the Find tab. Same definition as the smart default (zero follows
-  // + zero crew). While followingCount is still resolving we treat
-  // the user as established — that way an existing user with a slow
-  // network never sees a flash of the new-user coachmark.
-  const isNewUser = followingCount === 0 && !profileCrewId;
+  // the Find tab (zero follows — crews retired 2026-07-20, so follow
+  // count is the whole signal). While followingCount is still
+  // resolving we treat the user as established — that way an existing
+  // user with a slow network never sees a flash of the new-user
+  // coachmark.
+  const isNewUser = followingCount === 0;
 
   // SOCIAL S4 — the solo-first curated stack leads the Feed tab for a
   // cold-start user (0 follows ⇒ 0 partners, since a bond needs mutual
@@ -220,37 +205,16 @@ export default function Social() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifications = useNotifications();
 
-  // Crews — stays in the shell (not CommunityView) because the People
-  // tab consumes the same instance (crews / currentCrew / crewsError /
-  // refreshCrews) and the hook has no shared cache: a second instance
-  // would double-fetch and desync optimistic membership updates.
-  //
-  // SOCIAL-CREW-READS-01: the legacy crew catalogue is only rendered by
-  // the Together tab (CrewsBlock) and the People overlay, so gate the
-  // unbounded `groups` read to those surfaces. A member who only opens
-  // Feed never downloads every crew doc; the first visit to Together /
-  // People loads once and the session cache serves later visits.
-  const crewsEnabled = tab === "together" || peopleOpen;
-  const {
-    crews,
-    error: crewsError,
-    currentCrew,
-    joinCrew,
-    leaveCrew,
-    createCrew,
-    refresh: refreshCrews,
-  } = useCrews(crewsEnabled);
-
   // Pull-to-refresh with iOS conflict fix (#9).
   // Soc5 cross-cutting pin: pull-to-refresh re-fetches the active
-  // tab's data — feed view re-pulls the active feed, Crews tab
-  // re-pulls the crew list (and Suggested Crews in Phase 2). Hook
+  // tab's data — feed view re-pulls the active feed, Together
+  // re-pulls its sections. Hook
   // owns gesture state + state-machine; this page owns the per-tab
   // refresh action via the onRefresh callback.
   // Extracted into src/hooks/usePullToRefresh.ts so History + Food
   // share the same gesture implementation rather than triplicating
   // ~50 lines of identical touch-handling code.
-  /* Stage A: the feed + crews refresh actions live inside FeedView /
+  /* Stage A: the feed + community refresh actions live inside FeedView /
      CommunityView (which own those hooks now). Each view publishes
      its refresh fn into a ref the shell holds, so pull-to-refresh
      keeps working without lifting the feed hooks. */
@@ -362,7 +326,7 @@ export default function Social() {
           options={[
             /* Together leads (SOCIAL-HOME-01): the user's active
                Circle + shared-goal surfaces. Feed is the second
-               track. Legacy ?tab=crews resolves to Together above;
+               track. Legacy ?tab=crews still resolves to Together;
                ?tab=find opens the People overlay. */
             { value: "together", label: "Together" },
             { value: "feed", label: "Feed" },
@@ -390,21 +354,15 @@ export default function Social() {
 
       {/* ========== TOGETHER TAB ==========
           The shared-goal surface: Circles lead, then Spaces /
-          Challenges / legacy Crews. (Formerly the Community tab —
-          the legacy ?tab=crews deep link resolves here.) */}
+          Challenges. (Formerly the Community tab — the legacy
+          ?tab=crews deep link resolves here; crews retired
+          2026-07-20, see docs/proposals/crews-retirement.md.) */}
       <CommunityView
         active={tab === "together"}
         openPeople={openPeople}
         chromeHidden={chromeHidden}
         uid={user?.uid}
-        profileCrewId={profileCrewId}
         refreshRef={communityRefreshRef}
-        crews={crews}
-        currentCrew={currentCrew}
-        joinCrew={joinCrew}
-        leaveCrew={leaveCrew}
-        createCrew={createCrew}
-        refreshCrews={refreshCrews}
       />
 
       {/* ========== PEOPLE OVERLAY ==========
@@ -435,10 +393,6 @@ export default function Social() {
                 setPeopleOpen(false);
                 setTab("together");
               }}
-              crews={crews}
-              currentCrew={currentCrew}
-              crewsError={crewsError}
-              refreshCrews={refreshCrews}
             />
           </div>
         </div>

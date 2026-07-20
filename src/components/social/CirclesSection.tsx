@@ -1,7 +1,7 @@
 /**
  * Circles (GOALS-CORE-01, slice 4) — the Goal Space surface on the
- * Social → Crews tab. Per the audit IA, Circles render FIRST and
- * legacy Crews stay reachable below — no URL changes, no removed
+ * Social → Together tab. Per the audit IA, Circles render FIRST
+ * with Spaces + Challenges below — no URL changes, no removed
  * entry points.
  *
  * v1 scope (GsPb1 lock): invite-only via a paste code (spaceId.code —

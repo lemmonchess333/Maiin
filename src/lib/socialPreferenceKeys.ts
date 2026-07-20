@@ -1,15 +1,13 @@
 /**
  * SOCIAL-ATTENTION-01 — uid-scoped localStorage keys for Social
  * "attention" preferences (unread-badge last-seen, per-sub-tab
- * new-content pointers, dismissed crew suggestions).
+ * new-content pointers).
  *
  * Why this exists: these preferences were stored under GLOBAL keys
- * (`tropos-social-last-seen`, `tropos-social-feed-*-last-viewed`,
- * `tropos-social-dismissed-crews`). On a shared browser, account B
- * inherited account A's pointers — B's unread badge could read as
- * "all seen" the instant it signed in, and A's dismissed crews stayed
- * dismissed for B. Scoping every key by uid closes that cross-account
- * bleed, mirroring the notification tray fix (NOTIFICATION-TRUST-01)
+ * (`tropos-social-last-seen`, `tropos-social-feed-*-last-viewed`).
+ * On a shared browser, account B inherited account A's pointers —
+ * B's unread badge could read as "all seen" the instant it signed
+ * in. Scoping every key by uid closes that cross-account bleed, mirroring the notification tray fix (NOTIFICATION-TRUST-01)
  * and the offline/share-queue uid-scoping (PR #820).
  *
  * Migration: the old global keys are deliberately NOT migrated — a
@@ -23,8 +21,7 @@
 export type SocialPrefFamily =
   | "unread-last-seen"
   | "feed-following-last-viewed"
-  | "feed-explore-last-viewed"
-  | "dismissed-crews";
+  | "feed-explore-last-viewed";
 
 const PREFIX = "tropos-social";
 
@@ -33,7 +30,6 @@ const LEGACY_KEYS: Record<SocialPrefFamily, string> = {
   "unread-last-seen": "tropos-social-last-seen",
   "feed-following-last-viewed": "tropos-social-feed-following-last-viewed",
   "feed-explore-last-viewed": "tropos-social-feed-explore-last-viewed",
-  "dismissed-crews": "tropos-social-dismissed-crews",
 };
 
 /** The uid-scoped storage key for a given preference family. */

@@ -905,25 +905,12 @@ export function useProgram() {
               day.exercises.map((ex) => ex.movementCategory).filter(Boolean)
             ),
           ];
-          // Map composer-side visibility → postActivity API visibility.
-          // 'crews' is composer-only; under the hood it's a followers
-          // post tagged with crewId so it surfaces on the crew page.
-          // 'public' also tags with crewId so crew members see public
-          // posts on the crew surface; 'followers' explicitly does not
-          // (the user picked the broader audience without opting in
-          // to the crew page).
-          const apiVisibility =
-            decision.visibility === "crews" ? "followers" : decision.visibility;
-          const includeCrewId =
-            (decision.visibility === "crews" ||
-              decision.visibility === "public") &&
-            !!profile?.crewId;
           const payload = {
             authorId: user.uid,
             authorName: profile?.displayName || "Athlete",
             ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
             type: "workout" as const,
-            visibility: apiVisibility,
+            visibility: decision.visibility,
             ...(decision.caption ? { caption: decision.caption } : {}),
             workoutName: day.dayName,
             activityTitle: day.dayName,
@@ -931,7 +918,6 @@ export function useProgram() {
             totalVolume: tonnage,
             duration: effectiveDurationMin * 60,
             muscleGroups: uniqueCategories,
-            ...(includeCrewId ? { crewId: profile?.crewId } : {}),
             // Exercises — full list (was previously sliced to 3) with
             // structured fields per exercise so feed viewers can
             // "Save as routine" (PR 4) without parsing the summary

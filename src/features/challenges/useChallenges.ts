@@ -107,7 +107,7 @@ export function useChallenges() {
        Firestore rules deny client creates on /challenges. The client used to
        seed these here via seedChallenges() — removed: a browser shouldn't
        create global product metadata (the same lesson the repo applied to
-       default crews).
+       retired default crews).
 
        The dep on `user` is the uid object reference; AuthProvider holds it
        stable for the session so this doesn't re-run gratuitously. */
