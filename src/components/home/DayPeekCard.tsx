@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   getCompletionKind,
   type ClaimState,
@@ -122,6 +123,17 @@ export default function DayPeekCard({
   const hasW = workouts.length > 0;
   const hasM = dailyTotals.mealCount > 0;
   const hasRun = resolved.run.runDay !== null;
+  // Cal-A: surface the PLANNED session by name so tapping a day tells
+  // you WHICH lift / run it is (not a generic "Lift + Run day"). Lift
+  // name from the scheduled WorkoutDay; run name from its template
+  // (honouring a per-day override).
+  const plannedLiftName = resolved.lift.workout?.dayName ?? null;
+  const runTemplateId =
+    resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
+  const runName =
+    (runTemplateId &&
+      RUN_TEMPLATES.find((t) => t.id === runTemplateId)?.name) ||
+    "Run";
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
   // mirrors the RunWeekStrip pattern; overflow taps through to
   // /history. Counts toward the activity-section gate so a
@@ -177,27 +189,36 @@ export default function DayPeekCard({
                 Manage day
               </button>
             )}
-          {hasW || hasM || hasRun || hasExtras ? (
+          {hasW || hasM || hasRun || hasExtras || plannedLiftName ? (
             <div className="space-y-1 text-xs">
-              {hasW && (
+              {(plannedLiftName || hasW) && (
                 <div className="flex items-center gap-1.5">
                   <Dumbbell className="size-3.5 shrink-0 text-lifting" />
-                  <span className="text-foreground font-mono tabular-nums">
-                    {workouts.length} session{workouts.length !== 1 ? "s" : ""}
-                    {totalMinutes > 0 && (
-                      <span className="text-muted-foreground">
-                        {" · "}
-                        {totalMinutes} min
-                      </span>
+                  <span className="text-foreground">
+                    {/* Cal-A: the lift's actual name (e.g. "Push — Chest
+                        Focus"), not a generic "N sessions". Logged
+                        min/volume append in mono when the day is done. */}
+                    {plannedLiftName ??
+                      `${workouts.length} session${workouts.length !== 1 ? "s" : ""}`}
+                    {resolved.lift.status === "completed" && (
+                      <Check
+                        className="inline size-3 ml-1 align-[-1px]"
+                        style={{ color: THEME.success }}
+                      />
                     )}
-                    {tonnage > 0 && (
-                      <span className="text-muted-foreground">
+                    {resolved.lift.status === "skipped" && (
+                      <span className="text-muted-foreground"> · skipped</span>
+                    )}
+                    {hasW && (totalMinutes > 0 || tonnage > 0) && (
+                      <span className="text-muted-foreground font-mono tabular-nums">
                         {" · "}
-                        <span className="font-mono tabular-nums">
-                          {tonnage >= 1000
+                        {totalMinutes > 0 ? `${totalMinutes} min` : ""}
+                        {totalMinutes > 0 && tonnage > 0 ? " · " : ""}
+                        {tonnage > 0
+                          ? tonnage >= 1000
                             ? (tonnage / 1000).toFixed(1) + "k kg"
-                            : Math.round(tonnage) + " kg"}
-                        </span>
+                            : Math.round(tonnage) + " kg"
+                          : ""}
                       </span>
                     )}
                   </span>
@@ -223,14 +244,16 @@ export default function DayPeekCard({
               {hasRun && (
                 <div className="flex items-center gap-1.5">
                   <Footprints className="size-3.5 shrink-0 text-running" />
+                  {/* Cal-A: lead with the run's actual name (e.g. "Easy
+                      30", "5×1K Intervals") — the status is an adornment,
+                      not the whole line. A scheduled future run is just
+                      its name. */}
                   <span className="text-foreground">
+                    {runName}
                     {resolved.run.isCompleted ? (
-                      // Q2 P24 — distinguish real vs manual ✅. Real /
-                      // legacy show solid green check + "Run completed."
-                      // Manual shows dimmed check + "Marked complete"
-                      // so the user can tell what kind of credit
-                      // landed here without digging into the action
-                      // sheet.
+                      // Q2 P24 — distinguish real vs manual ✅. Manual keeps
+                      // a "· manual" tag + dimmed check so the credit kind
+                      // is still legible now that the name leads the line.
                       (() => {
                         const runDayId = resolved.run.runDay?.id;
                         const completionKind = runDayId
@@ -238,26 +261,31 @@ export default function DayPeekCard({
                           : null;
                         const isManual = completionKind === "manual";
                         return (
-                          <span className="inline-flex items-center gap-1">
-                            {isManual ? "Marked complete" : "Run completed"}
+                          <>
+                            {isManual && (
+                              <span className="text-muted-foreground">
+                                {" "}
+                                · manual
+                              </span>
+                            )}
                             <Check
-                              className={cn("size-3", isManual && "opacity-50")}
+                              className={cn(
+                                "inline size-3 ml-1 align-[-1px]",
+                                isManual && "opacity-50"
+                              )}
                               style={{ color: THEME.success }}
                             />
-                          </span>
+                          </>
                         );
                       })()
                     ) : resolved.run.status === "skipped" ? (
-                      <span style={{ color: "hsl(var(--muted-foreground))" }}>
-                        Run skipped
-                      </span>
+                      <span className="text-muted-foreground"> · skipped</span>
                     ) : resolved.run.status === "race_no_show" ? (
-                      <span style={{ color: "hsl(var(--muted-foreground))" }}>
-                        Race day passed
+                      <span className="text-muted-foreground">
+                        {" "}
+                        · race day passed
                       </span>
-                    ) : (
-                      <span>Run scheduled</span>
-                    )}
+                    ) : null}
                   </span>
                 </div>
               )}
