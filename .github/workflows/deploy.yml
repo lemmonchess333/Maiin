@@ -65,6 +65,12 @@ jobs:
           # FCM Web push public VAPID key (#963). Public by design (ships in the
           # client bundle); kept as a secret only to match the other VITE_ vars.
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+          # Run11 road-aware route planning — enables the Pro-gated Mapbox
+          # road-align / loop layer in RoutePlannerSheet (routePlanningApi.ts
+          # gates on this). The `planRunningRoute` callable + its
+          # MAPBOX_DIRECTIONS_TOKEN secret are live in production (2026-07-18).
+          # Non-secret public flag; the road buttons only render for Pro users.
+          VITE_ROUTE_PLANNING_ENABLED: "true"
       # Defence in depth: refuse to deploy a build that contains the
       # E2E marker. The marker is emitted as a top-of-bundle banner
       # only by `npm run build:e2e` (vite.config.ts function-form,
