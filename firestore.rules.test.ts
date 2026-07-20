@@ -1517,7 +1517,6 @@ suite(
             prCount: 1,
             challengeMilestone: "Week 3 complete",
             badgeEarned: "consistency-7",
-            crewId: "crew-abc",
           })
         )
       );
@@ -1874,7 +1873,7 @@ suite(
       );
     });
 
-    it("crew creator CAN still update non-counter fields on their crew (regression guard)", async () => {
+    it("crews retired: even the creator cannot update or read a legacy crew doc", async () => {
       await env.withSecurityRulesDisabled(async (ctx) => {
         const db = ctx.firestore();
         await setDoc(doc(db, "groups", "crew-a"), {
@@ -1886,13 +1885,14 @@ suite(
         });
       });
       const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
-      await assertSucceeds(
+      await assertFails(
         setDoc(
           doc(ownerDb, "groups", "crew-a"),
           { name: "Crew A Renamed" },
           { merge: true }
         )
       );
+      await assertFails(getDoc(doc(ownerDb, "groups", "crew-a")));
     });
 
     it("kudos reads stay open (regression guard — UI still renders 'Props from' list)", async () => {
