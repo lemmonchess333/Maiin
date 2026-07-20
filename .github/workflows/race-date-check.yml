@@ -1,0 +1,127 @@
+name: Race date check
+
+# Stale race-date tripwire (races plan, 2026-07-20). The race
+# catalogue's one recurring duty is pasting each race's next-edition
+# date forward; a passed date degrades gracefully (card hidden, space
+# alive — Q2), so nothing breaks meanwhile, which is exactly how it
+# gets forgotten. This workflow automates the NOTICING: monthly it
+# scans the config and files/updates a GitHub issue assigned to the
+# operator listing lapsed races. The date LOOKUP stays human/agent
+# work — verified against each race's official site, never guessed or
+# scraped (Q5; race dates don't follow rules).
+#
+# Deliberately an issue, not a failing check: a red build on a
+# calendar date would punish unrelated PRs.
+
+on:
+  schedule:
+    # 08:00 UTC on the 1st of every month.
+    - cron: "0 8 1 * *"
+  # Manual trigger for testing / an off-cycle sweep.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Scan race catalogue for lapsed dates
+        id: scan
+        run: |
+          npx tsx scripts/check-race-dates.ts > stale-races.json
+          echo "count=$(node -e 'console.log(require("./stale-races.json").length)')" >> "$GITHUB_OUTPUT"
+          cat stale-races.json
+
+      - name: File or update the stale-dates issue
+        if: steps.scan.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const stale = require("./stale-races.json");
+            const MARKER = "<!-- race-date-check -->";
+            const OPERATOR = "lemmonchess333";
+            const title = "Stale race dates — paste next editions forward";
+
+            const rows = stale
+              .map(
+                (r) =>
+                  `| ${r.name} | \`${r.id}\` | ${r.passedDate} | [official site](${r.websiteUrl}) |`
+              )
+              .join("\n");
+
+            const body = [
+              MARKER,
+              "The monthly race-date check found race spaces whose",
+              "`event.dateKey` has passed. Their directory cards and",
+              "\"Train for this race\" CTAs are hidden until the next",
+              "edition's date is pasted forward (Q2 — graceful, but the",
+              "races are invisible to browsers meanwhile).",
+              "",
+              "| Race | Space id | Passed date | Look up |",
+              "| --- | --- | --- | --- |",
+              rows,
+              "",
+              "**To fix (agent-runnable):** for each race, verify the",
+              "next edition's date on the OFFICIAL site (never guess —",
+              "Q5 lock; check for format changes like the 2027 two-day",
+              "London Marathon), update `event.dateKey` in",
+              "`src/features/spaces/spaceDefs.ts`, and ship the config",
+              "PR. The spaceDefs parity tests pin everything else.",
+              "",
+              `_Last checked: ${new Date().toISOString().slice(0, 10)}_`,
+            ].join("\n");
+
+            // Idempotent: update the existing open tripwire issue if
+            // one exists, otherwise create it assigned to the operator.
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100,
+            });
+            const existing = issues.find((i) => i.body?.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+              });
+              core.info(`Updated issue #${existing.number}`);
+            } else {
+              const { data: created } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                assignees: [OPERATOR],
+              });
+              core.info(`Created issue #${created.number}`);
+              // Label with the agent-queue vocabulary if the label
+              // exists (auto-created by /triage; absence is non-fatal).
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: created.number,
+                  labels: ["ready-for-agent"],
+                });
+              } catch (e) {
+                core.info(`Label skipped: ${e.message}`);
+              }
+            }
