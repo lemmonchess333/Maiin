@@ -87,6 +87,17 @@ describe("SpacesDirectory — Races & Events", () => {
     expect(screen.queryByText("2 members")).not.toBeInTheDocument();
   });
 
+  it("each carousel row opts out of page-swipe navigation (data-no-page-swipe)", () => {
+    // Regression guard: a horizontal swipe to scroll the Spaces / Races
+    // carousels must NOT trigger the page/tab swipe-nav gesture.
+    renderDirectory();
+    const rows = screen.getAllByRole("list");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row).toHaveAttribute("data-no-page-swipe");
+    }
+  });
+
   it("compact row never requests races (Q6 calm-feed lock)", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [INTEREST],

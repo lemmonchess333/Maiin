@@ -332,7 +332,7 @@ export default function CommentSheet({
       {/* Quick chips + input */}
       <div className="border-t border-border/30 px-4 pt-3 pb-4 space-y-2">
         {quickChips && quickChips.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <div data-no-page-swipe className="flex gap-1.5 overflow-x-auto pb-1">
             {quickChips.map((chip) => (
               <button
                 type="button"
