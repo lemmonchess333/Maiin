@@ -7,7 +7,13 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { SPACE_DEFS, SPACE_IDS, spaceDef, raceSpaceDefs } from "../spaceDefs";
+import {
+  SPACE_DEFS,
+  SPACE_IDS,
+  spaceDef,
+  raceSpaceDefs,
+  upcomingRaceSpaceDefs,
+} from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
   it("ships the locked sets: 8 interest (Spc1e + trail-running) + 12 races (2026-07-19 plan)", () => {
@@ -79,6 +85,21 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
     expect(races).toHaveLength(12);
     const keys = races.map((d) => d.event!.dateKey);
     expect(keys).toEqual([...keys].sort());
+  });
+
+  it("upcomingRaceSpaceDefs hides past races, keeps race day itself (Q2)", () => {
+    const first = raceSpaceDefs()[0].event!.dateKey; // soonest: 2026-09-06
+    // On race day the card still shows…
+    expect(upcomingRaceSpaceDefs(first).map((d) => d.event!.dateKey)).toContain(
+      first
+    );
+    // …the day after, it's gone, and everything later survives.
+    const dayAfter = "2026-09-07";
+    const after = upcomingRaceSpaceDefs(dayAfter).map((d) => d.event!.dateKey);
+    expect(after).not.toContain(first);
+    expect(after).toHaveLength(11);
+    // Far future: everything hidden, none invented.
+    expect(upcomingRaceSpaceDefs("2099-01-01")).toHaveLength(0);
   });
 });
 
