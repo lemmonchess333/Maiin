@@ -75,3 +75,22 @@ energy full-width on top, water + weight as half-width tiles below
 (WaterCard gains a `compact` variant keeping the wave/fill identity;
 WeightStepsTiles stacks its tiles vertically in the right column).
 All other declutter locks unchanged.
+
+STATUS 2026-07-20 (same day, 3rd pass) — 2a FULLY REVERSED on operator
+call: "revert today's energy to the collapsable card it was like
+before." TodayEnergy + BreakdownRow restored verbatim from the
+pre-declutter commit `c4c5de17` (HOME-TARGET-01, which already carried
+the truthful-target fix). The card is again COLLAPSIBLE: collapsed
+shows a muted grams-remaining summary line, tap the header to expand →
+the three colour-coded macro rings + burned-today breakdown rows
+(tap-to-flip consumed↔left preserved). Deliberately NOT re-wired: the
+embedded nutrition-insight text and the post-workout-protein nudge —
+those were the extra "voices" 2a/3a removed and the operator named only
+"the colours and macros", so the collapsed default view stays calm
+(one-voice principle intact; the density is opt-in behind the expand).
+Home.tsx needed NO change — every required prop was already passed; the
+insight/nudge props simply default to absent. The PYRAMID (energy
+full-width over water+weight half-tiles) and every other declutter lock
+(sessions-first 4a, one-voice 3a, badge-off-home 5a, pro-snooze 6b)
+stay as shipped. Q1 (Performance card) remains deferred — next Home
+pass revisits it.
