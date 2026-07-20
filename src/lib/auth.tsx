@@ -285,6 +285,9 @@ export interface UserProfileRunning {
     targetDate: string;
     /** Optional user-entered event name, ≤60 chars (e.g. "London Marathon 2026"). */
     eventName?: string;
+    /** Optional race-space link (races plan Q4) — present only when the
+     *  goal was set from the race catalogue; manual goals lack it. */
+    eventSpaceId?: string;
   } | null;
   weekSchedule?: { day: number; type: "lift" | "run" | "both" | "rest" }[];
   /**

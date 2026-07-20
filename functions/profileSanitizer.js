@@ -20,6 +20,10 @@
  * Pure, no Firebase Admin dependency. Unit-testable.
  */
 
+// Pinned space-id list (frozen array, no Admin dependency) — used to
+// validate raceGoal.eventSpaceId against the known-space contract.
+const { SPACE_IDS } = require("./lib/spaceIds");
+
 /**
  * Server-managed fields the caller must never set. These get set
  * deterministically by the handler post-sanitise; including them
@@ -237,6 +241,10 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
       // (control chars stripped by cleanString). Without this entry the
       // configurePlan/completeOnboarding path silently strips the name.
       eventName: (d) => cleanString(d, 60),
+      // Optional race-space link (races plan Q4). Validated against the
+      // pinned space-id list — an unknown id is dropped, so the field can
+      // only ever point at a space the deletion sweep + rules know about.
+      eventSpaceId: (d) => cleanEnum(d, SPACE_IDS),
     }),
 
   injuries: cleanInjuries,
