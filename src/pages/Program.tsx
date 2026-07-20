@@ -914,19 +914,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 {activeTab === "run" ? programRunHeaderLine : programHeaderLine}
               </p>
             </div>
-            {/* Right utility cluster — reorder (Lift only) + overflow. The
-              unlabelled Footprints "start a run" icon was removed: ambiguous
-              beside the utility controls, and the Run tab now owns clearly
-              labelled Start-run CTAs. */}
+            {/* Right utility cluster — overflow (+ a "Done" exit that shows
+              only while reordering). The reorder ENTER control moved out of
+              the header into the overflow menu ("Reorder exercises") — it's
+              a low-frequency plan edit, not worth a permanent header icon.
+              During reorder mode the header surfaces a clear "Done" to exit;
+              at rest the header is just the overflow. */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              {/* PR-2: reorder toggle only renders where it works —
-                Lift tab AND the user actually has lift workouts in
-                their programState. Pre-PR-2 the button lived
-                outside the activeTab guard, so users on Today/Week/
-                Run saw an inert icon that toggled hidden state. */}
               {activeTab === "lift" &&
                 (programState?.workouts?.length ?? 0) > 0 &&
-                (reorderMode ? (
+                reorderMode && (
                   <button
                     type="button"
                     onClick={() => setReorderMode(false)}
@@ -934,17 +931,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                   >
                     Done
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setReorderMode(true)}
-                    aria-label="Reorder exercises"
-                    className="p-2 rounded-lg hover:bg-muted transition-colors"
-                    style={{ minWidth: 44, minHeight: 44 }}
-                  >
-                    <ArrowUpDown className="size-4 text-muted-foreground" />
-                  </button>
-                ))}
+                )}
               <button
                 type="button"
                 onClick={() => setShowOverflow(true)}
@@ -1871,6 +1858,33 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             >
               <div className="max-w-md mx-auto p-5 space-y-1">
                 <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
+                {/* Reorder exercises — enters the drag-to-reorder mode for
+                    today's lift session. Moved here from a permanent header
+                    icon: it's a low-frequency plan edit, so it lives with the
+                    other edit actions instead of occupying header space. Only
+                    offered where it works — Lift tab with logged workouts. */}
+                {activeTab === "lift" &&
+                  (programState?.workouts?.length ?? 0) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOverflow(false);
+                        setReorderMode(true);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                      style={{ minHeight: 44 }}
+                    >
+                      <ArrowUpDown className="size-5 text-muted-foreground" />
+                      <span className="flex-1">
+                        <span className="block text-sm font-medium text-foreground">
+                          Reorder exercises
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Drag to change today&apos;s order
+                        </span>
+                      </span>
+                    </button>
+                  )}
                 {/* Edit weekly layout — opens ScheduleLayoutSheet (the
                     day-by-day Rest/Lift/Run/Both grid). Foundational, free. */}
                 <button
