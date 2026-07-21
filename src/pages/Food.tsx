@@ -394,12 +394,18 @@ export default function Food() {
     let protein = rawDailyTotals.protein;
     let carbs = rawDailyTotals.carbs;
     let fat = rawDailyTotals.fat;
+    let fiber = rawDailyTotals.fiber;
+    let sugar = rawDailyTotals.sugar;
+    let sodium = rawDailyTotals.sodium;
     for (const m of todaysMeals) {
       if (!pendingDeleteIds.has(m.id)) continue;
       calories -= safeNum(m.totalCalories);
       protein -= safeNum(m.totalProtein);
       carbs -= safeNum(m.totalCarbs);
       fat -= safeNum(m.totalFat);
+      fiber -= safeNum(m.totalFiber);
+      sugar -= safeNum(m.totalSugar);
+      sodium -= safeNum(m.totalSodium);
     }
     return {
       ...rawDailyTotals,
@@ -407,6 +413,9 @@ export default function Food() {
       protein,
       carbs,
       fat,
+      fiber,
+      sugar,
+      sodium,
     };
   }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
 
@@ -1673,6 +1682,9 @@ export default function Food() {
           protein: dailyTotals.protein,
           carbs: dailyTotals.carbs,
           fat: dailyTotals.fat,
+          fiber: dailyTotals.fiber,
+          sugar: dailyTotals.sugar,
+          sodium: dailyTotals.sodium,
         }}
         dailyTargets={dailyTargets}
       />
