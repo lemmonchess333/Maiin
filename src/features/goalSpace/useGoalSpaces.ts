@@ -156,9 +156,12 @@ export function useGoalSpaces(uid: string | undefined) {
   );
 
   const joinCircle = useCallback(
-    async (spaceId: string, inviteCode: string): Promise<boolean> => {
+    // Accepts the raw pasted/typed code. The server resolves any accepted
+    // form — a short code (K7P4-9M2H), or the legacy spaceId.token string —
+    // so the client stays format-agnostic.
+    async (code: string): Promise<boolean> => {
       try {
-        await httpsCallable(fns(), "joinGoalSpace")({ spaceId, inviteCode });
+        await httpsCallable(fns(), "joinGoalSpace")({ code });
         await reload();
         return true;
       } catch (err) {

@@ -134,6 +134,39 @@ describe("post-create invite hand-off", () => {
       ).toBe(true);
     });
   });
+
+  it("shares a short code bare + grouped (K7P49M2H → K7P4-9M2H), no spaceId", async () => {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        createCircle: vi.fn(async () => ({
+          spaceId: "new-space",
+          inviteCode: "K7P49M2H",
+        })),
+      })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
+    fireEvent.change(screen.getByLabelText(/circle name/i), {
+      target: { value: "Autumn block" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /start circle/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Your Circle is ready")).toBeInTheDocument()
+    );
+    // Short code shows grouped and WITHOUT the spaceId prefix.
+    expect(screen.getByText("K7P4-9M2H")).toBeInTheDocument();
+    expect(screen.queryByText(/new-space\./)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /copy code/i }));
+    await waitFor(() =>
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith("K7P4-9M2H")
+    );
+  });
 });
 
 describe("one-member featured circle", () => {
