@@ -178,6 +178,13 @@
      star fill. */
   --achievement: 40 90% 35%;
   --achievement-bg: 45 100% 95%;
+  /* Food calorie hero — photo-wash scrim (theme-flipping, since Tailwind's
+     dark: variant here is media-based, not .dark-class-based). LIGHT mode =
+     a WHITE whitewash so a photo behind the light card reads as a faint
+     tint, keeping the card a light surface with its normal dark text — no
+     dark island. Paired with the .dark values below. */
+  --food-photo-scrim: rgba(255, 255, 255, 0.8);
+  --food-photo-scrim-soft: rgba(255, 255, 255, 0.52);
 }
 
 .dark {
@@ -208,6 +215,11 @@
   --glass-bg: rgba(20, 20, 24, 0.97);
   --glass-border: rgba(255, 255, 255, 0.07);
   --surface-solid: #1c1c20;
+  /* Food calorie hero — DARK photo-wash scrim so the photo reads as a
+     moody hero with the card's light text (the twin of the :root white
+     whitewash above). */
+  --food-photo-scrim: rgba(0, 0, 0, 0.62);
+  --food-photo-scrim-soft: rgba(0, 0, 0, 0.28);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
