@@ -128,7 +128,26 @@ export default function CalorieRing({
         transition: "filter 800ms ease-in-out",
       }}
     >
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="size-full">
+      {/* Idle breathing pulse — the single ambient loop on the Food hero,
+          so the ring reads as alive at rest instead of a static empty
+          circle. Glow recipe (WKWebView-safe): a STATIC blurred layer whose
+          OPACITY animates — never the blur value. Suppressed under
+          reduced-motion and while the completion glow is celebrating, so
+          the two never stack. */}
+      {!reduce && !glowing && (
+        <motion.div
+          className="absolute inset-3 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${COLOR_RING}2E 0%, transparent 70%)`,
+            filter: "blur(8px)",
+          }}
+          initial={{ opacity: 0.28 }}
+          animate={{ opacity: [0.28, 0.5, 0.28] }}
+          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        />
+      )}
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="relative size-full">
         <defs>
           {/* Apple Activity Rings-style gradient — lighter at the top of the
               arc (12 o'clock), deeper at the bottom. Uses userSpaceOnUse so
