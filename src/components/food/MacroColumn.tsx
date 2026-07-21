@@ -127,6 +127,12 @@ export default function MacroColumn({
   const prevTargetRef = useRef<number>(target);
   const firstMountRef = useRef(true);
   const pulseOpacity = useMotionValue(1);
+  // Food-delight #3: the macro glyph gets its own life. A small scale-pop
+  // on every logged increase makes each log feel responsive; a bigger pop
+  // when the goal is crossed rewards the moment; and a soft macro-colour
+  // halo (goalReached, below) leaves a lasting "you hit this" mark.
+  const iconScale = useMotionValue(1);
+  const goalReached = hasTarget && consumed >= target;
 
   useEffect(() => {
     if (firstMountRef.current) {
@@ -141,19 +147,30 @@ export default function MacroColumn({
     prevConsumedRef.current = consumed;
     prevTargetRef.current = target;
 
+    if (reduce) return;
+
     const intakeIncreased = consumed > prevConsumed;
     const crossedPrevTarget =
       prevConsumed <= prevTarget && consumed > prevTarget;
     const justCrossed = intakeIncreased && crossedPrevTarget;
 
-    if (justCrossed && !reduce) {
-      const controls = animate(pulseOpacity, [1, 0.6, 1], {
-        duration: 0.4,
-        ease: "easeOut",
-      });
-      return () => controls.stop();
+    const controls: { stop: () => void }[] = [];
+    if (justCrossed) {
+      // Goal landed — a fuller glyph pop + the bar's opacity pulse.
+      controls.push(
+        animate(pulseOpacity, [1, 0.6, 1], { duration: 0.4, ease: "easeOut" })
+      );
+      controls.push(
+        animate(iconScale, [1, 1.35, 1], { duration: 0.5, ease: "easeOut" })
+      );
+    } else if (intakeIncreased) {
+      // Ordinary log — a light, satisfying tick.
+      controls.push(
+        animate(iconScale, [1, 1.15, 1], { duration: 0.35, ease: "easeOut" })
+      );
     }
-  }, [consumed, target, reduce, pulseOpacity]);
+    if (controls.length) return () => controls.forEach((c) => c.stop());
+  }, [consumed, target, reduce, pulseOpacity, iconScale]);
 
   return (
     <button
@@ -162,13 +179,31 @@ export default function MacroColumn({
       onClick={onTap}
       className="flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
-      {/* Icon */}
-      <Icon
-        className="size-6"
-        style={{ color }}
-        strokeWidth={2}
-        aria-hidden="true"
-      />
+      {/* Icon — pops on log, and once its goal is met it sits inside a
+          soft macro-colour halo (a calm, lasting "hit it" mark). The halo
+          is a static state, so it shows under reduced-motion too. */}
+      <motion.span
+        className="relative inline-flex items-center justify-center"
+        style={{ scale: iconScale }}
+      >
+        {goalReached && (
+          <motion.span
+            className="absolute -inset-1.5 rounded-full"
+            style={{ background: color }}
+            initial={{ opacity: reduce ? 0.16 : 0 }}
+            animate={{ opacity: 0.16 }}
+            transition={{ duration: reduce ? 0 : 0.3 }}
+            aria-hidden="true"
+          />
+        )}
+        <Icon
+          className="relative size-6"
+          style={{ color }}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
+      </motion.span>
+      {goalReached && <span className="sr-only">{label} goal reached</span>}
 
       {/* Big number — Food7: neutral foreground (not the macro hue). The
           macro identity is carried by the icon + progress bar; a neutral
