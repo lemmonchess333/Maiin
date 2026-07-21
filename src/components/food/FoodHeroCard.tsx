@@ -272,15 +272,19 @@ export default function FoodHeroCard({
               className="pointer-events-none absolute inset-0 size-full object-cover select-none"
               draggable={false}
             />
+            {/* Theme-aware scrim via the --food-photo-scrim CSS var (flips
+                white↔black under .dark in index.css). A radial darkening
+                centred on the ring/number keeps the value legible whatever
+                the photo, over a vertical scrim for the caption + glance
+                line. LIGHT mode = white whitewash → the card stays a light
+                surface with its dark text (no dark island); DARK mode =
+                black scrim → a moody photo hero with the card's light text. */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0"
               style={{
-                /* Two layers: a radial darkening centred on the ring/number
-                   (so the value always sits on a dark patch, whatever the
-                   photo), over a vertical scrim that keeps the caption + glance
-                   line legible top and bottom. */
-                background: `radial-gradient(circle at 50% 38%, ${THEME.scrim} 0%, transparent 58%), linear-gradient(to bottom, ${THEME.scrim} 0%, ${THEME.scrimSoft} 48%, ${THEME.scrim} 100%)`,
+                background:
+                  "radial-gradient(circle at 50% 38%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
               }}
             />
           </>
