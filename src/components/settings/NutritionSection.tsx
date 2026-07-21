@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import {
@@ -35,8 +35,6 @@ interface NutritionSectionProps {
   weeklyRateKg: number;
   setWeeklyRateKg: (v: number) => void;
   goalPlan: GoalWeightPlan;
-  mealsTarget: number;
-  setMealsTarget: (v: number) => void;
   tdee: {
     bmr: number;
     tdee: number;
@@ -65,32 +63,16 @@ export default function NutritionSection({
   weeklyRateKg,
   setWeeklyRateKg,
   goalPlan,
-  mealsTarget,
-  setMealsTarget,
   tdee,
   updateProfile,
   inline = false,
 }: NutritionSectionProps) {
   const [showTDEE, setShowTDEE] = useState(false);
-  const mealsTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   // Contrast-safe macro colours from the shared palette — protein=pink,
   // carbs=gold, fat=sage everywhere else in the app. These tiles were
   // previously mis-coloured (protein blue / carbs amber / fat pink) with
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
-
-  const handleMealsChange = useCallback(
-    (val: number) => {
-      const prev = profile.weeklyMealsTarget ?? 10;
-      setMealsTarget(val);
-      clearTimeout(mealsTimerRef.current);
-      mealsTimerRef.current = setTimeout(async () => {
-        const result = await updateProfile({ weeklyMealsTarget: val });
-        if (!result.ok) setMealsTarget(prev);
-      }, 500);
-    },
-    [setMealsTarget, updateProfile, profile.weeklyMealsTarget]
-  );
 
   const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -99,7 +81,7 @@ export default function NutritionSection({
       inline={inline}
       icon={<Calculator className="size-5 text-primary" />}
       title="Nutrition"
-      subtitle="TDEE, phase, macros, meal target"
+      subtitle="TDEE, phase, macros"
     >
       {/* TDEE Calculator (sub-collapsible) */}
       <div className="bg-card rounded-2xl overflow-hidden">
@@ -439,25 +421,6 @@ export default function NutritionSection({
             />
           </div>
         </div>
-      </div>
-
-      {/* Meal logging target */}
-      <div>
-        <label
-          htmlFor="weekly-meals-target"
-          className="text-sm text-muted-foreground"
-        >
-          Weekly meal logging target ({mealsTarget})
-        </label>
-        <input
-          id="weekly-meals-target"
-          type="range"
-          min="0"
-          max="20"
-          value={mealsTarget}
-          onChange={(e) => handleMealsChange(Number(e.target.value))}
-          className="w-full accent-primary"
-        />
       </div>
 
       {/* Nutr1 (expenditure-inclusive): the "Adjust calories for training"

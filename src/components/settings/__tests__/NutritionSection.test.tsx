@@ -37,8 +37,6 @@ function renderSection(weeklyRateKg = 0.5) {
       weeklyRateKg={weeklyRateKg}
       setWeeklyRateKg={setWeeklyRateKg}
       goalPlan={goalPlan}
-      mealsTarget={10}
-      setMealsTarget={vi.fn()}
       tdee={{
         bmr: 1600,
         tdee: 2400,
