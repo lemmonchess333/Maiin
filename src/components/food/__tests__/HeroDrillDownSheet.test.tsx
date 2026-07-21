@@ -25,6 +25,11 @@ vi.mock("@/lib/subscription", () => ({
   useSubscription: () => ({ isPro: mockIsPro }),
 }));
 
+// Micro reference targets read profile.sex via useAuth — stub it.
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => ({ profile: { sex: "male" } }),
+}));
+
 // Stub ProModal so we can assert it mounts with the right feature key without
 // dragging in its heavy dependency tree.
 vi.mock("@/components/ProModal", () => ({
@@ -74,7 +79,15 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
   };
 }
 
-const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+const totals = {
+  calories: 0,
+  protein: 0,
+  carbs: 0,
+  fat: 0,
+  fiber: 0,
+  sugar: 0,
+  sodium: 0,
+};
 
 // Controlled wrapper so onOpenChange(false) actually closes the sheet (the
 // queued-paywall flow depends on the `open` prop flipping to false).
