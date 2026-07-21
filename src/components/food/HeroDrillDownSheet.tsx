@@ -187,7 +187,7 @@ export default function HeroDrillDownSheet({
 
   const { isPro } = useSubscription();
   const { profile } = useAuth();
-  const micros = resolveMicroTargets(profile?.sex);
+  const micros = resolveMicroTargets(profile?.sex, dailyTargets.finalTarget);
   const [showMacroPaywall, setShowMacroPaywall] = useState(false);
   const [macroPaywallQueued, setMacroPaywallQueued] = useState(false);
   const fuel = dailyTargets.trainingFuel;
