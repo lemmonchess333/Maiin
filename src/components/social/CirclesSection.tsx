@@ -73,8 +73,24 @@ const EVENT_COPY: Record<
   routine_shared: "shared a routine",
 };
 
+// A short invite code is our 8-char base32 token (no dashes stored);
+// legacy codes are UUIDs (36 chars, dashed). Only short codes can be
+// shared bare — legacy circles predate the server lookup, so they still
+// need the spaceId.token form for the server's legacy join path.
+function isShortInviteCode(code: string): boolean {
+  return !code.includes("-") && code.length <= 12;
+}
+
+// Display a short code grouped for readability: K7P49M2H → K7P4-9M2H.
+function formatInviteCode(code: string): string {
+  const c = code.toUpperCase();
+  return c.length === 8 ? `${c.slice(0, 4)}-${c.slice(4)}` : c;
+}
+
 function inviteString(spaceId: string, code: string): string {
-  return `${spaceId}.${code}`;
+  return isShortInviteCode(code)
+    ? formatInviteCode(code)
+    : `${spaceId}.${code}`;
 }
 
 /* SOCIAL-HOME-01 — cold-start goal selector options. The first four
@@ -492,16 +508,15 @@ export default function CirclesSection({ uid }: { uid: string }) {
   };
 
   const join = async () => {
-    const dot = joinInput.indexOf(".");
-    if (dot <= 0) {
-      toast.error("Paste the full invite code.");
+    const raw = joinInput.trim();
+    if (!raw) {
+      toast.error("Enter your invite code.");
       return;
     }
     setBusy(true);
-    const ok = await joinCircle(
-      joinInput.slice(0, dot).trim(),
-      joinInput.slice(dot + 1).trim()
-    );
+    // Format-agnostic: the server resolves a short code or a legacy
+    // spaceId.token string, so pass the raw input straight through.
+    const ok = await joinCircle(raw);
     setBusy(false);
     if (ok) {
       setShowJoin(false);
