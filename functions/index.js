@@ -5939,7 +5939,21 @@ exports._runWeeklyFellBehindCheckForUser = _runWeeklyFellBehindCheckForUser;
 // free at launch (no entitlement gate).
 // ═══════════════════════════════════════════════════════════════
 const goalSpaceMembership = require("./lib/goalSpaceMembership");
-const { randomUUID: goalSpaceRandomId } = require("crypto");
+const { randomUUID: goalSpaceRandomId, randomInt } = require("crypto");
+
+// Short, human-shareable invite code: 8 chars from an unambiguous
+// alphabet (no 0/1/I/L/O/U) so "K7P4-9M2H" reads the same spoken, typed,
+// or texted. 30^8 ≈ 6.5e11 combinations; codes are reserved with a
+// collision-retry, and Circles cap at 8 members, so this is ample for a
+// bearer invite token.
+const GOAL_SPACE_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTVWXYZ";
+function goalSpaceInviteCode() {
+  let out = "";
+  for (let i = 0; i < 8; i++) {
+    out += GOAL_SPACE_CODE_ALPHABET[randomInt(GOAL_SPACE_CODE_ALPHABET.length)];
+  }
+  return out;
+}
 
 /** Safe display projection from the caller's own profile doc —
  *  never trusted from client input. */
@@ -5993,6 +6007,7 @@ exports.createGoalSpace = functions
         input: data || {},
         now: Date.now(),
         makeId: goalSpaceRandomId,
+        makeCode: goalSpaceInviteCode,
       });
     } catch (err) {
       throw mapGoalSpaceError(err);
@@ -6012,6 +6027,7 @@ exports.joinGoalSpace = functions
         photoURL: profile.photoURL,
         spaceId: data?.spaceId,
         inviteCode: data?.inviteCode,
+        code: data?.code,
         now: Date.now(),
         makeId: goalSpaceRandomId,
       });
