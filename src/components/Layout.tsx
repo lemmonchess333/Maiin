@@ -8,7 +8,7 @@ import {
   Users,
   WifiOff,
   Check,
-  UtensilsCrossed,
+  Apple,
 } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
@@ -39,7 +39,7 @@ function useQueueCount(isOnline: boolean): number {
 const tabs: { to: string; icon: typeof Home; label: string }[] = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/program", icon: Dumbbell, label: "Train" },
-  { to: "/food", icon: UtensilsCrossed, label: "Food" },
+  { to: "/food", icon: Apple, label: "Food" },
   { to: "/social", icon: Users, label: "Social" },
   { to: "/history", icon: BarChart3, label: "Analytics" },
 ];
