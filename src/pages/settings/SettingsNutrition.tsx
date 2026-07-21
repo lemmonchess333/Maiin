@@ -39,9 +39,6 @@ export default function SettingsNutrition() {
   const [weeklyRateKg, setWeeklyRateKg] = useState<number>(
     Math.abs(profile?.weeklyRateKg ?? 0) || 0.5
   );
-  const [mealsTarget, setMealsTarget] = useState(() =>
-    Math.min(profile?.weeklyMealsTarget ?? 10, 20)
-  );
 
   // Target weight + rate → direction → fitnessGoal + daily calorie offset.
   const goalPlan = useMemo(
@@ -154,8 +151,6 @@ export default function SettingsNutrition() {
         weeklyRateKg={weeklyRateKg}
         setWeeklyRateKg={setWeeklyRateKg}
         goalPlan={goalPlan}
-        mealsTarget={mealsTarget}
-        setMealsTarget={setMealsTarget}
         tdee={tdee}
         updateProfile={updateProfile}
       />
