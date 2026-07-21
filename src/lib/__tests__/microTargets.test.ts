@@ -22,15 +22,26 @@ describe("resolveMicroTargets", () => {
     ).toBe(30);
   });
 
-  it("uses fixed sodium (mg) and sugar (g) references regardless of sex", () => {
+  it("uses a fixed sodium reference + a 2000-cal sugar fallback when no calorie target", () => {
     for (const sex of ["male", "female", undefined] as const) {
       const t = resolveMicroTargets(sex);
       const sodium = t.find((m) => m.key === "sodium")!;
       const sugar = t.find((m) => m.key === "sugar")!;
       expect(sodium.target).toBe(2300);
       expect(sodium.unit).toBe("mg");
-      expect(sugar.target).toBe(50);
+      // 15% of the 2000-cal fallback ÷ 4 kcal/g = 75 g.
+      expect(sugar.target).toBe(75);
       expect(sugar.unit).toBe("g");
     }
+  });
+
+  it("scales the sugar guide to 15% of the calorie target", () => {
+    const sugarFor = (cals: number) =>
+      resolveMicroTargets("male", cals).find((m) => m.key === "sugar")!.target;
+    expect(sugarFor(2000)).toBe(75); // 300 kcal / 4
+    expect(sugarFor(2200)).toBe(83); // 82.5 → 83
+    expect(sugarFor(3400)).toBe(128); // 127.5 → 128
+    // A missing / non-positive target falls back to the 2000-cal reference.
+    expect(sugarFor(0)).toBe(75);
   });
 });
