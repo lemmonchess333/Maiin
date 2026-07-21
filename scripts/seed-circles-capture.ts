@@ -125,7 +125,7 @@ async function main() {
     maxMembers: 8,
     targetDate: null,
     active: true,
-    inviteCode: "capture-invite",
+    inviteCode: "K7P49M2H",
     createdAt: now - 6 * 86_400_000,
   });
   await db.doc(`goalSpaces/${SPACE_ID}/members/${uid}`).set({
