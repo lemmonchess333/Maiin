@@ -43,6 +43,41 @@ function sanitizeDisplay(value, fallback) {
   return value.trim().slice(0, GOAL_SPACE_TEXT_MAX);
 }
 
+// Short human-shareable invite codes. A pasted/typed code is normalised
+// by upper-casing and dropping every non-alphanumeric char, so the
+// display form (`K7P4-9M2H`), a bare form (`K7P49M2H`), and stray spaces
+// all resolve to the same stored key.
+function normalizeInviteCode(value) {
+  if (typeof value !== "string") return "";
+  return value.toUpperCase().replace(/[^0-9A-Z]/g, "");
+}
+
+// Reserve a unique short code by racing a create-if-absent on the
+// server-only goalSpaceInvites/{code} lookup doc, retrying on the (rare)
+// collision. Reading-then-writing the same path inside a transaction is
+// contention-guarded, so two concurrent creates can't both win the code.
+async function reserveInviteCode({
+  firestore,
+  spaceId,
+  now,
+  makeCode,
+  attempts = 6,
+}) {
+  for (let i = 0; i < attempts; i++) {
+    const code = normalizeInviteCode(makeCode());
+    if (!code) continue;
+    const ref = firestore.doc(`goalSpaceInvites/${code}`);
+    const claimed = await firestore.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (snap.exists) return false;
+      tx.set(ref, { spaceId, createdAt: now });
+      return true;
+    });
+    if (claimed) return code;
+  }
+  throw new GoalSpaceError("internal", "could not allocate invite code");
+}
+
 function memberDoc({ uid, displayName, photoURL, role, now }) {
   return {
     uid,
@@ -86,6 +121,7 @@ async function createGoalSpace({
   input,
   now,
   makeId,
+  makeCode,
 }) {
   if (!GOAL_SPACE_TYPES.includes(input?.type)) {
     throw new GoalSpaceError("invalid-argument", "unknown goal space type");
@@ -101,7 +137,14 @@ async function createGoalSpace({
       : null;
 
   const spaceId = makeId();
-  const inviteCode = makeId();
+  // Short, human-shareable invite code (e.g. "K7P4-9M2H") — reserved via a
+  // server-only goalSpaceInvites/{code} lookup so the shared string is just
+  // the code, not spaceId.token. Falls back to makeId() if no makeCode is
+  // injected (keeps older callers/tests working — legacy UUID codes still
+  // join via the explicit spaceId+inviteCode path).
+  const inviteCode = makeCode
+    ? await reserveInviteCode({ firestore, spaceId, now, makeCode })
+    : makeId();
   const batch = firestore.batch();
   batch.set(firestore.doc(`goalSpaces/${spaceId}`), {
     id: spaceId,
@@ -151,14 +194,41 @@ async function joinGoalSpace({
   photoURL,
   spaceId,
   inviteCode,
+  code,
   now,
   makeId,
 }) {
-  if (typeof spaceId !== "string" || typeof inviteCode !== "string") {
-    throw new GoalSpaceError("invalid-argument", "spaceId + inviteCode required");
-  }
   await firestore.runTransaction(async (tx) => {
-    const spaceRef = firestore.doc(`goalSpaces/${spaceId}`);
+    // Resolve the (spaceId, inviteCode) pair from any of the accepted
+    // forms: explicit legacy fields, a legacy combined "spaceId.token"
+    // string, or a short code that maps to a space via the lookup.
+    let sid = spaceId;
+    let ic = inviteCode;
+    if (
+      (typeof sid !== "string" || typeof ic !== "string") &&
+      typeof code === "string"
+    ) {
+      const raw = code.trim();
+      const dot = raw.indexOf(".");
+      if (dot > 0) {
+        sid = raw.slice(0, dot).trim();
+        ic = raw.slice(dot + 1).trim();
+      } else {
+        const norm = normalizeInviteCode(raw);
+        if (norm) {
+          const look = await tx.get(firestore.doc(`goalSpaceInvites/${norm}`));
+          if (look.exists && typeof look.data().spaceId === "string") {
+            sid = look.data().spaceId;
+            ic = norm;
+          }
+        }
+      }
+    }
+    if (typeof sid !== "string" || typeof ic !== "string") {
+      throw new GoalSpaceError("invalid-argument", "invite code required");
+    }
+
+    const spaceRef = firestore.doc(`goalSpaces/${sid}`);
     const spaceSnap = await tx.get(spaceRef);
     if (!spaceSnap.exists) {
       throw new GoalSpaceError("not-found", "no such circle");
@@ -167,39 +237,39 @@ async function joinGoalSpace({
     if (space.active !== true) {
       throw new GoalSpaceError("failed-precondition", "circle inactive");
     }
-    if (space.inviteCode !== inviteCode) {
+    if (space.inviteCode !== ic) {
       throw new GoalSpaceError("permission-denied", "bad invite");
     }
     const selfSnap = await tx.get(
-      firestore.doc(`goalSpaces/${spaceId}/members/${uid}`)
+      firestore.doc(`goalSpaces/${sid}/members/${uid}`)
     );
     if (selfSnap.exists) return; // idempotent re-join: no-op
     if (space.memberCount >= (space.maxMembers ?? GOAL_SPACE_MAX_MEMBERS)) {
       throw new GoalSpaceError("failed-precondition", "circle full");
     }
     const membersSnap = await tx.get(
-      firestore.collection(`goalSpaces/${spaceId}/members`)
+      firestore.collection(`goalSpaces/${sid}/members`)
     );
     const memberUids = membersSnap.docs.map((d) => d.id);
     await assertNoBlockedPair({ tx, firestore, uid, memberUids });
 
     tx.set(
-      firestore.doc(`goalSpaces/${spaceId}/members/${uid}`),
+      firestore.doc(`goalSpaces/${sid}/members/${uid}`),
       memberDoc({ uid, displayName, photoURL, role: "member", now })
     );
     tx.update(spaceRef, { memberCount: space.memberCount + 1 });
-    tx.set(firestore.doc(`goalSpaces/${spaceId}/events/${makeId()}`), {
+    tx.set(firestore.doc(`goalSpaces/${sid}/events/${makeId()}`), {
       uid,
       kind: "joined",
       text: null,
       weekKey: null,
       createdAt: now,
     });
-    tx.set(firestore.doc(`users/${uid}/journeys/${spaceId}`), {
-      id: spaceId,
+    tx.set(firestore.doc(`users/${uid}/journeys/${sid}`), {
+      id: sid,
       type: space.type,
       title: space.title,
-      goalSpaceId: spaceId,
+      goalSpaceId: sid,
       targetDate: space.targetDate ?? null,
       createdAt: now,
     });

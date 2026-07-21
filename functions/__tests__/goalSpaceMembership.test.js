@@ -250,3 +250,89 @@ describe("leave / remove", () => {
     expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(1);
   });
 });
+
+describe("short invite codes", () => {
+  function createWithCode(firestore, makeCode) {
+    return createGoalSpace({
+      firestore,
+      uid: "owner",
+      displayName: "Owner",
+      photoURL: null,
+      input: { type: "hybrid", title: "Hybrid" },
+      now: NOW,
+      makeId,
+      makeCode,
+    });
+  }
+
+  it("reserves a short code + writes the goalSpaceInvites lookup", async () => {
+    const { firestore, docs } = makeStore();
+    const { spaceId, inviteCode } = await createWithCode(
+      firestore,
+      () => "K7P49M2H"
+    );
+    expect(inviteCode).toBe("K7P49M2H");
+    expect(docs.get(`goalSpaces/${spaceId}`).inviteCode).toBe("K7P49M2H");
+    expect(docs.get("goalSpaceInvites/K7P49M2H")).toEqual({
+      spaceId,
+      createdAt: NOW,
+    });
+  });
+
+  it("retries when a generated code collides", async () => {
+    const { firestore, docs } = makeStore();
+    docs.set("goalSpaceInvites/TAKEN234", { spaceId: "other" });
+    const codes = ["TAKEN234", "FRESH567"];
+    let i = 0;
+    const { inviteCode } = await createWithCode(firestore, () => codes[i++]);
+    expect(inviteCode).toBe("FRESH567");
+    // The pre-existing reservation is untouched.
+    expect(docs.get("goalSpaceInvites/TAKEN234")).toEqual({ spaceId: "other" });
+  });
+
+  it("joins via a short code — dash + case tolerant", async () => {
+    const { firestore, docs } = makeStore();
+    const { spaceId } = await createWithCode(firestore, () => "K7P49M2H");
+    await joinGoalSpace({
+      firestore,
+      uid: "friend",
+      displayName: "Friend",
+      photoURL: null,
+      code: "k7p4-9m2h",
+      now: NOW,
+      makeId,
+    });
+    expect(docs.get(`goalSpaces/${spaceId}/members/friend`)).toBeTruthy();
+    expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(2);
+  });
+
+  it("still joins via the legacy spaceId.token combined code", async () => {
+    const { firestore, docs } = makeStore();
+    const { spaceId, inviteCode } = await seedSpace(firestore); // UUID code, no lookup
+    await joinGoalSpace({
+      firestore,
+      uid: "friend",
+      displayName: "Friend",
+      photoURL: null,
+      code: `${spaceId}.${inviteCode}`,
+      now: NOW,
+      makeId,
+    });
+    expect(docs.get(`goalSpaces/${spaceId}/members/friend`)).toBeTruthy();
+  });
+
+  it("rejects an unknown short code", async () => {
+    const { firestore } = makeStore();
+    await expect(
+      joinGoalSpace({
+        firestore,
+        uid: "x",
+        displayName: "x",
+        photoURL: null,
+        code: "ZZZZ9999",
+        now: NOW,
+        makeId,
+      })
+    ).rejects.toThrow("invite code required");
+  });
+});

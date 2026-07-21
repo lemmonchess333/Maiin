@@ -149,6 +149,11 @@ const EXPLICITLY_EXEMPT = [
 const INFRASTRUCTURE_AND_READ_ONLY = [
   "match /goalSpaces/{spaceId}",
   "match /goalSpaces/{spaceId}/members/{memberUid}",
+  // Short invite-code → spaceId lookup (bearer index). Admin SDK writes
+  // only (createGoalSpace reserves the code, joinGoalSpace reads it);
+  // `allow read, write: if false` for clients so codes can't be
+  // enumerated. No user-keyed data → out of scope for the deletion freeze.
+  "match /goalSpaceInvites/{code}",
   "match /databases/{database}/documents",
   "match /{document=**}",
   "match /users/{uid}/performance/{doc}",
