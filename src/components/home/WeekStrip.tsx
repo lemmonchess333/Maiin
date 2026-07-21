@@ -68,7 +68,12 @@ export default function WeekStrip({
       {days.map(function (day) {
         // Today: 48px filled purple + halo (matches Program DayStepper's
         // Rule 3). Others: 40px. Selected-not-today: 40px filled purple
-        // to match Program Rule 5. Default: 40px filled grey.
+        // to match Program Rule 5. Default: 40px hollow ring (transparent
+        // fill + 2px border) — matches Program's ProgrammeWeekSelector
+        // default cell so the day-circle primitive reads identically on
+        // Home and the Train Lift/Run selectors (the grey-fill default was
+        // the last state that diverged; it encoded nothing — activity shows
+        // via the dots below, not the circle).
         const isBig = day.isToday;
         // Day numbers are numeric displays → font-mono (Archivo) + tabular-nums
         // per the design-system invariant, and text-sm so the week's dates are
@@ -87,7 +92,7 @@ export default function WeekStrip({
           cls += " text-white";
           st = { backgroundColor: THEME.brand };
         } else {
-          cls += " text-muted-foreground bg-muted";
+          cls += " text-muted-foreground border-2 border-border";
         }
         return (
           <button
