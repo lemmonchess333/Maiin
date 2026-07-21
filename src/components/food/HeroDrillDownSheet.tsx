@@ -3,6 +3,7 @@ import { Lock } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
 import { useSubscription } from "@/lib/subscription";
+import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
   formatCalories,
@@ -10,6 +11,7 @@ import {
   CALORIE_UNIT,
 } from "@/utils/formatNutrition";
 import { clampPct } from "@/lib/percentageHelpers";
+import { resolveMicroTargets, type MicroKind } from "@/lib/microTargets";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 
 const ProModal = lazy(() => import("@/components/ProModal"));
@@ -19,7 +21,20 @@ interface DailyTotals {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number;
+  sugar: number;
+  sodium: number;
 }
+
+// Micro reference colours (tokens only): fiber = positive green (a goal to
+// reach), sugar = carb gold (sugar is a carbohydrate), sodium = hydration
+// teal (a distinct calm mineral tone). Over-limit switches to the amber
+// warning register in MicroRow.
+const MICRO_COLORS: Record<"fiber" | "sugar" | "sodium", string> = {
+  fiber: THEME.semantic.positive,
+  sugar: THEME.macros.carbs,
+  sodium: THEME.semantic.hydration,
+};
 
 interface HeroDrillDownSheetProps {
   open: boolean;
@@ -73,6 +88,82 @@ function MacroRow({ label, consumed, target, color }: MacroRowProps) {
   );
 }
 
+interface MicroRowProps {
+  label: string;
+  consumed: number;
+  target: number;
+  unit: "g" | "mg";
+  kind: MicroKind;
+  color: string;
+}
+
+// Fiber/sugar/sodium row. Unlike a macro, the KIND matters: a "goal"
+// (fiber) fills toward 100% and reads as a win when met; a "limit"
+// (sodium, sugar) is fine until exceeded, then flips to the amber warning
+// register — over is the caution state, not the achievement.
+function MicroRow({
+  label,
+  consumed,
+  target,
+  unit,
+  kind,
+  color,
+}: MicroRowProps) {
+  const pct = clampPct(consumed, target);
+  const isLimit = kind === "limit";
+  const over = consumed > target;
+  const warn = isLimit && over;
+  const barColor = warn ? THEME.amber : color;
+  const remaining = Math.max(0, Math.round(target - consumed));
+  const overBy = Math.max(0, Math.round(consumed - target));
+  const note = isLimit
+    ? over
+      ? `${formatMacro(overBy)}${unit} over limit`
+      : `${formatMacro(remaining)}${unit} left · ${pct}%`
+    : consumed >= target
+      ? `Goal reached · ${formatMacro(consumed)}${unit}`
+      : `${formatMacro(remaining)}${unit} to goal · ${pct}%`;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <span className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+          {label}
+          {isLimit && (
+            <span className="ml-1.5 normal-case tracking-normal text-[10px] text-muted-foreground/70">
+              limit
+            </span>
+          )}
+        </span>
+        <span className="font-mono tabular-nums text-sm">
+          <span
+            className="font-semibold text-foreground"
+            style={warn ? { color: THEME.amber } : undefined}
+          >
+            {formatMacro(consumed)}
+          </span>
+          <span className="text-muted-foreground">
+            {" / "}
+            {formatMacro(target)}
+            {unit}
+          </span>
+        </span>
+      </div>
+      <div className="h-1.5 rounded-full overflow-hidden bg-muted">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, background: barColor }}
+        />
+      </div>
+      <p
+        className="text-caption text-muted-foreground font-mono tabular-nums"
+        style={warn ? { color: THEME.amber } : undefined}
+      >
+        {note}
+      </p>
+    </div>
+  );
+}
+
 /**
  * Food6 a2: tap-on-hero drill-down sheet. Surfaces the same
  * calorie + macro data the hero shows, but expanded — explicit
@@ -95,6 +186,8 @@ export default function HeroDrillDownSheet({
   const showBurnBreakdown = dailyTargets.actualBurn > 0;
 
   const { isPro } = useSubscription();
+  const { profile } = useAuth();
+  const micros = resolveMicroTargets(profile?.sex);
   const [showMacroPaywall, setShowMacroPaywall] = useState(false);
   const [macroPaywallQueued, setMacroPaywallQueued] = useState(false);
   const fuel = dailyTargets.trainingFuel;
@@ -278,6 +371,27 @@ export default function HeroDrillDownSheet({
               target={dailyTargets.fat}
               color={THEME.macros.fat}
             />
+          </section>
+
+          {/* Other nutrients — fiber (a goal), sugar + sodium (limits).
+              Totals are already aggregated per-meal by mealTotals; the
+              reference targets come from microTargets (not personalised the
+              way calories/macros are — there's no engine for these). */}
+          <section className="space-y-4">
+            <p className="text-caption uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              Other nutrients
+            </p>
+            {micros.map((m) => (
+              <MicroRow
+                key={m.key}
+                label={m.label}
+                consumed={dailyTotals[m.key]}
+                target={m.target}
+                unit={m.unit}
+                kind={m.kind}
+                color={MICRO_COLORS[m.key]}
+              />
+            ))}
           </section>
 
           {/* Activity today — only when activity has been recorded.
