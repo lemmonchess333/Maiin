@@ -6,6 +6,7 @@ import {
   useReducedMotion as useFramerReducedMotion,
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+import { haptic } from "@/lib/haptic";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -156,7 +157,10 @@ export default function MacroColumn({
 
     const controls: { stop: () => void }[] = [];
     if (justCrossed) {
-      // Goal landed — a fuller glyph pop + the bar's opacity pulse.
+      // Goal landed — a fuller glyph pop + the bar's opacity pulse + a
+      // light haptic so hitting a macro is a small felt win, not just a
+      // late all-macros-done celebration (Food-delight #2).
+      haptic("light");
       controls.push(
         animate(pulseOpacity, [1, 0.6, 1], { duration: 0.4, ease: "easeOut" })
       );
