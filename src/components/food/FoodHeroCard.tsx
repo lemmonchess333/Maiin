@@ -20,6 +20,7 @@ import {
 } from "@/lib/foodCelebration";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
+import { mealPhotoImage } from "@/lib/editorialImages";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
@@ -244,6 +245,12 @@ export default function FoodHeroCard({
     ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
     : null;
 
+  // Ambient time-of-day food photo behind the calorie hero (breakfast /
+  // lunch / dinner, same windows as meal slots). Only for TODAY — a past
+  // day keeps the clean look. Null until the operator drops the licensed
+  // asset, in which case the hero renders its existing brand-purple halo.
+  const mealPhoto = isToday ? mealPhotoImage(new Date().getHours()) : null;
+
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
   // markup renders correctly in both themes.
@@ -251,18 +258,46 @@ export default function FoodHeroCard({
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
       <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
-        {/* Brand-hue ambient halo behind the calorie ring — the cross-screen
-            cohesion twin of the Performance hero's band-state halo. The ring
-            is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
-            halo is brand purple, centered behind the ring. Decorative-free:
-            functional state/identity wash, low alpha, fades to transparent. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
-          style={{
-            background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
-          }}
-        />
+        {mealPhoto ? (
+          /* Ambient food-photo wash (time-of-day). Reuses the Social/Spaces
+             editorial-photo + scrim recipe: the photo fills the card behind
+             a dark scrim so the ring, number and captions stay legible
+             (white-on-scrim reads in both themes). Replaces the purple halo
+             when present. Decorative + aria-hidden. */
+          <>
+            <img
+              src={mealPhoto}
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 size-full object-cover select-none"
+              draggable={false}
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                /* Two layers: a radial darkening centred on the ring/number
+                   (so the value always sits on a dark patch, whatever the
+                   photo), over a vertical scrim that keeps the caption + glance
+                   line legible top and bottom. */
+                background: `radial-gradient(circle at 50% 38%, ${THEME.scrim} 0%, transparent 58%), linear-gradient(to bottom, ${THEME.scrim} 0%, ${THEME.scrimSoft} 48%, ${THEME.scrim} 100%)`,
+              }}
+            />
+          </>
+        ) : (
+          /* Brand-hue ambient halo behind the calorie ring — the cross-screen
+             cohesion twin of the Performance hero's band-state halo. The ring
+             is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
+             halo is brand purple, centered behind the ring. Decorative-free:
+             functional state/identity wash, low alpha, fades to transparent. */
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
+            }}
+          />
+        )}
         {/* Content sits above the absolute halo (positioned siblings paint
             in DOM order; a non-positioned block would render beneath it). */}
         <div className="relative">
