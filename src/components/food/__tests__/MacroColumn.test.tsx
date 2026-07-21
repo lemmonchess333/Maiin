@@ -53,4 +53,34 @@ describe("MacroColumn — tap contract", () => {
     );
     expect(() => fireEvent.click(screen.getByRole("button"))).not.toThrow();
   });
+
+  // Food-delight #3: once a macro meets its goal the glyph shows a lasting
+  // "hit it" state (halo + sr-only announcement); below goal it doesn't.
+  it("announces the goal-reached state only when consumed >= target", () => {
+    const { rerender } = render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={80}
+        target={120}
+        label="Protein"
+        color="#000"
+        mode="eaten"
+      />
+    );
+    expect(screen.queryByText(/protein goal reached/i)).toBeNull();
+
+    rerender(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={120}
+        target={120}
+        label="Protein"
+        color="#000"
+        mode="eaten"
+      />
+    );
+    expect(screen.getByText(/protein goal reached/i)).toBeInTheDocument();
+  });
 });
