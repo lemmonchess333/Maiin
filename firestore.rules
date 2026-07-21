@@ -1241,6 +1241,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Short invite-code → spaceId lookup. A server-only bearer index
+    // (written/read exclusively by the createGoalSpace / joinGoalSpace
+    // callables via the Admin SDK). Never client-accessible: a client
+    // read would let anyone enumerate codes → spaces. Default-deny would
+    // already cover this; the explicit block documents the intent.
+    match /goalSpaceInvites/{code} {
+      allow read, write: if false;
+    }
+
     match /goalSpaces/{spaceId}/members/{memberUid} {
       allow read: if isGoalSpaceMember(spaceId);
       allow write: if false;
