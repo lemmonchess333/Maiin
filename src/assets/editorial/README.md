@@ -46,6 +46,14 @@ crispest. The food hero renders these in **dark mode only** (a photo
 behind the light card washes out muddy); light mode keeps the purple
 halo, so tune candidates against a dark scrim.
 
+**Crop tight — no letterbox.** The food hero paints the image
+edge-to-edge over the whole card (`object-cover`, `absolute inset-0`),
+so any black/blank border baked into the file renders as a hard band
+inside the card and reads as "the photo doesn't fit". When sourcing
+from a phone screenshot, crop to the photo's true bounds — don't leave
+the surrounding letterbox rows in. Check the finished file's outer rows
+and columns are actual image content before committing it.
+
 ## Licensing
 
 Only add images you have rights to distribute in a shipped app —
