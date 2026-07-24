@@ -178,6 +178,13 @@
      star fill. */
   --achievement: 40 90% 35%;
   --achievement-bg: 45 100% 95%;
+  /* Food calorie hero — dark photo-wash scrim. The ambient food photo
+     behind the calorie ring renders in DARK MODE ONLY (see FoodHeroCard),
+     so this scrim is a single dark value — no light variant / no theme
+     flip. In light mode the hero keeps its brand-purple halo and this var
+     is never referenced. */
+  --food-photo-scrim: rgba(0, 0, 0, 0.62);
+  --food-photo-scrim-soft: rgba(0, 0, 0, 0.28);
 }
 
 .dark {
