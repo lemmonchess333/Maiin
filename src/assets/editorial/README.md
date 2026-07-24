@@ -54,6 +54,15 @@ from a phone screenshot, crop to the photo's true bounds — don't leave
 the surrounding letterbox rows in. Check the finished file's outer rows
 and columns are actual image content before committing it.
 
+**Grade the asset dark (mean luminance ≈ 105).** The hero's scrim is
+deliberately light (0.42) so the food stays visible, which means the
+contrast that keeps the ring and captions readable has to come from the
+IMAGE, not the wash. A bright, un-graded shot dropped in as-is will
+wash the text out. The shipped `food-breakfast.webp` was graded to
+≈ 34% darker than its source; match that, or move the
+`--food-photo-scrim` values in `src/index.css` to suit the new photo.
+Check with: `sharp(file).stats()` → mean of the RGB channel means.
+
 ## Licensing
 
 Only add images you have rights to distribute in a shipped app —
