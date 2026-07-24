@@ -2,6 +2,7 @@ import { useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeftRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
@@ -58,6 +59,7 @@ export default function CalorieRing({
   ringDurationMs = 1500,
 }: CalorieRingProps) {
   const reduce = useReducedMotion();
+  const isDark = useIsDarkMode();
   const id = useId();
   const ringGradientId = `calorie-ring-gradient${id}`;
   const overflowGradientId = `calorie-overflow-gradient${id}`;
@@ -89,6 +91,17 @@ export default function CalorieRing({
   // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
   const numberColor = hasTarget ? COLOR_RING : THEME.neutral[300];
   const trackColor = COLOR_TRACK;
+
+  /* Mode-chip palette, theme-aware (mirrors the useMacroPalette split).
+     The deep purple below is tuned for the lavender tint over a WHITE
+     card; on the dark card it lands at ~2.8:1 — under AA for 11px text —
+     and it disappears almost entirely over the dark-mode hero photo,
+     where the 10% tint is too sheer to give the text a surface of its
+     own. In dark mode the chip therefore uses the LIGHT ring step
+     (~7:1 on the dark card) over a slightly stronger purple backing so
+     it holds up against photography as well as the flat card. */
+  const chipTextColor = isDark ? COLOR_RING_LIGHT : COLOR_RING_DEEP;
+  const chipBackground = isDark ? `${COLOR_RING}33` : trackColor;
 
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)
@@ -316,13 +329,20 @@ export default function CalorieRing({
                   + the ⇄ icon read as "tap to switch" at a glance, so the
                   active framing (LEFT vs EATEN) is legible without parsing
                   the 10px text. Reuses the ring's own track tint
-                  (`trackColor`) for the chip. Text uses the deeper brand
-                  purple (`COLOR_RING_DEEP`, already the overshoot-arc shade)
-                  so it clears WCAG AA (~5.3:1) on the lavender tint at 10px,
-                  keeping the single purple ring identity. */}
+                  (`trackColor`) for the chip. In LIGHT mode the text is the
+                  deeper brand purple (`COLOR_RING_DEEP`, already the
+                  overshoot-arc shade) so it clears WCAG AA (~5.3:1) on the
+                  lavender tint at 10px; DARK mode flips to the lighter ring
+                  step over a stronger backing (see `chipTextColor` above) —
+                  the deep purple failed AA on the dark card and vanished
+                  over the hero photo. Either way it stays one purple
+                  identity. */}
               <span
                 className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold uppercase tracking-wider"
-                style={{ color: COLOR_RING_DEEP, backgroundColor: trackColor }}
+                style={{
+                  color: chipTextColor,
+                  backgroundColor: chipBackground,
+                }}
               >
                 {CALORIE_UNIT} {labelMode}
                 <ArrowLeftRight className="size-2.5" aria-hidden="true" />
