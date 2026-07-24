@@ -19,6 +19,9 @@ prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 | `space-<spaceId>.webp`  | Community Space cards (directory + header) — |
 |                         | one per id in `spaceDefs.ts` SPACE_DEFS,     |
 |                         | e.g. `space-trail-running.webp`              |
+| `food-breakfast.webp`   | Food calorie hero, morning (before 11:00)    |
+| `food-lunch.webp`       | Food calorie hero, midday (11:00–17:00)      |
+| `food-dinner.webp`      | Food calorie hero, evening (after 17:00)     |
 
 They're picked up at **build time** (`import.meta.glob`) — no code
 change needed. Until a file exists, the surface renders its designed
@@ -35,6 +38,13 @@ overlays white text — so choose images that survive that treatment:
 - meaningful detail in the upper two-thirds (the bottom band sits
   under a dark scrim + text);
 - avoid busy high-contrast bottoms and embedded text/logos.
+
+For the `food-*` shots specifically: prefer **calm flat-lays** (a plate
+of eggs, a lunch bowl) over busy plated scenes — the calorie number sits
+centred over the image behind a radial scrim, so a quiet centre reads
+crispest. The food hero renders these in **dark mode only** (a photo
+behind the light card washes out muddy); light mode keeps the purple
+halo, so tune candidates against a dark scrim.
 
 ## Licensing
 

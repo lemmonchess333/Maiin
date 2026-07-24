@@ -20,6 +20,8 @@ import {
 } from "@/lib/foodCelebration";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
+import { mealPhotoImage } from "@/lib/editorialImages";
+import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import CalorieRing, { type CalorieRingMode } from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
@@ -244,6 +246,18 @@ export default function FoodHeroCard({
     ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
     : null;
 
+  // Ambient time-of-day food photo behind the calorie hero (breakfast /
+  // lunch / dinner, same windows as meal slots). DARK MODE ONLY + TODAY:
+  // in dark mode the photo reads as a moody, intentional hero behind the
+  // ring; in light mode a photo behind the light card either washes out
+  // muddy or reads as a dark island, so light mode keeps the clean
+  // brand-purple halo. Gating on isDark also means the asset is never
+  // fetched in light mode. Null (→ halo) until the operator drops the
+  // licensed asset.
+  const isDark = useIsDarkMode();
+  const mealPhoto =
+    isToday && isDark ? mealPhotoImage(new Date().getHours()) : null;
+
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
   // markup renders correctly in both themes.
@@ -251,18 +265,49 @@ export default function FoodHeroCard({
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
       <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
-        {/* Brand-hue ambient halo behind the calorie ring — the cross-screen
-            cohesion twin of the Performance hero's band-state halo. The ring
-            is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
-            halo is brand purple, centered behind the ring. Decorative-free:
-            functional state/identity wash, low alpha, fades to transparent. */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
-          style={{
-            background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
-          }}
-        />
+        {mealPhoto ? (
+          /* Ambient food-photo hero (dark mode only, gated above). Reuses
+             the Social/Spaces editorial-photo + scrim recipe: the photo
+             fills the card behind a dark scrim so the ring, number and
+             captions stay legible (white-on-scrim). Replaces the purple
+             halo when present. Decorative + aria-hidden. */
+          <>
+            <img
+              src={mealPhoto}
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 size-full object-cover select-none"
+              draggable={false}
+            />
+            {/* Dark scrim via the --food-photo-scrim CSS var: a radial
+                darkening centred on the ring/number keeps the value
+                legible whatever the photo, over a vertical scrim for the
+                caption + glance line. Only ever renders in dark mode
+                (photo is dark-only), so this is a moody photo hero behind
+                the card's light text. */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 38%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
+              }}
+            />
+          </>
+        ) : (
+          /* Brand-hue ambient halo behind the calorie ring — the cross-screen
+             cohesion twin of the Performance hero's band-state halo. The ring
+             is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
+             halo is brand purple, centered behind the ring. Decorative-free:
+             functional state/identity wash, low alpha, fades to transparent. */
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
+            }}
+          />
+        )}
         {/* Content sits above the absolute halo (positioned siblings paint
             in DOM order; a non-positioned block would render beneath it). */}
         <div className="relative">
