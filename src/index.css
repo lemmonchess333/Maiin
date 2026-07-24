@@ -182,9 +182,16 @@
      behind the calorie ring renders in DARK MODE ONLY (see FoodHeroCard),
      so this scrim is a single dark value — no light variant / no theme
      flip. In light mode the hero keeps its brand-purple halo and this var
-     is never referenced. */
-  --food-photo-scrim: rgba(0, 0, 0, 0.62);
-  --food-photo-scrim-soft: rgba(0, 0, 0, 0.28);
+     is never referenced.
+
+     Deliberately LIGHT (0.42/0.12, was 0.62/0.28): the asset itself is
+     graded dark, so legibility comes from the photo rather than from a
+     heavy black wash over a bright one. The wash approach flattened the
+     image into a dark rectangle — pushing the contrast into the asset
+     keeps the food readable AND the text clear. Any replacement photo
+     must be graded to match, or this value has to move with it. */
+  --food-photo-scrim: rgba(0, 0, 0, 0.42);
+  --food-photo-scrim-soft: rgba(0, 0, 0, 0.12);
 }
 
 .dark {
