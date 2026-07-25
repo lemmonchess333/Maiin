@@ -2,8 +2,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   captureError,
-  getRecentErrors,
-  clearErrors,
+  __getRecentErrors,
+  __clearErrors,
   setErrorReportingUid,
   __getPendingPreAuthCount,
   initErrorMonitoring,
@@ -11,7 +11,7 @@ import {
 
 describe("errorReporting", () => {
   beforeEach(() => {
-    clearErrors();
+    __clearErrors();
     // Reset to the unauthenticated state + drop any pending pre-auth
     // queue so each test starts clean.
     setErrorReportingUid(null);
@@ -19,7 +19,7 @@ describe("errorReporting", () => {
 
   it("captures errors", () => {
     captureError(new Error("test error"));
-    const errors = getRecentErrors();
+    const errors = __getRecentErrors();
     expect(errors.length).toBe(1);
     expect(errors[0].message).toBe("test error");
     expect(errors[0].type).toBe("error");
@@ -31,7 +31,7 @@ describe("errorReporting", () => {
       url: "/api/data",
       status: 500,
     });
-    const errors = getRecentErrors();
+    const errors = __getRecentErrors();
     expect(errors[0].type).toBe("network");
     expect(errors[0].context?.url).toBe("/api/data");
   });
@@ -40,7 +40,7 @@ describe("errorReporting", () => {
     for (let i = 0; i < 60; i++) {
       captureError(new Error(`error ${i}`));
     }
-    const errors = getRecentErrors();
+    const errors = __getRecentErrors();
     expect(errors.length).toBe(50);
     // Should keep the most recent
     expect(errors[errors.length - 1].message).toBe("error 59");
@@ -48,20 +48,20 @@ describe("errorReporting", () => {
 
   it("clears errors", () => {
     captureError(new Error("test"));
-    clearErrors();
-    expect(getRecentErrors().length).toBe(0);
+    __clearErrors();
+    expect(__getRecentErrors().length).toBe(0);
   });
 
   it("returns readonly array", () => {
     captureError(new Error("test"));
-    const errors = getRecentErrors();
+    const errors = __getRecentErrors();
     expect(Array.isArray(errors)).toBe(true);
   });
 
   it("stamps appVersion + a stable sessionId on every report", () => {
     captureError(new Error("one"));
     captureError(new Error("two"));
-    const errors = getRecentErrors();
+    const errors = __getRecentErrors();
     expect(errors[0].appVersion).toBeTruthy();
     expect(errors[0].sessionId).toBeTruthy();
     // Same page-load → same session id across reports (so a cascade
@@ -98,7 +98,7 @@ describe("errorReporting", () => {
 });
 
 describe("initErrorMonitoring — global handler registration + cleanup", () => {
-  beforeEach(() => clearErrors());
+  beforeEach(() => __clearErrors());
 
   it("captures window error events while active, and stops after cleanup", () => {
     const cleanup = initErrorMonitoring();
@@ -114,15 +114,15 @@ describe("initErrorMonitoring — global handler registration + cleanup", () => 
         colno: 5,
       })
     );
-    const after = getRecentErrors();
+    const after = __getRecentErrors();
     expect(after.some((e) => e.message === "boom")).toBe(true);
     const countWhileActive = after.length;
 
     // After cleanup the listener is removed → no further capture.
     cleanup();
     window.dispatchEvent(new ErrorEvent("error", { message: "after" }));
-    expect(getRecentErrors().length).toBe(countWhileActive);
-    expect(getRecentErrors().some((e) => e.message === "after")).toBe(false);
+    expect(__getRecentErrors().length).toBe(countWhileActive);
+    expect(__getRecentErrors().some((e) => e.message === "after")).toBe(false);
   });
 
   it("captures unhandled promise rejections while active", () => {
@@ -133,7 +133,9 @@ describe("initErrorMonitoring — global handler registration + cleanup", () => 
     (ev as unknown as { reason: Error }).reason = new Error("rejected");
     window.dispatchEvent(ev);
 
-    expect(getRecentErrors().some((e) => e.message === "rejected")).toBe(true);
+    expect(__getRecentErrors().some((e) => e.message === "rejected")).toBe(
+      true
+    );
     cleanup();
   });
 
@@ -143,7 +145,7 @@ describe("initErrorMonitoring — global handler registration + cleanup", () => 
     (ev as unknown as { reason: string }).reason = "string reason";
     window.dispatchEvent(ev);
 
-    expect(getRecentErrors().some((e) => e.message === "string reason")).toBe(
+    expect(__getRecentErrors().some((e) => e.message === "string reason")).toBe(
       true
     );
     cleanup();

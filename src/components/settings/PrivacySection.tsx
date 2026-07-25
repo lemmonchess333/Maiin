@@ -10,6 +10,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
 import AccordionSection from "@/components/AccordionSection";
+import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { PrivacyZone } from "@/lib/privacyZones";
@@ -30,10 +31,6 @@ interface PrivacySectionProps {
   ) => Promise<UpdateProfileResult>;
   defaultVisibility: "public" | "followers" | "private";
   setDefaultVisibility: (v: "public" | "followers" | "private") => void;
-  autoPostRuns: boolean;
-  setAutoPostRuns: (v: boolean) => void;
-  autoPostWorkouts: boolean;
-  setAutoPostWorkouts: (v: boolean) => void;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -50,10 +47,6 @@ export default function PrivacySection({
   updateProfile,
   defaultVisibility,
   setDefaultVisibility,
-  autoPostRuns,
-  setAutoPostRuns,
-  autoPostWorkouts,
-  setAutoPostWorkouts,
   privacyZones,
   addZone,
   removeZone,
@@ -103,55 +96,14 @@ export default function PrivacySection({
           </select>
         </div>
 
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
-            <p className="text-sm text-foreground">Auto-post runs</p>
-            <p className="text-xs text-muted-foreground">
-              Share runs to feed automatically
-            </p>
-          </div>
-          <Toggle
-            checked={autoPostRuns}
-            label="Auto-post runs"
-            onChange={async () => {
-              haptic("light");
-              const prev = autoPostRuns;
-              const next = !autoPostRuns;
-              setAutoPostRuns(next);
-              trackSettingsEvent("settings_toggle_changed", {
-                toggle: "auto_post_runs",
-                value: next,
-              });
-              const result = await updateProfile({ autoPostRuns: next });
-              if (!result.ok) setAutoPostRuns(prev);
-            }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
-            <p className="text-sm text-foreground">Auto-post workouts</p>
-            <p className="text-xs text-muted-foreground">
-              Share workouts to feed automatically
-            </p>
-          </div>
-          <Toggle
-            checked={autoPostWorkouts}
-            label="Auto-post workouts"
-            onChange={async () => {
-              haptic("light");
-              const prev = autoPostWorkouts;
-              const next = !autoPostWorkouts;
-              setAutoPostWorkouts(next);
-              trackSettingsEvent("settings_toggle_changed", {
-                toggle: "auto_post_workouts",
-                value: next,
-              });
-              const result = await updateProfile({ autoPostWorkouts: next });
-              if (!result.ok) setAutoPostWorkouts(prev);
-            }}
-          />
-        </div>
+        {/* Auto-posting is owned by the share composer's saved default, not
+            by a profile flag. Two `autoPostRuns` / `autoPostWorkouts`
+            toggles used to sit here; the composer replaced them (#1416,
+            see useProgram's completion path) and nothing has read either
+            field since — so the switches persisted a value, changed
+            nothing, and contradicted the composer whenever the two
+            disagreed. This row edits the setting that actually runs. */}
+        <ShareDefaultsRow uid={user?.uid ?? null} />
 
         {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
           false = user opted out. Toggling off hides the AI CTAs and

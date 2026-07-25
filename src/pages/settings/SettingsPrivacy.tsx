@@ -10,12 +10,6 @@ export default function SettingsPrivacy() {
   const [defaultVisibility, setDefaultVisibility] = useState<
     "public" | "followers" | "private"
   >(profile?.defaultVisibility ?? "public");
-  const [autoPostRuns, setAutoPostRuns] = useState(
-    profile?.autoPostRuns ?? true
-  );
-  const [autoPostWorkouts, setAutoPostWorkouts] = useState(
-    profile?.autoPostWorkouts ?? false
-  );
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
@@ -34,10 +28,6 @@ export default function SettingsPrivacy() {
         updateProfile={updateProfile}
         defaultVisibility={defaultVisibility}
         setDefaultVisibility={setDefaultVisibility}
-        autoPostRuns={autoPostRuns}
-        setAutoPostRuns={setAutoPostRuns}
-        autoPostWorkouts={autoPostWorkouts}
-        setAutoPostWorkouts={setAutoPostWorkouts}
         privacyZones={privacyZones}
         addZone={addZone}
         removeZone={removeZone}
