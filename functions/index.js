@@ -3273,13 +3273,15 @@ const RECOVERY_EXIT_GRACE_DAYS = 7;
 // race date (well after the +3d no-show flip), so they're not stranded in
 // race_prep on a race that never happened (#1109).
 const NO_SHOW_EXIT_GRACE_DAYS = 14;
-const RACE_STRICT_DISTANCE_RATIO_FNS = 0.95;
-const PLANNED_RACE_DISTANCE_METERS_FNS = {
-  "5k": 5000,
-  "10k": 10000,
-  half: 21097,
-  marathon: 42195,
-};
+// Race-day completion rule — extracted to ./lib/raceDayCompletion.js so the
+// rule that ACTUALLY RUNS is importable and pinned by golden fixtures. It is
+// a deliberate NON-mirror of the client's claim-map rule (different question,
+// different data shape); see that module's header.
+const raceDayCompletion = require("./lib/raceDayCompletion");
+const RACE_STRICT_DISTANCE_RATIO_FNS =
+  raceDayCompletion.RACE_STRICT_DISTANCE_RATIO;
+const PLANNED_RACE_DISTANCE_METERS_FNS =
+  raceDayCompletion.PLANNED_RACE_DISTANCE_METERS;
 
 // Date helpers — `utcDateString` (YYYY-MM-DD in UTC) and
 // `parseUtcDate` (YYYY-MM-DD → UTC 00:00 Date) live in
@@ -3298,26 +3300,7 @@ const _parseUtcDate = parseUtcDate;
  *  Also defends against `isInvalid` / `savedAnyway` runs counting
  *  as a race match (a "Save anyway" on a borked GPS trace must not
  *  clear no-show). */
-function _hasStrictRaceMatch(savedRunsForDate, plannedDistanceMeters) {
-  if (!Array.isArray(savedRunsForDate) || savedRunsForDate.length === 0) {
-    return false;
-  }
-  for (const r of savedRunsForDate) {
-    if (!r || r.isInvalid === true || r.savedAnyway === true) continue;
-    if (r.actualTemplateId !== "race") continue;
-    if (typeof r.distance !== "number") continue;
-    if (!plannedDistanceMeters || plannedDistanceMeters <= 0) {
-      // Defensive — without a planned distance we can't gate on the
-      // strict ratio. Treat any race-templated run as a match in
-      // that case (matches client behavior at Q1 P29 fallback).
-      return true;
-    }
-    if (r.distance / plannedDistanceMeters >= RACE_STRICT_DISTANCE_RATIO_FNS) {
-      return true;
-    }
-  }
-  return false;
-}
+const _hasStrictRaceMatch = raceDayCompletion.hasStrictRaceMatch;
 
 /** Locate the plan's race-day runDay.
  *
@@ -3758,12 +3741,13 @@ exports._recoveryEndDateForRace = _recoveryEndDateForRace;
 //     and a newer race lands, the recoveryEndDate updates to the
 //     new race's window (later race's recovery overrides).
 
-const RECOVERY_WEEKS_BY_DISTANCE_FNS = {
-  "5k": 1,
-  "10k": 2,
-  half: 3,
-  marathon: 4,
-};
+// Recovery weeks by distance — from ./lib/raceDayCompletion.js. The server
+// derives `recoveryEndDate` from this AND uses that date as the identity
+// check for "which race did recovery come from", so a silent drift against
+// the scheduler's `recoveryWeeksForDistance` mis-identifies the completed
+// race. Pinned by golden fixtures.
+const RECOVERY_WEEKS_BY_DISTANCE_FNS =
+  raceDayCompletion.RECOVERY_WEEKS_BY_DISTANCE;
 
 /** Pure decision function for the recovery-entry write triggered
  *  by `onRunCreated`. Returns `{ write, payload?, raceDayRunDayId?,
@@ -3787,31 +3771,22 @@ function _decideRecoveryEntry(profile, programState, savedRun) {
     return { write: false };
   }
 
-  // Gate 2b — reject invalid / save-anyway runs. A user who hit
-  // "Save anyway" on a borked GPS trace (impossible pace, partial
-  // crash recovery) must not trip recovery entry off a junk save
-  // that they explicitly flagged as invalid.
-  if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
+  // Gates 2b–4 — one predicate, shared with the reconciliation sweep:
+  //   2b. reject invalid / "Save anyway" runs (a borked GPS trace the
+  //       user explicitly flagged must not trip recovery entry);
+  //   3.  saved run must be race-templated (`actualTemplateId` — the
+  //       raw-doc field RunSummary writes);
+  //   4.  saved run must clear the ≥95% planned-distance bar, with the
+  //       Q1 P29 zero-planned fallback.
+  // Previously re-derived inline here AND in `_hasStrictRaceMatch`,
+  // which is how the two drifted apart from the (dead) lib port.
+  if (
+    !raceDayCompletion.isStrictRaceRun(
+      savedRun,
+      raceDayCompletion.plannedDistanceFor(runPlan.raceGoal.distance)
+    )
+  ) {
     return { write: false };
-  }
-
-  // Gate 3 — saved run must be race-templated. RunSummary stores the
-  // resolved template as `actualTemplateId` (planMetadata flattened
-  // to top-level); there is no plain `templateId` field on the doc.
-  if (savedRun.actualTemplateId !== "race") {
-    return { write: false };
-  }
-
-  // Gate 4 — saved run must clear the ≥95% planned-distance bar
-  // (Q1 P4 strict). Defensive 0-planned fallback per Q1 P29 —
-  // unconfigured race goal accepts any distance.
-  const plannedDistance =
-    PLANNED_RACE_DISTANCE_METERS_FNS[runPlan.raceGoal.distance] || 0;
-  if (plannedDistance > 0) {
-    if (typeof savedRun.distance !== "number") return { write: false };
-    if (savedRun.distance / plannedDistance < RACE_STRICT_DISTANCE_RATIO_FNS) {
-      return { write: false };
-    }
   }
 
   // Gate 5 — race-day runDay must exist in the plan.

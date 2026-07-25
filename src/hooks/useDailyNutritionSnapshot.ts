@@ -10,6 +10,7 @@
  * unchanged re-render is a no-op. ~1 write/day/active-session — the same order
  * as the existing daily streak/water writes.
  */
+/* @untested: coverage gap. Fire-and-forget writer mounted once in the auth tree; a test needs a stable clock plus the snapshot module's own fixtures. */
 import { useEffect, useRef } from "react";
 import { Timestamp, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";

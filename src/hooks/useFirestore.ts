@@ -1,3 +1,4 @@
+/* @untested: coverage gap. Legacy generic reader superseded by the per-domain hooks; test it if a caller is added rather than to preserve it. */
 import { useState, useEffect } from "react";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";

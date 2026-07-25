@@ -1,3 +1,4 @@
+/* @untested: coverage gap. Straightforwardly testable against the fake; needs a fixed clock for the per-day doc id. */
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";

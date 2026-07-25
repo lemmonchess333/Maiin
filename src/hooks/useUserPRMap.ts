@@ -1,3 +1,4 @@
+/* @untested: coverage gap. Carries a module-level uid cache that a test must be able to clear first. */
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -33,11 +34,20 @@ async function fetchPRMap(uid: string): Promise<PRMap> {
       query(
         collection(db, "users", uid, "workouts"),
         orderBy("date", "desc"),
-        limit(FETCH_LIMIT),
-      ),
+        limit(FETCH_LIMIT)
+      )
     );
     const workouts = snap.docs
-      .map((d) => d.data() as { exercises: { exerciseName: string; sets: { weightKg: number; reps: number }[] }[]; date: string })
+      .map(
+        (d) =>
+          d.data() as {
+            exercises: {
+              exerciseName: string;
+              sets: { weightKg: number; reps: number }[];
+            }[];
+            date: string;
+          }
+      )
       .filter((w) => Array.isArray(w.exercises) && typeof w.date === "string");
     const map = buildPRMap(workouts);
     cache.set(uid, map);
@@ -66,8 +76,10 @@ export interface UseUserPRMap {
  *  uid change between mount and resolve doesn't show stale data for
  *  the new uid. */
 export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
-  const cached = uid ? cache.get(uid) ?? null : null;
-  const [fetched, setFetched] = useState<{ uid: string; map: PRMap } | null>(null);
+  const cached = uid ? (cache.get(uid) ?? null) : null;
+  const [fetched, setFetched] = useState<{ uid: string; map: PRMap } | null>(
+    null
+  );
   const [errored, setErrored] = useState<{ uid: string } | null>(null);
 
   useEffect(() => {
