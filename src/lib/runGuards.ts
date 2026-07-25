@@ -1,4 +1,4 @@
-import type { ActivityType } from '@/types/run';
+import type { ActivityType } from "@/types/run";
 
 export const MIN_RUN_DURATION_SECONDS = 30;
 export const MIN_OUTDOOR_DISTANCE_KM = 0.05;
@@ -22,26 +22,30 @@ export const MIN_MANUAL_DISTANCE_KM = 0.05;
  */
 export const MAX_PLAUSIBLE_SPEED_MS = 12;
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 /** The specific reason a run is invalid, drives the InvalidRunReview
  *  body copy so the user sees an explanation that matches the actual
  *  failure mode instead of a generic "too short" message. */
-export type InvalidRunReason = 'too-short' | 'too-fast';
+export type InvalidRunReason = "too-short" | "too-fast";
 
 /** Treadmill and manual runs both bypass GPS — treadmill because the
  *  user is on a fixed surface, manual because GPS never locked
  *  outdoors. Undefined activityType (legacy / mid-config flow) is
  *  treated as outdoor: that's what the original `!== 'treadmill'`
  *  inline checks resolved to. */
-export function isOutdoorGpsRun(activityType: ActivityType | undefined): boolean {
-  return activityType !== 'treadmill' && activityType !== 'manual';
+export function isOutdoorGpsRun(
+  activityType: ActivityType | undefined
+): boolean {
+  return activityType !== "treadmill" && activityType !== "manual";
 }
 
 /** Both treadmill and manual flows take a manual distance entry via
  *  TreadmillMode's input. */
-export function requiresManualDistance(activityType: ActivityType | undefined): boolean {
-  return activityType === 'treadmill' || activityType === 'manual';
+export function requiresManualDistance(
+  activityType: ActivityType | undefined
+): boolean {
+  return activityType === "treadmill" || activityType === "manual";
 }
 
 /**
@@ -77,13 +81,15 @@ export function getInvalidRunReason(args: {
 }): InvalidRunReason | null {
   if (requiresManualDistance(args.activityType) && args.elapsedSeconds > 0) {
     const impliedSpeedMS = (args.distanceKm * 1000) / args.elapsedSeconds;
-    if (impliedSpeedMS > MAX_PLAUSIBLE_SPEED_MS) return 'too-fast';
+    if (impliedSpeedMS > MAX_PLAUSIBLE_SPEED_MS) return "too-fast";
   }
-  if (args.elapsedSeconds < MIN_RUN_DURATION_SECONDS) return 'too-short';
+  if (args.elapsedSeconds < MIN_RUN_DURATION_SECONDS) return "too-short";
   const minDistance = requiresManualDistance(args.activityType)
-    ? (args.activityType === 'treadmill' ? MIN_TREADMILL_DISTANCE_KM : MIN_MANUAL_DISTANCE_KM)
+    ? args.activityType === "treadmill"
+      ? MIN_TREADMILL_DISTANCE_KM
+      : MIN_MANUAL_DISTANCE_KM
     : MIN_OUTDOOR_DISTANCE_KM;
-  if (args.distanceKm < minDistance) return 'too-short';
+  if (args.distanceKm < minDistance) return "too-short";
   return null;
 }
 
@@ -95,28 +101,39 @@ export function isInvalidRun(args: {
   return getInvalidRunReason(args) !== null;
 }
 
-export function canShowFullSummary(args: { isInvalid: boolean }): boolean {
-  return !args.isInvalid;
-}
-
 // Save Run button: visible for valid runs in idle or saving state.
-export function canShowNormalSave(args: { isInvalid: boolean; saveStatus: SaveStatus }): boolean {
-  return !args.isInvalid && (args.saveStatus === 'idle' || args.saveStatus === 'saving');
+export function canShowNormalSave(args: {
+  isInvalid: boolean;
+  saveStatus: SaveStatus;
+}): boolean {
+  return (
+    !args.isInvalid &&
+    (args.saveStatus === "idle" || args.saveStatus === "saving")
+  );
 }
 
 // Save anyway button: visible for invalid runs in idle or saving state.
-export function canShowSaveAnyway(args: { isInvalid: boolean; saveStatus: SaveStatus }): boolean {
-  return args.isInvalid && (args.saveStatus === 'idle' || args.saveStatus === 'saving');
+export function canShowSaveAnyway(args: {
+  isInvalid: boolean;
+  saveStatus: SaveStatus;
+}): boolean {
+  return (
+    args.isInvalid &&
+    (args.saveStatus === "idle" || args.saveStatus === "saving")
+  );
 }
 
 // Discard button: visible only in idle or error. Hidden during saving (race prevention) and after saved.
 export function canShowDiscard(args: { saveStatus: SaveStatus }): boolean {
-  return args.saveStatus === 'idle' || args.saveStatus === 'error';
+  return args.saveStatus === "idle" || args.saveStatus === "error";
 }
 
 // Share: only valid + saved runs.
-export function canShowShare(args: { isInvalid: boolean; saveStatus: SaveStatus }): boolean {
-  return !args.isInvalid && args.saveStatus === 'saved';
+export function canShowShare(args: {
+  isInvalid: boolean;
+  saveStatus: SaveStatus;
+}): boolean {
+  return !args.isInvalid && args.saveStatus === "saved";
 }
 
 // Export GPX: only valid + saved + outdoor GPS runs (treadmill/manual has no route).
@@ -125,15 +142,15 @@ export function canExportGpx(args: {
   isOutdoorGpsRun: boolean;
   saveStatus: SaveStatus;
 }): boolean {
-  return !args.isInvalid && args.isOutdoorGpsRun && args.saveStatus === 'saved';
+  return !args.isInvalid && args.isOutdoorGpsRun && args.saveStatus === "saved";
 }
 
 // Done: only after successful save.
 export function canShowDone(args: { saveStatus: SaveStatus }): boolean {
-  return args.saveStatus === 'saved';
+  return args.saveStatus === "saved";
 }
 
 // Retry banner: only on error.
 export function canShowRetrySave(args: { saveStatus: SaveStatus }): boolean {
-  return args.saveStatus === 'error';
+  return args.saveStatus === "error";
 }
