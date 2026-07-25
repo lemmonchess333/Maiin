@@ -178,7 +178,11 @@ function walkFiles(absDir: string, ext: string, recurse: boolean): string[] {
 /** Every non-test source file's contents, for specifier scanning. */
 function productionSources(): { path: string; text: string }[] {
   const out: { path: string; text: string }[] = [];
-  const roots = ["src", "functions/lib", "scripts"];
+  // Walk `functions` WHOLE rather than enumerating its subdirectories. An
+  // earlier version listed `functions/lib` plus the top-level `*.js` entry
+  // points, and went stale the moment `functions/email/` was added — every
+  // module reachable only from there read as an orphan.
+  const roots = ["src", "functions", "scripts"];
   const seen = new Set<string>();
   const walk = (absDir: string) => {
     if (!existsSync(absDir)) return;
@@ -195,17 +199,6 @@ function productionSources(): { path: string; text: string }[] {
     }
   };
   for (const r of roots) walk(resolve(repoRoot, r));
-  // functions/*.js entry points (index.js et al) live one level up.
-  const fnDir = resolve(repoRoot, "functions");
-  if (existsSync(fnDir)) {
-    for (const name of readdirSync(fnDir)) {
-      const abs = join(fnDir, name);
-      if (!name.endsWith(".js") || statSync(abs).isDirectory()) continue;
-      if (seen.has(abs)) continue;
-      seen.add(abs);
-      out.push({ path: abs, text: readFileSync(abs, "utf8") });
-    }
-  }
   return out;
 }
 
