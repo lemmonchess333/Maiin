@@ -1,3 +1,4 @@
+/* @untested: context provider, not a hook — needs a render-tree test rather than renderHook; its two consumers (useMeals, useWorkouts) are covered. */
 import {
   createContext,
   use,

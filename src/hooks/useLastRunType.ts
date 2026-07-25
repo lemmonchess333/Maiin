@@ -9,6 +9,7 @@
  * recent volume-eligible runs must share the same DIRECT-launch type.
  * Failure is silent — the picker just renders without the repeat row.
  */
+/* @untested: coverage gap. Straightforwardly testable against the fake — first in the queue. */
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";

@@ -7,6 +7,9 @@ import { THEME } from "./theme";
  * `calories` was the legacy #e87316 "nutrition orange" — repointed to the
  * canonical nutrition orange (#D9884E, the deliberate #E87316→#D9884E conflict
  * resolution). The other three are left as-is pending the deletion review.
+ *
+ * @unwired: orphan candidate — self-flagged above as having no production
+ *   consumer. Owed work is DELETION, not wiring. Triage per ADR-0008.
  */
 export const macroColors = {
   calories: THEME.semantic.nutrition, // #D9884E (canonical nutrition orange)
