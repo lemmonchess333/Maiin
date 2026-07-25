@@ -79,9 +79,7 @@ const EXEMPT = [
   "useFirestore",
   "useMealReminders",
   "useNutritionBadgeData",
-  "usePrivacyZones",
   "useTrainingLoadSeries",
-  "useUserPRMap",
   "useWeekPulse",
   "useWorkoutReminders",
 ];
