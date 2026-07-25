@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { THEME } from "@/lib/theme";
 import { Trophy, Clock, Dumbbell, Target, Zap, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -109,7 +109,14 @@ export default function SessionCompleteScreen({
     })
     .filter((e) => e.setsCompleted > 0);
 
-  const funComparison = getVolumeComparison(totalVolume);
+  /* Memoised for the same reason as the run twin in RunSummary:
+     `getVolumeComparison` picks at random among the eligible lines, so
+     recomputing in the render body reshuffles the text on any
+     re-render. */
+  const funComparison = useMemo(
+    () => getVolumeComparison(totalVolume),
+    [totalVolume]
+  );
 
   return (
     <motion.div

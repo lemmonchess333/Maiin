@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { getDistanceComparison, getVolumeComparison } from "../funComparisons";
+import {
+  MIN_OUTDOOR_DISTANCE_KM,
+  MIN_TREADMILL_DISTANCE_KM,
+  MIN_MANUAL_DISTANCE_KM,
+} from "../runGuards";
 
 describe("getDistanceComparison", () => {
   it("returns null for 0 km", () => {
@@ -40,7 +45,9 @@ describe("getDistanceComparison", () => {
     // sorted by filter order: Tower Bridges (0.25), football pitches (0.1), Olympic pools (0.05)
     // random=0 picks index 0 => Tower Bridges
     const result = getDistanceComparison(0.25);
-    expect(result).toBe(`That's ${Math.round(0.25 * 1000 / 268)} Tower Bridges long`);
+    expect(result).toBe(
+      `That's ${Math.round((0.25 * 1000) / 268)} Tower Bridges long`
+    );
     vi.restoreAllMocks();
   });
 
@@ -49,7 +56,9 @@ describe("getDistanceComparison", () => {
     // At 0.1 km, eligible: threshold 0.1 (football pitches) and 0.05 (Olympic pools)
     // random=0 picks index 0 => football pitches
     const result = getDistanceComparison(0.1);
-    expect(result).toBe(`That's ${Math.round(0.1 * 1000 / 100)} football pitches`);
+    expect(result).toBe(
+      `That's ${Math.round((0.1 * 1000) / 100)} football pitches`
+    );
     vi.restoreAllMocks();
   });
 
@@ -57,7 +66,9 @@ describe("getDistanceComparison", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
     // At exactly 0.05, only Olympic pools eligible
     const result = getDistanceComparison(0.05);
-    expect(result).toBe(`That's ${Math.round(0.05 * 1000 / 50)} Olympic pool lengths`);
+    expect(result).toBe(
+      `That's ${Math.round((0.05 * 1000) / 50)} Olympic pool lengths`
+    );
     vi.restoreAllMocks();
   });
 
@@ -65,7 +76,9 @@ describe("getDistanceComparison", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.99);
     // At 10 km, all 5 comparisons eligible. random=0.99 => floor(0.99*5)=4 => Great Wall (index 4)
     const result = getDistanceComparison(10);
-    expect(result).toBe(`That's a ${(10 / 8.851).toFixed(1)}× Great Wall section`);
+    expect(result).toBe(
+      `That's a ${(10 / 8.851).toFixed(1)}× Great Wall section`
+    );
     vi.restoreAllMocks();
   });
 
@@ -75,7 +88,9 @@ describe("getDistanceComparison", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.5);
     // floor(0.5 * 4) = 2 => Eiffel Towers
     const result = getDistanceComparison(1);
-    expect(result).toBe(`That's ${Math.round(1 * 1000 / 324)} Eiffel Towers stacked`);
+    expect(result).toBe(
+      `That's ${Math.round((1 * 1000) / 324)} Eiffel Towers stacked`
+    );
     vi.restoreAllMocks();
   });
 });
@@ -149,5 +164,37 @@ describe("getVolumeComparison", () => {
     const result = getVolumeComparison(300);
     expect(result).toBe(`That's ${(300 / 120).toFixed(1)} baby elephants`);
     vi.restoreAllMocks();
+  });
+});
+
+/**
+ * Cross-module invariant added when the run half was finally wired into
+ * RunSummary (the lift half has shipped on SessionCompleteScreen since
+ * the module landed).
+ *
+ * The comparison renders inside RunSummary's VALID branch, so every run
+ * that clears the validity floor reaches it. If the lowest comparison
+ * threshold ever drifts ABOVE that floor, short-but-valid runs silently
+ * get no line — invisible, because "no comparison" and "no comparison
+ * for this distance" render identically (both render nothing).
+ *
+ * Pinned here rather than in a RunSummary render test because it is a
+ * relationship between two CONSTANTS, and that is where it can break.
+ */
+describe("distance comparisons cover every valid run", () => {
+  it("fires at the run-validity floor, so no valid run is left blank", () => {
+    // Deliberately reads the real guard constant rather than restating
+    // 0.05 — restating it is how the two drift apart unnoticed.
+    expect(getDistanceComparison(MIN_OUTDOOR_DISTANCE_KM)).toBeTypeOf("string");
+    expect(getDistanceComparison(MIN_TREADMILL_DISTANCE_KM)).toBeTypeOf(
+      "string"
+    );
+    expect(getDistanceComparison(MIN_MANUAL_DISTANCE_KM)).toBeTypeOf("string");
+  });
+
+  it("stays non-null across the whole plausible run range", () => {
+    for (const km of [0.05, 0.1, 0.5, 1, 3, 5, 10, 21.1, 42.2, 100]) {
+      expect(getDistanceComparison(km), `${km} km`).toBeTypeOf("string");
+    }
   });
 });
