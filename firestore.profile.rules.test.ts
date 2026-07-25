@@ -182,6 +182,50 @@ suite("users/{uid} update — fields a client must never write", () => {
   });
 });
 
+suite("users/{uid} update — retired allow-list entries", () => {
+  /**
+   * Fields removed from allowedUserFields() on 2026-07-25. Three were the
+   * names of SUBCOLLECTIONS or a settings doc, never fields on the profile
+   * document; four had no reader or writer anywhere. Allow-listing them only
+   * widened what a client could write to `users/{uid}`.
+   *
+   * Pinned as a test rather than trusted to the list edit: the point of the
+   * change is that these writes are now REFUSED, and only the engine can say
+   * so.
+   */
+  const RETIRED = [
+    ["shoes", "users/{uid}/shoes is a subcollection"],
+    ["privacyZones", "users/{uid}/privacyZones is a subcollection"],
+    ["mealReminders", "users/{uid}/settings/mealReminders is its own doc"],
+    ["stepGoal", "no reader or writer"],
+    ["phaseMode", "no reader or writer"],
+    ["trainingPhase", "no reader or writer"],
+    ["stallPopupCooldowns", "no reader or writer"],
+  ];
+
+  for (const [field, why] of RETIRED) {
+    it(`refuses \`${field}\` on the profile document (${why})`, async () => {
+      const uid = `rt-${field.toLowerCase()}`;
+      await seedProfile(uid);
+      const db = env.authenticatedContext(uid).firestore();
+      await assertFails(
+        setDoc(doc(db, `users/${uid}`), { [field]: null }, { merge: true })
+      );
+    });
+  }
+
+  it("the subcollections themselves are still writable", async () => {
+    // Removing the profile-field entry must not touch the real storage —
+    // `users/{uid}/shoes` is governed by its own match block.
+    const uid = "rt-subcoll";
+    await seedProfile(uid);
+    const db = env.authenticatedContext(uid).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `users/${uid}/shoes/s1`), { name: "Pegasus" })
+    );
+  });
+});
+
 suite("registry ↔ engine", () => {
   it("every client-writable field is genuinely accepted by the engine", async () => {
     // The list test proves the registry and the rules TEXT agree. This proves
