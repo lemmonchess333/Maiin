@@ -102,7 +102,6 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `tdee.ts`                 | Base TDEE calculation                                          |
 | `phaseNutrition.ts`       | Day-type specific macro adjustments (lift/run/rest)            |
 | `calculateDailyMacros.ts` | Daily macro target computation                                 |
-| `nutritionInsights.ts`    | Nutrition insight generation                                   |
 | `gps.ts`                  | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`           | Running pace trend detection (PR/improving/consistent)         |
 | `guidedRun.ts`            | Guided run logic & coaching                                    |
