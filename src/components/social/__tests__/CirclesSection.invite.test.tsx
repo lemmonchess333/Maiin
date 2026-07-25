@@ -86,7 +86,44 @@ function hookValue(overrides: Record<string, unknown> = {}) {
   };
 }
 
-afterEach(() => cleanup());
+/* Unmount, then yield ONE macrotask before the file can end.
+ *
+ * These tests open vaul Drawers, which wrap Radix Dialog. Radix's
+ * FocusScope defers its close handling to a `setTimeout(…, 0)` scheduled
+ * in the effect CLEANUP, so the work lands one macrotask AFTER unmount:
+ *
+ *   return () => { … setTimeout(() => {
+ *     const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, …);
+ *     container.dispatchEvent(unmountEvent);        // ← the hazard
+ *   }, 0); };
+ *
+ * Let the file end with that timer pending and Vitest swaps the jsdom
+ * realm first. The callback then builds its CustomEvent from the NEW
+ * realm and dispatches it on a container from the OLD one, so jsdom's
+ * IDL conversion rejects the cross-realm event:
+ *
+ *   TypeError: Failed to execute 'dispatchEvent' on 'EventTarget':
+ *   parameter 1 is not of type 'Event'
+ *
+ * That surfaces as an UNHANDLED error rather than a test failure — the
+ * suite reports every test passing and still exits non-zero, which is
+ * horrible to diagnose from a CI log (it took a run reporting
+ * 5385/5385 green to track down).
+ *
+ * Deliberately scoped to THIS file rather than the shared setup. A
+ * global afterEach flush was tried first and regressed
+ * `Tooltip.test.tsx`: letting deferred work run after cleanup can strand
+ * a portal node in document.body, where the next test's `screen` query
+ * finds it. The blast radius isn't worth it — the hazard belongs to
+ * suites that mount Drawers, so the drain lives with them.
+ *
+ * `src/test/__tests__/drawerUnmountTimerFlush.test.tsx` pins the
+ * load-bearing assumption: that ONE macrotask is enough to drain it.
+ */
+afterEach(async () => {
+  cleanup();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+});
 beforeEach(() => {
   vi.clearAllMocks();
   Object.assign(navigator, {
