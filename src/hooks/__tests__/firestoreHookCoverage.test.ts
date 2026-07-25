@@ -75,10 +75,8 @@ function firestoreHooks(): HookFile[] {
  */
 const EXEMPT = [
   "DailyLogsProvider",
-  "useDailyNutritionSnapshot",
   "useFirestore",
   "useMealReminders",
-  "useNutritionBadgeData",
   "useWorkoutReminders",
 ];
 
