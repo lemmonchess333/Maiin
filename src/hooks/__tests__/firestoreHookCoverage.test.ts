@@ -97,7 +97,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/lib/__tests__/export.test.ts",
   "src/lib/__tests__/firestoreWrite.test.ts",
   "src/lib/__tests__/offlineQueue.test.ts",
-  "src/lib/__tests__/personalTrajectory.test.ts",
   "src/lib/__tests__/pushNotifications.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
 ];
