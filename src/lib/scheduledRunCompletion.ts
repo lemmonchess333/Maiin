@@ -22,7 +22,6 @@ import type {
   ManualCompletion,
 } from "@/features/program/programTypes";
 
-const RACE_STRICT_DISTANCE_RATIO = 0.95;
 const GENERAL_DISTANCE_RATIO = 0.7;
 
 const LEGACY_COMPLETED_STATUSES = new Set([
@@ -109,7 +108,27 @@ function distanceAndBucketOk(
   }
 
   if (bucket === "quality") {
-    // Q1 P4 short-circuit: race-day explicit templateId match
+    /* Q1 P4 short-circuit: race day completes on a race-templated run
+       regardless of pace bucket — you can race a 5k as a pacer, on a bad
+       day, or as a fun run, and it is still the race.
+       ⚠️ UNREACHABLE AS WRITTEN (found 2026-07-25, orphan triage). BOTH
+       operands are impossible:
+         - `runDay.templateId` is a RUN_TEMPLATES id — `5k_race` …
+           `marathon_race` — never the literal "race". This is the trap
+           CLAUDE.md locks ("detection is by template TYPE, never
+           templateId === 'race'") and that raceRunDaysReconcile.ts,
+           runHeroState.ts and workoutTemplates.ts each warn about.
+         - `saved.templateId` is undefined for every real run. The
+           useClaimMap adapter maps `data.templateId`, but saved-run docs
+           carry `plannedTemplateId` / `actualTemplateId` — RunSummary
+           writes no plain `templateId` (see the header of
+           functions/lib/raceDayCompletion.js).
+       So race day currently falls through to the pace check below, and a
+       race run at an easy pace does NOT complete its slot — precisely
+       what this short-circuit exists to prevent. Left in place rather
+       than silently rewritten: the fix needs the adapter to populate
+       templateId AND a type-based predicate, which changes which runs
+       complete race slots. Not a drive-by change to the race machinery. */
     if (runDay.templateId === "race" && saved.templateId === "race") {
       return true;
     }
@@ -278,31 +297,4 @@ export function getCompletionKind(
   if (entry.claimedSavedRunId || entry.legacyCompleted) return "real";
   if (entry.manualCompleted) return "manual";
   return null;
-}
-
-export function isRaceDayCompletedStrictly(
-  runDayId: string,
-  claimMap: Map<string, ClaimState>,
-  savedRuns: SavedRunLike[],
-  runDay?: ScheduledRunDay,
-  deps?: CompletionDeps
-): boolean {
-  const entry = claimMap.get(runDayId);
-  if (!entry || !entry.claimedSavedRunId) return false;
-  const saved = savedRuns.find((s) => s.id === entry.claimedSavedRunId);
-  if (!saved) return false;
-  if (saved.templateId !== "race") return false;
-
-  if (runDay && deps) {
-    const plannedDistanceFor =
-      deps.plannedDistanceFor || defaultPlannedDistanceFor;
-    const planned = plannedDistanceFor(runDay);
-    if (planned > 0) {
-      const ratio =
-        typeof saved.distance === "number" ? saved.distance / planned : 0;
-      if (ratio < RACE_STRICT_DISTANCE_RATIO) return false;
-    }
-  }
-
-  return true;
 }
