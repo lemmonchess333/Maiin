@@ -80,7 +80,6 @@ const EXEMPT = ["DailyLogsProvider", "useFirestore"];
  * DELETE-ONLY: migrate a suite to `seedFirestore`, remove its line. Do not add.
  */
 const LEGACY_INLINE_MOCKS = [
-  "src/components/review/__tests__/MomentumCheckinCard.test.tsx",
   "src/components/social/__tests__/ProgressPhotos.test.tsx",
   "src/features/goalSpace/__tests__/useGoalSpaces.indexTrust.test.ts",
   "src/features/partnerStreak/__tests__/partnerStreakApi.test.ts",
