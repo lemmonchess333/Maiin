@@ -18,6 +18,8 @@ import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
 import {
+  blockDocPath,
+  blocksCollectionPath,
   makeBlockId,
   parseTrainingBlock,
   presetLabel,
@@ -50,9 +52,7 @@ export function useTrainingBlock(uid: string | undefined) {
     let cancelled = false;
     void (async () => {
       try {
-        const snap = await getDocs(
-          collection(db, "users", uid, "trainingBlocks")
-        );
+        const snap = await getDocs(collection(db, blocksCollectionPath(uid)));
         if (cancelled) return;
         const parsed = snap.docs
           .map((d) => parseTrainingBlock(d.data()))
@@ -87,10 +87,7 @@ export function useTrainingBlock(uid: string | undefined) {
         createdAt: Date.now(),
       };
       try {
-        await setDocGuarded(
-          doc(db, "users", uid, "trainingBlocks", block.id),
-          block
-        );
+        await setDocGuarded(doc(db, blockDocPath(uid, block.id)), block);
         setBlocks((prev) => [block, ...(prev ?? [])]);
         return block;
       } catch (err) {
@@ -116,10 +113,7 @@ export function useTrainingBlock(uid: string | undefined) {
         endedAt: Date.now(),
       };
       try {
-        await setDocGuarded(
-          doc(db, "users", uid, "trainingBlocks", block.id),
-          finished
-        );
+        await setDocGuarded(doc(db, blockDocPath(uid, block.id)), finished);
         setBlocks((prev) =>
           (prev ?? []).map((b) => (b.id === block.id ? finished : b))
         );
