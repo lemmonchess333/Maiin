@@ -10,12 +10,23 @@
  * Known v1 limitation: computed once per render from `now`. If the user keeps
  * the page open across the 9am/9pm boundary, the line only refreshes on the
  * next data change or mount. Acceptable because the window is wide.
+ *
+ * @unwired: the trajectory line is SUPPRESSED on the Food hero card, not
+ *   removed — `FoodHeroCard.tsx` sets `trajectoryLabel = null` with a note
+ *   on how to reinstate it (import this and pass its result). Kept as cheap
+ *   optionality for a decision that may be revisited.
+ *
+ *   Recorded HERE because the reason previously lived only at the call site.
+ *   A reachability sweep reads the module, finds no consumer, and cannot
+ *   tell a suppressed feature from rot — which is how deliberate work gets
+ *   deleted. If the suppression becomes permanent, delete this and its
+ *   test; don't leave it half-true.
  */
 
 export function computeTrajectory(
   consumed: number,
   target: number,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): string | null {
   if (target <= 0) return null;
 
