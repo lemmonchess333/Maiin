@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+  waitFor,
+} from "@testing-library/react";
 import Tooltip from "../Tooltip";
 
 vi.mock("@/hooks/useReducedMotion", () => ({
@@ -87,10 +93,12 @@ describe("Tooltip", () => {
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    /* waitFor, not a single microtask flush: dismissal unmounts the
+       portal across more than one tick, so `await Promise.resolve()`
+       only happened to be enough under a quiet event loop. Under a
+       loaded parallel run it wasn't, and the assertion found the
+       still-closing tooltip. */
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
   });
 
   it("respects controlled `open` prop", () => {
