@@ -246,17 +246,31 @@ export default function FoodHeroCard({
     ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
     : null;
 
-  // Ambient time-of-day food photo behind the calorie hero (breakfast /
-  // lunch / dinner, same windows as meal slots). DARK MODE ONLY + TODAY:
-  // in dark mode the photo reads as a moody, intentional hero behind the
-  // ring; in light mode a photo behind the light card either washes out
-  // muddy or reads as a dark island, so light mode keeps the clean
-  // brand-purple halo. Gating on isDark also means the asset is never
-  // fetched in light mode. Null (→ halo) until the operator drops the
-  // licensed asset.
+  /* Ambient time-of-day food photo behind the calorie hero (breakfast /
+     lunch / dinner, same windows as meal slots). Today only — a past day
+     keeps the clean look. Null (→ purple halo) until the operator drops
+     the licensed asset.
+
+     BOTH themes, but they need OPPOSITE treatments of the same file. The
+     shipped asset is graded dark so light text reads on it (see the
+     editorial README); light mode brightens it back up via a filter and
+     lays a WHITE scrim, because there the card's text is DARK and needs a
+     light backdrop. Using a filter rather than a second asset keeps this
+     to one file per meal — a light-graded twin would double the bytes for
+     the same pixels.
+
+     Consequence worth knowing: light mode's photo is inherently PALER
+     than dark mode's. That's structural — dark text forces the image to
+     sit back — not a fixable property of the photo. */
   const isDark = useIsDarkMode();
-  const mealPhoto =
-    isToday && isDark ? mealPhotoImage(new Date().getHours()) : null;
+  const mealPhoto = isToday ? mealPhotoImage(new Date().getHours()) : null;
+
+  /* Over a LIGHT-mode photo the card's muted greys stop working: they're
+     tuned to sit quietly on flat white, and against even a pale wash they
+     drop below readable. Promote them to full foreground for that case
+     only — dark mode's light-on-scrim text is already fine, and with no
+     photo the muted greys are exactly right. Measured 11-18:1 after. */
+  const photoTextClass = mealPhoto && !isDark ? "text-foreground" : null;
 
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
@@ -266,25 +280,30 @@ export default function FoodHeroCard({
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
       <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
         {mealPhoto ? (
-          /* Ambient food-photo hero (dark mode only, gated above). Reuses
-             the Social/Spaces editorial-photo + scrim recipe: the photo
-             fills the card behind a dark scrim so the ring, number and
-             captions stay legible (white-on-scrim). Replaces the purple
-             halo when present. Decorative + aria-hidden. */
+          /* Ambient food-photo hero. Reuses the Social/Spaces
+             editorial-photo + scrim recipe: the photo fills the card
+             behind a scrim so the ring, number and captions stay legible.
+             Replaces the purple halo when present. Decorative +
+             aria-hidden. */
           <>
             <img
               src={mealPhoto}
               alt=""
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 size-full object-cover select-none"
+              /* Light mode brightens the dark-graded asset back up so it
+                 reads as an airy wash under DARK text; dark mode uses it
+                 as-graded. Static filter — never animated (the
+                 WKWebView rule is about animating filter values). */
+              style={isDark ? undefined : { filter: "brightness(1.55)" }}
               draggable={false}
             />
-            {/* Dark scrim via the --food-photo-scrim CSS var: a radial
-                darkening centred on the ring/number keeps the value
-                legible whatever the photo, over a vertical scrim for the
-                caption + glance line. Only ever renders in dark mode
-                (photo is dark-only), so this is a moody photo hero behind
-                the card's light text. */}
+            {/* Scrim via the --food-photo-scrim CSS vars, which flip with
+                the theme: a radial wash centred on the ring/number keeps
+                the value legible whatever the photo, over a vertical one
+                for the caption + glance line. DARK mode = black scrim (a
+                moody hero under light text); LIGHT mode = white scrim (an
+                airy wash under dark text). */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0"
@@ -343,7 +362,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className="text-xs font-medium text-muted-foreground/80 truncate"
+                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground/80"}`}
                   >
                     {/* Wave3 G — the day annotation is merged INTO the hero
                       caption as one line ("{dayType} · {rationale}") instead
@@ -414,7 +433,9 @@ export default function FoodHeroCard({
             inputs and renders the result. Skips on past/future
             dates (diary-mode views). */}
           {glanceLine && (
-            <p className="text-center text-xs font-medium text-muted-foreground mt-3 px-2">
+            <p
+              className={`text-center text-xs font-medium mt-3 px-2 ${photoTextClass ?? "text-muted-foreground"}`}
+            >
               {glanceLine}
             </p>
           )}
@@ -432,7 +453,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className="flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] text-muted-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-[0.12em] hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />
