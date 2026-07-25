@@ -113,6 +113,19 @@ service cloud.firestore {
         // permission-denied ("Couldn't save your settings"). Pinned by
         // profileFieldParity.cross.test.ts.
         'hideWeightNumber',
+        // Settings → Privacy → "AI food analysis". In the UserProfile type
+        // and written client-side via updateProfile, but never allow-listed
+        // here — so every toggle hit permission-denied. Third instance of
+        // this exact miss (see hideWeightNumber above, goalWeightKg below);
+        // the type↔registry parity test now covers the pair that was unpinned.
+        'aiAnalysisEnabled',
+        // #962 device-timezone capture, written on boot by AuthProvider.
+        // Its write is fire-and-forget behind `.catch(logger.warn)`, so the
+        // rejection was invisible: `timezone` stayed null for every user, and
+        // the streak-nudge CF treats null as "skip — no overnight pings".
+        // Also part of the SIGNUP payload (createDefaultProfile emits
+        // `timezone: null`), which `create` gates with hasOnly().
+        'timezone',
         'runMode', 'weeklyRunDaysTarget', 'raceGoal', 'weekSchedule',
         'weekScheduleVersion',
         // Pgm6 run-plan tuning knobs (volume preset + difficulty). Written by
