@@ -20,6 +20,9 @@
  * retention is bounded for that reason; indefinite retention would
  * itself be a compliance issue. The minimisation rule below excludes
  * any non-uid profile data.
+ *
+ * Wired into the deletion executor (accountDeletion.js writeTombstone) and
+ * read by programCommandTransaction.js as the deleted-account guard.
  */
 "use strict";
 

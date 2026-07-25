@@ -39,6 +39,9 @@
  * matches saved runs by date+bucket, so organic completions survive
  * automatically). This module only DECIDES staleness + recomputes the
  * honest week index; the caller performs the carry-aware regen.
+ *
+ * @unwired: intentional — the load-effect wiring is a separate, emulator-gated
+ *   change (see header). The bug it fixes is live until then.
  */
 
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
