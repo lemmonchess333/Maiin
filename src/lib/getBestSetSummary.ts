@@ -4,6 +4,9 @@ import { getExerciseById } from "@/lib/exercises";
 /**
  * Returns a display string for the best set of a completed exercise.
  * Uses lastPerformance data. Falls back to prescription.
+ *
+ * @unwired: orphan candidate — no production consumer. Owed work is likely
+ *   deletion (or wiring into the set-summary UI). Triage per ADR-0008.
  */
 export function getBestSetSummary(ex: ProgramExercise): string {
   const lp = ex.lastPerformance;

@@ -1,26 +1,53 @@
 /**
- * Mirror cross-test gate (D4).
+ * Mirror + reachability gate (D4; reachability added 2026-07-11).
  *
- * Several `functions/*.js` modules are hand-maintained TS↔JS *equality mirrors*
- * of a `src/lib` / `src/features` source — the server copy MUST return identical
- * output for identical input (perfScoring, runModeResolution, runEligibility,
- * plan-validation, …). The only thing that historically bound them was a "keep
- * in lockstep" *comment*; the fix has been a `*.cross.test` per mirror.
+ * ── Part 1: mirror classification (original D4 gate) ──────────────────
+ * Several `functions/*.js` modules are hand-maintained TS↔JS *equality
+ * mirrors* of a `src/lib` / `src/features` source — the server copy MUST
+ * return identical output for identical input. The only thing that
+ * historically bound them was a "keep in lockstep" *comment*; the fix has
+ * been a `*.cross.test` per mirror. This half scans the functions tree for
+ * mirror-declaring language and fails if a flagged module is neither PINNED
+ * to a cross-test nor consciously classified as not-an-equality-mirror.
  *
- * But nothing stops the NEXT mirror being born unpinned. This gate scans the
- * functions tree for mirror-declaring language and fails if a flagged module is
- * neither (a) PINNED to an existing cross-test, nor (b) consciously classified
- * as not-an-equality-mirror (intentional asymmetry / consolidated / server-only
- * false-positive). A new "mirror of …" file forces a decision in CI.
+ * ── Part 2: reachability (why this half exists) ───────────────────────
+ * Part 1 asks "is this pinned?" — never "does the pinned code RUN?" That
+ * gap shipped a textbook failure: `functions/lib/scheduledRunCompletion.js`
+ * was a port of the client's run-completion rule, covered by BOTH a unit
+ * suite (510 lines) and an equality cross-test, and `require`d by NOTHING.
+ * The rule that actually ran was a third, unpinned implementation inlined
+ * in `functions/index.js` — and the pinned port could never have replaced
+ * it, because it reads `templateId` while raw Firestore docs carry
+ * `actualTemplateId`. Two copies were pinned to each other; neither was the
+ * running copy; the fixtures were written in a shape only the client
+ * produces. Green CI, zero protection. (See ADR-0008.)
  *
- * This is the grep-based gate the D4 scope check called for — deliberately
- * heuristic; humans classify the edge cases (e.g. dateUtils is UTC-vs-local on
- * purpose, so an equality pin would be WRONG).
+ * So: a domain module must be reachable from production code, or say why
+ * not. Two markers, because "test-only" has two legitimate meanings and
+ * collapsing them lets rot hide behind a valid annotation:
+ *
+ *   `@oracle`   — test-only BY DESIGN, permanently. A declaration or
+ *                 reference implementation whose whole job is to be read
+ *                 by a parity test (e.g. `profileFieldRegistry.ts`, whose
+ *                 purpose is to be the pinned field list). No expiry, no
+ *                 follow-up owed.
+ *   `@unwired:` — written ahead of its wiring; DEBT. Must carry a reason
+ *                 on the same line so it reads as owed work, not as design.
+ *
+ * Anything genuinely orphaned should be DELETED, not annotated. If you
+ * find yourself reaching for a marker to silence this gate on code nobody
+ * calls and nobody intends to call, that is the gate working.
+ *
+ * Detection is deliberately shallow — "is this module's specifier
+ * referenced by any non-test file?" — not a real transitive import graph.
+ * That is exactly the check that surfaced every instance above, it needs no
+ * build step, and the cases it misses (a module reachable only from other
+ * dead code) are ones a graph walk would also have to special-case.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, join, basename } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -28,6 +55,10 @@ const repoRoot = resolve(here, "../../..");
 // Strong mirror-declaring phrases a future author is likely to write.
 const MIRROR_RE =
   /mirror of|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam/i;
+
+// Escape hatches. `@unwired` requires a reason after the colon.
+const ORACLE_RE = /@oracle\b/;
+const UNWIRED_RE = /@unwired:\s*\S/;
 
 // Scan functions/*.js and functions/lib/*.js (skip tests, scripts, node_modules).
 function functionsJsFiles(): string[] {
@@ -108,7 +139,75 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "server-only; its header states 'no TS↔JS port to keep in lockstep'",
   "functions/index.js":
     "orchestrator; 'lockstep' refers to shared user-iteration, not a client mirror",
+  "functions/lib/raceDayCompletion.js":
+    "deliberate non-mirror (ADR-0008): server asks 'was this race run?' over RAW docs " +
+    "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
+    "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
+    "an equality pin would be wrong, and pinning them is what produced the dead port.",
 };
+
+/* ── Reachability ─────────────────────────────────────────────────── */
+
+/** Domain-module roots whose files must be reachable from production. */
+const REACHABILITY_ROOTS = [
+  { dir: "src/lib", ext: ".ts", recurse: false },
+  { dir: "src/features", ext: ".ts", recurse: true },
+  { dir: "functions/lib", ext: ".js", recurse: false },
+];
+
+function isTestPath(p: string): boolean {
+  return p.includes("__tests__") || /\.(test|spec)\.[cm]?[jt]sx?$/.test(p);
+}
+
+function walkFiles(absDir: string, ext: string, recurse: boolean): string[] {
+  const out: string[] = [];
+  if (!existsSync(absDir)) return out;
+  for (const name of readdirSync(absDir)) {
+    const abs = join(absDir, name);
+    if (statSync(abs).isDirectory()) {
+      if (recurse && name !== "__tests__")
+        out.push(...walkFiles(abs, ext, true));
+      continue;
+    }
+    if (!name.endsWith(ext) || name.endsWith(".d.ts")) continue;
+    out.push(abs);
+  }
+  return out;
+}
+
+/** Every non-test source file's contents, for specifier scanning. */
+function productionSources(): { path: string; text: string }[] {
+  const out: { path: string; text: string }[] = [];
+  const roots = ["src", "functions/lib", "scripts"];
+  const seen = new Set<string>();
+  const walk = (absDir: string) => {
+    if (!existsSync(absDir)) return;
+    for (const name of readdirSync(absDir)) {
+      const abs = join(absDir, name);
+      if (statSync(abs).isDirectory()) {
+        if (name !== "__tests__" && name !== "node_modules") walk(abs);
+        continue;
+      }
+      if (!/\.[cm]?[jt]sx?$/.test(name)) continue;
+      if (isTestPath(abs) || seen.has(abs)) continue;
+      seen.add(abs);
+      out.push({ path: abs, text: readFileSync(abs, "utf8") });
+    }
+  };
+  for (const r of roots) walk(resolve(repoRoot, r));
+  // functions/*.js entry points (index.js et al) live one level up.
+  const fnDir = resolve(repoRoot, "functions");
+  if (existsSync(fnDir)) {
+    for (const name of readdirSync(fnDir)) {
+      const abs = join(fnDir, name);
+      if (!name.endsWith(".js") || statSync(abs).isDirectory()) continue;
+      if (seen.has(abs)) continue;
+      seen.add(abs);
+      out.push({ path: abs, text: readFileSync(abs, "utf8") });
+    }
+  }
+  return out;
+}
 
 describe("mirror cross-test gate", () => {
   const flagged = functionsJsFiles().filter((f) =>
@@ -146,5 +245,74 @@ describe("mirror cross-test gate", () => {
       ...Object.keys(NOT_EQUALITY_MIRROR),
     ].filter((f) => !existsSync(resolve(repoRoot, f)));
     expect(gone, `Classified files that no longer exist`).toEqual([]);
+  });
+});
+
+describe("reachability gate — a pinned module must be the RUNNING module", () => {
+  const sources = productionSources();
+
+  /** Is this module's specifier referenced by any non-test source file? */
+  function isReachable(absPath: string): boolean {
+    const base = basename(absPath).replace(/\.[cm]?[jt]sx?$/, "");
+    // Match an import/require specifier ending in this basename:
+    //   "@/lib/foo"  "./foo"  "../../lib/foo"  require("./lib/foo")
+    const spec = new RegExp(`["'\`][^"'\`]*[/]${base}["'\`]`);
+    for (const s of sources) {
+      if (s.path === absPath) continue;
+      if (spec.test(s.text)) return true;
+    }
+    return false;
+  }
+
+  const modules = REACHABILITY_ROOTS.flatMap((r) =>
+    walkFiles(resolve(repoRoot, r.dir), r.ext, r.recurse)
+  ).filter((p) => !isTestPath(p));
+
+  it("scans a plausible number of domain modules (sanity)", () => {
+    expect(modules.length).toBeGreaterThan(100);
+  });
+
+  it("every domain module is reachable from production, or marked @oracle / @unwired:", () => {
+    const orphans: string[] = [];
+    for (const abs of modules) {
+      if (isReachable(abs)) continue;
+      const text = readFileSync(abs, "utf8");
+      if (ORACLE_RE.test(text) || UNWIRED_RE.test(text)) continue;
+      orphans.push(abs.slice(repoRoot.length + 1));
+    }
+    expect(
+      orphans,
+      `These modules are imported by NOTHING outside __tests__ — so any test ` +
+        `covering them proves nothing about production (the ADR-0008 failure). ` +
+        `Either wire them up, DELETE them, or annotate:\n` +
+        `  @oracle             — test-only by design, permanently\n` +
+        `  @unwired: <reason>  — written ahead of wiring; debt, reason required\n` +
+        `Offenders:\n  ${orphans.join("\n  ")}`
+    ).toEqual([]);
+  });
+
+  it("@unwired always carries a reason (a bare marker is how debt becomes design)", () => {
+    const bare: string[] = [];
+    for (const abs of modules) {
+      const text = readFileSync(abs, "utf8");
+      if (/@unwired\b/.test(text) && !UNWIRED_RE.test(text)) {
+        bare.push(abs.slice(repoRoot.length + 1));
+      }
+    }
+    expect(bare, `@unwired with no reason after the colon`).toEqual([]);
+  });
+
+  it("markers stay honest — a module that IS reachable must not claim to be test-only", () => {
+    const stale: string[] = [];
+    for (const abs of modules) {
+      const text = readFileSync(abs, "utf8");
+      if (!ORACLE_RE.test(text) && !UNWIRED_RE.test(text)) continue;
+      if (isReachable(abs)) stale.push(abs.slice(repoRoot.length + 1));
+    }
+    expect(
+      stale,
+      `These carry @oracle/@unwired but ARE imported by production code — ` +
+        `drop the marker so the gate keeps protecting them`
+    ).toEqual([]);
   });
 });

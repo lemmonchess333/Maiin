@@ -20,6 +20,9 @@
  * retention is bounded for that reason; indefinite retention would
  * itself be a compliance issue. The minimisation rule below excludes
  * any non-uid profile data.
+  *
+ * @unwired: R1A tombstone helper not yet called by the deletion executor —
+ *   accountDeletion.js does not require it. Wire or delete; triage per ADR-0008.
  */
 "use strict";
 
