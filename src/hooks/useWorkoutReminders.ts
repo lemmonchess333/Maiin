@@ -1,3 +1,4 @@
+/* @untested: blocked on a notifications seam, not this one — schedules against the Notification API and Capacitor LocalNotifications, which have no fake yet. */
 import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
