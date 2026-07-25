@@ -29,6 +29,18 @@
  * by their own module plus a test are a different and legitimate pattern
  * (pinning a threshold), and including them buried the signal — 220
  * entries instead of 47.
+ *
+ * PRECISION (2026-07-25b). The first version searched raw file text, so a
+ * name appearing in a COMMENT counted as a use. That is why it reported
+ * `analytics.ts` as mostly reachable when production imports exactly two
+ * of its 22 exports — the rest were "used" by prose. Comments are stripped
+ * before matching now.
+ *
+ * The error direction matters and was the safe one: comment matches made
+ * the gate UNDER-report (a dead symbol read as live), never over-report,
+ * so it could not have failed CI spuriously. A gate that cries wolf gets
+ * disabled; one that misses some real cases still ratchets. Worth keeping
+ * in mind for the next gate: prefer the miss to the false alarm.
  */
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
@@ -54,6 +66,16 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * Remove block and line comments so prose can't masquerade as a call site.
+ * Crude on purpose: it does not parse, so a `//` inside a string literal is
+ * over-eaten. That only ever removes a potential match, which pushes toward
+ * reporting MORE orphans — visible as a CI failure, never a silent pass.
+ */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+}
+
 /** Roots whose exports must be reachable. */
 const DOMAIN_ROOTS = ["src/lib", "src/features", "functions/lib"];
 /** Everything that could plausibly consume them. */
@@ -77,20 +99,14 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
   "src/features/program/run9Migration.ts:migrateRunStateToRun9",
   "src/features/program/trainingBlock.ts:blockDocPath",
+  "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",
   "src/lib/aiFoodIdentification.ts:isEmptyAiFoodResult",
-  "src/lib/analytics.ts:computeVolume",
-  "src/lib/analytics.ts:dailyAdherence",
-  "src/lib/analytics.ts:detectFatigue",
-  "src/lib/analytics.ts:fourWeekChange",
-  "src/lib/analytics.ts:momentumDirection",
-  "src/lib/analytics.ts:strengthSlope",
-  "src/lib/analytics.ts:volumeWoWChange",
-  "src/lib/analytics.ts:weeklyAdherenceScore",
   "src/lib/analyticsProvider.ts:isAnalyticsActive",
   "src/lib/dataConfidence.ts:makeSuppressionBatch",
   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
   "src/lib/errorReporting.ts:clearErrors",
   "src/lib/errorReporting.ts:getRecentErrors",
+  "src/lib/foodTrajectory.ts:computeTrajectory",
   "src/lib/funComparisons.ts:getDistanceComparison",
   "src/lib/getBestSetSummary.ts:getBestSetSummary",
   "src/lib/guidedRun.ts:auditGuidedWorkouts",
@@ -101,6 +117,7 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/runGuards.ts:canShowFullSummary",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
   "src/lib/runProgrammeViewModel.ts:buildHybridWeekItems",
+  "src/lib/socialGates.ts:isSoloUser",
   "src/lib/scheduleUtils.ts:countByType",
   "src/lib/scheduleUtils.ts:getTodaySchedule",
   "src/lib/scheduledRunCompletion.ts:isRaceDayCompletedStrictly",
@@ -122,7 +139,7 @@ function orphanExports(): string[] {
   ).filter((p) => !p.includes(`${repoRoot}/functions/node_modules`));
   const consumers = files
     .filter((p) => !isTest(p))
-    .map((p) => ({ path: p, text: readFileSync(p, "utf8") }));
+    .map((p) => ({ path: p, text: stripComments(readFileSync(p, "utf8")) }));
 
   const found: string[] = [];
   for (const file of files) {
