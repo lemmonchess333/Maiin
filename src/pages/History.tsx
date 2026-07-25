@@ -42,7 +42,11 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
-import { localWeekKey, localDateString } from "@/lib/dateHelpers";
+import {
+  localWeekKey,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -696,7 +700,11 @@ export default function History() {
        52-bar unreadable mess at long windows. */
     const granularity = granularityForRange(rangeDays);
     filtered.forEach((w) => {
-      const d = new Date(w.date);
+      // `w.date` is a LOCAL "YYYY-MM-DD"; `new Date(s)` parses it as UTC
+      // midnight, which put the data on a different footing from the axis
+      // cursor below (a local wall-clock Date). Both feeding the same
+      // binKeyForDate hid the mismatch rather than fixing it.
+      const d = parseLocalDate(w.date);
       const key = binKeyForDate(d, granularity);
       const weeklyKey = binKeyForDate(d, "weekly");
       const vol = workoutTonnageKg(w);
