@@ -295,7 +295,7 @@ export default function FoodHeroCard({
                  reads as an airy wash under DARK text; dark mode uses it
                  as-graded. Static filter — never animated (the
                  WKWebView rule is about animating filter values). */
-              style={isDark ? undefined : { filter: "brightness(1.55)" }}
+              style={isDark ? undefined : { filter: "brightness(1.35)" }}
               draggable={false}
             />
             {/* Scrim via the --food-photo-scrim CSS vars, which flip with

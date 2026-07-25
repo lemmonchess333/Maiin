@@ -86,10 +86,23 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  // Colour stays purple in both modes — the toggle changes the displayed
-  // value, not the ring's visual identity. The centre label text is the
-  // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
-  const numberColor = hasTarget ? COLOR_RING : THEME.neutral[300];
+  /* Colour stays purple in both modes — the toggle changes the displayed
+     value, not the ring's visual identity. The centre label text is the
+     only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
+
+     Theme split (the chip's #1728 pattern, applied to the number): DARK
+     keeps the brand purple on the dark card; LIGHT uses the deeper ring
+     step. The brand purple measures ~3:1 against the light-mode photo
+     wash — the exact large-text floor, with lunch marginally under —
+     and that floor is what forced the wash to stay heavy. The deep step
+     (~5:1 on white) buys the headroom that lets the wash lighten so the
+     photo reads as food instead of fog. On the plain white card it is
+     simply higher-contrast, same family. */
+  const numberColor = hasTarget
+    ? isDark
+      ? COLOR_RING
+      : COLOR_RING_DEEP
+    : THEME.neutral[300];
 
   /* Ring track. The 10% brand tint reads as a recessed groove on a flat
      WHITE card, but it's far too sheer over the dark-mode hero photo —
@@ -118,7 +131,12 @@ export default function CalorieRing({
      (~7:1 on the dark card) over a slightly stronger purple backing so
      it holds up against photography as well as the flat card. */
   const chipTextColor = isDark ? COLOR_RING_LIGHT : COLOR_RING_DEEP;
-  const chipBackground = isDark ? `${COLOR_RING}33` : trackColor;
+  /* Light backing is OPAQUE (the tint flattened on white): translucent
+     10% tint went sheer over the photo wash and the chip fell under AA
+     on the busiest shot (3.06:1). Same rendered colour on a plain card. */
+  const chipBackground = isDark
+    ? `${COLOR_RING}33`
+    : THEME.calorieRing.chipBgLight;
 
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)

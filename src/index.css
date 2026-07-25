@@ -185,12 +185,18 @@
      is never referenced.
 
      LIGHT MODE values (the :root pair): a WHITE wash, because here the
-     card's text is DARK and needs a light backdrop. The hero brightens
+     card's text is DARK and needs a light backdrop. Softened 0.62/0.34
+     -> 0.48/0.22 in lockstep with the calorie number moving to the DEEP
+     ring purple in light mode (CalorieRing numberColor): the brand
+     purple sat at the 3:1 large-text floor on the heavier wash, which
+     is what kept the wash heavy. Deep number + lighter wash measure
+     3.5-4.5:1 across all three meal photos. These two values and that
+     colour move TOGETHER — re-measure before touching either. The hero brightens
      the dark-graded asset with a filter to match. The photo necessarily
      reads paler than in dark mode — dark text forces the image to sit
      back. The .dark pair below is the inverse. */
-  --food-photo-scrim: rgba(255, 255, 255, 0.62);
-  --food-photo-scrim-soft: rgba(255, 255, 255, 0.34);
+  --food-photo-scrim: rgba(255, 255, 255, 0.48);
+  --food-photo-scrim-soft: rgba(255, 255, 255, 0.22);
 }
 
 .dark {

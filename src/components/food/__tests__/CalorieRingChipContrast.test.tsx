@@ -99,6 +99,42 @@ describe("CalorieRing mode chip — theme-aware colour", () => {
   });
 });
 
+describe("CalorieRing centre number — theme-aware colour", () => {
+  /* Same split as the chip, applied to the number (the light-mode-photo
+     work): brand purple sat at the 3:1 large-text floor against the
+     light wash, which forced the wash to stay heavy. The deep step buys
+     the headroom that let the wash lighten.
+
+     Asserted on the ZERO ring: AnimatedNumber counts up from 0, so a
+     non-zero value isn't in the DOM at assert time — 0 is, immediately. */
+  function centreNumberEl() {
+    return screen.getByText("0").closest("p") as HTMLElement;
+  }
+
+  it("uses the BRAND purple in dark mode", () => {
+    document.documentElement.classList.add("dark");
+    renderZeroRing();
+    expect(centreNumberEl()).toHaveStyle({ color: THEME.brand });
+  });
+
+  it("uses the DEEP ring step in light mode", () => {
+    renderZeroRing();
+    expect(centreNumberEl()).toHaveStyle({ color: THEME.calorieRing.deep });
+  });
+});
+
+describe("CalorieRing mode chip — light backing is opaque", () => {
+  it("uses the flattened-tint solid, not the sheer 10% tint", () => {
+    renderRing();
+    const el = screen.getByText(/kcal/i).closest("span") as HTMLElement;
+    // Translucent tint went under AA over the photo wash (3.06:1 on the
+    // busiest shot); the solid renders identically on the plain card.
+    expect(el).toHaveStyle({
+      backgroundColor: THEME.calorieRing.chipBgLight,
+    });
+  });
+});
+
 describe("CalorieRing centre value — zero is not dimmed", () => {
   /** The centre number is the only .font-mono element in the ring. */
   function centreNumber() {

@@ -121,6 +121,13 @@ export const THEME = {
   calorieRing: {
     light: "#A8A2EF", // lighter stop for the arc gradient
     deep: "#5D55C9", // deeper stop for the overshoot arc
+    /* The mode chip's LIGHT backing: iconBg (10% brand tint) flattened
+       onto white — 0.9*255 + 0.1*(123,114,233) = rgb(242,241,253).
+       Identical rendered colour to the translucent tint on the plain
+       white card, but OPAQUE, so over the hero photo the chip keeps a
+       designed surface instead of going sheer (the #1728 failure mode,
+       light-side). */
+    chipBgLight: "#F2F1FD",
   },
 
   // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —
