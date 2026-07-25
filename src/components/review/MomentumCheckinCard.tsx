@@ -32,6 +32,7 @@ import {
   type MomentumCheckin,
   type MomentumFocus,
   type PlanFeel,
+  checkinDocPath,
 } from "@/lib/momentumCheckin";
 
 interface Props {
@@ -41,7 +42,11 @@ interface Props {
 }
 
 function checkinRef(uid: string, weekKey: string) {
-  return doc(db, "users", uid, "checkins", weekKey);
+  // Path comes from the domain module, not a second literal here — the
+  // collection name was written in both places and only the helper copy
+  // was tested, so a typo at this site would have read an empty
+  // collection silently.
+  return doc(db, checkinDocPath(uid, weekKey));
 }
 
 function pillClass(selected: boolean): string {
