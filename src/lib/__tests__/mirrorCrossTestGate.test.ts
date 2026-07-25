@@ -175,6 +175,16 @@ function walkFiles(absDir: string, ext: string, recurse: boolean): string[] {
   return out;
 }
 
+/**
+ * Remove block and line comments so prose can't masquerade as an import.
+ * Crude on purpose — it doesn't parse, so a `//` inside a string literal is
+ * over-eaten. That only ever removes a potential match, which pushes toward
+ * reporting MORE orphans: a CI failure, never a silent pass.
+ */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
+}
+
 /** Every non-test source file's contents, for specifier scanning. */
 function productionSources(): { path: string; text: string }[] {
   const out: { path: string; text: string }[] = [];
@@ -244,7 +254,19 @@ describe("mirror cross-test gate", () => {
 describe("reachability gate — a pinned module must be the RUNNING module", () => {
   const sources = productionSources();
 
-  /** Is this module's specifier referenced by any non-test source file? */
+  /**
+   * Is this module's specifier referenced by any non-test source file?
+   *
+   * Comments are stripped first. Without that, a module named in PROSE
+   * reads as reachable — `foodTrajectory.ts` was "imported" only by a
+   * FoodHeroCard comment explaining how to reinstate it, which made this
+   * gate insist the module was live while the symbol-level gate correctly
+   * called it dead. The two gates disagreeing is what surfaced it.
+   *
+   * Same fix the symbol gate already carries; back-ported here because
+   * fixing one copy of a bug and not the other is the exact class of
+   * mistake ADR-0008 exists for.
+   */
   function isReachable(absPath: string): boolean {
     const base = basename(absPath).replace(/\.[cm]?[jt]sx?$/, "");
     // Match an import/require specifier ending in this basename:
@@ -252,7 +274,7 @@ describe("reachability gate — a pinned module must be the RUNNING module", () 
     const spec = new RegExp(`["'\`][^"'\`]*[/]${base}["'\`]`);
     for (const s of sources) {
       if (s.path === absPath) continue;
-      if (spec.test(s.text)) return true;
+      if (spec.test(stripComments(s.text))) return true;
     }
     return false;
   }
