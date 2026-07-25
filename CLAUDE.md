@@ -33,24 +33,28 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 
 ```
 src/
-├── components/         # Shared UI components (87 files total)
-│   ├── analytics/      # Performance charts & stats (12 components)
-│   ├── home/           # Home screen cards & widgets (10 components)
+├── components/         # Shared UI components
+│   ├── analytics/      # Performance charts & stats
+│   ├── home/           # Home screen cards & widgets
 │   ├── nutrition/      # Nutrition UI (HealthScore, Water, Barcode, Serving)
 │   ├── program/        # Workout program builder (ExercisePicker, CustomDayBuilder)
 │   ├── progress/       # Progress tracking charts (TrendWeight, Energy, CalorieBalance)
-│   ├── run/            # Running feature components (12 components)
-│   ├── settings/       # Settings sections (10 components)
-│   └── social/         # Social feed, activity cards (7 components)
-├── features/           # Feature modules
-│   ├── challenges/     # Challenge system (list, card, hook, tests)
-│   ├── streaks/        # Streaks & badges (hook, grid, modal, tests)
-│   └── program/        # Workout program engine (engine, templates, scheduler)
-├── hooks/              # Custom React hooks (31 hooks)
-│   └── __tests__/      # Unit tests for hooks/ (2 test files)
-├── lib/                # Pure business logic & utilities (46 modules)
-│   └── __tests__/      # Unit tests for lib/ (31 test files)
-├── pages/              # Route-level page components (15 pages)
+│   ├── run/            # Running feature components
+│   ├── settings/       # Settings sections
+│   └── social/         # Social feed, activity cards
+├── features/           # Feature modules (see "Feature Modules" below)
+│   ├── challenges/     # Challenge system
+│   ├── goalSpace/      # Goal Spaces / Circles
+│   ├── partnerStreak/  # Partner bonds + shared-day streaks
+│   ├── program/        # Workout program engine (engine, templates, scheduler)
+│   ├── run/            # Run-surface feature modules
+│   ├── spaces/         # Space definitions (incl. race spaces)
+│   └── streaks/        # Streaks & badges
+├── hooks/              # Custom React hooks
+│   └── __tests__/      # Unit tests for hooks/
+├── lib/                # Pure business logic & utilities
+│   └── __tests__/      # Unit tests for lib/
+├── pages/              # Route-level page components
 ├── styles/             # CSS tokens, component styles, animations
 ├── utils/              # Helpers (calorie balance, formatters, weight trend)
 │   └── __tests__/      # Unit tests for utils/
@@ -69,7 +73,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
 - **Route prefetching:** `PREFETCH_MAP` in App.tsx preloads adjacent pages via `requestIdleCallback`
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app)
-- **App version:** Defined via `__APP_VERSION__` (from package.json, currently 1.1.0)
+- **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
 ## Pages (src/pages/)
 
@@ -82,7 +86,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `Run.tsx`            | `/run`         | Active GPS run tracking (full-screen, no nav)                              |
 | `RunSummary.tsx`     | `/run-summary` | Post-run stats & map review                                                |
 | `RunDetail.tsx`      | `/run/:runId`  | Historical run detail view                                                 |
-| `Social.tsx`         | `/social`      | Social feed, crews, leaderboards                                           |
+| `Social.tsx`         | `/social`      | Social feed, Circles/Spaces, leaderboards                                  |
 | `UserProfile.tsx`    | `/user/:uid`   | User profile viewing                                                       |
 | `Settings.tsx`       | `/settings`    | User settings & preferences                                                |
 | `Onboarding.tsx`     | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete)                   |
@@ -111,7 +115,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `nlFoodParser.ts`         | Natural language food parsing                                  |
 | `voiceFoodParser.ts`      | Voice-based food parsing                                       |
 | `gemini.ts`               | AI food analysis via Gemini API                                |
-| `socialApi.ts`            | Firestore social operations (feed, kudos, follow, crews)       |
+| `socialApi.ts`            | Firestore social operations (feed, kudos, follow)              |
 | `shareCardGenerator.ts`   | Share card image generation (html-to-image)                    |
 | `analytics.ts`            | Analytics computation                                          |
 | `subscription.ts`         | Pro subscription handling                                      |
@@ -138,6 +142,16 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `utils.ts`                | General utility functions                                      |
 
 ## Feature Modules (src/features/)
+
+### goalSpace/ · spaces/ · partnerStreak/ · run/
+
+Four modules that shipped after this section was first written and were
+never listed. `goalSpace/` owns Goal Spaces (Circles) — membership,
+invites, weekly focus, check-ins. `spaces/` owns the space definitions,
+including the race spaces a `raceGoal.eventSpaceId` binds to.
+`partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
+the sole writer of bond streak state — see the QA section). `run/` holds
+run-surface feature modules.
 
 ### challenges/
 
@@ -171,7 +185,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 `useGPS`, `useRunTimer`, `useRunningStats`, `useGuidedRun`, `useIntervalWorkout`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useCrews`, `useUnreadCount`, `useBlockedUsers`
+`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`
 
 **Performance & Analytics:**
 `usePerformance`
@@ -206,7 +220,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `activities` (public), `crews`, `challenges`, `challenges/{id}/participants`
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
@@ -229,7 +243,13 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 ### Unit Tests (Vitest)
 
 - Config: `vitest.config.ts`, setup: `src/test/setup.ts`
-- 31 test files in `src/lib/__tests__/`, 4 in `src/utils/__tests__/`, 2 in `src/hooks/__tests__/` (useOnlineStatus, useRunTimer), plus feature module tests (challenges, streaks)
+- Colocated in `__tests__/` beside the code: `src/lib/`, `src/hooks/`, `src/utils/`,
+  and each `src/features/*` module. Hook tests drive Firestore through the one
+  fake (ADR-0009) — `vi.mock("firebase/firestore")` bare, then `seedFirestore`.
+- Deliberately NOT counted here. Every file count this document used to carry
+  had drifted by 3–7× (87 components → 319, 31 hooks → 75, 46 lib modules →
+  198). A number nothing checks is a claim that rots; prefer describing the
+  shape, or add a test that pins the number.
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
 ### E2E Tests (Playwright)
@@ -740,7 +760,8 @@ Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definit
 
 Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
 
-- [ ] **Light + dark capture of the solo state.** As a fresh user (0 follows, 0 crew), open Social → Feed. Confirm the curated stack renders top-to-bottom — PartnerStreak hero → June Hybrid Hero challenge card → Share-your-training → "Crews unlock…" hexagon row — with NO empty-feed copy or skeleton beneath it, in both themes.
+- [ ] **Light + dark capture of the solo state.** (SUPERSEDED 2026-07-25 — crews were retired in #1700; re-read this row against Circles/Spaces before running it.)
+- [ ] _(original)_ As a fresh user (0 follows, 0 crew), open Social → Feed. Confirm the curated stack renders top-to-bottom — PartnerStreak hero → June Hybrid Hero challenge card → Share-your-training → "Crews unlock…" hexagon row — with NO empty-feed copy or skeleton beneath it, in both themes.
 - [ ] **Sub-tab default interaction.** A new user's feed sub-tab defaults to Explore (`n>0?following:explore`). Confirm the solo stack still leads (it's sub-tab-agnostic) and that switching to Following shows the stack, not the empty "Your feed is empty" prompt.
 - [ ] **Challenge slot before rollover.** In the ~5-min window before the daily `rolloverChallenges` first materialises `global-monthly-*`, confirm the challenge slot simply collapses (no broken/empty card).
 - [ ] **Share cold-start vs preloaded.** With nothing logged, the Share card shows the prompt and NO button. After logging a workout, it offers "Create a share card" and opens the sheet preloaded with that session's volume/exercise count.
@@ -792,6 +813,22 @@ auto-created on first `/triage` use if absent on GitHub. See
 Single-context. `CONTEXT.md` at repo root (seed; fill with domain
 vocabulary as it crystallises); ADRs in `docs/adr/`. See
 `docs/agents/domain.md`.
+
+Read the relevant ADR before re-deciding something it already settled —
+an audit that re-derives a locked decision is wasted effort even when it
+lands in the same place (the plan-file lock rule, applied to ADRs):
+
+| ADR  | Decision                                                                  |
+| ---- | ------------------------------------------------------------------------- |
+| 0001 | Domain depth lives in `src/lib` helpers — file size is NOT a depth signal |
+| 0002 | Dual scheduling ontology: runs are date-pinned, lifts are split-ordered   |
+| 0003 | UI primitives contract (`Button` / `IconButton` / `Toggle`)               |
+| 0004 | Surface coordinator                                                       |
+| 0005 | Profile-sanitizer drift is an observability seam, not a consolidation     |
+| 0006 | Adopt RevenueCat for IAP                                                  |
+| 0007 | HealthKit reconciliation                                                  |
+| 0008 | Mirror parity must pin the RUNNING copy — reachability over prose         |
+| 0009 | One Firestore test fake; injecting the `db` handle buys nothing           |
 
 ## Dynamic workflows & `ultracode` (when to escalate)
 
