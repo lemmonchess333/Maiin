@@ -1,4 +1,3 @@
-/* @untested: coverage gap. Carries a module-level uid cache that a test must be able to clear first. */
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";

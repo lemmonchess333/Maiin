@@ -1,4 +1,3 @@
-/* @untested: coverage gap. Zone geometry is pure and already tested in privacyZones.test.ts; only the persistence wrapper is uncovered. */
 import { useState, useEffect, useCallback } from "react";
 import {
   collection,
