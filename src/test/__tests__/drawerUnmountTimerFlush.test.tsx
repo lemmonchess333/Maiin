@@ -22,18 +22,17 @@
  * dispatches it on a container from the OLD one, and jsdom's IDL
  * conversion rejects the cross-realm event with exactly that message.
  *
- * The fix: Drawer-mounting suites yield one macrotask in their afterEach
- * (see `CirclesSection.invite.test.tsx`) so the timer runs inside its
- * own realm. THIS suite pins the load-bearing assumption behind that
- * fix: that a single macrotask is enough. If a future vaul/Radix bump
- * moves the work to a longer timer, a different scheduler, or several
- * chained ticks, those drains would silently stop working and the flake
- * would come back as a mystery — this fails loudly instead.
+ * The fix: `src/test/setup.ts` yields one macrotask in a GLOBAL
+ * afterEach, so the timer runs inside its own realm. THIS suite pins the
+ * load-bearing assumption behind that fix: that a single macrotask is
+ * enough. If a future vaul/Radix bump moves the work to a longer timer,
+ * a different scheduler, or several chained ticks, the flush would
+ * silently stop working and the flake would come back as a mystery —
+ * this fails loudly instead.
  *
- * Scoped per-file rather than globally on purpose: a global afterEach
- * flush was tried first and regressed `Tooltip.test.tsx`, because
- * letting deferred work run after cleanup can strand a portal node in
- * document.body for the next test's `screen` query to find.
+ * Global rather than per-file, the hard way round: a per-file drain was
+ * tried first and the flake simply moved to the next Drawer suite. 14
+ * suites mount Drawers/Sheets and any future one inherits the hazard.
  *
  * It deliberately probes via `onCloseAutoFocus`, which Radix invokes by
  * dispatching AUTOFOCUS_ON_UNMOUNT — i.e. the very dispatchEvent call
