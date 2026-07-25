@@ -84,10 +84,28 @@ const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
 /**
  * Exported functions with no caller outside their own module.
  *
- * DELETE-ONLY. Wire it up, or delete it and its tests — a test over an
- * unreachable function proves nothing about production, which is the
- * whole point of ADR-0008. Do not add entries; a new orphan means the
- * export was never needed.
+ * DELETE-ONLY as a LIST: entries come off, none go on. But the list is a
+ * TRIAGE QUEUE, not a delete list — read each module's header before
+ * acting. Unreachable has at least three causes and only one of them is
+ * rot:
+ *
+ *   rot         — the consumer was rewritten and the helper stayed behind
+ *                 (`analytics.ts` lost 20 of 22 exports this way). Delete
+ *                 it and its tests.
+ *   staged      — shipped deliberately ahead of its wiring.
+ *                 `raceRunDaysReconcile.ts` says so in its header AND
+ *                 notes the bug it fixes is live until then. Deleting that
+ *                 throws away tested logic for a real bug.
+ *   suppressed  — a feature switched off but kept as cheap optionality.
+ *                 `foodTrajectory.ts` is switched off at the call site in
+ *                 FoodHeroCard.
+ *
+ * Both non-rot cases were nearly deleted in one sweep here on the strength
+ * of "no consumer" alone. The tell was in the module header both times —
+ * so if a header gives no reason, that absence IS the finding: either
+ * write the reason down or delete the module.
+ *
+ * Do not add entries; a new orphan means the export was never needed.
  */
 const KNOWN_ORPHAN_EXPORTS = [
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
