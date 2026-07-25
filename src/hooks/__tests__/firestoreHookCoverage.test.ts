@@ -73,12 +73,7 @@ function firestoreHooks(): HookFile[] {
  * Hooks with a known, named coverage gap. DELETE-ONLY: write the test,
  * remove the `@untested:` marker, remove the name here. Do not add.
  */
-const EXEMPT = [
-  "DailyLogsProvider",
-  "useFirestore",
-  "useMealReminders",
-  "useWorkoutReminders",
-];
+const EXEMPT = ["DailyLogsProvider", "useFirestore"];
 
 /**
  * Suites that predate the seam and still carry their own inline SDK factory.
