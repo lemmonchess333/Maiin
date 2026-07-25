@@ -480,6 +480,7 @@ async function checkMonthlyQuota(uid) {
 // (audit P0 #1 follow-up), tests should import these via
 // `require("./index")` and exercise the predicates without booting
 // Firestore.
+exports._shouldApplyParticipantCount = _shouldApplyParticipantCount;
 exports._pruneOldTimestamps = _pruneOldTimestamps;
 exports._computeEffectiveTier = _computeEffectiveTier;
 exports._currentMonthCount = _currentMonthCount;
@@ -4283,10 +4284,55 @@ async function syncFastestEffortProgress(
  * Recompute-and-set (rather than increment) is deliberately idempotent: a
  * re-delivered onCreate/onDelete (triggers are at-least-once — CLAUDE.md) sets
  * the same observed count instead of double-counting. A `.count()` aggregation
- * keeps it O(1) reads regardless of participant volume. Concurrent membership
- * changes converge (the last trigger to run observes the final set).
+ * keeps it O(1) reads regardless of participant volume.
+ *
+ * ORDERING (fixed 2026-07-25). This used to claim "concurrent membership
+ * changes converge (the last trigger to run observes the final set)". That
+ * assumed read order equals write order, and it doesn't — the read and the
+ * write are separate operations:
+ *
+ *   join  fires, counts 5
+ *   leave fires, counts 4, writes 4
+ *   join's write lands second, writes 5   ← final value 5, actual 4
+ *
+ * The lost-update shape of 23369ef. It self-corrects on the next membership
+ * change, but nothing bounded how long that took.
+ *
+ * The guard is a MAX on the SOURCE WRITE's commit time — `context.timestamp`,
+ * assigned by Firestore, not by the instance clock, so it orders the two
+ * triggers authoritatively however their instances interleave. A count
+ * observed after a later commit wins; an older observation is dropped. That
+ * is the "MIN/MAX-style update" CLAUDE.md names as the naturally-safe
+ * exception, and it keeps the O(1) read cost.
+ *
+ * Chosen over the two obvious alternatives:
+ *   - `FieldValue.increment(±1)` is atomic but NOT retry-idempotent, which is
+ *     the dc3e4a6 double-count bug.
+ *   - A transactional recompute is correct on both axes but cannot use the
+ *     aggregate, so it reads every participant doc per join/leave — and the
+ *     global monthly challenge is built for the whole user base.
  */
-async function recomputeParticipantCount(challengeId) {
+/**
+ * Should an observation taken at `observedMs` overwrite a count last written
+ * from an observation at `seenMs`?
+ *
+ * Pure so the ordering rule is testable without Firestore (the convention the
+ * rest of this file's helpers follow — see _decideReconciliationActions).
+ *
+ * - No stored marker → write (first observation, or a pre-guard document).
+ * - No usable observation time → write (degrades to the old last-write-wins
+ *   rather than refusing to update at all).
+ * - Equal times → WRITE, not skip: that's a re-delivery of the same event, and
+ *   re-writing the same observed count is idempotent. Skipping would be too,
+ *   but writing keeps the recompute self-healing if the stored count was
+ *   corrupted by something else.
+ */
+function _shouldApplyParticipantCount(observedMs, seenMs) {
+  if (!observedMs || !seenMs) return true;
+  return observedMs >= seenMs;
+}
+
+async function recomputeParticipantCount(challengeId, observedAt) {
   try {
     const partsRef = db
       .collection("challenges")
@@ -4294,10 +4340,20 @@ async function recomputeParticipantCount(challengeId) {
       .collection("participants");
     const agg = await partsRef.count().get();
     const count = agg.data().count;
-    await db
-      .collection("challenges")
-      .doc(challengeId)
-      .update({ participantCount: count });
+    const challengeRef = db.collection("challenges").doc(challengeId);
+    // Observation time = the commit time of the write that triggered us, so
+    // the count we just read is the state as of that commit or later.
+    const observedMs = Date.parse(observedAt || "") || 0;
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(challengeRef);
+      if (!snap.exists) return; // challenge gone — nothing to count
+      const seenMs = Number(snap.data().participantCountAt || 0);
+      if (!_shouldApplyParticipantCount(observedMs, seenMs)) return;
+      tx.update(challengeRef, {
+        participantCount: count,
+        participantCountAt: observedMs || Date.now(),
+      });
+    });
   } catch (err) {
     // A missing parent (challenge expired / never created) is benign — there's
     // nothing to keep a count on. Log anything else.
@@ -4317,7 +4373,10 @@ exports.onChallengeParticipantCreated = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("challenges/{challengeId}/participants/{uid}")
   .onCreate(async (_snap, context) => {
-    await recomputeParticipantCount(context.params.challengeId);
+    await recomputeParticipantCount(
+      context.params.challengeId,
+      context.timestamp
+    );
     return null;
   });
 
@@ -4325,7 +4384,10 @@ exports.onChallengeParticipantDeleted = functions
   .runWith(TRIGGER_CAP)
   .firestore.document("challenges/{challengeId}/participants/{uid}")
   .onDelete(async (_snap, context) => {
-    await recomputeParticipantCount(context.params.challengeId);
+    await recomputeParticipantCount(
+      context.params.challengeId,
+      context.timestamp
+    );
     return null;
   });
 
