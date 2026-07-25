@@ -184,14 +184,6 @@ function assembleSlots(
 }
 
 /**
- * Get today's scheduled activity type from a week schedule.
- */
-export function getTodaySchedule(schedule: ScheduleDay[]): ScheduleDay | null {
-  const today = new Date().getDay();
-  return schedule.find((s) => s.day === today) || null;
-}
-
-/**
  * Map a day-of-week (0=Sun … 6=Sat) to its position in the lift
  * programme's `workouts[]` array. The workouts array is ordered by
  * lift exposure: workouts[0] is the first lift/both day in the
@@ -263,6 +255,16 @@ export function isValidWeekSchedule(
 
 /**
  * Count active days by type.
+ *
+ * @oracle — test-only by design, permanently. This is how the
+ * `generateSchedule` suite states the P0-B invariant that matters:
+ * total lift exposure is `lift + both`, not `lift`. Asserting slot by
+ * slot instead would pin the packing ORDER, which is an implementation
+ * detail the scheduler is free to change; counting by type pins the
+ * exposure contract, which it is not.
+ *
+ * Production never needs this — surfaces read the schedule day by day
+ * (`dayIntensity`, `runReschedule`), never as a tally.
  */
 export function countByType(schedule: ScheduleDay[]): {
   lift: number;
