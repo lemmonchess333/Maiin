@@ -15,8 +15,17 @@
  *      client-side display matches).
  *   7. Legacy {count, month} doc shape → used=0 (no migration
  *      required; matches server-side helper).
+ *
+ * MIGRATED to the ADR-0009 fake (was a hand-rolled onSnapshot stub that
+ * captured the listener so tests could push synthetic snapshots). The
+ * assertions here were always substantive — derived limits, not call
+ * shapes — so the migration is mostly mechanical. It does buy one thing
+ * the stub could not: `doc` was `vi.fn()` returning UNDEFINED, so nothing
+ * checked the hook reads `scanUsage/{uid}`. Seeding by path means a wrong
+ * collection now fails instead of silently reading the same synthetic
+ * snapshot.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 
 // Module-level mock refs so individual tests can override the
@@ -31,7 +40,7 @@ const subscriptionMock = vi.fn<() => { isPro: boolean; isInTrial: boolean }>(
 vi.mock("@/lib/auth", () => ({
   useAuth: () => authMock(),
 }));
-vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
 vi.mock("@/lib/subscription", async () => {
   const actual =
     await vi.importActual<typeof import("@/lib/subscription")>(
@@ -43,40 +52,14 @@ vi.mock("@/lib/subscription", async () => {
   };
 });
 
-// onSnapshot stub — captures the listener so the test can push a
-// synthetic snapshot to drive the hook.
-const fixtures = vi.hoisted(() => {
-  const listeners: Array<
-    (snap: {
-      exists: () => boolean;
-      data: () => Record<string, unknown>;
-    }) => void
-  > = [];
-  return { listeners };
-});
-
-vi.mock("firebase/firestore", () => ({
-  doc: vi.fn(),
-  onSnapshot: vi.fn(
-    (
-      _ref: unknown,
-      onNext: (snap: {
-        exists: () => boolean;
-        data: () => Record<string, unknown>;
-      }) => void
-    ) => {
-      fixtures.listeners.push(onNext);
-      return () => {};
-    }
-  ),
-}));
+vi.mock("firebase/firestore");
 
 import { useScanUsage } from "../useScanUsage";
+import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
-function pushSnapshot(data: Record<string, unknown> | null) {
-  fixtures.listeners.forEach((fn) =>
-    fn({ exists: () => data !== null, data: () => data ?? {} })
-  );
+/** The hook reads `scanUsage/{uid}` — seeding by path pins that. */
+function seedUsage(data: Record<string, unknown> | null) {
+  if (data) seedFirestore({ "scanUsage/uid_test": data });
 }
 
 function todayKey(): string {
@@ -88,21 +71,17 @@ function todayKey(): string {
 }
 
 beforeEach(() => {
-  fixtures.listeners.length = 0;
+  resetFirestore();
   authMock.mockReset();
   subscriptionMock.mockReset();
   authMock.mockReturnValue({ user: { uid: "uid_test" } });
   subscriptionMock.mockReturnValue({ isPro: false, isInTrial: false });
 });
 
-afterEach(() => {
-  fixtures.listeners.length = 0;
-});
-
 describe("useScanUsage", () => {
   it("Cycle 1: free user + default action (image_ai) reports limit=0 (Pro-only gate)", async () => {
+    seedUsage(null);
     const { result } = renderHook(() => useScanUsage());
-    pushSnapshot(null);
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
@@ -113,8 +92,8 @@ describe("useScanUsage", () => {
   });
 
   it("Cycle 2: free user + text_ai reports limit=10; used reflects today's count", async () => {
+    seedUsage({ text_ai: { day: todayKey(), count: 4 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
-    pushSnapshot({ text_ai: { day: todayKey(), count: 4 } });
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
@@ -126,8 +105,8 @@ describe("useScanUsage", () => {
 
   it("Cycle 3: pro user + image_ai reports limit=100; remaining decrements from used", async () => {
     subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
+    seedUsage({ image_ai: { day: todayKey(), count: 80 } });
     const { result } = renderHook(() => useScanUsage("image_ai"));
-    pushSnapshot({ image_ai: { day: todayKey(), count: 80 } });
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
@@ -139,8 +118,8 @@ describe("useScanUsage", () => {
 
   it("Cycle 4: pro user + text_ai reports limit=100", async () => {
     subscriptionMock.mockReturnValue({ isPro: true, isInTrial: false });
+    seedUsage({ text_ai: { day: todayKey(), count: 30 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
-    pushSnapshot({ text_ai: { day: todayKey(), count: 30 } });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.limit).toBe(100);
     expect(result.current.remaining).toBe(70);
@@ -148,8 +127,8 @@ describe("useScanUsage", () => {
 
   it("Cycle 5: trial user (isInTrial=true) gets Pro limits", async () => {
     subscriptionMock.mockReturnValue({ isPro: false, isInTrial: true });
+    seedUsage({ image_ai: { day: todayKey(), count: 0 } });
     const { result } = renderHook(() => useScanUsage("image_ai"));
-    pushSnapshot({ image_ai: { day: todayKey(), count: 0 } });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.limit).toBe(100);
     expect(result.current.remaining).toBe(100);
@@ -157,16 +136,16 @@ describe("useScanUsage", () => {
   });
 
   it("Cycle 6: stale day in doc → used=0 (counter resets at local midnight)", async () => {
+    seedUsage({ text_ai: { day: "2020-01-01", count: 99 } });
     const { result } = renderHook(() => useScanUsage("text_ai"));
-    pushSnapshot({ text_ai: { day: "2020-01-01", count: 99 } });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
     expect(result.current.remaining).toBe(10);
   });
 
   it("Cycle 7: legacy {count, month} doc shape → used=0 (no migration script needed)", async () => {
+    seedUsage({ count: 7, month: "2026-05" });
     const { result } = renderHook(() => useScanUsage("text_ai"));
-    pushSnapshot({ count: 7, month: "2026-05" });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.used).toBe(0);
     expect(result.current.remaining).toBe(10);
