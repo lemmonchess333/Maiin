@@ -10,7 +10,6 @@
  * are two listeners per session, not per consumer. ~60-doc windows comfortably
  * cover the 7-day protein/water streaks with headroom.
  */
-/* @untested: coverage gap. Needs a fixed clock (per-day doc ids) alongside the fake. */
 import { useEffect, useState } from "react";
 import {
   collection,
