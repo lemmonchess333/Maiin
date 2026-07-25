@@ -128,7 +128,6 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `types.ts`                | Shared TypeScript type definitions                             |
 | `performanceTypes.ts`     | Performance engine type definitions                            |
 | `macroConstants.ts`       | Macro/nutrition constants                                      |
-| `colorUtils.ts`           | Colour manipulation helpers                                    |
 | `export.ts`               | Data export utilities                                          |
 | `exerciseDemo.ts`         | Exercise demo/animation data                                   |
 | `firestoreGuards.ts`      | Firestore data validation guards                               |
