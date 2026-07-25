@@ -121,7 +121,7 @@ export const T5_BARS_MIN_COUNT = 3;
  * computation + memoisation (Hist5d cross-cut pin 5).
  */
 export function computeDataConfidence(
-  input: DataConfidenceInput,
+  input: DataConfidenceInput
 ): DataConfidence {
   const suppressions: SuppressionRecord[] = [];
   const recency = input.hasRecentPoint ?? true;
@@ -140,8 +140,8 @@ export function computeDataConfidence(
 
   // T2 — vs-last delta
   const hasDelta =
-    input.pointsInWindow >= T2_DELTA_MIN_POINTS
-    && input.pointsInPriorWindow >= T2_DELTA_MIN_POINTS;
+    input.pointsInWindow >= T2_DELTA_MIN_POINTS &&
+    input.pointsInPriorWindow >= T2_DELTA_MIN_POINTS;
   if (!hasDelta) {
     suppressions.push({
       decoration: "delta",
@@ -219,18 +219,28 @@ export function computeDataConfidence(
 export function suppressionCaveatCopy(
   decoration: DecorationKind,
   pointsAvailable: number,
-  ratePerDay?: number,
+  ratePerDay?: number
 ): string {
   switch (decoration) {
     case "sparkline":
-      return computeETA(T1_SPARKLINE_MIN_POINTS, pointsAvailable, ratePerDay)
-        ?? "Building chart · keep logging";
+      return (
+        computeETA(T1_SPARKLINE_MIN_POINTS, pointsAvailable, ratePerDay) ??
+        "Building chart · keep logging"
+      );
     case "projection":
-      return computeETA(T3_PROJECTION_MIN_POINTS, pointsAvailable, ratePerDay)
-        ?? "Building trend · check back";
+      return (
+        computeETA(T3_PROJECTION_MIN_POINTS, pointsAvailable, ratePerDay) ??
+        "Building trend · check back"
+      );
     case "donut":
-      return computeETA(T4_DONUT_MIN_LOGGED_DAYS, pointsAvailable, ratePerDay, "Macro split in")
-        ?? "Building your macro split";
+      return (
+        computeETA(
+          T4_DONUT_MIN_LOGGED_DAYS,
+          pointsAvailable,
+          ratePerDay,
+          "Macro split in"
+        ) ?? "Building your macro split"
+      );
     case "delta":
       return "First period · no comparison";
     case "bars":
@@ -242,7 +252,7 @@ function computeETA(
   target: number,
   current: number,
   ratePerDay: number | undefined,
-  prefix: string = "Trending in",
+  prefix: string = "Trending in"
 ): string | null {
   if (!ratePerDay || ratePerDay <= 0) return null;
   const remaining = Math.max(1, Math.ceil((target - current) / ratePerDay));
@@ -266,6 +276,20 @@ export interface SuppressionTelemetryItem {
   pointsAvailable: number;
 }
 
+/**
+ * Accumulates suppression records across surfaces into one telemetry
+ * payload — "how often, and on which surfaces, is the thin-data policy
+ * hiding a decoration?" The question the Hist5d spec wanted answered
+ * once the policy was live: thresholds tuned from real suppression
+ * rates rather than from guesses.
+ *
+ * UNWIRED, and the reason is that there is no sink — nothing in the app
+ * emits suppression telemetry, so this builds a payload no one sends.
+ * Recorded here rather than left blank because triage keeps rediscovering
+ * it: "no consumer" alone reads as rot, and this is staged work. Wiring
+ * it is a product decision (what is sent, and whether per-surface
+ * suppression counts are worth collecting at all), not a plumbing gap.
+ */
 export function makeSuppressionBatch() {
   const items: SuppressionTelemetryItem[] = [];
   return {

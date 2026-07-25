@@ -228,6 +228,18 @@ export const GUIDED_WORKOUTS: GuidedRunWorkout[] = [
   },
 ];
 
+/**
+ * Integrity audit over a guided-workout catalogue: duplicate ids, empty
+ * ids, malformed segments — the defects a hand-maintained data table
+ * accumulates as it is edited.
+ *
+ * @oracle — test-only by design, permanently. Production never audits
+ * the catalogue at runtime; it TRUSTS it. What makes that trust safe is
+ * `guidedRun.test.ts` running this over the shipped `GUIDED_WORKOUTS`
+ * and asserting zero issues, so a bad edit fails CI instead of shipping
+ * a broken guided run. Wiring it into the app would only spend cycles
+ * re-checking a constant.
+ */
 export function auditGuidedWorkouts(
   workouts: GuidedRunWorkout[]
 ): GuidedRunAuditIssue[] {
