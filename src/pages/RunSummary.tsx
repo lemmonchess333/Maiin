@@ -87,6 +87,7 @@ import {
   type InvalidRunReason,
   type SaveStatus,
 } from "../lib/runGuards";
+import { getDistanceComparison } from "@/lib/funComparisons";
 import {
   formatSecondsPerKm,
   gradeAdjustedPace,
@@ -593,6 +594,20 @@ export default function RunSummary() {
       isPaceEligible(currentPaceCandidate),
     loading: paceHistoryLoading,
   });
+
+  /* Fun distance comparison. Two constraints shape this.
+     MEMOISED because `getDistanceComparison` picks at RANDOM among the
+     eligible lines — recomputing in the render body reshuffles the text
+     on every unrelated re-render (save status, map load, online flip),
+     and this page re-renders plenty.
+     Declared ABOVE the `!state` early return, like the pace hooks, so
+     hook order stays stable; it therefore reads `state` defensively and
+     repeats the edited-distance fallback rather than using the
+     `distance` binding, which is destructured below the return. */
+  const funComparison = useMemo(() => {
+    const meters = editedDistanceMeters ?? state?.distance;
+    return meters ? getDistanceComparison(meters / 1000) : null;
+  }, [editedDistanceMeters, state?.distance]);
 
   if (!state) {
     navigate("/");
@@ -1198,6 +1213,19 @@ export default function RunSummary() {
             {paceVerdict && (
               <p className="mt-2 mx-auto max-w-xs text-xs leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
+              </p>
+            )}
+
+            {/* The run half of the completion delight beat. The lift side
+                (SessionCompleteScreen) has shipped `getVolumeComparison`
+                since the module landed; the distance twin was written at
+                the same time and never wired, so only lifters got it —
+                an odd gap in an app whose identity is hybrid. Lives in
+                the VALID branch, so a sub-threshold GPS glitch never
+                claims "4 Great Wall sections". */}
+            {funComparison && (
+              <p className="mt-2 text-center text-xs font-medium text-muted-foreground">
+                {funComparison}
               </p>
             )}
           </div>
