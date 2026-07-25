@@ -117,13 +117,29 @@ function writeAlways(uid: string, type: ShareType, value: AlwaysPref) {
   }
 }
 
-/** Used by Settings to let the user clear their saved default. */
+/** Used by Settings (ShareDefaultsRow) to let the user clear their saved
+ *  default. Without this the "Always do this" tick is a one-way door —
+ *  `compose()` short-circuits from then on and the sheet never reopens. */
 export function clearShareDefault(uid: string, type: ShareType): void {
   writeAlways(uid, type, null);
 }
 
+/** Reads the saved "Always do this" preference, or null if the user has
+ *  never ticked it for this type. Settings renders it so the choice is
+ *  visible and reversible. */
 export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
   return readAlways(uid, type);
+}
+
+/** Test-only: seed a saved default without driving the whole sheet flow.
+ *  Exists so tests don't hard-code the localStorage key format, which is
+ *  private to this module (and uid-scoped — see `prefKey`). */
+export function __setShareDefault(
+  uid: string,
+  type: ShareType,
+  value: AlwaysPref
+): void {
+  writeAlways(uid, type, value);
 }
 
 // ── compose / resolve ────────────────────────────────────────────

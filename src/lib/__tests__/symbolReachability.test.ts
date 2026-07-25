@@ -122,8 +122,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/analyticsProvider.ts:isAnalyticsActive",
   "src/lib/dataConfidence.ts:makeSuppressionBatch",
   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
-  "src/lib/errorReporting.ts:clearErrors",
-  "src/lib/errorReporting.ts:getRecentErrors",
   "src/lib/foodTrajectory.ts:computeTrajectory",
   "src/lib/funComparisons.ts:getDistanceComparison",
   "src/lib/getBestSetSummary.ts:getBestSetSummary",
@@ -141,8 +139,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/scheduledRunCompletion.ts:isRaceDayCompletedStrictly",
   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
   "src/lib/shareCard/statToggles.ts:isStatVisible",
-  "src/lib/shareComposer.ts:clearShareDefault",
-  "src/lib/shareComposer.ts:getShareDefault",
   "src/lib/workoutBurn.ts:estimateRunBurn",
 ];
 
