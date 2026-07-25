@@ -11,6 +11,28 @@
  * When a change to this table is INTENTIONAL (a new function, a
  * deliberate cap change), update the literal in the same PR — the diff
  * is the review surface. Never regenerate it blindly.
+ *
+ * STATUS 2026-07-25 — the extraction this was built for has NOT happened;
+ * index.js is still ~6.3k lines / 69 exports. That is a deliberate hold,
+ * not an oversight: ADR-0001 settled that file size is not a depth signal
+ * here, and the invariant size might threaten — the mandatory cap — is
+ * pinned by this very file. Size alone is not a reason to refactor the
+ * riskiest deploy surface in the repo.
+ *
+ * The net itself was verified rather than assumed, by mutating index.js
+ * and confirming each failure mode is caught:
+ *
+ *   dropped maxInstances cap  → "kind / cap / secrets / schedule" fails
+ *   lost secret binding       → same assertion fails
+ *   renamed export            → "exports exactly the expected trigger set"
+ *                               AND the metadata assertion fail
+ *   shifted pubsub schedule   → metadata assertion fails
+ *
+ * So whenever the extraction IS taken up, it is an appetite question, not
+ * a risk question — this net demonstrably catches the four ways a move
+ * goes wrong. Do it as one domain per PR, and spot-check the deployed
+ * source afterwards (CI green does not prove an upload happened — see the
+ * dedup/bundle-hash gotcha in CLAUDE.md).
  */
 import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";

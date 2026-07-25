@@ -97,7 +97,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/hrZones.ts:zoneDistribution",
   "src/lib/momentumCheckin.ts:checkinDocPath",
   "src/lib/nutritionConsistency.ts:commitmentDocPath",
-  "src/lib/nutritionInsights.ts:getMacroBalance",
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runGuards.ts:canShowFullSummary",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
