@@ -39,6 +39,7 @@ import {
   parseCommitment,
   type NutritionCommitment,
   type NutritionIntent,
+  commitmentDocPath,
 } from "@/lib/nutritionConsistency";
 import { useGoalSpaces } from "@/features/goalSpace/useGoalSpaces";
 
@@ -68,7 +69,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       try {
         const { start, end } = weekBounds(weekKey);
         const [snap, meals] = await Promise.all([
-          getDoc(doc(db, "users", uid, "nutritionCommitments", weekKey)),
+          getDoc(doc(db, commitmentDocPath(uid, weekKey))),
           getDocs(
             query(
               collection(db, "users", uid, "meals"),
@@ -100,10 +101,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
   const save = useCallback(
     async (record: NutritionCommitment) => {
       try {
-        await setDocGuarded(
-          doc(db, "users", uid, "nutritionCommitments", weekKey),
-          record
-        );
+        await setDocGuarded(doc(db, commitmentDocPath(uid, weekKey)), record);
         setCommitment(record);
         return true;
       } catch (err) {
