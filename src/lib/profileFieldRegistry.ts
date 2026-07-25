@@ -102,6 +102,9 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   },
   { field: "athleteType", sanitized: true },
   { field: "audioCues", sanitized: true },
+  // LEGACY: superseded by the share composer's saved default (#1416) —
+  // never read, and no longer written since ShareDefaultsRow replaced the
+  // two dead Settings toggles. Kept on the same terms as `crewId`.
   { field: "autoPostBadges", sanitized: false },
   { field: "autoPostRuns", sanitized: false },
   { field: "autoPostWorkouts", sanitized: false },

@@ -38,8 +38,11 @@ export type SettingsSection =
  *  free-form keys. */
 export type SettingsToggle =
   | "auto_rest_timer"
-  | "auto_post_runs"
-  | "auto_post_workouts"
+  /** Sends the share TYPE ("run" | "workout") as `value`, like `theme`
+   *  does. Replaces the retired `auto_post_runs` / `auto_post_workouts`
+   *  toggles, whose profile fields nothing ever read (#1416 moved
+   *  auto-posting to the share composer's saved default). */
+  | "share_default_cleared"
   | "weekly_summary_email"
   | "default_visibility"
   | "weight_unit"

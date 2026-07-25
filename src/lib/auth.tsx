@@ -250,6 +250,18 @@ export interface UserProfileNutrition {
 /** Social and privacy settings */
 export interface UserProfileSocial {
   defaultVisibility?: "public" | "followers" | "private";
+  /** LEGACY (share composer superseded these, #1416): the composer's saved
+   *  "Always do this" default decides auto-posting now — see
+   *  `src/lib/shareComposer.ts`. Nothing has READ these three since; the
+   *  Settings switches that wrote `autoPostRuns` / `autoPostWorkouts`
+   *  persisted a value that changed nothing and contradicted the composer
+   *  whenever the two disagreed, so they were replaced by
+   *  `ShareDefaultsRow` (which edits the preference that actually runs).
+   *  `autoPostBadges` never had a writer at all.
+   *
+   *  Kept typed + registered on the same terms as `crewId` below: existing
+   *  docs carry them, and a future registry sweep can drop the whole group
+   *  once prod data is confirmed clean. */
   autoPostRuns?: boolean;
   autoPostWorkouts?: boolean;
   autoPostBadges?: boolean;
