@@ -20,10 +20,19 @@
  * So: an exported function in a domain root must be called by something
  * outside its own module, or be listed below.
  *
- * Two exemptions are automatic rather than listed, because both are
- * legible at the call site:
+ * Three exemptions are automatic rather than listed, because all three are
+ * legible at the declaration:
  *   - `__`-prefixed names   — deliberate test hooks (`__resetFooForTests`)
  *   - `@oracle` modules     — test-only by design (ADR-0008's marker)
+ *   - `@oracle` on a single export's JSDoc — the same claim, one level
+ *     down. Added 2026-07-25 because triage kept meeting the case the
+ *     module-level marker can't express: `scheduleUtils.countByType` is
+ *     test-only BY DESIGN (it is how the generateSchedule suite asserts
+ *     "lift exposure = lift + both"), but it lives in a module full of
+ *     production exports, so marking the file would blind the gate to all
+ *     of them. Without this the only options were renaming a
+ *     production-shaped pure function to `__countByType`, or pinning it as
+ *     an orphan — which is a claim of DEBT, and it isn't debt.
  *
  * NOTE the pinned list is functions ONLY. Exported CONSTANTS used solely
  * by their own module plus a test are a different and legitimate pattern
@@ -46,6 +55,7 @@ import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join } from "node:path";
+import { moduleHeader, docAbove } from "./reachabilityMarkers";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const isTest = (p: string) => /__tests__|\.test\.|\.spec\./.test(p);
@@ -124,7 +134,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/dataConfidence.ts:suppressionCaveatCopy",
   "src/lib/foodTrajectory.ts:computeTrajectory",
   "src/lib/funComparisons.ts:getDistanceComparison",
-  "src/lib/getBestSetSummary.ts:getBestSetSummary",
   "src/lib/guidedRun.ts:auditGuidedWorkouts",
   "src/lib/hrZones.ts:zoneDistribution",
   "src/lib/momentumCheckin.ts:checkinDocPath",
@@ -134,8 +143,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
   "src/lib/runProgrammeViewModel.ts:buildHybridWeekItems",
   "src/lib/socialGates.ts:isSoloUser",
-  "src/lib/scheduleUtils.ts:countByType",
-  "src/lib/scheduleUtils.ts:getTodaySchedule",
   "src/lib/scheduledRunCompletion.ts:isRaceDayCompletedStrictly",
   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
   "src/lib/shareCard/statToggles.ts:isStatVisible",
@@ -155,11 +162,16 @@ function orphanExports(): string[] {
     const rel = file.slice(repoRoot.length + 1);
     if (isTest(file) || !DOMAIN_ROOTS.some((r) => rel.startsWith(r))) continue;
     const src = readFileSync(file, "utf8");
-    if (/@oracle\b/.test(src)) continue; // test-only by design
+    // Header marker → the whole module is test-only by design. Scoped to
+    // the header on purpose: a per-symbol @oracle further down claims only
+    // that symbol, and must not take the module out of the gate.
+    if (/@oracle\b/.test(moduleHeader(src))) continue;
 
     for (const m of src.matchAll(/^export function ([A-Za-z0-9_]+)/gm)) {
       const name = m[1];
       if (name.startsWith("__")) continue; // deliberate test hook
+      // Per-symbol @oracle: test-only by design, in a module that is not.
+      if (/@oracle\b/.test(docAbove(src, m.index))) continue;
       const ref = new RegExp(`\\b${name}\\b`, "g");
       const usedElsewhere = consumers.some(
         (c) => c.path !== file && ref.test(c.text)
