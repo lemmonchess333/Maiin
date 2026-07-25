@@ -126,11 +126,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/shareComposer.ts:clearShareDefault",
   "src/lib/shareComposer.ts:getShareDefault",
   "src/lib/workoutBurn.ts:estimateRunBurn",
-  "src/lib/workoutTemplates.ts:estimateRestTime",
-  "src/lib/workoutTemplates.ts:estimateTotalSets",
-  "src/lib/workoutTemplates.ts:getTemplateById",
-  "src/lib/workoutTemplates.ts:getTemplatesByCategory",
-  "src/lib/workoutTemplates.ts:getTemplatesByDifficulty",
 ];
 
 function orphanExports(): string[] {
