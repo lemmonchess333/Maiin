@@ -48,8 +48,13 @@ export function doc(dbOrCollection: unknown, ...segments: string[]): DocRef {
     const id = segments[0] ?? firestoreFake.nextId();
     return { __kind: "doc", path: `${parent.path}/${id}`, id };
   }
+  // `id` is the last path SEGMENT, not the last argument — the real SDK
+  // accepts a whole slash-separated path as one argument
+  // (`doc(db, "users/u1/checkins/2026-07-06")`), and taking the last
+  // argument would hand that entire string back as the id.
   const path = segments.join("/");
-  return { __kind: "doc", path, id: segments[segments.length - 1] };
+  const parts = path.split("/");
+  return { __kind: "doc", path, id: parts[parts.length - 1] };
 }
 
 /* ── query building ────────────────────────────────────────────────── */
