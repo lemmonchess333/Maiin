@@ -23,6 +23,9 @@
  *   2. deload week         → keyed on loadBand === 'deload'
  *   3. PI delta < -10      → diagnostic insight (P2d pin 8)
  *   4. otherwise           → lowest-sub-score band-keyed insight
+ *
+ * @unwired: built for the Performance Index surface (locked P2b) but never
+ *   wired to a consumer — 353 lines. Wire or delete; triage per ADR-0008.
  */
 
 export type SubScore = "load" | "recovery" | "adherence";

@@ -25,6 +25,9 @@
  *     leaving them is the zombie-data risk round 2 flagged).
  *  4. `runPlan.raceGoal` is rewritten to equal the canonical goal (mirror
  *     re-derive) — or the runPlan is cleared when there's no race.
+ *
+ * @unwired: Run9 migration helper; its canonicalRaceGoal rule was re-implemented
+ *   by hand in runPlanResolver.ts. Wire or fold in; triage per ADR-0008.
  */
 
 import {
@@ -107,7 +110,8 @@ export function migrateRunStateToRun9(
   // No race → freeform. If the user was legacy `structured`, its auto-assigned
   // runDays + runPlan are orphaned: wipe them.
   const wasStructured = profile.runMode === "structured";
-  const hadRunDays = Array.isArray(program.runDays) && program.runDays.length > 0;
+  const hadRunDays =
+    Array.isArray(program.runDays) && program.runDays.length > 0;
   const alreadyFreeform =
     (profile.runMode === "freeform" || profile.runMode == null) &&
     profile.raceGoal == null &&

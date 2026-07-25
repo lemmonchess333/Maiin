@@ -21,6 +21,9 @@
  * Chunk 1.1 scope: pure function + helper signatures. The deletion
  * executor consumes this in Chunk 3 to filter collectionGroup query
  * results by parent path BEFORE batched delete.
+  *
+ * @oracle — tooling helper for the deletion-inventory drift test
+ *   (accountDeletionDrift.test.ts). Test-only by design.
  */
 "use strict";
 
