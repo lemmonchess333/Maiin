@@ -48,6 +48,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve, join, basename } from "node:path";
+import { moduleHeader } from "./reachabilityMarkers";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -57,6 +58,12 @@ const MIRROR_RE =
   /mirror of|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
+//
+// Both are read from the MODULE HEADER only (`moduleHeader`), because both
+// make a claim about the whole module. `symbolReachability` also honours a
+// per-symbol `@oracle` on an individual export's JSDoc; matching anywhere
+// in the file would let one such marker quietly take its entire module out
+// of this gate too.
 const ORACLE_RE = /@oracle\b/;
 const UNWIRED_RE = /@unwired:\s*\S/;
 
@@ -291,8 +298,8 @@ describe("reachability gate — a pinned module must be the RUNNING module", () 
     const orphans: string[] = [];
     for (const abs of modules) {
       if (isReachable(abs)) continue;
-      const text = readFileSync(abs, "utf8");
-      if (ORACLE_RE.test(text) || UNWIRED_RE.test(text)) continue;
+      const head = moduleHeader(readFileSync(abs, "utf8"));
+      if (ORACLE_RE.test(head) || UNWIRED_RE.test(head)) continue;
       orphans.push(abs.slice(repoRoot.length + 1));
     }
     expect(
@@ -309,8 +316,8 @@ describe("reachability gate — a pinned module must be the RUNNING module", () 
   it("@unwired always carries a reason (a bare marker is how debt becomes design)", () => {
     const bare: string[] = [];
     for (const abs of modules) {
-      const text = readFileSync(abs, "utf8");
-      if (/@unwired\b/.test(text) && !UNWIRED_RE.test(text)) {
+      const head = moduleHeader(readFileSync(abs, "utf8"));
+      if (/@unwired\b/.test(head) && !UNWIRED_RE.test(head)) {
         bare.push(abs.slice(repoRoot.length + 1));
       }
     }
@@ -320,8 +327,8 @@ describe("reachability gate — a pinned module must be the RUNNING module", () 
   it("markers stay honest — a module that IS reachable must not claim to be test-only", () => {
     const stale: string[] = [];
     for (const abs of modules) {
-      const text = readFileSync(abs, "utf8");
-      if (!ORACLE_RE.test(text) && !UNWIRED_RE.test(text)) continue;
+      const head = moduleHeader(readFileSync(abs, "utf8"));
+      if (!ORACLE_RE.test(head) && !UNWIRED_RE.test(head)) continue;
       if (isReachable(abs)) stale.push(abs.slice(repoRoot.length + 1));
     }
     expect(
