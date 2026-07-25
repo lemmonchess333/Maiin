@@ -107,7 +107,10 @@ pinning the server copy that does run. `CONTEXT.md` previously claimed it
   practice and get worked around.
 - **Report-only warning.** Rejected: this drift class is exactly what silent
   warnings don't fix — the `colorUtils.ts` header had already self-flagged
-  "no production consumer" and nothing happened.
+  "no production consumer" and nothing happened. (Epilogue, 2026-07-25: the
+  gate did what the warning couldn't — `colorUtils.ts` and
+  `getBestSetSummary.ts` were both deleted once the marker scoping made
+  them visible. Deleted files, so this is the last mention of either.)
 - **One `@unwired` marker with a mandatory reason.** Rejected: the gate then
   can't mechanically separate "fine forever" from "someone owes this", so
   nothing ever expires.
