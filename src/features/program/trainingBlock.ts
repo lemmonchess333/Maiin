@@ -127,8 +127,16 @@ export function presetProgrammeGoal(
   }
 }
 
+/** Where a user's training blocks live. The ONLY place the collection
+ *  name is written — `useTrainingBlock` reads the list and writes
+ *  individual docs, so the name used to appear at three call sites plus
+ *  here, with only this copy under test. */
+export function blocksCollectionPath(uid: string): string {
+  return `users/${uid}/trainingBlocks`;
+}
+
 export function blockDocPath(uid: string, blockId: string): string {
-  return `users/${uid}/trainingBlocks/${blockId}`;
+  return `${blocksCollectionPath(uid)}/${blockId}`;
 }
 
 export function makeBlockId(startDate: string, preset: BlockPreset): string {
