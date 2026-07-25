@@ -84,7 +84,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/features/goalSpace/__tests__/useGoalSpaces.indexTrust.test.ts",
   "src/features/partnerStreak/__tests__/partnerStreakApi.test.ts",
   "src/features/program/__tests__/useProgramWriters.test.ts",
-  "src/hooks/__tests__/useAdaptiveTdee.test.ts",
   "src/hooks/__tests__/useClaimMap.test.ts",
   "src/hooks/__tests__/useEffectiveTargets.test.ts",
   "src/hooks/__tests__/useFoodFavourites.test.ts",
