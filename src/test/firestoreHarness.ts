@@ -105,3 +105,20 @@ export function writeLog(): readonly {
 }[] {
   return firestoreFake.writes;
 }
+
+/**
+ * Every read issued since the last reset, in order.
+ *
+ * For asserting a gated hook did NOT touch Firestore. "active === false"
+ * only proves the RESULT was suppressed; it can't distinguish a hook that
+ * skipped the read from one that paid for it and threw the answer away —
+ * and on a per-read-priced database those are different bugs.
+ */
+export function readLog(): readonly { op: string; path: string }[] {
+  return firestoreFake.reads;
+}
+
+/** Reads issued against `path` (exact match). */
+export function readsAt(path: string): readonly { op: string; path: string }[] {
+  return firestoreFake.reads.filter((r) => r.path === path);
+}
