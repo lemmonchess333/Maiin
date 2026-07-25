@@ -56,6 +56,19 @@ function renderRing() {
   );
 }
 
+/** Nothing logged yet, "eaten" framing — the centre value is 0. */
+function renderZeroRing() {
+  return render(
+    <CalorieRing
+      consumed={0}
+      target={2000}
+      mode="eaten"
+      onToggleMode={() => {}}
+      trajectoryLabel={null}
+    />
+  );
+}
+
 /** The mode chip is the element carrying the unit + mode word. */
 function chip() {
   return screen.getByText(/kcal/i).closest("span") as HTMLElement;
@@ -83,6 +96,28 @@ describe("CalorieRing mode chip — theme-aware colour", () => {
     // The regression this guards: the chip rendering deep purple on the
     // dark card, which fails AA and is invisible over the hero photo.
     expect(chip()).not.toHaveStyle({ color: THEME.calorieRing.deep });
+  });
+});
+
+describe("CalorieRing centre value — zero is not dimmed", () => {
+  /** The centre number is the only .font-mono element in the ring. */
+  function centreNumber() {
+    return screen.getByText("0").closest("p") as HTMLElement;
+  }
+
+  it("renders 0 at full opacity, like any other value", () => {
+    renderZeroRing();
+    const style = centreNumber().style;
+    // Either unset or explicitly "1" — what must NOT happen is a
+    // fractional dim. The old 0.4 made the hero's primary number
+    // almost invisible over the dark-mode photo.
+    expect(style.opacity === "" || style.opacity === "1").toBe(true);
+  });
+
+  it("does not special-case zero with a fractional opacity", () => {
+    renderZeroRing();
+    const o = centreNumber().style.opacity;
+    if (o !== "") expect(Number(o)).toBeGreaterThanOrEqual(1);
   });
 });
 
