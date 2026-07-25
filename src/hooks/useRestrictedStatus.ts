@@ -1,3 +1,4 @@
+/* @untested: coverage gap. Single onSnapshot on a moderation doc; testable against the fake. */
 import { useEffect, useState } from "react";
 import { doc, onSnapshot, type Timestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";

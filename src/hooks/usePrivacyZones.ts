@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+/* @untested: coverage gap. Zone geometry is pure and already tested in privacyZones.test.ts; only the persistence wrapper is uncovered. */
+import { useState, useEffect, useCallback } from "react";
 import {
   collection,
   deleteDoc,
   doc,
   onSnapshot,
   serverTimestamp,
-} from 'firebase/firestore';
-import { addDocGuarded } from '@/lib/firestoreWrite';
-import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/auth';
-import type { PrivacyZone } from '@/lib/privacyZones';
+} from "firebase/firestore";
+import { addDocGuarded } from "@/lib/firestoreWrite";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/lib/auth";
+import type { PrivacyZone } from "@/lib/privacyZones";
 
 export function usePrivacyZones() {
   const { user } = useAuth();
@@ -17,36 +18,53 @@ export function usePrivacyZones() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { const reset = () => { setZones([]); setLoading(false); }; reset(); return; }
+    if (!user) {
+      const reset = () => {
+        setZones([]);
+        setLoading(false);
+      };
+      reset();
+      return;
+    }
 
-    const ref = collection(db, 'users', user.uid, 'privacyZones');
-    const unsub = onSnapshot(ref, (snap) => {
-      const result: PrivacyZone[] = snap.docs.map((d) => ({
-        id: d.id,
-        name: d.data().name || 'Zone',
-        lat: d.data().lat,
-        lon: d.data().lon,
-        radiusMeters: d.data().radiusMeters || 500,
-      }));
-      setZones(result);
-      setLoading(false);
-    }, () => setLoading(false));
+    const ref = collection(db, "users", user.uid, "privacyZones");
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
+        const result: PrivacyZone[] = snap.docs.map((d) => ({
+          id: d.id,
+          name: d.data().name || "Zone",
+          lat: d.data().lat,
+          lon: d.data().lon,
+          radiusMeters: d.data().radiusMeters || 500,
+        }));
+        setZones(result);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
 
     return unsub;
   }, [user]);
 
-  const addZone = useCallback(async (zone: Omit<PrivacyZone, 'id'>) => {
-    if (!user) return;
-    await addDocGuarded(collection(db, 'users', user.uid, 'privacyZones'), {
-      ...zone,
-      createdAt: serverTimestamp(),
-    });
-  }, [user]);
+  const addZone = useCallback(
+    async (zone: Omit<PrivacyZone, "id">) => {
+      if (!user) return;
+      await addDocGuarded(collection(db, "users", user.uid, "privacyZones"), {
+        ...zone,
+        createdAt: serverTimestamp(),
+      });
+    },
+    [user]
+  );
 
-  const removeZone = useCallback(async (zoneId: string) => {
-    if (!user) return;
-    await deleteDoc(doc(db, 'users', user.uid, 'privacyZones', zoneId));
-  }, [user]);
+  const removeZone = useCallback(
+    async (zoneId: string) => {
+      if (!user) return;
+      await deleteDoc(doc(db, "users", user.uid, "privacyZones", zoneId));
+    },
+    [user]
+  );
 
   return { zones, loading, addZone, removeZone };
 }

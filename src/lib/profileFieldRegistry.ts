@@ -32,6 +32,10 @@
  *                      the rules allow-list but is held immutable from the
  *                      client by `subscriptionFieldsUnchanged()` etc. Never
  *                      sanitised (the server owns its value).
+ *
+ * @oracle — this module's PURPOSE is to be the pinned declaration read by
+ *   profileFieldRegistry.test.ts / profileFieldParity.cross.test.ts. It is
+ *   test-only by design and always will be; do not "wire it up".
  */
 
 export interface ProfileFieldEntry {
