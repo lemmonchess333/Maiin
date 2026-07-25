@@ -198,12 +198,21 @@ export class FirestoreFake {
   private failures: PendingFailure[] = [];
   /** Every write, for assertions ("did it write, and with what?"). */
   readonly writes: { op: string; path: string; data?: unknown }[] = [];
+  /**
+   * Every read the code under test issued. Exists so a suite can assert a
+   * hook did NOT read — a gated hook that skips Firestore is saving the
+   * user money, and "active === false" alone doesn't prove the read was
+   * skipped rather than merely ignored.
+   */
+  readonly reads: { op: "getDoc" | "getDocs" | "onSnapshot"; path: string }[] =
+    [];
 
   reset(): void {
     this.docs.clear();
     this.listeners.clear();
     this.failures.length = 0;
     this.writes.length = 0;
+    this.reads.length = 0;
     autoId = 0;
   }
 
@@ -284,6 +293,13 @@ export class FirestoreFake {
   /* ── reads ── */
 
   docSnap(ref: DocRef): FakeDocSnap {
+    this.reads.push({ op: "getDoc", path: ref.path });
+    return this.snapFor(ref);
+  }
+
+  /** Snapshot WITHOUT logging a read — `querySnap` builds one per row, and
+   *  logging those would report a getDocs as N phantom getDoc reads. */
+  private snapFor(ref: DocRef): FakeDocSnap {
     const data = this.docs.get(ref.path);
     return {
       id: ref.id,
@@ -313,8 +329,9 @@ export class FirestoreFake {
   }
 
   querySnap(ref: CollectionRef): FakeQuerySnap {
+    this.reads.push({ op: "getDocs", path: ref.path });
     let rows = this.childPaths(ref).map((p) =>
-      this.docSnap({ __kind: "doc", path: p, id: p.split("/").pop() as string })
+      this.snapFor({ __kind: "doc", path: p, id: p.split("/").pop() as string })
     );
 
     for (const c of ref.constraints) {

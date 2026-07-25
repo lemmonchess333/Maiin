@@ -18,22 +18,31 @@ const subMock = vi.fn<() => { isPro: boolean }>(() => ({ isPro: true }));
 const bodyweightMock = vi.fn<() => Promise<{ date: string; weight: number }[]>>(
   async () => []
 );
-const getDocsMock = vi.fn(async () => ({ docs: [] as unknown[] }));
-
 vi.mock("@/lib/auth", () => ({ useAuth: () => authMock() }));
 vi.mock("@/lib/subscription", () => ({ useSubscription: () => subMock() }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/api", () => ({
   fetchBodyweightLogs: () => bodyweightMock(),
 }));
-vi.mock("firebase/firestore", () => ({
-  collection: () => ({}),
-  query: () => ({}),
-  where: () => ({}),
-  getDocs: () => getDocsMock(),
-}));
+vi.mock("firebase/firestore");
 
 import { useAdaptiveTdee } from "../useAdaptiveTdee";
+import {
+  seedFirestore,
+  resetFirestore,
+  readsAt,
+} from "@/test/firestoreHarness";
+
+const MEALS = "users/u1/meals";
+
+/** Seed one meal doc per date, all at the same intake. */
+function seedMeals(dates: string[], totalCalories: number) {
+  seedFirestore(
+    Object.fromEntries(
+      dates.map((date, i) => [`${MEALS}/m${i}`, { date, totalCalories }])
+    )
+  );
+}
 
 /** Recent local "YYYY-MM-DD" keys (today back), safely inside the 21d window. */
 function recentDays(n: number): string[] {
@@ -53,7 +62,7 @@ beforeEach(() => {
   });
   subMock.mockReturnValue({ isPro: true });
   bodyweightMock.mockResolvedValue([]);
-  getDocsMock.mockResolvedValue({ docs: [] });
+  resetFirestore();
 });
 
 describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
@@ -62,7 +71,9 @@ describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
     const { result } = renderHook(() => useAdaptiveTdee());
     expect(result.current.active).toBe(false);
     expect(result.current.showWarmup).toBe(false);
-    expect(getDocsMock).not.toHaveBeenCalled();
+    // Gated hooks must SKIP the read, not read-then-discard — Firestore
+    // bills per document.
+    expect(readsAt(MEALS)).toEqual([]);
     expect(bodyweightMock).not.toHaveBeenCalled();
   });
 
@@ -74,7 +85,7 @@ describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
     });
     const { result } = renderHook(() => useAdaptiveTdee());
     expect(result.current.active).toBe(false);
-    expect(getDocsMock).not.toHaveBeenCalled();
+    expect(readsAt(MEALS)).toEqual([]);
   });
 
   it("inactive when logged out", () => {
@@ -110,11 +121,7 @@ describe("useAdaptiveTdee — active assembly", () => {
 
   it("Pro user with a full window: assembles → gate ready → warmup hidden", async () => {
     const ds = recentDays(21);
-    getDocsMock.mockResolvedValue({
-      docs: ds.map((date) => ({
-        data: () => ({ date, totalCalories: 2500 }),
-      })),
-    });
+    seedMeals(ds, 2500);
     bodyweightMock.mockResolvedValue(ds.map((date) => ({ date, weight: 80 })));
 
     const { result } = renderHook(() => useAdaptiveTdee());
@@ -160,9 +167,7 @@ describe("useAdaptiveTdee — race-taper freeze", () => {
     });
     updateProfileMock.mockClear(); // module-level mock isn't auto-reset
     const ds = recentDays(21);
-    getDocsMock.mockResolvedValue({
-      docs: ds.map((date) => ({ data: () => ({ date, totalCalories: 3200 }) })),
-    });
+    seedMeals(ds, 3200);
     bodyweightMock.mockResolvedValue(ds.map((date) => ({ date, weight: 78 })));
 
     const { result } = renderHook(() => useAdaptiveTdee());
