@@ -75,14 +75,8 @@ function firestoreHooks(): HookFile[] {
  */
 const EXEMPT = [
   "DailyLogsProvider",
-  "useDailyNutritionSnapshot",
   "useFirestore",
   "useMealReminders",
-  "useNutritionBadgeData",
-  "usePrivacyZones",
-  "useTrainingLoadSeries",
-  "useUserPRMap",
-  "useWeekPulse",
   "useWorkoutReminders",
 ];
 
@@ -105,7 +99,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useNotifications.trust.test.tsx",
   "src/hooks/__tests__/usePushSettings.test.tsx",
   "src/hooks/__tests__/useRunningStats.accountSwitch.test.tsx",
-  "src/hooks/__tests__/useScanUsage.test.ts",
   "src/hooks/__tests__/useUnreadCount.test.tsx",
   "src/lib/__tests__/authProviderAccountSwitch.test.tsx",
   "src/lib/__tests__/export.test.ts",

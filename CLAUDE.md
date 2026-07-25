@@ -113,7 +113,6 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 | `workoutTemplates.ts`     | Workout template library                                       |
 | `nlFoodParser.ts`         | Natural language food parsing                                  |
 | `voiceFoodParser.ts`      | Voice-based food parsing                                       |
-| `gemini.ts`               | AI food analysis via Gemini API                                |
 | `socialApi.ts`            | Firestore social operations (feed, kudos, follow)              |
 | `shareCardGenerator.ts`   | Share card image generation (html-to-image)                    |
 | `analytics.ts`            | Analytics computation                                          |
