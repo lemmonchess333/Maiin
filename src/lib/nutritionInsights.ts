@@ -1,3 +1,8 @@
+/* @unwired: orphaned by the Home declutter (#1698), which removed the insight
+ * strip that was its only consumer. The module and its test suite survived the
+ * removal; nothing imports either. Triage per ADR-0008 — resurface the insights
+ * on a nutrition surface, or delete this and its test. Do not leave as-is: a
+ * passing suite over unreachable code is the exact shape ADR-0008 describes. */
 /**
  * Analyzes meal patterns and provides actionable nutrition insights.
  *

@@ -1,3 +1,4 @@
+/* @untested: coverage gap. Straightforwardly testable against the fake; overlaps the eligibility rules already pinned in runStatsEligibility tests. */
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";

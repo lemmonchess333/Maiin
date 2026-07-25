@@ -18,6 +18,9 @@
  * The helper is pure-of-Firestore-handle — `index.js` passes the
  * admin-resolved `firestore` so unit tests can drive it with a stub
  * (mirrors the `accountDeletion.js` / `checkoutTrial.js` pattern).
+  *
+ * @unwired: one-shot operational backfill, invoked manually rather than from
+ *   index.js. Keep until the backfill has demonstrably run everywhere.
  */
 async function backfillTrialFlag({ firestore, dryRun = false, logger = console } = {}) {
   if (!firestore) {
