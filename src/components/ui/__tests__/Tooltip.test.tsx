@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-  waitFor,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import Tooltip from "../Tooltip";
 
 vi.mock("@/hooks/useReducedMotion", () => ({
@@ -76,11 +70,10 @@ describe("Tooltip", () => {
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
 
     fireEvent.click(anchor);
-    /* AnimatePresence exit is async — flush microtasks. */
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    /* AnimatePresence exit spans more than one tick, so a single
+       microtask flush only passed under a quiet event loop — waitFor
+       instead. (Same race as the two dismissal tests below.) */
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
   });
 
   it("closes on Escape key press", async () => {
@@ -184,10 +177,11 @@ describe("Tooltip", () => {
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    /* Same race as the two dismissal tests above. This copy is why CI
+       kept failing after the first fix: the file had THREE instances of
+       "flush one microtask, assert the tooltip is gone", and only one
+       was replaced. All three now wait properly. */
+    await waitFor(() => expect(screen.queryByRole("tooltip")).toBeNull());
     /* Anchor stays focused — the tooltip body is portaled and never
        stole focus on open, so closing returns to the natural focus. */
     expect(document.activeElement).toBe(anchor);
