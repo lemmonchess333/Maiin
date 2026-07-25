@@ -90,7 +90,24 @@ export default function CalorieRing({
   // value, not the ring's visual identity. The centre label text is the
   // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
   const numberColor = hasTarget ? COLOR_RING : THEME.neutral[300];
-  const trackColor = COLOR_TRACK;
+
+  /* Ring track. The 10% brand tint reads as a recessed groove on a flat
+     WHITE card, but it's far too sheer over the dark-mode hero photo —
+     and at 0 progress the track is the ONLY ring geometry drawn (the
+     progress arc has zero length), so a track you can't see means the
+     ring disappears entirely on a day with nothing logged. Dark mode
+     therefore gets a stronger tint so the circle always reads as a
+     shape, empty or not. */
+  const trackColor = isDark ? `${COLOR_RING}3D` : COLOR_TRACK;
+
+  /* Zero is a real value, not a placeholder — it renders at full strength
+     like any other. The centre number used to drop to 0.4 opacity at
+     zero: a soft "nothing yet" cue that was survivable on a plain card
+     but rendered the hero's primary number all but invisible over the
+     dark-mode photo, which is exactly the state a user opens the app in
+     each morning. The de-emphasis was also redundant — an empty progress
+     arc already says "nothing logged" — and it broke the app's
+     consistent-numeric-treatment rule by special-casing one value. */
 
   /* Mode-chip palette, theme-aware (mirrors the useMacroPalette split).
      The deep purple below is tuned for the lavender tint over a WHITE
@@ -312,10 +329,7 @@ export default function CalorieRing({
             >
               <p
                 className="text-4xl font-extrabold font-mono tabular-nums leading-none tracking-tight"
-                style={{
-                  color: numberColor,
-                  opacity: displayValue === 0 ? 0.4 : 1,
-                }}
+                style={{ color: numberColor }}
               >
                 <AnimatedNumber
                   value={displayValue}
