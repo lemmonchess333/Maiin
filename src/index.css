@@ -184,14 +184,13 @@
      flip. In light mode the hero keeps its brand-purple halo and this var
      is never referenced.
 
-     Deliberately LIGHT (0.42/0.12, was 0.62/0.28): the asset itself is
-     graded dark, so legibility comes from the photo rather than from a
-     heavy black wash over a bright one. The wash approach flattened the
-     image into a dark rectangle — pushing the contrast into the asset
-     keeps the food readable AND the text clear. Any replacement photo
-     must be graded to match, or this value has to move with it. */
-  --food-photo-scrim: rgba(0, 0, 0, 0.42);
-  --food-photo-scrim-soft: rgba(0, 0, 0, 0.12);
+     LIGHT MODE values (the :root pair): a WHITE wash, because here the
+     card's text is DARK and needs a light backdrop. The hero brightens
+     the dark-graded asset with a filter to match. The photo necessarily
+     reads paler than in dark mode — dark text forces the image to sit
+     back. The .dark pair below is the inverse. */
+  --food-photo-scrim: rgba(255, 255, 255, 0.62);
+  --food-photo-scrim-soft: rgba(255, 255, 255, 0.34);
 }
 
 .dark {
@@ -222,6 +221,14 @@
   --glass-bg: rgba(20, 20, 24, 0.97);
   --glass-border: rgba(255, 255, 255, 0.07);
   --surface-solid: #1c1c20;
+  /* Food calorie hero — DARK photo scrim. Deliberately light (0.42/0.12,
+     was 0.62/0.28): the asset is graded dark, so legibility comes from
+     the photo rather than a heavy black wash over a bright one. The wash
+     approach flattened the image into a dark rectangle. Any replacement
+     photo must be graded to match (see the editorial README), or this
+     value has to move with it. */
+  --food-photo-scrim: rgba(0, 0, 0, 0.42);
+  --food-photo-scrim-soft: rgba(0, 0, 0, 0.12);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
