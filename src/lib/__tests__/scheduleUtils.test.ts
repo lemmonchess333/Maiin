@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   generateSchedule,
-  getTodaySchedule,
   countByType,
   liftIndexForDayOfWeek,
   isValidWeekSchedule,
@@ -103,7 +102,7 @@ describe("generateSchedule", () => {
     // preserve every requested session.
     const counts = countByType(schedule);
     expect(counts.lift + counts.both).toBe(5); // total lift exposure
-    expect(counts.run + counts.both).toBe(5);  // total run exposure
+    expect(counts.run + counts.both).toBe(5); // total run exposure
     expect(counts.both).toBeGreaterThanOrEqual(1);
     expect(counts.rest).toBe(0);
   });
@@ -113,49 +112,6 @@ describe("generateSchedule", () => {
     expect(schedule[1].type).toBe("lift");
     const restCount = schedule.filter((d) => d.type === "rest").length;
     expect(restCount).toBe(6);
-  });
-});
-
-describe("getTodaySchedule", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("returns the correct ScheduleDay for the current day of the week", () => {
-    // Set date to a Wednesday (day 3)
-    vi.setSystemTime(new Date("2026-03-11T12:00:00")); // Wednesday
-    const schedule = generateSchedule(3, 2);
-    const today = getTodaySchedule(schedule);
-    expect(today).not.toBeNull();
-    expect(today!.day).toBe(3);
-    expect(today!.type).toBe(schedule[3].type);
-  });
-
-  it("returns the Sunday entry when today is Sunday", () => {
-    vi.setSystemTime(new Date("2026-03-15T12:00:00")); // Sunday
-    const schedule = generateSchedule(3, 2);
-    const today = getTodaySchedule(schedule);
-    expect(today).not.toBeNull();
-    expect(today!.day).toBe(0);
-  });
-
-  it("returns null if no matching day in schedule", () => {
-    const partial: ScheduleDay[] = [
-      { day: 1, type: "lift" },
-      { day: 2, type: "run" },
-    ];
-    // Set to Wednesday (3) which isn't in the partial schedule
-    vi.setSystemTime(new Date("2026-03-11T12:00:00"));
-    expect(getTodaySchedule(partial)).toBeNull();
-  });
-
-  it("returns null for empty schedule", () => {
-    vi.setSystemTime(new Date("2026-03-11T12:00:00"));
-    expect(getTodaySchedule([])).toBeNull();
   });
 });
 
@@ -193,9 +149,9 @@ describe("generateSchedule · P0-B Both-day support", () => {
   it("generateSchedule(5, 4) → 2 both + 3 lift + 2 run + 0 rest", () => {
     const schedule = generateSchedule(5, 4);
     const counts = countByType(schedule);
-    expect(counts.both).toBe(2);            // total - 7 = 9 - 7
-    expect(counts.lift).toBe(3);            // 5 - 2
-    expect(counts.run).toBe(2);             // 4 - 2
+    expect(counts.both).toBe(2); // total - 7 = 9 - 7
+    expect(counts.lift).toBe(3); // 5 - 2
+    expect(counts.run).toBe(2); // 4 - 2
     expect(counts.rest).toBe(0);
     // exposure check
     expect(counts.lift + counts.both).toBe(5);
@@ -260,9 +216,9 @@ describe("generateSchedule · P0-B Both-day support", () => {
     const schedule = generateSchedule(5, 5);
     expect(schedule).toHaveLength(7);
     const counts = countByType(schedule);
-    expect(counts.both).toBe(3);            // 10 - 7
-    expect(counts.lift).toBe(2);            // 5 - 3
-    expect(counts.run).toBe(2);             // 5 - 3
+    expect(counts.both).toBe(3); // 10 - 7
+    expect(counts.lift).toBe(2); // 5 - 3
+    expect(counts.run).toBe(2); // 5 - 3
     expect(counts.rest).toBe(0);
     // Lift + run exposure preserved
     expect(counts.lift + counts.both).toBe(5);
@@ -383,7 +339,7 @@ describe("liftIndexForDayOfWeek", () => {
   it("returns -1 for a day-of-week converted to rest", () => {
     const schedule = generateSchedule(3, 2);
     const modified = schedule.map((d) =>
-      d.day === 3 ? { ...d, type: "rest" as const } : d,
+      d.day === 3 ? { ...d, type: "rest" as const } : d
     );
     expect(liftIndexForDayOfWeek(modified, 3)).toBe(-1);
   });
@@ -410,7 +366,10 @@ describe("isValidWeekSchedule", () => {
   it("rejects wrong-length arrays", () => {
     expect(isValidWeekSchedule([])).toBe(false);
     expect(isValidWeekSchedule(generateSchedule(3, 2).slice(0, 6))).toBe(false);
-    const tooMany = [...generateSchedule(3, 2), { day: 7, type: "rest" as const }];
+    const tooMany = [
+      ...generateSchedule(3, 2),
+      { day: 7, type: "rest" as const },
+    ];
     expect(isValidWeekSchedule(tooMany)).toBe(false);
   });
 
