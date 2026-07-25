@@ -1,4 +1,3 @@
-/* @untested: coverage gap. Assembly is wide but pure once seeded; the load maths itself is pinned in performanceEngine tests. */
 import { useEffect, useState } from "react";
 import {
   collection,
