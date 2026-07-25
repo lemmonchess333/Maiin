@@ -14,29 +14,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const getDocMock = vi.fn();
-vi.mock("firebase/firestore", () => ({
-  doc: vi.fn((_db: unknown, ...path: string[]) => ({ path: path.join("/") })),
-  getDoc: (...args: unknown[]) => getDocMock(...args),
-}));
-
-const setDocGuardedMock = vi.fn(async () => undefined);
-vi.mock("@/lib/firestoreWrite", () => ({
-  setDocGuarded: (...args: unknown[]) =>
-    setDocGuardedMock(...(args as Parameters<typeof setDocGuardedMock>)),
-}));
-
+vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import MomentumCheckinCard from "../MomentumCheckinCard";
+import {
+  seedFirestore,
+  resetFirestore,
+  readDoc,
+  failNextFirestore,
+} from "@/test/firestoreHarness";
 
-function mockDoc(data: Record<string, unknown> | null) {
-  getDocMock.mockResolvedValue(
-    data === null
-      ? { exists: () => false, data: () => undefined }
-      : { exists: () => true, data: () => data }
-  );
+const PATH = "users/u1/checkins/2026-07-06";
+
+/** Seed the week's check-in doc. Omit to leave the week unanswered. */
+function seedCheckin(data?: Record<string, unknown>) {
+  if (data) seedFirestore({ [PATH]: data });
 }
 
 function renderCard() {
@@ -48,13 +42,12 @@ function renderCard() {
 }
 
 beforeEach(() => {
-  getDocMock.mockReset();
-  setDocGuardedMock.mockClear();
+  resetFirestore();
+  vi.clearAllMocks();
 });
 
 describe("MomentumCheckinCard", () => {
   it("shows the feel question first; focus + save appear after a pick", async () => {
-    mockDoc(null);
     renderCard();
     expect(
       await screen.findByText(/How did this week's plan feel\?/)
@@ -69,7 +62,6 @@ describe("MomentumCheckinCard", () => {
   });
 
   it("saves a weekKey-keyed record through the guarded wrapper and reads back", async () => {
-    mockDoc(null);
     renderCard();
     fireEvent.click(await screen.findByRole("radio", { name: "A bit much" }));
     fireEvent.click(
@@ -77,12 +69,12 @@ describe("MomentumCheckinCard", () => {
     );
     fireEvent.click(screen.getByText("Save check-in"));
 
-    await waitFor(() => expect(setDocGuardedMock).toHaveBeenCalledTimes(1));
-    const [ref, record] = setDocGuardedMock.mock.calls[0] as unknown as [
-      { path: string },
-      Record<string, unknown>,
-    ];
-    expect(ref.path).toBe("users/u1/checkins/2026-07-06");
+    // Read the record back from the PATH it landed at. The previous
+    // assertion inspected the call args, which cannot tell a correct
+    // path from a wrong one — the stub returned the same canned snapshot
+    // whatever was asked for.
+    await waitFor(() => expect(readDoc(PATH)).toBeDefined());
+    const record = readDoc(PATH)!;
     expect(record.weekKey).toBe("2026-07-06");
     expect(record.feel).toBe("a_bit_much");
     expect(record.focus).toBe("lifts");
@@ -97,24 +89,18 @@ describe("MomentumCheckinCard", () => {
   });
 
   it("dismiss writes a dismissed record and hides the card", async () => {
-    mockDoc(null);
     renderCard();
     fireEvent.click(
       await screen.findByRole("button", { name: "Dismiss check-in" })
     );
-    await waitFor(() => expect(setDocGuardedMock).toHaveBeenCalledTimes(1));
-    const [, record] = setDocGuardedMock.mock.calls[0] as unknown as [
-      unknown,
-      Record<string, unknown>,
-    ];
-    expect(record.dismissed).toBe(true);
+    await waitFor(() => expect(readDoc(PATH)?.dismissed).toBe(true));
     await waitFor(() =>
       expect(screen.queryByText(/Momentum check-in/i)).toBeNull()
     );
   });
 
   it("an answered week renders the read-back, not the questions", async () => {
-    mockDoc({
+    seedCheckin({
       weekKey: "2026-07-06",
       feel: "too_light",
       focus: null,
@@ -129,16 +115,14 @@ describe("MomentumCheckinCard", () => {
   });
 
   it("a dismissed week renders nothing", async () => {
-    mockDoc({ weekKey: "2026-07-06", dismissed: true, createdAt: 1 });
+    seedCheckin({ weekKey: "2026-07-06", dismissed: true, createdAt: 1 });
     const { container } = renderCard();
-    await waitFor(() => expect(getDocMock).toHaveBeenCalled());
     await waitFor(() => expect(container.innerHTML).toBe(""));
   });
 
   it("a failed load hides the card — never re-asks over an unread answer", async () => {
-    getDocMock.mockRejectedValue(new Error("offline"));
+    failNextFirestore("getDoc", { path: PATH });
     const { container } = renderCard();
-    await waitFor(() => expect(getDocMock).toHaveBeenCalled());
     // Stays empty: showing the blank questions here would double-nag a
     // user whose answer we merely failed to READ, and saving would
     // overwrite it.
