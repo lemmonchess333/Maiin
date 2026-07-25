@@ -4,9 +4,9 @@
  * Stores recent errors in memory and logs critical errors to Firestore.
  */
 
-import { doc, collection, serverTimestamp } from 'firebase/firestore';
-import { setDocGuarded } from '@/lib/firestoreWrite';
-import { db } from './firebase';
+import { doc, collection, serverTimestamp } from "firebase/firestore";
+import { setDocGuarded } from "@/lib/firestoreWrite";
+import { db } from "./firebase";
 
 export interface ErrorReport {
   message: string;
@@ -15,7 +15,7 @@ export interface ErrorReport {
   url: string;
   userAgent: string;
   context?: Record<string, unknown>;
-  type: 'error' | 'unhandledrejection' | 'component' | 'network';
+  type: "error" | "unhandledrejection" | "component" | "network";
   /** App version the error occurred on — lets an operator correlate a
    *  spike to a specific deploy instead of guessing. Reads the
    *  `__APP_VERSION__` build-time define; "dev" under vitest where the
@@ -31,8 +31,14 @@ const MAX_STORED_ERRORS = 50;
 const errorBuffer: ErrorReport[] = [];
 
 /** Error types that warrant Firestore persistence */
-const CRITICAL_TYPES = new Set<string>(['network', 'component']);
-const CRITICAL_KEYWORDS = ['payment', 'auth', 'subscription', 'stripe', 'firestore'];
+const CRITICAL_TYPES = new Set<string>(["network", "component"]);
+const CRITICAL_KEYWORDS = [
+  "payment",
+  "auth",
+  "subscription",
+  "stripe",
+  "firestore",
+];
 
 /** Critical reports captured BEFORE auth resolves (login / onboarding —
  *  the highest-stakes window) used to be dropped outright: persistToFirestore
@@ -43,14 +49,14 @@ const MAX_PENDING_PREAUTH = 20;
 const pendingPreAuth: ErrorReport[] = [];
 
 const APP_VERSION =
-  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+  typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "dev";
 
 /** Stable per-page-load session id. crypto.randomUUID where available
  *  (all target browsers + the Capacitor WKWebView), with a cheap
  *  fallback for non-secure / test contexts. */
 const SESSION_ID = (() => {
   try {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
       return crypto.randomUUID();
     }
   } catch {
@@ -81,7 +87,7 @@ export function setErrorReportingUid(uid: string | null): void {
 function isCritical(report: ErrorReport): boolean {
   if (CRITICAL_TYPES.has(report.type)) return true;
   const msg = report.message.toLowerCase();
-  return CRITICAL_KEYWORDS.some(kw => msg.includes(kw));
+  return CRITICAL_KEYWORDS.some((kw) => msg.includes(kw));
 }
 
 async function persistToFirestore(report: ErrorReport): Promise<void> {
@@ -95,7 +101,7 @@ async function persistToFirestore(report: ErrorReport): Promise<void> {
     return;
   }
   try {
-    const errorsCol = collection(db, 'users', _currentUid, 'errors');
+    const errorsCol = collection(db, "users", _currentUid, "errors");
     const errDoc = doc(errorsCol);
     await setDocGuarded(errDoc, {
       ...report,
@@ -108,16 +114,16 @@ async function persistToFirestore(report: ErrorReport): Promise<void> {
 
 function createReport(
   message: string,
-  type: ErrorReport['type'],
+  type: ErrorReport["type"],
   stack?: string,
-  context?: Record<string, unknown>,
+  context?: Record<string, unknown>
 ): ErrorReport {
   return {
     message,
     stack,
     timestamp: Date.now(),
-    url: typeof window !== 'undefined' ? window.location.href : '',
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    url: typeof window !== "undefined" ? window.location.href : "",
+    userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
     context,
     type,
     appVersion: APP_VERSION,
@@ -127,8 +133,8 @@ function createReport(
 
 export function captureError(
   error: Error,
-  type: ErrorReport['type'] = 'error',
-  context?: Record<string, unknown>,
+  type: ErrorReport["type"] = "error",
+  context?: Record<string, unknown>
 ): void {
   const report = createReport(error.message, type, error.stack, context);
   errorBuffer.push(report);
@@ -141,7 +147,12 @@ export function captureError(
   }
 }
 
-export function getRecentErrors(): readonly ErrorReport[] {
+/** Test-only: the in-memory error buffer. Same category as
+ *  `__getPendingPreAuthCount` below — it sat here without the `__` prefix,
+ *  so the reachability gate flagged it as an orphan while auto-exempting
+ *  its identically-shaped neighbour. The prefix IS this codebase's marker
+ *  for a test accessor; using it states the intent at every call site. */
+export function __getRecentErrors(): readonly ErrorReport[] {
   return errorBuffer;
 }
 
@@ -152,7 +163,8 @@ export function __getPendingPreAuthCount(): number {
   return pendingPreAuth.length;
 }
 
-export function clearErrors(): void {
+/** Test-only: reset the buffer between cases. */
+export function __clearErrors(): void {
   errorBuffer.length = 0;
 }
 
@@ -160,23 +172,24 @@ export function initErrorMonitoring(): () => void {
   const handleError = (event: ErrorEvent) => {
     captureError(
       event.error instanceof Error ? event.error : new Error(event.message),
-      'error',
-      { filename: event.filename, lineno: event.lineno, colno: event.colno },
+      "error",
+      { filename: event.filename, lineno: event.lineno, colno: event.colno }
     );
   };
 
   const handleRejection = (event: PromiseRejectionEvent) => {
-    const error = event.reason instanceof Error
-      ? event.reason
-      : new Error(String(event.reason));
-    captureError(error, 'unhandledrejection');
+    const error =
+      event.reason instanceof Error
+        ? event.reason
+        : new Error(String(event.reason));
+    captureError(error, "unhandledrejection");
   };
 
-  window.addEventListener('error', handleError);
-  window.addEventListener('unhandledrejection', handleRejection);
+  window.addEventListener("error", handleError);
+  window.addEventListener("unhandledrejection", handleRejection);
 
   return () => {
-    window.removeEventListener('error', handleError);
-    window.removeEventListener('unhandledrejection', handleRejection);
+    window.removeEventListener("error", handleError);
+    window.removeEventListener("unhandledrejection", handleRejection);
   };
 }
