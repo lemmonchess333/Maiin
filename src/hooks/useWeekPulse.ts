@@ -5,7 +5,6 @@
  * session is included in the counts. Returns null while loading (the
  * card simply doesn't render — completion screens must never jank).
  */
-/* @untested: coverage gap. Needs a fixed clock (current-week bounds); sibling of useWeeklyReview, which is covered. */
 import { useEffect, useState } from "react";
 import {
   collection,
