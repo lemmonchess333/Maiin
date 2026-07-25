@@ -119,8 +119,6 @@ const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
  */
 const KNOWN_ORPHAN_EXPORTS = [
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
-  "src/features/program/programEngine.ts:calculateE1RM",
-  "src/features/program/programEngine.ts:getProgressionLabel",
   "src/features/program/raceRunDaysReconcile.ts:areRaceRunDaysStale",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
   "src/features/program/raceRunDaysReconcile.ts:raceIsInFuture",

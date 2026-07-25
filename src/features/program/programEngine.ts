@@ -70,14 +70,6 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
   return GOAL_PROFILES[primaryGoal ?? "general"];
 }
 
-/* ================================
-   E1RM CALCULATION
-================================ */
-
-export function calculateE1RM(weight: number, reps: number): number {
-  return weight * (1 + reps / 30);
-}
-
 // Progression tuning (D-LIFT-6 / D-LIFT-11).
 /** A logged set at this RPE or above holds load/reps for the cycle. */
 const RPE_HOLD_THRESHOLD = 9.5;
@@ -1142,35 +1134,6 @@ export function applyProgression(
   }
 
   return updated;
-}
-
-/* ================================
-   PROGRESSION DIRECTION (for UI)
-================================ */
-
-export type ProgressionDirection = "up" | "down" | "stable";
-
-export function getProgressionDirection(
-  ex: ProgramExercise
-): ProgressionDirection {
-  if (!ex.lastAttemptedWeight || ex.lastAttemptedWeight === 0) return "stable";
-  if (ex.weight > ex.lastAttemptedWeight) return "up";
-  if (ex.weight < ex.lastAttemptedWeight) return "down";
-  return "stable";
-}
-
-export function getProgressionLabel(ex: ProgramExercise): string {
-  const dir = getProgressionDirection(ex);
-  const w = ex.weight > 0 ? `${ex.weight}kg` : "BW";
-
-  if (
-    dir === "up" &&
-    ex.lastAttemptedWeight &&
-    ex.weight > ex.lastAttemptedWeight
-  )
-    return `${w} ↑`;
-  if (dir === "down") return `${w} ↓`;
-  return w;
 }
 
 /* ================================
