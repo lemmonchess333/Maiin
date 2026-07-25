@@ -113,6 +113,15 @@ service cloud.firestore {
         // permission-denied ("Couldn't save your settings"). Pinned by
         // profileFieldParity.cross.test.ts.
         'hideWeightNumber',
+        // NOT in this list, deliberately (removed 2026-07-25): shoes,
+        // privacyZones and mealReminders are the names of SUBCOLLECTIONS
+        // (`users/{uid}/shoes`, `users/{uid}/privacyZones`) and a settings
+        // doc (`users/{uid}/settings/mealReminders`) — never fields on the
+        // profile document, so allow-listing them here only widened what a
+        // client could write to `users/{uid}`. stepGoal, phaseMode,
+        // trainingPhase and stallPopupCooldowns had no reader or writer
+        // anywhere. Re-add only alongside code that actually writes the
+        // field to THIS document.
         // Settings → Privacy → "AI food analysis". In the UserProfile type
         // and written client-side via updateProfile, but never allow-listed
         // here — so every toggle hit permission-denied. Third instance of
@@ -140,8 +149,7 @@ service cloud.firestore {
         // to this client-write allow-list, so every Goal-Weight save was
         // rejected ("Couldn't save your settings"). Both gates now agree.
         'goalWeightKg', 'weeklyRateKg',
-        'createdAt', 'updatedAt', 'photoURL', 'stallPopupCooldowns', 'shoes', 'lastActiveAt',
-        'mealReminders', 'privacyZones', 'stepGoal', 'phaseMode', 'trainingPhase',
+        'createdAt', 'updatedAt', 'photoURL', 'lastActiveAt',
         'gender', 'ageRange', 'primaryGoal', 'experience', 'daysPerWeek',
         'equipment', 'preferredSplit', 'runFrequency', 'injuries', 'crewId',
         'adjustCaloriesForTraining',
