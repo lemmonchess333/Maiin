@@ -29,6 +29,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
 
+import { PROFILE_FIELD_REGISTRY } from "../profileFieldRegistry";
+
 const require = createRequire(import.meta.url);
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -52,27 +54,23 @@ function rulesAllowedFields(): Set<string> {
 // Adding a field here is a deliberate statement: "this is intentionally only
 // writable via ONE path." Anything NOT here must exist on BOTH sides.
 
-/** In rules (direct client write) but intentionally NOT CF-sanitised — set via
- *  `updateProfile` after onboarding, never sent through completeOnboarding /
- *  configurePlan. Social / notification / cosmetic prefs + system timestamps. */
-const DIRECT_WRITE_ONLY = new Set<string>([
-  "autoPostBadges",
-  "autoPostRuns",
-  "autoPostWorkouts",
-  "crewId",
-  "defaultVisibility",
-  "lastActiveAt",
-  "mealReminders",
-  "onboardingComplete", // CF sets it via post-sanitise overwrite, not the allow-list
-  "phaseMode",
-  "privacyZones",
-  "shoes",
-  "stallPopupCooldowns",
-  "stepGoal",
-  "trainingPhase",
-  "trialExpiryPromptShown",
-  "updatedAt",
-]);
+/**
+ * In rules (direct client write) but intentionally NOT CF-sanitised — set via
+ * `updateProfile` after onboarding, never sent through completeOnboarding /
+ * configurePlan. Social / notification / cosmetic prefs + system timestamps.
+ *
+ * DERIVED from the registry's `sanitized` bit rather than hand-listed. It was
+ * a fourth copy of the same statement, and it drifted the moment two fields
+ * were added — which is the failure this whole file exists to catch, so the
+ * classification list reproducing it was not a small irony. Deriving costs
+ * nothing here: the comparison below still reads BOTH real artifacts (the
+ * rules text and the sanitiser module); only the annotation is shared.
+ */
+const DIRECT_WRITE_ONLY = new Set<string>(
+  PROFILE_FIELD_REGISTRY.filter(
+    (e) => !e.sanitized && !e.serverGuarded && !e.serverOnly
+  ).map((e) => e.field)
+);
 
 /** In the sanitiser (CF write) but intentionally NOT directly client-writable.
  *  Currently empty — every CF-accepted field is also a legitimate direct edit.
