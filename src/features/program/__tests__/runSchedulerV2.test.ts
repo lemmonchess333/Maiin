@@ -13,7 +13,6 @@ import { describe, it, expect } from "vitest";
 import {
   scheduleStructuredWeekV2,
   generateRacePlanV2,
-  enrichRunDayV2,
   classifyRaceTiming,
   getRaceFloorWeeks,
   getRaceMinWeeks,
@@ -21,7 +20,6 @@ import {
   type RacePlanV2Input,
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import type { ScheduledRunDay } from "../programTypes";
 
 const sundayStart = "2026-05-10"; // Sunday
 const baseInput = {
@@ -531,66 +529,6 @@ describe("generateRacePlanV2 · clashesWithLift flag", () => {
     expect(hard).toBeTruthy();
     expect(hard!.dayIndex).toBe(0); // landed on the run-only day
     expect(hard!.clashesWithLift).toBeUndefined();
-  });
-});
-
-/* ─── enrichRunDayV2 (back-compat helper) ────────────────────── */
-
-describe("enrichRunDayV2", () => {
-  const weekStart = new Date(2026, 4, 10); // Sun May 10
-
-  it("adds id / date / weekKey / status to a v1 runDay", () => {
-    const v1: ScheduledRunDay = {
-      dayIndex: 2,
-      templateId: "tempo_20",
-      type: "tempo",
-      completed: false,
-    };
-    const v2 = enrichRunDayV2(v1, weekStart);
-    expect(v2.id).toBeTruthy();
-    expect(v2.date).toBe("2026-05-12");
-    expect(v2.weekKey).toBe("2026-05-10");
-    expect(v2.status).toBe("planned");
-  });
-
-  it("derives status='completed_exact' when v1 completed=true", () => {
-    const v1: ScheduledRunDay = {
-      dayIndex: 0,
-      templateId: "easy_30",
-      type: "easy",
-      completed: true,
-    };
-    const v2 = enrichRunDayV2(v1, weekStart);
-    expect(v2.status).toBe("completed_exact");
-  });
-
-  it("preserves existing v2 fields (idempotent)", () => {
-    const already: ScheduledRunDay = {
-      id: "explicit_id",
-      weekKey: "2026-05-10",
-      date: "2026-05-12",
-      dayIndex: 2,
-      templateId: "tempo_20",
-      type: "tempo",
-      completed: false,
-      status: "planned",
-    };
-    const v2 = enrichRunDayV2(already, weekStart);
-    expect(v2.id).toBe("explicit_id");
-    expect(v2.date).toBe("2026-05-12");
-  });
-
-  it("preserves userOverride as string", () => {
-    const v1: ScheduledRunDay = {
-      dayIndex: 2,
-      templateId: "tempo_20",
-      type: "tempo",
-      completed: false,
-      userOverride: "alternate_template_id",
-    };
-    const v2 = enrichRunDayV2(v1, weekStart);
-    expect(v2.userOverride).toBe("alternate_template_id");
-    expect(typeof v2.userOverride).toBe("string");
   });
 });
 

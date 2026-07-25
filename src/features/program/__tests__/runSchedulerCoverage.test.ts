@@ -1,6 +1,17 @@
 /**
  * RUN_TEMPLATES coverage test — first commit of Phase B1.
  *
+ * RETARGETED 2026-07-25. The sweeps below drove `scheduleStructuredWeek`
+ * and `generateRacePlan` — the V1 schedulers, which by then had ZERO
+ * production callers. Every plan the app builds goes through
+ * `scheduleStructuredWeekV2` / `generateRacePlanV2` via `planBuilder`.
+ * So this suite swept 240 parameter combinations of code nobody runs,
+ * and a templateId typo in the V2 generators would have sailed through
+ * it: the exact ADR-0008 failure (the tested copy is not the running
+ * copy), one level down — inside a live module, where the module-level
+ * reachability gate cannot see it. The V1 pair is deleted; the sweeps
+ * now run against the generators that actually build plans.
+ *
  * Programme run prefill (the feature shipping in this PR) trusts that
  * every templateId the runScheduler emits exists in RUN_TEMPLATES with
  * a stable `.type` field. If a templateId is missing OR if
@@ -25,13 +36,29 @@
  */
 import { describe, it, expect } from "vitest";
 import {
-  scheduleStructuredWeek,
-  generateRacePlan,
+  scheduleStructuredWeekV2,
+  generateRacePlanV2,
   recoveryWeeksForDistance,
-  getCurrentRaceWeek,
   type ScheduledRunDay,
 } from "../runScheduler";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import type { ScheduleDay } from "@/lib/scheduleUtils";
+
+/** V2 drives from a weekSchedule rather than (liftCount, runCount). */
+function weekSchedule(liftDays: number, runDays: number): ScheduleDay[] {
+  const days: ScheduleDay[] = Array.from({ length: 7 }, (_, day) => ({
+    day,
+    type: "rest" as const,
+  }));
+  for (let i = 0; i < runDays && i < 7; i++) days[i].type = "run";
+  for (let i = 6; i >= 7 - liftDays && i >= 0; i--) {
+    days[i].type = days[i].type === "run" ? "both" : "lift";
+  }
+  return days;
+}
+
+/** Sunday of an arbitrary fixed week — V2 needs a real week anchor. */
+const WEEK_START = "2026-07-05";
 
 const KNOWN_TEMPLATE_IDS = new Set(RUN_TEMPLATES.map((t) => t.id));
 const TEMPLATE_BY_ID = new Map(RUN_TEMPLATES.map((t) => [t.id, t]));
@@ -84,7 +111,7 @@ describe("RUN_TEMPLATES coverage — static set", () => {
   });
 });
 
-describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeek", () => {
+describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeekV2", () => {
   it("emits only known templateIds across lift/run/week combinations", () => {
     // Parameter space sized to hit every branch:
     //   liftCount 0-5 × runCount 1-5 × weekNumber 0-7 = 240 combos.
@@ -93,7 +120,11 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeek",
     for (let lift = 0; lift <= 5; lift++) {
       for (let run = 1; run <= 5; run++) {
         for (let week = 0; week <= 7; week++) {
-          const days = scheduleStructuredWeek(lift, run, week);
+          const days = scheduleStructuredWeekV2({
+            weekSchedule: weekSchedule(lift, run),
+            weekNumber: week,
+            weekStart: WEEK_START,
+          });
           for (const d of days) {
             if (!KNOWN_TEMPLATE_IDS.has(d.templateId)) {
               offenders.push({
@@ -117,7 +148,12 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeek",
     for (let lift = 0; lift <= 5; lift++) {
       for (let run = 1; run <= 5; run++) {
         for (let week = 0; week <= 7; week++) {
-          for (const d of scheduleStructuredWeek(lift, run, week)) {
+          const days = scheduleStructuredWeekV2({
+            weekSchedule: weekSchedule(lift, run),
+            weekNumber: week,
+            weekStart: WEEK_START,
+          });
+          for (const d of days) {
             const tmpl = TEMPLATE_BY_ID.get(d.templateId);
             if (!tmpl) continue; // covered by the previous test
             if (tmpl.type !== d.type) mismatches.push(d);
@@ -129,14 +165,17 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over scheduleStructuredWeek",
   });
 });
 
-describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlan", () => {
+describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlanV2", () => {
   // Race plans take a target date. Use a date far enough out to hit
   // every phase (base / build / taper / race) in a single plan, and
   // sample across distances to surface long_10k vs long_15k branches.
-  function farFutureDate(daysAhead: number): string {
-    const d = new Date();
+  const TODAY = "2026-07-05";
+  /** V2 takes local "YYYY-MM-DD", not an ISO instant. */
+  function futureDate(daysAhead: number): string {
+    const d = new Date(2026, 6, 5);
     d.setDate(d.getDate() + daysAhead);
-    return d.toISOString();
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   }
 
   const DISTANCES = ["5k", "10k", "half", "marathon"] as const;
@@ -148,12 +187,13 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlan", () =>
       for (const ahead of DAYS_AHEAD) {
         for (let lift = 0; lift <= 5; lift++) {
           for (let run = 1; run <= 5; run++) {
-            const plan = generateRacePlan(
-              distance,
-              farFutureDate(ahead),
-              lift,
-              run
-            );
+            const plan = generateRacePlanV2({
+              weekSchedule: weekSchedule(lift, run),
+              raceGoal: { distance, targetDate: futureDate(ahead) },
+              weeklyRunDays: run,
+              currentDate: TODAY,
+              weekStart: WEEK_START,
+            });
             for (const week of plan.weeks) {
               for (const d of week) {
                 if (!KNOWN_TEMPLATE_IDS.has(d.templateId)) {
@@ -175,7 +215,13 @@ describe("RUN_TEMPLATES coverage — dynamic sweep over generateRacePlan", () =>
     const mismatches: { day: ScheduledRunDay; ctx: string }[] = [];
     for (const distance of DISTANCES) {
       for (const ahead of DAYS_AHEAD) {
-        const plan = generateRacePlan(distance, farFutureDate(ahead), 3, 3);
+        const plan = generateRacePlanV2({
+          weekSchedule: weekSchedule(3, 3),
+          raceGoal: { distance, targetDate: futureDate(ahead) },
+          weeklyRunDays: 3,
+          currentDate: TODAY,
+          weekStart: WEEK_START,
+        });
         for (const week of plan.weeks) {
           for (const d of week) {
             const tmpl = TEMPLATE_BY_ID.get(d.templateId);
@@ -201,25 +247,5 @@ describe("recoveryWeeksForDistance", () => {
     expect(recoveryWeeksForDistance("10k")).toBe(2);
     expect(recoveryWeeksForDistance("half")).toBe(3);
     expect(recoveryWeeksForDistance("marathon")).toBe(4);
-  });
-});
-
-// ── getCurrentRaceWeek ───────────────────────
-// Uses new Date() internally, so assert the clamp behaviour with dates far
-// enough either side of "now" to be robust regardless of when the suite runs.
-describe("getCurrentRaceWeek", () => {
-  it("clamps to the final week index when the race is in the past", () => {
-    // weeksLeft is very negative → totalWeeks - weeksLeft overflows → clamp to last.
-    expect(getCurrentRaceWeek(12, "2000-01-01")).toBe(11);
-  });
-
-  it("clamps to week 0 when the race is far in the future", () => {
-    // weeksLeft huge → totalWeeks - weeksLeft negative → clamp to 0.
-    expect(getCurrentRaceWeek(12, "2099-01-01")).toBe(0);
-  });
-
-  it("returns a valid in-range index for a degenerate single-week plan", () => {
-    const w = getCurrentRaceWeek(1, "2099-01-01");
-    expect(w).toBe(0); // min(totalWeeks-1, …) with totalWeeks=1 → 0
   });
 });
