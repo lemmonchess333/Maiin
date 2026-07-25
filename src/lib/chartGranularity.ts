@@ -18,6 +18,8 @@
    share the policy.
    ───────────────────────────────────────────── */
 
+import { localDateString, localWeekKey } from "./dateHelpers";
+
 export type ChartGranularity = "daily" | "weekly" | "monthly";
 
 /**
@@ -32,26 +34,42 @@ export function granularityForRange(rangeDays: number): ChartGranularity {
 
 /**
  * Compute the bin key for `date` under the chosen granularity.
- * Returns an ISO date string (`YYYY-MM-DD`) — the first day of
+ * Returns a local date string (`YYYY-MM-DD`) — the first day of
  * the bin (the day itself for daily, the Sunday of the week for
  * weekly, the 1st of the month for monthly).
  *
- * UTC-safe: uses Date.toISOString() so the returned key is stable
- * regardless of the caller's local timezone.
+ * LOCAL, deliberately. This was UTC-anchored (`toISOString`), on the
+ * reasoning that "the key is stable regardless of the caller's local
+ * timezone". Stability of the function is the wrong invariant: what
+ * matters is that every caller's key means the same DAY, and the days
+ * this app bins are local ones — a workout's `date` is a local
+ * "YYYY-MM-DD" string, and a user's Sunday session belongs to their
+ * Sunday.
+ *
+ * The bug that reasoning produced: History fed this function two
+ * different KINDS of Date. The data side did `new Date(w.date)`, which
+ * parses "YYYY-MM-DD" as UTC midnight; the axis side built a local
+ * wall-clock cursor. Under UTC anchoring those two agree only where
+ * the offset happens to keep them on the same UTC day — so at UTC+10
+ * and beyond the axis sat a full week behind the data and the current
+ * week's sparkline bar read zero, permanently, for every user in
+ * Australia and New Zealand. At UTC+9 it depended on the time of day.
+ *
+ * Anchoring locally makes the key depend only on the calendar day the
+ * user experienced, so both call sites agree in every zone.
  */
-export function binKeyForDate(date: Date, granularity: ChartGranularity): string {
+export function binKeyForDate(
+  date: Date,
+  granularity: ChartGranularity
+): string {
   if (granularity === "daily") {
-    return date.toISOString().split("T")[0];
+    return localDateString(date);
   }
   if (granularity === "weekly") {
-    const d = new Date(date);
-    d.setUTCDate(d.getUTCDate() - d.getUTCDay()); // Sunday-anchored
-    return d.toISOString().split("T")[0];
+    return localWeekKey(date); // Sunday-anchored, local
   }
-  // monthly — first-of-month
-  const d = new Date(date);
-  d.setUTCDate(1);
-  return d.toISOString().split("T")[0];
+  // monthly — first-of-month, local
+  return localDateString(new Date(date.getFullYear(), date.getMonth(), 1));
 }
 
 /**
@@ -66,13 +84,16 @@ export function binKeyForDate(date: Date, granularity: ChartGranularity): string
  */
 export function formatBinLabel(
   binKey: string,
-  granularity: ChartGranularity,
+  granularity: ChartGranularity
 ): string {
   const d = new Date(binKey + "T00:00:00Z");
   if (granularity === "monthly") {
     const now = new Date();
     const sameYear = d.getUTCFullYear() === now.getUTCFullYear();
-    const month = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+    const month = d.toLocaleString("en-US", {
+      month: "short",
+      timeZone: "UTC",
+    });
     return sameYear ? month : `${month} ${String(d.getUTCFullYear()).slice(2)}`;
   }
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
