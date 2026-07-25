@@ -142,23 +142,12 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "longestStreak", sanitized: true },
   { field: "macroTargets", sanitized: true },
   { field: "maxHeartRate", sanitized: true },
-  {
-    field: "mealReminders",
-    sanitized: false,
-    undeclared: "meal-reminder schedule blob",
-  },
   { field: "onboardingComplete", sanitized: false },
-  {
-    field: "phaseMode",
-    sanitized: false,
-    undeclared: "nutrition phase override",
-  },
   { field: "photoURL", sanitized: true },
   { field: "preferredHeightUnit", sanitized: true },
   { field: "preferredSplit", sanitized: true },
   { field: "preferredWeightUnit", sanitized: true },
   { field: "primaryGoal", sanitized: true },
-  { field: "privacyZones", sanitized: false, undeclared: "GPS privacy zones" },
   { field: "program", sanitized: true },
   { field: "raceGoal", sanitized: true },
   // Pgm6 run-plan tuning knob (quality-work difficulty preset).
@@ -169,13 +158,6 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // Pgm6 run-plan tuning knob (long-run volume preset).
   { field: "runVolume", sanitized: true },
   { field: "sex", sanitized: true },
-  { field: "shoes", sanitized: false, undeclared: "shoe rack summary" },
-  {
-    field: "stallPopupCooldowns",
-    sanitized: false,
-    undeclared: "per-exercise stall-prompt cooldown map",
-  },
-  { field: "stepGoal", sanitized: false, undeclared: "daily step target" },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
@@ -196,11 +178,6 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   // `timezone` null forever, which the streak-nudge CF reads as
   // "skip-on-null-tz" and never sends.
   { field: "timezone", sanitized: false },
-  {
-    field: "trainingPhase",
-    sanitized: false,
-    undeclared: "current training phase label",
-  },
   // D16 personal "why" — free-text motivation (onboarding + Settings).
   { field: "trainingWhy", sanitized: true },
   { field: "trialExpiresAt", sanitized: false, serverGuarded: true },
