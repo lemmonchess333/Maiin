@@ -69,6 +69,23 @@ const TEMPLATE_QUALITY_BUCKET: Record<string, "quality" | "easy"> = (() => {
 })();
 
 /**
+ * Race-template ids, by TYPE. Same construction as the quality lookup
+ * above, and injected for the same reason (Q3 P41: the completion helper
+ * stays template-agnostic).
+ *
+ * Never compare against the literal "race" — the real ids are `5k_race`
+ * … `marathon_race`, which is exactly the bug this replaces on both sides
+ * of the race-day short-circuit.
+ */
+const RACE_TEMPLATE_IDS: ReadonlySet<string> = new Set(
+  RUN_TEMPLATES.filter((t) => t.type === "race").map((t) => t.id)
+);
+
+function defaultIsRaceTemplate(templateId: string | undefined): boolean {
+  return typeof templateId === "string" && RACE_TEMPLATE_IDS.has(templateId);
+}
+
+/**
  * Default pace-bucket classifier. Saved runs with avgPace under
  * 270 sec/km (4:30/km) read as "quality"; otherwise "easy". This
  * is a v1 best-guess; a future PR can pull from `paceTrends.ts`
@@ -104,6 +121,7 @@ const DEFAULT_DEPS: CompletionDeps = {
   paceBucketFor: defaultPaceBucketFor,
   templateQualityBucket: TEMPLATE_QUALITY_BUCKET,
   plannedDistanceFor: defaultPlannedDistanceFor,
+  isRaceTemplate: defaultIsRaceTemplate,
 };
 
 /**
@@ -187,10 +205,22 @@ export function useClaimMap(dateAnchor?: string): UseClaimMapResult {
                 typeof data.distance === "number" ? data.distance : undefined,
               avgPace:
                 typeof data.avgPace === "number" ? data.avgPace : undefined,
+              /* Saved-run docs carry NO plain `templateId` — RunSummary
+                 writes `actualTemplateId` (what was run) and
+                 `plannedTemplateId` (what was scheduled), both top-level.
+                 Reading `data.templateId` therefore left this undefined
+                 on every real run, which silently disabled the race-day
+                 short-circuit in `distanceAndBucketOk`.
+                 `actual` first: the question downstream is what the user
+                 RAN, not what they were meant to run. */
               templateId:
-                typeof data.templateId === "string"
-                  ? data.templateId
-                  : undefined,
+                typeof data.actualTemplateId === "string"
+                  ? data.actualTemplateId
+                  : typeof data.plannedTemplateId === "string"
+                    ? data.plannedTemplateId
+                    : typeof data.templateId === "string"
+                      ? data.templateId
+                      : undefined,
               createdAt:
                 ca instanceof Timestamp
                   ? { seconds: ca.seconds }

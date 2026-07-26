@@ -49,6 +49,13 @@ const TIER_LABELS: Record<ChallengeTier, string> = {
   gold: "Gold",
 };
 
+/* SOC-P1a — founding state. Below this many participants the meta row
+   withholds the number and reads as a founding invitation instead:
+   "0 joined" (the loudest locked-lobby signal on the Social tab, and
+   the most-seen state for every cold-start user) never renders. Counts
+   are real or withheld — never inflated. */
+const FOUNDING_COUNT_MIN = 3;
+
 /* Sport-coding by metric (visual polish, 2026-07). Every challenge card
    used to wear brand purple regardless of discipline — a km challenge and
    a volume challenge looked identical, ignoring the app's strongest visual
@@ -294,7 +301,11 @@ export function ChallengeCard({
         <div className="flex items-center gap-3 text-small text-muted-foreground">
           <span className="flex items-center gap-1">
             <Users className="size-3.5" />
-            {challenge.participantCount} joined
+            {challenge.participantCount >= FOUNDING_COUNT_MIN
+              ? `${challenge.participantCount} joined`
+              : joined
+                ? "You're in — founding member"
+                : "Just launched · founding spots open"}
           </span>
           {percentile !== null && (
             <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-mono tabular-nums font-medium">

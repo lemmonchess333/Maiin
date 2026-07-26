@@ -29,7 +29,7 @@ import {
   getPersonalTrajectory,
   type PersonalTrajectory,
 } from "@/lib/personalTrajectory";
-import { SOCIAL_GATES } from "@/lib/socialGates";
+import { SOCIAL_GATES, shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
@@ -213,14 +213,19 @@ export default function FeedView({
     onOverlayChange(false);
   };
 
-  // SOCIAL S4 — the following ACTIVITY feed (the list of activities from
-  // people you follow) only renders at ≥3 follows; below that it's a
-  // sparse list that reads as broken, so we show the leaderboard/
-  // trajectory slot instead (never an empty feed). Explore is unaffected.
+  // SOC-P1b — the following ACTIVITY feed renders from the FIRST follow.
+  // The old ≥3-follow hard gate hid real activity from a user's first
+  // two follows: they followed someone, that person trained, and the
+  // feed still read "Follow 3+ to unlock" — a locked door in front of
+  // content that already existed. Below 3 follows the list is sparse,
+  // so the trajectory slot above keeps the surface weighted and the
+  // progress row (below) frames the graph-building step honestly.
+  // 0 follows still routes to SoloFirstFeed (Soc8 lock, unchanged).
   const showActivityList =
     !showSoloFeed &&
     (feedSubTab === "explore" ||
-      (feedSubTab === "following" && followingFeedUnlocked));
+      (feedSubTab === "following" &&
+        shouldRenderFollowingList(followingCount ?? 0)));
 
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -436,8 +441,15 @@ export default function FeedView({
                         <Users size={16} style={{ color: THEME.brand }} />
                       </div>
                       <p className="text-small text-muted-foreground leading-snug">
-                        Follow {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}+ people
-                        to unlock your activity feed
+                        {/* SOC-P1b: progress framing, not a locked door —
+                            the feed already renders below the threshold;
+                            this row just names the graph-building step. */}
+                        Following{" "}
+                        <span className="font-mono tabular-nums">
+                          {followingCount ?? 0} of{" "}
+                          {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}
+                        </span>{" "}
+                        — your feed fills as you follow more
                       </p>
                     </div>
                     <button
@@ -564,6 +576,11 @@ export default function FeedView({
             {!activeFeed.loading &&
               activeFeed.items.length === 0 &&
               showActivityList &&
+              // SOC-P1b: below the follow threshold the progress row above
+              // already frames the empty list AND carries the Find-people
+              // CTA — rendering the empty state too would stack two
+              // near-identical rows. It returns once the graph is built.
+              !(feedSubTab === "following" && !followingFeedUnlocked) &&
               !(feedSubTab === "explore" && exploreFeed.error) && (
                 <div className="mt-6" aria-live="polite">
                   {feedSubTab === "explore" ? (

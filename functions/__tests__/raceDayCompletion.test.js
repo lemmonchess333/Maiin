@@ -26,12 +26,22 @@ const {
   isStrictRaceRun,
   hasStrictRaceMatch,
 } = require("../lib/raceDayCompletion");
+const { RACE_TEMPLATE_IDS } = require("../lib/raceTemplateIds");
 
-/** Raw saved-run doc, as RunSummary writes it. */
+/**
+ * Raw saved-run doc, as RunSummary writes it.
+ *
+ * `actualTemplateId` is a REAL template id. It was `"race"` until
+ * 2026-07-26 — a value production never writes — so the accept path was
+ * verified against an impossible doc while the reject paths used real ids
+ * (`easy_30`, `tempo_20`). Every rejection was therefore honest and the
+ * one acceptance was fiction, which is how `isStrictRaceRun` shipped
+ * always-false and read every completed race as a no-show.
+ */
 function rawRun(overrides = {}) {
   return {
     date: "2027-04-18",
-    actualTemplateId: "race",
+    actualTemplateId: "marathon_race",
     distance: 42195,
     ...overrides,
   };
@@ -92,6 +102,27 @@ describe("isStrictRaceRun", () => {
     expect(
       isStrictRaceRun(rawRun({ actualTemplateId: "easy_30" }), 10000)
     ).toBe(false);
+  });
+
+  it("accepts EVERY race-type id, not one hard-coded distance", () => {
+    // The bug was a single impossible literal. Enumerating the real ids
+    // makes "which values count" explicit, so adding a race template
+    // cannot quietly go unrecognised on the server.
+    for (const id of RACE_TEMPLATE_IDS) {
+      expect(
+        isStrictRaceRun(rawRun({ actualTemplateId: id }), 10000),
+        `id ${id}`
+      ).toBe(true);
+    }
+  });
+
+  it('REJECTS the literal "race" — production never writes it', () => {
+    // Pinned as a rejection, not merely absent. This exact value was the
+    // sole accept fixture for months; if it starts being accepted again,
+    // the id mirror has been bypassed.
+    expect(isStrictRaceRun(rawRun({ actualTemplateId: "race" }), 10000)).toBe(
+      false
+    );
   });
 
   it("rejects an isInvalid / savedAnyway run however far it went", () => {
