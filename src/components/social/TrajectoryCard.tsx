@@ -1,11 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Zap, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import {
-  getPersonalTrajectory,
-  type PersonalTrajectory,
-} from "@/lib/personalTrajectory";
+import { type PersonalTrajectory } from "@/lib/personalTrajectory";
 import { THEME } from "@/lib/theme";
 import Tooltip from "@/components/ui/Tooltip";
 import { Spinner } from "@/components/ui/Spinner";
@@ -16,38 +11,22 @@ import { Spinner } from "@/components/ui/Spinner";
  * Following tab stays useful for users who don't yet have enough
  * friends for a meaningful leaderboard.
  *
+ * SOC-P1c: presentational — FeedView owns the getPersonalTrajectory
+ * fetch (same one-shot read, just lifted) so the zero-week state can
+ * collapse the whole Your-week slot into WeekOpenerCard BEFORE this
+ * card's 0-pts grid ever mounts.
+ *
  * Keeps the same outer shape (p-4 rounded-2xl card with a header
  * row featuring Zap + title + "This Week" pill) as LeaderboardCard
  * so swapping between the two doesn't cause a layout shift.
  */
-export default function TrajectoryCard() {
-  const { user } = useAuth();
-  const [data, setData] = useState<PersonalTrajectory | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const d = await getPersonalTrajectory(user.uid);
-      setData(d);
-    } catch {
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    let cancelled = false;
-    load().catch(() => {
-      if (cancelled) return;
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [load]);
-
+export default function TrajectoryCard({
+  data,
+  loading,
+}: {
+  data: PersonalTrajectory | null;
+  loading: boolean;
+}) {
   const thisWeek = data?.thisWeek;
   const lastWeek = data?.lastWeek;
   const deltaPct = data?.deltaPct ?? null;
