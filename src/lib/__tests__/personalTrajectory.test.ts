@@ -1,117 +1,131 @@
+/**
+ * getPersonalTrajectory — this week vs the SAME SLICE of last week.
+ *
+ * The whole point of the module is that slice. Comparing a Tuesday
+ * against a full previous week reads as a collapse every Monday, which
+ * is the PR-G bug: (200 − 1000)/1000 = −80% for a user who is actually
+ * ahead of pace.
+ *
+ * This suite used to drive six `mockResolvedValueOnce` calls in sequence
+ * and assert `getDocs` was called six times. That made the window
+ * boundaries FICTION — "last-week-to-date runs" was true by position in
+ * the mock queue, not because any date filtering happened. A broken
+ * boundary (wrong week start, elapsed offset against the wrong anchor,
+ * an inclusive/exclusive slip) could not fail it.
+ *
+ * Now the runs are seeded at real timestamps and the real
+ * `where('completedAt', …)` bounds select them. Last week's 10 km is
+ * deliberately SPLIT — 1 km before last Tuesday 14:00, 9 km after — so
+ * the to-date window has to actually cut the week to produce the
+ * expected numbers. Under the old suite that split didn't exist; the two
+ * figures came from two different canned responses.
+ */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-/* Mocks Firestore so the trajectory query can be driven from the test
- * with synthetic run + workout snapshots. Each test fixes "now" with
- * vi.useFakeTimers so the week/day-of-week math is deterministic. */
-
-const mockGetDocs = vi.fn();
-
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn((..._args: unknown[]) => "col"),
-  query: vi.fn((..._args: unknown[]) => "q"),
-  where: vi.fn((..._args: unknown[]) => "w"),
-  orderBy: vi.fn((..._args: unknown[]) => "o"),
-  limit: vi.fn((..._args: unknown[]) => "l"),
-  getDocs: (...args: unknown[]) => mockGetDocs(...args),
-  Timestamp: { fromDate: (d: Date) => ({ toMillis: () => d.getTime(), seconds: Math.floor(d.getTime() / 1000) }) },
-}));
-
-vi.mock("../firebase", () => ({ db: "mock-db" }));
+vi.mock("firebase/firestore");
+vi.mock("../firebase", () => ({ db: {} }));
 
 import { getPersonalTrajectory } from "../personalTrajectory";
+import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import { Timestamp } from "firebase/firestore";
 
-const emptySnap = { docs: [] };
+/** Tuesday 14:00 UTC. Week starts Sunday, so: this week from Sun 26th;
+ *  last week Sun 19th → Sun 26th; last-week-to-date Sun 19th → Tue 21st
+ *  14:00. */
+const NOW = new Date("2026-04-28T14:00:00Z");
 
-describe("getPersonalTrajectory.lastWeekToDate", () => {
-  beforeEach(() => {
-    mockGetDocs.mockReset();
-  });
+/** A run doc as stored — `duration` clears the eligibility floor (30s). */
+function run(iso: string, km: number) {
+  return {
+    completedAt: Timestamp.fromDate(new Date(iso)),
+    distance: km * 1000,
+    duration: 60,
+  };
+}
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+beforeEach(() => {
+  resetFirestore();
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
+});
 
-  it("computes lastWeekToDate as the elapsed-time-aligned slice of last week", async () => {
-    /* Tuesday 14:00 in the current week. Elapsed = ~62 hours into the
-       week. lastWeekToDate should query last Sunday 00:00 → last
-       Tuesday 14:00. Three Promise.all queries fire (this week, last
-       week full, last week to date), each with its own runs+workouts
-       getDocs pair = 6 calls total. We assert the call count and the
-       resolved shape. */
-    vi.setSystemTime(new Date("2026-04-28T14:00:00Z")); // Tuesday
-    mockGetDocs.mockResolvedValue(emptySnap);
+afterEach(() => {
+  vi.useRealTimers();
+});
 
+describe("getPersonalTrajectory", () => {
+  it("returns zeroes for a user with nothing logged", async () => {
     const result = await getPersonalTrajectory("user1");
-
-    /* Three Promise.all branches × 2 collections (runs, workouts) = 6 */
-    expect(mockGetDocs).toHaveBeenCalledTimes(6);
     expect(result.thisWeek).toEqual({ km: 0, kg: 0, score: 0 });
     expect(result.lastWeek).toEqual({ km: 0, kg: 0, score: 0 });
     expect(result.lastWeekToDate).toEqual({ km: 0, kg: 0, score: 0 });
   });
 
-  it("delta is computed against lastWeekToDate, not lastWeek (the bug PR G fixes)", async () => {
-    vi.setSystemTime(new Date("2026-04-28T14:00:00Z")); // Tuesday
-
-    /* Six getDocs calls in order:
-       0: this-week runs       — 2 km
-       1: this-week workouts   — empty
-       2: last-week runs       — 10 km full week
-       3: last-week workouts   — empty
-       4: last-week-to-date runs — 1 km (Tuesday so far)
-       5: last-week-to-date workouts — empty
-
-       thisWeek.score   = 2  km * 100 = 200
-       lastWeek.score   = 10 km * 100 = 1000   (NOT used for delta)
-       lastWeekToDate   = 1  km * 100 = 100    (USED for delta)
-       deltaPct         = (200 - 100) / 100 * 100 = +100%
-
-       Pre-PR-G the delta was (200 - 1000) / 1000 = -80% — the
-       misleading negative this test guards against. */
-    /* `duration: 60` puts these above the volume floor (30s) so the
-       Sprint 1 eligibility filter in personalTrajectory passes them
-       through. Tests pre-Sprint-1 didn't need a duration. */
-    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000, duration: 60 }) });
-    mockGetDocs
-      .mockResolvedValueOnce({ docs: [runDoc(2)] })  // this-week runs
-      .mockResolvedValueOnce(emptySnap)              // this-week workouts
-      .mockResolvedValueOnce({ docs: [runDoc(10)] }) // last-week runs (full)
-      .mockResolvedValueOnce(emptySnap)              // last-week workouts
-      .mockResolvedValueOnce({ docs: [runDoc(1)] })  // last-week-to-date runs
-      .mockResolvedValueOnce(emptySnap);             // last-week-to-date workouts
+  it("compares against lastWeekToDate, not lastWeek (the PR-G bug)", async () => {
+    seedFirestore({
+      // This week — Monday, 2 km.
+      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 2),
+      // Last week, INSIDE the to-date slice (Mon 20th, before Tue 14:00).
+      "users/user1/runs/lw_early": run("2026-04-20T10:00:00Z", 1),
+      // Last week, AFTER the slice (Thu 23rd) — counts toward the full
+      // week only. The to-date window must exclude it.
+      "users/user1/runs/lw_late": run("2026-04-23T10:00:00Z", 9),
+    });
 
     const result = await getPersonalTrajectory("user1");
 
-    expect(result.thisWeek.score).toBe(200);
-    expect(result.lastWeek.score).toBe(1000);
-    expect(result.lastWeekToDate.score).toBe(100);
+    expect(result.thisWeek.score).toBe(200); // 2 km × 100
+    expect(result.lastWeek.score).toBe(1000); // 10 km × 100, full week
+    expect(result.lastWeekToDate.score).toBe(100); // 1 km × 100, sliced
+    // Pre-PR-G this was (200 − 1000)/1000 = −80%: a misleading collapse
+    // shown to a user who is ahead of pace.
     expect(result.deltaPct).toBe(100);
-    /* The full-week last-week total stays available for the
-       informational baseline row in TrajectoryCard. */
+    // The full-week total stays available for TrajectoryCard's baseline row.
     expect(result.lastWeek.km).toBe(10);
   });
 
-  it("returns deltaPct=null when lastWeekToDate.score is zero (no division)", async () => {
-    vi.setSystemTime(new Date("2026-04-28T14:00:00Z"));
+  it("excludes a run from just BEFORE last week starts", async () => {
+    // Deliberately one hour before the boundary (last week starts Sun
+    // 19th 00:00), not comfortably outside it. A seed placed days away
+    // tolerates a week-start that is a day off; this one does not — and
+    // an off-by-one week anchor is the likeliest way this drifts.
+    seedFirestore({
+      "users/user1/runs/just_before": run("2026-04-18T23:00:00Z", 42),
+      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 2),
+    });
 
-    /* `duration: 60` puts these above the volume floor (30s) so the
-       Sprint 1 eligibility filter in personalTrajectory passes them
-       through. Tests pre-Sprint-1 didn't need a duration. */
-    const runDoc = (km: number) => ({ data: () => ({ distance: km * 1000, duration: 60 }) });
-    mockGetDocs
-      .mockResolvedValueOnce({ docs: [runDoc(3)] })  // this-week runs
-      .mockResolvedValueOnce(emptySnap)
-      .mockResolvedValueOnce({ docs: [runDoc(5)] })  // last-week full
-      .mockResolvedValueOnce(emptySnap)
-      .mockResolvedValueOnce(emptySnap)              // last-week-to-date — empty
-      .mockResolvedValueOnce(emptySnap);
+    const result = await getPersonalTrajectory("user1");
+    expect(result.thisWeek.km).toBe(2);
+    expect(result.lastWeek.km).toBe(0);
+    expect(result.lastWeekToDate.km).toBe(0);
+  });
+
+  it("returns deltaPct=null when lastWeekToDate is zero (no division)", async () => {
+    seedFirestore({
+      "users/user1/runs/tw": run("2026-04-27T10:00:00Z", 3),
+      // Last week's 5 km all lands AFTER the to-date cut, so the slice is
+      // empty while the full week is not.
+      "users/user1/runs/lw_late": run("2026-04-23T10:00:00Z", 5),
+    });
 
     const result = await getPersonalTrajectory("user1");
 
     expect(result.thisWeek.score).toBe(300);
     expect(result.lastWeek.score).toBe(500);
     expect(result.lastWeekToDate.score).toBe(0);
-    /* Caller renders "new" copy in this case rather than a -100%. */
+    // Caller renders "new" copy rather than a meaningless −100%.
     expect(result.deltaPct).toBeNull();
+  });
+
+  it("ignores a sub-threshold run (eligibility floor)", async () => {
+    seedFirestore({
+      "users/user1/runs/bogus": {
+        completedAt: Timestamp.fromDate(new Date("2026-04-27T10:00:00Z")),
+        distance: 40000,
+        duration: 8,
+      },
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.thisWeek.km).toBe(0);
   });
 });
