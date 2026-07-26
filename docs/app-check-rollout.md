@@ -158,11 +158,28 @@ Add `enforceAppCheck: true` ONE at a time, watching error-reporting for
 App-Check-rejection spikes between each (the rate must already be ≥99% per
 Phase 3 before starting). Order:
 
-| Tier                                  | Callables                                                                                                             | If it breaks                                                                                    |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| 1 — low risk (flip first)             | `askGeminiText`, `sendTestPush`, `backfillMyActivityCategories`, `refreshMyCrewLeaderboard`, `computePerformanceWeek` | a non-critical feature errors; user retries                                                     |
-| 2 — core flows                        | `completeOnboarding`, `configurePlan`                                                                                 | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
-| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `verifyApplePurchase`, `restoreApplePurchases`                                                     | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
+| Tier                                  | Callables                                                         | If it breaks                                                                                    |
+| ------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1 — low risk (flip first)             | `sendTestPush`, `backfillMyActivityCategories`                    | a non-critical feature errors; user retries                                                     |
+| 2 — core flows                        | `completeOnboarding`, `configurePlan`                             | new users can't onboard / can't edit plan — flip only after Tier 1 is stable for days           |
+| 3 — destructive / billing (flip LAST) | `deleteMyAccount`, `verifyApplePurchase`, `restoreApplePurchases` | account deletion or purchase/restore breaks — highest blast radius, flip last and watch closely |
+
+> **A canary needs traffic.** Tier 1 listed five callables until
+> 2026-07-26; three of them could not have served the purpose:
+> `refreshMyCrewLeaderboard` no longer exists (deleted with crews in
+> #1700), `askGeminiText` was retired for having no client caller, and
+> `computePerformanceWeek` is still exported but is called from no client
+> code path. Flipping `enforceAppCheck` on an endpoint nothing calls
+> produces no verified-request telemetry and no rejection signal — it
+> goes green because nothing exercises it, which reads as evidence when
+> it is the absence of evidence. Only `sendTestPush` and
+> `backfillMyActivityCategories` have real client call sites, so those
+> are the tier.
+>
+> Before adding a callable to any tier, confirm the client actually calls
+> it (`grep -rn '<name>' src/ --include=*.ts --include=*.tsx`). An
+> uncalled callable belongs in the "retire or wire up" pile, not the
+> rollout plan.
 
 ### ⚠️ `onRequest`, client-called — manual verification only
 

@@ -691,6 +691,14 @@ Affects: `functions/index.js` (`dailyRaceReconciliationSweep` L3) + new `functio
 - [ ] **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
 - [ ] **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
 
+### `askGeminiText` retirement — needs a deploy to actually stop serving
+
+Removing the export from `functions/index.js` does **not** take the endpoint down. Until `deploy-functions.yml` runs, the previously-deployed `askGeminiText` container keeps accepting authenticated calls and billing Vertex. That was the main reason to retire it: with no client caller, any traffic reaching it was by definition not from the app, and App Check is not yet enforced.
+
+- [ ] After the next functions deploy, confirm `askGeminiText` is **gone** from the Cloud Functions list (Console → Functions, or `firebase functions:list`). A stale container is the whole risk this retirement was meant to close.
+- [ ] If it lingers, delete it explicitly: `firebase functions:delete askGeminiText --project adaptive-fitness-af8bb`. Firebase usually prunes removed exports on deploy, but it prompts for confirmation, and a non-interactive CI deploy can skip the prune.
+- [ ] No client change is needed — there were zero call sites. `rateLimits/{uid}_askGemini` docs stop being written; existing ones are swept by the account-deletion range filter already covered in `accountDeletionRateLimitsRange.test.ts`.
+
 ### Race-day completion predicate (PR #1775)
 
 Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateIds.js` — both reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Merged 2026-07-26 from a web session that cannot view the deployed source.
@@ -806,7 +814,7 @@ Rollout sequence (operator, not agent):
 - [ ] Wait 24–48h post-deploy for telemetry to populate.
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
-- [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints (e.g. `askGeminiText`). Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+- [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
 
 ## Agent skills
 

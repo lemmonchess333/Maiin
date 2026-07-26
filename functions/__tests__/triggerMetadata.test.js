@@ -115,11 +115,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
-  askGeminiText: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
-  },
   createCheckoutSession: {
     kind: "http",
     maxInstances: 100,

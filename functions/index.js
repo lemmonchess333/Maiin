@@ -1171,8 +1171,10 @@ exports.analyzeFood = functions
           res.status(400).json({ error: "No image provided" });
           return;
         }
-        // Cap input size to prevent token-cost inflation (mirrors the
-        // askGeminiText prompt cap). A normal compressed food photo is
+        // Cap input size to prevent token-cost inflation. (This used to
+        // read "mirrors the askGeminiText prompt cap"; that endpoint was
+        // retired — the cap stands on its own reasoning below.) A normal
+        // compressed food photo is
         // well under this ceiling; the limit blocks padding the payload
         // toward the 10MB request size purely to inflate Vertex token
         // cost within an otherwise-legitimate quota.
@@ -1355,8 +1357,9 @@ exports.analyzeFoodText = functions
           res.status(400).json({ error: "No text provided" });
           return;
         }
-        // Cap input size to prevent token-cost inflation (mirrors the
-        // askGeminiText prompt cap). A food description is short; this
+        // Cap input size to prevent token-cost inflation. (Formerly
+        // "mirrors the askGeminiText prompt cap" — that endpoint was
+        // retired.) A food description is short; this
         // blocks padding the payload toward the 10MB request size to
         // inflate Vertex token cost within an otherwise-legitimate quota.
         if (text.length > 2000) {
@@ -1444,111 +1447,6 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
         res.status(500).json({ error: "Failed to analyze food description" });
       }
     });
-  });
-
-// ══════════════════════════════════════════════
-// GEMINI TEXT PROXY — keeps API key server-side
-// ══════════════════════════════════════════════
-
-exports.askGeminiText = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-    }
-    const uid = context.auth.uid;
-    // R1A-Deletion: actor lock. askGeminiText writes rateLimits/{uid}_askGemini.
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-
-    // Rate limit: 5 calls per 60 seconds per user
-    const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Rate limit reached. Please wait a moment before trying again."
-      );
-    }
-
-    const { prompt } = data;
-    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "prompt is required."
-      );
-    }
-
-    // Cap prompt length to prevent abuse
-    if (prompt.length > 5000) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Prompt too long (max 5000 characters)."
-      );
-    }
-
-    try {
-      const projectId = process.env.GCLOUD_PROJECT;
-      const accessToken = await admin.credential
-        .applicationDefault()
-        .getAccessToken();
-
-      const url =
-        "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-        projectId +
-        "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + accessToken.access_token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1024,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error(
-          "askGeminiText: Vertex AI error:",
-          redactVertexResponse(result, { httpStatus: response.status })
-        );
-        throw new functions.https.HttpsError("internal", "AI service error");
-      }
-
-      let responseText = "";
-      if (
-        result.candidates &&
-        result.candidates[0] &&
-        result.candidates[0].content &&
-        result.candidates[0].content.parts
-      ) {
-        responseText = result.candidates[0].content.parts[0].text;
-      } else {
-        console.error(
-          "askGeminiText: unexpected response format:",
-          redactVertexResponse(result, { httpStatus: response.status })
-        );
-        throw new functions.https.HttpsError(
-          "internal",
-          "Unexpected AI response format"
-        );
-      }
-
-      return { text: responseText };
-    } catch (err) {
-      if (err instanceof functions.https.HttpsError) throw err;
-      console.error("askGeminiText error:", err.message);
-      throw new functions.https.HttpsError("internal", "AI request failed");
-    }
   });
 
 // ══════════════════════════════════════════════
