@@ -9,4 +9,5 @@
  * states — SocialTab is only what the tab bar can show.
  */
 export type SocialTab = "together" | "feed";
-export type FeedSubTab = "following" | "explore";
+// SOC-P3a adds "communities" — posts from joined Spaces as a source.
+export type FeedSubTab = "following" | "explore" | "communities";

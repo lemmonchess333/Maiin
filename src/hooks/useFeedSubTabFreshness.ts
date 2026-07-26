@@ -68,7 +68,10 @@ function toIso(value: unknown): string {
 }
 
 interface FreshnessInput {
-  activeSubTab: "following" | "explore";
+  /** SOC-P3a: "communities" is a valid active sub-tab; the two dots it
+   *  tracks stay following/explore (the communities source has no
+   *  freshness pointer in v1). */
+  activeSubTab: "following" | "explore" | "communities";
   followingNewestCreatedAt: unknown;
   exploreNewestCreatedAt: unknown;
   /** The signed-in user's uid — scopes the seen pointers so account B
