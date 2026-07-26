@@ -71,4 +71,4 @@ the **Firestore doc** to spot-check. Run a query in
 
 ## App Check enforcement rollout (operator monitoring, not a firing)
 
-- Firebase Console → App Check → APIs → Cloud Functions: target **≥99% verified for ≥7 days** before flipping `enforceAppCheck` per-callable. If low, query `jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see which callables/uids lack tokens (usual culprit: native iOS until the Capacitor App Check plugin lands). Flip low-risk callables first (`askGeminiText`); keep `deleteMyAccount` / `verifyApplePurchase` for last.
+- Firebase Console → App Check → APIs → Cloud Functions: target **≥99% verified for ≥7 days** before flipping `enforceAppCheck` per-callable. If low, query `jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see which callables/uids lack tokens (usual culprit: native iOS until the Capacitor App Check plugin lands). Flip low-risk callables first — `sendTestPush`, `backfillMyActivityCategories`, the two the client actually calls (a callable with no call sites yields no telemetry, so it can't act as the canary); keep `deleteMyAccount` / `verifyApplePurchase` for last.

@@ -4,7 +4,6 @@ import {
   shouldShowFollowingFeed,
   shouldShowLeaderboard,
   shouldShowChallengePercentile,
-  isSoloUser,
 } from "../socialGates";
 
 describe("SOCIAL_GATES thresholds (pinned to the researched values)", () => {
@@ -41,18 +40,6 @@ describe("shouldShowChallengePercentile", () => {
     expect(shouldShowChallengePercentile(50)).toBe(true);
   });
 });
-
-describe("isSoloUser", () => {
-  it("solo when no partner bonds exist", () => {
-    expect(isSoloUser({ partnerCount: 0 })).toBe(true);
-  });
-
-  it("not solo once a partner bond exists", () => {
-    expect(isSoloUser({ partnerCount: 1 })).toBe(false);
-    expect(isSoloUser({ partnerCount: 2 })).toBe(false);
-  });
-});
-
 describe("shouldRenderFollowingList (SOC-P1b)", () => {
   it("renders from the FIRST follow — no ≥3 hard gate", async () => {
     const { shouldRenderFollowingList } = await import("../socialGates");
