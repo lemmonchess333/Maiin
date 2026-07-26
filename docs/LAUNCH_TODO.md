@@ -206,8 +206,8 @@ open), but you have no tested pause lever on the day you need one.
 ### 5b. Scheduled-function timeouts — verify the perf rollup at scale
 
 The cron sweeps (`weeklyPerformanceRollup`, `dailyPerformanceRefresh`,
-`dailyRaceReconciliationSweep`, `weeklyFellBehindCheck`,
-`crewWeeklyLeaderboardRollup`) iterate every active user/crew. They
+`dailyRaceReconciliationSweep`, `weeklyFellBehindCheck`) iterate every
+active user. They
 previously had **no `timeoutSeconds`**, so they inherited the 60s v1
 default and would be hard-killed mid-sweep at scale (a prefix of users
 processed, the rest silently left stale — no error, green schedule).
@@ -410,8 +410,8 @@ web-side fixes, all now done:
   (script-src) and `apis.google.com` + `accounts.google.com` (frame/connect).
   `signInWithPopup` loads `apis.google.com/js/api.js`; the old CSP blocked it,
   which read as `auth/internal-error`. (PR "Allow Google auth domains in CSP".)
-- **Browser API key:** Google Cloud → Credentials → *Browser key (auto created
-  by Firebase)* → HTTP-referrer allowlist now includes
+- **Browser API key:** Google Cloud → Credentials → _Browser key (auto created
+  by Firebase)_ → HTTP-referrer allowlist now includes
   `adaptive-fitness-af8bb.firebaseapp.com/*` and `…web.app/*` (403 "requests
   from referer blocked" otherwise). Because the project has Gemini enabled,
   Google now forces an **API restriction** too — restricted to the 7 APIs the
@@ -646,15 +646,15 @@ are what remain.
   `https://adaptive-fitness-af8bb.firebaseapp.com/support` as the App Store
   Connect Support URL** (a bare mailto doesn't qualify).
 - [ ] **Operator, at launch:** verify the `troposfit.com` domain in Resend
-  and set `RESEND_FROM` (e.g. `Tropos <no-reply@troposfit.com>`) so reset +
-  verification emails stop coming from `onboarding@resend.dev` (test domain
-  only delivers to the Resend account owner).
+      and set `RESEND_FROM` (e.g. `Tropos <no-reply@troposfit.com>`) so reset +
+      verification emails stop coming from `onboarding@resend.dev` (test domain
+      only delivers to the Resend account owner).
 - [ ] **Post-deploy spot-checks:** email signup sends the branded
-  verification email; resend respects the 3-per-10-min rate limit;
-  change-password round-trip; change-email confirm link flips the auth
-  email AND the profile doc `email` reconciles on next boot; writing
-  `config/client.minSupportedVersion` above the current version blocks the
-  app (and deleting the field unblocks it).
+      verification email; resend respects the 3-per-10-min rate limit;
+      change-password round-trip; change-email confirm link flips the auth
+      email AND the profile doc `email` reconciles on next boot; writing
+      `config/client.minSupportedVersion` above the current version blocks the
+      app (and deleting the field unblocks it).
 
 ---
 
