@@ -19,6 +19,13 @@
  */
 import type { Timestamp } from "firebase/firestore";
 
+/** SOC-P2b — the system Coach author id. MIRROR of COACH_AUTHOR.authorId
+ *  in functions/lib/coachPrompts.js (the weekly prompt cron's writer).
+ *  Not a real uid: firestore.rules bind client-created posts to auth.uid,
+ *  so only the Admin SDK can post as the coach — matching on this id is
+ *  therefore safe to drive UI (the coach card variant + reply prefill). */
+export const COACH_AUTHOR_ID = "tropos-coach";
+
 export interface SpaceMemberDoc {
   joinedAt: Timestamp;
   /** Denormalised identity for member lists (challenge-participant
