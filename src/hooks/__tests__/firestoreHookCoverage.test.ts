@@ -132,6 +132,13 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  *     Check the fake covers each before starting; extend it if not.
  *
  *   The rest are ordinary migrations: seed by path, assert on state.
+ *     Treat that as a starting guess, not a survey result:
+ *     `useGoalSpaces.indexTrust` was filed here and is actually a
+ *     DEFERRED-READS case (it holds `getDocs` open to force reload
+ *     ordering), and `useNotifications.trust` needed the fake to LOG
+ *     `onSnapshot` subscriptions before its re-subscribe assertion
+ *     could be expressed. Check what a suite is actually doing before
+ *     assuming it is mechanical.
  *
  * The trap in all of them is that a mechanical fixture rewrite can DELETE
  * coverage while staying green — an `export.test.ts` block silently
@@ -140,7 +147,6 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  */
 const LEGACY_INLINE_MOCKS = [
   "src/components/social/__tests__/ProgressPhotos.test.tsx",
-  "src/features/goalSpace/__tests__/useGoalSpaces.indexTrust.test.ts",
   "src/features/partnerStreak/__tests__/partnerStreakApi.test.ts",
   "src/features/program/__tests__/useProgramWriters.test.ts",
   "src/hooks/__tests__/useClaimMap.test.ts",
@@ -148,7 +154,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useFoodFavourites.test.ts",
   "src/hooks/__tests__/useHomeData.test.ts",
   "src/hooks/__tests__/useMeals.test.ts",
-  "src/hooks/__tests__/useNotifications.trust.test.tsx",
   "src/lib/__tests__/offlineQueue.test.ts",
   "src/lib/__tests__/pushNotifications.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
