@@ -105,6 +105,31 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
 /**
  * Suites that predate the seam and still carry their own inline SDK factory.
  * DELETE-ONLY: migrate a suite to `seedFirestore`, remove its line. Do not add.
+ *
+ * Not all of these are the same size of job, and the difference is not
+ * line count. Surveyed 2026-07-26 while migrating the first batch:
+ *
+ *   DEFERRED READS — `useRunningStats.accountSwitch`, `usePushSettings`,
+ *     `authProviderAccountSwitch`, `useProgramWriters`. These hold reads
+ *     open deliberately, because what they test is RACE ORDERING ("B's
+ *     later data wins even when A resolves last"). The fake resolves
+ *     immediately, so migrating them as-is would delete the very
+ *     assertion they exist for. They need `deferNextRead()` in the fake
+ *     FIRST — a real feature, not a test edit. Worth building: stale
+ *     account-A data landing under account B is a privacy leak, and the
+ *     fake would additionally make "A's rows" real per-uid documents
+ *     rather than the synthetic ones these currently fabricate.
+ *
+ *   BROAD SDK SURFACE — `socialApi`, `useFoodFavourites`, `offlineQueue`.
+ *     These reach for `writeBatch` / `increment` / `collectionGroup`.
+ *     Check the fake covers each before starting; extend it if not.
+ *
+ *   The rest are ordinary migrations: seed by path, assert on state.
+ *
+ * The trap in all of them is that a mechanical fixture rewrite can DELETE
+ * coverage while staying green — an `export.test.ts` block silently
+ * converted to an empty seed during this batch. Re-read the suite; a
+ * green run after a fixture rewrite proves less than usual.
  */
 const LEGACY_INLINE_MOCKS = [
   "src/components/social/__tests__/ProgressPhotos.test.tsx",
