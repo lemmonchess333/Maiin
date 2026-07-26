@@ -41,10 +41,7 @@ vi.mock("firebase/messaging", () => ({
   isSupported: async () => true,
   onMessage: () => () => {},
 }));
-vi.mock("firebase/firestore", () => ({
-  doc: (...a: unknown[]) => a,
-  getDoc: async () => ({ exists: () => false, data: () => ({}) }),
-}));
+vi.mock("firebase/firestore");
 vi.mock("@/lib/register-sw", () => ({
   getAppServiceWorkerRegistration: (...a: unknown[]) => h.getReg(...(a as [])),
 }));
@@ -53,7 +50,10 @@ vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
 }));
 
+import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+
 beforeEach(() => {
+  resetFirestore();
   vi.clearAllMocks();
   h.setUid("u1");
   h.getToken.mockResolvedValue("tok123");
@@ -74,6 +74,8 @@ beforeEach(() => {
 async function load() {
   return import("@/lib/pushNotifications");
 }
+
+const PUSH_SETTINGS = "users/u1/settings/push";
 
 describe("registerDeviceToken (packet 19 — server-owned)", () => {
   it("claims the token via the callable with the ownerUid + a fresh binding id", async () => {
@@ -173,5 +175,56 @@ describe("unregisterDeviceToken (packet 19 — fenced release)", () => {
       Object.assign(new Error("boom"), { code: "functions/internal" })
     );
     await expect(unregisterDeviceToken("u1")).rejects.toThrow("boom");
+  });
+});
+
+describe("refreshDeviceTokenForCurrentUser (consent-gated re-register)", () => {
+  /**
+   * Untested until 2026-07-26, and untestable by construction: this is the
+   * only consumer of the module's Firestore read, and the inline stub
+   * hard-coded `getDoc` to a non-existent snapshot. `DEFAULT_PUSH_CONSENT`
+   * has `enabled: false`, so the consent gate ALWAYS bailed — the register
+   * path below could never be reached whatever the suite did. Seeding a
+   * real settings doc is what makes both branches expressible.
+   */
+  it("re-registers when stored consent has push enabled", async () => {
+    seedFirestore({ [PUSH_SETTINGS]: { enabled: true } });
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing when stored consent has push disabled", async () => {
+    seedFirestore({ [PUSH_SETTINGS]: { enabled: false } });
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when no consent doc exists (default is OFF)", async () => {
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).not.toHaveBeenCalled();
+  });
+
+  it("never registers for a uid that is not the signed-in user", async () => {
+    // Consent is ON for u1, but u2 is signed in: registering would bind
+    // THIS device's token to u1 while u2 is the active account.
+    //
+    // SCOPE, measured rather than assumed. This is an END-TO-END property
+    // check; it does NOT pin either uid guard inside
+    // `refreshDeviceTokenForCurrentUser`. Mutation showed why: that
+    // function has two (`!isCurrentUser(uid)` on entry, and again after
+    // the consent read), and removing them ONE AT A TIME leaves this
+    // green because the other still returns — and removing BOTH is still
+    // green, because `registerDeviceToken` refuses on its own uid check.
+    // So the guarantee is real and defended three deep, but the
+    // enforcement this test observes lives downstream. Don't read a pass
+    // here as cover for editing the guards above.
+    seedFirestore({ [PUSH_SETTINGS]: { enabled: true } });
+    h.setUid("u2");
+    const { refreshDeviceTokenForCurrentUser } = await load();
+    await refreshDeviceTokenForCurrentUser("u1");
+    expect(h.claimFn).not.toHaveBeenCalled();
   });
 });
