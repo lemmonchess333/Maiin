@@ -95,10 +95,10 @@ describe("_hasStrictRaceMatch", () => {
     expect(_hasStrictRaceMatch([], 10000)).toBe(false);
   });
 
-  it("returns false when no saved run has actualTemplateId='race'", () => {
+  it("returns false when no saved run has a race-TYPE actualTemplateId", () => {
     expect(
       _hasStrictRaceMatch(
-        [{ actualTemplateId: "tempo", distance: 10000 }],
+        [{ actualTemplateId: "tempo_20", distance: 10000 }],
         10000
       )
     ).toBe(false);
@@ -108,20 +108,26 @@ describe("_hasStrictRaceMatch", () => {
     // 9 km on a 10K (90%) — DNF, sits as a Q5 extra rather than
     // claiming the slot.
     expect(
-      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 9000 }], 10000)
+      _hasStrictRaceMatch(
+        [{ actualTemplateId: "10k_race", distance: 9000 }],
+        10000
+      )
     ).toBe(false);
   });
 
   it("returns true at exactly 95% of planned (≥ boundary)", () => {
     expect(
-      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 9500 }], 10000)
+      _hasStrictRaceMatch(
+        [{ actualTemplateId: "10k_race", distance: 9500 }],
+        10000
+      )
     ).toBe(true);
   });
 
   it("returns true above 95%", () => {
     expect(
       _hasStrictRaceMatch(
-        [{ actualTemplateId: "race", distance: 10200 }],
+        [{ actualTemplateId: "10k_race", distance: 10200 }],
         10000
       )
     ).toBe(true);
@@ -132,12 +138,12 @@ describe("_hasStrictRaceMatch", () => {
     // race-templated run is accepted as a match to preserve the
     // client's lenient behavior in this edge.
     expect(
-      _hasStrictRaceMatch([{ actualTemplateId: "race", distance: 5000 }], 0)
+      _hasStrictRaceMatch([{ actualTemplateId: "10k_race", distance: 5000 }], 0)
     ).toBe(true);
   });
 
   it("returns false when the race-templated run lacks a distance field", () => {
-    expect(_hasStrictRaceMatch([{ actualTemplateId: "race" }], 10000)).toBe(
+    expect(_hasStrictRaceMatch([{ actualTemplateId: "10k_race" }], 10000)).toBe(
       false
     );
   });
@@ -150,7 +156,7 @@ describe("_hasStrictRaceMatch", () => {
       _hasStrictRaceMatch(
         [
           {
-            actualTemplateId: "race",
+            actualTemplateId: "10k_race",
             distance: 10500,
             isInvalid: true,
             savedAnyway: true,
@@ -268,7 +274,7 @@ describe("_decideReconciliationActions — L1 race-no-show", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState(),
-      [{ actualTemplateId: "race", distance: 10500 }],
+      [{ actualTemplateId: "10k_race", distance: 10500 }],
       FIXED_NOW_MS
     );
     expect(result.payload).toBeNull();
@@ -281,7 +287,7 @@ describe("_decideReconciliationActions — L1 race-no-show", () => {
     const result = _decideReconciliationActions(
       profile(),
       programState(),
-      [{ actualTemplateId: "race", distance: 9000 }],
+      [{ actualTemplateId: "10k_race", distance: 9000 }],
       FIXED_NOW_MS
     );
     expect(result.payload).not.toBeNull();

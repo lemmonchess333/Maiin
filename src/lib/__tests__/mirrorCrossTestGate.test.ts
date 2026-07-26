@@ -124,6 +124,11 @@ const PINNED: Record<string, string> = {
   // applyDeload (and the easierToday.deloadWeight weight rule).
   "functions/lib/deloadEngine.js":
     "src/features/program/__tests__/deloadEngine.cross.test.ts",
+  // Race-template ids — data-list mirror of the race-TYPE RUN_TEMPLATES
+  // entries. Same shape as spaceIds below: the server cannot import the
+  // catalogue, so the list is pinned set-equal instead.
+  "functions/lib/raceTemplateIds.js":
+    "src/lib/__tests__/raceTemplateIds.cross.test.ts",
   // Spc1 PR4 — data-list mirror (space ids), not a function mirror;
   // the set-equality parity pin lives in the spaceDefs config test.
   "functions/lib/spaceIds.js":
