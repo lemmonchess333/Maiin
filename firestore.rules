@@ -979,6 +979,16 @@ service cloud.firestore {
         match /likes/{likeUid} {
           allow read: if request.auth != null;
         }
+
+        // SOC-P2g — post comments. Same lockdown: signed-in READ (the
+        // comment sheet lists them), ALL writes server-only via the
+        // addSpacePostComment/deleteSpacePostComment callables, which
+        // flip the doc and the post's server-owned commentCount in one
+        // transaction. Author-only deletes + the report takedown path
+        // are enforced in the callables.
+        match /comments/{commentId} {
+          allow read: if request.auth != null;
+        }
       }
     }
 

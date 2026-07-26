@@ -41,7 +41,12 @@ export type NotificationType =
   | "circle_milestone"
   | "circle_needs_support"
   | "circle_joined"
-  | "circle_routine_shared";
+  | "circle_routine_shared"
+  // SOC-P2g — Space-post engagement: props / a comment on the
+  // recipient's space post. Rows deep-link to the SPACE (the post
+  // lives there), not the actor's profile.
+  | "space_post_like"
+  | "space_post_comment";
 
 export interface NotificationItem {
   id: string;
@@ -49,6 +54,8 @@ export interface NotificationItem {
   fromUserId: string;
   fromName?: string;
   activityId?: string;
+  /** SOC-P2g — present on space_post_* types; drives the space deep-link. */
+  spaceId?: string;
   message?: string;
   /** Resolved server timestamp; null only in the brief pending window. */
   createdAt: Date | null;
@@ -79,6 +86,8 @@ const VALID_TYPES: ReadonlySet<string> = new Set<NotificationType>([
   "circle_needs_support",
   "circle_joined",
   "circle_routine_shared",
+  "space_post_like",
+  "space_post_comment",
 ]);
 
 /** Pure: count items strictly newer than the last-seen instant. */
@@ -157,6 +166,8 @@ export function useNotifications() {
               typeof data.fromName === "string" ? data.fromName : undefined,
             activityId:
               typeof data.activityId === "string" ? data.activityId : undefined,
+            spaceId:
+              typeof data.spaceId === "string" ? data.spaceId : undefined,
             message:
               typeof data.message === "string" ? data.message : undefined,
             createdAt:
