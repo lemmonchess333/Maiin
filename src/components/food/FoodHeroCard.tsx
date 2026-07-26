@@ -309,7 +309,7 @@ export default function FoodHeroCard({
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(circle at 50% 47.5%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
+                  "radial-gradient(circle 92px at 50% 47.5%, var(--food-photo-ring-bed) 0%, var(--food-photo-ring-bed) 55%, var(--food-photo-ring-bed-soft) 78%, transparent 100%), radial-gradient(circle at 50% 47.5%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
               }}
             />
           </>
