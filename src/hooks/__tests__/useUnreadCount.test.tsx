@@ -133,14 +133,25 @@ describe("useUnreadCount — what it counts", () => {
 });
 
 describe("useUnreadCount — failure and scoping", () => {
-  it("a read error flags error rather than reporting all-caught-up", async () => {
+  it("a MID-SUBSCRIPTION error keeps the last known count", async () => {
     // Zeroing on a transient failure reads as "all caught up", which is
-    // a lie the user acts on.
-    failNextFirestore("onSnapshot", { path: FEED });
+    // a lie the user acts on — so the retained count is the assertion
+    // that matters, not merely the error flag.
+    //
+    // The failure is armed AFTER the first delivery: seeding re-fires
+    // listeners, so the second fire throws and lands in onError while
+    // the first one's count stands. Arming before render would fail the
+    // initial fire instead, leaving nothing to retain and quietly
+    // reducing this to "error was flagged".
     seedItems({ a: item(1, "a"), b: item(1, "b"), c: item(1, "c") });
-
     const { result } = renderHook(() => useUnreadCount());
+    await waitFor(() => expect(result.current.count).toBe(3));
+
+    failNextFirestore("onSnapshot", { path: FEED });
+    seedItems({ d: item(1, "d") }); // triggers the next fire → throws
+
     await waitFor(() => expect(result.current.error).toBe(true));
+    expect(result.current.count).toBe(3);
   });
 
   it("reads the user's OWN feed, not the global activities collection", async () => {
