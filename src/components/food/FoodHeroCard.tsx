@@ -295,7 +295,7 @@ export default function FoodHeroCard({
                  reads as an airy wash under DARK text; dark mode uses it
                  as-graded. Static filter — never animated (the
                  WKWebView rule is about animating filter values). */
-              style={isDark ? undefined : { filter: "brightness(1.55)" }}
+              style={isDark ? undefined : { filter: "brightness(1.35)" }}
               draggable={false}
             />
             {/* Scrim via the --food-photo-scrim CSS vars, which flip with
@@ -309,7 +309,7 @@ export default function FoodHeroCard({
               className="pointer-events-none absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(circle at 50% 38%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
+                  "radial-gradient(circle at 50% 47.5%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
               }}
             />
           </>
