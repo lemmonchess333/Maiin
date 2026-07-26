@@ -146,7 +146,6 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  * green run after a fixture rewrite proves less than usual.
  */
 const LEGACY_INLINE_MOCKS = [
-  "src/components/social/__tests__/ProgressPhotos.test.tsx",
   "src/features/partnerStreak/__tests__/partnerStreakApi.test.ts",
   "src/features/program/__tests__/useProgramWriters.test.ts",
   "src/hooks/__tests__/useClaimMap.test.ts",
