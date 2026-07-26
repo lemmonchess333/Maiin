@@ -157,6 +157,49 @@ describe("CalorieRing centre value — zero is not dimmed", () => {
   });
 });
 
+describe("CalorieRing halo bed — the wheel reads on any photo", () => {
+  /* Over a busy hero photo the 24%-tint track vanished and the arc
+     muddied into the food — which users read as "the ring is hard to
+     see" AND "the ring looks off-centre". The halo is a contrasting
+     under-stroke painted once beneath the whole wheel (the cartographic
+     outline technique): dark bed under the bright arc in dark mode,
+     light bed under the deep arc in light mode. */
+
+  function circles() {
+    const { container } = renderRing();
+    return Array.from(container.querySelectorAll("circle"));
+  }
+
+  it("paints a LIGHT halo under the wheel in light mode", () => {
+    const halo = circles().find(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
+    );
+    expect(halo).toBeTruthy();
+  });
+
+  it("paints a DARK halo under the wheel in dark mode", () => {
+    document.documentElement.classList.add("dark");
+    const halo = circles().find(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloDark
+    );
+    expect(halo).toBeTruthy();
+  });
+
+  it("the halo is wider than the stroke and painted FIRST (underneath)", () => {
+    const all = circles();
+    const haloIndex = all.findIndex(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
+    );
+    expect(haloIndex).toBe(0); // under everything — track, arc, overshoot
+    const halo = all[haloIndex];
+    const track = all[haloIndex + 1];
+    expect(Number(halo.getAttribute("stroke-width"))).toBeGreaterThan(
+      Number(track.getAttribute("stroke-width"))
+    );
+    expect(halo.getAttribute("fill")).toBe("none");
+  });
+});
+
 describe("CalorieRing mode chip — contrast maths", () => {
   // Card surfaces: --card is 0 0% 100% (light) and 240 4% 13% (dark).
   const LIGHT_CARD = "#FFFFFF";

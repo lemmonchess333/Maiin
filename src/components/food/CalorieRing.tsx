@@ -111,7 +111,18 @@ export default function CalorieRing({
      ring disappears entirely on a day with nothing logged. Dark mode
      therefore gets a stronger tint so the circle always reads as a
      shape, empty or not. */
-  const trackColor = isDark ? `${COLOR_RING}3D` : COLOR_TRACK;
+  const trackColor = isDark ? `${COLOR_RING}52` : COLOR_TRACK;
+
+  /* Halo bed for the whole wheel (photo legibility). Over busy food the
+     24%-tint track vanished while the arc muddied — which also READS as
+     the ring being off-centre. A soft contrasting under-stroke (dark
+     under the bright arc in dark mode, light under the deep arc in
+     light) gives the wheel its own bed on any image, the same way map
+     labels get a halo. Painted once under the track so track + arc +
+     overshoot all benefit. Static layer, never animated. */
+  const haloColor = isDark
+    ? THEME.calorieRing.haloDark
+    : THEME.calorieRing.haloLight;
 
   /* Zero is a real value, not a placeholder — it renders at full strength
      like any other. The centre number used to drop to 0.4 opacity at
@@ -264,6 +275,16 @@ export default function CalorieRing({
         </defs>
 
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
+          {/* Halo bed — see haloColor above. Wider than the stroke so a
+              sliver of contrast rims both edges of track and arc. */}
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={RADIUS}
+            fill="none"
+            stroke={haloColor}
+            strokeWidth={STROKE + 6}
+          />
           {/* Track — inset shadow filter makes it read as a recessed groove */}
           <circle
             cx={CENTER}
