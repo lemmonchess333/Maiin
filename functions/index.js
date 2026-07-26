@@ -5652,6 +5652,80 @@ exports.toggleKudosCallable = functions
     }
   });
 
+// SOC-P2c — space-post like toggle (props for Community Space posts).
+// Mirrors toggleKudosCallable: server-owned counter + sub-doc flipped in
+// one transaction (lib/spacePostEngagement.js), deletion actor-lock,
+// rate-limited. spaceId is validated against the known-space allowlist so
+// junk paths never reach Firestore. No notification in this slice — a
+// space_post_like tray type is a follow-up (the coach author id is not a
+// notifiable user anyway).
+const spacePostEngagement = require("./lib/spacePostEngagement");
+
+exports.toggleSpacePostLikeCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const spaceId = data && data.spaceId;
+    const postId = data && data.postId;
+    if (
+      typeof spaceId !== "string" ||
+      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      typeof postId !== "string" ||
+      !postId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId and postId required."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "toggleSpacePostLike",
+      30,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many updates. Slow down."
+      );
+    }
+    try {
+      return await spacePostEngagement.toggleSpacePostLike({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+    } catch (err) {
+      functions.logger.warn("toggleSpacePostLikeCallable.error", {
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        error: err && err.message,
+      });
+      const isAccessError =
+        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
+      throw new functions.https.HttpsError(
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This post is unavailable."
+          : (err && err.message) || "Like toggle failed."
+      );
+    }
+  });
+
 exports.addCommentCallable = functions
   .runWith(DEFAULT_HTTP_CAP)
   .https.onCall(async (data, context) => {

@@ -952,6 +952,16 @@ service cloud.firestore {
             resource.data.authorId == request.auth.uid
             || isOfficialUid()
           );
+
+        // SOC-P2c — post likes. Doc id IS the liker uid. Reads are
+        // open to signed-in users (the client needs "did I like this"
+        // + the post itself is auth-readable); ALL writes are
+        // server-only via toggleSpacePostLikeCallable, which flips
+        // this doc and the post's server-owned likeCount in one
+        // transaction (the activity-kudos lockdown, applied here).
+        match /likes/{likeUid} {
+          allow read: if request.auth != null;
+        }
       }
     }
 
