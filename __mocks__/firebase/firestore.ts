@@ -12,6 +12,7 @@
  */
 import {
   firestoreFake,
+  FakeFirestoreError,
   sentinels,
   FakeTimestamp,
   type CollectionRef,
@@ -98,6 +99,28 @@ export async function getDoc(ref: DocRef) {
 export async function getDocs(ref: CollectionRef) {
   firestoreFake.failIfArmed("getDocs", ref.path);
   return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
+}
+
+/**
+ * Cache-only read. The fake models a COLD cache: it always rejects with
+ * Firestore's `unavailable`, which is what the real SDK does for a
+ * document the client has never seen.
+ *
+ * That is the honest default rather than a convenience. Both app call
+ * sites (`auth.tsx` profile hydration, `useProgram`) use this for an
+ * instant first paint and then read the SERVER anyway — so a fake that
+ * answered from the store would let the cache branch satisfy the test
+ * and leave the server path, the one that must be correct, unexercised.
+ *
+ * A suite that needs the cache-HIT branch should say so by adding a
+ * priming hook here; nothing needs it yet, so it isn't built.
+ */
+export async function getDocFromCache(ref: DocRef) {
+  firestoreFake.failIfArmed("getDoc", ref.path);
+  throw new FakeFirestoreError(
+    "unavailable",
+    `[firestoreFake] cold cache: ${ref.path} is not cached`
+  );
 }
 
 export async function getCountFromServer(ref: CollectionRef) {
