@@ -513,6 +513,21 @@ export class FirestoreFake {
   /* ── listeners ── */
 
   addListener(l: Listener): () => void {
+    // Log the SUBSCRIPTION as a read, not each fire. Attaching a listener
+    // is what costs a document read; re-delivery on a local change is not
+    // a new billed read, so one entry per subscribe is the honest count.
+    //
+    // This was missing until 2026-07-26, which made `readLog()` /
+    // `readsAt()` quietly partial: they claimed to be the read log while
+    // omitting the most common read shape in this codebase. Nothing was
+    // wrong at the time — the one consumer asserting "this gated hook
+    // performs NO read" (useAdaptiveTdee) reads via `getDocs`, which was
+    // logged. But it is a latent vacuity: convert that hook to
+    // `onSnapshot` (the natural change for anything live-updating) and
+    // the assertion keeps passing while a listener is attached and
+    // billing. Logging here means the check fails instead, which is the
+    // whole point of asserting it.
+    this.reads.push({ op: "onSnapshot", path: l.ref.path });
     this.listeners.add(l);
     l.fire();
     return () => {
