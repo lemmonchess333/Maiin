@@ -128,13 +128,6 @@ export const THEME = {
        designed surface instead of going sheer (the #1728 failure mode,
        light-side). */
     chipBgLight: "#F2F1FD",
-    /* Ring halo — a soft contrasting bed drawn UNDER the whole wheel so
-       the track and arc read on ANY photo (the cartographic-outline
-       technique). Dark mode gets a dark bed under the bright arc; light
-       mode a light bed under the deep arc. Static layers, never
-       animated. */
-    haloDark: "rgba(0, 0, 0, 0.55)",
-    haloLight: "rgba(255, 255, 255, 0.85)",
   },
 
   // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —
