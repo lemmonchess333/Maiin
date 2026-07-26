@@ -6,28 +6,34 @@ import {
   flushQueue,
   safeSave,
 } from "../offlineQueue";
+import {
+  resetFirestore,
+  failNextFirestore,
+  unfiredFailures,
+  writeLog,
+} from "@/test/firestoreHarness";
 
-// Mock firebase/firestore
-let generatedIdCounter = 0;
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn((_db, path) => ({ __collection: true, path })),
-  // Two call shapes:
-  //   doc(db, path, id)   → an explicit ref (flush / setDoc paths)
-  //   doc(collectionRef)  → CORE-01 client-side id generation
-  doc: vi.fn((dbOrColl, path, id) => {
-    if (path === undefined) {
-      generatedIdCounter += 1;
-      return {
-        id: `gen-${generatedIdCounter}`,
-        path: `${(dbOrColl as { path?: string })?.path}/gen-${generatedIdCounter}`,
-      };
-    }
-    return { path: `${path}/${id}`, id };
-  }),
-  addDoc: vi.fn().mockResolvedValue({ id: "mock-id" }),
-  setDoc: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock("firebase/firestore");
 
+/** Ids the fake mints for `doc(collectionRef)` — the client-minted-id
+ *  shape these tests pin. */
+const GENERATED_ID = /^fake-id-\d+$/;
+
+/**
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ *
+ * The queue was filed under BROAD SDK SURFACE, but it only ever touched
+ * `collection` / `doc` / `addDoc` / `setDoc` — all long since covered.
+ * What the inline factory really carried was a hand-rolled id minter
+ * (`gen-N`) reimplementing the fake's `nextId()`, which is why the
+ * client-minted-id assertions were written against `/gen-\d+$/`: a
+ * pattern only the stub could ever produce.
+ *
+ * Failure injection moves to `failNextFirestore`, so a flush failure is
+ * raised by the same layer that stores the successes — the previous
+ * `mockRejectedValueOnce` could disagree with the store about what
+ * landed.
+ */
 // Mock errorReporting to avoid transitive Firebase dependency
 vi.mock("@/lib/errorReporting", () => ({
   captureError: vi.fn(),
@@ -41,6 +47,7 @@ const UID_B = "user-b";
 
 describe("offlineQueue", () => {
   beforeEach(() => {
+    resetFirestore();
     localStorage.clear();
   });
 
@@ -89,20 +96,20 @@ describe("offlineQueue", () => {
   });
 
   it("keeps failed items in queue after flush", async () => {
-    const { addDoc } = await import("firebase/firestore");
-    const mockAddDoc = vi.mocked(addDoc);
-
     queueWrite(UID_A, "users/abc/meals", { name: "chicken" });
     queueWrite(UID_A, "users/abc/meals", { name: "will-fail" });
 
-    // First call succeeds, second fails
-    mockAddDoc
-      .mockResolvedValueOnce({ id: "ok" } as never)
-      .mockRejectedValueOnce(new Error("network error"));
+    // One of the two writes fails. Which one is immaterial to the
+    // contract under test — a partial flush must retire exactly the
+    // items that landed and leave the rest queued.
+    failNextFirestore("addDoc", { path: "users/abc/meals" });
 
     const mockDb = {} as Parameters<typeof flushQueue>[0];
     const count = await flushQueue(mockDb, UID_A);
 
+    // Assert the injected failure actually fired — a path typo would
+    // otherwise leave this quietly exercising a clean flush.
+    expect(unfiredFailures()).toEqual([]);
     expect(count).toBe(1);
     expect(getQueueLength()).toBe(1);
   });
@@ -155,22 +162,18 @@ describe("offlineQueue", () => {
   // ── CORE-01: idempotent creates + accountable quota handling ──
   describe("CORE-01 idempotent creates", () => {
     it("safeSave online uses setDoc with a client-minted id, not addDoc", async () => {
-      const { setDoc, addDoc } = await import("firebase/firestore");
-      vi.mocked(setDoc).mockClear();
-      vi.mocked(addDoc).mockClear();
       vi.stubGlobal("navigator", { onLine: true });
       const mockDb = {} as Parameters<typeof safeSave>[0];
       await safeSave(mockDb, UID_A, "users/abc/meals", { name: "chicken" });
-      expect(addDoc).not.toHaveBeenCalled();
-      expect(setDoc).toHaveBeenCalledTimes(1);
-      // The ref carries a concrete generated id (…/gen-N), never …/undefined.
-      const ref = vi.mocked(setDoc).mock.calls[0][0] as { path: string };
-      expect(ref.path).toMatch(/\/gen-\d+$/);
+
+      const writes = writeLog();
+      expect(writes.map((w) => w.op)).toEqual(["set"]);
+      // The ref carries a concrete generated id, never …/undefined.
+      expect(writes[0].path).toMatch(/^users\/abc\/meals\/fake-id-\d+$/);
     });
 
     it("an ambiguous online failure queues the SAME id — a retry re-sets, never duplicates", async () => {
-      const { setDoc } = await import("firebase/firestore");
-      vi.mocked(setDoc).mockRejectedValueOnce(new Error("network lost"));
+      failNextFirestore("setDoc", { path: "users/abc/meals" });
       vi.stubGlobal("navigator", { onLine: true });
       const mockDb = {} as Parameters<typeof safeSave>[0];
       await safeSave(mockDb, UID_A, "users/abc/meals", { name: "rice" });
@@ -180,7 +183,7 @@ describe("offlineQueue", () => {
       expect(stored).toHaveLength(1);
       // A stable docId rode into the queue → the flush setDoc is idempotent.
       expect(typeof stored[0].docId).toBe("string");
-      expect(stored[0].docId).toMatch(/^gen-\d+$/);
+      expect(stored[0].docId).toMatch(GENERATED_ID);
       expect(stored[0].merge).toBeUndefined();
     });
 
@@ -191,7 +194,7 @@ describe("offlineQueue", () => {
       const stored = JSON.parse(
         localStorage.getItem("tropos_offline_queue") || "[]"
       );
-      expect(stored[0].docId).toMatch(/^gen-\d+$/);
+      expect(stored[0].docId).toMatch(GENERATED_ID);
     });
   });
 
