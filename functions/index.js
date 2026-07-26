@@ -1171,8 +1171,10 @@ exports.analyzeFood = functions
           res.status(400).json({ error: "No image provided" });
           return;
         }
-        // Cap input size to prevent token-cost inflation (mirrors the
-        // askGeminiText prompt cap). A normal compressed food photo is
+        // Cap input size to prevent token-cost inflation. (This used to
+        // read "mirrors the askGeminiText prompt cap"; that endpoint was
+        // retired — the cap stands on its own reasoning below.) A normal
+        // compressed food photo is
         // well under this ceiling; the limit blocks padding the payload
         // toward the 10MB request size purely to inflate Vertex token
         // cost within an otherwise-legitimate quota.
@@ -1355,8 +1357,9 @@ exports.analyzeFoodText = functions
           res.status(400).json({ error: "No text provided" });
           return;
         }
-        // Cap input size to prevent token-cost inflation (mirrors the
-        // askGeminiText prompt cap). A food description is short; this
+        // Cap input size to prevent token-cost inflation. (Formerly
+        // "mirrors the askGeminiText prompt cap" — that endpoint was
+        // retired.) A food description is short; this
         // blocks padding the payload toward the 10MB request size to
         // inflate Vertex token cost within an otherwise-legitimate quota.
         if (text.length > 2000) {
@@ -1444,111 +1447,6 @@ Food description: "${text.replace(/"/g, '\\"')}"`;
         res.status(500).json({ error: "Failed to analyze food description" });
       }
     });
-  });
-
-// ══════════════════════════════════════════════
-// GEMINI TEXT PROXY — keeps API key server-side
-// ══════════════════════════════════════════════
-
-exports.askGeminiText = functions
-  .runWith(DEFAULT_HTTP_CAP)
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
-    }
-    const uid = context.auth.uid;
-    // R1A-Deletion: actor lock. askGeminiText writes rateLimits/{uid}_askGemini.
-    await accountDeletionLocks.assertCallableActorNotDeleting(
-      admin.firestore(),
-      uid
-    );
-
-    // Rate limit: 5 calls per 60 seconds per user
-    const limited = await isRateLimited(uid, "askGemini", 5, 60_000);
-    if (limited) {
-      throw new functions.https.HttpsError(
-        "resource-exhausted",
-        "Rate limit reached. Please wait a moment before trying again."
-      );
-    }
-
-    const { prompt } = data;
-    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "prompt is required."
-      );
-    }
-
-    // Cap prompt length to prevent abuse
-    if (prompt.length > 5000) {
-      throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Prompt too long (max 5000 characters)."
-      );
-    }
-
-    try {
-      const projectId = process.env.GCLOUD_PROJECT;
-      const accessToken = await admin.credential
-        .applicationDefault()
-        .getAccessToken();
-
-      const url =
-        "https://us-central1-aiplatform.googleapis.com/v1/projects/" +
-        projectId +
-        "/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent";
-
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + accessToken.access_token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 1024,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error(
-          "askGeminiText: Vertex AI error:",
-          redactVertexResponse(result, { httpStatus: response.status })
-        );
-        throw new functions.https.HttpsError("internal", "AI service error");
-      }
-
-      let responseText = "";
-      if (
-        result.candidates &&
-        result.candidates[0] &&
-        result.candidates[0].content &&
-        result.candidates[0].content.parts
-      ) {
-        responseText = result.candidates[0].content.parts[0].text;
-      } else {
-        console.error(
-          "askGeminiText: unexpected response format:",
-          redactVertexResponse(result, { httpStatus: response.status })
-        );
-        throw new functions.https.HttpsError(
-          "internal",
-          "Unexpected AI response format"
-        );
-      }
-
-      return { text: responseText };
-    } catch (err) {
-      if (err instanceof functions.https.HttpsError) throw err;
-      console.error("askGeminiText error:", err.message);
-      throw new functions.https.HttpsError("internal", "AI request failed");
-    }
   });
 
 // ══════════════════════════════════════════════
@@ -5648,6 +5546,80 @@ exports.toggleKudosCallable = functions
         isAccessError
           ? "This activity is unavailable."
           : (err && err.message) || "Kudos toggle failed."
+      );
+    }
+  });
+
+// SOC-P2c — space-post like toggle (props for Community Space posts).
+// Mirrors toggleKudosCallable: server-owned counter + sub-doc flipped in
+// one transaction (lib/spacePostEngagement.js), deletion actor-lock,
+// rate-limited. spaceId is validated against the known-space allowlist so
+// junk paths never reach Firestore. No notification in this slice — a
+// space_post_like tray type is a follow-up (the coach author id is not a
+// notifiable user anyway).
+const spacePostEngagement = require("./lib/spacePostEngagement");
+
+exports.toggleSpacePostLikeCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const spaceId = data && data.spaceId;
+    const postId = data && data.postId;
+    if (
+      typeof spaceId !== "string" ||
+      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      typeof postId !== "string" ||
+      !postId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId and postId required."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "toggleSpacePostLike",
+      30,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many updates. Slow down."
+      );
+    }
+    try {
+      return await spacePostEngagement.toggleSpacePostLike({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+    } catch (err) {
+      functions.logger.warn("toggleSpacePostLikeCallable.error", {
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        error: err && err.message,
+      });
+      const isAccessError =
+        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
+      throw new functions.https.HttpsError(
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This post is unavailable."
+          : (err && err.message) || "Like toggle failed."
       );
     }
   });

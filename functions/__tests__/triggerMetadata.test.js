@@ -115,11 +115,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
-  askGeminiText: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: [],
-  },
   createCheckoutSession: {
     kind: "http",
     maxInstances: 100,
@@ -256,6 +251,12 @@ const EXPECTED = {
     secrets: [],
   },
   deleteCommentCallable: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  // SOC-P2c — space-post like toggle (server-owned counter).
+  toggleSpacePostLikeCallable: {
     kind: "callable",
     maxInstances: 100,
     secrets: [],

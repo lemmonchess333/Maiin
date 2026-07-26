@@ -134,7 +134,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/performanceInsights.ts:buildPerformanceInsight",
   "src/lib/runHeroState.ts:shouldShowHeroOverflow",
   "src/lib/runProgrammeViewModel.ts:buildHybridWeekItems",
-  "src/lib/socialGates.ts:isSoloUser",
   "src/lib/shareCard/instagramShare.ts:isInstagramShareAvailable",
   "src/lib/shareCard/statToggles.ts:isStatVisible",
   "src/lib/workoutBurn.ts:estimateRunBurn",

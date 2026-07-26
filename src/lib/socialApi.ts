@@ -215,6 +215,22 @@ export async function toggleKudos(
   return result.data.kudosed;
 }
 
+// SOC-P2c — space-post like toggle. Same lockdown as activity kudos:
+// likeCount is server-owned, so the flip routes through
+// `toggleSpacePostLikeCallable` (one transaction: likes/{uid} sub-doc +
+// counter). Returns the resulting liked state.
+export async function toggleSpacePostLike(
+  spaceId: string,
+  postId: string
+): Promise<boolean> {
+  const fn = httpsCallable<
+    { spaceId: string; postId: string },
+    { liked: boolean }
+  >(getFunctions(), "toggleSpacePostLikeCallable");
+  const result = await fn({ spaceId, postId });
+  return result.data.liked;
+}
+
 // `giveHighFive` is a thin wrapper around toggleKudos. The original
 // "give once, never undo" semantic was a courtesy; legitimate
 // double-tap UX is now toggling (matches every social app).
