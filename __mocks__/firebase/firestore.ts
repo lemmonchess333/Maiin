@@ -90,12 +90,14 @@ export function documentId(): string {
 
 export async function getDoc(ref: DocRef) {
   firestoreFake.failIfArmed("getDoc", ref.path);
-  return firestoreFake.docSnap(ref);
+  // Snapshot NOW, deliver when released — see `maybeDefer`. Pass-through
+  // unless the test called `deferReads()`.
+  return firestoreFake.maybeDefer(ref.path, firestoreFake.docSnap(ref));
 }
 
 export async function getDocs(ref: CollectionRef) {
   firestoreFake.failIfArmed("getDocs", ref.path);
-  return firestoreFake.querySnap(ref);
+  return firestoreFake.maybeDefer(ref.path, firestoreFake.querySnap(ref));
 }
 
 export async function getCountFromServer(ref: CollectionRef) {
