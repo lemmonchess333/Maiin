@@ -49,6 +49,9 @@ export default function SpacePostCard({
   accent,
   onRemoved,
   onShareTake,
+  liked = false,
+  likeDelta = 0,
+  onToggleLike,
 }: {
   spaceId: string;
   postId: string;
@@ -59,6 +62,12 @@ export default function SpacePostCard({
    *  opens the composer prefilled with the prompt title. Passed only
    *  where posting is possible (member on the space page). */
   onShareTake?: (promptTitle: string) => void;
+  /** SOC-P2c — viewer's like state + optimistic count delta + toggle.
+   *  When onToggleLike is absent the count renders read-only (the
+   *  pre-P2c behaviour). */
+  liked?: boolean;
+  likeDelta?: number;
+  onToggleLike?: () => void;
 }) {
   const { user } = useAuth();
   const { addBlocked } = useBlockedUsers();
@@ -298,25 +307,52 @@ export default function SpacePostCard({
           />
         )}
 
-        {/* Read-only engagement counts — the interactive like/comment
-            kit is a later callable-backed slice; zero counts render
-            nothing rather than dead buttons. */}
-        {((post.likeCount ?? 0) > 0 || (post.commentCount ?? 0) > 0) && (
-          <div className="flex items-center gap-4 pt-1 text-muted-foreground">
-            {(post.likeCount ?? 0) > 0 && (
-              <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
-                <Flame className="size-4" aria-hidden />
-                {post.likeCount}
-              </span>
-            )}
-            {(post.commentCount ?? 0) > 0 && (
-              <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
-                <MessageCircle className="size-4" aria-hidden />
-                {post.commentCount}
-              </span>
-            )}
-          </div>
-        )}
+        {/* Engagement row. SOC-P2c: the flame is a real toggle when the
+            page supplies onToggleLike (props for the post — the same
+            grammar as the feed's ActivityCard); the count is the stored
+            server-owned value plus this session's optimistic delta.
+            Comment counts stay read-only (comments are a later slice);
+            zero comment counts render nothing rather than dead chrome. */}
+        {(() => {
+          const displayLikeCount = Math.max(
+            0,
+            (post.likeCount ?? 0) + likeDelta
+          );
+          return (
+            <div className="flex items-center gap-4 pt-1 text-muted-foreground">
+              {onToggleLike ? (
+                <button
+                  type="button"
+                  onClick={onToggleLike}
+                  aria-label={liked ? "Remove props" : "Give props"}
+                  aria-pressed={liked}
+                  className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3 -m-3 active:scale-90 transition-transform"
+                  style={liked ? { color: THEME.running } : undefined}
+                >
+                  <Flame
+                    className="size-4"
+                    aria-hidden
+                    fill={liked ? "currentColor" : "none"}
+                  />
+                  {displayLikeCount > 0 ? displayLikeCount : ""}
+                </button>
+              ) : (
+                displayLikeCount > 0 && (
+                  <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
+                    <Flame className="size-4" aria-hidden />
+                    {displayLikeCount}
+                  </span>
+                )
+              )}
+              {(post.commentCount ?? 0) > 0 && (
+                <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
+                  <MessageCircle className="size-4" aria-hidden />
+                  {post.commentCount}
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* SOC-P2b — the coach prompt's reply affordance. Space posts
             have no comments yet, so answers arrive as REAL posts: this
