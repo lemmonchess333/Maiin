@@ -16,7 +16,9 @@ describe("SOCIAL_GATES thresholds (pinned to the researched values)", () => {
 });
 
 describe("shouldShowFollowingFeed", () => {
-  it("hidden below 3 follows, shown at/above", () => {
+  // SOC-P1b: the predicate now means "follow graph built" — it picks the
+  // progress row vs the standard empty state; it no longer hides the list.
+  it("graph reads as built at/above 3 follows", () => {
     expect(shouldShowFollowingFeed(0)).toBe(false);
     expect(shouldShowFollowingFeed(2)).toBe(false);
     expect(shouldShowFollowingFeed(3)).toBe(true);
@@ -48,5 +50,15 @@ describe("isSoloUser", () => {
   it("not solo once a partner bond exists", () => {
     expect(isSoloUser({ partnerCount: 1 })).toBe(false);
     expect(isSoloUser({ partnerCount: 2 })).toBe(false);
+  });
+});
+
+describe("shouldRenderFollowingList (SOC-P1b)", () => {
+  it("renders from the FIRST follow — no ≥3 hard gate", async () => {
+    const { shouldRenderFollowingList } = await import("../socialGates");
+    expect(shouldRenderFollowingList(0)).toBe(false);
+    expect(shouldRenderFollowingList(1)).toBe(true);
+    expect(shouldRenderFollowingList(2)).toBe(true);
+    expect(shouldRenderFollowingList(3)).toBe(true);
   });
 });
