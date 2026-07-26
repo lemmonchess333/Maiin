@@ -533,7 +533,11 @@ export interface SuggestedPerson {
   /** Uploaded avatar URL — threads through from `users/{uid}/public/profile`. */
   photoURL?: string;
   /** Short reason chip surfaced in the UI. */
-  reason: "recent_post";
+  reason: "recent_post" | "shared_space";
+  /** SOC-P2e — set when reason is "shared_space": the joined space this
+   *  candidate was found in. The UI resolves the display name via
+   *  spaceDefs (socialApi stays feature-import-free). */
+  sharedSpaceId?: string;
 }
 
 /**
@@ -554,9 +558,18 @@ export async function getSuggestedPeople(
   opts: {
     limitCount?: number;
     blockedUsers?: Set<string>;
+    /** SOC-P2e — the caller's joined space ids. Members of shared
+     *  spaces are the HIGHEST-priority candidates (Runna's context-
+     *  over-graph model: the graph grows FROM shared contexts), each
+     *  labelled with the space so the row can say "Also in Runners". */
+    joinedSpaceIds?: string[];
   } = {}
 ): Promise<SuggestedPerson[]> {
-  const { limitCount = 10, blockedUsers = new Set<string>() } = opts;
+  const {
+    limitCount = 10,
+    blockedUsers = new Set<string>(),
+    joinedSpaceIds = [],
+  } = opts;
   const excludeIds = new Set<string>([uid, ...blockedUsers]);
 
   // Exclude people we already follow — one-time read scoped to when
@@ -574,6 +587,43 @@ export async function getSuggestedPeople(
 
   // Build an ordered list of candidate UIDs with their reason.
   const candidates = new Map<string, SuggestedPerson>();
+
+  // Shared-space members first (SOC-P2e) — a person training in the
+  // same space is a far stronger follow candidate than a stranger who
+  // posted recently, and the label gives the row a REASON a user can
+  // feel ("Also in Runners"). Bounded: at most 4 spaces × 12 members,
+  // read only when the suggestion UI is actually open.
+  for (const spaceId of joinedSpaceIds.slice(0, 4)) {
+    if (candidates.size >= limitCount) break;
+    try {
+      const members = await getDocs(
+        query(collection(db, "spaces", spaceId, "members"), limit(12))
+      );
+      for (const d of members.docs) {
+        const memberUid = d.id;
+        if (excludeIds.has(memberUid)) continue;
+        if (candidates.has(memberUid)) continue;
+        const data = d.data() as {
+          displayName?: string;
+          photoURL?: string;
+        };
+        candidates.set(memberUid, {
+          uid: memberUid,
+          // Denormalised member identity pre-fills; the public-profile
+          // enrichment below still overrides with the fresh value.
+          displayName: data.displayName || "Athlete",
+          ...(data.photoURL ? { photoURL: data.photoURL } : {}),
+          reason: "shared_space",
+          sharedSpaceId: spaceId,
+        });
+        if (candidates.size >= limitCount) break;
+      }
+    } catch (e) {
+      captureError(e instanceof Error ? e : new Error(String(e)), "error", {
+        fn: "getSuggestedPeople.sharedSpaces",
+      });
+    }
+  }
 
   // Recent public posters — dedupe by authorId, keep the most recent.
   if (candidates.size < limitCount) {

@@ -18,7 +18,10 @@ import { logger } from "@/lib/logger";
  */
 export function useSuggestedPeople(
   active: boolean,
-  blockedUsers?: Set<string>
+  blockedUsers?: Set<string>,
+  /** SOC-P2e — joined space ids; shared-space members become the
+   *  highest-priority, context-labelled candidates. */
+  joinedSpaceIds?: string[]
 ) {
   const { user } = useAuth();
   const [people, setPeople] = useState<SuggestedPerson[]>([]);
@@ -32,6 +35,7 @@ export function useSuggestedPeople(
       const list = await getSuggestedPeople(user.uid, {
         limitCount: 10,
         blockedUsers,
+        joinedSpaceIds,
       });
       setPeople(list);
     } catch (err) {
@@ -42,7 +46,8 @@ export function useSuggestedPeople(
     }
     // `blockedUsers` is a Set — reference-identity stable across renders
     // when coming from `useBlockedUsers`, safe to depend on directly.
-  }, [user, blockedUsers]);
+    // joinedSpaceIds arrives as a memoised array from the caller.
+  }, [user, blockedUsers, joinedSpaceIds]);
 
   useEffect(() => {
     // When the hook goes inactive, drop the cached list so the UI
