@@ -120,6 +120,13 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  *     fake would additionally make "A's rows" real per-uid documents
  *     rather than the synthetic ones these currently fabricate.
  *
+ *     DONE for the first three: `deferReads`/`pendingReads`/`releaseRead`
+ *     shipped, and `authProviderAccountSwitch` migrated 2026-07-26. That
+ *     one also needed `rejectRead` — a held read that fails LATE, which
+ *     `failNextFirestore` cannot express because it fires at issue time.
+ *     Worth knowing before `useProgramWriters`: the surviving entry may
+ *     need the same, and the capability now exists.
+ *
  *   BROAD SDK SURFACE — `socialApi`, `useFoodFavourites`, `offlineQueue`.
  *     These reach for `writeBatch` / `increment` / `collectionGroup`.
  *     Check the fake covers each before starting; extend it if not.
@@ -142,7 +149,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useHomeData.test.ts",
   "src/hooks/__tests__/useMeals.test.ts",
   "src/hooks/__tests__/useNotifications.trust.test.tsx",
-  "src/lib/__tests__/authProviderAccountSwitch.test.tsx",
   "src/lib/__tests__/offlineQueue.test.ts",
   "src/lib/__tests__/pushNotifications.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
