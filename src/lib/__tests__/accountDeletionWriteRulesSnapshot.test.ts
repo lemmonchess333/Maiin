@@ -147,6 +147,13 @@ const EXPLICITLY_EXEMPT = [
  * match block.
  */
 const INFRASTRUCTURE_AND_READ_ONLY = [
+  // SOC-P2c — space-post likes. Client READ only ("did I like this");
+  // ALL writes are server-only via toggleSpacePostLikeCallable, whose
+  // deletion actor-lock (assertCallableActorNotDeleting) covers the
+  // freeze this snapshot exists to police. Like docs left by a deleted
+  // account are anonymous uid-keyed marks with a createdAt — swept-or-
+  // orphaned posture matches kudos (collectionGroup sweep follow-up).
+  "match /likes/{likeUid}",
   "match /goalSpaces/{spaceId}",
   "match /goalSpaces/{spaceId}/members/{memberUid}",
   // Short invite-code → spaceId lookup (bearer index). Admin SDK writes

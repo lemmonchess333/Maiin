@@ -52,6 +52,7 @@ import {
 } from "@/features/spaces/raceEventOverrides";
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
+import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
 import type { SpacePostDoc } from "@/features/spaces/spaceTypes";
 
@@ -191,11 +192,16 @@ type PostItem = SpacePostDoc & { id: string };
 export default function Space() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const def = spaceId ? spaceDef(spaceId) : undefined;
   const { joined, memberCount, busy, join, leave } =
     useSpaceMembership(spaceId);
   const { blocked: blockedUsers } = useBlockedUsers();
   const [posts, setPosts] = useState<PostItem[] | null>(null);
+  /* SOC-P2c — viewer like state for the rendered posts (bounded batch
+     read + optimistic toggle; counts stay server-owned). */
+  const postIds = useMemo(() => (posts ?? []).map((p) => p.id), [posts]);
+  const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
   const [composerOpen, setComposerOpen] = useState(false);
   /* SOC-P2b — a coach prompt's "Share your take" seeds the composer
      title. Cleared when the composer closes so a later manual post
@@ -459,6 +465,11 @@ export default function Space() {
                         setComposerOpen(true);
                       }
                     : undefined
+                }
+                liked={spaceLikes.liked.has(post.id)}
+                likeDelta={spaceLikes.deltas[post.id] ?? 0}
+                onToggleLike={
+                  user ? () => spaceLikes.toggle(post.id) : undefined
                 }
               />
             ))
