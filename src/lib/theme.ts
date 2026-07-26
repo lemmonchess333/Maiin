@@ -133,7 +133,7 @@ export const THEME = {
        technique). Dark mode gets a dark bed under the bright arc; light
        mode a light bed under the deep arc. Static layers, never
        animated. */
-    haloDark: "rgba(0, 0, 0, 0.45)",
+    haloDark: "rgba(0, 0, 0, 0.55)",
     haloLight: "rgba(255, 255, 255, 0.85)",
   },
 
