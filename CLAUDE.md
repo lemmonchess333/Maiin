@@ -217,7 +217,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 ## Data Model
 
-- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`
+- **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only)
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
@@ -769,6 +769,18 @@ Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `app
 - [ ] **Same-day re-log is a no-op write.** Log a SECOND workout as A on the same day; confirm the bond doc's `updateTime` does NOT change (the engine's MAX-idempotency + the changed-guard skip the write).
 - [ ] **Ineligible run doesn't count.** Save an `isInvalid` / `savedAnyway` / sub-threshold run; confirm the bond's `lastActive` does NOT update (gated on the same eligibility predicate as challenges).
 - [ ] **Freeze ledger uses Monday weeks.** Over a gap that consumes a freeze, confirm `freezeWeek.<uid>` is the Monday-anchored week key (e.g. a Friday log stores that week's Monday), NOT a Sunday — proves the mirror's `weekKey` (not the Sunday `getWeekKey`) is the one that ran.
+
+### Social context arc — coach prompts + space engagement (2026-07-26, PRs #1776-#1793)
+
+Affects: `functions/lib/coachPrompts.js` + `weeklyCoachPrompts` (scheduled Mon 06:00 UTC), `functions/lib/spacePostEngagement.js` + three callables (`toggleSpacePostLikeCallable`, `addSpacePostCommentCallable`, `deleteSpacePostCommentCallable`), firestore.rules (space likes/comments read blocks, public-profile `trainingForSpaceId` value gate). Eighteen PRs shipped in one day from a design-panel roadmap (Runna's context-over-graph model); client behaviour is test-pinned, but the server half needs the standard deploy proofs.
+
+- [ ] **Deployed-source spot-check (do first).** Console → `weeklyCoachPrompts` source contains `require("./lib/coachPrompts")`; `toggleSpacePostLikeCallable` source contains `spacePostEngagement`. All were `.js` changes so the bundle-hash dedup shouldn't bite, but CI-green ≠ uploaded (the standing gotcha).
+- [ ] **First Monday firing (04:00-07:00 UTC window).** Logs show `weeklyCoachPrompts: starting` → `done — spaces=20, created=20, alreadyExisted=0`. Spot-check one interest space and one race space in the app: a "Tropos Coach" post (purple Coach badge, Sparkles tile) dated Monday, with "Share your take" opening the composer prefilled `Re: <title>`. Week 2: `created=20` again with DIFFERENT prompts (rotation), never duplicates (`alreadyExisted` counts a retried run, not a normal one).
+- [ ] **Like round-trip on device.** Tap the flame on a space post → fills coral + count bumps instantly; kill the app, reopen → state persisted (server txn landed). Re-tap → count returns. A second account liking YOUR post lands a coral `space_post_like` tray row that deep-links to the space.
+- [ ] **Comment round-trip on device.** Comment on another account's post → author gets the `space_post_comment` tray row → tapping it opens the space. Delete your own comment → count decrements. Confirm a comment on a COACH post produces NO notification (the coach isn't a notifiable user — check logs stay clean of `notification_failed`).
+- [ ] **Race identity opt-in.** With a race goal set, the bound race space shows the "Show on your profile" toggle (and ONLY there — other race spaces must not). Toggle on → your profile shows "Training for {race} · N wks" in coral, linking to the space. Toggle off → chip gone. After race day passes, the chip must disappear ON ITS OWN (display gate) even if the toggle was left on.
+- [ ] **Communities feed source.** Feed → source sheet → "My communities": joined-space posts newest-first under space-name eyebrows; empty states are the join prompt (no spaces) or the quiet-week line (spaces joined, nothing posted) — never a blank column. Pull-to-refresh refetches this stream while active.
+- [ ] **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.
 
 ### Global hybrid challenge + hybrid_score sync (SOCIAL S4 Soc8, PR2)
 
