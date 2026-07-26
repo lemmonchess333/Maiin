@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   collection,
   query,
@@ -333,4 +333,30 @@ export function useChallenges() {
      *  via the myProgress dependency) — the pull-to-refresh handle. */
     refreshProgress: loadMyProgress,
   };
+}
+
+/* Auto-enrolment (SOC-P1a). Weekly Warrior set the precedent: a
+   challenge every user is honestly IN from day one beats a "0 joined"
+   join-gate no launch user will ever tap first. The global monthly
+   hybrid challenge is the second enrolee — it is the solo-first anchor
+   (Soc8) and the card that greets every cold-start user.
+
+   Safe to call from multiple mounted surfaces at once: joinChallenge
+   reads the participant doc before writing, the doc id is the uid (a
+   concurrent second set is an update, not a create), and
+   participantCount is server-owned via the participant onCreate/onDelete
+   triggers — no double count is possible. The per-mount ref only stops
+   repeat attempts from the same surface; cross-month rollovers (new
+   challenge id) re-arm it. */
+export function useAutoJoinChallenge(
+  challenge: Challenge | undefined,
+  joined: boolean,
+  joinChallenge: (id: string) => Promise<void>
+) {
+  const firedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!challenge || joined || firedForRef.current === challenge.id) return;
+    firedForRef.current = challenge.id;
+    joinChallenge(challenge.id).catch(() => {});
+  }, [challenge, joined, joinChallenge]);
 }

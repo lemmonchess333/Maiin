@@ -27,7 +27,13 @@ import { Spinner } from "@/components/ui/Spinner";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
 import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
-import { SOCIAL_GATES } from "@/lib/socialGates";
+import WeekOpenerCard from "@/components/social/WeekOpenerCard";
+import { useNavigate } from "react-router-dom";
+import {
+  getPersonalTrajectory,
+  type PersonalTrajectory,
+} from "@/lib/personalTrajectory";
+import { SOCIAL_GATES, shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
@@ -199,6 +205,49 @@ export default function FeedView({
     );
   };
 
+  /* SOC-P1c — the Your-week slot's data. FeedView owns the
+     getPersonalTrajectory fetch (lifted out of TrajectoryCard — same
+     one-shot bounded read, fired under exactly the conditions the
+     trajectory card used to render: following sub-tab, thin graph) so a
+     zero-session week can collapse the recap + trajectory pair into one
+     compact WeekOpenerCard instead of stacking a dead "Build recap"
+     button on a 0-pts grid. */
+  const navigate = useNavigate();
+  const trajectoryEnabled =
+    active &&
+    feedSubTab === "following" &&
+    !showSoloFeed &&
+    followingCount !== null &&
+    followingCount < 2;
+  const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
+  const [trajectoryLoading, setTrajectoryLoading] = useState(true);
+  useEffect(() => {
+    if (!trajectoryEnabled || !user) return;
+    let cancelled = false;
+    setTrajectoryLoading(true);
+    getPersonalTrajectory(user.uid)
+      .then((d) => {
+        if (!cancelled) setTrajectory(d);
+      })
+      .catch(() => {
+        if (!cancelled) setTrajectory(null);
+      })
+      .finally(() => {
+        if (!cancelled) setTrajectoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [trajectoryEnabled, user]);
+  /* The week is "open" (no sessions yet) only once the data says so —
+     never while loading, and never for leaderboard-tier users whose
+     slot doesn't fetch trajectory at all. */
+  const weekOpen =
+    trajectoryEnabled &&
+    !trajectoryLoading &&
+    trajectory !== null &&
+    trajectory.thisWeek.score === 0;
+
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
   const [sourceMenuOpen, setSourceMenuOpen] = useState(false);
@@ -214,14 +263,19 @@ export default function FeedView({
     onOverlayChange(false);
   };
 
-  // SOCIAL S4 — the following ACTIVITY feed (the list of activities from
-  // people you follow) only renders at ≥3 follows; below that it's a
-  // sparse list that reads as broken, so we show the leaderboard/
-  // trajectory slot instead (never an empty feed). Explore is unaffected.
+  // SOC-P1b — the following ACTIVITY feed renders from the FIRST follow.
+  // The old ≥3-follow hard gate hid real activity from a user's first
+  // two follows: they followed someone, that person trained, and the
+  // feed still read "Follow 3+ to unlock" — a locked door in front of
+  // content that already existed. Below 3 follows the list is sparse,
+  // so the trajectory slot above keeps the surface weighted and the
+  // progress row (below) frames the graph-building step honestly.
+  // 0 follows still routes to SoloFirstFeed (Soc8 lock, unchanged).
   const showActivityList =
     !showSoloFeed &&
     (feedSubTab === "explore" ||
-      (feedSubTab === "following" && followingFeedUnlocked));
+      (feedSubTab === "following" &&
+        shouldRenderFollowingList(followingCount ?? 0)));
 
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -368,8 +422,21 @@ export default function FeedView({
 
             {/* Weekly recap share entry — established users only
                 (SoloFirstFeed carries its own share card for the
-                cold-start stack). Renders nothing on a zero week. */}
-            {!showSoloFeed && <WeeklyRecapCard />}
+                cold-start stack). SOC-P1c: on a zero-session week the
+                "Build recap" button is a dead control (nothing to
+                build), so the slot renders WeekOpenerCard instead —
+                one compact line merging recap + trajectory: the week
+                is open, the number to beat, and the action (train).
+                Both full cards return the moment a session exists. */}
+            {!showSoloFeed &&
+              (weekOpen ? (
+                <WeekOpenerCard
+                  lastWeekScore={trajectory?.lastWeek.score ?? 0}
+                  onStartTraining={() => navigate("/program")}
+                />
+              ) : (
+                <WeeklyRecapCard />
+              ))}
 
             {/* Spc1g — Suggested Spaces reach people who never
                 open the Community tab. Compact cards, joined
@@ -398,8 +465,15 @@ export default function FeedView({
                       challenge="weekly_hybrid"
                       onViewFull={openFullLeaderboard}
                     />
-                  ) : (
-                    <TrajectoryCard />
+                  ) : weekOpen ? null : (
+                    /* SOC-P1c: on an open (zero-session) week the
+                       WeekOpenerCard at the top of the feed already
+                       covers this slot — rendering the 0-pts grid too
+                       would put the wall of zeros right back. */
+                    <TrajectoryCard
+                      data={trajectory}
+                      loading={trajectoryLoading}
+                    />
                   ))}
                 {/* Trajectory pairing: when the slot is the solo
                   trajectory card (thin social graph), follow it with
@@ -417,8 +491,15 @@ export default function FeedView({
                         <Users size={16} style={{ color: THEME.brand }} />
                       </div>
                       <p className="text-small text-muted-foreground leading-snug">
-                        Follow {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}+ people
-                        to unlock your activity feed
+                        {/* SOC-P1b: progress framing, not a locked door —
+                            the feed already renders below the threshold;
+                            this row just names the graph-building step. */}
+                        Following{" "}
+                        <span className="font-mono tabular-nums">
+                          {followingCount ?? 0} of{" "}
+                          {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}
+                        </span>{" "}
+                        — your feed fills as you follow more
                       </p>
                     </div>
                     <button
@@ -567,6 +648,11 @@ export default function FeedView({
             {!activeFeed.loading &&
               activeFeed.items.length === 0 &&
               showActivityList &&
+              // SOC-P1b: below the follow threshold the progress row above
+              // already frames the empty list AND carries the Find-people
+              // CTA — rendering the empty state too would stack two
+              // near-identical rows. It returns once the graph is built.
+              !(feedSubTab === "following" && !followingFeedUnlocked) &&
               !(feedSubTab === "explore" && exploreFeed.error) && (
                 <div className="mt-6" aria-live="polite">
                   {feedSubTab === "explore" ? (
