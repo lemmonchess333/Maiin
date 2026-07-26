@@ -1,6 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useChallenges, getTimeRemaining } from "./useChallenges";
+import {
+  useChallenges,
+  useAutoJoinChallenge,
+  getTimeRemaining,
+} from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
 import { ChallengeCard } from "./ChallengeCard";
 import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
@@ -36,7 +40,6 @@ export function ChallengeList({
   } = useChallenges();
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   const [rankingsLoading, setRankingsLoading] = useState(true);
-  const autoJoinedRef = useRef(false);
 
   // Find the weekly warrior challenge
   const weeklyCh = challenges.find(
@@ -44,12 +47,18 @@ export function ChallengeList({
   );
   const isJoined = weeklyCh ? !!myProgress[weeklyCh.id] : false;
 
-  // Auto-join weekly warrior
-  useEffect(() => {
-    if (!weeklyCh || isJoined || autoJoinedRef.current || !user) return;
-    autoJoinedRef.current = true;
-    joinChallenge(weeklyCh.id).catch(() => {});
-  }, [weeklyCh, isJoined, user, joinChallenge]);
+  // Auto-enrolment (SOC-P1a): Weekly Warrior (the original precedent) and
+  // the global monthly hybrid — both are challenges every user is honestly
+  // IN from day one, so their cards never read as a locked "0 joined" door.
+  const hybridCh = challenges.find(
+    (c) => c.id.startsWith("global-monthly-") && c.metric === "hybrid_score"
+  );
+  useAutoJoinChallenge(user ? weeklyCh : undefined, isJoined, joinChallenge);
+  useAutoJoinChallenge(
+    user ? hybridCh : undefined,
+    hybridCh ? !!myProgress[hybridCh.id] : false,
+    joinChallenge
+  );
 
   // Build friend workout rankings for the weekly card
   useEffect(() => {
