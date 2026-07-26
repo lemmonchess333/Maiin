@@ -153,6 +153,55 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 
+  it("owner opts into a race identity (known space id) — succeeds", async () => {
+    // SOC-P2f — trainingForSpaceId is the self-declared "Training for
+    // {race}" public identity. Rules gate the VALUE to null or a known
+    // space id; the client chip gates display to upcoming race-kind defs.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { trainingForSpaceId: "london-marathon" },
+        { merge: true }
+      )
+    );
+  });
+
+  it("owner opts back out (null) — succeeds", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { trainingForSpaceId: null },
+        { merge: true }
+      )
+    );
+  });
+
+  it("rejects an arbitrary string as a race identity", async () => {
+    // The closed-vocabulary gate: a public cross-user-readable field
+    // must not carry free text.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { trainingForSpaceId: "my totally real marathon" },
+        { merge: true }
+      )
+    );
+  });
+
+  it("rejects a non-string race identity", async () => {
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        { trainingForSpaceId: 42 },
+        { merge: true }
+      )
+    );
+  });
+
   it("owner writes a subset (just badgeSummary) — succeeds", async () => {
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(
