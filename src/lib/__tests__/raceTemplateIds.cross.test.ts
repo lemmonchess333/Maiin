@@ -19,19 +19,25 @@
  * never schedule as a race.
  */
 import { describe, it, expect } from "vitest";
+import { createRequire } from "node:module";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const {
-  RACE_TEMPLATE_IDS,
-  isRaceTemplateId,
-} = require("../../../functions/lib/raceTemplateIds");
+
+// Same shape as `runEligibility.cross.test.ts`: the server module is
+// CommonJS, and `createRequire` reaches it without a lint suppression
+// that prettier can reformat away from the line it suppresses.
+const require = createRequire(import.meta.url);
+const { RACE_TEMPLATE_IDS, isRaceTemplateId } =
+  require("../../../functions/lib/raceTemplateIds") as {
+    RACE_TEMPLATE_IDS: readonly string[];
+    isRaceTemplateId: (id: string | undefined) => boolean;
+  };
 
 describe("race-template id mirror", () => {
   it("matches the race-TYPE entries in RUN_TEMPLATES exactly", () => {
     const client = RUN_TEMPLATES.filter((t) => t.type === "race")
       .map((t) => t.id)
       .sort();
-    const server = [...(RACE_TEMPLATE_IDS as string[])].sort();
+    const server = [...RACE_TEMPLATE_IDS].sort();
     expect(server).toEqual(client);
   });
 
@@ -39,11 +45,11 @@ describe("race-template id mirror", () => {
     // If RUN_TEMPLATES ever lost its race entries, both sides would be []
     // and the test above would still pass while the server accepted
     // nothing. Guard the floor.
-    expect((RACE_TEMPLATE_IDS as string[]).length).toBeGreaterThan(0);
+    expect(RACE_TEMPLATE_IDS.length).toBeGreaterThan(0);
   });
 
   it("recognises every real id and rejects the impossible literal", () => {
-    for (const id of RACE_TEMPLATE_IDS as string[]) {
+    for (const id of RACE_TEMPLATE_IDS) {
       expect(isRaceTemplateId(id), `id ${id}`).toBe(true);
     }
     // The value that shipped in the server's accept fixture for months.
