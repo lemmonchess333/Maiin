@@ -89,6 +89,57 @@ describe("useClaimMap", () => {
     mockProgramState = null;
   });
 
+  /**
+   * Race day must complete on a race-templated run REGARDLESS of pace.
+   * You can pace a friend, have a bad day, or run it as a fun run — it is
+   * still the race, and gating on pace is how a genuine race day gets
+   * left incomplete.
+   *
+   * This went unreachable in two independent ways at once, and the
+   * fixtures below are deliberately production-shaped so neither can come
+   * back:
+   *   - `runDay.templateId` is `5k_race`, never the literal "race";
+   *   - the saved doc carries `actualTemplateId`, NOT a plain `templateId`
+   *     (RunSummary writes no such field), so the adapter's value was
+   *     undefined for every real run.
+   * An easy `avgPace` is used so the short-circuit is the ONLY thing that
+   * can complete the slot — with it broken, the pace-bucket check rejects.
+   */
+  it("completes race day on a race-templated run at an EASY pace", () => {
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-race",
+          date: "2026-05-26",
+          dayIndex: 2,
+          templateId: "5k_race", // real id — never the literal "race"
+          type: "race",
+          status: "planned",
+        },
+      ],
+    };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    act(() =>
+      pumpSnapshot([
+        {
+          id: "run-race",
+          data: {
+            date: "2026-05-26",
+            distance: 5000,
+            duration: 1800,
+            avgPace: 360, // 6:00/km — "easy" bucket, not quality
+            actualTemplateId: "5k_race", // the field docs actually carry
+            completedAt: { seconds: 1780000000 },
+          },
+        },
+      ])
+    );
+
+    expect(result.current.claimMap.get("rd-race")?.claimedSavedRunId).toBe(
+      "run-race"
+    );
+  });
+
   it("returns empty result and skips subscription when there is no user", () => {
     currentUser = null;
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
