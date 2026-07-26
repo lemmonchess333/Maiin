@@ -1,4 +1,4 @@
-import { useEffect, Suspense } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import type { MutableRefObject } from "react";
 import CirclesSection from "@/components/social/CirclesSection";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
@@ -49,18 +49,29 @@ export default function CommunityView({
   openPeople,
   refreshRef,
 }: CommunityViewProps) {
-  /* Publish the refresh into the shell's ref (effect-time sync, same
-     latest-ref pattern as FeedView). Circles/Spaces/Challenges manage
-     their own data lifecycles; the pull gesture simply resolves. */
+  /* SOC-P1d: pull-to-refresh on Together used to publish a literal
+     no-op — the spinner animated and nothing refetched, a control that
+     taught users the UI lies. The sections now publish their real
+     handles (circles reload with its generation guard; challenge
+     progress refetch, which cascades the leaderboards) and the shell's
+     pull awaits both. Challenge DOCS and space membership are live
+     subscriptions already — nothing to refetch there. */
+  const circlesRefreshRef = useRef<(() => Promise<void>) | null>(null);
+  const challengesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
-    refreshRef.current = async () => {};
+    refreshRef.current = async () => {
+      await Promise.all([
+        circlesRefreshRef.current?.(),
+        challengesRefreshRef.current?.(),
+      ]);
+    };
   }, [refreshRef]);
 
   if (!active || chromeHidden) return null;
 
   return (
     <section aria-label="Community" className="space-y-6">
-      {uid && <CirclesSection uid={uid} />}
+      {uid && <CirclesSection uid={uid} refreshRef={circlesRefreshRef} />}
 
       <SpacesDirectory />
 
@@ -77,7 +88,10 @@ export default function CommunityView({
           />
         }
       >
-        <ChallengeList onFindFriends={openPeople} />
+        <ChallengeList
+          onFindFriends={openPeople}
+          refreshRef={challengesRefreshRef}
+        />
       </Suspense>
     </section>
   );
