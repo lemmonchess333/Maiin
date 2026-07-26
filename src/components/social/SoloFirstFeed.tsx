@@ -1,7 +1,10 @@
 import { useMemo, useState } from "react";
 import { Users, Dumbbell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useChallenges } from "@/features/challenges/useChallenges";
+import {
+  useChallenges,
+  useAutoJoinChallenge,
+} from "@/features/challenges/useChallenges";
 import { ChallengeCard } from "@/features/challenges/ChallengeCard";
 import PartnerStreakHero from "@/features/partnerStreak/PartnerStreakHero";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
@@ -51,6 +54,15 @@ export default function SoloFirstFeed({
   const globalChallenge = useMemo(
     () => challenges.find((c) => c.id.startsWith("global-monthly-")),
     [challenges]
+  );
+
+  // SOC-P1a: the solo-first anchor is a challenge the user is honestly IN
+  // from day one (Weekly Warrior precedent) — its card greets a cold-start
+  // user as "You're in", never as a "0 joined" join-gate.
+  useAutoJoinChallenge(
+    globalChallenge,
+    globalChallenge ? !!myProgress[globalChallenge.id] : false,
+    joinChallenge
   );
 
   // Preload the share card from the latest logged workout (volume summed
