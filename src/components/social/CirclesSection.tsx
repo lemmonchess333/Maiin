@@ -30,7 +30,7 @@
  * create sheet opens prefilled.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Copy, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -213,6 +213,7 @@ export type CirclesSectionState = "loading" | "none" | "solo" | "live";
 export default function CirclesSection({
   uid,
   onStateChange,
+  refreshRef,
 }: {
   uid: string;
   /** SOC-P1e: reports whether the user has a LIVE (multi-member) circle,
@@ -222,6 +223,10 @@ export default function CirclesSection({
    *  A failed load reports "live" so the retry card keeps the lead
    *  position rather than being buried by an error. */
   onStateChange?: (state: CirclesSectionState) => void;
+  /** SOC-P1d: CommunityView's pull-to-refresh awaits this section's real
+   *  reload (published effect-time, same latest-ref pattern as the feed).
+   *  Optional so other mounts don't need to care. */
+  refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
 }) {
   const {
     loading,
@@ -249,6 +254,15 @@ export default function CirclesSection({
       onStateChange("live");
     else onStateChange("solo");
   }, [onStateChange, loading, loadFailed, circles]);
+
+  /* SOC-P1d: publish the real reload for the shell's pull-to-refresh
+     (effect-time sync — latest-ref pattern). reload carries its own
+     generation guard (CIRCLE-INDEX-TRUST-01), so an overlapping pull
+     can't overwrite newer state. */
+  useEffect(() => {
+    if (!refreshRef) return;
+    refreshRef.current = reload;
+  }, [refreshRef, reload]);
 
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();

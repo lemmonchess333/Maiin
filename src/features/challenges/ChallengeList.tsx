@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useChallenges,
@@ -24,8 +24,12 @@ interface EnrichedEntry extends LeaderboardEntry {
 
 export function ChallengeList({
   onFindFriends,
+  refreshRef,
 }: {
   onFindFriends?: () => void;
+  /** SOC-P1d: CommunityView's pull-to-refresh awaits this section's
+   *  progress refetch (challenge docs are already a live subscription). */
+  refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
 }) {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -39,7 +43,16 @@ export function ChallengeList({
     loading,
     joinChallenge,
     leaveChallenge,
+    refreshProgress,
   } = useChallenges();
+
+  /* SOC-P1d: publish the progress refetch for the shell's pull-to-refresh
+     (effect-time sync — latest-ref pattern). */
+  useEffect(() => {
+    if (!refreshRef) return;
+    refreshRef.current = refreshProgress;
+  }, [refreshRef, refreshProgress]);
+
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
   // SOC-P1e: not-joined challenges collapse behind a disclosure row.
   const [showAllAvailable, setShowAllAvailable] = useState(false);

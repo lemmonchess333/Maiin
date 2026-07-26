@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import type { MutableRefObject } from "react";
 import CirclesSection, {
   type CirclesSectionState,
@@ -60,11 +60,22 @@ export default function CommunityView({
   openPeople,
   refreshRef,
 }: CommunityViewProps) {
-  /* Publish the refresh into the shell's ref (effect-time sync, same
-     latest-ref pattern as FeedView). Circles/Spaces/Challenges manage
-     their own data lifecycles; the pull gesture simply resolves. */
+  /* SOC-P1d: pull-to-refresh on Together used to publish a literal
+     no-op — the spinner animated and nothing refetched, a control that
+     taught users the UI lies. The sections now publish their real
+     handles (circles reload with its generation guard; challenge
+     progress refetch, which cascades the leaderboards) and the shell's
+     pull awaits both. Challenge DOCS and space membership are live
+     subscriptions already — nothing to refetch there. */
+  const circlesRefreshRef = useRef<(() => Promise<void>) | null>(null);
+  const challengesRefreshRef = useRef<(() => Promise<void>) | null>(null);
   useEffect(() => {
-    refreshRef.current = async () => {};
+    refreshRef.current = async () => {
+      await Promise.all([
+        circlesRefreshRef.current?.(),
+        challengesRefreshRef.current?.(),
+      ]);
+    };
   }, [refreshRef]);
 
   /* SOC-P1e — CirclesSection reports whether the user's circle is
@@ -86,7 +97,12 @@ export default function CommunityView({
      — CirclesSection (and its reads) must survive the flip that its
      own state report triggers. */
   const circles = uid ? (
-    <CirclesSection key="circles" uid={uid} onStateChange={onCirclesState} />
+    <CirclesSection
+      key="circles"
+      uid={uid}
+      onStateChange={onCirclesState}
+      refreshRef={circlesRefreshRef}
+    />
   ) : null;
   const spaces = <SpacesDirectory key="spaces" />;
   /* Challenges — the active / competitive surface. Empty-state CTA
@@ -104,7 +120,10 @@ export default function CommunityView({
         />
       }
     >
-      <ChallengeList onFindFriends={openPeople} />
+      <ChallengeList
+        onFindFriends={openPeople}
+        refreshRef={challengesRefreshRef}
+      />
     </Suspense>
   );
 
