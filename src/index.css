@@ -246,8 +246,13 @@
   /* Ring bed — dark-mode pair (see :root). Black under the bright
      purple number/arc: purple-on-dark-food has no luminance gap, so
      the bed supplies one exactly where the wheel sits. */
-  --food-photo-ring-bed: rgba(0, 0, 0, 0.55);
-  --food-photo-ring-bed-soft: rgba(0, 0, 0, 0.32);
+  /* Softened 0.55/0.32 -> 0.38/0.18 (device feedback 2026-07-26): on a
+     real OLED the heavier disc + the dark-graded asset buried the food
+     under the wheel. This bed is now the wheel's ONLY backing (the SVG
+     halo was removed for reading as a hard clipped outline), so it must
+     help the number without hiding the bowl. */
+  --food-photo-ring-bed: rgba(0, 0, 0, 0.38);
+  --food-photo-ring-bed-soft: rgba(0, 0, 0, 0.18);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
