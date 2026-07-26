@@ -14,6 +14,7 @@ import {
   Flame,
   MessageCircle,
   MoreHorizontal,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -33,7 +34,7 @@ import ReportModal from "@/components/social/ReportModal";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
-import type { SpacePostDoc } from "./spaceTypes";
+import { COACH_AUTHOR_ID, type SpacePostDoc } from "./spaceTypes";
 
 function formatPace(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -47,15 +48,25 @@ export default function SpacePostCard({
   post,
   accent,
   onRemoved,
+  onShareTake,
 }: {
   spaceId: string;
   postId: string;
   post: SpacePostDoc;
   accent: string;
   onRemoved: (postId: string) => void;
+  /** SOC-P2b — coach prompts end in a "Share your take" action that
+   *  opens the composer prefilled with the prompt title. Passed only
+   *  where posting is possible (member on the space page). */
+  onShareTake?: (promptTitle: string) => void;
 }) {
   const { user } = useAuth();
   const { addBlocked } = useBlockedUsers();
+  /* SOC-P2b — the system Coach variant: brand-marked avatar tile +
+     "Coach" badge (purple, not the green Team badge) + the share-your-
+     take reply affordance. Unforgeable: rules bind client authorId to
+     auth.uid, so only the Admin cron writes this id. */
+  const isCoach = post.authorId === COACH_AUTHOR_ID;
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -145,13 +156,23 @@ export default function SpacePostCard({
 
       <div className="p-4 space-y-2">
         <div className="flex items-center gap-2.5">
-          <Avatar
-            photoURL={post.authorPhotoURL}
-            displayName={post.authorName}
-            size="md"
-            fallbackBg={`${accent}20`}
-            fallbackColor={accent}
-          />
+          {isCoach ? (
+            <div
+              className="size-9 rounded-lg flex items-center justify-center shrink-0"
+              style={{ background: `${THEME.brand}1A` }}
+              aria-hidden
+            >
+              <Sparkles className="size-4" style={{ color: THEME.brand }} />
+            </div>
+          ) : (
+            <Avatar
+              photoURL={post.authorPhotoURL}
+              displayName={post.authorName}
+              size="md"
+              fallbackBg={`${accent}20`}
+              fallbackColor={accent}
+            />
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">
@@ -160,12 +181,19 @@ export default function SpacePostCard({
               {post.official && (
                 <span
                   className="inline-flex items-center text-caption font-semibold px-1.5 py-0.5 rounded shrink-0"
-                  style={{
-                    background: `${THEME.success}1F`,
-                    color: THEME.success,
-                  }}
+                  style={
+                    isCoach
+                      ? {
+                          background: `${THEME.brand}1F`,
+                          color: THEME.brand,
+                        }
+                      : {
+                          background: `${THEME.success}1F`,
+                          color: THEME.success,
+                        }
+                  }
                 >
-                  Tropos Team
+                  {isCoach ? "Coach" : "Tropos Team"}
                 </span>
               )}
               {post.pinned && (
@@ -288,6 +316,23 @@ export default function SpacePostCard({
               </span>
             )}
           </div>
+        )}
+
+        {/* SOC-P2b — the coach prompt's reply affordance. Space posts
+            have no comments yet, so answers arrive as REAL posts: this
+            opens the composer prefilled with the prompt title. Only
+            rendered where posting is possible (member on the space
+            page passes onShareTake). 44px target. */}
+        {isCoach && onShareTake && (
+          <button
+            type="button"
+            onClick={() => onShareTake(post.title ?? "")}
+            className="w-full min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]"
+            style={{ background: `${THEME.brand}14`, color: THEME.brand }}
+          >
+            <MessageCircle className="size-4" aria-hidden />
+            Share your take
+          </button>
         )}
       </div>
 
