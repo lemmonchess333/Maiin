@@ -151,21 +151,27 @@ export function useChallenges() {
     };
   }, [user]);
 
-  useEffect(() => {
+  /* Extracted so pull-to-refresh can re-run it on demand (SOC-P1d): the
+     challenge DOCS are a live subscription above, but per-user progress
+     and (via the myProgress dep on the boards effect below) the
+     leaderboards are one-shot reads that previously only refreshed when
+     the challenge list itself changed. */
+  const loadMyProgress = useCallback(async () => {
     const tracked = [...challenges, ...endedChallenges];
     if (!user || tracked.length === 0) return;
-    const load = async () => {
-      const prog: Record<string, ChallengeParticipant> = {};
-      for (const ch of tracked) {
-        const snap = await getDoc(
-          doc(db, "challenges", ch.id, "participants", user.uid)
-        );
-        if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
-      }
-      setMyProgress(prog);
-    };
-    load();
+    const prog: Record<string, ChallengeParticipant> = {};
+    for (const ch of tracked) {
+      const snap = await getDoc(
+        doc(db, "challenges", ch.id, "participants", user.uid)
+      );
+      if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
+    }
+    setMyProgress(prog);
   }, [user, challenges, endedChallenges]);
+
+  useEffect(() => {
+    void loadMyProgress();
+  }, [loadMyProgress]);
 
   useEffect(() => {
     const tracked = [...challenges, ...endedChallenges];
@@ -323,6 +329,9 @@ export function useChallenges() {
     loading,
     joinChallenge,
     leaveChallenge,
+    /** SOC-P1d: on-demand progress refetch (cascades the leaderboards
+     *  via the myProgress dependency) — the pull-to-refresh handle. */
+    refreshProgress: loadMyProgress,
   };
 }
 

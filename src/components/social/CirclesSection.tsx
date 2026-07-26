@@ -30,7 +30,7 @@
  * create sheet opens prefilled.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type MutableRefObject } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Copy, Users } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -207,7 +207,16 @@ interface TrainTogetherPrefill {
   targetDate: string | null;
 }
 
-export default function CirclesSection({ uid }: { uid: string }) {
+export default function CirclesSection({
+  uid,
+  refreshRef,
+}: {
+  uid: string;
+  /** SOC-P1d: CommunityView's pull-to-refresh awaits this section's real
+   *  reload (published effect-time, same latest-ref pattern as the feed).
+   *  Optional so other mounts don't need to care. */
+  refreshRef?: MutableRefObject<(() => Promise<void>) | null>;
+}) {
   const {
     loading,
     circles,
@@ -222,6 +231,16 @@ export default function CirclesSection({ uid }: { uid: string }) {
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
+
+  /* SOC-P1d: publish the real reload for the shell's pull-to-refresh
+     (effect-time sync — latest-ref pattern). reload carries its own
+     generation guard (CIRCLE-INDEX-TRUST-01), so an overlapping pull
+     can't overwrite newer state. */
+  useEffect(() => {
+    if (!refreshRef) return;
+    refreshRef.current = reload;
+  }, [refreshRef, reload]);
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showCreate, setShowCreate] = useState(false);
