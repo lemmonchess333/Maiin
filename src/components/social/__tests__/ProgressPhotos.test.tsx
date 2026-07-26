@@ -14,8 +14,8 @@
  *      upload path needs createImageBitmap/canvas/crypto.subtle, which
  *      jsdom doesn't provide.
  */
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -28,13 +28,7 @@ vi.mock("../../../lib/firebase", () => ({
   storage: {},
 }));
 
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn(() => ({})),
-  query: vi.fn(() => ({})),
-  orderBy: vi.fn(() => ({})),
-  getDocs: vi.fn(async () => ({ docs: [] })),
-  Timestamp: { now: () => ({ seconds: 0, nanoseconds: 0 }) },
-}));
+vi.mock("firebase/firestore");
 
 vi.mock("firebase/storage", () => ({
   ref: vi.fn(() => ({})),
@@ -47,6 +41,16 @@ vi.mock("@/lib/firestoreWrite", () => ({
 }));
 
 import ProgressPhotos from "../ProgressPhotos";
+import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+
+const VAULT = "users/u-self/progressPhotos";
+
+beforeEach(() => {
+  resetFirestore();
+});
+afterEach(() => {
+  resetFirestore();
+});
 
 describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
   it("renders no public/private toggle in any labelling", () => {
@@ -64,6 +68,47 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
     expect(
       screen.getByText(/only you can view these photos/i)
     ).toBeInTheDocument();
+  });
+
+  it("still offers no toggle once the vault HAS photos", async () => {
+    // The pre-migration stub hard-coded `getDocs` to an empty result, so
+    // every assertion above only ever described the EMPTY vault. A
+    // per-photo visibility control — the most natural place to
+    // reintroduce the affordance BODY-VAULT-00 removed — would have been
+    // invisible to this suite. Seeding real rows is what the shared fake
+    // buys here; it is not a mechanical swap.
+    seedFirestore({
+      [`${VAULT}/p1`]: {
+        storagePath: "progress-photos/u-self/1.enc",
+        iv: [1, 2, 3],
+        date: "2026-07-01",
+        visibility: "private",
+        createdAt: 1,
+      },
+      [`${VAULT}/p2`]: {
+        storagePath: "progress-photos/u-self/2.enc",
+        iv: [4, 5, 6],
+        date: "2026-07-08",
+        visibility: "private",
+        createdAt: 2,
+      },
+    });
+    render(<ProgressPhotos />);
+
+    // Positive anchor: the seeded photos must actually REACH the
+    // component before the negatives below mean anything. The privacy
+    // copy is the wrong anchor — it renders in the empty vault too, so
+    // waiting on it would prove nothing. `groupVaultEntries` turns
+    // photos into entries, which is what dismisses the empty state, so
+    // its disappearance is the signal that the rows loaded.
+    expect(screen.getByText(/track your transformation/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText(/track your transformation/i)).toBeNull()
+    );
+
+    expect(screen.queryByText(/make photos public/i)).toBeNull();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
   });
 
   it("records every upload as private and never writes 'public' (source pin)", () => {
