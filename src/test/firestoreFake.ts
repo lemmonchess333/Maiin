@@ -288,7 +288,11 @@ export class FirestoreFake {
    * point is to reorder delivery, not to change what was fetched.
    */
   private deferring = false;
-  private deferred: { path: string; resolve: () => void }[] = [];
+  private deferred: {
+    path: string;
+    resolve: () => void;
+    reject: (err: unknown) => void;
+  }[] = [];
 
   /** Hold every subsequent read until explicitly released. */
   deferReads(): void {
@@ -318,6 +322,29 @@ export class FirestoreFake {
     return true;
   }
 
+  /**
+   * Fail one held read instead of answering it, by position in issue order.
+   * Returns false when there is nothing at that index, on the same terms as
+   * `releaseRead` — so a test can't claim an interleaving that never
+   * happened.
+   *
+   * `failNextFirestore` cannot express this. It is checked at ISSUE time
+   * (`failIfArmed` throws before `maybeDefer` runs), so an armed read
+   * rejects immediately and never becomes a held read at all. The bug this
+   * exists for needs the opposite shape: a read that is still in flight
+   * when the account switches, and only THEN fails. A stale rejection
+   * handler that clears state it no longer owns wipes the CURRENT
+   * account's profile — the same privacy-shaped failure as a stale
+   * success, and equally invisible to a fake that can only resolve.
+   */
+  rejectRead(index = 0, code = "unavailable"): boolean {
+    const entry = this.deferred[index];
+    if (!entry) return false;
+    this.deferred.splice(index, 1);
+    entry.reject(new FakeFirestoreError(code));
+    return true;
+  }
+
   /** Release everything still held, oldest first. */
   releaseAllReads(): void {
     while (this.releaseRead()) {
@@ -332,8 +359,8 @@ export class FirestoreFake {
    */
   maybeDefer<T>(path: string, value: T): Promise<T> {
     if (!this.deferring) return Promise.resolve(value);
-    return new Promise<T>((resolve) => {
-      this.deferred.push({ path, resolve: () => resolve(value) });
+    return new Promise<T>((resolve, reject) => {
+      this.deferred.push({ path, resolve: () => resolve(value), reject });
     });
   }
 
