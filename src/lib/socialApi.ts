@@ -231,6 +231,73 @@ export async function toggleSpacePostLike(
   return result.data.liked;
 }
 
+// SOC-P2g — space-post comments (the addComment lockdown applied to
+// space posts). Reads are direct (rules allow authed reads); writes
+// route through the callables that own the server-side commentCount.
+
+export interface SpacePostComment {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorPhotoURL?: string;
+  text: string;
+  createdAt: { toDate: () => Date } | null;
+}
+
+export async function getSpacePostComments(
+  spaceId: string,
+  postId: string,
+  limitCount = 50
+): Promise<SpacePostComment[]> {
+  const snap = await getDocs(
+    query(
+      collection(db, "spaces", spaceId, "posts", postId, "comments"),
+      orderBy("createdAt", "asc"),
+      limit(limitCount)
+    )
+  );
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SpacePostComment);
+}
+
+export async function addSpacePostComment(
+  spaceId: string,
+  postId: string,
+  text: string,
+  authorName?: string,
+  authorPhotoURL?: string
+): Promise<string> {
+  const fn = httpsCallable<
+    {
+      spaceId: string;
+      postId: string;
+      text: string;
+      authorName?: string;
+      authorPhotoURL?: string;
+    },
+    { commentId: string }
+  >(getFunctions(), "addSpacePostCommentCallable");
+  const result = await fn({
+    spaceId,
+    postId,
+    text,
+    ...(authorName ? { authorName } : {}),
+    ...(authorPhotoURL ? { authorPhotoURL } : {}),
+  });
+  return result.data.commentId;
+}
+
+export async function deleteSpacePostComment(
+  spaceId: string,
+  postId: string,
+  commentId: string
+): Promise<void> {
+  const fn = httpsCallable<
+    { spaceId: string; postId: string; commentId: string },
+    { ok: boolean }
+  >(getFunctions(), "deleteSpacePostCommentCallable");
+  await fn({ spaceId, postId, commentId });
+}
+
 // `giveHighFive` is a thin wrapper around toggleKudos. The original
 // "give once, never undo" semantic was a courtesy; legitimate
 // double-tap UX is now toggling (matches every social app).

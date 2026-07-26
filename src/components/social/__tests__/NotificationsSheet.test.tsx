@@ -159,3 +159,41 @@ describe("NotificationsSheet — NOTIFICATION-TRUST-01 error state", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("NotificationsSheet — space-post engagement rows (SOC-P2g)", () => {
+  beforeEach(() => navigateMock.mockClear());
+
+  it("a space_post_like row navigates to the SPACE, not the actor", () => {
+    renderSheet([
+      item({
+        id: "sl1",
+        type: "space_post_like",
+        spaceId: "runners",
+        message: "Alex gave your space post props",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Alex gave your space post props"));
+    expect(navigateMock).toHaveBeenCalledWith("/space/runners");
+  });
+
+  it("a space_post_comment row navigates to the SPACE", () => {
+    renderSheet([
+      item({
+        id: "sc1",
+        type: "space_post_comment",
+        spaceId: "lifters",
+        message: "Sam commented on your space post",
+      }),
+    ]);
+    fireEvent.click(screen.getByText("Sam commented on your space post"));
+    expect(navigateMock).toHaveBeenCalledWith("/space/lifters");
+  });
+
+  it("falls back to the actor when a space row is missing spaceId", () => {
+    renderSheet([
+      item({ id: "sl2", type: "space_post_like", message: "Props!" }),
+    ]);
+    fireEvent.click(screen.getByText("Props!"));
+    expect(navigateMock).toHaveBeenCalledWith("/user/u-actor");
+  });
+});
