@@ -143,7 +143,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useMeals.test.ts",
   "src/hooks/__tests__/useNotifications.trust.test.tsx",
   "src/hooks/__tests__/usePushSettings.test.tsx",
-  "src/hooks/__tests__/useRunningStats.accountSwitch.test.tsx",
   "src/lib/__tests__/authProviderAccountSwitch.test.tsx",
   "src/lib/__tests__/offlineQueue.test.ts",
   "src/lib/__tests__/pushNotifications.test.ts",
