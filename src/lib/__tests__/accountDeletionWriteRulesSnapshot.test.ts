@@ -154,6 +154,12 @@ const INFRASTRUCTURE_AND_READ_ONLY = [
   // account are anonymous uid-keyed marks with a createdAt — swept-or-
   // orphaned posture matches kudos (collectionGroup sweep follow-up).
   "match /likes/{likeUid}",
+  // SOC-P2g — space-post comments. Same posture as likes: client READ
+  // only; writes are server-only via the comment callables, whose
+  // deletion actor-lock covers the freeze. Author-uid-keyed docs are
+  // in the kudos-style swept-or-orphaned class (collectionGroup sweep
+  // follow-up alongside likes).
+  "match /comments/{commentId}",
   "match /goalSpaces/{spaceId}",
   "match /goalSpaces/{spaceId}/members/{memberUid}",
   // Short invite-code → spaceId lookup (bearer index). Admin SDK writes

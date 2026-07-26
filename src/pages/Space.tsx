@@ -54,6 +54,7 @@ import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
+import SpaceCommentSheet from "@/features/spaces/SpaceCommentSheet";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
 import type { SpacePostDoc } from "@/features/spaces/spaceTypes";
 
@@ -203,6 +204,12 @@ export default function Space() {
      read + optimistic toggle; counts stay server-owned). */
   const postIds = useMemo(() => (posts ?? []).map((p) => p.id), [posts]);
   const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
+  /* SOC-P2g — comment sheet target + per-post optimistic count deltas
+     (same grammar as likes; server owns the stored count). */
+  const [commentsFor, setCommentsFor] = useState<string | null>(null);
+  const [commentDeltas, setCommentDeltas] = useState<Record<string, number>>(
+    {}
+  );
   const [composerOpen, setComposerOpen] = useState(false);
   /* SOC-P2b — a coach prompt's "Share your take" seeds the composer
      title. Cleared when the composer closes so a later manual post
@@ -477,11 +484,32 @@ export default function Space() {
                 onToggleLike={
                   user ? () => spaceLikes.toggle(post.id) : undefined
                 }
+                commentDelta={commentDeltas[post.id] ?? 0}
+                onOpenComments={
+                  user ? () => setCommentsFor(post.id) : undefined
+                }
               />
             ))
           )}
         </div>
       </div>
+
+      {commentsFor && (
+        <SpaceCommentSheet
+          spaceId={def.id}
+          postId={commentsFor}
+          open
+          onOpenChange={(o) => {
+            if (!o) setCommentsFor(null);
+          }}
+          onCountChange={(delta) =>
+            setCommentDeltas((prev) => ({
+              ...prev,
+              [commentsFor]: (prev[commentsFor] ?? 0) + delta,
+            }))
+          }
+        />
+      )}
 
       <SpacePostComposer
         spaceId={def.id}
