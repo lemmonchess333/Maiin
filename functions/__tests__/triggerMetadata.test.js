@@ -255,6 +255,17 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: [],
   },
+  // SOC-P2g — space-post comments (server-owned counter + author-only delete).
+  addSpacePostCommentCallable: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
+  deleteSpacePostCommentCallable: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: [],
+  },
   // SOC-P2c — space-post like toggle (server-owned counter).
   toggleSpacePostLikeCallable: {
     kind: "callable",

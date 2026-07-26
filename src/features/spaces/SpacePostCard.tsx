@@ -52,6 +52,8 @@ export default function SpacePostCard({
   liked = false,
   likeDelta = 0,
   onToggleLike,
+  commentDelta = 0,
+  onOpenComments,
 }: {
   spaceId: string;
   postId: string;
@@ -68,6 +70,10 @@ export default function SpacePostCard({
   liked?: boolean;
   likeDelta?: number;
   onToggleLike?: () => void;
+  /** SOC-P2g — opens the comment sheet; the count is the stored
+   *  server-owned value plus this session's delta. */
+  commentDelta?: number;
+  onOpenComments?: () => void;
 }) {
   const { user } = useAuth();
   const { addBlocked } = useBlockedUsers();
@@ -344,12 +350,30 @@ export default function SpacePostCard({
                   </span>
                 )
               )}
-              {(post.commentCount ?? 0) > 0 && (
-                <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
-                  <MessageCircle className="size-4" aria-hidden />
-                  {post.commentCount}
-                </span>
-              )}
+              {(() => {
+                const displayCommentCount = Math.max(
+                  0,
+                  (post.commentCount ?? 0) + commentDelta
+                );
+                return onOpenComments ? (
+                  <button
+                    type="button"
+                    onClick={onOpenComments}
+                    aria-label="Comments"
+                    className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3 -m-3 active:scale-90 transition-transform"
+                  >
+                    <MessageCircle className="size-4" aria-hidden />
+                    {displayCommentCount > 0 ? displayCommentCount : ""}
+                  </button>
+                ) : (
+                  displayCommentCount > 0 && (
+                    <span className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums">
+                      <MessageCircle className="size-4" aria-hidden />
+                      {displayCommentCount}
+                    </span>
+                  )
+                );
+              })()}
             </div>
           );
         })()}
