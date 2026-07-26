@@ -113,16 +113,14 @@ export default function CalorieRing({
      shape, empty or not. */
   const trackColor = isDark ? `${COLOR_RING}52` : COLOR_TRACK;
 
-  /* Halo bed for the whole wheel (photo legibility). Over busy food the
-     24%-tint track vanished while the arc muddied — which also READS as
-     the ring being off-centre. A soft contrasting under-stroke (dark
-     under the bright arc in dark mode, light under the deep arc in
-     light) gives the wheel its own bed on any image, the same way map
-     labels get a halo. Painted once under the track so track + arc +
-     overshoot all benefit. Static layer, never animated. */
-  const haloColor = isDark
-    ? THEME.calorieRing.haloDark
-    : THEME.calorieRing.haloLight;
+  /* The SVG halo bed that briefly lived here (2026-07-26, #1753/#1774)
+     is REMOVED — device feedback: it read as a hard black outline in
+     dark mode, and its STROKE+6 width painted past the 160px viewBox
+     (ring outer edge sits EXACTLY at the box edge at r=75 + stroke/2),
+     so the box clipped it flat on all four sides. The wheel's bed is
+     the photo scrim's concentrated ring-bed disc in FoodHeroCard —
+     soft-edged and unclippable. Nothing drawn here may exceed
+     r + strokeWidth/2 = SIZE/2 (regression-pinned). */
 
   /* Zero is a real value, not a placeholder — it renders at full strength
      like any other. The centre number used to drop to 0.4 opacity at
@@ -275,16 +273,6 @@ export default function CalorieRing({
         </defs>
 
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
-          {/* Halo bed — see haloColor above. Wider than the stroke so a
-              sliver of contrast rims both edges of track and arc. */}
-          <circle
-            cx={CENTER}
-            cy={CENTER}
-            r={RADIUS}
-            fill="none"
-            stroke={haloColor}
-            strokeWidth={STROKE + 6}
-          />
           {/* Track — inset shadow filter makes it read as a recessed groove */}
           <circle
             cx={CENTER}
