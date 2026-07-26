@@ -177,13 +177,31 @@ export default function Social() {
   // coachmark.
   const isNewUser = followingCount === 0;
 
-  // SOCIAL S4 — the solo-first curated stack leads the Feed tab for a
+  // SOCIAL S4 — the solo-first curated stack IS the Feed tab for a
   // cold-start user (0 follows ⇒ 0 partners, since a bond needs mutual
   // follow). Sub-tab-agnostic on purpose: a new user's sub-tab defaults to
   // Explore (n>0?following:explore), so gating on "following" would never
-  // fire. The stack renders above whatever the active sub-tab shows; the
-  // empty-feed states below are suppressed so nothing reads as broken.
-  // PR4 will refine the gate to the full `isSoloUser` density check.
+  // fire.
+  //
+  // It REPLACES rather than precedes: FeedView suppresses the activity
+  // list, the weekly recap, the Spaces row and the trajectory slot while
+  // this is true. (The comment here claimed it "renders above" until
+  // 2026-07-26 — worth knowing before widening the gate, because
+  // widening it hides real content rather than adding to it.)
+  //
+  // Soc8 planned to refine this to `isSoloUser` (no partner bonds, no
+  // activated crew). That is deliberately NOT done, and the predicate is
+  // deleted — see the note in socialGates.ts. Short version: crews
+  // retired, leaving `partnerCount === 0`, which is true for most
+  // established users forever; combined with the replace semantics above
+  // it would blank the whole feed — Explore included — for anyone who
+  // never formed a bond. Zero follows is the cold-start signal, and
+  // SOC-P1b independently drew the boundary in the same place: the
+  // following LIST now renders from the first follow
+  // (`shouldRenderFollowingList`), with a "Following N of 3" progress row
+  // below the threshold. So at ≥1 follow the user already has their own
+  // following activity plus a named next step — both of which the curated
+  // stack would replace, not supplement.
   const showSoloFeed = isNewUser;
 
   // SOCIAL S4 — the following ACTIVITY feed (the list of activities from
