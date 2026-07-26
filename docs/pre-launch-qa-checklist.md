@@ -61,7 +61,8 @@ written`, `applyPartnerActivity`, `hybrid_score`, `_recoveryEndDateForRace`).
 - [ ] **App Check enforcement flip** — execute `docs/app-check-rollout.md`:
       Phase 3 (≥99% verified-token rate sustained ≥1 week) → Phase 4b
       per-callable `enforceAppCheck: true`, **low-risk tier first**
-      (`askGeminiText` …) → **destructive last** (`deleteMyAccount`,
+      (`sendTestPush`, `backfillMyActivityCategories` — the two tier-1
+      callables the client actually calls) → **destructive last** (`deleteMyAccount`,
       `verifyApplePurchase`, `restoreApplePurchases`). **Never** the webhooks
       (`stripeWebhook`, `appleIAPWebhook`). Don't bulk-flip.
 - [ ] **Public-profile uid binding** (firestore.rules) — from the client SDK,
@@ -70,7 +71,7 @@ written`, `applyPartnerActivity`, `hybrid_score`, `_recoveryEndDateForRace`).
       (or `uid: '<me>'`) still succeeds.
 - [ ] **Subscription `expiresAt` guard** — set `subscriptionTier: "pro"` +
       `subscriptionExpiresAt: <past ISO>` on a test user → `useSubscription()
-    .isPro` returns **false** on app open (locale-sensitive `Date.parse` of
+  .isPro` returns **false** on app open (locale-sensitive `Date.parse` of
       the stored string — worth a real roundtrip).
 
 ### Multi-account data isolation (two accounts, one device)
@@ -111,7 +112,7 @@ confirmed present — you're confirming behaviour, not wiring.
 - [ ] **Partner-streak server persist** — two mutually-following accounts with
       a bond: log on the same local day as A then B → `partnerBonds/<id>`
       flips `streak 0→1`, `lastSharedDay` today, no `applyPartnerActivity:
-    error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
+  error`. Same-day re-log is a no-op (doc `updateTime` unchanged). An
       `isInvalid`/`savedAnyway`/sub-threshold run does NOT update `lastActive`.
       Freeze ledger uses Monday-anchored week keys.
 - [ ] **Global hybrid challenge + `hybrid_score`** — after 00:05 UTC

@@ -67,17 +67,32 @@ export function shouldShowChallengePercentile(
   return participantCount >= SOCIAL_GATES.CHALLENGE_PERCENTILE_MIN_PARTICIPANTS;
 }
 
-/**
- * A "solo" user gets the solo-first curated layout (PartnerStreak hero →
- * global challenge → share-your-training → spaces row) instead of any
- * empty network feed.
+/*
+ * `isSoloUser` used to live here (Soc8 PR1) and was deleted 2026-07-26
+ * without ever being wired. Recorded because the plan file still names
+ * it, and the next reader should not re-add it.
  *
- * Solo = no active partner bonds. (The crew half of this predicate
- * retired with crews, 2026-07-20 — Spaces have no per-user membership
- * threshold.) Follows do NOT factor in here: a user who follows people
- * but has no partners still gets the curated layout (their following
- * feed activates separately via `shouldShowFollowingFeed`).
+ * Soc8 locked it as "no partner bonds AND no activated crew", with
+ * follows deliberately excluded. Retiring crews (#1700) removed half the
+ * predicate, leaving `partnerCount === 0` — which is not a cold-start
+ * signal at all. Partner bonds are opt-in, require a mutual follow, and
+ * cap at 5; most users will never form one, so that predicate stays true
+ * for established users forever.
+ *
+ * That matters more than it sounds, because `showSoloFeed` does not
+ * stack the curated layout above the feed — it REPLACES it
+ * (`FeedView.showActivityList = !showSoloFeed && …`, and the recap card,
+ * Spaces row and trajectory slot are all suppressed alongside). Wiring
+ * the surviving predicate would therefore have blanked the entire Social
+ * feed — including the Explore list of public activity, which needs no
+ * network at all — for every user without a partner. That is a
+ * regression, not the "refinement" the call site promised.
+ *
+ * The gate that ships is the cold-start one: zero follows. SOC-P1b
+ * landed on the same boundary from the other direction —
+ * `shouldRenderFollowingList` renders the following list from the FIRST
+ * follow, with a "Following N of 3" progress row below the threshold, and
+ * notes that 0 follows never reaches it "in practice (SoloFirstFeed owns
+ * that branch)". So at ≥1 follow the user has their own following
+ * activity plus a named next step; curation would replace both.
  */
-export function isSoloUser(params: { partnerCount: number }): boolean {
-  return params.partnerCount === 0;
-}
