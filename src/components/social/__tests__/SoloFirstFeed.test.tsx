@@ -11,6 +11,9 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/features/challenges/useChallenges", () => ({
   useChallenges: () => mockUseChallenges(),
+  // SOC-P1a auto-enrolment is a no-op here — its behaviour is pinned in
+  // the challenges feature tests; this suite cares about the stack layout.
+  useAutoJoinChallenge: () => {},
 }));
 vi.mock("@/hooks/useWorkouts", () => ({
   useWorkouts: () => mockUseWorkouts(),
