@@ -153,6 +153,13 @@ const EXPECTED = {
     secrets: [],
     schedule: "5 0 * * *",
   },
+  // SOC-P2a — weekly Coach prompts seeded into every Community Space.
+  weeklyCoachPrompts: {
+    kind: "schedule",
+    maxInstances: 1,
+    secrets: [],
+    schedule: "0 6 * * 1",
+  },
   hourlyStreakNudge: {
     kind: "schedule",
     maxInstances: 1,
