@@ -36,6 +36,26 @@ vi.mock("@/lib/auth", () => ({
 vi.mock("@/features/spaces/SpacesDirectory", () => ({
   default: () => null,
 }));
+/* SOC-P3a — communities source: directory + feed hooks are mocked so
+   the sub-tab's composition can be pinned without Firestore. */
+const mockCommunitiesFeed = vi.fn();
+vi.mock("@/features/spaces/useSpacesDirectory", () => ({
+  useSpacesDirectory: () => ({
+    entries: [
+      { def: { id: "runners" }, joined: true, memberCount: 3 },
+      { def: { id: "lifters" }, joined: false, memberCount: 2 },
+    ],
+    refresh: vi.fn(),
+  }),
+}));
+vi.mock("@/features/spaces/useCommunitiesFeed", () => ({
+  useCommunitiesFeed: () => mockCommunitiesFeed(),
+}));
+vi.mock("@/features/spaces/SpacePostCard", () => ({
+  default: ({ postId }: { postId: string }) => (
+    <div data-testid="space-post">{postId}</div>
+  ),
+}));
 vi.mock("@/components/social/ActivityCard", () => ({ default: () => null }));
 vi.mock("@/components/social/LeaderboardCard", () => ({
   default: () => null,
@@ -57,6 +77,12 @@ afterEach(() => cleanup());
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetPersonalTrajectory.mockResolvedValue(trajectory(500));
+  mockCommunitiesFeed.mockReturnValue({
+    items: [],
+    loading: false,
+    refresh: vi.fn(async () => {}),
+    remove: vi.fn(),
+  });
 });
 
 /** Minimal PersonalTrajectory fixture — score drives the zero-week branch. */
@@ -180,5 +206,68 @@ describe("FeedView — honest Your-week slot (SOC-P1c)", () => {
   it("leaderboard-tier users (>=2 follows) never fetch trajectory", () => {
     setup({ feedSubTab: "following", followingCount: 3 });
     expect(mockGetPersonalTrajectory).not.toHaveBeenCalled();
+  });
+});
+
+describe("FeedView — My communities source (SOC-P3a)", () => {
+  it("the source sheet offers all three sources", () => {
+    setup();
+    fireEvent.click(
+      screen.getByRole("button", { name: /feed source: explore/i })
+    );
+    expect(
+      screen.getByRole("radio", { name: /my communities/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /following/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /explore/i })).toBeInTheDocument();
+  });
+
+  it("picking My communities drives the URL-writing callback", () => {
+    const { selectFeedSubTab } = setup();
+    fireEvent.click(
+      screen.getByRole("button", { name: /feed source: explore/i })
+    );
+    fireEvent.click(screen.getByRole("radio", { name: /my communities/i }));
+    expect(selectFeedSubTab).toHaveBeenCalledWith("communities");
+  });
+
+  it("renders joined-space posts with a space eyebrow link", () => {
+    mockCommunitiesFeed.mockReturnValue({
+      items: [
+        {
+          spaceId: "runners",
+          postId: "coach-2026-07-20",
+          post: {
+            authorId: "tropos-coach",
+            authorName: "Tropos Coach",
+            body: "prompt",
+            likeCount: 0,
+            commentCount: 0,
+            official: true,
+            createdAt: { toDate: () => new Date() },
+          },
+        },
+      ],
+      loading: false,
+      refresh: vi.fn(async () => {}),
+      remove: vi.fn(),
+    });
+    setup({ feedSubTab: "communities" });
+    expect(screen.getByTestId("space-post")).toHaveTextContent(
+      "coach-2026-07-20"
+    );
+    expect(screen.getByRole("link", { name: /runners/i })).toHaveAttribute(
+      "href",
+      "/space/runners"
+    );
+  });
+
+  it("empty stream shows the honest join prompt, never a blank column", () => {
+    setup({ feedSubTab: "communities" });
+    expect(
+      screen.getByText(/your spaces are quiet right now/i)
+    ).toBeInTheDocument();
   });
 });

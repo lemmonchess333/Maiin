@@ -6,9 +6,14 @@ import {
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useAuth } from "@/lib/auth";
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import type { MutableRefObject } from "react";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
+import SpacePostCard from "@/features/spaces/SpacePostCard";
+import { useCommunitiesFeed } from "@/features/spaces/useCommunitiesFeed";
+import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
+import { spaceDef } from "@/features/spaces/spaceDefs";
+import { Link } from "react-router-dom";
 import ActivityCard from "@/components/social/ActivityCard";
 import LeaderboardCard from "@/components/social/LeaderboardCard";
 import TrajectoryCard from "@/components/social/TrajectoryCard";
@@ -115,6 +120,20 @@ export default function FeedView({
     feedSubTab === "explore" && blockedReady,
     blockedUsers
   );
+  /* SOC-P3a — "My communities": posts from joined spaces as a third
+     source. The directory hook resolves joined ids (bounded reads,
+     only meaningful once the user opens the Feed tab); the feed hook
+     fires only while this sub-tab is active. */
+  const { entries: spaceEntries } = useSpacesDirectory(true);
+  const joinedSpaceIds = useMemo(
+    () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
+    [spaceEntries]
+  );
+  const communitiesFeed = useCommunitiesFeed(
+    active && feedSubTab === "communities",
+    joinedSpaceIds
+  );
+
   const activeFeed = feedSubTab === "following" ? followingFeed : exploreFeed;
 
   /* Soc5b pin (3): subtle new-content dot on inactive Feed sub-tab.
@@ -156,8 +175,11 @@ export default function FeedView({
      looking at. Effect-time sync (not render-phase) for the same
      purity reason as the sentinel latest-ref below. */
   useEffect(() => {
-    refreshRef.current = activeFeed.refresh;
-  }, [refreshRef, activeFeed.refresh]);
+    refreshRef.current =
+      feedSubTab === "communities"
+        ? communitiesFeed.refresh
+        : activeFeed.refresh;
+  }, [refreshRef, activeFeed.refresh, communitiesFeed.refresh, feedSubTab]);
 
   /* SOC-P1d — share-card entry from the feed. Built entirely from the
      ALREADY-ENRICHED FeedItem (no per-card reads): a lift card carries
@@ -335,9 +357,19 @@ export default function FeedView({
                 type="button"
                 onClick={() => setSourceMenuOpen(true)}
                 className="relative inline-flex items-center gap-1 min-h-[44px] px-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors active:scale-[0.97]"
-                aria-label={`Feed source: ${feedSubTab === "following" ? "Following" : "Explore"}`}
+                aria-label={`Feed source: ${
+                  feedSubTab === "following"
+                    ? "Following"
+                    : feedSubTab === "communities"
+                      ? "My communities"
+                      : "Explore"
+                }`}
               >
-                {feedSubTab === "following" ? "Following" : "Explore"}
+                {feedSubTab === "following"
+                  ? "Following"
+                  : feedSubTab === "communities"
+                    ? "My communities"
+                    : "Explore"}
                 <ChevronDown className="size-4" aria-hidden="true" />
                 {(feedSubTab === "following"
                   ? exploreHasNew
@@ -363,53 +395,66 @@ export default function FeedView({
                 role="radiogroup"
                 aria-label="Feed source"
               >
-                {(["following", "explore"] as FeedSubTab[]).map((st) => {
-                  const hasNew =
-                    st === "following" ? followingHasNew : exploreHasNew;
-                  const text = st === "following" ? "Following" : "Explore";
-                  const sub =
-                    st === "following"
-                      ? "Activities from people you follow"
-                      : "Public activity across Tropos";
-                  return (
-                    <button
-                      key={st}
-                      type="button"
-                      role="radio"
-                      aria-checked={feedSubTab === st}
-                      onClick={() => {
-                        setSourceMenuOpen(false);
-                        if (feedSubTab === st) return;
-                        selectFeedSubTab(st);
-                        trackSocialEvent("social_feed_subtab_changed", {
-                          subTab: st,
-                        });
-                      }}
-                      className={cn(
-                        "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
-                        feedSubTab === st
-                          ? "bg-primary/10 border border-primary/40"
-                          : "bg-muted border border-transparent"
-                      )}
-                    >
-                      <span className="relative inline-flex items-center text-sm font-semibold text-foreground">
-                        {text}
-                        {hasNew && (
-                          <>
-                            <span
-                              aria-hidden="true"
-                              className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
-                            />
-                            <span className="sr-only"> new content</span>
-                          </>
+                {(["following", "communities", "explore"] as FeedSubTab[]).map(
+                  (st) => {
+                    const hasNew =
+                      st === "following"
+                        ? followingHasNew
+                        : st === "explore"
+                          ? exploreHasNew
+                          : false; // communities has no freshness pointer (v1)
+                    const text =
+                      st === "following"
+                        ? "Following"
+                        : st === "communities"
+                          ? "My communities"
+                          : "Explore";
+                    const sub =
+                      st === "following"
+                        ? "Activities from people you follow"
+                        : st === "communities"
+                          ? "Posts from spaces you've joined"
+                          : "Public activity across Tropos";
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        role="radio"
+                        aria-checked={feedSubTab === st}
+                        onClick={() => {
+                          setSourceMenuOpen(false);
+                          if (feedSubTab === st) return;
+                          selectFeedSubTab(st);
+                          trackSocialEvent("social_feed_subtab_changed", {
+                            subTab: st,
+                          });
+                        }}
+                        className={cn(
+                          "w-full min-h-[44px] p-3 rounded-xl text-left transition-colors active:scale-[0.97]",
+                          feedSubTab === st
+                            ? "bg-primary/10 border border-primary/40"
+                            : "bg-muted border border-transparent"
                         )}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {sub}
-                      </span>
-                    </button>
-                  );
-                })}
+                      >
+                        <span className="relative inline-flex items-center text-sm font-semibold text-foreground">
+                          {text}
+                          {hasNew && (
+                            <>
+                              <span
+                                aria-hidden="true"
+                                className="absolute -top-0.5 -right-2 size-1.5 rounded-full bg-primary"
+                              />
+                              <span className="sr-only"> new content</span>
+                            </>
+                          )}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {sub}
+                        </span>
+                      </button>
+                    );
+                  }
+                )}
               </div>
             </BottomSheet>
 
@@ -573,6 +618,72 @@ export default function FeedView({
                   </button>
                 </div>
               )}
+
+            {/* SOC-P3a — the communities stream: joined-space posts,
+                newest-first. Cards render read-only counts (engagement
+                lives on the space page — the eyebrow link above each
+                card); the eyebrow names the space so a mixed stream
+                stays legible. */}
+            {feedSubTab === "communities" && !showSoloFeed && (
+              <div className="space-y-3 mt-4">
+                {communitiesFeed.loading &&
+                  communitiesFeed.items.length === 0 && (
+                    <div
+                      className="space-y-3"
+                      aria-live="polite"
+                      aria-label="Loading communities feed"
+                    >
+                      <ActivityCardSkeleton stagger={0} />
+                      <ActivityCardSkeleton stagger={1} />
+                    </div>
+                  )}
+                {!communitiesFeed.loading &&
+                  communitiesFeed.items.length === 0 && (
+                    <HexEmptyState
+                      icon={Users}
+                      headline={
+                        joinedSpaceIds.length === 0
+                          ? "Join a space to fill this feed"
+                          : "Your spaces are quiet right now"
+                      }
+                      sub={
+                        joinedSpaceIds.length === 0
+                          ? "Spaces you join post here — including the weekly Coach prompt"
+                          : "The Coach posts weekly — check back Monday"
+                      }
+                      accent={THEME.brand}
+                      action={{ label: "Browse Spaces", onClick: openTogether }}
+                    />
+                  )}
+                {communitiesFeed.items.map((item) => {
+                  const def = spaceDef(item.spaceId);
+                  if (!def) return null;
+                  return (
+                    <div key={`${item.spaceId}/${item.postId}`}>
+                      <Link
+                        to={`/space/${item.spaceId}`}
+                        className="inline-flex items-center min-h-[28px] mb-1 text-caption font-semibold uppercase tracking-wider text-muted-foreground"
+                      >
+                        {def.name}
+                      </Link>
+                      <SpacePostCard
+                        spaceId={item.spaceId}
+                        postId={item.postId}
+                        post={item.post}
+                        accent={
+                          def.accent === "running"
+                            ? THEME.running
+                            : def.accent === "lifting"
+                              ? THEME.lifting
+                              : THEME.brand
+                        }
+                        onRemoved={() => communitiesFeed.remove(item.postId)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {showActivityList && (
               <div className="space-y-3">

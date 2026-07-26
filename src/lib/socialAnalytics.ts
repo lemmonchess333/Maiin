@@ -34,7 +34,7 @@ export type SocialEvent =
    remains as a legacy value so historical events stay queryable
    (the People overlay still reports as "find"). */
 export type SocialTab = "together" | "feed" | "find";
-export type SocialFeedSubTab = "following" | "explore";
+export type SocialFeedSubTab = "following" | "explore" | "communities";
 export type ShareCardTemplate =
   | "run"
   | "lift"
