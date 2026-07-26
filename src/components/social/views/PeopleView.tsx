@@ -7,6 +7,7 @@ import { searchUsers } from "@/lib/socialApi";
 import BlockAwareAvatar from "@/components/social/BlockAwareAvatar";
 import FollowButton from "@/components/social/FollowButton";
 import FollowsYouBadge from "@/components/social/FollowsYouBadge";
+import PartnerReadyBadge from "@/components/social/PartnerReadyBadge";
 import { Share, Users, X, Search } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { toast } from "@/lib/toast";
@@ -299,6 +300,7 @@ export default function PeopleView({
                           {u.displayName || "Athlete"}
                         </p>
                         <FollowsYouBadge uid={u.uid} />
+                        <PartnerReadyBadge uid={u.uid} />
                       </div>
                     </div>
                   </Link>
@@ -408,6 +410,7 @@ export default function PeopleView({
                         {p.displayName}
                       </p>
                       <FollowsYouBadge uid={p.uid} />
+                      <PartnerReadyBadge uid={p.uid} />
                     </div>
                     <p className="text-sm text-muted-foreground">Recent post</p>
                   </div>
