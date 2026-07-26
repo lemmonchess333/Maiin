@@ -207,11 +207,22 @@ interface TrainTogetherPrefill {
   targetDate: string | null;
 }
 
+/** SOC-P1e — the circle state CommunityView orders the Together page by. */
+export type CirclesSectionState = "loading" | "none" | "solo" | "live";
+
 export default function CirclesSection({
   uid,
+  onStateChange,
   refreshRef,
 }: {
   uid: string;
+  /** SOC-P1e: reports whether the user has a LIVE (multi-member) circle,
+   *  a solo 1-member circle, or none — CommunityView leads with the
+   *  featured circle only when it's genuinely live; otherwise joinable
+   *  contexts (Spaces, Challenges) lead and this section compacts below.
+   *  A failed load reports "live" so the retry card keeps the lead
+   *  position rather than being buried by an error. */
+  onStateChange?: (state: CirclesSectionState) => void;
   /** SOC-P1d: CommunityView's pull-to-refresh awaits this section's real
    *  reload (published effect-time, same latest-ref pattern as the feed).
    *  Optional so other mounts don't need to care. */
@@ -231,6 +242,18 @@ export default function CirclesSection({
     backCheckIn,
     resolveTarget,
   } = useGoalSpaces(uid);
+
+  /* SOC-P1e — report the ordering state upward (effect-time, latest
+     values). */
+  useEffect(() => {
+    if (!onStateChange) return;
+    if (loading) onStateChange("loading");
+    else if (loadFailed) onStateChange("live");
+    else if (circles.length === 0) onStateChange("none");
+    else if (circles.some((c) => c.space.memberCount >= 2))
+      onStateChange("live");
+    else onStateChange("solo");
+  }, [onStateChange, loading, loadFailed, circles]);
 
   /* SOC-P1d: publish the real reload for the shell's pull-to-refresh
      (effect-time sync — latest-ref pattern). reload carries its own
