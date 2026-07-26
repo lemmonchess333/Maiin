@@ -23,6 +23,12 @@ import { Spinner } from "@/components/ui/Spinner";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SoloFirstFeed from "@/components/social/SoloFirstFeed";
 import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
+import WeekOpenerCard from "@/components/social/WeekOpenerCard";
+import { useNavigate } from "react-router-dom";
+import {
+  getPersonalTrajectory,
+  type PersonalTrajectory,
+} from "@/lib/personalTrajectory";
 import { SOCIAL_GATES, shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -148,6 +154,49 @@ export default function FeedView({
   useEffect(() => {
     refreshRef.current = activeFeed.refresh;
   }, [refreshRef, activeFeed.refresh]);
+
+  /* SOC-P1c — the Your-week slot's data. FeedView owns the
+     getPersonalTrajectory fetch (lifted out of TrajectoryCard — same
+     one-shot bounded read, fired under exactly the conditions the
+     trajectory card used to render: following sub-tab, thin graph) so a
+     zero-session week can collapse the recap + trajectory pair into one
+     compact WeekOpenerCard instead of stacking a dead "Build recap"
+     button on a 0-pts grid. */
+  const navigate = useNavigate();
+  const trajectoryEnabled =
+    active &&
+    feedSubTab === "following" &&
+    !showSoloFeed &&
+    followingCount !== null &&
+    followingCount < 2;
+  const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
+  const [trajectoryLoading, setTrajectoryLoading] = useState(true);
+  useEffect(() => {
+    if (!trajectoryEnabled || !user) return;
+    let cancelled = false;
+    setTrajectoryLoading(true);
+    getPersonalTrajectory(user.uid)
+      .then((d) => {
+        if (!cancelled) setTrajectory(d);
+      })
+      .catch(() => {
+        if (!cancelled) setTrajectory(null);
+      })
+      .finally(() => {
+        if (!cancelled) setTrajectoryLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [trajectoryEnabled, user]);
+  /* The week is "open" (no sessions yet) only once the data says so —
+     never while loading, and never for leaderboard-tier users whose
+     slot doesn't fetch trajectory at all. */
+  const weekOpen =
+    trajectoryEnabled &&
+    !trajectoryLoading &&
+    trajectory !== null &&
+    trajectory.thisWeek.score === 0;
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
@@ -323,8 +372,21 @@ export default function FeedView({
 
             {/* Weekly recap share entry — established users only
                 (SoloFirstFeed carries its own share card for the
-                cold-start stack). Renders nothing on a zero week. */}
-            {!showSoloFeed && <WeeklyRecapCard />}
+                cold-start stack). SOC-P1c: on a zero-session week the
+                "Build recap" button is a dead control (nothing to
+                build), so the slot renders WeekOpenerCard instead —
+                one compact line merging recap + trajectory: the week
+                is open, the number to beat, and the action (train).
+                Both full cards return the moment a session exists. */}
+            {!showSoloFeed &&
+              (weekOpen ? (
+                <WeekOpenerCard
+                  lastWeekScore={trajectory?.lastWeek.score ?? 0}
+                  onStartTraining={() => navigate("/program")}
+                />
+              ) : (
+                <WeeklyRecapCard />
+              ))}
 
             {/* Spc1g — Suggested Spaces reach people who never
                 open the Community tab. Compact cards, joined
@@ -353,8 +415,15 @@ export default function FeedView({
                       challenge="weekly_hybrid"
                       onViewFull={openFullLeaderboard}
                     />
-                  ) : (
-                    <TrajectoryCard />
+                  ) : weekOpen ? null : (
+                    /* SOC-P1c: on an open (zero-session) week the
+                       WeekOpenerCard at the top of the feed already
+                       covers this slot — rendering the 0-pts grid too
+                       would put the wall of zeros right back. */
+                    <TrajectoryCard
+                      data={trajectory}
+                      loading={trajectoryLoading}
+                    />
                   ))}
                 {/* Trajectory pairing: when the slot is the solo
                   trajectory card (thin social graph), follow it with
