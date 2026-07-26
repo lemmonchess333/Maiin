@@ -124,7 +124,9 @@ export default function Social() {
   // (no ?feed) still gets the smart default.
   const feedFromUrl = searchParams.get("feed");
   const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>(
-    feedFromUrl === "following" || feedFromUrl === "explore"
+    feedFromUrl === "following" ||
+      feedFromUrl === "explore" ||
+      feedFromUrl === "communities"
       ? feedFromUrl
       : "explore"
   );
