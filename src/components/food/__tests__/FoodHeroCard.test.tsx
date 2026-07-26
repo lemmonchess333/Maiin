@@ -182,3 +182,29 @@ describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", ()
     expect(screen.queryByText(/Run day|Rest day/)).toBeNull();
   });
 });
+
+describe("FoodHeroCard — photo scrim carries the ring bed", () => {
+  /* The ring-bed layer is a concentrated feathered disc painted at the
+     wheel's centre (50% 47.5%) as the scrim's first radial layer. It's
+     what keeps the number + arc legible when the photo's MIDDLE is dark
+     or busy (the teal-quinoa lunch in dark mode) — the page-wide wash
+     alone couldn't supply a luminance gap exactly where the wheel sits.
+     Pinned so a scrim simplification can't silently drop the layer. */
+  it("today's hero paints the --food-photo-ring-bed layer at the ring centre", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={true}
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+        />
+      </MemoryRouter>
+    );
+    const scrim = [...container.querySelectorAll("div")].find((d) =>
+      (d.style.background || "").includes("--food-photo-ring-bed")
+    );
+    expect(scrim).toBeTruthy();
+    expect(scrim!.style.background).toContain("50% 47.5%");
+  });
+});
