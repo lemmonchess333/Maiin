@@ -5554,9 +5554,8 @@ exports.toggleKudosCallable = functions
 // Mirrors toggleKudosCallable: server-owned counter + sub-doc flipped in
 // one transaction (lib/spacePostEngagement.js), deletion actor-lock,
 // rate-limited. spaceId is validated against the known-space allowlist so
-// junk paths never reach Firestore. No notification in this slice — a
-// space_post_like tray type is a follow-up (the coach author id is not a
-// notifiable user anyway).
+// junk paths never reach Firestore. SOC-P2g added the space_post_like
+// notification on the add edge (self + the system coach excluded).
 const spacePostEngagement = require("./lib/spacePostEngagement");
 
 exports.toggleSpacePostLikeCallable = functions
@@ -5598,7 +5597,7 @@ exports.toggleSpacePostLikeCallable = functions
       );
     }
     try {
-      return await spacePostEngagement.toggleSpacePostLike({
+      const result = await spacePostEngagement.toggleSpacePostLike({
         firestore: admin.firestore(),
         uid: context.auth.uid,
         spaceId,
@@ -5606,6 +5605,46 @@ exports.toggleSpacePostLikeCallable = functions
         increment: admin.firestore.FieldValue.increment,
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
+      // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
+      // self, never the system coach (not a notifiable user).
+      if (result && result.liked) {
+        try {
+          const postAuthorId = result.postAuthorId;
+          if (
+            postAuthorId &&
+            postAuthorId !== context.auth.uid &&
+            postAuthorId !== coachPrompts.COACH_AUTHOR.authorId
+          ) {
+            const fromName =
+              (data && typeof data.fromName === "string" && data.fromName) ||
+              "Someone";
+            await socialFanout.createNotification({
+              firestore: admin.firestore(),
+              fromUid: context.auth.uid,
+              toUid: postAuthorId,
+              data: {
+                type: "space_post_like",
+                fromName,
+                spaceId,
+                postId,
+                message: `${fromName} gave your space post props`,
+              },
+              serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+            });
+          }
+        } catch (notifErr) {
+          functions.logger.warn(
+            "toggleSpacePostLikeCallable.notification_failed",
+            {
+              uid: context.auth.uid,
+              spaceId,
+              postId,
+              error: notifErr && notifErr.message,
+            }
+          );
+        }
+      }
+      return result;
     } catch (err) {
       functions.logger.warn("toggleSpacePostLikeCallable.error", {
         uid: context.auth.uid,
@@ -5620,6 +5659,173 @@ exports.toggleSpacePostLikeCallable = functions
         isAccessError
           ? "This post is unavailable."
           : (err && err.message) || "Like toggle failed."
+      );
+    }
+  });
+
+// SOC-P2g — Space-post comments (the addComment lockdown applied to
+// spaces/{id}/posts/{postId}/comments). Client writes are rules-denied;
+// creates/deletes route through these callables, which flip the comment
+// doc and the server-owned commentCount in one transaction. The add edge
+// notifies the post author (space_post_comment) unless the author is the
+// commenter or the system coach ("tropos-coach" is not a notifiable
+// user). The like callable above gained the matching space_post_like
+// notification in this slice.
+
+exports.addSpacePostCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
+    if (
+      typeof spaceId !== "string" ||
+      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      typeof postId !== "string" ||
+      !postId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId and postId required."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    const limited = await isRateLimited(
+      context.auth.uid,
+      "addSpacePostComment",
+      20,
+      60_000
+    );
+    if (limited) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many comments. Slow down."
+      );
+    }
+    try {
+      const result = await spacePostEngagement.addSpacePostComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        text,
+        authorName,
+        authorPhotoURL,
+        increment: admin.firestore.FieldValue.increment,
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+      });
+      try {
+        const postAuthorId = result && result.postAuthorId;
+        if (
+          postAuthorId &&
+          postAuthorId !== context.auth.uid &&
+          postAuthorId !== coachPrompts.COACH_AUTHOR.authorId
+        ) {
+          const fromName =
+            (typeof authorName === "string" && authorName) || "Someone";
+          await socialFanout.createNotification({
+            firestore: admin.firestore(),
+            fromUid: context.auth.uid,
+            toUid: postAuthorId,
+            data: {
+              type: "space_post_comment",
+              fromName,
+              spaceId,
+              postId,
+              message: `${fromName} commented on your space post`,
+            },
+            serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+          });
+        }
+      } catch (notifErr) {
+        functions.logger.warn(
+          "addSpacePostCommentCallable.notification_failed",
+          {
+            uid: context.auth.uid,
+            spaceId,
+            postId,
+            error: notifErr && notifErr.message,
+          }
+        );
+      }
+      return result;
+    } catch (err) {
+      functions.logger.warn("addSpacePostCommentCallable.error", {
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        error: err && err.message,
+      });
+      const isAccessError =
+        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
+      throw new functions.https.HttpsError(
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This post is unavailable."
+          : (err && err.message) || "Comment create failed."
+      );
+    }
+  });
+
+exports.deleteSpacePostCommentCallable = functions
+  .runWith(DEFAULT_HTTP_CAP)
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Sign-in required."
+      );
+    }
+    const { spaceId, postId, commentId } = data || {};
+    if (
+      typeof spaceId !== "string" ||
+      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      typeof postId !== "string" ||
+      !postId.trim() ||
+      typeof commentId !== "string" ||
+      !commentId.trim()
+    ) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "spaceId, postId and commentId required."
+      );
+    }
+    await accountDeletionLocks.assertCallableActorNotDeleting(
+      admin.firestore(),
+      context.auth.uid
+    );
+    try {
+      await spacePostEngagement.deleteSpacePostComment({
+        firestore: admin.firestore(),
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        commentId,
+        increment: admin.firestore.FieldValue.increment,
+      });
+      return { ok: true };
+    } catch (err) {
+      functions.logger.warn("deleteSpacePostCommentCallable.error", {
+        uid: context.auth.uid,
+        spaceId,
+        postId,
+        commentId,
+        error: err && err.message,
+      });
+      const isAccessError =
+        err && err.code === spacePostEngagement.POST_NOT_ACCESSIBLE;
+      throw new functions.https.HttpsError(
+        isAccessError ? "permission-denied" : "failed-precondition",
+        isAccessError
+          ? "This post is unavailable."
+          : (err && err.message) || "Comment delete failed."
       );
     }
   });
