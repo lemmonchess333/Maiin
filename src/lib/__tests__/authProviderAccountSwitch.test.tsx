@@ -7,23 +7,34 @@
  * no stale A callback can commit A's identity-derived state under B, that an
  * A→B switch clears A's profile before B hydrates, and that a same-uid token
  * refresh doesn't flicker the profile away.
+ *
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake). The
+ * old version hand-rolled `getDoc` as a deferred-promise queue and fabricated
+ * each account's snapshot inline. Two things improve by moving to the shared
+ * fake, beyond removing a second Firestore implementation:
+ *
+ *   - A and B are now REAL documents at `users/A` and `users/B`, seeded and
+ *     read by path. The old snapshots were synthetic and identical in shape,
+ *     so nothing connected "the read that resolved" to "the account it was
+ *     for" — the test trusted its own array indices.
+ *   - `pendingReads()` names the held reads by path, so the interleaving is
+ *     asserted rather than assumed. `releaseRead(1)` used to mean "whatever
+ *     landed second"; now the test first proves the queue is
+ *     `["users/A", "users/B"]`.
+ *
+ * The late-FAILURE case needed a new fake capability (`rejectRead`), because
+ * `failNextFirestore` fires at issue time and so can never produce a read
+ * that is still in flight across the switch and only then fails. See the
+ * note on `rejectRead` in firestoreFake.ts.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act, cleanup, waitFor } from "@testing-library/react";
 
 // Hoisted shared state (vi.mock factories are hoisted above module init).
-type Deferred = {
-  promise: Promise<unknown>;
-  resolve: (v: unknown) => void;
-  reject: (e: unknown) => void;
-};
-const H = vi.hoisted(() => {
-  return {
-    mockAuth: { currentUser: null as { uid: string } | null },
-    authCb: null as ((u: { uid: string } | null) => void) | null,
-    serverReads: [] as Deferred[],
-  };
-});
+const H = vi.hoisted(() => ({
+  mockAuth: { currentUser: null as { uid: string } | null },
+  authCb: null as ((u: { uid: string } | null) => void) | null,
+}));
 const mockAuth = H.mockAuth;
 
 vi.mock("../firebase", () => ({
@@ -61,37 +72,11 @@ vi.mock("firebase/auth", () => ({
   signOut: vi.fn(),
 }));
 
-function defer(): Deferred {
-  let resolve!: (v: unknown) => void;
-  let reject!: (e: unknown) => void;
-  const promise = new Promise((res, rej) => {
-    resolve = res;
-    reject = rej;
-  });
-  return { promise, resolve, reject };
-}
-const snap = (uid: string | null) =>
-  uid
-    ? {
-        exists: () => true,
-        data: () => ({ email: `${uid}@x.z`, darkMode: true }),
-      }
-    : { exists: () => false, data: () => ({}) };
-
-vi.mock("firebase/firestore", () => ({
-  doc: (_db: unknown, _c: string, uid: string) => ({ uid }),
-  getDoc: () => {
-    const d = defer();
-    H.serverReads.push(d);
-    return d.promise;
-  },
-  getDocFromCache: () => Promise.reject(new Error("cache-miss")),
-  writeBatch: () => ({
-    set: vi.fn(),
-    commit: vi.fn().mockResolvedValue(undefined),
-  }),
-  serverTimestamp: () => ({}),
-}));
+// The one fake (ADR-0009). `getDocFromCache` models a cold cache and rejects
+// synchronously without going through the deferral queue, so the cache-first
+// paint in AuthProvider never appears in `pendingReads()` — the held reads
+// below are the authoritative server reads only.
+vi.mock("firebase/firestore");
 
 vi.mock("../errorReporting", () => ({ setErrorReportingUid: vi.fn() }));
 vi.mock("@/lib/firestoreWrite", () => ({
@@ -106,6 +91,14 @@ vi.mock("@/lib/captureTimezone", () => ({
 }));
 
 import { AuthProvider, useAuth } from "../auth";
+import {
+  seedFirestore,
+  resetFirestore,
+  deferReads,
+  pendingReads,
+  releaseRead,
+  rejectRead,
+} from "@/test/firestoreHarness";
 
 function Probe() {
   const { user, profile, loading } = useAuth();
@@ -136,51 +129,88 @@ async function emit(uid: string | null) {
 }
 
 beforeEach(() => {
+  resetFirestore();
   mockAuth.currentUser = null;
   H.authCb = null;
-  H.serverReads = [];
+  // Deliberately OPPOSITE darkMode values so "whose document won" is
+  // readable off the store, not just inferred from the uid the provider
+  // happens to carry over from auth.
+  seedFirestore({
+    "users/A": { email: "A@x.z", darkMode: true },
+    "users/B": { email: "B@x.z", darkMode: false },
+  });
   render(
     <AuthProvider>
       <Probe />
     </AuthProvider>
   );
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetFirestore();
+});
 
 describe("AuthProvider — account switch isolation", () => {
   it("B wins when A's read resolves LAST", async () => {
-    await emit("A"); // A's server read pending (H.serverReads[0])
-    await emit("B"); // B's server read pending (H.serverReads[1])
-    // Resolve B first, then A (out of order).
-    await act(async () => H.serverReads[1].resolve(snap("B")));
-    await act(async () => H.serverReads[0].resolve(snap("A")));
+    deferReads();
+    await emit("A");
+    await emit("B");
+    // Assert the interleaving exists before relying on it. The old suite
+    // indexed a bare array and could not tell A's read from B's.
+    expect(pendingReads()).toEqual(["users/A", "users/B"]);
+
+    await act(async () => {
+      expect(releaseRead(1)).toBe(true); // B answers first
+    });
     await waitFor(() => expect(state().p).toBe("B"));
+
+    await act(async () => {
+      expect(releaseRead(0)).toBe(true); // A answers LATE
+    });
+    expect(state().p).toBe("B");
     expect(state().u).toBe("B");
   });
 
   it("A→B clears A's profile immediately, before B hydrates", async () => {
     await emit("A");
-    await act(async () => H.serverReads[0].resolve(snap("A")));
     await waitFor(() => expect(state().p).toBe("A"));
-    // Switch to B — profile must blank before B's read resolves.
+
+    // Hold B's read so "before B hydrates" is a real window rather than a
+    // race the test happens to win.
+    deferReads();
     await emit("B");
+    expect(pendingReads()).toEqual(["users/B"]);
     expect(state().p).toBe("null");
     expect(state().loading).toBe("true");
+
+    await act(async () => {
+      expect(releaseRead(0)).toBe(true);
+    });
+    await waitFor(() => expect(state().p).toBe("B"));
   });
 
-  it("A's rejected read after B is current does not null B", async () => {
+  it("A's read FAILING after B is current does not null B", async () => {
+    deferReads();
     await emit("A");
     await emit("B");
-    await act(async () => H.serverReads[1].resolve(snap("B")));
+    expect(pendingReads()).toEqual(["users/A", "users/B"]);
+
+    await act(async () => {
+      expect(releaseRead(1)).toBe(true);
+    });
     await waitFor(() => expect(state().p).toBe("B"));
-    // A's read now rejects — the stale catch must not clear B.
-    await act(async () => H.serverReads[0].reject(new Error("late-fail")));
+
+    // A's still-in-flight read now rejects. The stale catch must not clear
+    // the account that is actually signed in.
+    await act(async () => {
+      expect(rejectRead(0)).toBe(true);
+    });
     expect(state().p).toBe("B");
+    expect(state().loading).toBe("false");
   });
 
   it("same-uid token refresh keeps the rendered profile (no flicker)", async () => {
     await emit("A");
-    await act(async () => H.serverReads[0].resolve(snap("A")));
     await waitFor(() => expect(state().p).toBe("A"));
     // A refreshes token (same uid) — profile must NOT blank.
     await emit("A");
