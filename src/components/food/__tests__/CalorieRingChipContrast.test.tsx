@@ -157,46 +157,33 @@ describe("CalorieRing centre value — zero is not dimmed", () => {
   });
 });
 
-describe("CalorieRing halo bed — the wheel reads on any photo", () => {
-  /* Over a busy hero photo the 24%-tint track vanished and the arc
-     muddied into the food — which users read as "the ring is hard to
-     see" AND "the ring looks off-centre". The halo is a contrasting
-     under-stroke painted once beneath the whole wheel (the cartographic
-     outline technique): dark bed under the bright arc in dark mode,
-     light bed under the deep arc in light mode. */
-
-  function circles() {
+describe("CalorieRing — nothing paints past the viewBox (the clipped-halo regression)", () => {
+  /* The SVG halo bed (2026-07-26, #1753/#1774) drew a STROKE+6 ring at
+     r=RADIUS. The wheel's outer edge sits EXACTLY at the 160px viewBox
+     edge (r + stroke/2 = 80), so the wider halo painted to r=83 and the
+     box clipped it flat on all four sides — on device it read as a hard
+     black outline "cut off like it's in a box". The halo is removed;
+     this pin makes the geometry law explicit: every circle's
+     r + strokeWidth/2 must stay inside SIZE/2. */
+  it("every circle stays inside the 160px box", () => {
     const { container } = renderRing();
-    return Array.from(container.querySelectorAll("circle"));
-  }
-
-  it("paints a LIGHT halo under the wheel in light mode", () => {
-    const halo = circles().find(
-      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
-    );
-    expect(halo).toBeTruthy();
+    const circles = Array.from(container.querySelectorAll("circle"));
+    expect(circles.length).toBeGreaterThan(0);
+    for (const c of circles) {
+      const r = Number(c.getAttribute("r") ?? 0);
+      const sw = Number(c.getAttribute("stroke-width") ?? 0);
+      expect(r + sw / 2).toBeLessThanOrEqual(80);
+    }
   });
 
-  it("paints a DARK halo under the wheel in dark mode", () => {
+  it("no dark or light halo under-stroke exists", () => {
     document.documentElement.classList.add("dark");
-    const halo = circles().find(
-      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloDark
-    );
-    expect(halo).toBeTruthy();
-  });
-
-  it("the halo is wider than the stroke and painted FIRST (underneath)", () => {
-    const all = circles();
-    const haloIndex = all.findIndex(
-      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
-    );
-    expect(haloIndex).toBe(0); // under everything — track, arc, overshoot
-    const halo = all[haloIndex];
-    const track = all[haloIndex + 1];
-    expect(Number(halo.getAttribute("stroke-width"))).toBeGreaterThan(
-      Number(track.getAttribute("stroke-width"))
-    );
-    expect(halo.getAttribute("fill")).toBe("none");
+    const { container } = renderRing();
+    for (const c of Array.from(container.querySelectorAll("circle"))) {
+      const stroke = c.getAttribute("stroke") ?? "";
+      expect(stroke.startsWith("rgba(0, 0, 0")).toBe(false);
+      expect(stroke.startsWith("rgba(255, 255, 255")).toBe(false);
+    }
   });
 });
 
