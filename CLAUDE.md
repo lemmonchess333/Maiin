@@ -646,11 +646,13 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 
 ### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
 
-Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). The sandbox has no Storage emulator, so the upload path itself is unverified end-to-end (display path verified via seeded photoUrl captures).
+Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep).
 
-- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px.
+**The agent sandbox DOES run the Storage emulator** — `npm run test:rules:storage` passes here (29 tests, firestore+storage emulators, Java 21 present). This row claimed the opposite until 2026-07-26, and that false constraint was doing real work: it justified leaving the whole path manual. What is actually unverifiable in-sandbox is narrower — `toUploadBlob`'s `<img>`+canvas downscale needs a real browser (jsdom has no `canvas`, and the module isn't reachable from the built preview bundle a Playwright spec loads), so the **≤1280px resize** is the only genuinely device-level claim. The rules half is already automated in `storage.rules.test.ts` ("food-photos/{uid} — owner-only").
+
+- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
 - [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
-- [ ] After the next `storage.rules` deploy (deploy-storage.yml on merge), confirm a signed-out request to a food-photos URL path 403s and cross-uid read is denied.
+- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. Only the later account-deletion write freeze (`779ca7ba`) is held back by the packet-11 gate.
 - [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
@@ -688,6 +690,28 @@ Affects: `functions/index.js` (`dailyRaceReconciliationSweep` L3) + new `functio
 - [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`), confirm the deployed bundle contains `_recoveryEndDateForRace` and the `require("./lib/runModeResolution")`. If absent, the dedup logic skipped the upload — re-run `deploy-functions.yml` via `workflow_dispatch`.
 - [ ] **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
 - [ ] **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
+
+### `askGeminiText` retirement — needs a deploy to actually stop serving
+
+Removing the export from `functions/index.js` does **not** take the endpoint down. Until `deploy-functions.yml` runs, the previously-deployed `askGeminiText` container keeps accepting authenticated calls and billing Vertex. That was the main reason to retire it: with no client caller, any traffic reaching it was by definition not from the app, and App Check is not yet enforced.
+
+- [ ] After the next functions deploy, confirm `askGeminiText` is **gone** from the Cloud Functions list (Console → Functions, or `firebase functions:list`). A stale container is the whole risk this retirement was meant to close.
+- [ ] If it lingers, delete it explicitly: `firebase functions:delete askGeminiText --project adaptive-fitness-af8bb`. Firebase usually prunes removed exports on deploy, but it prompts for confirmation, and a non-interactive CI deploy can skip the prune.
+- [ ] No client change is needed — there were zero call sites. `rateLimits/{uid}_askGemini` docs stop being written; existing ones are swept by the account-deletion range filter already covered in `accountDeletionRateLimitsRange.test.ts`.
+
+### Race-day completion predicate (PR #1775)
+
+Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateIds.js` — both reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Merged 2026-07-26 from a web session that cannot view the deployed source.
+
+**This is the highest-value deploy check in the backlog**, because the bug it fixes was silent and total: `isStrictRaceRun` compared `savedRun.actualTemplateId` against the literal `"race"`, which no document ever carries (RunSummary writes the template id, and the race ids are `5k_race` … `marathon_race`). The predicate was therefore **always false** — every completed race read as a no-show, and the post-race recovery entry never fired for anyone. Its own golden fixtures hid it by using `"race"` on the accept path and real ids on the rejects, so the rejections were honest and the acceptance was fiction. Fixing the predicate broke 14 tests, all on the accept path — the proof the whole server race path had been verified against a value production never writes.
+
+- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`, then `…/onRunCreated/source`), confirm the bundle contains `require("./raceTemplateIds")` and the string `marathon_race`. This is a `.js` change so the bundle-hash dedup should not bite, but green CI is still not proof — re-run `deploy-functions.yml` via `workflow_dispatch` if absent.
+- [ ] **A completed race now clears the no-show.** Log a race-templated run on a race-prep user's race date at ≥95% of planned distance. `onRunCreated` logs should include `recovery-entry written for {uid}`, and `programState.runPlan.phase` should flip to `"recovery"` with the race-day runDay id appended to `completedRaces[]`. Pre-fix this never happened for any user.
+- [ ] **Past races are not retroactively repaired — and there is a 14-day point of no return.** Verified mechanism, not a guess: `_needsRaceNoShowEvaluation` bails on `raceDayRunDay.status !== "planned"`, so once a slot is `race_no_show` the sweep never re-evaluates it. The predicate fix therefore does NOT self-heal past races. Two windows:
+  - **Within 14 days of the race** the state is recoverable by the user: PR-D locked `race_no_show` as a soft-terminal status (`LEGAL_TRANSITIONS.race_no_show: ["planned"]`), surfaced as the **Restore** action on the locked day in `DayActionSheet`. Nothing automatic clears it — the lock deliberately made recovery a user action.
+  - **Past 14 days** the sweep's L4 auto-exit (`NO_SHOW_EXIT_GRACE_DAYS = 14`) returns the user to `runMode: "freeform"` and nulls `raceGoal` on both the profile and the runPlan. Restoring the runDay after that does NOT bring the race goal back — the user has to re-declare the race. So any user whose race passed >14 days before the fix deployed has silently lost their race goal.
+
+  Decide whether to backfill. With one pre-launch user this is likely a manual repair rather than a migration, but it is a real user-visible residue of the original bug, not a deploy failure — don't read a clean sweep log as "nobody was affected".
 
 ### PR-L bugfix verification (PR #815)
 
@@ -775,7 +799,7 @@ Rollout sequence (operator, not agent) — do these in order, ideally after pack
 
 - [ ] **Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)
 - [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
-- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then, storage-rules changes deploy only via the manual `firebase deploy` above / `workflow_dispatch`.
+- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [ ] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`.
 
 ### App Check enforcement rollout — operator-in-loop
@@ -790,7 +814,7 @@ Rollout sequence (operator, not agent):
 - [ ] Wait 24–48h post-deploy for telemetry to populate.
 - [ ] Open **Firebase Console → App Check → APIs tab → Cloud Functions for Firebase**. Look for "Verified requests %". Target: ≥99% sustained for ≥7 days before any per-callable flip.
 - [ ] If verified % is low and the cause isn't obvious, query Cloud Logging: `resource.type="cloud_function" jsonPayload.appCheck.status=("MISSING" OR "INVALID")` to see exactly which callables would reject and which uids are missing tokens. Usual culprits: ad-blockers killing reCAPTCHA (rare, swallowed) or native iOS (all `MISSING` until the Capacitor App Check plugin is wired).
-- [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints (e.g. `askGeminiText`). Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
+- [ ] Flip enforcement per-callable in `functions/index.js` by adding `.runWith({ enforceAppCheck: true })`. Start with low-risk endpoints that the client **actually calls** — `sendTestPush`, `backfillMyActivityCategories`. (This line named `askGeminiText` until 2026-07-26; it had no client caller, so flipping it would have produced no telemetry and no rejection signal. It has since been retired. `docs/app-check-rollout.md` carries the full tier table and the traffic check.) Keep destructive ones (`deleteMyAccount`, `verifyApplePurchase`) until last. Don't bulk-flip.
 
 ## Agent skills
 
