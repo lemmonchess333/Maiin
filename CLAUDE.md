@@ -646,11 +646,13 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 
 ### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
 
-Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). The sandbox has no Storage emulator, so the upload path itself is unverified end-to-end (display path verified via seeded photoUrl captures).
+Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep).
 
-- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px.
+**The agent sandbox DOES run the Storage emulator** — `npm run test:rules:storage` passes here (29 tests, firestore+storage emulators, Java 21 present). This row claimed the opposite until 2026-07-26, and that false constraint was doing real work: it justified leaving the whole path manual. What is actually unverifiable in-sandbox is narrower — `toUploadBlob`'s `<img>`+canvas downscale needs a real browser (jsdom has no `canvas`, and the module isn't reachable from the built preview bundle a Playwright spec loads), so the **≤1280px resize** is the only genuinely device-level claim. The rules half is already automated in `storage.rules.test.ts` ("food-photos/{uid} — owner-only").
+
+- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
 - [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
-- [ ] After the next `storage.rules` deploy (deploy-storage.yml on merge), confirm a signed-out request to a food-photos URL path 403s and cross-uid read is denied.
+- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. Only the later account-deletion write freeze (`779ca7ba`) is held back by the packet-11 gate.
 - [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
@@ -775,7 +777,7 @@ Rollout sequence (operator, not agent) — do these in order, ideally after pack
 
 - [ ] **Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)
 - [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
-- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then, storage-rules changes deploy only via the manual `firebase deploy` above / `workflow_dispatch`.
+- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [ ] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`.
 
 ### App Check enforcement rollout — operator-in-loop

@@ -71,3 +71,51 @@ jobs:
 
       - name: Deploy Storage rules
         run: firebase deploy --only storage --project adaptive-fitness-af8bb --force
+
+  # ── LOUD SKIP ────────────────────────────────────────────────────────────
+  # The gate above is intentional, but a skipped job leaves the WORKFLOW
+  # green — and this workflow only ever triggers when storage.rules or
+  # firebase.json actually changed. So every gated run is, by construction,
+  # "a rules change that did not ship", reported as success. That is the
+  # same silent-drift shape the Cloud Functions dedup gotcha caused (see
+  # CLAUDE.md, "Cloud Functions deploy — known gotchas"): CI green read as
+  # deployed while production stayed on the old bundle for days.
+  #
+  # This job fails so the drift is legible at a glance. It is not noise:
+  # it cannot fire in steady state (no rules change → no workflow run), it
+  # names the exact remediation, and it disappears the moment the operator
+  # completes the packet-11 rollout. `verify` still runs and still gates,
+  # so the rules themselves are tested either way.
+  report-not-deployed:
+    needs: verify
+    if: vars.STORAGE_XSERVICE_APPROVED != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Storage rules changed but were NOT deployed
+        run: |
+          {
+            echo "## ⚠️ storage.rules changed — NOT deployed"
+            echo
+            echo "The \`deploy\` job is gated behind the repo variable"
+            echo "\`STORAGE_XSERVICE_APPROVED\`, which is not set to \`true\`."
+            echo "Production Storage rules are unchanged by this run."
+            echo
+            echo "This gate exists because \`storage.rules\` reads Firestore"
+            echo "(the account-deletion write freeze). Deploying that"
+            echo "cross-service rule before a project owner grants access in"
+            echo "the Firebase Console makes the predicate error → deny →"
+            echo "**all photo uploads blocked app-wide**."
+            echo
+            echo "To ship these rules:"
+            echo
+            echo '1. From a project-owner machine, run:'
+            echo '   `firebase deploy --only storage --project adaptive-fitness-af8bb`'
+            echo '   and approve the cross-service prompt. This is the ONLY'
+            echo '   path while the gate is off — re-running this workflow via'
+            echo '   `workflow_dispatch` hits the same `if:` and skips again.'
+            echo '2. Then set repo variable `STORAGE_XSERVICE_APPROVED=true`'
+            echo '   (Settings → Secrets and variables → Actions → Variables)'
+            echo '   so subsequent pushes deploy normally.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error title=storage.rules not deployed::Gated behind STORAGE_XSERVICE_APPROVED; see the job summary for the rollout steps."
+          exit 1
