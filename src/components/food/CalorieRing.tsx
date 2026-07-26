@@ -86,10 +86,23 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  // Colour stays purple in both modes — the toggle changes the displayed
-  // value, not the ring's visual identity. The centre label text is the
-  // only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
-  const numberColor = hasTarget ? COLOR_RING : THEME.neutral[300];
+  /* Colour stays purple in both modes — the toggle changes the displayed
+     value, not the ring's visual identity. The centre label text is the
+     only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
+
+     Theme split (the chip's #1728 pattern, applied to the number): DARK
+     keeps the brand purple on the dark card; LIGHT uses the deeper ring
+     step. The brand purple measures ~3:1 against the light-mode photo
+     wash — the exact large-text floor, with lunch marginally under —
+     and that floor is what forced the wash to stay heavy. The deep step
+     (~5:1 on white) buys the headroom that lets the wash lighten so the
+     photo reads as food instead of fog. On the plain white card it is
+     simply higher-contrast, same family. */
+  const numberColor = hasTarget
+    ? isDark
+      ? COLOR_RING
+      : COLOR_RING_DEEP
+    : THEME.neutral[300];
 
   /* Ring track. The 10% brand tint reads as a recessed groove on a flat
      WHITE card, but it's far too sheer over the dark-mode hero photo —
@@ -98,7 +111,18 @@ export default function CalorieRing({
      ring disappears entirely on a day with nothing logged. Dark mode
      therefore gets a stronger tint so the circle always reads as a
      shape, empty or not. */
-  const trackColor = isDark ? `${COLOR_RING}3D` : COLOR_TRACK;
+  const trackColor = isDark ? `${COLOR_RING}52` : COLOR_TRACK;
+
+  /* Halo bed for the whole wheel (photo legibility). Over busy food the
+     24%-tint track vanished while the arc muddied — which also READS as
+     the ring being off-centre. A soft contrasting under-stroke (dark
+     under the bright arc in dark mode, light under the deep arc in
+     light) gives the wheel its own bed on any image, the same way map
+     labels get a halo. Painted once under the track so track + arc +
+     overshoot all benefit. Static layer, never animated. */
+  const haloColor = isDark
+    ? THEME.calorieRing.haloDark
+    : THEME.calorieRing.haloLight;
 
   /* Zero is a real value, not a placeholder — it renders at full strength
      like any other. The centre number used to drop to 0.4 opacity at
@@ -118,7 +142,12 @@ export default function CalorieRing({
      (~7:1 on the dark card) over a slightly stronger purple backing so
      it holds up against photography as well as the flat card. */
   const chipTextColor = isDark ? COLOR_RING_LIGHT : COLOR_RING_DEEP;
-  const chipBackground = isDark ? `${COLOR_RING}33` : trackColor;
+  /* Light backing is OPAQUE (the tint flattened on white): translucent
+     10% tint went sheer over the photo wash and the chip fell under AA
+     on the busiest shot (3.06:1). Same rendered colour on a plain card. */
+  const chipBackground = isDark
+    ? `${COLOR_RING}33`
+    : THEME.calorieRing.chipBgLight;
 
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)
@@ -246,6 +275,16 @@ export default function CalorieRing({
         </defs>
 
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
+          {/* Halo bed — see haloColor above. Wider than the stroke so a
+              sliver of contrast rims both edges of track and arc. */}
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={RADIUS}
+            fill="none"
+            stroke={haloColor}
+            strokeWidth={STROKE + 6}
+          />
           {/* Track — inset shadow filter makes it read as a recessed groove */}
           <circle
             cx={CENTER}

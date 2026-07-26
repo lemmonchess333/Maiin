@@ -99,6 +99,42 @@ describe("CalorieRing mode chip — theme-aware colour", () => {
   });
 });
 
+describe("CalorieRing centre number — theme-aware colour", () => {
+  /* Same split as the chip, applied to the number (the light-mode-photo
+     work): brand purple sat at the 3:1 large-text floor against the
+     light wash, which forced the wash to stay heavy. The deep step buys
+     the headroom that let the wash lighten.
+
+     Asserted on the ZERO ring: AnimatedNumber counts up from 0, so a
+     non-zero value isn't in the DOM at assert time — 0 is, immediately. */
+  function centreNumberEl() {
+    return screen.getByText("0").closest("p") as HTMLElement;
+  }
+
+  it("uses the BRAND purple in dark mode", () => {
+    document.documentElement.classList.add("dark");
+    renderZeroRing();
+    expect(centreNumberEl()).toHaveStyle({ color: THEME.brand });
+  });
+
+  it("uses the DEEP ring step in light mode", () => {
+    renderZeroRing();
+    expect(centreNumberEl()).toHaveStyle({ color: THEME.calorieRing.deep });
+  });
+});
+
+describe("CalorieRing mode chip — light backing is opaque", () => {
+  it("uses the flattened-tint solid, not the sheer 10% tint", () => {
+    renderRing();
+    const el = screen.getByText(/kcal/i).closest("span") as HTMLElement;
+    // Translucent tint went under AA over the photo wash (3.06:1 on the
+    // busiest shot); the solid renders identically on the plain card.
+    expect(el).toHaveStyle({
+      backgroundColor: THEME.calorieRing.chipBgLight,
+    });
+  });
+});
+
 describe("CalorieRing centre value — zero is not dimmed", () => {
   /** The centre number is the only .font-mono element in the ring. */
   function centreNumber() {
@@ -118,6 +154,49 @@ describe("CalorieRing centre value — zero is not dimmed", () => {
     renderZeroRing();
     const o = centreNumber().style.opacity;
     if (o !== "") expect(Number(o)).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("CalorieRing halo bed — the wheel reads on any photo", () => {
+  /* Over a busy hero photo the 24%-tint track vanished and the arc
+     muddied into the food — which users read as "the ring is hard to
+     see" AND "the ring looks off-centre". The halo is a contrasting
+     under-stroke painted once beneath the whole wheel (the cartographic
+     outline technique): dark bed under the bright arc in dark mode,
+     light bed under the deep arc in light mode. */
+
+  function circles() {
+    const { container } = renderRing();
+    return Array.from(container.querySelectorAll("circle"));
+  }
+
+  it("paints a LIGHT halo under the wheel in light mode", () => {
+    const halo = circles().find(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
+    );
+    expect(halo).toBeTruthy();
+  });
+
+  it("paints a DARK halo under the wheel in dark mode", () => {
+    document.documentElement.classList.add("dark");
+    const halo = circles().find(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloDark
+    );
+    expect(halo).toBeTruthy();
+  });
+
+  it("the halo is wider than the stroke and painted FIRST (underneath)", () => {
+    const all = circles();
+    const haloIndex = all.findIndex(
+      (c) => c.getAttribute("stroke") === THEME.calorieRing.haloLight
+    );
+    expect(haloIndex).toBe(0); // under everything — track, arc, overshoot
+    const halo = all[haloIndex];
+    const track = all[haloIndex + 1];
+    expect(Number(halo.getAttribute("stroke-width"))).toBeGreaterThan(
+      Number(track.getAttribute("stroke-width"))
+    );
+    expect(halo.getAttribute("fill")).toBe("none");
   });
 });
 
