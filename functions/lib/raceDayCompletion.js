@@ -40,6 +40,8 @@
  * Pure — no Firestore handle, no admin SDK. Callers pass plain data.
  */
 
+const { isRaceTemplateId } = require("./raceTemplateIds");
+
 /** Q1 P4: a race counts as run at ≥95% of the planned distance. */
 const RACE_STRICT_DISTANCE_RATIO = 0.95;
 
@@ -87,7 +89,10 @@ function recoveryWeeksFor(distanceKey) {
  *
  *   1. not `isInvalid` / `savedAnyway` — a "Save anyway" on a borked
  *      GPS trace the user explicitly flagged must never clear a no-show;
- *   2. `actualTemplateId === "race"` (the raw-doc field, see header);
+ *   2. `actualTemplateId` is a RACE-TYPE template id — `5k_race` …
+ *      `marathon_race`, resolved through the pinned `raceTemplateIds`
+ *      mirror. It compared against the literal "race" until 2026-07-26,
+ *      which no doc satisfies; see that module for the full account;
  *   3. `distance` is a number;
  *   4. `plannedDistanceMeters <= 0` → unconfigured goal accepts any
  *      race-templated run (Q1 P29 fallback);
@@ -108,7 +113,11 @@ function isStrictRaceRun(savedRun, plannedDistanceMeters) {
   if (savedRun.isInvalid === true || savedRun.savedAnyway === true) {
     return false;
   }
-  if (savedRun.actualTemplateId !== "race") return false;
+  // By TYPE, via the pinned id mirror — NOT `=== "race"`, which no doc
+  // ever satisfies (real ids are `5k_race` … `marathon_race`). That
+  // comparison made this predicate always false, so every completed race
+  // read as a no-show and the recovery entry never fired.
+  if (!isRaceTemplateId(savedRun.actualTemplateId)) return false;
   if (typeof savedRun.distance !== "number") return false;
   if (!plannedDistanceMeters || plannedDistanceMeters <= 0) return true;
   return savedRun.distance / plannedDistanceMeters >= RACE_STRICT_DISTANCE_RATIO;

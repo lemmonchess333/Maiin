@@ -49,6 +49,17 @@ export interface CompletionDeps {
   paceBucketFor: (saved: SavedRunLike) => "quality" | "easy" | string;
   templateQualityBucket: Record<string, "quality" | "easy">;
   plannedDistanceFor?: (runDay: ScheduledRunDay) => number;
+  /**
+   * Is this template id a RACE? Supplied rather than derived so this
+   * module stays template-agnostic (the Q3 P41 reason `templateQualityBucket`
+   * is injected too).
+   *
+   * Race ids are `5k_race` … `marathon_race`, never the literal "race" —
+   * comparing against that literal is the trap CLAUDE.md locks and that
+   * `raceRunDaysReconcile`, `runHeroState` and `workoutTemplates` each warn
+   * about. It is also the bug this predicate replaces.
+   */
+  isRaceTemplate?: (templateId: string | undefined) => boolean;
 }
 
 function dateKey(dateStr: string | undefined): number | null {
@@ -109,27 +120,22 @@ function distanceAndBucketOk(
 
   if (bucket === "quality") {
     /* Q1 P4 short-circuit: race day completes on a race-templated run
-       regardless of pace bucket — you can race a 5k as a pacer, on a bad
-       day, or as a fun run, and it is still the race.
-       ⚠️ UNREACHABLE AS WRITTEN (found 2026-07-25, orphan triage). BOTH
-       operands are impossible:
-         - `runDay.templateId` is a RUN_TEMPLATES id — `5k_race` …
-           `marathon_race` — never the literal "race". This is the trap
-           CLAUDE.md locks ("detection is by template TYPE, never
-           templateId === 'race'") and that raceRunDaysReconcile.ts,
-           runHeroState.ts and workoutTemplates.ts each warn about.
-         - `saved.templateId` is undefined for every real run. The
-           useClaimMap adapter maps `data.templateId`, but saved-run docs
-           carry `plannedTemplateId` / `actualTemplateId` — RunSummary
-           writes no plain `templateId` (see the header of
-           functions/lib/raceDayCompletion.js).
-       So race day currently falls through to the pace check below, and a
-       race run at an easy pace does NOT complete its slot — precisely
-       what this short-circuit exists to prevent. Left in place rather
-       than silently rewritten: the fix needs the adapter to populate
-       templateId AND a type-based predicate, which changes which runs
-       complete race slots. Not a drive-by change to the race machinery. */
-    if (runDay.templateId === "race" && saved.templateId === "race") {
+       regardless of pace bucket. You can run your race as a pacer, on a
+       bad day, or as a fun run — it is still the race, and gating it on
+       pace is how a genuine race day gets left incomplete.
+
+       Was UNREACHABLE until 2026-07-26: it compared BOTH operands to the
+       literal "race". `runDay.templateId` is a RUN_TEMPLATES id (`5k_race`
+       … `marathon_race`) and `saved.templateId` was undefined for every
+       real run, because the useClaimMap adapter read a plain `templateId`
+       that saved-run docs do not carry. Detection is by template TYPE via
+       the injected predicate now, on both sides. */
+    const isRaceTemplate = deps && deps.isRaceTemplate;
+    if (
+      isRaceTemplate &&
+      isRaceTemplate(runDay.userOverride || runDay.templateId) &&
+      isRaceTemplate(saved.templateId)
+    ) {
       return true;
     }
     const paceBucketFor = deps && deps.paceBucketFor;
