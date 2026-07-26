@@ -127,9 +127,15 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  *     Worth knowing before `useProgramWriters`: the surviving entry may
  *     need the same, and the capability now exists.
  *
- *   BROAD SDK SURFACE — `socialApi`, `useFoodFavourites`, `offlineQueue`.
- *     These reach for `writeBatch` / `increment` / `collectionGroup`.
- *     Check the fake covers each before starting; extend it if not.
+ *   BROAD SDK SURFACE — `socialApi`, `useFoodFavourites`. These reach for
+ *     `writeBatch` / `increment` / `collectionGroup`. Checked 2026-07-26:
+ *     the fake already exports all of those, plus `runTransaction`,
+ *     `arrayUnion`/`arrayRemove`, `startAfter` and `getCountFromServer` —
+ *     so "extend it first" is no longer the expected blocker; verify
+ *     before assuming. `offlineQueue` was listed here and did NOT belong:
+ *     it only ever touched `collection`/`doc`/`addDoc`/`setDoc`. What its
+ *     factory actually carried was a hand-rolled id minter duplicating
+ *     `nextId()`, which is a different problem wearing the same label.
  *
  *   The rest are ordinary migrations: seed by path, assert on state.
  *     Treat that as a starting guess, not a survey result:
@@ -152,7 +158,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useFoodFavourites.test.ts",
   "src/hooks/__tests__/useHomeData.test.ts",
   "src/hooks/__tests__/useMeals.test.ts",
-  "src/lib/__tests__/offlineQueue.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
 ];
 
