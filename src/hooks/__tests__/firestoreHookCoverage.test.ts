@@ -76,6 +76,33 @@ function firestoreHooks(): HookFile[] {
 const EXEMPT = ["DailyLogsProvider", "useFirestore"];
 
 /**
+ * Suites where an inline SDK factory is CORRECT and permanent — not debt.
+ *
+ * These test the boundary adapter itself, so their contract IS the call
+ * made to the SDK. `firestoreWrite` asserts that the guarded wrappers
+ * strip `undefined` BEFORE handing off, forward merge options unchanged,
+ * and omit the options argument entirely when none was given. That last
+ * one is invisible through stored state — the fake records the RESULT of
+ * a write, and "called with two arguments rather than three" leaves no
+ * trace in it. A spy is the right instrument here, and migrating would
+ * lose the assertion.
+ *
+ * Kept separate from the migration queue so that queue can actually reach
+ * zero. A delete-only list containing something that must never be deleted
+ * is a list that always reads as unfinished, and the next person to pick
+ * it up pays to re-derive why.
+ *
+ * NOT an escape hatch. Splitting this out creates an obvious temptation —
+ * a failing migration gets reclassified as "permanent" instead of done. An
+ * entry earns a place here only if a SPY is the sole instrument that can
+ * express its contract, which in practice means the unit under test is the
+ * SDK boundary itself. "The fake was awkward" is a reason to extend the
+ * fake, and "the assertions are shaped around the stub" is the definition
+ * of the migration work, not an exemption from it.
+ */
+const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
+
+/**
  * Suites that predate the seam and still carry their own inline SDK factory.
  * DELETE-ONLY: migrate a suite to `seedFirestore`, remove its line. Do not add.
  */
@@ -94,7 +121,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useRunningStats.accountSwitch.test.tsx",
   "src/lib/__tests__/authProviderAccountSwitch.test.tsx",
   "src/lib/__tests__/export.test.ts",
-  "src/lib/__tests__/firestoreWrite.test.ts",
   "src/lib/__tests__/offlineQueue.test.ts",
   "src/lib/__tests__/pushNotifications.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
@@ -170,6 +196,6 @@ describe("Firestore hook coverage", () => {
       offenders,
       `Use bare vi.mock("firebase/firestore") + seedFirestore() instead. If ` +
         `the fake lacks behaviour you need, extend src/test/firestoreFake.ts.`
-    ).toEqual(LEGACY_INLINE_MOCKS);
+    ).toEqual([...PERMANENT_INLINE_MOCKS, ...LEGACY_INLINE_MOCKS].sort());
   });
 });
