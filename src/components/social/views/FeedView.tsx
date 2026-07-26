@@ -1,4 +1,8 @@
-import { useSocialFeed } from "@/hooks/useSocialFeed";
+import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
+import {
+  ShareCardSheet,
+  type ShareCardSheetData,
+} from "@/components/share/ShareCardSheet";
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useAuth } from "@/lib/auth";
@@ -148,6 +152,52 @@ export default function FeedView({
   useEffect(() => {
     refreshRef.current = activeFeed.refresh;
   }, [refreshRef, activeFeed.refresh]);
+
+  /* SOC-P1d — share-card entry from the feed. Built entirely from the
+     ALREADY-ENRICHED FeedItem (no per-card reads): a lift card carries
+     volume + exercise count, a run card distance/duration/pace. The
+     sheet is the existing external share-card generator (same one the
+     weekly recap uses). */
+  const [shareCardData, setShareCardData] = useState<ShareCardSheetData | null>(
+    null
+  );
+  const openShareCard = (item: FeedItem) => {
+    const a = item.activity;
+    if (!a) return;
+    const created =
+      typeof (item.createdAt as { toDate?: () => Date })?.toDate === "function"
+        ? (item.createdAt as { toDate: () => Date }).toDate()
+        : new Date();
+    const date = created.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+    setShareCardData(
+      item.type === "run"
+        ? {
+            template: "run",
+            handle: item.authorName,
+            date,
+            // ActivityData.distance is metres (ActivityCard divides by
+            // 1000 everywhere it renders km) — the sheet wants km.
+            distanceKm: (a.distance ?? 0) / 1000,
+            durationSec:
+              typeof a.duration === "number" ? a.duration : undefined,
+            pace: typeof a.avgPace === "string" ? a.avgPace : undefined,
+            elevationM: a.elevationGain,
+          }
+        : {
+            template: "lift",
+            handle: item.authorName,
+            date,
+            totalVolumeKg: a.totalVolume,
+            exerciseCount: a.exerciseCount,
+            prCount: a.prCount,
+            prExercise: a.prExercise,
+          }
+    );
+  };
 
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   // SOCIAL-HOME-01: the feed-source picker is a compact menu now.
@@ -446,9 +496,31 @@ export default function FeedView({
             {showActivityList && (
               <div className="space-y-3">
                 {activeFeed.items.map((item) => (
-                  <ActivityCard key={item.id} feedItem={item} />
+                  <ActivityCard
+                    key={item.id}
+                    feedItem={item}
+                    /* SOC-P1d: the card's share affordance was orphaned —
+                       ActivityCard supported onShare but no feed surface
+                       ever passed it, so Share2 never rendered where
+                       finished sessions are displayed. Own cards only:
+                       sharing someone ELSE's session raises consent
+                       questions this deliberately doesn't open. */
+                    onShare={
+                      item.authorId === user?.uid ? openShareCard : undefined
+                    }
+                  />
                 ))}
               </div>
+            )}
+
+            {shareCardData && (
+              <ShareCardSheet
+                open
+                onOpenChange={(o) => {
+                  if (!o) setShareCardData(null);
+                }}
+                data={shareCardData}
+              />
             )}
 
             {/*
