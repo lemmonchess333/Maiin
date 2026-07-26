@@ -213,6 +213,11 @@ export class FirestoreFake {
     this.failures.length = 0;
     this.writes.length = 0;
     this.reads.length = 0;
+    // Release before clearing: a held promise that is dropped never settles,
+    // and a test awaiting it would hang until the suite timeout rather than
+    // fail with a usable message.
+    this.releaseAllReads();
+    this.deferring = false;
     autoId = 0;
   }
 
@@ -265,6 +270,71 @@ export class FirestoreFake {
   /** Armed-but-unfired failures, so a test can assert it actually exercised one. */
   get armedFailures(): readonly { op: FailOp; path?: string }[] {
     return this.failures.map((f) => ({ op: f.op, path: f.path }));
+  }
+
+  /* ── deferred reads ── */
+
+  /**
+   * Hold reads open so a test can choose the ORDER they resolve in.
+   *
+   * Account-switch bugs are ordering bugs: user A's in-flight read resolves
+   * AFTER the switch to B and overwrites B's rows with A's. Both reads
+   * succeed, so nothing throws and nothing logs — the user simply sees
+   * someone else's data. That failure is invisible to a fake that always
+   * resolves immediately, because it can never produce the interleaving.
+   *
+   * The snapshot is taken when the read is ISSUED, not when it is released,
+   * so holding a read doesn't let later seeding rewrite its answer — the
+   * point is to reorder delivery, not to change what was fetched.
+   */
+  private deferring = false;
+  private deferred: { path: string; resolve: () => void }[] = [];
+
+  /** Hold every subsequent read until explicitly released. */
+  deferReads(): void {
+    this.deferring = true;
+  }
+
+  /** Stop holding new reads. Already-held ones stay held. */
+  resumeReads(): void {
+    this.deferring = false;
+  }
+
+  /** Paths of the reads currently held, in the order they were issued. */
+  get pendingReads(): readonly string[] {
+    return this.deferred.map((d) => d.path);
+  }
+
+  /**
+   * Release one held read by its position in issue order (default: the
+   * oldest). Returns false when there is nothing at that index, so a test
+   * can't silently assert against an interleaving that never happened.
+   */
+  releaseRead(index = 0): boolean {
+    const entry = this.deferred[index];
+    if (!entry) return false;
+    this.deferred.splice(index, 1);
+    entry.resolve();
+    return true;
+  }
+
+  /** Release everything still held, oldest first. */
+  releaseAllReads(): void {
+    while (this.releaseRead()) {
+      /* drain */
+    }
+  }
+
+  /**
+   * Wrap a read result so it resolves only when released. Called by the SDK
+   * surface. When not deferring, the value passes straight through, so the
+   * default behaviour is unchanged.
+   */
+  maybeDefer<T>(path: string, value: T): Promise<T> {
+    if (!this.deferring) return Promise.resolve(value);
+    return new Promise<T>((resolve) => {
+      this.deferred.push({ path, resolve: () => resolve(value) });
+    });
   }
 
   /** Seed documents: `{ "users/u1": {...}, "users/u1/meals/m1": {...} }`. */
