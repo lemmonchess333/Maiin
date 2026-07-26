@@ -206,7 +206,7 @@ a future "secure all HTTP functions" pass can't accidentally break them.
 The scheduled (`pubsub.schedule`) and Firestore-trigger functions —
 `weeklyPerformanceRollup`, `dailyPerformanceRefresh`, `rolloverChallenges`,
 `hourlyStreakNudge`, `dailyRaceReconciliationSweep`,
-`crewWeeklyLeaderboardRollup`, `onWorkoutCreated`, `onRunCreated`,
+`weeklyFellBehindCheck`, `onWorkoutCreated`, `onRunCreated`,
 `onActivityCreated`, `onChallengeParticipant{Created,Deleted}` — never receive
 a client request, so App Check does not apply to them.
 
