@@ -324,8 +324,25 @@ service cloud.firestore {
           'currentStreak',
           'longestStreak',
           'createdAt',
-          'badgeSummary'
+          'badgeSummary',
+          // SOC-P2f — self-declared "Training for {race}" identity.
+          // Value-gated below to null or a KNOWN space id; the client
+          // renders it only for race-kind spaces with an upcoming date,
+          // so a stale or interest-space value degrades to nothing.
+          'trainingForSpaceId'
         ])
+        /* trainingForSpaceId value gate — null (opted out) or a known
+           space id. Prevents arbitrary strings riding a public,
+           cross-user-readable field (the same closed-vocabulary posture
+           as the spaces rules' isKnownSpaceId gates). */
+        && (
+          !('trainingForSpaceId' in request.resource.data)
+          || request.resource.data.trainingForSpaceId == null
+          || (
+            request.resource.data.trainingForSpaceId is string
+            && isKnownSpaceId(request.resource.data.trainingForSpaceId)
+          )
+        )
         /* uid identity gate.
            The 'uid' field is allowed for back-compat (some clients
            mirror the grandparent path into the doc body for easier
