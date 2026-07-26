@@ -22,6 +22,7 @@ import {
   getDocs,
   doc,
   getDoc,
+  getDocFromCache,
   type Firestore,
 } from "firebase/firestore";
 import {
@@ -177,5 +178,18 @@ describe("reset", () => {
     seedFirestore({ "users/a/runs/r1": { km: 1 } });
     const snap = await getDocs(collection(db, "users", "a", "runs"));
     expect(snap.docs).toHaveLength(1);
+  });
+});
+
+describe("getDocFromCache", () => {
+  it("always rejects — the fake models a COLD cache", async () => {
+    // Deliberate: both app call sites read the cache for an instant paint
+    // and then hit the SERVER anyway. A fake that answered from the store
+    // would let the cache branch satisfy the test and leave the server
+    // path — the one that has to be right — unexercised.
+    seedFirestore({ "users/a": { name: "A" } });
+    await expect(getDocFromCache(doc(db, "users", "a"))).rejects.toMatchObject({
+      code: "unavailable",
+    });
   });
 });
