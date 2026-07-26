@@ -1,6 +1,8 @@
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
+import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
+import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { searchUsers } from "@/lib/socialApi";
@@ -50,12 +52,22 @@ export default function PeopleView({
   // Suggested People — fetches lazily only when the Discover tab is shown.
   // SOCIAL-PRIVACY-01: also wait for the block list so a blocked user
   // can't appear as a suggestion in the load window.
+  /* SOC-P2e — joined spaces feed the shared-space suggestion source.
+     The directory hook reads member counts once per overlay open
+     (bounded, tap-gated surface); ids memoised so the suggestion
+     effect doesn't re-fire per render. */
+  const { entries: spaceEntries } = useSpacesDirectory(true);
+  const joinedSpaceIds = useMemo(
+    () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
+    [spaceEntries]
+  );
+
   const {
     people: suggestedPeople,
     loading: suggestedLoading,
     refresh: refreshSuggestions,
     remove: removeSuggestion,
-  } = useSuggestedPeople(active && blockedReady, blockedUsers);
+  } = useSuggestedPeople(active && blockedReady, blockedUsers, joinedSpaceIds);
 
   /* S4e-MVP — restricted-user gate on the Find tab. Hook subscribes
      to the user's own `globalRestrictedUids/{uid}` doc; doc existence
@@ -412,7 +424,11 @@ export default function PeopleView({
                       <FollowsYouBadge uid={p.uid} />
                       <PartnerReadyBadge uid={p.uid} />
                     </div>
-                    <p className="text-sm text-muted-foreground">Recent post</p>
+                    <p className="text-sm text-muted-foreground">
+                      {p.reason === "shared_space" && p.sharedSpaceId
+                        ? `Also in ${spaceDef(p.sharedSpaceId)?.name ?? "a space you joined"}`
+                        : "Recent post"}
+                    </p>
                   </div>
                   <FollowButton
                     targetUid={p.uid}
