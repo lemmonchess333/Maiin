@@ -197,6 +197,12 @@ export default function Space() {
   const { blocked: blockedUsers } = useBlockedUsers();
   const [posts, setPosts] = useState<PostItem[] | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
+  /* SOC-P2b — a coach prompt's "Share your take" seeds the composer
+     title. Cleared when the composer closes so a later manual post
+     doesn't inherit a stale prompt title. */
+  const [composerPrefillTitle, setComposerPrefillTitle] = useState<
+    string | undefined
+  >(undefined);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   /* Races plan PR4 — `?compose=1` (the post-race share hand-off from
@@ -444,6 +450,16 @@ export default function Space() {
                 post={post}
                 accent={accent}
                 onRemoved={handleRemoved}
+                onShareTake={
+                  joined === true
+                    ? (promptTitle) => {
+                        setComposerPrefillTitle(
+                          promptTitle ? `Re: ${promptTitle}` : undefined
+                        );
+                        setComposerOpen(true);
+                      }
+                    : undefined
+                }
               />
             ))
           )}
@@ -453,8 +469,12 @@ export default function Space() {
       <SpacePostComposer
         spaceId={def.id}
         open={composerOpen}
-        onOpenChange={setComposerOpen}
+        onOpenChange={(o) => {
+          setComposerOpen(o);
+          if (!o) setComposerPrefillTitle(undefined);
+        }}
         onPosted={() => setReloadNonce((n) => n + 1)}
+        initialTitle={composerPrefillTitle}
       />
     </div>
   );

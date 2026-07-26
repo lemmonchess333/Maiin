@@ -12,7 +12,7 @@
  * Profanity check is client-side UX only, same posture as CommentSheet;
  * report/block + official moderation delete are the real teeth.
  */
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { Camera, Dumbbell, Footprints, X } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -98,17 +98,33 @@ export default function SpacePostComposer({
   open,
   onOpenChange,
   onPosted,
+  initialTitle,
 }: {
   spaceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPosted: () => void;
+  /** SOC-P2b — a coach prompt's "Share your take" opens the composer
+   *  with the prompt title pre-seeded (applied on open, and only when
+   *  the user hasn't already typed a title — never clobbers input). */
+  initialTitle?: string;
 }) {
   const { user, profile } = useAuth();
   const { workouts } = useWorkouts();
   const { runs } = useRunningStats(30);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+
+  /* Apply the prefill on the open TRANSITION only: re-renders while
+     open must not overwrite what the user typed. */
+  const prevOpenRef = useRef(false);
+  useEffect(() => {
+    if (open && !prevOpenRef.current && initialTitle && title === "") {
+      setTitle(initialTitle);
+    }
+    prevOpenRef.current = open;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open-transition effect; title read is a guard, not a dep
+  }, [open, initialTitle]);
   const [attached, setAttached] = useState<Attachable | null>(null);
   const [busy, setBusy] = useState(false);
   /* Photo attach (Spc1 PR4 — the operator's Runna-parity amendment).
