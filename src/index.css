@@ -197,6 +197,14 @@
      back. The .dark pair below is the inverse. */
   --food-photo-scrim: rgba(255, 255, 255, 0.48);
   --food-photo-scrim-soft: rgba(255, 255, 255, 0.22);
+  /* Ring bed — a CONCENTRATED feathered disc behind the calorie wheel
+     (FoodHeroCard paints it as the scrim's first radial layer). The
+     page-wide wash above keeps the whole card legible; this layer gives
+     the number + arc a guaranteed bed at the ring's centre on photos
+     whose middle is busy or dark (the lunch-bowl failure). Light mode:
+     white under the deep-purple number. */
+  --food-photo-ring-bed: rgba(255, 255, 255, 0.5);
+  --food-photo-ring-bed-soft: rgba(255, 255, 255, 0.3);
 }
 
 .dark {
@@ -235,6 +243,11 @@
      value has to move with it. */
   --food-photo-scrim: rgba(0, 0, 0, 0.42);
   --food-photo-scrim-soft: rgba(0, 0, 0, 0.12);
+  /* Ring bed — dark-mode pair (see :root). Black under the bright
+     purple number/arc: purple-on-dark-food has no luminance gap, so
+     the bed supplies one exactly where the wheel sits. */
+  --food-photo-ring-bed: rgba(0, 0, 0, 0.55);
+  --food-photo-ring-bed-soft: rgba(0, 0, 0, 0.32);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
   /* Semantic status colours — dark mode.
