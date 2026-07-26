@@ -8,8 +8,10 @@ import {
 import { getWeeklyAccountability } from "./weeklyAccountability";
 import { ChallengeCard } from "./ChallengeCard";
 import { ChallengeFinaleCard } from "./ChallengeFinaleCard";
+import CollectivePulse from "./CollectivePulse";
 import { Trophy, ChevronRight } from "lucide-react";
 import { THEME, RANK_COLORS } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { buildLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
@@ -39,6 +41,8 @@ export function ChallengeList({
     leaveChallenge,
   } = useChallenges();
   const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
+  // SOC-P1e: not-joined challenges collapse behind a disclosure row.
+  const [showAllAvailable, setShowAllAvailable] = useState(false);
   const [rankingsLoading, setRankingsLoading] = useState(true);
 
   // Find the weekly warrior challenge
@@ -111,10 +115,26 @@ export function ChallengeList({
   }, [user]);
 
   // Other challenges (non-weekly)
-  const otherMy = myChallenges.filter((c) => c.id !== weeklyCh?.id);
-  const otherAvailable = availableChallenges.filter(
-    (c) => c.id !== weeklyCh?.id
+  /* SOC-P1e: the collective (group_goal) challenge is promoted into the
+     CollectivePulse strip at the top of the section — the one ambient
+     signal that moves at any user count — so it leaves the card lists. */
+  const collectiveCh = challenges.find((c) => (c.collectiveTarget ?? 0) > 0);
+  const otherMy = myChallenges.filter(
+    (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
   );
+  const otherAvailable = availableChallenges.filter(
+    (c) => c.id !== weeklyCh?.id && c.id !== collectiveCh?.id
+  );
+  /* Soonest-ending available challenge keeps the time pressure visible
+     on the collapsed row ("5 days left" was a real join driver). */
+  const soonestAvailable =
+    otherAvailable.length > 0
+      ? getTimeRemaining(
+          otherAvailable.reduce((a, b) =>
+            a.endDate.toDate() <= b.endDate.toDate() ? a : b
+          ).endDate
+        )
+      : null;
 
   if (loading) {
     return (
@@ -194,6 +214,15 @@ export function ChallengeList({
 
   return (
     <div className="space-y-4">
+      {/* SOC-P1e — collective pulse leads the section: honest ambient
+          liveness (the km total moves whenever anyone runs). */}
+      {collectiveCh && (
+        <CollectivePulse
+          challenge={collectiveCh}
+          leaderboard={leaderboards[collectiveCh.id]}
+        />
+      )}
+
       {/* Finale cards — challenges the user took part in that ended within
           the last 7 days. Closure for the effort; dismiss-once per id. */}
       {myEndedChallenges.map((ch) => (
@@ -364,24 +393,38 @@ export function ChallengeList({
         </div>
       )}
 
-      {/* Other available challenges */}
-      {otherAvailable.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-            Available
-          </p>
-          {otherAvailable.map((ch) => (
-            <ChallengeCard
-              key={ch.id}
-              challenge={ch}
-              leaderboard={leaderboards[ch.id]}
-              joined={false}
-              onJoin={() => joinChallenge(ch.id)}
-              onLeave={() => {}}
-            />
-          ))}
-        </div>
-      )}
+      {/* Other available challenges — SOC-P1e: collapsed behind a
+          disclosure row. Three full photo-header cards of not-joined
+          challenges dominated Together with equal weight to the joined
+          surface; the row keeps the entry (with the soonest deadline's
+          urgency) without three competing lobbies above the fold. */}
+      {otherAvailable.length > 0 &&
+        (showAllAvailable ? (
+          <div className="space-y-2">
+            <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
+              Available
+            </p>
+            {otherAvailable.map((ch) => (
+              <ChallengeCard
+                key={ch.id}
+                challenge={ch}
+                leaderboard={leaderboards[ch.id]}
+                joined={false}
+                onJoin={() => joinChallenge(ch.id)}
+                onLeave={() => {}}
+              />
+            ))}
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={() => setShowAllAvailable(true)}
+          >
+            See all challenges · {otherAvailable.length}
+            {soonestAvailable ? ` · ${soonestAvailable}` : ""}
+          </Button>
+        ))}
 
       {/* "More coming soon" placeholder removed in PR-bug-fix:
           PR 5 actually shipped two new challenges (Fastest 5K,
