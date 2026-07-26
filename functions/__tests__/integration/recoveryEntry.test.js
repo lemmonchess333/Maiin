@@ -71,7 +71,13 @@ function savedRun(overrides = {}) {
   return {
     id: "saved-race",
     date: RACE_DATE,
-    actualTemplateId: "race",
+    // A REAL race template id. This fixture said `"race"` until
+    // 2026-07-26 — a value no doc ever carries (RunSummary writes the
+    // template id, and the race ids are `5k_race` … `marathon_race`).
+    // The predicate compared against that same literal, so the accept
+    // path here was verified against a shape production never produces
+    // while the running code read every completed race as a no-show.
+    actualTemplateId: "10k_race",
     distance: 10000,
     avgPace: 280,
     ...overrides,
@@ -89,7 +95,7 @@ async function seed(runPlanExtra = {}) {
       {
         id: RACE_DAY_ID,
         dayIndex: 6,
-        templateId: "race",
+        templateId: "10k_race",
         type: "race",
         status: "planned",
         date: RACE_DATE,

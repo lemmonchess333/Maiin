@@ -73,7 +73,7 @@ function savedRun(overrides = {}) {
     // Saved-run docs carry the planMetadata flattened — the
     // resolved template lives at top-level as `actualTemplateId`.
     // There is no plain `templateId` on a saved run.
-    actualTemplateId: "race",
+    actualTemplateId: "10k_race",
     distance: 10000,
     avgPace: 280,
     ...overrides,
@@ -121,11 +121,11 @@ describe("_decideRecoveryEntry — gate-by-gate negative cases", () => {
     expect(result.write).toBe(false);
   });
 
-  it("does not write when the saved run's actualTemplateId is not 'race'", () => {
+  it("does not write when the saved run's actualTemplateId is not a race template", () => {
     const result = _decideRecoveryEntry(
       profile(),
       programState(),
-      savedRun({ actualTemplateId: "tempo" })
+      savedRun({ actualTemplateId: "tempo_20" })
     );
     expect(result.write).toBe(false);
   });
