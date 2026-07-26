@@ -99,3 +99,54 @@ describe("SpacePostCard — coach variant", () => {
     ).toBeNull();
   });
 });
+
+describe("SpacePostCard — like toggle (SOC-P2c)", () => {
+  it("renders an interactive flame when onToggleLike is provided", () => {
+    const onToggleLike = vi.fn();
+    render(
+      <SpacePostCard
+        spaceId="runners"
+        postId="p1"
+        post={makePost({ likeCount: 2 })}
+        accent="#D4637A"
+        onRemoved={() => {}}
+        onToggleLike={onToggleLike}
+      />
+    );
+    const btn = screen.getByRole("button", { name: /give props/i });
+    fireEvent.click(btn);
+    expect(onToggleLike).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the stored count plus the optimistic delta", () => {
+    render(
+      <SpacePostCard
+        spaceId="runners"
+        postId="p1"
+        post={makePost({ likeCount: 2 })}
+        accent="#D4637A"
+        onRemoved={() => {}}
+        liked
+        likeDelta={1}
+        onToggleLike={() => {}}
+      />
+    );
+    const btn = screen.getByRole("button", { name: /remove props/i });
+    expect(btn).toHaveAttribute("aria-pressed", "true");
+    expect(btn.textContent).toContain("3");
+  });
+
+  it("stays read-only without onToggleLike (no button, count still shows)", () => {
+    render(
+      <SpacePostCard
+        spaceId="runners"
+        postId="p1"
+        post={makePost({ likeCount: 4 })}
+        accent="#D4637A"
+        onRemoved={() => {}}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /give props/i })).toBeNull();
+    expect(screen.getByText("4")).toBeInTheDocument();
+  });
+});
