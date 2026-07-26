@@ -8,6 +8,7 @@ import {
   Users,
   HeartHandshake,
   ClipboardList,
+  Flame,
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
@@ -41,6 +42,10 @@ const TYPE_ICON: Record<
   circle_needs_support: { Icon: HeartHandshake, color: THEME.brand },
   circle_joined: { Icon: UserPlus, color: THEME.brand },
   circle_routine_shared: { Icon: ClipboardList, color: THEME.brand },
+  // SOC-P2g — space-post engagement. Coral: the running/vitals register
+  // the flame action itself uses.
+  space_post_like: { Icon: Flame, color: THEME.running },
+  space_post_comment: { Icon: MessageCircle, color: THEME.running },
 };
 
 /** Fallback copy when the server didn't store a pre-built `message`. */
@@ -67,6 +72,10 @@ function fallbackMessage(n: NotificationItem): string {
       return `${who} joined your Circle`;
     case "circle_routine_shared":
       return `${who} shared a routine`;
+    case "space_post_like":
+      return `${who} gave your space post props`;
+    case "space_post_comment":
+      return `${who} commented on your space post`;
     default:
       return who;
   }
@@ -157,7 +166,15 @@ export default function NotificationsSheet({
                     onClick={() => {
                       haptic();
                       onOpenChange(false);
-                      if (n.fromUserId && navigatesToActor(n.type)) {
+                      // SOC-P2g: space engagement rows go to the SPACE —
+                      // that's where the post (and the reply action) lives.
+                      if (
+                        (n.type === "space_post_like" ||
+                          n.type === "space_post_comment") &&
+                        n.spaceId
+                      ) {
+                        navigate(`/space/${n.spaceId}`);
+                      } else if (n.fromUserId && navigatesToActor(n.type)) {
                         navigate(`/user/${n.fromUserId}`);
                       }
                     }}
