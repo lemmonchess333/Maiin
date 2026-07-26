@@ -122,3 +122,48 @@ export function readLog(): readonly { op: string; path: string }[] {
 export function readsAt(path: string): readonly { op: string; path: string }[] {
   return firestoreFake.reads.filter((r) => r.path === path);
 }
+
+/* ── deferred reads ────────────────────────────────────────────────── */
+
+/**
+ * Hold every subsequent read open so the test chooses the order they
+ * resolve in.
+ *
+ * For account-switch races: user A's in-flight read resolving AFTER the
+ * switch to B, and overwriting B's rows with A's. Both reads succeed, so
+ * nothing throws and nothing logs — the user just sees someone else's
+ * data. A fake that always resolves immediately cannot produce that
+ * interleaving, so the bug is untestable without this.
+ *
+ *   deferReads();
+ *   // ... render as A, switch to B — two reads now pending
+ *   releaseRead(1);   // B answers first
+ *   releaseRead(0);   // A answers LATE and must not win
+ */
+export function deferReads(): void {
+  firestoreFake.deferReads();
+}
+
+/** Stop holding NEW reads. Already-held ones stay held. */
+export function resumeReads(): void {
+  firestoreFake.resumeReads();
+}
+
+/** Paths of the reads currently held, in the order they were issued. */
+export function pendingReads(): readonly string[] {
+  return firestoreFake.pendingReads;
+}
+
+/**
+ * Release one held read by position in issue order (default: oldest).
+ * Returns false if nothing is at that index — assert on it, so a test
+ * can't claim an interleaving that never happened.
+ */
+export function releaseRead(index = 0): boolean {
+  return firestoreFake.releaseRead(index);
+}
+
+/** Release everything still held, oldest first. */
+export function releaseAllReads(): void {
+  firestoreFake.releaseAllReads();
+}
