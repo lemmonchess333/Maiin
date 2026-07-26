@@ -2536,6 +2536,72 @@ exports.rolloverChallenges = functions
   });
 
 // ══════════════════════════════════════════════
+// SOC-P2a — weekly Coach prompts in Community Spaces
+// ══════════════════════════════════════════════
+//
+// Runna-model seeded liveness: one system-authored question/tip lands in
+// every space each Monday, so no space is an empty room and answering is
+// as easy as replying to a person. Pure selection lives in
+// lib/coachPrompts.js; this shell is I/O only.
+//
+// Idempotency: the doc id is `coach-<weekKey>` (Monday-anchored UTC) —
+// create() is atomic, so a retried run hits ALREADY_EXISTS and skips.
+// authorId "tropos-coach" is not a real uid; firestore.rules bind client
+// creates to auth.uid, so only this Admin-SDK writer can post as the
+// coach. official:true renders the existing Tropos Team badge.
+// SCHEDULED_CAP (maxInstances:1). No secrets.
+
+const coachPrompts = require("./lib/coachPrompts");
+
+exports.weeklyCoachPrompts = functions
+  .runWith(SCHEDULED_CAP)
+  .pubsub.schedule("0 6 * * 1") // Mondays 06:00 UTC — after rollover, before EU mornings
+  .timeZone("Etc/UTC")
+  .onRun(async () => {
+    try {
+      const now = new Date();
+      console.log("weeklyCoachPrompts: starting");
+      let created = 0;
+      let skipped = 0;
+      for (const spaceId of coachPrompts.SPACE_IDS) {
+        const { docId, doc } = coachPrompts.buildCoachPost(spaceId, now);
+        try {
+          await db
+            .collection("spaces")
+            .doc(spaceId)
+            .collection("posts")
+            .doc(docId)
+            .create({
+              ...doc,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          created++;
+        } catch (err) {
+          // ALREADY_EXISTS (code 6) = this week's prompt already landed
+          // (retry / overlapping run) — the success case for idempotency.
+          if (err && err.code === 6) {
+            skipped++;
+          } else {
+            console.error(
+              `weeklyCoachPrompts: failed for ${spaceId}:`,
+              err.message
+            );
+          }
+        }
+      }
+      console.log(
+        `weeklyCoachPrompts: done — spaces=${coachPrompts.SPACE_IDS.length}, created=${created}, alreadyExisted=${skipped}`
+      );
+    } catch (err) {
+      console.error("weeklyCoachPrompts: fatal error:", {
+        message: err.message,
+        stack: err.stack,
+      });
+    }
+    return null;
+  });
+
+// ══════════════════════════════════════════════
 // Push #961 — hourly streak-at-risk nudge sender (web)
 // ══════════════════════════════════════════════
 //
