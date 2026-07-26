@@ -53,6 +53,7 @@ import {
 import { useSpaceMembership } from "@/features/spaces/useSpaceMembership";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
+import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
 import type { SpacePostDoc } from "@/features/spaces/spaceTypes";
 
@@ -382,11 +383,16 @@ export default function Space() {
         <p className="text-sm text-muted-foreground">{def.tagline}</p>
 
         {def.kind === "race" && resolvedEvent && (
-          <RaceEventHeader
-            spaceId={def.id}
-            name={def.name}
-            event={resolvedEvent}
-          />
+          <>
+            <RaceEventHeader
+              spaceId={def.id}
+              name={def.name}
+              event={resolvedEvent}
+            />
+            {/* SOC-P2f — opt-in public race identity; renders only when
+                this space is bound to the viewer's own race goal. */}
+            <RaceIdentityToggle spaceId={def.id} />
+          </>
         )}
 
         {joined ? (

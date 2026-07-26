@@ -18,6 +18,7 @@ import {
 } from "../lib/socialApi";
 import { useAuth } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
+import TrainingForChip from "@/features/spaces/TrainingForChip";
 import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
 import type { FeedItem } from "../hooks/useSocialFeed";
@@ -82,6 +83,9 @@ export default function UserProfile() {
   } | null>(null);
   const [badges, setBadges] = useState<EarnedBadge[]>([]);
   const [streak, setStreak] = useState<number>(0);
+  const [trainingForSpaceId, setTrainingForSpaceId] = useState<string | null>(
+    null
+  );
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
@@ -191,6 +195,13 @@ export default function UserProfile() {
         if (!snap.exists()) return;
         const data = snap.data();
         setStreak((data.currentStreak as number) ?? 0);
+        // SOC-P2f — self-declared race identity; the chip component
+        // validates kind + upcoming date, so a stale value renders nothing.
+        setTrainingForSpaceId(
+          typeof data.trainingForSpaceId === "string"
+            ? data.trainingForSpaceId
+            : null
+        );
         // Backfill the local `profile` state with the cross-user-safe fields
         // when the main user-doc read above failed (cross-user case).
         setProfile(
@@ -358,6 +369,11 @@ export default function UserProfile() {
               following
             </span>
           </div>
+          {trainingForSpaceId && (
+            <div className="mt-2">
+              <TrainingForChip spaceId={trainingForSpaceId} />
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {uid && <FollowButton targetUid={uid} />}
