@@ -163,6 +163,24 @@ export function releaseRead(index = 0): boolean {
   return firestoreFake.releaseRead(index);
 }
 
+/**
+ * Fail one held read instead of answering it (default: oldest). Returns
+ * false if nothing is at that index — assert on it, same as `releaseRead`.
+ *
+ * `failNextFirestore` cannot do this: it fires at ISSUE time, so the read
+ * rejects immediately and is never held. Use this for the late-failure
+ * ordering — account A's read still in flight across a switch to B, then
+ * failing — where a stale rejection handler can clear B's state.
+ *
+ *   deferReads();
+ *   // render as A, switch to B
+ *   releaseRead(1);   // B answers
+ *   rejectRead(0);    // A fails LATE and must not clear B
+ */
+export function rejectRead(index = 0, code = "unavailable"): boolean {
+  return firestoreFake.rejectRead(index, code);
+}
+
 /** Release everything still held, oldest first. */
 export function releaseAllReads(): void {
   firestoreFake.releaseAllReads();
