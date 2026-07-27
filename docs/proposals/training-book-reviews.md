@@ -130,3 +130,139 @@ already-built halves.
   RFD for runners), not backlog-worthy now.
 - **Mobility/foam-rolling habit tracking.** Real theme in the manual, but it
   belongs to a habits/streaks surface discussion, not the program engine.
+
+---
+
+## 2. Juggernaut Deadlift Manual — Team Juggernaut (reviewed 2026-07-27)
+
+Ten articles; contributors include Chad Wesley Smith, Brandon Lilly, Dan
+Green, Eric Lilliebridge, Brad Little, Ryan Brown, Matt Vincent, Kalle Beck,
+Courtney Gould and Jen Comas Keck. Narrower than the squat manual on
+periodization, but much richer on two things Tropos is weakest at:
+**warm-up** and **weak-point diagnosis**. It also surfaces one programming
+idea the squat manual did not: the deadlift's recovery cost is
+lift-specific, not muscle-specific.
+
+### Convergence with the squat manual (two independent sources agreeing)
+
+- **Rotating weekly emphasis.** Lilly's deadlift split is Week 1 max /
+  Week 2 reps / Week 3 speed / repeat — structurally the same as his squat
+  manual "rep week / explosion week / heavy week" rotation. Two manuals, same
+  author-independent shape: *vary what the week asks for, not just the load*.
+  This makes section 1's P2 concrete and much cheaper to build than a
+  load-multiplier wave.
+- **Map backwards, never forwards.** Lilliebridge back-tracks 7 weeks from a
+  meet to a goal weight (PR + 10–20 lb) and fills in the required top single
+  each week. Same principle as Lilly's "base the cycle on a weight you could
+  hit any day".
+- **Never grind in training.** Green: "failed reps reinforce bad technique and
+  strain the body's ability to recover far more"; he refuses reps he isn't
+  certain to complete. Direct support for Tropos's existing RPE ≥ 9.5 hold —
+  and an argument against the current design where progression only fires when
+  the user *overshoots target reps by 2*, which structurally rewards grinding.
+- **Bar-speed intent on every rep.** Smith and Vincent both make it the primary
+  driver ("from your warmup sets to your final accessory movement"). Coaching
+  copy, not a prescription — see P6 in section 1.
+
+### New findings
+
+**D1 — The deadlift's recovery cost is lift-specific, and Tropos's model
+can't express that.** The manual's strongest near-consensus, and it is
+directly contradicted by what the engine generates today:
+
+| Author | Practice |
+| --- | --- |
+| Lilliebridge | Alternates squat and pull by week — "squatting and deadlifting twice a month"; pulling for reps "burnt out my lower back" and left him unrecovered for squats |
+| Little | "Pulling heavy isn't needed every week"; sometimes deadlifts only every other week when peaking |
+| Beck | Actual deadlifts "only every 3–4 weeks" |
+| Green | Dissenter — pulls weekly, "without needing to take breaks or deload" |
+
+Against that, `programEngine.ts` puts a `hip_dominant` slot in **every**
+leg/full-body day it builds — full-body days at `:343`, `:370`, `:413`;
+upper/lower at `:525`, `:589` (+ a second `hip_dominant` accessory at `:597`);
+PPL at `:710`, `:803` (+ `:819`). Because `pickExercise` holds the category's
+primary until `plateauCount >= 3`, that slot resolves to the **barbell
+deadlift** nearly every time. So a default 3-day full-body user is prescribed
+the deadlift pattern three times a week, twice alongside a squat pattern in
+the same session.
+
+`muscleRecovery.ts` can't catch this: it is per-**muscle**, date-based, and
+"volume-blind by design" (its own doc comment), so it models Hamstrings/Back
+recovery but has no notion that a heavy pull is *systemically* expensive or
+that it competes with squat recovery specifically. Options, cheapest first:
+(a) let a day builder mark a slot's *emphasis* so the pattern can appear
+weekly while only one session is heavy — which is what the rotating-emphasis
+wave already needs; (b) an interference rule that avoids heavy pull adjacent
+to heavy squat. Note Green's dissent: this should bias the default, not
+hard-code a single frequency.
+
+**D2 — Weak-point diagnosis has a canonical two-way split for the deadlift.**
+Where the squat manual gave one axis (strength in the hole), the deadlift
+chapter gives a clean diagnostic with named fixes on both sides:
+
+| Fails | Prescribed by | Fix |
+| --- | --- | --- |
+| Off the floor | Green, Smith, Little | Deficit pulls (3–4"), reps 1–5 from floor, high-rep front/Olympic squats, direct ab work |
+| At lockout | Green, Lilly, Little, Smith | Block pulls (4") for triples, pin pulls above knee 70–85%, snatch-grip block pulls 40–50% × 15–20, glute bridges, lunges, rows/upright rows, deadlift hyperextensions |
+
+This is exactly the input section 1's P4 needs — a one-question plateau
+breaker ("where does it fail?") now has a real mapping for the two biggest
+lifts. Worth capturing that **the experts disagree**: Smith rejects rack pulls
+outright ("unrealistic starting position") while others build lockouts with
+block pulls. Tropos should present a variation as *a* fix, never *the* fix.
+
+**D3 — Warm-up deserves promotion from P5, and it isn't only load ramping.**
+The manual's first and longest chapter (9 of 48 pages) is a warm-up protocol:
+monostructural work → foam roll → breathe → active → joint mobility →
+dynamic → bar work → activation ("activation, not exhaustion") → plyo →
+reactive, plus a per-region fault list (tripod foot and pronation, knees
+caving from anterior pelvic tilt, neutral spine via breathing, chin tuck).
+Tropos prescribes **no lifting warm-up at all** — while `RUN_TEMPLATES`
+gives every run a 300 s warm-up and cool-down. That internal asymmetry is
+hard to defend. The full ten steps are far too much for this audience; the
+shippable subset is a generated load ramp on main compounds (section 1 P5)
+plus one or two movement-prep items on the heaviest lift.
+
+**D4 — Lifting has no goal-driven periodization, while running does.** A
+structural gap this manual makes obvious: Lilliebridge's whole method is
+date-anchored back-mapping to a target, and Tropos already has that machinery
+for running — `raceGoal` with `targetDate`, phase progression, taper and
+recovery exit. There is no lift analogue; a grep of `programTypes.ts` and
+`types.ts` finds no lift target/goal concept at all. A "lift goal" (target
+weight on a target date, back-mapped to weekly top sets) would mirror an
+architecture the app has already built, debugged and shipped. This is the
+largest idea in either manual so far and the least certain — it wants a
+`/grill-me` pass against the reference apps (Hevy and Strong have no such
+feature; that absence is itself evidence worth weighing) before it becomes
+backlog.
+
+**D5 — Deadlift form content, and the first-barbell-lift intimidation
+barrier.** Rich per-lift material for the backfill in section 1 P6: sumo cues
+(bar close to centre of gravity, knees over ankles, spread the knees, hips
+through once the bar clears the knees), conventional setup, the head-up vs
+chin-tuck debate, bracing via breath. Separately, Comas Keck's article names
+something Tropos's cold-start design should care about — a first barbell pull
+is *intimidating* for a beginner with nobody to teach them. That's an
+onboarding/UX observation for the exercise guide's first-encounter state, not
+an engine change.
+
+### Changes to section 1's ranking
+
+- **P2 (weekly wave) — mechanism resolved.** Build it as rotating weekly
+  *emphasis* (heavy / reps / speed) rather than intensity multipliers. Two
+  manuals converge on it, and it doubles as the cheapest lever for D1.
+- **P4 (weak-point plateau breaker) — promote above P3.** It now has a real
+  mapping for both squat and deadlift, and it is self-contained.
+- **P5 (warm-up ramp) — promote.** Zero coverage today, run/lift asymmetry,
+  and every reference lifting app already does it.
+
+### Deliberately NOT adopting
+
+- **The full ten-step warm-up, sled drags, plyo/reactive blocks, Olympic bar
+  complexes.** Coach-supervised gym-floor protocol; wrong scope for the app.
+- **Car deadlift / strongman work, clean and snatch deadlifts at 90–110% of
+  the classic lift.** Different sports.
+- **Rack/pin pulls as a default plateau fix.** Contested within the manual
+  itself (see D2) — if added, it is one option among several, never automatic.
+- **Grip training, belt positioning, suit/gear technique, baby powder.**
+  Equipment and competition minutiae with no Tropos surface.
