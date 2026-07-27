@@ -29,6 +29,7 @@ import {
   buildEasierSession,
   summarizeEasier,
   type EasierTodayRecommendation,
+  type LighterDaySwap,
 } from "@/features/program/easierToday";
 import type { WorkoutDay } from "@/features/program/programTypes";
 
@@ -42,6 +43,12 @@ interface ExpressSessionSheetProps {
   /** Fires with the chosen variant; the caller builds the plan and
    *  opens the session. */
   onStart: (variant: SessionVariant) => void;
+  /** Backlog #1 (Helms H1): the week's lightest remaining day, offered as
+   *  a one-tap swap. Null/absent = no meaningfully lighter alternative,
+   *  and the row simply doesn't render. */
+  lighterDay?: LighterDaySwap | null;
+  /** Launches the swapped day (full prescription) instead of today's. */
+  onSwapToDay?: (index: number) => void;
 }
 
 export default function ExpressSessionSheet({
@@ -50,6 +57,8 @@ export default function ExpressSessionSheet({
   easierRecommendation = null,
   onClose,
   onStart,
+  lighterDay = null,
+  onSwapToDay,
 }: ExpressSessionSheetProps) {
   if (!day) return null;
 
@@ -84,6 +93,21 @@ export default function ExpressSessionSheet({
     variant: "secondary",
     onSelect: async () => onStart("easier_today"),
   });
+
+  // Backlog #1 (Helms H1), quietly-visible per the presentation policy:
+  // one plain row, no jargon, only when a meaningfully lighter session
+  // exists. Swapping launches that day untouched — today's day stays in
+  // the week (lifts are split-ordered, ADR-0002).
+  if (lighterDay && onSwapToDay) {
+    const swapIndex = lighterDay.index;
+    choices.push({
+      id: "lighter_day",
+      label: `Do ${lighterDay.day.dayName} instead · ~${lighterDay.minutes} min`,
+      sublabel: "The lighter session in your week — today's stays planned.",
+      variant: "secondary",
+      onSelect: async () => onSwapToDay(swapIndex),
+    });
+  }
 
   return (
     <ChoiceSheet

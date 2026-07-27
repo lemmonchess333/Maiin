@@ -68,10 +68,13 @@ describe("applyProgression CF ↔ client parity", () => {
     const weights = [0, 100];
     const failures = [0, 2];
     const goals: Goal[] = ["lean bulk", "cut"];
-    const actualRepsSet = [6, 8, 10];
+    const actualRepsSet = [6, 8, 10, 12]; // 12 = range ceiling for the repRangeMax cases
     const actualWeightSet = [95, 100, 105];
     const micros = [true, false];
     const rpes: Array<number | undefined> = [undefined, 8, 9.5];
+    // P1 range-aware double progression: undefined = legacy behaviour,
+    // 12 = authored range 8-12 (reps/baseReps are 8 in makeExercise).
+    const repRangeMaxes: Array<number | undefined> = [undefined, 12];
 
     let compared = 0;
     for (const exerciseId of ids) {
@@ -83,49 +86,49 @@ describe("applyProgression CF ↔ client parity", () => {
                 for (const actualWeight of actualWeightSet) {
                   for (const microloading of micros) {
                     for (const actualRpe of rpes) {
-                      const base = makeExercise({
-                        exerciseId,
-                        progressionType,
-                        weight,
-                        consecutiveFailures,
-                      });
-                      const clientOut = clientApplyProgression(
-                        makeExercise({
+                      for (const repRangeMax of repRangeMaxes) {
+                        const overrides = {
                           exerciseId,
                           progressionType,
                           weight,
                           consecutiveFailures,
-                        }),
-                        actualReps,
-                        actualWeight,
-                        goal,
-                        microloading,
-                        actualRpe
-                      );
-                      const cfOut = cf.applyProgression(
-                        base,
-                        actualReps,
-                        actualWeight,
-                        goal,
-                        microloading,
-                        actualRpe,
-                        NOW
-                      );
-                      expect(
-                        strip(cfOut),
-                        `mismatch for ${JSON.stringify({
-                          exerciseId,
-                          progressionType,
-                          weight,
-                          consecutiveFailures,
-                          goal,
+                          ...(repRangeMax !== undefined ? { repRangeMax } : {}),
+                        };
+                        const base = makeExercise(overrides);
+                        const clientOut = clientApplyProgression(
+                          makeExercise(overrides),
                           actualReps,
                           actualWeight,
+                          goal,
+                          microloading,
+                          actualRpe
+                        );
+                        const cfOut = cf.applyProgression(
+                          base,
+                          actualReps,
+                          actualWeight,
+                          goal,
                           microloading,
                           actualRpe,
-                        })}`
-                      ).toEqual(strip(clientOut));
-                      compared += 1;
+                          NOW
+                        );
+                        expect(
+                          strip(cfOut),
+                          `mismatch for ${JSON.stringify({
+                            exerciseId,
+                            progressionType,
+                            weight,
+                            consecutiveFailures,
+                            goal,
+                            actualReps,
+                            actualWeight,
+                            microloading,
+                            actualRpe,
+                            repRangeMax,
+                          })}`
+                        ).toEqual(strip(clientOut));
+                        compared += 1;
+                      }
                     }
                   }
                 }

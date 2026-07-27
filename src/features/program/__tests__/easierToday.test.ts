@@ -23,6 +23,7 @@ import {
   summarizeEasier,
   EASIER_PRIMARY_MIN_SETS,
   EASIER_ACCESSORY_MIN_SETS,
+  pickLighterDay,
 } from "../easierToday";
 import { applyDeload } from "../programEngine";
 import type {
@@ -239,5 +240,64 @@ describe("signal helpers", () => {
     ]);
     const result = recoveringTargetMuscles(lower, entries);
     expect(result).toEqual(["Quads"]); // Chest ready, Hamstrings only "nearly"
+  });
+});
+
+describe("pickLighterDay (backlog #1, Helms H1)", () => {
+  const day = (
+    name: string,
+    sets: number[],
+    completed = false
+  ): import("../programTypes").WorkoutDay => ({
+    dayName: name,
+    dayType: "full_body",
+    completed,
+    exercises: sets.map((n, i) => ({
+      name: `Ex${i}`,
+      exerciseId: `ex-${i}`,
+      movementCategory: "knee_dominant",
+      sets: n,
+      reps: 8,
+      weight: 50,
+      progressionType: "linear" as const,
+      lastSuccessfulWeight: 50,
+      lastAttemptedWeight: 50,
+      consecutiveFailures: 0,
+      plateauCount: 0,
+      performanceHistory: [],
+      lastPerformance: null,
+    })),
+  });
+
+  it("offers the lightest meaningfully-lighter uncompleted day", () => {
+    const days = [
+      day("Heavy", [4, 4, 4, 3, 3]), // today: 18 sets
+      day("Medium", [4, 4, 4, 3]), // 15 sets — under 15% lighter? 15/18=0.83 → offered
+      day("Light", [3, 3, 3]), // 9 sets — lightest
+    ];
+    const swap = pickLighterDay(days, 0);
+    expect(swap?.index).toBe(2);
+    expect(swap?.day.dayName).toBe("Light");
+    expect(swap!.minutes).toBeLessThan(swap!.todayMinutes);
+  });
+
+  it("returns null when no alternative is meaningfully lighter", () => {
+    const days = [day("A", [3, 3, 3]), day("B", [3, 3, 3])];
+    expect(pickLighterDay(days, 0)).toBeNull();
+  });
+
+  it("ignores completed days and empty days", () => {
+    const days = [
+      day("Today", [4, 4, 4, 4]),
+      day("Done", [2, 2], true),
+      day("Empty", []),
+    ];
+    expect(pickLighterDay(days, 0)).toBeNull();
+  });
+
+  it("never offers today itself and handles bad indices", () => {
+    const days = [day("Only", [3, 3, 3])];
+    expect(pickLighterDay(days, 0)).toBeNull();
+    expect(pickLighterDay(days, 5)).toBeNull();
   });
 });
