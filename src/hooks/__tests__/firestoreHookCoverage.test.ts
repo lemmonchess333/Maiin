@@ -127,15 +127,18 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  *     Worth knowing before `useProgramWriters`: the surviving entry may
  *     need the same, and the capability now exists.
  *
- *   BROAD SDK SURFACE — `socialApi`, `useFoodFavourites`. These reach for
- *     `writeBatch` / `increment` / `collectionGroup`. Checked 2026-07-26:
- *     the fake already exports all of those, plus `runTransaction`,
- *     `arrayUnion`/`arrayRemove`, `startAfter` and `getCountFromServer` —
- *     so "extend it first" is no longer the expected blocker; verify
- *     before assuming. `offlineQueue` was listed here and did NOT belong:
- *     it only ever touched `collection`/`doc`/`addDoc`/`setDoc`. What its
- *     factory actually carried was a hand-rolled id minter duplicating
- *     `nextId()`, which is a different problem wearing the same label.
+ *   BROAD SDK SURFACE — CLEARED 2026-07-26. The group was `socialApi`,
+ *     `useFoodFavourites` and `offlineQueue`, flagged as needing
+ *     `writeBatch` / `increment` / `collectionGroup` support first. The
+ *     fake already had all of it. The real blockers were different in
+ *     every case: `offlineQueue` never touched those APIs at all (it
+ *     carried a hand-rolled id minter duplicating `nextId()`), and
+ *     `useFoodFavourites` needed two FIDELITY fixes rather than new
+ *     surface — sentinels had to become class instances to survive
+ *     `stripUndefined`, and `FakeTimestamp` had to stop discarding
+ *     sub-second precision. "Which SDK calls does it make" turned out to
+ *     be the wrong question; "what does the fake get WRONG" was the
+ *     right one.
  *
  *   The rest are ordinary migrations: seed by path, assert on state.
  *     Treat that as a starting guess, not a survey result:
@@ -153,7 +156,6 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  */
 const LEGACY_INLINE_MOCKS = [
   "src/features/program/__tests__/useProgramWriters.test.ts",
-  "src/lib/__tests__/socialApi.test.ts",
 ];
 
 describe("Firestore hook coverage", () => {
