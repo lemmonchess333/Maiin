@@ -299,24 +299,43 @@ describe("reachability gate — a pinned module must be the RUNNING module", () 
     expect(modules.length).toBeGreaterThan(100);
   });
 
-  it("every domain module is reachable from production, or marked @oracle / @unwired:", () => {
-    const orphans: string[] = [];
-    for (const abs of modules) {
-      if (isReachable(abs)) continue;
-      const head = moduleHeader(readFileSync(abs, "utf8"));
-      if (ORACLE_RE.test(head) || UNWIRED_RE.test(head)) continue;
-      orphans.push(abs.slice(repoRoot.length + 1));
+  /**
+   * Explicit timeout. This walks every domain module in `src/` and, for
+   * each, re-scans the consumer tree to decide reachability — so its cost
+   * grows with the codebase, not with what a PR touched. It measures ~3s
+   * locally against vitest's 5s default, which is not enough headroom on
+   * a loaded CI runner: it timed out on #1803, a PR that touched neither
+   * this gate nor any module it scans. Timing was compared with and
+   * without that PR's changes (3.09s vs 3.30s — noise) to confirm this is
+   * a pre-existing margin, not a regression.
+   *
+   * Raising the ceiling rather than the speed is the deliberate call: the
+   * gate is I/O-bound and correct, and a flaky gate gets deleted long
+   * before a slow one does. If it ever approaches 30s, make it
+   * incremental instead of loosening this again.
+   */
+  it(
+    "every domain module is reachable from production, or marked @oracle / @unwired:",
+    { timeout: 30_000 },
+    () => {
+      const orphans: string[] = [];
+      for (const abs of modules) {
+        if (isReachable(abs)) continue;
+        const head = moduleHeader(readFileSync(abs, "utf8"));
+        if (ORACLE_RE.test(head) || UNWIRED_RE.test(head)) continue;
+        orphans.push(abs.slice(repoRoot.length + 1));
+      }
+      expect(
+        orphans,
+        `These modules are imported by NOTHING outside __tests__ — so any test ` +
+          `covering them proves nothing about production (the ADR-0008 failure). ` +
+          `Either wire them up, DELETE them, or annotate:\n` +
+          `  @oracle             — test-only by design, permanently\n` +
+          `  @unwired: <reason>  — written ahead of wiring; debt, reason required\n` +
+          `Offenders:\n  ${orphans.join("\n  ")}`
+      ).toEqual([]);
     }
-    expect(
-      orphans,
-      `These modules are imported by NOTHING outside __tests__ — so any test ` +
-        `covering them proves nothing about production (the ADR-0008 failure). ` +
-        `Either wire them up, DELETE them, or annotate:\n` +
-        `  @oracle             — test-only by design, permanently\n` +
-        `  @unwired: <reason>  — written ahead of wiring; debt, reason required\n` +
-        `Offenders:\n  ${orphans.join("\n  ")}`
-    ).toEqual([]);
-  });
+  );
 
   it("@unwired always carries a reason (a bare marker is how debt becomes design)", () => {
     const bare: string[] = [];
