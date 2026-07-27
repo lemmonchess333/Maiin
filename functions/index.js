@@ -2515,12 +2515,11 @@ exports.weeklyCoachPrompts = functions
 
 const STREAK_NUDGE_LOCAL_HOUR = 19;
 
-// Mirrors src/lib/pushConsent.mayTargetUser: a type sends only when the global
-// switch AND its per-type flag are on (absent per-type flag → on).
-function mayTargetUserConsent(consent, type) {
-  if (!consent || !consent.enabled) return false;
-  return consent[type] !== false;
-}
+// Consent gate — see functions/lib/pushConsent.js. It was inlined here under
+// a comment claiming it mirrored src/lib/pushConsent.mayTargetUser, which had
+// no callers: the tested copy was the dead one. Now extracted and tested where
+// it runs.
+const { mayTargetUserConsent } = require("./lib/pushConsent");
 
 // ══════════════════════════════════════════════
 // PUSH TOKEN OWNERSHIP (packet 19) — claim/release callables + sender leasing
