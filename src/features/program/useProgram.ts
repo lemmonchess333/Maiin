@@ -90,6 +90,7 @@ import {
   addLocalDays,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import {
@@ -658,10 +659,13 @@ export function useProgram() {
       const runTarget = getWeeklyRunTarget(profile) || 3;
 
       const advRunPlan = advanced.runPlan;
+      // Asked about NEXT week's date, not today: the question is whether the
+      // week being rolled into is still inside the recovery window. The
+      // explicit `!!advRunPlan` is what carries the non-null guarantee into
+      // the block below, which spreads it — `isInRecoveryOn` deliberately
+      // does not narrow (see its doc).
       const inRecovery =
-        advRunPlan?.phase === "recovery" &&
-        advRunPlan?.recoveryEndDate &&
-        nextWeekCurrentDate < advRunPlan.recoveryEndDate;
+        !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
 
       if (inRecovery) {
         // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
@@ -1030,10 +1034,13 @@ export function useProgram() {
       const nextWeekCurrentDate = localDateString(addLocalDays(new Date(), 7));
 
       const advRunPlan = advanced.runPlan;
+      // Asked about NEXT week's date, not today: the question is whether the
+      // week being rolled into is still inside the recovery window. The
+      // explicit `!!advRunPlan` is what carries the non-null guarantee into
+      // the block below, which spreads it — `isInRecoveryOn` deliberately
+      // does not narrow (see its doc).
       const inRecovery =
-        advRunPlan?.phase === "recovery" &&
-        advRunPlan?.recoveryEndDate &&
-        nextWeekCurrentDate < advRunPlan.recoveryEndDate;
+        !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
 
       if (inRecovery) {
         // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
@@ -1728,10 +1735,10 @@ export function useProgram() {
       // does the differentiation. PR-D writes the phase on race
       // completion; this generator consumes it on subsequent
       // refreshes (e.g. mid-week schedule edits while recovering).
-      const inRecovery =
-        programState.runPlan?.phase === "recovery" &&
-        programState.runPlan?.recoveryEndDate &&
-        localDateString() < programState.runPlan.recoveryEndDate;
+      const inRecovery = isInRecoveryOn(
+        programState.runPlan,
+        localDateString()
+      );
 
       if (inRecovery) {
         runDays = scheduleRecoveryWeekV2({ weekSchedule, weekStart });
@@ -1949,11 +1956,7 @@ export function useProgram() {
     // plan that drops the recovery phase. The fell-behind prompt that triggers
     // realign is already suppressed during recovery, but guard explicitly so
     // recovery exit stays a deliberate decision (resolveRecoveryExit).
-    if (
-      programState.runPlan?.phase === "recovery" &&
-      programState.runPlan?.recoveryEndDate &&
-      localDateString() < programState.runPlan.recoveryEndDate
-    ) {
+    if (isInRecoveryOn(programState.runPlan, localDateString())) {
       return { timing: "healthy", totalWeeks: 0 };
     }
     // R3: a race that has already passed (recovery ended, raceGoal not yet
