@@ -39,3 +39,21 @@ overrides by editing this table; only an operator-confirmed
 
 Regenerate after any rig change and re-review — a stale sheet is not
 evidence.
+
+## STATUS 2026-07-27 — owner-feedback anatomy rebuild (sheets regenerated)
+
+Device feedback (operator, from production screenshots): press arms
+"come up, try the other side, go back down" and detach at the
+shoulders; bench "lying down doesn't look right… too many
+individualized body parts"; reps "spaz out / don't repeat properly".
+Changes shipped against those verdicts — the table above should be
+re-read with these deltas:
+
+| Demo           | Delta                                                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| overhead-press | REBUILT: IK bar-path press (hands pinned to a fixed-width vertical path, elbows solved) replaces the 170° whole-arm pendulum. Divergence-scaled joint caps close the lockout shoulder gap. |
+| deadlift       | REBUILT: side-view hinge (planted-ankle chain, knees bend, hips back+down, straight arms to a full-size r=16 plate) replaces the posterior scaleY "shrinking figure".                      |
+| bench-press    | Leg posture fixed (28°/62° split → vertical shin, sole ON the floor, real knee bend); bar path moved off the head onto the lower-chest → upper-chest J-curve.                              |
+| lateral-raise  | Stops AT parallel (72°, was above); joint caps now scale with rotation so the arm chain no longer reads as detached links.                                                                 |
+| all side demos | Facet-count discipline: arbitrary mid-length row splits merged (calves, abs, obliques, forearm) — seams now only at real muscle boundaries.                                                |
+| player         | Reps LOOP continuously (gym-placard model; supersedes the Demo1 single-rep settle + replay) and the 30fps throttle steps evenly (judder fix).                                              |

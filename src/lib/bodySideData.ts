@@ -270,14 +270,16 @@ const SHANK_OUTLINE: Pt[] = [
   [40.2, 198.4],
   [41.4, 193.6],
 ];
+/* Facet-count discipline (device feedback 2026-07-27: "too many
+ * individualized body parts"): at the card's 190px width every extra
+ * seam reads as a crack in the figure, so a row split only earns its
+ * place when it follows a REAL muscle boundary. The arbitrary
+ * mid-length splits (calves gastroc/soleus row, abs/obliques second
+ * row, forearm halves) are merged into single bellies below. */
 const SHANK_FACETS = [
   {
     muscle: "calves",
-    points: band(SHANK_B, SHANK_F, 151, 177.2, 0, 0.5, { bellyR: 0.09 }),
-  },
-  {
-    muscle: "calves",
-    points: band(SHANK_B, SHANK_F, 178.8, 191, 0, 0.44),
+    points: band(SHANK_B, SHANK_F, 151, 191, 0, 0.47, { bellyR: 0.08 }),
   },
   {
     muscle: "shin",
@@ -438,20 +440,15 @@ export const SIDE_PIECES: SidePiece[] = [
       },
       {
         muscle: "abs",
-        points: band(TORSO_B, TORSO_F, 57.4, 75.4, 0.64, 1, {
+        points: band(TORSO_B, TORSO_F, 57.4, 89.5, 0.64, 1, {
           skewT: [1.2, -0.8],
         }),
       },
-      { muscle: "abs", points: band(TORSO_B, TORSO_F, 76.9, 89.5, 0.64, 1) },
       {
         muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 58.8, 75.2, 0.34, 0.64, {
+        points: band(TORSO_B, TORSO_F, 58.8, 90, 0.34, 0.64, {
           skewT: [1.5, -1.5],
         }),
-      },
-      {
-        muscle: "obliques",
-        points: band(TORSO_B, TORSO_F, 76.7, 90, 0.34, 0.64),
       },
       {
         muscle: "lower-back",
@@ -465,11 +462,7 @@ export const SIDE_PIECES: SidePiece[] = [
     facets: [
       {
         muscle: "forearm",
-        points: band(FORE_B, FORE_F, 68.4, 81.6, 0, 1, { skewB: [-1.4, 1.4] }),
-      },
-      {
-        muscle: "forearm",
-        points: band(FORE_B, FORE_F, 83.2, 99.8, 0, 1, { skewT: [-1.4, 1.4] }),
+        points: band(FORE_B, FORE_F, 68.4, 99.8, 0, 1),
       },
     ],
   },

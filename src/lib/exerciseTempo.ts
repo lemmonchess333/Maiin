@@ -103,6 +103,29 @@ export function repTotalMs(timing: RepTiming): number {
   );
 }
 
+/** One rep cycle (eccentric → pause → drive → lockout beat), without
+ *  the set lead-in. */
+export function repCycleMs(timing: RepTiming): number {
+  return timing.downMs + timing.holdMs + timing.upMs + timing.holdMs;
+}
+
+/**
+ * The LOOPING rep sample: one "Set" lead-in, then the rep cycle repeats
+ * indefinitely — the gym-placard demo loop. Supersedes the Demo1
+ * single-rep-then-settle behaviour (owner feedback 2026-07-27: "the
+ * reps don't repeat properly" — the reference experience is the looping
+ * demo screens on gym equipment). The player stops the loop by
+ * unmounting / going inactive, not by a timeline end.
+ */
+export function repSampleLoopedAt(
+  elapsedMs: number,
+  timing: RepTiming
+): RepSample {
+  if (elapsedMs < SET_BEAT_MS) return repSampleAt(elapsedMs, timing);
+  const m = (elapsedMs - SET_BEAT_MS) % repCycleMs(timing);
+  return repSampleAt(SET_BEAT_MS + m, timing);
+}
+
 /** The rep sample at `elapsedMs` since the rep started. Monotonic in
  *  time; elapsed past repTotalMs settles on "done" at calm effort. */
 export function repSampleAt(elapsedMs: number, timing: RepTiming): RepSample {
