@@ -28,6 +28,7 @@
 
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import { isInRecoveryOn } from "@/lib/runPlanResolver";
 
 export type RunHeroState =
   /** runMode === "freeform" — Start CTA + recent-run context. */
@@ -105,7 +106,7 @@ export function getRunHeroState(input: RunHeroStateInput): RunHeroState {
   // hero must still win there, so this check MUST sit before the freeform
   // return — otherwise a post-race user briefly sees a bare freeform Start CTA
   // instead of their recovery hero.
-  if (phase === "recovery" && !!recoveryEndDate && todayKey < recoveryEndDate) {
+  if (isInRecoveryOn({ phase, recoveryEndDate }, todayKey)) {
     return "race-recovery";
   }
 

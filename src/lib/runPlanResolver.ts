@@ -91,9 +91,63 @@ function reconcileRaceGoal(
   return fromMirror ?? null;
 }
 
+/** The fields the recovery window is derived from. Deliberately loose: the
+ *  callers hold these in three different shapes (a `runPlan`, an in-flight
+ *  `advanced.runPlan` mid-rollover, or two destructured locals). */
+export interface RecoveryWindowFields {
+  phase?: string | null;
+  recoveryEndDate?: string | null;
+}
+
 /**
- * The one resolver. Given the two stores and today's local date key, returns
- * the reconciled run-plan state every reader should use.
+ * Is the plan inside its post-race recovery window ON `dateKey`?
+ *
+ * THE one definition. This predicate was hand-inlined in five places —
+ * `useProgram` ×4 (two rollovers, `refreshRunSchedule`, `realignRacePlan`)
+ * and `runHeroState` — each spelling out the same three clauses. Every copy
+ * agreed, which is exactly why it was worth collapsing before one of them
+ * stopped agreeing: the failure would be silent. A rollover that reads "not
+ * in recovery" regenerates a RACE plan for the coming week and drops the
+ * recovery flags via makeRunPlanRecord, so the user's post-race easy week
+ * quietly becomes race training.
+ *
+ * `resolveRunPlan` calls this too, so its `inRecovery` cannot drift from it.
+ *
+ * DATE-PARAMETERISED, not "today". Two callers legitimately ask about a
+ * FUTURE date — "will this still be a recovery week when the roll-over lands
+ * next week?" — so binding this to today would have made them keep their own
+ * copies. (`resolveRunPlan`'s third argument is likewise any date key; it is
+ * only NAMED `todayKey`.)
+ *
+ * Lexicographic compare is date compare for YYYY-MM-DD, the same convention
+ * as the rest of this module. A missing `recoveryEndDate` is NOT in
+ * recovery — a phase flag with no end date has no window to be inside, and
+ * treating it as open-ended would strand the user there forever.
+ *
+ * Returns a plain boolean, NOT a type predicate. The inline copies were
+ * doing double duty — their clauses also narrowed `runPlan` to non-undefined
+ * for the block that followed, which then spread it (`{ ...advRunPlan }`) —
+ * so a `runPlan is T` signature looks tempting and even quiets `tsc -b` at
+ * those two sites. It is a lie on the other branch: "not in recovery" says
+ * nothing about whether a plan EXISTS, but the predicate would narrow the
+ * negative branch to `null | undefined`. `realignRacePlan` reads
+ * `runPlan.currentWeek` after exactly such a check and collapsed to `never`.
+ * Callers needing the non-null guarantee state it themselves.
+ */
+export function isInRecoveryOn(
+  runPlan: RecoveryWindowFields | null | undefined,
+  dateKey: string
+): boolean {
+  return (
+    runPlan?.phase === "recovery" &&
+    !!runPlan.recoveryEndDate &&
+    dateKey < runPlan.recoveryEndDate
+  );
+}
+
+/**
+ * The one resolver. Given the two stores and a local date key, returns the
+ * reconciled run-plan state every reader should use.
  */
 export function resolveRunPlan(
   profile: ProfileRunFields | null | undefined,
@@ -127,11 +181,11 @@ export function resolveRunPlan(
     }
   }
 
-  // Recovery window — single definition (was inlined ~6× with different "today").
+  // Recovery window — `isInRecoveryOn` above is now the one definition, and
+  // this calls it so the resolver's answer cannot drift from a direct call.
   const inRecoveryPhase = runPlan?.phase === "recovery";
   const recoveryEndDate = runPlan?.recoveryEndDate ?? null;
-  const inRecovery =
-    inRecoveryPhase && !!recoveryEndDate && todayKey < recoveryEndDate;
+  const inRecovery = isInRecoveryOn(runPlan, todayKey);
   const recoveryEnded =
     inRecoveryPhase && !!recoveryEndDate && todayKey >= recoveryEndDate;
 
