@@ -1,19 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- mock return types need any casts */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import { getDocs } from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
+import { localDateString } from "@/lib/dateHelpers";
+import {
+  seedFirestore,
+  resetFirestore,
+  failNextFirestore,
+  unfiredFailures,
+} from "@/test/firestoreHarness";
 import { useHomeData } from "../useHomeData";
 import type { UserProfile } from "@/lib/auth";
 
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  getDocs: vi.fn(),
-  Timestamp: { fromDate: vi.fn(() => ({ seconds: 0, nanoseconds: 0 })) },
-  orderBy: vi.fn(),
-  limit: vi.fn(),
-}));
+/**
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ *
+ * The stub returned results by CALL INDEX (`callIndex % 3`), explicitly
+ * to survive strict-mode double-invocation. That encoded an assumption
+ * the hook is free to break: that it issues exactly meals, runs, weight
+ * in that order. Reordering those three reads — or adding a fourth —
+ * would have silently handed each query someone else's rows while every
+ * assertion still passed.
+ *
+ * Seeding by PATH removes the ordering assumption entirely, and makes
+ * re-reads idempotent, which is what the modulo was working around.
+ */
+vi.mock("firebase/firestore");
 
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
@@ -21,40 +33,48 @@ vi.mock("date-fns", () => ({
   format: vi.fn((_d: unknown, _fmt: string) => "2026-04-01"),
 }));
 
-function makeSnap(docs: Record<string, unknown>[], empty = false) {
-  const docObjects = docs.map((d) => ({ data: () => d }));
-  return {
-    docs: docObjects,
-    forEach: (fn: (doc: { data: () => Record<string, unknown> }) => void) =>
-      docObjects.forEach(fn),
-    empty: empty || docs.length === 0,
-    size: docs.length,
-  };
+const MEALS = "users/u1/meals";
+const RUNS = "users/u1/runs";
+const WEIGHT = "users/u1/bodyweightLogs";
+
+/**
+ * The hook date-windows every read:
+ *   meals   where("date", "==", localDateString())
+ *   runs    where("completedAt", ">=", Timestamp.fromDate(startOfToday))
+ * The old stub ignored constraints entirely and handed back whatever was
+ * queued, so those filters were never exercised — a row with no `date`
+ * counted toward today's totals. Rows are stamped here so they satisfy
+ * the real query; anything unstamped is correctly dropped.
+ */
+const TODAY_KEY = localDateString();
+const todayStart = new Date();
+todayStart.setHours(0, 0, 0, 0);
+
+/** Seed one collection's rows; ids are positional and irrelevant here. */
+function seedRows(base: string, rows: Record<string, unknown>[]) {
+  const tree: Record<string, Record<string, unknown>> = {};
+  rows.forEach((r, i) => {
+    tree[`${base}/d${i}`] = r;
+  });
+  if (Object.keys(tree).length > 0) seedFirestore(tree);
 }
 
-const EMPTY_SNAP = makeSnap([], true);
-
-/** Sets up getDocs to return the same 3 snapshots on every call cycle (handles React strict mode double-invocation) */
-function mockGetDocs(mealsSnap: any, runsSnap: any, weightSnap: any) {
-  let callIndex = 0;
-  const results = [mealsSnap, runsSnap, weightSnap];
-  vi.mocked(getDocs).mockImplementation(() => {
-    const idx = callIndex % 3;
-    callIndex++;
-    return Promise.resolve(results[idx]);
-  });
-}
-
-/** Like mockGetDocs but the meals query rejects */
-function mockGetDocsWithMealFailure(runsSnap: any, weightSnap: any) {
-  let callIndex = 0;
-  vi.mocked(getDocs).mockImplementation(() => {
-    const idx = callIndex % 3;
-    callIndex++;
-    if (idx === 0) return Promise.reject(new Error("network error"));
-    if (idx === 1) return Promise.resolve(runsSnap);
-    return Promise.resolve(weightSnap);
-  });
+/** Seed all three collections the hook reads, by path rather than by
+ *  call order. An empty array simply seeds nothing. */
+function seedHome(
+  meals: Record<string, unknown>[] = [],
+  runs: Record<string, unknown>[] = [],
+  weight: Record<string, unknown>[] = []
+) {
+  seedRows(
+    MEALS,
+    meals.map((m) => ({ date: TODAY_KEY, ...m }))
+  );
+  seedRows(
+    RUNS,
+    runs.map((r) => ({ completedAt: Timestamp.fromDate(todayStart), ...r }))
+  );
+  seedRows(WEIGHT, weight);
 }
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -80,11 +100,12 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 
 describe("useHomeData", { timeout: 5000 }, () => {
   beforeEach(() => {
+    resetFirestore();
     vi.clearAllMocks();
   });
 
   it("starts in loading state and resolves to not loading", async () => {
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
+    seedHome([], [], []);
 
     const { result } = renderHook(() =>
       useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
@@ -93,6 +114,61 @@ describe("useHomeData", { timeout: 5000 }, () => {
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
+  });
+
+  it("counts ONLY today's meals — a yesterday row is filtered out", async () => {
+    // The `where("date", "==", todayKey)` filter was untestable before
+    // the migration: the stub ignored constraints and returned whatever
+    // was queued, so a stale row counted toward today's totals. That
+    // filter is the fix for the Home/Food macro mismatch the hook's own
+    // comment describes, and nothing was holding it.
+    seedFirestore({
+      [`${MEALS}/today`]: {
+        date: TODAY_KEY,
+        totalCalories: 500,
+        totalProtein: 40,
+      },
+      [`${MEALS}/yesterday`]: {
+        date: "1999-01-01",
+        totalCalories: 9999,
+        totalProtein: 999,
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.dailyCal).toBe(500);
+    expect(result.current.dailyProt).toBe(40);
+  });
+
+  it("counts ONLY runs completed today — an older run is filtered out", async () => {
+    // Same gap on the runs side: `where("completedAt", ">=", todayTs)`.
+    const yesterday = new Date(todayStart);
+    yesterday.setDate(yesterday.getDate() - 1);
+    seedFirestore({
+      [`${RUNS}/today`]: {
+        completedAt: Timestamp.fromDate(todayStart),
+        distance: 5000,
+        duration: 1800,
+      },
+      [`${RUNS}/old`]: {
+        completedAt: Timestamp.fromDate(yesterday),
+        distance: 40000,
+        duration: 14400,
+      },
+    });
+
+    const profile = makeProfile({ weightKg: 70 });
+    const { result } = renderHook(() =>
+      useHomeData({ uid: "u1" }, profile, [], "kg")
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // 70 * 5 * 1.036 = 362.6 -> 363. The 40km row would dwarf this.
+    expect(result.current.todayRunCals).toBe(363);
   });
 
   it("returns zero defaults when no user", () => {
@@ -104,11 +180,11 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("computes meal totals from Firestore results", async () => {
-    const mealsSnap = makeSnap([
+    const mealsRows = [
       { totalCalories: 500, totalProtein: 40 },
       { calories: 300, protein: 20 },
-    ]);
-    mockGetDocs(mealsSnap, EMPTY_SNAP, EMPTY_SNAP);
+    ];
+    seedHome(mealsRows, [], []);
 
     const { result } = renderHook(() =>
       useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
@@ -123,8 +199,8 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("computes run calories using weight and distance", async () => {
-    const runsSnap = makeSnap([{ distance: 5000, duration: 1800 }]);
-    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+    const runsRows = [{ distance: 5000, duration: 1800 }];
+    seedHome([], runsRows, []);
 
     const profile = makeProfile({ weightKg: 80 });
     const { result } = renderHook(() =>
@@ -146,10 +222,8 @@ describe("useHomeData", { timeout: 5000 }, () => {
   // pulled in ~414kcal for a 5km "too-fast" save the user never
   // ran.
   it("excludes isInvalid runs from todayRunCals", async () => {
-    const runsSnap = makeSnap([
-      { distance: 5000, duration: 1800, isInvalid: true },
-    ]);
-    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+    const runsRows = [{ distance: 5000, duration: 1800, isInvalid: true }];
+    seedHome([], runsRows, []);
 
     const profile = makeProfile({ weightKg: 80 });
     const { result } = renderHook(() =>
@@ -164,10 +238,8 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("excludes savedAnyway runs from todayRunCals", async () => {
-    const runsSnap = makeSnap([
-      { distance: 5000, duration: 1800, savedAnyway: true },
-    ]);
-    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+    const runsRows = [{ distance: 5000, duration: 1800, savedAnyway: true }];
+    seedHome([], runsRows, []);
 
     const profile = makeProfile({ weightKg: 80 });
     const { result } = renderHook(() =>
@@ -186,8 +258,8 @@ describe("useHomeData", { timeout: 5000 }, () => {
     // treats missing flags as not-flagged so historic runs stay in
     // the aggregate; the distance/duration floors (50m + 30s) still
     // gate them. Regression guard for the missing-field branch.
-    const runsSnap = makeSnap([{ distance: 5000, duration: 1800 }]);
-    mockGetDocs(EMPTY_SNAP, runsSnap, EMPTY_SNAP);
+    const runsRows = [{ distance: 5000, duration: 1800 }];
+    seedHome([], runsRows, []);
 
     const profile = makeProfile({ weightKg: 80 });
     const { result } = renderHook(() =>
@@ -202,7 +274,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("falls back to profile weight when bodyweightLogs is empty (kg)", async () => {
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
+    seedHome([], [], []);
 
     const profile = makeProfile({ weightKg: 75 });
     const { result } = renderHook(() =>
@@ -221,7 +293,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("falls back to profile weight when bodyweightLogs is empty (lbs)", async () => {
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
+    seedHome([], [], []);
 
     const profile = makeProfile({ weightKg: 75 });
     const { result } = renderHook(() =>
@@ -240,10 +312,9 @@ describe("useHomeData", { timeout: 5000 }, () => {
     // isCountableRun's 30s floor. Pre-fix this test only set
     // distance and still aggregated; after the eligibility filter
     // landed, missing duration drops the run from the aggregate.
-    mockGetDocsWithMealFailure(
-      makeSnap([{ distance: 3000, duration: 1200 }]),
-      EMPTY_SNAP
-    );
+    // The meals read fails; runs + weight still resolve.
+    failNextFirestore("getDocs", { path: MEALS });
+    seedHome([], [{ distance: 3000, duration: 1200 }], []);
 
     const profile = makeProfile({ weightKg: 70 });
     const { result } = renderHook(() =>
@@ -254,14 +325,18 @@ describe("useHomeData", { timeout: 5000 }, () => {
       expect(result.current.loading).toBe(false);
     });
 
+    // Prove the injected failure actually fired — with a path typo this
+    // test would otherwise assert a clean load and still pass the
+    // "runs still computed" half below.
+    expect(unfiredFailures()).toEqual([]);
     expect(result.current.error).toContain("Failed to load meals");
     // Runs still computed: 70 * 3 * 1.036 = 217.56 → 218
     expect(result.current.todayRunCals).toBe(218);
   });
 
   it("converts weight to lbs when weightUnit is lbs", async () => {
-    const weightSnap = makeSnap([{ date: "2026-03-30", weight: 80 }]);
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, weightSnap);
+    const weightRows = [{ date: "2026-03-30", weight: 80 }];
+    seedHome([], [], weightRows);
 
     const { result } = renderHook(() =>
       useHomeData({ uid: "u1" }, makeProfile(), [], "lbs")
@@ -276,7 +351,7 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("setLastWeightInfo updates weight optimistically", async () => {
-    mockGetDocs(EMPTY_SNAP, EMPTY_SNAP, EMPTY_SNAP);
+    seedHome([], [], []);
 
     const { result } = renderHook(() =>
       useHomeData({ uid: "u1" }, makeProfile({ weightKg: 70 }), [], "kg")
