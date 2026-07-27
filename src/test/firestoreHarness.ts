@@ -83,6 +83,23 @@ export function unfiredFailures(): readonly { op: FailOp; path?: string }[] {
   return firestoreFake.armedFailures;
 }
 
+/**
+ * Seed the IndexedDB cache only. These documents answer
+ * `getDocFromCache` and are INVISIBLE to every server read, so a test can
+ * model "cached locally, server slow or unreachable" — the case a
+ * cache-first paint exists for.
+ *
+ * The cache stays COLD by default; without this the fake rejects with
+ * `unavailable`, exactly as the real SDK does for an uncached document.
+ *
+ *   seedCache({ "users/u1/programState/current": { weekNumber: 3 } });
+ *   deferReads();   // server read never answers
+ *   // → the hook still paints from cache
+ */
+export function seedCache(tree: Record<string, Record<string, unknown>>): void {
+  firestoreFake.seedCache(tree);
+}
+
 /** Read a document straight out of the store, for assertions. */
 export function readDoc(path: string): Record<string, unknown> | undefined {
   return firestoreFake.peek(path);
@@ -104,6 +121,22 @@ export function writeLog(): readonly {
   data?: unknown;
 }[] {
   return firestoreFake.writes;
+}
+
+/**
+ * One entry per COMMITTED batch, holding that batch's writes.
+ *
+ * `writeLog()` flattens everything, so it cannot answer "did these land
+ * together?" — the property a `writeBatch` caller actually promises. A
+ * batch whose commit fails contributes NO entry, since the fake applies
+ * nothing on a failed commit.
+ */
+export function batchLog(): readonly {
+  op: string;
+  path: string;
+  data?: unknown;
+}[][] {
+  return firestoreFake.batches;
 }
 
 /**
