@@ -380,6 +380,10 @@ export interface BodyDemo {
    *  hands): a fixed-bar is the overhead bar the body hangs from
    *  (pull-up); a cable-bar is the machine bar + cable (pulldown). */
   equip?: "fixed-bar" | "cable-bar" | "dip-bars" | "plate-end";
+  /** plate-end disc radius (default 10). The deadlift draws a
+   *  full-size 45 (r=26 ≈ 45 cm on a 175 cm figure) so the bottom
+   *  frame reads bar-near-the-floor. */
+  plateR?: number;
   /** Draw the equipment OVER the body (pushdown: the hands work in
    *  front of the torso, so a behind-the-body bar would vanish). */
   barInFront?: boolean;
@@ -469,34 +473,39 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       neck: "secondary",
     },
     pose: (e) => {
-      /* Goal-post press. The forearm stays WORLD-VERTICAL for the whole
-       * rep (hand directly above elbow) while the upper arm arcs about
-       * the shoulder — rack (elbows low, hands at the shoulders) →
-       * elbows out at shoulder height → lockout overhead. Hands travel
-       * straight up, exactly how a front-view press reads; the earlier
-       * fold+lift version swung through a T-pose and looked like a
-       * lateral raise. Numbers: rest upper arm ≈10° outward of straight
-       * down, rest forearm ≈17–19°; forearm world angle must equal 180°
-       * (up), so fold = 163 − arm. */
-      /* Lockout = both segments world-vertical: rest upper arm sits
-       * ~10 deg outside straight-down, so 170 deg of rotation lands it
-       * exactly upright (10 + 170 = 180); fold = 163 - arm keeps the
-       * forearm plumb throughout and reaches ~-7 deg (arm nearly
-       * straight) at the top — the biceps-by-the-ears finish of the
-       * reference press, not the previous 15-deg-short goal post. */
-      const arm = lerp(10, 170, e); // outward whole-arm rotation
-      const fold = 163 - arm; // keeps the forearm vertical
+      /* Bar-path press (2026-07-27 owner feedback rebuild). The old
+       * version choreographed a 170° whole-arm rotation, which swept the
+       * hands through a wide pendulum arc ("comes up, tries the other
+       * side, goes back down") and finished as splayed slabs detached
+       * from the shoulders. A press is a CONSTRAINT movement: the hands
+       * ride an (invisible) bar whose path is a straight vertical line
+       * above the shoulders. So the hands are pinned to that path and
+       * the elbows are IK-solved. Bottom = the placard front-view press
+       * start (bar at chin height, forearms vertical, elbows down-out —
+       * a clavicle-level rack folds through the DEPTH axis, which a 2D
+       * solve can't represent); top = lockout with a slight barbell V.
+       * Same both-ends-constrained machinery as the pull-up/dips. */
+      const GRIP = 14; // grip offset outside each shoulder (bar width)
+      const y = lerp(32, -5, e); // chin-height bottom → overhead lockout
+      const hl: Pt = [ANT.shoulderL[0] - GRIP, y];
+      const hr: Pt = [ANT.shoulderR[0] + GRIP, y];
+      const L = aimArm(
+        { S: ANT.shoulderL, E: ANT.elbowL, H: ANT.handL },
+        solveElbow(ANT.shoulderL, hl, ANT_UPPER_LEN, ANT_FORE_LEN, 1),
+        hl,
+        0
+      );
+      const R = aimArm(
+        { S: ANT.shoulderR, E: ANT.elbowR, H: ANT.handR },
+        solveElbow(ANT.shoulderR, hr, ANT_UPPER_LEN, ANT_FORE_LEN, -1),
+        hr,
+        0
+      );
       return {
-        upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
-        foreArmL: [
-          { kind: "rotate", deg: fold, pivot: ANT.elbowL },
-          { kind: "rotate", deg: arm, pivot: ANT.shoulderL },
-        ],
-        upperArmR: [{ kind: "rotate", deg: -arm, pivot: ANT.shoulderR }],
-        foreArmR: [
-          { kind: "rotate", deg: -fold, pivot: ANT.elbowR },
-          { kind: "rotate", deg: -arm, pivot: ANT.shoulderR },
-        ],
+        upperArmL: L.upper,
+        foreArmL: L.fore,
+        upperArmR: R.upper,
+        foreArmR: R.fore,
       };
     },
   },
@@ -651,31 +660,101 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
   },
 
   deadlift: {
-    view: "posterior",
+    view: "side",
+    equip: "plate-end",
+    plateR: 16,
     concentricTo: 0,
+    // Wider left margin than the RDL: the deep-hinge hips travel far
+    // enough back that the glutes cross x=0.
+    viewBox: "-18 -2 186 212",
+    groundY: 204,
+    shadowCx: 58,
+    shadowRx: 44,
     tint: {
-      gluteal: "primary",
       hamstring: "primary",
+      gluteal: "primary",
       "lower-back": "secondary",
       forearm: "secondary",
     },
     pose: (e) => {
-      // Hip hinge from behind: the torso compresses toward the hip line,
-      // shoulders/head/arms ride down with it; slight knee give below.
-      const k = lerp(1, 0.62, e);
-      const shoulderDrop = (1 - k) * (POST.hipY - POST.shoulderL[1]);
-      const headDrop = (1 - k) * (POST.hipY - 10);
-      const armDive: Op[] = [{ kind: "translate", dx: 0, dy: shoulderDrop }];
-      return {
-        torso: [{ kind: "scaleY", k, pivotY: POST.hipY }],
-        head: [{ kind: "translate", dx: 0, dy: headDrop }],
-        upperArmL: armDive,
-        upperArmR: armDive,
-        foreArmL: armDive,
-        foreArmR: armDive,
-        shankL: [{ kind: "scaleY", k: lerp(1, 0.95, e), pivotY: POST.ankleY }],
-        shankR: [{ kind: "scaleY", k: lerp(1, 0.95, e), pivotY: POST.ankleY }],
+      /* Conventional deadlift, rebuilt as a SIDE hinge (2026-07-27).
+       * The old posterior view faked the hinge by scaleY-compressing
+       * the torso, which read as a figure SHRINKING (Gate-0 verdict +
+       * device feedback). This is the RDL's proven hinge language plus
+       * real knee bend, built ankle-up so the feet stay planted:
+       * shank rotates about the planted ankle (knees travel forward),
+       * thigh rotates about the moved knee (hips drop and travel
+       * back), torso hinges about the moved hip, and the straight
+       * arms hang to the bar. Plate r=16 splits the difference between
+       * the stylized r=10 (floats absurdly mid-shin) and a true 45
+       * (r=26 — swallows the whole pelvis in the standing frame); the
+       * bottom frame reads bar-just-off-the-floor. */
+      /* Shin tilt stays ≤8°: the foot is part of the shank piece, so
+       * every degree of shin tilt tips the sole — at 8° the heel read
+       * stays planted, at 14° it visibly lifted. The hip depth lost is
+       * recovered in thighRel. */
+      const shin = lerp(0, 8, e); // about the planted ankle
+      const thighRel = lerp(0, -64, e); // about the knee → hips back+down
+      const hinge = lerp(0, 70, e); // torso about the hip
+      const legOps: Op[] = [
+        { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+      ];
+      const thighOps: Op[] = [
+        { kind: "rotate", deg: thighRel, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: shin, pivot: SIDE_ANCHORS.ankle },
+      ];
+      const hipNew = applyToPoint(SIDE_ANCHORS.hip, thighOps);
+      const shift: Op = {
+        kind: "translate",
+        dx: hipNew[0] - SIDE_ANCHORS.hip[0],
+        dy: hipNew[1] - SIDE_ANCHORS.hip[1],
       };
+      const T: Op = { kind: "rotate", deg: hinge, pivot: SIDE_ANCHORS.hip };
+      const torsoOps: Op[] = [T, shift];
+      /* Straight arms hang from the hinged shoulder. The x-offset
+       * interpolates: standing lockout rests the bar against the FRONT
+       * of the thigh (+8), the bottom pulls it back under the shoulder
+       * blades toward mid-foot (−5, the lats-pull-the-bar-in line) so
+       * the bar never drifts out past the toes. */
+      const S = applyToPoint(SIDE_ANCHORS.shoulder, torsoOps);
+      const hFinal: Pt = [S[0] + lerp(8, -5, e), S[1] + 54.8];
+      const unpose: Op[] = [
+        { kind: "translate", dx: -shift.dx, dy: -shift.dy },
+        { kind: "rotate", deg: -hinge, pivot: SIDE_ANCHORS.hip },
+      ];
+      const hPre = applyToPoint(hFinal, unpose);
+      const arm = aimArm(
+        {
+          S: SIDE_ANCHORS.shoulder,
+          E: SIDE_ANCHORS.elbow,
+          H: SIDE_ANCHORS.hand,
+        },
+        solveElbow(
+          SIDE_ANCHORS.shoulder,
+          hPre,
+          SIDE_UPPER_LEN,
+          SIDE_FORE_LEN,
+          -1
+        ),
+        hPre,
+        0
+      );
+      return {
+        head: torsoOps,
+        torso: torsoOps,
+        pelvis: torsoOps,
+        thighL: thighOps,
+        thighR: thighOps,
+        shankL: legOps,
+        shankR: legOps,
+        upperArmL: [...arm.upper, ...torsoOps],
+        foreArmL: [...arm.fore, ...torsoOps],
+        handL: [...arm.fore, ...torsoOps],
+      };
+    },
+    bar: (_e, pose) => {
+      const h = applyToPoint(SIDE_ANCHORS.hand, pose.handL ?? []);
+      return [h, h];
     },
   },
 
@@ -797,7 +876,9 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
       // Whole arm sweeps out to shoulder height (proper form stops at
       // parallel); a constant soft elbow bend so the arm never reads
       // hyper-straight, hands trailing slightly under the elbows.
-      const arm = lerp(4, 78, e);
+      // 72, not 78: the rest arm already sits ~10° outside vertical, so
+      // 78 finished ABOVE parallel — a form error the demo was teaching.
+      const arm = lerp(4, 72, e);
       return {
         upperArmL: [{ kind: "rotate", deg: arm, pivot: ANT.shoulderL }],
         foreArmL: [
@@ -866,7 +947,12 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
        * bar path. */
       const G: Op = { kind: "rotate", deg: -90, pivot: [44, 100] };
       const S = SIDE_ANCHORS.shoulder;
-      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(18, 0, e)];
+      /* Bar path (device feedback 2026-07-27: "the plate is over the
+       * face"): bottom touches the LOWER chest (~22 toward the feet
+       * from the shoulder joint), lockout finishes over the upper
+       * chest — the real bench J-curve, and it keeps the plate disc
+       * clear of the head at every frame. */
+      const H: Pt = [S[0] + lerp(24, 50, e), S[1] + lerp(22, 8, e)];
       const arm = aimArm(
         { S, E: SIDE_ANCHORS.elbow, H: SIDE_ANCHORS.hand },
         // out −1: the elbow tucks toward the feet/floor side, the real
@@ -875,13 +961,22 @@ export const BODY_DEMOS: Record<string, BodyDemo> = {
         H,
         0
       );
+      /* Legs (device feedback 2026-07-27: "knees almost straight,
+       * sliding off the bench"): thigh drops 28° off the bench end and
+       * the shank closes to 62° so the total leg rotation stays exactly
+       * 90° — which is what makes the shin land screen-vertical AND the
+       * foot (part of the shank piece) land sole-flat. 28° is solved
+       * from the floor: hip pad-height + thigh + vertical shank + foot
+       * puts the sole ON the ground line instead of 5 units through it
+       * (the old 35°/55° split buried the feet and opened the knee to
+       * ~125°). */
       const leg: Op[] = [
-        { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: 28, pivot: SIDE_ANCHORS.hip },
         G,
       ];
       const shank: Op[] = [
-        { kind: "rotate", deg: 55, pivot: SIDE_ANCHORS.knee },
-        { kind: "rotate", deg: 35, pivot: SIDE_ANCHORS.hip },
+        { kind: "rotate", deg: 62, pivot: SIDE_ANCHORS.knee },
+        { kind: "rotate", deg: 28, pivot: SIDE_ANCHORS.hip },
         G,
       ];
       return {
@@ -1386,6 +1481,19 @@ export function renderBodyDemo(
       (o) =>
         (o.kind === "rotate" && Math.abs(o.deg) > 8) || o.kind === "scaleAxis"
     );
+  /* The wedge a joint opens grows with how far the limb rotated away
+     from its rest orientation — a fixed 3.6 disc bridged a curl but
+     left a dark pizza-slice gap at a press lockout (~170° of shoulder
+     rotation) or a raised lateral (device feedback 2026-07-27:
+     "detached sausage links"). Scale the cap with the group's total
+     rotation so big strokes get real joint coverage. */
+  const rotationOf = (ops?: Op[]) =>
+    (ops ?? []).reduce(
+      (sum, o) => sum + (o.kind === "rotate" ? Math.abs(o.deg) : 0),
+      0
+    );
+  const capR = (base: number, ops?: Op[]) =>
+    base + (3 * Math.min(rotationOf(ops), 180)) / 180;
   const A = demo.view === "anterior" ? ANT : POST;
   const capDefs: { pt: Pt; group: GroupName; r: number }[] = [
     { pt: A.shoulderL, group: "upperArmL", r: 3.6 },
@@ -1403,7 +1511,7 @@ export function renderBodyDemo(
     .filter((c) => articulates(pose[c.group]))
     .map((c) => {
       const [x, y] = applyToPoint(c.pt, pose[c.group] ?? []);
-      return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${c.r}" fill="${BODY}"/>`;
+      return `<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${capR(c.r, pose[c.group]).toFixed(2)}" fill="${BODY}"/>`;
     })
     .join("");
 
@@ -1504,14 +1612,15 @@ function renderSideDemo(demo: BodyDemo, t: number, effort: number): string {
   const ends = demo.bar?.(e, pose);
   if (ends && demo.equip === "plate-end") {
     const [x, y] = ends[0];
+    const r = demo.plateR ?? 10;
     // Collar + protruding bar stub behind the disc: reads as a barbell
-    // end, not a floating disc.
+    // end, not a floating disc. Proportions scale with the disc.
     plate =
-      `<rect x="${(x + 7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
-      `<rect x="${(x + 11.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6.4" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
-      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="${GEAR}"/>`;
+      `<rect x="${(x + r * 0.7).toFixed(1)}" y="${(y - 2.6).toFixed(1)}" width="5" height="5.2" rx="1.4" fill="${GEAR}"/>` +
+      `<rect x="${(x + r * 0.7 + 4.4).toFixed(1)}" y="${(y - 1.6).toFixed(1)}" width="4.6" height="3.2" rx="1" fill="${GEAR_DARK}" stroke="#565760" stroke-width="0.6"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${GEAR_DARK}" stroke="#565760" stroke-width="1"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.64).toFixed(1)}" fill="none" stroke="${GEAR}" stroke-width="1.2" opacity="0.7"/>` +
+      `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 0.22).toFixed(1)}" fill="${GEAR}"/>`;
   }
 
   return (
