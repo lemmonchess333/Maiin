@@ -95,14 +95,6 @@ export interface RepSample {
   targetEffort: number;
 }
 
-/** Total rep duration including the set lead-in and the lockout beat
- *  (the lockout beat reuses holdMs — same length as the bottom pause). */
-export function repTotalMs(timing: RepTiming): number {
-  return (
-    SET_BEAT_MS + timing.downMs + timing.holdMs + timing.upMs + timing.holdMs
-  );
-}
-
 /** One rep cycle (eccentric → pause → drive → lockout beat), without
  *  the set lead-in. */
 export function repCycleMs(timing: RepTiming): number {
@@ -127,7 +119,7 @@ export function repSampleLoopedAt(
 }
 
 /** The rep sample at `elapsedMs` since the rep started. Monotonic in
- *  time; elapsed past repTotalMs settles on "done" at calm effort. */
+ *  time; elapsed past one full rep settles on "done" at calm effort. */
 export function repSampleAt(elapsedMs: number, timing: RepTiming): RepSample {
   const { downMs, holdMs, upMs } = timing;
   let m = elapsedMs;

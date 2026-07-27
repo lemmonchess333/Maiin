@@ -69,8 +69,18 @@ export function useBackDismiss(
   }, [active, ctx, sticky]);
 }
 
-/** Exposes `dispatchBack` (what the native listener calls) — used by the
- *  provider's interceptor, tests, and the future web popstate handler. */
+/** Exposes `dispatchBack` (what the native listener calls).
+ *
+ *  NO production caller today. The provider builds and provides the api
+ *  itself, so it never consumes this; the only current consumer is the
+ *  test harness, which needs a way to fire a back press. Its doc used to
+ *  claim "the provider's interceptor" used it — it does not, and that
+ *  false claim is why the export read as live.
+ *
+ *  Kept rather than deleted because the module header names the real
+ *  second consumer: the web popstate handler (platform scope is "native
+ *  now, web popstate as a fast-follow"). That handler is what this signature
+ *  exists for. Pinned in KNOWN_ORPHAN_EXPORTS until it lands. */
 export function useBackDismissController(): BackDismissApi {
   const ctx = useContext(BackDismissContext);
   if (!ctx)

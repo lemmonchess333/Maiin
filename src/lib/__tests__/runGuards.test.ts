@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   isOutdoorGpsRun,
   requiresManualDistance,
-  isInvalidRun,
   getInvalidRunReason,
   canShowNormalSave,
   canShowSaveAnyway,
@@ -74,11 +73,20 @@ describe("requiresManualDistance", () => {
   });
 });
 
-describe("isInvalidRun", () => {
+describe("invalid-run thresholds", () => {
+  /* `isInvalidRun` was a production export wrapping this predicate. It
+     was deleted 2026-07-27 as unreachable — both real call sites
+     (Run.tsx, RunSummary.tsx) want the REASON, not a boolean, because
+     they have to explain which failure occurred. The threshold coverage
+     it carried is real and outlives it, so the block moved onto the
+     surviving predicate rather than being deleted alongside the wrapper. */
+  const isInvalid = (args: Parameters<typeof getInvalidRunReason>[0]) =>
+    getInvalidRunReason(args) !== null;
+
   describe("outdoor", () => {
     it("flags runs under the distance floor", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "freerun",
           distanceKm: 0.04,
           elapsedSeconds: 60,
@@ -88,7 +96,7 @@ describe("isInvalidRun", () => {
 
     it("flags runs under the elapsed-time floor", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "freerun",
           distanceKm: 0.5,
           elapsedSeconds: 20,
@@ -98,7 +106,7 @@ describe("isInvalidRun", () => {
 
     it("passes runs above both floors", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "freerun",
           distanceKm: 0.5,
           elapsedSeconds: 60,
@@ -108,7 +116,7 @@ describe("isInvalidRun", () => {
 
     it("flags 0km / under-30s — the canonical screenshot bug from QA", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "easy",
           distanceKm: 0,
           elapsedSeconds: 14,
@@ -120,7 +128,7 @@ describe("isInvalidRun", () => {
   describe("treadmill", () => {
     it("flags runs under the distance floor", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "treadmill",
           distanceKm: 0.04,
           elapsedSeconds: 60,
@@ -134,7 +142,7 @@ describe("isInvalidRun", () => {
          the same way it does for outdoor. A 100m / 0:20 entry is
          flagged. */
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "treadmill",
           distanceKm: 0.1,
           elapsedSeconds: 20,
@@ -144,7 +152,7 @@ describe("isInvalidRun", () => {
 
     it("passes treadmill runs above both floors", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "treadmill",
           distanceKm: 0.05,
           elapsedSeconds: 60,
@@ -156,21 +164,21 @@ describe("isInvalidRun", () => {
   describe("manual", () => {
     it("mirrors treadmill: enforces both distance and elapsed-time floors", () => {
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "manual",
           distanceKm: 0.04,
           elapsedSeconds: 60,
         })
       ).toBe(true);
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "manual",
           distanceKm: 0.1,
           elapsedSeconds: 20,
         })
       ).toBe(true);
       expect(
-        isInvalidRun({
+        isInvalid({
           activityType: "manual",
           distanceKm: 0.05,
           elapsedSeconds: 60,
