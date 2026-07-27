@@ -31,29 +31,48 @@
 
 const SENTINEL = Symbol("fake-sentinel");
 
-export type Sentinel =
-  | { [SENTINEL]: "serverTimestamp" }
-  | { [SENTINEL]: "delete" }
-  | { [SENTINEL]: "increment"; by: number }
-  | { [SENTINEL]: "arrayUnion"; values: unknown[] }
-  | { [SENTINEL]: "arrayRemove"; values: unknown[] };
+/**
+ * A field sentinel — the fake's `FieldValue`.
+ *
+ * This is a CLASS, not a plain object, and that is load-bearing rather
+ * than stylistic. Every write in this app is required to go through the
+ * guarded wrappers in `src/lib/firestoreWrite.ts` (CLAUDE.md), which
+ * apply `stripUndefined`. That helper passes non-plain objects through
+ * untouched via `value.constructor !== Object` — precisely so real
+ * `FieldValue`s and `Timestamp`s survive, as its header says.
+ *
+ * While these were plain objects carrying a symbol key, `stripUndefined`
+ * recursed INTO them and dropped the symbol, so `increment(1)` reached
+ * the store as `{ by: 1 }` and was written verbatim instead of applied.
+ * Every sentinel was silently inert on the app's own mandated write
+ * path. Found 2026-07-26 by `useFoodFavourites`, whose useCount stopped
+ * accumulating.
+ */
+class FakeFieldValue {
+  readonly [SENTINEL]: string;
+  readonly by?: number;
+  readonly values?: unknown[];
+  constructor(kind: string, extra: { by?: number; values?: unknown[] } = {}) {
+    this[SENTINEL] = kind;
+    this.by = extra.by;
+    this.values = extra.values;
+  }
+}
+
+export type Sentinel = FakeFieldValue;
 
 function isSentinel(v: unknown): v is Sentinel {
-  return typeof v === "object" && v !== null && SENTINEL in v;
+  return v instanceof FakeFieldValue;
 }
 
 export const sentinels = {
-  serverTimestamp: (): Sentinel => ({ [SENTINEL]: "serverTimestamp" }),
-  deleteField: (): Sentinel => ({ [SENTINEL]: "delete" }),
-  increment: (by: number): Sentinel => ({ [SENTINEL]: "increment", by }),
-  arrayUnion: (...values: unknown[]): Sentinel => ({
-    [SENTINEL]: "arrayUnion",
-    values,
-  }),
-  arrayRemove: (...values: unknown[]): Sentinel => ({
-    [SENTINEL]: "arrayRemove",
-    values,
-  }),
+  serverTimestamp: (): Sentinel => new FakeFieldValue("serverTimestamp"),
+  deleteField: (): Sentinel => new FakeFieldValue("delete"),
+  increment: (by: number): Sentinel => new FakeFieldValue("increment", { by }),
+  arrayUnion: (...values: unknown[]): Sentinel =>
+    new FakeFieldValue("arrayUnion", { values }),
+  arrayRemove: (...values: unknown[]): Sentinel =>
+    new FakeFieldValue("arrayRemove", { values }),
 };
 
 /** Minimal Timestamp with the surface the app uses. */
@@ -70,16 +89,27 @@ export class FakeTimestamp {
     return FakeTimestamp.fromDate(new Date());
   }
   static fromDate(d: Date): FakeTimestamp {
-    return new FakeTimestamp(Math.floor(d.getTime() / 1000));
+    return FakeTimestamp.fromMillis(d.getTime());
   }
+  /**
+   * Sub-second precision is kept in `nanoseconds`, as real Firestore
+   * does. It was dropped until 2026-07-26 — `fromMillis(100).toMillis()`
+   * returned 0 — which silently collapsed any fixture whose timestamps
+   * differ by less than a second into a tie. A hook sorting by
+   * `lastUsed.toMillis()` then fell back to insertion order, so a
+   * genuinely wrong sort and a correct one were indistinguishable.
+   * (Found by `useFoodFavourites`, whose tie-break fixture uses 50 /
+   * 100 / 200 ms.)
+   */
   static fromMillis(ms: number): FakeTimestamp {
-    return new FakeTimestamp(Math.floor(ms / 1000));
+    const seconds = Math.floor(ms / 1000);
+    return new FakeTimestamp(seconds, (ms - seconds * 1000) * 1e6);
   }
   toDate(): Date {
-    return new Date(this.seconds * 1000);
+    return new Date(this.toMillis());
   }
   toMillis(): number {
-    return this.seconds * 1000;
+    return this.seconds * 1000 + Math.floor(this.nanoseconds / 1e6);
   }
 }
 
@@ -615,7 +645,7 @@ function resolveWrite(
       next[key] = value;
       continue;
     }
-    const kind = (value as Record<symbol, unknown>)[SENTINEL];
+    const kind = (value as FakeFieldValue)[SENTINEL];
     if (kind === "serverTimestamp") {
       next[key] = FakeTimestamp.now();
     } else if (kind === "delete") {
