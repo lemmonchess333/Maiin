@@ -3,6 +3,8 @@ import {
   parseTempo,
   repTimingFor,
   repSampleAt,
+  repSampleLoopedAt,
+  repCycleMs,
   repTotalMs,
   SET_BEAT_MS,
   DEFAULT_REP_TIMING,
@@ -105,5 +107,42 @@ describe("repSampleAt / repTotalMs", () => {
     const drive = repSampleAt(SET_BEAT_MS + 1400 + 400, T).targetEffort;
     expect(drive).toBe(1);
     expect(ecc).toBeLessThan(drive);
+  });
+});
+
+/* The looping timeline (2026-07-27, supersedes the Demo1 single-rep
+ * settle): one Set lead-in, then the cycle repeats — never "done". */
+describe("repSampleLoopedAt", () => {
+  const T = { downMs: 1000, holdMs: 400, upMs: 800 };
+  const CYCLE = 1000 + 400 + 800 + 400;
+
+  it("cycle length excludes the one-time set lead-in", () => {
+    expect(repCycleMs(T)).toBe(CYCLE);
+    expect(repTotalMs(T)).toBe(SET_BEAT_MS + CYCLE);
+  });
+
+  it("matches the single-rep timeline through the first cycle", () => {
+    for (const m of [0, 300, SET_BEAT_MS + 500, SET_BEAT_MS + 1600]) {
+      expect(repSampleLoopedAt(m, T)).toEqual(repSampleAt(m, T));
+    }
+  });
+
+  it("wraps: one full cycle later, the sample is identical — never done", () => {
+    for (const m of [0, 250, 999, 1500, 2300]) {
+      const first = repSampleLoopedAt(SET_BEAT_MS + m, T);
+      const second = repSampleLoopedAt(SET_BEAT_MS + CYCLE + m, T);
+      const tenth = repSampleLoopedAt(SET_BEAT_MS + 9 * CYCLE + m, T);
+      expect(second).toEqual(first);
+      expect(tenth).toEqual(first);
+      expect(first.phase).not.toBe("done");
+    }
+  });
+
+  it("the set lead-in happens once, not on every wrap", () => {
+    // Exactly at a cycle boundary the loop restarts on the ECCENTRIC.
+    expect(repSampleLoopedAt(SET_BEAT_MS + CYCLE, T).phase).toBe("eccentric");
+    expect(repSampleLoopedAt(SET_BEAT_MS + 5 * CYCLE, T).phase).toBe(
+      "eccentric"
+    );
   });
 });

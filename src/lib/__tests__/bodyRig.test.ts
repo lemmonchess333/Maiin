@@ -262,6 +262,72 @@ describe("renderBodyDemo", () => {
     expect(width(hand.outline, 1)).toBeLessThanOrEqual(headW / 2 + 0.5);
   });
 
+  /* ── 2026-07-27 anatomy rebuild pins (owner device feedback) ── */
+
+  it("overhead press: hands ride a fixed-width vertical bar path", () => {
+    // The press is hand-constrained (IK), not choreographed rotation —
+    // the regression this pins: a 170° whole-arm sweep that pendulumed
+    // the hands out sideways. Rest anchors: shoulder [24,48], hand
+    // [10,100] (left side of the vendored anterior figure).
+    const hand = (t: number) =>
+      applyToPoint(
+        [10, 100],
+        (BODY_DEMOS["overhead-press"].pose(t).foreArmL ?? []) as never[]
+      );
+    const bottom = hand(0);
+    const top = hand(1);
+    // Fixed grip width: the hand's x never wanders.
+    expect(Math.abs(top[0] - bottom[0])).toBeLessThan(0.5);
+    // Real stroke: the hand travels straight UP by the press range.
+    expect(bottom[1] - top[1]).toBeGreaterThan(30);
+    // Lockout is overhead (above the head top at y≈0).
+    expect(top[1]).toBeLessThan(0);
+  });
+
+  it("deadlift: side hinge with planted heels, hips back and down", () => {
+    const pose = (t: number) => BODY_DEMOS["deadlift"].pose(t);
+    // The ankle is the planted pivot — it must not move at all.
+    const ankle = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.ankle, (pose(t).shankL ?? []) as never[]);
+    expect(ankle(1)[0]).toBeCloseTo(ankle(0)[0], 5);
+    expect(ankle(1)[1]).toBeCloseTo(ankle(0)[1], 5);
+    // The hip travels BACK and DOWN into the bottom (hinge + knee bend,
+    // not the old torso-compression "shrinking figure").
+    const hip = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hip, (pose(t).thighL ?? []) as never[]);
+    expect(hip(1)[0]).toBeLessThan(hip(0)[0] - 15);
+    expect(hip(1)[1]).toBeGreaterThan(hip(0)[1] + 15);
+    // Full-size plate pinned in every frame; bar finishes near the
+    // floor at the bottom of the pull.
+    for (const t of [0, 0.5, 1]) {
+      expect(renderBodyDemo("deadlift", t).includes('r="16"'), `@${t}`).toBe(
+        true
+      );
+    }
+    const grip = (t: number) =>
+      applyToPoint(SIDE_ANCHORS.hand, (pose(t).handL ?? []) as never[]);
+    expect(grip(1)[1]).toBeGreaterThan(160); // below the knee line (152)
+    expect(grip(0)[1]).toBeLessThan(105); // standing lockout at the thigh
+  });
+
+  it("bench press: sole lands ON the floor with a vertical shin", () => {
+    const pose = BODY_DEMOS["bench-press"].pose(1);
+    const knee = applyToPoint(
+      SIDE_ANCHORS.knee,
+      (pose.thighL ?? []) as never[]
+    );
+    const ankle = applyToPoint(
+      SIDE_ANCHORS.ankle,
+      (pose.shankL ?? []) as never[]
+    );
+    // Shin screen-vertical: ankle directly under the knee.
+    expect(Math.abs(ankle[0] - knee[0])).toBeLessThan(5);
+    // Sole (ankle + ~10 of foot) meets the 171 floor line — the old
+    // 35°/55° split buried the foot ~5 units through it.
+    expect(ankle[1] + 10).toBeGreaterThan(168);
+    expect(ankle[1] + 10).toBeLessThan(174);
+  });
+
   it("calf raise: body rises but the feet stay planted", () => {
     const maxY = (svg: string) => Math.max(...polyYs(svg));
     const minY = (svg: string) => Math.min(...polyYs(svg));
