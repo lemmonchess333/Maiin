@@ -266,3 +266,180 @@ an engine change.
   itself (see D2) — if added, it is one option among several, never automatic.
 - **Grip training, belt positioning, suit/gear technique, baby powder.**
   Equipment and competition minutiae with no Tropos surface.
+
+---
+
+## 3. Juggernaut Bench Manual — Team Juggernaut (reviewed 2026-07-27)
+
+Fourteen articles; Brandon Lilly, Dan Green, Eric Lilliebridge, Chad Wesley
+Smith, Blaine Sumner, Greg Panora, Corey Hayes, Ryan Brown, Mike Jenkins,
+Matt Vincent. The most useful of the three manuals for Tropos's actual
+audience, for two reasons: the bench is the lift beginners care most about,
+and two of its ideas **unblock proposals that sections 1 and 2 had to leave
+half-solved** — how to prescribe intelligently without a 1RM, and how to make
+progression feel like progress on an ordinary session.
+
+### Third convergence on rotating weekly emphasis
+
+Lilly's "My Best Bench Ever" cycle is **Week 1 REPS / Week 2 SPEED / Week 3
+MAX**, repeating through week 10. That is the same rotation as his squat
+manual (rep/explosion/heavy) and his deadlift manual (max/reps/speed) — the
+same author-independent shape now in **all three manuals**, with percentage
+bands attached: reps weeks 70–80%, speed weeks 55–70%, max weeks 87.5–105%.
+Section 1's P2 should be considered settled in principle; what remains is a
+design pass on the Tropos-appropriate expression of it.
+
+### New findings
+
+**B1 — The three-axis PR definition, and the missing axis.** Green's account
+of adding 25 lb to his bench is built on one idea, quoted directly:
+
+> "compare what I was hitting to what I'd done in the past and either **beat
+> the reps at a given weight, lift a heavier weight for the same rep count, or
+> even just match the weight and reps but do it for more sets!** If I just did
+> any of these, I knew objectively I'd hit a PR and was steadily progressing."
+
+Tropos implements the first two axes and not the third. `checkSetPR`
+(`prTracking.ts:62-77`) fires on `weight > current.weight ||
+(weight === current.weight && reps > current.reps)` — there is no sets or
+volume-at-load axis anywhere in the module. Adding it would mean almost every
+honest session can register objective progress, which is exactly the
+retention problem the app's cold-start and consistency work keeps circling.
+It also costs little: the PR celebration surface, the `PRMap` shape and the
+Firestore persistence all already exist.
+
+Two related observations from reading the module:
+
+- **Bucket boundaries partly defeat axis 1.** Records are kept per rep bucket
+  (`getRepBucket`: ≤1, ≤3, ≤5, ≤8, else 10rm), so "beat the reps at a given
+  weight" only registers while the extra rep stays inside the bucket. 100 kg×5
+  → 100 kg×6 crosses from `5rm` to `8rm` and is compared against a different
+  record entirely.
+- **The rebuild path is lossy** (low priority, but real). The live path is
+  correct: `checkSetPR` fires and `WorkoutSession.tsx:~750` writes the new
+  reps into the map, which is persisted at `:964-971`. But the fallback
+  `buildPRMap` (`prTracking.ts:42-60`, used at `WorkoutSession.tsx:435` when
+  the persisted doc is missing or has no `sessionCounts`) keeps only
+  `set.weightKg > current.weight` and drops the reps tiebreak. So a
+  same-weight-more-reps record silently degrades to the lower rep count
+  whenever the map is rebuilt from history, and the user can re-earn a PR they
+  already hit.
+
+**B2 — RIR-prescribed loading: the answer to what section 1 rejected.**
+Section 1 declined %-of-1RM/training-max loading because Tropos users have no
+meet maxes. Sumner's 8-week rack-lockout cycle shows the alternative — it
+prescribes **no load at all**, only sets, reps and effort:
+
+| Week | Reps left in the tank | Reps |
+| --- | --- | --- |
+| 1 | 3 | 8, 8, 8 |
+| 2 | 3 | 6, 6, 6 |
+| 3 | 3 | 8, 6, 4 |
+| 4 | 5 (deload) | 5, 5, 5 |
+| 5 | 2 | 5, 5, 5 |
+| 6 | 2 | 5, 3, 1 |
+| 7 | 1 | 1, 1, 1 |
+| 8 | 0 | 1 |
+
+Reps in reserve is the same scale Tropos already collects, inverted (RPE 8 ≈
+2 RIR). Today RPE is captured per set (`RPE_OPTIONS` at
+`WorkoutSession.tsx:140`, stored on `SetLog.rpe`) but sits **behind a
+`showRPE` toggle** (`:259`), is consumed by exactly one rule — the ≥ 9.5
+hold at `programEngine.ts:75, 1061` — and is deliberately omitted from the
+server command path. Prescribing effort would turn a mostly-inert field into
+the loading mechanism, give the wave (P2) a way to express "heavier week"
+without a training max, and structurally discourage grinding — the thing
+every author in all three manuals warns about. This is the single
+highest-leverage idea across the three manuals and it needs a design pass:
+the honest counter-argument is that novices rate RIR badly, which is a real
+finding in the literature and the reason Fitbod and Hevy keep RPE optional.
+
+**B3 — Rest is a programmed variable, not a global default.** Smith's
+12-week dead-bench progression periodizes rest explicitly alongside load:
+60% ×8 singles at 30 s rest → 65% ×9 at 45 s → 70% ×7 at 60 s → 75% ×5 at
+75 s → heavy singles at 90 s → 120 s → 150 s, deloading at weeks 4, 8 and 12.
+Hayes and Vincent both prescribe rest too (60–90 s to keep speed work
+fast-twitch). Tropos authors `restSeconds` per exercise in `templates.ts`,
+then **drops it at the template boundary** (`Onboarding.tsx:125-151`) in
+favour of a single global `profile.defaultRestSeconds`
+(`WorkoutSession.tsx:506-514`). Section 1's P1 listed that as one of four
+fields lost in a lossy conversion; this manual reframes it as discarding a
+training variable, not a preference.
+
+**B4 — Accessory volume should sometimes come DOWN.** Green: the high-rep
+incline and overhead work that builds the base "do little for immediately
+improving a max… in the last few weeks before a meet they tend to create
+more fatigue than value. **They should be dropped 3–4 weeks out**", while
+main-lift frequency goes up (his 12-week shape is 8 weeks of 1 bench + 1 OHP
+day, then 3 weeks of 2 heavy bench days, then a rest week). Tropos's
+`balanceWeeklyVolume` only ever **adds** sets to under-MEV accessories and
+never trims above MRV — deliberate, per its own comment at
+`volumeModel.ts:250-253`. That's defensible for a steady-state trainee, but
+it means the app has no way to express a phase where accessory volume should
+fall. Pairs naturally with the P2 wave and the existing deload transform.
+
+**B5 — Stability before mobility, and a named injury mechanism.** Brown's
+scapula chapter is the bench analogue of the deadlift warm-up chapter, with a
+sharper thesis: "before you start looking at where you need more mobility,
+you need to focus on making sure that the things that shouldn't be moving
+aren't", and "too much mobility, or mobility in the wrong place is a force
+bleed". He names the mechanism — the most common bench injury cause is lack
+of shoulder internal rotation, traced to scapular position — and gives a
+four-step pre-bench routine (breathe → soft tissue → motor pattern →
+activation, explicitly "not to fatigue the muscle"). Tropos's injury handling
+is purely reactive: `injurySubstitutions.ts` swaps an exercise once the user
+reports an injury. There is no preventive content. The cheap version is
+copy in the existing "Watch out" panel of `ExerciseFormContent.tsx`, not a
+new feature.
+
+**B6 — Exercise roles, beyond the binary accessory flag.** Three authors
+independently categorize by role rather than muscle: Hayes splits "exercises
+that teach me how to lift" from brute-strength exercises; Jenkins frames
+non-competition lifts as "tools in the arsenal"; Green assigns each bench
+variant an explicit job (paused = technique + strength, speed = volume,
+paused wide grip = bottom-range, slingshot = lockout, incline/OHP = size and
+base). Tropos has one boolean, `ProgramExercise.isAccessory`. A role field
+(main / technique / weak-point / size) is what would make the P4 plateau
+breaker pick a *purposeful* substitute instead of the current
+`Math.random()` sibling — the two proposals share this dependency.
+
+**B7 — Bench form content and a concrete warm-up ramp.** Lilly's "Bench 101"
+is the densest form chapter in any of the three manuals — foot position with
+knee below hip, shoulder blades squeezed and high on the traps, grip
+experimentation, breath held, elbows slightly tucked with lats flared, "meet
+the bar", driving the head back off the bench, elbows not rotating outward
+past the midpoint, squeezing and "pulling the bar apart" when it stalls.
+Straight into the P6 content backfill. Separately, Smith's 225-test chapter
+gives an actual warm-up ramp to model P5 on — bar ×50 across five grips,
+95×10, 135×2×5 (one at normal tempo, one explosive), 185×3, 225×1, then one
+over-warmup single capped at 75% of max — which is a working template for
+generating a ramp from a working weight.
+
+### Changes to earlier rankings
+
+- **P3 (AMRAP PR set) — supersede with B1 + B2.** Green gets the same signal
+  from "beat one of three axes, never fail a rep" without asking a general
+  audience to take a set to the edge. The three-axis PR plus RIR prescription
+  is the better-fitting version of the same idea for this user base.
+- **P4 (weak-point plateau breaker) — now depends on B6.** Give exercises a
+  role before wiring the plateau breaker; otherwise the substitution logic has
+  nothing principled to select on.
+- **P1 (rep ranges + template boundary) — rest gets promoted within it.**
+  Per B3, treat `restSeconds` as a training variable being discarded, not a
+  dropped preference.
+
+### Deliberately NOT adopting
+
+- **Boards, slingshots, reverse bands, chains, dead bench off pins, rack
+  lockouts.** Equipment-dependent powerlifting overload tools. The *concepts*
+  they encode (partial-range work for a named weak point) survive via B6/P4.
+- **The 225 rep test programme, cluster/mini-set rep strategy, rest-pause and
+  mechanical drop sets.** NFL combine prep. Rest-pause and mechanical drop
+  sets are legitimate general hypertrophy techniques and could return later as
+  an advanced set type, but nothing in the app models intra-set structure
+  today.
+- **Accessory work taken to failure and drop sets** (Lilliebridge's top-5
+  accessories). Directly contradicts the never-grind principle the same
+  manuals argue for elsewhere; not a default we should ship.
+- **Full shoulder assessment protocol** (Y/T range tests needing a second
+  person). Keep the injury-mechanism copy from B5, not the assessment.
