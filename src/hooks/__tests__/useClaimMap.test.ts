@@ -13,11 +13,27 @@
  *   - Q3 P90: unclaimedByDate shares the same memo / excludes
  *     claimed savedRunIds
  *   - dateAnchor override (test hook for midnight-rollover effects)
+ *
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ * The old version stubbed `onSnapshot` to capture its callback and then
+ * `pumpSnapshot()`d fabricated docs straight into it, so the suite fed
+ * the hook rather than the hook reading a store. Runs are now real
+ * documents under `users/u1/runs`, delivered by the fake's own
+ * subscription — which means the `orderBy("createdAt", "desc")` in the
+ * query is exercised rather than bypassed, and "no user ⇒ no
+ * subscription" can be asserted against the read log instead of against
+ * the stub's own array.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { Timestamp } from "firebase/firestore";
+import {
+  seedFirestore,
+  resetFirestore,
+  readLog,
+  flushSnapshots,
+} from "@/test/firestoreHarness";
 
 const mockUser: { uid: string } | null = { uid: "u1" };
 let currentUser: { uid: string } | null = mockUser;
@@ -28,38 +44,7 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
-const snapshotListeners: Array<
-  (snap: {
-    docs: Array<{ id: string; data: () => Record<string, unknown> }>;
-  }) => void
-> = [];
-const unsubscribeCalls: Array<() => void> = [];
-
-vi.mock("firebase/firestore", async () => {
-  const actual =
-    await vi.importActual<typeof import("firebase/firestore")>(
-      "firebase/firestore"
-    );
-  return {
-    ...actual,
-    collection: vi.fn(),
-    query: vi.fn((c: unknown) => c),
-    orderBy: vi.fn(),
-    onSnapshot: vi.fn(
-      (
-        _q: unknown,
-        onNext: (snap: {
-          docs: Array<{ id: string; data: () => Record<string, unknown> }>;
-        }) => void
-      ) => {
-        snapshotListeners.push(onNext);
-        const unsub = vi.fn();
-        unsubscribeCalls.push(unsub);
-        return unsub;
-      }
-    ),
-  };
-});
+vi.mock("firebase/firestore");
 
 interface ProgramStateLike {
   runDays?: Array<Record<string, unknown>>;
@@ -73,18 +58,22 @@ vi.mock("@/features/program/useProgram", () => ({
 
 import { useClaimMap } from "../useClaimMap";
 
-function pumpSnapshot(
-  docs: Array<{ id: string; data: Record<string, unknown> }>
-) {
-  snapshotListeners.forEach((l) =>
-    l({ docs: docs.map((d) => ({ id: d.id, data: () => d.data })) })
-  );
+const RUNS = "users/u1/runs";
+
+/** Seed saved-run documents the hook's own subscription will deliver. */
+function seedRuns(docs: Array<{ id: string; data: Record<string, unknown> }>) {
+  const tree: Record<string, Record<string, unknown>> = {};
+  for (const d of docs) tree[`${RUNS}/${d.id}`] = d.data;
+  seedFirestore(tree);
 }
+
+/** How many times the hook subscribed to the runs collection. */
+const runSubscriptions = () =>
+  readLog().filter((r) => r.op === "onSnapshot" && r.path === RUNS).length;
 
 describe("useClaimMap", () => {
   beforeEach(() => {
-    snapshotListeners.length = 0;
-    unsubscribeCalls.length = 0;
+    resetFirestore();
     currentUser = mockUser;
     mockProgramState = null;
   });
@@ -105,7 +94,7 @@ describe("useClaimMap", () => {
    * An easy `avgPace` is used so the short-circuit is the ONLY thing that
    * can complete the slot — with it broken, the pace-bucket check rejects.
    */
-  it("completes race day on a race-templated run at an EASY pace", () => {
+  it("completes race day on a race-templated run at an EASY pace", async () => {
     mockProgramState = {
       runDays: [
         {
@@ -119,8 +108,8 @@ describe("useClaimMap", () => {
       ],
     };
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    act(() =>
-      pumpSnapshot([
+    await act(async () => {
+      seedRuns([
         {
           id: "run-race",
           data: {
@@ -132,8 +121,9 @@ describe("useClaimMap", () => {
             completedAt: { seconds: 1780000000 },
           },
         },
-      ])
-    );
+      ]);
+      await flushSnapshots();
+    });
 
     expect(result.current.claimMap.get("rd-race")?.claimedSavedRunId).toBe(
       "run-race"
@@ -143,13 +133,13 @@ describe("useClaimMap", () => {
   it("returns empty result and skips subscription when there is no user", () => {
     currentUser = null;
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    expect(snapshotListeners).toHaveLength(0);
+    expect(runSubscriptions()).toBe(0);
     expect(result.current.claimMap.size).toBe(0);
     expect(result.current.unclaimedByDate.size).toBe(0);
     expect(result.current.loading).toBe(false);
   });
 
-  it("subscribes once and derives the claim map from snapshot + programState", () => {
+  it("subscribes once and derives the claim map from snapshot + programState", async () => {
     mockProgramState = {
       runDays: [
         {
@@ -165,10 +155,10 @@ describe("useClaimMap", () => {
     };
 
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    expect(snapshotListeners).toHaveLength(1);
+    expect(runSubscriptions()).toBe(1);
 
-    act(() => {
-      pumpSnapshot([
+    await act(async () => {
+      seedRuns([
         {
           id: "saved-1",
           data: {
@@ -180,6 +170,7 @@ describe("useClaimMap", () => {
           },
         },
       ]);
+      await flushSnapshots();
     });
 
     const claim = result.current.claimMap.get("rd-1");
@@ -187,13 +178,13 @@ describe("useClaimMap", () => {
     expect(result.current.unclaimedByDate.size).toBe(0);
   });
 
-  it("returns unclaimed saved runs keyed by date when no slot matches (Q3 P90)", () => {
+  it("returns unclaimed saved runs keyed by date when no slot matches (Q3 P90)", async () => {
     // Plan has nothing on this date — the saved run can't claim a slot.
     mockProgramState = { runDays: [], manualCompletions: {} };
 
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    act(() => {
-      pumpSnapshot([
+    await act(async () => {
+      seedRuns([
         {
           id: "extra-1",
           data: {
@@ -205,6 +196,7 @@ describe("useClaimMap", () => {
           },
         },
       ]);
+      await flushSnapshots();
     });
 
     const extras = result.current.unclaimedByDate.get("2026-05-26");
@@ -213,7 +205,7 @@ describe("useClaimMap", () => {
     expect(result.current.claimMap.size).toBe(0);
   });
 
-  it("propagates manualCompletions into the claim map without a saved-run match", () => {
+  it("propagates manualCompletions into the claim map without a saved-run match", async () => {
     mockProgramState = {
       runDays: [
         {
@@ -231,8 +223,8 @@ describe("useClaimMap", () => {
     };
 
     const { result } = renderHook(() => useClaimMap("2026-05-26"));
-    act(() => {
-      pumpSnapshot([]);
+    await act(async () => {
+      seedRuns([]);
     });
 
     const claim = result.current.claimMap.get("rd-2");
