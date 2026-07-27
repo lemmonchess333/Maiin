@@ -153,7 +153,6 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  */
 const LEGACY_INLINE_MOCKS = [
   "src/features/program/__tests__/useProgramWriters.test.ts",
-  "src/hooks/__tests__/useFoodFavourites.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
 ];
 
