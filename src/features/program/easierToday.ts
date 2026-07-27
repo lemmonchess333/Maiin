@@ -194,3 +194,51 @@ export function recoveringTargetMuscles(
   }
   return out;
 }
+
+/* ================================
+   LIGHTER-DAY SWAP (backlog #1, Helms H1)
+================================ */
+
+export interface LighterDaySwap {
+  /** Index into programState.workouts to launch instead of today. */
+  index: number;
+  day: WorkoutDay;
+  /** Estimated minutes of the lighter day. */
+  minutes: number;
+  /** Estimated minutes of today's day, for the one-line copy. */
+  todayMinutes: number;
+}
+
+/**
+ * Flexible session choice (training-book backlog #1 / Helms H1). The
+ * evidence (McNamara & Stearne 2010) is for swapping in a session already
+ * planned this week — not only scaling today's down. Lifts are
+ * split-ordered (ADR-0002), so the swap is just launching a different
+ * uncompleted day index: nothing is rewritten, today's day stays in the
+ * week, and completion marks the day that was actually done.
+ *
+ * Presentation policy: quietly visible — one row in the pre-session
+ * chooser ("Not feeling it? <Day> is lighter"), shown ONLY when a
+ * meaningfully lighter alternative exists. Pure and deterministic.
+ */
+export function pickLighterDay(
+  days: readonly WorkoutDay[],
+  todayIndex: number
+): LighterDaySwap | null {
+  const today = days[todayIndex];
+  if (!today) return null;
+  const todayMinutes = estimateSessionMinutes(today.exercises);
+  let best: LighterDaySwap | null = null;
+  days.forEach((day, index) => {
+    if (index === todayIndex || day.completed) return;
+    if (!day.exercises || day.exercises.length === 0) return;
+    const minutes = estimateSessionMinutes(day.exercises);
+    // "Meaningfully lighter": at least 15% fewer estimated minutes.
+    // Marginal differences would make the option noise, not relief.
+    if (minutes >= todayMinutes * 0.85) return;
+    if (!best || minutes < best.minutes) {
+      best = { index, day, minutes, todayMinutes };
+    }
+  });
+  return best;
+}
