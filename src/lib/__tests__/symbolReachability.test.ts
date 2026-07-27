@@ -177,17 +177,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   // that used to say so.
   "src/lib/backDismiss.ts:useBackDismissController",
 
-  // Staged, and the bug it fixes is STILL LIVE. runPlanResolver was built
-  // (architecture review candidate #1) to be the single definition of
-  // elapsed / inRecovery / recoveryEnded, after those were found inlined
-  // ~6× with different notions of "today". Only the back-compat shim
-  // `resolveRunPlanSurface` was ever adopted; ProgrammeRunSection.tsx:389
-  // and useProgram.ts:661 still hand-derive the recovery window today. So
-  // this is tested logic for a real drift that has not been fixed —
-  // deleting it throws that away. Migrating those call sites is the work
-  // that removes this line.
-  "src/lib/runPlanResolver.ts:resolveRunPlan",
-
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
   "src/features/program/raceRunDaysReconcile.ts:areRaceRunDaysStale",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
