@@ -126,6 +126,24 @@ export interface ProgramExercise {
    */
   repRangeMax?: number;
   /**
+   * Steady-state set-count anchor (backlog #5, volume ramp). Stamped at
+   * generation (after volume balancing) and lazily on first advance for
+   * legacy docs. advanceWeek derives each week's sets FROM this anchor —
+   * which is also the fix for the compounding auto-deload decay (the
+   * sets−1 / ×0.85 cut was applied to live state and never restored, so
+   * every mesocycle permanently shrank the programme). Any future UI
+   * that edits an exercise's set count MUST update baseSets too, or the
+   * next weekly advance will revert the edit. Optional + defaulting
+   * readers → no schema bump.
+   */
+  baseSets?: number;
+  /**
+   * Load stored on entering an automatic deload week and restored
+   * (max(live, stored)) on meso exit, then removed. Absent outside a
+   * deload cycle.
+   */
+  preDeloadWeight?: number;
+  /**
    * Per-exercise rest between sets in seconds, carried from
    * TemplateExercise.restSeconds. WorkoutSession prefers this over
    * profile.defaultRestSeconds; a mid-session manual target change by the
@@ -619,6 +637,10 @@ export function normalizeExercise(
     // stripped on every load. Conditional spread keeps `undefined` out of
     // the object (Firestore rejects undefined values at the setDoc site).
     ...(ex.repRangeMax !== undefined ? { repRangeMax: ex.repRangeMax } : {}),
+    ...(ex.baseSets !== undefined ? { baseSets: ex.baseSets } : {}),
+    ...(ex.preDeloadWeight !== undefined
+      ? { preDeloadWeight: ex.preDeloadWeight }
+      : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,

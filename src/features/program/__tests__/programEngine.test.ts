@@ -15,6 +15,7 @@ import {
   isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
+import { deloadWeight } from "../easierToday";
 import type {
   ProgramExercise,
   ProgramState,
@@ -776,5 +777,131 @@ describe("day roles (backlog #3)", () => {
     // Day C is pump: every exercise ≥ its own baseReps and mains ≥ base+2
     const pumpMains = mainRepsOf(three.workouts[2]);
     expect(Math.max(...pumpMains)).toBeGreaterThanOrEqual(10);
+  });
+});
+
+// Backlog #5 (volume ramp) + the auto-deload decay fix. Before this,
+// advanceWeek applied applyDeload's sets−1 / ×0.85 to LIVE state with no
+// restore on meso exit — every mesocycle permanently shrank the programme
+// (the manual deload command guards exactly this with its undo snapshot;
+// the automatic weekly path had no guard).
+describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
+  const makeState = () => {
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    // Calibrate every lift so the deload weight cut/restore is observable.
+    const withWeights = workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        weight: 50,
+        lastSuccessfulWeight: 50,
+        consecutiveFailures: 0,
+      })),
+    }));
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      workouts: withWeights,
+      fatigueScore: 0,
+      updatedAt: 0,
+      settings: { autoProgression: true, microloading: false },
+      weekHistory: [],
+    } as unknown as Parameters<typeof advanceWeek>[0];
+  };
+
+  const setsGrid = (st: ReturnType<typeof makeState>) =>
+    st.workouts.map((d) => d.exercises.map((e) => e.sets));
+
+  it("generateProgram stamps baseSets on every exercise", () => {
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    workouts.forEach((d) =>
+      d.exercises.forEach((ex) => expect(ex.baseSets).toBe(ex.sets))
+    );
+  });
+
+  it("ramps accessories base−1 / base / base+1 across the meso, mains hold", () => {
+    let st = makeState();
+    const base = st.workouts.map((d) => d.exercises.map((e) => e.sets));
+    st = advanceWeek(st); // week 2 (mid)
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => expect(ex.sets).toBe(base[di][ei]))
+    );
+    st = advanceWeek(st); // week 3 (top)
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        const b = base[di][ei];
+        expect(ex.sets).toBe(ex.isAccessory === true ? Math.min(5, b + 1) : b);
+      })
+    );
+    st = advanceWeek(st); // week 4 — deload cuts from the ANCHOR, not week 3
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        expect(ex.sets).toBe(Math.max(2, base[di][ei] - 1));
+        expect(ex.weight).toBe(deloadWeight(50)); // pinned to the shared rule
+        expect(ex.preDeloadWeight).toBe(50);
+      })
+    );
+    st = advanceWeek(st); // week 5 — meso restart
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        const b = base[di][ei];
+        expect(ex.sets).toBe(ex.isAccessory === true ? Math.max(1, b - 1) : b);
+        expect(ex.weight).toBe(50); // load restored, cut not permanent
+        expect("preDeloadWeight" in ex).toBe(false);
+      })
+    );
+  });
+
+  it("never compounds across mesocycles", () => {
+    let st = makeState();
+    for (let w = 2; w <= 5; w++) st = advanceWeek(st);
+    const firstMesoRestart = setsGrid(st);
+    for (let w = 6; w <= 9; w++) st = advanceWeek(st);
+    expect(setsGrid(st)).toEqual(firstMesoRestart);
+    st.workouts.forEach((d) =>
+      d.exercises.forEach((ex) => expect(ex.weight).toBe(50))
+    );
+  });
+
+  it("keeps load progressed DURING the deload week (max wins on restore)", () => {
+    let st = makeState();
+    for (let w = 2; w <= 4; w++) st = advanceWeek(st); // into deload
+    st = {
+      ...st,
+      workouts: st.workouts.map((d, di) => ({
+        ...d,
+        exercises: d.exercises.map((ex, ei) =>
+          di === 0 && ei === 0 ? { ...ex, weight: 55 } : ex
+        ),
+      })),
+    };
+    st = advanceWeek(st); // meso exit
+    expect(st.workouts[0].exercises[0].weight).toBe(55);
+    expect(st.workouts[0].exercises[1].weight).toBe(50);
+  });
+
+  it("legacy exercises without baseSets anchor lazily from live sets", () => {
+    let st = makeState();
+    st = {
+      ...st,
+      workouts: st.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.map((ex) => {
+          const { baseSets: _b, ...rest } = ex;
+          void _b;
+          return rest as typeof ex;
+        }),
+      })),
+    };
+    const live = setsGrid(st);
+    st = advanceWeek(st); // week 2 (mid) — anchor stamps, sets unchanged
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        expect(ex.baseSets).toBe(live[di][ei]);
+        expect(ex.sets).toBe(live[di][ei]);
+      })
+    );
   });
 });

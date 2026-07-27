@@ -84,6 +84,10 @@ export function templateExToProgEx(
        default). Inference is name-based: see lib/exerciseMovementCategory. */
     movementCategory: inferMovementCategory(te.name, te.exerciseId),
     sets: te.sets,
+    // Volume-ramp anchor (backlog #5) — advanceWeek derives weekly sets
+    // from this; without it a template-derived plan would lazily anchor
+    // on whatever week it first advanced from.
+    baseSets: te.sets,
     reps,
     // Reset anchor for the progression engine: on a load increase the rep
     // target returns here (the bottom of the authored range), not to

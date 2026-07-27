@@ -1043,6 +1043,13 @@ export function generateProgram(
   // (no-op without a load context, or for lifts with logged history).
   if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
+  // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
+  // seeding — advanceWeek derives each week's sets from baseSets.
+  workouts = workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),
+  }));
+
   return { splitType, workouts };
 }
 
@@ -1264,6 +1271,67 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
   return workouts.every((day) => day.completed || day.skipped);
 }
 
+/** Accessory ramp ceiling — mirrors volumeModel's ACCESSORY_SET_CAP. */
+const ACCESSORY_RAMP_CAP = 5;
+
+/**
+ * Entering an automatic deload week: re-anchor sets to baseSets and stash
+ * each loaded exercise's weight so meso exit can restore it. applyDeload
+ * then cuts from the ANCHORED values, so its −1/×0.85 can never compound
+ * across mesocycles (the manual deload command guards the same hazard
+ * with its undo snapshot — the auto path had no guard at all).
+ */
+function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets ?? ex.sets;
+      const out: ProgramExercise = { ...ex, baseSets: base, sets: base };
+      if (out.weight > 0) out.preDeloadWeight = out.weight;
+      return out;
+    }),
+  }));
+}
+
+/**
+ * Backlog #5 (training-book backlog; M2/N1): the volume ramp. Non-deload
+ * weeks derive sets from the baseSets anchor — accessories run
+ * base−1 / base / base+1 across the meso (start below target, build,
+ * then deload), mains hold at base. Also restores pre-deload loads on
+ * meso exit (max() keeps anything the user progressed DURING the deload
+ * week). Anchor-derived recompute makes the weekly shape idempotent:
+ * applyFatigue's shave lasts exactly one week. Presentation policy:
+ * INVISIBLE — the prescription simply differs week to week.
+ */
+function applyWeeklyVolumeShape(
+  workouts: WorkoutDay[],
+  week: number
+): WorkoutDay[] {
+  const weekInMeso = ((week - 1) % 4) + 1; // 1..3 here; week 4 deloads
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets ?? ex.sets;
+      const out: ProgramExercise = { ...ex, baseSets: base };
+      if (typeof ex.preDeloadWeight === "number") {
+        out.weight = Math.max(out.weight, ex.preDeloadWeight);
+        delete out.preDeloadWeight;
+      }
+      if (ex.isAccessory === true) {
+        out.sets =
+          weekInMeso === 1
+            ? Math.max(1, base - 1)
+            : weekInMeso === 3
+              ? Math.min(ACCESSORY_RAMP_CAP, base + 1)
+              : base;
+      } else {
+        out.sets = base;
+      }
+      return out;
+    }),
+  }));
+}
+
 export function advanceWeek(state: ProgramState): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
@@ -1289,8 +1357,9 @@ export function advanceWeek(state: ProgramState): ProgramState {
   // scalar.
   const fatigue = computeFatigueScore(state.workouts);
   if (prescription.deload) {
-    workouts = applyDeload(workouts);
+    workouts = applyDeload(prepareForDeload(workouts));
   } else {
+    workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
   }

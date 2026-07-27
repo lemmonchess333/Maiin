@@ -71,6 +71,8 @@ describe("templateExToProgEx", () => {
     expect(ex.reps).toBe(8);
     expect(ex.repRangeMax).toBe(12);
     expect(ex.baseReps).toBe(8);
+    // Volume-ramp anchor (backlog #5) stamped at the boundary too
+    expect(ex.baseSets).toBe(3);
     // 2. restSeconds survives (was: dropped entirely)
     expect(ex.restSeconds).toBe(120);
     // 3. progressionType from goal (was: hardcoded "linear")
