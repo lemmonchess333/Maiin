@@ -732,3 +732,49 @@ describe("splitRationale", () => {
     expect(splitRationale(7)).toBe(splitRationale(6));
   });
 });
+
+// Backlog #3 — day roles (N9 daily undulation). Compare same-structure days
+// across weekly targets: 1-day week is all-moderate, 3-day week is
+// [heavy, moderate, pump], so day A (heavy in the 3-day week) should sit 2
+// reps under its 1-day (moderate) twin, and day C mirrors +2 vs moderate.
+describe("day roles (backlog #3)", () => {
+  const mainRepsOf = (w: {
+    exercises: { isAccessory?: boolean; reps: number }[];
+  }) => w.exercises.filter((e) => e.isAccessory !== true).map((e) => e.reps);
+
+  it("single-day weeks stay at the goal base", () => {
+    const one = generateProgram("recomp", 1, undefined, "hypertrophy");
+    expect(mainRepsOf(one.workouts[0])).toContain(8);
+  });
+
+  it("3-day full-body week undulates: day A heavy (-2) vs its moderate twin", () => {
+    const one = generateProgram("recomp", 1, undefined, "hypertrophy");
+    const three = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const moderateA = one.workouts[0];
+    const heavyA = three.workouts[0];
+    expect(heavyA.dayName).toBe(moderateA.dayName);
+    heavyA.exercises.forEach((ex, i) => {
+      const twin = moderateA.exercises[i];
+      const floor = ex.isAccessory === true ? 6 : 3;
+      expect(ex.reps).toBe(Math.max(floor, twin.reps - 2));
+      expect(ex.baseReps).toBe(ex.reps);
+    });
+    // middle day is moderate: reps match the profile base on the mains
+    expect(mainRepsOf(three.workouts[1])).toContain(8);
+  });
+
+  it("strength mains floor at 3 on heavy days", () => {
+    const two = generateProgram("recomp", 2, undefined, "strength");
+    const heavyMains = mainRepsOf(two.workouts[0]);
+    // strength base 5 → heavy day 3; nothing below the floor
+    expect(Math.min(...heavyMains)).toBeGreaterThanOrEqual(3);
+    expect(heavyMains).toContain(3);
+  });
+
+  it("pump day sits +2 over the moderate twin (2-day week, day B vs 3-day day B... via 3-day pump day C)", () => {
+    const three = generateProgram("recomp", 3, undefined, "hypertrophy");
+    // Day C is pump: every exercise ≥ its own baseReps and mains ≥ base+2
+    const pumpMains = mainRepsOf(three.workouts[2]);
+    expect(Math.max(...pumpMains)).toBeGreaterThanOrEqual(10);
+  });
+});

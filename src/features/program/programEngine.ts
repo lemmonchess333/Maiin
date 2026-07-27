@@ -901,6 +901,53 @@ export function dedupeDayExercises(workouts: WorkoutDay[]): WorkoutDay[] {
   });
 }
 
+/* ================================
+   DAY ROLES (backlog #3 — N9 daily undulating periodization)
+================================ */
+
+type DayRole = "heavy" | "moderate" | "pump";
+
+/**
+ * Deterministic role per generated day: first half of the week heavier,
+ * back half higher-rep, an odd middle day at the goal base, and a
+ * single-day week entirely at base. Module-private by design — the only
+ * contract is generateProgram's output (reachability guardrail).
+ */
+function assignDayRoles(count: number): DayRole[] {
+  if (count <= 1) return count === 1 ? ["moderate"] : [];
+  return Array.from({ length: count }, (_, i) => {
+    if (i < Math.floor(count / 2)) return "heavy";
+    if (i >= Math.ceil(count / 2)) return "pump";
+    return "moderate";
+  });
+}
+
+/**
+ * Backlog #3 (training-book backlog; N9): put the first rep variation
+ * into a Tropos week. Every source converged on varying what the week
+ * asks for; daily undulation is the stateless version — heavy days sit
+ * ±2 reps around the goal profile's base, structures/sets/progression
+ * mechanics untouched. baseReps moves with reps so progression resets
+ * stay role-consistent. Presentation policy: INVISIBLE — the
+ * prescription simply differs; no labels, no new UI.
+ */
+function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
+  const roles = assignDayRoles(workouts.length);
+  return workouts.map((day, i) => {
+    const role = roles[i];
+    if (role === "moderate") return day;
+    const delta = role === "heavy" ? -2 : 2;
+    return {
+      ...day,
+      exercises: day.exercises.map((ex) => {
+        const floor = ex.isAccessory === true ? 6 : 3;
+        const reps = Math.max(floor, ex.reps + delta);
+        return { ...ex, reps, baseReps: reps };
+      }),
+    };
+  });
+}
+
 export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
@@ -985,6 +1032,8 @@ export function generateProgram(
   // rotated to a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
   workouts = dedupeDayExercises(workouts);
+  // Backlog #3: day roles — see applyDayRoles above.
+  workouts = applyDayRoles(workouts);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
