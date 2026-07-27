@@ -115,6 +115,24 @@ export interface ProgramExercise {
   sets: number;
   reps: number;
   baseReps?: number; // original prescribed rep target — used as reset anchor on weight increase
+  /**
+   * Top of the authored rep range (P1, training-book backlog). When present
+   * and progressionType is "double", the rep target climbs from baseReps
+   * toward this ceiling as targets are completed; load rises only when the
+   * ceiling is reached, then the target resets to baseReps. Absent (all
+   * generated programs today, and legacy docs) → the pre-range behaviour:
+   * load rises on a 2-rep overshoot. Optional field with a default → no
+   * programSchemaVersion bump (see docs/proposals/schema-versioning.md).
+   */
+  repRangeMax?: number;
+  /**
+   * Per-exercise rest between sets in seconds, carried from
+   * TemplateExercise.restSeconds. WorkoutSession prefers this over
+   * profile.defaultRestSeconds; a mid-session manual target change by the
+   * user wins over both. Absent on generated programs (they have no
+   * authored rest yet).
+   */
+  restSeconds?: number;
   weight: number;
   progressionType: ProgressionType;
   // Exercise-specific progression
@@ -596,6 +614,13 @@ export function normalizeExercise(
     sets: ex.sets ?? 3,
     reps: ex.reps ?? 8,
     baseReps: ex.baseReps ?? ex.reps ?? 8,
+    // Optional fields must be carried explicitly — this function rebuilds
+    // the object field-by-field, so anything omitted here is silently
+    // stripped on every load. Conditional spread keeps `undefined` out of
+    // the object (Firestore rejects undefined values at the setDoc site).
+    ...(ex.repRangeMax !== undefined ? { repRangeMax: ex.repRangeMax } : {}),
+    ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
+    ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,
     progressionType: ex.progressionType ?? "linear",
     lastSuccessfulWeight: ex.lastSuccessfulWeight ?? ex.weight ?? 0,

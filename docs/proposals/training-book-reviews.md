@@ -86,6 +86,37 @@ a defensible use; Level 6); rest-period training effects (H8 — carry the
 field, drop the claim); Smolov/daily-max/bands/chains/BFR/failure-by-default
 (audience fit, per-section notes).
 
+## Presentation policy (operator decision, 2026-07-27)
+
+Locked with the operator when implementation began: **the app is the coach,
+not the textbook — surface outcomes, hide mechanisms.** The wider audience
+must never be alienated by training jargon. Every backlog item ships with a
+visibility class, and the default is _invisible_:
+
+- **Invisible (engine-only)** — the prescription simply changes; no new UI,
+  no terminology: rep-range climbing (#6, shipped), volume ramp (#5), day
+  roles' mechanics (#3), progression-per-exercise-type (#7), deload logic
+  (#8), plateau/recovery rule (#9), overlap-aware scheduling (#10). Day
+  roles may surface as at most two friendly words ("Heavy day", "Pump day")
+  — never "undulating periodization".
+- **Quietly visible (one plain sentence, zero jargon)** — flexible session
+  choice (#1: "Not feeling it? Do your lighter day instead", one tap);
+  three-axis PR (#2: a celebration — "Volume PR!" — not an explanation);
+  plateau-breaker suggestions (#11: "Squat's been stuck — try pause squats
+  for a couple of weeks?"); warm-up rows (#12: pre-filled rows labelled
+  "Warm-up", which _reduce_ novice anxiety).
+- **Earned complexity (opt-in / experience-gated)** — RPE prescription (#4)
+  stays behind the existing `showRPE` toggle and renders as words ("leave 2
+  in the tank"), never a bare number scale, and the last-set-to-failure flag
+  is expressed as copy ("push this one" / "keep some in reserve"), not a
+  control. Experience level from onboarding gates when richer detail may
+  appear.
+
+Standing rules: the jargon budget for a novice is **zero**; every
+explanation lives behind a tap (the existing Tooltip/Coachmark primitives —
+education on demand, never in the way); a feature that needs a paragraph to
+explain has failed this policy and goes back for redesign.
+
 ---
 
 ## 1. Juggernaut Squat Manual — Team Juggernaut (reviewed 2026-07-27)
@@ -120,13 +151,13 @@ lifts. Recurring methodology across authors:
 
 ### What Tropos already does that the manual validates
 
-| Manual pattern | Tropos implementation |
-| --- | --- |
-| Deload every 4th week | `programEngine.ts` `generateWeekPrescription` (`week % 4 === 0` → sets −1, load ×0.85) + manual `applyDeloadWeekCommand` with undo |
-| Double progression | `GOAL_PROFILES` `mainProgression: "double"` for hypertrophy/general |
-| Rep-max PRs | `prTracking.ts` rep buckets (1/3/5/8/10RM), raw bests |
-| Back off after failure | 3 consecutive misses → −5% (double) / −1 kg (linear) |
-| Variation rotation on stall | `plateauCount >= 3` → rotate main within movement category |
+| Manual pattern              | Tropos implementation                                                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Deload every 4th week       | `programEngine.ts` `generateWeekPrescription` (`week % 4 === 0` → sets −1, load ×0.85) + manual `applyDeloadWeekCommand` with undo |
+| Double progression          | `GOAL_PROFILES` `mainProgression: "double"` for hypertrophy/general                                                                |
+| Rep-max PRs                 | `prTracking.ts` rep buckets (1/3/5/8/10RM), raw bests                                                                              |
+| Back off after failure      | 3 consecutive misses → −5% (double) / −1 kg (linear)                                                                               |
+| Variation rotation on stall | `plateauCount >= 3` → rotate main within movement category                                                                         |
 
 ### Ranked adoptable improvements
 
@@ -154,7 +185,7 @@ dead fields should either drive this or be deleted.
 **P3 — AMRAP "PR set" on main lifts.** The Juggernaut Method's signature: the
 last set of the main lift is max-reps (shy of failure), and that rep count
 drives the next block's loading. Tropos progression currently only reacts if
-the user *happens* to overshoot target reps by 2. An opt-in AMRAP final set
+the user _happens_ to overshoot target reps by 2. An opt-in AMRAP final set
 makes progression intentional, feeds the existing rep-bucket PR system (PR
 celebration moment for free), and gives `applyProgression` a much stronger
 signal than the passive overshoot rule. Client + server command mirror both
@@ -198,7 +229,7 @@ already-built halves.
 
 - **% of 1RM / training max as the core loading model.** Tropos users don't
   have meet maxes; event-driven kg progression from bodyweight-seeded loads
-  is the right model for the user base. The *conservative-TM principle*
+  is the right model for the user base. The _conservative-TM principle_
   survives in spirit via P3 (AMRAP-derived progression) without exposing a
   "training max" concept. Epley e1RM (`analytics.ts`) stays display-only.
 - **Smolov Jr, daily maxing, the 9-day week, bands/chains, beltless
@@ -228,7 +259,7 @@ lift-specific, not muscle-specific.
 - **Rotating weekly emphasis.** Lilly's deadlift split is Week 1 max /
   Week 2 reps / Week 3 speed / repeat — structurally the same as his squat
   manual "rep week / explosion week / heavy week" rotation. Two manuals, same
-  author-independent shape: *vary what the week asks for, not just the load*.
+  author-independent shape: _vary what the week asks for, not just the load_.
   This makes section 1's P2 concrete and much cheaper to build than a
   load-multiplier wave.
 - **Map backwards, never forwards.** Lilliebridge back-tracks 7 weeks from a
@@ -239,7 +270,7 @@ lift-specific, not muscle-specific.
   strain the body's ability to recover far more"; he refuses reps he isn't
   certain to complete. Direct support for Tropos's existing RPE ≥ 9.5 hold —
   and an argument against the current design where progression only fires when
-  the user *overshoots target reps by 2*, which structurally rewards grinding.
+  the user _overshoots target reps by 2_, which structurally rewards grinding.
 - **Bar-speed intent on every rep.** Smith and Vincent both make it the primary
   driver ("from your warmup sets to your final accessory movement"). Coaching
   copy, not a prescription — see P6 in section 1.
@@ -250,12 +281,12 @@ lift-specific, not muscle-specific.
 can't express that.** The manual's strongest near-consensus, and it is
 directly contradicted by what the engine generates today:
 
-| Author | Practice |
-| --- | --- |
+| Author       | Practice                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Lilliebridge | Alternates squat and pull by week — "squatting and deadlifting twice a month"; pulling for reps "burnt out my lower back" and left him unrecovered for squats |
-| Little | "Pulling heavy isn't needed every week"; sometimes deadlifts only every other week when peaking |
-| Beck | Actual deadlifts "only every 3–4 weeks" |
-| Green | Dissenter — pulls weekly, "without needing to take breaks or deload" |
+| Little       | "Pulling heavy isn't needed every week"; sometimes deadlifts only every other week when peaking                                                               |
+| Beck         | Actual deadlifts "only every 3–4 weeks"                                                                                                                       |
+| Green        | Dissenter — pulls weekly, "without needing to take breaks or deload"                                                                                          |
 
 Against that, `programEngine.ts` puts a `hip_dominant` slot in **every**
 leg/full-body day it builds — full-body days at `:343`, `:370`, `:413`;
@@ -268,9 +299,9 @@ the same session.
 
 `muscleRecovery.ts` can't catch this: it is per-**muscle**, date-based, and
 "volume-blind by design" (its own doc comment), so it models Hamstrings/Back
-recovery but has no notion that a heavy pull is *systemically* expensive or
+recovery but has no notion that a heavy pull is _systemically_ expensive or
 that it competes with squat recovery specifically. Options, cheapest first:
-(a) let a day builder mark a slot's *emphasis* so the pattern can appear
+(a) let a day builder mark a slot's _emphasis_ so the pattern can appear
 weekly while only one session is heavy — which is what the rotating-emphasis
 wave already needs; (b) an interference rule that avoids heavy pull adjacent
 to heavy squat. Note Green's dissent: this should bias the default, not
@@ -280,16 +311,16 @@ hard-code a single frequency.
 Where the squat manual gave one axis (strength in the hole), the deadlift
 chapter gives a clean diagnostic with named fixes on both sides:
 
-| Fails | Prescribed by | Fix |
-| --- | --- | --- |
-| Off the floor | Green, Smith, Little | Deficit pulls (3–4"), reps 1–5 from floor, high-rep front/Olympic squats, direct ab work |
-| At lockout | Green, Lilly, Little, Smith | Block pulls (4") for triples, pin pulls above knee 70–85%, snatch-grip block pulls 40–50% × 15–20, glute bridges, lunges, rows/upright rows, deadlift hyperextensions |
+| Fails         | Prescribed by               | Fix                                                                                                                                                                   |
+| ------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Off the floor | Green, Smith, Little        | Deficit pulls (3–4"), reps 1–5 from floor, high-rep front/Olympic squats, direct ab work                                                                              |
+| At lockout    | Green, Lilly, Little, Smith | Block pulls (4") for triples, pin pulls above knee 70–85%, snatch-grip block pulls 40–50% × 15–20, glute bridges, lunges, rows/upright rows, deadlift hyperextensions |
 
 This is exactly the input section 1's P4 needs — a one-question plateau
 breaker ("where does it fail?") now has a real mapping for the two biggest
 lifts. Worth capturing that **the experts disagree**: Smith rejects rack pulls
 outright ("unrealistic starting position") while others build lockouts with
-block pulls. Tropos should present a variation as *a* fix, never *the* fix.
+block pulls. Tropos should present a variation as _a_ fix, never _the_ fix.
 
 **D3 — Warm-up deserves promotion from P5, and it isn't only load ramping.**
 The manual's first and longest chapter (9 of 48 pages) is a warm-up protocol:
@@ -322,14 +353,14 @@ barrier.** Rich per-lift material for the backfill in section 1 P6: sumo cues
 through once the bar clears the knees), conventional setup, the head-up vs
 chin-tuck debate, bracing via breath. Separately, Comas Keck's article names
 something Tropos's cold-start design should care about — a first barbell pull
-is *intimidating* for a beginner with nobody to teach them. That's an
+is _intimidating_ for a beginner with nobody to teach them. That's an
 onboarding/UX observation for the exercise guide's first-encounter state, not
 an engine change.
 
 ### Changes to section 1's ranking
 
 - **P2 (weekly wave) — mechanism resolved.** Build it as rotating weekly
-  *emphasis* (heavy / reps / speed) rather than intensity multipliers. Two
+  _emphasis_ (heavy / reps / speed) rather than intensity multipliers. Two
   manuals converge on it, and it doubles as the cheapest lever for D1.
 - **P4 (weak-point plateau breaker) — promote above P3.** It now has a real
   mapping for both squat and deadlift, and it is self-contained.
@@ -410,16 +441,16 @@ Section 1 declined %-of-1RM/training-max loading because Tropos users have no
 meet maxes. Sumner's 8-week rack-lockout cycle shows the alternative — it
 prescribes **no load at all**, only sets, reps and effort:
 
-| Week | Reps left in the tank | Reps |
-| --- | --- | --- |
-| 1 | 3 | 8, 8, 8 |
-| 2 | 3 | 6, 6, 6 |
-| 3 | 3 | 8, 6, 4 |
-| 4 | 5 (deload) | 5, 5, 5 |
-| 5 | 2 | 5, 5, 5 |
-| 6 | 2 | 5, 3, 1 |
-| 7 | 1 | 1, 1, 1 |
-| 8 | 0 | 1 |
+| Week | Reps left in the tank | Reps    |
+| ---- | --------------------- | ------- |
+| 1    | 3                     | 8, 8, 8 |
+| 2    | 3                     | 6, 6, 6 |
+| 3    | 3                     | 8, 6, 4 |
+| 4    | 5 (deload)            | 5, 5, 5 |
+| 5    | 2                     | 5, 5, 5 |
+| 6    | 2                     | 5, 3, 1 |
+| 7    | 1                     | 1, 1, 1 |
+| 8    | 0                     | 1       |
 
 Reps in reserve is the same scale Tropos already collects, inverted (RPE 8 ≈
 2 RIR). Today RPE is captured per set (`RPE_OPTIONS` at
@@ -480,7 +511,7 @@ variant an explicit job (paused = technique + strength, speed = volume,
 paused wide grip = bottom-range, slingshot = lockout, incline/OHP = size and
 base). Tropos has one boolean, `ProgramExercise.isAccessory`. A role field
 (main / technique / weak-point / size) is what would make the P4 plateau
-breaker pick a *purposeful* substitute instead of the current
+breaker pick a _purposeful_ substitute instead of the current
 `Math.random()` sibling — the two proposals share this dependency.
 
 **B7 — Bench form content and a concrete warm-up ramp.** Lilly's "Bench 101"
@@ -511,7 +542,7 @@ generating a ramp from a working weight.
 ### Deliberately NOT adopting
 
 - **Boards, slingshots, reverse bands, chains, dead bench off pins, rack
-  lockouts.** Equipment-dependent powerlifting overload tools. The *concepts*
+  lockouts.** Equipment-dependent powerlifting overload tools. The _concepts_
   they encode (partial-range work for a named weak point) survive via B6/P4.
 - **The 225 rep test programme, cluster/mini-set rep strategy, rest-pause and
   mechanical drop sets.** NFL combine prep. Rest-pause and mechanical drop
@@ -540,7 +571,7 @@ so it contributes mostly **new** material rather than convergent material.
 people who "train like an uncaged animal" and that "most people don't need
 periodization… I don't believe that most people train hard enough to even
 need it". Tropos's user base sits nearer the gym-goer he's dismissing than
-the IFBB pros he coaches. The *structural* ideas below transfer; the
+the IFBB pros he coaches. The _structural_ ideas below transfer; the
 volumes, frequencies and failure-seeking intensity do not, and adopting the
 latter would violate the design-for-the-user-base rule.
 
@@ -549,12 +580,12 @@ latter would violate the design-for-the-user-base rule.
 **M1 — A four-phase intra-session template that inverts Tropos's exercise
 order.** Every "Base" workout runs four phases with explicit roles:
 
-| Phase | Objective | Example |
-| --- | --- | --- |
-| 1. Pre-Pump activation | Beyond a warm-up; joint-friendly, easy to feel, 8–12 reps. Explicitly **not** pre-exhaustion | Prone ham curl |
-| 2. Explosive | The heavy compound — "meat and potatoes", load progression | Low incline bench |
-| 3. Supra-maximal pump | Intensification techniques, metabolic stress | Leg press, knee extension |
-| 4. Loaded stretching | Full ROM under load while pumped | Stiff-legged deadlift |
+| Phase                  | Objective                                                                                    | Example                   |
+| ---------------------- | -------------------------------------------------------------------------------------------- | ------------------------- |
+| 1. Pre-Pump activation | Beyond a warm-up; joint-friendly, easy to feel, 8–12 reps. Explicitly **not** pre-exhaustion | Prone ham curl            |
+| 2. Explosive           | The heavy compound — "meat and potatoes", load progression                                   | Low incline bench         |
+| 3. Supra-maximal pump  | Intensification techniques, metabolic stress                                                 | Leg press, knee extension |
+| 4. Loaded stretching   | Full ROM under load while pumped                                                             | Stiff-legged deadlift     |
 
 The heavy compound goes **second**, after a joint-friendly activation lift.
 His rationale is injury prevention over a training lifetime — working up to a
@@ -571,7 +602,7 @@ recommendation to flip that default — the powerlifting manuals argue the
 opposite order for strength goals, and they're right for their goal. It's an
 argument that **order should follow the goal profile**, which the engine
 currently has no way to express. It is also the second independent source
-(after bench B6) saying exercises carry *roles*; Meadows's roles are
+(after bench B6) saying exercises carry _roles_; Meadows's roles are
 positions in a session, which is strictly more information than
 `isAccessory`.
 
@@ -579,7 +610,7 @@ positions in a session, which is strictly more information than
 mechanism for Tropos's dead field.** The macrocycle is three microcycles over
 ~3 months:
 
-- **Preparation (2–3 wk)** — deliberately *low* volume, high intensity.
+- **Preparation (2–3 wk)** — deliberately _low_ volume, high intensity.
 - **Destroyer (5–8 wk)** — volume climbs until overreaching appears.
 - **Taper (2–3 wk)** — volume drops hard, **intensity stays high**. This is
   when PRs and visible gains show up.
@@ -595,7 +626,7 @@ goal-appropriate for hypertrophy users in a way a load ramp is not.
 **M3 — "Get the most out of the least."** The reason Preparation starts
 light: "If you go into a training cycle right out of the gate with guns
 blazing… how can the training stimulus be increased?" Start at the smallest
-dose that works so there is somewhere to progress *to*. Tropos computes a
+dose that works so there is somewhere to progress _to_. Tropos computes a
 fixed weekly volume from `goalProfile.volumeMultiplier` × nutrition-phase
 multiplier, tops up under-MEV muscles, and then holds there indefinitely —
 there is no notion of deliberately starting below target to leave room. The
@@ -606,12 +637,12 @@ periodization one.
 
 **M4 — A direct conflict with how Tropos deloads.** Meadows's deload:
 
-| Parameter | Change |
-| --- | --- |
-| Weekly frequency | Reduce to 3–4 days |
-| Intensity / effort | Cut sets short of failure by 2–3 reps |
-| Session volume | Reduce sets by 20% |
-| Intensification techniques | Eliminate |
+| Parameter                  | Change                                |
+| -------------------------- | ------------------------------------- |
+| Weekly frequency           | Reduce to 3–4 days                    |
+| Intensity / effort         | Cut sets short of failure by 2–3 reps |
+| Session volume             | Reduce sets by 20%                    |
+| Intensification techniques | Eliminate                             |
 
 Note what is absent: **he does not reduce the load.** The taper science
 concurs — maintaining training intensity while cutting volume is repeatedly
@@ -628,11 +659,11 @@ again (bench B2), now arriving from a third direction.
 observe.** The manual distinguishes overreaching (normal, recovers in a
 couple of weeks) from overtraining, with signs for each:
 
-- *Overreaching*: loss of "pop" — clean reps now grind; difficulty elevating
+- _Overreaching_: loss of "pop" — clean reps now grind; difficulty elevating
   heart rate; tightness/stiffness and tendon discomfort on the first
   eccentrics; DOMS even after light sessions; **appetite change and
   bodyweight decrease**; mental fuzziness.
-- *Overtraining*: the above plus loss of motivation, sleep disturbance,
+- _Overtraining_: the above plus loss of motivation, sleep disturbance,
   irritability, persistent fatigue, loss of libido.
 
 Tropos's `computeRecoveryScore` (`performanceEngine.ts:104-157`) currently
@@ -693,8 +724,8 @@ see below.
 
 ### Changes to earlier rankings
 
-- **P2 (weekly wave) — split it in two.** Sections 1–3 settled *rotating
-  emphasis* for strength-goal users. M2 shows hypertrophy/general users want a
+- **P2 (weekly wave) — split it in two.** Sections 1–3 settled _rotating
+  emphasis_ for strength-goal users. M2 shows hypertrophy/general users want a
   different axis entirely: **volume ramp → taper**. One wave shape will not
   serve both; the goal profile should pick.
 - **B6 (exercise roles) — promote; it now has two independent sources** and a
@@ -708,14 +739,14 @@ see below.
 - **The peri-workout supplement protocol** (intra-workout EAA/hydrolysate
   shakes, creatine, the NSAID discussion). Supplement prescription is well
   outside what Tropos should do, and the NSAID/muscle-damage material is
-  frankly medical. The *meal-timing* half (M8) is the transferable part.
+  frankly medical. The _meal-timing_ half (M8) is the transferable part.
 - **Occlusion / BFR training, bands and chains.** Equipment-dependent, and
   BFR carries real risk when self-applied — Meadows himself hedges on it and
   warns against chronic use.
 - **Forced reps, iso-holds, challenge sets.** All require a training partner
   (some are impossible without one); challenge sets are explicitly a
-  once-every-2–3-weeks shock for advanced lifters. *Drop sets and partials
-  need no partner and are mainstream* — they'd belong to the same
+  once-every-2–3-weeks shock for advanced lifters. _Drop sets and partials
+  need no partner and are mainstream_ — they'd belong to the same
   intra-set-structure work the bench manual's rest-pause note deferred, if
   that's ever picked up.
 - **Destroyer-microcycle volumes and 6–7×/week frequency.** Aimed at
@@ -752,10 +783,10 @@ apply.
 what Meadows's M2 ("progression is primarily volume") looks like as a
 shippable artifact. Weekly working sets:
 
-| | W1 | W2 | W3 | W4 | W5 | W6 | W7 | W8 | W9 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **Chest** (weekly sets) | 21 | 22 | 21 | 22 | 23 | 24 | 24 | 22 | — |
-| **Back** (actualized) | 23 | 23 | 23.5 | 23.5 | 25 | 25 | 25 | 25 | **14** |
+|                         | W1  | W2  | W3   | W4   | W5  | W6  | W7  | W8  | W9     |
+| ----------------------- | --- | --- | ---- | ---- | --- | --- | --- | --- | ------ |
+| **Chest** (weekly sets) | 21  | 22  | 21   | 22   | 23  | 24  | 24  | 22  | —      |
+| **Back** (actualized)   | 23  | 23  | 23.5 | 23.5 | 25  | 25  | 25  | 25  | **14** |
 
 The ramp is **modest** — roughly one set per week, undulating rather than
 monotonic — and individual exercises gain sets on a schedule (chest static
@@ -769,12 +800,12 @@ progression.
 program runs **four different schemes simultaneously**, chosen per exercise
 type:
 
-| Exercise type | Scheme |
-| --- | --- |
-| Bench press (main barbell) | % of 1RM given as a *range*, semi-autoregulated — "on days you feel strong, use the mid-to-high end" |
+| Exercise type                                               | Scheme                                                                                                                               |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Bench press (main barbell)                                  | % of 1RM given as a _range_, semi-autoregulated — "on days you feel strong, use the mid-to-high end"                                 |
 | Rep-range exercises (incline DB, banded pushup, cable flye) | Double progression — add reps at fixed load until the top of the range is hit **on all sets**, then add load and reset to the bottom |
-| Flat DB static hold | Add **time** in 5-second increments; when time stalls, add 5–10 lb and reset the clock |
-| Bodyweight dips | Add a rep weekly; when reps stall, improve rep quality and cadence (slower negatives) |
+| Flat DB static hold                                         | Add **time** in 5-second increments; when time stalls, add 5–10 lb and reset the clock                                               |
+| Bodyweight dips                                             | Add a rep weekly; when reps stall, improve rep quality and cadence (slower negatives)                                                |
 
 Tropos assigns exactly two schemes (`"linear"` / `"double"`) from the
 **goal profile**, applying one to every exercise in the program
@@ -785,12 +816,12 @@ Tropos assigns exactly two schemes (`"linear"` / `"double"`) from the
   `templateExToProgEx` runs `parseInt(te.reps, 10) || 8` over them
   (`Onboarding.tsx:126`) — so a 30–45 second hold becomes "30 reps". Section 1
   called this lossy; Nippard shows time-under-tension at constant load is a
-  *progression axis in its own right*, so what's discarded is a dimension,
+  _progression axis in its own right_, so what's discarded is a dimension,
   not a preference.
 - **The bodyweight ceiling has no graceful exit.** Tropos caps bodyweight
   progression at `MAX_BODYWEIGHT_REPS = 20` and then emits an "add load" note
   (`programEngine.ts:77`). Nippard's answer is cadence and control; for
-  pull-ups he also uses *assistance* as the progressed variable ("progressively
+  pull-ups he also uses _assistance_ as the progressed variable ("progressively
   lower the assistance… aim toward 0 lb"), which Tropos has no concept of and
   which is the more common real-world case for new lifters.
 
@@ -806,8 +837,8 @@ the tank, 8 = leave two." Plus two tracking columns worth stealing:
   isolation work is Y.
 
 That Y/N flag is a much cheaper primitive than full RPE prescription and
-encodes exactly the knowledge Tropos lacks: *which exercises are safe to push
-and which aren't*. It could ride on the existing exercise data without
+encodes exactly the knowledge Tropos lacks: _which exercises are safe to push
+and which aren't_. It could ride on the existing exercise data without
 touching the loading model.
 
 **This also weakens a caveat I attached to bench B2.** I noted there that
@@ -828,8 +859,8 @@ prescription. The infrastructure for N4 is largely built and pointed at the
 wrong consumer.
 
 **N5 — Exercise stability is itself the progression mechanism (and the
-experts disagree).** Both programs answer the same FAQ: *"Why don't the
-exercises change from week to week?"* → "Changing exercises from week to week
+experts disagree).** Both programs answer the same FAQ: _"Why don't the
+exercises change from week to week?"_ → "Changing exercises from week to week
 is more likely to flatten out the progression curve. This is to ensure
 progression by adding volume incrementally to these specific movements."
 
@@ -841,7 +872,7 @@ bulk of selection intact. That maps cleanly onto Tropos's 4-week mesocycle,
 and it retroactively justifies the existing design: `rotateUntrainedAccessories`
 fires at `week % 4 === 1` and only rotates accessories with **zero logged
 history**, leaving trained movements alone. Tropos is already on the right
-side of this disagreement. What it does *not* justify is `pickExercise`'s
+side of this disagreement. What it does _not_ justify is `pickExercise`'s
 `Math.random()` swap of a plateaued main — a third argument for making that
 rotation purposeful (P4 / B6).
 
@@ -933,11 +964,11 @@ identical and already recorded above. Six things are genuinely new.
 version of the weekly wave.** The neck/trap guide labels its three days
 outright:
 
-| Day | Label | Reps | RPE |
-| --- | --- | --- | --- |
-| 1 | **STRENGTH FOCUS** | 6–8 (rack pulls) | 7.5 |
-| 2 | **HYPERTROPHY FOCUS** | 10–12 / 12–15 | 8–9 |
-| 3 | **METABOLIC FOCUS** | 15–20 | 8–9 |
+| Day | Label                 | Reps             | RPE |
+| --- | --------------------- | ---------------- | --- |
+| 1   | **STRENGTH FOCUS**    | 6–8 (rack pulls) | 7.5 |
+| 2   | **HYPERTROPHY FOCUS** | 10–12 / 12–15    | 8–9 |
+| 3   | **METABOLIC FOCUS**   | 15–20            | 8–9 |
 
 The back program does the same (Day 1 strength focus, Day 2 hypertrophy
 focus). This is daily undulating periodization, and it matters for Tropos
@@ -945,7 +976,7 @@ because **it needs no week-to-week state**. Sections 1–4 kept arriving at
 "vary the stimulus", but every version so far (Juggernaut's rotating
 emphasis, Meadows's volume ramp) required the generated week to differ from
 the last one — which is precisely what Tropos doesn't do, and what makes P2
-expensive. Assigning each day a rep-range role is a change *inside* the day
+expensive. Assigning each day a rep-range role is a change _inside_ the day
 builders: Tropos already names days by muscle focus ("Full Body — Squat
 Focus", "Push — Chest Focus"), but every day draws the same
 `profile.mainReps` / `profile.accessoryReps` from the goal profile, so there
@@ -955,8 +986,8 @@ delivers most of the benefit. This should probably lead P2 rather than the
 week-to-week wave.
 
 **N10 — Delt heads are tracked separately, and Tropos's model can't.** The
-shoulder program totals each head at the foot of every week: *"WEEKLY FRONT
-DELT VOLUME = 7, SIDE DELT = 16, REAR DELT = 18, TOTAL DELT VOLUME = 41."*
+shoulder program totals each head at the foot of every week: _"WEEKLY FRONT
+DELT VOLUME = 7, SIDE DELT = 16, REAR DELT = 18, TOTAL DELT VOLUME = 41."_
 The asymmetry is the whole point — front delts get heavy carryover from
 pressing, so they need little direct work, while side and rear are the
 commonly under-trained heads.
@@ -964,7 +995,7 @@ commonly under-trained heads.
 Tropos maps `front delts`, `side delts`, `rear delts` **and** `rotator cuff`
 all onto one canonical `"Shoulders"` bucket (`volumeModel.ts:68-74`). The
 codebase already knows this is lossy — the push/pull balancer deliberately
-works at the movement level *because* of it:
+works at the movement level _because_ of it:
 
 > "the canonical "Shoulders" group lumps the push-y front delt with the
 > pull-y rear delt, so a muscle-level ratio would be misleading"
@@ -989,7 +1020,7 @@ rows with a flag, rather than inventing a parallel warm-up structure.
 tag on a logged set — so the display side largely exists.
 
 **N12 — The program calibrates itself in session one.** Week 1 Day 1 of the
-shoulder program *is* the AMRAP test: work up, do one AMRAP set at 90%,
+shoulder program _is_ the AMRAP test: work up, do one AMRAP set at 90%,
 derive the 1RM, and every subsequent week's percentages key off it. Tropos
 instead seeds untrained mains from bodyweight multiples × experience level
 (`startingLoads.ts:30-44`) and then waits for the event-driven progression to
@@ -1002,7 +1033,7 @@ combining programs: chest + shoulder concurrently is refused outright ("very
 high volume of pressing… risk of overuse and injury would be high, even in
 the most advanced"), and back + arms is allowed only with bicep work cut 50%
 initially. The underlying concept — temporarily prioritize one muscle group
-and *pay for it* by reducing others — doesn't exist in Tropos at all;
+and _pay for it_ by reducing others — doesn't exist in Tropos at all;
 `balanceWeeklyVolume` only ever adds. This is the same shape as the bench
 manual's B4 (accessory volume should sometimes come down) arriving from a
 different direction, and it's the natural home for a future "bring up a weak
@@ -1018,7 +1049,7 @@ rope upright row → rope facepull). That is exactly the shape of
 for the `commonMistakes` / "Watch out" backfill (P6).
 
 **On the men's/women's editions.** The shoulder program ships as two
-editions, and the stated rationale is worth recording because it is *not*
+editions, and the stated rationale is worth recording because it is _not_
 essentialist: the women's edition adds front-delt isolation **because women
 typically do less chest work, so they get less front-delt carryover**, and
 carries more rep volume. Nippard is explicit that "the base core of the
@@ -1027,7 +1058,7 @@ science training principles apply to both sexes." The transferable principle
 is **adjust for what else is in the program, not for the category of person**
 — which is a better rule than the vestigial `gender` field on
 `ProgramTemplate` (whose scoring `matchTemplate` has already removed). Front-
-delt volume should account for pressing carryover for *everyone*; N10 is what
+delt volume should account for pressing carryover for _everyone_; N10 is what
 blocks Tropos from doing that today.
 
 ### Updated ranking after 5b
@@ -1046,16 +1077,16 @@ The most academically rigorous source in this document (Helms holds a PhD;
 every claim is referenced), and structurally the most useful, because its
 central contribution is not a program but a **hierarchy of what matters**:
 
-| Level | | Helms's note |
-| --- | --- | --- |
-| 6 | Tempo | *"just lift the weights"* |
-| 5 | Rest periods | Mostly about avoiding harm |
-| 4 | Exercise selection | Matters more for strength than hypertrophy |
-| 3 | Progression | Needed from intermediate onward |
-| 2 | **Volume, Intensity, Frequency** | "the longest section… the majority of the most important concepts" |
-| 1 | **Adherence** | *"it doesn't matter how good your programming is if you cannot stick to it"* |
+| Level |                                  | Helms's note                                                                 |
+| ----- | -------------------------------- | ---------------------------------------------------------------------------- |
+| 6     | Tempo                            | _"just lift the weights"_                                                    |
+| 5     | Rest periods                     | Mostly about avoiding harm                                                   |
+| 4     | Exercise selection               | Matters more for strength than hypertrophy                                   |
+| 3     | Progression                      | Needed from intermediate onward                                              |
+| 2     | **Volume, Intensity, Frequency** | "the longest section… the majority of the most important concepts"           |
+| 1     | **Adherence**                    | _"it doesn't matter how good your programming is if you cannot stick to it"_ |
 
-with periodization sitting *outside* the pyramid, since it is how you
+with periodization sitting _outside_ the pyramid, since it is how you
 manipulate every level over time. Helms: **"~80% of your progress is going to
 be made by focusing on these bottom three or four levels, and only the very
 small finishing touches will be affected by the last levels."**
@@ -1063,17 +1094,17 @@ small finishing touches will be affected by the last levels."**
 That makes this section a **ranking function for everything above**, which is
 more valuable to this backlog than any individual finding. Applying it:
 
-| Proposal | Pyramid level | Effect on priority |
-| --- | --- | --- |
-| Daily undulation (N9), volume ramp (M2/N1), rep ranges (P1) | **2** | Confirmed top tier |
-| RIR prescription (B2/N3) | **2** (intensity measurement) | Confirmed top tier |
-| Three-axis PR (B1) | **1 — adherence** | *Raised.* It's a consistency mechanism |
-| easierToday as first-class (H1 below) | **1 — adherence** | *Raised sharply* |
-| Progression schemes per exercise type (N2/H3) | **3** | Confirmed |
-| Deload philosophy (M4/H4) | **3** | Confirmed |
-| Weak-point plateau breaker (P4/B6) | **4** | *Lowered* — real, but a level-4 concern |
-| Rest carried through the boundary (B3) | **5** | *Lowered* — see H8 |
-| Tempo prescription (N4) | **6** | *Lowered sharply* — see H9 |
+| Proposal                                                    | Pyramid level                 | Effect on priority                      |
+| ----------------------------------------------------------- | ----------------------------- | --------------------------------------- |
+| Daily undulation (N9), volume ramp (M2/N1), rep ranges (P1) | **2**                         | Confirmed top tier                      |
+| RIR prescription (B2/N3)                                    | **2** (intensity measurement) | Confirmed top tier                      |
+| Three-axis PR (B1)                                          | **1 — adherence**             | _Raised._ It's a consistency mechanism  |
+| easierToday as first-class (H1 below)                       | **1 — adherence**             | _Raised sharply_                        |
+| Progression schemes per exercise type (N2/H3)               | **3**                         | Confirmed                               |
+| Deload philosophy (M4/H4)                                   | **3**                         | Confirmed                               |
+| Weak-point plateau breaker (P4/B6)                          | **4**                         | _Lowered_ — real, but a level-4 concern |
+| Rest carried through the boundary (B3)                      | **5**                         | _Lowered_ — see H8                      |
+| Tempo prescription (N4)                                     | **6**                         | _Lowered sharply_ — see H9              |
 
 ### New findings
 
@@ -1089,7 +1120,7 @@ studies land directly on Tropos features:
   sessions in a preset order. **The flexible group made greater strength
   gains.** Tropos has `easierToday.ts`, but it is framed as an accommodation —
   a one-session concession the user reaches for on a bad day. This evidence
-  says flexible selection is not a concession, it is *superior*, and it
+  says flexible selection is not a concession, it is _superior_, and it
   belongs at the top of the pyramid. Note the mechanism differs from
   `easierToday`'s: Helms says "do the easiest workout **you had planned for
   the week** instead" — swap sessions within the week rather than scale
@@ -1097,12 +1128,12 @@ studies land directly on Tropos features:
   Level 1, with an RCT behind it. It is probably the highest
   value-per-unit-effort item in this entire document.
 - **Process focus beats goal focus for consistency.** Fishbach & Choi (2012):
-  the group told to focus on the end goal achieved it *less* consistently
+  the group told to focus on the end goal achieved it _less_ consistently
   than the group told to focus on the process. Tropos runs both framings at
   once — streaks and badges (process) alongside PRs and targets (goal). The
   finding doesn't say drop goals; it says the process framing is what carries
   consistency, which is an argument for keeping streaks prominent and for
-  treating B1's three-axis PR as a *consistency* feature rather than a
+  treating B1's three-axis PR as a _consistency_ feature rather than a
   celebration feature.
 - Bartholomew (2008): negative life events measurably impair training
   adaptation — supporting flexibility as a design requirement rather than a
@@ -1112,16 +1143,16 @@ studies land directly on Tropos features:
 question.** This is the authoritative version of what sections 3–5 kept
 circling, including the half-points:
 
-| RPE | Meaning |
-| --- | --- |
-| 10 | Could not do more reps or load |
+| RPE | Meaning                                             |
+| --- | --------------------------------------------------- |
+| 10  | Could not do more reps or load                      |
 | 9.5 | Could not do more reps, could do slightly more load |
-| 9 | Could do 1 more rep |
-| 8.5 | Definitely 1 more, chance at 2 |
-| 8 | Could do 2 more reps |
-| 7.5 | Definitely 2 more, chance at 3 |
-| 7 | Could do 3 more reps |
-| 5–6 | Could do 4–6 more |
+| 9   | Could do 1 more rep                                 |
+| 8.5 | Definitely 1 more, chance at 2                      |
+| 8   | Could do 2 more reps                                |
+| 7.5 | Definitely 2 more, chance at 3                      |
+| 7   | Could do 3 more reps                                |
+| 5–6 | Could do 4–6 more                                   |
 
 Tropos's `RPE_OPTIONS` already runs `[6, 6.5, … 10]` — the same scale at the
 same granularity. What's missing is that it's optional, hidden behind
@@ -1130,8 +1161,8 @@ Nippard's Y/N flag raised: **don't take multi-joint compounds to failure**
 (injury risk plus systemic fatigue that degrades the rest of the session);
 failure is comparatively safe on isolation work. And the volume argument:
 going to failure on set 1 of 3 costs you total reps (5+3+2 = 10) versus
-stopping short (4+4+4 = 12). *"Failure needs to be used with a purpose, if
-used at all."* That is a principled basis for a per-exercise failure flag
+stopping short (4+4+4 = 12). _"Failure needs to be used with a purpose, if
+used at all."_ That is a principled basis for a per-exercise failure flag
 rather than a per-program default.
 
 **H3 — Progression scheme is chosen by BOTH training age and exercise type —
@@ -1140,7 +1171,7 @@ running at once (N2); Helms gives the rule behind it:
 
 - **Compound movements → linear / wave loading.** For 3×6–8: week 1
   `8,8,8 @110`; week 2 `7,7,7 @115`; week 3 `6,6,6 @120`; week 4 deload
-  `6,6 @110`; week 5 back to `8,8,8` at *more* than week 1's load. Drop 1 rep
+  `6,6 @110`; week 5 back to `8,8,8` at _more_ than week 1's load. Drop 1 rep
   per week for 3–5/4–6/5–7 ranges, 2 reps per week for 8–12. Load steps up
   every four weeks.
 - **Isolation movements → double progression.** Adding 2.5 kg to a curl is a
@@ -1171,10 +1202,10 @@ Tropos's `applyProgression` is already in the novice family but calibrated
 differently: it backs off after **three** consecutive failures, by **5%**
 (double) or 1 kg (linear), where Helms says two failures and 10%. And
 `applyDeload` cuts sets by 1 **and** load by 15%, where Helms's post-novice
-recipe cuts volume via sets *and reps* while holding load. Combined with
+recipe cuts volume via sets _and reps_ while holding load. Combined with
 Meadows (M4) and Nippard, that's now four positions on the deload question —
 but Helms is the only one who makes it **conditional on training age**, which
-is probably the resolution: Tropos's load-cutting deload is the *novice*
+is probably the resolution: Tropos's load-cutting deload is the _novice_
 answer, applied to everyone.
 
 **H5 — An adjustment flowchart that is directly implementable.** Helms gives
@@ -1193,7 +1224,7 @@ Are you plateaued?
 
 Tropos has both inputs already: `plateauCount` per exercise, and a recovery
 estimate from `performanceEngine`'s `computeRecoveryScore`. What it lacks is
-the *joint* rule — today plateau triggers a variation swap and low recovery
+the _joint_ rule — today plateau triggers a variation swap and low recovery
 triggers advisory copy, independently. This flowchart connects them, and the
 final branch ("if it recurs, the answer isn't another deload") is exactly the
 kind of second-order rule an app can track across cycles and a user can't.
@@ -1201,8 +1232,8 @@ kind of second-order rule an app can track across cycles and a user can't.
 **H6 — "Overlap" is the name for the interference problem, and Tropos already
 models it.** Section 2 (D1) found the deadlift scheduled in every leg day;
 Meadows (M6) ordered days to protect the lower back. Helms supplies the
-concept and the mechanism: *"the body does not 'think' of movements as
-specific to muscle groups"* — a lat pulldown trains triceps and chest;
+concept and the mechanism: _"the body does not 'think' of movements as
+specific to muscle groups"_ — a lat pulldown trains triceps and chest;
 squats and deadlifts both train back and legs. Hence "training squats three
 times a week and deadlifts three times a week… wouldn't be ideal for 90% of
 people because of the overlap."
@@ -1210,12 +1241,12 @@ people because of the overlap."
 Encouragingly, **Tropos's fractional volume model is an overlap model** —
 `weeklyVolumeByMuscle` counts primary involvement 1.0 and secondary 0.5,
 which is exactly the accounting Helms argues for. The gap is that overlap
-informs *volume totals* but not *scheduling*: nothing stops the generator
+informs _volume totals_ but not _scheduling_: nothing stops the generator
 placing two high-overlap patterns in the same session or on consecutive days.
 
 **H7 — Helms counts volume in reps, not sets.** His guideline is **40–70
 reps per muscle group per session, 2–3×/week → 80–210 reps per muscle per
-week** (from Wernbom's 2007 review), versus Nippard's and Tropos's *sets*.
+week** (from Wernbom's 2007 review), versus Nippard's and Tropos's _sets_.
 Helms notes the ranges are enormous — a threefold span "more or less going to
 produce a similar outcome in the majority of people" — and warns against
 absolutist readings ("39 reps doesn't mean you won't grow"). Practically this
@@ -1228,13 +1259,13 @@ end (~40 reps, 2×/week) and adjust upward.
 "rest until you feel ready to perform at your best on the next set", with
 floors only for habitual under-resters: **≥1.5 min for small muscle groups,
 ≥2.5 min for compounds**. Section 3 (B3) framed the dropped `restSeconds` as
-"discarding a training variable"; Helms's placement says it is a *minor*
+"discarding a training variable"; Helms's placement says it is a _minor_
 one. Carrying rest through the template boundary is still correct — it's part
 of P1's field-loss fix — but it should not be argued for on training-effect
 grounds.
 
 **H9 — Tempo is Level 6, which lowers N4 sharply.** Helms's practical
-guidance is, verbatim, *"just lift the weights."* Control the eccentric so
+guidance is, verbatim, _"just lift the weights."_ Control the eccentric so
 gravity isn't doing the work, drive the concentric forcefully, and don't
 deliberately slow reps (except beginners learning form). Section 5 (N4)
 observed that Tropos has `Exercise.tempo` and `parseTempo` but points them at
