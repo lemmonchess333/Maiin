@@ -647,3 +647,197 @@ see below.
 - **Per-workout volume landmarks** (legs 8–20 sets/session etc.). Not
   comparable to Tropos's landmarks, which are **weekly** per muscle
   (`volumeModel.ts:208-223`). Useful only as a loose sanity reference.
+
+---
+
+## 5. Jeff Nippard — Chest & Back Hypertrophy Programs (reviewed 2026-07-27)
+
+Two companion programs from the same system, reviewed together. A third
+lineage: **evidence-based consumer hypertrophy** — cited literature (RP's
+volume landmarks, Schoenfeld's frequency and dose-response meta-analyses),
+but packaged as a product for ordinary gym-goers rather than a manual for
+elite competitors.
+
+**This is the closest reference point yet to what Tropos actually
+generates**, and that makes it the most directly usable of the five. The
+Juggernaut manuals optimize a competition total; Meadows writes for people
+who "train like an uncaged animal". Nippard's reader is a normal person with
+a gym membership — i.e. Tropos's user. When his choices differ from Tropos's,
+the audience-fit excuse that retires most powerlifting material does not
+apply.
+
+### New findings
+
+**N1 — The volume ramp, rendered as a concrete week-by-week table.** This is
+what Meadows's M2 ("progression is primarily volume") looks like as a
+shippable artifact. Weekly working sets:
+
+| | W1 | W2 | W3 | W4 | W5 | W6 | W7 | W8 | W9 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **Chest** (weekly sets) | 21 | 22 | 21 | 22 | 23 | 24 | 24 | 22 | — |
+| **Back** (actualized) | 23 | 23 | 23.5 | 23.5 | 25 | 25 | 25 | 25 | **14** |
+
+The ramp is **modest** — roughly one set per week, undulating rather than
+monotonic — and individual exercises gain sets on a schedule (chest static
+holds 2→3 at W5; dips 2→3 at W5; cable flyes 3→4 at W7). That is a directly
+implementable shape for the `volumeModifier` that `generateWeekPrescription`
+computes and nothing reads. It is also a useful corrective to a naive
+reading of Meadows: the ramp does not need to be dramatic to be the
+progression.
+
+**N2 — Progression scheme belongs to the exercise, not the goal.** The chest
+program runs **four different schemes simultaneously**, chosen per exercise
+type:
+
+| Exercise type | Scheme |
+| --- | --- |
+| Bench press (main barbell) | % of 1RM given as a *range*, semi-autoregulated — "on days you feel strong, use the mid-to-high end" |
+| Rep-range exercises (incline DB, banded pushup, cable flye) | Double progression — add reps at fixed load until the top of the range is hit **on all sets**, then add load and reset to the bottom |
+| Flat DB static hold | Add **time** in 5-second increments; when time stalls, add 5–10 lb and reset the clock |
+| Bodyweight dips | Add a rep weekly; when reps stall, improve rep quality and cadence (slower negatives) |
+
+Tropos assigns exactly two schemes (`"linear"` / `"double"`) from the
+**goal profile**, applying one to every exercise in the program
+(`GOAL_PROFILES`, `programEngine.ts:34-67`). Two concrete gaps follow:
+
+- **Time-based progression does not exist in Tropos at all.** `templates.ts`
+  authors duration prescriptions as strings (`"30-45s"`), and
+  `templateExToProgEx` runs `parseInt(te.reps, 10) || 8` over them
+  (`Onboarding.tsx:126`) — so a 30–45 second hold becomes "30 reps". Section 1
+  called this lossy; Nippard shows time-under-tension at constant load is a
+  *progression axis in its own right*, so what's discarded is a dimension,
+  not a preference.
+- **The bodyweight ceiling has no graceful exit.** Tropos caps bodyweight
+  progression at `MAX_BODYWEIGHT_REPS = 20` and then emits an "add load" note
+  (`programEngine.ts:77`). Nippard's answer is cadence and control; for
+  pull-ups he also uses *assistance* as the progressed variable ("progressively
+  lower the assistance… aim toward 0 lb"), which Tropos has no concept of and
+  which is the more common real-world case for new lifters.
+
+**N3 — RPE prescribed per exercise, for a general audience.** Every exercise
+row carries an RPE target (chest: bench 8, incline DB 9, banded pushup 9,
+dips 10), with a plain-language key: "RPE 10 = failure, 9 = leave one rep in
+the tank, 8 = leave two." Plus two tracking columns worth stealing:
+
+- **LSRPE** ("Last Set RPE") — the user reflects after the final set and
+  records how many more reps they had. A reflection field, not a prescription.
+- **LSTF / FSTF** ("Last Set To Failure") — a per-exercise **Y/N flag** saying
+  whether the final set goes to failure. Bench and close-grip bench are N;
+  isolation work is Y.
+
+That Y/N flag is a much cheaper primitive than full RPE prescription and
+encodes exactly the knowledge Tropos lacks: *which exercises are safe to push
+and which aren't*. It could ride on the existing exercise data without
+touching the loading model.
+
+**This also weakens a caveat I attached to bench B2.** I noted there that
+novices rate RIR poorly and that Fitbod and Hevy therefore keep RPE optional.
+Nippard's audience is precisely that population and he makes RPE the
+**primary** intensity mechanism, with a translation table and a
+"drop the weight 5–10% if you'll hit failure early" fallback. The counter-
+argument stands as a design risk but is weaker than I stated — the mainstream
+consumer precedent runs the other way.
+
+**N4 — Tempo prescribed as a first-class column, which Tropos parses but
+uses for the wrong thing.** The back program gives every exercise a tempo in
+`eccentric:pause:concentric:pause` notation (most commonly `2:0:1:0`, with
+`2:1:1:1` on rack pulls). Tropos already has the type (`Exercise.tempo`) and
+a parser (`exerciseTempo.ts` `parseTempo`) — but tempo is authored on **3 of
+151 exercises** and drives only **demo-animation timing**, never a set
+prescription. The infrastructure for N4 is largely built and pointed at the
+wrong consumer.
+
+**N5 — Exercise stability is itself the progression mechanism (and the
+experts disagree).** Both programs answer the same FAQ: *"Why don't the
+exercises change from week to week?"* → "Changing exercises from week to week
+is more likely to flatten out the progression curve. This is to ensure
+progression by adding volume incrementally to these specific movements."
+
+That is the direct opposite of Meadows, who rotates exercises for novelty and
+to blunt the repeated-bout effect. The reconciliation is in Nippard's own
+structure: **stability within a block, novelty between blocks** — his Block 2
+(weeks 5–8) introduces new movements and loading patterns while keeping the
+bulk of selection intact. That maps cleanly onto Tropos's 4-week mesocycle,
+and it retroactively justifies the existing design: `rotateUntrainedAccessories`
+fires at `week % 4 === 1` and only rotates accessories with **zero logged
+history**, leaving trained movements alone. Tropos is already on the right
+side of this disagreement. What it does *not* justify is `pickExercise`'s
+`Math.random()` swap of a plateaued main — a third argument for making that
+rotation purposeful (P4 / B6).
+
+**N6 — Volume landmarks directly comparable to Tropos's, and Tropos's
+ceiling looks low.** Nippard cites 15–25 weekly sets for pecs and 14–25 for
+back (sourced to RP and Schoenfeld's 2017 dose-response meta-analysis) — the
+**same unit** as Tropos's `volumeLandmark`, unlike Meadows's per-session
+numbers. Tropos's hypertrophy band is `{low: 12, high: 20}`
+(`volumeModel.ts:208-223`); Nippard's programmes actually run 21–25 sets. So
+Tropos's upper bound sits below where a dedicated hypertrophy program lives.
+Not a bug — `balanceWeeklyVolume` deliberately never trims above MRV — but a
+calibration data point if the hypertrophy profile is ever revisited. He also
+repeats Meadows's M3 advice for beginners: "start with one less set per
+movement for the first week or two", then add.
+
+**N7 — A warm-up spec that is finally practical to implement.** Third
+warm-up specification across the five sources, and the most implementable:
+pyramid up before the **first heavy exercise per body part only** (not every
+exercise), scaled to the working weight — e.g. bar×15, 50%×8, 60%×4, 70%×3,
+75%×2 before an 80% working set; or 135×10, 225×6, 315×4, 405×3, 455×1 before
+500×2. The scoping rule ("only required for the first heavy exercise") is the
+detail the other two sources lacked and the thing that makes P5 shippable
+without bloating every session.
+
+**N8 — Named set structures Tropos cannot express.** Supersets via paired
+row labels (`B1`/`B2` with `0.0` rest between and the real rest after `B2`),
+cluster sets (8×3 at 0.5 min rest), reverse pyramid (10/15/20 reps with
+descending load), myoreps, and extended sets. Tropos has no concept of paired
+or structured sets at all. Combined with the rest-pause and mechanical drop
+sets deferred in section 3, this is now a recurring gap across three sources
+— worth naming as one candidate ("intra-session set structures") rather than
+re-deriving it per book. Note Nippard scopes all of these to Block 2, i.e.
+after four weeks of adaptation.
+
+### Corrections to earlier sections
+
+- **M4 (deload philosophy) — it's a three-way spread, not a conflict, and
+  Tropos is not the outlier.** Nippard's week-9 deload cuts back volume from
+  25 sets to 14 (~44%) **and** lowers intensity — siding closer to Tropos's
+  `applyDeload` (sets −1, load ×0.85) than to Meadows's keep-the-load
+  approach. Three sources, three positions. The design question stands but
+  the case for changing Tropos's deload is weaker than section 4 implied.
+- **B2 (RIR prescription) — the audience objection is weaker than stated.**
+  See N3.
+
+### Existing Tropos behaviour this validates
+
+Worth recording so the doc isn't read as a pure gap list:
+
+- **Push/pull balancing.** "It is important to balance out the amount of
+  pushing volume… with at least an equal amount of pulling volume… imperative
+  to preventing a rolled-forward posture." Tropos's `balancePushPull`
+  (`volumeModel.ts:347-372`) grows pull accessories until pull ≥ push.
+- **Fractional volume attribution.** Nippard hand-computes an "actualized"
+  back volume by excluding non-pulling patterns and counting cluster sets at
+  ¼. Tropos's `weeklyVolumeByMuscle` already does this systematically
+  (primary 1.0 / secondary 0.5) — a more principled version of the same idea.
+- **2×/week frequency and its source.** He cites Schoenfeld's 2016 frequency
+  meta-analysis; `programEngine.ts:138-155` already cites the same paper for
+  routing 3 lift days to full-body. Same literature, same conclusion.
+- **Exercise stability across a mesocycle** — see N5.
+
+### Deliberately NOT adopting
+
+- **The specific exercise selections and EMG-optimised variants** (Bayesian
+  cable flyes, moto rows, omni-grip pulldowns, rack pulls). Program content,
+  not engine behaviour, and much of it is cable/machine-dependent.
+- **Myoreps, cluster sets, extended/cheat reps as defaults.** Advanced, and
+  gated behind a block of adaptation even in his own programming. They belong
+  to the deferred "intra-session set structures" candidate (N8), not to
+  generated beginner programs.
+- **Percentage-of-1RM loading for the main lift.** Consistent with section 1:
+  it needs a tested max Tropos users don't have. Note Nippard supplies an
+  AMRAP-test-plus-calculator on-ramp for exactly this problem — a viable path
+  if a lift-goal feature (deadlift D4) is ever built, but not a reason to
+  adopt %-loading now.
+- **Taking the last set to failure by default.** The Y/N flag from N3 is the
+  transferable part; a blanket "isolation goes to failure" default contradicts
+  the never-grind principle sections 1–3 established.
