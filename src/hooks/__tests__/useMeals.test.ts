@@ -7,87 +7,62 @@ vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-// Firebase wiring — capture the snapshot listener so tests can pump
-// data through it, and capture the runTransaction calls so the edit
-// path's bumps can be inspected.
-const snapshotListeners: Array<(snap: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void> = [];
-const transactionCalls: Array<{
-  ref: { id: string };
-  update: Record<string, unknown> | null;
-  thrown: string | null;
-}> = [];
-let mockDocState: Record<string, Record<string, unknown>> = {};
-
+/**
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ *
+ * The factory hand-rolled `runTransaction` — its own tx `get`/`update`
+ * over a `mockDocState` map — so the edit path ran against a second,
+ * simpler Firestore whose `get` could disagree with what the snapshot
+ * listener had just delivered. Meals are now real documents under
+ * `users/me/meals`: the transaction reads what was seeded, and the
+ * update payloads are read back off `writeLog()` rather than off a
+ * capture array the stub filled in.
+ *
+ * `pumpSnapshot` is gone for the same reason it went in `useClaimMap` —
+ * it fed the hook instead of letting the hook read a store, which meant
+ * the `orderBy`/`limit` query was never exercised.
+ */
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() } }));
-
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn(),
-  query: vi.fn((c: unknown) => c),
-  orderBy: vi.fn(),
-  onSnapshot: vi.fn((_q: unknown, onNext: (snap: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void) => {
-    snapshotListeners.push(onNext);
-    return () => {};
-  }),
-  deleteDoc: vi.fn(),
-  doc: vi.fn((_db: unknown, _coll: string, _uid: string, _sub: string, id: string) => ({ id })),
-  limit: vi.fn(),
-  startAfter: vi.fn(),
-  getDocs: vi.fn(),
-  setDoc: vi.fn(),
-  serverTimestamp: vi.fn(() => "__SERVER_TIMESTAMP__"),
-  runTransaction: vi.fn(async (_db: unknown, fn: (tx: {
-    get: (ref: { id: string }) => Promise<{
-      exists: () => boolean;
-      data: () => Record<string, unknown>;
-    }>;
-    update: (ref: { id: string }, update: Record<string, unknown>) => void;
-  }) => Promise<void>) => {
-    const call: typeof transactionCalls[number] = { ref: { id: "" }, update: null, thrown: null };
-    try {
-      await fn({
-        get: async (ref) => {
-          call.ref = ref;
-          const data = mockDocState[ref.id];
-          return {
-            exists: () => data !== undefined,
-            data: () => data ?? {},
-          };
-        },
-        update: (ref, update) => {
-          call.ref = ref;
-          call.update = update;
-        },
-      });
-    } catch (err) {
-      call.thrown = err instanceof Error ? err.message : String(err);
-      transactionCalls.push(call);
-      throw err;
-    }
-    transactionCalls.push(call);
-  }),
+vi.mock("@/lib/logger", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
 }));
+vi.mock("firebase/firestore");
 
 import { useMeals } from "../useMeals";
+import {
+  seedFirestore,
+  resetFirestore,
+  writeLog,
+  readDoc,
+  flushSnapshots,
+} from "@/test/firestoreHarness";
 
-function pumpSnapshot(docs: Array<{ id: string; data: Record<string, unknown> }>) {
-  snapshotListeners.forEach((l) =>
-    l({ docs: docs.map((d) => ({ id: d.id, data: () => d.data })) }),
-  );
+const MEALS = "users/me/meals";
+
+/** Seed meal documents the hook's own subscription will deliver. */
+function seedMeals(docs: Array<{ id: string; data: Record<string, unknown> }>) {
+  const tree: Record<string, Record<string, unknown>> = {};
+  for (const d of docs) tree[`${MEALS}/${d.id}`] = d.data;
+  seedFirestore(tree);
 }
+
+/** Transactional update patches, in order — the shape the old
+ *  `transactionCalls[i].update` captured, read off the real write log. */
+const updatePatches = () =>
+  writeLog()
+    .filter((w) => w.op === "update" && w.path.startsWith(`${MEALS}/`))
+    .map((w) => w.data as Record<string, unknown>);
 
 describe("useMeals", () => {
   beforeEach(() => {
-    snapshotListeners.length = 0;
-    transactionCalls.length = 0;
-    mockDocState = {};
+    resetFirestore();
   });
 
   describe("parseMealDoc lazy migration (F5b)", () => {
     it("defaults missing revisionCount + userEditCount to 0 on docs predating the F5b fields", async () => {
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([
+      await act(async () => {
+        seedMeals([
           {
             id: "old-doc",
             data: {
@@ -104,6 +79,7 @@ describe("useMeals", () => {
             },
           },
         ]);
+        await flushSnapshots();
       });
       await waitFor(() => expect(result.current.meals).toHaveLength(1));
       const meal = result.current.meals[0];
@@ -116,8 +92,8 @@ describe("useMeals", () => {
 
     it("preserves existing counter values on F5b-migrated docs", async () => {
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([
+      await act(async () => {
+        seedMeals([
           {
             id: "edited-doc",
             data: {
@@ -136,6 +112,7 @@ describe("useMeals", () => {
             },
           },
         ]);
+        await flushSnapshots();
       });
       await waitFor(() => expect(result.current.meals).toHaveLength(1));
       const meal = result.current.meals[0];
@@ -147,70 +124,89 @@ describe("useMeals", () => {
 
   describe("editMeal (F5a)", () => {
     it("bumps revisionCount + userEditCount atomically and stamps updatedAt", async () => {
-      mockDocState["meal-1"] = {
-        revisionCount: 4,
-        userEditCount: 1,
-      };
+      seedMeals([
+        {
+          id: "meal-1",
+          data: {
+            revisionCount: 4,
+            userEditCount: 1,
+          },
+        },
+      ]);
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       await act(async () => {
         await result.current.editMeal("meal-1", { foodName: "Eggs (large)" });
       });
-      expect(transactionCalls).toHaveLength(1);
-      expect(transactionCalls[0].update).toEqual({
+      expect(updatePatches()).toHaveLength(1);
+      expect(updatePatches()[0]).toEqual({
         foodName: "Eggs (large)",
-        updatedAt: "__SERVER_TIMESTAMP__",
+        // The raw patch carries the serverTimestamp SENTINEL — the
+        // old stub swapped in a magic string, which hid whether a
+        // sentinel was sent at all. Materialisation is asserted
+        // separately below, off the stored document.
+        updatedAt: expect.anything(),
         revisionCount: 5,
         userEditCount: 2,
         userEditedFields: ["foodName"],
       });
+      // ...and the sentinel really did resolve to a timestamp in the store.
+      const stored = readDoc(`${MEALS}/meal-1`)!;
+      expect(stored.updatedAt).toHaveProperty("seconds");
     });
 
     it("initialises counters from 0 when editing a pre-F5b doc (lazy migration)", async () => {
-      mockDocState["meal-old"] = {
-        // No revisionCount / userEditCount fields — predates F5b
-        foodName: "Toast",
-      };
+      seedMeals([
+        {
+          id: "meal-old",
+          data: {
+            // No revisionCount / userEditCount fields — predates F5b
+            foodName: "Toast",
+          },
+        },
+      ]);
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       await act(async () => {
         await result.current.editMeal("meal-old", { totalCalories: 150 });
       });
-      expect(transactionCalls[0].update).toMatchObject({
+      expect(updatePatches()[0]).toMatchObject({
         revisionCount: 1,
         userEditCount: 1,
       });
     });
 
     it("rejects edits whose macro values trip the validation BLOCK floor (negative / non-finite)", async () => {
-      mockDocState["meal-1"] = { revisionCount: 0, userEditCount: 0 };
+      seedMeals([
+        { id: "meal-1", data: { revisionCount: 0, userEditCount: 0 } },
+      ]);
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       // foodValidation BLOCKs on non-finite / NaN / negative numbers
       // (the high-but-finite case returns WARN, which is the UI's
       // confirmation surface, not the hook's gate).
       await expect(
-        result.current.editMeal("meal-1", { totalCalories: -10 }),
+        result.current.editMeal("meal-1", { totalCalories: -10 })
       ).rejects.toThrow();
       // No transaction should have completed when the validation
       // gate fired before the runTransaction call.
-      expect(transactionCalls).toHaveLength(0);
+      expect(updatePatches()).toHaveLength(0);
     });
 
     it("throws when the meal does not exist (deleted between fetch and edit)", async () => {
       // mockDocState empty → exists() returns false
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       await expect(
-        result.current.editMeal("missing-meal", { foodName: "x" }),
+        result.current.editMeal("missing-meal", { foodName: "x" })
       ).rejects.toThrow(/not found/i);
     });
   });
@@ -218,8 +214,8 @@ describe("useMeals", () => {
   describe("F1d userEditedFields (per-field edit locks)", () => {
     it("parseMealDoc defaults missing userEditedFields to an empty array", async () => {
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([
+      await act(async () => {
+        seedMeals([
           {
             id: "pre-f1d",
             data: {
@@ -236,6 +232,7 @@ describe("useMeals", () => {
             },
           },
         ]);
+        await flushSnapshots();
       });
       await waitFor(() => expect(result.current.meals).toHaveLength(1));
       expect(result.current.meals[0].userEditedFields).toEqual([]);
@@ -243,8 +240,8 @@ describe("useMeals", () => {
 
     it("parseMealDoc filters non-string entries out of userEditedFields", async () => {
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([
+      await act(async () => {
+        seedMeals([
           {
             id: "corrupt",
             data: {
@@ -258,24 +255,46 @@ describe("useMeals", () => {
               confidence: "low",
               createdAt: "__T1__",
               // Mixed array — only string keys survive
-              userEditedFields: ["foodName", 42, null, "totalCalories", undefined],
+              userEditedFields: [
+                "foodName",
+                42,
+                null,
+                "totalCalories",
+                undefined,
+              ],
             },
           },
         ]);
+        await flushSnapshots();
       });
       await waitFor(() => expect(result.current.meals).toHaveLength(1));
-      expect(result.current.meals[0].userEditedFields).toEqual(["foodName", "totalCalories"]);
+      expect(result.current.meals[0].userEditedFields).toEqual([
+        "foodName",
+        "totalCalories",
+      ]);
     });
 
     it("editMeal adds edited keys to userEditedFields, deduped, union with existing", async () => {
-      mockDocState["meal-1"] = {
-        revisionCount: 1,
-        userEditCount: 1,
-        userEditedFields: ["foodName"],
-      };
+      // `totalCarbs` is locked but NOT edited here, and `foodName` is
+      // both. That combination is deliberate: it separates the two
+      // claims in the title. Until 2026-07-26 the seed was
+      // `["foodName"]` alone and every edited key was already in it, so
+      // "union with existing" and "just the new keys" produced the same
+      // array — discarding the transaction's read of `current` passed
+      // the test. With `totalCarbs` present, dropping the union loses it.
+      seedMeals([
+        {
+          id: "meal-1",
+          data: {
+            revisionCount: 1,
+            userEditCount: 1,
+            userEditedFields: ["foodName", "totalCarbs"],
+          },
+        },
+      ]);
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       await act(async () => {
         await result.current.editMeal("meal-1", {
@@ -283,25 +302,25 @@ describe("useMeals", () => {
           totalCalories: 80,
         });
       });
-      const writtenLocks = transactionCalls[0].update?.userEditedFields as string[];
-      // Existing 'foodName' lock retained, new 'foodName' deduped,
-      // 'totalCalories' added. Set ordering: existing then new.
+      const writtenLocks = updatePatches()[0].userEditedFields as string[];
+      // Existing locks retained (incl. the un-edited `totalCarbs`), new
+      // 'foodName' deduped, 'totalCalories' added.
       expect(writtenLocks).toEqual(
-        expect.arrayContaining(["foodName", "totalCalories"]),
+        expect.arrayContaining(["foodName", "totalCarbs", "totalCalories"])
       );
-      expect(writtenLocks).toHaveLength(2);
+      expect(writtenLocks).toHaveLength(3);
     });
 
     it("editMeal initialises userEditedFields from empty when the doc predates F1d", async () => {
-      mockDocState["meal-old"] = { foodName: "Toast" };
+      seedMeals([{ id: "meal-old", data: { foodName: "Toast" } }]);
       const { result } = renderHook(() => useMeals());
-      act(() => {
-        pumpSnapshot([]);
+      await act(async () => {
+        await flushSnapshots();
       });
       await act(async () => {
         await result.current.editMeal("meal-old", { totalProtein: 10 });
       });
-      expect(transactionCalls[0].update?.userEditedFields).toEqual(["totalProtein"]);
+      expect(updatePatches()[0].userEditedFields).toEqual(["totalProtein"]);
     });
   });
 });
