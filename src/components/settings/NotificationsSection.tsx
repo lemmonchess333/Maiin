@@ -423,7 +423,8 @@ export default function NotificationsSection({
         {/* Push notifications (#969) — the server-side delivery channel. The
             global toggle requests OS permission + registers/revokes this
             device's FCM token; per-type toggles gate which senders may target
-            the user (each sender checks the flag via mayTargetUser). */}
+            the user (each sender checks the flag via the server-side
+            mayTargetUserConsent in functions/lib/pushConsent.js). */}
         <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
           <div className="pr-3">
             <p className="text-sm text-foreground">Push notifications</p>
