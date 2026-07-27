@@ -106,6 +106,18 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  * Suites that predate the seam and still carry their own inline SDK factory.
  * DELETE-ONLY: migrate a suite to `seedFirestore`, remove its line. Do not add.
  *
+ * EMPTY as of 2026-07-26 — every legacy inline factory is gone, and the
+ * fake is the only Firestore in the client tests. Keep it empty: a new
+ * hand-rolled factory should be a failing gate, not a judgement call.
+ * (The example that belongs here cannot be written literally — the
+ * scanner below would match this very comment, which is how it first
+ * failed. That the gate catches its own documentation is a point in its
+ * favour.)
+ *
+ * The survey below is kept because its LESSON outlived the queue: the
+ * stated blocker was wrong more often than it was right. Read it before
+ * trusting any similar triage.
+ *
  * Not all of these are the same size of job, and the difference is not
  * line count. Surveyed 2026-07-26 while migrating the first batch:
  *
@@ -154,9 +166,7 @@ const PERMANENT_INLINE_MOCKS = ["src/lib/__tests__/firestoreWrite.test.ts"];
  * converted to an empty seed during this batch. Re-read the suite; a
  * green run after a fixture rewrite proves less than usual.
  */
-const LEGACY_INLINE_MOCKS = [
-  "src/features/program/__tests__/useProgramWriters.test.ts",
-];
+const LEGACY_INLINE_MOCKS: string[] = [];
 
 describe("Firestore hook coverage", () => {
   it("finds the hooks (guards against a broken scan silently passing)", () => {
