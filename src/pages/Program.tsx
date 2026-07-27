@@ -1724,6 +1724,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 : buildExpressSession(storedDay, sessionVariant);
           return (
             <WorkoutSession
+              deloadWeek={programState.currentPhase === "deload"}
               day={
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }

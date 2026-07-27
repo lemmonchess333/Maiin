@@ -110,7 +110,13 @@ visibility class, and the default is _invisible_:
   in the tank"), never a bare number scale, and the last-set-to-failure flag
   is expressed as copy ("push this one" / "keep some in reserve"), not a
   control. Experience level from onboarding gates when richer detail may
-  appear.
+  appear. _(Refined at build, 2026-07-27, operator-approved copy set: the
+  plain-language effort cues — "Finish with 2 reps to spare" / "Last set —
+  OK to go to your limit." / "Step-back week — keep everything comfortably
+  easy." — are visible to everyone, since they carry zero jargon; the
+  NUMERIC scale and its reserve-word captions remain behind `showRPE`.
+  "Leave 2 in the tank" itself was rejected at copy review: "in the tank"
+  fails voice-and-tone rule 5, no decode-metaphors.)_
 
 Standing rules: the jargon budget for a novice is **zero**; every
 explanation lives behind a tap (the existing Tooltip/Coachmark primitives —
