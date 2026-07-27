@@ -176,7 +176,7 @@ run-surface feature modules.
 ## Custom Hooks (src/hooks/)
 
 **Data & State:**
-`useFirestore`, `useMeals`, `useWorkouts`, `useWaterLog`, `useShoes`, `useFoodFavourites`, `useBodyweightTrend`
+`useFirestore`, `useMeals`, `useWorkouts`, `useWaterLog`, `useShoes`, `useFoodFavourites`
 
 **Running & GPS:**
 `useGPS`, `useRunTimer`, `useRunningStats`, `useGuidedRun`, `useIntervalWorkout`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`

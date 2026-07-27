@@ -164,6 +164,16 @@ const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
  * are cheap, the reading is not.
  */
 const KNOWN_ORPHAN_EXPORTS = [
+  // Suppressed — kept optionality, and the judgement is not mine: CORE-01
+  // (#1596) hardened this function KNOWING it was uncalled ("the live write
+  // paths already use the idempotent safeMerge — but safeSave is one call
+  // site away from reintroducing duplicates; this closes the trap"). It is
+  // the offline-aware CREATE path, deliberately maintained against the day
+  // a create-shaped write needs queueing. Surfaced 2026-07-27 when the
+  // scanner learned to see `export async function`; its only self-mention
+  // is its own error log string.
+  "src/lib/offlineQueue.ts:safeSave",
+
   // ── native-injection seams (staged; CLAUDE.md's documented pattern) ──
   // Web ships the real path, native calls the setter from its boot path
   // once the Capacitor plugin lands. CLAUDE.md names the appCheck split as
@@ -224,7 +234,17 @@ function orphanExports(): string[] {
     // that symbol, and must not take the module out of the gate.
     if (/@oracle\b/.test(moduleHeader(src))) continue;
 
-    for (const m of src.matchAll(/^export function ([A-Za-z0-9_]+)/gm)) {
+    // `async` included since 2026-07-27. The original pattern matched only
+    // `export function`, which silently exempted every `export async
+    // function` — 113 declarations across the domain roots at the time, a
+    // gap documented nowhere (unlike the constants exclusion above). It was
+    // hiding five real orphans, including one whose only "use" was its own
+    // log string — the exact false-positive shape the string-stripping fix
+    // was written to kill, surviving in the blind spot that fix couldn't
+    // reach.
+    for (const m of src.matchAll(
+      /^export (?:async )?function ([A-Za-z0-9_]+)/gm
+    )) {
       const name = m[1];
       if (name.startsWith("__")) continue; // deliberate test hook
       // Per-symbol @oracle: test-only by design, in a module that is not.

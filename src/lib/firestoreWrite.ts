@@ -22,10 +22,12 @@
  * these wrappers are transparent to them.
  *
  * Offline-aware writes (those that should queue and replay when the
- * connection drops) go through `safeSave` / `safeMerge` in
- * `@/lib/offlineQueue`, which strip undefined the same way. Use these
- * direct wrappers for writes that must hit the server immediately
- * (social actions, counters, anything the user expects confirmed now).
+ * connection drops) go through `safeMerge` in `@/lib/offlineQueue`,
+ * which strips undefined the same way. (`safeSave`, its create-shaped
+ * sibling, currently has no callers — kept deliberately per CORE-01,
+ * pinned in KNOWN_ORPHAN_EXPORTS.) Use these direct wrappers for
+ * writes that must hit the server immediately (social actions,
+ * counters, anything the user expects confirmed now).
  */
 
 import {
@@ -44,7 +46,7 @@ import { stripUndefined } from "@/lib/firestoreGuards";
 /** `addDoc` with the payload stripped of `undefined`. */
 export function addDocGuarded<T extends DocumentData>(
   reference: CollectionReference<T>,
-  data: WithFieldValue<T>,
+  data: WithFieldValue<T>
 ): Promise<DocumentReference<T>> {
   return fbAddDoc(reference, stripUndefined(data));
 }
@@ -54,10 +56,12 @@ export function addDocGuarded<T extends DocumentData>(
 export function setDocGuarded<T extends DocumentData>(
   reference: DocumentReference<T>,
   data: WithFieldValue<T>,
-  options?: SetOptions,
+  options?: SetOptions
 ): Promise<void> {
   const clean = stripUndefined(data);
-  return options ? fbSetDoc(reference, clean, options) : fbSetDoc(reference, clean);
+  return options
+    ? fbSetDoc(reference, clean, options)
+    : fbSetDoc(reference, clean);
 }
 
 /** `updateDoc` (object-literal form) with the payload stripped of
@@ -65,7 +69,7 @@ export function setDocGuarded<T extends DocumentData>(
  *  is intentionally not wrapped; nothing in the codebase uses it. */
 export function updateDocGuarded<T extends DocumentData>(
   reference: DocumentReference<T>,
-  data: UpdateData<T>,
+  data: UpdateData<T>
 ): Promise<void> {
   return fbUpdateDoc(reference, stripUndefined(data));
 }

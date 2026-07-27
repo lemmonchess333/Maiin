@@ -71,20 +71,6 @@ export async function getFollowingCount(uid: string): Promise<number> {
 }
 
 /**
- * Cheap check for "do I follow anyone at all". `getFollowingCount`
- * reads every doc in the subcollection — wasteful when the caller
- * only needs a boolean (smart-default feed sub-tab). `limit(1)`
- * costs a single Firestore read regardless of how many follows the
- * user has.
- */
-export async function hasAnyFollowing(uid: string): Promise<boolean> {
-  const snap = await getDocs(
-    query(collection(db, "following", uid, "users"), limit(1))
-  );
-  return !snap.empty;
-}
-
-/**
  * Return the user's following count bounded by `cap` — cheap when
  * caller only needs to know if the count crosses a small threshold
  * (e.g. "does this user have ≥2 follows" for the leaderboard vs
@@ -318,14 +304,6 @@ export async function giveHighFive(
   return toggleKudos(activityId, userId, opts);
 }
 
-export async function hasGivenKudos(
-  activityId: string,
-  userId: string
-): Promise<boolean> {
-  const snap = await getDoc(doc(db, "kudos", activityId, "users", userId));
-  return snap.exists();
-}
-
 export async function getKudosList(
   activityId: string
 ): Promise<{ userId: string; userName: string; photoURL?: string }[]> {
@@ -492,11 +470,6 @@ export async function getFeed(
     items: snap.docs.map((d) => ({ id: d.id, ...d.data() })),
     lastDoc: snap.docs[snap.docs.length - 1],
   };
-}
-
-export async function getActivity(activityId: string) {
-  const snap = await getDoc(doc(db, "activities", activityId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 // ============================================
@@ -752,20 +725,6 @@ export async function getSuggestedPeople(
   );
 
   return list;
-}
-
-export async function searchUsersByEmail(email: string, limitCount = 10) {
-  // Read-only query against the top-level users collection. The
-  // deletion executor cleans `users/{uid}` via the `userRoot`
-  // inventory entry; this search path doesn't create new state.
-  const q = query(
-    // @deletion-classified: userRoot
-    collection(db, "users"),
-    where("email", "==", email.toLowerCase().trim()),
-    limit(limitCount)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }));
 }
 
 // ============================================
