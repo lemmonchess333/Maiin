@@ -72,8 +72,17 @@ function firestoreHooks(): HookFile[] {
 /**
  * Hooks with a known, named coverage gap. DELETE-ONLY: write the test,
  * remove the `@untested:` marker, remove the name here. Do not add.
+ *
+ * `useFirestore` came off 2026-07-27 by a third route worth naming, since
+ * neither "wrote the test" nor "deleted the hook" describes it: its ONLY
+ * Firestore access was `useHistoryData`, an export nothing called. Deleting
+ * that left a pure re-export barrel, which touches no SDK and so is not
+ * this gate's business at all. The exemption had been recording a coverage
+ * gap that existed solely because of dead code — so the honest fix was
+ * upstream of the test, and a gap can legitimately close by the surface
+ * disappearing rather than by being covered.
  */
-const EXEMPT = ["DailyLogsProvider", "useFirestore"];
+const EXEMPT = ["DailyLogsProvider"];
 
 /**
  * Suites where an inline SDK factory is CORRECT and permanent — not debt.
