@@ -127,6 +127,15 @@ export default function AccountSection({
          minutes). Sign out programmatically so client state
          immediately matches server state — user lands on login. */
       toast.success("Account deleted. Signing you out…", { duration: 4000 });
+      // Read-once flag for the Login screen's persistent confirmation —
+      // the toast alone dies in the sign-out transition (deletion QA
+      // 2026-07-27: user re-attempted login on the deleted account to
+      // verify, and got a red error as their only "confirmation").
+      try {
+        localStorage.setItem("tropos.account_deleted", "1");
+      } catch {
+        /* storage unavailable — toast remains the only confirmation */
+      }
       // The executor already removed the server claim + wrote the tombstone
       // (which rejects future callables). Skip the tombstone-rejected fallback
       // release; just drop the local token.
@@ -197,6 +206,11 @@ export default function AccountSection({
         toast.success("Account already deleted. Signing you out…", {
           duration: 4000,
         });
+        try {
+          localStorage.setItem("tropos.account_deleted", "1");
+        } catch {
+          /* storage unavailable */
+        }
         await discardDeletedAccountPushState(user.uid);
         signOut();
       } else {
