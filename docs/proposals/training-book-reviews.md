@@ -443,3 +443,207 @@ generating a ramp from a working weight.
   manuals argue for elsewhere; not a default we should ship.
 - **Full shoulder assessment protocol** (Y/T range tests needing a second
   person). Keep the injury-mechanism copy from B5, not the assessment.
+
+---
+
+## 4. The Brutality of Mountain Dog Training — John Meadows with Scott Stevenson, PhD (reviewed 2026-07-27)
+
+A different lineage from sections 1–3: **bodybuilding/hypertrophy, not
+powerlifting**, with an exercise-science co-author and 234 cited references,
+so most claims are traceable. That matters for Tropos — `hypertrophy` and
+`general` are two of the five `GOAL_PROFILES` and between them cover most
+likely users, and both map to `mainProgression: "double"`. Where the
+Juggernaut manuals optimize a one-rep max, this one optimizes muscle growth,
+so it contributes mostly **new** material rather than convergent material.
+
+**Scope caveat, stated up front.** Meadows is explicit that this is for
+people who "train like an uncaged animal" and that "most people don't need
+periodization… I don't believe that most people train hard enough to even
+need it". Tropos's user base sits nearer the gym-goer he's dismissing than
+the IFBB pros he coaches. The *structural* ideas below transfer; the
+volumes, frequencies and failure-seeking intensity do not, and adopting the
+latter would violate the design-for-the-user-base rule.
+
+### New findings
+
+**M1 — A four-phase intra-session template that inverts Tropos's exercise
+order.** Every "Base" workout runs four phases with explicit roles:
+
+| Phase | Objective | Example |
+| --- | --- | --- |
+| 1. Pre-Pump activation | Beyond a warm-up; joint-friendly, easy to feel, 8–12 reps. Explicitly **not** pre-exhaustion | Prone ham curl |
+| 2. Explosive | The heavy compound — "meat and potatoes", load progression | Low incline bench |
+| 3. Supra-maximal pump | Intensification techniques, metabolic stress | Leg press, knee extension |
+| 4. Loaded stretching | Full ROM under load while pumped | Stiff-legged deadlift |
+
+The heavy compound goes **second**, after a joint-friendly activation lift.
+His rationale is injury prevention over a training lifetime — working up to a
+top set cold, first thing, is how people "pop something" — and he pre-empts
+the obvious objection (you'll be weaker for 2–3 weeks, then you exceed the
+old numbers). There's a specific case too: train hamstrings before squats or
+compound thigh work to improve performance and reduce knee/hip pain.
+
+Tropos does the opposite everywhere. Every day builder emits main compounds
+first via `makeExercise`, then assistance via `makeAccessory`
+(`programEngine.ts:251, 279`, applied across `buildFullBody` `:300-449`,
+`buildUpperLower` `:451-609`, `buildPPL` `:611-779`). This is **not** a
+recommendation to flip that default — the powerlifting manuals argue the
+opposite order for strength goals, and they're right for their goal. It's an
+argument that **order should follow the goal profile**, which the engine
+currently has no way to express. It is also the second independent source
+(after bench B6) saying exercises carry *roles*; Meadows's roles are
+positions in a session, which is strictly more information than
+`isAccessory`.
+
+**M2 — Volume, not load, as the progression axis — and the missing
+mechanism for Tropos's dead field.** The macrocycle is three microcycles over
+~3 months:
+
+- **Preparation (2–3 wk)** — deliberately *low* volume, high intensity.
+- **Destroyer (5–8 wk)** — volume climbs until overreaching appears.
+- **Taper (2–3 wk)** — volume drops hard, **intensity stays high**. This is
+  when PRs and visible gains show up.
+
+And the key sentence: "In my programs, **progression is primarily the volume
+of the training load itself.**" Tropos progresses load per exercise (+2.5 kg
+on a rep overshoot) and has no volume-progression concept at all — while
+`generateWeekPrescription` computes a `volumeModifier` that **no consumer
+ever reads** (section 1, P2). This manual supplies exactly the mechanism that
+field was presumably meant to drive, and a shape for it that is
+goal-appropriate for hypertrophy users in a way a load ramp is not.
+
+**M3 — "Get the most out of the least."** The reason Preparation starts
+light: "If you go into a training cycle right out of the gate with guns
+blazing… how can the training stimulus be increased?" Start at the smallest
+dose that works so there is somewhere to progress *to*. Tropos computes a
+fixed weekly volume from `goalProfile.volumeMultiplier` × nutrition-phase
+multiplier, tops up under-MEV muscles, and then holds there indefinitely —
+there is no notion of deliberately starting below target to leave room. The
+science box cites a study where a 3-week preparation microcycle eliminated
+soreness and damage versus starting at high volume, **with equivalent size
+and strength gains** — which makes this a cold-start argument as much as a
+periodization one.
+
+**M4 — A direct conflict with how Tropos deloads.** Meadows's deload:
+
+| Parameter | Change |
+| --- | --- |
+| Weekly frequency | Reduce to 3–4 days |
+| Intensity / effort | Cut sets short of failure by 2–3 reps |
+| Session volume | Reduce sets by 20% |
+| Intensification techniques | Eliminate |
+
+Note what is absent: **he does not reduce the load.** The taper science
+concurs — maintaining training intensity while cutting volume is repeatedly
+found to be the most effective taper for strength, and volume can fall by up
+to two-thirds via frequency while muscle size is retained. Tropos's deload
+does the reverse on the load axis: `applyDeload` (`programEngine.ts:1180-1192`)
+cuts sets by 1 and multiplies **weight by 0.85**. Both philosophies are
+defensible and the difference is a real design question, not an obvious bug —
+but it's worth deciding deliberately rather than by inheritance, especially
+since the "cut sets short of failure by 2–3 reps" line is RIR prescription
+again (bench B2), now arriving from a third direction.
+
+**M5 — An overreaching/overtraining symptom checklist Tropos could partly
+observe.** The manual distinguishes overreaching (normal, recovers in a
+couple of weeks) from overtraining, with signs for each:
+
+- *Overreaching*: loss of "pop" — clean reps now grind; difficulty elevating
+  heart rate; tightness/stiffness and tendon discomfort on the first
+  eccentrics; DOMS even after light sessions; **appetite change and
+  bodyweight decrease**; mental fuzziness.
+- *Overtraining*: the above plus loss of motivation, sleep disturbance,
+  irritability, persistent fatigue, loss of libido.
+
+Tropos's `computeRecoveryScore` (`performanceEngine.ts:104-157`) currently
+proxies recovery from bodyweight stability, meal logging and session counts,
+with no HRV or sleep. Two items on that overreaching list — appetite change
+and bodyweight decrease — are things the app **already logs**, and "loss of
+pop" is what the RPE field would capture if it were prescribed rather than
+optional. This is a concrete, literature-backed way to sharpen an existing
+score rather than a new feature.
+
+**M6 — Split adjacency logic, from a second independent direction.** The
+split notes are explicit about ordering days to protect a structure rather
+than a muscle: "Legs and back are separated to keep lower back from getting
+too beat up"; "during back pumping workout you should go easy on your lower
+back as you will be doing heavy legs the next day"; "arms are after torso so
+they won't potentially limit chest and back training". That is the same
+interference concern section 2 (D1) raised from the deadlift side — now with
+a bodybuilder arriving at it independently. Tropos derives its split purely
+from weekly lift-day count (`programEngine.ts:138-155`) with no adjacency or
+interference rule at all.
+
+**M7 — Not every muscle group takes the same programming.** Arms, calves
+and abs are explicit exceptions: arms **skip Phase 2 entirely** (going heavy
+on curls and skullcrushers invites tendonitis — lighter loads, strict form,
+shorter rest); calves respond to very high frequency (4–7×/week) and should
+include tibialis work; abs need one pelvis-to-torso movement plus one
+torso-to-pelvis movement, 4 sets each, 2–3×/week. Tropos's day builders treat
+every movement category identically apart from set/rep counts. The
+transferable piece is small and safe: a per-category rule that arm work
+shouldn't inherit heavy main-lift progression.
+
+**M8 — Peri-workout nutrition, where Tropos owns both sides and uses one.**
+The manual prescribes a pre-workout meal finished 30–60 min before, intra-
+workout carbs/EAAs, and a post-workout meal 45–60 min after — and ties
+recovery capacity (and therefore trainable frequency) directly to getting it
+right. Tropos is unusual in owning both the training log and the food log,
+and it already has the seam: `postWorkoutNudge` surfaces remaining protein
+after a lift (`useHomeData.ts:291`, rendered in `TodayEnergy.tsx:318-327`).
+There is no pre-workout counterpart, and `phaseNutrition.ts` adjusts macros
+by **day type** (lift/run/rest), not by time relative to the session. A
+pre-session fuelling nudge would be a small, symmetric addition to a
+component that already exists. Deliberately excluding the supplement stack —
+see below.
+
+### Convergences with earlier sections
+
+- **RIR, third appearance.** The deload spec is written as "cut sets short of
+  failure by 2–3 reps." Bench B2 proposed RIR prescription; this is the same
+  currency used for regulating a whole week.
+- **Autoregulation over templates.** "Periodization should be more about
+  instincts… if you feel decimated after 4 weeks, it's ok to back off." The
+  science box cites Mann et al. (2010): autoregulated progression produced
+  **superior** gains to linear periodization in college athletes. That is the
+  strongest single citation across all four manuals for the direction B2
+  points in.
+- **Injury prevention as a programming rationale**, not an afterthought —
+  compare bench B5.
+
+### Changes to earlier rankings
+
+- **P2 (weekly wave) — split it in two.** Sections 1–3 settled *rotating
+  emphasis* for strength-goal users. M2 shows hypertrophy/general users want a
+  different axis entirely: **volume ramp → taper**. One wave shape will not
+  serve both; the goal profile should pick.
+- **B6 (exercise roles) — promote; it now has two independent sources** and a
+  richer definition (position in session, not just category).
+- **New candidate — deload philosophy review.** M4 puts Tropos's load×0.85
+  deload in question against a literature-backed alternative. Worth an
+  explicit decision before any wave work builds on top of it.
+
+### Deliberately NOT adopting
+
+- **The peri-workout supplement protocol** (intra-workout EAA/hydrolysate
+  shakes, creatine, the NSAID discussion). Supplement prescription is well
+  outside what Tropos should do, and the NSAID/muscle-damage material is
+  frankly medical. The *meal-timing* half (M8) is the transferable part.
+- **Occlusion / BFR training, bands and chains.** Equipment-dependent, and
+  BFR carries real risk when self-applied — Meadows himself hedges on it and
+  warns against chronic use.
+- **Forced reps, iso-holds, challenge sets.** All require a training partner
+  (some are impossible without one); challenge sets are explicitly a
+  once-every-2–3-weeks shock for advanced lifters. *Drop sets and partials
+  need no partner and are mainstream* — they'd belong to the same
+  intra-set-structure work the bench manual's rest-pause note deferred, if
+  that's ever picked up.
+- **Destroyer-microcycle volumes and 6–7×/week frequency.** Aimed at
+  competitive bodybuilders with tuned peri-workout nutrition; the manual
+  itself gates these behind two completed 12-week cycles.
+- **"Train to and beyond failure" as a default.** Contradicts the never-grind
+  principle sections 1–3 established, and Meadows applies it only in Phase 3
+  under supervision.
+- **Per-workout volume landmarks** (legs 8–20 sets/session etc.). Not
+  comparable to Tropos's landmarks, which are **weekly** per muscle
+  (`volumeModel.ts:208-223`). Useful only as a loose sanity reference.
