@@ -317,7 +317,8 @@ export default function SpacePostCard({
             page supplies onToggleLike (props for the post — the same
             grammar as the feed's ActivityCard); the count is the stored
             server-owned value plus this session's optimistic delta.
-            Comment counts stay read-only (comments are a later slice);
+            Comment counts open the comment sheet via onOpenComments
+            (P2g shipped them — this line used to call them a later slice);
             zero comment counts render nothing rather than dead chrome. */}
         {(() => {
           const displayLikeCount = Math.max(
