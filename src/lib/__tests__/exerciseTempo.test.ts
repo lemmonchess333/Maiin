@@ -5,7 +5,6 @@ import {
   repSampleAt,
   repSampleLoopedAt,
   repCycleMs,
-  repTotalMs,
   SET_BEAT_MS,
   DEFAULT_REP_TIMING,
 } from "../exerciseTempo";
@@ -53,13 +52,18 @@ describe("parseTempo", () => {
 /* The rep phase timeline (form-animation pass): set lead-in → eccentric →
  * pause → drive → lockout beat → done. Pure elapsed-time → sample, so the
  * whole teaching sequence pins here without mocking rAF. */
-describe("repSampleAt / repTotalMs", () => {
+describe("repSampleAt", () => {
   const T = { downMs: 1000, holdMs: 400, upMs: 800 };
+  /* `repTotalMs` was an exported helper for this sum. It was deleted
+     2026-07-27 as unreachable — `repCycleMs` is the one production
+     uses. The total is still the right thing to assert, so it is
+     spelled out here rather than dropped with the helper. */
+  const totalMs = SET_BEAT_MS + repCycleMs(T);
   // Timeline: set [0,600) → eccentric [600,1600) → pause [1600,2000)
   //           → drive [2000,2800) → lockout [2800,3200) → done.
 
   it("totals the set lead-in + all phases + the lockout beat", () => {
-    expect(repTotalMs(T)).toBe(SET_BEAT_MS + 1000 + 400 + 800 + 400);
+    expect(totalMs).toBe(SET_BEAT_MS + 1000 + 400 + 800 + 400);
   });
 
   it("holds the lockout frame through the Set lead-in (no motion before the eye settles)", () => {
@@ -94,12 +98,12 @@ describe("repSampleAt / repTotalMs", () => {
   });
 
   it("settles on done at calm effort past the total", () => {
-    expect(repSampleAt(repTotalMs(T), T)).toMatchObject({
+    expect(repSampleAt(totalMs, T)).toMatchObject({
       phase: "done",
       ecc: 0,
       targetEffort: 0.7,
     });
-    expect(repSampleAt(repTotalMs(T) + 99999, T).phase).toBe("done");
+    expect(repSampleAt(totalMs + 99999, T).phase).toBe("done");
   });
 
   it("effort peaks through the drive and stays controlled on the eccentric", () => {
@@ -118,7 +122,7 @@ describe("repSampleLoopedAt", () => {
 
   it("cycle length excludes the one-time set lead-in", () => {
     expect(repCycleMs(T)).toBe(CYCLE);
-    expect(repTotalMs(T)).toBe(SET_BEAT_MS + CYCLE);
+    expect(SET_BEAT_MS + repCycleMs(T)).toBe(SET_BEAT_MS + CYCLE);
   });
 
   it("matches the single-rep timeline through the first cycle", () => {

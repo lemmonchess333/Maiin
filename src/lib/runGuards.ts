@@ -50,9 +50,15 @@ export function requiresManualDistance(
 
 /**
  * Returns the reason a run should be flagged as invalid, or null if
- * the run is fine. Centralises the validity logic so both
- * `isInvalidRun` (which drives routing) and the `InvalidRunReview`
- * body copy (which drives explanation) read from the same source.
+ * the run is fine. THE validity predicate: routing (Run.tsx,
+ * RunSummary.tsx) and the `InvalidRunReview` body copy both read the
+ * reason from here, so the decision and its explanation cannot drift.
+ *
+ * A boolean `isInvalidRun` wrapper used to sit alongside this and was
+ * what routing called. Both call sites moved to the reason itself —
+ * they need to know WHICH failure to explain — leaving the wrapper
+ * dead. Removed 2026-07-27. Callers wanting a boolean should compare
+ * to null at the call site rather than reintroduce a second predicate.
  *
  * Uniform contract: a run is invalid if `elapsedSeconds < 30` OR
  * `distanceKm < 0.05`, applied to all activity types. For
@@ -91,14 +97,6 @@ export function getInvalidRunReason(args: {
     : MIN_OUTDOOR_DISTANCE_KM;
   if (args.distanceKm < minDistance) return "too-short";
   return null;
-}
-
-export function isInvalidRun(args: {
-  activityType: ActivityType;
-  distanceKm: number;
-  elapsedSeconds: number;
-}): boolean {
-  return getInvalidRunReason(args) !== null;
 }
 
 // Save Run button: visible for valid runs in idle or saving state.

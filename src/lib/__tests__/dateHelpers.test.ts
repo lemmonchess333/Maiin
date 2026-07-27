@@ -12,7 +12,6 @@ import { describe, it, expect } from "vitest";
 import {
   localDateString,
   localWeekKey,
-  localDayIndex,
   generateScheduledRunId,
   addLocalDays,
   parseLocalDate,
@@ -72,36 +71,46 @@ describe("localWeekKey", () => {
   });
 });
 
-describe("localDayIndex", () => {
-  it("returns 0 for Sunday, 6 for Saturday", () => {
-    expect(localDayIndex(new Date(2026, 4, 10))).toBe(0); // Sun
-    expect(localDayIndex(new Date(2026, 4, 11))).toBe(1); // Mon
-    expect(localDayIndex(new Date(2026, 4, 16))).toBe(6); // Sat
-  });
-});
-
 describe("generateScheduledRunId", () => {
   it("produces a stable id for the same inputs", () => {
-    const id1 = generateScheduledRunId({ dayIndex: 2, templateId: "tempo_run" }, "2026-05-10");
-    const id2 = generateScheduledRunId({ dayIndex: 2, templateId: "tempo_run" }, "2026-05-10");
+    const id1 = generateScheduledRunId(
+      { dayIndex: 2, templateId: "tempo_run" },
+      "2026-05-10"
+    );
+    const id2 = generateScheduledRunId(
+      { dayIndex: 2, templateId: "tempo_run" },
+      "2026-05-10"
+    );
     expect(id1).toBe(id2);
   });
 
   it("includes weekKey, dayIndex, and templateId", () => {
-    const id = generateScheduledRunId({ dayIndex: 3, templateId: "long_8k" }, "2026-05-10");
+    const id = generateScheduledRunId(
+      { dayIndex: 3, templateId: "long_8k" },
+      "2026-05-10"
+    );
     expect(id).toContain("2026-05-10");
     expect(id).toContain("3");
     expect(id).toContain("long_8k");
   });
 
   it("starts with runday_ prefix", () => {
-    const id = generateScheduledRunId({ dayIndex: 0, templateId: "easy" }, "2026-05-10");
+    const id = generateScheduledRunId(
+      { dayIndex: 0, templateId: "easy" },
+      "2026-05-10"
+    );
     expect(id).toMatch(/^runday_/);
   });
 
   it("differs between weeks for the same template", () => {
-    const id1 = generateScheduledRunId({ dayIndex: 2, templateId: "tempo" }, "2026-05-10");
-    const id2 = generateScheduledRunId({ dayIndex: 2, templateId: "tempo" }, "2026-05-17");
+    const id1 = generateScheduledRunId(
+      { dayIndex: 2, templateId: "tempo" },
+      "2026-05-10"
+    );
+    const id2 = generateScheduledRunId(
+      { dayIndex: 2, templateId: "tempo" },
+      "2026-05-17"
+    );
     expect(id1).not.toBe(id2);
   });
 });
