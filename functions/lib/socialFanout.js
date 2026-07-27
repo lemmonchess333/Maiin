@@ -182,6 +182,19 @@ const VALID_NOTIFICATION_TYPES = [
   "circle_needs_support",
   "circle_joined",
   "circle_routine_shared",
+  // SOC-P2g: space-post engagement (like = "props" flame, comment). NAMED
+  // types — the actor is already visible on the post itself, so naming is
+  // consistent, not a leak. These deep-link via spaceId (see the sanitiser).
+  //
+  // Added 2026-07-27, AFTER the callables shipped emitting them: the P2g
+  // callables threw here on every single notification, the throw landed in
+  // their best-effort catch, and the feature was silently dead in
+  // production while both halves' unit tests stayed green. The composition
+  // test in socialFanout.test.js ("every type index.js emits is valid")
+  // now pins this list against the callables' actual emissions — extend
+  // BOTH when adding a notifying callable, and the test will say so.
+  "space_post_like",
+  "space_post_comment",
 ];
 
 function sanitiseNotificationData(data) {
@@ -194,6 +207,19 @@ function sanitiseNotificationData(data) {
   }
   if (typeof data.message === "string" && data.message) {
     out.message = data.message.slice(0, 200);
+  }
+  // SOC-P2g deep-link payload. The tray navigates to the space via
+  // data.spaceId (useNotifications.ts parses it; NotificationsSheet routes
+  // on it), so stripping it here ships rows that render but go nowhere —
+  // which is exactly what happened before 2026-07-27: the callables SENT
+  // spaceId/postId and this allowlist dropped them. spaceId is a closed
+  // server-side vocabulary (SPACE_IDS, ~20 short ids) and postId is a
+  // Firestore doc id; the caps are generous ceilings, not formats.
+  if (typeof data.spaceId === "string" && data.spaceId) {
+    out.spaceId = data.spaceId.slice(0, 64);
+  }
+  if (typeof data.postId === "string" && data.postId) {
+    out.postId = data.postId.slice(0, 128);
   }
   return out;
 }

@@ -221,13 +221,22 @@ export async function toggleKudos(
 // counter). Returns the resulting liked state.
 export async function toggleSpacePostLike(
   spaceId: string,
-  postId: string
+  postId: string,
+  opts?: { fromName?: string }
 ): Promise<boolean> {
   const fn = httpsCallable<
-    { spaceId: string; postId: string },
+    { spaceId: string; postId: string; fromName?: string },
     { liked: boolean }
   >(getFunctions(), "toggleSpacePostLikeCallable");
-  const result = await fn({ spaceId, postId });
+  // fromName rides the payload for the author's notification, same as
+  // toggleKudos above. Without it the server falls back to "Someone" —
+  // which is what every like row showed until 2026-07-27, because this
+  // wrapper never sent it.
+  const result = await fn({
+    spaceId,
+    postId,
+    ...(opts?.fromName ? { fromName: opts.fromName } : {}),
+  });
   return result.data.liked;
 }
 
