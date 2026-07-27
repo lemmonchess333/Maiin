@@ -156,7 +156,6 @@ const LEGACY_INLINE_MOCKS = [
   "src/hooks/__tests__/useEffectiveTargets.test.ts",
   "src/hooks/__tests__/useFoodFavourites.test.ts",
   "src/hooks/__tests__/useHomeData.test.ts",
-  "src/hooks/__tests__/useMeals.test.ts",
   "src/lib/__tests__/socialApi.test.ts",
 ];
 
