@@ -531,3 +531,97 @@ describe("createNotification", () => {
     expect(firestore._writes[0].data.fromUserId).toBe("alice");
   });
 });
+
+describe("SOC-P2g space-post engagement notifications", () => {
+  /* These two types shipped BROKEN: the P2g callables emitted them while
+     this module's allowlist didn't contain them, so createNotification
+     threw on every call, the callables' best-effort catch swallowed it,
+     and the feature was silently dead in production — with both halves'
+     unit tests green, because nothing tested the composition. The suite
+     below pins the composition, not just the units. */
+
+  it("accepts both space-post types and stores the deep-link payload", async () => {
+    const { createNotification } = require("../lib/socialFanout");
+    for (const type of ["space_post_like", "space_post_comment"]) {
+      const firestore = makeFirestoreStub();
+      await createNotification({
+        firestore,
+        fromUid: "alice",
+        toUid: "bob",
+        data: {
+          type,
+          fromName: "Alice",
+          spaceId: "race-london-marathon",
+          postId: "post-abc123",
+          message: "Alice gave your space post props",
+        },
+        serverTimestamp,
+      });
+      expect(firestore._writes).toHaveLength(1);
+      const stored = firestore._writes[0].data;
+      expect(stored.type).toBe(type);
+      // The tray navigates via data.spaceId (useNotifications.ts parses
+      // it; NotificationsSheet routes on it). The pre-fix sanitiser
+      // dropped both fields, so even a valid type produced a row that
+      // rendered but went nowhere.
+      expect(stored.spaceId).toBe("race-london-marathon");
+      expect(stored.postId).toBe("post-abc123");
+      expect(stored.fromName).toBe("Alice");
+    }
+  });
+
+  it("length-caps the deep-link fields", async () => {
+    const { createNotification } = require("../lib/socialFanout");
+    const firestore = makeFirestoreStub();
+    await createNotification({
+      firestore,
+      fromUid: "alice",
+      toUid: "bob",
+      data: {
+        type: "space_post_like",
+        spaceId: "x".repeat(500),
+        postId: "y".repeat(500),
+      },
+      serverTimestamp,
+    });
+    const stored = firestore._writes[0].data;
+    expect(stored.spaceId).toHaveLength(64);
+    expect(stored.postId).toHaveLength(128);
+  });
+
+  it("COMPOSITION PIN: every type index.js emits is in the allowlist", () => {
+    /* The test that would have caught the P2g break. Scans the real
+       functions/index.js source for `type: "..."` inside every
+       createNotification call's data block, and asserts each against the
+       REAL exported allowlist. A new callable emitting a type this module
+       does not know fails here, at unit speed, instead of shipping a
+       notification path that throws into a best-effort catch forever.
+
+       The window is bounded (800 chars) so the regex reads only the data
+       block of the call, not unrelated `type:` fields further down. If a
+       future call site legitimately exceeds it, widen the window — do NOT
+       exempt the site. */
+    const { readFileSync } = require("node:fs");
+    const { join } = require("node:path");
+    const { VALID_NOTIFICATION_TYPES } = require("../lib/socialFanout");
+    const src = readFileSync(join(__dirname, "..", "index.js"), "utf8");
+
+    const emitted = [];
+    const callRe = /createNotification\(\{[\s\S]{0,800}?type:\s*"([a-z_]+)"/g;
+    for (const m of src.matchAll(callRe)) emitted.push(m[1]);
+
+    // Guard the scan itself: if the regex rots, this fails loudly instead
+    // of the assertion below passing over an empty list.
+    expect(emitted.length).toBeGreaterThanOrEqual(4);
+
+    for (const type of emitted) {
+      expect(
+        VALID_NOTIFICATION_TYPES,
+        `functions/index.js emits type "${type}" but socialFanout's ` +
+          `VALID_NOTIFICATION_TYPES does not allow it — createNotification ` +
+          `will throw into the caller's best-effort catch and the ` +
+          `notification will be silently dropped in production.`
+      ).toContain(type);
+    }
+  });
+});
