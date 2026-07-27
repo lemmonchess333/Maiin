@@ -188,15 +188,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   // that removes this line.
   "src/lib/runPlanResolver.ts:resolveRunPlan",
 
-  // DEBT, not design — an ADR-0008 mirror inversion. pushConsent's header
-  // says "the senders import mayTargetUser directly and table-test it",
-  // but the senders are Cloud Functions: functions/index.js hand-copies it
-  // as `mayTargetUserConsent` under a comment claiming it mirrors this.
-  // The bodies agree today and nothing holds them together, so the copy
-  // with tests is dead and the copy that decides real pushes is untested.
-  // Consolidating it is a functions/ change and wants its own PR.
-  "src/lib/pushConsent.ts:mayTargetUser",
-
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
   "src/features/program/raceRunDaysReconcile.ts:areRaceRunDaysStale",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
