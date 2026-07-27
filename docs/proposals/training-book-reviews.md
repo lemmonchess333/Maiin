@@ -6,6 +6,86 @@ improvements (with the code seams they touch), and what we deliberately do NOT
 adopt (with reasons — mostly audience fit). Proposals here are candidates, not
 locked decisions; anything that graduates goes through the normal lock flow.
 
+Seven books reviewed 2026-07-27, four lineages: competitive powerlifting
+(Juggernaut squat/deadlift/bench), bodybuilding (Mountain Dog), evidence-based
+consumer hypertrophy (Nippard ×4), academic synthesis (Helms). Later sections
+correct earlier ones where evidence shifted — read a proposal's LAST mention,
+not its first. Finding IDs (P1…, D1…, B1…, M1…, N1…, H1…) are stable and
+referenced throughout.
+
+## Consolidated backlog (final state after all seven books)
+
+Ordered by Helms's pyramid (section 6) — adherence beats programming, and
+~80% of outcome lives in the bottom levels. Within a tier, by value-per-effort.
+
+**Tier 1 — Adherence (the layer the app owns)**
+
+1. **Flexible session selection as a first-class mechanism** (H1). Reframe
+   `easierToday` from bad-day concession to daily easy/moderate/hard choice —
+   swap in a session already planned this week rather than only scaling
+   today's down. RCT-backed (McNamara & Stearne 2010: flexible choosers
+   out-gained fixed order). Smallest change, best evidence in the document.
+2. **Three-axis PR** (B1): add the sets/volume-at-load axis to `checkSetPR`
+   so nearly every honest session can register objective progress. Fix the
+   two defects found while verifying: bucket boundaries defeating the
+   more-reps axis, and `buildPRMap`'s rebuild dropping the reps tiebreak.
+
+**Tier 2 — Volume / Intensity / Frequency**
+
+3. **Daily undulation via per-day rep-range roles** (N9, constraint H10):
+   day 1 strength / day 2 hypertrophy / day 3 metabolic focus. Stateless,
+   contained in the day builders; puts the first rep variation into a Tropos
+   week. Leads the old "weekly wave" proposal (P2).
+4. **RIR/RPE as prescription, not just capture** (B2 → N3 → H2): per-exercise
+   RPE targets plus a last-set-to-failure Y/N flag (never on compounds).
+   `RPE_OPTIONS` already matches Helms's canonical scale; today it feeds one
+   hold rule behind a toggle.
+5. **Volume ramp → deload across the mesocycle** (M2, shape from N1): wire
+   the never-read `volumeModifier`; ~1 set/week undulating is enough. Start
+   below target to leave room (M3/N6/H7).
+6. **Rep ranges first-class + template boundary fix** (P1, B3, N2): stop
+   `parseInt` collapsing `"8-12"` and `"30-45s"`, carry `restSeconds` and
+   `isAccessory`, derive `progressionType` from the goal. Prerequisite for #7.
+
+**Tier 3 — Progression**
+
+7. **Progression scheme per exercise type, not per goal** (H3/N2):
+   `isAccessory` is exactly Helms's compound/isolation discriminator and
+   already exists — compounds get the 4-week wave (maps onto `week % 4`),
+   isolations get double progression. Add time-based progression and
+   assistance-reduction as axes (N2's gaps).
+8. **Deload by training age** (H4 resolving M4): the current sets−1 ×0.85
+   deload is the novice recipe applied to everyone; intermediates should get
+   half volume at held load. Decide deliberately.
+9. **Joint plateau/recovery rule** (H5): connect `plateauCount` and
+   `computeRecoveryScore` per Helms's flowchart — plateaued+recovered → add
+   volume; plateaued+unrecovered → light week; recurring → reorganize.
+10. **Overlap-aware scheduling** (D1 + M6 + H6): stop prescribing the
+    deadlift pattern 3×/week; heavy/light emphasis per slot; adjacency rules.
+    The fractional volume model already does the accounting.
+
+**Tier 4 — Exercise selection & content**
+
+11. **Exercise roles beyond `isAccessory`** (B6/M1/N5) feeding a purposeful
+    weak-point plateau breaker (P4/D2) instead of `Math.random()`.
+12. **Warm-up ramp** (P5, spec N7, pattern N11): flagged prescription rows,
+    first heavy exercise per body part only.
+13. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
+    3/151 exercises; these books supply the material for the big lifts.
+14. **Wire deload detection to the existing one-tap deload command** (P7).
+
+**Recorded, not scheduled:** lift goal / target-date back-mapping (D4,
+grill-me first); delt-head split of the `Shoulders` bucket (N10, schema
+reach); specialization cost budget (N13); recovery-score sharpening from
+observable overreaching signs (M5); intra-session set structures (N8);
+pre-workout fuelling nudge (M8); first-session AMRAP calibration (N12).
+
+**Closed:** %-of-1RM loading (rejected by four sources for this audience);
+AMRAP PR set (superseded by #2 + #4); tempo prescription (H9 — demo timing is
+a defensible use; Level 6); rest-period training effects (H8 — carry the
+field, drop the claim); Smolov/daily-max/bands/chains/BFR/failure-by-default
+(audience fit, per-section notes).
+
 ---
 
 ## 1. Juggernaut Squat Manual — Team Juggernaut (reviewed 2026-07-27)
