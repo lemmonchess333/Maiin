@@ -24,7 +24,7 @@ import { logger } from "@/lib/logger";
  * never leak across accounts — the standing rule).
  */
 export function useSpacePostLikes(spaceId: string, postIds: string[]) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const uid = user?.uid ?? null;
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [deltas, setDeltas] = useState<Record<string, number>>({});
@@ -89,7 +89,9 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
         [postId]: (prev[postId] ?? 0) + (wasLiked ? -1 : 1),
       }));
       try {
-        const serverLiked = await toggleSpacePostLike(spaceId, postId);
+        const serverLiked = await toggleSpacePostLike(spaceId, postId, {
+          fromName: profile?.displayName || "Someone",
+        });
         // Reconcile if the server disagrees (e.g. a stale seed).
         if (serverLiked === wasLiked) {
           setLiked((prev) => {
@@ -121,7 +123,7 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
         busyRef.current.delete(postId);
       }
     },
-    [uid, spaceId, liked]
+    [uid, spaceId, liked, profile?.displayName]
   );
 
   return { liked, deltas, toggle };
