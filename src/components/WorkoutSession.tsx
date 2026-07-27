@@ -35,8 +35,12 @@ import {
   buildPRMap,
   checkSetPR,
   repBucketLabel,
+  buildVolumeBest,
+  checkVolumePR,
+  exerciseSessionVolume,
   type PRMap,
   type RepBucket,
+  type VolumeBestMap,
   getRepBucket,
 } from "@/lib/prTracking";
 import {
@@ -315,6 +319,10 @@ export default function WorkoutSession({
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
+  // Backlog #2 (three-axis PR): best single-session volume per exercise.
+  // Loaded with the PR map; persisted undo-safe from final setLogs.
+  const [volumeBest, setVolumeBest] = useState<VolumeBestMap>({});
+  const firedVolumePRs = useRef<Set<string>>(new Set());
   /* Double-progression nudges per exercise index (2026-07 audit). Computed
      alongside the prefill from the SAME previous-session data; the chip
      only renders while the exercise is untouched this session. */
@@ -394,6 +402,7 @@ export default function WorkoutSession({
 
       // Load persisted PR map, or build from history if not available
       let prMapLoaded = false;
+      let volumeBestLoaded = false;
       try {
         const { doc: fbDoc, getDoc: fbGetDoc } =
           await import("firebase/firestore");
@@ -406,6 +415,10 @@ export default function WorkoutSession({
           if (data.sessionCounts) {
             setSessionCounts(data.sessionCounts as Record<string, number>);
             prMapLoaded = true;
+          }
+          if (data.volumeBest) {
+            setVolumeBest(data.volumeBest as VolumeBestMap);
+            volumeBestLoaded = true;
           }
         }
       } catch {
@@ -446,6 +459,31 @@ export default function WorkoutSession({
           }
         }
         setSessionCounts(counts);
+      }
+
+      if (!volumeBestLoaded) {
+        // Legacy stats/prMap docs predate volumeBest — rebuild from the
+        // same 50-workout window so the first post-upgrade session doesn't
+        // spray false volume PRs.
+        const historyForVolume = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            date: (data.date as string) ?? "",
+            exercises: (data.exercises || []).map(
+              (ex: {
+                exerciseName: string;
+                sets: { weightKg: number; reps: number }[];
+              }) => ({
+                exerciseName: ex.exerciseName,
+                sets: (ex.sets || []).map((s) => ({
+                  weightKg: s.weightKg || 0,
+                  reps: s.reps || 0,
+                })),
+              })
+            ),
+          };
+        });
+        setVolumeBest(buildVolumeBest(historyForVolume));
       }
     };
 
@@ -508,12 +546,17 @@ export default function WorkoutSession({
   // the actual session. Now the default is sourced from the
   // profile with a 90s fallback for users who haven't set one.
   const [restSeconds, setRestSeconds] = useState(0);
-  const [restTarget, setRestTarget] = useState(
+  const profileRestDefault =
     typeof profile?.defaultRestSeconds === "number" &&
-      profile.defaultRestSeconds > 0
+    profile.defaultRestSeconds > 0
       ? profile.defaultRestSeconds
-      : 90
-  );
+      : 90;
+  const [restTarget, setRestTarget] = useState(profileRestDefault);
+  // P1 (training-book backlog): template-derived exercises carry an authored
+  // per-exercise rest (ProgramExercise.restSeconds). startRest prefers it over
+  // the profile default — unless the user has manually changed the target
+  // this session, in which case the manual choice wins for the remainder.
+  const manualRestRef = useRef(false);
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
@@ -576,12 +619,24 @@ export default function WorkoutSession({
      Safari — the Vibrate API has never shipped there. */
 
   // Timer logic
-  const startRest = useCallback(() => {
-    setRestSeconds(0);
-    setIsResting(true);
-    chimeFiredRef.current = false;
-    haptic(50);
-  }, []);
+  const startRest = useCallback(
+    (exerciseRest?: number) => {
+      // Rest "belongs" to the exercise just performed: call sites pass that
+      // exercise's authored restSeconds (undefined for generated programs).
+      if (!manualRestRef.current) {
+        setRestTarget(
+          typeof exerciseRest === "number" && exerciseRest > 0
+            ? exerciseRest
+            : profileRestDefault
+        );
+      }
+      setRestSeconds(0);
+      setIsResting(true);
+      chimeFiredRef.current = false;
+      haptic(50);
+    },
+    [profileRestDefault]
+  );
 
   const stopRest = useCallback(() => {
     setIsResting(false);
@@ -801,6 +856,32 @@ export default function WorkoutSession({
     const isLastExercise = currentExIndex >= day.exercises.length - 1;
 
     if (isLastSet) {
+      // Backlog #2 — session-volume PR (three-axis PR, Green/B1): most
+      // total work for this exercise in one session. Quietly visible per
+      // the presentation policy: one toast, no mechanism talk. Gated on
+      // the validator like set PRs.
+      if (!validation.warn && !firedVolumePRs.current.has(exName)) {
+        const sessionVolume = exerciseSessionVolume(
+          currentSets
+            .map((st, i) =>
+              i === currentSetIndex ? { ...set, completed: true } : st
+            )
+            .filter((st) => st.completed && st.type !== "warmup")
+            .map((st) => ({ weightKg: st.weight, reps: st.reps }))
+        );
+        if (checkVolumePR(exName, sessionVolume, volumeBest, sessionCounts)) {
+          firedVolumePRs.current.add(exName);
+          setVolumeBest((prev) => ({
+            ...prev,
+            [exName]: {
+              volume: sessionVolume,
+              date: new Date().toISOString().split("T")[0],
+            },
+          }));
+          toast.success(`Volume PR — most total work on ${exName} yet`);
+        }
+      }
+
       // Log exercise performance (use last set's reps/weight/RPE — the latter
       // drives RPE autoregulation in applyProgression, D-LIFT-6).
       await onLogExercise(
@@ -820,12 +901,12 @@ export default function WorkoutSession({
         // Move to next exercise
         setCurrentExIndex((prev) => prev + 1);
         setCurrentSetIndex(0);
-        if (autoRest) startRest();
+        if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex((prev) => prev + 1);
-      if (autoRest) startRest();
+      if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
     }
   };
 
@@ -963,6 +1044,22 @@ export default function WorkoutSession({
       // Best-effort — the workout already committed above.
       if (user?.uid && Object.keys(prMap).length > 0) {
         try {
+          // Backlog #2: persist volume bests derived from the FINAL set
+          // logs — undo-safe (an undone set never inflates the record).
+          const volDate = new Date().toISOString().split("T")[0];
+          const finalVolumeBest: VolumeBestMap = { ...volumeBest };
+          setLogs.forEach((exSets, exIdx) => {
+            const name = day.exercises[exIdx]?.name;
+            if (!name) return;
+            const vol = exerciseSessionVolume(
+              exSets
+                .filter((s2) => s2.completed && s2.type !== "warmup")
+                .map((s2) => ({ weightKg: s2.weight, reps: s2.reps }))
+            );
+            if (vol > 0 && vol > (finalVolumeBest[name]?.volume ?? 0)) {
+              finalVolumeBest[name] = { volume: vol, date: volDate };
+            }
+          });
           const { doc: fbDoc } = await import("firebase/firestore");
           const { Timestamp } = await import("firebase/firestore");
           await setDocGuarded(
@@ -970,6 +1067,7 @@ export default function WorkoutSession({
             {
               map: prMap,
               sessionCounts,
+              volumeBest: finalVolumeBest,
               updatedAt: Timestamp.now(),
             },
             { merge: true }
@@ -1272,7 +1370,10 @@ export default function WorkoutSession({
               restSeconds={restSeconds}
               restTarget={restTarget}
               onStop={stopRest}
-              onChangeTarget={setRestTarget}
+              onChangeTarget={(t) => {
+                manualRestRef.current = true;
+                setRestTarget(t);
+              }}
             />
           )}
         </AnimatePresence>
@@ -1285,7 +1386,7 @@ export default function WorkoutSession({
             type="button"
             onClick={() => {
               haptic("light");
-              startRest();
+              startRest(day.exercises[currentExIndex]?.restSeconds);
             }}
             className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
           >

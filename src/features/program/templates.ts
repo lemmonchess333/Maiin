@@ -7,6 +7,13 @@ export interface TemplateExercise {
   alternatives?: string[];
   contraindicated?: string[];
   notes?: string;
+  /**
+   * Marks assistance/isolation work. Carried into ProgramExercise.isAccessory
+   * at the template→program boundary so volume balancing, express trimming
+   * and easier-today treat template-derived plans the same as generated ones.
+   * Absent = main/compound.
+   */
+  isAccessory?: boolean;
 }
 
 export interface TemplateDay {
@@ -41,7 +48,7 @@ function ex(
   sets: number,
   reps: string,
   rest: number,
-  opts?: { alt?: string[]; contra?: string[] },
+  opts?: { alt?: string[]; contra?: string[]; isAccessory?: boolean }
 ): TemplateExercise {
   return {
     name,
@@ -51,6 +58,7 @@ function ex(
     restSeconds: rest,
     ...(opts?.alt ? { alternatives: opts.alt } : {}),
     ...(opts?.contra ? { contraindicated: opts.contra } : {}),
+    ...(opts?.isAccessory ? { isAccessory: true } : {}),
   };
 }
 
@@ -67,41 +75,73 @@ const fullBodyBeginner: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Full Body A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 3, "8-10", 120, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Bench Press", "bench-press", 3, "8-10", 120, { alt: ["Chest Press Machine"], contra: ["wrist"] }),
-          ex("Barbell Row", "barbell-row", 3, "8-10", 90, { alt: ["Seated Cable Row"], contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-10", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Plank", "plank", 3, "30-45s", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Full Body B", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 3, "6-8", 150, { alt: ["Seated Leg Curl"], contra: ["lower_back"] }),
-          ex("Dumbbell Bench Press", "db-bench", 3, "10-12", 90),
-          ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Cable Crunch", "cable-crunch", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Full Body C", type: "lift",
-        exercises: [
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Dumbbell Row", "db-row", 3, "10-12", 90),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Bicep Curl", "barbell-curl", 2, "10-12", 60, { contra: ["wrist", "elbow"] }),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Full Body A",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 3, "8-10", 120, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Bench Press", "bench-press", 3, "8-10", 120, {
+              alt: ["Chest Press Machine"],
+              contra: ["wrist"],
+            }),
+            ex("Barbell Row", "barbell-row", 3, "8-10", 90, {
+              alt: ["Seated Cable Row"],
+              contra: ["lower_back"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "8-10", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Plank", "plank", 3, "30-45s", 60, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Full Body B",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 3, "6-8", 150, {
+              alt: ["Seated Leg Curl"],
+              contra: ["lower_back"],
+            }),
+            ex("Dumbbell Bench Press", "db-bench", 3, "10-12", 90),
+            ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Cable Crunch", "cable-crunch", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Full Body C",
+          type: "lift",
+          exercises: [
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
+            ex("Dumbbell Row", "db-row", 3, "10-12", 90),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Bicep Curl", "barbell-curl", 2, "10-12", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -117,41 +157,81 @@ const fullBodyHome: ProgramTemplate = {
   equipment: "home_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Full Body A", type: "lift",
-        exercises: [
-          ex("Goblet Squat", "goblet-squat", 3, "12-15", 90),
-          ex("Dumbbell Bench Press", "db-bench", 3, "10-12", 90),
-          ex("Dumbbell Row", "db-row", 3, "10-12", 90),
-          ex("Dumbbell Overhead Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Plank", "plank", 3, "30-60s", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Full Body B", type: "lift",
-        exercises: [
-          ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Dumbbell Curl", "db-curl", 2, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Full Body C", type: "lift",
-        exercises: [
-          ex("Dumbbell Lunge", "lunges", 3, "10/leg", 90, { alt: ["Goblet Squat"], contra: ["knee"] }),
-          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
-          ex("Dumbbell Tricep Extension", "overhead-extension", 2, "10-12", 60),
-          ex("Bicycle Crunch", "bicycle-crunch", 3, "15-20", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Full Body A",
+          type: "lift",
+          exercises: [
+            ex("Goblet Squat", "goblet-squat", 3, "12-15", 90),
+            ex("Dumbbell Bench Press", "db-bench", 3, "10-12", 90),
+            ex("Dumbbell Row", "db-row", 3, "10-12", 90),
+            ex("Dumbbell Overhead Press", "db-shoulder-press", 3, "10-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Plank", "plank", 3, "30-60s", 60, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Full Body B",
+          type: "lift",
+          exercises: [
+            ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
+            ex("Pull-Ups", "pull-ups", 3, "6-10", 90, {
+              alt: ["Inverted Row"],
+              contra: ["shoulder", "elbow"],
+            }),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Curl", "db-curl", 2, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Full Body C",
+          type: "lift",
+          exercises: [
+            ex("Dumbbell Lunge", "lunges", 3, "10/leg", 90, {
+              alt: ["Goblet Squat"],
+              contra: ["knee"],
+            }),
+            ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex(
+              "Chest-Supported DB Row",
+              "chest-supported-db-row",
+              3,
+              "10-12",
+              90
+            ),
+            ex(
+              "Dumbbell Tricep Extension",
+              "overhead-extension",
+              2,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+            ex("Bicycle Crunch", "bicycle-crunch", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -167,41 +247,70 @@ const fullBodyMinimal: ProgramTemplate = {
   equipment: "minimal",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Full Body A", type: "lift",
-        exercises: [
-          ex("Bodyweight Squat", "bodyweight-squat", 4, "15-20", 60),
-          ex("Push-Ups", "push-ups", 4, "10-20", 60, { contra: ["wrist"] }),
-          ex("Inverted Row", "inverted-row", 3, "8-12", 60),
-          ex("Pike Push-Up", "pike-push-up", 3, "8-12", 60, { alt: ["Push-Ups"], contra: ["shoulder", "wrist"] }),
-          ex("Plank", "plank", 3, "30-60s", 45),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Full Body B", type: "lift",
-        exercises: [
-          ex("Lunge", "bodyweight-lunge", 3, "12/leg", 60, { contra: ["knee"] }),
-          ex("Diamond Push-Ups", "diamond-push-ups", 3, "8-15", 60, { contra: ["wrist", "elbow"] }),
-          ex("Pull-Ups", "pull-ups", 3, "5-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
-          ex("Glute Bridge", "glute-bridge", 3, "15-20", 60),
-          ex("Mountain Climbers", "mountain-climbers", 3, "20/side", 45),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Full Body C", type: "lift",
-        exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
-          ex("Weighted Push-Ups", "weighted-push-ups", 3, "8-15", 60),
-          ex("Chin-Ups", "chin-ups", 3, "5-10", 90, { alt: ["Inverted Row"], contra: ["elbow"] }),
-          ex("Superman Hold", "superman-hold", 3, "20-30s", 45, { contra: ["lower_back"] }),
-          ex("Dead Bug", "dead-bug", 3, "10/side", 45),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Full Body A",
+          type: "lift",
+          exercises: [
+            ex("Bodyweight Squat", "bodyweight-squat", 4, "15-20", 60),
+            ex("Push-Ups", "push-ups", 4, "10-20", 60, { contra: ["wrist"] }),
+            ex("Inverted Row", "inverted-row", 3, "8-12", 60),
+            ex("Pike Push-Up", "pike-push-up", 3, "8-12", 60, {
+              alt: ["Push-Ups"],
+              contra: ["shoulder", "wrist"],
+              isAccessory: true,
+            }),
+            ex("Plank", "plank", 3, "30-60s", 45, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Full Body B",
+          type: "lift",
+          exercises: [
+            ex("Lunge", "bodyweight-lunge", 3, "12/leg", 60, {
+              contra: ["knee"],
+            }),
+            ex("Diamond Push-Ups", "diamond-push-ups", 3, "8-15", 60, {
+              contra: ["wrist", "elbow"],
+            }),
+            ex("Pull-Ups", "pull-ups", 3, "5-10", 90, {
+              alt: ["Inverted Row"],
+              contra: ["shoulder", "elbow"],
+            }),
+            ex("Glute Bridge", "glute-bridge", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Mountain Climbers", "mountain-climbers", 3, "20/side", 45, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Full Body C",
+          type: "lift",
+          exercises: [
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
+            ex("Weighted Push-Ups", "weighted-push-ups", 3, "8-15", 60),
+            ex("Chin-Ups", "chin-ups", 3, "5-10", 90, {
+              alt: ["Inverted Row"],
+              contra: ["elbow"],
+            }),
+            ex("Superman Hold", "superman-hold", 3, "20-30s", 45, {
+              contra: ["lower_back"],
+              isAccessory: true,
+            }),
+            ex("Dead Bug", "dead-bug", 3, "10/side", 45, { isAccessory: true }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -217,53 +326,106 @@ const upperLowerHypertrophy: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Upper A", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
-          ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Lower A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 4, "6-8", 150, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Upper B", type: "lift",
-        exercises: [
-          ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
-          ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
-          ex("Overhead Tricep Extension", "overhead-extension", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Lower B", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 4, "5-6", 180, { contra: ["lower_back"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
-          ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Upper A",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "8-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Barbell Row", "barbell-row", 4, "8-10", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Lower A",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 4, "6-8", 150, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Upper B",
+          type: "lift",
+          exercises: [
+            ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
+            ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+            ex(
+              "Overhead Tricep Extension",
+              "overhead-extension",
+              3,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Lower B",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 4, "5-6", 180, {
+              contra: ["lower_back"],
+            }),
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
+            ex("Leg Extension", "leg-extension", 3, "12-15", 60, {
+              contra: ["knee"],
+              isAccessory: true,
+            }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -279,54 +441,98 @@ const upperLowerRuns: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: true,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      // Mon: Upper, Tue: Run, Wed: Lower, Thu: Run, Fri: Upper, Sat: Lower, Sun: Rest
-      // Legs on Wed/Sat — away from long run day
-      {
-        dayNumber: 1, name: "Upper A", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
-          ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Lower A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 3, "8-10", 120, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Upper B", type: "lift",
-        exercises: [
-          ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
-          ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Lower B", type: "lift",
-        exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
-          ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Hip Thrust", "hip-thrust", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        // Mon: Upper, Tue: Run, Wed: Lower, Thu: Run, Fri: Upper, Sat: Lower, Sun: Rest
+        // Legs on Wed/Sat — away from long run day
+        {
+          dayNumber: 1,
+          name: "Upper A",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "8-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Barbell Row", "barbell-row", 4, "8-10", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Lower A",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 3, "8-10", 120, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Upper B",
+          type: "lift",
+          exercises: [
+            ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
+            ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Lower B",
+          type: "lift",
+          exercises: [
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
+            ex("Leg Extension", "leg-extension", 3, "12-15", 60, {
+              contra: ["knee"],
+              isAccessory: true,
+            }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Hip Thrust", "hip-thrust", 3, "10-12", 90),
+            ex("Seated Calf Raise", "seated-calf-raise", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -348,74 +554,157 @@ const pplHypertrophy: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Push A", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "6-8", 150, { contra: ["wrist"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Cable Crossover", "cable-crossover", 3, "12-15", 60),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
-          ex("Overhead Tricep Extension", "overhead-extension", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Pull A", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 4, "5-6", 180, { contra: ["lower_back"] }),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 120, { contra: ["shoulder", "elbow"] }),
-          ex("Barbell Row", "barbell-row", 3, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, { contra: ["wrist", "elbow"] }),
-          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Legs A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 4, "6-8", 180, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Push B", type: "lift",
-        exercises: [
-          ex("Incline Bench Press", "incline-bench", 4, "8-10", 120, { contra: ["wrist"] }),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Dips", "dips", 3, "8-12", 90, { contra: ["shoulder", "wrist", "elbow"] }),
-        ],
-      },
-      {
-        dayNumber: 5, name: "Pull B", type: "lift",
-        exercises: [
-          ex("Lat Pulldown", "lat-pulldown", 4, "8-12", 90),
-          ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
-          ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
-          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Preacher Curl", "preacher-curl", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 6, name: "Legs B", type: "lift",
-        exercises: [
-          ex("Leg Press", "leg-press", 4, "10-12", 90, { contra: ["knee"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
-          ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 4, "15-20", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Push A",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "6-8", 150, {
+              contra: ["wrist"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "8-10", 120, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
+            ex("Cable Crossover", "cable-crossover", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex(
+              "Overhead Tricep Extension",
+              "overhead-extension",
+              3,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Pull A",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 4, "5-6", 180, {
+              contra: ["lower_back"],
+            }),
+            ex("Pull-Ups", "pull-ups", 3, "6-10", 120, {
+              contra: ["shoulder", "elbow"],
+            }),
+            ex("Barbell Row", "barbell-row", 3, "8-10", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Barbell Curl", "barbell-curl", 3, "8-12", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+            ex("Hammer Curl", "hammer-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Legs A",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 4, "6-8", 180, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Push B",
+          type: "lift",
+          exercises: [
+            ex("Incline Bench Press", "incline-bench", 4, "8-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dips", "dips", 3, "8-12", 90, {
+              contra: ["shoulder", "wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 5,
+          name: "Pull B",
+          type: "lift",
+          exercises: [
+            ex("Lat Pulldown", "lat-pulldown", 4, "8-12", 90),
+            ex("Seated Cable Row", "seated-row", 4, "10-12", 90),
+            ex(
+              "Chest-Supported DB Row",
+              "chest-supported-db-row",
+              3,
+              "10-12",
+              90
+            ),
+            ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Preacher Curl", "preacher-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 6,
+          name: "Legs B",
+          type: "lift",
+          exercises: [
+            ex("Leg Press", "leg-press", 4, "10-12", 90, { contra: ["knee"] }),
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
+            ex("Leg Extension", "leg-extension", 3, "12-15", 60, {
+              contra: ["knee"],
+              isAccessory: true,
+            }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Seated Calf Raise", "seated-calf-raise", 4, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // Template 7 (`pplHypertrophyF`) removed in W1a. See comment on
@@ -437,71 +726,140 @@ const pplStrength: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Push (Strength)", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 5, "3-5", 240, { contra: ["wrist"] }),
-          ex("Overhead Press", "overhead-press", 4, "4-6", 180, { alt: ["Dumbbell Shoulder Press"], contra: ["shoulder", "wrist"] }),
-          ex("Incline Bench Press", "incline-bench", 3, "6-8", 120, { contra: ["wrist"] }),
-          ex("Weighted Chest Dip", "weighted-chest-dip", 3, "6-10", 120, { contra: ["shoulder", "wrist", "elbow"] }),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "8-12", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Pull (Strength)", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 5, "3-5", 300, { contra: ["lower_back"] }),
-          ex("Barbell Row", "barbell-row", 4, "4-6", 150, { contra: ["lower_back"] }),
-          ex("Pull-Ups", "pull-ups", 3, "5-8", 120, { contra: ["shoulder", "elbow"] }),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Barbell Curl", "barbell-curl", 3, "6-10", 60, { contra: ["wrist", "elbow"] }),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Legs (Strength)", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 5, "3-5", 300, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 4, "5-8", 150, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "6-10", 120, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "8-10", 90),
-          ex("Calf Raise", "standing-calf-raise", 4, "10-15", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Push (Volume)", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "6-8", 150, { contra: ["wrist"] }),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Dumbbell Flyes", "db-flyes", 3, "10-12", 60),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Close Grip Bench Press", "close-grip-bench", 3, "8-10", 120, { contra: ["wrist", "elbow"] }),
-        ],
-      },
-      {
-        dayNumber: 5, name: "Pull (Volume)", type: "lift",
-        exercises: [
-          ex("Lat Pulldown", "lat-pulldown", 4, "8-12", 90),
-          ex("Seated Cable Row", "seated-row", 4, "8-12", 90),
-          ex("Dumbbell Row", "db-row", 3, "8-12", 90),
-          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
-          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 6, name: "Legs (Volume)", type: "lift",
-        exercises: [
-          ex("Leg Press", "leg-press", 4, "8-12", 120, { contra: ["knee"] }),
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
-          ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Seated Calf Raise", "seated-calf-raise", 4, "12-15", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Push (Strength)",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 5, "3-5", 240, {
+              contra: ["wrist"],
+            }),
+            ex("Overhead Press", "overhead-press", 4, "4-6", 180, {
+              alt: ["Dumbbell Shoulder Press"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Incline Bench Press", "incline-bench", 3, "6-8", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Weighted Chest Dip", "weighted-chest-dip", 3, "6-10", 120, {
+              contra: ["shoulder", "wrist", "elbow"],
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "8-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Pull (Strength)",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 5, "3-5", 300, {
+              contra: ["lower_back"],
+            }),
+            ex("Barbell Row", "barbell-row", 4, "4-6", 150, {
+              contra: ["lower_back"],
+            }),
+            ex("Pull-Ups", "pull-ups", 3, "5-8", 120, {
+              contra: ["shoulder", "elbow"],
+            }),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Barbell Curl", "barbell-curl", 3, "6-10", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Legs (Strength)",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 5, "3-5", 300, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 4, "5-8", 150, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "6-10", 120, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "8-10", 90, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 4, "10-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Push (Volume)",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "6-8", 150, {
+              contra: ["wrist"],
+            }),
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-10", 120, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Dumbbell Flyes", "db-flyes", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Close Grip Bench Press", "close-grip-bench", 3, "8-10", 120, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 5,
+          name: "Pull (Volume)",
+          type: "lift",
+          exercises: [
+            ex("Lat Pulldown", "lat-pulldown", 4, "8-12", 90),
+            ex("Seated Cable Row", "seated-row", 4, "8-12", 90),
+            ex("Dumbbell Row", "db-row", 3, "8-12", 90),
+            ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Hammer Curl", "hammer-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 6,
+          name: "Legs (Volume)",
+          type: "lift",
+          exercises: [
+            ex("Leg Press", "leg-press", 4, "8-12", 120, { contra: ["knee"] }),
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "8-10/leg", 90),
+            ex("Leg Extension", "leg-extension", 3, "12-15", 60, {
+              contra: ["knee"],
+              isAccessory: true,
+            }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Seated Calf Raise", "seated-calf-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -517,79 +875,149 @@ const pplHybridRunner: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: true,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      // Intended weekly mapping (scheduler handles the actual day-of-week):
-      //   Mon: Legs (heavy, single leg day)
-      //   Tue: Pull
-      //   Wed: Push
-      //   Thu: Upper (chest/back volume)
-      //   Fri: Shoulders & Arms (NO leg work)
-      //   Sat: Long run (96h after Monday's heavy legs)
-      //   Sun: Rest
-      //
-      // Pre-W1a this template had two leg days (Wed moderate + Fri light)
-      // and a comment claiming "Saturday long run has a day gap" — but
-      // Fri→Sat was back-to-back. Running lit (Doma & Deakin 2013/2015)
-      // shows heavy lower-body work within 24h of endurance work
-      // compromises both. Collapsing to a single heavy leg day on Day 1
-      // gives 96h of recovery before Saturday's long run and matches how
-      // hybrid programs (Hybrid Athlete, Tactical Barbell) structure
-      // leg work around endurance days.
-      {
-        dayNumber: 1, name: "Legs (Heavy)", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 4, "6-8", 150, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Pull", type: "lift",
-        exercises: [
-          ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Hammer Curl", "hammer-curl", 2, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Push", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "8-10", 120, { contra: ["wrist"] }),
-          ex("Overhead Press", "overhead-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Upper — Chest & Back", type: "lift",
-        exercises: [
-          ex("Incline Bench Press", "incline-bench", 3, "8-10", 120, { contra: ["wrist"] }),
-          ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
-          ex("Chest-Supported DB Row", "chest-supported-db-row", 3, "10-12", 90),
-          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Barbell Curl", "barbell-curl", 2, "10-12", 60, { contra: ["wrist", "elbow"] }),
-          ex("Dips", "dips", 2, "8-12", 90, { contra: ["shoulder", "wrist", "elbow"] }),
-        ],
-      },
-      {
-        dayNumber: 5, name: "Shoulders & Arms", type: "lift",
-        exercises: [
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 4, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 4, "12-15", 60),
-          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
-          ex("Overhead Tricep Extension", "overhead-extension", 3, "10-12", 60),
-          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        // Intended weekly mapping (scheduler handles the actual day-of-week):
+        //   Mon: Legs (heavy, single leg day)
+        //   Tue: Pull
+        //   Wed: Push
+        //   Thu: Upper (chest/back volume)
+        //   Fri: Shoulders & Arms (NO leg work)
+        //   Sat: Long run (96h after Monday's heavy legs)
+        //   Sun: Rest
+        //
+        // Pre-W1a this template had two leg days (Wed moderate + Fri light)
+        // and a comment claiming "Saturday long run has a day gap" — but
+        // Fri→Sat was back-to-back. Running lit (Doma & Deakin 2013/2015)
+        // shows heavy lower-body work within 24h of endurance work
+        // compromises both. Collapsing to a single heavy leg day on Day 1
+        // gives 96h of recovery before Saturday's long run and matches how
+        // hybrid programs (Hybrid Athlete, Tactical Barbell) structure
+        // leg work around endurance days.
+        {
+          dayNumber: 1,
+          name: "Legs (Heavy)",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 4, "6-8", 150, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Pull",
+          type: "lift",
+          exercises: [
+            ex("Barbell Row", "barbell-row", 4, "8-10", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Hammer Curl", "hammer-curl", 2, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Push",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "8-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Incline Dumbbell Press", "incline-db-press", 3, "10-12", 90),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Upper — Chest & Back",
+          type: "lift",
+          exercises: [
+            ex("Incline Bench Press", "incline-bench", 3, "8-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
+            ex(
+              "Chest-Supported DB Row",
+              "chest-supported-db-row",
+              3,
+              "10-12",
+              90
+            ),
+            ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Barbell Curl", "barbell-curl", 2, "10-12", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+            ex("Dips", "dips", 2, "8-12", 90, {
+              contra: ["shoulder", "wrist", "elbow"],
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 5,
+          name: "Shoulders & Arms",
+          type: "lift",
+          exercises: [
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 4, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex(
+              "Overhead Tricep Extension",
+              "overhead-extension",
+              3,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+            ex("Hammer Curl", "hammer-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -609,63 +1037,129 @@ const broSplitClassic: ProgramTemplate = {
   // to any gender.
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Chest", type: "lift",
-        exercises: [
-          ex("Bench Press", "bench-press", 4, "6-10", 120, { contra: ["wrist"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
-          ex("Cable Crossover", "cable-crossover", 3, "12-15", 60),
-          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Pec Deck", "pec-deck", 3, "12-15", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Back", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 4, "5-6", 180, { contra: ["lower_back"] }),
-          ex("Barbell Row", "barbell-row", 4, "8-10", 90, { contra: ["lower_back"] }),
-          ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
-          ex("Seated Cable Row", "seated-row", 3, "10-12", 90),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Shoulders", type: "lift",
-        exercises: [
-          ex("Overhead Press", "overhead-press", 4, "6-10", 120, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 4, "12-15", 60),
-          ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Shrug", "barbell-shrug", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Arms", type: "lift",
-        exercises: [
-          ex("Barbell Curl", "barbell-curl", 4, "8-10", 60, { contra: ["wrist", "elbow"] }),
-          ex("Close Grip Bench Press", "close-grip-bench", 4, "8-10", 90, { contra: ["wrist", "elbow"] }),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60),
-          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
-          ex("Overhead Tricep Extension", "overhead-extension", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 5, name: "Legs", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 4, "6-10", 180, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, { contra: ["lower_back"] }),
-          ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
-          ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90),
-          ex("Leg Extension", "leg-extension", 3, "12-15", 60, { contra: ["knee"] }),
-          ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Chest",
+          type: "lift",
+          exercises: [
+            ex("Bench Press", "bench-press", 4, "6-10", 120, {
+              contra: ["wrist"],
+            }),
+            ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
+            ex("Cable Crossover", "cable-crossover", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Pec Deck", "pec-deck", 3, "12-15", 60, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Back",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 4, "5-6", 180, {
+              contra: ["lower_back"],
+            }),
+            ex("Barbell Row", "barbell-row", 4, "8-10", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Lat Pulldown", "lat-pulldown", 3, "10-12", 90),
+            ex("Seated Cable Row", "seated-row", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Shoulders",
+          type: "lift",
+          exercises: [
+            ex("Overhead Press", "overhead-press", 4, "6-10", 120, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Rear Delt Fly", "reverse-pec-deck", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "8-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Shrug", "barbell-shrug", 3, "10-12", 60, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Arms",
+          type: "lift",
+          exercises: [
+            ex("Barbell Curl", "barbell-curl", 4, "8-10", 60, {
+              contra: ["wrist", "elbow"],
+              isAccessory: true,
+            }),
+            ex("Close Grip Bench Press", "close-grip-bench", 4, "8-10", 90, {
+              contra: ["wrist", "elbow"],
+            }),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Tricep Pushdown", "rope-tricep-pushdown", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex("Hammer Curl", "hammer-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex(
+              "Overhead Tricep Extension",
+              "overhead-extension",
+              3,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+          ],
+        },
+        {
+          dayNumber: 5,
+          name: "Legs",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 4, "6-10", 180, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Romanian Deadlift", "romanian-deadlift", 3, "8-10", 120, {
+              contra: ["lower_back"],
+            }),
+            ex("Leg Press", "leg-press", 3, "10-12", 90, { contra: ["knee"] }),
+            ex("Leg Curl", "seated-leg-curl", 3, "10-12", 90, {
+              isAccessory: true,
+            }),
+            ex("Leg Extension", "leg-extension", 3, "12-15", 60, {
+              contra: ["knee"],
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 4, "12-15", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -681,52 +1175,101 @@ const homeDumbbellUL: ProgramTemplate = {
   equipment: "home_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Upper A", type: "lift",
-        exercises: [
-          ex("Dumbbell Bench Press", "db-bench", 4, "8-12", 90),
-          ex("Dumbbell Row", "db-row", 4, "8-12", 90),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "10-12", 90, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Pull-Ups", "pull-ups", 3, "6-10", 90, { alt: ["Inverted Row"], contra: ["shoulder", "elbow"] }),
-          ex("Dumbbell Curl", "db-curl", 3, "10-12", 60),
-          ex("Dumbbell Tricep Extension", "overhead-extension", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Lower A", type: "lift",
-        exercises: [
-          ex("Goblet Squat", "goblet-squat", 4, "10-15", 90),
-          ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
-          ex("Dumbbell Lunge", "lunges", 3, "10/leg", 90, { contra: ["knee"] }),
-          ex("Glute Bridge", "glute-bridge", 3, "15-20", 60),
-          ex("Calf Raise", "standing-calf-raise", 3, "15-20", 60),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Upper B", type: "lift",
-        exercises: [
-          ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
-          ex("Chest-Supported DB Row", "chest-supported-db-row", 4, "10-12", 90),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60),
-          ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60),
-          ex("Hammer Curl", "hammer-curl", 3, "10-12", 60),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Lower B", type: "lift",
-        exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
-          ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, { contra: ["lower_back"] }),
-          ex("Step Up", "barbell-step-ups", 3, "10/leg", 90),
-          ex("Hip Thrust", "hip-thrust", 3, "12-15", 60),
-          ex("Plank", "plank", 3, "30-60s", 45),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Upper A",
+          type: "lift",
+          exercises: [
+            ex("Dumbbell Bench Press", "db-bench", 4, "8-12", 90),
+            ex("Dumbbell Row", "db-row", 4, "8-12", 90),
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "10-12", 90, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Pull-Ups", "pull-ups", 3, "6-10", 90, {
+              alt: ["Inverted Row"],
+              contra: ["shoulder", "elbow"],
+            }),
+            ex("Dumbbell Curl", "db-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+            ex(
+              "Dumbbell Tricep Extension",
+              "overhead-extension",
+              3,
+              "10-12",
+              60,
+              { isAccessory: true }
+            ),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Lower A",
+          type: "lift",
+          exercises: [
+            ex("Goblet Squat", "goblet-squat", 4, "10-15", 90),
+            ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Dumbbell Lunge", "lunges", 3, "10/leg", 90, {
+              contra: ["knee"],
+            }),
+            ex("Glute Bridge", "glute-bridge", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+            ex("Calf Raise", "standing-calf-raise", 3, "15-20", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Upper B",
+          type: "lift",
+          exercises: [
+            ex("Incline Dumbbell Press", "incline-db-press", 4, "8-12", 90),
+            ex(
+              "Chest-Supported DB Row",
+              "chest-supported-db-row",
+              4,
+              "10-12",
+              90
+            ),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Flyes", "db-flyes", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Hammer Curl", "hammer-curl", 3, "10-12", 60, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Lower B",
+          type: "lift",
+          exercises: [
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "10/leg", 90),
+            ex("Dumbbell Romanian Deadlift", "db-rdl", 3, "10-12", 90, {
+              contra: ["lower_back"],
+            }),
+            ex("Step Up", "barbell-step-ups", 3, "10/leg", 90),
+            ex("Hip Thrust", "hip-thrust", 3, "12-15", 60, {
+              isAccessory: true,
+            }),
+            ex("Plank", "plank", 3, "30-60s", 45, { isAccessory: true }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -742,51 +1285,86 @@ const fatLossCircuit: ProgramTemplate = {
   equipment: "full_gym",
   gender: ["male", "female", "unspecified"],
   runIntegration: false,
-  weeks: [{
-    weekNumber: 1,
-    days: [
-      {
-        dayNumber: 1, name: "Full Body Circuit A", type: "lift",
-        exercises: [
-          ex("Barbell Squat", "squat", 3, "12-15", 45, { alt: ["Bulgarian Split Squat", "Hip Thrust"], contra: ["knee"] }),
-          ex("Bench Press", "bench-press", 3, "12-15", 45, { contra: ["wrist"] }),
-          ex("Barbell Row", "barbell-row", 3, "12-15", 45, { contra: ["lower_back"] }),
-          ex("Overhead Press", "overhead-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder", "wrist"] }),
-          ex("Plank", "plank", 3, "30-45s", 30),
-        ],
-      },
-      {
-        dayNumber: 2, name: "Full Body Circuit B", type: "lift",
-        exercises: [
-          ex("Deadlift", "deadlift", 3, "10-12", 60, { contra: ["lower_back"] }),
-          ex("Dumbbell Bench Press", "db-bench", 3, "12-15", 45),
-          ex("Lat Pulldown", "lat-pulldown", 3, "12-15", 45),
-          ex("Dumbbell Lateral Raise", "lateral-raise", 3, "15-20", 30),
-          ex("Mountain Climbers", "mountain-climbers", 3, "20/side", 30),
-        ],
-      },
-      {
-        dayNumber: 3, name: "Full Body Circuit C", type: "lift",
-        exercises: [
-          ex("Leg Press", "leg-press", 3, "15-20", 45, { contra: ["knee"] }),
-          ex("Incline Dumbbell Press", "incline-db-press", 3, "12-15", 45),
-          ex("Seated Cable Row", "seated-row", 3, "12-15", 45),
-          ex("Face Pulls", "face-pulls", 3, "15-20", 30),
-          ex("Bicycle Crunch", "bicycle-crunch", 3, "15-20", 30),
-        ],
-      },
-      {
-        dayNumber: 4, name: "Full Body Circuit D", type: "lift",
-        exercises: [
-          ex("Bulgarian Split Squat", "bulgarian-split", 3, "12/leg", 45),
-          ex("Cable Crossover", "cable-crossover", 3, "12-15", 30),
-          ex("Dumbbell Row", "db-row", 3, "12-15", 45),
-          ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "12-15", 45, { alt: ["Lateral Raise"], contra: ["shoulder"] }),
-          ex("Dead Bug", "dead-bug", 3, "10/side", 30),
-        ],
-      },
-    ],
-  }],
+  weeks: [
+    {
+      weekNumber: 1,
+      days: [
+        {
+          dayNumber: 1,
+          name: "Full Body Circuit A",
+          type: "lift",
+          exercises: [
+            ex("Barbell Squat", "squat", 3, "12-15", 45, {
+              alt: ["Bulgarian Split Squat", "Hip Thrust"],
+              contra: ["knee"],
+            }),
+            ex("Bench Press", "bench-press", 3, "12-15", 45, {
+              contra: ["wrist"],
+            }),
+            ex("Barbell Row", "barbell-row", 3, "12-15", 45, {
+              contra: ["lower_back"],
+            }),
+            ex("Overhead Press", "overhead-press", 3, "12-15", 45, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder", "wrist"],
+            }),
+            ex("Plank", "plank", 3, "30-45s", 30, { isAccessory: true }),
+          ],
+        },
+        {
+          dayNumber: 2,
+          name: "Full Body Circuit B",
+          type: "lift",
+          exercises: [
+            ex("Deadlift", "deadlift", 3, "10-12", 60, {
+              contra: ["lower_back"],
+            }),
+            ex("Dumbbell Bench Press", "db-bench", 3, "12-15", 45),
+            ex("Lat Pulldown", "lat-pulldown", 3, "12-15", 45),
+            ex("Dumbbell Lateral Raise", "lateral-raise", 3, "15-20", 30, {
+              isAccessory: true,
+            }),
+            ex("Mountain Climbers", "mountain-climbers", 3, "20/side", 30, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 3,
+          name: "Full Body Circuit C",
+          type: "lift",
+          exercises: [
+            ex("Leg Press", "leg-press", 3, "15-20", 45, { contra: ["knee"] }),
+            ex("Incline Dumbbell Press", "incline-db-press", 3, "12-15", 45),
+            ex("Seated Cable Row", "seated-row", 3, "12-15", 45),
+            ex("Face Pulls", "face-pulls", 3, "15-20", 30, {
+              isAccessory: true,
+            }),
+            ex("Bicycle Crunch", "bicycle-crunch", 3, "15-20", 30, {
+              isAccessory: true,
+            }),
+          ],
+        },
+        {
+          dayNumber: 4,
+          name: "Full Body Circuit D",
+          type: "lift",
+          exercises: [
+            ex("Bulgarian Split Squat", "bulgarian-split", 3, "12/leg", 45),
+            ex("Cable Crossover", "cable-crossover", 3, "12-15", 30, {
+              isAccessory: true,
+            }),
+            ex("Dumbbell Row", "db-row", 3, "12-15", 45),
+            ex("Dumbbell Shoulder Press", "db-shoulder-press", 3, "12-15", 45, {
+              alt: ["Lateral Raise"],
+              contra: ["shoulder"],
+            }),
+            ex("Dead Bug", "dead-bug", 3, "10/side", 30, { isAccessory: true }),
+          ],
+        },
+      ],
+    },
+  ],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

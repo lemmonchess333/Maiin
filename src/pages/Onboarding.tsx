@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/auth";
 import type { UserProfile } from "@/lib/auth";
 import { doc, serverTimestamp } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE } from "@/lib/tdee";
@@ -22,10 +21,11 @@ import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import { motion, AnimatePresence } from "framer-motion";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
-import type {
-  ProgramTemplate,
-  TemplateExercise,
-} from "@/features/program/templates";
+import type { ProgramTemplate } from "@/features/program/templates";
+import {
+  templateExToProgEx,
+  templateProgressionFor,
+} from "@/features/program/templateConversion";
 import {
   matchTemplate,
   applyInjuryFilters,
@@ -33,7 +33,6 @@ import {
 import type {
   ProgramState,
   WorkoutDay,
-  ProgramExercise,
   PreferredSplit,
   SplitType,
   Experience,
@@ -122,45 +121,24 @@ function templateSplitToSplitType(s: ProgramTemplate["split"]): SplitType {
   }
 }
 
-function templateExToProgEx(te: TemplateExercise): ProgramExercise {
-  const repNum = parseInt(te.reps, 10) || 8;
-  return {
-    name: te.name,
-    exerciseId: te.exerciseId,
-    /* Was hardcoded "horizontal_push" — caused every template-derived
-       day to mis-tag muscle groups on the social activity card (Pull A
-       showed "horizontal_push" because every exercise inherited the
-       default). Inference is name-based: see lib/exerciseMovementCategory. */
-    movementCategory: inferMovementCategory(te.name, te.exerciseId),
-    sets: te.sets,
-    reps: repNum,
-    weight: 0,
-    progressionType: "linear",
-    lastSuccessfulWeight: 0,
-    lastAttemptedWeight: 0,
-    consecutiveFailures: 0,
-    plateauCount: 0,
-    performanceHistory: [],
-    lastPerformance: null,
-    // Carry `notes` from the template through to program state so the
-    // injury-substitution rationale written by `applyInjuryFilters`
-    // survives the conversion — previously dropped, so users saw their
-    // swapped exercises with no context for why.
-    ...(te.notes !== undefined ? { notes: te.notes } : {}),
-  };
-}
-
 function templateToProgramState(
   template: ProgramTemplate,
   goal: FitnessGoal
 ): ProgramState {
   const week1 = template.weeks[0];
+  // P1 (training-book backlog): the conversion itself lives in
+  // features/program/templateConversion.ts so the boundary is unit-tested.
+  // Main lifts take the template goal's progression scheme; accessories
+  // stay "linear" for parity with the generated-program path.
+  const mainProgression = templateProgressionFor(template.goal);
   const workouts: WorkoutDay[] = week1.days
     .filter((d) => d.type === "lift")
     .map((d) => ({
       dayName: d.name,
       dayType: d.type,
-      exercises: d.exercises.map(templateExToProgEx),
+      exercises: d.exercises.map((te) =>
+        templateExToProgEx(te, mainProgression)
+      ),
       completed: false,
     }));
 
