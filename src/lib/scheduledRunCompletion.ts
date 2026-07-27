@@ -1,20 +1,16 @@
 /**
- * PR-J — soft-link reframe helper (TypeScript port).
+ * PR-J — soft-link reframe helper. THE source, not a port.
  *
- * TS-side counterpart to `functions/lib/scheduledRunCompletion.js`
- * (the CommonJS source of truth for the server). Q3 P32 intended a
- * single CommonJS source with TS re-exports via this path, but
- * `tsconfig.app.json:include = ["src"]` makes a cross-module import
- * + `.d.ts` bridge awkward. The port keeps the surface symmetric;
- * the cross-consistency test in
- * `src/lib/__tests__/scheduledRunCompletion.cross.test.ts` pins the
- * JS + TS to produce identical claim maps for shared fixtures so
- * drift is caught at CI time.
- *
- * See `functions/lib/scheduledRunCompletion.js` for the contract
- * doc (Q1–Q3 pins, walk discipline, DI shape). This file is the
- * direct port; comments referencing the locks live in the JS file
- * to avoid maintaining the same doc twice.
+ * This header used to point at `functions/lib/scheduledRunCompletion.js`
+ * as "the CommonJS source of truth" and at a cross-test pinning the two
+ * equal. Both were DELETED in #1733: the JS "source" was required by
+ * nothing (ADR-0008's motivating case — two suites, a parity pin, zero
+ * protection on running code), and the server deliberately answers a
+ * DIFFERENT question via `functions/lib/raceDayCompletion.js` (a
+ * date-scoped ANY over raw docs, vs this file's claim-map over
+ * normalised rows — see that file's non-mirror rationale). This TS file
+ * is the only implementation of the client rule and carries its own
+ * contract now; there is no second copy to keep in step.
  */
 
 import type {
@@ -188,8 +184,8 @@ function compareSavedRuns(a: SavedRunLike, b: SavedRunLike): number {
 
 /**
  * Compute the claim map for a set of runDays against saved runs +
- * manual completions. See `functions/lib/scheduledRunCompletion.js`
- * for the full contract — this file is the direct port.
+ * manual completions. This is the full contract — the JS "source" this
+ * doc used to defer to was deleted in #1733 (see the module header).
  */
 export function computeClaims(
   runDays: ScheduledRunDay[],
