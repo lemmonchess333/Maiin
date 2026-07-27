@@ -107,11 +107,3 @@ export function useUserPRMap(uid: string | null | undefined): UseUserPRMap {
   const loading = !!uid && !prMap && !error;
   return { prMap, loading, error };
 }
-
-/** Test-only escape hatch — clears the module-level cache. Not used
- *  in production code; exposed so unit tests can run with isolated
- *  state and so a future "refresh PRs" button has a hook to drop. */
-export function _clearPRMapCache(): void {
-  cache.clear();
-  inflight.clear();
-}
