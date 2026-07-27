@@ -14,6 +14,13 @@
  * There is no cache-reset hook, so each test uses its own uid rather than
  * reaching into module state. That keeps the test honest about the cache
  * rather than pretending it away.
+ *
+ * One DID exist — `_clearPRMapCache`, whose doc said it was "exposed so
+ * unit tests can run with isolated state". This file never called it, and
+ * said so in this very paragraph. Deleted 2026-07-27 when the reachability
+ * gate started scanning `src/hooks`. Keep the per-uid discipline: a reset
+ * hook would let a test pretend the cache away, which is the one thing
+ * this suite exists to prove.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";

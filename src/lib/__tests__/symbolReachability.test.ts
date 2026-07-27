@@ -50,6 +50,22 @@
  * so it could not have failed CI spuriously. A gate that cries wolf gets
  * disabled; one that misses some real cases still ratchets. Worth keeping
  * in mind for the next gate: prefer the miss to the false alarm.
+ *
+ * SCOPE (2026-07-27). `src/hooks` joined DOMAIN_ROOTS. It had been outside
+ * the scan for no reason beyond the roots being written before the hook
+ * layer grew — and hooks are exactly where a stale export hides, since a
+ * live hook keeps its whole module reachable. Adding it turned up ONE
+ * orphan across ~75 files: `useUserPRMap._clearPRMapCache`, a "test-only
+ * escape hatch" its own sibling suite explicitly declined to use (that
+ * suite's header states there is no reset hook). Deleted rather than
+ * pinned — a helper whose stated consumer says in writing that it does not
+ * consume it is rot, not debt.
+ *
+ * Note the single underscore: the automatic exemption is `__`, so a
+ * one-underscore name reads as production API to this gate. That is the
+ * right default — `_foo` is a convention, `__foo` is a declaration — but
+ * it is why this survived until the root was added rather than being
+ * waved through as a test hook.
  */
 import { describe, it, expect } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
@@ -87,7 +103,7 @@ function stripComments(src: string): string {
 }
 
 /** Roots whose exports must be reachable. */
-const DOMAIN_ROOTS = ["src/lib", "src/features", "functions/lib"];
+const DOMAIN_ROOTS = ["src/lib", "src/features", "src/hooks", "functions/lib"];
 /** Everything that could plausibly consume them. */
 const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
 
