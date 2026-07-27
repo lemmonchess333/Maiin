@@ -212,6 +212,28 @@ function commonProps() {
   };
 }
 
+/**
+ * Props for "the user's race is <distance> on <date>", with the goal in BOTH
+ * stores — which is what production looks like outside the brief window
+ * between the profile write and the plan regeneration.
+ *
+ * Needed because the section now reads the goal through `resolveRunPlan`,
+ * where `profile.raceGoal` is canonical and the `programState.runPlan`
+ * mirror only backfills. Several fixtures below used to set the MIRROR
+ * alone and leave the profile on `makeProfile`'s default 18 Apr 2027 — a
+ * disagreement no real user has, which passed only because the section read
+ * the mirror. Setting one store and asserting on it proved the component
+ * read that store, not that it read the right one.
+ */
+function raceProps(distance: string, targetDate: string) {
+  return {
+    ...commonProps(),
+    profile: makeProfile({
+      raceGoal: { distance, targetDate },
+    } as Partial<UserProfile>),
+  };
+}
+
 function renderSection(
   props: ReturnType<typeof commonProps>,
   programState: ProgramState
@@ -327,7 +349,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
         currentWeek: 0,
       },
     });
-    renderSection(commonProps(), programState);
+    renderSection(raceProps("10k", "2027-07-16"), programState);
     // Cockpit identity: distance as a readable heading (not "MARATHON"
     // machine text), human-readable target date, and the countdown.
     expect(screen.getByRole("heading", { name: "10K" })).toBeInTheDocument();
@@ -338,6 +360,29 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     const editBtn = screen.getByRole("button", { name: /Edit race goal/i });
     expect(editBtn.className).toContain("text-muted-foreground");
     expect(editBtn.style.color).toBe("");
+  });
+
+  // R4 — the store-disagreement window. `profile.raceGoal` is CANONICAL and
+  // `programState.runPlan.raceGoal` is a mirror written by a later
+  // regeneration, so between the two writes the mirror is empty while the
+  // user unambiguously has a race. Reading the mirror alone drops the whole
+  // race surface for that window. `runPlanResolver.reconcileRaceGoal` exists
+  // to settle this (profile wins, mirror backfills) — this pins that the
+  // section actually goes through it.
+  //
+  // Every other fixture here sets the goal in BOTH stores, which is exactly
+  // why the drift stayed invisible.
+  it("keeps the race surface when only the profile has the goal (mirror not yet written)", () => {
+    const programState = makeProgramState([makeRunDay()], {
+      runPlan: {
+        mode: "race_prep",
+        totalWeeks: 12,
+        currentWeek: 0,
+      },
+    } as Partial<ProgramState>);
+    renderSection(commonProps(), programState);
+    expect(screen.getByRole("heading", { name: "10K" })).toBeInTheDocument();
+    expect(screen.getByText(/18 Apr 2027/)).toBeInTheDocument();
   });
 });
 
@@ -588,7 +633,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
 
   it("Run9 (k): compressed shows as a calm RaceHeader note, NOT an amber alert banner", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "race_prep" });
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2099-01-01" },
+    } as Partial<UserProfile>);
     const programState = makeProgramState([], {
       runPlan: {
         mode: "race_prep",
@@ -616,7 +664,10 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
 
   it("race-elapsed banner is dismissible and persists via localStorage for the week", () => {
     const props = commonProps();
-    const profile = makeProfile({ runMode: "race_prep" });
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "5k", targetDate: "2020-01-01" },
+    } as Partial<UserProfile>);
     // Past race date with no recovery / no-show state → triggers
     // the legacy elapsed fallback.
     const programState = makeProgramState([], {
@@ -796,7 +847,10 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
   // race 2 days ago, race-day slot still "planned" (not yet logged, server
   // hasn't flipped no-show). raceGoal is read from programState.runPlan.
   function raceRecentState() {
-    const profile = makeProfile({ runMode: "race_prep" });
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2026-05-27" },
+    } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
         makeRunDay({
@@ -888,7 +942,10 @@ describe("ProgrammeRunSection — Run9 (l) race-recent did-you-race hero", () =>
   // ── race-today (T+0) hero body ──────────────────────────────────
   // System time is 2026-05-29 (this describe's beforeEach). Race ON today.
   function raceTodayState() {
-    const profile = makeProfile({ runMode: "race_prep" });
+    const profile = makeProfile({
+      runMode: "race_prep",
+      raceGoal: { distance: "half", targetDate: "2026-05-29" },
+    } as Partial<UserProfile>);
     const programState = makeProgramState(
       [
         makeRunDay({
