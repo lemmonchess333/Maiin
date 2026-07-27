@@ -1,8 +1,25 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
+import { Timestamp } from "firebase/firestore";
+import {
+  seedFirestore,
+  resetFirestore,
+  writeLog,
+  readDoc,
+  flushSnapshots,
+} from "@/test/firestoreHarness";
 
+// The `user` identity must be STABLE across renders. `useFoodFavourites`
+// has TWO effects keyed on it (`[user]` and `[favourites, isOnline,
+// user]`), so a fresh object literal per render re-subscribes on every
+// render — and since the fake delivers a fresh `data()` object per fire,
+// that setState re-renders, which re-subscribes... a runaway loop that
+// hangs the worker. The old stub hid it by never firing spontaneously.
+// Same bug as `useEffectiveTargets` (#1801); the real `useAuth` returns
+// a stable user from context.
+const AUTH = vi.hoisted(() => ({ user: { uid: "me" } }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: { uid: "me" } }),
+  useAuth: () => AUTH,
 }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/logger", () => ({
@@ -14,99 +31,61 @@ vi.mock("@/hooks/useOnlineStatus", () => ({
   useOnlineStatus: () => onlineState,
 }));
 
-const trackedEvents: Array<{ event: string; metadata: Record<string, unknown> }> = [];
+const trackedEvents: Array<{
+  event: string;
+  metadata: Record<string, unknown>;
+}> = [];
 vi.mock("@/lib/foodAnalytics", () => ({
   track: vi.fn((event: string, metadata: Record<string, unknown>) => {
     trackedEvents.push({ event, metadata });
   }),
 }));
 
-// vi.mock factories are hoisted — anything they reference must come
-// from vi.hoisted() or be defined inline inside the factory.
-const fixtures = vi.hoisted(() => {
-  const snapshotListeners: Array<
-    (snap: { docs: Array<{ id: string; data: () => Record<string, unknown> }> }) => void
-  > = [];
-  const setDocCalls: Array<{ ref: { id: string }; payload: Record<string, unknown> }> = [];
-  const deleteDocCalls: Array<{ ref: { id: string } }> = [];
-  const INCREMENT_SENTINEL = Symbol("FieldValue.increment");
-  class FakeTimestamp {
-    millis: number;
-    constructor(millis: number) {
-      this.millis = millis;
-    }
-    toMillis() {
-      return this.millis;
-    }
-    static now() {
-      return new FakeTimestamp(Date.now());
-    }
-    static fromMillis(ms: number) {
-      return new FakeTimestamp(ms);
-    }
-  }
-  return {
-    snapshotListeners,
-    setDocCalls,
-    deleteDocCalls,
-    INCREMENT_SENTINEL,
-    FakeTimestamp,
-  };
-});
+/**
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ *
+ * It hand-rolled a `FakeTimestamp` class and an `INCREMENT_SENTINEL`
+ * symbol — both of which the shared fake already exports — plus capture
+ * arrays for setDoc/deleteDoc. Favourites are now real documents under
+ * `users/me/foodFavourites`, so `increment()` actually accumulates
+ * against stored state instead of being asserted as an opaque token.
+ */
+vi.mock("firebase/firestore");
 
-const {
-  snapshotListeners,
-  setDocCalls,
-  deleteDocCalls,
-  INCREMENT_SENTINEL,
-  FakeTimestamp,
-} = fixtures;
+import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
-vi.mock("firebase/firestore", () => ({
-  collection: vi.fn(),
-  query: vi.fn((c: unknown) => c),
-  orderBy: vi.fn(),
-  onSnapshot: vi.fn(
-    (
-      _q: unknown,
-      onNext: (snap: {
-        docs: Array<{ id: string; data: () => Record<string, unknown> }>;
-      }) => void,
-    ) => {
-      fixtures.snapshotListeners.push(onNext);
-      return () => {};
-    },
-  ),
-  doc: vi.fn(
-    (_db: unknown, _coll: string, _uid: string, _sub: string, id: string) => ({ id }),
-  ),
-  setDoc: vi.fn(async (ref: { id: string }, payload: Record<string, unknown>) => {
-    fixtures.setDocCalls.push({ ref, payload });
-  }),
-  deleteDoc: vi.fn(async (ref: { id: string }) => {
-    fixtures.deleteDocCalls.push({ ref });
-  }),
-  increment: vi.fn(() => fixtures.INCREMENT_SENTINEL),
-  Timestamp: fixtures.FakeTimestamp,
-}));
+const FAVES = "users/me/foodFavourites";
 
-import { useFoodFavourites } from "../useFoodFavourites";
-
-function pumpSnapshot(docs: Array<{ id: string; data: Record<string, unknown> }>) {
-  snapshotListeners.forEach((l) =>
-    l({ docs: docs.map((d) => ({ id: d.id, data: () => d.data })) }),
-  );
+/** Seed favourite documents the hook's own subscription will deliver. */
+function pumpSnapshot(
+  docs: Array<{ id: string; data: Record<string, unknown> }>
+) {
+  const tree: Record<string, Record<string, unknown>> = {};
+  for (const d of docs) tree[`${FAVES}/${d.id}`] = d.data;
+  if (Object.keys(tree).length > 0) seedFirestore(tree);
 }
 
-function makeDoc(over: Partial<{
-  id: string;
-  name: string;
-  useCount: number;
-  timeOfDay: string;
-  source: string;
-  calories: number;
-  lastUsedMs: number;
-}>) {
+/** Writes to the favourites collection, in order. */
+const faveWrites = () =>
+  writeLog().filter((w) => w.path.startsWith(`${FAVES}/`));
+
+/** Document writes. The fake labels a merge write `set:merge` rather
+ *  than `set`, so match the family — the hook always merges, and
+ *  hard-coding one label would silently match nothing. */
+const faveSets = () => faveWrites().filter((w) => w.op.startsWith("set"));
+const faveDeletes = () => faveWrites().filter((w) => w.op === "delete");
+
+function makeDoc(
+  over: Partial<{
+    id: string;
+    name: string;
+    useCount: number;
+    timeOfDay: string;
+    source: string;
+    calories: number;
+    lastUsedMs: number;
+  }>
+) {
   return {
     id: over.id ?? "x",
     data: {
@@ -119,16 +98,14 @@ function makeDoc(over: Partial<{
       useCount: over.useCount ?? 1,
       timeOfDay: over.timeOfDay ?? "any",
       source: over.source ?? "manual",
-      lastUsed: new FakeTimestamp(over.lastUsedMs ?? 0),
+      lastUsed: Timestamp.fromMillis(over.lastUsedMs ?? 0),
     },
   };
 }
 
 describe("useFoodFavourites", () => {
   beforeEach(() => {
-    snapshotListeners.length = 0;
-    setDocCalls.length = 0;
-    deleteDocCalls.length = 0;
+    resetFirestore();
     trackedEvents.length = 0;
     onlineState.isOnline = true;
   });
@@ -149,10 +126,10 @@ describe("useFoodFavourites", () => {
               useCount: -3,
               timeOfDay: "morning",
               source: "manual",
-              lastUsed: new FakeTimestamp(1000),
+              lastUsed: Timestamp.fromMillis(1000),
             },
           },
-        ]),
+        ])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(1));
       const fav = result.current.favourites[0];
@@ -170,7 +147,7 @@ describe("useFoodFavourites", () => {
           makeDoc({ id: "older", useCount: 5, lastUsedMs: 100 }),
           makeDoc({ id: "newer", useCount: 5, lastUsedMs: 200 }),
           makeDoc({ id: "oldest", useCount: 5, lastUsedMs: 50 }),
-        ]),
+        ])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(3));
       expect(result.current.favourites.map((f) => f.id)).toEqual([
@@ -188,7 +165,7 @@ describe("useFoodFavourites", () => {
         pumpSnapshot([
           makeDoc({ id: "one", useCount: 1, timeOfDay: "morning" }),
           makeDoc({ id: "two", useCount: 2, timeOfDay: "morning" }),
-        ]),
+        ])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(2));
       const relevant = result.current.getTimeRelevant(8, 10);
@@ -202,7 +179,7 @@ describe("useFoodFavourites", () => {
           // High-useCount "any" item must NOT push out the morning-tagged item.
           makeDoc({ id: "lunch-any", useCount: 20, timeOfDay: "any" }),
           makeDoc({ id: "breakfast-am", useCount: 3, timeOfDay: "morning" }),
-        ]),
+        ])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(2));
       const relevant = result.current.getTimeRelevant(8, 10); // 8am → morning
@@ -214,7 +191,7 @@ describe("useFoodFavourites", () => {
       act(() =>
         pumpSnapshot([
           makeDoc({ id: "evening", useCount: 4, timeOfDay: "evening" }),
-        ]),
+        ])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(1));
       const relevant = result.current.getTimeRelevant(8, 5); // morning
@@ -236,8 +213,38 @@ describe("useFoodFavourites", () => {
           fat: 4,
         });
       });
-      expect(setDocCalls).toHaveLength(1);
-      expect(setDocCalls[0].payload.useCount).toBe(INCREMENT_SENTINEL);
+      expect(faveSets()).toHaveLength(1);
+
+      // The old assertion compared the payload against an opaque
+      // INCREMENT_SENTINEL symbol the stub minted — it proved a token
+      // was passed, not that it behaved like an increment. The fake
+      // MATERIALISES the sentinel, so the claim in the test's title is
+      // now checkable directly: re-adding accumulates rather than
+      // overwriting with a precomputed 1.
+      const key = faveSets()[0].path.split("/").pop()!;
+
+      // The title's claim, asserted directly: the PAYLOAD must not be a
+      // precomputed number. A local `previousCount + 1` would be, and
+      // would still land on the right stored value here — so asserting
+      // only the result cannot tell the two apart. (Checked: mutating
+      // the hook to write `predictedCount` leaves an accumulation-only
+      // assertion green.) The point of increment() is concurrent
+      // multi-device writes, where the local count is stale.
+      expect(
+        typeof (faveSets()[0].data as Record<string, unknown>).useCount
+      ).not.toBe("number");
+      expect(readDoc(`${FAVES}/${key}`)!.useCount).toBe(1);
+
+      await act(async () => {
+        await result.current.addFavourite({
+          name: "Oatmeal",
+          calories: 200,
+          protein: 8,
+          carbs: 30,
+          fat: 4,
+        });
+      });
+      expect(readDoc(`${FAVES}/${key}`)!.useCount).toBe(2);
     });
 
     it("preserves Unicode characters in the doc-id key (CJK, accents)", async () => {
@@ -260,9 +267,9 @@ describe("useFoodFavourites", () => {
           fat: 5,
         });
       });
-      expect(setDocCalls[0].ref.id).toBe("炒飯");
+      expect(faveSets()[0].path.split("/").pop()).toBe("炒飯");
       // NFKC + lower-case + whitespace→_
-      expect(setDocCalls[1].ref.id).toBe("piña_colada");
+      expect(faveSets()[1].path.split("/").pop()).toBe("piña_colada");
     });
 
     it("rejects zero-macro junk (OFF safety check)", async () => {
@@ -279,7 +286,7 @@ describe("useFoodFavourites", () => {
         });
         expect(res.count).toBe(0);
       });
-      expect(setDocCalls).toHaveLength(0);
+      expect(faveSets()).toHaveLength(0);
     });
 
     it("sets timeOfDay + source on first write only", async () => {
@@ -297,8 +304,8 @@ describe("useFoodFavourites", () => {
           source: "search",
         });
       });
-      expect(setDocCalls[0].payload).toHaveProperty("timeOfDay");
-      expect(setDocCalls[0].payload).toHaveProperty("source", "search");
+      expect(faveSets()[0].data).toHaveProperty("timeOfDay");
+      expect(faveSets()[0].data).toHaveProperty("source", "search");
 
       // Now simulate the snapshot reflecting the new doc.
       act(() =>
@@ -310,7 +317,7 @@ describe("useFoodFavourites", () => {
             timeOfDay: "morning",
             source: "search",
           }),
-        ]),
+        ])
       );
 
       // Second write — payload must NOT overwrite timeOfDay/source.
@@ -324,14 +331,14 @@ describe("useFoodFavourites", () => {
           source: "manual",
         });
       });
-      expect(setDocCalls[1].payload).not.toHaveProperty("timeOfDay");
-      expect(setDocCalls[1].payload).not.toHaveProperty("source");
+      expect(faveSets()[1].data).not.toHaveProperty("timeOfDay");
+      expect(faveSets()[1].data).not.toHaveProperty("source");
     });
 
     it("flags graduation when previousCount=1 transitions to 2", async () => {
       const { result } = renderHook(() => useFoodFavourites());
       act(() =>
-        pumpSnapshot([makeDoc({ id: "oats", name: "Oats", useCount: 1 })]),
+        pumpSnapshot([makeDoc({ id: "oats", name: "Oats", useCount: 1 })])
       );
       await waitFor(() => expect(result.current.favourites).toHaveLength(1));
       let res: { isNew: boolean; count: number } | undefined;
@@ -389,7 +396,7 @@ describe("useFoodFavourites", () => {
           useCount: i + 1,
           timeOfDay: "any",
           source: "manual",
-          lastUsed: new FakeTimestamp(ages[i] ?? i * 1000),
+          lastUsed: Timestamp.fromMillis(ages[i] ?? i * 1000),
         },
       }));
     }
@@ -403,7 +410,7 @@ describe("useFoodFavourites", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(1000);
       });
-      expect(deleteDocCalls).toHaveLength(0);
+      expect(faveDeletes()).toHaveLength(0);
     });
 
     it("evicts the lowest-useCount entry after the debounce when over cap", async () => {
@@ -414,12 +421,12 @@ describe("useFoodFavourites", () => {
       });
       expect(result.current.favourites).toHaveLength(51);
       // Before the debounce — no eviction yet.
-      expect(deleteDocCalls).toHaveLength(0);
+      expect(faveDeletes()).toHaveLength(0);
       await act(async () => {
         await vi.advanceTimersByTimeAsync(500);
       });
-      expect(deleteDocCalls).toHaveLength(1);
-      expect(deleteDocCalls[0].ref.id).toBe("fav-0");
+      expect(faveDeletes()).toHaveLength(1);
+      expect(faveDeletes()[0].path.split("/").pop()).toBe("fav-0");
     });
 
     it("tie-breaks equal useCount by oldest lastUsed", async () => {
@@ -439,7 +446,7 @@ describe("useFoodFavourites", () => {
           useCount: 1,
           timeOfDay: "any",
           source: "manual",
-          lastUsed: new FakeTimestamp(i * 1000),
+          lastUsed: Timestamp.fromMillis(i * 1000),
         },
       }));
       await act(async () => {
@@ -449,8 +456,8 @@ describe("useFoodFavourites", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(500);
       });
-      expect(deleteDocCalls).toHaveLength(1);
-      expect(deleteDocCalls[0].ref.id).toBe("fav-0");
+      expect(faveDeletes()).toHaveLength(1);
+      expect(faveDeletes()[0].path.split("/").pop()).toBe("fav-0");
     });
 
     it("does NOT evict while offline", async () => {
@@ -463,7 +470,7 @@ describe("useFoodFavourites", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(2000);
       });
-      expect(deleteDocCalls).toHaveLength(0);
+      expect(faveDeletes()).toHaveLength(0);
     });
 
     it("emits food_pantry_eviction analytics with id + useCount + totalBefore", async () => {
@@ -485,15 +492,25 @@ describe("useFoodFavourites", () => {
 
   describe("graduation events", () => {
     it("does NOT fire on the initial snapshot (existing useCount>=2 docs)", async () => {
+      // Seed BEFORE mount. The docs must be present in the FIRST
+      // snapshot the hook receives — that is what "existing" means, and
+      // it is the case the guard exists for. Under the old stub the
+      // ordering was accidental: it never fired until pumped, so the
+      // pumped batch WAS the first snapshot. The fake delivers on
+      // subscribe, so seeding afterwards makes these arrivals a
+      // second, changed snapshot — a graduation, correctly.
+      pumpSnapshot([
+        makeDoc({ id: "a", useCount: 5 }),
+        makeDoc({ id: "b", useCount: 3 }),
+      ]);
       const { result } = renderHook(() => useFoodFavourites());
       await act(async () => {
-        pumpSnapshot([
-          makeDoc({ id: "a", useCount: 5 }),
-          makeDoc({ id: "b", useCount: 3 }),
-        ]);
+        await flushSnapshots();
       });
       expect(result.current.graduationToken).toBe(0);
-      const evs = trackedEvents.filter((e) => e.event === "food_pantry_graduated");
+      const evs = trackedEvents.filter(
+        (e) => e.event === "food_pantry_graduated"
+      );
       expect(evs).toHaveLength(0);
     });
 
@@ -557,7 +574,7 @@ describe("useFoodFavourites", () => {
         sugar: undefined,
         sodium: undefined,
         servingSize: "1 bowl",
-        lastUsed: new FakeTimestamp(12345),
+        lastUsed: Timestamp.fromMillis(12345),
         useCount: 7,
         timeOfDay: "morning" as const,
         source: "nl" as const,
@@ -567,14 +584,18 @@ describe("useFoodFavourites", () => {
         ok = await result.current.restoreFavourite(captured);
       });
       expect(ok).toBe(true);
-      expect(setDocCalls).toHaveLength(1);
-      expect(setDocCalls[0].ref.id).toBe("oats");
+      expect(faveSets()).toHaveLength(1);
+      expect(faveSets()[0].path.split("/").pop()).toBe("oats");
       // Restored payload preserves the captured numerics — undo must
       // not bump useCount or reset lastUsed.
-      expect(setDocCalls[0].payload.useCount).toBe(7);
-      expect(setDocCalls[0].payload.lastUsed).toBe(captured.lastUsed);
-      expect(setDocCalls[0].payload.timeOfDay).toBe("morning");
-      expect(setDocCalls[0].payload.source).toBe("nl");
+      expect((faveSets()[0].data as Record<string, unknown>).useCount).toBe(7);
+      expect((faveSets()[0].data as Record<string, unknown>).lastUsed).toBe(
+        captured.lastUsed
+      );
+      expect((faveSets()[0].data as Record<string, unknown>).timeOfDay).toBe(
+        "morning"
+      );
+      expect((faveSets()[0].data as Record<string, unknown>).source).toBe("nl");
     });
   });
 
@@ -586,8 +607,8 @@ describe("useFoodFavourites", () => {
       await act(async () => {
         await result.current.removeFavourite("oats");
       });
-      expect(deleteDocCalls).toHaveLength(1);
-      expect(deleteDocCalls[0].ref.id).toBe("oats");
+      expect(faveDeletes()).toHaveLength(1);
+      expect(faveDeletes()[0].path.split("/").pop()).toBe("oats");
     });
   });
 });
