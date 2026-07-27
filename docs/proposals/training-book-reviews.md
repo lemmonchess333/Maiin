@@ -841,3 +841,119 @@ Worth recording so the doc isn't read as a pure gap list:
 - **Taking the last set to failure by default.** The Y/N flag from N3 is the
   transferable part; a blanket "isolation goes to failure" default contradicts
   the never-grind principle sections 1–3 established.
+
+### 5b. Shoulder Hypertrophy + Neck and Trap Guide (same system, reviewed 2026-07-27)
+
+Two more programs from the same author, reviewed against sections 5's
+findings rather than re-deriving them — the system-level material (RPE
+columns, LSRPE, tempo, exercise stability, block structure, volume ramp) is
+identical and already recorded above. Six things are genuinely new.
+
+**N9 — Each DAY carries a rep-range role. This is the cheapest possible
+version of the weekly wave.** The neck/trap guide labels its three days
+outright:
+
+| Day | Label | Reps | RPE |
+| --- | --- | --- | --- |
+| 1 | **STRENGTH FOCUS** | 6–8 (rack pulls) | 7.5 |
+| 2 | **HYPERTROPHY FOCUS** | 10–12 / 12–15 | 8–9 |
+| 3 | **METABOLIC FOCUS** | 15–20 | 8–9 |
+
+The back program does the same (Day 1 strength focus, Day 2 hypertrophy
+focus). This is daily undulating periodization, and it matters for Tropos
+because **it needs no week-to-week state**. Sections 1–4 kept arriving at
+"vary the stimulus", but every version so far (Juggernaut's rotating
+emphasis, Meadows's volume ramp) required the generated week to differ from
+the last one — which is precisely what Tropos doesn't do, and what makes P2
+expensive. Assigning each day a rep-range role is a change *inside* the day
+builders: Tropos already names days by muscle focus ("Full Body — Squat
+Focus", "Push — Chest Focus"), but every day draws the same
+`profile.mainReps` / `profile.accessoryReps` from the goal profile, so there
+is currently **no rep variation anywhere in a Tropos week**. Giving day 1 the
+low end and day 3 the high end of a range is a small, stateless change that
+delivers most of the benefit. This should probably lead P2 rather than the
+week-to-week wave.
+
+**N10 — Delt heads are tracked separately, and Tropos's model can't.** The
+shoulder program totals each head at the foot of every week: *"WEEKLY FRONT
+DELT VOLUME = 7, SIDE DELT = 16, REAR DELT = 18, TOTAL DELT VOLUME = 41."*
+The asymmetry is the whole point — front delts get heavy carryover from
+pressing, so they need little direct work, while side and rear are the
+commonly under-trained heads.
+
+Tropos maps `front delts`, `side delts`, `rear delts` **and** `rotator cuff`
+all onto one canonical `"Shoulders"` bucket (`volumeModel.ts:68-74`). The
+codebase already knows this is lossy — the push/pull balancer deliberately
+works at the movement level *because* of it:
+
+> "the canonical "Shoulders" group lumps the push-y front delt with the
+> pull-y rear delt, so a muscle-level ratio would be misleading"
+> — `volumeModel.ts:302-305`
+
+That comment documents the workaround for push/pull balance. What it doesn't
+say is the second cost: `balanceWeeklyVolume` targets a single `Shoulders`
+landmark, so it cannot detect the most common real-world shoulder imbalance —
+a presser whose front delts are saturated while side and rear are starved.
+Splitting the canonical muscle is a schema-level change with real reach
+(`CANONICAL_MUSCLE_ORDER`, the body diagram, recovery windows), so this is a
+finding to record rather than a quick fix — but it is now evidenced rather
+than theoretical.
+
+**N11 — Warm-up sets are program rows, not a separate concept.** The shoulder
+program lists them inline with their own targets: `OHP (WARM UP) 1×8-10 @ 50%,
+RPE 5 — "rehearse technique"`, then `OHP (WARM UP) 2×4-6 @ 60-70%, RPE 7 —
+"get used to heavier loading"`, then the working sets. That's the
+implementation answer for P5/N7: emit warm-up sets as ordinary prescription
+rows with a flag, rather than inventing a parallel warm-up structure.
+`WorkoutSession` already has a `"warmup"` `SetType` — currently only a user
+tag on a logged set — so the display side largely exists.
+
+**N12 — The program calibrates itself in session one.** Week 1 Day 1 of the
+shoulder program *is* the AMRAP test: work up, do one AMRAP set at 90%,
+derive the 1RM, and every subsequent week's percentages key off it. Tropos
+instead seeds untrained mains from bodyweight multiples × experience level
+(`startingLoads.ts:30-44`) and then waits for the event-driven progression to
+converge. A first-session calibration is more accurate and self-correcting,
+and it's a cold-start idea as much as a loading one — worth noting alongside
+the deadlift section's D4 (lift goals), which would need the same machinery.
+
+**N13 — Specialization has a cost budget.** The FAQs reason explicitly about
+combining programs: chest + shoulder concurrently is refused outright ("very
+high volume of pressing… risk of overuse and injury would be high, even in
+the most advanced"), and back + arms is allowed only with bicep work cut 50%
+initially. The underlying concept — temporarily prioritize one muscle group
+and *pay for it* by reducing others — doesn't exist in Tropos at all;
+`balanceWeeklyVolume` only ever adds. This is the same shape as the bench
+manual's B4 (accessory volume should sometimes come down) arriving from a
+different direction, and it's the natural home for a future "bring up a weak
+body part" feature.
+
+**N14 — Cited per-exercise risk notes with a named substitute.** On upright
+rows the guide quotes Schoenfeld (2011) on subacromial impingement, states
+the mitigation (keep elbows below shoulder height), the contraindication
+(pre-existing shoulder damage → avoid), and the fallback chain (barbell →
+rope upright row → rope facepull). That is exactly the shape of
+`TemplateExercise.contraindicated` + `alternatives` and `injurySubstitutions.ts`
+— validation that Tropos's data model is right, plus a usable content source
+for the `commonMistakes` / "Watch out" backfill (P6).
+
+**On the men's/women's editions.** The shoulder program ships as two
+editions, and the stated rationale is worth recording because it is *not*
+essentialist: the women's edition adds front-delt isolation **because women
+typically do less chest work, so they get less front-delt carryover**, and
+carries more rep volume. Nippard is explicit that "the base core of the
+programs are the same… the majority of basic musculo-skeletal and exercise
+science training principles apply to both sexes." The transferable principle
+is **adjust for what else is in the program, not for the category of person**
+— which is a better rule than the vestigial `gender` field on
+`ProgramTemplate` (whose scoring `matchTemplate` has already removed). Front-
+delt volume should account for pressing carryover for *everyone*; N10 is what
+blocks Tropos from doing that today.
+
+### Updated ranking after 5b
+
+- **P2 — lead with daily undulation (N9), not the weekly wave.** Stateless,
+  contained inside the day builders, and it finally puts rep variation into a
+  Tropos week. The week-to-week volume ramp (M2/N1) becomes the follow-on.
+- **P5 (warm-up) — implementation pattern resolved** by N11: warm-up sets as
+  flagged prescription rows.
