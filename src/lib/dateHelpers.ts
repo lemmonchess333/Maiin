@@ -12,7 +12,6 @@
  *   - `localWeekKey` → Sunday-start week key ("YYYY-MM-DD" of the
  *     Sunday on or before the input date). Matches the existing
  *     JS convention `Date.getDay()` where 0 = Sunday.
- *   - `localDayIndex` → 0=Sun..6=Sat, mirrors Date.getDay()
  *   - `generateScheduledRunId` → stable deterministic ID for a
  *     scheduled run instance; preserved across user-initiated moves
  */
@@ -36,11 +35,6 @@ export function localWeekKey(d: Date = new Date()): string {
   return localDateString(sunday);
 }
 
-/** 0=Sun, 1=Mon, ..., 6=Sat. Local. */
-export function localDayIndex(d: Date = new Date()): number {
-  return d.getDay();
-}
-
 /**
  * Stable deterministic ID for a scheduled run. Format:
  *   "runday_{weekKey}_{dayIndex}_{templateId}"
@@ -54,7 +48,7 @@ export function localDayIndex(d: Date = new Date()): number {
  */
 export function generateScheduledRunId(
   args: { dayIndex: number; templateId: string },
-  weekKey: string,
+  weekKey: string
 ): string {
   return `runday_${weekKey}_${args.dayIndex}_${args.templateId}`;
 }

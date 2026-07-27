@@ -102,6 +102,28 @@ function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/[^\n]*/g, " ");
 }
 
+/**
+ * Comments AND quoted strings. A name inside a string literal is not a
+ * call, and the case is not hypothetical: `logger.error("useHistoryData
+ * error:", e)` made `useHistoryData` look self-used, so the gate filed a
+ * genuinely dead export as an implementation detail. Same shape had
+ * already been seen on `useBodyweightTrend`.
+ *
+ * Template literals are deliberately LEFT ALONE. Their `${...}` holes
+ * contain real code, so eating a whole template would delete real call
+ * sites — a false ALARM, the direction this gate refuses to fail in.
+ * Both observed cases were double-quoted log messages, so the narrow
+ * rule catches them at no risk.
+ *
+ * Import specifiers are unaffected: the module path is inside the quotes,
+ * the symbol names are outside them.
+ */
+function stripCommentsAndStrings(src: string): string {
+  return stripComments(src)
+    .replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+    .replace(/'(?:[^'\\\n]|\\.)*'/g, "''");
+}
+
 /** Roots whose exports must be reachable. */
 const DOMAIN_ROOTS = ["src/lib", "src/features", "src/hooks", "functions/lib"];
 /** Everything that could plausibly consume them. */
@@ -132,8 +154,49 @@ const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
  * write the reason down or delete the module.
  *
  * Do not add entries; a new orphan means the export was never needed.
+ *
+ * The exception is a PRECISION FIX to the scanner, which does not find new
+ * orphans so much as stop hiding old ones. The 2026-07-27 string-literal
+ * fix surfaced eleven at once: seven were rot and were deleted, four are
+ * pinned below with reasons. Read those four as "was always an orphan, the
+ * gate just couldn't see it", not as new debt. If you make the scanner
+ * sharper again, expect the same and budget for the triage — the entries
+ * are cheap, the reading is not.
  */
 const KNOWN_ORPHAN_EXPORTS = [
+  // ── native-injection seams (staged; CLAUDE.md's documented pattern) ──
+  // Web ships the real path, native calls the setter from its boot path
+  // once the Capacitor plugin lands. CLAUDE.md names the appCheck split as
+  // THE reference for "if native parity is deferred, leave the seam".
+  "src/lib/appCheck.ts:setNativeAppCheckProvider",
+  "src/lib/shareCard/instagramShare.ts:setNativeInstagramProvider",
+
+  // Test-harness accessor with a named future consumer: the web popstate
+  // handler (module header's platform scope is "native now, web popstate
+  // as a fast-follow"). The provider does NOT use it, despite the doc
+  // that used to say so.
+  "src/lib/backDismiss.ts:useBackDismissController",
+
+  // Staged, and the bug it fixes is STILL LIVE. runPlanResolver was built
+  // (architecture review candidate #1) to be the single definition of
+  // elapsed / inRecovery / recoveryEnded, after those were found inlined
+  // ~6× with different notions of "today". Only the back-compat shim
+  // `resolveRunPlanSurface` was ever adopted; ProgrammeRunSection.tsx:389
+  // and useProgram.ts:661 still hand-derive the recovery window today. So
+  // this is tested logic for a real drift that has not been fixed —
+  // deleting it throws that away. Migrating those call sites is the work
+  // that removes this line.
+  "src/lib/runPlanResolver.ts:resolveRunPlan",
+
+  // DEBT, not design — an ADR-0008 mirror inversion. pushConsent's header
+  // says "the senders import mayTargetUser directly and table-test it",
+  // but the senders are Cloud Functions: functions/index.js hand-copies it
+  // as `mayTargetUserConsent` under a comment claiming it mirrors this.
+  // The bodies agree today and nothing holds them together, so the copy
+  // with tests is dead and the copy that decides real pushes is untested.
+  // Consolidating it is a functions/ change and wants its own PR.
+  "src/lib/pushConsent.ts:mayTargetUser",
+
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
   "src/features/program/raceRunDaysReconcile.ts:areRaceRunDaysStale",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
@@ -161,13 +224,21 @@ function orphanExports(): string[] {
   ).filter((p) => !p.includes(`${repoRoot}/functions/node_modules`));
   const consumers = files
     .filter((p) => !isTest(p))
-    .map((p) => ({ path: p, text: stripComments(readFileSync(p, "utf8")) }));
+    .map((p) => ({
+      path: p,
+      text: stripCommentsAndStrings(readFileSync(p, "utf8")),
+    }));
 
   const found: string[] = [];
   for (const file of files) {
     const rel = file.slice(repoRoot.length + 1);
     if (isTest(file) || !DOMAIN_ROOTS.some((r) => rel.startsWith(r))) continue;
     const src = readFileSync(file, "utf8");
+    // Declarations are matched against RAW source (so `@oracle` docs and
+    // the `export function` line survive), but the USE counts below run
+    // against this — otherwise a module's own prose or log messages vouch
+    // for its dead exports.
+    const body = stripCommentsAndStrings(src);
     // Header marker → the whole module is test-only by design. Scoped to
     // the header on purpose: a per-symbol @oracle further down claims only
     // that symbol, and must not take the module out of the gate.
@@ -185,7 +256,7 @@ function orphanExports(): string[] {
       if (usedElsewhere) continue;
       // Used inside its own module? Then it's an implementation detail
       // that happens to be exported, not an orphan.
-      if ((src.match(ref) ?? []).length > 1) continue;
+      if ((body.match(ref) ?? []).length > 1) continue;
       found.push(`${rel}:${name}`);
     }
   }
