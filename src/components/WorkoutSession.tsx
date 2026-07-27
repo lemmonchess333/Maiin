@@ -508,12 +508,17 @@ export default function WorkoutSession({
   // the actual session. Now the default is sourced from the
   // profile with a 90s fallback for users who haven't set one.
   const [restSeconds, setRestSeconds] = useState(0);
-  const [restTarget, setRestTarget] = useState(
+  const profileRestDefault =
     typeof profile?.defaultRestSeconds === "number" &&
-      profile.defaultRestSeconds > 0
+    profile.defaultRestSeconds > 0
       ? profile.defaultRestSeconds
-      : 90
-  );
+      : 90;
+  const [restTarget, setRestTarget] = useState(profileRestDefault);
+  // P1 (training-book backlog): template-derived exercises carry an authored
+  // per-exercise rest (ProgramExercise.restSeconds). startRest prefers it over
+  // the profile default — unless the user has manually changed the target
+  // this session, in which case the manual choice wins for the remainder.
+  const manualRestRef = useRef(false);
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
@@ -576,12 +581,24 @@ export default function WorkoutSession({
      Safari — the Vibrate API has never shipped there. */
 
   // Timer logic
-  const startRest = useCallback(() => {
-    setRestSeconds(0);
-    setIsResting(true);
-    chimeFiredRef.current = false;
-    haptic(50);
-  }, []);
+  const startRest = useCallback(
+    (exerciseRest?: number) => {
+      // Rest "belongs" to the exercise just performed: call sites pass that
+      // exercise's authored restSeconds (undefined for generated programs).
+      if (!manualRestRef.current) {
+        setRestTarget(
+          typeof exerciseRest === "number" && exerciseRest > 0
+            ? exerciseRest
+            : profileRestDefault
+        );
+      }
+      setRestSeconds(0);
+      setIsResting(true);
+      chimeFiredRef.current = false;
+      haptic(50);
+    },
+    [profileRestDefault]
+  );
 
   const stopRest = useCallback(() => {
     setIsResting(false);
@@ -820,12 +837,12 @@ export default function WorkoutSession({
         // Move to next exercise
         setCurrentExIndex((prev) => prev + 1);
         setCurrentSetIndex(0);
-        if (autoRest) startRest();
+        if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
       }
     } else {
       // Move to next set, start rest timer (unless auto-start is off)
       setCurrentSetIndex((prev) => prev + 1);
-      if (autoRest) startRest();
+      if (autoRest) startRest(day.exercises[currentExIndex]?.restSeconds);
     }
   };
 
@@ -1272,7 +1289,10 @@ export default function WorkoutSession({
               restSeconds={restSeconds}
               restTarget={restTarget}
               onStop={stopRest}
-              onChangeTarget={setRestTarget}
+              onChangeTarget={(t) => {
+                manualRestRef.current = true;
+                setRestTarget(t);
+              }}
             />
           )}
         </AnimatePresence>
@@ -1285,7 +1305,7 @@ export default function WorkoutSession({
             type="button"
             onClick={() => {
               haptic("light");
-              startRest();
+              startRest(day.exercises[currentExIndex]?.restSeconds);
             }}
             className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
           >

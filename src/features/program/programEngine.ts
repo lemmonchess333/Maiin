@@ -1072,8 +1072,28 @@ export function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
-      // True double progression: accumulate reps until ceiling, then increase weight
-      if (actualReps >= exercise.reps + 2 && rpeOk) {
+      const rangeMax = exercise.repRangeMax;
+      if (!isBodyweight && rangeMax != null && rangeMax > resetReps) {
+        // Range-aware double progression (P1, training-book backlog): the
+        // rep TARGET climbs through [baseReps, repRangeMax] as targets are
+        // completed; load rises only once the top of the range is reached,
+        // then the target resets to the bottom. Pre-range behaviour (below)
+        // waited for the user to spontaneously overshoot by 2 — the target
+        // itself never moved. RPE ≥ threshold holds the climb, same hold
+        // contract as every other progression path.
+        if (rpeOk) {
+          if (actualReps >= rangeMax) {
+            updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+            updated.reps = resetReps;
+          } else {
+            // Next target: one past what was actually done (monotonic —
+            // completed ⇒ actualReps >= exercise.reps), capped at the range.
+            updated.reps = Math.min(rangeMax, actualReps + 1);
+          }
+        }
+      } else if (actualReps >= exercise.reps + 2 && rpeOk) {
+        // Legacy double progression (no authored range): accumulate reps
+        // until a 2-rep overshoot, then increase weight
         if (isBodyweight) {
           // Bodyweight: progress via rep target increase (capped)
           bumpBodyweightReps();

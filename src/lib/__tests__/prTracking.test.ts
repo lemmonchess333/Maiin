@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { getRepBucket, repBucketLabel, buildPRMap, checkSetPR } from "../prTracking";
+import {
+  getRepBucket,
+  repBucketLabel,
+  buildPRMap,
+  checkSetPR,
+} from "../prTracking";
 import type { RepBucket } from "../prTracking";
 
 describe("getRepBucket", () => {
@@ -37,24 +42,28 @@ describe("buildPRMap", () => {
     const workouts = [
       {
         date: "2025-01-01",
-        exercises: [{
-          exerciseName: "Bench Press",
-          sets: [
-            { weightKg: 80, reps: 5 },
-            { weightKg: 85, reps: 5 },
-            { weightKg: 100, reps: 1 },
-          ],
-        }],
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: 80, reps: 5 },
+              { weightKg: 85, reps: 5 },
+              { weightKg: 100, reps: 1 },
+            ],
+          },
+        ],
       },
       {
         date: "2025-01-03",
-        exercises: [{
-          exerciseName: "Bench Press",
-          sets: [
-            { weightKg: 82.5, reps: 5 },
-            { weightKg: 90, reps: 3 },
-          ],
-        }],
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: 82.5, reps: 5 },
+              { weightKg: 90, reps: 3 },
+            ],
+          },
+        ],
       },
     ];
 
@@ -67,24 +76,30 @@ describe("buildPRMap", () => {
   });
 
   it("ignores sets with zero weight", () => {
-    const map = buildPRMap([{
-      date: "2025-01-01",
-      exercises: [{
-        exerciseName: "Push Ups",
-        sets: [{ weightKg: 0, reps: 20 }],
-      }],
-    }]);
+    const map = buildPRMap([
+      {
+        date: "2025-01-01",
+        exercises: [
+          {
+            exerciseName: "Push Ups",
+            sets: [{ weightKg: 0, reps: 20 }],
+          },
+        ],
+      },
+    ]);
     expect(map["Push Ups"]["10rm"]).toBeNull();
   });
 
   it("handles multiple exercises", () => {
-    const map = buildPRMap([{
-      date: "2025-01-01",
-      exercises: [
-        { exerciseName: "Squat", sets: [{ weightKg: 120, reps: 5 }] },
-        { exerciseName: "Deadlift", sets: [{ weightKg: 180, reps: 1 }] },
-      ],
-    }]);
+    const map = buildPRMap([
+      {
+        date: "2025-01-01",
+        exercises: [
+          { exerciseName: "Squat", sets: [{ weightKg: 120, reps: 5 }] },
+          { exerciseName: "Deadlift", sets: [{ weightKg: 180, reps: 1 }] },
+        ],
+      },
+    ]);
     expect(map["Squat"]["5rm"]?.weight).toBe(120);
     expect(map["Deadlift"]["1rm"]?.weight).toBe(180);
   });
@@ -94,19 +109,23 @@ describe("checkSetPR", () => {
   const prMap = buildPRMap([
     {
       date: "2025-01-01",
-      exercises: [{
-        exerciseName: "Bench Press",
-        sets: [
-          { weightKg: 80, reps: 5 },
-          { weightKg: 100, reps: 1 },
-        ],
-      }],
+      exercises: [
+        {
+          exerciseName: "Bench Press",
+          sets: [
+            { weightKg: 80, reps: 5 },
+            { weightKg: 100, reps: 1 },
+          ],
+        },
+      ],
     },
   ]);
   const sessionCounts = { "Bench Press": 5, "New Exercise": 1 };
 
   it("returns bucket when weight beats record", () => {
-    expect(checkSetPR("Bench Press", 82.5, 5, prMap, sessionCounts)).toBe("5rm");
+    expect(checkSetPR("Bench Press", 82.5, 5, prMap, sessionCounts)).toBe(
+      "5rm"
+    );
   });
 
   it("returns null when weight does not beat record and reps are same", () => {
@@ -124,12 +143,16 @@ describe("checkSetPR", () => {
   });
 
   it("returns bucket for a new rep range with no prior record", () => {
-    expect(checkSetPR("Bench Press", 60, 10, prMap, sessionCounts)).toBe("10rm");
+    expect(checkSetPR("Bench Press", 60, 10, prMap, sessionCounts)).toBe(
+      "10rm"
+    );
   });
 
   it("returns null when session count < minSessions", () => {
     expect(checkSetPR("New Exercise", 200, 5, prMap, sessionCounts)).toBeNull();
-    expect(checkSetPR("New Exercise", 200, 5, prMap, sessionCounts, 3)).toBeNull();
+    expect(
+      checkSetPR("New Exercise", 200, 5, prMap, sessionCounts, 3)
+    ).toBeNull();
   });
 
   it("returns null for zero weight", () => {
@@ -137,7 +160,86 @@ describe("checkSetPR", () => {
   });
 
   it("returns bucket for exercise not in prMap but with enough sessions", () => {
-    const counts = { "OHP": 4 };
+    const counts = { OHP: 4 };
     expect(checkSetPR("OHP", 50, 8, prMap, counts)).toBe("8rm");
+  });
+});
+
+// Training-book backlog section 3 (B1): the rebuild path must apply the same
+// same-weight-more-reps tiebreak as the live checkSetPR path — before the fix
+// a rebuild from history silently degraded such records and the user could
+// re-earn a PR they already hit.
+describe("buildPRMap rebuild tiebreak (B1)", () => {
+  it("keeps the higher-rep record at equal weight within a bucket", () => {
+    const map = buildPRMap([
+      {
+        date: "2026-07-01",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 100, reps: 7 }],
+          },
+        ],
+      },
+      {
+        date: "2026-07-08",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 100, reps: 8 }],
+          },
+        ],
+      },
+    ]);
+    expect(map["Bench Press"]["8rm"]).toEqual({
+      weight: 100,
+      reps: 8,
+      date: "2026-07-08",
+    });
+  });
+
+  it("is order-independent — later lower-rep set does not clobber", () => {
+    const map = buildPRMap([
+      {
+        date: "2026-07-01",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 100, reps: 8 }],
+          },
+        ],
+      },
+      {
+        date: "2026-07-08",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [{ weightKg: 100, reps: 7 }],
+          },
+        ],
+      },
+    ]);
+    expect(map["Bench Press"]["8rm"]).toMatchObject({
+      reps: 8,
+      date: "2026-07-01",
+    });
+  });
+
+  it("heavier weight still wins regardless of reps", () => {
+    const map = buildPRMap([
+      {
+        date: "2026-07-01",
+        exercises: [
+          {
+            exerciseName: "Bench Press",
+            sets: [
+              { weightKg: 100, reps: 8 },
+              { weightKg: 102.5, reps: 6 },
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(map["Bench Press"]["8rm"]?.weight).toBe(102.5);
   });
 });
