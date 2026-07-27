@@ -89,6 +89,7 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { isRunDayComplete } from "@/lib/scheduledRunCompletion";
+import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { getRunHeroState } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
@@ -283,7 +284,20 @@ export default function ProgrammeRunSection({
   }
 
   const currentMode = profile.runMode ?? "freeform";
-  const raceGoal = programState?.runPlan?.raceGoal;
+  /* R4 — read the run plan through the resolver, not the mirror.
+   *
+   * `profile.raceGoal` is canonical; `programState.runPlan.raceGoal` is a
+   * mirror written by a later regeneration. Reading the mirror alone meant
+   * that between the two writes — profile saved, regen not yet run — a
+   * race-prep user's entire race surface vanished. `resolveRunPlan`
+   * reconciles them (profile wins, mirror backfills) and owns the single
+   * definition of the recovery window, which was hand-derived here. */
+  const todayKeyDerivation = localDateString(new Date());
+  const resolvedRunPlan = useMemo(
+    () => resolveRunPlan(profile, programState, todayKeyDerivation),
+    [profile, programState, todayKeyDerivation]
+  );
+  const raceGoal = resolvedRunPlan.raceGoal ?? undefined;
   const raceCompressed = !!programState?.runPlan?.compressed;
   // Memoised: `programState?.runDays ?? []` produces a fresh array
   // reference on every render when the field is undefined, which
@@ -385,15 +399,13 @@ export default function ProgrammeRunSection({
     : null;
   const phase = programState?.runPlan?.phase;
   const recoveryEndDate = programState?.runPlan?.recoveryEndDate;
-  const todayKeyDerivation = localDateString(new Date());
-  const inRecovery =
-    phase === "recovery" &&
-    !!recoveryEndDate &&
-    todayKeyDerivation < recoveryEndDate;
-  const recoveryEnded =
-    phase === "recovery" &&
-    !!recoveryEndDate &&
-    todayKeyDerivation >= recoveryEndDate;
+  /* Was hand-derived here from phase + recoveryEndDate + a locally-computed
+   * today. That derivation existed in ~6 places with slightly different
+   * notions of "today", which is the drift runPlanResolver was built to end;
+   * this reads its single definition instead. `phase` / `recoveryEndDate`
+   * stay because getRunHeroState takes the RAW fields and does its own
+   * thing with them — narrowing that is a separate job. */
+  const { inRecovery, recoveryEnded } = resolvedRunPlan;
   const isNoShow = raceDayStatus === "race_no_show";
   // Run9 (k)/(f): the ONE-AT-A-TIME actionable prompt slot. The resolver
   // picks a single prompt by locked precedence (no-show > recovery-complete >
