@@ -29,6 +29,7 @@ import {
 import {
   buildEasierSession,
   easierTodayRecommendation,
+  pickLighterDay,
   isLowerBodyDay,
   recoveringTargetMuscles,
 } from "@/features/program/easierToday";
@@ -1676,6 +1677,16 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
             : null
         }
         easierRecommendation={easierRecommendationForChooser}
+        lighterDay={
+          expressChooserDay !== null
+            ? pickLighterDay(programState.workouts, expressChooserDay)
+            : null
+        }
+        onSwapToDay={(index) => {
+          setExpressChooserDay(null);
+          setSessionVariant("full");
+          setSessionDayIndex(index);
+        }}
         onClose={() => setExpressChooserDay(null)}
         onStart={(variant) => {
           const idx = expressChooserDay;
