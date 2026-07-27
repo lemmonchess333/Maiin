@@ -1,30 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { getBodyDemo, renderBodyDemo } from "@/lib/bodyRig";
 import {
   repTimingFor,
-  repSampleAt,
-  repTotalMs,
+  repSampleLoopedAt,
   type RepPhase,
 } from "@/lib/exerciseTempo";
-import IconButton from "@/components/ui/IconButton";
-import { haptic } from "@/lib/haptic";
-
-interface ExerciseRigDemoProps {
-  exerciseId: string;
-  /** Exercise name, for the accessible label. */
-  name: string;
-  /** When false the rep is paused (hidden sheets shouldn't burn rAF). */
-  active?: boolean;
-  /** Authored "down-pause-up" tempo (seconds) — drives the rep's phase
-   *  durations via lib/exerciseTempo; absent → the calm defaults. */
-  tempo?: string;
-}
 
 const FPS_INTERVAL = 1000 / 30;
 
-/** Phase cues for the teaching rep. Labels are generic and direction-
+/** Phase cues for the looping rep. Labels are generic and direction-
  *  derived — the eccentric is always "lower under control" and the
  *  concentric always the drive, whichever end of t the exercise locks
  *  out at. Per-exercise authored cues are future content work. */
@@ -43,32 +28,46 @@ const PHASE_LABEL: Record<RepPhase, string> = {
  * skeletal transforms. Working-muscle highlights BREATHE with the effort
  * phase — brightest through the lifting drive, softer on the way down.
  *
- * Demo1 lock: plays ONE phase-cued teaching rep
- * (set → eccentric → pause → drive → lockout), then SETTLES at the lockout
- * frame behind a replay control — a bounded teaching rep, not ambient media
- * (and no more 30fps work after it ends). The phase timeline is the pure
- * repSampleAt in lib/exerciseTempo: a short "Set" lead-in holds the lockout
- * frame so the eye finds the figure before anything moves, the eccentric is
- * controlled and slower than the concentric drive (authored "D-P-U" tempo
- * refines the durations), and the post-drive beat cues "Lockout".
- * Reduced-motion users get the static two-up of the extremes, unchanged.
+ * The rep LOOPS continuously while the surface is active — the
+ * gym-placard demo model (owner feedback 2026-07-27: "the reps don't
+ * repeat properly"; the reference is the looping demo screens on gym
+ * equipment). This supersedes the Demo1 single-rep-then-settle player
+ * and its replay control. A short "Set" lead-in still holds the lockout
+ * frame so the eye finds the figure before anything moves, then the
+ * phase-cued cycle (lower → pause → drive → lockout) repeats until the
+ * sheet closes or `active` goes false. Reduced-motion users get the
+ * static two-up of the extremes, unchanged.
  *
  * Rendering is IMPERATIVE inside the rAF loop: frames write the figure
  * div's innerHTML directly instead of going through setState, so the
  * 30fps sweep costs zero React reconciliations — the difference is
  * visible on older phones inside WKWebView. React only re-renders on
- * PHASE changes (six per rep) for the cue line and the replay control.
+ * PHASE changes (four per cycle) for the cue line.
+ *
+ * The 30fps throttle advances its clock in WHOLE intervals: re-anchoring
+ * to `now` on every draw made draw spacing alternate ~33/50ms against a
+ * 60Hz rAF — a visible judder the device feedback called reps that
+ * "spaz out". Quantized stepping keeps the spacing even.
  */
 export default function ExerciseRigDemo({
   exerciseId,
   name,
   active = true,
   tempo,
-}: ExerciseRigDemoProps) {
+}: {
+  exerciseId: string;
+  /** Exercise name, for the accessible label. */
+  name: string;
+  /** When false the loop is stopped (hidden sheets shouldn't burn rAF). */
+  active?: boolean;
+  /** Authored "down-pause-up" tempo (seconds) — drives the cycle's phase
+   *  durations via lib/exerciseTempo; absent → the calm defaults. */
+  tempo?: string;
+}) {
   const reducedMotion = useReducedMotion();
-  // Which end of t is the concentric top decides the rep's shape AND the
-  // settle frame: squats/hinges lock out at t=0 (standing), presses/curls at
-  // t=1. The rep starts and ends at lockout.
+  // Which end of t is the concentric top decides the cycle's shape AND
+  // the opening frame: squats/hinges lock out at t=0 (standing),
+  // presses/curls at t=1. The loop starts from lockout.
   const liftsToOne = getBodyDemo(exerciseId)?.concentricTo === 1;
   const lockoutT = liftsToOne ? 1 : 0;
 
@@ -81,8 +80,6 @@ export default function ExerciseRigDemo({
   );
   const figureRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<RepPhase>("set");
-  // Bumped by Replay; each value plays exactly one rep.
-  const [repNonce, setRepNonce] = useState(0);
   const rafRef = useRef<number>(0);
   const lastDrawRef = useRef(0);
   const effortRef = useRef(0.7);
@@ -90,14 +87,12 @@ export default function ExerciseRigDemo({
 
   useEffect(() => {
     if (reducedMotion || !active) return;
-    // Deterministic replay: the draw-throttle clock and the effort
-    // low-pass must start every run from the same calm state — not from
-    // wherever the previous rep left them, or a replayed rep's opening
-    // frames glow differently from the first run's.
+    // Deterministic restart: the draw-throttle clock and the effort
+    // low-pass start every run from the same calm state — not from
+    // wherever a previous mount left them.
     lastDrawRef.current = 0;
     effortRef.current = 0.7;
     const timing = repTimingFor(tempo);
-    const total = repTotalMs(timing);
     const start = performance.now();
     const draw = (svg: string) => {
       if (figureRef.current) figureRef.current.innerHTML = svg;
@@ -111,19 +106,20 @@ export default function ExerciseRigDemo({
     draw(renderBodyDemo(exerciseId, lockoutT, 0.7));
 
     const tick = (now: number) => {
-      const m = now - start;
-      if (m >= total) {
-        // Rep over — settle on the lockout frame at a calm effort and STOP
-        // (no further rAF; the replay control owns any next rep).
-        draw(renderBodyDemo(exerciseId, lockoutT, 0.7));
-        cue("done");
-        return;
-      }
       rafRef.current = requestAnimationFrame(tick);
-      if (now - lastDrawRef.current < FPS_INTERVAL) return;
-      lastDrawRef.current = now;
+      // The 1ms tolerance matters: an exact `< FPS_INTERVAL` check
+      // flips on float noise right at the boundary (a 33.3333…−ε delta
+      // reads as "too soon"), which skips a frame and produces the very
+      // 33/50ms alternation this throttle exists to prevent.
+      if (now - lastDrawRef.current < FPS_INTERVAL - 1) return;
+      // Advance the throttle clock in WHOLE intervals on a fixed
+      // lattice (catching up after hitches without re-anchoring to the
+      // noisy rAF timestamp) — even spacing, no 33/50ms alternation.
+      lastDrawRef.current +=
+        FPS_INTERVAL *
+        Math.max(1, Math.round((now - lastDrawRef.current) / FPS_INTERVAL));
 
-      const sample = repSampleAt(m, timing);
+      const sample = repSampleLoopedAt(now - start, timing);
       const t = liftsToOne ? 1 - sample.ecc : sample.ecc;
       // Low-pass the effort so phase changes glow in, never flicker.
       effortRef.current += (sample.targetEffort - effortRef.current) * 0.1;
@@ -132,20 +128,7 @@ export default function ExerciseRigDemo({
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [
-    exerciseId,
-    reducedMotion,
-    active,
-    tempo,
-    liftsToOne,
-    lockoutT,
-    repNonce,
-  ]);
-
-  const replay = useCallback(() => {
-    haptic();
-    setRepNonce((n) => n + 1);
-  }, []);
+  }, [exerciseId, reducedMotion, active, tempo, liftsToOne, lockoutT]);
 
   /* The demo renders on a fixed DARK stage in both themes (like any
    * media viewer): the figure's facet gaps read as the dark surface
@@ -170,37 +153,23 @@ export default function ExerciseRigDemo({
     );
   }
 
-  const done = phase === "done";
   return (
-    // The replay control is interactive, so it lives OUTSIDE the role="img"
-    // figure (an img role may not contain a button).
-    <div className="bg-stage rounded-2xl p-4 mt-4 relative">
-      <div role="img" aria-label={`${name} demonstration — one guided rep`}>
+    <div className="bg-stage rounded-2xl p-4 mt-4">
+      <div role="img" aria-label={`${name} demonstration — looping reps`}>
         <div
           ref={figureRef}
           className="mx-auto max-w-[190px]"
           dangerouslySetInnerHTML={{ __html: initialSvg }}
         />
       </div>
-      {/* Phase cue — the teaching half of the rep. aria-live=polite reads the
-          phase to screen-reader users without interrupting. */}
+      {/* Phase cue — the teaching half of the loop. aria-live=polite reads
+          the phase to screen-reader users without interrupting. */}
       <p
         aria-live="polite"
         className="mt-2 text-center text-micro uppercase tracking-wider text-muted-foreground"
       >
         {PHASE_LABEL[phase]}
       </p>
-      {done && (
-        <div className="absolute bottom-3 right-3">
-          <IconButton
-            aria-label="Replay demonstration"
-            icon={<RotateCcw className="size-5" aria-hidden="true" />}
-            variant="secondary"
-            size="md"
-            onClick={replay}
-          />
-        </div>
-      )}
     </div>
   );
 }

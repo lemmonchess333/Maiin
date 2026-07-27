@@ -37,7 +37,25 @@ packet's design content as the plan and its status content as void.
 | Misrepresentation gate — `barbell-curl` + `rope-tricep-pushdown` production-gated, review path kept | `bodyRig.ts` `GATED_PENDING_REPAIR` + tests | ✅ this PR                  |
 | Form Motion Lab — dev-only force-render review rig (Phase 1)                                        | `/dev/form-motion-lab` (#1639)              | ✅ shipped                  |
 | Gate-0 contact sheets + status ledger (operator review pending)                                     | `docs/visual-audit/form-motion-v2/`         | ✅ sheets; verdicts pending |
+| Press rebuild — IK bar-path press + divergence-scaled joint caps (Phase 4-class, owner-directed)    | `bodyRig.ts` + mechanics pins               | ✅ 2026-07-27               |
+| Deadlift rebuild — side-view planted-ankle hinge replaces posterior scaleY (Phase 4-class)          | `bodyRig.ts` + mechanics pins               | ✅ 2026-07-27               |
+| Bench leg/bar repair + side facet-count discipline (Phase 2-class art)                              | `bodyRig.ts` / `bodySideData.ts`            | ✅ 2026-07-27               |
+| Looping player + even 30fps throttle (supersedes Demo1 single-rep settle — owner feedback)          | `ExerciseRigDemo.tsx` / `exerciseTempo.ts`  | ✅ 2026-07-27               |
 | Everything else below                                                                               | —                                           | Pending                     |
+
+**Demo1 supersession note (2026-07-27).** The single bounded teaching
+rep ("plays one rep, settles behind a replay control") is superseded by
+owner feedback from device use: "the reps don't repeat properly" — the
+reference experience is the looping demo screens on gym equipment. The
+player now loops the phase-cued cycle continuously while the surface is
+active; reduced-motion still gets the static two-up. The Demo1
+PROVENANCE rule (only vetted media may animate; borrowed photos render
+static) is untouched. The guardrail list's "single bounded teaching
+rep" line should be read through this note. The owner-directed rebuilds
+above were shipped without the rights-cleared-reference gate because
+they correct movements that misrepresented their exercise (the gate's
+own honesty standard); operator review of the regenerated sheets stands
+in for Gate-3 approval.
 
 ## Executive decision (unchanged from packet)
 
