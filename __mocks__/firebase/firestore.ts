@@ -117,10 +117,23 @@ export async function getDocs(ref: CollectionRef) {
  */
 export async function getDocFromCache(ref: DocRef) {
   firestoreFake.failIfArmed("getDoc", ref.path);
-  throw new FakeFirestoreError(
-    "unavailable",
-    `[firestoreFake] cold cache: ${ref.path} is not cached`
-  );
+  const cached = firestoreFake.peekCache(ref.path);
+  if (cached === undefined) {
+    // Cold cache — what the real SDK does for a document this client has
+    // never seen. Still the DEFAULT, so nothing changes for the suites
+    // that rely on the miss path; a warm cache is opt-in via seedCache().
+    throw new FakeFirestoreError(
+      "unavailable",
+      `[firestoreFake] cold cache: ${ref.path} is not cached`
+    );
+  }
+  return {
+    id: ref.id,
+    ref,
+    exists: () => true,
+    data: () => ({ ...cached }),
+    get: (field: string) => cached[field],
+  };
 }
 
 export async function getCountFromServer(ref: CollectionRef) {
@@ -245,7 +258,14 @@ export function writeBatch(_db?: unknown) {
       return batch;
     },
     commit: async () => {
+      // Fail BEFORE applying anything: a real batch is atomic, so a
+      // rejected commit must leave the store untouched. Applying then
+      // throwing would let a rollback test pass against a store that
+      // had already been mutated.
+      firestoreFake.failIfArmed("commit", "");
+      const before = firestoreFake.writes.length;
       ops.forEach((op) => op());
+      firestoreFake.batches.push(firestoreFake.writes.slice(before));
     },
   };
   return batch;

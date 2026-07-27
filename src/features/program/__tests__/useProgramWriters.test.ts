@@ -35,66 +35,106 @@ import type { ProgramState, ScheduledRunDay } from "../programTypes";
 
 // ─── Firebase mocks ──────────────────────────────────────────────────
 
-// Storage we control across tests.
-let mockDocData: ProgramState | null = null;
-let mockDocExists = false;
-// Separate store for the IndexedDB cache read (getDocFromCache) so a test
-// can simulate "cached locally but server is slow / unreachable".
-let mockCacheData: ProgramState | null = null;
-let mockCacheExists = false;
-const setDocCalls: { ref: unknown; data: any; opts?: any }[] = [];
-// Packet 15 — completeWorkoutDay now writes via one writeBatch. Capture each
-// committed batch's set() calls; `mockBatchReject` simulates a commit failure.
-const batchCommits: { ref: any; data: any }[][] = [];
-let mockBatchReject = false;
+/**
+ * MIGRATED off the inline SDK factory 2026-07-26 (ADR-0009: one fake).
+ * The last of the legacy inline mocks.
+ *
+ * The factory was a second Firestore: a `mockDocData` store, a bespoke
+ * `writeBatch` whose commit hand-applied each set, and a separate cache
+ * pair. Three consequences the fake fixes rather than reproduces:
+ *
+ *   - its batch commit mutated the store and THEN threw on
+ *     `mockBatchReject`, so the rollback test asserted against a store
+ *     that had already been written to. A real batch is atomic; the
+ *     fake fails before applying anything.
+ *   - `doc()` returned `{ __ref, __id }`, so every ref assertion saw the
+ *     LAST path segment only — `programState/current` and
+ *     `workouts/current` were indistinguishable.
+ *   - the cache could not be seeded independently of the server store
+ *     without the bespoke `mockCacheData` pair.
+ *
+ * The shims keep this suite's vocabulary (`setDocCalls()`, `batchCommits()`)
+ * so ~100 assertion sites did not have to be rewritten. A 2069-line
+ * mechanical rewrite is precisely where coverage gets deleted while
+ * staying green, which this file's own queue entry warns about.
+ */
+const PROGRAM = "users/test-user-1/programState/current";
 
-vi.mock("firebase/firestore", () => ({
-  doc: vi.fn((...args: any[]) => ({
-    __ref: true,
-    __id: args[args.length - 1],
-  })),
-  getDoc: vi.fn(async () => ({
-    exists: () => mockDocExists,
-    data: () => mockDocData,
-  })),
-  writeBatch: vi.fn(() => {
-    const sets: { ref: any; data: any }[] = [];
-    return {
-      set: (ref: any, data: any) => sets.push({ ref, data }),
-      commit: async () => {
-        batchCommits.push(sets);
-        if (mockBatchReject) throw new Error("batch commit boom");
-        for (const s of sets) {
-          mockDocData = { ...(mockDocData ?? ({} as ProgramState)), ...s.data };
-          mockDocExists = true;
-        }
-      },
-    };
-  }),
-  // Mirrors the real SDK: getDocFromCache REJECTS on a cache miss rather
-  // than returning a non-existent snapshot. useProgram's cache-first paint
-  // relies on that (its try/catch falls through to the server read).
-  getDocFromCache: vi.fn(async () => {
-    if (!mockCacheExists) throw new Error("Failed to get document from cache.");
-    return { exists: () => mockCacheExists, data: () => mockCacheData };
-  }),
-  setDoc: vi.fn(async (ref: unknown, data: any, opts?: any) => {
-    setDocCalls.push({ ref, data, opts });
-    // Mirror the write back into our mock store so subsequent
-    // reads see what was just written. saveProgram inside
-    // useProgram doesn't re-read, but readback is useful for
-    // assertions on the final stored doc.
-    mockDocData = { ...(mockDocData ?? ({} as ProgramState)), ...data };
-    mockDocExists = true;
-  }),
-  Timestamp: {
-    fromDate: vi.fn((d: Date) => ({ seconds: d.getTime() / 1000 })),
-    now: vi.fn(() => ({ seconds: 1_700_000_000 })),
-  },
-  deleteField: vi.fn(() => "__deleteField__"),
-}));
+/** Seed the IndexedDB cache copy only — invisible to server reads.
+ *  `null` means "nothing cached", i.e. leave the cache cold. */
+function seedCacheDoc(data: unknown): void {
+  if (data == null) return;
+  seedCache({ [PROGRAM]: data as Record<string, unknown> });
+}
 
+/** Seed the server-side program doc. `null` means "no doc exists" —
+ *  NOT a document whose contents are null, which is what a naive
+ *  translation of the old `mockDocData = null` would produce. */
+function seedProgram(data: unknown): void {
+  if (data == null) return;
+  seedFirestore({ [PROGRAM]: data as Record<string, unknown> });
+}
+
+/**
+ * Baseline for the "ignore everything written before now" idiom.
+ *
+ * The old suite did `setDocCalls.length = 0` mid-test to isolate the
+ * write under test from the load-time ones. Against a DERIVED view that
+ * is a silent no-op, so every such assertion counts the load writes too
+ * — which is exactly how 22 of these tests failed on the first run after
+ * migrating. `markWrites()` makes the intent explicit instead.
+ */
+let writeMark = 0;
+let batchMark = 0;
+function markWrites(): void {
+  writeMark = writeLog().length;
+  batchMark = batchLog().length;
+}
+
+/** Program-doc writes, in order — the old `setDocCalls()`. `ref.__id` is
+ *  preserved for the existing assertions, but now derived from the REAL
+ *  path, and `ref.path` is available for anything that wants to be
+ *  unambiguous about which collection was written. */
+const setDocCalls = () => {
+  // Exclude writes that arrived inside a batch. The old stub kept batch
+  // sets in their own array, so `setDocCalls` meant "direct setDoc only";
+  // the fake logs both, and counting them together silently doubles
+  // every assertion on a path that is written both ways.
+  const batched = new Set(batchLog().flat());
+  return writeLog()
+    .slice(writeMark)
+    .filter((w) => !batched.has(w))
+    .filter((w) => w.op.startsWith("set") && w.path === PROGRAM)
+    .map((w) => ({
+      ref: { path: w.path, __id: w.path.split("/").pop() },
+      data: w.data as any,
+      opts: undefined as any,
+    }));
+};
+
+/** Committed batches, grouped — the old `batchCommits()`. */
+const batchCommits = () =>
+  batchLog()
+    .slice(batchMark)
+    .map((b) =>
+      b.map((w) => ({
+        ref: { path: w.path, __id: w.path.split("/").pop() },
+        data: w.data as any,
+      }))
+    );
+
+vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+
+import {
+  seedFirestore,
+  resetFirestore,
+  seedCache,
+  writeLog,
+  batchLog,
+  failNextFirestore,
+  deferReads,
+} from "@/test/firestoreHarness";
 
 // ─── useAuth + adjacent mocks ────────────────────────────────────────
 
@@ -190,17 +230,13 @@ function expectV2Shape(rd: ScheduledRunDay) {
 // import here resolves to the mocked dependencies. We deliberately
 // import last so the read order is "mocks → consumers".
 import { useProgram } from "../useProgram";
-// Mocked above — imported here to override per-test (e.g. hang the server read).
-import { getDoc } from "firebase/firestore";
 
 beforeEach(() => {
-  setDocCalls.length = 0;
-  batchCommits.length = 0;
-  mockBatchReject = false;
-  mockDocData = null;
-  mockDocExists = false;
-  mockCacheData = null;
-  mockCacheExists = false;
+  // One reset clears documents, the cache, the write log and the batch
+  // log together — the four things this suite used to zero by hand.
+  resetFirestore();
+  writeMark = 0;
+  batchMark = 0;
   mockProfile = null;
   mockUpdateProfile.mockClear();
 });
@@ -211,7 +247,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // freeform on load, and freeform generates no auto-assigned runDays. Only
     // a race plan (race_prep + raceGoal) produces a week.
     mockProfile = structuredProfile();
-    mockDocExists = false; // no existing programState doc
+    resetFirestore(); // no existing programState doc
 
     const { result } = renderHook(() => useProgram());
 
@@ -220,8 +256,9 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     });
 
     // The initial doc still pins the schema version.
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
 
     // No structured week is generated — freeform has no runDays.
@@ -237,14 +274,15 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
     const targetDate = threeWeeksOut.toISOString().split("T")[0];
     mockProfile = raceProfile(targetDate);
-    mockDocExists = false;
+    resetFirestore();
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runPlan).toBeDefined();
     expect(lastWrite.runPlan!.mode).toBe("race_prep");
     expect(lastWrite.runPlan!.compressed).toBe(true);
@@ -256,7 +294,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
     const targetDate = threeWeeksOut.toISOString().split("T")[0];
     mockProfile = raceProfile(targetDate);
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -274,21 +312,21 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         totalWeeks: 6,
         currentWeek: 2,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0; // reset to capture only the refresh write
+    markWrites(); // reset to capture only the refresh write
 
     await act(async () => {
       await result.current.refreshRunSchedule();
     });
 
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runDays).toBeDefined();
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
     lastWrite.runDays!.forEach(expectV2Shape);
@@ -312,7 +350,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         eventName: "Manchester 10K 2026",
       },
     });
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -330,21 +368,21 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         totalWeeks: 6,
         currentWeek: 2,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0; // reset to capture only the refresh write
+    markWrites(); // reset to capture only the refresh write
 
     await act(async () => {
       await result.current.refreshRunSchedule();
     });
 
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runPlan!.raceGoal).toMatchObject({
       distance: "10k",
       targetDate,
@@ -357,7 +395,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // auto-assigned runDays + runPlan are wiped (they're meaningless under
     // freeform) and runMode is migrated.
     mockProfile = structuredProfile();
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -380,8 +418,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         } as ScheduledRunDay,
       ],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -396,7 +433,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // unchanged mock doc, so the ordering of writes isn't deterministic in the
     // harness — the wipe having happened is the contract.)
     expect(
-      setDocCalls.some((c) => {
+      setDocCalls().some((c) => {
         const rd = (c.data as ProgramState).runDays;
         return Array.isArray(rd) && rd.length === 0;
       })
@@ -419,7 +456,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // exercised via a race plan (the surviving runDays-generating mode). The
     // staleness concern is mode-agnostic.
     mockProfile = raceProfile("2027-01-01", { weekSchedule: staleSchedule });
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -435,14 +472,13 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
         mode: "race_prep",
         raceGoal: { distance: "10k", targetDate: "2027-01-01" },
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     const overrideSchedule = generateSchedule(6, 2);
     await act(async () => {
@@ -452,15 +488,25 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       });
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     // Override (hybrid 6+2) won → runs generated. Stale profile.weekSchedule
     // (all rest) would have produced 0.
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
   });
 
   it("regenerateProgram writes programSchemaVersion + V2-shape runDays", async () => {
-    mockProfile = structuredProfile();
-    mockDocData = {
+    // RACE-prep, not structured. Run9 retired structured and WIPES its
+    // runDays + runPlan on load, so a structured user legitimately
+    // regenerates with no runDays — there is nothing V2-shaped to check.
+    //
+    // This read as a structured user until 2026-07-26 and passed, because
+    // the old stub merged on EVERY setDoc regardless of `{ merge }`. The
+    // load-time wipe therefore never actually removed `runPlan`, and
+    // regenerate still saw `mode: "structured"`. Under a fake that honours
+    // replace-vs-merge the wipe lands, and the assertion had no subject.
+    mockProfile = raceProfile("2027-01-01");
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 5,
@@ -473,21 +519,21 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       // Deliberately omit programSchemaVersion to test the
       // explicit write on regenerate.
       runDays: [],
-      runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+      runPlan: { mode: "race_prep" },
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.regenerateProgram();
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
     expect(lastWrite.runDays).toBeDefined();
     lastWrite.runDays!.forEach(expectV2Shape);
@@ -530,7 +576,7 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
   it("skipRunDay refuses to skip a legacy completed:true doc", async () => {
     mockProfile = structuredProfile();
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -543,14 +589,13 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [legacyCompletedRunDay()],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.skipRunDay(2);
@@ -558,7 +603,7 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
 
     // transitionStatus(completed_exact, skipped) is illegal —
     // completed_* is terminal. Zero writes.
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -576,7 +621,7 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
     mockProfile = raceProfile(targetDate);
     const completion = { completedAt: 1_700_000_000_000 };
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -615,8 +660,7 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
         realRunCount: 1,
         weeklyTarget: 4,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -625,7 +669,8 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
       await result.current.realignRacePlan();
     });
 
-    const lastSave = setDocCalls[setDocCalls.length - 1]?.data as ProgramState;
+    const lastSave = setDocCalls()[setDocCalls().length - 1]
+      ?.data as ProgramState;
     // A manualCompletions map is persisted (pre-fix the writer kept the stale
     // map via spread but never re-keyed; now the carry path owns it).
     expect(lastSave.manualCompletions).toBeDefined();
@@ -676,7 +721,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
     // Run9 (3a): runDays only persist under race_prep now (structured is
     // retired + wiped on load). The override matching logic is mode-agnostic.
     mockProfile = raceProfile("2027-01-01");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -692,21 +737,20 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
         plannedRunDay(3, "runday_other_id"),
       ],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.overrideRunDay("runday_target_id", "tempo_20");
     });
 
-    expect(setDocCalls.length).toBe(1);
-    const written = setDocCalls[0].data as ProgramState;
+    expect(setDocCalls().length).toBe(1);
+    const written = setDocCalls()[0].data as ProgramState;
     const updated = written.runDays!.find((rd) => rd.id === "runday_target_id");
     const untouched = written.runDays!.find(
       (rd) => rd.id === "runday_other_id"
@@ -721,7 +765,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
 
   it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
     mockProfile = raceProfile("2027-01-01");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -734,21 +778,20 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [plannedRunDay(1, "runday_a"), plannedRunDay(3, "runday_b")],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.overrideRunDay(3, "tempo_20");
     });
 
-    expect(setDocCalls.length).toBe(1);
-    const written = setDocCalls[0].data as ProgramState;
+    expect(setDocCalls().length).toBe(1);
+    const written = setDocCalls()[0].data as ProgramState;
     const updated = written.runDays!.find((rd) => rd.dayIndex === 3);
     expect(updated!.templateId).toBe("tempo_20");
     expect(updated!.userOverride).toBe("tempo_20");
@@ -756,7 +799,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
 
   it("refuses to override a non-editable runDay (terminal status)", async () => {
     mockProfile = raceProfile("2027-01-01");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -774,21 +817,20 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
         },
       ],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.overrideRunDay("runday_skipped", "tempo_20");
     });
 
     // Editable gate refuses. Zero writes.
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -874,7 +916,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       } as ScheduledRunDay,
     ];
 
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -893,14 +935,13 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
         totalWeeks: 12,
         compressed: false,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.refreshRunSchedule({
@@ -909,8 +950,9 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       });
     });
 
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     const writtenRunDays = lastWrite.runDays ?? [];
 
     // Replace, not merge: the legacy marker IDs MUST NOT survive.
@@ -949,7 +991,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       } as ScheduledRunDay,
     ];
 
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -962,14 +1004,13 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: structuredPeriodRunDays,
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.refreshRunSchedule({
@@ -978,7 +1019,8 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       });
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     const writtenRunDays = lastWrite.runDays ?? [];
 
     // Marker ID must not survive.
@@ -1017,7 +1059,7 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
   it("does NOT write race_no_show even when the 3-day grace has passed (server now owns the transition)", async () => {
     const raceDate = pastDateOffset(5); // 5 days ago — pre-L5 this would have triggered the client effect
     mockProfile = raceProfile(raceDate);
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1044,20 +1086,19 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
         mode: "race_prep",
         raceGoal: { distance: "10k", targetDate: raceDate },
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     // Wait long enough for any post-load effect to have fired.
     await new Promise((r) => setTimeout(r, 200));
     // Scan all writes — none should carry race_no_show for the
     // race-day runDay. PR-G's auto-rollover may still fire if the
     // weekKey is stale, but it won't change the race-day status.
-    const wroteRaceNoShow = setDocCalls.some((c) => {
+    const wroteRaceNoShow = setDocCalls().some((c) => {
       const data = c.data as ProgramState | undefined;
       const raceRunDay = data?.runDays?.find((rd) => rd.date === raceDate);
       return raceRunDay?.status === "race_no_show";
@@ -1087,7 +1128,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       return `${y}-${m}-${day}`;
     })();
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1105,14 +1146,13 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
         phase: "recovery",
         recoveryEndDate: future,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.refreshRunSchedule({
@@ -1121,7 +1161,8 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       });
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runDays).toBeDefined();
     expect(lastWrite.runDays!.length).toBeGreaterThan(0);
     for (const rd of lastWrite.runDays!) {
@@ -1145,7 +1186,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       return `${y}-${m}-${day}`;
     })();
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1163,20 +1204,20 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
         phase: "recovery",
         recoveryEndDate: future,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.advanceToNextWeek();
     });
 
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     // Recovery preserved across the week advance.
     expect(lastWrite.runPlan?.phase).toBe("recovery");
     expect(lastWrite.runPlan?.recoveryEndDate).toBe(future);
@@ -1209,7 +1250,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       return `${y}-${m}-${day}`;
     })();
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1227,20 +1268,19 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
         phase: "recovery",
         recoveryEndDate: eightDaysAgo,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     await new Promise((r) => setTimeout(r, 200));
     // No writes from the deleted recovery-exit effect. Scan all
     // captured writes — none should clear the phase. (PR-G's
     // auto-rollover may still fire and rewrite runDays, but it
     // doesn't touch runPlan.phase.)
-    const clearedPhase = setDocCalls.some((c) => {
+    const clearedPhase = setDocCalls().some((c) => {
       const data = c.data as ProgramState | undefined;
       return data?.runPlan !== undefined && data.runPlan.phase === undefined;
     });
@@ -1268,7 +1308,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
     // raceGoal on the profile === the race recovery is for (runPlan.raceGoal)
     // → resolveRecoveryExit clears it.
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1286,15 +1326,14 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
         phase: "recovery",
         recoveryEndDate: future,
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
     mockUpdateProfile.mockClear();
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.skipRecoveryEarly();
@@ -1307,7 +1346,8 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       runMode: "freeform",
     });
     // The plan is dropped (runPlan omitted → stripped; runDays emptied).
-    const lastWrite = setDocCalls[setDocCalls.length - 1].data as ProgramState;
+    const lastWrite = setDocCalls()[setDocCalls().length - 1]
+      .data as ProgramState;
     expect(lastWrite.runDays).toEqual([]);
     expect(lastWrite.runPlan).toBeUndefined();
   });
@@ -1332,7 +1372,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
     mockProfile = raceProfile("2027-01-01", { weeklyRunDaysTarget: 2 });
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1359,8 +1399,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         mode: "race_prep",
         raceGoal: { distance: "10k", targetDate: "2027-01-01" },
       },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -1370,7 +1409,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     // Wait for the rollover effect to fire + save.
     await waitFor(
       () => {
-        const lastWrite = setDocCalls[setDocCalls.length - 1]?.data as
+        const lastWrite = setDocCalls()[setDocCalls().length - 1]?.data as
           | ProgramState
           | undefined;
         // After rollover, runDays[0].weekKey should match current week
@@ -1392,7 +1431,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       return `${y}-${m}-${day}`;
     })();
     mockProfile = structuredProfile({ weeklyRunDaysTarget: 2 });
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1416,22 +1455,21 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
         } as ScheduledRunDay,
       ],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     await new Promise((r) => setTimeout(r, 100));
     // No rollover write — current week, nothing to advance.
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("skips freeform users (no runDays to rotate)", async () => {
     mockProfile = structuredProfile({ runMode: "freeform" });
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1444,16 +1482,15 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [],
       runPlan: { mode: "structured" },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
 
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     await new Promise((r) => setTimeout(r, 100));
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -1473,10 +1510,13 @@ describe("cache-first paint (cold-open latency)", () => {
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
     } as ProgramState;
-    mockCacheData = cached;
-    mockCacheExists = true;
+    seedCacheDoc(cached);
     // Server read never resolves — proves the cache paint alone flips loading.
-    (getDoc as any).mockImplementationOnce(() => new Promise(() => {}));
+    // Server read never answers. `deferReads` holds it open for real,
+    // rather than swapping getDoc for a never-resolving stub — so the
+    // cache paint is racing an actual in-flight read, which is the
+    // situation being tested.
+    deferReads();
     mockProfile = structuredProfile({ runMode: "freeform" });
 
     const { result } = renderHook(() => useProgram());
@@ -1491,8 +1531,7 @@ describe("cache-first paint (cold-open latency)", () => {
   it("falls through to the server read on a cache miss (no regression)", async () => {
     // First-ever load: nothing cached → getDocFromCache rejects. The server
     // read must still drive the load exactly as it did pre-cache-first.
-    mockCacheExists = false;
-    mockDocExists = false; // no server doc either → initial-creation path
+    resetFirestore(); // no server doc either → initial-creation path
     mockProfile = structuredProfile({ runMode: "freeform" });
 
     const { result } = renderHook(() => useProgram());
@@ -1501,7 +1540,7 @@ describe("cache-first paint (cold-open latency)", () => {
       timeout: 2000,
     });
     // The server path ran (initial-creation write) and produced state.
-    expect(setDocCalls.length).toBeGreaterThan(0);
+    expect(setDocCalls().length).toBeGreaterThan(0);
     expect(result.current.programState).toBeTruthy();
   });
 });
@@ -1510,8 +1549,7 @@ describe("cache-first paint (cold-open latency)", () => {
 describe("packet 15 — completeWorkoutDay atomic batch", () => {
   function seedProgramWithDay() {
     mockProfile = { uid: "test-user-1", runMode: "freeform" };
-    mockDocExists = true;
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       weekNumber: 1,
       currentPhase: "base",
@@ -1538,7 +1576,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
           ],
         },
       ],
-    } as unknown as ProgramState;
+    } as unknown as ProgramState);
   }
   const session = (completionId: string) => ({
     completionId,
@@ -1558,8 +1596,8 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       await result.current.completeWorkoutDay(0, session("cid-1"));
     });
 
-    expect(batchCommits).toHaveLength(1);
-    const ids = batchCommits[0].map((s) => s.ref.__id);
+    expect(batchCommits()).toHaveLength(1);
+    const ids = batchCommits()[0].map((s) => s.ref.__id);
     // Programme doc (PROGRAM_DOC = "current") + deterministic workout id.
     expect(ids).toContain("current");
     expect(ids).toContain("programme-cid-1");
@@ -1574,10 +1612,13 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       timeout: 2000,
     });
 
-    mockBatchReject = true;
+    failNextFirestore("commit");
     await expect(
       result.current.completeWorkoutDay(0, session("cid-2"))
-    ).rejects.toThrow(/batch commit boom/);
+      // The fake generates the message from the injected code, so match
+      // that rather than the old stub's bespoke string. What the test
+      // pins is unchanged: the rejection propagates to the caller.
+    ).rejects.toThrow(/permission-denied/);
     // No split state: the day is still not completed in local state.
     expect(result.current.programState?.workouts[0].completed).toBe(false);
   });
@@ -1603,7 +1644,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       });
     });
 
-    const workoutWrite = batchCommits
+    const workoutWrite = batchCommits()
       .flat()
       .find((s) => s.ref.__id === "programme-cid-easier");
     expect(workoutWrite).toBeTruthy();
@@ -1635,7 +1676,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       await result.current.completeWorkoutDay(0, session("cid-3"));
       await result.current.completeWorkoutDay(0, session("cid-3"));
     });
-    const workoutIds = batchCommits
+    const workoutIds = batchCommits()
       .flat()
       .map((s) => s.ref.__id)
       .filter((id) => typeof id === "string" && id.startsWith("programme-"));
@@ -1661,7 +1702,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
 
   function seedLiftState(extra: Partial<ProgramState> = {}) {
     mockProfile = structuredProfile();
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1675,8 +1716,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
       runDays: [],
       runPlan: { mode: "freeform" },
       ...extra,
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
   }
 
   async function mount() {
@@ -1684,7 +1724,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     return result;
   }
 
@@ -1694,10 +1734,10 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     await act(async () => {
       await result.current.setNextWorkout(2);
     });
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    expect(setDocCalls[setDocCalls.length - 1].data.nextWorkoutOverride).toBe(
-      2
-    );
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    expect(
+      setDocCalls()[setDocCalls().length - 1].data.nextWorkoutOverride
+    ).toBe(2);
   });
 
   it("ignores terminal and out-of-range selections (no write)", async () => {
@@ -1708,7 +1748,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
       await result.current.setNextWorkout(9); // out of range
       await result.current.setNextWorkout(1.5); // malformed
     });
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("null resets: the persisted doc drops the field entirely", async () => {
@@ -1717,8 +1757,8 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     await act(async () => {
       await result.current.setNextWorkout(null);
     });
-    expect(setDocCalls.length).toBeGreaterThan(0);
-    const saved = setDocCalls[setDocCalls.length - 1].data;
+    expect(setDocCalls().length).toBeGreaterThan(0);
+    const saved = setDocCalls()[setDocCalls().length - 1].data;
     // The guarded write path strips undefined — a reset must REMOVE the
     // field, not persist a stale value.
     expect("nextWorkoutOverride" in saved).toBe(false);
@@ -1730,7 +1770,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     await act(async () => {
       await result.current.setNextWorkout(null);
     });
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -1738,7 +1778,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
   function seedRaceDay() {
     const targetDate = "2027-01-01";
     mockProfile = raceProfile(targetDate);
-    mockDocData = {
+    seedProgram({
       goal: "recomp",
       currentPhase: "base",
       weekNumber: 1,
@@ -1762,8 +1802,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
         } as ScheduledRunDay,
       ],
       runPlan: { mode: "race_prep", raceGoal: { distance: "10k", targetDate } },
-    } as ProgramState;
-    mockDocExists = true;
+    } as ProgramState);
   }
 
   it("overrideRunDay refuses to swap a scheduled race (no write)", async () => {
@@ -1772,13 +1811,13 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0; // capture only writes after this point
+    markWrites(); // capture only writes after this point
 
     await act(async () => {
       await result.current.overrideRunDay("race_day_1", "easy_30");
     });
 
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("markManualComplete refuses a scheduled race (no write)", async () => {
@@ -1787,13 +1826,13 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.markManualComplete("race_day_1");
     });
 
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -1837,20 +1876,19 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
 
   it("restoreRunDay: skipped → planned, completed:false, no manual-completion key", async () => {
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = stateWith([skippedRunDay("skipped")]);
-    mockDocExists = true;
+    seedProgram(stateWith([skippedRunDay("skipped")]));
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls.length).toBe(1);
-    const saved = setDocCalls[0].data as ProgramState;
+    expect(setDocCalls().length).toBe(1);
+    const saved = setDocCalls()[0].data as ProgramState;
     expect(saved.runDays?.[0].status).toBe("planned");
     expect(saved.runDays?.[0].completed).toBe(false);
     // Restore is a pure status reversal — never a manual completion.
@@ -1862,109 +1900,111 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
 
   it("restoreRunDay: race_no_show → planned", async () => {
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = stateWith([skippedRunDay("race_no_show")]);
-    mockDocExists = true;
+    seedProgram(stateWith([skippedRunDay("race_no_show")]));
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls.length).toBe(1);
-    expect((setDocCalls[0].data as ProgramState).runDays?.[0].status).toBe(
+    expect(setDocCalls().length).toBe(1);
+    expect((setDocCalls()[0].data as ProgramState).runDays?.[0].status).toBe(
       "planned"
     );
   });
 
   it("restoreRunDay: refuses a completed slot (terminal → no write)", async () => {
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = stateWith([
-      {
-        id: "runday_restore_1",
-        dayIndex: new Date().getDay(),
-        date: localDateString(addLocalDays(new Date(), 0)),
-        weekKey: localWeekKey(),
-        templateId: "easy_30",
-        type: "easy",
-        completed: true,
-        status: "completed_exact",
-      } as ScheduledRunDay,
-    ]);
-    mockDocExists = true;
+    seedProgram(
+      stateWith([
+        {
+          id: "runday_restore_1",
+          dayIndex: new Date().getDay(),
+          date: localDateString(addLocalDays(new Date(), 0)),
+          weekKey: localWeekKey(),
+          templateId: "easy_30",
+          type: "easy",
+          completed: true,
+          status: "completed_exact",
+        } as ScheduledRunDay,
+      ])
+    );
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.restoreRunDay("runday_restore_1");
     });
 
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("restoreWorkoutDay: clears `skipped` on a non-completed lift day", async () => {
     mockProfile = structuredProfile();
-    mockDocData = stateWith(
-      [],
-      [
-        {
-          dayName: "Push",
-          dayType: "lift",
-          exercises: [],
-          completed: false,
-          skipped: true,
-        },
-      ]
+    seedProgram(
+      stateWith(
+        [],
+        [
+          {
+            dayName: "Push",
+            dayType: "lift",
+            exercises: [],
+            completed: false,
+            skipped: true,
+          },
+        ]
+      )
     );
-    mockDocExists = true;
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.restoreWorkoutDay(0);
     });
 
-    expect(setDocCalls.length).toBe(1);
-    expect((setDocCalls[0].data as ProgramState).workouts[0].skipped).toBe(
+    expect(setDocCalls().length).toBe(1);
+    expect((setDocCalls()[0].data as ProgramState).workouts[0].skipped).toBe(
       false
     );
   });
 
   it("restoreWorkoutDay: refuses a completed lift day (no write)", async () => {
     mockProfile = structuredProfile();
-    mockDocData = stateWith(
-      [],
-      [
-        {
-          dayName: "Push",
-          dayType: "lift",
-          exercises: [],
-          completed: true,
-          skipped: false,
-        },
-      ]
+    seedProgram(
+      stateWith(
+        [],
+        [
+          {
+            dayName: "Push",
+            dayType: "lift",
+            exercises: [],
+            completed: true,
+            skipped: false,
+          },
+        ]
+      )
     );
-    mockDocExists = true;
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
 
     await act(async () => {
       await result.current.restoreWorkoutDay(0);
     });
 
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
 
@@ -2012,13 +2052,12 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     call: (api: any) => Promise<void>
   ) {
     mockProfile = raceProfile("2099-09-15");
-    mockDocData = stateWith(runDays);
-    mockDocExists = true;
+    seedProgram(stateWith(runDays));
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
-    setDocCalls.length = 0;
+    markWrites();
     await act(async () => {
       await call(result.current);
     });
@@ -2028,8 +2067,8 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     await run([plannedToday()], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls.length).toBe(1);
-    const saved = setDocCalls[0].data as ProgramState;
+    expect(setDocCalls().length).toBe(1);
+    const saved = setDocCalls()[0].data as ProgramState;
     const moved = saved.runDays!.find((rd) => rd.id === "runday_move_1")!;
     expect(moved.dayIndex).toBe(target);
     expect(moved.date).toBe(
@@ -2049,14 +2088,14 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
     await run([plannedToday({ type: "race", templateId: "10k_race" })], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("refuses to move a skipped (non-editable) slot", async () => {
     await run([plannedToday({ status: "skipped" })], (api) =>
       api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 
   it("refuses to double-book an occupied day", async () => {
@@ -2064,6 +2103,6 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
       [plannedToday(), plannedToday({ id: "other", dayIndex: target })],
       (api) => api.moveRunDay("runday_move_1", target)
     );
-    expect(setDocCalls.length).toBe(0);
+    expect(setDocCalls().length).toBe(0);
   });
 });
