@@ -1,15 +1,24 @@
 /**
- * Push consent contract (push arc #961, slice 8 / #969).
+ * Push consent contract (push arc #961, slice 8 / #969) — the SHAPE only.
  *
- * The server-readable shape stored at `users/{uid}/settings/push`, plus the
- * pure predicate EVERY server sender gates on. Pure — no Firestore, no SDK —
- * so the senders (#966 streak, recap, badge) import `mayTargetUser` directly
- * and table-test it.
+ * The doc stored at `users/{uid}/settings/push`, as the client reads and
+ * writes it (`usePushSettings`, `pushNotifications`).
  *
  * Model (Q6): a global kill-switch + per-type consent. A type sends only when
  * the global switch AND that type's flag are both on. Global defaults OFF
  * (explicit opt-in — no cold sends); per-type default ON (so opting in to push
  * enables the standard set, which the user can then pare back).
+ *
+ * The PREDICATE that enforces that model is NOT here. This header used to
+ * claim "the senders import `mayTargetUser` directly and table-test it" — but
+ * the senders are Cloud Functions, which cannot import TypeScript, and they
+ * were running a hand-copied duplicate. The exported `mayTargetUser` had no
+ * callers at all, so the tested copy was the dead one and the copy deciding
+ * real pushes had no tests. It now lives, and is tested, where it runs:
+ * `functions/lib/pushConsent.js` + `functions/__tests__/pushConsent.test.js`.
+ *
+ * Keep it that way. "May a server sender target this user?" is a server
+ * question; a client-side answer to it can only ever drift out of sight.
  */
 export type PushType = "streak" | "recap" | "badge";
 
@@ -27,16 +36,3 @@ export const DEFAULT_PUSH_CONSENT: PushConsent = {
   recap: true,
   badge: true,
 };
-
-/**
- * May a server sender of `type` target a user with this consent? True only
- * when the global switch is on AND the per-type flag isn't explicitly off
- * (absent type flag → on, so older docs default to the standard set).
- */
-export function mayTargetUser(
-  consent: Partial<PushConsent> | null | undefined,
-  type: PushType
-): boolean {
-  if (!consent || !consent.enabled) return false;
-  return consent[type] !== false;
-}
