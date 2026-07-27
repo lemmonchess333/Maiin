@@ -56,7 +56,6 @@ import {
   getFollowerCount,
   getFollowingCount,
   toggleKudos,
-  hasGivenKudos,
   fetchActivitiesByIds,
   batchGetKudos,
   blockUser,
@@ -179,19 +178,6 @@ describe("toggleKudos", () => {
     );
     expect(mockHttpsCallable).not.toHaveBeenCalled();
     expect(mockCallableInvoke).not.toHaveBeenCalled();
-  });
-});
-
-describe("hasGivenKudos", () => {
-  it("returns true when kudos doc exists", async () => {
-    seedFirestore({ "kudos/act1/users/user1": { at: 1 } });
-    expect(await hasGivenKudos("act1", "user1")).toBe(true);
-  });
-
-  it("returns false when kudos doc does not exist", async () => {
-    // Another user's kudos on the same activity must not read as mine.
-    seedFirestore({ "kudos/act1/users/someone-else": { at: 1 } });
-    expect(await hasGivenKudos("act1", "user1")).toBe(false);
   });
 });
 
