@@ -107,3 +107,67 @@ export function checkSetPR(
     return bucket;
   return null;
 }
+
+/* ================================
+   SESSION-VOLUME PR (backlog #2, three-axis PR — Green, bench manual B1)
+   Third axis: most total work (kg × reps) for an exercise in one session.
+   Presentation policy: one celebration toast, no mechanism talk.
+================================ */
+
+export interface VolumeBest {
+  volume: number;
+  date: string;
+}
+
+export type VolumeBestMap = Record<string, VolumeBest>;
+
+/** Sum of weight×reps over the given sets; zero-weight sets contribute 0. */
+export function exerciseSessionVolume(
+  sets: { weightKg: number; reps: number }[]
+): number {
+  return sets.reduce(
+    (sum, s) =>
+      s.weightKg > 0 && s.reps > 0 ? sum + s.weightKg * s.reps : sum,
+    0
+  );
+}
+
+/** Best single-session volume per exercise across the workout history. */
+export function buildVolumeBest(
+  workouts: {
+    exercises: {
+      exerciseName: string;
+      sets: { weightKg: number; reps: number }[];
+    }[];
+    date: string;
+  }[]
+): VolumeBestMap {
+  const best: VolumeBestMap = {};
+  for (const w of workouts) {
+    for (const ex of w.exercises) {
+      const vol = exerciseSessionVolume(ex.sets);
+      if (vol > 0 && vol > (best[ex.exerciseName]?.volume ?? 0)) {
+        best[ex.exerciseName] = { volume: vol, date: w.date };
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Same gating philosophy as checkSetPR: needs history depth (minSessions)
+ * so day-one sessions don't spray celebrations, and zero volume never fires
+ * (bodyweight/uncalibrated work has no volume identity).
+ */
+export function checkVolumePR(
+  exerciseName: string,
+  sessionVolume: number,
+  volumeBest: VolumeBestMap,
+  sessionCounts: Record<string, number>,
+  minSessions: number = 3
+): boolean {
+  if (sessionVolume <= 0) return false;
+  if ((sessionCounts[exerciseName] || 0) < minSessions) return false;
+  const current = volumeBest[exerciseName];
+  return !current || sessionVolume > current.volume;
+}

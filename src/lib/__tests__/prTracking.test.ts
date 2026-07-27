@@ -4,6 +4,9 @@ import {
   repBucketLabel,
   buildPRMap,
   checkSetPR,
+  buildVolumeBest,
+  checkVolumePR,
+  exerciseSessionVolume,
 } from "../prTracking";
 import type { RepBucket } from "../prTracking";
 
@@ -241,5 +244,55 @@ describe("buildPRMap rebuild tiebreak (B1)", () => {
       },
     ]);
     expect(map["Bench Press"]["8rm"]?.weight).toBe(102.5);
+  });
+});
+
+// Backlog #2 — session-volume PR (three-axis PR, Green/B1).
+describe("session-volume PR", () => {
+  it("exerciseSessionVolume sums weight×reps, ignoring zero-weight/rep sets", () => {
+    expect(
+      exerciseSessionVolume([
+        { weightKg: 100, reps: 8 },
+        { weightKg: 100, reps: 7 },
+        { weightKg: 0, reps: 12 },
+        { weightKg: 60, reps: 0 },
+      ])
+    ).toBe(1500);
+  });
+
+  it("buildVolumeBest keeps the best single-session volume per exercise", () => {
+    const best = buildVolumeBest([
+      {
+        date: "2026-07-01",
+        exercises: [
+          { exerciseName: "Bench", sets: [{ weightKg: 100, reps: 8 }] },
+        ],
+      },
+      {
+        date: "2026-07-08",
+        exercises: [
+          {
+            exerciseName: "Bench",
+            sets: [
+              { weightKg: 95, reps: 8 },
+              { weightKg: 95, reps: 8 },
+            ],
+          },
+        ],
+      },
+    ]);
+    // 1520 (2×95×8) beats 800 even though the top set was lighter —
+    // that is exactly the third axis.
+    expect(best["Bench"]).toEqual({ volume: 1520, date: "2026-07-08" });
+  });
+
+  it("checkVolumePR gates on history depth, positive volume, and beating the best", () => {
+    const best = { Bench: { volume: 1500, date: "2026-07-01" } };
+    const counts = { Bench: 5, Curl: 1 };
+    expect(checkVolumePR("Bench", 1600, best, counts)).toBe(true);
+    expect(checkVolumePR("Bench", 1500, best, counts)).toBe(false);
+    expect(checkVolumePR("Bench", 0, {}, counts)).toBe(false);
+    expect(checkVolumePR("Curl", 500, {}, counts)).toBe(false); // < 3 sessions
+    expect(checkVolumePR("Bench", 100, {}, counts)).toBe(true); // no prior best
   });
 });
