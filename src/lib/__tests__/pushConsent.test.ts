@@ -1,48 +1,36 @@
+/**
+ * The client half of the push consent contract: the DEFAULT.
+ *
+ * This file used to table-test `mayTargetUser` — the sender gate — and every
+ * one of those cases passed while proving nothing, because the senders are
+ * Cloud Functions running their own hand-copied duplicate and nothing
+ * imported the TS function. Those cases moved with the predicate to
+ * `functions/__tests__/pushConsent.test.js`, which pins the copy that
+ * actually decides whether a phone buzzes (ADR-0008).
+ *
+ * What legitimately remains client-side is the default the app WRITES.
+ * `usePushSettings` seeds a user's settings doc from `DEFAULT_PUSH_CONSENT`,
+ * so this constant determines whether a brand-new user is opted in or out.
+ * Getting it wrong is a consent violation on the WRITE side, which no
+ * server-side test of the read side would catch.
+ */
 import { describe, it, expect } from "vitest";
-import {
-  mayTargetUser,
-  DEFAULT_PUSH_CONSENT,
-  type PushConsent,
-} from "../pushConsent";
+import { DEFAULT_PUSH_CONSENT } from "../pushConsent";
 
-describe("mayTargetUser — the senders' gate (#969)", () => {
-  const on: PushConsent = {
-    enabled: true,
-    streak: true,
-    recap: true,
-    badge: true,
-  };
-
-  it("blocks every type when the global switch is off", () => {
-    const off: PushConsent = { ...on, enabled: false };
-    expect(mayTargetUser(off, "streak")).toBe(false);
-    expect(mayTargetUser(off, "recap")).toBe(false);
-    expect(mayTargetUser(off, "badge")).toBe(false);
-  });
-
-  it("allows a type when global + that type are on", () => {
-    expect(mayTargetUser(on, "streak")).toBe(true);
-    expect(mayTargetUser(on, "badge")).toBe(true);
-  });
-
-  it("blocks only the types switched off, when global is on", () => {
-    const c: PushConsent = { ...on, recap: false };
-    expect(mayTargetUser(c, "recap")).toBe(false);
-    expect(mayTargetUser(c, "streak")).toBe(true);
-  });
-
-  it("defaults an absent per-type flag to ON (older docs get the standard set)", () => {
-    expect(mayTargetUser({ enabled: true }, "streak")).toBe(true);
-    expect(mayTargetUser({ enabled: true }, "recap")).toBe(true);
-  });
-
-  it("treats null/undefined consent as no-send (default off)", () => {
-    expect(mayTargetUser(null, "streak")).toBe(false);
-    expect(mayTargetUser(undefined, "badge")).toBe(false);
-  });
-
-  it("default consent is opt-out by default (global off)", () => {
+describe("DEFAULT_PUSH_CONSENT", () => {
+  it("is opt-OUT by default — a new user is never cold-pushed", () => {
+    // The global switch is the one that must default off. Flipping it true
+    // would opt in every existing user who has never touched the toggle,
+    // since an unwritten settings doc reads as the default.
     expect(DEFAULT_PUSH_CONSENT.enabled).toBe(false);
-    expect(mayTargetUser(DEFAULT_PUSH_CONSENT, "streak")).toBe(false);
+  });
+
+  it("has every per-type flag ON, so opting in enables the standard set", () => {
+    // Q6's model: one deliberate opt-in gets the normal notifications, which
+    // the user then pares back — rather than opting in and still hearing
+    // nothing until they find three more toggles.
+    expect(DEFAULT_PUSH_CONSENT.streak).toBe(true);
+    expect(DEFAULT_PUSH_CONSENT.recap).toBe(true);
+    expect(DEFAULT_PUSH_CONSENT.badge).toBe(true);
   });
 });
