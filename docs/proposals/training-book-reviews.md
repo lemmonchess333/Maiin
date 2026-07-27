@@ -957,3 +957,250 @@ blocks Tropos from doing that today.
   Tropos week. The week-to-week volume ramp (M2/N1) becomes the follow-on.
 - **P5 (warm-up) — implementation pattern resolved** by N11: warm-up sets as
   flagged prescription rows.
+
+---
+
+## 6. Eric Helms — The Muscle & Strength Pyramid: Training (reviewed 2026-07-27)
+
+The most academically rigorous source in this document (Helms holds a PhD;
+every claim is referenced), and structurally the most useful, because its
+central contribution is not a program but a **hierarchy of what matters**:
+
+| Level | | Helms's note |
+| --- | --- | --- |
+| 6 | Tempo | *"just lift the weights"* |
+| 5 | Rest periods | Mostly about avoiding harm |
+| 4 | Exercise selection | Matters more for strength than hypertrophy |
+| 3 | Progression | Needed from intermediate onward |
+| 2 | **Volume, Intensity, Frequency** | "the longest section… the majority of the most important concepts" |
+| 1 | **Adherence** | *"it doesn't matter how good your programming is if you cannot stick to it"* |
+
+with periodization sitting *outside* the pyramid, since it is how you
+manipulate every level over time. Helms: **"~80% of your progress is going to
+be made by focusing on these bottom three or four levels, and only the very
+small finishing touches will be affected by the last levels."**
+
+That makes this section a **ranking function for everything above**, which is
+more valuable to this backlog than any individual finding. Applying it:
+
+| Proposal | Pyramid level | Effect on priority |
+| --- | --- | --- |
+| Daily undulation (N9), volume ramp (M2/N1), rep ranges (P1) | **2** | Confirmed top tier |
+| RIR prescription (B2/N3) | **2** (intensity measurement) | Confirmed top tier |
+| Three-axis PR (B1) | **1 — adherence** | *Raised.* It's a consistency mechanism |
+| easierToday as first-class (H1 below) | **1 — adherence** | *Raised sharply* |
+| Progression schemes per exercise type (N2/H3) | **3** | Confirmed |
+| Deload philosophy (M4/H4) | **3** | Confirmed |
+| Weak-point plateau breaker (P4/B6) | **4** | *Lowered* — real, but a level-4 concern |
+| Rest carried through the boundary (B3) | **5** | *Lowered* — see H8 |
+| Tempo prescription (N4) | **6** | *Lowered sharply* — see H9 |
+
+### New findings
+
+**H1 — Adherence is Level 1, and it is the layer an app actually owns.**
+Everything else in this document is programming; adherence is the thing
+Tropos is uniquely positioned to influence, and Helms puts it beneath all of
+it. His framework is **REF — Realistic, Enjoyable, Flexible**, and two cited
+studies land directly on Tropos features:
+
+- **Flexible day-selection beats fixed order.** McNamara & Stearne (2010):
+  two volume-matched groups over 12 weeks; one chose daily from an easy /
+  moderate / hard session based on how they felt, the other did the same
+  sessions in a preset order. **The flexible group made greater strength
+  gains.** Tropos has `easierToday.ts`, but it is framed as an accommodation —
+  a one-session concession the user reaches for on a bad day. This evidence
+  says flexible selection is not a concession, it is *superior*, and it
+  belongs at the top of the pyramid. Note the mechanism differs from
+  `easierToday`'s: Helms says "do the easiest workout **you had planned for
+  the week** instead" — swap sessions within the week rather than scale
+  today's down. That's a small change to a feature that already exists, at
+  Level 1, with an RCT behind it. It is probably the highest
+  value-per-unit-effort item in this entire document.
+- **Process focus beats goal focus for consistency.** Fishbach & Choi (2012):
+  the group told to focus on the end goal achieved it *less* consistently
+  than the group told to focus on the process. Tropos runs both framings at
+  once — streaks and badges (process) alongside PRs and targets (goal). The
+  finding doesn't say drop goals; it says the process framing is what carries
+  consistency, which is an argument for keeping streaks prominent and for
+  treating B1's three-axis PR as a *consistency* feature rather than a
+  celebration feature.
+- Bartholomew (2008): negative life events measurably impair training
+  adaptation — supporting flexibility as a design requirement rather than a
+  nicety.
+
+**H2 — The canonical RIR scale, and failure guidance that resolves an open
+question.** This is the authoritative version of what sections 3–5 kept
+circling, including the half-points:
+
+| RPE | Meaning |
+| --- | --- |
+| 10 | Could not do more reps or load |
+| 9.5 | Could not do more reps, could do slightly more load |
+| 9 | Could do 1 more rep |
+| 8.5 | Definitely 1 more, chance at 2 |
+| 8 | Could do 2 more reps |
+| 7.5 | Definitely 2 more, chance at 3 |
+| 7 | Could do 3 more reps |
+| 5–6 | Could do 4–6 more |
+
+Tropos's `RPE_OPTIONS` already runs `[6, 6.5, … 10]` — the same scale at the
+same granularity. What's missing is that it's optional, hidden behind
+`showRPE`, and feeds one rule. Helms also settles the failure question that
+Nippard's Y/N flag raised: **don't take multi-joint compounds to failure**
+(injury risk plus systemic fatigue that degrades the rest of the session);
+failure is comparatively safe on isolation work. And the volume argument:
+going to failure on set 1 of 3 costs you total reps (5+3+2 = 10) versus
+stopping short (4+4+4 = 12). *"Failure needs to be used with a purpose, if
+used at all."* That is a principled basis for a per-exercise failure flag
+rather than a per-program default.
+
+**H3 — Progression scheme is chosen by BOTH training age and exercise type —
+and Tropos already has the discriminator.** Nippard showed four schemes
+running at once (N2); Helms gives the rule behind it:
+
+- **Compound movements → linear / wave loading.** For 3×6–8: week 1
+  `8,8,8 @110`; week 2 `7,7,7 @115`; week 3 `6,6,6 @120`; week 4 deload
+  `6,6 @110`; week 5 back to `8,8,8` at *more* than week 1's load. Drop 1 rep
+  per week for 3–5/4–6/5–7 ranges, 2 reps per week for 8–12. Load steps up
+  every four weeks.
+- **Isolation movements → double progression.** Adding 2.5 kg to a curl is a
+  10% jump where the same increment is 1.5% on a squat, so load can't be the
+  progressed variable. Add reps to the top of the range across all sets, then
+  add load and reset.
+
+Two things follow. First, **that four-week compound wave maps exactly onto
+Tropos's existing `week % 4 === 0` mesocycle** — including the deload in
+week 4 — so P2's wave has a concrete, referenced shape for compounds.
+Second, and more actionable: Tropos assigns `progressionType` from the
+**goal profile**, but it already carries `ProgramExercise.isAccessory`, which
+is precisely the compound/isolation discriminator Helms uses. The flag exists
+and is used for volume balancing; wiring it to progression choice is a small
+change with a strong rationale. (Caveat from section 1's P1: template-derived
+programs never set `isAccessory` at all, so that gap has to close first.)
+
+**H4 — Deloads differ by training age, with concrete recipes.**
+
+- **Novice:** fail the target sets/reps **two sessions in a row** → drop load
+  10%, keep sets and reps → next session return to the failed weight.
+- **Intermediate and beyond:** roughly **half the volume at similar
+  intensity** — "drop a set or two from each exercise, and reduce the rep
+  target by two repetitions." `3×10×200 lb` → `2×8×200 lb`. Volume halves,
+  RPE falls ~2 points, load is untouched.
+
+Tropos's `applyProgression` is already in the novice family but calibrated
+differently: it backs off after **three** consecutive failures, by **5%**
+(double) or 1 kg (linear), where Helms says two failures and 10%. And
+`applyDeload` cuts sets by 1 **and** load by 15%, where Helms's post-novice
+recipe cuts volume via sets *and reps* while holding load. Combined with
+Meadows (M4) and Nippard, that's now four positions on the deload question —
+but Helms is the only one who makes it **conditional on training age**, which
+is probably the resolution: Tropos's load-cutting deload is the *novice*
+answer, applied to everyone.
+
+**H5 — An adjustment flowchart that is directly implementable.** Helms gives
+a decision procedure for a stalled cycle:
+
+```
+Are you plateaued?
+├─ No  → change nothing
+└─ Yes → Are you recovered?
+         ├─ Yes → add volume
+         └─ No  → cut volume / take a light week
+                  └─ if you re-fatigue and stall again, the problem is not
+                     fatigue — you need less total volume, or the volume
+                     organised differently
+```
+
+Tropos has both inputs already: `plateauCount` per exercise, and a recovery
+estimate from `performanceEngine`'s `computeRecoveryScore`. What it lacks is
+the *joint* rule — today plateau triggers a variation swap and low recovery
+triggers advisory copy, independently. This flowchart connects them, and the
+final branch ("if it recurs, the answer isn't another deload") is exactly the
+kind of second-order rule an app can track across cycles and a user can't.
+
+**H6 — "Overlap" is the name for the interference problem, and Tropos already
+models it.** Section 2 (D1) found the deadlift scheduled in every leg day;
+Meadows (M6) ordered days to protect the lower back. Helms supplies the
+concept and the mechanism: *"the body does not 'think' of movements as
+specific to muscle groups"* — a lat pulldown trains triceps and chest;
+squats and deadlifts both train back and legs. Hence "training squats three
+times a week and deadlifts three times a week… wouldn't be ideal for 90% of
+people because of the overlap."
+
+Encouragingly, **Tropos's fractional volume model is an overlap model** —
+`weeklyVolumeByMuscle` counts primary involvement 1.0 and secondary 0.5,
+which is exactly the accounting Helms argues for. The gap is that overlap
+informs *volume totals* but not *scheduling*: nothing stops the generator
+placing two high-overlap patterns in the same session or on consecutive days.
+
+**H7 — Helms counts volume in reps, not sets.** His guideline is **40–70
+reps per muscle group per session, 2–3×/week → 80–210 reps per muscle per
+week** (from Wernbom's 2007 review), versus Nippard's and Tropos's *sets*.
+Helms notes the ranges are enormous — a threefold span "more or less going to
+produce a similar outcome in the majority of people" — and warns against
+absolutist readings ("39 reps doesn't mean you won't grow"). Practically this
+is a caution rather than a change: it says Tropos's set-based landmarks are a
+reasonable proxy, and that precision in this area is false comfort. His
+starting advice matches Meadows M3 and Nippard N6: novices start at the low
+end (~40 reps, 2×/week) and adjust upward.
+
+**H8 — Rest periods are Level 5, which lowers B3.** The recommendation is
+"rest until you feel ready to perform at your best on the next set", with
+floors only for habitual under-resters: **≥1.5 min for small muscle groups,
+≥2.5 min for compounds**. Section 3 (B3) framed the dropped `restSeconds` as
+"discarding a training variable"; Helms's placement says it is a *minor*
+one. Carrying rest through the template boundary is still correct — it's part
+of P1's field-loss fix — but it should not be argued for on training-effect
+grounds.
+
+**H9 — Tempo is Level 6, which lowers N4 sharply.** Helms's practical
+guidance is, verbatim, *"just lift the weights."* Control the eccentric so
+gravity isn't doing the work, drive the concentric forcefully, and don't
+deliberately slow reps (except beginners learning form). Section 5 (N4)
+observed that Tropos has `Exercise.tempo` and `parseTempo` but points them at
+demo-animation timing rather than prescription — and framed that as
+infrastructure aimed at the wrong consumer. Helms's hierarchy reframes it:
+**animation timing may be the correct use.** Prescribing tempo is a level-6
+polish item and should not compete with anything at levels 1–3. I'm recording
+this as a correction to N4 rather than leaving the earlier framing to mislead
+a future reader.
+
+**H10 — DUP ordering has a fatigue constraint.** Reinforcing N9: Zourdos's
+dissertation compared hypertrophy→strength→power against
+hypertrophy→**power**→strength and found the latter produced greater strength
+gains, because the high-volume hypertrophy day was no longer immediately
+before the most important session. The transferable rule for a day-role
+scheme is that **the highest-fatigue day should not directly precede the
+highest-priority day** — relevant if daily undulation (N9) is built, since
+Tropos would be choosing that order.
+
+### Corrections to earlier sections
+
+- **N4 (tempo prescription) — downgraded to level 6.** See H9. Tropos's
+  current tempo usage is defensible.
+- **B3 (rest as a periodized variable) — downgraded to level 5.** See H8.
+  Fix the field loss as part of P1; don't justify it as a training variable.
+- **P4 / B6 (weak-point rotation, exercise roles) — level 4.** Still worth
+  doing, and B6's role concept has three sources behind it, but it should not
+  outrank level-2 and level-3 work.
+- **M4 / H4 (deload) — the disagreement resolves by training age.** Tropos's
+  load-cutting deload is the novice-appropriate answer applied universally.
+
+### Deliberately NOT adopting
+
+- **Percentage-of-1RM prescription as the primary loading method.** Helms
+  himself lists its weakness — rep-at-a-given-percentage varies widely
+  between individuals (one person's 80% is 8 reps, another's is 8 reps at
+  70%) — which is why he prefers RM targets and RPE. This is the fourth
+  source to point away from %-loading for a general population; consider the
+  question settled.
+- **Competition tapering and peaking blocks.** Meet-specific; only relevant
+  if the lift-goal idea (D4) is ever built.
+- **Antagonist paired sets** (level 5). A time-efficiency technique needing
+  paired-exercise support Tropos lacks — folds into the deferred
+  "intra-session set structures" candidate (N8), at low priority.
+- **Static stretching prescriptions.** Helms's own read is that the injury-
+  prevention evidence is "mixed at best" and that pre-training static
+  stretching can reduce performance. His fallbacks (foam rolling, short
+  sub-60s holds, dynamic warm-up) are the P5 warm-up content, not a separate
+  flexibility feature.
