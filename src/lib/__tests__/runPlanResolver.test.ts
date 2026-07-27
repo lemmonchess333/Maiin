@@ -34,6 +34,27 @@ describe("resolveRunPlan — store reconciliation (R4)", () => {
     expect(r.raceGoal).toEqual(RACE);
   });
 
+  it("the PROFILE wins when the two stores disagree", () => {
+    // The precedence itself, which nothing pinned until 2026-07-27: every
+    // other fixture here has an empty mirror or agreeing stores, so flipping
+    // `reconcileRaceGoal` to mirror-first passed all 47 tests across this
+    // suite and ProgrammeRunSection's.
+    //
+    // It is not academic. EDITING a race goal writes the profile first and
+    // leaves the mirror on the OLD race until regeneration — so mirror-first
+    // shows the user a date they have already changed, and every derived
+    // value (days-out, week-of-M, taper timing) is computed against the
+    // stale race. Backfilling from the mirror is only ever a fallback for a
+    // goal the profile does not have.
+    const EDITED = { distance: "marathon", targetDate: "2026-09-20" } as const;
+    const r = resolveRunPlan(
+      profile({ runMode: "race_prep", raceGoal: EDITED }),
+      program({ raceGoal: RACE }), // stale mirror, still the old date
+      "2026-07-01"
+    );
+    expect(r.raceGoal).toEqual(EDITED);
+  });
+
   it("race_goal when only the MIRROR has the goal (profile lagging)", () => {
     const r = resolveRunPlan(
       profile({ runMode: "freeform", raceGoal: null }),
