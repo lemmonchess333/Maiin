@@ -24,6 +24,9 @@ import {
   resetFirestore,
   readDoc,
   failNextFirestore,
+  deferReads,
+  releaseRead,
+  flushSnapshots,
 } from "@/test/firestoreHarness";
 
 const PATH = "users/u1/checkins/2026-07-06";
@@ -115,9 +118,22 @@ describe("MomentumCheckinCard", () => {
   });
 
   it("a dismissed week renders nothing", async () => {
+    /* Anchored via a held read, because the naive form of this test was
+     * VACUOUS: the card also renders nothing while LOADING, so
+     * `waitFor(innerHTML === "")` was satisfied on its first poll before
+     * the read resolved — deleting the entire dismissed branch from the
+     * component left it green (found by a 2026-07-27 mutation audit; the
+     * suite was saved only by an unrelated interaction test). Holding the
+     * read open and releasing it makes "the load completed AND the card
+     * still renders nothing" the thing actually asserted. */
     seedCheckin({ weekKey: "2026-07-06", dismissed: true, createdAt: 1 });
+    deferReads();
     const { container } = renderCard();
-    await waitFor(() => expect(container.innerHTML).toBe(""));
+    // Positive anchor: the read is genuinely held, then genuinely answered.
+    await waitFor(() => expect(releaseRead()).toBe(true));
+    await flushSnapshots();
+    expect(container.innerHTML).toBe("");
+    expect(screen.queryByText(/How did this week's plan feel\?/)).toBeNull();
   });
 
   it("a failed load hides the card — never re-asks over an unread answer", async () => {
