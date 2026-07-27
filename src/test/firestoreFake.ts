@@ -191,7 +191,11 @@ export type FailOp =
   | "setDoc"
   | "addDoc"
   | "updateDoc"
-  | "deleteDoc";
+  | "deleteDoc"
+  /** `writeBatch().commit()`. A batch is atomic, so a failure here must
+   *  leave NONE of its operations applied — which is exactly what a test
+   *  of the rollback path needs and what a per-op failure cannot model. */
+  | "commit";
 
 /**
  * The error shape client code branches on. Real Firestore throws a
@@ -224,10 +228,32 @@ let autoId = 0;
 export class FirestoreFake {
   /** path → document data. Paths are "a/b/c/d" (even segment count). */
   private docs = new Map<string, Record<string, unknown>>();
+  /**
+   * The IndexedDB cache, DELIBERATELY separate from `docs`.
+   *
+   * A cache-first paint is only worth testing when the cached copy can
+   * differ from the server's — that is the whole scenario ("cached
+   * locally, server slow or unreachable"). Backing it with the same map
+   * would make every cache test tautological, since the two could never
+   * disagree.
+   *
+   * Empty by default, so the modelled cache stays COLD unless a test
+   * says otherwise — see `getDocFromCache` in the SDK surface.
+   */
+  private cached = new Map<string, Record<string, unknown>>();
   private listeners = new Set<Listener>();
   private failures: PendingFailure[] = [];
   /** Every write, for assertions ("did it write, and with what?"). */
   readonly writes: { op: string; path: string; data?: unknown }[] = [];
+  /**
+   * One entry per COMMITTED batch, holding that batch's operations.
+   *
+   * The flat write log can't express this: a batch's writes are
+   * indistinguishable from N separate writes once flattened, so a suite
+   * asserting "these three landed together, atomically" has nowhere to
+   * look. Grouping is the property under test for `writeBatch` callers.
+   */
+  readonly batches: { op: string; path: string; data?: unknown }[][] = [];
   /**
    * Every read the code under test issued. Exists so a suite can assert a
    * hook did NOT read — a gated hook that skips Firestore is saving the
@@ -239,9 +265,11 @@ export class FirestoreFake {
 
   reset(): void {
     this.docs.clear();
+    this.cached.clear();
     this.listeners.clear();
     this.failures.length = 0;
     this.writes.length = 0;
+    this.batches.length = 0;
     this.reads.length = 0;
     // Release before clearing: a held promise that is dropped never settles,
     // and a test awaiting it would hang until the suite timeout rather than
@@ -392,6 +420,22 @@ export class FirestoreFake {
     return new Promise<T>((resolve, reject) => {
       this.deferred.push({ path, resolve: () => resolve(value), reject });
     });
+  }
+
+  /**
+   * Seed the IndexedDB cache only — these documents are visible to
+   * `getDocFromCache` and INVISIBLE to every server read. Use it to model
+   * a returning user whose cache is warm while the network is slow.
+   */
+  seedCache(tree: Record<string, Record<string, unknown>>): void {
+    for (const [path, data] of Object.entries(tree)) {
+      this.cached.set(path, { ...data });
+    }
+  }
+
+  /** Cached copy of a document, or undefined for a cold cache. */
+  peekCache(path: string): Record<string, unknown> | undefined {
+    return this.cached.get(path);
   }
 
   /** Seed documents: `{ "users/u1": {...}, "users/u1/meals/m1": {...} }`. */
