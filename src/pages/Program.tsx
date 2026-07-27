@@ -93,7 +93,8 @@ import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import TrackProgrammeSectionView from "@/components/program/TrackProgrammeSectionView";
 import DeloadBanner from "@/components/program/DeloadBanner";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
-import { raceDistanceLabel } from "@/lib/runProgrammeViewModel";
+import { resolveRunPlan } from "@/lib/runPlanResolver";
+import { runHeaderLine } from "@/lib/runHeaderLine";
 
 /**
  * IMPORTANT:
@@ -785,25 +786,26 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
   // user is on the Run tab. Race prep leads with distance + week-of-M;
   // structured shows weekly run frequency; freeform is the calm default.
   // (Run9 locked model: only freeform + race-goal overlay exist.)
-  const programRunHeaderLine = (() => {
-    const runMode = profile?.runMode ?? "freeform";
-    const raceGoal = programState?.runPlan?.raceGoal;
-    if (runMode === "race_prep") {
-      if (!raceGoal) return "Race prep · Set your race goal";
-      const dist = raceDistanceLabel(raceGoal.distance);
-      const cw = programState?.runPlan?.currentWeek;
-      const tw = programState?.runPlan?.totalWeeks;
-      if (cw != null && tw) {
-        return `Race prep · ${dist} · Week ${cw + 1}/${tw}`;
-      }
-      return `Race prep · ${dist}`;
-    }
-    if (runMode === "structured") {
-      const t = runsTarget;
-      return `Structured · ${t} ${t === 1 ? "run" : "runs"}/week`;
-    }
-    return "Free running · Start whenever";
-  })();
+  //
+  // The GOAL now comes from the resolver. Taking it from the runPlan mirror
+  // while the mode came from the profile is what made this render
+  // "Race prep · Set your race goal" at users who had just set one, for as
+  // long as regeneration took. The mode itself stays on the profile — that
+  // half was already canonical, and narrowing it to the resolver's RunMode
+  // would drop legacy `structured` profiles to freeform. The derivation
+  // moved to src/lib/runHeaderLine.ts so the case could be pinned by a test.
+  const resolvedRunPlan = resolveRunPlan(
+    profile,
+    programState,
+    localDateString(new Date())
+  );
+  const programRunHeaderLine = runHeaderLine({
+    runMode: profile?.runMode ?? "freeform",
+    raceGoal: resolvedRunPlan.raceGoal,
+    currentWeek: programState?.runPlan?.currentWeek,
+    totalWeeks: programState?.runPlan?.totalWeeks,
+    runsTarget,
+  });
 
   const handleAdvanceWeek = async () => {
     setAdvancing(true);

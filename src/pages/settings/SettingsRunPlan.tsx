@@ -20,6 +20,7 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import RunPlanSettings from "@/components/program/RunPlanSettings";
 import AdjustWeekSheet from "@/components/program/AdjustWeekSheet";
 import { localDateString } from "@/lib/dateHelpers";
+import { resolveRunPlan } from "@/lib/runPlanResolver";
 import { track as trackProgram } from "@/lib/programAnalytics";
 
 export default function SettingsRunPlan() {
@@ -36,10 +37,33 @@ export default function SettingsRunPlan() {
 
   // Run13 gating — mirror the cockpit entry: race-prep with a live plan only
   // (recovery and post-race own their own flows).
-  const raceGoal = programState?.runPlan?.raceGoal;
+  //
+  // The MODE and the GOAL both come from the resolver. This used to take
+  // `runMode` from the profile but `raceGoal` from the programState mirror,
+  // so between saving a race goal and the plan regenerating, `canAdjust` went
+  // false and the "Adjust this week" affordance simply vanished — for a user
+  // who had just told us about their race.
+  //
+  // The two remaining predicates are deliberately left as they were rather
+  // than swapped for the resolver's near-equivalents, because neither is the
+  // same question:
+  //   - `resolved.isElapsed` ALSO fires when the plan runs out of weeks, so
+  //     adopting it would newly hide the control for a user whose race is
+  //     still ahead. That may well be right, but it is a product call about
+  //     what "live plan" means, not part of this fix.
+  //   - `inRecovery || recoveryEnded` both require a `recoveryEndDate`, so
+  //     they would silently start ALLOWING adjust for `phase === "recovery"`
+  //     with no end date — which this gate has always excluded.
+  const resolved = resolveRunPlan(profile, programState, localDateString());
+  const raceGoal = resolved.raceGoal;
   const todayKey = localDateString();
   const inRecoveryPhase = programState?.runPlan?.phase === "recovery";
   const raceElapsed = !!raceGoal?.targetDate && todayKey > raceGoal.targetDate;
+  // `profile.runMode`, not `resolved.runMode`: the resolver derives its mode
+  // from the goal, so `resolved.runMode === "race_prep"` is implied by
+  // `!!raceGoal` and the clause would stop meaning anything. Keeping the
+  // profile's own value preserves the gate for a legacy `structured` profile
+  // that happens to carry a goal.
   const canAdjust =
     profile.runMode === "race_prep" &&
     !!raceGoal &&
