@@ -333,7 +333,7 @@ export default function SpacePostCard({
                   onClick={onToggleLike}
                   aria-label={liked ? "Remove props" : "Give props"}
                   aria-pressed={liked}
-                  className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3 -m-3 active:scale-90 transition-transform"
+                  className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   style={liked ? { color: THEME.running } : undefined}
                 >
                   <Flame
@@ -361,7 +361,7 @@ export default function SpacePostCard({
                     type="button"
                     onClick={onOpenComments}
                     aria-label="Comments"
-                    className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3 -m-3 active:scale-90 transition-transform"
+                    className="flex items-center gap-1 text-xs font-medium font-mono tabular-nums p-3.5 -m-3.5 active:scale-90 transition-transform"
                   >
                     <MessageCircle className="size-4" aria-hidden />
                     {displayCommentCount > 0 ? displayCommentCount : ""}

@@ -33,7 +33,7 @@ export default function TrainingForChip({ spaceId }: { spaceId: string }) {
   return (
     <Link
       to={`/space/${def.id}`}
-      className="inline-flex items-center gap-1.5 min-h-[28px] px-2.5 py-1 rounded-full text-xs font-semibold active:scale-[0.97] transition-transform"
+      className="relative inline-flex items-center gap-1.5 min-h-[28px] px-2.5 py-1 rounded-full text-xs font-semibold active:scale-[0.97] transition-transform before:content-[''] before:absolute before:inset-x-0 before:-inset-y-2"
       style={{ background: `${THEME.running}14`, color: THEME.running }}
     >
       <Flag className="size-3.5" aria-hidden />
