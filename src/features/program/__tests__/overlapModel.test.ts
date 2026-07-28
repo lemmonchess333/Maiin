@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 
 import {
+  backToBackPairs,
   expensiveExposures,
   leastTrainedCategory,
+  orderForAdjacency,
   surplusExposures,
   EXPENSIVE_PATTERNS,
   MAX_EXPENSIVE_SESSIONS_PER_WEEK,
@@ -182,5 +184,112 @@ describe("leastTrainedCategory", () => {
       "core",
     ]);
     expect(leastTrainedCategory(week, excluded)).toBeNull();
+  });
+});
+
+describe("backToBackPairs — the week's SHAPE, not date-pinned lifts", () => {
+  const sched = (days: number[]) =>
+    [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+      day: d,
+      type: days.includes(d) ? "lift" : "rest",
+    }));
+
+  it("a Mon/Wed/Fri lifter has no back-to-back sessions", () => {
+    // The whole reason adjacency needs the schedule: for this user the rule
+    // is a no-op, and nothing in workouts[] could have told us that.
+    expect(backToBackPairs(sched([1, 3, 5]), 3)).toEqual([false, false]);
+  });
+
+  it("a Mon/Tue/Wed lifter is back-to-back throughout", () => {
+    expect(backToBackPairs(sched([1, 2, 3]), 3)).toEqual([true, true]);
+  });
+
+  it("flags only the consecutive seams in a mixed week", () => {
+    // Mon, Tue, Wed, Fri → seams 0-1 and 1-2 are adjacent, 2-3 is not.
+    expect(backToBackPairs(sched([1, 2, 3, 5]), 4)).toEqual([
+      true,
+      true,
+      false,
+    ]);
+  });
+
+  it("counts 'both' days as lift days", () => {
+    const mixed = [
+      { day: 1, type: "lift" },
+      { day: 2, type: "both" },
+      { day: 4, type: "run" },
+    ];
+    expect(backToBackPairs(mixed, 2)).toEqual([true]);
+  });
+
+  it("assumes nothing when the schedule is unknown", () => {
+    // Assuming back-to-back would apply a reorder to users it cannot help.
+    expect(backToBackPairs(undefined, 3)).toEqual([false, false]);
+    expect(backToBackPairs([], 3)).toEqual([false, false]);
+  });
+
+  it("is empty for a single session", () => {
+    expect(backToBackPairs(sched([1]), 1)).toEqual([]);
+  });
+});
+
+describe("orderForAdjacency", () => {
+  const spread = [
+    { day: 1, type: "lift" },
+    { day: 3, type: "lift" },
+    { day: 5, type: "lift" },
+  ];
+  const consecutive = [
+    { day: 1, type: "lift" },
+    { day: 2, type: "lift" },
+    { day: 3, type: "lift" },
+  ];
+  // Two posterior-heavy days and one that isn't.
+  const week = (): WorkoutDay[] => [
+    day(ex("hip_dominant"), ex("horizontal_pull")),
+    day(ex("hip_dominant"), ex("vertical_pull")),
+    day(ex("horizontal_push"), ex("arms_triceps")),
+  ];
+
+  it("is a NO-OP for a spread-out week", () => {
+    const w = week();
+    expect(orderForAdjacency(w, spread)).toBe(w); // same reference
+  });
+
+  it("is a no-op when the schedule is unknown", () => {
+    const w = week();
+    expect(orderForAdjacency(w, undefined)).toBe(w);
+  });
+
+  it("separates the posterior-heavy days when the week IS consecutive", () => {
+    const out = orderForAdjacency(week(), consecutive);
+    const posterior = out.map((d) =>
+      d.exercises.some((e) => e.movementCategory === "hip_dominant")
+    );
+    // the push day should sit between the two hinge days
+    expect(posterior).toEqual([true, false, true]);
+  });
+
+  it("leaves a week alone when it cannot be improved", () => {
+    const already = [
+      day(ex("hip_dominant")),
+      day(ex("horizontal_push")),
+      day(ex("hip_dominant")),
+    ];
+    expect(orderForAdjacency(already, consecutive)).toBe(already);
+  });
+
+  it("does nothing with fewer than three sessions", () => {
+    const two = [day(ex("hip_dominant")), day(ex("hip_dominant"))];
+    expect(orderForAdjacency(two, consecutive)).toBe(two);
+  });
+
+  it("is deterministic", () => {
+    const runs = Array.from({ length: 5 }, () =>
+      orderForAdjacency(week(), consecutive).map((d) =>
+        d.exercises.map((e) => e.movementCategory).join(",")
+      )
+    );
+    runs.forEach((r) => expect(r).toEqual(runs[0]));
   });
 });

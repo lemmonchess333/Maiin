@@ -30,7 +30,11 @@ import {
   MICROPLATE_STEP,
   PLATE_PAIR_STEP,
 } from "./movementClass";
-import { leastTrainedCategory, surplusExposures } from "./overlapModel";
+import {
+  leastTrainedCategory,
+  orderForAdjacency,
+  surplusExposures,
+} from "./overlapModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -794,7 +798,12 @@ function buildPPL(
           15,
           15,
           "linear",
-          findExisting(2, 4)
+          // Was findExisting(2, 4) — an off-by-one. This day has four slots
+          // (0-3), so index 4 never resolved and the core lift was rebuilt
+          // from defaults on EVERY regenerate, silently dropping the user's
+          // logged weight and history. Same family as #17; found by the
+          // regenerate-preserves-load test rather than by reading indices.
+          findExisting(2, 3)
         ),
       ],
     },
@@ -1134,7 +1143,17 @@ export function generateProgram(
   weeklyTarget: number,
   existingWorkouts?: WorkoutDay[],
   primaryGoal?: PrimaryGoal,
-  loadCtx?: StartingLoadContext
+  loadCtx?: StartingLoadContext,
+  /**
+   * The user's planned week SHAPE (backlog #10, M6 adjacency). Read-only, and
+   * used for one thing: knowing whether the planned lift days are
+   * back-to-back, so two posterior-chain-heavy sessions aren't scheduled on
+   * consecutive days. This does NOT date-pin lifts — ADR-0002 keeps them
+   * split-ordered on purpose, because pinning would mark a
+   * Tuesday-instead-of-Monday session as "missed Monday" and drop its volume.
+   * Absent → adjacency is simply not applied.
+   */
+  weekSchedule?: ReadonlyArray<{ day: number; type: string }>
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -1149,78 +1168,142 @@ export function generateProgram(
   const profile = goalProfileFor(primaryGoal);
 
   const splitType = chooseSplit(weeklyTarget);
-  let workouts: WorkoutDay[];
 
-  switch (splitType) {
-    case "full_body": {
-      // `chooseSplit` now returns "full_body" for 3-day targets too
-      // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
-      const fbDays = Math.min(weeklyTarget, 3);
-      workouts = buildFullBody(
-        profile,
-        nutritionGoal,
-        fbDays,
-        existingWorkouts
-      );
-      break;
-    }
-    case "ppl":
-      workouts = buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3);
-      break;
-    case "upper_lower": {
-      const ul = buildUpperLower(profile, nutritionGoal, existingWorkouts);
-      // 2-day uses first upper + first lower only
-      workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
-      break;
-    }
-    case "ppl_ul":
-      workouts = [
-        ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
-        ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(
+  const buildSplit = (existingWorkouts?: WorkoutDay[]): WorkoutDay[] => {
+    let workouts: WorkoutDay[];
+
+    switch (splitType) {
+      case "full_body": {
+        // `chooseSplit` now returns "full_body" for 3-day targets too
+        // (beats 3-day PPL for hypertrophy). Cap at 3 days of rotation.
+        const fbDays = Math.min(weeklyTarget, 3);
+        workouts = buildFullBody(
+          profile,
+          nutritionGoal,
+          fbDays,
+          existingWorkouts
+        );
+        break;
+      }
+      case "ppl":
+        workouts = buildPPL(profile, nutritionGoal, existingWorkouts).slice(
           0,
-          2
-        ),
-      ];
-      break;
-    case "ppl_x2": {
-      const ppl = buildPPL(profile, nutritionGoal, existingWorkouts);
-      workouts = [...ppl, buildLegsB(profile, nutritionGoal, existingWorkouts)];
-      break;
+          3
+        );
+        break;
+      case "upper_lower": {
+        const ul = buildUpperLower(profile, nutritionGoal, existingWorkouts);
+        // 2-day uses first upper + first lower only
+        workouts = weeklyTarget <= 2 ? ul.slice(0, 2) : ul;
+        break;
+      }
+      case "ppl_ul":
+        workouts = [
+          ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
+          ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(
+            0,
+            2
+          ),
+        ];
+        break;
+      case "ppl_x2": {
+        const ppl = buildPPL(profile, nutritionGoal, existingWorkouts);
+        workouts = [
+          ...ppl,
+          buildLegsB(profile, nutritionGoal, existingWorkouts),
+        ];
+        break;
+      }
+      case "ppl_x2_fb": {
+        // Retained for backward-compat — `chooseSplit` no longer returns
+        // this (capped at 6 days) but existing programState rows on disk
+        // may still pass through here on regeneration.
+        const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
+        const fb = buildFullBody(profile, nutritionGoal, 1, existingWorkouts);
+        workouts = [
+          ...ppl7,
+          buildLegsB(profile, nutritionGoal, existingWorkouts),
+          {
+            ...fb[0],
+            dayName: "Full Body (Recovery)",
+            completed: false,
+            exercises: fb[0].exercises.map((ex) => ({ ...ex })),
+          },
+        ];
+        break;
+      }
+      default:
+        workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
     }
-    case "ppl_x2_fb": {
-      // Retained for backward-compat — `chooseSplit` no longer returns
-      // this (capped at 6 days) but existing programState rows on disk
-      // may still pass through here on regeneration.
-      const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
-      const fb = buildFullBody(profile, nutritionGoal, 1, existingWorkouts);
-      workouts = [
-        ...ppl7,
-        buildLegsB(profile, nutritionGoal, existingWorkouts),
-        {
-          ...fb[0],
-          dayName: "Full Body (Recovery)",
-          completed: false,
-          exercises: fb[0].exercises.map((ex) => ({ ...ex })),
-        },
-      ];
-      break;
+    return workouts;
+  };
+
+  /**
+   * Align a saved plan to the builders' CANONICAL day order before handing it
+   * over (backlog #10).
+   *
+   * The builders carry a saved exercise by POSITION (`findExisting(dayIdx,
+   * exIdx)`), which silently assumes the saved plan is in the same day order
+   * the builder emits. Adjacency ordering breaks that assumption, and the
+   * failure is data corruption rather than a visible error: with a saved
+   * order of Pull,Push,Legs and a builder order of Push,Pull,Legs, the user's
+   * logged pull-up weight lands on bench press.
+   *
+   * Matching on `dayName` fixes it, and fixes it generally — the carry stops
+   * depending on day order at all, so ANY future reordering is safe. A probe
+   * build (no existing, so it is pure and cheap) supplies the canonical order.
+   */
+  const alignExistingTo = (
+    saved: WorkoutDay[] | undefined,
+    reference: WorkoutDay[]
+  ): WorkoutDay[] | undefined => {
+    if (!saved || saved.length !== reference.length) return saved;
+    const byName = new Map<string, WorkoutDay[]>();
+    for (const d of saved) {
+      const list = byName.get(d.dayName);
+      if (list) list.push(d);
+      else byName.set(d.dayName, [d]);
     }
-    default:
-      workouts = buildUpperLower(profile, nutritionGoal, existingWorkouts);
-  }
+    // Every reference name must be present the same number of times, or the
+    // saved plan is a different shape and positional is the best we can do.
+    const aligned: WorkoutDay[] = [];
+    for (const c of reference) {
+      const list = byName.get(c.dayName);
+      if (!list || list.length === 0) return saved;
+      aligned.push(list.shift() as WorkoutDay);
+    }
+    return aligned;
+  };
+
+  let workouts = buildSplit(
+    alignExistingTo(existingWorkouts, buildSplit(undefined))
+  );
 
   // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
   // rotated to a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
+  // Backlog #10 (M6 adjacency): order the week so back-to-back days aren't the
+  // two that hammer the same lower back. Safe to apply on EVERY generation
+  // now that the carry keys on day NAME rather than position — reordering
+  // used to land a logged pull-up weight on bench press, which is what kept
+  // this unbuilt.
+  workouts = orderForAdjacency(workouts, weekSchedule);
+
+  // Everything below still matches the saved plan POSITIONALLY, so realign it
+  // to the order the week actually ended up in. Missing this is exactly the
+  // bug above, one layer down: the builders carried correctly and then the
+  // accessory carry put day 0's accessories on whatever day now sits first.
+  const alignedExisting = alignExistingTo(existingWorkouts, workouts);
+
   // Backlog #17: accessories keep their identity and logged state across a
   // regenerate — makeAccessory rebuilds from defaults and re-rolls its
   // random pick, so without this a settings change wipes them.
-  workouts = carryExistingAccessories(workouts, existingWorkouts);
+  workouts = carryExistingAccessories(workouts, alignedExisting);
   workouts = dedupeDayExercises(workouts);
   // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly
   // like an originally-built one rather than escaping both.
-  workouts = applyOverlapCaps(workouts, profile, existingWorkouts);
+  workouts = applyOverlapCaps(workouts, profile, alignedExisting);
   // Backlog #3: day roles — see applyDayRoles above.
   workouts = applyDayRoles(workouts);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume

@@ -486,7 +486,11 @@ export function useProgram() {
           weeklyTarget,
           undefined,
           profile.primaryGoal,
-          loadContextFrom(profile)
+          loadContextFrom(profile),
+          // Backlog #10 (M6): the week's SHAPE, so back-to-back days aren't
+          // the two that load the same lower back. Read-only — this does not
+          // date-pin lifts (ADR-0002).
+          profile.weekSchedule
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -1628,7 +1632,8 @@ export function useProgram() {
         weeklyTarget,
         programState?.workouts,
         primaryGoal,
-        loadContextFrom(profile)
+        loadContextFrom(profile),
+        profile.weekSchedule
       );
 
       // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen

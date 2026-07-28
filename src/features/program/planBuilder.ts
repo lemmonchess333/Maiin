@@ -227,7 +227,12 @@ function buildLiftProgram(input: PlanBuilderInput): {
             weightKg: input.bodyweightKg,
             experience: input.experience,
             sex: input.sex,
-          })
+          }),
+          // Backlog #10 (M6): the week's SHAPE, derived from the SAME inputs
+          // this builder uses for the schedule it is about to write, so the
+          // programme is ordered against the week the user will actually get.
+          // Read-only — lifts stay split-ordered (ADR-0002).
+          buildWeekSchedule(input)
         );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the

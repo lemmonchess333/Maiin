@@ -124,6 +124,138 @@ export function surplusExposures(workouts: WorkoutDay[]): Exposure[] {
   );
 }
 
+/* ================================
+   ADJACENCY (M6) — needs the week's SHAPE, not date-pinned lifts
+================================ */
+
+/**
+ * Which adjacent session-pairs land on back-to-back CALENDAR days.
+ *
+ * `workouts[i]` is the i-th lift session of the week, not a weekday — lifts
+ * are split-ordered by ADR-0002 and that is deliberate: pinning them to
+ * weekdays would mark a Tuesday-instead-of-Monday session as "missed Monday"
+ * and drop its volume, punishing exactly the light-trainer and
+ * lapsed-and-returning segments. Adjacency does NOT need pinning, though. It
+ * only needs to know the SHAPE of the week — whether the planned lift days
+ * are consecutive — which `profile.weekSchedule` already carries and the
+ * generator simply never received.
+ *
+ * Returns one flag per adjacent pair (length = sessions − 1). A Mon/Wed/Fri
+ * lifter gets all-false and the whole rule correctly becomes a no-op for
+ * them; a Mon/Tue/Wed lifter gets all-true. The week does not wrap: the last
+ * session and the first are a week apart in execution terms.
+ */
+export function backToBackPairs(
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
+  sessionCount: number
+): boolean[] {
+  if (sessionCount <= 1) return [];
+  if (!schedule || schedule.length === 0) {
+    // No schedule known — assume nothing. Assuming back-to-back would apply a
+    // reorder to users it cannot possibly help.
+    return Array.from({ length: sessionCount - 1 }, () => false);
+  }
+  const liftDays = [...schedule]
+    .filter((d) => d.type === "lift" || d.type === "both")
+    .sort((a, b) => a.day - b.day)
+    .map((d) => d.day);
+  return Array.from({ length: sessionCount - 1 }, (_, i) => {
+    const a = liftDays[i];
+    const b = liftDays[i + 1];
+    return a != null && b != null && b - a === 1;
+  });
+}
+
+/**
+ * Shared POSTERIOR-CHAIN load between two days — the thing M6 actually warns
+ * about ("legs and back are separated to keep lower back from getting too
+ * beat up"; "go easy on your lower back as you will be doing heavy legs the
+ * next day").
+ *
+ * Deliberately not a general muscle-overlap score. A general score reorders
+ * push/pull/legs out of its intended rotation to chase torso separation that
+ * no source asks for; restricting to the posterior chain expresses the
+ * source's claim and leaves the rotation alone.
+ */
+const POSTERIOR_CHAIN: ReadonlySet<CanonicalMuscle> = new Set([
+  "Back",
+  "Hamstrings",
+  "Glutes",
+] as CanonicalMuscle[]);
+
+export function posteriorChainOverlap(a: WorkoutDay, b: WorkoutDay): number {
+  const vec = (d: WorkoutDay) => {
+    const m = new Map<CanonicalMuscle, number>();
+    for (const v of weeklyVolumeByMuscle([d])) {
+      if (POSTERIOR_CHAIN.has(v.muscle)) m.set(v.muscle, v.sets);
+    }
+    return m;
+  };
+  const va = vec(a);
+  const vb = vec(b);
+  let total = 0;
+  for (const [muscle, sets] of va) total += Math.min(sets, vb.get(muscle) ?? 0);
+  return total;
+}
+
+/**
+ * Reorder the week so the sessions that land on BACK-TO-BACK days aren't the
+ * two that load the same posterior chain hardest (M6).
+ *
+ * Returns the input untouched when there is nothing to do — no back-to-back
+ * pairs (the Mon/Wed/Fri case), fewer than three sessions, or no ordering
+ * that improves on the one the builders produced. Deterministic: ties keep
+ * the earlier permutation, so the same week in always gives the same week
+ * out.
+ *
+ * The CALLER must only apply this when there is no existing plan to carry —
+ * `workouts[i]` is matched to saved state positionally, so reordering an
+ * established plan would land a user's logged bench weight on squats. That
+ * has already caused two silent data-loss bugs in this arc.
+ */
+export function orderForAdjacency(
+  workouts: WorkoutDay[],
+  schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null
+): WorkoutDay[] {
+  const n = workouts.length;
+  if (n < 3) return workouts; // nothing meaningful to permute
+  const adjacency = backToBackPairs(schedule, n);
+  if (!adjacency.some(Boolean)) return workouts; // spread-out week — no-op
+
+  const cost = (order: number[]) => {
+    let total = 0;
+    for (let i = 0; i + 1 < order.length; i += 1) {
+      if (!adjacency[i]) continue; // only back-to-back seams are penalised
+      total += posteriorChainOverlap(
+        workouts[order[i]],
+        workouts[order[i + 1]]
+      );
+    }
+    return total;
+  };
+
+  const identity = workouts.map((_, i) => i);
+  let best = identity;
+  let bestCost = cost(identity);
+  // n <= 6 in every split the engine emits, so exhaustive is 720 at worst.
+  const permute = (rest: number[], acc: number[]) => {
+    if (rest.length === 0) {
+      const c = cost(acc);
+      if (c < bestCost) {
+        bestCost = c;
+        best = acc;
+      }
+      return;
+    }
+    for (let i = 0; i < rest.length; i += 1) {
+      permute([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, rest[i]]);
+    }
+  };
+  permute(identity, []);
+
+  return best === identity ? workouts : best.map((i) => workouts[i]);
+}
+
 const CATEGORY_TO_MUSCLE: Record<MovementCategory, CanonicalMuscle> = {
   horizontal_push: "Chest",
   vertical_push: "Shoulders",

@@ -1753,3 +1753,178 @@ describe("timed holds (backlog #7 time axis)", () => {
     expect(out.notes).toMatch(/20\+ reps/);
   });
 });
+
+// Backlog #10 (M6 adjacency) wired into generateProgram. The week's SHAPE
+// comes from profile.weekSchedule — read-only. Lifts stay split-ordered
+// (ADR-0002); this only decides which session sits next to which.
+describe("adjacency ordering (backlog #10, M6)", () => {
+  const sched = (days: number[]) =>
+    [0, 1, 2, 3, 4, 5, 6].map((d) => ({
+      day: d,
+      type: days.includes(d) ? "lift" : "rest",
+    }));
+  const gen = (
+    n: number,
+    schedule?: ReadonlyArray<{ day: number; type: string }>,
+    existing?: WorkoutDay[]
+  ) =>
+    generateProgram("recomp", n, existing, "hypertrophy", undefined, schedule)
+      .workouts;
+
+  it("changes nothing for a spread-out week", () => {
+    // Mon/Wed/Fri — no two sessions are back-to-back, so there is nothing
+    // adjacency can improve. This is the case the rule MUST leave alone.
+    const plain = gen(3).map((d) => d.dayName);
+    const spread = gen(3, sched([1, 3, 5])).map((d) => d.dayName);
+    expect(spread).toEqual(plain);
+  });
+
+  it("changes nothing when no schedule is supplied", () => {
+    expect(gen(6, undefined).map((d) => d.dayName)).toEqual(
+      gen(6, undefined).map((d) => d.dayName)
+    );
+  });
+
+  it("separates posterior-heavy days on a fully consecutive week", () => {
+    const before = gen(6);
+    const after = gen(6, sched([1, 2, 3, 4, 5, 6]));
+    const posterior = (w: WorkoutDay[]) =>
+      w.map((d) =>
+        d.exercises.reduce(
+          (n, e) =>
+            n +
+            (e.movementCategory === "hip_dominant" ||
+            e.movementCategory === "horizontal_pull" ||
+            e.movementCategory === "vertical_pull"
+              ? e.sets
+              : 0),
+          0
+        )
+      );
+    const cost = (w: WorkoutDay[]) => {
+      const p = posterior(w);
+      let c = 0;
+      for (let i = 0; i + 1 < p.length; i += 1) c += Math.min(p[i], p[i + 1]);
+      return c;
+    };
+    expect(cost(after)).toBeLessThanOrEqual(cost(before));
+  });
+
+  it("keeps the push/pull/legs rotation intact", () => {
+    // The worry that kept this unbuilt: a GENERIC overlap metric reorders PPL
+    // out of its rotation. Scoring only the posterior chain does not — a
+    // 6-day week stays a clean two-cycle rotation, just possibly starting on
+    // a different day.
+    const names = gen(6, sched([1, 2, 3, 4, 5, 6])).map(
+      (d) => d.dayName.split(" ")[0]
+    );
+    expect(names.slice(0, 3)).toEqual(names.slice(3, 6));
+  });
+
+  it("keeps the order stable across regenerates", () => {
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const established = gen(6, S);
+    let current = established;
+    for (let i = 0; i < 3; i += 1) {
+      current = gen(6, S, current);
+      expect(current.map((d) => d.dayName)).toEqual(
+        established.map((d) => d.dayName)
+      );
+    }
+  });
+
+  it("carries every exercise to the RIGHT day after reordering", () => {
+    // The bug this feature was blocked on, now a regression pin. The builders
+    // carry saved exercises by POSITION, which assumed saved order == builder
+    // order. Reordering broke that silently: with saved Pull,Push,Legs and
+    // builder Push,Pull,Legs, a logged pull-up weight landed on bench press.
+    // `alignToCanonical` makes the carry key on day NAME instead.
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const established = gen(6, S);
+    const trained = established.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, weight: 61 })),
+    }));
+    const again = gen(6, S, trained);
+
+    again.forEach((d, di) => {
+      expect(d.dayName).toBe(trained[di].dayName);
+      d.exercises.forEach((e, ei) => {
+        const before = trained[di].exercises[ei];
+        if (!before) return;
+        expect(e.exerciseId, `d${di}/e${ei} (${d.dayName})`).toBe(
+          before.exerciseId
+        );
+        expect(e.weight, `d${di}/e${ei}`).toBe(61);
+      });
+    });
+  });
+
+  it("aligns by name even when the saved plan is in a different order", () => {
+    // Directly: hand the engine a saved plan whose days are shuffled and
+    // confirm each day's content follows its NAME, not its index.
+    const S = sched([1, 2, 3, 4, 5, 6]);
+    const base = gen(6, S);
+    const shuffled = [...base].reverse().map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({ ...e, weight: 77 })),
+    }));
+    const out = gen(6, S, shuffled);
+    out.forEach((d) => {
+      const source = shuffled.find((x) => x.dayName === d.dayName);
+      expect(source).toBeDefined();
+      d.exercises.forEach((e, ei) => {
+        const before = source!.exercises[ei];
+        if (before) expect(e.exerciseId).toBe(before.exerciseId);
+      });
+    });
+  });
+});
+
+// A regenerate must never drop a logged load, on ANY split. This is the guard
+// for the whole class rather than for one slot: the builders carry saved
+// exercises through hand-written `findExisting(dayIdx, exIdx)` calls, and a
+// single wrong index silently rebuilds that lift from defaults every time the
+// user changes a setting. One such off-by-one (the PPL legs day's core slot,
+// calling findExisting(2, 4) into a four-slot day) survived until this test
+// existed.
+describe("regenerate preserves every logged load (all splits)", () => {
+  it.each([1, 2, 3, 4, 5, 6])("%i-day split", (days) => {
+    const first = generateProgram(
+      "recomp",
+      days,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    const trained = first.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({
+        ...e,
+        weight: 61,
+        performanceHistory: [
+          { date: "2026-01-01", weight: 61, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })),
+    }));
+    const again = generateProgram(
+      "recomp",
+      days,
+      trained,
+      "hypertrophy"
+    ).workouts;
+
+    again.forEach((d, di) =>
+      d.exercises.forEach((e, ei) => {
+        const before = trained[di]?.exercises[ei];
+        if (!before) return;
+        expect(e.weight, `${d.dayName} / slot ${ei} (${e.exerciseId})`).toBe(
+          61
+        );
+        expect(
+          e.performanceHistory?.length,
+          `${d.dayName} / slot ${ei} (${e.exerciseId})`
+        ).toBe(1);
+      })
+    );
+  });
+});

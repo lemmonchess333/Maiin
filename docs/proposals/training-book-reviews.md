@@ -26,7 +26,7 @@ exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule),
 wrong), #10 (overlap caps — adjacency deferred), #11 (exercise roles + a
 deterministic purposeful plateau rotation — the failure-point question
 deferred), #17 (accessory churn on regenerate), #12 (warm-up ramp), #13
-(form-content backfill). #14 was found ALREADY SHIPPED by PROGRAM-DELOAD-01 —
+(form-content backfill), #10's adjacency half, and #7's time axis. #14 was found ALREADY SHIPPED by PROGRAM-DELOAD-01 —
 see its STATUS. **That closes the whole scheduled backlog.** What remains is
 the "Recorded, not scheduled" list below, plus the explicitly deferred halves
 noted in the STATUS rows of #7 (compound wave, time-based and
@@ -218,129 +218,54 @@ rather than inside a tier's existing list.
     `profile.weekSchedule` and `liftIndexForDayOfWeek`, which
     `generateProgram` never receives.
 
-    MEASURED 2026-07-28, and the measurement argues against building it as
-    scoped. Adjacent-day muscle overlap for each generated split, against the
-    brute-forced optimal ordering of the same days:
+    MEASURED then BUILT 2026-07-28. The measurement first — adjacent-day
+    posterior-chain overlap for each generated split, against the brute-forced
+    optimal ordering: 2d and 4d upper/lower are already optimal, the 3d
+    full-body gap is noise (every pair of full-body days overlaps heavily by
+    construction), and the real gap sits in the CONCATENATED splits, which
+    join two independently-built sub-splits without considering the seam.
 
-    | split          | current | best | gap |
-    | -------------- | ------- | ---- | --- |
-    | 2d upper/lower | 7.5     | 7.5  | 0%  |
-    | 3d full body   | 56.5    | 51   | 10% |
-    | 4d upper/lower | 28.5    | 28   | 2%  |
-    | 5d ppl+ul      | 30.5    | 18.5 | 39% |
-    | 6d ppl ×2      | 30      | 23.5 | 22% |
+    Three objections had kept it unbuilt. Two dissolved, one turned out to be
+    a pre-existing bug worth more than the feature.
 
-    Three things follow. The 2- and 4-day splits are **already optimal** —
-    alternating upper/lower is the answer and the builder already does it.
-    The 3-day full-body "gap" is noise: every pair of full-body days overlaps
-    heavily by construction (24 and 32.5 between the two adjacent pairs), so
-    reordering them means nothing. The real gap is concentrated in the
-    CONCATENATED splits — `ppl_ul` and `ppl_x2` are built by joining two
-    independently-built sub-splits and nothing ever considered the seam.
+    **"The generator doesn't know the calendar."** True, and it does not need
+    to. It needs the week's SHAPE — are the planned lift days back-to-back? —
+    which `profile.weekSchedule` already carries. Threading it through is
+    read-only and does NOT date-pin lifts: ADR-0002 keeps them split-ordered
+    deliberately, because pinning would mark a Tuesday-instead-of-Monday
+    session as "missed Monday" and drop its volume, punishing the
+    light-trainer and lapsed-and-returning segments. A Mon/Wed/Fri lifter now
+    correctly gets a NO-OP; nothing in `workouts[]` could ever have told us
+    that.
 
-    Still not building it, for reasons the measurement sharpens rather than
-    removes. (a) Whether adjacency matters AT ALL depends on the weekday
-    schedule the generator doesn't get: a Mon/Wed/Fri user has no adjacent
-    sessions, so the whole exercise is moot for them, and it is precisely the
-    5–6 day users — where it does bite — who cannot spread their days out.
-    (b) The objective function above is MINE, not any source's. M6's actual
-    concern is specific (lower back the day before heavy legs), and #10's
-    hinge cap already addresses the main instance of it. Minimising a
-    generic overlap metric is not the same claim and would reorder PPL out of
-    its intended rotation. (c) Reordering `workouts[]` breaks the positional
-    `findExisting` / `carryExistingAccessories` carry, which has already
-    caused two silent data-loss bugs this arc (#10's first cut, #17).
+    **"The objective function is mine, not the sources'."** Fixed by scoring
+    only the POSTERIOR CHAIN — which is M6's actual claim ("legs and back are
+    separated to keep lower back from getting too beat up"). This also
+    resolves the worry that a generic overlap metric would scramble PPL: a
+    6-day week comes out Pull/Push/Legs ×2, a clean rotation, just started on
+    a different day. Measured effect: 5d cost 18 → 12, 6d 12 → 6.
 
-    If it IS picked up: thread the schedule in, scope the reorder to the
-    concatenated splits only, and apply it ONLY when there is no existing
-    plan to carry — order decided once, then respected.
+    **"Reordering breaks the positional carry."** This one was RIGHT, and
+    worse than stated — proven, not argued. The builders carry saved
+    exercises by position (`findExisting(dayIdx, exIdx)`), silently assuming
+    saved order equals builder order. With a saved order of Pull,Push,Legs
+    and a builder order of Push,Pull,Legs, a user's logged pull-up weight
+    landed on bench press. Gating the reorder on "no existing plan" did NOT
+    help, because the corruption happens INSIDE the builders before any
+    post-pass can run.
+    Fixed properly rather than avoided: `alignExistingTo` matches the saved
+    plan to the reference order by day NAME before the builders see it, and
+    again before the two later positional passes (the accessory carry and the
+    overlap caps). The carry no longer depends on day order at all, so any
+    future reordering is safe.
 
-**Tier 4 — Exercise selection & content**
-
-11. **Exercise roles beyond `isAccessory`** (B6/M1/N5) feeding a purposeful
-    weak-point plateau breaker (P4/D2) instead of `Math.random()`.
-
-    STATUS 2026-07-28 — the ENGINE half shipped; the user-facing question did
-    not. `ExerciseOption.role` (`technique` / `weak_point` / `size`) is
-    authored on every non-primary bank entry and pinned by a test, and
-    `pickExercise`'s plateau branch is now a deterministic role ranking
-    instead of `others[Math.floor(Math.random() * others.length)]`. Technique
-    first: Hayes's "exercises that teach me how to lift", and a stall is more
-    often a position problem than a missing sticking-point. Determinism
-    matters independently of purpose — the random pick RE-ROLLED on every
-    regenerate, so a plateaued main churned to a different exercise each time
-    the user changed a setting.
-    P4's other half — asking "where does it fail?" and ranking `weak_point`
-    first against the answer — needs a UI surface and somewhere to persist
-    the answer, and is left open. The roles it would select on now exist,
-    which is what B6 said had to come first.
-    P4 assumed new exercises were needed ("pause squat, good morning, box
-    squat"). They weren't, for this half: the existing bank already carries
-    the technique variants that matter (front squat, trap-bar deadlift,
-    landmine press, chest-supported row). The DB also already holds
-    `barbell-floor-press`, `rack-pull` and `pendlay-row`, which are unused by
-    the bank and are the natural `weak_point` entries when the failure-point
-    question lands.
-
-12. **Warm-up ramp** (P5, spec N7, pattern N11): flagged prescription rows,
-    first heavy exercise per body part only.
-
-    STATUS 2026-07-28 — shipped. `warmupRamp.ts` is pure; `WorkoutSession`
-    seeds the rows. N11's shape held exactly — warm-ups are ordinary rows
-    carrying the existing `warmup` SetType, not a parallel structure, so the
-    volume, PR and calorie paths that already filter on that type excluded
-    them for free. N7's scoping rule (first LOADED exercise per body part)
-    keys on the canonical muscle from `primaryCanonicalForExercise`, so the
-    ramp speaks the same body-part language as the volume model; movement
-    category would have warmed a horizontal and a vertical press separately
-    for the same shoulders.
-    The ramp is deliberately shorter than N7's five steps (bar×15, 50%×8,
-    60%×4, 70%×3, 75%×2) — that spec is written for a lifter under a heavy
-    bar, and three rows is the useful version for a general audience. The
-    count self-scales: a 30 kg bench gets one bar set, a 140 kg squat gets
-    three.
-    The integration risk was NOT the UI. The completion command carries only
-    `{weight, reps, completed}` — no type — and the server builds the saved
-    workout from `logs.filter(l => l.completed)`, so a completed warm-up row
-    reaching it would be indistinguishable from a working set and would
-    inflate tonnage, set count and calories straight into the performance
-    baselines that #9's recovery signal reads. `toCompletionSetLogs` strips
-    them at that boundary, and is a separate exported function purely so it
-    can be tested — `WorkoutSession` has NO test coverage at all, and this is
-    the one place where being wrong is silent and consequential.
-
-13. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
-    3/151 exercises; these books supply the material for the big lifts.
-
-    STATUS 2026-07-28 — shipped for the lifts that matter; not a full sweep of
-    all 151. `commonMistakes` went from 3 exercises to 28, and every PRIMARY
-    in `exerciseBank` — the movement the engine picks by default for each
-    category, and the one a novice meets first — now has content, pinned by
-    `formContentCoverage.test.ts`. Coverage of the remaining non-primary
-    variants is deliberately not pinned; blank "watch out" on a lift the
-    generator rarely picks is a much smaller problem than blank on a squat.
-    Sourcing is honest rather than uniform: the squat family, bench, deadlift
-    and upright row draw on the review material (P6's depth/butt-wink/elbow
-    cues, D5's sumo setup, B7's bench chapter, N14's cited impingement note
-    WITH its mitigation), and the rest are standard uncontroversial coaching
-    cues. The UI needed nothing — `ExerciseFormContent` already rendered the
-    field; it just had almost nothing to render.
-
-14. **Wire deload detection to the existing one-tap deload command** (P7).
-
-    STATUS 2026-07-28 — ALREADY SHIPPED; nothing to build. Verified end to
-    end before writing any code: `DeloadBanner` is driven by
-    `perfWeek?.flags?.deloadRecommended`, its `onApply` routes through the
-    server `applyDeloadWeek` command, undo lives in the success toast, and
-    `deloadActive` swaps the copy so the user is never offered an Apply the
-    server would reject as already-deloaded. PROGRAM-DELOAD-01 delivered this
-    after the review was written, so P7's premise ("`shouldDeload` is
-    advisory copy only") was true when recorded and is now stale.
-    One deliberate deviation worth noting: P7 asked for "make NEXT week a
-    deload"; the shipped command eases the ACTIVE week. That is the better
-    answer — relief applies immediately and is reversible in one tap — and
-    changing it would need a different command, so this is recorded as
-    resolved rather than partially done.
+    Found on the way, and worth more than the feature: **the PPL legs day's
+    core slot called `findExisting(2, 4)` into a four-slot day.** Index 4
+    never resolved, so that lift was rebuilt from defaults on EVERY
+    regenerate — the user's logged weight and history dropped silently, same
+    family as #17. Now guarded for the whole class by a
+    "regenerate preserves every logged load" test across all six splits,
+    which is what found it; reading indices by hand had not.
 
 **Tier 2b — found while building, not from a book**
 
