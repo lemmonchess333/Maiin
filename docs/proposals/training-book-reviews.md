@@ -25,10 +25,18 @@ exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule),
 #15 (full-body accessory slots), #16 (the load-step discriminator #7 got
 wrong), #10 (overlap caps — adjacency deferred), #11 (exercise roles + a
 deterministic purposeful plateau rotation — the failure-point question
-deferred), #17 (accessory churn on regenerate). That closes tiers 1–3. Next
-unstarted: #12–#14, all content/UI rather than engine work. Each shipped
-item's engine changes carry a `backlog #N` comment at the seam, so
-`git grep "backlog #"` in `src/features/program` finds them.
+deferred), #17 (accessory churn on regenerate), #12 (warm-up ramp). That
+closes tiers 1–3 plus #11 and #12. Next unstarted: #13 (form-content
+backfill, pure content) and #14 (wire deload detection to the one-tap
+command). Each shipped item's engine changes carry a `backlog #N` comment at
+the seam, so `git grep "backlog #"` in `src/features/program` finds them.
+
+**These IDs are stable — do not renumber the lists below.** They're
+referenced from commit messages, PR bodies and code comments. Markdown
+auto-numbering will silently renumber an ordered list when a block is
+inserted into it: #17 became "#12" that way on 2026-07-28, colliding with the
+warm-up ramp. If you add a finding, put it in Tier 2b with the next free ID
+rather than inside a tier's existing list.
 
 **Tier 1 — Adherence (the layer the app owns)**
 
@@ -220,29 +228,36 @@ item's engine changes carry a `backlog #N` comment at the seam, so
     the bank and are the natural `weak_point` entries when the failure-point
     question lands.
 
-12. **Accessories were rebuilt from scratch on every regenerate.** Found
-    2026-07-28 while surveying `pickExercise` for #11. `makeAccessory` takes
-    no `existing` — unlike `makeExercise` — so it re-rolled its
-    `Math.random()`-backed `pickAccessory` and rebuilt from the passed
-    defaults every time `generateProgram` ran with existing workouts.
-    Measured on main: regenerating a 4-day programme turned a 55 kg Bulgarian
-    Split Squat with logged history into a 40 kg Hack Squat with none, and
-    reset an Incline DB Press from 55 kg to 30 kg. A regenerate is what a
-    SETTINGS CHANGE triggers — goal, days per week, split — so changing any
-    of those silently wiped every accessory's load and history and shuffled
-    the exercises. Fixed by `carryExistingAccessories`, a post-pass rather
-    than threading `existing` through fifteen call sites; it carries identity
-    and logged state only, so a genuine prescription change still lands, and
-    it's guarded on category equality so #10's re-pointed slots are left
-    alone. This also puts Tropos properly on N5's "stability within a block,
-    novelty between blocks" — `rotateUntrainedAccessories` still refreshes
-    untrained accessories at each mesocycle boundary, which is the intended
-    novelty; it just no longer happened by accident on every settings change.
-13. **Warm-up ramp** (P5, spec N7, pattern N11): flagged prescription rows,
+12. **Warm-up ramp** (P5, spec N7, pattern N11): flagged prescription rows,
     first heavy exercise per body part only.
-14. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
+
+    STATUS 2026-07-28 — shipped. `warmupRamp.ts` is pure; `WorkoutSession`
+    seeds the rows. N11's shape held exactly — warm-ups are ordinary rows
+    carrying the existing `warmup` SetType, not a parallel structure, so the
+    volume, PR and calorie paths that already filter on that type excluded
+    them for free. N7's scoping rule (first LOADED exercise per body part)
+    keys on the canonical muscle from `primaryCanonicalForExercise`, so the
+    ramp speaks the same body-part language as the volume model; movement
+    category would have warmed a horizontal and a vertical press separately
+    for the same shoulders.
+    The ramp is deliberately shorter than N7's five steps (bar×15, 50%×8,
+    60%×4, 70%×3, 75%×2) — that spec is written for a lifter under a heavy
+    bar, and three rows is the useful version for a general audience. The
+    count self-scales: a 30 kg bench gets one bar set, a 140 kg squat gets
+    three.
+    The integration risk was NOT the UI. The completion command carries only
+    `{weight, reps, completed}` — no type — and the server builds the saved
+    workout from `logs.filter(l => l.completed)`, so a completed warm-up row
+    reaching it would be indistinguishable from a working set and would
+    inflate tonnage, set count and calories straight into the performance
+    baselines that #9's recovery signal reads. `toCompletionSetLogs` strips
+    them at that boundary, and is a separate exported function purely so it
+    can be tested — `WorkoutSession` has NO test coverage at all, and this is
+    the one place where being wrong is silent and consequential.
+
+13. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
     3/151 exercises; these books supply the material for the big lifts.
-15. **Wire deload detection to the existing one-tap deload command** (P7).
+14. **Wire deload detection to the existing one-tap deload command** (P7).
 
 **Tier 2b — found while building, not from a book**
 
@@ -308,6 +323,25 @@ item's engine changes carry a `backlog #N` comment at the seam, so
     bench taking 8% jumps is the same error the item set out to fix.
     `effortCue`'s private copy of the single-joint set now imports the
     shared one, so the two can't drift.
+
+17. **Accessories were rebuilt from scratch on every regenerate.** Found
+    2026-07-28 while surveying `pickExercise` for #11. `makeAccessory` takes
+    no `existing` — unlike `makeExercise` — so it re-rolled its
+    `Math.random()`-backed `pickAccessory` and rebuilt from the passed
+    defaults every time `generateProgram` ran with existing workouts.
+    Measured on main: regenerating a 4-day programme turned a 55 kg Bulgarian
+    Split Squat with logged history into a 40 kg Hack Squat with none, and
+    reset an Incline DB Press from 55 kg to 30 kg. A regenerate is what a
+    SETTINGS CHANGE triggers — goal, days per week, split — so changing any
+    of those silently wiped every accessory's load and history and shuffled
+    the exercises. Fixed by `carryExistingAccessories`, a post-pass rather
+    than threading `existing` through fifteen call sites; it carries identity
+    and logged state only, so a genuine prescription change still lands, and
+    it's guarded on category equality so #10's re-pointed slots are left
+    alone. This also puts Tropos properly on N5's "stability within a block,
+    novelty between blocks" — `rotateUntrainedAccessories` still refreshes
+    untrained accessories at each mesocycle boundary, which is the intended
+    novelty; it just no longer happened by accident on every settings change.
 
 **Recorded, not scheduled:** lift goal / target-date back-mapping (D4,
 grill-me first); delt-head split of the `Shoulders` bucket (N10, schema

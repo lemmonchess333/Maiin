@@ -27,6 +27,11 @@ import { Button } from "@/components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  warmupRamp,
+  warmupTargets,
+  toCompletionSetLogs,
+} from "@/features/program/warmupRamp";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -254,18 +259,30 @@ export default function WorkoutSession({
     initialDraft?.currentExIndex ?? 0
   );
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [setLogs, setSetLogs] = useState<SetLog[][]>(
-    () =>
-      (initialDraft?.setLogs as SetLog[][]) ??
-      day.exercises.map((ex) =>
-        Array.from({ length: ex.sets }, () => ({
-          reps: ex.reps,
-          weight: ex.weight,
-          completed: false,
-          type: "working" as SetType,
-        }))
-      )
-  );
+  const [setLogs, setSetLogs] = useState<SetLog[][]>(() => {
+    if (initialDraft?.setLogs) return initialDraft.setLogs as SetLog[][];
+    // Backlog #12: pre-fill a warm-up ramp on the first loaded exercise per
+    // body part (N7's scoping rule). They're ordinary rows carrying the
+    // existing `warmup` type (N11), so every volume/PR/calorie path that
+    // already filters on that type excludes them for free.
+    const ramps = warmupTargets(day.exercises);
+    return day.exercises.map((ex, i) => [
+      ...(ramps[i]
+        ? warmupRamp(ex.weight).map((w) => ({
+            reps: w.reps,
+            weight: w.weight,
+            completed: false,
+            type: "warmup" as SetType,
+          }))
+        : []),
+      ...Array.from({ length: ex.sets }, () => ({
+        reps: ex.reps,
+        weight: ex.weight,
+        completed: false,
+        type: "working" as SetType,
+      })),
+    ]);
+  });
   const [showRPE, setShowRPE] = useState(false);
   // D-LIFT-14: form guide reachable mid-workout (no more exit → History → Form).
   const [showFormGuide, setShowFormGuide] = useState(false);
@@ -1036,13 +1053,9 @@ export default function WorkoutSession({
         completionId: completionIdRef.current,
         completionCommandId: completionCommandIdRef.current,
         durationMinutes: sessionDurationMinutes,
-        setLogs: setLogs.map((exSets) =>
-          exSets.map((s) => ({
-            weight: s.weight,
-            reps: s.reps,
-            completed: s.completed,
-          }))
-        ),
+        // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
+        // for why this boundary matters and why it lives in a pure module.
+        setLogs: toCompletionSetLogs(setLogs),
         sessionVariant,
       });
 
