@@ -25,6 +25,11 @@ import {
   type AdjustmentAction,
   type RecoveryState,
 } from "./adjustmentRule";
+import {
+  usesMicroplateStep,
+  MICROPLATE_STEP,
+  PLATE_PAIR_STEP,
+} from "./movementClass";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -93,15 +98,8 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
-/**
- * Load step when an exercise earns weight (training-book backlog #7, H3).
- * The same 2.5 kg is ~1.5% of a squat but ~10% of a curl, which is Helms's
- * reason isolations progress by REPS and only take load in microplate steps.
- * The lean-bulk accelerator (`goalWeightBonus`) is a compound bias too — a
- * curl doubling its step because the user is bulking is the same error.
- */
-const COMPOUND_LOAD_STEP = 2.5;
-const ISOLATION_LOAD_STEP = 1.25;
+// Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
+// see that module for why `isAccessory` was the wrong one.
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -245,13 +243,26 @@ export function primaryGoalLabel(g?: PrimaryGoal): string {
    EXERCISE BUILDER HELPER
 ================================ */
 
+/**
+ * Build a programme exercise from the PRIMARY variation pool, preserving an
+ * existing row's load/history/instanceId across a regenerate.
+ *
+ * `isAccessory` is a VOLUME ROLE, not a movement class (movementClass.ts) —
+ * it marks the slots the volume machinery may adjust: #5's ramp, #9's
+ * add/reduce arms, and `balanceWeeklyVolume`'s under-dosed-muscle top-up.
+ * `buildFullBody` needs to mark supporting slots WITHOUT `makeAccessory`,
+ * which re-picks from the non-primary pool and can't carry `existing` —
+ * using it there would rewrite users' exercises and wipe their logged loads
+ * on every regenerate. Hence the parameter (backlog #15).
+ */
 function makeExercise(
   category: MovementCategory,
   sets: number,
   reps: number,
   weight: number,
   progression: "double" | "linear",
-  existing?: ProgramExercise
+  existing?: ProgramExercise,
+  isAccessory = false
 ): ProgramExercise {
   const ex = pickExercise(
     category,
@@ -275,7 +286,7 @@ function makeExercise(
     plateauCount: existing?.plateauCount ?? 0,
     performanceHistory: existing?.performanceHistory ?? [],
     lastPerformance: existing?.lastPerformance ?? null,
-    isAccessory: false,
+    isAccessory,
   };
 }
 
@@ -370,7 +381,8 @@ function buildFullBody(
         acc,
         0,
         profile.mainProgression,
-        findExisting(0, 2)
+        findExisting(0, 2),
+        true
       ),
       makeExercise(
         "hip_dominant",
@@ -378,9 +390,18 @@ function buildFullBody(
         acc,
         60,
         "linear",
-        findExisting(0, 3)
+        findExisting(0, 3),
+        true
       ),
-      makeExercise("core", round(2 * vm), 12, 15, "linear", findExisting(0, 4)),
+      makeExercise(
+        "core",
+        round(2 * vm),
+        12,
+        15,
+        "linear",
+        findExisting(0, 4),
+        true
+      ),
     ],
   };
 
@@ -413,7 +434,8 @@ function buildFullBody(
         acc,
         50,
         profile.mainProgression,
-        findExisting(1, 2)
+        findExisting(1, 2),
+        true
       ),
       makeExercise(
         "knee_dominant",
@@ -421,7 +443,8 @@ function buildFullBody(
         acc,
         60,
         "linear",
-        findExisting(1, 3)
+        findExisting(1, 3),
+        true
       ),
       makeExercise(
         "arms_biceps",
@@ -429,7 +452,8 @@ function buildFullBody(
         12,
         10,
         "linear",
-        findExisting(1, 4)
+        findExisting(1, 4),
+        true
       ),
     ],
   };
@@ -456,7 +480,8 @@ function buildFullBody(
         acc,
         60,
         profile.mainProgression,
-        findExisting(2, 1)
+        findExisting(2, 1),
+        true
       ),
       makeExercise(
         "vertical_pull",
@@ -464,7 +489,8 @@ function buildFullBody(
         acc,
         0,
         profile.mainProgression,
-        findExisting(2, 2)
+        findExisting(2, 2),
+        true
       ),
       makeExercise(
         "knee_dominant",
@@ -472,9 +498,18 @@ function buildFullBody(
         acc,
         60,
         "linear",
-        findExisting(2, 3)
+        findExisting(2, 3),
+        true
       ),
-      makeExercise("core", round(2 * vm), 12, 15, "linear", findExisting(2, 4)),
+      makeExercise(
+        "core",
+        round(2 * vm),
+        12,
+        15,
+        "linear",
+        findExisting(2, 4),
+        true
+      ),
     ],
   };
 
@@ -1164,12 +1199,17 @@ export function applyProgression(
   // means the load is already at the edge — HOLD this cycle rather than add
   // load/reps, even on a completed set. No RPE logged → progress as before.
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
-  // Backlog #7 (H3): load moves in proportion to the lift. Compounds are
-  // unchanged (isAccessory absent on legacy rows ⇒ compound), so this only
-  // ever softens the step for isolations.
-  const isIsolation = exercise.isAccessory === true;
-  const loadStep = isIsolation ? ISOLATION_LOAD_STEP : COMPOUND_LOAD_STEP;
-  const loadBonus = isIsolation ? 0 : goalWeightBonus(goal);
+  // Backlog #7 (H3): load moves in proportion to the lift. The step keys on
+  // the MOVEMENT and its load, not on `isAccessory` — see movementClass.ts
+  // for why that flag (a volume role) can't answer this question. The
+  // lean-bulk accelerator rides the same test: a lift too light for a full
+  // plate is too light for a bonus on top of one.
+  const microplate = usesMicroplateStep(
+    exercise.movementCategory,
+    exercise.weight
+  );
+  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
+  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   const bumpBodyweightReps = () => {
