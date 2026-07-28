@@ -36,6 +36,8 @@ import {
   applyProgression,
 } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
+import { recoveryStateFrom } from "./adjustmentRule";
+import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
@@ -275,6 +277,13 @@ interface RefreshRunScheduleOverrides {
 
 export function useProgram() {
   const { user, profile, updateProfile } = useAuth();
+  // Backlog #9 (H5): the recovery half of the adjustment rule. A limit-1
+  // read — the rule is only consulted on a week advance, so this is the
+  // cheapest way to have the answer in hand when that happens. Resolves to
+  // "unknown" (⇒ hold) with no doc, a legacy doc, or too little baseline
+  // depth for the engine's own deload judgement to mean anything.
+  const { currentWeek: perfWeek } = usePerformanceWeeks(1);
+  const recovery = recoveryStateFrom(perfWeek?.signals);
   const [programState, setProgramState] = useState<ProgramState | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(
@@ -646,7 +655,8 @@ export function useProgram() {
 
       // Advance lift side (workouts, weekNumber, weekHistory).
       // Backlog #8: the deload recipe follows training age (Helms H4).
-      const advanced = advanceWeek(rolling, profile.experience);
+      // Backlog #9: plus the joint plateau x recovery adjustment rule.
+      const advanced = advanceWeek(rolling, profile.experience, recovery);
 
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.
@@ -732,7 +742,7 @@ export function useProgram() {
       .catch((err) => {
         logger.warn("[auto-rollover] save failed", err);
       });
-  }, [programState, profile, saveProgram]);
+  }, [programState, profile, saveProgram, recovery]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
@@ -1022,7 +1032,8 @@ export function useProgram() {
     if (!shouldAdvanceWeek(programState.workouts)) return;
 
     // Backlog #8: the deload recipe follows training age (Helms H4).
-    const advanced = advanceWeek(programState, profile?.experience);
+    // Backlog #9: plus the joint plateau x recovery adjustment rule.
+    const advanced = advanceWeek(programState, profile?.experience, recovery);
 
     // Refresh run days for new week. PR-0b-ii: V2 writers + next-
     // week date vantage so the saved runDays carry next-week
@@ -1094,7 +1105,7 @@ export function useProgram() {
     } else {
       toast.success(`Week ${advanced.weekNumber} started`);
     }
-  }, [programState, profile, saveProgram]);
+  }, [programState, profile, saveProgram, recovery]);
 
   // P0-6: Mark a run day as completed.
   //
