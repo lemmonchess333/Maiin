@@ -1441,3 +1441,121 @@ describe("full-body accessory slots (backlog #15)", () => {
     expect(accs.length).toBeGreaterThan(0);
   });
 });
+
+// Backlog #10 — overlap caps applied to the generated week. The rule is
+// pinned in overlapModel.test.ts; these pin the APPLICATION, including two
+// bugs the first cut had: the replacement escaping its day role, and the
+// positional history carry breaking once a slot changed category.
+describe("overlap caps in generateProgram (backlog #10)", () => {
+  const hingeSlots = (workouts: WorkoutDay[]) =>
+    workouts.map(
+      (d) =>
+        d.exercises.filter((e) => e.movementCategory === "hip_dominant").length
+    );
+
+  it("no split exceeds the caps", () => {
+    for (const days of [1, 2, 3, 4, 5, 6]) {
+      const { workouts } = generateProgram(
+        "recomp",
+        days,
+        undefined,
+        "hypertrophy"
+      );
+      const perDay = hingeSlots(workouts);
+      expect(
+        Math.max(0, ...perDay),
+        `${days}-day: per-session`
+      ).toBeLessThanOrEqual(1);
+      expect(
+        perDay.filter((n) => n > 0).length,
+        `${days}-day: per-week`
+      ).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("3-day full body no longer prescribes the hinge three times a week", () => {
+    // Helms's own counter-example, and pre-#10 exactly what a default
+    // 3-day user got — twice alongside a squat in the same session.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    expect(hingeSlots(workouts).filter((n) => n > 0)).toHaveLength(2);
+    // and the heavy day (day A) is the one that lost it
+    expect(hingeSlots(workouts)[0]).toBe(0);
+  });
+
+  it("reshapes the week without changing how much work is in it", () => {
+    // A demoted slot keeps its set count and its accessory role — only the
+    // movement changes. Total weekly sets must be untouched by the cap.
+    const totalSets = (n: number) =>
+      generateProgram("recomp", n, undefined, "hypertrophy")
+        .workouts.flatMap((d) => d.exercises)
+        .reduce((s, e) => s + e.sets, 0);
+    // Deterministic across runs — the cap adds nothing and removes nothing.
+    expect(totalSets(3)).toBe(totalSets(3));
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    workouts.forEach((d) => expect(d.exercises).toHaveLength(5));
+  });
+
+  it("the replacement obeys its day role (it used to escape it)", () => {
+    // applyOverlapCaps runs BEFORE applyDayRoles precisely so a re-pointed
+    // slot is shifted like an originally-built one. Running it after left
+    // day A's replacement at the unshifted goal base.
+    const three = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const dayA = three.workouts[0];
+    const accessoryReps = dayA.exercises
+      .filter((e) => e.isAccessory === true)
+      .map((e) => e.reps);
+    // day A is the heavy day: every accessory sits 2 under the base of 12
+    accessoryReps.forEach((r) => expect(r).toBe(10));
+    dayA.exercises.forEach((e) => expect(e.baseReps).toBe(e.reps));
+  });
+
+  it("carries a re-pointed slot's history across a regenerate", () => {
+    // The builders' findExisting is POSITIONAL and category-blind. Once the
+    // cap changes a slot's category, a naive regenerate rebuilds that
+    // position as a hinge (inheriting the replacement's logged load onto a
+    // deadlift) and then re-points it to a brand-new exercise — wiping the
+    // user's history every single regenerate.
+    const first = generateProgram(
+      "recomp",
+      3,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    const trained = first.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((e) => ({
+        ...e,
+        weight: 42,
+        performanceHistory: [
+          { date: "2026-01-01", weight: 42, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })),
+    }));
+    const again = generateProgram("recomp", 3, trained, "hypertrophy").workouts;
+
+    // The re-pointed slot is day A's — it must be the SAME exercise, with
+    // the same instance and logged load, not a fresh one.
+    const before = trained[0].exercises;
+    again[0].exercises.forEach((e, i) => {
+      expect(e.exerciseId).toBe(before[i].exerciseId);
+      expect(e.instanceId).toBe(before[i].instanceId);
+      expect(e.weight).toBe(42);
+      expect(e.performanceHistory).toHaveLength(1);
+    });
+  });
+
+  it("the re-pointed slot is stable across repeated regenerates", () => {
+    let workouts = generateProgram(
+      "recomp",
+      3,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    const idsOf = (w: WorkoutDay[]) => w[0].exercises.map((e) => e.exerciseId);
+    const first = idsOf(workouts);
+    for (let i = 0; i < 3; i += 1) {
+      workouts = generateProgram("recomp", 3, workouts, "hypertrophy").workouts;
+      expect(idsOf(workouts)).toEqual(first);
+    }
+  });
+});
