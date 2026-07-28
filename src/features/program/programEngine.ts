@@ -34,25 +34,33 @@ import { format } from "date-fns";
 const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
   strength: {
     mainReps: 5,
+    mainRepsMax: 7,
     accessoryReps: 8,
+    accessoryRepsMax: 12,
     volumeMultiplier: 0.9,
     mainProgression: "linear",
   },
   hypertrophy: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
   fat_loss: {
     mainReps: 12,
+    mainRepsMax: 15,
     accessoryReps: 15,
+    accessoryRepsMax: 20,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },
   general: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
@@ -60,7 +68,9 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
   // fullBodyBeginner prescription: moderate reps, lower volume.
   running: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 0.85,
     mainProgression: "linear",
   },
@@ -75,6 +85,15 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/**
+ * Load step when an exercise earns weight (training-book backlog #7, H3).
+ * The same 2.5 kg is ~1.5% of a squat but ~10% of a curl, which is Helms's
+ * reason isolations progress by REPS and only take load in microplate steps.
+ * The lean-bulk accelerator (`goalWeightBonus`) is a compound bias too — a
+ * curl doubling its step because the user is bulking is the same error.
+ */
+const COMPOUND_LOAD_STEP = 2.5;
+const ISOLATION_LOAD_STEP = 1.25;
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -269,7 +288,13 @@ function makeAccessory(
     reps,
     baseReps: reps,
     weight,
-    progressionType: "linear",
+    // Backlog #7 (H3): isolations progress by REPS, not load — `isAccessory`
+    // is exactly Helms's compound/isolation discriminator. The rep range that
+    // makes this meaningful is stamped in generateProgram's final pass. This
+    // also retires a runaway: the linear branch's `microloading` case added
+    // 1 kg per completed session with no rep requirement, which on an 8 kg
+    // lateral raise is a 12% jump every workout.
+    progressionType: "double",
     lastSuccessfulWeight: weight,
     lastAttemptedWeight: weight,
     consecutiveFailures: 0,
@@ -1045,9 +1070,25 @@ export function generateProgram(
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
   // seeding — advanceWeek derives each week's sets from baseSets.
+  // Backlog #7: stamp the rep-range ceiling in the same pass, and for the
+  // same reason — it must be derived from the FINAL `reps`, after day roles
+  // have shifted them. Carrying a fixed ceiling through applyDayRoles would
+  // hand a heavy day (reps 8 → 6) the untouched 12-rep ceiling, turning a
+  // 4-rep climb into a 6-rep one. Deriving from the span keeps the range
+  // width constant across every role.
+  const mainSpan = Math.max(0, profile.mainRepsMax - profile.mainReps);
+  const accessorySpan = Math.max(
+    0,
+    profile.accessoryRepsMax - profile.accessoryReps
+  );
   workouts = workouts.map((day) => ({
     ...day,
-    exercises: day.exercises.map((ex) => ({ ...ex, baseSets: ex.sets })),
+    exercises: day.exercises.map((ex) => {
+      const span = ex.isAccessory === true ? accessorySpan : mainSpan;
+      const out: ProgramExercise = { ...ex, baseSets: ex.sets };
+      if (span > 0) out.repRangeMax = ex.reps + span;
+      return out;
+    }),
   }));
 
   return { splitType, workouts };
@@ -1115,6 +1156,12 @@ export function applyProgression(
   // means the load is already at the edge — HOLD this cycle rather than add
   // load/reps, even on a completed set. No RPE logged → progress as before.
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  // Backlog #7 (H3): load moves in proportion to the lift. Compounds are
+  // unchanged (isAccessory absent on legacy rows ⇒ compound), so this only
+  // ever softens the step for isolations.
+  const isIsolation = exercise.isAccessory === true;
+  const loadStep = isIsolation ? ISOLATION_LOAD_STEP : COMPOUND_LOAD_STEP;
+  const loadBonus = isIsolation ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   const bumpBodyweightReps = () => {
@@ -1139,7 +1186,7 @@ export function applyProgression(
         // contract as every other progression path.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+            updated.weight = exercise.weight + loadStep + loadBonus;
             updated.reps = resetReps;
           } else {
             // Next target: one past what was actually done (monotonic —
@@ -1155,7 +1202,7 @@ export function applyProgression(
           bumpBodyweightReps();
         } else {
           // Weighted: increase weight and reset reps to base prescription
-          updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+          updated.weight = exercise.weight + loadStep + loadBonus;
           updated.reps = resetReps;
         }
       }
@@ -1188,7 +1235,8 @@ export function applyProgression(
         updated.weight = exercise.weight + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
-          updated.weight = exercise.weight + 2.5;
+          // No goal bonus on the linear path — pre-#7 behaviour, kept.
+          updated.weight = exercise.weight + loadStep;
           updated.reps = resetReps; // reset to original prescription, not drifted value
         }
       }

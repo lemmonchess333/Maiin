@@ -48,9 +48,9 @@ export function parseTemplateReps(reps: string): {
 /**
  * Progression scheme for a template's MAIN lifts, derived from the template's
  * own training goal (templates are only adopted on a goal match, so this is
- * also the user's goal). Accessories stay "linear" for parity with
- * `makeAccessory` in programEngine — moving isolations to double progression
- * is backlog item #7 (H3) and will change both paths together.
+ * also the user's goal). Accessories no longer consult this at all — backlog
+ * #7 (H3) moved isolations to double progression on both paths, since
+ * `isAccessory` IS the compound/isolation discriminator Helms's rule keys on.
  */
 export function templateProgressionFor(templateGoal: string): ProgressionType {
   // goalProfileFor only defaults on undefined, not on unknown strings — an
@@ -95,7 +95,11 @@ export function templateExToProgEx(
     baseReps: reps,
     ...(repRangeMax !== undefined ? { repRangeMax } : {}),
     weight: 0,
-    progressionType: isAccessory ? "linear" : mainProgression,
+    // Backlog #7 (H3): the scheme belongs to the exercise, not the goal —
+    // isolations climb reps within their authored range, mains follow the
+    // goal profile. Templates already author accessory ranges ("12-15"), so
+    // the range-aware branch has something to climb from day one.
+    progressionType: isAccessory ? "double" : mainProgression,
     // Per-exercise rest authored in the template; WorkoutSession prefers it
     // over profile.defaultRestSeconds unless the user overrides mid-session.
     restSeconds: te.restSeconds,

@@ -905,3 +905,143 @@ describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
     );
   });
 });
+
+// Backlog #7 — progression scheme per exercise TYPE, not per goal (H3/N2).
+// Two halves: generateProgram now stamps rep ranges + puts isolations on
+// double progression, and applyProgression steps load in proportion to the
+// lift. Both are engine-only (presentation policy: INVISIBLE).
+describe("progression scheme per exercise type (backlog #7)", () => {
+  const allEx = (w: { exercises: ProgramExercise[] }[]) =>
+    w.flatMap((d) => d.exercises);
+
+  it("stamps a rep range on every generated exercise", () => {
+    const { workouts } = generateProgram("recomp", 4, undefined, "hypertrophy");
+    // Before #7 the range machinery shipped in P1 only ever reached
+    // template-derived programmes — the procedural engine authored none.
+    for (const ex of allEx(workouts)) {
+      expect(ex.repRangeMax).toBeGreaterThan(ex.reps);
+    }
+  });
+
+  it("keeps the range WIDTH constant across day roles", () => {
+    // The ceiling is derived after applyDayRoles has shifted reps, so a
+    // heavy day gets a shifted ceiling too. A fixed ceiling would have
+    // turned an 8-12 main into 6-12 on heavy days — a 6-rep climb.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    for (const ex of allEx(workouts)) {
+      const span = ex.isAccessory === true ? 3 : 4; // 12→15 acc, 8→12 main
+      expect(ex.repRangeMax! - ex.reps).toBe(span);
+    }
+    // and the roles really did move: heavy day A mains sit under pump day C
+    const mainReps = (i: number) =>
+      workouts[i].exercises.filter((e) => e.isAccessory !== true)[0].reps;
+    expect(mainReps(0)).toBeLessThan(mainReps(2));
+  });
+
+  it("puts isolations on double progression and mains on the goal's scheme", () => {
+    // strength profile is mainProgression "linear" — the accessories must
+    // NOT inherit it. That inheritance was the whole defect (H3).
+    const { workouts } = generateProgram("recomp", 4, undefined, "strength");
+    const acc = allEx(workouts).filter((e) => e.isAccessory === true);
+    const mains = allEx(workouts).filter((e) => e.isAccessory !== true);
+    expect(acc.length).toBeGreaterThan(0);
+    expect(acc.every((e) => e.progressionType === "double")).toBe(true);
+    expect(mains.every((e) => e.progressionType === "linear")).toBe(true);
+  });
+
+  it("isolations take a microplate at the top of the range; compounds a full plate", () => {
+    // Helms H3: 2.5 kg is ~1.5% of a squat but ~10% of a curl.
+    const base = {
+      progressionType: "double" as const,
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 10,
+      lastSuccessfulWeight: 10,
+    };
+    const iso = applyProgression(
+      makeTestExercise({ ...base, isAccessory: true }),
+      15,
+      10,
+      "recomp",
+      false
+    );
+    const compound = applyProgression(
+      makeTestExercise({ ...base, isAccessory: false }),
+      15,
+      10,
+      "recomp",
+      false
+    );
+    expect(iso.weight).toBe(11.25);
+    expect(compound.weight).toBe(12.5);
+    // both reset the target to the bottom of the range
+    expect(iso.reps).toBe(12);
+    expect(compound.reps).toBe(12);
+  });
+
+  it("does not hand isolations the lean-bulk load accelerator", () => {
+    // goalWeightBonus is a compound bias: a curl jumping 2.5 kg because the
+    // user is bulking is the same proportionality error, doubled.
+    const base = {
+      progressionType: "double" as const,
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 10,
+      lastSuccessfulWeight: 10,
+    };
+    const iso = applyProgression(
+      makeTestExercise({ ...base, isAccessory: true }),
+      15,
+      10,
+      "lean bulk",
+      false
+    );
+    const compound = applyProgression(
+      makeTestExercise({ ...base, isAccessory: false }),
+      15,
+      10,
+      "lean bulk",
+      false
+    );
+    expect(iso.weight).toBe(11.25); // unchanged by the goal
+    expect(compound.weight).toBe(13.75); // 2.5 + 1.25 bonus
+  });
+
+  it("leaves compounds byte-identical to pre-#7 behaviour", () => {
+    // isAccessory absent (legacy rows) must read as compound, not isolation.
+    const legacy = makeTestExercise({
+      progressionType: "linear",
+      reps: 6,
+      baseReps: 6,
+      weight: 100,
+      lastSuccessfulWeight: 100,
+    });
+    expect(applyProgression(legacy, 8, 100, "recomp", false).weight).toBe(
+      102.5
+    );
+    const dbl = makeTestExercise({ weight: 100, lastSuccessfulWeight: 100 });
+    expect(applyProgression(dbl, 8, 100, "lean bulk", false).weight).toBe(
+      103.75
+    );
+  });
+
+  it("retires the microloading runaway for generated isolations", () => {
+    // On the linear path a completed set with microloading on added 1 kg
+    // with NO rep requirement — ~12% per session on an 8 kg lateral raise.
+    // Double progression has no such branch, so the climb is reps-first.
+    const iso = makeTestExercise({
+      isAccessory: true,
+      progressionType: "double",
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 8,
+      lastSuccessfulWeight: 8,
+    });
+    const next = applyProgression(iso, 12, 8, "recomp", true);
+    expect(next.weight).toBe(8);
+    expect(next.reps).toBe(13);
+  });
+});

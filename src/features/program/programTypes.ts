@@ -75,6 +75,15 @@ export type PrimaryGoal =
 export interface GoalProfile {
   mainReps: number;
   accessoryReps: number;
+  /**
+   * Top of the authored rep range for mains / accessories (training-book
+   * backlog #7, H3/N2). `mainReps`..`mainRepsMax` is what the double
+   * progression climbs before load moves. The procedural engine had no
+   * ranges at all before #7 — only template-derived programs did — so the
+   * range machinery shipped in P1 never reached generated programs.
+   */
+  mainRepsMax: number;
+  accessoryRepsMax: number;
   volumeMultiplier: number;
   mainProgression: ProgressionType;
 }

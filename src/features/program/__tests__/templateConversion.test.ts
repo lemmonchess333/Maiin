@@ -81,7 +81,9 @@ describe("templateExToProgEx", () => {
     expect(ex.isAccessory).toBe(false);
   });
 
-  it("marks authored accessories and keeps them on linear progression", () => {
+  it("puts authored accessories on double progression regardless of the goal", () => {
+    // Backlog #7 (H3): the scheme is the exercise's, not the goal's. Passing
+    // "linear" as the MAIN progression must not drag the isolation with it.
     const ex = templateExToProgEx(
       te({
         name: "Lateral Raise",
@@ -89,12 +91,11 @@ describe("templateExToProgEx", () => {
         isAccessory: true,
         reps: "12-15",
       }),
-      "double"
+      "linear"
     );
     expect(ex.isAccessory).toBe(true);
-    // Parity with makeAccessory in programEngine — isolations move to double
-    // progression only when backlog item #7 lands on both paths.
-    expect(ex.progressionType).toBe("linear");
+    expect(ex.progressionType).toBe("double");
+    expect(ex.repRangeMax).toBe(15);
   });
 
   it("omits repRangeMax rather than writing undefined (Firestore rejects undefined)", () => {

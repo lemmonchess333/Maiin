@@ -23,6 +23,9 @@ const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 
 const RPE_HOLD_THRESHOLD = 9.5;
 const MAX_BODYWEIGHT_REPS = 20;
+// Backlog #7 (H3) — mirror of the client constants; see programEngine.ts.
+const COMPOUND_LOAD_STEP = 2.5;
+const ISOLATION_LOAD_STEP = 1.25;
 
 function goalWeightBonus(goal) {
   return goal === "lean bulk" ? 1.25 : 0;
@@ -96,6 +99,10 @@ function applyProgression(
   const resetReps = exercise.baseReps ?? exercise.reps;
 
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  // Backlog #7 (H3) — proportional load step; compounds unchanged.
+  const isIsolation = exercise.isAccessory === true;
+  const loadStep = isIsolation ? ISOLATION_LOAD_STEP : COMPOUND_LOAD_STEP;
+  const loadBonus = isIsolation ? 0 : goalWeightBonus(goal);
   const bumpBodyweightReps = () => {
     if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
       updated.notes =
@@ -113,7 +120,7 @@ function applyProgression(
         // see programEngine.ts for the full rationale.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+            updated.weight = exercise.weight + loadStep + loadBonus;
             updated.reps = resetReps;
           } else {
             updated.reps = Math.min(rangeMax, actualReps + 1);
@@ -123,7 +130,7 @@ function applyProgression(
         if (isBodyweight) {
           bumpBodyweightReps();
         } else {
-          updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+          updated.weight = exercise.weight + loadStep + loadBonus;
           updated.reps = resetReps;
         }
       }
@@ -153,7 +160,8 @@ function applyProgression(
         updated.weight = exercise.weight + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
-          updated.weight = exercise.weight + 2.5;
+          // No goal bonus on the linear path — pre-#7 behaviour, kept.
+          updated.weight = exercise.weight + loadStep;
           updated.reps = resetReps;
         }
       }

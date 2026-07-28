@@ -1075,8 +1075,10 @@ function replaceExercise(state, command) {
     "replacement"
   );
   const old = day.exercises[idx];
-  // Mirror the client replaceExercise: carry the old prescription
-  // (sets/reps/weight), re-infer the category, mint a new instance.
+  // Mirror the client replaceExercise: carry the old prescription, re-infer
+  // the category, mint a new instance. The slot's prescription fields carry
+  // too (backlog #7) — see Program.tsx for why each one, including why
+  // preDeloadWeight is deliberately excluded.
   const replacement = buildProgramExercise({
     name,
     exerciseId: command.replacementExerciseId,
@@ -1084,6 +1086,12 @@ function replaceExercise(state, command) {
     sets: old.sets,
     reps: old.reps,
     weight: old.weight,
+    baseReps: old.baseReps,
+    progressionType: old.progressionType,
+    ...(old.repRangeMax !== undefined ? { repRangeMax: old.repRangeMax } : {}),
+    ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
+    ...(old.restSeconds !== undefined ? { restSeconds: old.restSeconds } : {}),
+    ...(old.isAccessory !== undefined ? { isAccessory: old.isAccessory } : {}),
   });
 
   return mapWorkoutDay(state, command.dayIndex, (d) => ({

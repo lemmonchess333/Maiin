@@ -1244,6 +1244,45 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
     expect(ex[1].instanceId).toBe("inst-b"); // untouched
   });
 
+  it("replaceExercise carries the slot's prescription fields (backlog #7)", () => {
+    // isAccessory now picks BOTH the progression scheme and the load step, so
+    // dropping it on a swap silently re-prices an isolation as a compound
+    // (2.5 kg on a curl). baseSets is the volume-ramp anchor; repRangeMax +
+    // baseReps are the range it climbs; restSeconds is the authored rest.
+    const state = baseState();
+    Object.assign(state.workouts[0].exercises[0], {
+      isAccessory: true,
+      progressionType: "double",
+      repRangeMax: 15,
+      baseReps: 12,
+      baseSets: 4,
+      restSeconds: 60,
+      preDeloadWeight: 120,
+    });
+    const out = apply(
+      {
+        kind: "replaceExercise",
+        commandId: CMD,
+        ...dayPre(),
+        oldInstanceId: "inst-a",
+        replacementExerciseId: "front-squat",
+      },
+      state
+    );
+    expect(out.state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "front-squat",
+      isAccessory: true,
+      progressionType: "double",
+      repRangeMax: 15,
+      baseReps: 12,
+      baseSets: 4,
+      restSeconds: 60,
+    });
+    // preDeloadWeight deliberately does NOT carry — the replacement keeps its
+    // deloaded load rather than jumping to a weight it never lifted.
+    expect("preDeloadWeight" in out.state.workouts[0].exercises[0]).toBe(false);
+  });
+
   it("replaceExercise rejects an unknown old instance id", () => {
     expectHttps(
       () =>

@@ -18,6 +18,14 @@ referenced throughout.
 Ordered by Helms's pyramid (section 6) — adherence beats programming, and
 ~80% of outcome lives in the bottom levels. Within a tier, by value-per-effort.
 
+**Shipped so far:** P1/#6 (rep ranges + template boundary), #1 (lighter-day
+swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp
+
+- the compounding auto-deload decay fix it surfaced), #7 (progression scheme
+  per exercise type). Next unstarted: #8. Each shipped item's engine changes
+  carry a `backlog #N` comment at the seam, so `git grep "backlog #"` in
+  `src/features/program` finds them.
+
 **Tier 1 — Adherence (the layer the app owns)**
 
 1. **Flexible session selection as a first-class mechanism** (H1). Reframe
@@ -54,6 +62,33 @@ Ordered by Helms's pyramid (section 6) — adherence beats programming, and
    already exists — compounds get the 4-week wave (maps onto `week % 4`),
    isolations get double progression. Add time-based progression and
    assistance-reduction as axes (N2's gaps).
+
+   STATUS 2026-07-28 — shipped, partially. Landed: isolations moved to double
+   progression on BOTH paths (`makeAccessory`, `templateExToProgEx`); the
+   procedural engine now stamps rep ranges at all (P1's range machinery had
+   only ever reached template-derived programmes — `GoalProfile` gained
+   `mainRepsMax`/`accessoryRepsMax`, stamped in `generateProgram`'s final pass
+   so the ceiling tracks day-role-shifted reps and the range WIDTH stays
+   constant); and the load step became proportional (`ISOLATION_LOAD_STEP`
+   1.25 vs `COMPOUND_LOAD_STEP` 2.5, with the lean-bulk accelerator now
+   compound-only). Compound behaviour is byte-identical to pre-#7 —
+   `isAccessory` absent reads as compound, so legacy rows are untouched.
+   Two things fell out of it: flipping isolations off the linear path also
+   retired the `microloading` runaway (+1 kg per completed session with no
+   rep gate — ~12% on an 8 kg lateral raise), and the replace-exercise path
+   was dropping every optional prescription field on both client and server,
+   which #7 turned from cosmetic into a silent re-pricing of any swapped-in
+   isolation. Both fixed here; the server `buildProgramExercise` mirror had
+   drifted from `normalizeExercise` since P1/#5 and the cross-test matrix
+   didn't vary those fields, so nothing caught it — matrix widened, and the
+   pin verified by removing a carry and watching it fail.
+   NOT landed, still open: the 4-week compound WAVE (mains take the goal's
+   scheme as-is; #3's day roles already put rep variation in the week, and
+   stacking a weekly wave on daily undulation needs deciding, not assuming),
+   plus N2's two missing axes — time-based progression (blocked on duration
+   prescriptions being strings, see `parseTemplateReps`) and
+   assistance-reduction for band/machine-assisted bodyweight work.
+
 8. **Deload by training age** (H4 resolving M4): the current sets−1 ×0.85
    deload is the novice recipe applied to everyone; intermediates should get
    half volume at held load. Decide deliberately.
