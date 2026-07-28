@@ -23,9 +23,10 @@ swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp,
 plus the compounding auto-deload decay it surfaced), #7 (progression scheme per
 exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule),
 #15 (full-body accessory slots), #16 (the load-step discriminator #7 got
-wrong). Next unstarted: #10. Each shipped item's engine changes carry a
-`backlog #N` comment at the seam, so `git grep "backlog #"` in
-`src/features/program` finds them.
+wrong), #10 (overlap caps — adjacency deferred, see its STATUS). That closes
+tiers 1–3. Next unstarted: tier 4 (#11–#14). Each shipped item's engine
+changes carry a `backlog #N` comment at the seam, so `git grep "backlog #"`
+in `src/features/program` finds them.
 
 **Tier 1 — Adherence (the layer the app owns)**
 
@@ -152,6 +153,43 @@ wrong). Next unstarted: #10. Each shipped item's engine changes carry a
 10. **Overlap-aware scheduling** (D1 + M6 + H6): stop prescribing the
     deadlift pattern 3×/week; heavy/light emphasis per slot; adjacency rules.
     The fractional volume model already does the accounting.
+
+    STATUS 2026-07-28 — shipped, narrower than the entry describes, because
+    the entry was measured wrong. Probed against main before writing
+    anything: 1d 1/1 hinge day, 2d 1/2, **3d 3/3**, 4d 2/4, 5d 2/5, 6d 2/6.
+    So D1's "a `hip_dominant` slot in every leg/full-body day" held for
+    full body only; upper/lower and PPL already sat at two hinge days,
+    which is what Helms would endorse. Two real problems remained and one
+    rule covers both — the 3-day user got the deadlift pattern three times a
+    week (Helms's literal counter-example, and on the heavy day beside a
+    squat), and the 4/6-day builds stacked a Deadlift AND an RDL in one
+    session.
+    `overlapModel.ts` holds the pure rule: ≤1 expensive slot per session,
+    ≤2 sessions per week; surplus slots are re-pointed to the category the
+    week trains LEAST, which is `weeklyVolumeByMuscle` doing the accounting
+    H6 says it should. Only `hip_dominant` is listed expensive — squat
+    frequency is deliberately NOT capped (3×/week in a 3-day full body is
+    advertised by `splitRationale` and rests on the frequency evidence the
+    split choice is built on). Green's dissent is why these are caps on a
+    default rather than a forbidden frequency; twice a week is still
+    frequent. Sets and accessory role are preserved, so the week is
+    reshaped without changing how much work is in it.
+    Two bugs in the first cut, both now pinned: the pass ran AFTER
+    `applyDayRoles`, so a re-pointed slot escaped its day's rep shift (it
+    sat at the unshifted goal base on a heavy day); and the builders'
+    `findExisting` is POSITIONAL and category-blind, so once a slot changed
+    category a regenerate rebuilt that position as a hinge — inheriting the
+    replacement's logged load onto a deadlift — then re-pointed it afresh,
+    wiping the user's history every regenerate. Fixed by ordering the pass
+    before day roles and threading `existingWorkouts` through for a
+    category-matched carry.
+    NOT landed: **adjacency** (M6's "separate legs and back", "go easy on
+    lower back the day before heavy legs"). `workouts[]` order is a lift-day
+    sequence, not a calendar — the weekday mapping lives in
+    `profile.weekSchedule` and `liftIndexForDayOfWeek`, which
+    `generateProgram` never receives. A real adjacency rule needs the
+    schedule threaded in, which is a bigger change than this item's other
+    half and worth its own decision.
 
 **Tier 4 — Exercise selection & content**
 
