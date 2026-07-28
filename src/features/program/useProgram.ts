@@ -645,7 +645,8 @@ export function useProgram() {
       if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
 
       // Advance lift side (workouts, weekNumber, weekHistory).
-      const advanced = advanceWeek(rolling);
+      // Backlog #8: the deload recipe follows training age (Helms H4).
+      const advanced = advanceWeek(rolling, profile.experience);
 
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.
@@ -1020,7 +1021,8 @@ export function useProgram() {
     if (!programState) return;
     if (!shouldAdvanceWeek(programState.workouts)) return;
 
-    const advanced = advanceWeek(programState);
+    // Backlog #8: the deload recipe follows training age (Helms H4).
+    const advanced = advanceWeek(programState, profile?.experience);
 
     // Refresh run days for new week. PR-0b-ii: V2 writers + next-
     // week date vantage so the saved runDays carry next-week
