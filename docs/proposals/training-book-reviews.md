@@ -21,8 +21,9 @@ Ordered by Helms's pyramid (section 6) — adherence beats programming, and
 **Shipped so far:** P1/#6 (rep ranges + template boundary), #1 (lighter-day
 swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp,
 plus the compounding auto-deload decay it surfaced), #7 (progression scheme per
-exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule).
-Next unstarted: #15, then #10. Each shipped item's engine changes carry a
+exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule),
+#15 (full-body accessory slots), #16 (the load-step discriminator #7 got
+wrong). Next unstarted: #10. Each shipped item's engine changes carry a
 `backlog #N` comment at the seam, so `git grep "backlog #"` in
 `src/features/program` finds them.
 
@@ -181,6 +182,51 @@ Next unstarted: #15, then #10. Each shipped item's engine changes carry a
     slots like `buildUpperLower` and `buildPPL` have. Needs a volume-budget
     decision first (a full-body day is already long), which is why this is
     recorded rather than patched inline.
+
+    STATUS 2026-07-28 — shipped, and the volume-budget worry was wrong.
+    There was no budget question: `buildFullBody` ALREADY prescribes two
+    tiers — slots 0–1 at `profile.mainReps`, slots 2–4 at
+    `accessoryReps` — so the supporting tier existed in the prescription
+    and was merely built with `makeExercise` (which hardcoded
+    `isAccessory: false`). Marking it adds no sets, swaps no exercise, and
+    lengthens no session; it is metadata catching up with intent.
+    `makeAccessory` was the wrong tool for it on two counts, both pinned by
+    tests: it re-picks from the NON-primary pool (a 3-day user's squat would
+    have become a hack squat) and it takes no `existing`, so every
+    regenerate would mint a new instanceId and wipe logged weight and
+    history. Hence an `isAccessory` parameter on `makeExercise` instead.
+    Blocked until now by #7's load step, which read `isAccessory` as a
+    movement class — see #16.
+    Two consumers got more correct for free: `expressSession` can finally
+    shorten a full-body session (it never drops mains, and pre-#15 a
+    full-body day was ALL mains), and `Program.tsx`'s `blockAnchorIds` now
+    picks real anchor compounds instead of just the first three exercises
+    in order.
+
+16. **`isAccessory` was doing two jobs, and #7 used the wrong one.** It
+    means "supporting work the volume machinery may adjust" (#5's ramp,
+    #9's arms, `balanceWeeklyVolume`, `expressSession`) — a VOLUME ROLE.
+    #7 read it as Helms's compound/isolation discriminator for the
+    proportional load step. But `pickAccessory` fills those slots from each
+    category's non-primary pool, which for the compound categories is
+    Romanian Deadlift, Hack Squat, Leg Press, Incline Bench. Probed on main
+    2026-07-28: a real 4-day programme tagged a 50 kg Hack Squat and a
+    40 kg RDL as accessories and handed them 1.25 kg steps. `effortCue`
+    had already documented this exact hazard ("`isAccessory` alone can't
+    distinguish an isolation from a hinge accessory") and guarded against
+    it — then #7 used the flag anyway two items later.
+    Fixed in the same PR as #15. `movementClass.ts` now owns the question,
+    and the answer is a union, because no single test works: the taxonomy
+    puts Lateral Raise and Overhead Press both in `vertical_push`, so
+    category alone can't separate an 8 kg isolation from a 50 kg press.
+    Single-joint categories always take a microplate; so does anything
+    under `HEAVY_LOAD_KG` (40). That second half is what Helms's argument
+    was actually about — percentage IS the rule, category was only ever a
+    proxy. It reaches MAIN lifts too, which #7 promised not to touch; that
+    promise was scoped to the wrong discriminator, and a novice's 30 kg
+    bench taking 8% jumps is the same error the item set out to fix.
+    `effortCue`'s private copy of the single-joint set now imports the
+    shared one, so the two can't drift.
 
 **Recorded, not scheduled:** lift goal / target-date back-mapping (D4,
 grill-me first); delt-head split of the `Shoulders` bucket (N10, schema
