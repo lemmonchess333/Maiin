@@ -16,6 +16,7 @@ import {
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
 import { deloadWeight } from "../easierToday";
+import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
   ProgramExercise,
   ProgramState,
@@ -1136,5 +1137,184 @@ describe("deload by training age (backlog #8)", () => {
     expect(st.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
       before
     );
+  });
+});
+
+// Backlog #9 — the joint rule wired into advanceWeek. The rule itself is
+// pinned in adjustmentRule.test.ts; these pin the APPLICATION: which volume
+// register each action moves, and therefore how long it lasts.
+describe("adjustment rule application (backlog #9)", () => {
+  const stall = (st: ProgramState, n: number): ProgramState => {
+    // Mark the first n accessories as plateaued.
+    let left = n;
+    return {
+      ...st,
+      workouts: st.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.map((ex) => {
+          if (left > 0 && ex.isAccessory === true) {
+            left -= 1;
+            return { ...ex, plateauCount: 2 };
+          }
+          return ex;
+        }),
+      })),
+    };
+  };
+
+  // 4 days → upper/lower, which is a split that BUILDS accessories.
+  // buildFullBody (1- and 3-day targets) authors none at all, so the
+  // accessory-scoped volume registers — #5's ramp, #7's isolation
+  // progression, and #9's volume arms — are all no-ops there. Asserted
+  // below rather than assumed, so a builder change can't make these tests
+  // pass vacuously.
+  const makeState = (week = 1): ProgramState => {
+    const { workouts } = generateProgram("recomp", 4, undefined, "hypertrophy");
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: week,
+      splitType: "upper_lower",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+  };
+
+  it("the fixture actually has accessories to adjust", () => {
+    const accs = makeState()
+      .workouts.flatMap((d) => d.exercises)
+      .filter((e) => e.isAccessory === true);
+    expect(accs.length).toBeGreaterThanOrEqual(PROGRAMME_PLATEAU_MIN);
+  });
+
+  const anchors = (s: ProgramState) =>
+    s.workouts.map((d) =>
+      d.exercises.filter((e) => e.isAccessory === true).map((e) => e.baseSets)
+    );
+
+  it("holds — and touches nothing — when recovery is unknown", () => {
+    const st = stall(makeState(), 4);
+    const out = advanceWeek(st, "beginner"); // recovery defaults to unknown
+    expect(anchors(out)).toEqual(anchors(st));
+    expect(out.plateauResponses).toBe(0);
+  });
+
+  it("plateaued + recovered raises the ANCHOR, so the volume persists", () => {
+    const st = stall(makeState(), 4);
+    const before = anchors(st);
+    const out = advanceWeek(st, "beginner", "recovered");
+    out.workouts.forEach((d, di) => {
+      const accs = d.exercises.filter((e) => e.isAccessory === true);
+      accs.forEach((ex, ei) => {
+        expect(ex.baseSets).toBe(Math.min(5, (before[di][ei] ?? 0) + 1));
+      });
+    });
+    // add_volume is not a "response" — nothing was cut, so nothing to escalate
+    expect(out.plateauResponses).toBe(0);
+  });
+
+  it("plateaued + strained cuts THIS WEEK only — the anchor is untouched", () => {
+    const st = stall(makeState(), 4);
+    const before = anchors(st);
+    const out = advanceWeek(st, "beginner", "strained");
+    expect(anchors(out)).toEqual(before); // anchor held
+    out.workouts.forEach((d) =>
+      d.exercises
+        .filter((e) => e.isAccessory === true)
+        .forEach((ex) => expect(ex.sets).toBeLessThanOrEqual(ex.baseSets ?? 0))
+    );
+    expect(out.plateauResponses).toBe(1);
+  });
+
+  it("a SECOND strained stall reorganizes instead of cutting again", () => {
+    let st = stall(makeState(), 4);
+    st = advanceWeek(st, "beginner", "strained"); // cut #1
+    expect(st.plateauResponses).toBe(1);
+    const beforeAnchors = anchors(st);
+    st = stall(st, 4); // still stalled
+    const out = advanceWeek(st, "beginner", "strained");
+    // anchor DROPS now (less total volume), and the counter stops climbing
+    out.workouts.forEach((d, di) => {
+      const accs = d.exercises.filter((e) => e.isAccessory === true);
+      accs.forEach((ex, ei) => {
+        expect(ex.baseSets).toBeLessThanOrEqual(beforeAnchors[di][ei] ?? 0);
+      });
+    });
+    expect(out.plateauResponses).toBe(1);
+  });
+
+  it("reorganize clears the stall counters so a NEW stall is distinguishable", () => {
+    let st = stall(makeState(), 4);
+    st = advanceWeek(st, "beginner", "strained");
+    st = stall(st, 4);
+    const out = advanceWeek(st, "beginner", "strained"); // reorganize
+    const stillPlateaued = out.workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => (e.plateauCount ?? 0) > 0);
+    expect(stillPlateaued).toHaveLength(0);
+  });
+
+  it("forgets the response once the stall clears", () => {
+    let st = stall(makeState(), 4);
+    st = advanceWeek(st, "beginner", "strained");
+    expect(st.plateauResponses).toBe(1);
+    // Cutting volume does NOT itself clear the stall — plateauCount is reset
+    // by the progression engine when the lift actually succeeds again. Do
+    // that here, which is the only thing that should wipe the memory.
+    st = {
+      ...st,
+      workouts: st.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.map((ex) => ({ ...ex, plateauCount: 0 })),
+      })),
+    };
+    st = advanceWeek(st, "beginner", "strained");
+    expect(st.plateauResponses).toBe(0);
+  });
+
+  it("a cut does not fake-clear the stall it was responding to", () => {
+    // If reduce_volume wiped plateauCount, the next advance would read
+    // "recovered from the stall" and the escalation branch could never fire.
+    const st = advanceWeek(stall(makeState(), 4), "beginner", "strained");
+    const stillPlateaued = st.workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => (e.plateauCount ?? 0) > 0);
+    expect(stillPlateaued.length).toBeGreaterThanOrEqual(PROGRAMME_PLATEAU_MIN);
+  });
+
+  it("never adjusts on a deload week — the deload IS the light week", () => {
+    const st = stall(makeState(3), 4); // advancing lands on week 4
+    const before = anchors(st);
+    const out = advanceWeek(st, "beginner", "recovered");
+    expect(out.currentPhase).toBe("deload");
+    expect(anchors(out)).toEqual(before); // no add_volume stacked on it
+  });
+
+  it("leaves mains alone under every action", () => {
+    for (const recovery of ["recovered", "strained"] as const) {
+      const st = stall(makeState(), 4);
+      const mainAnchors = (s: ProgramState) =>
+        s.workouts.map((d) =>
+          d.exercises
+            .filter((e) => e.isAccessory !== true)
+            .map((e) => e.baseSets)
+        );
+      const before = mainAnchors(st);
+      expect(mainAnchors(advanceWeek(st, "beginner", recovery))).toEqual(
+        before
+      );
+    }
+  });
+
+  it("never produces a duplicate exercise within a day after reorganizing", () => {
+    let st = stall(makeState(), 6);
+    st = advanceWeek(st, "beginner", "strained");
+    st = stall(st, 6);
+    const out = advanceWeek(st, "beginner", "strained"); // reorganize rotates
+    for (const d of out.workouts) {
+      const ids = d.exercises.map((e) => e.exerciseId);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
   });
 });
