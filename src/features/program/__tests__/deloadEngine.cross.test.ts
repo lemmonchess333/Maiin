@@ -6,21 +6,36 @@ import { deloadWeight } from "../easierToday";
 import type { WorkoutDay } from "../programTypes";
 
 /**
- * Parity guard (PROGRAM-DELOAD-01): the deload rule — one set fewer
- * (floor 2), weight ×0.85 rounded to the nearest 2.5 kg, zero stays
- * zero — is triple-sited: the client engine (`applyDeload`, runs the
- * automatic week-4 path), the easier-today session builder
- * (`deloadWeight`), and the Cloud-Functions command reducer's mirror
- * (`functions/lib/deloadEngine.js`, runs the user-invoked
- * applyDeloadWeek command). These copies MUST agree; this test is the
- * lockstep pin (the sanctioned mitigation for the tested-copy-vs-
- * running-copy rule). Change the rule on one side and this fails
- * until every copy moves together.
+ * Parity guard (PROGRAM-DELOAD-01): the deload rule is triple-sited — the
+ * client engine (`applyDeload`, runs the automatic week-4 path), the
+ * easier-today session builder (`deloadWeight`), and the Cloud-Functions
+ * command reducer's mirror (`functions/lib/deloadEngine.js`, runs the
+ * user-invoked applyDeloadWeek command). These copies MUST agree; this
+ * test is the lockstep pin (the sanctioned mitigation for the tested-copy-
+ * vs-running-copy rule). Change the rule on one side and this fails until
+ * every copy moves together.
+ *
+ * Backlog #8 split the rule by training age, so the engine↔mirror pin now
+ * runs over EVERY experience value. `deloadWeight` is only the weight half
+ * and stays novice-shaped on purpose: it powers the easier-today lever
+ * ("make this session lighter"), which is a different concept from the
+ * mesocycle step-back — so it is pinned against the beginner recipe only.
  */
 const require = createRequire(import.meta.url);
 const cf = require("../../../../functions/lib/deloadEngine") as {
-  applyDeloadToWorkouts: (workouts: WorkoutDay[]) => WorkoutDay[];
+  applyDeloadToWorkouts: (
+    workouts: WorkoutDay[],
+    experience?: string
+  ) => WorkoutDay[];
 };
+
+const EXPERIENCES = [
+  undefined,
+  "beginner",
+  "intermediate",
+  "advanced",
+  "nonsense",
+] as const;
 
 function fixtureWeek(): WorkoutDay[] {
   return [
@@ -65,10 +80,32 @@ function mkEx(id: string, sets: number, reps: number, weight: number) {
 }
 
 describe("deload rule parity (client engine ↔ CF mirror ↔ easierToday)", () => {
-  it("the CF mirror equals programEngine.applyDeload on a mixed fixture", () => {
-    expect(cf.applyDeloadToWorkouts(fixtureWeek())).toEqual(
-      applyDeload(fixtureWeek())
-    );
+  it("the CF mirror equals programEngine.applyDeload for every experience", () => {
+    for (const experience of EXPERIENCES) {
+      expect(
+        cf.applyDeloadToWorkouts(fixtureWeek(), experience),
+        `mismatch for experience=${experience}`
+      ).toEqual(
+        applyDeload(
+          fixtureWeek(),
+          experience as Parameters<typeof applyDeload>[1]
+        )
+      );
+    }
+  });
+
+  it("an unknown experience falls back to the novice recipe on both copies", () => {
+    // Neither copy may treat a garbage value as post-novice — the fallback
+    // has to be the load-cutting recipe both sides shipped before #8.
+    const novice = applyDeload(fixtureWeek(), "beginner");
+    expect(
+      applyDeload(
+        fixtureWeek(),
+        "nonsense" as Parameters<typeof applyDeload>[1]
+      )
+    ).toEqual(novice);
+    expect(cf.applyDeloadToWorkouts(fixtureWeek(), "nonsense")).toEqual(novice);
+    expect(applyDeload(fixtureWeek())).toEqual(novice);
   });
 
   it("the weight rule equals easierToday.deloadWeight per exercise", () => {
@@ -87,11 +124,13 @@ describe("deload rule parity (client engine ↔ CF mirror ↔ easierToday)", () 
   });
 
   it("input is not mutated by either copy", () => {
-    const a = fixtureWeek();
-    const b = fixtureWeek();
-    applyDeload(a);
-    cf.applyDeloadToWorkouts(b);
-    expect(a).toEqual(fixtureWeek());
-    expect(b).toEqual(fixtureWeek());
+    for (const experience of EXPERIENCES) {
+      const a = fixtureWeek();
+      const b = fixtureWeek();
+      applyDeload(a, experience as Parameters<typeof applyDeload>[1]);
+      cf.applyDeloadToWorkouts(b, experience);
+      expect(a).toEqual(fixtureWeek());
+      expect(b).toEqual(fixtureWeek());
+    }
   });
 });
