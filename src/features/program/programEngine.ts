@@ -30,6 +30,7 @@ import {
   MICROPLATE_STEP,
   PLATE_PAIR_STEP,
 } from "./movementClass";
+import { leastTrainedCategory, surplusExposures } from "./overlapModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -1016,6 +1017,55 @@ function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
   });
 }
 
+/**
+ * Backlog #10 (training-book backlog; D1 + M6 + H6): re-point the
+ * expensive-pattern slots that exceed the overlap caps. The decision is pure
+ * (overlapModel.ts); this only rebuilds the chosen slots, because the
+ * builders are module-private.
+ *
+ * A demoted slot keeps its sets and its accessory role — only the movement
+ * changes, to whatever the week trains least. So this reshapes the week
+ * without changing how much work is in it.
+ *
+ * `existingWorkouts` is threaded in for the carry. The builders' `findExisting`
+ * is POSITIONAL and category-blind, so once this pass changes a slot's
+ * category, the next regenerate would rebuild that position as a hinge again
+ * (inheriting the replacement's logged weight onto a deadlift), and then
+ * re-point it to a brand-new exercise — wiping the user's history on every
+ * regenerate. Matching the previous slot at the same position BY CATEGORY
+ * closes that: the choice is deterministic, so a stable programme carries its
+ * instanceId, load and history across regenerates like any other slot.
+ */
+function applyOverlapCaps(
+  workouts: WorkoutDay[],
+  profile: GoalProfile,
+  existingWorkouts?: WorkoutDay[]
+): WorkoutDay[] {
+  const surplus = surplusExposures(workouts);
+  if (surplus.length === 0) return workouts;
+
+  const out = workouts.map((d) => ({ ...d, exercises: [...d.exercises] }));
+  for (const { dayIndex, exIndex } of surplus) {
+    const day = out[dayIndex];
+    const old = day.exercises[exIndex];
+    const inDay = new Set(day.exercises.map((e) => e.movementCategory));
+    const category = leastTrainedCategory(out, inDay);
+    if (!category) continue; // every alternative already in this day — leave it
+    const prev = existingWorkouts?.[dayIndex]?.exercises[exIndex];
+    const isAccessory = old.isAccessory === true;
+    day.exercises[exIndex] = makeExercise(
+      category,
+      old.sets,
+      isAccessory ? profile.accessoryReps : profile.mainReps,
+      0, // uncalibrated when fresh — seedStartingLoads runs after this
+      isAccessory ? "double" : profile.mainProgression,
+      prev?.movementCategory === category ? prev : undefined,
+      isAccessory
+    );
+  }
+  return out;
+}
+
 export function generateProgram(
   nutritionGoal: Goal,
   weeklyTarget: number,
@@ -1100,6 +1150,10 @@ export function generateProgram(
   // rotated to a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
   workouts = dedupeDayExercises(workouts);
+  // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
+  // volume balancers, so a re-pointed slot is shifted and budgeted exactly
+  // like an originally-built one rather than escaping both.
+  workouts = applyOverlapCaps(workouts, profile, existingWorkouts);
   // Backlog #3: day roles — see applyDayRoles above.
   workouts = applyDayRoles(workouts);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
