@@ -26,6 +26,7 @@
  */
 
 import type { MovementCategory } from "@/lib/exerciseMovementCategory";
+import { isSingleJoint } from "./movementClass";
 
 export interface EffortCue {
   kind: "reserve" | "push" | "deload";
@@ -34,12 +35,6 @@ export interface EffortCue {
   /** Longer expansion behind a tap (reserve cue only). */
   tooltip?: string;
 }
-
-/** Single-joint categories where the last set may safely be pushed. */
-const PUSH_CATEGORIES: ReadonlySet<MovementCategory> = new Set([
-  "arms_biceps",
-  "arms_triceps",
-] as MovementCategory[]);
 
 export function effortCueFor(
   exercise: { movementCategory: MovementCategory },
@@ -52,7 +47,10 @@ export function effortCueFor(
     };
   }
   if (exercise.movementCategory === "core") return null;
-  if (PUSH_CATEGORIES.has(exercise.movementCategory)) {
+  // Shared with the load step (movementClass.ts) — the same "provably
+  // single-joint" question, previously answered by a private copy of the
+  // set here and by `isAccessory` there.
+  if (isSingleJoint(exercise.movementCategory)) {
     return opts.isLastSet
       ? { kind: "push", text: "Last set — OK to go to your limit." }
       : null;
