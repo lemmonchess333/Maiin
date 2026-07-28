@@ -32,7 +32,12 @@
  * which movements are chosen, whether the week undulates, and whether
  * advanced technique surfaces at all.
  */
-import type { Experience } from "./startingLoads";
+// `Experience` comes from `programTypes` — the module that owns the vocabulary
+// (`VALID_EXPERIENCE`) and imports nothing from this feature — NOT from
+// `startingLoads`. Taking it from there created a circular dependency that
+// `npm run check:cycles` caught in CI and my local tsc/vitest/lint pass did
+// not: experienceModel → startingLoads → variationBank → experienceModel.
+import type { Experience } from "./programTypes";
 
 export type { Experience };
 

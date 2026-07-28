@@ -16,13 +16,18 @@
 import { EXERCISES } from "@/lib/exercises";
 
 import type {
+  Experience,
   MovementCategory,
   ProgramExercise,
   WorkoutDay,
 } from "./programTypes";
 import { loadFactorFor } from "./variationBank";
 
-export type Experience = "beginner" | "intermediate" | "advanced";
+// Re-exported, not redeclared. This was a hand-written duplicate of the union
+// `programTypes.VALID_EXPERIENCE` already derives — a second copy of one
+// vocabulary, which is the drift hazard the repo's own rules call out, and it
+// is what made the import cycle look reasonable in the first place.
+export type { Experience };
 
 export interface StartingLoadContext {
   bodyweightKg: number;
