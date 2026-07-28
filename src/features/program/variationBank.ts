@@ -32,6 +32,24 @@ interface ExerciseOption {
    * Absent on the category primary, which is the lift being substituted FOR.
    */
   role?: "technique" | "weak_point" | "size";
+  /**
+   * Working weight relative to the category's PRIMARY lift, used to seed a
+   * cold-start load (`startingWeightForExercise`). Absent = 1 (loads like the
+   * primary).
+   *
+   * Added 2026-07-28 after an audit measured the cost of not having it: the
+   * seed table is per-CATEGORY, so every variation inherited the compound's
+   * number. A Romanian deadlift, a hip thrust and a leg curl are all
+   * `hip_dominant`, and a beginner was handed the deadlift's 68 kg on all
+   * three. That was tolerable while the builders only ever emitted the
+   * primary; it stopped being tolerable once #10's overlap caps started
+   * re-pointing slots to variations.
+   *
+   * These are conservative working-weight ratios, deliberately erring light —
+   * the module's existing stance is that a light start self-corrects in a
+   * session or two whereas a heavy one costs a failed first workout.
+   */
+  loadFactor?: number;
 }
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
@@ -39,12 +57,14 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "bench-press", name: "Bench Press", primary: true },
     {
       id: "incline-bench",
+      loadFactor: 0.8,
       name: "Incline Bench Press",
       primary: false,
       role: "size",
     },
     {
       id: "db-bench",
+      loadFactor: 0.35,
       name: "Dumbbell Bench Press",
       primary: false,
       lengthened: true,
@@ -52,6 +72,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "incline-db-press",
+      loadFactor: 0.3,
       name: "Incline Dumbbell Press",
       primary: false,
       lengthened: true,
@@ -59,6 +80,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "close-grip-bench",
+      loadFactor: 0.8,
       name: "Close Grip Bench Press",
       primary: false,
       role: "weak_point",
@@ -68,13 +90,21 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "overhead-press", name: "Overhead Press", primary: true },
     {
       id: "db-shoulder-press",
+      loadFactor: 0.35,
       name: "Dumbbell Shoulder Press",
       primary: false,
       role: "size",
     },
-    { id: "arnold-press", name: "Arnold Press", primary: false, role: "size" },
+    {
+      id: "arnold-press",
+      loadFactor: 0.3,
+      name: "Arnold Press",
+      primary: false,
+      role: "size",
+    },
     {
       id: "landmine-press",
+      loadFactor: 0.5,
       name: "Landmine Press",
       primary: false,
       role: "technique",
@@ -82,10 +112,23 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
   ],
   horizontal_pull: [
     { id: "barbell-row", name: "Barbell Row", primary: true },
-    { id: "db-row", name: "Dumbbell Row", primary: false, role: "size" },
-    { id: "t-bar-row", name: "T-Bar Row", primary: false, role: "size" },
+    {
+      id: "db-row",
+      loadFactor: 0.4,
+      name: "Dumbbell Row",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "t-bar-row",
+      loadFactor: 0.8,
+      name: "T-Bar Row",
+      primary: false,
+      role: "size",
+    },
     {
       id: "seated-row",
+      loadFactor: 0.9,
       name: "Seated Cable Row",
       primary: false,
       lengthened: true,
@@ -93,6 +136,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "chest-supported-db-row",
+      loadFactor: 0.35,
       name: "Chest-Supported DB Row",
       primary: false,
       lengthened: true,
@@ -103,14 +147,22 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "pull-ups", name: "Pull-Ups", primary: true },
     {
       id: "lat-pulldown",
+      loadFactor: 0.6,
       name: "Lat Pulldown",
       primary: false,
       lengthened: true,
       role: "size",
     },
-    { id: "chin-ups", name: "Chin-Ups", primary: false, role: "size" },
+    {
+      id: "chin-ups",
+      loadFactor: 0,
+      name: "Chin-Ups",
+      primary: false,
+      role: "size",
+    },
     {
       id: "single-arm-lat-pulldown",
+      loadFactor: 0.25,
       name: "Single-Arm Lat Pulldown",
       primary: false,
       lengthened: true,
@@ -121,13 +173,21 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "squat", name: "Barbell Squat", primary: true },
     {
       id: "front-squat",
+      loadFactor: 0.75,
       name: "Front Squat",
       primary: false,
       role: "technique",
     },
-    { id: "leg-press", name: "Leg Press", primary: false, role: "size" },
+    {
+      id: "leg-press",
+      loadFactor: 1.6,
+      name: "Leg Press",
+      primary: false,
+      role: "size",
+    },
     {
       id: "hack-squat",
+      loadFactor: 0.9,
       name: "Hack Squat",
       primary: false,
       lengthened: true,
@@ -135,6 +195,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "bulgarian-split",
+      loadFactor: 0.25,
       name: "Bulgarian Split Squat",
       primary: false,
       lengthened: true,
@@ -145,37 +206,75 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "deadlift", name: "Deadlift", primary: true },
     {
       id: "romanian-deadlift",
+      loadFactor: 0.65,
       name: "Romanian Deadlift",
       primary: false,
       lengthened: true,
       role: "size",
     },
-    { id: "hip-thrust", name: "Hip Thrust", primary: false, role: "size" },
+    {
+      id: "hip-thrust",
+      loadFactor: 0.9,
+      name: "Hip Thrust",
+      primary: false,
+      role: "size",
+    },
     {
       id: "sumo-deadlift",
+      loadFactor: 0.95,
       name: "Sumo Deadlift",
       primary: false,
       role: "technique",
     },
     {
       id: "trap-bar-deadlift",
+      loadFactor: 1.0,
       name: "Trap Bar Deadlift",
       primary: false,
       role: "technique",
     },
+    // The only HAMSTRING-primary option in the whole bank, and the only hinge
+    // with no spinal load at all. Added 2026-07-28: an audit measured the
+    // 4-day and 6-day builds losing HALF their hamstring volume once #10's
+    // per-session hinge cap demoted the Romanian deadlift, because there was
+    // nothing back-sparing in the category to demote it TO — the cap had to
+    // leave the category entirely. It also gives `balanceWeeklyVolume` an
+    // accessory it can grow for hamstrings, which it previously never had.
+    {
+      id: "seated-leg-curl",
+      loadFactor: 0.25,
+      name: "Seated Leg Curl",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
   ],
   arms_biceps: [
     { id: "barbell-curl", name: "Barbell Curl", primary: true },
-    { id: "db-curl", name: "Dumbbell Curl", primary: false, role: "size" },
-    { id: "hammer-curl", name: "Hammer Curl", primary: false, role: "size" },
+    {
+      id: "db-curl",
+      loadFactor: 0.4,
+      name: "Dumbbell Curl",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "hammer-curl",
+      loadFactor: 0.4,
+      name: "Hammer Curl",
+      primary: false,
+      role: "size",
+    },
     {
       id: "preacher-curl",
+      loadFactor: 0.7,
       name: "Preacher Curl",
       primary: false,
       role: "size",
     },
     {
       id: "cable-curl",
+      loadFactor: 0.8,
       name: "Cable Curl",
       primary: false,
       lengthened: true,
@@ -186,6 +285,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "rope-tricep-pushdown", name: "Rope Tricep Pushdown", primary: true },
     {
       id: "skull-crushers",
+      loadFactor: 0.6,
       name: "Skull Crushers",
       primary: false,
       lengthened: true,
@@ -193,36 +293,68 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "overhead-extension",
+      loadFactor: 0.6,
       name: "Overhead Tricep Extension",
       primary: false,
       lengthened: true,
       role: "size",
     },
-    { id: "tricep-dips", name: "Tricep Dips", primary: false, role: "size" },
+    {
+      id: "tricep-dips",
+      loadFactor: 0,
+      name: "Tricep Dips",
+      primary: false,
+      role: "size",
+    },
   ],
   core: [
     { id: "cable-crunch", name: "Cable Crunch", primary: true },
     {
       id: "leg-raise",
+      loadFactor: 0,
       name: "Hanging Leg Raise",
       primary: false,
       role: "size",
     },
-    { id: "ab-wheel", name: "Ab Wheel Rollout", primary: false, role: "size" },
+    {
+      id: "ab-wheel",
+      loadFactor: 0,
+      name: "Ab Wheel Rollout",
+      primary: false,
+      role: "size",
+    },
     {
       id: "pallof-press",
+      loadFactor: 0.5,
       name: "Pallof Press",
       primary: false,
       role: "technique",
     },
     {
       id: "russian-twist",
+      loadFactor: 0.3,
       name: "Russian Twist",
       primary: false,
       role: "size",
     },
   ],
 };
+
+/**
+ * Working weight of a variation relative to its category's primary lift.
+ *
+ * Unknown ids return 1 — that is exactly today's behaviour (the seed table is
+ * per-category), so an exercise arriving from outside the bank (an injury or
+ * equipment substitution) is no worse off than before.
+ */
+export function loadFactorFor(
+  exerciseId: string | undefined,
+  category: MovementCategory
+): number {
+  if (!exerciseId) return 1;
+  const opt = (exerciseBank[category] ?? []).find((o) => o.id === exerciseId);
+  return opt?.loadFactor ?? 1;
+}
 
 /**
  * Pick the primary exercise for a movement category,
@@ -272,11 +404,31 @@ export function pickExercise(
 }
 
 /**
- * Pick an accessory (non-primary) exercise for variety. Biases toward
- * LENGTHENED-position options when the category has any (D-LIFT-2) — accessories
- * are isolation/hypertrophy work, where training at long muscle length yields
- * more growth per set. Falls back to the full non-primary pool when none are
- * tagged, preserving variety.
+ * Pick an accessory (non-primary) exercise. Biases toward LENGTHENED-position
+ * options when the category has any (D-LIFT-2) — accessories are
+ * isolation/hypertrophy work, where training at long muscle length yields more
+ * growth per set. Falls back to the full non-primary pool when none are tagged.
+ *
+ * DETERMINISTIC as of 2026-07-28. This was
+ * `pool[Math.floor(Math.random() * pool.length)]`, and it made the whole
+ * generator nondeterministic: twelve `generateProgram` calls with byte-identical
+ * inputs produced EIGHT different programmes. That is the same defect backlog
+ * #11 already fixed one function up in this file (`pickExercise`'s plateau
+ * rotation), for the same reasons, and it was left here:
+ *
+ *   - Nippard (N5): changing exercises flattens the progression curve.
+ *     Novelty belongs at block boundaries, which is what
+ *     `rotateUntrainedAccessories` is for — not at every build.
+ *   - A regenerate is what a settings change triggers. Before any history
+ *     exists to carry, changing days-per-week re-rolled the user's accessories
+ *     into different exercises for no reason they could see.
+ *   - Every claim in this arc about the pipeline being deterministic (#10,
+ *     #11, #17) was false while this stood, and every measurement taken
+ *     against generated output was a sample rather than a fact.
+ *
+ * Variety across the week is not lost: `dedupeDayExercises` removes in-day
+ * duplicates, `capRepeatedLifts` re-points anything appearing more than twice,
+ * and `excludeId` keeps an accessory off its own category primary.
  */
 export function pickAccessory(
   category: MovementCategory,
@@ -287,7 +439,6 @@ export function pickAccessory(
   );
   const lengthened = options.filter((e) => e.lengthened);
   const pool = lengthened.length > 0 ? lengthened : options;
-  const pick =
-    pool[Math.floor(Math.random() * pool.length)] ?? exerciseBank[category][0];
+  const pick = pool[0] ?? exerciseBank[category][0];
   return { id: pick.id, name: pick.name };
 }

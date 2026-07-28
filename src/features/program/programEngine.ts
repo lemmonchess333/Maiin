@@ -31,7 +31,8 @@ import {
   PLATE_PAIR_STEP,
 } from "./movementClass";
 import {
-  leastTrainedCategory,
+  capRepeatedLifts,
+  lowCostAlternative,
   orderForAdjacency,
   surplusExposures,
 } from "./overlapModel";
@@ -103,6 +104,35 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/**
+ * Ceilings the GENERATOR will not prescribe past (2026-07-28 audit).
+ *
+ * `applyDayRoles` shifts a pump day +2 reps with a floor and no ceiling, and
+ * the final pass then stamps `repRangeMax = reps + span`. On the higher-rep
+ * goal profiles the two compounded into prescriptions nobody would write:
+ * `Pull-Ups 3×17-22`, `Barbell Squat 4×17-20`, `Deadlift 3×15-20`.
+ *
+ * 20 is not a new number — `MAX_BODYWEIGHT_REPS` above is already the point
+ * where the progression engine stops adding reps and tells the user to add
+ * load. Prescribing past it asks for something the app's own advice says to
+ * stop doing. Bodyweight lifts stop earlier still: they cannot be loaded
+ * DOWN, so a high-rep target is the wrong tool rather than a hard one, and a
+ * beginner handed 17-rep pull-ups simply cannot start the set.
+ */
+const MAX_PRESCRIBED_REPS = MAX_BODYWEIGHT_REPS;
+const MAX_PRESCRIBED_BODYWEIGHT_REPS = 15;
+
+/** Highest rep target the generator may prescribe for this exercise. */
+function prescribedRepCeiling(ex: {
+  exerciseId?: string;
+  repUnit?: string;
+}): number {
+  // Timed holds count seconds, not reps — a 30-45s plank is not a 30-rep set.
+  if (ex.repUnit === "seconds") return Number.POSITIVE_INFINITY;
+  return isBodyweightExerciseId(ex.exerciseId)
+    ? MAX_PRESCRIBED_BODYWEIGHT_REPS
+    : MAX_PRESCRIBED_REPS;
+}
 /** Timed holds climb in 5-second steps (N2's time axis). */
 const HOLD_STEP_SECONDS = 5;
 /** Ceiling for a hold with no authored range — past this, add load instead. */
@@ -1023,7 +1053,10 @@ function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
       ...day,
       exercises: day.exercises.map((ex) => {
         const floor = ex.isAccessory === true ? 6 : 3;
-        const reps = Math.max(floor, ex.reps + delta);
+        const reps = Math.min(
+          prescribedRepCeiling(ex),
+          Math.max(floor, ex.reps + delta)
+        );
         return { ...ex, reps, baseReps: reps };
       }),
     };
@@ -1092,27 +1125,21 @@ function carryExistingAccessories(
 /**
  * Backlog #10 (training-book backlog; D1 + M6 + H6): re-point the
  * expensive-pattern slots that exceed the overlap caps. The decision is pure
- * (overlapModel.ts); this only rebuilds the chosen slots, because the
- * builders are module-private.
+ * (overlapModel.ts); this only rewrites `exerciseId` / `name` on the chosen
+ * slots.
  *
- * A demoted slot keeps its sets and its accessory role — only the movement
- * changes, to whatever the week trains least. So this reshapes the week
- * without changing how much work is in it.
+ * A demoted slot keeps its category, its sets, its reps, its accessory role,
+ * its position and its history — the ONLY thing that moves is which variation
+ * of the same movement fills it, from a barbell pull to something that spares
+ * the lower back. That is the whole of what the cap is trying to achieve, and
+ * keeping everything else fixed is what makes the pass safe: the positional
+ * accessory carry still matches, the muscle keeps its weekly volume, and the
+ * builder's authoring of the day is not second-guessed.
  *
- * `existingWorkouts` is threaded in for the carry. The builders' `findExisting`
- * is POSITIONAL and category-blind, so once this pass changes a slot's
- * category, the next regenerate would rebuild that position as a hinge again
- * (inheriting the replacement's logged weight onto a deadlift), and then
- * re-point it to a brand-new exercise — wiping the user's history on every
- * regenerate. Matching the previous slot at the same position BY CATEGORY
- * closes that: the choice is deterministic, so a stable programme carries its
- * instanceId, load and history across regenerates like any other slot.
+ * See `lowCostAlternative` for the three defects the previous cross-category
+ * version shipped, all of them measured.
  */
-function applyOverlapCaps(
-  workouts: WorkoutDay[],
-  profile: GoalProfile,
-  existingWorkouts?: WorkoutDay[]
-): WorkoutDay[] {
+function applyOverlapCaps(workouts: WorkoutDay[]): WorkoutDay[] {
   const surplus = surplusExposures(workouts);
   if (surplus.length === 0) return workouts;
 
@@ -1120,20 +1147,20 @@ function applyOverlapCaps(
   for (const { dayIndex, exIndex } of surplus) {
     const day = out[dayIndex];
     const old = day.exercises[exIndex];
-    const inDay = new Set(day.exercises.map((e) => e.movementCategory));
-    const category = leastTrainedCategory(out, inDay);
-    if (!category) continue; // every alternative already in this day — leave it
-    const prev = existingWorkouts?.[dayIndex]?.exercises[exIndex];
-    const isAccessory = old.isAccessory === true;
-    day.exercises[exIndex] = makeExercise(
-      category,
-      old.sets,
-      isAccessory ? profile.accessoryReps : profile.mainReps,
-      0, // uncalibrated when fresh — seedStartingLoads runs after this
-      isAccessory ? "double" : profile.mainProgression,
-      prev?.movementCategory === category ? prev : undefined,
-      isAccessory
+    const swap = lowCostAlternative(
+      old.movementCategory,
+      new Set(day.exercises.map((e) => e.exerciseId)),
+      old.isAccessory !== true
     );
+    // No back-sparing variation left in the category that isn't already in
+    // the day. Leave the slot alone — the cap is a bias, not a guarantee, and
+    // dropping the work or importing a foreign movement are both worse.
+    if (!swap) continue;
+    day.exercises[exIndex] = {
+      ...old,
+      exerciseId: swap.id,
+      name: swap.name,
+    };
   }
   return out;
 }
@@ -1303,16 +1330,21 @@ export function generateProgram(
   // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly
   // like an originally-built one rather than escaping both.
-  workouts = applyOverlapCaps(workouts, profile, alignedExisting);
+  workouts = applyOverlapCaps(workouts);
   // Backlog #3: day roles — see applyDayRoles above.
   workouts = applyDayRoles(workouts);
+  // Variety: no single lift more than twice a week. Must run BEFORE the
+  // volume balancers so they budget against the shape the user actually
+  // gets, and AFTER the overlap caps so a re-pointed slot is counted.
+  workouts = capRepeatedLifts(workouts);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));
   // D-LIFT-3: keep weekly pull volume ≥ push (shoulder-health balance).
-  workouts = balancePushPull(workouts);
-  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained mains
-  // (no-op without a load context, or for lifts with logged history).
+  workouts = balancePushPull(workouts, volumeLandmark(primaryGoal));
+  // D-LIFT-5: seed bodyweight-relative cold-start loads on never-trained lifts
+  // (no-op without a load context, or for lifts with logged history). Runs
+  // last so it also calibrates whatever the caps above re-pointed.
   if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
   // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
@@ -1333,7 +1365,11 @@ export function generateProgram(
     exercises: day.exercises.map((ex) => {
       const span = ex.isAccessory === true ? accessorySpan : mainSpan;
       const out: ProgramExercise = { ...ex, baseSets: ex.sets };
-      if (span > 0) out.repRangeMax = ex.reps + span;
+      // The ceiling is clamped too, not just the floor — otherwise a target
+      // clamped to 15 still advertises a 20-rep top end and the double
+      // progression climbs straight back through it.
+      const ceiling = Math.min(ex.reps + span, prescribedRepCeiling(ex));
+      if (span > 0 && ceiling > ex.reps) out.repRangeMax = ceiling;
       return out;
     }),
   }));

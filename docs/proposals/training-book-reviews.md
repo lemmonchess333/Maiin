@@ -267,6 +267,51 @@ rather than inside a tier's existing list.
     "regenerate preserves every logged load" test across all six splits,
     which is what found it; reading indices by hand had not.
 
+    STATUS 2026-07-28 (audit correction) — two of the decisions above were
+    WRONG and shipped a worse programme than the one they replaced. Both were
+    caught by an owner report ("it was doing the squat three days a week,
+    which obviously is ridiculous") and then measured.
+
+    **1. The squat carve-out conflated MUSCLE frequency with LIFT frequency.**
+    The row above declines to cap squats because `splitRationale` promises the
+    user "every muscle 3× a week". That promise is about muscles; Helms's
+    objection is about the lift ("training squats three times a week and
+    deadlifts three times a week wouldn't be ideal for 90% of people"). Quads
+    trained 3×/week via squat + leg press + split squat satisfies the
+    frequency argument in full while satisfying Helms's objection too — the
+    benefit never required repeating the same barbell lift. Measured on the
+    shipped code: a default 3-day hypertrophy user got Barbell Squat ×3, and a
+    4-day user Barbell Curl ×3, on every goal. Fixed by
+    `capRepeatedLifts` — no exerciseId more than twice a week, surplus slots
+    re-pointed within the SAME movement category, deterministic.
+
+    **2. Re-pointing to "the category the week trains least" was wrong in
+    three ways at once, and all three shipped.** (a) It DELETED the week's
+    only direct hamstring work: `hip_dominant` was the sole expensive
+    pattern, so a demoted hinge could never be replaced by another hinge, and
+    the 4-day and 6-day builds lost their Romanian deadlift — hamstring volume
+    halved, 12 → 6 weekly sets on the 4-day, under the landmark low. A rule
+    written to protect the lower back quietly removed the posterior-chain
+    training instead. (b) It put a **bicep curl on "Lower — Deadlift Focus"**,
+    because arms happened to be the week's least-trained muscle; a day-type
+    allow-list was drafted to guard that, which treated the symptom. (c) It
+    rebuilt the slot with `weight: 0` under a comment claiming the seeding
+    pass would calibrate it — the seeding pass skipped accessories, so users
+    were shown "5 × 14-17 @ 0 kg".
+    Fixed by deleting the cross-category path entirely. A demoted slot keeps
+    its category, sets, reps, role, position, load and history; only the
+    VARIATION changes, to a back-sparing hinge (`seated-leg-curl` for an
+    accessory, `hip-thrust` for a main). The day keeps its character, the
+    muscle keeps its volume, and the slot keeps its number — all three
+    defects become impossible by construction rather than guarded against.
+    `leastTrainedCategory` and the day-type allow-list are both gone.
+
+    The common thread, and the reason both survived review: every test
+    written for #10 asserted the RULE (≤ 1 hinge per session, ≤ 2 per week)
+    and none looked at the resulting programme. `generatorAudit.test.ts` now
+    does — it reads the week a user would open, across every goal × day
+    count.
+
 **Tier 2b — found while building, not from a book**
 
 15. **`buildFullBody` authors zero accessories** — every exercise it emits
@@ -306,6 +351,37 @@ rather than inside a tier's existing list.
     full-body day was ALL mains), and `Program.tsx`'s `blockAnchorIds` now
     picks real anchor compounds instead of just the first three exercises
     in order.
+
+    STATUS 2026-07-28 (audit correction) — "adds no sets, swaps no exercise,
+    and lengthens no session" is measurably false, and the volume-budget
+    worry this item was ORIGINALLY deferred on was right. Marking the
+    full-body slots as accessories was correct metadata, but `isAccessory` is
+    a live wire — two consumers change behaviour the moment it flips, and the
+    STATUS enumerated neither.
+
+    **It added 29% more sets.** `balanceWeeklyVolume` and `balancePushPull`
+    only grow exercises where `isAccessory` is true, so pre-#15 they were
+    structural no-ops for every full-body user. Measured, same inputs:
+    3-day full body 42 → 54 weekly sets, per-session 14 → 17/20/17; 1-day
+    14 → 20 in a single session. The balancing itself is right — it had
+    simply never run for these users — but it needed a bound, which is
+    exactly the "a full-body day is already long" objection the deferral
+    made. `MAX_SETS_PER_SESSION = 18` is that bound: the balancers stop
+    adding to a session at ~an hour of work, and the builders are not
+    policed by it.
+
+    **It silently switched cold-start load seeding off for the whole
+    full-body segment.** `seedStartingLoads` skipped accessories, so an 80 kg
+    beginner was prescribed `Bench Press 35 kg` as the day-0 main and
+    `Bench Press 60 kg` as a day-2 accessory — the same lift, in the same
+    week, with the accessory copy heavier. Fixed by removing the skip: the
+    flag is a volume ROLE, not a claim about whether a hardcoded weight suits
+    this user. Seeding accessories is only safe because the seed is now
+    derived per EXERCISE (`loadFactor` on the bank × the category multiple),
+    which is what stops a leg curl being seeded like a deadlift.
+
+    Rule this leaves behind: **a flag with consumers is a behaviour change, not
+    metadata.** Enumerate every reader before flipping one.
 
 16. **`isAccessory` was doing two jobs, and #7 used the wrong one.** It
     means "supporting work the volume machinery may adjust" (#5's ramp,
@@ -362,6 +438,85 @@ AMRAP PR set (superseded by #2 + #4); tempo prescription (H9 — demo timing is
 a defensible use; Level 6); rest-period training effects (H8 — carry the
 field, drop the claim); Smolov/daily-max/bands/chains/BFR/failure-by-default
 (audience fit, per-section notes).
+
+## Generator audit (2026-07-28) — what the arc got wrong, and what is still open
+
+The owner stopped the merge of the adjacency PR with a specific complaint —
+"it was doing the squat three days a week, which obviously is ridiculous" —
+and asked for everything in the arc to be re-checked against the six books
+before anything else shipped. The audit that followed read the generated
+PROGRAMME rather than the rules, across every goal × day count, and compared
+it against the code as it stood before the arc.
+
+The finding worth writing down is not any single defect. It is that this arc
+was **reasoned about carefully and verified loosely**: every test written for
+#10 asserted the rule it implemented (≤ 1 hinge per session, ≤ 2 per week)
+and none of them opened the week a user would receive. A rule can be
+implemented perfectly and still produce a bad programme.
+
+### Fixed in the audit PR
+
+| What                                            | Was                                                                                                   |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Cross-week lift repetition (`capRepeatedLifts`) | Barbell Squat ×3 on a 3-day, Barbell Curl ×3 on a 4-day, every goal                                   |
+| Same-category re-point (`lowCostAlternative`)   | A demoted hinge deleted the week's only hamstring work; a curl landed on a leg day                    |
+| No uncalibrated slots                           | Re-pointed slots shipped `@0 kg`; the seeding pass that was supposed to fill them skipped accessories |
+| Per-exercise load seeding (`loadFactor`)        | A leg curl, a hip thrust and a deadlift were all seeded at the deadlift's 68 kg                       |
+| Accessory seeding                               | Bench Press @35 kg as a main and @60 kg as an accessory in the same week (#15 side effect)            |
+| Rep ceilings by equipment                       | `Pull-Ups 3×17-22`, `Barbell Squat 4×17-20` as a main, `Deadlift 3×15-20`                             |
+| Session length budget (`MAX_SETS_PER_SESSION`)  | #15 took a 3-day week 42 → 54 sets, 14 → 20 in one session                                            |
+| Balancer ceiling guard                          | Add-only balancers pushed shared muscles past the landmark high while chasing another muscle's low    |
+| Determinism (`pickAccessory`)                   | Twelve identical `generateProgram` calls returned EIGHT different programmes                          |
+
+That last one deserves its own line. `pickAccessory` was still
+`Math.random()`-backed — the exact defect #11 had already fixed one function
+up in the same file. While it stood, every determinism claim in #10 / #11 /
+#17 was false, and every measurement anyone took against generated output was
+a sample rather than a fact.
+
+### Open — measured, not yet fixed
+
+Recorded here rather than fixed in the same PR, because each needs a decision
+rather than a patch. None of them are speculative; each was measured.
+
+1. **The landmark bands compare lumped muscle groups against per-muscle
+   numbers.** `Back` absorbs lats, traps, rhomboids and erectors, so every
+   row, pulldown, deadlift and RDL adds to one bucket — a 6-day week reads
+   `Back = 37` against a high of 20. `Shoulders` (front/side/rear) and `Core`
+   lump the same way. Part of the "violates its own landmarks" finding is the
+   MODEL, not the programme. Splitting the canonical muscles, or giving
+   lumped groups their own bands, is the fix; trimming real training to
+   satisfy a miscalibrated number is not.
+2. **Calves are never trained.** No calf movement exists in `variationBank`
+   at all, in any category, so the tally reads 1.5–2.5 incidental sets at
+   every day count. Same gap, smaller: no lateral raise, and hamstring
+   isolation only arrived in this PR.
+3. **Day names contradict their contents.** "Full Body — Posterior Focus"
+   opens with a bench press; "Upper — Shoulders & Arms" leads on pull-ups.
+   The names are authored constants; the contents are computed.
+4. **Set allocation can invert the exercise hierarchy.** The balancers grow
+   accessories up to 5 sets while mains sit at 3-4, so the week's biggest
+   block of sets is sometimes a supporting lift.
+5. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
+   that arms come after torso work; nothing enforces it.
+6. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
+   in `buildUpperLower` are `isAccessory: false` + hardcoded `"linear"`, so a
+   barbell curl progresses like a squat.
+7. **`repRangeMax` is inert on every linear-progression exercise** — the
+   "climb the range, then add load" mechanism (#6) never runs for the
+   strength, fat_loss or running goals, whose mains are all linear.
+8. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
+   it**, so a strength user's heavy day reads 3-5 against a profile that
+   declares 5-7. The rep CEILING is now clamped; the floor still escapes the
+   profile.
+9. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
+   45-second plank can be "deloaded" to 43 seconds, and floored at 3.
+10. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
+    Σ weight × reps), so 3×20 @ 40 kg registers as a PR over 3×5 @ 100 kg.
+11. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
+    current exercise below a plateau count of 3, while the adjustment rule
+    fires at 1 — so the branch cuts sets and resets the plateau counter
+    without changing a single exercise.
 
 ## Presentation policy (operator decision, 2026-07-27)
 

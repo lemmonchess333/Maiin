@@ -15,7 +15,7 @@ import {
   isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
-import { EXERCISES } from "@/lib/exercises";
+import { EXERCISES, isBodyweightExerciseId } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
@@ -935,7 +935,12 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
     for (const ex of allEx(workouts)) {
       const span = ex.isAccessory === true ? 3 : 4; // 12→15 acc, 8→12 main
-      expect(ex.repRangeMax! - ex.reps).toBe(span);
+      // …unless the prescription ceiling bit first (2026-07-28 audit): a
+      // bodyweight lift stops at 15 reps rather than advertising a 17-rep
+      // top end nobody would program. Then the ceiling IS the ceiling.
+      const clamped =
+        ex.reps + span > 15 && isBodyweightExerciseId(ex.exerciseId);
+      expect(ex.repRangeMax! - ex.reps).toBe(clamped ? 15 - ex.reps : span);
     }
     // and the roles really did move: heavy day A mains sit under pump day C
     const mainReps = (i: number) =>
@@ -1448,10 +1453,20 @@ describe("full-body accessory slots (backlog #15)", () => {
 // bugs the first cut had: the replacement escaping its day role, and the
 // positional history carry breaking once a slot changed category.
 describe("overlap caps in generateProgram (backlog #10)", () => {
+  // The cap is about LOWER-BACK cost, not the hip pattern as such. A hip
+  // thrust and a seated leg curl are both hip_dominant but neither loads the
+  // spine, and no source in the review warns about them — so they do not
+  // count. They are also exactly what the pass swaps TO: a demoted slot keeps
+  // its category (see `lowCostAlternative`).
+  const SPINAL_SPARING = new Set(["hip-thrust", "seated-leg-curl"]);
   const hingeSlots = (workouts: WorkoutDay[]) =>
     workouts.map(
       (d) =>
-        d.exercises.filter((e) => e.movementCategory === "hip_dominant").length
+        d.exercises.filter(
+          (e) =>
+            e.movementCategory === "hip_dominant" &&
+            !SPINAL_SPARING.has(e.exerciseId)
+        ).length
     );
 
   it("no split exceeds the caps", () => {
@@ -1926,5 +1941,53 @@ describe("regenerate preserves every logged load (all splits)", () => {
         ).toBe(1);
       })
     );
+  });
+});
+
+// The owner-reported defect: a default 3-day programme prescribed Barbell
+// Squat x3/week and a 4-day prescribed Barbell Curl x3 — on every goal, i.e.
+// the two most common configurations in the app. Helms's literal
+// counter-example, shipped. Guarded across every split and goal.
+describe("no lift is prescribed more than twice a week", () => {
+  const GOALS = ["hypertrophy", "strength", "fat_loss", "general"] as const;
+  it.each(GOALS)("%s, every split", (goal) => {
+    for (const days of [1, 2, 3, 4, 5, 6]) {
+      const { workouts } = generateProgram("recomp", days, undefined, goal);
+      const counts = new Map<string, number>();
+      for (const ex of workouts.flatMap((d) => d.exercises)) {
+        counts.set(ex.name, (counts.get(ex.name) ?? 0) + 1);
+      }
+      const over = [...counts.entries()].filter(([, n]) => n > 2);
+      expect(over, `${goal} / ${days}-day`).toEqual([]);
+    }
+  });
+
+  it("leaves no duplicate exercise within any single day", () => {
+    // The end-to-end guarantee: the repeat cap must not undo what
+    // dedupeDayExercises did earlier in the pipeline.
+    for (const days of [1, 2, 3, 4, 5, 6]) {
+      const { workouts } = generateProgram(
+        "recomp",
+        days,
+        undefined,
+        "hypertrophy"
+      );
+      workouts.forEach((d) => {
+        const ids = d.exercises.map((e) => e.exerciseId);
+        expect(new Set(ids).size, `${days}-day / ${d.dayName}`).toBe(
+          ids.length
+        );
+      });
+    }
+  });
+
+  it("still trains the muscle at the split's promised frequency", () => {
+    // The cap must change WHICH variation fills a slot, never how often the
+    // muscle is trained — that frequency is what splitRationale promises.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    const kneeDays = workouts.filter((d) =>
+      d.exercises.some((e) => e.movementCategory === "knee_dominant")
+    );
+    expect(kneeDays).toHaveLength(3);
   });
 });

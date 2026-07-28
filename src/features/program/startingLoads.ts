@@ -13,7 +13,14 @@
  * progression engine ramps load fast), whereas too-heavy risks failed first
  * sessions. Pure + mirror-ready.
  */
-import type { MovementCategory, WorkoutDay } from "./programTypes";
+import { EXERCISES } from "@/lib/exercises";
+
+import type {
+  MovementCategory,
+  ProgramExercise,
+  WorkoutDay,
+} from "./programTypes";
+import { loadFactorFor } from "./variationBank";
 
 export type Experience = "beginner" | "intermediate" | "advanced";
 
@@ -77,12 +84,56 @@ export function startingWeightForCategory(
   return Math.max(0, Math.round(raw / 2.5) * 2.5);
 }
 
+const BODYWEIGHT_IDS: ReadonlySet<string> = new Set(
+  EXERCISES.filter((e) => e.equipment === "Bodyweight").map((e) => e.id)
+);
+
 /**
- * Seed cold-start starting weights on a generated week. Reweights only the
- * MAIN lifts (not accessories) that have NEVER been trained
- * (`performanceHistory` empty) and carry a real (non-bodyweight) load — so a
- * fresh program reflects the user's size/level, while any lift with logged
- * history keeps its progressed weight. Pure; returns a new workouts array.
+ * Starting working weight for a SPECIFIC lift — the category seed scaled by
+ * the variation's `loadFactor`, and 0 for anything the catalog calls
+ * bodyweight.
+ *
+ * The category seed alone was only ever right for the category's primary
+ * compound. Everything else in the bank inherited it: a beginner's Romanian
+ * deadlift, hip thrust and leg curl were all handed the deadlift's 68 kg.
+ */
+export function startingWeightForExercise(
+  exerciseId: string | undefined,
+  category: MovementCategory,
+  ctx: StartingLoadContext
+): number {
+  if (exerciseId && BODYWEIGHT_IDS.has(exerciseId)) return 0;
+  const base = startingWeightForCategory(category, ctx);
+  if (base <= 0) return 0;
+  const raw = base * loadFactorFor(exerciseId, category);
+  if (raw <= 0) return 0;
+  return Math.max(2.5, Math.round(raw / 2.5) * 2.5);
+}
+
+/**
+ * Seed cold-start starting weights on a generated week. Reweights every lift
+ * that has NEVER been trained (`performanceHistory` empty) and carries a real
+ * (non-bodyweight) load — so a fresh program reflects the user's size/level,
+ * while any lift with logged history keeps its progressed weight. Pure;
+ * returns a new workouts array.
+ *
+ * CORRECTED 2026-07-28 — this used to skip `isAccessory` slots, which sounded
+ * conservative and was not. The flag says what ROLE a slot plays in the
+ * session, not whether its hardcoded weight is right for this user, and an
+ * audit measured what that conflation cost:
+ *
+ *   - backlog #15 marked the full-body builder's slots 2-4 as accessories
+ *     (correct metadata), and silently switched cold-start seeding OFF for
+ *     the entire full-body segment as a side effect. A 80 kg beginner was
+ *     then prescribed `Bench Press 35 kg` as the day-0 main and
+ *     `Bench Press 60 kg` as a day-2 accessory — the same lift, twice, with
+ *     the accessory copy heavier;
+ *   - `Barbell Row` sat at its hardcoded 50 kg where the bodyweight-relative
+ *     seed is 36 kg.
+ *
+ * Seeding accessories is only safe now that the weight is derived per
+ * EXERCISE (`startingWeightForExercise`) rather than per category — that is
+ * what stops a leg curl being seeded like a deadlift.
  *
  * Back-compat: callers without a context don't invoke this, so existing
  * behaviour (hardcoded weights) is unchanged where no profile data exists.
@@ -93,10 +144,14 @@ export function seedStartingLoads(
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
-    exercises: day.exercises.map((ex) => {
+    exercises: day.exercises.map((ex: ProgramExercise) => {
       const untrained = (ex.performanceHistory?.length ?? 0) === 0;
-      if (ex.isAccessory || !untrained || (ex.weight ?? 0) <= 0) return ex;
-      const seed = startingWeightForCategory(ex.movementCategory, ctx);
+      if (!untrained || (ex.weight ?? 0) <= 0) return ex;
+      const seed = startingWeightForExercise(
+        ex.exerciseId,
+        ex.movementCategory,
+        ctx
+      );
       if (seed <= 0) return ex; // bodyweight pattern — leave as-is
       return {
         ...ex,

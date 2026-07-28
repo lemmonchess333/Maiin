@@ -29,9 +29,18 @@
  * source in the review flags the heavy hinge specifically — Lilliebridge
  * ("pulling for reps burnt out my lower back"), Little, Beck — and Meadows
  * arrives at the same place from bodybuilding (M6: separate legs and back to
- * protect the lower back). Squat frequency is NOT capped: 3×/week squatting in
- * a 3-day full body is deliberate, advertised to the user by `splitRationale`,
- * and backed by the frequency evidence the split choice rests on.
+ * protect the lower back).
+ *
+ * CORRECTED 2026-07-28. This comment used to continue: "Squat frequency is NOT
+ * capped: 3×/week squatting in a 3-day full body is deliberate, advertised to
+ * the user by `splitRationale`." That reasoning was WRONG and it shipped a bad
+ * programme — a default 3-day user was prescribed Barbell Squat three times a
+ * week, which is Helms's literal counter-example. The error was conflating
+ * MUSCLE frequency with LIFT frequency: `splitRationale` promises "every muscle
+ * 3× a week", and quads trained 3×/week via squat + leg press + split squat
+ * delivers that without repeating the barbell lift. `capRepeatedLifts` below
+ * enforces the lift-level cap; the pattern-level caps here are about systemic
+ * cost and remain a separate concern.
  *
  * Green dissents from the whole premise (pulls weekly, no deloads), which is
  * why the caps bias a default rather than forbidding a frequency — twice a
@@ -46,6 +55,7 @@ import type {
   WorkoutDay,
 } from "./programTypes";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "./volumeModel";
+import { exerciseBank } from "./variationBank";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
 export const EXPENSIVE_PATTERNS: ReadonlySet<MovementCategory> = new Set([
@@ -63,7 +73,28 @@ export interface Exposure {
   isAccessory: boolean;
 }
 
+/**
+ * Hinge variations that do NOT load the spine the way a barbell pull does,
+ * most back-sparing first. Excluded from the expensive-pattern count, and used
+ * as the same-category replacement when a slot exceeds a cap.
+ *
+ * The seated leg curl carries no spinal load at all and is the only
+ * hamstring-PRIMARY entry in the bank; the hip thrust is the compound of the
+ * pair, so a demoted MAIN takes the hip thrust and a demoted ACCESSORY takes
+ * the leg curl.
+ */
+const BACK_SPARING_HINGES: readonly string[] = [
+  "seated-leg-curl",
+  "hip-thrust",
+];
+
 function isExpensive(ex: ProgramExercise): boolean {
+  // The cap is about LOWER-BACK cost, not about the hip pattern. A hip thrust
+  // is a hip_dominant movement that no source in the review warns about —
+  // Lilliebridge's "pulling for reps burnt out my lower back" and Meadows's
+  // "keep lower back from getting too beat up" are both about spinal loading.
+  // Counting it would make the cap fire on a day that isn't actually costly.
+  if (BACK_SPARING_HINGES.includes(ex.exerciseId)) return false;
   return EXPENSIVE_PATTERNS.has(ex.movementCategory);
 }
 
@@ -122,6 +153,102 @@ export function surplusExposures(workouts: WorkoutDay[]): Exposure[] {
   return surplus.sort((a, b) =>
     a.dayIndex === b.dayIndex ? a.exIndex - b.exIndex : a.dayIndex - b.dayIndex
   );
+}
+
+/* ================================
+   VARIETY — the same LIFT, repeated across the week
+================================ */
+
+/**
+ * How many times one exercise may appear in a week.
+ *
+ * TWO, not one, and not three. Both source claims point here and they only
+ * look contradictory:
+ *
+ * - Nippard (N5): "changing exercises from week to week is more likely to
+ *   flatten out the progression curve." Repetition is the progression
+ *   mechanism, so a cap of 1 would be actively harmful.
+ * - Helms (H6): "training squats three times a week and deadlifts three times
+ *   a week wouldn't be ideal for 90% of people because of the overlap."
+ *
+ * The trap — which backlog #10 fell into and this fixes — is reading Helms's
+ * claim as being about the MUSCLE. It is about the LIFT. #10's rationale
+ * declined to cap squats because `splitRationale` promises the user "every
+ * muscle 3× a week", and concluded squat×3 was therefore deliberate. But
+ * quads trained 3×/week via squat + leg press + split squat satisfies the
+ * frequency argument completely while satisfying Helms's objection too. The
+ * frequency benefit never required the same barbell lift.
+ *
+ * Measured before the fix: a 3-day full body prescribed Barbell Squat ×3 and
+ * a 4-day upper/lower prescribed Barbell Curl ×3, on EVERY goal — the two
+ * most common configurations in the app.
+ */
+export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
+
+/**
+ * Re-point the surplus exposures of any over-used lift to a different
+ * variation in the SAME movement category.
+ *
+ * Muscle frequency is untouched — only which variation fills the slot
+ * changes — so the split's frequency promise still holds. Slots keep their
+ * position, their sets/reps and their accessory role; only `exerciseId` and
+ * `name` move, which is what keeps the positional accessory carry safe.
+ *
+ * Which slots keep the original: mains before accessories (the main is the
+ * progression anchor and usually the lift the day is named for), then
+ * earliest day, then earliest slot. Fully deterministic — a regenerate must
+ * not churn the programme (the lesson of #11 and #17).
+ */
+export function capRepeatedLifts(workouts: WorkoutDay[]): WorkoutDay[] {
+  const slots: Array<{ d: number; e: number; ex: ProgramExercise }> = [];
+  workouts.forEach((day, d) =>
+    day.exercises.forEach((ex, e) => slots.push({ d, e, ex }))
+  );
+
+  const exposures = new Map<string, typeof slots>();
+  for (const s of slots) {
+    const list = exposures.get(s.ex.exerciseId);
+    if (list) list.push(s);
+    else exposures.set(s.ex.exerciseId, [s]);
+  }
+
+  const over = [...exposures.entries()].filter(
+    ([, list]) => list.length > MAX_WEEKLY_LIFT_EXPOSURES
+  );
+  if (over.length === 0) return workouts;
+
+  const out = workouts.map((day) => ({
+    ...day,
+    exercises: [...day.exercises],
+  }));
+  // Track weekly usage so a replacement can't itself become over-used.
+  const usage = new Map<string, number>();
+  for (const [id, list] of exposures) usage.set(id, list.length);
+
+  for (const [id, list] of over) {
+    const ranked = [...list].sort((a, b) => {
+      const aMain = a.ex.isAccessory !== true;
+      const bMain = b.ex.isAccessory !== true;
+      if (aMain !== bMain) return aMain ? -1 : 1;
+      return a.d === b.d ? a.e - b.e : a.d - b.d;
+    });
+    for (const s of ranked.slice(MAX_WEEKLY_LIFT_EXPOSURES)) {
+      const day = out[s.d];
+      const inDay = new Set(day.exercises.map((x) => x.exerciseId));
+      const options = exerciseBank[s.ex.movementCategory] ?? [];
+      const pick = options.find(
+        (o) =>
+          o.id !== id &&
+          !inDay.has(o.id) &&
+          (usage.get(o.id) ?? 0) < MAX_WEEKLY_LIFT_EXPOSURES
+      );
+      if (!pick) continue; // category exhausted — leave it rather than duplicate
+      day.exercises[s.e] = { ...s.ex, exerciseId: pick.id, name: pick.name };
+      usage.set(id, (usage.get(id) ?? 1) - 1);
+      usage.set(pick.id, (usage.get(pick.id) ?? 0) + 1);
+    }
+  }
+  return out;
 }
 
 /* ================================
@@ -256,45 +383,51 @@ export function orderForAdjacency(
   return best === identity ? workouts : best.map((i) => workouts[i]);
 }
 
-const CATEGORY_TO_MUSCLE: Record<MovementCategory, CanonicalMuscle> = {
-  horizontal_push: "Chest",
-  vertical_push: "Shoulders",
-  horizontal_pull: "Back",
-  vertical_pull: "Back",
-  knee_dominant: "Quads",
-  hip_dominant: "Hamstrings",
-  arms_biceps: "Biceps",
-  arms_triceps: "Triceps",
-  core: "Core",
-};
-
 /**
- * The replacement for a demoted slot: the category whose muscle the week
- * trains LEAST, which is the fractional volume model doing the accounting
- * H6 says it should. Excludes categories already in that day (no duplicate)
- * and the expensive patterns themselves (no swapping one hinge for another).
- * Ties break on a fixed order, so this stays deterministic.
+ * The replacement for a slot that exceeds an expensive-pattern cap: a
+ * back-sparing variation IN THE SAME CATEGORY. Null when the bank has nothing
+ * suitable that isn't already in the day.
+ *
+ * CORRECTED 2026-07-28 — a cross-category `leastTrainedCategory` used to live
+ * here, and re-pointing a demoted hinge to "whatever muscle the week trains
+ * least" was wrong in three separate ways, all of them measured on shipped
+ * code:
+ *
+ *   1. It DELETED the week's only direct hamstring work. Both the 4-day and
+ *      6-day builds authored a Romanian deadlift alongside the main pull; the
+ *      per-session cap demoted it, and because `hip_dominant` was the one
+ *      expensive pattern, the replacement could never be another hinge.
+ *      Hamstring volume halved (4-day: 12 → 6 weekly sets, under the
+ *      landmark low) — a rule meant to protect the lower back quietly
+ *      removed the posterior-chain training instead.
+ *   2. It put a **bicep curl on "Lower — Deadlift Focus"**, because arms
+ *      happened to be the week's least-trained muscle. Guarding that with a
+ *      day-type allow-list treated the symptom; the premise was the defect.
+ *      What belongs in a slot is decided by the BUILDER that authored the
+ *      day, and the cap has no business overriding it.
+ *   3. Rebuilding the slot from scratch shipped **0 kg prescriptions** — a
+ *      re-pointed accessory was minted uncalibrated and the seeding pass
+ *      skipped accessories, so nothing ever filled the number in.
+ *
+ * Keeping the category makes all three impossible by construction: the day
+ * keeps its character, the muscle keeps its volume, and the slot keeps its
+ * load. Only the variation changes, which is the one thing the cap is
+ * actually trying to change.
  */
-export function leastTrainedCategory(
-  workouts: WorkoutDay[],
-  excluded: ReadonlySet<MovementCategory>
-): MovementCategory | null {
-  const volume = new Map(
-    weeklyVolumeByMuscle(workouts).map((v) => [v.muscle, v.sets])
-  );
-  const candidates = (
-    Object.keys(CATEGORY_TO_MUSCLE) as MovementCategory[]
-  ).filter((c) => !excluded.has(c) && !EXPENSIVE_PATTERNS.has(c));
-  if (candidates.length === 0) return null;
-
-  let best = candidates[0];
-  let bestSets = volume.get(CATEGORY_TO_MUSCLE[best]) ?? 0;
-  for (const c of candidates.slice(1)) {
-    const sets = volume.get(CATEGORY_TO_MUSCLE[c]) ?? 0;
-    if (sets < bestSets) {
-      best = c;
-      bestSets = sets;
-    }
+export function lowCostAlternative(
+  category: MovementCategory,
+  idsInDay: ReadonlySet<string>,
+  isMain = false
+): { id: string; name: string } | null {
+  if (!EXPENSIVE_PATTERNS.has(category)) return null;
+  const ranked = isMain
+    ? [...BACK_SPARING_HINGES].reverse() // a main should stay a compound
+    : BACK_SPARING_HINGES;
+  const options = exerciseBank[category] ?? [];
+  for (const id of ranked) {
+    if (idsInDay.has(id)) continue;
+    const opt = options.find((o) => o.id === id);
+    if (opt) return { id: opt.id, name: opt.name };
   }
-  return best;
+  return null;
 }
