@@ -18,6 +18,13 @@ import {
   volumeLandmark,
 } from "./volumeModel";
 import { seedStartingLoads, type StartingLoadContext } from "./startingLoads";
+import {
+  countPlateauedExercises,
+  resolveAdjustment,
+  PROGRAMME_PLATEAU_MIN,
+  type AdjustmentAction,
+  type RecoveryState,
+} from "./adjustmentRule";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -1430,9 +1437,69 @@ function applyWeeklyVolumeShape(
   }));
 }
 
+/** Floor for the steady-state accessory anchor — a lift never drops below this. */
+const ACCESSORY_ANCHOR_FLOOR = 2;
+
+/**
+ * Backlog #9 (training-book backlog; H5): apply the adjustment the rule
+ * chose. Split across the two volume registers #5 established, which is
+ * what makes each action last the right length of time:
+ *
+ * - `add_volume` / `reorganize` move the ANCHOR (`baseSets`), so the change
+ *   survives `applyWeeklyVolumeShape`'s idempotent recompute — these are
+ *   verdicts about the programme.
+ * - `reduce_volume` moves only `sets`, so it lasts exactly one week and is
+ *   then recomputed away, same as `applyFatigue`'s shave — it's a light
+ *   week, not a new baseline.
+ *
+ * Mains are never touched. They are the progression anchor, and every
+ * source in the review puts the adjustable volume in accessory work.
+ * `reorganize` also rotates the stalled lifts to a fresh variation and
+ * clears their plateau counter — Helms's "or the volume organised
+ * differently", and the reset is what lets the rule tell a NEW stall from
+ * the one it already responded to.
+ */
+function applyAdjustment(
+  workouts: WorkoutDay[],
+  action: AdjustmentAction
+): WorkoutDay[] {
+  if (action === "hold") return workouts;
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const out: ProgramExercise = { ...ex };
+      const base = ex.baseSets ?? ex.sets;
+      if (ex.isAccessory === true) {
+        if (action === "add_volume") {
+          out.baseSets = Math.min(ACCESSORY_RAMP_CAP, base + 1);
+          out.sets = Math.min(ACCESSORY_RAMP_CAP, out.sets + 1);
+        } else if (action === "reduce_volume") {
+          out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
+        } else {
+          out.baseSets = Math.max(ACCESSORY_ANCHOR_FLOOR, base - 1);
+          out.sets = Math.max(ACCESSORY_ANCHOR_FLOOR, out.sets - 1);
+        }
+      }
+      if (action === "reorganize" && (ex.plateauCount ?? 0) > 0) {
+        const swap = pickExercise(
+          ex.movementCategory,
+          ex.plateauCount ?? 0,
+          ex.exerciseId
+        );
+        out.exerciseId = swap.id;
+        out.name = swap.name;
+        out.plateauCount = 0;
+        out.consecutiveFailures = 0;
+      }
+      return out;
+    }),
+  }));
+}
+
 export function advanceWeek(
   state: ProgramState,
-  experience?: Experience
+  experience?: Experience,
+  recovery: RecoveryState = "unknown"
 ): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
@@ -1457,13 +1524,35 @@ export function advanceWeek(
   // logged per-exercise failure state rather than the formerly-dead persisted
   // scalar.
   const fatigue = computeFatigueScore(state.workouts);
+  // Backlog #9 (H5): the joint plateau × recovery rule. Evaluated from the
+  // week just TRAINED (state.workouts), before the weekly reshape rewrites
+  // sets, so it reads the stall the user actually just hit.
+  const plateauedExercises = countPlateauedExercises(state.workouts);
+  const action = resolveAdjustment({
+    plateauedExercises,
+    recovery,
+    priorReductions: state.plateauResponses ?? 0,
+  });
+
   if (prescription.deload) {
+    // A deload week IS the light week — don't stack an adjustment on top of
+    // it. The rule's bookkeeping below still runs, so a stall that spans a
+    // deload is remembered rather than silently forgiven.
     workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
+    workouts = applyAdjustment(workouts, action);
   }
+
+  // Reset the memory once the stall itself clears; otherwise carry it, and
+  // count a reduction so a SECOND stall escalates to `reorganize` instead of
+  // cutting again. (Helms: if it recurs, the answer isn't another deload.)
+  const plateauResponses =
+    plateauedExercises < PROGRAMME_PLATEAU_MIN
+      ? 0
+      : (state.plateauResponses ?? 0) + (action === "reduce_volume" ? 1 : 0);
 
   // D-LIFT-4: at the start of a new mesocycle (weeks 5, 9, … and the 52→1
   // recycle), rotate UNTRAINED accessories to a fresh variation for novelty +
@@ -1472,6 +1561,10 @@ export function advanceWeek(
   // theirs to keep. Re-deduped so a rotation can't collide within a day.
   if (nextWeek % 4 === 1) {
     workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
+  } else if (action === "reorganize") {
+    // Same hazard from #9's rotation: a swapped lift can collide with
+    // another exercise already in that day.
+    workouts = dedupeDayExercises(workouts);
   }
 
   return {
@@ -1483,6 +1576,7 @@ export function advanceWeek(
     // A deload clears accumulated acute fatigue; otherwise persist the computed
     // value so the field is meaningful + observable (no longer dead).
     fatigueScore: prescription.deload ? 0 : fatigue,
+    plateauResponses,
     updatedAt: Date.now(),
     nextWorkoutOverride: undefined,
   };
