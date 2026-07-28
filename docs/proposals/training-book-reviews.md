@@ -21,9 +21,10 @@ Ordered by Helms's pyramid (section 6) — adherence beats programming, and
 **Shipped so far:** P1/#6 (rep ranges + template boundary), #1 (lighter-day
 swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp,
 plus the compounding auto-deload decay it surfaced), #7 (progression scheme per
-exercise type), #8 (deload by training age). Next unstarted: #9. Each shipped
-item's engine changes carry a `backlog #N` comment at the seam, so
-`git grep "backlog #"` in `src/features/program` finds them.
+exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule).
+Next unstarted: #15, then #10. Each shipped item's engine changes carry a
+`backlog #N` comment at the seam, so `git grep "backlog #"` in
+`src/features/program` finds them.
 
 **Tier 1 — Adherence (the layer the app owns)**
 
@@ -118,6 +119,35 @@ item's engine changes carry a `backlog #N` comment at the seam, so
 9. **Joint plateau/recovery rule** (H5): connect `plateauCount` and
    `computeRecoveryScore` per Helms's flowchart — plateaued+recovered → add
    volume; plateaued+unrecovered → light week; recurring → reorganize.
+
+   STATUS 2026-07-28 — shipped. `adjustmentRule.ts` holds the pure flowchart;
+   `advanceWeek` applies it. Two decisions worth keeping:
+   **`RecoveryState` is three-valued, not a boolean.** `deloadRecommended` is
+   FALSE both when the lifter is fresh AND when the engine has too little
+   baseline to judge (`bl.weeksUsed >= 3`). Collapsing those would read every
+   cold-start user as "recovered" and add volume to someone we know nothing
+   about — the harmful direction. `unknown` holds, and `recoveryStateFrom`
+   gates on the doc's own `lifetimeWeeks` using the engine's own depth
+   requirement.
+   **The rule reads `deloadFlag`/`recoveryWeak`, NOT the raw `recoveryScore`.**
+   PROGRAM-ADAPT-01 locked `recoveryScore` as a retrospective analytics input
+   rather than a readiness measure (see the comment on
+   `easierTodayRecommendation`); the same reasoning applies here, and the two
+   flags are weekly-scope judgements, which is the scope this rule operates
+   at. The entry above named `computeRecoveryScore` — that was the wrong
+   input, and this is the deliberate deviation.
+   Each action moves a different volume register so it lasts the right
+   length of time: `add_volume`/`reorganize` move the `baseSets` ANCHOR
+   (persist through `applyWeeklyVolumeShape`'s recompute), `reduce_volume`
+   moves only `sets` (one week, like `applyFatigue`). `reorganize` also
+   rotates the stalled lifts and clears their counters, which is what lets
+   the rule distinguish a new stall from the one it already answered.
+   `plateauResponses` on ProgramState is the memory the second-order branch
+   needs. Deload weeks skip the adjustment — the deload IS the light week —
+   but the bookkeeping still runs, so a stall spanning one isn't forgiven.
+   Constrained by #15 below: the volume arms are accessory-scoped, so they
+   are no-ops for full-body users. `reorganize` still reaches them.
+
 10. **Overlap-aware scheduling** (D1 + M6 + H6): stop prescribing the
     deadlift pattern 3×/week; heavy/light emphasis per slot; adjacency rules.
     The fractional volume model already does the accounting.
@@ -131,6 +161,26 @@ item's engine changes carry a `backlog #N` comment at the seam, so
 13. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
     3/151 exercises; these books supply the material for the big lifts.
 14. **Wire deload detection to the existing one-tap deload command** (P7).
+
+**Tier 2b — found while building, not from a book**
+
+15. **`buildFullBody` authors zero accessories** — every exercise it emits
+    goes through `makeExercise` (`isAccessory: false`). `chooseSplit` routes
+    both 1-day and **3-day** targets to full body, and 3-day full body is a
+    deliberate primary recommendation (section 6's frequency argument, and
+    `splitRationale` says so to the user). So a large, deliberately-courted
+    segment silently sits outside every accessory-scoped mechanism the arc
+    has shipped: #5's volume ramp (mains hold at base), #7's isolation
+    double progression and microplate load step, #9's volume arms, and
+    `balanceWeeklyVolume`'s under-dosed-muscle top-up (which explicitly
+    "leaves a muscle with no accessory to grow as-is"). Found 2026-07-28
+    when #9's first fixture generated a 3-day programme and counted zero
+    adjustable lifts. Not a regression — it predates the arc — but the arc
+    kept building on a register those users don't have. Fix is in the
+    builder, not in the consumers: give `buildFullBody` real accessory
+    slots like `buildUpperLower` and `buildPPL` have. Needs a volume-budget
+    decision first (a full-body day is already long), which is why this is
+    recorded rather than patched inline.
 
 **Recorded, not scheduled:** lift goal / target-date back-mapping (D4,
 grill-me first); delt-head split of the `Shoulders` bucket (N10, schema

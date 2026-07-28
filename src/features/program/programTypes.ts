@@ -573,6 +573,15 @@ export interface ProgramState {
    */
   primaryGoal?: PrimaryGoal;
   /**
+   * Backlog #9 (Helms H5): how many times the adjustment rule has already
+   * cut volume for the CURRENT stall without it clearing. Reset to 0 the
+   * moment the programme is no longer plateaued. Its only job is the
+   * flowchart's second-order branch — if a light week didn't fix it, the
+   * problem isn't fatigue, so escalate to reorganising rather than cutting
+   * again. Optional with a defaulting reader → no schema bump.
+   */
+  plateauResponses?: number;
+  /**
    * ID of the handwritten template this program was assigned at
    * onboarding, when a match existed. Absent when `matchTemplate`
    * couldn't find a goal-matching template and the program came from
