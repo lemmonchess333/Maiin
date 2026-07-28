@@ -4,7 +4,6 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
-import { allowsComplexity, type Experience } from "./experienceModel";
 import { exerciseBank } from "./variationBank";
 
 /**
@@ -404,15 +403,7 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 export function applyEquipmentFilterToWorkouts(
   workouts: readonly WorkoutDay[],
   equipment: string,
-  injuries: readonly string[] = [],
-  /**
-   * The lifter's level. Without it this filter re-introduced movements the
-   * complexity gate had just removed — it runs AFTER `generateProgram`, so it
-   * was the last word on which exercise a beginner actually receives
-   * (2026-07-28 sweep). Absent → no complexity constraint, which is the
-   * behaviour every pre-existing caller had.
-   */
-  experience?: Experience
+  injuries: readonly string[] = []
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -442,13 +433,31 @@ export function applyEquipmentFilterToWorkouts(
       if (isAvailable(ex.exerciseId)) return { ...ex };
 
       const options = exerciseBank[ex.movementCategory] ?? [];
+      // NOT complexity-gated, and that is a measured decision rather than an
+      // oversight (2026-07-28). Adding `allowsComplexity` to this predicate
+      // was tried twice and neither form helps:
+      //
+      //   AND-ed into the find  → complexity violations 603 → 315, but
+      //                           equipment violations 462 → 798. It does not
+      //                           find simpler movements; it finds NOTHING and
+      //                           leaves the slot holding a barbell the user
+      //                           does not own. Strictly worse.
+      //   preferred, then fall  → identical to no gate at all on both counts
+      //   back to any available   (603 / 462), because in every failing case
+      //                           there IS no simple, equipment-available
+      //                           option in that category.
+      //
+      // The residue is exercise-BANK COVERAGE, not filter logic: on
+      // `home_gym`/`minimal`, `knee_dominant` has exactly one non-primary the
+      // user owns and it is `bulgarian-split` (technical) — front squat is a
+      // barbell, leg press and hack squat are machines. No predicate can
+      // conjure an option that is not in the bank. See the backlog entry.
       const pick = options.find(
         (o) =>
           o.id !== ex.exerciseId &&
           !usedIds.has(o.id) &&
           isAvailable(o.id) &&
-          !isInjuryContra(o.id) &&
-          allowsComplexity(experience, o.complexity)
+          !isInjuryContra(o.id)
       );
       if (pick) {
         usedIds.delete(ex.exerciseId);

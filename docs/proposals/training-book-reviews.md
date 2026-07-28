@@ -498,33 +498,62 @@ rather than a patch. None of them are speculative; each was measured.
    the canonical muscles (or giving lumped groups their own bands) and then
    rebalancing what the builders author. Trimming real training to satisfy a
    miscalibrated number is not the fix either.
-2. **Calves are never trained.** No calf movement exists in `variationBank`
+2. **A limited-equipment beginner receives movements they cannot do, and
+   movements above their level — both because the exercise bank has no simple
+   dumbbell/bodyweight options.** Measured over a 216-config matrix (3 goals ×
+   1–6 days × 3 equipment tiers × 4 injury states), for a beginner:
+
+   | equipment filter                            | complexity violations | equipment violations |
+   | ------------------------------------------- | --------------------- | -------------------- |
+   | as shipped                                  | 603                   | 462                  |
+   | complexity AND-ed into the picker           | 315                   | **798**              |
+   | complexity preferred, fallback to available | 603                   | 462                  |
+
+   The middle row shipped briefly in `646eeec` and was reverted the same
+   session: gating the picker does not find simpler movements, it finds
+   _none_, and the slot then keeps a barbell a dumbbells-and-a-bench user does
+   not own. The third row is a pure no-op, which is the diagnosis — in every
+   failing case there IS no simple, equipment-available option in that
+   category. `knee_dominant` on `home_gym`/`minimal` has exactly one
+   non-primary the user owns and it is the Bulgarian split squat; front squat
+   is a barbell, leg press and hack squat are machines.
+
+   Note the 462 equipment violations are PRE-EXISTING and independent of the
+   experience work: a home-gym user is already prescribed barbell deadlifts and
+   machine hack squats. That is the larger of the two problems.
+
+   The fix is bank coverage, not filter logic. The catalog already contains
+   `goblet-squat`, `bodyweight-squat`, `lunges`, `push-ups`, `inverted-row`,
+   `db-rdl` and `glute-bridge` — the TEMPLATES prescribe them and the bank does
+   not contain them. Adding them closes both columns at once.
+
+3. **Calves are never trained.** No calf movement exists in `variationBank`
    at all, in any category, so the tally reads 1.5–2.5 incidental sets at
    every day count. Same gap, smaller: no lateral raise, and hamstring
    isolation only arrived in this PR.
-3. **Day names contradict their contents.** "Full Body — Posterior Focus"
+4. **Day names contradict their contents.** "Full Body — Posterior Focus"
    opens with a bench press; "Upper — Shoulders & Arms" leads on pull-ups.
    The names are authored constants; the contents are computed.
-4. **Set allocation can invert the exercise hierarchy.** The balancers grow
+5. **Set allocation can invert the exercise hierarchy.** The balancers grow
    accessories up to 5 sets while mains sit at 3-4, so the week's biggest
    block of sets is sometimes a supporting lift.
-5. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
+6. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
    that arms come after torso work; nothing enforces it.
-6. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
+7. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
    in `buildUpperLower` are `isAccessory: false` + hardcoded `"linear"`, so a
    barbell curl progresses like a squat.
-7. **`repRangeMax` is inert on every linear-progression exercise** — the
+8. **`repRangeMax` is inert on every linear-progression exercise** — the
    "climb the range, then add load" mechanism (#6) never runs for the
    strength, fat_loss or running goals, whose mains are all linear.
-8. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
+9. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
    it**, so a strength user's heavy day reads 3-5 against a profile that
    declares 5-7. The rep CEILING is now clamped; the floor still escapes the
    profile.
-9. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
-   45-second plank can be "deloaded" to 43 seconds, and floored at 3.
-10. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
+10. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
+    45-second plank can be "deloaded" to 43 seconds, and floored at 3.
+11. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
     Σ weight × reps), so 3×20 @ 40 kg registers as a PR over 3×5 @ 100 kg.
-11. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
+12. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
     current exercise below a plateau count of 3, while the adjustment rule
     fires at 1 — so the branch cuts sets and resets the plateau counter
     without changing a single exercise.

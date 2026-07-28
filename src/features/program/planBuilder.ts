@@ -279,19 +279,18 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // Both deep-clone (the pure builder never aliases existingState) and are
   // no-ops for healthy / full-gym users.
   //
-  // ORDER MATTERS, and it is the whole point of the fix: these two run AFTER
-  // the gate, so if they are not level-aware they get the last word on which
-  // exercise a beginner receives — which is exactly what was happening. The
-  // equipment filter now takes `experience`; the injury filter deliberately
-  // does not (see its docstring — safety outranks simplicity).
+  // These run AFTER the gate and are NOT level-aware, which is a measured
+  // decision — see `applyEquipmentFilterToWorkouts`. Gating them was tried and
+  // either made things worse (a beginner keeping equipment they don't own) or
+  // changed nothing (no simple alternative exists in the bank). What remains
+  // is bank coverage, recorded in the backlog, not a filter bug.
   const injurySafe = applyInjuryFiltersToWorkouts(levelled, input.injuries);
   return {
     splitType: base.splitType,
     workouts: applyEquipmentFilterToWorkouts(
       injurySafe,
       input.equipment,
-      input.injuries,
-      toExperience(input.experience)
+      input.injuries
     ),
   };
 }
