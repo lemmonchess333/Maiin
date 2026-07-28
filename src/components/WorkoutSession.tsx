@@ -47,6 +47,8 @@ import {
   suggestNextLoad,
   type ProgressionSuggestion,
 } from "@/lib/progressionSuggestion";
+import { effortCueFor, rpeReserveWords } from "@/features/program/effortCue";
+import Tooltip from "@/components/ui/Tooltip";
 import PlateCalculatorSheet from "@/components/workout/PlateCalculatorSheet";
 import { validateSet } from "@/lib/setValidation";
 import { getExerciseById } from "@/lib/exercises";
@@ -167,6 +169,9 @@ interface Props {
    *  today). Threaded into the completion write and acknowledged on
    *  the complete screen. */
   sessionVariant?: "express45" | "express30" | "easier_today";
+  /** Backlog #4: true during a step-back (deload) week — the effort cue
+   *  under the set counter switches to the step-back line. */
+  deloadWeek?: boolean;
   onLogExercise: (
     dayIndex: number,
     exIndex: number,
@@ -195,6 +200,7 @@ export default function WorkoutSession({
   draftScope,
   draftEpoch,
   sessionVariant,
+  deloadWeek = false,
   onLogExercise,
   onCompleteDay,
   onClose,
@@ -1342,6 +1348,33 @@ export default function WorkoutSession({
           Set {currentSetIndex + 1} of {currentSets.length} ·{" "}
           {completedSetsInExercise} done
         </p>
+        {/* Backlog #4 — effort cue as words (operator-approved copy set).
+            Reserve cue expands via Tooltip; push/deload cues are plain
+            lines. Guidance lives BEFORE the set, never as a verdict after
+            it (voice doc: never shame). */}
+        {(() => {
+          if (!currentExercise) return null;
+          const cue = effortCueFor(currentExercise, {
+            isLastSet: currentSetIndex >= currentSets.length - 1,
+            deloadWeek,
+          });
+          if (!cue) return null;
+          if (cue.tooltip) {
+            return (
+              <Tooltip content={<p>{cue.tooltip}</p>}>
+                <button
+                  type="button"
+                  className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                >
+                  {cue.text}
+                </button>
+              </Tooltip>
+            );
+          }
+          return (
+            <p className="mt-1 text-xs text-muted-foreground">{cue.text}</p>
+          );
+        })()}
       </div>
 
       {/* Main content area */}
@@ -1651,6 +1684,14 @@ export default function WorkoutSession({
                               {rpe}
                             </button>
                           ))}
+                          {typeof set.rpe === "number" && (
+                            <span className="w-full pl-1 pt-0.5 text-[11px] text-muted-foreground">
+                              <span className="font-mono tabular-nums">
+                                {set.rpe}
+                              </span>{" "}
+                              · {rpeReserveWords(set.rpe)}
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

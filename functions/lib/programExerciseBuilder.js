@@ -43,6 +43,22 @@ function buildProgramExercise(ex) {
     sets: ex.sets ?? 3,
     reps: ex.reps ?? 8,
     baseReps: ex.baseReps ?? ex.reps ?? 8,
+    // Optional fields must be carried explicitly, exactly as normalizeExercise
+    // does — both rebuild the object field-by-field, so anything omitted is
+    // silently stripped. These drifted in when P1 (repRangeMax / restSeconds /
+    // isAccessory) and #5 (baseSets / preDeloadWeight) landed client-side
+    // only; the cross-test matrix didn't vary them, so nothing caught it.
+    // Conditional spread keeps `undefined` out (Firestore rejects it).
+    ...(ex.repRangeMax !== undefined ? { repRangeMax: ex.repRangeMax } : {}),
+    ...(ex.baseSets !== undefined ? { baseSets: ex.baseSets } : {}),
+    ...(ex.preDeloadWeight !== undefined
+      ? { preDeloadWeight: ex.preDeloadWeight }
+      : {}),
+    ...(ex.preDeloadReps !== undefined
+      ? { preDeloadReps: ex.preDeloadReps }
+      : {}),
+    ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
+    ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,
     progressionType: ex.progressionType ?? "linear",
     lastSuccessfulWeight: ex.lastSuccessfulWeight ?? ex.weight ?? 0,

@@ -75,6 +75,15 @@ export type PrimaryGoal =
 export interface GoalProfile {
   mainReps: number;
   accessoryReps: number;
+  /**
+   * Top of the authored rep range for mains / accessories (training-book
+   * backlog #7, H3/N2). `mainReps`..`mainRepsMax` is what the double
+   * progression climbs before load moves. The procedural engine had no
+   * ranges at all before #7 — only template-derived programs did — so the
+   * range machinery shipped in P1 never reached generated programs.
+   */
+  mainRepsMax: number;
+  accessoryRepsMax: number;
   volumeMultiplier: number;
   mainProgression: ProgressionType;
 }
@@ -125,6 +134,32 @@ export interface ProgramExercise {
    * programSchemaVersion bump (see docs/proposals/schema-versioning.md).
    */
   repRangeMax?: number;
+  /**
+   * Steady-state set-count anchor (backlog #5, volume ramp). Stamped at
+   * generation (after volume balancing) and lazily on first advance for
+   * legacy docs. advanceWeek derives each week's sets FROM this anchor —
+   * which is also the fix for the compounding auto-deload decay (the
+   * sets−1 / ×0.85 cut was applied to live state and never restored, so
+   * every mesocycle permanently shrank the programme). Any future UI
+   * that edits an exercise's set count MUST update baseSets too, or the
+   * next weekly advance will revert the edit. Optional + defaulting
+   * readers → no schema bump.
+   */
+  baseSets?: number;
+  /**
+   * Load stored on entering an automatic deload week and restored
+   * (max(live, stored)) on meso exit, then removed. Absent outside a
+   * deload cycle.
+   */
+  preDeloadWeight?: number;
+  /**
+   * Rep target stored on entering an automatic deload week and restored
+   * (max(live, stored)) on meso exit, then removed. Only the post-novice
+   * deload recipe (backlog #8) cuts reps, but the stash is unconditional
+   * so the restore can't depend on which recipe ran — a user who changes
+   * their experience level mid-mesocycle must still get their reps back.
+   */
+  preDeloadReps?: number;
   /**
    * Per-exercise rest between sets in seconds, carried from
    * TemplateExercise.restSeconds. WorkoutSession prefers this over
@@ -619,6 +654,13 @@ export function normalizeExercise(
     // stripped on every load. Conditional spread keeps `undefined` out of
     // the object (Firestore rejects undefined values at the setDoc site).
     ...(ex.repRangeMax !== undefined ? { repRangeMax: ex.repRangeMax } : {}),
+    ...(ex.baseSets !== undefined ? { baseSets: ex.baseSets } : {}),
+    ...(ex.preDeloadWeight !== undefined
+      ? { preDeloadWeight: ex.preDeloadWeight }
+      : {}),
+    ...(ex.preDeloadReps !== undefined
+      ? { preDeloadReps: ex.preDeloadReps }
+      : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),
     weight: ex.weight ?? 0,

@@ -31,6 +31,29 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
     const repsSet = [undefined, 8, 10];
     const weightSet = [undefined, 0, 60];
     const notesSet = [undefined, "keep chest up"];
+    // The optional prescription fields, added client-side by P1 (repRangeMax /
+    // restSeconds / isAccessory) and #5 (baseSets / preDeloadWeight). Both
+    // copies rebuild the object field-by-field, so an un-mirrored carry is a
+    // SILENT strip — and this matrix not varying them is why the drift sat
+    // unpinned. Backlog #7 made it consequential: isAccessory now picks the
+    // load step, so dropping it re-prices every isolation as a compound.
+    const extrasSet: Array<Record<string, unknown>> = [
+      {},
+      { repRangeMax: 12 },
+      { baseSets: 4 },
+      { preDeloadWeight: 55 },
+      { preDeloadReps: 10 },
+      { restSeconds: 90 },
+      { isAccessory: true },
+      { isAccessory: false },
+      {
+        repRangeMax: 15,
+        baseSets: 3,
+        preDeloadWeight: 40,
+        restSeconds: 60,
+        isAccessory: true,
+      },
+    ];
 
     let compared = 0;
     for (const [name, exerciseId] of names) {
@@ -38,24 +61,27 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
         for (const reps of repsSet) {
           for (const weight of weightSet) {
             for (const notes of notesSet) {
-              const input: Record<string, unknown> = {
-                name,
-                exerciseId,
-                instanceId: "fixed-inst-1",
-              };
-              if (sets !== undefined) input.sets = sets;
-              if (reps !== undefined) input.reps = reps;
-              if (weight !== undefined) input.weight = weight;
-              if (notes !== undefined) input.notes = notes;
+              for (const extras of extrasSet) {
+                const input: Record<string, unknown> = {
+                  name,
+                  exerciseId,
+                  instanceId: "fixed-inst-1",
+                  ...extras,
+                };
+                if (sets !== undefined) input.sets = sets;
+                if (reps !== undefined) input.reps = reps;
+                if (weight !== undefined) input.weight = weight;
+                if (notes !== undefined) input.notes = notes;
 
-              const clientOut = normalizeExercise(
-                input as Parameters<typeof normalizeExercise>[0]
-              );
-              const cfOut = cf.buildProgramExercise({ ...input });
-              expect(cfOut, `mismatch for ${JSON.stringify(input)}`).toEqual(
-                clientOut as unknown as Record<string, unknown>
-              );
-              compared += 1;
+                const clientOut = normalizeExercise(
+                  input as Parameters<typeof normalizeExercise>[0]
+                );
+                const cfOut = cf.buildProgramExercise({ ...input });
+                expect(cfOut, `mismatch for ${JSON.stringify(input)}`).toEqual(
+                  clientOut as unknown as Record<string, unknown>
+                );
+                compared += 1;
+              }
             }
           }
         }

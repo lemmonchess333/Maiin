@@ -18,6 +18,13 @@ referenced throughout.
 Ordered by Helms's pyramid (section 6) — adherence beats programming, and
 ~80% of outcome lives in the bottom levels. Within a tier, by value-per-effort.
 
+**Shipped so far:** P1/#6 (rep ranges + template boundary), #1 (lighter-day
+swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp,
+plus the compounding auto-deload decay it surfaced), #7 (progression scheme per
+exercise type), #8 (deload by training age). Next unstarted: #9. Each shipped
+item's engine changes carry a `backlog #N` comment at the seam, so
+`git grep "backlog #"` in `src/features/program` finds them.
+
 **Tier 1 — Adherence (the layer the app owns)**
 
 1. **Flexible session selection as a first-class mechanism** (H1). Reframe
@@ -54,9 +61,60 @@ Ordered by Helms's pyramid (section 6) — adherence beats programming, and
    already exists — compounds get the 4-week wave (maps onto `week % 4`),
    isolations get double progression. Add time-based progression and
    assistance-reduction as axes (N2's gaps).
+
+   STATUS 2026-07-28 — shipped, partially. Landed: isolations moved to double
+   progression on BOTH paths (`makeAccessory`, `templateExToProgEx`); the
+   procedural engine now stamps rep ranges at all (P1's range machinery had
+   only ever reached template-derived programmes — `GoalProfile` gained
+   `mainRepsMax`/`accessoryRepsMax`, stamped in `generateProgram`'s final pass
+   so the ceiling tracks day-role-shifted reps and the range WIDTH stays
+   constant); and the load step became proportional (`ISOLATION_LOAD_STEP`
+   1.25 vs `COMPOUND_LOAD_STEP` 2.5, with the lean-bulk accelerator now
+   compound-only). Compound behaviour is byte-identical to pre-#7 —
+   `isAccessory` absent reads as compound, so legacy rows are untouched.
+   Two things fell out of it: flipping isolations off the linear path also
+   retired the `microloading` runaway (+1 kg per completed session with no
+   rep gate — ~12% on an 8 kg lateral raise), and the replace-exercise path
+   was dropping every optional prescription field on both client and server,
+   which #7 turned from cosmetic into a silent re-pricing of any swapped-in
+   isolation. Both fixed here; the server `buildProgramExercise` mirror had
+   drifted from `normalizeExercise` since P1/#5 and the cross-test matrix
+   didn't vary those fields, so nothing caught it — matrix widened, and the
+   pin verified by removing a carry and watching it fail.
+   NOT landed, still open: the 4-week compound WAVE (mains take the goal's
+   scheme as-is; #3's day roles already put rep variation in the week, and
+   stacking a weekly wave on daily undulation needs deciding, not assuming),
+   plus N2's two missing axes — time-based progression (blocked on duration
+   prescriptions being strings, see `parseTemplateReps`) and
+   assistance-reduction for band/machine-assisted bodyweight work.
+
 8. **Deload by training age** (H4 resolving M4): the current sets−1 ×0.85
    deload is the novice recipe applied to everyone; intermediates should get
    half volume at held load. Decide deliberately.
+
+   STATUS 2026-07-28 — shipped as decided above; H4 is the resolution the
+   entry already named, and `profile.experience` (captured at onboarding,
+   already read by `startingLoads` and `matchTemplate`) is the discriminator,
+   so no new capture was needed. `applyDeload(workouts, experience?)`:
+   beginner **or anything unknown/absent** keeps the pre-#8 recipe byte for
+   byte (sets−1 floor 2, load ×0.85 on the 2.5 grid, reps untouched);
+   intermediate/advanced get sets−1 **and** reps−2 (floor 3) at held load —
+   Helms's worked 3×10×200 → 2×8×200. Threaded through `advanceWeek` (both
+   `useProgram` call sites) and the server `applyDeloadWeek` reducer, which
+   already had `profile` in hand.
+   The rep cut needed a restore or it would decay the prescription every
+   mesocycle — the identical hazard #5 had just fixed for sets and load,
+   arriving through a third field. `prepareForDeload` now stashes
+   `preDeloadReps` and `applyWeeklyVolumeShape` restores it max()-wins,
+   unconditionally on both sides so switching experience level mid-meso
+   can't strand a cut.
+   `deloadWeight` in `easierToday` deliberately did NOT follow. It is the
+   weight half only, and it powers the bad-day "make this session lighter"
+   lever — a different concept from a mesocycle step-back — so the triple-
+   siting pin now reads: engine ↔ CF mirror agree for **every** experience
+   value, and `deloadWeight` is pinned against the beginner recipe. Both
+   new pins verified by mutation.
+
 9. **Joint plateau/recovery rule** (H5): connect `plateauCount` and
    `computeRecoveryScore` per Helms's flowchart — plateaued+recovered → add
    volume; plateaued+unrecovered → light week; recurring → reorganize.
@@ -110,7 +168,13 @@ visibility class, and the default is _invisible_:
   in the tank"), never a bare number scale, and the last-set-to-failure flag
   is expressed as copy ("push this one" / "keep some in reserve"), not a
   control. Experience level from onboarding gates when richer detail may
-  appear.
+  appear. _(Refined at build, 2026-07-27, operator-approved copy set: the
+  plain-language effort cues — "Finish with 2 reps to spare" / "Last set —
+  OK to go to your limit." / "Step-back week — keep everything comfortably
+  easy." — are visible to everyone, since they carry zero jargon; the
+  NUMERIC scale and its reserve-word captions remain behind `showRPE`.
+  "Leave 2 in the tank" itself was rejected at copy review: "in the tank"
+  fails voice-and-tone rule 5, no decode-metaphors.)_
 
 Standing rules: the jargon budget for a novice is **zero**; every
 explanation lives behind a tap (the existing Tooltip/Coachmark primitives —
