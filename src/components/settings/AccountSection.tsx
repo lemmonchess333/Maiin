@@ -127,6 +127,15 @@ export default function AccountSection({
          minutes). Sign out programmatically so client state
          immediately matches server state — user lands on login. */
       toast.success("Account deleted. Signing you out…", { duration: 4000 });
+      // Read-once flag for the Login screen's persistent confirmation —
+      // the toast alone dies in the sign-out transition (deletion QA
+      // 2026-07-27: user re-attempted login on the deleted account to
+      // verify, and got a red error as their only "confirmation").
+      try {
+        localStorage.setItem("tropos.account_deleted", "1");
+      } catch {
+        /* storage unavailable — toast remains the only confirmation */
+      }
       // The executor already removed the server claim + wrote the tombstone
       // (which rejects future callables). Skip the tombstone-rejected fallback
       // release; just drop the local token.
@@ -135,7 +144,7 @@ export default function AccountSection({
     } catch (err) {
       const fe = err as {
         code?: string;
-        details?: { reason?: string };
+        details?: { reason?: string; errorCode?: string };
       } | null;
       const msg =
         err instanceof Error ? err.message : "Failed to delete account";
@@ -148,7 +157,19 @@ export default function AccountSection({
           "Account deletion is temporarily paused. Please try again later."
         );
         closeAndReset();
-      } else if (msg.includes("requires-recent-login")) {
+      } else if (
+        // Server recent-auth gate (accountDeletionAuth.js): HttpsError
+        // details carry errorCode "requires-recent-auth" and the message
+        // reads "Recent reauthentication required: ...". The
+        // "requires-recent-login" token below is the Firebase CLIENT-SDK
+        // spelling from the pre-W1f client-side delete path — the server
+        // gate never sends it, so matching only that string dumped the
+        // raw server message in a toast and the reauth modal never
+        // opened (found live 2026-07-27, test account b6768357).
+        fe?.details?.errorCode === "requires-recent-auth" ||
+        msg.includes("Recent reauthentication required") ||
+        msg.includes("requires-recent-login")
+      ) {
         /* The reason Chunk 4 exists. If we got here on a retry
            (isRetry === true), the reauth succeeded but the
            recent-auth gate STILL rejected — that's the JWT-not-
@@ -185,6 +206,11 @@ export default function AccountSection({
         toast.success("Account already deleted. Signing you out…", {
           duration: 4000,
         });
+        try {
+          localStorage.setItem("tropos.account_deleted", "1");
+        } catch {
+          /* storage unavailable */
+        }
         await discardDeletedAccountPushState(user.uid);
         signOut();
       } else {

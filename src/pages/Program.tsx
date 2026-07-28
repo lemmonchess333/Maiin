@@ -471,12 +471,33 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
     // carry over as the user's customisation — the user can re-tune
     // them post-replacement if the new exercise needs different
     // prescription.
+    // The slot's prescription fields carry too (backlog #7). They're the
+    // slot's identity, not the old movement's: `isAccessory` now picks the
+    // progression scheme AND the load step, so dropping it re-prices a
+    // swapped-in isolation as a compound (2.5 kg on a curl); repRangeMax +
+    // baseReps are the range it climbs; baseSets is the volume-ramp anchor
+    // (without it, a week-3 swap re-anchors at base+1 permanently);
+    // restSeconds is the authored rest. `preDeloadWeight` deliberately does
+    // NOT carry — the replacement keeps its deloaded load rather than
+    // jumping back up to a weight it never lifted.
     const replacement = normalizeExercise({
       name: newEx.name,
       exerciseId: newEx.id,
       sets: old.sets,
       reps: old.reps,
       weight: old.weight,
+      baseReps: old.baseReps,
+      progressionType: old.progressionType,
+      ...(old.repRangeMax !== undefined
+        ? { repRangeMax: old.repRangeMax }
+        : {}),
+      ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
+      ...(old.restSeconds !== undefined
+        ? { restSeconds: old.restSeconds }
+        : {}),
+      ...(old.isAccessory !== undefined
+        ? { isAccessory: old.isAccessory }
+        : {}),
     });
     const updated = programState.workouts.map((d, i) =>
       i === dayIdx
@@ -1724,6 +1745,7 @@ function ProgramInner({ phaseLocked = false }: { phaseLocked?: boolean }) {
                 : buildExpressSession(storedDay, sessionVariant);
           return (
             <WorkoutSession
+              deloadWeek={programState.currentPhase === "deload"}
               day={
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
