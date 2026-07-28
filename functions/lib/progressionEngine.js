@@ -23,9 +23,18 @@ const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 
 const RPE_HOLD_THRESHOLD = 9.5;
 const MAX_BODYWEIGHT_REPS = 20;
-// Backlog #7 (H3) — mirror of the client constants; see programEngine.ts.
-const COMPOUND_LOAD_STEP = 2.5;
-const ISOLATION_LOAD_STEP = 1.25;
+// Backlog #7 (H3) — mirror of src/features/program/movementClass.ts. The
+// step keys on the MOVEMENT and its load, not on `isAccessory`; see that
+// module for why the flag (a volume role, filled from the non-primary pool
+// with RDLs and hack squats) can't answer the proportionality question.
+const MICROPLATE_STEP = 1.25;
+const PLATE_PAIR_STEP = 2.5;
+const HEAVY_LOAD_KG = 40;
+const SINGLE_JOINT_CATEGORIES = new Set(["arms_biceps", "arms_triceps"]);
+
+function usesMicroplateStep(category, weight) {
+  return SINGLE_JOINT_CATEGORIES.has(category) || weight < HEAVY_LOAD_KG;
+}
 
 function goalWeightBonus(goal) {
   return goal === "lean bulk" ? 1.25 : 0;
@@ -99,10 +108,13 @@ function applyProgression(
   const resetReps = exercise.baseReps ?? exercise.reps;
 
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
-  // Backlog #7 (H3) — proportional load step; compounds unchanged.
-  const isIsolation = exercise.isAccessory === true;
-  const loadStep = isIsolation ? ISOLATION_LOAD_STEP : COMPOUND_LOAD_STEP;
-  const loadBonus = isIsolation ? 0 : goalWeightBonus(goal);
+  // Backlog #7 (H3) — proportional load step, keyed on movement + load.
+  const microplate = usesMicroplateStep(
+    exercise.movementCategory,
+    exercise.weight
+  );
+  const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
+  const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   const bumpBodyweightReps = () => {
     if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
       updated.notes =

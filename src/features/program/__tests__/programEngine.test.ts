@@ -18,6 +18,7 @@ import { exerciseBank } from "../variationBank";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
+  Goal,
   ProgramExercise,
   ProgramState,
   WorkoutDay,
@@ -576,10 +577,12 @@ describe("applyProgression — baseReps anchor (M7)", () => {
       baseReps: 12,
       weight: 30,
     });
-    // Hit ceiling (14+2=16) → weight increase
+    // Hit ceiling (14+2=16) → weight increase. 30 kg is below the heavy
+    // threshold, so the step is a microplate (#7's corrected discriminator
+    // reaches mains too — 2.5 kg on a 30 kg lift is an 8% jump).
     const result = applyProgression(ex, 16, 30, "recomp", false);
-    expect(result.weight).toBe(32.5);
-    expect(result.reps).toBe(12); // baseReps anchor
+    expect(result.weight).toBe(31.25);
+    expect(result.reps).toBe(12); // baseReps anchor — the subject of this test
   });
 
   it("falls back to exercise.reps when baseReps is undefined (backward compat)", () => {
@@ -950,64 +953,87 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     expect(mains.every((e) => e.progressionType === "linear")).toBe(true);
   });
 
-  it("isolations take a microplate at the top of the range; compounds a full plate", () => {
-    // Helms H3: 2.5 kg is ~1.5% of a squat but ~10% of a curl.
-    const base = {
-      progressionType: "double" as const,
-      reps: 12,
-      baseReps: 12,
-      repRangeMax: 15,
-      weight: 10,
-      lastSuccessfulWeight: 10,
-    };
-    const iso = applyProgression(
-      makeTestExercise({ ...base, isAccessory: true }),
+  // The load step keys on the MOVEMENT and its load, not on `isAccessory`.
+  // That flag is a volume role, and `pickAccessory` fills those slots from
+  // the non-primary pool — which for the compound categories is Romanian
+  // Deadlift, Hack Squat, Leg Press. A real 4-day programme tagged a 50 kg
+  // hack squat as an accessory and handed it 1.25 kg steps.
+  const atRangeTop = (o: Partial<ProgramExercise>, goal: Goal = "recomp") => {
+    const w = o.weight ?? 100;
+    return applyProgression(
+      makeTestExercise({
+        progressionType: "double",
+        reps: 12,
+        baseReps: 12,
+        repRangeMax: 15,
+        lastSuccessfulWeight: w,
+        ...o,
+      }),
       15,
-      10,
-      "recomp",
+      w,
+      goal,
       false
     );
-    const compound = applyProgression(
-      makeTestExercise({ ...base, isAccessory: false }),
-      15,
-      10,
-      "recomp",
-      false
-    );
-    expect(iso.weight).toBe(11.25);
-    expect(compound.weight).toBe(12.5);
-    // both reset the target to the bottom of the range
-    expect(iso.reps).toBe(12);
-    expect(compound.reps).toBe(12);
+  };
+
+  it("single-joint work takes a microplate at ANY load", () => {
+    const curl = atRangeTop({
+      movementCategory: "arms_biceps",
+      weight: 100,
+    });
+    expect(curl.weight).toBe(101.25);
+    expect(curl.reps).toBe(12); // target resets to the bottom of the range
   });
 
-  it("does not hand isolations the lean-bulk load accelerator", () => {
-    // goalWeightBonus is a compound bias: a curl jumping 2.5 kg because the
-    // user is bulking is the same proportionality error, doubled.
-    const base = {
-      progressionType: "double" as const,
-      reps: 12,
-      baseReps: 12,
-      repRangeMax: 15,
-      weight: 10,
-      lastSuccessfulWeight: 10,
-    };
-    const iso = applyProgression(
-      makeTestExercise({ ...base, isAccessory: true }),
-      15,
-      10,
-      "lean bulk",
-      false
-    );
-    const compound = applyProgression(
-      makeTestExercise({ ...base, isAccessory: false }),
-      15,
-      10,
-      "lean bulk",
-      false
-    );
-    expect(iso.weight).toBe(11.25); // unchanged by the goal
-    expect(compound.weight).toBe(13.75); // 2.5 + 1.25 bonus
+  it("a heavy compound takes a full plate pair even when tagged an accessory", () => {
+    // The exact shipped defect: isAccessory said "isolation" for an RDL.
+    for (const isAccessory of [true, false]) {
+      const rdl = atRangeTop({
+        movementCategory: "hip_dominant",
+        weight: 100,
+        isAccessory,
+      });
+      expect(rdl.weight).toBe(102.5);
+    }
+  });
+
+  it("a LIGHT compound takes a microplate — 2.5 kg on 30 kg is an 8% jump", () => {
+    const lightBench = atRangeTop({
+      movementCategory: "horizontal_push",
+      weight: 30,
+    });
+    expect(lightBench.weight).toBe(31.25);
+  });
+
+  it("separates a lateral raise from an overhead press, which no category can", () => {
+    // Both are `vertical_push` in this taxonomy (see the keyword table in
+    // exerciseMovementCategory) — the load is the only thing that tells
+    // them apart, which is why the discriminator isn't category alone.
+    expect(
+      atRangeTop({ movementCategory: "vertical_push", weight: 8 }).weight
+    ).toBe(9.25);
+    expect(
+      atRangeTop({ movementCategory: "vertical_push", weight: 60 }).weight
+    ).toBe(62.5);
+  });
+
+  it("withholds the lean-bulk accelerator from anything on a microplate", () => {
+    // A lift too light for a full plate is too light for a bonus on top.
+    expect(
+      atRangeTop({ movementCategory: "arms_biceps", weight: 100 }, "lean bulk")
+        .weight
+    ).toBe(101.25);
+    expect(
+      atRangeTop(
+        { movementCategory: "horizontal_push", weight: 30 },
+        "lean bulk"
+      ).weight
+    ).toBe(31.25);
+    // heavy compound still gets it: 2.5 + 1.25
+    expect(
+      atRangeTop({ movementCategory: "hip_dominant", weight: 100 }, "lean bulk")
+        .weight
+    ).toBe(103.75);
   });
 
   it("leaves compounds byte-identical to pre-#7 behaviour", () => {
@@ -1316,5 +1342,102 @@ describe("adjustment rule application (backlog #9)", () => {
       const ids = d.exercises.map((e) => e.exerciseId);
       expect(new Set(ids).size).toBe(ids.length);
     }
+  });
+});
+
+// Backlog #15 — buildFullBody authored zero accessories, so 1- and 3-day
+// users sat outside every accessory-scoped mechanism the arc shipped.
+// `chooseSplit` routes 3 days to full body and `splitRationale` recommends
+// it to the user, so this was a courted segment, not an edge case.
+describe("full-body accessory slots (backlog #15)", () => {
+  const fullBody = (days: number) =>
+    generateProgram("recomp", days, undefined, "hypertrophy").workouts;
+
+  it("marks the supporting slots as accessories", () => {
+    const accs = fullBody(3)
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.isAccessory === true);
+    expect(accs.length).toBeGreaterThan(0);
+  });
+
+  it("keeps the two anchor lifts per day as mains", () => {
+    // The tier already existed in the prescription — slots at mainReps vs
+    // slots at accessoryReps. #15 only made it explicit; it did not add
+    // sets, change an exercise, or lengthen the session.
+    for (const day of fullBody(3)) {
+      const mains = day.exercises.filter((e) => e.isAccessory !== true);
+      expect(mains.length).toBeGreaterThanOrEqual(1);
+      // mains come first — the anchor lifts lead the session
+      const firstAccessory = day.exercises.findIndex(
+        (e) => e.isAccessory === true
+      );
+      day.exercises.slice(0, firstAccessory).forEach((e) => {
+        expect(e.isAccessory).toBe(false);
+      });
+    }
+  });
+
+  it("adds no sets and swaps no exercise — the flag is metadata", () => {
+    // Guards the thing that made makeAccessory the wrong tool here: it
+    // re-picks from the NON-primary pool. A 3-day user's squat must still
+    // be a squat.
+    const ids = fullBody(3).map((d) => d.exercises.map((e) => e.exerciseId));
+    expect(ids[0]).toContain("squat");
+    expect(ids[1]).toContain("deadlift");
+  });
+
+  it("carries logged history through a regenerate — no wipe", () => {
+    // The other reason makeAccessory was wrong: it takes no `existing`, so
+    // it would mint a new instanceId and reset weight/history every time
+    // the programme regenerated.
+    const first = fullBody(3);
+    const trained = first.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        weight: 77,
+        performanceHistory: [
+          { date: "2026-01-01", weight: 77, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })),
+    }));
+    const again = generateProgram("recomp", 3, trained, "hypertrophy").workouts;
+    again.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        const before = trained[di].exercises[ei];
+        expect(ex.instanceId).toBe(before.instanceId);
+        expect(ex.weight).toBe(77);
+        expect(ex.performanceHistory).toHaveLength(1);
+      })
+    );
+  });
+
+  it("unlocks the volume ramp for 3-day users (#5 reached nothing before)", () => {
+    const workouts = fullBody(3);
+    let st: ProgramState = {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+    const accSets = (s: ProgramState) =>
+      s.workouts.flatMap((d) =>
+        d.exercises.filter((e) => e.isAccessory === true).map((e) => e.sets)
+      );
+    st = advanceWeek(st); // week 2 — base
+    const w2 = accSets(st);
+    st = advanceWeek(st); // week 3 — base + 1
+    const w3 = accSets(st);
+    expect(w3.some((s, i) => s > w2[i])).toBe(true);
+  });
+
+  it("1-day full-body users get accessories too", () => {
+    const accs = fullBody(1)
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.isAccessory === true);
+    expect(accs.length).toBeGreaterThan(0);
   });
 });
