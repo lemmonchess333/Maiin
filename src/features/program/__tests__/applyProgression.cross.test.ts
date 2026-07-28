@@ -65,7 +65,9 @@ describe("applyProgression CF ↔ client parity", () => {
   it("produces identical output across the input matrix", () => {
     const ids = ["barbell-bench-press", "pull-ups"]; // weighted + bodyweight
     const progressionTypes = ["linear", "double"] as const;
-    const weights = [0, 100];
+    // Straddle HEAVY_LOAD_KG (40): 0 = uncalibrated/bodyweight, 30 = below
+    // the threshold (microplate), 100 = above it (full plate pair).
+    const weights = [0, 30, 100];
     const failures = [0, 2];
     const goals: Goal[] = ["lean bulk", "cut"];
     const actualRepsSet = [6, 8, 10, 12]; // 12 = range ceiling for the repRangeMax cases
@@ -75,11 +77,22 @@ describe("applyProgression CF ↔ client parity", () => {
     // P1 range-aware double progression: undefined = legacy behaviour,
     // 12 = authored range 8-12 (reps/baseReps are 8 in makeExercise).
     const repRangeMaxes: Array<number | undefined> = [undefined, 12];
-    // Backlog #7: the load step is now type-dependent (isolations take a
-    // microplate, compounds take a full plate + the lean-bulk bonus), so
-    // both sides must agree on the discriminator too. `undefined` covers
-    // legacy rows written before isAccessory existed.
+    // Backlog #7: the load step is type-dependent (light / single-joint
+    // lifts take a microplate, heavier compounds take a full plate + the
+    // lean-bulk bonus), so both sides must agree on the discriminator too.
+    // `undefined` covers legacy rows written before isAccessory existed —
+    // it no longer feeds the step, but the mirrors must still agree on
+    // carrying it.
     const accessoryFlags: Array<boolean | undefined> = [undefined, false, true];
+    // The discriminator itself: a provably single-joint category, an
+    // ambiguous one (vertical_push holds BOTH Overhead Press and Lateral
+    // Raise), and a heavy compound. Crossed with the weight axis below,
+    // which is what actually separates those last two.
+    const categories = [
+      "arms_biceps",
+      "vertical_push",
+      "hip_dominant",
+    ] as const;
 
     let compared = 0;
     for (const exerciseId of ids) {
@@ -93,53 +106,57 @@ describe("applyProgression CF ↔ client parity", () => {
                     for (const actualRpe of rpes) {
                       for (const repRangeMax of repRangeMaxes) {
                         for (const isAccessory of accessoryFlags) {
-                          const overrides = {
-                            exerciseId,
-                            progressionType,
-                            weight,
-                            consecutiveFailures,
-                            ...(repRangeMax !== undefined
-                              ? { repRangeMax }
-                              : {}),
-                            ...(isAccessory !== undefined
-                              ? { isAccessory }
-                              : {}),
-                          };
-                          const base = makeExercise(overrides);
-                          const clientOut = clientApplyProgression(
-                            makeExercise(overrides),
-                            actualReps,
-                            actualWeight,
-                            goal,
-                            microloading,
-                            actualRpe
-                          );
-                          const cfOut = cf.applyProgression(
-                            base,
-                            actualReps,
-                            actualWeight,
-                            goal,
-                            microloading,
-                            actualRpe,
-                            NOW
-                          );
-                          expect(
-                            strip(cfOut),
-                            `mismatch for ${JSON.stringify({
+                          for (const movementCategory of categories) {
+                            const overrides = {
                               exerciseId,
                               progressionType,
                               weight,
+                              movementCategory,
                               consecutiveFailures,
-                              goal,
+                              ...(repRangeMax !== undefined
+                                ? { repRangeMax }
+                                : {}),
+                              ...(isAccessory !== undefined
+                                ? { isAccessory }
+                                : {}),
+                            };
+                            const base = makeExercise(overrides);
+                            const clientOut = clientApplyProgression(
+                              makeExercise(overrides),
                               actualReps,
                               actualWeight,
+                              goal,
+                              microloading,
+                              actualRpe
+                            );
+                            const cfOut = cf.applyProgression(
+                              base,
+                              actualReps,
+                              actualWeight,
+                              goal,
                               microloading,
                               actualRpe,
-                              repRangeMax,
-                              isAccessory,
-                            })}`
-                          ).toEqual(strip(clientOut));
-                          compared += 1;
+                              NOW
+                            );
+                            expect(
+                              strip(cfOut),
+                              `mismatch for ${JSON.stringify({
+                                exerciseId,
+                                progressionType,
+                                weight,
+                                consecutiveFailures,
+                                goal,
+                                actualReps,
+                                actualWeight,
+                                microloading,
+                                actualRpe,
+                                repRangeMax,
+                                isAccessory,
+                                movementCategory,
+                              })}`
+                            ).toEqual(strip(clientOut));
+                            compared += 1;
+                          }
                         }
                       }
                     }
