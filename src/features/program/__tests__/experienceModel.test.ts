@@ -7,9 +7,11 @@ import {
   toExperience,
   usesUndulation,
 } from "../experienceModel";
-import { generateProgram } from "../programEngine";
+import { advanceWeek, generateProgram } from "../programEngine";
+import { buildPlan } from "../planBuilder";
 import { exerciseBank } from "../variationBank";
 import type { WorkoutDay } from "../programTypes";
+import type { Experience } from "../experienceModel";
 
 /**
  * Experience-level programming.
@@ -229,6 +231,204 @@ describe("experience in generateProgram", () => {
           )
         );
       expect(new Set([shape(), shape(), shape()]).size, level).toBe(1);
+    }
+  });
+});
+
+/**
+ * COMPOSITION — added 2026-07-28 after an adversarial sweep falsified the claim
+ * above that "a beginner never receives a movement above their level".
+ *
+ * It was true of `generateProgram` in isolation and false of the plan a user
+ * actually receives. The gate was a post-pass INSIDE `generateProgram`, and
+ * three things ran after it or around it:
+ *
+ *   1. `buildLiftProgram` applies the injury and equipment filters AFTER
+ *      `generateProgram`, and neither knew about experience — so the equipment
+ *      filter got the last word on a beginner's exercise and put technical
+ *      movements straight back in;
+ *   2. `buildLiftProgram`'s PRESERVE branch never calls `generateProgram` at
+ *      all, so a beginner seeded from a template — the only seed path at
+ *      onboarding — was never gated once;
+ *   3. `advanceWeek` re-picks untrained accessories at every mesocycle
+ *      boundary through an ungated `pickAccessory`, so a correctly-gated plan
+ *      drifted above the lifter's level four weeks in.
+ *
+ * The lesson is the same one the generator audit produced: a rule tested in
+ * isolation says nothing about the artefact the user opens. These test the
+ * artefact.
+ */
+
+function seedEx(
+  exerciseId: string,
+  name: string,
+  movementCategory: WorkoutDay["exercises"][number]["movementCategory"]
+): WorkoutDay["exercises"][number] {
+  return {
+    name,
+    exerciseId,
+    movementCategory,
+    sets: 3,
+    reps: 8,
+    weight: 40,
+    progressionType: "double",
+    lastSuccessfulWeight: 40,
+    lastAttemptedWeight: 40,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [],
+    lastPerformance: null,
+    isAccessory: true,
+  };
+}
+
+describe("the complexity gate survives composition", () => {
+  const overLevel = (w: WorkoutDay[], level: Experience) =>
+    w
+      .flatMap((d) => d.exercises)
+      .filter((ex) => {
+        const opt = (exerciseBank[ex.movementCategory] ?? []).find(
+          (o) => o.id === ex.exerciseId
+        );
+        if (!opt || opt.primary) return false;
+        return !allowsComplexity(level, opt.complexity);
+      });
+
+  const planInput = (over: Record<string, unknown> = {}) => ({
+    primaryGoal: "hypertrophy" as const,
+    nutritionPhase: "recomp" as const,
+    experience: "beginner" as const,
+    bodyweightKg: 80,
+    sex: "male",
+    liftDays: 4,
+    preferredSplit: "auto" as const,
+    runMode: "freeform" as const,
+    weeklyRunDays: 0,
+    injuries: [] as string[],
+    equipment: "full_gym" as const,
+    currentDate: "2026-07-28",
+    ...over,
+  });
+
+  it("holds through the equipment filter, on every equipment tier", () => {
+    // The filter runs AFTER generateProgram and re-picks from the whole bank.
+    // Measured before the fix: hundreds of over-level slots on home_gym and
+    // minimal, which are exactly the tiers a novice is most likely to pick.
+    for (const equipment of ["full_gym", "home_gym", "minimal"] as const) {
+      for (const liftDays of [2, 3, 4, 5, 6]) {
+        const plan = buildPlan(
+          planInput({ equipment, liftDays }) as Parameters<typeof buildPlan>[0]
+        );
+        expect(
+          overLevel(plan.programState.workouts, "beginner").map((e) => e.name),
+          `${equipment}/${liftDays}d`
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("holds on the PRESERVE branch — a template-seeded beginner is gated", () => {
+    // The onboarding path: an existing plan whose day count already matches,
+    // so buildLiftProgram short-circuits and never calls generateProgram.
+    // Before the fix the gate simply never ran for these users.
+    //
+    // The seed is hand-built rather than taken from generateProgram, and that
+    // matters: my first version of this test seeded from an "advanced"
+    // GENERATED plan and passed even with the fix reverted, because the
+    // generated advanced plan contains no technical movements to begin with.
+    // It proved nothing. A real template seeds exactly this kind of content —
+    // front squats, split squats, sumo pulls — which is why this path was
+    // worth gating at all.
+    const technicalSeed: WorkoutDay[] = [
+      {
+        dayName: "Upper A",
+        dayType: "upper",
+        completed: false,
+        exercises: [
+          seedEx("bench-press", "Bench Press", "horizontal_push"),
+          seedEx(
+            "chest-supported-db-row",
+            "Chest-Supported DB Row",
+            "horizontal_pull"
+          ),
+          seedEx("arnold-press", "Arnold Press", "vertical_push"),
+          seedEx(
+            "single-arm-lat-pulldown",
+            "Single-Arm Lat Pulldown",
+            "vertical_pull"
+          ),
+        ],
+      },
+      {
+        dayName: "Lower A",
+        dayType: "lower",
+        completed: false,
+        exercises: [
+          seedEx("squat", "Barbell Squat", "knee_dominant"),
+          seedEx("front-squat", "Front Squat", "knee_dominant"),
+          seedEx("sumo-deadlift", "Sumo Deadlift", "hip_dominant"),
+          seedEx("ab-wheel", "Ab Wheel Rollout", "core"),
+        ],
+      },
+      {
+        dayName: "Upper B",
+        dayType: "upper",
+        completed: false,
+        exercises: [
+          seedEx("overhead-press", "Overhead Press", "vertical_push"),
+          seedEx(
+            "close-grip-bench",
+            "Close Grip Bench Press",
+            "horizontal_push"
+          ),
+          seedEx("barbell-row", "Barbell Row", "horizontal_pull"),
+          seedEx("skull-crushers", "Skull Crushers", "arms_triceps"),
+        ],
+      },
+      {
+        dayName: "Lower B",
+        dayType: "lower",
+        completed: false,
+        exercises: [
+          seedEx("deadlift", "Deadlift", "hip_dominant"),
+          seedEx("bulgarian-split", "Bulgarian Split Squat", "knee_dominant"),
+          seedEx("romanian-deadlift", "Romanian Deadlift", "hip_dominant"),
+          seedEx("pallof-press", "Pallof Press", "core"),
+        ],
+      },
+    ];
+    // Sanity: the seed really does contain above-level content, or the test
+    // would be vacuous for the second time.
+    expect(overLevel(technicalSeed, "beginner").length).toBeGreaterThan(4);
+
+    const asBeginner = buildPlan(
+      planInput({
+        experience: "beginner",
+        existingState: {
+          splitType: "upper_lower",
+          workouts: technicalSeed,
+          weekNumber: 1,
+          goal: "recomp",
+        },
+      }) as Parameters<typeof buildPlan>[0]
+    );
+    expect(
+      overLevel(asBeginner.programState.workouts, "beginner").map((e) => e.name)
+    ).toEqual([]);
+  });
+
+  it("holds across a mesocycle boundary — week 5 rotation stays in level", () => {
+    // advanceWeek rotates UNTRAINED accessories at weeks 5, 9, … Before the
+    // fix it re-picked from the full bank, so a beginner's plan drifted above
+    // their level four weeks after it was built.
+    const plan = buildPlan(planInput() as Parameters<typeof buildPlan>[0]);
+    let state = { ...plan.programState, weekNumber: 4 };
+    for (let i = 0; i < 3; i += 1) {
+      state = advanceWeek(state, "beginner");
+      expect(
+        overLevel(state.workouts, "beginner").map((e) => e.name),
+        `after advancing to week ${state.weekNumber}`
+      ).toEqual([]);
     }
   });
 });

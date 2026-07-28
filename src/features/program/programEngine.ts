@@ -984,14 +984,25 @@ export function expectedDayCount(weeklyTarget: number): number {
  * reorderable list doesn't churn. Pure.
  */
 export function rotateUntrainedAccessories(
-  workouts: WorkoutDay[]
+  workouts: WorkoutDay[],
+  /**
+   * The lifter's level. Without it the mesocycle rotation was a second escape
+   * route around the complexity gate (2026-07-28 sweep): at weeks 5, 9, … a
+   * beginner's untrained accessories were re-picked from the FULL bank, so a
+   * plan that started correctly gated drifted above their level four weeks in.
+   */
+  experience?: Experience
 ): WorkoutDay[] {
   return workouts.map((day) => ({
     ...day,
     exercises: day.exercises.map((ex) => {
       if (!ex.isAccessory) return ex; // mains never rotate
       if ((ex.performanceHistory?.length ?? 0) > 0) return ex; // trained → keep
-      const next = pickAccessory(ex.movementCategory, ex.exerciseId);
+      const next = pickAccessory(
+        ex.movementCategory,
+        ex.exerciseId,
+        experience
+      );
       if (next.id === ex.exerciseId) return ex; // no alternative available
       return {
         ...ex,
@@ -1855,7 +1866,10 @@ const ACCESSORY_ANCHOR_FLOOR = 2;
  */
 function applyAdjustment(
   workouts: WorkoutDay[],
-  action: AdjustmentAction
+  action: AdjustmentAction,
+  /** Level gate — `reorganize` re-picks a variation, so it needs the same
+   *  constraint the generator applies (2026-07-28 sweep). */
+  experience?: Experience
 ): WorkoutDay[] {
   if (action === "hold") return workouts;
   return workouts.map((day) => ({
@@ -1878,7 +1892,8 @@ function applyAdjustment(
         const swap = pickExercise(
           ex.movementCategory,
           ex.plateauCount ?? 0,
-          ex.exerciseId
+          ex.exerciseId,
+          experience
         );
         out.exerciseId = swap.id;
         out.name = swap.name;
@@ -1937,7 +1952,7 @@ export function advanceWeek(
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
-    workouts = applyAdjustment(workouts, action);
+    workouts = applyAdjustment(workouts, action, experience);
   }
 
   // Reset the memory once the stall itself clears; otherwise carry it, and
@@ -1954,7 +1969,9 @@ export function advanceWeek(
   // mains are the progression anchor, and a lift the user actually trains is
   // theirs to keep. Re-deduped so a rotation can't collide within a day.
   if (nextWeek % 4 === 1) {
-    workouts = dedupeDayExercises(rotateUntrainedAccessories(workouts));
+    workouts = dedupeDayExercises(
+      rotateUntrainedAccessories(workouts, experience)
+    );
   } else if (action === "reorganize") {
     // Same hazard from #9's rotation: a swapped lift can collide with
     // another exercise already in that day.

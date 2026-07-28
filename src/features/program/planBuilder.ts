@@ -55,7 +55,8 @@ import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
-import { toExperience } from "./experienceModel";
+import { applyComplexityGate, toExperience } from "./experienceModel";
+import { exerciseBank } from "./variationBank";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -260,22 +261,37 @@ function buildLiftProgram(input: PlanBuilderInput): {
           toExperience(input.experience)
         );
 
+  // Experience gate (2026-07-28). `generateProgram` gates internally, but that
+  // is not enough and a sweep proved it: the PRESERVE branch above never calls
+  // `generateProgram` at all, so a beginner seeded from a template — the only
+  // seed path at onboarding — was never gated once. Running it here covers
+  // both branches, and it is idempotent, so the generated path pays nothing.
+  const levelled = applyComplexityGate(
+    base.workouts,
+    toExperience(input.experience),
+    exerciseBank
+  );
+
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
   // regeneration path (generateProgram ignores both; the preserve branch keeps
   // whatever was there). Injuries first (safety), then equipment — the
   // equipment picker is injury-aware, so a swap never reintroduces a risk.
   // Both deep-clone (the pure builder never aliases existingState) and are
   // no-ops for healthy / full-gym users.
-  const injurySafe = applyInjuryFiltersToWorkouts(
-    base.workouts,
-    input.injuries
-  );
+  //
+  // ORDER MATTERS, and it is the whole point of the fix: these two run AFTER
+  // the gate, so if they are not level-aware they get the last word on which
+  // exercise a beginner receives — which is exactly what was happening. The
+  // equipment filter now takes `experience`; the injury filter deliberately
+  // does not (see its docstring — safety outranks simplicity).
+  const injurySafe = applyInjuryFiltersToWorkouts(levelled, input.injuries);
   return {
     splitType: base.splitType,
     workouts: applyEquipmentFilterToWorkouts(
       injurySafe,
       input.equipment,
-      input.injuries
+      input.injuries,
+      toExperience(input.experience)
     ),
   };
 }

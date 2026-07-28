@@ -101,7 +101,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     {
       id: "barbell-floor-press",
       loadFactor: 0.85,
-      name: "Floor Press",
+      name: "Barbell Floor Press",
       primary: false,
       complexity: "advanced",
       role: "weak_point",

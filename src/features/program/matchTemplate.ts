@@ -4,6 +4,7 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
+import { allowsComplexity, type Experience } from "./experienceModel";
 import { exerciseBank } from "./variationBank";
 
 /**
@@ -307,6 +308,16 @@ export function applyInjuryFilters(
  * swapped exercise (no pre-swap id is stored) — safe + acceptable; un-swap is
  * a future enhancement.
  */
+/**
+ * NOT experience-gated, deliberately (2026-07-28). Its sibling
+ * `applyEquipmentFilterToWorkouts` IS, because an equipment swap has many
+ * candidates and no safety stake. An injury swap has neither property: the
+ * substitute is chosen from a curated safety map, and if the only movement
+ * that spares an injured knee happens to be a technical one, an injured
+ * novice still needs it. Safety outranks simplicity, so a beginner CAN
+ * receive an above-level movement by this route — the one documented
+ * exception to the complexity gate.
+ */
 export function applyInjuryFiltersToWorkouts(
   workouts: readonly WorkoutDay[],
   injuries: readonly string[]
@@ -393,7 +404,15 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 export function applyEquipmentFilterToWorkouts(
   workouts: readonly WorkoutDay[],
   equipment: string,
-  injuries: readonly string[] = []
+  injuries: readonly string[] = [],
+  /**
+   * The lifter's level. Without it this filter re-introduced movements the
+   * complexity gate had just removed — it runs AFTER `generateProgram`, so it
+   * was the last word on which exercise a beginner actually receives
+   * (2026-07-28 sweep). Absent → no complexity constraint, which is the
+   * behaviour every pre-existing caller had.
+   */
+  experience?: Experience
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -428,7 +447,8 @@ export function applyEquipmentFilterToWorkouts(
           o.id !== ex.exerciseId &&
           !usedIds.has(o.id) &&
           isAvailable(o.id) &&
-          !isInjuryContra(o.id)
+          !isInjuryContra(o.id) &&
+          allowsComplexity(experience, o.complexity)
       );
       if (pick) {
         usedIds.delete(ex.exerciseId);
