@@ -15,6 +15,7 @@ import {
   isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
+import { EXERCISES } from "@/lib/exercises";
 import { deloadWeight } from "../easierToday";
 import { PROGRAMME_PLATEAU_MIN } from "../adjustmentRule";
 import type {
@@ -1557,5 +1558,122 @@ describe("overlap caps in generateProgram (backlog #10)", () => {
       workouts = generateProgram("recomp", 3, workouts, "hypertrophy").workouts;
       expect(idsOf(workouts)).toEqual(first);
     }
+  });
+});
+
+// Backlog #17 — accessories used to be rebuilt from scratch on every
+// regenerate. makeAccessory takes no `existing` (unlike makeExercise), so it
+// re-rolled its Math.random pick and reset load/history. A regenerate is what
+// a settings change triggers, so changing goal / days / split silently wiped
+// every accessory a user had trained.
+describe("accessory identity across a regenerate (backlog #17)", () => {
+  const trainAll = (workouts: WorkoutDay[]) =>
+    workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        weight: 55,
+        lastSuccessfulWeight: 55,
+        performanceHistory: [
+          { date: "2026-01-01", weight: 55, repsCompleted: 8, repsTarget: 8 },
+        ],
+      })),
+    }));
+
+  it("keeps exercise, instance, load and history for every accessory", () => {
+    // 4 days → upper/lower, which is a split that uses makeAccessory. This
+    // exact fixture regressed on main: a 55 kg Bulgarian Split Squat with
+    // history became a 40 kg Hack Squat with none.
+    const first = generateProgram(
+      "recomp",
+      4,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    const trained = trainAll(first);
+    const again = generateProgram("recomp", 4, trained, "hypertrophy").workouts;
+
+    trained.forEach((d, di) =>
+      d.exercises.forEach((before, ei) => {
+        const after = again[di].exercises[ei];
+        expect(after.exerciseId, `d${di}/e${ei}`).toBe(before.exerciseId);
+        expect(after.instanceId, `d${di}/e${ei}`).toBe(before.instanceId);
+        expect(after.weight, `d${di}/e${ei}`).toBe(55);
+        expect(after.performanceHistory, `d${di}/e${ei}`).toHaveLength(1);
+      })
+    );
+  });
+
+  it("holds across repeated regenerates, not just the first", () => {
+    let workouts = trainAll(
+      generateProgram("recomp", 6, undefined, "hypertrophy").workouts
+    );
+    const ids = workouts.map((d) => d.exercises.map((e) => e.exerciseId));
+    for (let i = 0; i < 3; i += 1) {
+      workouts = generateProgram("recomp", 6, workouts, "hypertrophy").workouts;
+      expect(workouts.map((d) => d.exercises.map((e) => e.exerciseId))).toEqual(
+        ids
+      );
+    }
+  });
+
+  it("still lets the PRESCRIPTION change — only identity and log carry", () => {
+    // The carry must not freeze sets/reps, or a real goal change would be
+    // silently ignored.
+    const strength = trainAll(
+      generateProgram("recomp", 4, undefined, "strength").workouts
+    );
+    const swapped = generateProgram(
+      "recomp",
+      4,
+      strength,
+      "hypertrophy"
+    ).workouts;
+    const repsOf = (w: WorkoutDay[]) =>
+      w.flatMap((d) => d.exercises.map((e) => e.reps));
+    expect(repsOf(swapped)).not.toEqual(repsOf(strength));
+  });
+
+  it("does not carry across a slot that legitimately changed movement", () => {
+    // applyOverlapCaps re-points slots; the carry is category-guarded so it
+    // can't drag a deadlift's log onto the replacement.
+    const first = generateProgram(
+      "recomp",
+      3,
+      undefined,
+      "hypertrophy"
+    ).workouts;
+    first.forEach((d) =>
+      d.exercises.forEach((e) => expect(e.movementCategory).toBeDefined())
+    );
+    const again = generateProgram(
+      "recomp",
+      3,
+      trainAll(first),
+      "hypertrophy"
+    ).workouts;
+    again.forEach((d, di) =>
+      d.exercises.forEach((e, ei) =>
+        expect(e.movementCategory).toBe(
+          first[di].exercises[ei].movementCategory
+        )
+      )
+    );
+  });
+});
+
+// The variation bank's ids were never pinned against the exercise DB — the
+// integrity test covers templates and injury substitutions only. #11 added
+// roles to those entries, so pin the ids too before they drift.
+describe("variation bank id integrity", () => {
+  it("every bank exerciseId resolves to a real EXERCISES entry", () => {
+    const ids = new Set(EXERCISES.map((e) => e.id));
+    const bad: string[] = [];
+    for (const [category, options] of Object.entries(exerciseBank)) {
+      for (const o of options) {
+        if (!ids.has(o.id)) bad.push(`${category}/${o.id}`);
+      }
+    }
+    expect(bad).toEqual([]);
   });
 });

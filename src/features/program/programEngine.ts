@@ -1018,6 +1018,65 @@ function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
 }
 
 /**
+ * Carry a user's accessories through a regenerate (backlog #17).
+ *
+ * `makeAccessory` takes no `existing` — unlike `makeExercise` — so it re-rolls
+ * `pickAccessory` (which is `Math.random()`-backed) and rebuilds from the
+ * passed defaults on EVERY regenerate. Measured on main: regenerating a 4-day
+ * programme turned a 55 kg Bulgarian Split Squat with logged history into a
+ * 40 kg Hack Squat with none, and reset an Incline DB Press from 55 kg to 30.
+ * A regenerate is what a settings change triggers — goal, days per week,
+ * split — so changing any of those silently wiped every accessory's load and
+ * history and shuffled the exercises.
+ *
+ * Done as a post-pass rather than threading `existing` through fifteen
+ * `makeAccessory` call sites: one place to reason about, and it uses the same
+ * positional correspondence `findExisting` already relies on. Only IDENTITY
+ * and LOGGED state carry — sets and reps stay whatever the builders and the
+ * volume machinery just computed, so a genuine prescription change still
+ * lands. Guarded on category equality, so a slot that legitimately changed
+ * movement (see `applyOverlapCaps`) is left alone.
+ *
+ * This also puts Tropos properly on the side of N5's "stability within a
+ * block, novelty between blocks": `rotateUntrainedAccessories` still refreshes
+ * untrained accessories at each mesocycle boundary, which is the intended
+ * novelty — it just no longer happens by accident on every settings change.
+ */
+function carryExistingAccessories(
+  workouts: WorkoutDay[],
+  existing?: WorkoutDay[]
+): WorkoutDay[] {
+  if (!existing) return workouts;
+  return workouts.map((day, dayIndex) => ({
+    ...day,
+    exercises: day.exercises.map((ex, exIndex) => {
+      if (ex.isAccessory !== true) return ex; // makeExercise already carries
+      const prev = existing[dayIndex]?.exercises[exIndex];
+      if (
+        !prev ||
+        prev.isAccessory !== true ||
+        prev.movementCategory !== ex.movementCategory
+      ) {
+        return ex;
+      }
+      return {
+        ...ex,
+        exerciseId: prev.exerciseId,
+        name: prev.name,
+        instanceId: prev.instanceId,
+        weight: prev.weight,
+        lastSuccessfulWeight: prev.lastSuccessfulWeight,
+        lastAttemptedWeight: prev.lastAttemptedWeight,
+        consecutiveFailures: prev.consecutiveFailures,
+        plateauCount: prev.plateauCount,
+        performanceHistory: prev.performanceHistory,
+        lastPerformance: prev.lastPerformance,
+      };
+    }),
+  }));
+}
+
+/**
  * Backlog #10 (training-book backlog; D1 + M6 + H6): re-point the
  * expensive-pattern slots that exceed the overlap caps. The decision is pure
  * (overlapModel.ts); this only rebuilds the chosen slots, because the
@@ -1149,6 +1208,10 @@ export function generateProgram(
   // D-LIFT-12: ensure no day picks the same exercise twice (e.g. a main that
   // rotated to a variation an accessory then matched). Re-picks the duplicate
   // to another variation in the same movement category.
+  // Backlog #17: accessories keep their identity and logged state across a
+  // regenerate — makeAccessory rebuilds from defaults and re-rolls its
+  // random pick, so without this a settings change wipes them.
+  workouts = carryExistingAccessories(workouts, existingWorkouts);
   workouts = dedupeDayExercises(workouts);
   // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly

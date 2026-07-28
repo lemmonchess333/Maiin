@@ -16,25 +16,53 @@ interface ExerciseOption {
    * compound (the progression anchor) regardless.
    */
   lengthened?: boolean;
+  /**
+   * What job this variation does when it replaces the category's main
+   * (training-book backlog #11 — B6). Three sources categorise by ROLE
+   * rather than by muscle: Hayes splits "exercises that teach me how to
+   * lift" from brute-strength ones, Jenkins frames non-competition lifts as
+   * "tools in the arsenal", and Green assigns each bench variant an explicit
+   * job (paused = technique, wide-grip paused = bottom range, slingshot =
+   * lockout, incline/OHP = size and base).
+   *
+   *   technique  — reinforces position and control; improves the parent lift
+   *   weak_point — targets a sticking point (bottom range or lockout)
+   *   size       — hypertrophy and base building
+   *
+   * Absent on the category primary, which is the lift being substituted FOR.
+   */
+  role?: "technique" | "weak_point" | "size";
 }
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
   horizontal_push: [
     { id: "bench-press", name: "Bench Press", primary: true },
-    { id: "incline-bench", name: "Incline Bench Press", primary: false },
+    {
+      id: "incline-bench",
+      name: "Incline Bench Press",
+      primary: false,
+      role: "size",
+    },
     {
       id: "db-bench",
       name: "Dumbbell Bench Press",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "incline-db-press",
       name: "Incline Dumbbell Press",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "close-grip-bench", name: "Close Grip Bench Press", primary: false },
+    {
+      id: "close-grip-bench",
+      name: "Close Grip Bench Press",
+      primary: false,
+      role: "weak_point",
+    },
   ],
   vertical_push: [
     { id: "overhead-press", name: "Overhead Press", primary: true },
@@ -42,25 +70,33 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       id: "db-shoulder-press",
       name: "Dumbbell Shoulder Press",
       primary: false,
+      role: "size",
     },
-    { id: "arnold-press", name: "Arnold Press", primary: false },
-    { id: "landmine-press", name: "Landmine Press", primary: false },
+    { id: "arnold-press", name: "Arnold Press", primary: false, role: "size" },
+    {
+      id: "landmine-press",
+      name: "Landmine Press",
+      primary: false,
+      role: "technique",
+    },
   ],
   horizontal_pull: [
     { id: "barbell-row", name: "Barbell Row", primary: true },
-    { id: "db-row", name: "Dumbbell Row", primary: false },
-    { id: "t-bar-row", name: "T-Bar Row", primary: false },
+    { id: "db-row", name: "Dumbbell Row", primary: false, role: "size" },
+    { id: "t-bar-row", name: "T-Bar Row", primary: false, role: "size" },
     {
       id: "seated-row",
       name: "Seated Cable Row",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "chest-supported-db-row",
       name: "Chest-Supported DB Row",
       primary: false,
       lengthened: true,
+      role: "technique",
     },
   ],
   vertical_pull: [
@@ -70,25 +106,39 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       name: "Lat Pulldown",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "chin-ups", name: "Chin-Ups", primary: false },
+    { id: "chin-ups", name: "Chin-Ups", primary: false, role: "size" },
     {
       id: "single-arm-lat-pulldown",
       name: "Single-Arm Lat Pulldown",
       primary: false,
       lengthened: true,
+      role: "technique",
     },
   ],
   knee_dominant: [
     { id: "squat", name: "Barbell Squat", primary: true },
-    { id: "front-squat", name: "Front Squat", primary: false },
-    { id: "leg-press", name: "Leg Press", primary: false },
-    { id: "hack-squat", name: "Hack Squat", primary: false, lengthened: true },
+    {
+      id: "front-squat",
+      name: "Front Squat",
+      primary: false,
+      role: "technique",
+    },
+    { id: "leg-press", name: "Leg Press", primary: false, role: "size" },
+    {
+      id: "hack-squat",
+      name: "Hack Squat",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
     {
       id: "bulgarian-split",
       name: "Bulgarian Split Squat",
       primary: false,
       lengthened: true,
+      role: "technique",
     },
   ],
   hip_dominant: [
@@ -98,17 +148,39 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       name: "Romanian Deadlift",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "hip-thrust", name: "Hip Thrust", primary: false },
-    { id: "sumo-deadlift", name: "Sumo Deadlift", primary: false },
-    { id: "trap-bar-deadlift", name: "Trap Bar Deadlift", primary: false },
+    { id: "hip-thrust", name: "Hip Thrust", primary: false, role: "size" },
+    {
+      id: "sumo-deadlift",
+      name: "Sumo Deadlift",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "trap-bar-deadlift",
+      name: "Trap Bar Deadlift",
+      primary: false,
+      role: "technique",
+    },
   ],
   arms_biceps: [
     { id: "barbell-curl", name: "Barbell Curl", primary: true },
-    { id: "db-curl", name: "Dumbbell Curl", primary: false },
-    { id: "hammer-curl", name: "Hammer Curl", primary: false },
-    { id: "preacher-curl", name: "Preacher Curl", primary: false },
-    { id: "cable-curl", name: "Cable Curl", primary: false, lengthened: true },
+    { id: "db-curl", name: "Dumbbell Curl", primary: false, role: "size" },
+    { id: "hammer-curl", name: "Hammer Curl", primary: false, role: "size" },
+    {
+      id: "preacher-curl",
+      name: "Preacher Curl",
+      primary: false,
+      role: "size",
+    },
+    {
+      id: "cable-curl",
+      name: "Cable Curl",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
   ],
   arms_triceps: [
     { id: "rope-tricep-pushdown", name: "Rope Tricep Pushdown", primary: true },
@@ -117,21 +189,38 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       name: "Skull Crushers",
       primary: false,
       lengthened: true,
+      role: "size",
     },
     {
       id: "overhead-extension",
       name: "Overhead Tricep Extension",
       primary: false,
       lengthened: true,
+      role: "size",
     },
-    { id: "tricep-dips", name: "Tricep Dips", primary: false },
+    { id: "tricep-dips", name: "Tricep Dips", primary: false, role: "size" },
   ],
   core: [
     { id: "cable-crunch", name: "Cable Crunch", primary: true },
-    { id: "leg-raise", name: "Hanging Leg Raise", primary: false },
-    { id: "ab-wheel", name: "Ab Wheel Rollout", primary: false },
-    { id: "pallof-press", name: "Pallof Press", primary: false },
-    { id: "russian-twist", name: "Russian Twist", primary: false },
+    {
+      id: "leg-raise",
+      name: "Hanging Leg Raise",
+      primary: false,
+      role: "size",
+    },
+    { id: "ab-wheel", name: "Ab Wheel Rollout", primary: false, role: "size" },
+    {
+      id: "pallof-press",
+      name: "Pallof Press",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "russian-twist",
+      name: "Russian Twist",
+      primary: false,
+      role: "size",
+    },
   ],
 };
 
@@ -156,9 +245,29 @@ export function pickExercise(
     return { id: primary.id, name: primary.name };
   }
 
-  // Plateau >= 3 — rotate to a different variation
+  // Plateau >= 3 — rotate to a PURPOSEFUL variation (backlog #11 — P4/B6/N5).
+  //
+  // This was `others[Math.floor(Math.random() * others.length)]`, which had
+  // two problems. It picked an arbitrary sibling, when three sources say the
+  // substitute should have a job (B6); and being random, it re-rolled on
+  // every regenerate, so a plateaued main churned to a different exercise
+  // each time the user changed a setting. Nippard (N5) is the third argument:
+  // changing exercises flattens the progression curve, so when you DO change,
+  // change to something that improves the parent lift.
+  //
+  // Ranked, deterministic, tie-broken by bank order. Technique first —
+  // Hayes's "exercises that teach me how to lift", and a stall is more often
+  // a position problem than a missing sticking-point. `weak_point` moves
+  // ahead of it once the user can say WHERE the lift fails, which is the
+  // other half of P4 and needs a UI question this doesn't have yet.
   const others = options.filter((e) => e.id !== currentExerciseId);
-  const pick = others[Math.floor(Math.random() * others.length)] ?? options[0];
+  if (others.length === 0) return { id: options[0].id, name: options[0].name };
+  const rank = (o: ExerciseOption) =>
+    o.role === "technique" ? 0 : o.role === "weak_point" ? 1 : 2;
+  let pick = others[0];
+  for (const o of others.slice(1)) {
+    if (rank(o) < rank(pick)) pick = o;
+  }
   return { id: pick.id, name: pick.name };
 }
 

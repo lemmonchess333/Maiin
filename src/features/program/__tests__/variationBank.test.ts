@@ -92,6 +92,46 @@ describe("pickExercise — plateau rotation", () => {
     }
   });
 
+  // Backlog #11 (P4/B6/N5) — the rotation used to be
+  // `others[Math.floor(Math.random() * others.length)]`.
+  it("is DETERMINISTIC — a regenerate can't churn a plateaued main", () => {
+    /* The random pick re-rolled on every regenerate, so a stalled lift
+       changed exercise each time the user touched a setting. */
+    const picks = Array.from(
+      { length: 30 },
+      () => pickExercise("knee_dominant", 3, "squat").id
+    );
+    expect(new Set(picks).size).toBe(1);
+  });
+
+  it("prefers a TECHNIQUE variation over a size one", () => {
+    /* Three sources say the substitute should have a job, and Nippard
+       adds that changing exercises flattens progression — so when you do
+       change, change to something that improves the parent lift. */
+    const bank = exerciseBank.knee_dominant;
+    const picked = pickExercise("knee_dominant", 3, "squat").id;
+    expect(bank.find((o) => o.id === picked)?.role).toBe("technique");
+  });
+
+  it("falls back through the ranking when no technique option is left", () => {
+    /* Exclude the technique picks; the next-best role wins, still
+       deterministically. */
+    const bank = exerciseBank.horizontal_push; // no technique entries at all
+    const picked = pickExercise("horizontal_push", 3, "bench-press").id;
+    const role = bank.find((o) => o.id === picked)?.role;
+    expect(role).toBe("weak_point");
+  });
+
+  it("every non-primary option carries a role", () => {
+    /* Otherwise the ranking silently degrades to bank order for that
+       category — the arbitrary behaviour this replaced. */
+    for (const [category, options] of Object.entries(exerciseBank)) {
+      for (const o of options.filter((x) => !x.primary)) {
+        expect(o.role, `${category}/${o.id}`).toBeDefined();
+      }
+    }
+  });
+
   it("returns a valid exercise from the category", () => {
     /* The picked exercise must be one of the category's options. */
     const validIds = new Set(exerciseBank.knee_dominant.map((o) => o.id));
