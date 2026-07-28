@@ -56,6 +56,7 @@ import type {
 } from "./programTypes";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "./volumeModel";
 import { exerciseBank } from "./variationBank";
+import { allowsComplexity, type Experience } from "./experienceModel";
 
 /** Patterns whose systemic cost is capped independently of muscle volume. */
 export const EXPENSIVE_PATTERNS: ReadonlySet<MovementCategory> = new Set([
@@ -199,7 +200,10 @@ export const MAX_WEEKLY_LIFT_EXPOSURES = 2;
  * earliest day, then earliest slot. Fully deterministic — a regenerate must
  * not churn the programme (the lesson of #11 and #17).
  */
-export function capRepeatedLifts(workouts: WorkoutDay[]): WorkoutDay[] {
+export function capRepeatedLifts(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
   const slots: Array<{ d: number; e: number; ex: ProgramExercise }> = [];
   workouts.forEach((day, d) =>
     day.exercises.forEach((ex, e) => slots.push({ d, e, ex }))
@@ -240,7 +244,11 @@ export function capRepeatedLifts(workouts: WorkoutDay[]): WorkoutDay[] {
         (o) =>
           o.id !== id &&
           !inDay.has(o.id) &&
-          (usage.get(o.id) ?? 0) < MAX_WEEKLY_LIFT_EXPOSURES
+          (usage.get(o.id) ?? 0) < MAX_WEEKLY_LIFT_EXPOSURES &&
+          // Every identity-changing pass has to respect the level gate, not
+          // just the one that owns it — otherwise this pass quietly hands a
+          // beginner the Front Squat the gate just took away.
+          allowsComplexity(experience, o.complexity)
       );
       if (!pick) continue; // category exhausted — leave it rather than duplicate
       day.exercises[s.e] = { ...s.ex, exerciseId: pick.id, name: pick.name };
@@ -420,7 +428,8 @@ export function orderForAdjacency(
 export function lowCostAlternative(
   category: MovementCategory,
   idsInDay: ReadonlySet<string>,
-  isMain = false
+  isMain = false,
+  experience?: Experience
 ): { id: string; name: string } | null {
   if (!EXPENSIVE_PATTERNS.has(category)) return null;
   const ranked = isMain
@@ -430,7 +439,9 @@ export function lowCostAlternative(
   for (const id of ranked) {
     if (idsInDay.has(id)) continue;
     const opt = options.find((o) => o.id === id);
-    if (opt) return { id: opt.id, name: opt.name };
+    if (opt && allowsComplexity(experience, opt.complexity)) {
+      return { id: opt.id, name: opt.name };
+    }
   }
   return null;
 }

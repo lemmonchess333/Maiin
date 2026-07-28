@@ -7,6 +7,10 @@ import {
   lazy,
   Suspense,
 } from "react";
+import {
+  showsRpeByDefault,
+  toExperience,
+} from "@/features/program/experienceModel";
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
@@ -284,7 +288,14 @@ export default function WorkoutSession({
       })),
     ]);
   });
-  const [showRPE, setShowRPE] = useState(false);
+  // Earned complexity (experienceModel.ts): RPE is a genuinely useful tool
+  // for someone who can calibrate it and noise-plus-jargon for someone who
+  // cannot, so an advanced lifter opens the session with it on and everyone
+  // else opts in. This was `useState(false)` with no gate at all, against a
+  // presentation policy that lists RPE under "experience-gated".
+  const [showRPE, setShowRPE] = useState(() =>
+    showsRpeByDefault(toExperience(profile?.experience))
+  );
   // D-LIFT-14: form guide reachable mid-workout (no more exit → History → Form).
   const [showFormGuide, setShowFormGuide] = useState(false);
   const [exerciseNotes, setExerciseNotes] = useState<Record<number, string>>(

@@ -36,6 +36,7 @@ import {
   orderForAdjacency,
   surplusExposures,
 } from "./overlapModel";
+import { applyComplexityGate, usesUndulation } from "./experienceModel";
 import { isBodyweightExerciseId } from "@/lib/exercises";
 import { format } from "date-fns";
 
@@ -1056,7 +1057,16 @@ function assignDayRoles(count: number): DayRole[] {
  * stay role-consistent. Presentation policy: INVISIBLE — the
  * prescription simply differs; no labels, no new UI.
  */
-function applyDayRoles(workouts: WorkoutDay[]): WorkoutDay[] {
+function applyDayRoles(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
+  // Not for a novice (2026-07-28). Undulation exists because an intermediate
+  // can no longer add load every session, so the stimulus has to be varied
+  // instead; a novice CAN, and a heavy day plus a pump day muddies the one
+  // signal their programme runs on — did today beat last time? See
+  // `usesUndulation`.
+  if (!usesUndulation(experience)) return workouts;
   const roles = assignDayRoles(workouts.length);
   return workouts.map((day, i) => {
     const role = roles[i];
@@ -1152,7 +1162,10 @@ function carryExistingAccessories(
  * See `lowCostAlternative` for the three defects the previous cross-category
  * version shipped, all of them measured.
  */
-function applyOverlapCaps(workouts: WorkoutDay[]): WorkoutDay[] {
+function applyOverlapCaps(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
   const surplus = surplusExposures(workouts);
   if (surplus.length === 0) return workouts;
 
@@ -1163,7 +1176,8 @@ function applyOverlapCaps(workouts: WorkoutDay[]): WorkoutDay[] {
     const swap = lowCostAlternative(
       old.movementCategory,
       new Set(day.exercises.map((e) => e.exerciseId)),
-      old.isAccessory !== true
+      old.isAccessory !== true,
+      experience
     );
     // No back-sparing variation left in the category that isn't already in
     // the day. Leave the slot alone — the cap is a bias, not a guarantee, and
@@ -1193,7 +1207,18 @@ export function generateProgram(
    * Tuesday-instead-of-Monday session as "missed Monday" and drop its volume.
    * Absent → adjacency is simply not applied.
    */
-  weekSchedule?: ReadonlyArray<{ day: number; type: string }>
+  weekSchedule?: ReadonlyArray<{ day: number; type: string }>,
+  /**
+   * The lifter's level (`experienceModel.ts`). Gates movement COMPLEXITY and
+   * whether the week undulates — never volume.
+   *
+   * Deliberately its OWN parameter rather than read off `loadCtx.experience`,
+   * even though the context carries it: `loadCtx` is undefined whenever the
+   * bodyweight is unknown, so reading it there would silently hand a beginner
+   * the intermediate programme for an unrelated reason. Absent → intermediate,
+   * which is the behaviour every caller had before this existed.
+   */
+  experience?: Experience
 ): { splitType: SplitType; workouts: WorkoutDay[] } {
   // 0 lift days → run-only athlete, return empty workouts
   if (weeklyTarget <= 0) {
@@ -1398,13 +1423,17 @@ export function generateProgram(
   // Backlog #10: cap expensive-pattern overlap BEFORE day roles and the
   // volume balancers, so a re-pointed slot is shifted and budgeted exactly
   // like an originally-built one rather than escaping both.
-  workouts = applyOverlapCaps(workouts);
+  workouts = applyOverlapCaps(workouts, experience);
   // Backlog #3: day roles — see applyDayRoles above.
-  workouts = applyDayRoles(workouts);
+  workouts = applyDayRoles(workouts, experience);
+  // Experience gate: no movement above the lifter's level. Runs with the
+  // other identity-only post-passes, and BEFORE the repeat cap so the cap
+  // counts the exercises the user will actually receive.
+  workouts = applyComplexityGate(workouts, experience, exerciseBank);
   // Variety: no single lift more than twice a week. Must run BEFORE the
   // volume balancers so they budget against the shape the user actually
   // gets, and AFTER the overlap caps so a re-pointed slot is counted.
-  workouts = capRepeatedLifts(workouts);
+  workouts = capRepeatedLifts(workouts, experience);
   // D-LIFT-1 (active): nudge under-dosed muscles up toward the goal volume
   // landmark by growing their accessories (add-only, mains untouched).
   workouts = balanceWeeklyVolume(workouts, volumeLandmark(primaryGoal));

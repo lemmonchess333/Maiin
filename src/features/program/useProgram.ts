@@ -36,6 +36,7 @@ import {
   applyProgression,
 } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
+import { toExperience } from "./experienceModel";
 import { recoveryStateFrom } from "./adjustmentRule";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { logger } from "@/lib/logger";
@@ -490,7 +491,8 @@ export function useProgram() {
           // Backlog #10 (M6): the week's SHAPE, so back-to-back days aren't
           // the two that load the same lower back. Read-only — this does not
           // date-pin lifts (ADR-0002).
-          profile.weekSchedule
+          profile.weekSchedule,
+          toExperience(profile.experience)
         );
 
         // Generate run schedule only for an active race plan. PR-0b-ii: V2
@@ -1633,7 +1635,8 @@ export function useProgram() {
         programState?.workouts,
         primaryGoal,
         loadContextFrom(profile),
-        profile.weekSchedule
+        profile.weekSchedule,
+        toExperience(profile.experience)
       );
 
       // Regenerate run schedule. PR-0b-ii: V2 writers. Full regen

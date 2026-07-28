@@ -62,6 +62,7 @@ import {
   User,
   Heart,
   Ruler,
+  Award,
   Target,
   Calendar,
   Warehouse,
@@ -381,8 +382,19 @@ export default function Onboarding() {
     draft?.primaryGoal ?? "hypertrophy"
   );
 
-  // ── Experience (DEFERRED — no UI step; default kept at intermediate)
-  const experience: Experience = "intermediate";
+  // ── Experience
+  //
+  // Captured on the "About you" step rather than a step of its own — the
+  // fast-start flow deliberately went 13 → 8 steps, and this belongs with
+  // the other "who are you" questions. It was DEFERRED and hardcoded to
+  // "intermediate" for every user until 2026-07-28, which meant "beginner"
+  // was a value the app could store and never produce: `startingLoads`,
+  // `applyDeload`'s novice branch and `matchTemplate` all read it, and all
+  // three only ever saw the constant. It now drives movement complexity and
+  // whether the week undulates (`experienceModel.ts`).
+  const [experience, setExperience] = useState<Experience>(
+    draft?.experience ?? "intermediate"
+  );
 
   // ── Days per week
   const [daysPerWeek, setDaysPerWeek] = useState<DaysPerWeek>(
@@ -440,6 +452,7 @@ export default function Onboarding() {
       heightUnit,
       weightUnit,
       trainingWhy,
+      experience,
     });
   }, [
     user,
@@ -461,6 +474,7 @@ export default function Onboarding() {
     heightUnit,
     weightUnit,
     trainingWhy,
+    experience,
   ]);
 
   // ── Derived values
@@ -1466,6 +1480,42 @@ export default function Onboarding() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Training experience */}
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Training experience
+                </p>
+                {(
+                  [
+                    {
+                      id: "beginner" as Experience,
+                      label: "New to lifting",
+                      desc: "0 – 6 months. We'll keep it to the core lifts.",
+                    },
+                    {
+                      id: "intermediate" as Experience,
+                      label: "Some experience",
+                      desc: "6 months – 2 years of consistent training",
+                    },
+                    {
+                      id: "advanced" as Experience,
+                      label: "Experienced",
+                      desc: "2+ years. Unlocks the full exercise library.",
+                    },
+                  ] as const
+                ).map((opt, i) => (
+                  <OptionCard
+                    key={opt.id}
+                    selected={experience === opt.id}
+                    onSelect={() => setExperience(opt.id)}
+                    icon={<Award size={22} style={{ color: THEME.brand }} />}
+                    label={opt.label}
+                    desc={opt.desc}
+                    index={i}
+                  />
+                ))}
               </div>
 
               {/* Height */}

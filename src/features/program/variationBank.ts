@@ -1,4 +1,9 @@
 import type { MovementCategory } from "./programTypes";
+import {
+  allowsComplexity,
+  type Experience,
+  type MovementComplexity,
+} from "./experienceModel";
 
 /* ================================
    EXERCISE BANK BY MOVEMENT CATEGORY
@@ -50,6 +55,13 @@ interface ExerciseOption {
    * session or two whereas a heavy one costs a failed first workout.
    */
   loadFactor?: number;
+  /**
+   * How much technique the movement demands (`experienceModel.ts`). Absent =
+   * `simple`. Gates which VARIATIONS a lifter is offered — a category primary
+   * is always allowed regardless, because it is the lift the programme is
+   * built around and the one the form content covers most thoroughly.
+   */
+  complexity?: MovementComplexity;
 }
 
 export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
@@ -80,9 +92,18 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "close-grip-bench",
+      complexity: "technical",
       loadFactor: 0.8,
       name: "Close Grip Bench Press",
       primary: false,
+      role: "weak_point",
+    },
+    {
+      id: "barbell-floor-press",
+      loadFactor: 0.85,
+      name: "Floor Press",
+      primary: false,
+      complexity: "advanced",
       role: "weak_point",
     },
   ],
@@ -97,6 +118,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "arnold-press",
+      complexity: "technical",
       loadFactor: 0.3,
       name: "Arnold Press",
       primary: false,
@@ -104,6 +126,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "landmine-press",
+      complexity: "technical",
       loadFactor: 0.5,
       name: "Landmine Press",
       primary: false,
@@ -136,10 +159,24 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "chest-supported-db-row",
+      complexity: "technical",
       loadFactor: 0.35,
       name: "Chest-Supported DB Row",
       primary: false,
       lengthened: true,
+      role: "technique",
+    },
+    // ADVANCED (2026-07-28). Already in the catalog, never reachable from the
+    // bank — the PR that added exercise ROLES noted these were "the natural
+    // weak_point entries later". Later is now: they are what "experienced
+    // lifters get access to all this other stuff" means concretely, and they
+    // are gated so a novice never meets them.
+    {
+      id: "pendlay-row",
+      loadFactor: 0.85,
+      name: "Pendlay Row",
+      primary: false,
+      complexity: "advanced",
       role: "technique",
     },
   ],
@@ -162,6 +199,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "single-arm-lat-pulldown",
+      complexity: "technical",
       loadFactor: 0.25,
       name: "Single-Arm Lat Pulldown",
       primary: false,
@@ -173,6 +211,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "squat", name: "Barbell Squat", primary: true },
     {
       id: "front-squat",
+      complexity: "technical",
       loadFactor: 0.75,
       name: "Front Squat",
       primary: false,
@@ -195,6 +234,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "bulgarian-split",
+      complexity: "technical",
       loadFactor: 0.25,
       name: "Bulgarian Split Squat",
       primary: false,
@@ -206,6 +246,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "deadlift", name: "Deadlift", primary: true },
     {
       id: "romanian-deadlift",
+      complexity: "technical",
       loadFactor: 0.65,
       name: "Romanian Deadlift",
       primary: false,
@@ -221,6 +262,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "sumo-deadlift",
+      complexity: "technical",
       loadFactor: 0.95,
       name: "Sumo Deadlift",
       primary: false,
@@ -228,6 +270,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "trap-bar-deadlift",
+      complexity: "technical",
       loadFactor: 1.0,
       name: "Trap Bar Deadlift",
       primary: false,
@@ -247,6 +290,14 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       primary: false,
       lengthened: true,
       role: "size",
+    },
+    {
+      id: "rack-pull",
+      loadFactor: 1.15,
+      name: "Rack Pull",
+      primary: false,
+      complexity: "advanced",
+      role: "weak_point",
     },
   ],
   arms_biceps: [
@@ -285,6 +336,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     { id: "rope-tricep-pushdown", name: "Rope Tricep Pushdown", primary: true },
     {
       id: "skull-crushers",
+      complexity: "technical",
       loadFactor: 0.6,
       name: "Skull Crushers",
       primary: false,
@@ -301,6 +353,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "tricep-dips",
+      complexity: "technical",
       loadFactor: 0,
       name: "Tricep Dips",
       primary: false,
@@ -318,6 +371,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "ab-wheel",
+      complexity: "technical",
       loadFactor: 0,
       name: "Ab Wheel Rollout",
       primary: false,
@@ -325,6 +379,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "pallof-press",
+      complexity: "technical",
       loadFactor: 0.5,
       name: "Pallof Press",
       primary: false,
@@ -332,6 +387,7 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
     },
     {
       id: "russian-twist",
+      complexity: "technical",
       loadFactor: 0.3,
       name: "Russian Twist",
       primary: false,
@@ -363,9 +419,15 @@ export function loadFactorFor(
 export function pickExercise(
   category: MovementCategory,
   plateauCount: number,
-  currentExerciseId?: string
+  currentExerciseId?: string,
+  experience?: Experience
 ): { id: string; name: string } {
-  const options = exerciseBank[category];
+  // The category PRIMARY is always allowed — it is the lift the programme is
+  // built around and the one the form content covers most thoroughly. What
+  // experience gates is which VARIATIONS a lifter is offered instead of it.
+  const options = exerciseBank[category].filter(
+    (e) => e.primary || allowsComplexity(experience, e.complexity)
+  );
 
   // No plateau — return primary or current
   if (plateauCount < 3) {
@@ -429,14 +491,25 @@ export function pickExercise(
  * Variety across the week is not lost: `dedupeDayExercises` removes in-day
  * duplicates, `capRepeatedLifts` re-points anything appearing more than twice,
  * and `excludeId` keeps an accessory off its own category primary.
+ *
+ * `experience` gates the pool by movement COMPLEXITY (`experienceModel.ts`) —
+ * a novice is not handed a Bulgarian split squat as their leg accessory.
  */
 export function pickAccessory(
   category: MovementCategory,
-  excludeId?: string
+  excludeId?: string,
+  experience?: Experience
 ): { id: string; name: string } {
-  const options = exerciseBank[category].filter(
+  const eligible = exerciseBank[category].filter(
     (e) => !e.primary && e.id !== excludeId
   );
+  // Experience gates the pool, but never empties it: a level with nothing
+  // left falls back to the full non-primary list rather than returning the
+  // category primary, which would duplicate the day's main lift.
+  const allowed = eligible.filter((e) =>
+    allowsComplexity(experience, e.complexity)
+  );
+  const options = allowed.length > 0 ? allowed : eligible;
   const lengthened = options.filter((e) => e.lengthened);
   const pool = lengthened.length > 0 ? lengthened : options;
   const pick = pool[0] ?? exerciseBank[category][0];

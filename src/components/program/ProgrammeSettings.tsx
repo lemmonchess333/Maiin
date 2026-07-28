@@ -539,6 +539,11 @@ export default function ProgrammeSettings({
         primaryGoal,
         nutritionPhase,
         experience,
+        // Without this a level change is invisible to the builder — it
+        // preserves the saved week whenever the day count is unchanged, so
+        // Beginner ↔ Advanced produced byte-identical workouts behind this
+        // flow's own "Plan updated" toast.
+        previousExperience: saved.experience,
         // D-LIFT-5: seed bodyweight-relative cold-start loads on regen.
         bodyweightKg: profile.weightKg,
         sex: profile.sex,

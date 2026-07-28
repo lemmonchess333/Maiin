@@ -55,6 +55,7 @@ import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
+import { toExperience } from "./experienceModel";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -80,6 +81,23 @@ export interface PlanBuilderInput {
   nutritionPhase: Goal;
 
   experience: "beginner" | "intermediate" | "advanced";
+
+  /**
+   * The experience level the EXISTING plan was built at, when there is one.
+   *
+   * Without it a level change is invisible to the builder: `buildLiftProgram`
+   * preserves the saved week whenever the lift-day count is unchanged, so
+   * switching Beginner ↔ Advanced in Settings produced byte-identical
+   * workouts — while the confirm modal listed "Experience: intermediate →
+   * beginner" as a change and the flow ended on a "Plan updated" toast.
+   * Measured 2026-07-28; the plan the user was told they had updated was the
+   * plan they already had.
+   *
+   * Not persisted on ProgramState: the caller edits a profile and therefore
+   * already knows the value it is replacing, and a stored copy would be a
+   * second source of truth for something the profile already owns.
+   */
+  previousExperience?: string;
 
   /** Bodyweight (kg) + sex — seed bodyweight-relative cold-start starting loads
    *  (D-LIFT-5). Optional: when absent the engine keeps its hardcoded defaults. */
@@ -212,9 +230,15 @@ function buildLiftProgram(input: PlanBuilderInput): {
     !!existing &&
     existing.length > 0 &&
     existing.length === expectedDayCount(input.liftDays);
+  // A level change restructures the programme — which movements are chosen
+  // and whether the week undulates — so it has to rebuild even though the
+  // skeleton is the same shape.
+  const levelChanged =
+    input.previousExperience !== undefined &&
+    toExperience(input.previousExperience) !== toExperience(input.experience);
 
   const base =
-    sameDayCount && input.existingState
+    sameDayCount && !levelChanged && input.existingState
       ? // Content edit → preserve the user's structure + customizations.
         { splitType: input.existingState.splitType, workouts: existing }
       : // No existing plan, or lift-days changed → rebuild from template.
@@ -232,7 +256,8 @@ function buildLiftProgram(input: PlanBuilderInput): {
           // this builder uses for the schedule it is about to write, so the
           // programme is ordered against the week the user will actually get.
           // Read-only — lifts stay split-ordered (ADR-0002).
-          buildWeekSchedule(input)
+          buildWeekSchedule(input),
+          toExperience(input.experience)
         );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the
