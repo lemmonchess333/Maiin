@@ -89,6 +89,22 @@ describe("usesUndulation / showsRpeByDefault / toExperience", () => {
     expect(toExperience("novice")).toBe("intermediate");
     expect(toExperience(undefined)).toBe("intermediate");
   });
+
+  it("never throws on an out-of-vocabulary value", () => {
+    // `allowsComplexity` indexed its lookup table directly, so ANY string
+    // outside the three levels threw a TypeError and took programme
+    // generation down with it. That was reachable: the server sanitizer
+    // stored this field with `cleanString(v, 30)`, i.e. any string at all —
+    // so a casing slip ("Beginner") or a legacy value was a hard crash.
+    // Both ends are fixed; this pins the read side.
+    for (const bad of ["novice", "Beginner", "", "ADVANCED", "  "]) {
+      expect(() =>
+        allowsComplexity(bad as Experience, "technical")
+      ).not.toThrow();
+      // …and falls back to the intermediate tier, not to "allow everything".
+      expect(allowsComplexity(bad as Experience, "advanced")).toBe(false);
+    }
+  });
 });
 
 describe("applyComplexityGate", () => {

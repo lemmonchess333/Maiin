@@ -73,12 +73,22 @@ const ALLOWED: Record<Experience, ReadonlySet<MovementComplexity>> = {
   advanced: new Set<MovementComplexity>(["simple", "technical", "advanced"]),
 };
 
-/** May this lifter be offered a movement of this complexity? */
+/**
+ * May this lifter be offered a movement of this complexity?
+ *
+ * Coerces through `toExperience` rather than indexing `ALLOWED` directly. The
+ * direct index threw a TypeError on ANY out-of-vocabulary string — `"novice"`,
+ * `"Beginner"`, `""` — and the value reaching here is not guaranteed to be in
+ * the vocabulary: the server sanitizer stored `experience` with
+ * `cleanString(v, 30)`, i.e. any string at all. That made a casing slip or a
+ * legacy value a hard crash of programme generation rather than a silent
+ * fallback. The sanitizer is fixed too; this is the defence at the read site.
+ */
 export function allowsComplexity(
   experience: Experience | undefined,
   complexity: MovementComplexity | undefined
 ): boolean {
-  return ALLOWED[experience ?? "intermediate"].has(complexity ?? "simple");
+  return ALLOWED[toExperience(experience)].has(complexity ?? "simple");
 }
 
 /**
@@ -127,10 +137,26 @@ export function toExperience(value: string | undefined): Experience {
  *
  * A post-pass rather than a parameter threaded through five builders and
  * forty `makeExercise` calls — the same shape as the overlap caps and the
- * repeat cap, for the same reasons. It composes with them (each pass changes
- * only `exerciseId`/`name`, never a slot's category, position, sets or load),
- * and it catches slots the builders did not author: an injury swap, an
- * equipment swap, or a plan that arrived from a template.
+ * repeat cap, for the same reasons. It composes with them: each pass changes
+ * only `exerciseId`/`name`, never a slot's category, position, sets or load.
+ *
+ * WHAT IT DOES NOT COVER, stated plainly because an earlier version of this
+ * comment claimed the opposite and a sweep measured it false:
+ *
+ *   - INJURY substitutions. `applyInjuryFiltersToWorkouts` runs after this and
+ *     is deliberately ungated — safety outranks simplicity, so an injured
+ *     novice can receive a technical movement if that is the safe one.
+ *   - EQUIPMENT substitutions. `applyEquipmentFilterToWorkouts` also runs
+ *     after this and is deliberately ungated, because gating it was measured
+ *     to leave users holding equipment they do not own (see that function).
+ *   - Anything the exercise BANK cannot supply. When a category has no
+ *     level-appropriate option that isn't already in the day, this keeps what
+ *     is there. On `home_gym`/`minimal` that is the common case, not the edge
+ *     case, and it is a bank-coverage problem rather than a gate bug.
+ *
+ * So the honest guarantee is narrow: on the paths this runs on, and where the
+ * bank has an alternative, no slot is above the lifter's level. It is a bias,
+ * not an invariant.
  *
  * The category PRIMARY is never re-pointed. It is the lift the programme is
  * built around, the progression anchor, and the one the form content covers
