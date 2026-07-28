@@ -11,7 +11,12 @@ import type {
   WeeklyPrescription,
 } from "./programTypes";
 import { generateInstanceId } from "./programTypes";
-import { pickExercise, pickAccessory, exerciseBank } from "./variationBank";
+import {
+  pickExercise,
+  pickAccessory,
+  exerciseBank,
+  rescaleForSwap,
+} from "./variationBank";
 import {
   balanceWeeklyVolume,
   balancePushPull,
@@ -1008,6 +1013,30 @@ export function rotateUntrainedAccessories(
         ...ex,
         exerciseId: next.id,
         name: next.name,
+        // NOT rescaled, deliberately — and this is the one swap site where
+        // that is the right call.
+        //
+        // Rescaling by the load-factor ratio is correct for a ONE-SHOT swap
+        // (equipment, injury, the complexity gate), which is why those three
+        // do it. This path is different: it re-fires at EVERY mesocycle
+        // boundary, so the scale compounds against a weight that is itself
+        // already scaled, and it does not round-trip with the deload
+        // store/restore. Measured over two mesocycles: 50 kg -> 30 -> 12.5.
+        // A silently shrinking load is worse than a mis-scaled one.
+        //
+        // Fixing it properly needs an anchor the slot does not currently
+        // carry (its ORIGINAL seed, so each rotation scales from that rather
+        // than from the last rotation's output). Recorded as open rather than
+        // bodged — see the backlog. The blast radius is bounded: rotation
+        // only touches UNTRAINED accessories, so no logged progress is at
+        // stake, and the next `seedStartingLoads` on a regenerate re-derives
+        // the number anyway.
+        //
+        // Guarded by "never compounds across mesocycles" and "ramps
+        // accessories …" in programEngine.test.ts — both fail if a rescale is
+        // re-added here. (A purpose-written test was tried and deleted: it
+        // passed with the rescale restored, i.e. it proved nothing. The
+        // existing pair already does the job.)
         lastPerformance: null,
         consecutiveFailures: 0,
         plateauCount: 0,
@@ -1440,7 +1469,18 @@ export function generateProgram(
   // Experience gate: no movement above the lifter's level. Runs with the
   // other identity-only post-passes, and BEFORE the repeat cap so the cap
   // counts the exercises the user will actually receive.
-  workouts = applyComplexityGate(workouts, experience, exerciseBank);
+  workouts = applyComplexityGate(
+    workouts,
+    experience,
+    exerciseBank,
+    (ex, toId) =>
+      rescaleForSwap(
+        ex.weight ?? 0,
+        ex.exerciseId,
+        toId,
+        ex.movementCategory as MovementCategory
+      )
+  );
   // Variety: no single lift more than twice a week. Must run BEFORE the
   // volume balancers so they budget against the shape the user actually
   // gets, and AFTER the overlap caps so a re-pointed slot is counted.
@@ -1894,6 +1934,12 @@ function applyAdjustment(
           ex.plateauCount ?? 0,
           ex.exerciseId,
           experience
+        );
+        out.weight = rescaleForSwap(
+          ex.weight,
+          ex.exerciseId,
+          swap.id,
+          ex.movementCategory
         );
         out.exerciseId = swap.id;
         out.name = swap.name;

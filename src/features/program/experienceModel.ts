@@ -167,6 +167,7 @@ export function applyComplexityGate<
     exerciseId: string;
     name: string;
     movementCategory: string;
+    weight?: number;
   },
   D extends { exercises: E[] },
 >(
@@ -180,7 +181,9 @@ export function applyComplexityGate<
       primary: boolean;
       complexity?: MovementComplexity;
     }>
-  >
+  >,
+  /** Optional load rescaler for a swapped slot — see the call in the body. */
+  rescale?: (ex: E, toExerciseId: string) => number | undefined
 ): D[] {
   if (allowsComplexity(experience, "advanced")) return workouts; // nothing gated
   let changed = false;
@@ -205,7 +208,16 @@ export function applyComplexityGate<
       changed = true;
       idsInDay.delete(ex.exerciseId);
       idsInDay.add(swap.id);
-      return { ...ex, exerciseId: swap.id, name: swap.name };
+      // The load belongs to the movement, not the slot — a Bulgarian split
+      // squat does not inherit a barbell squat's working weight. `rescale`
+      // is injected rather than imported so this module stays free of the
+      // bank (it already takes the bank as an argument for the same reason).
+      const weight = rescale
+        ? rescale(ex, swap.id)
+        : (ex as { weight?: number }).weight;
+      return weight === undefined
+        ? { ...ex, exerciseId: swap.id, name: swap.name }
+        : { ...ex, exerciseId: swap.id, name: swap.name, weight };
     });
     return { ...day, exercises };
   });

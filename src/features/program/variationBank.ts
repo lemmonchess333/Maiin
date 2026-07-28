@@ -403,6 +403,45 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
  * per-category), so an exercise arriving from outside the bank (an injury or
  * equipment substitution) is no worse off than before.
  */
+/**
+ * Rescale a carried working weight when a slot's EXERCISE changes but its
+ * movement category does not.
+ *
+ * Every in-place swap in the codebase is `{...ex, exerciseId, name}` — it
+ * carries the previous movement's load onto a different one. Measured on an
+ * 80 kg beginner, that produced loads wrong in both directions:
+ *
+ *   Bench Press 35 kg  -> Dumbbell Bench Press @35 kg   (per hand; want 12.5)
+ *   Barbell Squat      -> Bulgarian Split Squat @55 kg  (want 15)
+ *   Hack Squat 50 kg   -> Leg Press @50 kg              (want 87.5)
+ *   Seated Leg Curl 17.5 -> Hip Thrust @17.5            (want 60)
+ *
+ * Too heavy is a failed set or an injury; too light is a wasted session.
+ *
+ * The ratio of the two variations' `loadFactor` is the whole answer, and it
+ * needs no bodyweight, no profile and no context — which matters, because the
+ * swap sites include `advanceWeek`, which has none of those. It also beats
+ * re-seeding from scratch: a lifter who has already worked a lift up keeps
+ * that earned level, scaled to the new movement, instead of being reset to a
+ * novice's starting number.
+ *
+ * Returns the input unchanged for a bodyweight slot (0), an unknown id, or a
+ * factor of 0 — in each case there is nothing meaningful to scale.
+ */
+export function rescaleForSwap(
+  weight: number,
+  fromExerciseId: string | undefined,
+  toExerciseId: string | undefined,
+  category: MovementCategory
+): number {
+  if (!Number.isFinite(weight) || weight <= 0) return weight;
+  const from = loadFactorFor(fromExerciseId, category);
+  const to = loadFactorFor(toExerciseId, category);
+  if (from <= 0 || to <= 0) return weight;
+  if (from === to) return weight;
+  return Math.max(2.5, Math.round((weight * (to / from)) / 2.5) * 2.5);
+}
+
 export function loadFactorFor(
   exerciseId: string | undefined,
   category: MovementCategory

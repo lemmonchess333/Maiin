@@ -15,7 +15,9 @@ import { PROGRAM_TEMPLATES } from "../templates";
  * candidate in the ordered list when the first is already present.
  */
 describe("applyInjuryFilters — knee dedup", () => {
-  const template = PROGRAM_TEMPLATES.find((t) => t.id === "upper-lower-hypertrophy");
+  const template = PROGRAM_TEMPLATES.find(
+    (t) => t.id === "upper-lower-hypertrophy"
+  );
   if (!template) throw new Error("upper-lower-hypertrophy template missing");
 
   it("does not produce duplicate Bulgarian Split Squat on Lower A (squat + leg press both knee-contra)", () => {
@@ -32,7 +34,9 @@ describe("applyInjuryFilters — knee dedup", () => {
     const ids = lowerA.exercises.map((e) => e.exerciseId);
     expect(ids).toContain("bulgarian-split");
     const secondSub = ids.find(
-      (id) => id !== "bulgarian-split" && ["hip-thrust", "barbell-step-ups", "nordic-hamstring-curl"].includes(id),
+      (id) =>
+        id !== "bulgarian-split" &&
+        ["hip-thrust", "barbell-step-ups", "nordic-hamstring-curl"].includes(id)
     );
     expect(secondSub).toBeTruthy();
   });
@@ -54,27 +58,37 @@ describe("applyInjuryFilters — knee dedup", () => {
     const upperABefore = before.find((d) => d.name === "Upper A")!;
     const upperBBefore = before.find((d) => d.name === "Upper B")!;
     expect(upperA.exercises.map((e) => e.exerciseId)).toEqual(
-      upperABefore.exercises.map((e) => e.exerciseId),
+      upperABefore.exercises.map((e) => e.exerciseId)
     );
     expect(upperB.exercises.map((e) => e.exerciseId)).toEqual(
-      upperBBefore.exercises.map((e) => e.exerciseId),
+      upperBBefore.exercises.map((e) => e.exerciseId)
     );
   });
 });
 
 describe("applyInjuryFilters — lower_back + shoulder (regression)", () => {
-  const template = PROGRAM_TEMPLATES.find((t) => t.id === "upper-lower-hypertrophy");
+  const template = PROGRAM_TEMPLATES.find(
+    (t) => t.id === "upper-lower-hypertrophy"
+  );
   if (!template) throw new Error("upper-lower-hypertrophy template missing");
 
   it("swaps Deadlift for a lower_back user (Lower B)", () => {
-    const filtered = applyInjuryFilters(template, ["lower_back"], PROGRAM_TEMPLATES);
+    const filtered = applyInjuryFilters(
+      template,
+      ["lower_back"],
+      PROGRAM_TEMPLATES
+    );
     const lowerB = filtered.weeks[0].days.find((d) => d.name === "Lower B")!;
     const ids = lowerB.exercises.map((e) => e.exerciseId);
     expect(ids).not.toContain("deadlift");
   });
 
   it("swaps Overhead Press for a shoulder user (Upper A)", () => {
-    const filtered = applyInjuryFilters(template, ["shoulder"], PROGRAM_TEMPLATES);
+    const filtered = applyInjuryFilters(
+      template,
+      ["shoulder"],
+      PROGRAM_TEMPLATES
+    );
     const upperA = filtered.weeks[0].days.find((d) => d.name === "Upper A")!;
     const ids = upperA.exercises.map((e) => e.exerciseId);
     expect(ids).not.toContain("overhead-press");

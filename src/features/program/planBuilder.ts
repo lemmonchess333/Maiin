@@ -39,6 +39,7 @@
 
 import type {
   Goal,
+  MovementCategory,
   PreferredSplit,
   PrimaryGoal,
   ProgramState,
@@ -56,7 +57,7 @@ import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { generateProgram, expectedDayCount } from "./programEngine";
 import { loadContextFrom } from "./startingLoads";
 import { applyComplexityGate, toExperience } from "./experienceModel";
-import { exerciseBank } from "./variationBank";
+import { exerciseBank, rescaleForSwap } from "./variationBank";
 import {
   applyInjuryFiltersToWorkouts,
   applyEquipmentFilterToWorkouts,
@@ -269,7 +270,14 @@ function buildLiftProgram(input: PlanBuilderInput): {
   const levelled = applyComplexityGate(
     base.workouts,
     toExperience(input.experience),
-    exerciseBank
+    exerciseBank,
+    (ex, toId) =>
+      rescaleForSwap(
+        ex.weight ?? 0,
+        ex.exerciseId,
+        toId,
+        ex.movementCategory as MovementCategory
+      )
   );
 
   // Pgm5 follow-ups: honour the user's CURRENT injuries and equipment on the

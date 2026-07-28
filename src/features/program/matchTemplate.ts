@@ -4,6 +4,7 @@ import { PROGRAM_TEMPLATES } from "./templates";
 import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
+import { rescaleForSwap } from "./variationBank";
 import { exerciseBank } from "./variationBank";
 
 /**
@@ -350,9 +351,17 @@ export function applyInjuryFiltersToWorkouts(
       if (safe) {
         usedIds.add(safe.id);
         return {
-          ...ex, // carry sets / reps / weight / progression / history
+          ...ex, // carry sets / reps / progression / history
           exerciseId: safe.id,
           name: safe.name,
+          // Same reason as the equipment swap below — a different movement
+          // does not take the previous movement's working weight.
+          weight: rescaleForSwap(
+            ex.weight,
+            ex.exerciseId,
+            safe.id,
+            ex.movementCategory
+          ),
           notes: `Swapped from ${ex.name} (${relevant.join(", ")}): ${safe.rationale}.`,
         };
       }
@@ -463,9 +472,19 @@ export function applyEquipmentFilterToWorkouts(
         usedIds.delete(ex.exerciseId);
         usedIds.add(pick.id);
         return {
-          ...ex, // carry sets / reps / weight / progression / history
+          ...ex, // carry sets / reps / progression / history
           exerciseId: pick.id,
           name: pick.name,
+          // …but NOT the weight verbatim: this swap changes the MOVEMENT, and
+          // carrying the old one's load put a beginner's 35 kg barbell bench
+          // onto a per-hand dumbbell press and a 55 kg squat onto a Bulgarian
+          // split squat. Rescaled by the two variations' load factors.
+          weight: rescaleForSwap(
+            ex.weight,
+            ex.exerciseId,
+            pick.id,
+            ex.movementCategory
+          ),
           notes: `Swapped from ${ex.name} — not available with your equipment.`,
         };
       }

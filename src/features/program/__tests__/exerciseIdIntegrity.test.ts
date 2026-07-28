@@ -33,7 +33,9 @@ describe("exercise id integrity", () => {
         for (const day of week.days) {
           for (const ex of day.exercises) {
             if (!idSet.has(ex.exerciseId)) {
-              bad.push(`${template.id}/${day.name}/${ex.name} → "${ex.exerciseId}"`);
+              bad.push(
+                `${template.id}/${day.name}/${ex.name} → "${ex.exerciseId}"`
+              );
             }
           }
         }
@@ -50,7 +52,9 @@ describe("exercise id integrity", () => {
           for (const ex of day.exercises) {
             for (const alt of ex.alternatives ?? []) {
               if (!nameSet.has(alt.toLowerCase())) {
-                bad.push(`${template.id}/${day.name}/${ex.name} alt → "${alt}"`);
+                bad.push(
+                  `${template.id}/${day.name}/${ex.name} alt → "${alt}"`
+                );
               }
             }
           }

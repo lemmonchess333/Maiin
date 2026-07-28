@@ -15,10 +15,15 @@ import {
   migrateProgramState,
   backfillWeekScheduleIfMissing,
 } from "../migrations";
-import { CURRENT_PROGRAM_SCHEMA_VERSION, CURRENT_WEEKSCHEDULE_VERSION } from "../programTypes";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  CURRENT_WEEKSCHEDULE_VERSION,
+} from "../programTypes";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 
-function makeLegacyProgramState(overrides: Partial<ProgramState> = {}): ProgramState {
+function makeLegacyProgramState(
+  overrides: Partial<ProgramState> = {}
+): ProgramState {
   return {
     goal: "recomp",
     currentPhase: "Hypertrophy",
@@ -31,7 +36,9 @@ function makeLegacyProgramState(overrides: Partial<ProgramState> = {}): ProgramS
   };
 }
 
-function legacyRunDay(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
+function legacyRunDay(
+  overrides: Partial<ScheduledRunDay> = {}
+): ScheduledRunDay {
   return {
     dayIndex: 2,
     templateId: "tempo_run",
@@ -46,7 +53,13 @@ describe("migrateProgramState", () => {
     const upToDate = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
-        { ...legacyRunDay(), id: "runday_2026-05-10_2_tempo", date: "2026-05-12", weekKey: "2026-05-10", status: "planned" },
+        {
+          ...legacyRunDay(),
+          id: "runday_2026-05-10_2_tempo",
+          date: "2026-05-12",
+          weekKey: "2026-05-10",
+          status: "planned",
+        },
       ],
     });
     const migrated = migrateProgramState(upToDate, "2026-05-10");
@@ -55,7 +68,13 @@ describe("migrateProgramState", () => {
 
   it("adds id/date/weekKey/status to legacy runDays", () => {
     const legacy = makeLegacyProgramState({
-      runDays: [legacyRunDay({ dayIndex: 2, templateId: "tempo_run", completed: false })],
+      runDays: [
+        legacyRunDay({
+          dayIndex: 2,
+          templateId: "tempo_run",
+          completed: false,
+        }),
+      ],
     });
     const migrated = migrateProgramState(legacy, "2026-05-10");
     expect(migrated.runDays![0].id).toBeTruthy();
@@ -158,8 +177,12 @@ describe("backfillWeekScheduleIfMissing", () => {
   it("returns null when weekSchedule is current", () => {
     const result = backfillWeekScheduleIfMissing({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "lift" }, { day: 2, type: "run" },
-        { day: 3, type: "lift" }, { day: 4, type: "rest" }, { day: 5, type: "lift" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "lift" },
+        { day: 2, type: "run" },
+        { day: 3, type: "lift" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "lift" },
         { day: 6, type: "rest" },
       ],
       weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
@@ -180,8 +203,12 @@ describe("backfillWeekScheduleIfMissing", () => {
   it("backfills when weekScheduleVersion is missing (legacy doc)", () => {
     const result = backfillWeekScheduleIfMissing({
       weekSchedule: [
-        { day: 0, type: "rest" }, { day: 1, type: "lift" }, { day: 2, type: "run" },
-        { day: 3, type: "lift" }, { day: 4, type: "rest" }, { day: 5, type: "lift" },
+        { day: 0, type: "rest" },
+        { day: 1, type: "lift" },
+        { day: 2, type: "run" },
+        { day: 3, type: "lift" },
+        { day: 4, type: "rest" },
+        { day: 5, type: "lift" },
         { day: 6, type: "rest" },
       ],
       // no version
@@ -205,7 +232,7 @@ describe("backfillWeekScheduleIfMissing", () => {
     });
     expect(result).not.toBeNull();
     const runCount = (result!.weekSchedule ?? []).filter(
-      (d) => d.type === "run" || d.type === "both",
+      (d) => d.type === "run" || d.type === "both"
     ).length;
     expect(runCount).toBe(0);
   });
@@ -402,9 +429,7 @@ describe("PR-0b-i — migrateScheduledRunDay idempotency", () => {
     // override). A boolean here would break the
     // `day.userOverride ?? day.templateId` resolver. Pin the type.
     const legacy = makeLegacyProgramState({
-      runDays: [
-        legacyRunDay({ userOverride: "tempo_20" }),
-      ],
+      runDays: [legacyRunDay({ userOverride: "tempo_20" })],
     });
     const migrated = migrateProgramState(legacy, "2026-05-10");
     expect(typeof migrated.runDays![0].userOverride).toBe("string");

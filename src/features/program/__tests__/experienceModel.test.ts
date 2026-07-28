@@ -9,6 +9,7 @@ import {
 } from "../experienceModel";
 import { advanceWeek, generateProgram } from "../programEngine";
 import { buildPlan } from "../planBuilder";
+import { startingWeightForExercise } from "../startingLoads";
 import { exerciseBank } from "../variationBank";
 import type { WorkoutDay } from "../programTypes";
 import type { Experience } from "../experienceModel";
@@ -474,6 +475,68 @@ describe("the complexity gate survives composition", () => {
         overLevel(state.workouts, "beginner").map((e) => e.name),
         `after advancing to week ${state.weekNumber}`
       ).toEqual([]);
+    }
+  });
+});
+
+/**
+ * A swapped slot's LOAD must move with the movement.
+ *
+ * Every in-place swap in the codebase is `{...ex, exerciseId, name}`, which
+ * carries the previous movement's working weight onto a different one. On an
+ * 80 kg beginner that was measured wrong in both directions:
+ *
+ *   Bench Press 35 kg    -> Dumbbell Bench Press @35 kg  (per hand; want 12.5)
+ *   Barbell Squat        -> Bulgarian Split Squat @55 kg (want 15)
+ *   Hack Squat 50 kg     -> Leg Press @50 kg             (want 87.5)
+ *   Seated Leg Curl 17.5 -> Hip Thrust @17.5 kg          (want 60)
+ *
+ * Too heavy is a failed set or an injury; too light is a wasted session. Both
+ * are silent — nothing in the app flags an implausible prescription.
+ */
+describe("a swapped slot is re-calibrated, not carried", () => {
+  const CTX = { bodyweightKg: 80, experience: "beginner" as const };
+
+  const mismatches = (w: WorkoutDay[], tolerance = 5) => {
+    const out: string[] = [];
+    for (const d of w) {
+      for (const ex of d.exercises) {
+        if ((ex.performanceHistory?.length ?? 0) > 0) continue;
+        if ((ex.weight ?? 0) <= 0) continue;
+        const want = startingWeightForExercise(
+          ex.exerciseId,
+          ex.movementCategory,
+          CTX
+        );
+        if (want > 0 && Math.abs(want - ex.weight) > tolerance) {
+          out.push(`${ex.name}@${ex.weight} (want ~${want})`);
+        }
+      }
+    }
+    return out;
+  };
+
+  const plan = (equipment: "full_gym" | "home_gym" | "minimal") =>
+    buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "beginner",
+      bodyweightKg: 80,
+      sex: "male",
+      liftDays: 4,
+      preferredSplit: "auto",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      injuries: [],
+      equipment,
+      currentDate: "2026-07-28",
+    } as Parameters<typeof buildPlan>[0]);
+
+  it("survives the equipment filter's swaps", () => {
+    // This is the one that mattered: pre-fix, a home-gym beginner was handed
+    // a 55 kg Bulgarian split squat and a 35 kg per-hand dumbbell press.
+    for (const eq of ["full_gym", "home_gym", "minimal"] as const) {
+      expect(mismatches(plan(eq).programState.workouts), eq).toEqual([]);
     }
   });
 });

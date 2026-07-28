@@ -527,33 +527,53 @@ rather than a patch. None of them are speculative; each was measured.
    `db-rdl` and `glute-bridge` — the TEMPLATES prescribe them and the bank does
    not contain them. Adding them closes both columns at once.
 
-3. **Calves are never trained.** No calf movement exists in `variationBank`
+3. **A mesocycle rotation still carries the previous movement's load.** The
+   three ONE-SHOT swap sites (equipment, injury, complexity gate) now rescale a
+   swapped slot's weight by the two variations' `loadFactor` ratio — a 140 kg
+   back squat does not transfer to 140 kg of its knee-safe substitute, and
+   before this an 80 kg beginner was handed a 55 kg Bulgarian split squat and
+   a 35 kg per-hand dumbbell press.
+
+   `rotateUntrainedAccessories` deliberately does NOT, and the reason is
+   measured: it re-fires at every mesocycle boundary, so the scale compounds
+   against an already-scaled weight and does not round-trip with the deload
+   store/restore. Over two mesocycles a slot went 50 kg → 30 → 12.5. A
+   silently shrinking load is worse than a mis-scaled one, so the rescale was
+   removed from that path rather than shipped.
+
+   Fixing it needs an anchor the slot does not carry — its ORIGINAL seed, so
+   each rotation scales from that rather than from the last rotation's output.
+   Blast radius is bounded: rotation only touches UNTRAINED accessories, so no
+   logged progress is at stake, and the next `seedStartingLoads` on a
+   regenerate re-derives the number.
+
+4. **Calves are never trained.** No calf movement exists in `variationBank`
    at all, in any category, so the tally reads 1.5–2.5 incidental sets at
    every day count. Same gap, smaller: no lateral raise, and hamstring
    isolation only arrived in this PR.
-4. **Day names contradict their contents.** "Full Body — Posterior Focus"
+5. **Day names contradict their contents.** "Full Body — Posterior Focus"
    opens with a bench press; "Upper — Shoulders & Arms" leads on pull-ups.
    The names are authored constants; the contents are computed.
-5. **Set allocation can invert the exercise hierarchy.** The balancers grow
+6. **Set allocation can invert the exercise hierarchy.** The balancers grow
    accessories up to 5 sets while mains sit at 3-4, so the week's biggest
    block of sets is sometimes a supporting lift.
-6. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
+7. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
    that arms come after torso work; nothing enforces it.
-7. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
+8. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
    in `buildUpperLower` are `isAccessory: false` + hardcoded `"linear"`, so a
    barbell curl progresses like a squat.
-8. **`repRangeMax` is inert on every linear-progression exercise** — the
+9. **`repRangeMax` is inert on every linear-progression exercise** — the
    "climb the range, then add load" mechanism (#6) never runs for the
    strength, fat_loss or running goals, whose mains are all linear.
-9. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
-   it**, so a strength user's heavy day reads 3-5 against a profile that
-   declares 5-7. The rep CEILING is now clamped; the floor still escapes the
-   profile.
-10. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
+10. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
+    it**, so a strength user's heavy day reads 3-5 against a profile that
+    declares 5-7. The rep CEILING is now clamped; the floor still escapes the
+    profile.
+11. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
     45-second plank can be "deloaded" to 43 seconds, and floored at 3.
-11. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
+12. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
     Σ weight × reps), so 3×20 @ 40 kg registers as a PR over 3×5 @ 100 kg.
-12. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
+13. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
     current exercise below a plateau count of 3, while the adjustment rule
     fires at 1 — so the branch cuts sets and resets the plateau counter
     without changing a single exercise.

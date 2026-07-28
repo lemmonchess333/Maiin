@@ -13,13 +13,20 @@ import { applyInjuryFilters } from "../matchTemplate";
  * the wild can click any combination of cards on the onboarding
  * injury step, and every one must produce a valid program.
  */
-const ALL_INJURIES = ["knee", "shoulder", "lower_back", "wrist", "elbow"] as const;
+const ALL_INJURIES = [
+  "knee",
+  "shoulder",
+  "lower_back",
+  "wrist",
+  "elbow",
+] as const;
 const combos: readonly (readonly string[])[] = (() => {
   const out: string[][] = [];
   const n = ALL_INJURIES.length;
   for (let mask = 1; mask < 1 << n; mask++) {
     const combo: string[] = [];
-    for (let i = 0; i < n; i++) if (mask & (1 << i)) combo.push(ALL_INJURIES[i]);
+    for (let i = 0; i < n; i++)
+      if (mask & (1 << i)) combo.push(ALL_INJURIES[i]);
     out.push(combo);
   }
   return out;
@@ -46,14 +53,18 @@ describe("injury filter — full coverage", () => {
 
             // Stale contra flags + unresolved tier-4 warnings
             for (const ex of day.exercises) {
-              const hit = (ex.contraindicated ?? []).filter((c) => combo.includes(c));
+              const hit = (ex.contraindicated ?? []).filter((c) =>
+                combo.includes(c)
+              );
               if (!hit.length) continue;
               const swapped = ex.notes?.startsWith("Swapped from");
               const unresolved = ex.notes?.startsWith("No safe substitute");
               if (unresolved) {
                 issues.push(`UNRESOLVED ${day.name} → ${ex.name}`);
               } else if (!swapped) {
-                issues.push(`UNTOUCHED_CONTRA ${day.name} → ${ex.name} [${hit.join(",")}]`);
+                issues.push(
+                  `UNTOUCHED_CONTRA ${day.name} → ${ex.name} [${hit.join(",")}]`
+                );
               }
             }
           }
