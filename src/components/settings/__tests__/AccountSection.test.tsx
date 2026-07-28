@@ -28,6 +28,7 @@ import {
 vi.mock("@/lib/socialApi", () => ({
   deleteAccount: vi.fn(),
 }));
+import { deleteAccount } from "@/lib/socialApi";
 
 vi.mock("@/lib/reauth", () => ({
   reauthWithPassword: vi.fn(),
@@ -183,5 +184,49 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     expect(
       screen.queryByPlaceholderText("Type DELETE")
     ).not.toBeInTheDocument();
+  });
+
+  /* Found live 2026-07-27 (test account b6768357): the server recent-auth
+     gate throws message "Recent reauthentication required: ..." with
+     details.errorCode "requires-recent-auth" — but the client branch only
+     matched the CLIENT-SDK token "requires-recent-login", so the raw
+     server message was dumped in a toast and the reauth prompt never
+     opened. This pins the server error SHAPE (accountDeletionAuth.js +
+     the index.js HttpsError wrapper) to the reauth flow. */
+  it("opens the reauth prompt when the SERVER recent-auth gate rejects", async () => {
+    useAuthMock.mockReturnValue({
+      user: makeUser(),
+      profile: {},
+      loading: false,
+    });
+    const serverErr = Object.assign(
+      new Error(
+        "Recent reauthentication required: session is 2158s old, max 300s."
+      ),
+      {
+        code: "functions/failed-precondition",
+        details: { errorCode: "requires-recent-auth" },
+      }
+    );
+    vi.mocked(deleteAccount).mockRejectedValueOnce(serverErr);
+
+    renderSection();
+    fireEvent.click(screen.getByText(/Data & Account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+
+    fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
+      target: { value: "DELETE" },
+    });
+    // Confirm button inside the modal shares the "Delete Account" name
+    // with the opener — it is the last one rendered.
+    const confirmButtons = screen.getAllByRole("button", {
+      name: /Delete Account/i,
+    });
+    fireEvent.click(confirmButtons[confirmButtons.length - 1]);
+
+    // The reauth prompt must open — NOT a raw toast of the server message.
+    await waitFor(() =>
+      expect(screen.getByText(/Confirm it's you/i)).toBeInTheDocument()
+    );
   });
 });

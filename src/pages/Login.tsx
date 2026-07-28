@@ -33,6 +33,24 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  /* Post-deletion confirmation (deletion QA 2026-07-27): the success toast
+     fires in the same breath as signOut and is easy to miss during the
+     auth-state transition — the observed failure mode was the user signing
+     back INTO the deleted account to check, and reading "Invalid email or
+     password" as their de-facto confirmation. Read-once flag set by
+     AccountSection just before signOut; cleared immediately so it shows
+     exactly one time. */
+  const [accountDeleted] = useState<boolean>(() => {
+    try {
+      if (localStorage.getItem("tropos.account_deleted") === "1") {
+        localStorage.removeItem("tropos.account_deleted");
+        return true;
+      }
+    } catch {
+      /* storage unavailable — skip the banner */
+    }
+    return false;
+  });
   // Neutral confirmation for the password-reset flow (shown in a calm banner,
   // not the destructive error one).
   const [notice, setNotice] = useState("");
@@ -190,6 +208,14 @@ export default function Login() {
           className="space-y-4"
           aria-describedby={error ? "login-error" : undefined}
         >
+          {accountDeleted && (
+            <div
+              role="status"
+              className="p-3 rounded-xl bg-success/10 border border-success/20 text-success text-sm font-medium"
+            >
+              Your account and all data have been deleted.
+            </div>
+          )}
           {error && (
             <div
               id="login-error"

@@ -15,6 +15,7 @@ import {
   isCycleEndWeek,
 } from "../programEngine";
 import { exerciseBank } from "../variationBank";
+import { deloadWeight } from "../easierToday";
 import type {
   ProgramExercise,
   ProgramState,
@@ -776,5 +777,364 @@ describe("day roles (backlog #3)", () => {
     // Day C is pump: every exercise ≥ its own baseReps and mains ≥ base+2
     const pumpMains = mainRepsOf(three.workouts[2]);
     expect(Math.max(...pumpMains)).toBeGreaterThanOrEqual(10);
+  });
+});
+
+// Backlog #5 (volume ramp) + the auto-deload decay fix. Before this,
+// advanceWeek applied applyDeload's sets−1 / ×0.85 to LIVE state with no
+// restore on meso exit — every mesocycle permanently shrank the programme
+// (the manual deload command guards exactly this with its undo snapshot;
+// the automatic weekly path had no guard).
+describe("weekly volume shape (backlog #5 + deload-decay fix)", () => {
+  const makeState = () => {
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    // Calibrate every lift so the deload weight cut/restore is observable.
+    const withWeights = workouts.map((d) => ({
+      ...d,
+      exercises: d.exercises.map((ex) => ({
+        ...ex,
+        weight: 50,
+        lastSuccessfulWeight: 50,
+        consecutiveFailures: 0,
+      })),
+    }));
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      workouts: withWeights,
+      fatigueScore: 0,
+      updatedAt: 0,
+      settings: { autoProgression: true, microloading: false },
+      weekHistory: [],
+    } as unknown as Parameters<typeof advanceWeek>[0];
+  };
+
+  const setsGrid = (st: ReturnType<typeof makeState>) =>
+    st.workouts.map((d) => d.exercises.map((e) => e.sets));
+
+  it("generateProgram stamps baseSets on every exercise", () => {
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    workouts.forEach((d) =>
+      d.exercises.forEach((ex) => expect(ex.baseSets).toBe(ex.sets))
+    );
+  });
+
+  it("ramps accessories base−1 / base / base+1 across the meso, mains hold", () => {
+    let st = makeState();
+    const base = st.workouts.map((d) => d.exercises.map((e) => e.sets));
+    st = advanceWeek(st); // week 2 (mid)
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => expect(ex.sets).toBe(base[di][ei]))
+    );
+    st = advanceWeek(st); // week 3 (top)
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        const b = base[di][ei];
+        expect(ex.sets).toBe(ex.isAccessory === true ? Math.min(5, b + 1) : b);
+      })
+    );
+    st = advanceWeek(st); // week 4 — deload cuts from the ANCHOR, not week 3
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        expect(ex.sets).toBe(Math.max(2, base[di][ei] - 1));
+        expect(ex.weight).toBe(deloadWeight(50)); // pinned to the shared rule
+        expect(ex.preDeloadWeight).toBe(50);
+      })
+    );
+    st = advanceWeek(st); // week 5 — meso restart
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        const b = base[di][ei];
+        expect(ex.sets).toBe(ex.isAccessory === true ? Math.max(1, b - 1) : b);
+        expect(ex.weight).toBe(50); // load restored, cut not permanent
+        expect("preDeloadWeight" in ex).toBe(false);
+      })
+    );
+  });
+
+  it("never compounds across mesocycles", () => {
+    let st = makeState();
+    for (let w = 2; w <= 5; w++) st = advanceWeek(st);
+    const firstMesoRestart = setsGrid(st);
+    for (let w = 6; w <= 9; w++) st = advanceWeek(st);
+    expect(setsGrid(st)).toEqual(firstMesoRestart);
+    st.workouts.forEach((d) =>
+      d.exercises.forEach((ex) => expect(ex.weight).toBe(50))
+    );
+  });
+
+  it("keeps load progressed DURING the deload week (max wins on restore)", () => {
+    let st = makeState();
+    for (let w = 2; w <= 4; w++) st = advanceWeek(st); // into deload
+    st = {
+      ...st,
+      workouts: st.workouts.map((d, di) => ({
+        ...d,
+        exercises: d.exercises.map((ex, ei) =>
+          di === 0 && ei === 0 ? { ...ex, weight: 55 } : ex
+        ),
+      })),
+    };
+    st = advanceWeek(st); // meso exit
+    expect(st.workouts[0].exercises[0].weight).toBe(55);
+    expect(st.workouts[0].exercises[1].weight).toBe(50);
+  });
+
+  it("legacy exercises without baseSets anchor lazily from live sets", () => {
+    let st = makeState();
+    st = {
+      ...st,
+      workouts: st.workouts.map((d) => ({
+        ...d,
+        exercises: d.exercises.map((ex) => {
+          const { baseSets: _b, ...rest } = ex;
+          void _b;
+          return rest as typeof ex;
+        }),
+      })),
+    };
+    const live = setsGrid(st);
+    st = advanceWeek(st); // week 2 (mid) — anchor stamps, sets unchanged
+    st.workouts.forEach((d, di) =>
+      d.exercises.forEach((ex, ei) => {
+        expect(ex.baseSets).toBe(live[di][ei]);
+        expect(ex.sets).toBe(live[di][ei]);
+      })
+    );
+  });
+});
+
+// Backlog #7 — progression scheme per exercise TYPE, not per goal (H3/N2).
+// Two halves: generateProgram now stamps rep ranges + puts isolations on
+// double progression, and applyProgression steps load in proportion to the
+// lift. Both are engine-only (presentation policy: INVISIBLE).
+describe("progression scheme per exercise type (backlog #7)", () => {
+  const allEx = (w: { exercises: ProgramExercise[] }[]) =>
+    w.flatMap((d) => d.exercises);
+
+  it("stamps a rep range on every generated exercise", () => {
+    const { workouts } = generateProgram("recomp", 4, undefined, "hypertrophy");
+    // Before #7 the range machinery shipped in P1 only ever reached
+    // template-derived programmes — the procedural engine authored none.
+    for (const ex of allEx(workouts)) {
+      expect(ex.repRangeMax).toBeGreaterThan(ex.reps);
+    }
+  });
+
+  it("keeps the range WIDTH constant across day roles", () => {
+    // The ceiling is derived after applyDayRoles has shifted reps, so a
+    // heavy day gets a shifted ceiling too. A fixed ceiling would have
+    // turned an 8-12 main into 6-12 on heavy days — a 6-rep climb.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    for (const ex of allEx(workouts)) {
+      const span = ex.isAccessory === true ? 3 : 4; // 12→15 acc, 8→12 main
+      expect(ex.repRangeMax! - ex.reps).toBe(span);
+    }
+    // and the roles really did move: heavy day A mains sit under pump day C
+    const mainReps = (i: number) =>
+      workouts[i].exercises.filter((e) => e.isAccessory !== true)[0].reps;
+    expect(mainReps(0)).toBeLessThan(mainReps(2));
+  });
+
+  it("puts isolations on double progression and mains on the goal's scheme", () => {
+    // strength profile is mainProgression "linear" — the accessories must
+    // NOT inherit it. That inheritance was the whole defect (H3).
+    const { workouts } = generateProgram("recomp", 4, undefined, "strength");
+    const acc = allEx(workouts).filter((e) => e.isAccessory === true);
+    const mains = allEx(workouts).filter((e) => e.isAccessory !== true);
+    expect(acc.length).toBeGreaterThan(0);
+    expect(acc.every((e) => e.progressionType === "double")).toBe(true);
+    expect(mains.every((e) => e.progressionType === "linear")).toBe(true);
+  });
+
+  it("isolations take a microplate at the top of the range; compounds a full plate", () => {
+    // Helms H3: 2.5 kg is ~1.5% of a squat but ~10% of a curl.
+    const base = {
+      progressionType: "double" as const,
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 10,
+      lastSuccessfulWeight: 10,
+    };
+    const iso = applyProgression(
+      makeTestExercise({ ...base, isAccessory: true }),
+      15,
+      10,
+      "recomp",
+      false
+    );
+    const compound = applyProgression(
+      makeTestExercise({ ...base, isAccessory: false }),
+      15,
+      10,
+      "recomp",
+      false
+    );
+    expect(iso.weight).toBe(11.25);
+    expect(compound.weight).toBe(12.5);
+    // both reset the target to the bottom of the range
+    expect(iso.reps).toBe(12);
+    expect(compound.reps).toBe(12);
+  });
+
+  it("does not hand isolations the lean-bulk load accelerator", () => {
+    // goalWeightBonus is a compound bias: a curl jumping 2.5 kg because the
+    // user is bulking is the same proportionality error, doubled.
+    const base = {
+      progressionType: "double" as const,
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 10,
+      lastSuccessfulWeight: 10,
+    };
+    const iso = applyProgression(
+      makeTestExercise({ ...base, isAccessory: true }),
+      15,
+      10,
+      "lean bulk",
+      false
+    );
+    const compound = applyProgression(
+      makeTestExercise({ ...base, isAccessory: false }),
+      15,
+      10,
+      "lean bulk",
+      false
+    );
+    expect(iso.weight).toBe(11.25); // unchanged by the goal
+    expect(compound.weight).toBe(13.75); // 2.5 + 1.25 bonus
+  });
+
+  it("leaves compounds byte-identical to pre-#7 behaviour", () => {
+    // isAccessory absent (legacy rows) must read as compound, not isolation.
+    const legacy = makeTestExercise({
+      progressionType: "linear",
+      reps: 6,
+      baseReps: 6,
+      weight: 100,
+      lastSuccessfulWeight: 100,
+    });
+    expect(applyProgression(legacy, 8, 100, "recomp", false).weight).toBe(
+      102.5
+    );
+    const dbl = makeTestExercise({ weight: 100, lastSuccessfulWeight: 100 });
+    expect(applyProgression(dbl, 8, 100, "lean bulk", false).weight).toBe(
+      103.75
+    );
+  });
+
+  it("retires the microloading runaway for generated isolations", () => {
+    // On the linear path a completed set with microloading on added 1 kg
+    // with NO rep requirement — ~12% per session on an 8 kg lateral raise.
+    // Double progression has no such branch, so the climb is reps-first.
+    const iso = makeTestExercise({
+      isAccessory: true,
+      progressionType: "double",
+      reps: 12,
+      baseReps: 12,
+      repRangeMax: 15,
+      weight: 8,
+      lastSuccessfulWeight: 8,
+    });
+    const next = applyProgression(iso, 12, 8, "recomp", true);
+    expect(next.weight).toBe(8);
+    expect(next.reps).toBe(13);
+  });
+});
+
+// Backlog #8 — the deload recipe follows TRAINING AGE (H4 resolving M4).
+// Tropos's sets−1 + load−15% is Helms's novice answer; it was applied to
+// everyone. Post-novice gets ~half the volume at the SAME load instead.
+describe("deload by training age (backlog #8)", () => {
+  const week = (): WorkoutDay[] => [
+    {
+      dayName: "Push",
+      dayType: "push",
+      completed: false,
+      skipped: false,
+      exercises: [
+        makeTestExercise({ sets: 3, reps: 10, weight: 100 }),
+        makeTestExercise({ sets: 3, reps: 5, weight: 140 }),
+        makeTestExercise({ sets: 2, reps: 12, weight: 0 }), // bodyweight
+      ],
+    },
+  ];
+
+  it("beginners keep the pre-#8 recipe exactly (sets-1, load x0.85)", () => {
+    for (const exp of [undefined, "beginner" as const]) {
+      const out = applyDeload(week(), exp)[0].exercises;
+      expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
+      expect(out.map((e) => e.weight)).toEqual([85, 120, 0]);
+      expect(out.map((e) => e.reps)).toEqual([10, 5, 12]); // reps untouched
+    }
+  });
+
+  it("intermediates halve volume at held load (Helms 3x10x200 -> 2x8x200)", () => {
+    const out = applyDeload(week(), "intermediate")[0].exercises;
+    expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
+    expect(out.map((e) => e.reps)).toEqual([8, 3, 10]); // -2, floored at 3
+    expect(out.map((e) => e.weight)).toEqual([100, 140, 0]); // load untouched
+  });
+
+  it("advanced reads the same as intermediate", () => {
+    expect(applyDeload(week(), "advanced")).toEqual(
+      applyDeload(week(), "intermediate")
+    );
+  });
+
+  it("restores the cut reps on meso exit — no decay across mesocycles", () => {
+    // Symmetric with #5's sets/load restore. Without preDeloadReps the
+    // post-novice cut would compound: 10 -> 8 -> 6 -> 4 every four weeks.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    let st: ProgramState = {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+    const repsGrid = (s: ProgramState) =>
+      s.workouts.map((d) => d.exercises.map((e) => e.reps));
+    const start = repsGrid(st);
+
+    for (let meso = 0; meso < 2; meso += 1) {
+      st = advanceWeek(st, "intermediate"); // w2
+      st = advanceWeek(st, "intermediate"); // w3
+      st = advanceWeek(st, "intermediate"); // w4 — deload, reps cut
+      st.workouts.forEach((d, di) =>
+        d.exercises.forEach((ex, ei) => {
+          expect(ex.reps).toBe(Math.max(3, start[di][ei] - 2));
+        })
+      );
+      st = advanceWeek(st, "intermediate"); // meso exit — reps restored
+      expect(repsGrid(st)).toEqual(start);
+    }
+  });
+
+  it("restores reps even if the user switches experience mid-mesocycle", () => {
+    // The stash is unconditional, so a user who deloads as an intermediate
+    // and advances as a beginner still gets their rep target back.
+    const { workouts } = generateProgram("recomp", 2, undefined, "hypertrophy");
+    let st: ProgramState = {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+    const before = st.workouts.map((d) => d.exercises.map((e) => e.reps));
+    st = advanceWeek(st, "intermediate"); // week 4 deload — reps cut
+    st = advanceWeek(st, "beginner"); // week 5 — restore must still fire
+    expect(st.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
+      before
+    );
   });
 });
