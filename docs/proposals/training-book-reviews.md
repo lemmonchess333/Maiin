@@ -292,9 +292,13 @@ rather than inside a tier's existing list.
     the 4-day and 6-day builds lost their Romanian deadlift — hamstring volume
     halved, 12 → 6 weekly sets on the 4-day, under the landmark low. A rule
     written to protect the lower back quietly removed the posterior-chain
-    training instead. (b) It put a **bicep curl on "Lower — Deadlift Focus"**,
-    because arms happened to be the week's least-trained muscle; a day-type
-    allow-list was drafted to guard that, which treated the symptom. (c) It
+    (b) It put UPPER-BODY work on "Lower — Deadlift Focus" — a bench
+    press on most draws, a bicep curl on others, whatever the week trained
+    least. (Which one you got depended on the random accessory pick, item 9
+    below; two independent measurements of this same day disagreed for
+    exactly that reason, which is the clearest illustration of what
+    nondeterminism cost this arc.) A day-type allow-list was drafted to guard
+    it, which treated the symptom. (c) It
     rebuilt the slot with `weight: 0` under a comment claiming the seeding
     pass would calibrate it — the seeding pass skipped accessories, so users
     were shown "5 × 14-17 @ 0 kg".
@@ -479,14 +483,21 @@ a sample rather than a fact.
 Recorded here rather than fixed in the same PR, because each needs a decision
 rather than a patch. None of them are speculative; each was measured.
 
-1. **The landmark bands compare lumped muscle groups against per-muscle
-   numbers.** `Back` absorbs lats, traps, rhomboids and erectors, so every
-   row, pulldown, deadlift and RDL adds to one bucket — a 6-day week reads
-   `Back = 37` against a high of 20. `Shoulders` (front/side/rear) and `Core`
-   lump the same way. Part of the "violates its own landmarks" finding is the
-   MODEL, not the programme. Splitting the canonical muscles, or giving
-   lumped groups their own bands, is the fix; trimming real training to
-   satisfy a miscalibrated number is not.
+1. **The landmark overshoot is authored by the BUILDERS, and part of it is
+   the model's own lumping.** Two things were verified separately here, and
+   the first corrects a misdiagnosis in this PR's own commit message. (a)
+   Neutering both balancers to identity and regenerating gives hypertrophy
+   6-day `Back = 37 / Shoulders = 28` against a high of 20 — the builders
+   produce ~95% of the overshoot on their own, and hamstrings are already
+   under the low BEFORE the balancer runs. The ceiling guard added here is
+   correct and worth keeping (it stops the balancers making it worse) but it
+   moves 6-day Back only 39 → 37; it is not the fix. (b) `Back` absorbs lats,
+   traps, rhomboids AND erectors, so every row, pulldown, deadlift and RDL
+   lands in one bucket; `Shoulders` (front/side/rear) and `Core` lump the same
+   way. So the number is inflated as well as high. The real work is splitting
+   the canonical muscles (or giving lumped groups their own bands) and then
+   rebalancing what the builders author. Trimming real training to satisfy a
+   miscalibrated number is not the fix either.
 2. **Calves are never trained.** No calf movement exists in `variationBank`
    at all, in any category, so the tally reads 1.5–2.5 incidental sets at
    every day count. Same gap, smaller: no lateral raise, and hamstring

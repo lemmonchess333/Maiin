@@ -400,11 +400,14 @@ export function orderForAdjacency(
  *      Hamstring volume halved (4-day: 12 → 6 weekly sets, under the
  *      landmark low) — a rule meant to protect the lower back quietly
  *      removed the posterior-chain training instead.
- *   2. It put a **bicep curl on "Lower — Deadlift Focus"**, because arms
- *      happened to be the week's least-trained muscle. Guarding that with a
- *      day-type allow-list treated the symptom; the premise was the defect.
- *      What belongs in a slot is decided by the BUILDER that authored the
- *      day, and the cap has no business overriding it.
+ *   2. It put UPPER-BODY work on "Lower — Deadlift Focus" — a bench press on
+ *      most draws, a bicep curl on others — because whatever the week trained
+ *      least won the slot. (Which of the two you got depended on the random
+ *      accessory pick, now removed; two independent measurements of this same
+ *      day disagreed for exactly that reason.) Guarding it with a day-type
+ *      allow-list treated the symptom; the premise was the defect. What
+ *      belongs in a slot is decided by the BUILDER that authored the day, and
+ *      the cap has no business overriding it.
  *   3. Rebuilding the slot from scratch shipped **0 kg prescriptions** — a
  *      re-pointed accessory was minted uncalibrated and the seeding pass
  *      skipped accessories, so nothing ever filled the number in.
