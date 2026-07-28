@@ -216,9 +216,44 @@ rather than inside a tier's existing list.
     lower back the day before heavy legs"). `workouts[]` order is a lift-day
     sequence, not a calendar — the weekday mapping lives in
     `profile.weekSchedule` and `liftIndexForDayOfWeek`, which
-    `generateProgram` never receives. A real adjacency rule needs the
-    schedule threaded in, which is a bigger change than this item's other
-    half and worth its own decision.
+    `generateProgram` never receives.
+
+    MEASURED 2026-07-28, and the measurement argues against building it as
+    scoped. Adjacent-day muscle overlap for each generated split, against the
+    brute-forced optimal ordering of the same days:
+
+    | split          | current | best | gap |
+    | -------------- | ------- | ---- | --- |
+    | 2d upper/lower | 7.5     | 7.5  | 0%  |
+    | 3d full body   | 56.5    | 51   | 10% |
+    | 4d upper/lower | 28.5    | 28   | 2%  |
+    | 5d ppl+ul      | 30.5    | 18.5 | 39% |
+    | 6d ppl ×2      | 30      | 23.5 | 22% |
+
+    Three things follow. The 2- and 4-day splits are **already optimal** —
+    alternating upper/lower is the answer and the builder already does it.
+    The 3-day full-body "gap" is noise: every pair of full-body days overlaps
+    heavily by construction (24 and 32.5 between the two adjacent pairs), so
+    reordering them means nothing. The real gap is concentrated in the
+    CONCATENATED splits — `ppl_ul` and `ppl_x2` are built by joining two
+    independently-built sub-splits and nothing ever considered the seam.
+
+    Still not building it, for reasons the measurement sharpens rather than
+    removes. (a) Whether adjacency matters AT ALL depends on the weekday
+    schedule the generator doesn't get: a Mon/Wed/Fri user has no adjacent
+    sessions, so the whole exercise is moot for them, and it is precisely the
+    5–6 day users — where it does bite — who cannot spread their days out.
+    (b) The objective function above is MINE, not any source's. M6's actual
+    concern is specific (lower back the day before heavy legs), and #10's
+    hinge cap already addresses the main instance of it. Minimising a
+    generic overlap metric is not the same claim and would reorder PPL out of
+    its intended rotation. (c) Reordering `workouts[]` breaks the positional
+    `findExisting` / `carryExistingAccessories` carry, which has already
+    caused two silent data-loss bugs this arc (#10's first cut, #17).
+
+    If it IS picked up: thread the schedule in, scope the reorder to the
+    concatenated splits only, and apply it ONLY when there is no existing
+    plan to carry — order decided once, then respected.
 
 **Tier 4 — Exercise selection & content**
 
