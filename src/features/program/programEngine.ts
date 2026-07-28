@@ -1,4 +1,5 @@
 import type {
+  Experience,
   Goal,
   GoalProfile,
   MovementCategory,
@@ -1301,17 +1302,52 @@ export function applyFatigue(
   }));
 }
 
-export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
+/**
+ * Deload rep floor for the post-novice recipe — a 5-rep strength main drops
+ * to 3, not to 1. Shared with the CF mirror.
+ */
+const DELOAD_REPS_FLOOR = 3;
+
+/**
+ * Backlog #8 (training-book backlog; H4 resolving M4): the deload recipe is
+ * chosen by TRAINING AGE. Tropos's sets−1 + load−15% is Helms's *novice*
+ * answer, and it was being applied to everyone.
+ *
+ * - Beginner (and any caller that doesn't know): unchanged — one set fewer
+ *   (floor 2) and working weight ×0.85 on the 2.5 kg grid. Cutting load is
+ *   what a novice needs, because a novice's stall is usually the load.
+ * - Intermediate / advanced: roughly half the volume at the SAME load —
+ *   one set fewer and two reps off the target (floor 3), weight untouched
+ *   (Helms's worked example: 3×10×200 → 2×8×200). Past the novice phase
+ *   the fatigue comes from accumulated volume, not from the top-end load,
+ *   and dropping the bar weight costs the skill exposure that keeps a
+ *   heavy lift sharp.
+ *
+ * Presentation policy: INVISIBLE — the step-back week simply looks different.
+ * The one visible surface is #4's step-back cue, which is recipe-agnostic.
+ */
+export function applyDeload(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
+  const holdLoad = experience === "intermediate" || experience === "advanced";
   return workouts.map((day) => ({
     ...day,
-    exercises: day.exercises.map((ex) => ({
-      ...ex,
-      sets: Math.max(2, ex.sets - 1),
-      // 0 weight (bodyweight or uncalibrated): no weight to deload
-      // — leave at 0. Sets reduction above is the deload signal.
-      // Weighted: round to 2.5kg increments (standard plate size).
-      weight: ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
-    })),
+    exercises: day.exercises.map((ex) => {
+      const sets = Math.max(2, ex.sets - 1);
+      if (holdLoad) {
+        return { ...ex, sets, reps: Math.max(DELOAD_REPS_FLOOR, ex.reps - 2) };
+      }
+      return {
+        ...ex,
+        sets,
+        // 0 weight (bodyweight or uncalibrated): no weight to deload
+        // — leave at 0. Sets reduction above is the deload signal.
+        // Weighted: round to 2.5kg increments (standard plate size).
+        weight:
+          ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
+      };
+    }),
   }));
 }
 
@@ -1324,10 +1360,15 @@ const ACCESSORY_RAMP_CAP = 5;
 
 /**
  * Entering an automatic deload week: re-anchor sets to baseSets and stash
- * each loaded exercise's weight so meso exit can restore it. applyDeload
- * then cuts from the ANCHORED values, so its −1/×0.85 can never compound
- * across mesocycles (the manual deload command guards the same hazard
- * with its undo snapshot — the auto path had no guard at all).
+ * each loaded exercise's weight and rep target so meso exit can restore
+ * them. applyDeload then cuts from the ANCHORED values, so its cut can
+ * never compound across mesocycles (the manual deload command guards the
+ * same hazard with its undo snapshot — the auto path had no guard at all).
+ *
+ * Both stashes are unconditional w.r.t. the deload recipe (backlog #8):
+ * only the post-novice recipe cuts reps and only the novice recipe cuts
+ * load, but a user who changes experience level mid-mesocycle must still
+ * get back whichever one was cut.
  */
 function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
   return workouts.map((day) => ({
@@ -1336,6 +1377,7 @@ function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
       const base = ex.baseSets ?? ex.sets;
       const out: ProgramExercise = { ...ex, baseSets: base, sets: base };
       if (out.weight > 0) out.preDeloadWeight = out.weight;
+      out.preDeloadReps = out.reps;
       return out;
     }),
   }));
@@ -1365,6 +1407,14 @@ function applyWeeklyVolumeShape(
         out.weight = Math.max(out.weight, ex.preDeloadWeight);
         delete out.preDeloadWeight;
       }
+      // Backlog #8: same max()-wins restore for the rep target, which the
+      // post-novice deload recipe cuts. Without it the cut would decay the
+      // prescription every mesocycle — the exact hazard #5 fixed for sets
+      // and load, reintroduced through a third field.
+      if (typeof ex.preDeloadReps === "number") {
+        out.reps = Math.max(out.reps, ex.preDeloadReps);
+        delete out.preDeloadReps;
+      }
       if (ex.isAccessory === true) {
         out.sets =
           weekInMeso === 1
@@ -1380,7 +1430,10 @@ function applyWeeklyVolumeShape(
   }));
 }
 
-export function advanceWeek(state: ProgramState): ProgramState {
+export function advanceWeek(
+  state: ProgramState,
+  experience?: Experience
+): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
   const nextWeek = state.weekNumber >= 52 ? 1 : state.weekNumber + 1;
@@ -1405,7 +1458,7 @@ export function advanceWeek(state: ProgramState): ProgramState {
   // scalar.
   const fatigue = computeFatigueScore(state.workouts);
   if (prescription.deload) {
-    workouts = applyDeload(prepareForDeload(workouts));
+    workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
     workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction

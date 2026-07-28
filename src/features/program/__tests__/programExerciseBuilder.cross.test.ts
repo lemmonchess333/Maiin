@@ -42,6 +42,7 @@ describe("buildProgramExercise CF ↔ client normalizeExercise parity", () => {
       { repRangeMax: 12 },
       { baseSets: 4 },
       { preDeloadWeight: 55 },
+      { preDeloadReps: 10 },
       { restSeconds: 90 },
       { isAccessory: true },
       { isAccessory: false },

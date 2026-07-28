@@ -19,12 +19,11 @@ Ordered by Helms's pyramid (section 6) — adherence beats programming, and
 ~80% of outcome lives in the bottom levels. Within a tier, by value-per-effort.
 
 **Shipped so far:** P1/#6 (rep ranges + template boundary), #1 (lighter-day
-swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp
-
-- the compounding auto-deload decay fix it surfaced), #7 (progression scheme
-  per exercise type). Next unstarted: #8. Each shipped item's engine changes
-  carry a `backlog #N` comment at the seam, so `git grep "backlog #"` in
-  `src/features/program` finds them.
+swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp,
+plus the compounding auto-deload decay it surfaced), #7 (progression scheme per
+exercise type), #8 (deload by training age). Next unstarted: #9. Each shipped
+item's engine changes carry a `backlog #N` comment at the seam, so
+`git grep "backlog #"` in `src/features/program` finds them.
 
 **Tier 1 — Adherence (the layer the app owns)**
 
@@ -92,6 +91,30 @@ swap), #2 (volume PR axis), #3 (day roles), #4 (effort cues), #5 (volume ramp
 8. **Deload by training age** (H4 resolving M4): the current sets−1 ×0.85
    deload is the novice recipe applied to everyone; intermediates should get
    half volume at held load. Decide deliberately.
+
+   STATUS 2026-07-28 — shipped as decided above; H4 is the resolution the
+   entry already named, and `profile.experience` (captured at onboarding,
+   already read by `startingLoads` and `matchTemplate`) is the discriminator,
+   so no new capture was needed. `applyDeload(workouts, experience?)`:
+   beginner **or anything unknown/absent** keeps the pre-#8 recipe byte for
+   byte (sets−1 floor 2, load ×0.85 on the 2.5 grid, reps untouched);
+   intermediate/advanced get sets−1 **and** reps−2 (floor 3) at held load —
+   Helms's worked 3×10×200 → 2×8×200. Threaded through `advanceWeek` (both
+   `useProgram` call sites) and the server `applyDeloadWeek` reducer, which
+   already had `profile` in hand.
+   The rep cut needed a restore or it would decay the prescription every
+   mesocycle — the identical hazard #5 had just fixed for sets and load,
+   arriving through a third field. `prepareForDeload` now stashes
+   `preDeloadReps` and `applyWeeklyVolumeShape` restores it max()-wins,
+   unconditionally on both sides so switching experience level mid-meso
+   can't strand a cut.
+   `deloadWeight` in `easierToday` deliberately did NOT follow. It is the
+   weight half only, and it powers the bad-day "make this session lighter"
+   lever — a different concept from a mesocycle step-back — so the triple-
+   siting pin now reads: engine ↔ CF mirror agree for **every** experience
+   value, and `deloadWeight` is pinned against the beginner recipe. Both
+   new pins verified by mutation.
+
 9. **Joint plateau/recovery rule** (H5): connect `plateauCount` and
    `computeRecoveryScore` per Helms's flowchart — plateaued+recovered → add
    volume; plateaued+unrecovered → light week; recurring → reorganize.

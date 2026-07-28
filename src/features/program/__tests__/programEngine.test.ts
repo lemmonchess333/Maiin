@@ -1045,3 +1045,96 @@ describe("progression scheme per exercise type (backlog #7)", () => {
     expect(next.reps).toBe(13);
   });
 });
+
+// Backlog #8 — the deload recipe follows TRAINING AGE (H4 resolving M4).
+// Tropos's sets−1 + load−15% is Helms's novice answer; it was applied to
+// everyone. Post-novice gets ~half the volume at the SAME load instead.
+describe("deload by training age (backlog #8)", () => {
+  const week = (): WorkoutDay[] => [
+    {
+      dayName: "Push",
+      dayType: "push",
+      completed: false,
+      skipped: false,
+      exercises: [
+        makeTestExercise({ sets: 3, reps: 10, weight: 100 }),
+        makeTestExercise({ sets: 3, reps: 5, weight: 140 }),
+        makeTestExercise({ sets: 2, reps: 12, weight: 0 }), // bodyweight
+      ],
+    },
+  ];
+
+  it("beginners keep the pre-#8 recipe exactly (sets-1, load x0.85)", () => {
+    for (const exp of [undefined, "beginner" as const]) {
+      const out = applyDeload(week(), exp)[0].exercises;
+      expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
+      expect(out.map((e) => e.weight)).toEqual([85, 120, 0]);
+      expect(out.map((e) => e.reps)).toEqual([10, 5, 12]); // reps untouched
+    }
+  });
+
+  it("intermediates halve volume at held load (Helms 3x10x200 -> 2x8x200)", () => {
+    const out = applyDeload(week(), "intermediate")[0].exercises;
+    expect(out.map((e) => e.sets)).toEqual([2, 2, 2]);
+    expect(out.map((e) => e.reps)).toEqual([8, 3, 10]); // -2, floored at 3
+    expect(out.map((e) => e.weight)).toEqual([100, 140, 0]); // load untouched
+  });
+
+  it("advanced reads the same as intermediate", () => {
+    expect(applyDeload(week(), "advanced")).toEqual(
+      applyDeload(week(), "intermediate")
+    );
+  });
+
+  it("restores the cut reps on meso exit — no decay across mesocycles", () => {
+    // Symmetric with #5's sets/load restore. Without preDeloadReps the
+    // post-novice cut would compound: 10 -> 8 -> 6 -> 4 every four weeks.
+    const { workouts } = generateProgram("recomp", 3, undefined, "hypertrophy");
+    let st: ProgramState = {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+    const repsGrid = (s: ProgramState) =>
+      s.workouts.map((d) => d.exercises.map((e) => e.reps));
+    const start = repsGrid(st);
+
+    for (let meso = 0; meso < 2; meso += 1) {
+      st = advanceWeek(st, "intermediate"); // w2
+      st = advanceWeek(st, "intermediate"); // w3
+      st = advanceWeek(st, "intermediate"); // w4 — deload, reps cut
+      st.workouts.forEach((d, di) =>
+        d.exercises.forEach((ex, ei) => {
+          expect(ex.reps).toBe(Math.max(3, start[di][ei] - 2));
+        })
+      );
+      st = advanceWeek(st, "intermediate"); // meso exit — reps restored
+      expect(repsGrid(st)).toEqual(start);
+    }
+  });
+
+  it("restores reps even if the user switches experience mid-mesocycle", () => {
+    // The stash is unconditional, so a user who deloads as an intermediate
+    // and advances as a beginner still gets their rep target back.
+    const { workouts } = generateProgram("recomp", 2, undefined, "hypertrophy");
+    let st: ProgramState = {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      workouts,
+      fatigueScore: 0,
+      updatedAt: 0,
+    };
+    const before = st.workouts.map((d) => d.exercises.map((e) => e.reps));
+    st = advanceWeek(st, "intermediate"); // week 4 deload — reps cut
+    st = advanceWeek(st, "beginner"); // week 5 — restore must still fire
+    expect(st.workouts.map((d) => d.exercises.map((e) => e.reps))).toEqual(
+      before
+    );
+  });
+});

@@ -153,6 +153,14 @@ export interface ProgramExercise {
    */
   preDeloadWeight?: number;
   /**
+   * Rep target stored on entering an automatic deload week and restored
+   * (max(live, stored)) on meso exit, then removed. Only the post-novice
+   * deload recipe (backlog #8) cuts reps, but the stash is unconditional
+   * so the restore can't depend on which recipe ran — a user who changes
+   * their experience level mid-mesocycle must still get their reps back.
+   */
+  preDeloadReps?: number;
+  /**
    * Per-exercise rest between sets in seconds, carried from
    * TemplateExercise.restSeconds. WorkoutSession prefers this over
    * profile.defaultRestSeconds; a mid-session manual target change by the
@@ -649,6 +657,9 @@ export function normalizeExercise(
     ...(ex.baseSets !== undefined ? { baseSets: ex.baseSets } : {}),
     ...(ex.preDeloadWeight !== undefined
       ? { preDeloadWeight: ex.preDeloadWeight }
+      : {}),
+    ...(ex.preDeloadReps !== undefined
+      ? { preDeloadReps: ex.preDeloadReps }
       : {}),
     ...(ex.restSeconds !== undefined ? { restSeconds: ex.restSeconds } : {}),
     ...(ex.isAccessory !== undefined ? { isAccessory: ex.isAccessory } : {}),

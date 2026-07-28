@@ -1415,6 +1415,49 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
     expect(legs.exercises[0]).toMatchObject({ sets: 2, weight: 120 });
   });
 
+  it("post-novice lifters get the volume recipe instead (backlog #8)", () => {
+    // Helms H4: intermediate+ take ~half the volume at the SAME load, so the
+    // reducer must read profile.experience. An absent/unknown value stays on
+    // the novice recipe the two tests either side of this one pin.
+    const withExperience = (experience) =>
+      applyProgramCommand({
+        state: baseState(),
+        profile: { experience },
+        command: applyCmd(),
+        now: NOW,
+      }).state.workouts;
+
+    const inter = withExperience("intermediate");
+    // Push: bench 3×8×100 → 2×6×100; row 3×10×60 → 2×8×60
+    expect(inter[0].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 6,
+      weight: 100,
+    });
+    expect(inter[0].exercises[1]).toMatchObject({
+      sets: 2,
+      reps: 8,
+      weight: 60,
+    });
+    // Legs: squat 3×5×140 → 2×3×140 (rep floor is 3)
+    expect(inter[1].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 3,
+      weight: 140,
+    });
+
+    expect(withExperience("advanced")).toEqual(inter);
+    // Unknown / absent → novice recipe (load cut, reps untouched)
+    expect(withExperience("nonsense")[0].exercises[0]).toMatchObject({
+      sets: 2,
+      reps: 8,
+      weight: 85,
+    });
+    expect(withExperience(undefined)[0].exercises[0]).toMatchObject({
+      weight: 85,
+    });
+  });
+
   it("sets currentPhase deload, clears fatigue, stamps updatedAt", () => {
     const input = baseState();
     input.fatigueScore = 7;

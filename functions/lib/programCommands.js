@@ -938,7 +938,7 @@ function requireWeekCursor(state, command) {
   }
 }
 
-function applyDeloadWeekCommand(state, command, now) {
+function applyDeloadWeekCommand(state, profile, command, now) {
   requireWeekCursor(state, command);
   if (state.currentPhase === "deload") {
     failedPrecondition("This week is already a deload week.");
@@ -952,7 +952,9 @@ function applyDeloadWeekCommand(state, command, now) {
       fatigueScore: state.fatigueScore,
       appliedAt: now,
     },
-    workouts: applyDeloadToWorkouts(state.workouts),
+    // Backlog #8: the recipe follows training age. An absent/unknown
+    // experience falls back to the novice recipe — the pre-#8 behaviour.
+    workouts: applyDeloadToWorkouts(state.workouts, profile && profile.experience),
     currentPhase: "deload",
     fatigueScore: 0,
   };
@@ -1279,7 +1281,7 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = overrideRunDay(current, validated);
       break;
     case "applyDeloadWeek":
-      next = applyDeloadWeekCommand(current, validated, now);
+      next = applyDeloadWeekCommand(current, profile || {}, validated, now);
       break;
     case "revertDeloadWeek":
       next = revertDeloadWeekCommand(current, validated);
