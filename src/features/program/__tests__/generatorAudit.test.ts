@@ -24,6 +24,31 @@ const week = (days: number, goal: (typeof GOALS)[number]) =>
 
 const allEx = (w: WorkoutDay[]) => w.flatMap((d) => d.exercises);
 
+function tex(
+  exerciseId: string,
+  name: string,
+  movementCategory: WorkoutDay["exercises"][number]["movementCategory"],
+  weight: number
+): WorkoutDay["exercises"][number] {
+  return {
+    name,
+    exerciseId,
+    movementCategory,
+    sets: 3,
+    reps: 8,
+    weight,
+    progressionType: "double",
+    lastSuccessfulWeight: weight,
+    lastAttemptedWeight: weight,
+    consecutiveFailures: 0,
+    plateauCount: 0,
+    performanceHistory: [
+      { date: "2026-01-01", weight, repsCompleted: 8, repsTarget: 8 },
+    ],
+    lastPerformance: null,
+  };
+}
+
 describe("generator audit — cross-week lift repetition", () => {
   it("never prescribes the same lift more than twice in a week", () => {
     // The owner-reported defect, and Helms's literal counter-example:
@@ -205,5 +230,102 @@ describe("generator audit — the generator is deterministic", () => {
         expect(runs.size, `${goal}/${days}d`).toBe(1);
       }
     }
+  });
+});
+
+describe("generator audit — a template plan survives its first regenerate", () => {
+  // Templates are the ONLY seed path at onboarding, and their day names
+  // ("Full Body A", "Upper A") can never equal the generator's
+  // ("Full Body — Squat Focus"). Measured 2026-07-28 on the shipped code, the
+  // first time a template user changed any setting:
+  //   Bench Press@100 [from Barbell Squat] · Pull-Ups@106 [from Deadlift]
+  // — a deadlift's load on a bodyweight pull-up. There was no test at this
+  // boundary at all; the one that looked like it stamped the same weight on
+  // every slot, so no permutation could fail it.
+  const templatePlan = (): WorkoutDay[] => [
+    {
+      dayName: "Full Body A",
+      dayType: "full_body",
+      completed: false,
+      exercises: [
+        tex("squat", "Barbell Squat", "knee_dominant", 100),
+        tex("bench-press", "Bench Press", "horizontal_push", 101),
+        tex("barbell-row", "Barbell Row", "horizontal_pull", 102),
+        tex("overhead-press", "Overhead Press", "vertical_push", 103),
+        tex("cable-crunch", "Cable Crunch", "core", 104),
+      ],
+    },
+    {
+      dayName: "Full Body B",
+      dayType: "full_body",
+      completed: false,
+      exercises: [
+        tex("deadlift", "Deadlift", "hip_dominant", 105),
+        tex("db-bench", "Dumbbell Bench Press", "horizontal_push", 106),
+        tex("lat-pulldown", "Lat Pulldown", "vertical_pull", 107),
+        tex("barbell-curl", "Barbell Curl", "arms_biceps", 108),
+        tex("cable-crunch", "Cable Crunch", "core", 109),
+      ],
+    },
+    {
+      dayName: "Full Body C",
+      dayType: "full_body",
+      completed: false,
+      exercises: [
+        tex("front-squat", "Front Squat", "knee_dominant", 110),
+        tex("incline-bench", "Incline Bench Press", "horizontal_push", 111),
+        tex("seated-row", "Seated Cable Row", "horizontal_pull", 112),
+        tex(
+          "rope-tricep-pushdown",
+          "Rope Tricep Pushdown",
+          "arms_triceps",
+          113
+        ),
+        tex("cable-crunch", "Cable Crunch", "core", 114),
+      ],
+    },
+  ];
+
+  it("never carries one lift's logged load onto a different movement", () => {
+    const saved = templatePlan();
+    const byWeight = new Map(
+      saved
+        .flatMap((d) => d.exercises)
+        .map((e) => [e.weight, e.movementCategory] as const)
+    );
+    const { workouts } = generateProgram(
+      "recomp",
+      3,
+      saved,
+      "general",
+      undefined
+    );
+    for (const day of workouts) {
+      for (const ex of day.exercises) {
+        const from = byWeight.get(ex.weight);
+        if (from === undefined) continue; // a default, not a carry — fine
+        expect(
+          from,
+          `${day.dayName}: ${ex.name} (${ex.movementCategory}) carried a ${from} load`
+        ).toBe(ex.movementCategory);
+      }
+    }
+  });
+
+  it("still keeps the loads it legitimately can", () => {
+    // The guard must not be satisfied by dropping every load. Slot alignment
+    // puts each saved lift at the index its own movement is built at.
+    const saved = templatePlan();
+    const { workouts } = generateProgram(
+      "recomp",
+      3,
+      saved,
+      "general",
+      undefined
+    );
+    const carried = workouts
+      .flatMap((d) => d.exercises)
+      .filter((e) => e.weight >= 100 && e.weight <= 114);
+    expect(carried.length).toBeGreaterThanOrEqual(8);
   });
 });

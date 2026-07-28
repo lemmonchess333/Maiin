@@ -1903,6 +1903,13 @@ describe("adjacency ordering (backlog #10, M6)", () => {
 // user changes a setting. One such off-by-one (the PPL legs day's core slot,
 // calling findExisting(2, 4) into a four-slot day) survived until this test
 // existed.
+//
+// CORRECTED 2026-07-28. This test used to stamp `weight: 61` on EVERY
+// exercise and then assert every exercise still read 61 — so any permutation
+// of the carry passed it, including the one an audit found shipping
+// (`Bench Press@100 [from Barbell Squat]`). It also computed a `before` and
+// never compared against it. Distinct per-slot weights are the whole point:
+// they make a swap visible.
 describe("regenerate preserves every logged load (all splits)", () => {
   it.each([1, 2, 3, 4, 5, 6])("%i-day split", (days) => {
     const first = generateProgram(
@@ -1911,15 +1918,25 @@ describe("regenerate preserves every logged load (all splits)", () => {
       undefined,
       "hypertrophy"
     ).workouts;
+    // A unique load per LIFT, so a mis-carry names its own source.
+    const loadFor = new Map<string, number>();
+    first
+      .flatMap((d) => d.exercises)
+      .forEach((e, i) => {
+        if (!loadFor.has(e.exerciseId)) loadFor.set(e.exerciseId, 100 + i);
+      });
     const trained = first.map((d) => ({
       ...d,
-      exercises: d.exercises.map((e) => ({
-        ...e,
-        weight: 61,
-        performanceHistory: [
-          { date: "2026-01-01", weight: 61, repsCompleted: 8, repsTarget: 8 },
-        ],
-      })),
+      exercises: d.exercises.map((e) => {
+        const w = loadFor.get(e.exerciseId) as number;
+        return {
+          ...e,
+          weight: w,
+          performanceHistory: [
+            { date: "2026-01-01", weight: w, repsCompleted: 8, repsTarget: 8 },
+          ],
+        };
+      }),
     }));
     const again = generateProgram(
       "recomp",
@@ -1928,13 +1945,20 @@ describe("regenerate preserves every logged load (all splits)", () => {
       "hypertrophy"
     ).workouts;
 
-    again.forEach((d, di) =>
+    const sourceOf = (w: number) =>
+      [...loadFor.entries()].find(([, v]) => v === w)?.[0] ?? "unknown";
+
+    again.forEach((d) =>
       d.exercises.forEach((e, ei) => {
-        const before = trained[di]?.exercises[ei];
-        if (!before) return;
-        expect(e.weight, `${d.dayName} / slot ${ei} (${e.exerciseId})`).toBe(
-          61
-        );
+        const expected = loadFor.get(e.exerciseId);
+        expect(
+          expected,
+          `${d.dayName} / slot ${ei}: ${e.exerciseId} was not in the saved plan`
+        ).toBeDefined();
+        expect(
+          e.weight,
+          `${d.dayName} / slot ${ei}: ${e.exerciseId} carried ${sourceOf(e.weight)}'s load`
+        ).toBe(expected);
         expect(
           e.performanceHistory?.length,
           `${d.dayName} / slot ${ei} (${e.exerciseId})`

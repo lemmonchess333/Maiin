@@ -293,6 +293,17 @@ export function primaryGoalLabel(g?: PrimaryGoal): string {
  * which re-picks from the non-primary pool and can't carry `existing` —
  * using it there would rewrite users' exercises and wipe their logged loads
  * on every regenerate. Hence the parameter (backlog #15).
+ *
+ * `existing` is only carried when it is the SAME MOVEMENT. The builders find
+ * it positionally (`findExisting(dayIdx, exIdx)`), which assumes the saved
+ * plan's slots line up with the ones being built — true for a
+ * generated→generated regenerate, and false for anyone whose plan came from a
+ * TEMPLATE. Measured 2026-07-28 on a template user's first settings change:
+ * `Bench Press@100 [from Barbell Squat]`, `Pull-Ups@106 [from Deadlift]` —
+ * a deadlift's load landed on a bodyweight pull-up. The category check makes
+ * the corruption impossible; a slot with no same-movement predecessor falls
+ * back to defaults and is then seeded, which loses a load but never lies
+ * about one. (`carryExistingAccessories` has always guarded this way.)
  */
 function makeExercise(
   category: MovementCategory,
@@ -300,9 +311,11 @@ function makeExercise(
   reps: number,
   weight: number,
   progression: "double" | "linear",
-  existing?: ProgramExercise,
+  existingAtSlot?: ProgramExercise,
   isAccessory = false
 ): ProgramExercise {
+  const existing =
+    existingAtSlot?.movementCategory === category ? existingAtSlot : undefined;
   const ex = pickExercise(
     category,
     existing?.plateauCount ?? 0,
@@ -1225,12 +1238,19 @@ export function generateProgram(
         break;
       }
       case "ppl_ul":
+        // The second builder starts at week position 3, so it must be handed
+        // the saved plan FROM position 3 — its `findExisting(0, …)` means
+        // "my first day", not "the week's first day". Without the slice the
+        // Upper/Lower half of a 5-day plan carried its loads from the
+        // Push/Pull days; found 2026-07-28 once the carry test used
+        // distinct per-lift weights instead of stamping 61 everywhere.
         workouts = [
           ...buildPPL(profile, nutritionGoal, existingWorkouts).slice(0, 3),
-          ...buildUpperLower(profile, nutritionGoal, existingWorkouts).slice(
-            0,
-            2
-          ),
+          ...buildUpperLower(
+            profile,
+            nutritionGoal,
+            existingWorkouts?.slice(3)
+          ).slice(0, 2),
         ];
         break;
       case "ppl_x2": {
@@ -1246,7 +1266,13 @@ export function generateProgram(
         // this (capped at 6 days) but existing programState rows on disk
         // may still pass through here on regeneration.
         const ppl7 = buildPPL(profile, nutritionGoal, existingWorkouts);
-        const fb = buildFullBody(profile, nutritionGoal, 1, existingWorkouts);
+        // Same offset rule as `ppl_ul` — this day sits at week position 6.
+        const fb = buildFullBody(
+          profile,
+          nutritionGoal,
+          1,
+          existingWorkouts?.slice(6)
+        );
         workouts = [
           ...ppl7,
           buildLegsB(profile, nutritionGoal, existingWorkouts),
@@ -1279,7 +1305,40 @@ export function generateProgram(
    * Matching on `dayName` fixes it, and fixes it generally — the carry stops
    * depending on day order at all, so ANY future reordering is safe. A probe
    * build (no existing, so it is pure and cheap) supplies the canonical order.
+   *
+   * SLOTS are aligned the same way, and for the same reason one layer down
+   * (added 2026-07-28). Day names only line up between two GENERATED plans;
+   * a plan seeded from a template has names the generator never emits
+   * ("Full Body A", "Upper A", "Push A"), so alignment bailed and every
+   * template user's first settings change carried their saved loads onto
+   * whatever the builder happened to put at the same index. `makeExercise`
+   * now refuses a cross-movement carry outright, which makes that safe; this
+   * pass is what makes it lossLESS as well, by putting each saved lift at the
+   * index its own movement will be built at.
    */
+  const alignSlots = (saved: WorkoutDay, reference: WorkoutDay): WorkoutDay => {
+    const pool = [...saved.exercises];
+    const take = (match: (e: ProgramExercise) => boolean) => {
+      const i = pool.findIndex(match);
+      return i >= 0 ? pool.splice(i, 1)[0] : undefined;
+    };
+    // Two passes so an exact same-lift match is never stolen by a
+    // same-category slot that happens to come first.
+    const byId = reference.exercises.map((ref) =>
+      take((e) => e.exerciseId === ref.exerciseId)
+    );
+    const exercises = reference.exercises.map(
+      (ref, i) =>
+        byId[i] ?? take((e) => e.movementCategory === ref.movementCategory)
+    );
+    // Leftovers keep their identity at the tail; unmatched slots take a
+    // placeholder the category guard in `makeExercise` will reject.
+    return {
+      ...saved,
+      exercises: exercises.map((e, i) => e ?? pool[i] ?? saved.exercises[i]),
+    };
+  };
+
   const alignExistingTo = (
     saved: WorkoutDay[] | undefined,
     reference: WorkoutDay[]
@@ -1291,15 +1350,24 @@ export function generateProgram(
       if (list) list.push(d);
       else byName.set(d.dayName, [d]);
     }
-    // Every reference name must be present the same number of times, or the
-    // saved plan is a different shape and positional is the best we can do.
-    const aligned: WorkoutDay[] = [];
-    for (const c of reference) {
-      const list = byName.get(c.dayName);
-      if (!list || list.length === 0) return saved;
-      aligned.push(list.shift() as WorkoutDay);
+    // Names match one-for-one → a generated plan; align days by name. Any
+    // mismatch means the plan came from somewhere else (a template) and the
+    // day ORDER is all we can keep.
+    const namesLineUp = reference.every(
+      (c) => (byName.get(c.dayName) ?? []).length > 0
+    );
+    const dayAligned: WorkoutDay[] = [];
+    if (namesLineUp) {
+      const pool = new Map([...byName].map(([k, v]) => [k, [...v]]));
+      for (const c of reference) {
+        const list = pool.get(c.dayName);
+        if (!list || list.length === 0) return saved;
+        dayAligned.push(list.shift() as WorkoutDay);
+      }
+    } else {
+      dayAligned.push(...saved);
     }
-    return aligned;
+    return dayAligned.map((d, i) => alignSlots(d, reference[i]));
   };
 
   let workouts = buildSplit(
