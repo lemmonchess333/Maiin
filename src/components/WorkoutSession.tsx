@@ -32,6 +32,7 @@ import {
   warmupTargets,
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
+import { formatRepTarget } from "@/features/program/templateConversion";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -1809,7 +1810,8 @@ export default function WorkoutSession({
         {/* Prescription hint */}
         {currentExercise && (
           <p className="text-xs text-muted-foreground text-center">
-            Target: {currentExercise.sets}&times;{currentExercise.reps}
+            Target: {currentExercise.sets}&times;
+            {formatRepTarget(currentExercise)}
             {currentExercise.weight > 0
               ? ` @ ${currentExercise.weight}kg`
               : getExerciseById(currentExercise.exerciseId)?.equipment ===

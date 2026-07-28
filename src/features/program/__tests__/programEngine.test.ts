@@ -1677,3 +1677,79 @@ describe("variation bank id integrity", () => {
     expect(bad).toEqual([]);
   });
 });
+
+// Backlog #7's time axis (N2) — timed holds count SECONDS, not reps.
+describe("timed holds (backlog #7 time axis)", () => {
+  const plank = (o: Partial<ProgramExercise> = {}) =>
+    makeTestExercise({
+      name: "Plank",
+      exerciseId: "plank",
+      movementCategory: "core",
+      weight: 0,
+      lastSuccessfulWeight: 0,
+      lastAttemptedWeight: 0,
+      reps: 30,
+      baseReps: 30,
+      repRangeMax: 45,
+      repUnit: "seconds",
+      ...o,
+    });
+
+  it("climbs in 5-second steps, not 1-rep steps", () => {
+    const out = applyProgression(plank(), 32, 0, "recomp", false);
+    expect(out.reps).toBe(35);
+  });
+
+  it("stops at the authored ceiling rather than drifting", () => {
+    const out = applyProgression(
+      plank({ reps: 43, baseReps: 43 }),
+      45,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.reps).toBe(45);
+  });
+
+  it("prompts to add load at the ceiling, not at 20 'reps'", () => {
+    // The defect: a plank starts at 30, already ABOVE MAX_BODYWEIGHT_REPS, so
+    // any overshoot immediately advised "Hitting 20+ reps — add load" at what
+    // is an ordinary hold length.
+    const belowCeiling = applyProgression(plank(), 32, 0, "recomp", false);
+    expect(belowCeiling.notes).toBeUndefined();
+
+    const atCeiling = applyProgression(
+      plank({ reps: 45, baseReps: 45 }),
+      47,
+      0,
+      "recomp",
+      false
+    );
+    expect(atCeiling.notes).toMatch(/add load/i);
+    expect(atCeiling.notes).not.toMatch(/20\+ reps/);
+    expect(atCeiling.reps).toBe(45); // held, not bumped past the ceiling
+  });
+
+  it("falls back to a 60s ceiling when no range was authored", () => {
+    const out = applyProgression(
+      plank({ reps: 60, baseReps: 60, repRangeMax: undefined }),
+      65,
+      0,
+      "recomp",
+      false
+    );
+    expect(out.notes).toMatch(/add load/i);
+    expect(out.reps).toBe(60);
+  });
+
+  it("leaves ordinary bodyweight reps alone", () => {
+    // The rep path must be untouched: a pull-up still steps by 1 and still
+    // uses the 20-rep cap.
+    const pullup = makeBodyweightExercise({ reps: 8 });
+    expect(applyProgression(pullup, 10, 0, "recomp", false).reps).toBe(9);
+    const capped = makeBodyweightExercise({ reps: 20 });
+    const out = applyProgression(capped, 22, 0, "recomp", false);
+    expect(out.reps).toBe(20);
+    expect(out.notes).toMatch(/20\+ reps/);
+  });
+});

@@ -99,6 +99,10 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/** Timed holds climb in 5-second steps (N2's time axis). */
+const HOLD_STEP_SECONDS = 5;
+/** Ceiling for a hold with no authored range — past this, add load instead. */
+const MAX_HOLD_SECONDS = 60;
 // Load step (backlog #7, H3) — the discriminator lives in movementClass.ts;
 // see that module for why `isAccessory` was the wrong one.
 
@@ -1329,7 +1333,24 @@ export function applyProgression(
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
+  // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
+  // neither the +1 step nor the 20-rep ceiling means anything to it: a plank
+  // prescribed 30-45s starts ABOVE the rep cap, so any overshoot immediately
+  // advised "add load" at an ordinary hold length. Time climbs in 5-second
+  // steps toward the authored ceiling, and the add-load prompt waits until
+  // the hold is genuinely long.
+  const isTimed = exercise.repUnit === "seconds";
   const bumpBodyweightReps = () => {
+    if (isTimed) {
+      const ceiling = exercise.repRangeMax ?? MAX_HOLD_SECONDS;
+      if (exercise.reps >= ceiling) {
+        updated.notes =
+          "Holding this long already — add load (weighted vest / band) to keep progressing.";
+      } else {
+        updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
+      }
+      return;
+    }
     if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
       updated.notes =
         "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";

@@ -98,12 +98,27 @@ rather than inside a tier's existing list.
    drifted from `normalizeExercise` since P1/#5 and the cross-test matrix
    didn't vary those fields, so nothing caught it — matrix widened, and the
    pin verified by removing a carry and watching it fail.
+   STATUS 2026-07-28 (time axis) — N2's time-based progression now exists.
+   Probed first: the templates carry 6 duration prescriptions across 2
+   exercises (Plank, Superman Hold), and `parseTemplateReps` was turning
+   `"30-45s"` into `{reps: 30}` — wrong unit, and the authored 45s ceiling
+   discarded. Three consequences, all live: the user read "3 × 30" with no
+   unit; the range never climbed; and because a plank STARTS at 30, already
+   above `MAX_BODYWEIGHT_REPS` (20), any overshoot immediately advised
+   "Hitting 20+ reps — add load" at an entirely ordinary hold length.
+   The fix is smaller than N2 implies, because a hold is structurally a range
+   that climbs exactly like a rep range — the only thing missing was the
+   UNIT. `RepUnit` ("reps" | "seconds", absent = reps) rides the existing
+   range machinery: climbs in 5-second steps per N2, stops at the authored
+   ceiling, and defers the add-load prompt until the hold is genuinely long
+   (60s fallback where no range was authored). Per-side forms ("10/leg",
+   "20/side") deliberately stay plain reps — unlike a duration, the NUMBER is
+   already in the right unit. `formatRepTarget` renders it.
    NOT landed, still open: the 4-week compound WAVE (mains take the goal's
    scheme as-is; #3's day roles already put rep variation in the week, and
    stacking a weekly wave on daily undulation needs deciding, not assuming),
-   plus N2's two missing axes — time-based progression (blocked on duration
-   prescriptions being strings, see `parseTemplateReps`) and
-   assistance-reduction for band/machine-assisted bodyweight work.
+   and assistance-reduction for band/machine-assisted bodyweight work — which
+   needs an "assistance" concept the data model has no room for yet.
 
 8. **Deload by training age** (H4 resolving M4): the current sets−1 ×0.85
    deload is the novice recipe applied to everyone; intermediates should get
