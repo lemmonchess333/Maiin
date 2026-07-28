@@ -1,4 +1,5 @@
 import type {
+  Experience,
   Goal,
   GoalProfile,
   MovementCategory,
@@ -34,25 +35,33 @@ import { format } from "date-fns";
 const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
   strength: {
     mainReps: 5,
+    mainRepsMax: 7,
     accessoryReps: 8,
+    accessoryRepsMax: 12,
     volumeMultiplier: 0.9,
     mainProgression: "linear",
   },
   hypertrophy: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
   fat_loss: {
     mainReps: 12,
+    mainRepsMax: 15,
     accessoryReps: 15,
+    accessoryRepsMax: 20,
     volumeMultiplier: 1.0,
     mainProgression: "linear",
   },
   general: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 1.0,
     mainProgression: "double",
   },
@@ -60,7 +69,9 @@ const GOAL_PROFILES: Record<PrimaryGoal, GoalProfile> = {
   // fullBodyBeginner prescription: moderate reps, lower volume.
   running: {
     mainReps: 8,
+    mainRepsMax: 12,
     accessoryReps: 12,
+    accessoryRepsMax: 15,
     volumeMultiplier: 0.85,
     mainProgression: "linear",
   },
@@ -75,6 +86,15 @@ export function goalProfileFor(primaryGoal?: PrimaryGoal): GoalProfile {
 const RPE_HOLD_THRESHOLD = 9.5;
 /** Bodyweight rep target stops climbing here; the user is prompted to add load. */
 const MAX_BODYWEIGHT_REPS = 20;
+/**
+ * Load step when an exercise earns weight (training-book backlog #7, H3).
+ * The same 2.5 kg is ~1.5% of a squat but ~10% of a curl, which is Helms's
+ * reason isolations progress by REPS and only take load in microplate steps.
+ * The lean-bulk accelerator (`goalWeightBonus`) is a compound bias too — a
+ * curl doubling its step because the user is bulking is the same error.
+ */
+const COMPOUND_LOAD_STEP = 2.5;
+const ISOLATION_LOAD_STEP = 1.25;
 
 /* ================================
    WEEKLY PRESCRIPTION
@@ -269,7 +289,13 @@ function makeAccessory(
     reps,
     baseReps: reps,
     weight,
-    progressionType: "linear",
+    // Backlog #7 (H3): isolations progress by REPS, not load — `isAccessory`
+    // is exactly Helms's compound/isolation discriminator. The rep range that
+    // makes this meaningful is stamped in generateProgram's final pass. This
+    // also retires a runaway: the linear branch's `microloading` case added
+    // 1 kg per completed session with no rep requirement, which on an 8 kg
+    // lateral raise is a 12% jump every workout.
+    progressionType: "double",
     lastSuccessfulWeight: weight,
     lastAttemptedWeight: weight,
     consecutiveFailures: 0,
@@ -1043,6 +1069,29 @@ export function generateProgram(
   // (no-op without a load context, or for lifts with logged history).
   if (loadCtx) workouts = seedStartingLoads(workouts, loadCtx);
 
+  // Backlog #5: stamp the steady-state volume anchor AFTER balancing and
+  // seeding — advanceWeek derives each week's sets from baseSets.
+  // Backlog #7: stamp the rep-range ceiling in the same pass, and for the
+  // same reason — it must be derived from the FINAL `reps`, after day roles
+  // have shifted them. Carrying a fixed ceiling through applyDayRoles would
+  // hand a heavy day (reps 8 → 6) the untouched 12-rep ceiling, turning a
+  // 4-rep climb into a 6-rep one. Deriving from the span keeps the range
+  // width constant across every role.
+  const mainSpan = Math.max(0, profile.mainRepsMax - profile.mainReps);
+  const accessorySpan = Math.max(
+    0,
+    profile.accessoryRepsMax - profile.accessoryReps
+  );
+  workouts = workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const span = ex.isAccessory === true ? accessorySpan : mainSpan;
+      const out: ProgramExercise = { ...ex, baseSets: ex.sets };
+      if (span > 0) out.repRangeMax = ex.reps + span;
+      return out;
+    }),
+  }));
+
   return { splitType, workouts };
 }
 
@@ -1108,6 +1157,12 @@ export function applyProgression(
   // means the load is already at the edge — HOLD this cycle rather than add
   // load/reps, even on a completed set. No RPE logged → progress as before.
   const rpeOk = actualRpe == null || actualRpe < RPE_HOLD_THRESHOLD;
+  // Backlog #7 (H3): load moves in proportion to the lift. Compounds are
+  // unchanged (isAccessory absent on legacy rows ⇒ compound), so this only
+  // ever softens the step for isolations.
+  const isIsolation = exercise.isAccessory === true;
+  const loadStep = isIsolation ? ISOLATION_LOAD_STEP : COMPOUND_LOAD_STEP;
+  const loadBonus = isIsolation ? 0 : goalWeightBonus(goal);
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   const bumpBodyweightReps = () => {
@@ -1132,7 +1187,7 @@ export function applyProgression(
         // contract as every other progression path.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+            updated.weight = exercise.weight + loadStep + loadBonus;
             updated.reps = resetReps;
           } else {
             // Next target: one past what was actually done (monotonic —
@@ -1148,7 +1203,7 @@ export function applyProgression(
           bumpBodyweightReps();
         } else {
           // Weighted: increase weight and reset reps to base prescription
-          updated.weight = exercise.weight + 2.5 + goalWeightBonus(goal);
+          updated.weight = exercise.weight + loadStep + loadBonus;
           updated.reps = resetReps;
         }
       }
@@ -1181,7 +1236,8 @@ export function applyProgression(
         updated.weight = exercise.weight + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
-          updated.weight = exercise.weight + 2.5;
+          // No goal bonus on the linear path — pre-#7 behaviour, kept.
+          updated.weight = exercise.weight + loadStep;
           updated.reps = resetReps; // reset to original prescription, not drifted value
         }
       }
@@ -1246,17 +1302,52 @@ export function applyFatigue(
   }));
 }
 
-export function applyDeload(workouts: WorkoutDay[]): WorkoutDay[] {
+/**
+ * Deload rep floor for the post-novice recipe — a 5-rep strength main drops
+ * to 3, not to 1. Shared with the CF mirror.
+ */
+const DELOAD_REPS_FLOOR = 3;
+
+/**
+ * Backlog #8 (training-book backlog; H4 resolving M4): the deload recipe is
+ * chosen by TRAINING AGE. Tropos's sets−1 + load−15% is Helms's *novice*
+ * answer, and it was being applied to everyone.
+ *
+ * - Beginner (and any caller that doesn't know): unchanged — one set fewer
+ *   (floor 2) and working weight ×0.85 on the 2.5 kg grid. Cutting load is
+ *   what a novice needs, because a novice's stall is usually the load.
+ * - Intermediate / advanced: roughly half the volume at the SAME load —
+ *   one set fewer and two reps off the target (floor 3), weight untouched
+ *   (Helms's worked example: 3×10×200 → 2×8×200). Past the novice phase
+ *   the fatigue comes from accumulated volume, not from the top-end load,
+ *   and dropping the bar weight costs the skill exposure that keeps a
+ *   heavy lift sharp.
+ *
+ * Presentation policy: INVISIBLE — the step-back week simply looks different.
+ * The one visible surface is #4's step-back cue, which is recipe-agnostic.
+ */
+export function applyDeload(
+  workouts: WorkoutDay[],
+  experience?: Experience
+): WorkoutDay[] {
+  const holdLoad = experience === "intermediate" || experience === "advanced";
   return workouts.map((day) => ({
     ...day,
-    exercises: day.exercises.map((ex) => ({
-      ...ex,
-      sets: Math.max(2, ex.sets - 1),
-      // 0 weight (bodyweight or uncalibrated): no weight to deload
-      // — leave at 0. Sets reduction above is the deload signal.
-      // Weighted: round to 2.5kg increments (standard plate size).
-      weight: ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
-    })),
+    exercises: day.exercises.map((ex) => {
+      const sets = Math.max(2, ex.sets - 1);
+      if (holdLoad) {
+        return { ...ex, sets, reps: Math.max(DELOAD_REPS_FLOOR, ex.reps - 2) };
+      }
+      return {
+        ...ex,
+        sets,
+        // 0 weight (bodyweight or uncalibrated): no weight to deload
+        // — leave at 0. Sets reduction above is the deload signal.
+        // Weighted: round to 2.5kg increments (standard plate size).
+        weight:
+          ex.weight === 0 ? 0 : Math.round((ex.weight * 0.85) / 2.5) * 2.5,
+      };
+    }),
   }));
 }
 
@@ -1264,7 +1355,85 @@ export function shouldAdvanceWeek(workouts: WorkoutDay[]): boolean {
   return workouts.every((day) => day.completed || day.skipped);
 }
 
-export function advanceWeek(state: ProgramState): ProgramState {
+/** Accessory ramp ceiling — mirrors volumeModel's ACCESSORY_SET_CAP. */
+const ACCESSORY_RAMP_CAP = 5;
+
+/**
+ * Entering an automatic deload week: re-anchor sets to baseSets and stash
+ * each loaded exercise's weight and rep target so meso exit can restore
+ * them. applyDeload then cuts from the ANCHORED values, so its cut can
+ * never compound across mesocycles (the manual deload command guards the
+ * same hazard with its undo snapshot — the auto path had no guard at all).
+ *
+ * Both stashes are unconditional w.r.t. the deload recipe (backlog #8):
+ * only the post-novice recipe cuts reps and only the novice recipe cuts
+ * load, but a user who changes experience level mid-mesocycle must still
+ * get back whichever one was cut.
+ */
+function prepareForDeload(workouts: WorkoutDay[]): WorkoutDay[] {
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets ?? ex.sets;
+      const out: ProgramExercise = { ...ex, baseSets: base, sets: base };
+      if (out.weight > 0) out.preDeloadWeight = out.weight;
+      out.preDeloadReps = out.reps;
+      return out;
+    }),
+  }));
+}
+
+/**
+ * Backlog #5 (training-book backlog; M2/N1): the volume ramp. Non-deload
+ * weeks derive sets from the baseSets anchor — accessories run
+ * base−1 / base / base+1 across the meso (start below target, build,
+ * then deload), mains hold at base. Also restores pre-deload loads on
+ * meso exit (max() keeps anything the user progressed DURING the deload
+ * week). Anchor-derived recompute makes the weekly shape idempotent:
+ * applyFatigue's shave lasts exactly one week. Presentation policy:
+ * INVISIBLE — the prescription simply differs week to week.
+ */
+function applyWeeklyVolumeShape(
+  workouts: WorkoutDay[],
+  week: number
+): WorkoutDay[] {
+  const weekInMeso = ((week - 1) % 4) + 1; // 1..3 here; week 4 deloads
+  return workouts.map((day) => ({
+    ...day,
+    exercises: day.exercises.map((ex) => {
+      const base = ex.baseSets ?? ex.sets;
+      const out: ProgramExercise = { ...ex, baseSets: base };
+      if (typeof ex.preDeloadWeight === "number") {
+        out.weight = Math.max(out.weight, ex.preDeloadWeight);
+        delete out.preDeloadWeight;
+      }
+      // Backlog #8: same max()-wins restore for the rep target, which the
+      // post-novice deload recipe cuts. Without it the cut would decay the
+      // prescription every mesocycle — the exact hazard #5 fixed for sets
+      // and load, reintroduced through a third field.
+      if (typeof ex.preDeloadReps === "number") {
+        out.reps = Math.max(out.reps, ex.preDeloadReps);
+        delete out.preDeloadReps;
+      }
+      if (ex.isAccessory === true) {
+        out.sets =
+          weekInMeso === 1
+            ? Math.max(1, base - 1)
+            : weekInMeso === 3
+              ? Math.min(ACCESSORY_RAMP_CAP, base + 1)
+              : base;
+      } else {
+        out.sets = base;
+      }
+      return out;
+    }),
+  }));
+}
+
+export function advanceWeek(
+  state: ProgramState,
+  experience?: Experience
+): ProgramState {
   // Cap at 52 weeks (1 year) then recycle — the 4-week periodization cycle
   // continues via modulo, but the number stays meaningful for UI display
   const nextWeek = state.weekNumber >= 52 ? 1 : state.weekNumber + 1;
@@ -1289,8 +1458,9 @@ export function advanceWeek(state: ProgramState): ProgramState {
   // scalar.
   const fatigue = computeFatigueScore(state.workouts);
   if (prescription.deload) {
-    workouts = applyDeload(workouts);
+    workouts = applyDeload(prepareForDeload(workouts), experience);
   } else {
+    workouts = applyWeeklyVolumeShape(workouts, nextWeek);
     // Only apply fatigue on non-deload weeks to avoid double volume reduction
     workouts = applyFatigue(workouts, fatigue);
   }

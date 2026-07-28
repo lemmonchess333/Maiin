@@ -938,7 +938,7 @@ function requireWeekCursor(state, command) {
   }
 }
 
-function applyDeloadWeekCommand(state, command, now) {
+function applyDeloadWeekCommand(state, profile, command, now) {
   requireWeekCursor(state, command);
   if (state.currentPhase === "deload") {
     failedPrecondition("This week is already a deload week.");
@@ -952,7 +952,9 @@ function applyDeloadWeekCommand(state, command, now) {
       fatigueScore: state.fatigueScore,
       appliedAt: now,
     },
-    workouts: applyDeloadToWorkouts(state.workouts),
+    // Backlog #8: the recipe follows training age. An absent/unknown
+    // experience falls back to the novice recipe — the pre-#8 behaviour.
+    workouts: applyDeloadToWorkouts(state.workouts, profile && profile.experience),
     currentPhase: "deload",
     fatigueScore: 0,
   };
@@ -1075,8 +1077,10 @@ function replaceExercise(state, command) {
     "replacement"
   );
   const old = day.exercises[idx];
-  // Mirror the client replaceExercise: carry the old prescription
-  // (sets/reps/weight), re-infer the category, mint a new instance.
+  // Mirror the client replaceExercise: carry the old prescription, re-infer
+  // the category, mint a new instance. The slot's prescription fields carry
+  // too (backlog #7) — see Program.tsx for why each one, including why
+  // preDeloadWeight is deliberately excluded.
   const replacement = buildProgramExercise({
     name,
     exerciseId: command.replacementExerciseId,
@@ -1084,6 +1088,12 @@ function replaceExercise(state, command) {
     sets: old.sets,
     reps: old.reps,
     weight: old.weight,
+    baseReps: old.baseReps,
+    progressionType: old.progressionType,
+    ...(old.repRangeMax !== undefined ? { repRangeMax: old.repRangeMax } : {}),
+    ...(old.baseSets !== undefined ? { baseSets: old.baseSets } : {}),
+    ...(old.restSeconds !== undefined ? { restSeconds: old.restSeconds } : {}),
+    ...(old.isAccessory !== undefined ? { isAccessory: old.isAccessory } : {}),
   });
 
   return mapWorkoutDay(state, command.dayIndex, (d) => ({
@@ -1271,7 +1281,7 @@ function applyProgramCommand({ state, profile, command, now }) {
       next = overrideRunDay(current, validated);
       break;
     case "applyDeloadWeek":
-      next = applyDeloadWeekCommand(current, validated, now);
+      next = applyDeloadWeekCommand(current, profile || {}, validated, now);
       break;
     case "revertDeloadWeek":
       next = revertDeloadWeekCommand(current, validated);
