@@ -25,10 +25,14 @@ exercise type), #8 (deload by training age), #9 (joint plateau/recovery rule),
 #15 (full-body accessory slots), #16 (the load-step discriminator #7 got
 wrong), #10 (overlap caps — adjacency deferred), #11 (exercise roles + a
 deterministic purposeful plateau rotation — the failure-point question
-deferred), #17 (accessory churn on regenerate), #12 (warm-up ramp). That
-closes tiers 1–3 plus #11 and #12. Next unstarted: #13 (form-content
-backfill, pure content) and #14 (wire deload detection to the one-tap
-command). Each shipped item's engine changes carry a `backlog #N` comment at
+deferred), #17 (accessory churn on regenerate), #12 (warm-up ramp), #13
+(form-content backfill). #14 was found ALREADY SHIPPED by PROGRAM-DELOAD-01 —
+see its STATUS. **That closes the whole scheduled backlog.** What remains is
+the "Recorded, not scheduled" list below, plus the explicitly deferred halves
+noted in the STATUS rows of #7 (compound wave, time-based and
+assistance-reduction progression), #10 (adjacency — needs the weekday
+schedule threaded into the generator) and #11 (the "where does it fail?"
+question and its UI). Each shipped item's engine changes carry a `backlog #N` comment at
 the seam, so `git grep "backlog #"` in `src/features/program` finds them.
 
 **These IDs are stable — do not renumber the lists below.** They're
@@ -257,7 +261,36 @@ rather than inside a tier's existing list.
 
 13. **Form-content backfill** (P6/D5/B7/N14): `commonMistakes` is authored on
     3/151 exercises; these books supply the material for the big lifts.
+
+    STATUS 2026-07-28 — shipped for the lifts that matter; not a full sweep of
+    all 151. `commonMistakes` went from 3 exercises to 28, and every PRIMARY
+    in `exerciseBank` — the movement the engine picks by default for each
+    category, and the one a novice meets first — now has content, pinned by
+    `formContentCoverage.test.ts`. Coverage of the remaining non-primary
+    variants is deliberately not pinned; blank "watch out" on a lift the
+    generator rarely picks is a much smaller problem than blank on a squat.
+    Sourcing is honest rather than uniform: the squat family, bench, deadlift
+    and upright row draw on the review material (P6's depth/butt-wink/elbow
+    cues, D5's sumo setup, B7's bench chapter, N14's cited impingement note
+    WITH its mitigation), and the rest are standard uncontroversial coaching
+    cues. The UI needed nothing — `ExerciseFormContent` already rendered the
+    field; it just had almost nothing to render.
+
 14. **Wire deload detection to the existing one-tap deload command** (P7).
+
+    STATUS 2026-07-28 — ALREADY SHIPPED; nothing to build. Verified end to
+    end before writing any code: `DeloadBanner` is driven by
+    `perfWeek?.flags?.deloadRecommended`, its `onApply` routes through the
+    server `applyDeloadWeek` command, undo lives in the success toast, and
+    `deloadActive` swaps the copy so the user is never offered an Apply the
+    server would reject as already-deloaded. PROGRAM-DELOAD-01 delivered this
+    after the review was written, so P7's premise ("`shouldDeload` is
+    advisory copy only") was true when recorded and is now stale.
+    One deliberate deviation worth noting: P7 asked for "make NEXT week a
+    deload"; the shipped command eases the ACTIVE week. That is the better
+    answer — relief applies immediately and is reversible in one tap — and
+    changing it would need a different command, so this is recorded as
+    resolved rather than partially done.
 
 **Tier 2b — found while building, not from a book**
 
