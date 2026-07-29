@@ -149,10 +149,19 @@ describe("lowCostAlternative — a demoted slot keeps its CATEGORY", () => {
     expect(
       lowCostAlternative("hip_dominant", new Set(["seated-leg-curl"]))
     ).toEqual({ id: "hip-thrust", name: "Hip Thrust" });
+    // A third back-sparing option (the bodyweight glute bridge) exists as of
+    // 2026-07-28, added for equipment coverage — so two-in-the-day no longer
+    // exhausts the list.
     expect(
       lowCostAlternative(
         "hip_dominant",
         new Set(["seated-leg-curl", "hip-thrust"])
+      )
+    ).toEqual({ id: "glute-bridge", name: "Glute Bridge" });
+    expect(
+      lowCostAlternative(
+        "hip_dominant",
+        new Set(["seated-leg-curl", "hip-thrust", "glute-bridge"])
       )
     ).toBeNull();
   });

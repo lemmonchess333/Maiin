@@ -5,6 +5,7 @@ import type { WorkoutDay, ProgramExercise } from "./programTypes";
 import { EXERCISES, getExerciseById } from "@/lib/exercises";
 import { findSafeSubstitute } from "./injurySubstitutions";
 import { rescaleForSwap } from "./variationBank";
+import { allowsComplexity, type Experience } from "./experienceModel";
 import { exerciseBank } from "./variationBank";
 
 /**
@@ -320,7 +321,9 @@ export function applyInjuryFilters(
  */
 export function applyInjuryFiltersToWorkouts(
   workouts: readonly WorkoutDay[],
-  injuries: readonly string[]
+  injuries: readonly string[],
+  /** Equipment tier — a PREFERENCE for the substitute, never a hard filter. */
+  equipment?: string
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -347,7 +350,20 @@ export function applyInjuryFiltersToWorkouts(
       const relevant = contras ? injuries.filter((i) => contras.has(i)) : [];
       if (relevant.length === 0) return { ...ex };
 
-      const safe = findSafeSubstitute(ex.exerciseId, relevant, usedIds);
+      const allowedEq = equipment
+        ? EQUIPMENT_AVAILABILITY[equipment]
+        : undefined;
+      const safe = findSafeSubstitute(
+        ex.exerciseId,
+        relevant,
+        usedIds,
+        allowedEq
+          ? (id) => {
+              const eq = getExerciseById(id)?.equipment;
+              return eq === undefined || allowedEq.has(eq);
+            }
+          : undefined
+      );
       if (safe) {
         usedIds.add(safe.id);
         return {
@@ -412,7 +428,8 @@ const EQUIPMENT_AVAILABILITY: Record<string, ReadonlySet<string>> = {
 export function applyEquipmentFilterToWorkouts(
   workouts: readonly WorkoutDay[],
   equipment: string,
-  injuries: readonly string[] = []
+  injuries: readonly string[] = [],
+  experience?: Experience
 ): WorkoutDay[] {
   const cloneDay = (d: WorkoutDay): WorkoutDay => ({
     ...d,
@@ -461,13 +478,15 @@ export function applyEquipmentFilterToWorkouts(
       // user owns and it is `bulgarian-split` (technical) — front squat is a
       // barbell, leg press and hack squat are machines. No predicate can
       // conjure an option that is not in the bank. See the backlog entry.
-      const pick = options.find(
-        (o) =>
-          o.id !== ex.exerciseId &&
-          !usedIds.has(o.id) &&
-          isAvailable(o.id) &&
-          !isInjuryContra(o.id)
-      );
+      const eligible = (o: (typeof options)[number]) =>
+        o.id !== ex.exerciseId &&
+        !usedIds.has(o.id) &&
+        isAvailable(o.id) &&
+        !isInjuryContra(o.id);
+      const pick =
+        options.find(
+          (o) => eligible(o) && allowsComplexity(experience, o.complexity)
+        ) ?? options.find(eligible);
       if (pick) {
         usedIds.delete(ex.exerciseId);
         usedIds.add(pick.id);

@@ -87,7 +87,27 @@ export interface Exposure {
 const BACK_SPARING_HINGES: readonly string[] = [
   "seated-leg-curl",
   "hip-thrust",
+  "glute-bridge",
 ];
+
+/**
+ * Preference order for a demoted slot, by the role it plays.
+ *
+ * Two explicit lists rather than one list reversed. The reversal worked while
+ * there were exactly two entries and quietly became wrong at three: it handed
+ * a demoted MAIN the bodyweight glute bridge ahead of the loaded hip thrust.
+ *
+ * An ACCESSORY wants the least systemic cost, so the isolation leads. A MAIN
+ * is still the session's anchor and wants a loaded compound, so the hip thrust
+ * leads and the isolation is last resort. The glute bridge sits mid-list in
+ * both: it is here for EQUIPMENT coverage (the only bodyweight hinge, so a
+ * home/minimal user can always reach one), not because it is the best
+ * demotion target.
+ */
+const DEMOTION_ORDER: Record<"main" | "accessory", readonly string[]> = {
+  accessory: ["seated-leg-curl", "hip-thrust", "glute-bridge"],
+  main: ["hip-thrust", "glute-bridge", "seated-leg-curl"],
+};
 
 function isExpensive(ex: ProgramExercise): boolean {
   // The cap is about LOWER-BACK cost, not about the hip pattern. A hip thrust
@@ -432,9 +452,7 @@ export function lowCostAlternative(
   experience?: Experience
 ): { id: string; name: string } | null {
   if (!EXPENSIVE_PATTERNS.has(category)) return null;
-  const ranked = isMain
-    ? [...BACK_SPARING_HINGES].reverse() // a main should stay a compound
-    : BACK_SPARING_HINGES;
+  const ranked = DEMOTION_ORDER[isMain ? "main" : "accessory"];
   const options = exerciseBank[category] ?? [];
   for (const id of ranked) {
     if (idsInDay.has(id)) continue;

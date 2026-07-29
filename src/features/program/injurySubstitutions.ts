@@ -971,7 +971,21 @@ export const INJURY_SUBSTITUTIONS: Record<string, readonly SafeSubstitute[]> = {
 export function findSafeSubstitute(
   originalId: string,
   userInjuries: readonly string[],
-  excludeIds?: ReadonlySet<string>
+  excludeIds?: ReadonlySet<string>,
+  /**
+   * Optional equipment predicate. The substitution map is curated for SAFETY
+   * and knows nothing about what the user owns, so it happily prescribed a
+   * machine leg curl and a shoulder-press machine to home-gym users — 18 of
+   * those in a 216-config audit, and the only equipment violations left once
+   * the exercise bank gained home/minimal coverage.
+   *
+   * Applied as a PREFERENCE with a fallback, never as a hard filter: if the
+   * only movement that spares the injury needs a machine, the injured user
+   * gets it and can substitute manually. Safety outranks convenience, in that
+   * order and no other — the same precedence the equipment filter uses in
+   * reverse.
+   */
+  isAvailable?: (exerciseId: string) => boolean
 ): SafeSubstitute | null {
   const candidates = INJURY_SUBSTITUTIONS[originalId];
   if (!candidates || candidates.length === 0) return null;
@@ -987,13 +1001,17 @@ export function findSafeSubstitute(
   );
   if (relevant.length === 0) return null;
 
+  const safe: SafeSubstitute[] = [];
   for (const candidate of candidates) {
     const clears = relevant.every((injury) =>
       candidate.safeFor.includes(injury)
     );
     if (!clears) continue;
     if (excludeIds && excludeIds.has(candidate.id)) continue;
-    return candidate;
+    safe.push(candidate);
   }
-  return null;
+  if (safe.length === 0) return null;
+  // Prefer one the user can actually perform; fall back to the safest
+  // available option regardless of equipment.
+  return safe.find((c) => !isAvailable || isAvailable(c.id)) ?? safe[0];
 }

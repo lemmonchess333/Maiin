@@ -106,6 +106,27 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       complexity: "advanced",
       role: "weak_point",
     },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "push-ups",
+      loadFactor: 0,
+      name: "Push-Ups",
+      primary: false,
+      role: "size",
+    },
   ],
   vertical_push: [
     { id: "overhead-press", name: "Overhead Press", primary: true },
@@ -179,6 +200,27 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       complexity: "advanced",
       role: "technique",
     },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "inverted-row",
+      loadFactor: 0,
+      name: "Inverted Row",
+      primary: false,
+      role: "technique",
+    },
   ],
   vertical_pull: [
     { id: "pull-ups", name: "Pull-Ups", primary: true },
@@ -241,6 +283,34 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       lengthened: true,
       role: "technique",
     },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "goblet-squat",
+      loadFactor: 0.3,
+      name: "Goblet Squat",
+      primary: false,
+      role: "technique",
+    },
+    {
+      id: "bodyweight-squat",
+      loadFactor: 0,
+      name: "Bodyweight Squat",
+      primary: false,
+      role: "technique",
+    },
   ],
   hip_dominant: [
     { id: "deadlift", name: "Deadlift", primary: true },
@@ -298,6 +368,35 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       primary: false,
       complexity: "advanced",
       role: "weak_point",
+    },
+    // HOME / MINIMAL COVERAGE (2026-07-28). Appended, deliberately, at the END
+    // of the category: `pickAccessory` takes pool[0] of the LENGTHENED options
+    // and the complexity gate takes the first allowed non-primary, so adding
+    // here cannot change what a full-gym user receives — measured before and
+    // after to confirm.
+    //
+    // A 216-config audit found 462 slots prescribing equipment the user does
+    // not own. The cause was not the equipment FILTER (gating that was tried
+    // twice and made things worse or nothing); it was that the bank had
+    // nothing to swap TO. `hip_dominant` had ZERO home-gym-available options
+    // and `knee_dominant` had exactly one, and it was technical — so a
+    // home-gym beginner kept a barbell deadlift and a machine hack squat.
+    // Every id here was already in the catalog and already used by the
+    // TEMPLATES; only the generator's bank lacked them.
+    {
+      id: "db-rdl",
+      loadFactor: 0.25,
+      name: "Dumbbell Romanian Deadlift",
+      primary: false,
+      lengthened: true,
+      role: "size",
+    },
+    {
+      id: "glute-bridge",
+      loadFactor: 0,
+      name: "Glute Bridge",
+      primary: false,
+      role: "size",
     },
   ],
   arms_biceps: [

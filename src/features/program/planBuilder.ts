@@ -292,13 +292,18 @@ function buildLiftProgram(input: PlanBuilderInput): {
   // either made things worse (a beginner keeping equipment they don't own) or
   // changed nothing (no simple alternative exists in the bank). What remains
   // is bank coverage, recorded in the backlog, not a filter bug.
-  const injurySafe = applyInjuryFiltersToWorkouts(levelled, input.injuries);
+  const injurySafe = applyInjuryFiltersToWorkouts(
+    levelled,
+    input.injuries,
+    input.equipment
+  );
   return {
     splitType: base.splitType,
     workouts: applyEquipmentFilterToWorkouts(
       injurySafe,
       input.equipment,
-      input.injuries
+      input.injuries,
+      toExperience(input.experience)
     ),
   };
 }

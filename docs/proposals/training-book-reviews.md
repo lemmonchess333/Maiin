@@ -498,34 +498,51 @@ rather than a patch. None of them are speculative; each was measured.
    the canonical muscles (or giving lumped groups their own bands) and then
    rebalancing what the builders author. Trimming real training to satisfy a
    miscalibrated number is not the fix either.
-2. **A limited-equipment beginner receives movements they cannot do, and
-   movements above their level — both because the exercise bank has no simple
-   dumbbell/bodyweight options.** Measured over a 216-config matrix (3 goals ×
-   1–6 days × 3 equipment tiers × 4 injury states), for a beginner:
+2. **A limited-equipment user's plan — FIXED 2026-07-28, with a residue.**
+   Measured over a 216-config matrix (3 goals × 1–6 days × 3 equipment tiers ×
+   4 injury states), for a beginner:
 
-   | equipment filter                            | complexity violations | equipment violations |
-   | ------------------------------------------- | --------------------- | -------------------- |
-   | as shipped                                  | 603                   | 462                  |
-   | complexity AND-ed into the picker           | 315                   | **798**              |
-   | complexity preferred, fallback to available | 603                   | 462                  |
+   |        | complexity violations | equipment violations |
+   | ------ | --------------------- | -------------------- |
+   | before | 603                   | 462                  |
+   | after  | 273                   | 12                   |
 
-   The middle row shipped briefly in `646eeec` and was reverted the same
-   session: gating the picker does not find simpler movements, it finds
-   _none_, and the slot then keeps a barbell a dumbbells-and-a-bench user does
-   not own. The third row is a pure no-op, which is the diagnosis — in every
-   failing case there IS no simple, equipment-available option in that
-   category. `knee_dominant` on `home_gym`/`minimal` has exactly one
-   non-primary the user owns and it is the Bulgarian split squat; front squat
-   is a barbell, leg press and hack squat are machines.
+   The cause was never the equipment FILTER. Gating its picker was tried twice
+   and measured: AND-ing complexity into the predicate took equipment
+   violations 462 → **798** (it found no simpler movement, it found none, and
+   left the user holding a barbell they don't own — shipped briefly in
+   `646eeec`, reverted in `0718fd1`); preferring-then-falling-back was a pure
+   no-op. Both results said the same thing: there was nothing in the bank to
+   swap TO. `hip_dominant` had **zero** home-available options and
+   `knee_dominant` had exactly one, and it was technical.
 
-   Note the 462 equipment violations are PRE-EXISTING and independent of the
-   experience work: a home-gym user is already prescribed barbell deadlifts and
-   machine hack squats. That is the larger of the two problems.
+   Fixed by BANK COVERAGE — `goblet-squat`, `bodyweight-squat`, `db-rdl`,
+   `glute-bridge`, `push-ups` and `inverted-row`, all of which were already in
+   the catalog and already used by the TEMPLATES; only the generator's bank
+   lacked them. Appended at the END of each category so full-gym selection is
+   provably unchanged.
 
-   The fix is bank coverage, not filter logic. The catalog already contains
-   `goblet-squat`, `bodyweight-squat`, `lunges`, `push-ups`, `inverted-row`,
-   `db-rdl` and `glute-bridge` — the TEMPLATES prescribe them and the bank does
-   not contain them. Adding them closes both columns at once.
+   With coverage in place the prefer-then-fallback gate stopped being a no-op
+   and now earns its keep (complexity 543 → 273 with no equipment cost), which
+   is worth noting as a method point: the earlier revert was correct _at the
+   time_, and re-testing the decision after changing its premise is what found
+   the win.
+
+   RESIDUE, and it is now precisely characterised rather than a bulk number:
+   - 12 equipment violations, all `seated-leg-curl` (Machine) — the entry
+     added earlier the same day for hamstring coverage. Reached via
+     `lowCostAlternative`, which is not equipment-aware.
+   - 273 complexity violations, concentrated in `bulgarian-split` (90),
+     `arnold-press` (66), `chest-supported-db-row` (63), `tricep-dips` (48),
+     `trap-bar-deadlift` (30), `landmine-press` (24). Most arrive via injury
+     substitution, which is ungated on complexity BY DESIGN — safety outranks
+     simplicity — and the rest where the day already contains the simple
+     option.
+
+   Injury substitution is now equipment-PREFERRING (it was equipment-blind,
+   and was the source of every violation left once the bank was covered), but
+   still falls back to a safe-but-unavailable movement rather than leaving a
+   contraindicated one in place.
 
 3. **A mesocycle rotation still carries the previous movement's load.** The
    three ONE-SHOT swap sites (equipment, injury, complexity gate) now rescale a

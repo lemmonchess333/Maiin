@@ -11,6 +11,7 @@ import { advanceWeek, generateProgram } from "../programEngine";
 import { buildPlan } from "../planBuilder";
 import { startingWeightForExercise } from "../startingLoads";
 import { exerciseBank } from "../variationBank";
+import { getExerciseById } from "@/lib/exercises";
 import type { WorkoutDay } from "../programTypes";
 import type { Experience } from "../experienceModel";
 
@@ -341,36 +342,28 @@ describe("the complexity gate survives composition", () => {
     }
   });
 
-  it("documents the LIMITED-EQUIPMENT residue as bank coverage, not a gate bug", () => {
-    // On home_gym/minimal a beginner still receives technical movements, and
-    // this test exists to stop anyone (me included) "fixing" that in the
-    // filter again. Both attempts were measured over a 216-config matrix:
+  it("now holds on limited equipment too — the residue is gone", () => {
+    // This slot used to assert the OPPOSITE: that a home-gym beginner still
+    // received a Bulgarian split squat, pinned as a known residue "so the day
+    // the bank gains coverage this test fails and gets tightened rather than
+    // silently passing forever." That day is today — adding goblet squat,
+    // bodyweight squat, dumbbell RDL, glute bridge, push-ups and inverted row
+    // to the bank closed it, and the test is now the positive claim.
     //
-    //   no complexity clause      603 complexity / 462 equipment violations
-    //   AND-ed into the picker    315 complexity / 798 equipment  ← WORSE
-    //   preferred w/ fallback     603 / 462                        ← no-op
-    //
-    // The middle one shipped briefly in 646eeec and was reverted: it does not
-    // find simpler movements, it finds none and leaves the user holding a
-    // barbell they do not own. The cause is that `knee_dominant` has exactly
-    // one non-primary a dumbbells-and-a-bench user owns, and it is the
-    // Bulgarian split squat. The fix is to put simple dumbbell/bodyweight
-    // options in the bank — the catalog already has goblet squat, lunges,
-    // push-ups and inverted rows, which the TEMPLATES use and the bank does
-    // not.
-    const homeGym = buildPlan(
-      planInput({ equipment: "home_gym", liftDays: 4 }) as Parameters<
-        typeof buildPlan
-      >[0]
-    );
-    const leaked = overLevel(homeGym.programState.workouts, "beginner");
-    // Asserted as a KNOWN residue, so the day the bank gains coverage this
-    // test fails and gets tightened rather than silently passing forever.
-    expect(leaked.length).toBeGreaterThan(0);
-    expect(
-      leaked.every((e) => (e.exerciseId ?? "") === "bulgarian-split"),
-      `unexpected leak: ${leaked.map((e) => e.exerciseId).join(", ")}`
-    ).toBe(true);
+    // Measured across the full 216-config matrix, for a beginner:
+    //   before  603 complexity violations / 462 equipment violations
+    //   after   273 / 12
+    for (const equipment of ["home_gym", "minimal"] as const) {
+      for (const liftDays of [2, 3, 4]) {
+        const plan = buildPlan(
+          planInput({ equipment, liftDays }) as Parameters<typeof buildPlan>[0]
+        );
+        expect(
+          overLevel(plan.programState.workouts, "beginner").map((e) => e.name),
+          `${equipment}/${liftDays}d`
+        ).toEqual([]);
+      }
+    }
   });
 
   it("holds on the PRESERVE branch — a template-seeded beginner is gated", () => {
@@ -537,6 +530,82 @@ describe("a swapped slot is re-calibrated, not carried", () => {
     // a 55 kg Bulgarian split squat and a 35 kg per-hand dumbbell press.
     for (const eq of ["full_gym", "home_gym", "minimal"] as const) {
       expect(mismatches(plan(eq).programState.workouts), eq).toEqual([]);
+    }
+  });
+});
+
+/**
+ * EQUIPMENT COVERAGE — the largest single defect the 2026-07-28 audit found,
+ * and one that predates the experience work entirely.
+ *
+ * A 216-config matrix (3 goals x 1-6 days x 3 equipment tiers x 4 injury
+ * states) measured 462 slots prescribing equipment the user does not own: a
+ * home-gym lifter was handed barbell deadlifts and machine hack squats.
+ *
+ * The cause was NOT the equipment filter — gating that was tried twice and
+ * either made things worse or did nothing. It was that the exercise bank had
+ * nothing to swap TO: `hip_dominant` had ZERO home-available options and
+ * `knee_dominant` had exactly one, and it was technical. Every id needed was
+ * already in the catalog and already used by the templates.
+ */
+describe("a limited-equipment user gets a plan they can perform", () => {
+  const AVAIL: Record<string, ReadonlySet<string>> = {
+    home_gym: new Set(["Dumbbells", "Bodyweight", "Kettlebell"]),
+    minimal: new Set(["Dumbbells", "Bodyweight"]),
+  };
+
+  const unusable = (w: WorkoutDay[], tier: "home_gym" | "minimal") =>
+    w
+      .flatMap((d) => d.exercises)
+      .filter((ex) => {
+        const eq = getExerciseById(ex.exerciseId)?.equipment;
+        return eq !== undefined && !AVAIL[tier].has(eq);
+      })
+      .map((ex) => `${ex.name} (${getExerciseById(ex.exerciseId)?.equipment})`);
+
+  const build = (
+    tier: "home_gym" | "minimal",
+    liftDays: number,
+    injuries: string[] = []
+  ) =>
+    buildPlan({
+      primaryGoal: "hypertrophy",
+      nutritionPhase: "recomp",
+      experience: "beginner",
+      bodyweightKg: 80,
+      sex: "male",
+      liftDays,
+      preferredSplit: "auto",
+      runMode: "freeform",
+      weeklyRunDays: 0,
+      injuries,
+      equipment: tier,
+      currentDate: "2026-07-28",
+    } as Parameters<typeof buildPlan>[0]).programState.workouts;
+
+  it("prescribes nothing needing a barbell or a machine, at any day count", () => {
+    for (const tier of ["home_gym", "minimal"] as const) {
+      for (const liftDays of [1, 2, 3, 4, 5, 6]) {
+        expect(
+          unusable(build(tier, liftDays), tier),
+          `${tier}/${liftDays}d`
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("holds when an injury forces a substitution too", () => {
+    // Injury substitution comes from a curated SAFETY map that knew nothing
+    // about equipment, and was the source of every remaining violation once
+    // the bank gained coverage. It now prefers a movement the user can do —
+    // but only as a preference: if the one thing that spares the injury needs
+    // a machine, the injured user still gets it. Safety outranks convenience.
+    for (const injury of ["knee", "shoulder", "lower_back"]) {
+      const found = unusable(build("home_gym", 4, [injury]), "home_gym");
+      expect(
+        found.filter((n) => !/Leg Curl/i.test(n)),
+        `home_gym/4d/${injury}`
+      ).toEqual([]);
     }
   });
 });
