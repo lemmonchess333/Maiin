@@ -573,33 +573,56 @@ rather than a patch. None of them are speculative; each was measured.
    logged progress is at stake, and the next `seedStartingLoads` on a
    regenerate re-derives the number.
 
-4. **Calves are never trained.** No calf movement exists in `variationBank`
+4. **The three `advanced` bank entries are reachable — RESOLVED
+   2026-07-28.** They were unreachable not for want of a mechanism but because
+   ties inside a `role` broke on BANK ORDER, and they had been appended last,
+   so they lost every tie by construction. The mechanism already existed and
+   the arc had already decided the rule: `pickExercise`'s plateau branch swaps
+   a STALLED lift for a variation with a job (Green assigns each variant one;
+   Jenkins calls them "tools in the arsenal"). A stall is exactly when a
+   specialised tool is warranted.
+
+   Ties now break toward the more specialised tool for a lifter whose level
+   admits it. A stalled advanced lifter gets `pendlay-row` (row) and
+   `barbell-floor-press` (bench); an intermediate gets the same JOB one tier
+   down; a beginner can never reach either, since `allowsComplexity` filters
+   the pool first.
+
+   `rack-pull` stays unreachable ON PURPOSE. It is a lockout (`weak_point`)
+   tool and the rotation ranks `technique` first, because — in the rotation's
+   own words — "a stall is more often a position problem than a missing
+   sticking-point". Sumo and trap-bar teach position. Promoting a lockout fix
+   over a position fix requires knowing WHERE the lift fails, which is the
+   half of P4 that still has no UI question. That is the real open item, and
+   it is smaller and better-defined than "design a selection mechanism".
+
+5. **Calves are never trained.** No calf movement exists in `variationBank`
    at all, in any category, so the tally reads 1.5–2.5 incidental sets at
    every day count. Same gap, smaller: no lateral raise, and hamstring
    isolation only arrived in this PR.
-5. **Day names contradict their contents.** "Full Body — Posterior Focus"
+6. **Day names contradict their contents.** "Full Body — Posterior Focus"
    opens with a bench press; "Upper — Shoulders & Arms" leads on pull-ups.
    The names are authored constants; the contents are computed.
-6. **Set allocation can invert the exercise hierarchy.** The balancers grow
+7. **Set allocation can invert the exercise hierarchy.** The balancers grow
    accessories up to 5 sets while mains sit at 3-4, so the week's biggest
    block of sets is sometimes a supporting lift.
-7. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
+8. **Exercise ORDER within a session is unmanaged.** Meadows (M6) is explicit
    that arms come after torso work; nothing enforces it.
-8. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
+9. **`progressionType` is assigned by SLOT, not by exercise.** The arm slots
    in `buildUpperLower` are `isAccessory: false` + hardcoded `"linear"`, so a
    barbell curl progresses like a squat.
-9. **`repRangeMax` is inert on every linear-progression exercise** — the
-   "climb the range, then add load" mechanism (#6) never runs for the
-   strength, fat_loss or running goals, whose mains are all linear.
-10. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
+10. **`repRangeMax` is inert on every linear-progression exercise** — the
+    "climb the range, then add load" mechanism (#6) never runs for the
+    strength, fat_loss or running goals, whose mains are all linear.
+11. **`applyDayRoles` shifts the whole range ±2 rather than sampling within
     it**, so a strength user's heavy day reads 3-5 against a profile that
     declares 5-7. The rep CEILING is now clamped; the floor still escapes the
     profile.
-11. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
+12. **`repUnit` is not threaded into `applyDeload` or `applyDayRoles`** — a
     45-second plank can be "deloaded" to 43 seconds, and floored at 3.
-12. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
+13. **The volume PR axis is load-blind** (`checkVolumePR` compares bare
     Σ weight × reps), so 3×20 @ 40 kg registers as a PR over 3×5 @ 100 kg.
-13. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
+14. **#9's `reorganize` never reorganizes.** `pickExercise` returns the
     current exercise below a plateau count of 3, while the adjustment rule
     fires at 1 — so the branch cuts sets and resets the plateau counter
     without changing a single exercise.

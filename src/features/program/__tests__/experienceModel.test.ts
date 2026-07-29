@@ -10,7 +10,7 @@ import {
 import { advanceWeek, generateProgram } from "../programEngine";
 import { buildPlan } from "../planBuilder";
 import { startingWeightForExercise } from "../startingLoads";
-import { exerciseBank } from "../variationBank";
+import { exerciseBank, pickExercise } from "../variationBank";
 import { getExerciseById } from "@/lib/exercises";
 import type { WorkoutDay } from "../programTypes";
 import type { Experience } from "../experienceModel";
@@ -616,6 +616,77 @@ describe("a limited-equipment user gets a plan they can perform", () => {
           ).toEqual([]);
         }
       }
+    }
+  });
+});
+
+/**
+ * WHEN does an advanced lifter actually get the advanced movements?
+ *
+ * The question was left open as "a design decision" and then answered by
+ * re-reading the code: the arc had already decided it. `pickExercise`'s
+ * plateau branch exists precisely to swap a STALLED lift for a variation with
+ * a job (Green assigns each variant one; Jenkins calls them "tools in the
+ * arsenal"). That is the moment a specialised tool is warranted.
+ *
+ * The advanced entries were unreachable only because ties inside a role broke
+ * on BANK ORDER — arbitrary, and they were appended last, so they lost every
+ * tie by construction. Ties now break toward the more specialised tool for a
+ * lifter whose level admits it.
+ */
+describe("advanced movements surface when a lift stalls", () => {
+  it("a stalled advanced lifter gets the specialised tool; others do not", () => {
+    expect(
+      pickExercise("horizontal_pull", 3, "barbell-row", "advanced").id
+    ).toBe("pendlay-row");
+    expect(
+      pickExercise("horizontal_push", 3, "bench-press", "advanced").id
+    ).toBe("barbell-floor-press");
+
+    // An intermediate gets the same JOB, one tier down — not the advanced tool.
+    expect(
+      pickExercise("horizontal_pull", 3, "barbell-row", "intermediate").id
+    ).toBe("chest-supported-db-row");
+    expect(
+      pickExercise("horizontal_push", 3, "bench-press", "intermediate").id
+    ).toBe("close-grip-bench");
+  });
+
+  it("does not fire below the plateau threshold, at any level", () => {
+    // Stability within a block (N5) — a lift that is still progressing keeps
+    // its exercise. The advanced tier changes what a STALL escalates to, not
+    // what a working programme contains.
+    for (const lvl of ["intermediate", "advanced"] as const) {
+      expect(pickExercise("horizontal_pull", 0, "barbell-row", lvl).id).toBe(
+        "barbell-row"
+      );
+      expect(pickExercise("horizontal_push", 2, "bench-press", lvl).id).toBe(
+        "bench-press"
+      );
+    }
+  });
+
+  it("leaves the stalled DEADLIFT on a position fix, not a lockout fix", () => {
+    // `rack-pull` is the third advanced entry and stays unreachable here, on
+    // purpose. It is a `weak_point` (lockout) tool, and the rotation ranks
+    // `technique` first because — in this file's own words — "a stall is more
+    // often a position problem than a missing sticking-point". Sumo and
+    // trap-bar teach position. Promoting a lockout fix over a position fix
+    // needs the user to say WHERE the lift fails, which no UI asks yet.
+    expect(pickExercise("hip_dominant", 3, "deadlift", "advanced").id).toBe(
+      "sumo-deadlift"
+    );
+  });
+
+  it("never reaches an advanced movement for a beginner", () => {
+    for (const [cat, cur] of [
+      ["horizontal_pull", "barbell-row"],
+      ["horizontal_push", "bench-press"],
+      ["hip_dominant", "deadlift"],
+    ] as const) {
+      const got = pickExercise(cat, 5, cur, "beginner");
+      const opt = exerciseBank[cat].find((o) => o.id === got.id);
+      expect(opt?.complexity ?? "simple", `${cat}`).toBe("simple");
     }
   });
 });

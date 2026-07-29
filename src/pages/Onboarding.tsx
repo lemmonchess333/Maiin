@@ -1502,11 +1502,12 @@ export default function Onboarding() {
                     {
                       id: "advanced" as Experience,
                       label: "Experienced",
-                      // NOT "unlocks the full exercise library" — that was
-                      // the copy here until 2026-07-28 and it was untrue: the
-                      // three `advanced`-tier bank entries are not reachable
-                      // from the generator yet. Promise only what ships.
-                      desc: "2+ years. More exercise variety, and effort (RPE) shown in sessions.",
+                      // Says what ships, and no more. It read "Unlocks the
+                      // full exercise library" until 2026-07-28, when the
+                      // advanced movements were genuinely unreachable; they
+                      // now surface when a lift stalls, which is what this
+                      // describes.
+                      desc: "2+ years. Specialist lifts when you stall, and effort (RPE) shown in sessions.",
                     },
                   ] as const
                 ).map((opt, i) => (

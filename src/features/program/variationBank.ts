@@ -611,13 +611,31 @@ export function pickExercise(
   // a position problem than a missing sticking-point. `weak_point` moves
   // ahead of it once the user can say WHERE the lift fails, which is the
   // other half of P4 and needs a UI question this doesn't have yet.
+  //
+  // Within a role, the MORE SPECIALISED tool wins for a lifter who can use it
+  // (added 2026-07-28). Ties previously broke on bank order, which is
+  // arbitrary — whichever entry happened to be appended last always lost — and
+  // that is why the `advanced` variations were unreachable in practice: a
+  // stalled advanced lifter got the same substitute as an intermediate.
+  //
+  // The tie has to break somewhere, and this is the direction the sources
+  // point. Green assigns each variant an explicit job and Jenkins frames the
+  // non-competition lifts as "tools in the arsenal"; the advanced tier IS the
+  // specialised-tool tier. The moment a specialised tool is warranted is
+  // exactly this one — the standard variation has not resolved the stall, and
+  // the lifter has the base to use something sharper. `allowsComplexity`
+  // already filtered the pool, so a novice can never reach this branch.
   const others = options.filter((e) => e.id !== currentExerciseId);
   if (others.length === 0) return { id: options[0].id, name: options[0].name };
   const rank = (o: ExerciseOption) =>
     o.role === "technique" ? 0 : o.role === "weak_point" ? 1 : 2;
+  const specialisation = (o: ExerciseOption) =>
+    o.complexity === "advanced" ? 2 : o.complexity === "technical" ? 1 : 0;
   let pick = others[0];
   for (const o of others.slice(1)) {
     if (rank(o) < rank(pick)) pick = o;
+    else if (rank(o) === rank(pick) && specialisation(o) > specialisation(pick))
+      pick = o;
   }
   return { id: pick.id, name: pick.name };
 }
