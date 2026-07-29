@@ -16,7 +16,35 @@
  * specific id (which would require mocking Math.random).
  */
 import { describe, it, expect } from "vitest";
-import { exerciseBank, pickExercise, pickAccessory } from "../variationBank";
+import {
+  exerciseBank,
+  pickExercise,
+  pickAccessory,
+  rescaleForSwap,
+} from "../variationBank";
+
+describe("rescaleForSwap — unsafe boundaries", () => {
+  it("zeros a loaded-to-bodyweight swap instead of carrying kilograms", () => {
+    expect(
+      rescaleForSwap(80, "bench-press", "push-ups", "horizontal_push")
+    ).toBe(0);
+  });
+
+  it("leaves a bodyweight-to-loaded swap explicitly uncalibrated", () => {
+    expect(rescaleForSwap(0, "push-ups", "db-bench", "horizontal_push")).toBe(
+      0
+    );
+  });
+
+  it("does not invent a ratio for an unknown or cross-category target", () => {
+    expect(
+      rescaleForSwap(120, "deadlift", "glute-bridge", "hip_dominant")
+    ).toBe(0);
+    expect(
+      rescaleForSwap(120, "deadlift", "incline-db-press", "hip_dominant")
+    ).toBe(0);
+  });
+});
 
 describe("exerciseBank — structural invariants", () => {
   it("covers every MovementCategory", () => {
@@ -89,6 +117,46 @@ describe("pickExercise — plateau rotation", () => {
     for (let i = 0; i < 30; i++) {
       const result = pickExercise("horizontal_push", 3, "bench-press");
       expect(result.id).not.toBe("bench-press");
+    }
+  });
+
+  // Backlog #11 (P4/B6/N5) — the rotation used to be
+  // `others[Math.floor(Math.random() * others.length)]`.
+  it("is DETERMINISTIC — a regenerate can't churn a plateaued main", () => {
+    /* The random pick re-rolled on every regenerate, so a stalled lift
+       changed exercise each time the user touched a setting. */
+    const picks = Array.from(
+      { length: 30 },
+      () => pickExercise("knee_dominant", 3, "squat").id
+    );
+    expect(new Set(picks).size).toBe(1);
+  });
+
+  it("prefers a TECHNIQUE variation over a size one", () => {
+    /* Three sources say the substitute should have a job, and Nippard
+       adds that changing exercises flattens progression — so when you do
+       change, change to something that improves the parent lift. */
+    const bank = exerciseBank.knee_dominant;
+    const picked = pickExercise("knee_dominant", 3, "squat").id;
+    expect(bank.find((o) => o.id === picked)?.role).toBe("technique");
+  });
+
+  it("falls back through the ranking when no technique option is left", () => {
+    /* Exclude the technique picks; the next-best role wins, still
+       deterministically. */
+    const bank = exerciseBank.horizontal_push; // no technique entries at all
+    const picked = pickExercise("horizontal_push", 3, "bench-press").id;
+    const role = bank.find((o) => o.id === picked)?.role;
+    expect(role).toBe("weak_point");
+  });
+
+  it("every non-primary option carries a role", () => {
+    /* Otherwise the ranking silently degrades to bank order for that
+       category — the arbitrary behaviour this replaced. */
+    for (const [category, options] of Object.entries(exerciseBank)) {
+      for (const o of options.filter((x) => !x.primary)) {
+        expect(o.role, `${category}/${o.id}`).toBeDefined();
+      }
     }
   });
 

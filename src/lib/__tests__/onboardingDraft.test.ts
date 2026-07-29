@@ -47,6 +47,7 @@ function makeDraft(over: Partial<OnboardingDraft> = {}): OnboardingDraft {
     heightUnit: "cm",
     weightUnit: "kg",
     trainingWhy: "Run a race",
+    experience: "beginner",
     ...over,
   };
 }
@@ -170,6 +171,18 @@ describe("strict validation — any bad field rejects the whole draft", () => {
     delete draft.trainingWhy;
     saveOnboardingDraft(UID_A, draft as unknown as OnboardingDraft);
     expect(loadOnboardingDraft(UID_A, MAX_STEP)).toBeNull();
+  });
+
+  it("rejects an unknown experience level", () => {
+    // Added 2026-07-28 with the field itself. The vocabulary is what the
+    // Settings editor and the engine's complexity gate both key on, so a
+    // value outside it must reject the draft rather than reach either.
+    expect(
+      isValidDraft(
+        makeDraft({ experience: "novice" as OnboardingDraft["experience"] }),
+        7
+      )
+    ).toBe(false);
   });
 
   it("isValidDraft accepts the boundary values the UI can actually produce", () => {

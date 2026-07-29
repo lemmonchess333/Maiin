@@ -28,7 +28,9 @@ import { matchTemplate } from "../matchTemplate";
 import type { ProgramTemplate } from "../templates";
 import type { UserProfile } from "@/lib/auth";
 
-function makeTemplate(overrides: Partial<ProgramTemplate> = {}): ProgramTemplate {
+function makeTemplate(
+  overrides: Partial<ProgramTemplate> = {}
+): ProgramTemplate {
   return {
     id: "test-template",
     name: "Test Template",
@@ -71,11 +73,14 @@ describe("matchTemplate — hard filters", () => {
 
   it("rejects templates with the wrong equipment", () => {
     const target = makeTemplate({ id: "match", equipment: "home_gym" });
-    const wrongEquip = makeTemplate({ id: "wrong-equip", equipment: "full_gym" });
-    const result = matchTemplate(
-      makeProfile({ equipment: "home_gym" }),
-      [wrongEquip, target],
-    );
+    const wrongEquip = makeTemplate({
+      id: "wrong-equip",
+      equipment: "full_gym",
+    });
+    const result = matchTemplate(makeProfile({ equipment: "home_gym" }), [
+      wrongEquip,
+      target,
+    ]);
     expect(result.template.id).toBe("match");
   });
 
@@ -109,10 +114,10 @@ describe("matchTemplate — hard filters", () => {
       split: "full_body",
       daysPerWeek: 5,
     });
-    const result = matchTemplate(
-      makeProfile({ daysPerWeek: 4 }),
-      [upperLower, fullBody],
-    );
+    const result = matchTemplate(makeProfile({ daysPerWeek: 4 }), [
+      upperLower,
+      fullBody,
+    ]);
     expect(result.template.id).toBe("full-body");
     expect(result.isGoalMatch).toBe(false);
   });
@@ -121,11 +126,14 @@ describe("matchTemplate — hard filters", () => {
 describe("matchTemplate — score boosts", () => {
   it("prefers a goal-matching template over a non-matching one", () => {
     const strengthMatch = makeTemplate({ id: "strength", goal: "strength" });
-    const hypertrophy = makeTemplate({ id: "hypertrophy", goal: "hypertrophy" });
-    const result = matchTemplate(
-      makeProfile({ primaryGoal: "strength" }),
-      [hypertrophy, strengthMatch],
-    );
+    const hypertrophy = makeTemplate({
+      id: "hypertrophy",
+      goal: "hypertrophy",
+    });
+    const result = matchTemplate(makeProfile({ primaryGoal: "strength" }), [
+      hypertrophy,
+      strengthMatch,
+    ]);
     expect(result.template.id).toBe("strength");
     expect(result.isGoalMatch).toBe(true);
   });
@@ -136,10 +144,9 @@ describe("matchTemplate — score boosts", () => {
        engine instead of silently giving the user a hypertrophy
        program. */
     const hypertrophy = makeTemplate({ id: "h", goal: "hypertrophy" });
-    const result = matchTemplate(
-      makeProfile({ primaryGoal: "strength" }),
-      [hypertrophy],
-    );
+    const result = matchTemplate(makeProfile({ primaryGoal: "strength" }), [
+      hypertrophy,
+    ]);
     expect(result.template.id).toBe("h");
     expect(result.isGoalMatch).toBe(false);
   });
@@ -147,10 +154,10 @@ describe("matchTemplate — score boosts", () => {
   it("prefers a split-matching template when split is set", () => {
     const ppl = makeTemplate({ id: "ppl", split: "ppl" });
     const fullBody = makeTemplate({ id: "full", split: "full_body" });
-    const result = matchTemplate(
-      makeProfile({ preferredSplit: "ppl" }),
-      [fullBody, ppl],
-    );
+    const result = matchTemplate(makeProfile({ preferredSplit: "ppl" }), [
+      fullBody,
+      ppl,
+    ]);
     expect(result.template.id).toBe("ppl");
   });
 
@@ -169,7 +176,7 @@ describe("matchTemplate — score boosts", () => {
     });
     const result = matchTemplate(
       makeProfile({ preferredSplit: "auto", primaryGoal: "strength" }),
-      [fullBodyGeneral, pplStrength],
+      [fullBodyGeneral, pplStrength]
     );
     expect(result.template.id).toBe("ppl");
   });
@@ -180,10 +187,10 @@ describe("matchTemplate — score boosts", () => {
       id: "int",
       experience: ["intermediate"],
     });
-    const result = matchTemplate(
-      makeProfile({ experience: "intermediate" }),
-      [beginner, intermediate],
-    );
+    const result = matchTemplate(makeProfile({ experience: "intermediate" }), [
+      beginner,
+      intermediate,
+    ]);
     expect(result.template.id).toBe("int");
   });
 
@@ -196,10 +203,10 @@ describe("matchTemplate — score boosts", () => {
       experience: ["intermediate", "advanced"],
     });
     const beginner = makeTemplate({ id: "beg", experience: ["beginner"] });
-    const result = matchTemplate(
-      makeProfile({ experience: "advanced" }),
-      [beginner, multi],
-    );
+    const result = matchTemplate(makeProfile({ experience: "advanced" }), [
+      beginner,
+      multi,
+    ]);
     expect(result.template.id).toBe("multi");
   });
 });
@@ -208,10 +215,10 @@ describe("matchTemplate — run integration", () => {
   it("prefers run-integrated templates for regular runners", () => {
     const integrated = makeTemplate({ id: "run-int", runIntegration: true });
     const liftOnly = makeTemplate({ id: "lift-only", runIntegration: false });
-    const result = matchTemplate(
-      makeProfile({ runFrequency: "regular" }),
-      [liftOnly, integrated],
-    );
+    const result = matchTemplate(makeProfile({ runFrequency: "regular" }), [
+      liftOnly,
+      integrated,
+    ]);
     expect(result.template.id).toBe("run-int");
   });
 
@@ -222,10 +229,10 @@ describe("matchTemplate — run integration", () => {
        friendly template as strongly. */
     const integrated = makeTemplate({ id: "run-int", runIntegration: true });
     const liftOnly = makeTemplate({ id: "lift-only", runIntegration: false });
-    const result = matchTemplate(
-      makeProfile({ runFrequency: "none" }),
-      [integrated, liftOnly],
-    );
+    const result = matchTemplate(makeProfile({ runFrequency: "none" }), [
+      integrated,
+      liftOnly,
+    ]);
     expect(result.template.id).toBe("lift-only");
   });
 });
@@ -238,10 +245,10 @@ describe("matchTemplate — running primaryGoal special-case", () => {
        rather than missing every match. */
     const general = makeTemplate({ id: "gen", goal: "general" });
     const strength = makeTemplate({ id: "str", goal: "strength" });
-    const result = matchTemplate(
-      makeProfile({ primaryGoal: "running" }),
-      [strength, general],
-    );
+    const result = matchTemplate(makeProfile({ primaryGoal: "running" }), [
+      strength,
+      general,
+    ]);
     expect(result.template.id).toBe("gen");
     expect(result.isGoalMatch).toBe(true);
   });
@@ -269,10 +276,7 @@ describe("matchTemplate — profile defaults", () => {
 describe("matchTemplate — empty input fallback", () => {
   it("falls back to templates[0] when only one template is provided and it fails the hard filters", () => {
     const wrongDays = makeTemplate({ id: "only", daysPerWeek: 6 });
-    const result = matchTemplate(
-      makeProfile({ daysPerWeek: 3 }),
-      [wrongDays],
-    );
+    const result = matchTemplate(makeProfile({ daysPerWeek: 3 }), [wrongDays]);
     expect(result.template.id).toBe("only");
     expect(result.isGoalMatch).toBe(false);
   });

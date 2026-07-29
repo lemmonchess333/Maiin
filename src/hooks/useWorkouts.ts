@@ -56,6 +56,7 @@ export interface WorkoutExercise {
   exerciseId: string;
   exerciseName: string;
   category: string;
+  repUnit?: "reps" | "seconds";
   sets: WorkoutSet[];
   caloriesBurned: number;
   // Cardio-specific (optional)

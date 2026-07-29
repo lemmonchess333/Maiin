@@ -23,6 +23,9 @@ const { isBodyweightExerciseId } = require("./bodyweightExerciseIds");
 
 const RPE_HOLD_THRESHOLD = 9.5;
 const MAX_BODYWEIGHT_REPS = 20;
+// Backlog #7's time axis (N2) — mirror of the client constants.
+const HOLD_STEP_SECONDS = 5;
+const MAX_HOLD_SECONDS = 60;
 // Backlog #7 (H3) — mirror of src/features/program/movementClass.ts. The
 // step keys on the MOVEMENT and its load, not on `isAccessory`; see that
 // module for why the flag (a volume role, filled from the non-primary pool
@@ -98,9 +101,15 @@ function applyProgression(
   const isBodyweight = isBodyweightExerciseId(exercise.exerciseId);
   const isUncalibrated = !isBodyweight && exercise.weight === 0;
   if (isUncalibrated) {
+    const calibratedWeight =
+      Number.isFinite(actualWeight) && actualWeight > 0
+        ? actualWeight
+        : exercise.weight;
     return {
       ...updated,
-      lastSuccessfulWeight: actualWeight,
+      weight: calibratedWeight,
+      lastSuccessfulWeight: calibratedWeight,
+      lastAttemptedWeight: calibratedWeight,
       consecutiveFailures: 0,
       plateauCount: 0,
     };
@@ -115,12 +124,29 @@ function applyProgression(
   );
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
+  // Backlog #7's time axis (N2) — mirror; see programEngine.ts for why the
+  // rep cap is meaningless for a hold that starts above it.
+  const isTimed = exercise.repUnit === "seconds";
   const bumpBodyweightReps = () => {
-    if (exercise.reps >= MAX_BODYWEIGHT_REPS) {
+    if (isTimed) {
+      const ceiling = exercise.repRangeMax == null ? MAX_HOLD_SECONDS : exercise.repRangeMax;
+      if (exercise.reps >= ceiling) {
+        updated.notes =
+          "Holding this long already — add load (weighted vest / band) to keep progressing.";
+      } else {
+        updated.reps = Math.min(ceiling, exercise.reps + HOLD_STEP_SECONDS);
+      }
+      return;
+    }
+    const ceiling =
+      exercise.repRangeMax == null
+        ? MAX_BODYWEIGHT_REPS
+        : exercise.repRangeMax;
+    if (exercise.reps >= ceiling) {
       updated.notes =
-        "Hitting 20+ reps — add load (weighted vest / band) to keep progressing.";
+        `Hitting ${ceiling}+ reps — add load (weighted vest / band) to keep progressing.`;
     } else {
-      updated.reps = exercise.reps + 1;
+      updated.reps = Math.min(ceiling, exercise.reps + 1);
     }
   };
 

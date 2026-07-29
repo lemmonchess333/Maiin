@@ -239,6 +239,84 @@ const ACCESSORY_SET_CAP = 5;
 const MAX_ADDED_SETS_PER_MUSCLE = 6;
 
 /**
+ * Working sets one session may contain before the balancers stop adding to it.
+ *
+ * At roughly 2.5–3 minutes per working set including rest, 18 sets is an hour
+ * of work plus warm-up — the session length both Helms and Meadows treat as
+ * the practical ceiling, and past which the last exercises are performed
+ * tired rather than well.
+ *
+ * This is the budget backlog #15 was originally DEFERRED on ("needs a
+ * volume-budget decision first — a full-body day is already long"). Its STATUS
+ * later dismissed that worry as unfounded, and a 2026-07-28 audit measured the
+ * dismissal to be wrong in exactly the way the deferral predicted: marking the
+ * full-body builder's slots as accessories made them growable for the first
+ * time, and a 3-day full-body week went 42 → 54 weekly sets, 14 → 20 in a
+ * single session. The volume balancing is CORRECT — it had simply never run
+ * for full-body users before — but it needs the bound it was always missing.
+ *
+ * The builders are not policed by this. A session the builders author over
+ * budget stays as authored; the balancers just don't add to it.
+ */
+const MAX_SETS_PER_SESSION = 18;
+
+function sessionSets(day: WorkoutDay): number {
+  return day.exercises.reduce((n, e) => n + (e.sets ?? 0), 0);
+}
+
+/** The day this exercise sits in, or null if it isn't in the week. */
+function dayOf(
+  days: WorkoutDay[],
+  exercise: ProgramExercise
+): WorkoutDay | null {
+  return days.find((d) => d.exercises.includes(exercise)) ?? null;
+}
+
+/** Would growing this exercise take its session past the length budget? */
+function overshootsSession(
+  days: WorkoutDay[],
+  exercise: ProgramExercise
+): boolean {
+  const day = dayOf(days, exercise);
+  if (!day) return false;
+  return sessionSets(day) + 1 > MAX_SETS_PER_SESSION;
+}
+
+/**
+ * Would growing this exercise by a set take a muscle that is currently AT OR
+ * BELOW its landmark high above it?
+ *
+ * The balancers are add-only, which was reasoned about as the safe direction
+ * ("trimming wanted work is the riskier direction") but had no ceiling at all
+ * — so chasing one under-dosed muscle up to MEV freely pushed the muscles that
+ * SHARE the exercise past MRV. A 2026-07-28 audit measured generated weeks
+ * violating the app's own landmarks in both directions at once: hypertrophy
+ * 6-day came out Back=39 / Shoulders=29 against a high of 20, while
+ * hamstrings sat at 11 against a low of 12.
+ *
+ * This does not trim anything — the add-only stance is unchanged. It only
+ * declines an ADD whose cost lands on a muscle that is at or over its
+ * ceiling. Adds elsewhere are unaffected, so this is a targeted veto rather
+ * than a freeze: in a week where the back is over MRV, hamstring and quad
+ * top-ups still happen; only the pull accessories stop growing.
+ */
+function overshootsCeiling(
+  days: WorkoutDay[],
+  exercise: ProgramExercise,
+  landmark: VolumeLandmark
+): boolean {
+  const before = new Map(
+    weeklyVolumeByMuscle(days).map((v) => [v.muscle, v.sets])
+  );
+  exercise.sets += 1;
+  const after = weeklyVolumeByMuscle(days);
+  exercise.sets -= 1;
+  return after.some(
+    (v) => v.sets > landmark.high && v.sets > (before.get(v.muscle) ?? 0)
+  );
+}
+
+/**
  * Make the volume model active (D-LIFT-1) — nudge UNDER-dosed muscles up toward
  * the landmark low (MEV) by adding sets to their existing ACCESSORIES. Pure;
  * returns a new workouts array (inputs untouched).
@@ -285,11 +363,16 @@ export function balanceWeeklyVolume(
       volumeOf(muscle) < landmark.low &&
       added < MAX_ADDED_SETS_PER_MUSCLE
     ) {
-      // Grow the lowest-set addable accessory first (keeps volume even).
+      // Grow the lowest-set addable accessory first (keeps volume even), and
+      // skip any whose growth would tip a different muscle over its ceiling.
       const target = candidates
         .filter((e) => e.sets < ACCESSORY_SET_CAP)
-        .sort((a, b) => a.sets - b.sets)[0];
-      if (!target) break; // all capped
+        .sort((a, b) => a.sets - b.sets)
+        .find(
+          (e) =>
+            !overshootsCeiling(days, e, landmark) && !overshootsSession(days, e)
+        );
+      if (!target) break; // all capped, or every add overshoots elsewhere
       target.sets += 1;
       added += 1;
     }
@@ -344,7 +427,10 @@ function categorySetTotals(workouts: WorkoutDay[]): {
  * capped, total bounded). Uses movement category (not muscle) so it's immune to
  * the front/rear-delt lumping. Add-only — never trims push.
  */
-export function balancePushPull(workouts: WorkoutDay[]): WorkoutDay[] {
+export function balancePushPull(
+  workouts: WorkoutDay[],
+  landmark?: VolumeLandmark
+): WorkoutDay[] {
   const days = workouts.map((d) => ({
     ...d,
     exercises: d.exercises.map((e) => ({ ...e })),
@@ -362,8 +448,13 @@ export function balancePushPull(workouts: WorkoutDay[]): WorkoutDay[] {
     if (pull >= push) break;
     const target = pullAccessories
       .filter((e) => e.sets < ACCESSORY_SET_CAP)
-      .sort((a, b) => a.sets - b.sets)[0];
-    if (!target) break; // all capped
+      .sort((a, b) => a.sets - b.sets)
+      .find(
+        (e) =>
+          (!landmark || !overshootsCeiling(days, e, landmark)) &&
+          !overshootsSession(days, e)
+      );
+    if (!target) break; // all capped, or every add overshoots a ceiling
     target.sets += 1;
     added += 1;
   }

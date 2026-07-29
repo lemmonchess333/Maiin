@@ -11,6 +11,7 @@ import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { localDateString } from "@/lib/dateHelpers";
+import { isTimedExerciseId } from "@/features/program/repUnits";
 
 const ExerciseProgressChart = lazy(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -105,6 +106,14 @@ export default function ExerciseHistory() {
     [decodedName]
   );
   const isBodyweight = exercise?.equipment === "Bodyweight";
+  const isTimed =
+    isTimedExerciseId(exercise?.id) ||
+    workouts.some((workout) =>
+      workout.exercises?.some(
+        (entry) =>
+          entry.exerciseName === decodedName && entry.repUnit === "seconds"
+      )
+    );
 
   // Build chronological session summary for this specific exercise from
   // every logged workout. Kept as one useMemo keyed on `workouts` so the
@@ -115,7 +124,9 @@ export default function ExerciseHistory() {
       const ex = w.exercises?.find((e) => e.exerciseName === decodedName);
       if (!ex || !ex.sets || ex.sets.length === 0) continue;
       const sets = ex.sets.map((s) => ({ reps: s.reps, weightKg: s.weightKg }));
-      const top = topSetOf(sets);
+      const top = isTimed
+        ? sets.reduce((best, set) => (set.reps > best.reps ? set : best))
+        : topSetOf(sets);
       let e1rm = 0;
       let maxWeight = 0;
       let volume = 0;
@@ -139,7 +150,7 @@ export default function ExerciseHistory() {
     // Ascending by date so chart + "previous session" lookups run forward.
     out.sort((a, b) => a.date.localeCompare(b.date));
     return out;
-  }, [workouts, decodedName]);
+  }, [workouts, decodedName, isTimed]);
 
   // Rep-range PRs — heaviest weight ever lifted at exactly that rep
   // count. For bodyweight exercises this is the heaviest ADDED weight
@@ -171,13 +182,14 @@ export default function ExerciseHistory() {
     const prs = new Set<string>();
     let runningBest = 0;
     for (const s of allSessions) {
-      if (s.e1rm > runningBest) {
-        runningBest = s.e1rm;
+      const score = isTimed ? (s.topSet?.reps ?? 0) : s.e1rm;
+      if (score > runningBest) {
+        runningBest = score;
         prs.add(s.date);
       }
     }
     return prs;
-  }, [allSessions]);
+  }, [allSessions, isTimed]);
 
   // Previous-session delta: each session gets "+5 kg from last" etc.
   // Keyed by date → delta kg (top-set weight). Null when no previous
@@ -186,12 +198,14 @@ export default function ExerciseHistory() {
     const map = new Map<string, number | null>();
     let prevWeight: number | null = null;
     for (const s of allSessions) {
-      const topW = s.topSet?.weightKg ?? 0;
-      map.set(s.date, prevWeight == null ? null : topW - prevWeight);
-      prevWeight = topW;
+      const topValue = isTimed
+        ? (s.topSet?.reps ?? 0)
+        : (s.topSet?.weightKg ?? 0);
+      map.set(s.date, prevWeight == null ? null : topValue - prevWeight);
+      prevWeight = topValue;
     }
     return map;
-  }, [allSessions]);
+  }, [allSessions, isTimed]);
 
   // Filter by time range. "All" passes everything through.
   const filteredSessions = useMemo(() => {
@@ -212,10 +226,15 @@ export default function ExerciseHistory() {
   const headerStats = useMemo(() => {
     const best1RM = allSessions.reduce((m, s) => Math.max(m, s.e1rm), 0);
     const maxReps = allSessions.reduce((m, s) => Math.max(m, s.totalReps), 0);
+    const longestHold = allSessions.reduce(
+      (m, s) => Math.max(m, s.topSet?.reps ?? 0),
+      0
+    );
     const totalSets = allSessions.reduce((t, s) => t + s.sets.length, 0);
     return {
       best1RM: Math.round(best1RM),
       maxReps,
+      longestHold,
       totalSessions: allSessions.length,
       totalSets,
     };
@@ -227,7 +246,9 @@ export default function ExerciseHistory() {
   const chartData = useMemo(() => {
     return filteredSessions.map((s) => {
       let value = 0;
-      if (isBodyweight) {
+      if (isTimed) {
+        value = s.topSet?.reps ?? 0;
+      } else if (isBodyweight) {
         value = metric === "Volume" ? s.volume : s.totalReps;
       } else if (metric === "1RM") {
         value = Math.round(s.e1rm);
@@ -238,15 +259,17 @@ export default function ExerciseHistory() {
       }
       return { date: s.date, value, isPR: prDates.has(s.date) };
     });
-  }, [filteredSessions, metric, isBodyweight, prDates]);
+  }, [filteredSessions, metric, isBodyweight, isTimed, prDates]);
 
   // For BW exercises, the metric toggle simplifies to Reps / Volume — no
   // weight-based options make sense when the weight is implicit.
-  const metricOptions: Metric[] = isBodyweight
-    ? ["1RM", "Volume"]
-    : ["1RM", "Max Weight", "Volume"];
+  const metricOptions: Metric[] = isTimed
+    ? ["1RM"]
+    : isBodyweight
+      ? ["1RM", "Volume"]
+      : ["1RM", "Max Weight", "Volume"];
   const displayMetric =
-    isBodyweight && metric === "Max Weight" ? "1RM" : metric;
+    (isBodyweight || isTimed) && metric === "Max Weight" ? "1RM" : metric;
 
   const goBack = useCallback(() => {
     haptic("light");
@@ -320,15 +343,19 @@ export default function ExerciseHistory() {
       <div className="grid grid-cols-3 gap-2">
         <div className="p-3 rounded-xl bg-card card-shadow">
           <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
-            {isBodyweight ? "Max reps" : "Best 1RM"}
+            {isTimed ? "Longest hold" : isBodyweight ? "Max reps" : "Best 1RM"}
           </p>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-            {isBodyweight
-              ? headerStats.maxReps || "—"
-              : headerStats.best1RM
-                ? `${headerStats.best1RM}`
-                : "—"}
-            {!isBodyweight && headerStats.best1RM > 0 && (
+            {isTimed
+              ? headerStats.longestHold
+                ? `${headerStats.longestHold}s`
+                : "—"
+              : isBodyweight
+                ? headerStats.maxReps || "—"
+                : headerStats.best1RM
+                  ? `${headerStats.best1RM}`
+                  : "—"}
+            {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
               <span className="text-xs font-normal text-muted-foreground ml-1">
                 kg
               </span>
@@ -391,43 +418,45 @@ export default function ExerciseHistory() {
       ) : (
         <>
           {/* ── Rep-range PRs ───────────────────────────────────────── */}
-          <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
-            <div className="flex items-center gap-2">
-              <Trophy className="size-4 text-amber-500" />
-              <h3 className="text-sm font-semibold text-foreground">
-                {isBodyweight ? "Personal bests by reps" : "Rep-range PRs"}
-              </h3>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {REP_BUCKETS.map((b) => {
-                const pr = repRangePRs[b];
-                return (
-                  <div key={b} className="text-center">
-                    <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
-                      {b}RM
-                    </p>
-                    <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
-                      {pr
-                        ? isBodyweight && pr.weightKg === 0
-                          ? "BW"
-                          : `${pr.weightKg}`
-                        : "—"}
-                      {pr && pr.weightKg > 0 && !isBodyweight && (
-                        <span className="text-caption font-normal text-muted-foreground ml-0.5">
-                          kg
-                        </span>
-                      )}
-                    </p>
-                    {pr && (
-                      <p className="text-caption text-muted-foreground mt-0.5">
-                        {formatDate(pr.date)}
+          {!isTimed && (
+            <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
+              <div className="flex items-center gap-2">
+                <Trophy className="size-4 text-amber-500" />
+                <h3 className="text-sm font-semibold text-foreground">
+                  {isBodyweight ? "Personal bests by reps" : "Rep-range PRs"}
+                </h3>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {REP_BUCKETS.map((b) => {
+                  const pr = repRangePRs[b];
+                  return (
+                    <div key={b} className="text-center">
+                      <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
+                        {b}RM
                       </p>
-                    )}
-                  </div>
-                );
-              })}
+                      <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
+                        {pr
+                          ? isBodyweight && pr.weightKg === 0
+                            ? "BW"
+                            : `${pr.weightKg}`
+                          : "—"}
+                        {pr && pr.weightKg > 0 && !isBodyweight && (
+                          <span className="text-caption font-normal text-muted-foreground ml-0.5">
+                            kg
+                          </span>
+                        )}
+                      </p>
+                      {pr && (
+                        <p className="text-caption text-muted-foreground mt-0.5">
+                          {formatDate(pr.date)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ── Time range — shared SegmentedControl (wrap layout). Was a
                 row of sub-44px scroll pills (touch-target gap + no a11y); now
@@ -477,7 +506,7 @@ export default function ExerciseHistory() {
                           : undefined
                       }
                     >
-                      {m}
+                      {isTimed ? "Seconds" : m}
                     </button>
                   ))}
                 </div>
@@ -534,15 +563,19 @@ export default function ExerciseHistory() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {s.sets.length} set{s.sets.length !== 1 ? "s" : ""}
                           {" · "}
-                          {isBodyweight
-                            ? `${s.totalReps} reps total`
-                            : `${Math.round(s.volume)} kg volume`}
+                          {isTimed
+                            ? `${s.totalReps}s total`
+                            : isBodyweight
+                              ? `${s.totalReps} reps total`
+                              : `${Math.round(s.volume)} kg volume`}
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0 ml-3">
                         <p className="text-sm font-bold font-mono tabular-nums text-foreground">
                           {s.topSet
-                            ? `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
+                            ? isTimed
+                              ? `${s.topSet.reps}s`
+                              : `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
                         {delta != null && delta !== 0 && (
@@ -554,7 +587,7 @@ export default function ExerciseHistory() {
                             }}
                           >
                             {delta > 0 ? "+" : ""}
-                            {delta} kg from last
+                            {delta} {isTimed ? "s" : "kg"} from last
                           </p>
                         )}
                       </div>

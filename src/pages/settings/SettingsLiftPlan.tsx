@@ -51,7 +51,7 @@ function readBlockHandoff(state: unknown): {
 }
 
 export default function SettingsLiftPlan() {
-  const { profile, updateProfile } = useAuth();
+  const { profile, updateProfile, refreshProfile } = useAuth();
   const {
     programState,
     updateSettings,
@@ -85,6 +85,7 @@ export default function SettingsLiftPlan() {
           programState={programState}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}
+          refreshProfile={refreshProfile}
           onOpenWeeklyLayout={() => setEditLayoutOpen(true)}
           prefillGoal={prefillGoal ?? undefined}
         />

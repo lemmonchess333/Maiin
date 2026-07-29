@@ -1222,7 +1222,7 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
     );
   });
 
-  it("replaceExercise swaps the exercise, preserving the old prescription", () => {
+  it("replaceExercise swaps the exercise without carrying an unsafe load", () => {
     const { state } = apply({
       kind: "replaceExercise",
       commandId: CMD,
@@ -1237,11 +1237,28 @@ describe("addExercises / replaceExercise (catalog-derived, mirrors pinned by cro
       name: "Front Squat",
       sets: 3,
       reps: 8,
-      weight: 100, // carried from the replaced exercise
+      weight: 0, // arbitrary cross-movement kilograms are uncalibrated
       movementCategory: "knee_dominant",
       instanceId: `cmd-${CMD}`,
     });
     expect(ex[1].instanceId).toBe("inst-b"); // untouched
+  });
+
+  it("replaceExercise changes timed-hold units and resets the target coherently", () => {
+    const { state } = apply({
+      kind: "replaceExercise",
+      commandId: CMD,
+      ...dayPre(),
+      oldInstanceId: "inst-a",
+      replacementExerciseId: "plank",
+    });
+    expect(state.workouts[0].exercises[0]).toMatchObject({
+      exerciseId: "plank",
+      reps: 30,
+      baseReps: 30,
+      repUnit: "seconds",
+      weight: 0,
+    });
   });
 
   it("replaceExercise carries the slot's prescription fields (backlog #7)", () => {
