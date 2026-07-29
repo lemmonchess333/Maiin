@@ -398,6 +398,25 @@ export const exerciseBank: Record<MovementCategory, ExerciseOption[]> = {
       primary: false,
       role: "size",
     },
+    // The last of the 12 residual equipment violations, and a precise one: a
+    // lower-back-injured HOME-GYM user needs two hinge slots, and had exactly
+    // one option that was both available and safe (the glute bridge) — the
+    // dumbbell RDL is contraindicated for that injury and everything else in
+    // the category is a barbell or a machine. So a machine leg curl stayed in
+    // a plan for someone with no machine. Nordic curls are bodyweight,
+    // hamstring-primary and load no spine, which is exactly the gap.
+    // `technical` because most beginners cannot do one unassisted — the
+    // equipment filter still falls back to it over prescribing a machine
+    // they do not own.
+    {
+      id: "nordic-hamstring-curl",
+      loadFactor: 0,
+      name: "Nordic Hamstring Curl",
+      primary: false,
+      complexity: "technical",
+      lengthened: true,
+      role: "technique",
+    },
   ],
   arms_biceps: [
     { id: "barbell-curl", name: "Barbell Curl", primary: true },

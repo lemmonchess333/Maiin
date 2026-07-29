@@ -600,12 +600,22 @@ describe("a limited-equipment user gets a plan they can perform", () => {
     // the bank gained coverage. It now prefers a movement the user can do —
     // but only as a preference: if the one thing that spares the injury needs
     // a machine, the injured user still gets it. Safety outranks convenience.
-    for (const injury of ["knee", "shoulder", "lower_back"]) {
-      const found = unusable(build("home_gym", 4, [injury]), "home_gym");
-      expect(
-        found.filter((n) => !/Leg Curl/i.test(n)),
-        `home_gym/4d/${injury}`
-      ).toEqual([]);
+    //
+    // The last 12 were all one shape: a LOWER-BACK-injured home-gym user
+    // needs two hinge slots and had exactly one option that was both
+    // available and safe (the glute bridge), because the dumbbell RDL is
+    // contraindicated for that injury and the rest of the category is
+    // barbells and machines. The Nordic curl — bodyweight, hamstring-primary,
+    // no spinal load — was the missing piece and was already in the catalog.
+    for (const tier of ["home_gym", "minimal"] as const) {
+      for (const injury of ["knee", "shoulder", "lower_back"]) {
+        for (const liftDays of [2, 4, 6]) {
+          expect(
+            unusable(build(tier, liftDays, [injury]), tier),
+            `${tier}/${liftDays}d/${injury}`
+          ).toEqual([]);
+        }
+      }
     }
   });
 });
