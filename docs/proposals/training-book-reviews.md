@@ -505,7 +505,7 @@ rather than a patch. None of them are speculative; each was measured.
    |        | complexity violations | equipment violations |
    | ------ | --------------------- | -------------------- |
    | before | 603                   | 462                  |
-   | after  | 273                   | 12                   |
+   | after  | 273                   | 0                    |
 
    The cause was never the equipment FILTER. Gating its picker was tried twice
    and measured: AND-ing complexity into the predicate took equipment
@@ -528,10 +528,19 @@ rather than a patch. None of them are speculative; each was measured.
    time_, and re-testing the decision after changing its premise is what found
    the win.
 
-   RESIDUE, and it is now precisely characterised rather than a bulk number:
-   - 12 equipment violations, all `seated-leg-curl` (Machine) — the entry
-     added earlier the same day for hamstring coverage. Reached via
-     `lowCostAlternative`, which is not equipment-aware.
+   Equipment violations are now **ZERO** across the matrix. The last 12 were
+   one precise case repeated: a LOWER-BACK-injured home-gym user needs two
+   hinge slots and had exactly one option that was both available and safe
+   (the glute bridge) — the dumbbell RDL is contraindicated for that injury
+   and the rest of `hip_dominant` is barbells and machines, so a machine leg
+   curl stayed in the plan of someone with no machine. No selection logic
+   could fix that; there was one option and two slots.
+   `nordic-hamstring-curl` closed it — bodyweight, hamstring-primary, no
+   spinal load, and already in the catalog like every other id added here.
+   Full-gym generation is byte-identical before and after (fingerprinted
+   across 4 goals × 1–6 days × 3 levels).
+
+   RESIDUE:
    - 273 complexity violations, concentrated in `bulgarian-split` (90),
      `arnold-press` (66), `chest-supported-db-row` (63), `tricep-dips` (48),
      `trap-bar-deadlift` (30), `landmine-press` (24). Most arrive via injury
